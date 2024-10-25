@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -72,11 +73,33 @@ func (c *client) UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error) 
 	return res, nil
 }
 
+func (c *client) UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error) {
+	res, _, code, err := c.Request(ctx, http.MethodGet, fmt.Sprintf("/v2/jsonschema/%s", entityType), nil)
+	if err == nil {
+		if code != http.StatusOK {
+			err = fmt.Errorf("unexpected status code: %d", code)
+		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("unable to get schema: %w", err)
+	}
+
+	return res, nil
+}
+
 func (c *client) UserUpdate(ctx context.Context, username string, u *sdk.AuthentifiedUser) error {
 	if _, err := c.PutJSON(ctx, "/user/"+url.QueryEscape(username), u, u); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (c *client) UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error) {
+	var res []sdk.UserContact
+	if _, err := c.GetJSON(ctx, "/user/"+url.QueryEscape(username)+"/contact", &res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (c *client) UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error) {

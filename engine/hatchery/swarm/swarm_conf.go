@@ -28,6 +28,7 @@ func (h *HatcherySwarm) Init(config interface{}) (cdsclient.ServiceConfig, error
 	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
+	cfg.TokenV2 = sConfig.API.TokenV2
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
 	return cfg, nil
@@ -56,6 +57,7 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	}
 	h.Common.Common.Region = h.Config.Provision.Region
 	h.Common.Common.IgnoreJobWithNoRegion = h.Config.Provision.IgnoreJobWithNoRegion
+	h.Common.Common.ModelType = h.ModelType()
 
 	return nil
 }

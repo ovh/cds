@@ -13,6 +13,9 @@ import { AppService } from './app.service';
 import { ServicesModule } from './service/services.module';
 import { SharedModule } from './shared/shared.module';
 import { NavbarModule } from './views/navbar/navbar.module';
+import { NgxsStoragePluginModule, StorageEngine, STORAGE_ENGINE } from '@ngxs/storage-plugin';
+import { PreferencesState } from './store/preferences.state';
+import { EventV2Service } from './event-v2.service';
 
 export let errorFactory = () => {
     if ((<any>window).cds_sentry_url) {
@@ -39,6 +42,14 @@ export let errorFactory = () => {
     }
 };
 
+export class CDSStorageEngine implements StorageEngine {
+    get length(): number { return localStorage.length }
+    getItem(key: string): any { return localStorage.getItem(`CDS-${key.toUpperCase()}`) }
+    setItem(key: string, val: any): void { return localStorage.setItem(`CDS-${key.toUpperCase()}`, val) }
+    removeItem(key: string): void { localStorage.removeItem(`CDS-${key.toUpperCase()}`) }
+    clear(): void { localStorage.clear() }
+}
+
 @NgModule({
     declarations: [
         AppComponent
@@ -49,6 +60,7 @@ export let errorFactory = () => {
         HttpClientModule,
         NavbarModule,
         NgxsStoreModule,
+        NgxsStoragePluginModule.forRoot({ key: [PreferencesState], }),
         SharedModule,
         ServicesModule.forRoot(),
         routing,
@@ -58,7 +70,7 @@ export let errorFactory = () => {
                 useFactory: createTranslateLoader,
                 deps: [HttpClient]
             }
-        }),
+        })
     ],
     exports: [
         ServicesModule,
@@ -66,13 +78,14 @@ export let errorFactory = () => {
     providers: [
         AppService,
         EventService,
+        EventV2Service,
         { provide: ErrorHandler, useFactory: errorFactory },
         { provide: LOCALE_ID, useValue: 'en' },
+        { provide: STORAGE_ENGINE, useClass: CDSStorageEngine }
     ],
     bootstrap: [AppComponent]
 })
-export class AppModule {
-}
+export class AppModule { }
 
 export function createTranslateLoader(http: HttpClient) {
     return new TranslateHttpLoader(http, './assets/i18n/', '.json');

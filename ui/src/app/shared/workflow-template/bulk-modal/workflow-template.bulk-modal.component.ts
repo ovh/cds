@@ -2,7 +2,7 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
+    EventEmitter, inject,
     Input,
     OnDestroy, OnInit,
     Output
@@ -24,7 +24,11 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Select } from 'app/shared/table/data-table.component';
 import { interval, Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
+
+interface IModalData {
+    workflowTemplate: WorkflowTemplate;
+}
 
 @Component({
     selector: 'app-workflow-template-bulk-modal',
@@ -37,6 +41,8 @@ export class WorkflowTemplateBulkModalComponent implements OnInit, OnDestroy {
     @Input() workflowTemplate: WorkflowTemplate;
     @Output() close = new EventEmitter();
 
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
+
     columnsInstances: Array<Column<WorkflowTemplateInstance>>;
     columnsOperations: Array<Column<WorkflowTemplateBulkOperation>>;
     instances: Array<WorkflowTemplateInstance>;
@@ -44,7 +50,6 @@ export class WorkflowTemplateBulkModalComponent implements OnInit, OnDestroy {
     currentStep = 0;
     selectedInstanceKeys: Array<string> = new Array<string>();
     selectedInstances: Array<WorkflowTemplateInstance>;
-    accordionOpenedIndex = 0;
     parameters: { [s: number]: ParamData };
     response: WorkflowTemplateBulk;
     pollingStatusSub: Subscription;
@@ -88,18 +93,19 @@ export class WorkflowTemplateBulkModalComponent implements OnInit, OnDestroy {
                 name: 'Status',
                 class: 'rightAlign',
                 selector: (i: WorkflowTemplateBulkOperation) => ({
-                        class: OperationStatusUtil.color(i.status),
-                        value: OperationStatusUtil.translate(i.status)
-                    })
+                    class: OperationStatusUtil.color(i.status),
+                    value: OperationStatusUtil.translate(i.status)
+                })
             }
         ];
 
         this.parameters = {};
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
+        this.workflowTemplate = this.nzModalData.workflowTemplate;
         this.clickGoToInstanceReset();
     }
 
@@ -183,15 +189,6 @@ export class WorkflowTemplateBulkModalComponent implements OnInit, OnDestroy {
         });
 
         this.moveToStep(2);
-    }
-
-    accordionOpen(e: any, index: number) {
-        if (this.accordionOpenedIndex === index) {
-            this.accordionOpenedIndex = -1; // close all accordion items
-        } else {
-            this.accordionOpenedIndex = index;
-        }
-        this._cd.markForCheck();
     }
 
     changeParam(instanceID: number, params: ParamData) {

@@ -1,0 +1,29 @@
+name: plugin initialization
+
+vars:
+  plugins:
+    - addRunResult
+    - artifactoryPromote
+    - artifactoryRelease
+    - cache
+    - cacheRestore
+    - cacheSave
+    - checkout
+    - debianPush
+    - deployArsenal
+    - dockerPush
+    - downloadArtifact
+    - helmPush
+    - junit
+    - keyInstall
+    - pythonPush
+    - script
+    - uploadArtifact
+
+testcases:
+  - name: install plugins
+    steps:
+    - range: '{{.plugins}}'
+      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental plugin import {{.dist}}/{{.value}}.yml
+    - range: '{{.plugins}}'
+      script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add {{.value}} {{.dist}}/{{.value}}-linux-amd64.yml {{.dist}}/{{.value}}-linux-amd64

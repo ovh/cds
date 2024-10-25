@@ -12,16 +12,18 @@ import { WorkflowTemplate } from 'app/model/workflow-template.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { ImportAsCodeService } from 'app/service/import-as-code/import.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { EventState } from 'app/store/event.state';
+import { PreferencesState } from 'app/store/preferences.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first, map } from 'rxjs/operators';
+import {APIConfig} from "app/model/config.service";
+import {ConfigState} from "app/store/config.state";
 
 @Component({
     selector: 'app-workflow-add',
@@ -72,6 +74,8 @@ workflow:
     duplicateWorkflowName = false;
     fileTooLarge = false;
     themeSubscription: Subscription;
+    apiConfig: APIConfig;
+    configSubscription: Subscription;
 
     constructor(
         private _store: Store,
@@ -83,7 +87,6 @@ workflow:
         private _repoManagerService: RepoManagerService,
         private _workflowTemplateService: WorkflowTemplateService,
         private _sharedService: SharedService,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef,
         private _eventService: EventService
     ) {
@@ -95,6 +98,11 @@ workflow:
             lineNumbers: true,
             autoRefresh: true,
         };
+
+        this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
+            this.apiConfig = c;
+            this._cd.markForCheck();
+        });
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -104,12 +112,14 @@ workflow:
             this.project = datas['project'];
         });
 
-        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-            if (this.codemirror && this.codemirror.instance) {
-                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-        });
+        this.themeSubscription = this._store.select(PreferencesState.theme)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror && this.codemirror.instance) {
+                    this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+            });
 
         this.projectSubscription = this._store.select(ProjectState)
             .pipe(filter((projState) => projState.project && projState.project.key), finalize(() => this._cd.markForCheck()))
@@ -178,7 +188,7 @@ workflow:
         });
     }
 
-    filterRepo(query: string): void{
+    filterRepo(query: string): void {
         if (!query || query.length < 3) {
             return;
         }

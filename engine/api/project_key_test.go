@@ -31,7 +31,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,6 +62,22 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	var keys []sdk.ProjectKey
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &keys))
 	assert.Equal(t, len(keys), 1)
+
+	uri = router.GetRoute("POST", api.postDisableKeyInProjectHandler, vars)
+	req, err = http.NewRequest("POST", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	uri = router.GetRoute("POST", api.postEnableKeyInProjectHandler, vars)
+	req, err = http.NewRequest("POST", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 }
 
 func Test_deleteKeyInProjectHandler(t *testing.T) {

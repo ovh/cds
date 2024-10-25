@@ -10,9 +10,12 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	hatch "github.com/ovh/cds/engine/api/authentication/hatchery"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -77,8 +80,9 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	// We should have a consumer in the context to validate the auth
-	var apiConsumer = getAPIConsumer(ctx)
-	if apiConsumer == nil {
+	var userConsumer = getUserConsumer(ctx)
+	var hatcheryConsumer = getHatcheryConsumer(ctx)
+	if userConsumer == nil && hatcheryConsumer == nil {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
@@ -98,7 +102,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	}
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 	ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, claims.TokenID)
-	SetTracker(w, cdslog.AuthSessionTokenID, claims.TokenID)
+	service.SetTracker(w, cdslog.AuthSessionTokenID, claims.TokenID)
 	ctx = context.WithValue(ctx, contextClaims, claims)
 
 	// Check for session based on jwt from context
@@ -112,21 +116,79 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		return ctx, nil
 	}
 	ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
-	SetTracker(w, cdslog.AuthSessionID, session.ID)
+	service.SetTracker(w, cdslog.AuthSessionID, session.ID)
 	ctx = context.WithValue(ctx, cdslog.AuthSessionIAT, session.Created.Unix())
-	SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
+	service.SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
 	ctx = context.WithValue(ctx, contextSession, session)
 
+	// Load consumer
+	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID)
+	if err != nil {
+		return ctx, err
+	}
+
+	switch consumer.Type {
+	case sdk.ConsumerHatchery:
+		return api.handleAuthMiddlewareHatcheryConsumer(ctx, w, req, rc, session.ConsumerID)
+	default:
+		return api.handleAuthMiddlewareUserConsumer(ctx, w, req, rc, session.ConsumerID)
+	}
+}
+
+func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig, consumerID string) (context.Context, error) {
 	// Load auth consumer for current session in database with authentified user and contacts
-	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadHatcheryConsumerByAuthConsumerID(ctx, api.mustDB(), consumerID)
 	if err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
-	ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthentifiedUserID)
-	SetTracker(w, cdslog.AuthUserID, consumer.AuthentifiedUserID)
 	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
-	SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
+	service.SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
+
+	// If the consumer is disabled, return an error
+	if consumer.Disabled {
+		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
+	}
+
+	driverManifest := hatch.GetManifest()
+	ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
+
+	// Add service for consumer if exists
+	currentHatchery, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), consumer.AuthConsumerHatchery.HatcheryID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return ctx, err
+	}
+
+	ctx = context.WithValue(ctx, contextHatcheryConsumer, consumer)
+
+	work, err := worker_v2.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return ctx, err
+	}
+	ctx = context.WithValue(ctx, contextWorker, work)
+	if work != nil {
+		service.SetTracker(w, cdslog.AuthWorkerName, work.Name)
+	}
+
+	ctx = context.WithValue(ctx, cdslog.AuthServiceName, currentHatchery.Name)
+	service.SetTracker(w, cdslog.AuthServiceName, currentHatchery.Name)
+	ctx = context.WithValue(ctx, cdslog.AuthServiceType, sdk.ConsumerHatchery)
+	service.SetTracker(w, cdslog.AuthServiceType, sdk.ConsumerHatchery)
+
+	return ctx, nil
+}
+
+func (api *API) handleAuthMiddlewareUserConsumer(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig, consumerID string) (context.Context, error) {
+	// Load auth consumer for current session in database with authentified user and contacts
+	consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), consumerID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
+	if err != nil {
+		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+	}
+
+	ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
+	service.SetTracker(w, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
+	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
+	service.SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
 
 	// If the consumer is disabled, return an error
 	if consumer.Disabled {
@@ -145,42 +207,42 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
 
 	// Add contacts for consumer's user
-	if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
+	if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUser); err != nil {
 		return ctx, err
 	}
 
 	// Add service for consumer if exists
-	consumer.Service, err = services.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	consumer.AuthConsumerUser.Service, err = services.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return ctx, err
 	}
-	if consumer.Service != nil {
-		ctx = context.WithValue(ctx, cdslog.AuthServiceName, consumer.Service.Name)
-		SetTracker(w, cdslog.AuthServiceName, consumer.Service.Name)
-		ctx = context.WithValue(ctx, cdslog.AuthServiceType, consumer.Service.Type)
-		SetTracker(w, cdslog.AuthServiceType, consumer.Service.Type)
+	if consumer.AuthConsumerUser.Service != nil {
+		ctx = context.WithValue(ctx, cdslog.AuthServiceName, consumer.AuthConsumerUser.Service.Name)
+		service.SetTracker(w, cdslog.AuthServiceName, consumer.AuthConsumerUser.Service.Name)
+		ctx = context.WithValue(ctx, cdslog.AuthServiceType, consumer.AuthConsumerUser.Service.Type)
+		service.SetTracker(w, cdslog.AuthServiceType, consumer.AuthConsumerUser.Service.Type)
 	}
 
 	// Add worker for consumer if exists
-	consumer.Worker, err = worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	consumer.AuthConsumerUser.Worker, err = worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return ctx, err
 	}
-	if consumer.Worker != nil {
-		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, consumer.Worker.Name)
-		SetTracker(w, cdslog.AuthWorkerName, consumer.Worker.Name)
+	if consumer.AuthConsumerUser.Worker != nil {
+		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, consumer.AuthConsumerUser.Worker.Name)
+		service.SetTracker(w, cdslog.AuthWorkerName, consumer.AuthConsumerUser.Worker.Name)
 	}
 
-	if consumer.Service == nil && consumer.Worker == nil {
-		ctx = context.WithValue(ctx, cdslog.AuthUsername, consumer.AuthentifiedUser.Username)
-		SetTracker(w, cdslog.AuthUsername, consumer.AuthentifiedUser.Username)
+	if consumer.AuthConsumerUser.Service == nil && consumer.AuthConsumerUser.Worker == nil {
+		ctx = context.WithValue(ctx, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
+		service.SetTracker(w, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
 	}
 
-	ctx = context.WithValue(ctx, contextConsumer, consumer)
+	ctx = context.WithValue(ctx, contextUserConsumer, consumer)
 
 	// Checks scopes, one of expected scopes should be in actual scopes
 	// Actual scope empty list means wildcard scope, we don't need to check scopes
-	expectedScopes, actualScopes := rc.AllowedScopes, consumer.ScopeDetails
+	expectedScopes, actualScopes := rc.AllowedScopes, consumer.AuthConsumerUser.ScopeDetails
 	if len(expectedScopes) > 0 && len(actualScopes) > 0 {
 		var found bool
 	findScope:
@@ -220,7 +282,7 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	defer end()
 
 	// If no consumer in the context, means that the route is not authentified, we don't need to check the xsrf token.
-	if getAPIConsumer(ctx) == nil {
+	if getUserConsumer(ctx) == nil {
 		return ctx, nil
 	}
 

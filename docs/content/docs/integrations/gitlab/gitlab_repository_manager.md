@@ -46,5 +46,5 @@ options:
 ```
 
 ```sh
-cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-gitlab.yml
+cdsctl project vcs import YOUR_CDS_PROJECT_KEY vcs-gitlab.yml
 ```

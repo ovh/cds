@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk/telemetry"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/go-gorp/gorp"
 
@@ -18,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func pushOperation(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
+func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
 	if ope.RepositoryStrategy.SSHKey != "" {
 		key := proj.GetSSHKey(ope.RepositoryStrategy.SSHKey)
 		if key == nil {
@@ -128,12 +130,12 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 	}
 
 	if multipartData == nil {
-		if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/operations", ope, ope); err != nil {
+		if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/operations", ope, ope); err != nil {
 			return sdk.WrapError(err, "Unable to perform operation")
 		}
 		return nil
 	}
-	if _, err := services.NewClient(db, srvs).DoMultiPartRequest(ctx, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
+	if _, err := services.NewClient(srvs).DoMultiPartRequest(ctx, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
 		return sdk.WrapError(err, "unable to perform multipart operation")
 	}
 	return nil
@@ -146,7 +148,7 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 		return nil, sdk.WrapError(err, "unable to found repositories service")
 	}
 	var ope sdk.Operation
-	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodGet, "/operations/"+uuid, nil, &ope); err != nil {
+	if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, "/operations/"+uuid, nil, &ope); err != nil {
 		return nil, sdk.WrapError(err, "unable to get operation")
 	}
 	return &ope, nil
@@ -174,7 +176,7 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 		return ope, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
 	tick := time.NewTicker(2 * time.Second)
 	defer tick.Stop()
@@ -190,4 +192,35 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 			}
 		}
 	}
+}
+
+func CheckoutAndAnalyzeOperation(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, vcsWithSecret sdk.VCSProject, repoName, repoCloneURL string, ref string, opts sdk.OperationCheckout) (*sdk.Operation, error) {
+	ope := &sdk.Operation{
+		VCSServer:    vcsWithSecret.Name,
+		RepoFullName: repoName,
+		URL:          repoCloneURL,
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			SSHKey:   vcsWithSecret.Auth.SSHKeyName,
+			User:     vcsWithSecret.Auth.Username,
+			Password: vcsWithSecret.Auth.Token,
+		},
+		Setup: sdk.OperationSetup{
+			Checkout: opts,
+		},
+	}
+	if strings.HasPrefix(ref, sdk.GitRefTagPrefix) {
+		ope.Setup.Checkout.Tag = strings.TrimPrefix(ref, sdk.GitRefTagPrefix)
+	} else {
+		ope.Setup.Checkout.Branch = strings.TrimPrefix(ref, sdk.GitRefBranchPrefix)
+	}
+	if vcsWithSecret.Auth.SSHKeyName != "" {
+		ope.RepositoryStrategy.ConnectionType = "ssh"
+	} else {
+		ope.RepositoryStrategy.ConnectionType = "https"
+	}
+
+	if err := PostRepositoryOperation(ctx, db, proj, ope, nil); err != nil {
+		return nil, err
+	}
+	return ope, nil
 }

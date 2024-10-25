@@ -47,7 +47,7 @@ name: bitbucket-cloud
 type: bitbucketcloud
 description: "My Bitbucket Cloud"
 auth:
-    username: my-user-on-bitbucket-cloud
+    user: my-user-on-bitbucket-cloud
     token: the-long-token-here
 options:
     disableStatus: false    # Set to true if you don't want CDS to push statuses on the VCS server - optional
@@ -57,7 +57,7 @@ options:
 ```
 
 ```sh
-cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-bitbucketcloud.yml
+cdsctl project vcs import YOUR_CDS_PROJECT_KEY vcs-bitbucketcloud.yml
 ```
 
 ## Vcs events

@@ -19,7 +19,7 @@ func projectRepository() *cobra.Command {
 		cli.NewListCommand(projectRepositoryListCmd, projectRepositoryListFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(projectRepositoryDeleteCmd, projectRepositoryDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectRepositoryAddCmd, projectRepositoryAddFunc, nil, withAllCommandModifiers()...),
-		cli.NewGetCommand(projectRepositoryHookSecretRegenCmd, projectRepositoryHookSecretRegenFunc, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(projectRepositoryHookSecretCmd, projectRepositoryHookSecretFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -33,21 +33,11 @@ var projectRepositoryAddCmd = cli.Command{
 		{Name: "vcs-name"},
 		{Name: "repository-name"},
 	},
-	Flags: []cli.Flag{
-		{Name: "ssh-key", Usage: "Project SSH key you want to use to clone the repository"},
-		{Name: "user", Usage: "User you want to use to clone the repository"},
-		{Name: "password", Usage: "User password"},
-	},
 }
 
 func projectRepositoryAddFunc(v cli.Values) error {
 	repo := sdk.ProjectRepository{
 		Name: v.GetString("repository-name"),
-		Auth: sdk.ProjectRepositoryAuth{
-			SSHKeyName: v.GetString("ssh-key"),
-			Username:   v.GetString("user"),
-			Token:      v.GetString("password"),
-		},
 	}
 	return client.ProjectVCSRepositoryAdd(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), repo)
 }
@@ -120,18 +110,20 @@ func projectRepositoryDeleteFunc(v cli.Values) error {
 	return client.ProjectRepositoryDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
 }
 
-var projectRepositoryHookSecretRegenCmd = cli.Command{
-	Name:  "hook-regen",
-	Short: "Regenerate hook secret for webhook signature",
+var projectRepositoryHookSecretCmd = cli.Command{
+	Name:    "hook-key",
+	Short:   "Get repository webhook secret key",
+	Aliases: []string{"hk"},
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
+		{Name: "vcs-type"},
 		{Name: "vcs-name"},
 		{Name: "repository-name"},
 	},
 }
 
-func projectRepositoryHookSecretRegenFunc(v cli.Values) (interface{}, error) {
-	return client.ProjectRepositoryHookRegenSecret(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
+func projectRepositoryHookSecretFunc(v cli.Values) (interface{}, error) {
+	return client.ProjectRepositoryHookSecret(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-type"), v.GetString("vcs-name"), v.GetString("repository-name"))
 }

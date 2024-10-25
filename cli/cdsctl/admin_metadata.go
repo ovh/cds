@@ -134,10 +134,10 @@ type lineMetadata struct {
 
 func adminMetadataProjectExportRun(c cli.Values) error {
 	var currentDisplay = new(cli.Display)
-	currentDisplay.Printf("Gettings projects list...")
+	currentDisplay.Printf("Getting projects list...")
 	currentDisplay.Do(context.Background())
 
-	projects, err := client.ProjectList(false, false)
+	projects, err := client.ProjectList(false, false, false)
 	if err != nil {
 		return err
 	}
@@ -179,10 +179,10 @@ func adminMetadataProjectImportRun(c cli.Values) error {
 
 func adminMetadataApplicationExportRun(c cli.Values) error {
 	var currentDisplay = new(cli.Display)
-	currentDisplay.Printf("Gettings projects list...")
+	currentDisplay.Printf("Getting projects list...")
 	currentDisplay.Do(context.Background())
 
-	projects, err := client.ProjectList(false, false)
+	projects, err := client.ProjectList(false, false, false)
 	if err != nil {
 		return err
 	}
@@ -260,13 +260,13 @@ func adminMetadataApplicationImportRun(c cli.Values) error {
 }
 
 func adminMetadataWorkflowExportRun(c cli.Values) error {
-	projects, err := client.ProjectList(false, false)
+	projects, err := client.ProjectList(false, false, false)
 	if err != nil {
 		return err
 	}
 
 	var currentDisplay = new(cli.Display)
-	currentDisplay.Printf("Gettings projects list...")
+	currentDisplay.Printf("Getting projects list...")
 	currentDisplay.Do(context.Background())
 
 	modsWfs := []cdsclient.RequestModifier{}

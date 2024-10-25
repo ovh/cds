@@ -21,7 +21,7 @@ type Identifiable interface {
 	GetFullname() string
 }
 
-var _ Identifiable = new(AuthConsumer)
+var _ Identifiable = new(AuthUserConsumer)
 var _ Identifiable = new(AuthentifiedUser)
 
 type UserRegistration struct {

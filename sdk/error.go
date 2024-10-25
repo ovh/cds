@@ -183,7 +183,7 @@ var (
 	ErrRepositoryUsedByHook                          = Error{ID: 177, Status: http.StatusForbidden}
 	ErrResourceNotInProject                          = Error{ID: 178, Status: http.StatusForbidden}
 	ErrEnvironmentNotFound                           = Error{ID: 179, Status: http.StatusBadRequest}
-	ErrIntegrationtNotFound                          = Error{ID: 180, Status: http.StatusBadRequest}
+	ErrIntegrationNotFound                           = Error{ID: 180, Status: http.StatusBadRequest}
 	ErrBadBrokerConfiguration                        = Error{ID: 181, Status: http.StatusBadRequest}
 	ErrSignupDisabled                                = Error{ID: 182, Status: http.StatusForbidden}
 	ErrUsernamePresent                               = Error{ID: 183, Status: http.StatusBadRequest}
@@ -232,19 +232,19 @@ var errorsAmericanEnglish = map[int]string{
 	ErrModelNameExist.ID:                                "worker model name already used",
 	ErrNoProject.ID:                                     "project does not exist",
 	ErrVariableExists.ID:                                "variable already exists",
-	ErrInvalidGroupPattern.ID:                           "group name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrInvalidGroupPattern.ID:                           "group name must respect '^[a-zA-Z0-9._-]{1,}$'",
 	ErrGroupExists.ID:                                   "group already exists",
 	ErrNotEnoughAdmin.ID:                                "not enough group admin left",
 	ErrInvalidProjectName.ID:                            "project name must not be empty",
-	ErrInvalidApplicationPattern.ID:                     "application name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
-	ErrInvalidWorkerModelNamePattern.ID:                 "worker model name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
-	ErrInvalidPipelinePattern.ID:                        "pipeline name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrInvalidApplicationPattern.ID:                     "application name must respect '^[a-zA-Z0-9._-]{1,}$'",
+	ErrInvalidWorkerModelNamePattern.ID:                 "worker model name must respect '^[a-zA-Z0-9._-]{1,}$'",
+	ErrInvalidPipelinePattern.ID:                        "pipeline name must respect '^[a-zA-Z0-9._-]{1,}$'",
 	ErrNotFound.ID:                                      "resource not found",
 	ErrNoHook.ID:                                        "hook not found",
 	ErrNoAttachedPipeline.ID:                            "pipeline not attached to the application",
 	ErrNoReposManager.ID:                                "repositories manager not found",
 	ErrNoReposManagerAuth.ID:                            "CDS authentication error, please contact CDS administrator",
-	ErrNoReposManagerClientAuth.ID:                      "Repository manager authentication error, please unlink and relink your CDS Project to the repository manager",
+	ErrNoReposManagerClientAuth.ID:                      "Repository manager error: please check your git repository permissions.",
 	ErrRepoNotFound.ID:                                  "repository not found",
 	ErrSecretStoreUnreachable.ID:                        "could not reach secret backend to fetch secret key",
 	ErrSecretKeyFetchFailed.ID:                          "error while fetching key from secret backend",
@@ -297,11 +297,11 @@ var errorsAmericanEnglish = map[int]string{
 	ErrNotImplemented.ID:                                "This functionality isn't implemented",
 	ErrParameterNotExists.ID:                            "This parameter doesn't exist",
 	ErrUnknownKeyType.ID:                                "Unknown key type",
-	ErrInvalidKeyPattern.ID:                             "key name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrInvalidKeyPattern.ID:                             "key name must respect the following pattern: '^[a-zA-Z0-9._-]{1,}$'",
 	ErrWebhookConfigDoesNotMatch.ID:                     "Webhook config does not match",
 	ErrPipelineUsedByWorkflow.ID:                        "Pipeline still used by a workflow",
 	ErrMethodNotAllowed.ID:                              "Method not allowed",
-	ErrInvalidNodeNamePattern.ID:                        "Node name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrInvalidNodeNamePattern.ID:                        "Node name must respect the following pattern: '^[a-zA-Z0-9._-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:                      "Cannot run a node if their parents have never been launched",
 	ErrDefaultGroupPermission.ID:                        "Only read permission is allowed to default group",
 	ErrLastGroupWithWriteRole.ID:                        "The last group must have the write permission",
@@ -368,7 +368,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrRepositoryUsedByHook.ID:                          "There is still a repository webhook on this repository",
 	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
 	ErrEnvironmentNotFound.ID:                           "Environment not found ",
-	ErrIntegrationtNotFound.ID:                          "Integration not found",
+	ErrIntegrationNotFound.ID:                           "Integration not found",
 	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
@@ -556,7 +556,11 @@ func NewErrorFrom(err error, from string, args ...interface{}) error {
 
 	switch e := err.(type) {
 	case errorWithStack:
-		e.httpError.From = fmt.Errorf(from, args...).Error()
+		from := fmt.Errorf(from, args...).Error()
+		if e.httpError.From != "" {
+			from += ", " + e.httpError.From
+		}
+		e.httpError.From = from
 		return e
 	case Error:
 		return NewError(e, fmt.Errorf(from, args...))

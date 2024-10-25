@@ -19,7 +19,7 @@ var (
 	ErrNoNewEvents = fmt.Errorf("No new events")
 )
 
-//GetEvents calls Github et returns GithubEvents as []interface{}
+// GetEvents calls Github et returns GithubEvents as []interface{}
 func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
 	log.Debug(ctx, "githubClient.GetEvents> loading events for %s after %v", fullname, dateRef)
 	var events = []interface{}{}
@@ -101,7 +101,7 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 	return events, interval, nil
 }
 
-//PushEvents returns push events as commits
+// PushEvents returns push events as commits
 func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSPushEvent, error) {
 	events := Events{}
 	//Cast all the events
@@ -118,7 +118,7 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 
 	lastCommitPerBranch := map[string]sdk.VCSCommit{}
 	for _, e := range events {
-		branch := strings.Replace(e.Payload.Ref, "refs/heads/", "", 1)
+		branch := strings.Replace(e.Payload.Ref, sdk.GitRefBranchPrefix, "", 1)
 		for _, c := range e.Payload.Commits {
 			commit := sdk.VCSCommit{
 				Hash:      c.Sha,
@@ -160,7 +160,7 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 	return res, nil
 }
 
-//CreateEvents checks create events from a event list
+// CreateEvents checks create events from a event list
 func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSCreateEvent, error) {
 	events := Events{}
 	//Cast all the events
@@ -206,7 +206,7 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 	return res, nil
 }
 
-//DeleteEvents checks delete events from a event list
+// DeleteEvents checks delete events from a event list
 func (g *githubClient) DeleteEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSDeleteEvent, error) {
 	events := Events{}
 	//Cast all the events
@@ -234,7 +234,7 @@ func (g *githubClient) DeleteEvents(ctx context.Context, fullname string, iEvent
 	return res, nil
 }
 
-//PullRequestEvents checks pull request events from a event list
+// PullRequestEvents checks pull request events from a event list
 func (g *githubClient) PullRequestEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
 	events := Events{}
 	//Cast all the events
@@ -267,6 +267,7 @@ func (g *githubClient) PullRequestEvents(ctx context.Context, fullname string, i
 						Name:        e.Payload.PullRequest.Head.User.Name,
 						DisplayName: e.Payload.PullRequest.Head.User.Login,
 						Email:       e.Payload.PullRequest.Head.User.Email,
+						ID:          strconv.Itoa(e.Payload.PullRequest.Head.User.ID),
 					},
 					Hash:    e.Payload.PullRequest.Head.Sha,
 					Message: e.Payload.PullRequest.Head.Label,
@@ -285,6 +286,7 @@ func (g *githubClient) PullRequestEvents(ctx context.Context, fullname string, i
 						Name:        e.Payload.PullRequest.Base.User.Name,
 						DisplayName: e.Payload.PullRequest.Base.User.Login,
 						Email:       e.Payload.PullRequest.Base.User.Email,
+						ID:          strconv.Itoa(e.Payload.PullRequest.Base.User.ID),
 					},
 					Hash:    e.Payload.PullRequest.Base.Sha,
 					Message: e.Payload.PullRequest.Base.Label,

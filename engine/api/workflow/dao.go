@@ -257,6 +257,10 @@ func Load(ctx context.Context, db gorp.SqlExecutor, _ cache.Store, proj sdk.Proj
 	ctx, end := telemetry.Span(ctx, "workflow.Load")
 	defer end()
 
+	if name == "" {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid given workflow name")
+	}
+
 	dao := opts.GetWorkflowDAO()
 	dao.Filters.ProjectKey = proj.Key
 	dao.Filters.WorkflowName = name
@@ -1129,7 +1133,7 @@ func checkProjectIntegration(proj sdk.Project, w *sdk.Workflow, n *sdk.Node) err
 			}
 		}
 		if ppProj.ID == 0 {
-			return sdk.WithData(sdk.ErrIntegrationtNotFound, n.Context.ProjectIntegrationName)
+			return sdk.NewErrorFrom(sdk.ErrIntegrationNotFound, "unknown integration "+n.Context.ProjectIntegrationName)
 		}
 		w.ProjectIntegrations[ppProj.ID] = ppProj
 		n.Context.ProjectIntegrationID = ppProj.ID
@@ -1155,7 +1159,7 @@ func checkIntegration(proj sdk.Project, w *sdk.Workflow) error {
 			}
 		}
 		if !found {
-			return sdk.WithData(sdk.ErrIntegrationtNotFound, workflowIntegration.ProjectIntegration.Name)
+			return sdk.NewErrorFrom(sdk.ErrIntegrationNotFound, "unknown integration "+workflowIntegration.ProjectIntegration.Name)
 		}
 		if workflowIntegration.ProjectIntegration.Model.ArtifactManager {
 			countArtifactManagerIntegration++
@@ -1265,7 +1269,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, w
 
 // Push push a workflow from cds files
 func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, data exportentities.WorkflowComponents,
-	opts *PushOption, consumer *sdk.AuthConsumer, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
+	opts *PushOption, consumer *sdk.AuthUserConsumer, decryptFunc keys.DecryptFunc, emailFunc keys.EmailFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.Push")
 	defer end()
 	if data.Workflow == nil {
@@ -1292,9 +1296,21 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	// if a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
-	if oldWf != nil && oldWf.FromRepository != "" && (opts == nil || opts.FromRepository != oldWf.FromRepository) {
-		return nil, nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
+	// If a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
+	if oldWf != nil && oldWf.FromRepository != "" {
+		// If no repository info are given but force option is set, allow workflow override
+		if opts == nil || (opts.FromRepository == "" && !opts.Force) {
+			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
+		}
+		// Force option will not allow to change the repository of an existing workflow
+		if opts != nil && opts.FromRepository != "" && opts.FromRepository != oldWf.FromRepository {
+			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
+		}
+	}
+
+	var fromRepo string
+	if opts != nil {
+		fromRepo = opts.FromRepository
 	}
 
 	tx, err := db.Begin()
@@ -1309,11 +1325,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		EnvironmentdSecrets: make(map[int64][]sdk.Variable),
 	}
 	for _, app := range data.Applications {
-		var fromRepo string
-		if opts != nil {
-			fromRepo = opts.FromRepository
-		}
-		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer)
+		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer, emailFunc)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
 			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
@@ -1323,11 +1335,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	for _, env := range data.Environments {
-		var fromRepo string
-		if opts != nil {
-			fromRepo = opts.FromRepository
-		}
-		envDB, envsSecrets, msgList, err := environment.ParseAndImport(ctx, tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer)
+		envDB, envsSecrets, msgList, err := environment.ParseAndImport(ctx, tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer, emailFunc)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
 			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
@@ -1337,10 +1345,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	for _, pip := range data.Pipelines {
-		var fromRepo string
-		if opts != nil {
-			fromRepo = opts.FromRepository
-		}
 		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, consumer, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
@@ -1350,17 +1354,17 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	isDefaultBranch := true
-	if opts != nil {
+	if opts != nil && fromRepo != "" {
 		isDefaultBranch = opts.IsDefaultBranch
 	}
 
 	var importOptions = ImportOptions{
-		Force: true,
+		Force:           true,
+		FromRepository:  fromRepo,
+		IsDefaultBranch: isDefaultBranch,
 	}
 
 	if opts != nil {
-		importOptions.FromRepository = opts.FromRepository
-		importOptions.IsDefaultBranch = opts.IsDefaultBranch
 		importOptions.FromBranch = opts.Branch
 		importOptions.VCSServer = opts.VCSServer
 		importOptions.RepositoryName = opts.RepositoryName
@@ -1375,7 +1379,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	// If the workflow is "as-code", it should always be linked to a git repository
-	if opts != nil && opts.FromRepository != "" {
+	if fromRepo != "" {
 		if wf.WorkflowData.Node.Context.ApplicationID == 0 {
 			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
 		}

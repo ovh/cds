@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 import { Action, Usage } from '../../../../model/action.model';
 import { ActionService } from '../../../../service/action/action.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { Tab } from '../../../../shared/tabs/tabs.component';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-action-show',
@@ -38,12 +38,14 @@ export class ActionShowComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.tabs = [<Tab>{
             title: 'Action',
-            icon: 'list',
+            icon: 'unordered-list',
+            iconTheme: 'outline',
             key: 'action',
             default: true
         }, <Tab>{
             title: 'Usage',
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }];
 

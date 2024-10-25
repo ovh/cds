@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -400,7 +401,7 @@ func (p *IntegrationModel) Blur() {
 	p.PublicConfigurations.Blur()
 }
 
-//IsBuiltin checks is the model is builtin or not
+// IsBuiltin checks is the model is builtin or not
 func (p IntegrationModel) IsBuiltin() bool {
 	for _, m := range BuiltinIntegrationModels {
 		if p.Name == m.Name {
@@ -445,6 +446,34 @@ func (config IntegrationConfig) MergeWith(cfg IntegrationConfig) {
 	}
 }
 
+func (pi *ProjectIntegration) ToJobRunContextConfig() JobIntegratiosContextConfig {
+	result := make(map[string]interface{})
+
+	for key, configValue := range pi.Config {
+		parts := strings.Split(key, ".")
+		current := result
+
+		for i, part := range parts {
+			// Hack for artifactory
+			if pi.Model.Name == ArtifactoryIntegrationModelName && i == (len(parts)-2) && part == "token" {
+				current[part+"_"+parts[len(parts)-1]] = configValue.Value
+			} else if i == len(parts)-1 {
+				current[part] = configValue.Value
+			} else {
+				if _, exists := current[part]; !exists {
+					current[part] = make(map[string]interface{})
+				}
+				current = current[part].(map[string]interface{})
+			}
+		}
+	}
+	ctxConfig := JobIntegratiosContextConfig{}
+	for k, v := range result {
+		ctxConfig[k] = v
+	}
+	return ctxConfig
+}
+
 // HideSecrets replaces password with a placeholder
 func (config *IntegrationConfig) HideSecrets() {
 	for k, v := range *config {
@@ -456,7 +485,6 @@ func (config *IntegrationConfig) HideSecrets() {
 }
 
 type FileInfo struct {
-	Type              string
 	Checksums         *FileInfoChecksum `json:"checksums,omitempty"`
 	Created           time.Time         `json:"created"`
 	CreatedBy         string            `json:"createdBy"`
@@ -471,8 +499,48 @@ type FileInfo struct {
 	Repo              string            `json:"repo"`
 	SizeString        string            `json:"size"`
 	Size              int64
-	URI               string         `json:"uri"`
-	Children          []FileChildren `json:"children,omitempty"`
+	URI               string `json:"uri"`
+}
+
+type ArtifactResultsSearchPage struct {
+	Results []ArtifactResult `json:"results"`
+	Range   struct {
+		StartPos int `json:"start_pos"`
+		EndPos   int `json:"end_pos"`
+		Total    int `json:"total"`
+	} `json:"range"`
+}
+
+type ArtifactResults []ArtifactResult
+
+type ArtifactResult struct {
+	Repo         string         `json:"repo"`
+	Path         string         `json:"path"`
+	Name         string         `json:"name"`
+	Created      time.Time      `json:"created"`
+	Properties   []ItemProperty `json:"properties,omitempty"`
+	Size         int64          `json:"size,omitempty"`
+	Stats        []ItemStat     `json:"stats,omitempty"`
+	VirtualRepos []string       `json:"virtual_repos,omitempty"`
+	ActualMD5    string         `json:"actual_md5"`
+}
+
+func (i *ArtifactResult) String() string {
+	return i.Repo + "/" + i.Path + "/" + i.Name
+}
+
+type ItemProperty struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type ItemStat struct {
+	URI                  string `json:"uri"`
+	DownloadCount        int    `json:"downloadCount"`
+	LastDownloaded       int64  `json:"lastDownloaded"`
+	LastDownloadedBy     string `json:"lastDownloadedBy"`
+	RemoteDownloadCount  int    `json:"remoteDownloadCount"`
+	RemoteLastDownloaded int    `json:"remoteLastDownloaded"`
 }
 
 type FileInfoChecksum struct {

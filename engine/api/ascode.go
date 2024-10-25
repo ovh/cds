@@ -59,7 +59,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, p.Key, ope.VCSServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, ope.VCSServer)
 		if err != nil {
 			return sdk.NewErrorWithStack(err,
 				sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get client for %s %s", key, ope.VCSServer))
@@ -79,7 +79,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
 			ctx = context.WithValue(ctx, cdslog.Operation, ope.UUID)
@@ -176,7 +176,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
@@ -193,7 +193,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		msgPush, wrkflw, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getUserConsumer(ctx), project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return sdk.WrapError(err, "unable to push workflow")
@@ -209,17 +209,6 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		// Grant CDS as a repository collaborator
-		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
-		client, erra := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, ope.VCSServer)
-		if erra != nil {
-			log.Error(ctx, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
-		} else {
-			if err := client.GrantWritePermission(ctx, ope.RepoFullName); err != nil {
-				log.Error(ctx, "postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
-			}
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -229,7 +218,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
-		event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, getAPIConsumer(ctx))
+		event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
@@ -257,7 +246,7 @@ func (api *API) postWorkflowAsCodeEventsResyncHandler() service.Handler {
 			return err
 		}
 
-		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, *wf, getAPIConsumer(ctx).AuthentifiedUser)
+		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, *wf, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 		if err != nil {
 			return err
 		}

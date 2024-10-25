@@ -57,17 +57,17 @@ func Test_cachePushPullHandler(t *testing.T) {
 	pushJobInfo := sdk.WorkflowNodeJobRunData{}
 	pushJobInfo.NodeJobRun.Job.Job.Action.Name = sdk.RandomString(10)
 
-	wdPushFile, wdPushAbs, err := wkPush.setupWorkingDirectory(ctxPush, pushJobInfo)
+	wdPushFile, wdPushAbs, err := wkPush.setupWorkingDirectory(ctxPush, pushJobInfo.NodeJobRun.Job.Job.Action.Name)
 	require.NoError(t, err)
 	ctxPush = workerruntime.SetWorkingDirectory(ctxPush, wdPushFile)
 	t.Logf("Setup push workspace at %s", wdPushFile.Name())
 
-	tdPushFile, _, err := wkPush.setupTmpDirectory(ctxPush, pushJobInfo)
+	tdPushFile, _, err := wkPush.setupTmpDirectory(ctxPush, pushJobInfo.NodeJobRun.Job.Job.Action.Name)
 	require.NoError(t, err)
 	ctxPush = workerruntime.SetTmpDirectory(ctxPush, tdPushFile)
 	t.Logf("Setup push tmp directory at %s", tdPushFile.Name())
 
-	wkPush.currentJob.signer = signer
+	wkPush.signer = signer
 	wkPush.currentJob.context = ctxPush
 	wkPush.currentJob.wJob = &sdk.WorkflowNodeJobRun{
 		Parameters: []sdk.Parameter{{
@@ -84,7 +84,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 	pullJobInfo := sdk.WorkflowNodeJobRunData{}
 	pullJobInfo.NodeJobRun.Job.Job.Action.Name = sdk.RandomString(10)
 
-	wkPull.currentJob.signer = signer
+	wkPull.signer = signer
 	wkPull.currentJob.wJob = &sdk.WorkflowNodeJobRun{
 		Parameters: []sdk.Parameter{{
 			Name:  "cds.project",
@@ -118,6 +118,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 			f, err := fs.Open(path)
 			require.NoError(t, err)
 			bodyBytes, err = io.ReadAll(f)
+			require.NoError(t, err)
 			require.NotEqual(t, 0, len(bodyBytes))
 			return time.Since(t0), nil
 		},

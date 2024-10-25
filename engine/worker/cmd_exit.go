@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -18,7 +15,7 @@ func cmdExit() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "exit",
 		Short: "worker exit",
-    Long:  "worker exit command lets job finish current step with exit code 0 (success) and disabled all further steps",
+		Long:  "worker exit command lets job finish current step with exit code 0 (success) and disabled all further steps",
 		Run:   exitCmd(),
 	}
 	return c
@@ -26,15 +23,7 @@ func cmdExit() *cobra.Command {
 
 func exitCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(internal.WorkerServerPort)
-		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
-		}
-
-		port, errPort := strconv.Atoi(portS)
-		if errPort != nil {
-			sdk.Exit("cannot parse '%s' as a port number", portS)
-		}
+		port := MustGetWorkerHTTPPort()
 
 		req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/exit", port), nil)
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")

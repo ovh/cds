@@ -752,7 +752,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 
 	k.Public = kpgp.Public

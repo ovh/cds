@@ -6,13 +6,11 @@ import { RetentionDryRunEvent } from 'app/model/purge.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { concatMap, first } from 'rxjs/operators';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
-import { TimelineFilter } from './model/timeline.model';
 import { NavbarService } from './service/navbar/navbar.service';
-import { RouterService, TimelineStore } from './service/services.module';
+import { RouterService } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
 import {
@@ -37,6 +35,7 @@ import {
     UpdateWorkflowRunList
 } from './store/workflow.action';
 import { WorkflowState } from './store/workflow.state';
+import { AnalysisEvent, AnalysisService } from "./service/analysis/analysis.service";
 
 @Injectable()
 export class AppService {
@@ -44,24 +43,19 @@ export class AppService {
     // Information about current route
     routeParams: {};
 
-    filter: TimelineFilter;
 
     constructor(
         private _routerService: RouterService,
         private _routeActivated: ActivatedRoute,
         private _router: Router,
         private _translate: TranslateService,
-        private _timelineStore: TimelineStore,
         private _toast: ToastService,
         private _workflowRunService: WorkflowRunService,
         private _store: Store,
         private _navbarService: NavbarService,
+        private _analysisService: AnalysisService
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
-    }
-
-    initFilter(filterTimeline: TimelineFilter) {
-        this.filter = cloneDeep(filterTimeline);
     }
 
     updateRoute(params: {}) {
@@ -99,6 +93,13 @@ export class AppService {
             }
             return;
         }
+        switch (event.type_event) {
+            case EventType.PROJECT_REPOSITORY_ANALYSE:
+                let aEvent = new AnalysisEvent(event?.payload['vcs_id'], event?.payload['repository_id'], event?.payload['analysis_id'], event?.payload['status']);
+                this._analysisService.sendEvent(aEvent);
+                return;
+        }
+
         if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||
             event.type_event === EventType.APPLICATION_ADD || event.type_event === EventType.APPLICATION_UPDATE ||
             event.type_event === EventType.APPLICATION_DELETE ||
@@ -110,10 +111,14 @@ export class AppService {
             event.type_event === EventType.WORKFLOW_DELETE) {
             await this.updateProjectCache(event);
 
-            if (event.type_event === EventType.APPLICATION_UPDATE || event.type_event === EventType.WORKFLOW_UPDATE) {
-                this._navbarService.refreshData();
+            switch (event.type_event) {
+                case EventType.APPLICATION_UPDATE:
+                case EventType.WORKFLOW_UPDATE:
+                    this._navbarService.refreshData();
+                    break;
+                case EventType.PROJECT_REPOSITORY_REMOVE:
+                    break;
             }
-
         }
         if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
             await this.updateApplicationCache(event);
@@ -123,32 +128,6 @@ export class AppService {
             await this.updateWorkflowCache(event);
         } else if (event.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) === 0) {
             await this.updateWorkflowRunCache(event);
-        }
-        this.manageEventForTimeline(event);
-    }
-
-    manageEventForTimeline(event: Event) {
-        if (!event || !event.type_event) {
-            return;
-        }
-        if (event.type_event === EventType.RUN_WORKFLOW_PREFIX) {
-            let mustAdd = true;
-            // Check if we have to mute it
-            if (this.filter && this.filter.projects) {
-                let workflowList = this.filter.projects.find(p => p.key === event.project_key);
-                if (workflowList) {
-                    let w = workflowList.workflow_names.find(wname => wname === event.workflow_name);
-                    if (w) {
-                        mustAdd = false;
-                    }
-                }
-            }
-
-            if (mustAdd) {
-                let e = cloneDeep(event);
-                this._timelineStore.add(e);
-            }
-
         }
     }
 

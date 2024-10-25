@@ -3,9 +3,12 @@
   &.active {
     color: $cds_color_teal;
   }
-  .icon {
+  i {
     font-size: 25px;
     display: unset;
     margin: 0;
+  }
+  i.green {
+    color: $cds_color_green;
   }
 }

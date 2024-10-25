@@ -11,36 +11,31 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// DEPRECATED VCS
-func (client *gerritClient) IsDisableStatusDetails(ctx context.Context) bool {
-	return client.disableStatusDetails
+func (client *gerritClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, vcsReport sdk.VCSInsight) error {
+	// not implemented
+	return nil
 }
 
 // SetStatus set build status on Gerrit
-func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
-	var eventNR sdk.EventRunWorkflowNode
-	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
-		return sdk.WrapError(err, "cannot unmarshal payload")
-	}
-
-	if eventNR.GerritChange == nil {
-		log.Debug(ctx, "gerrit.setStatus> no gerrit change provided: %s/%s", eventNR.Status, eventNR.NodeName)
+func (client *gerritClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
+	if buildStatus.GerritChange == nil {
+		log.Debug(ctx, "gerrit.setStatus> no gerrit change provided - context %s", buildStatus.Context)
 		return nil
 	}
 
 	// Use reviewer account to post the review
-	c.client.Authentication.SetBasicAuth(c.reviewerName, c.reviewerToken)
+	client.client.Authentication.SetBasicAuth(client.reviewerName, client.reviewerToken)
 
 	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#review-input
 	ri := gerrit.ReviewInput{
-		Message: c.buildMessage(eventNR),
+		Message: client.buildMessage(buildStatus),
 		Tag:     "CDS",
-		Labels:  c.buildLabel(eventNR),
+		Labels:  client.buildLabel(buildStatus),
 		Notify:  "OWNER", // Send notification to the owner
 	}
 
 	// Check if we already send the message
-	changeDetail, _, err := c.client.Changes.GetChangeDetail(eventNR.GerritChange.ID, nil)
+	changeDetail, _, err := client.client.Changes.GetChangeDetail(buildStatus.GerritChange.ID, nil)
 	if err != nil {
 		return sdk.WrapError(err, "error while getting change detail")
 	}
@@ -56,7 +51,7 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event, disableSt
 	}
 
 	if !found {
-		if _, _, err := c.client.Changes.SetReview(eventNR.GerritChange.ID, eventNR.GerritChange.Revision, &ri); err != nil {
+		if _, _, err := client.client.Changes.SetReview(buildStatus.GerritChange.ID, buildStatus.GerritChange.Revision, &ri); err != nil {
 			return sdk.WrapError(err, "unable to set gerrit review")
 		}
 	}
@@ -64,28 +59,28 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event, disableSt
 	return nil
 }
 
-func (c *gerritClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+func (client *gerritClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	return nil, nil
 }
 
-func (c *gerritClient) buildMessage(eventNR sdk.EventRunWorkflowNode) string {
+func (client *gerritClient) buildMessage(buildStatus sdk.VCSBuildStatus) string {
 	var message string
-	switch eventNR.Status {
+	switch buildStatus.Status {
 	case sdk.StatusSuccess:
-		message += fmt.Sprintf("Build Success on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
+		message += fmt.Sprintf("Build Success on %s\n%s", buildStatus.Context, buildStatus.GerritChange.URL)
 	case sdk.StatusSkipped:
-		message += fmt.Sprintf("Build Skipped on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
+		message += fmt.Sprintf("Build Skipped on %s\n%s", buildStatus.Context, buildStatus.GerritChange.URL)
 	case sdk.StatusFail, sdk.StatusStopped:
-		message += fmt.Sprintf("Build Failed on %s\n%s \n%s", eventNR.NodeName, eventNR.GerritChange.URL, eventNR.GerritChange.Report)
+		message += fmt.Sprintf("Build Failed on %s\n%s \n%s", buildStatus.Context, buildStatus.GerritChange.URL, buildStatus.GerritChange.Report)
 	case sdk.StatusBuilding:
-		message += fmt.Sprintf("CDS starts working on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
+		message += fmt.Sprintf("CDS starts working on %s\n%s", buildStatus.Context, buildStatus.GerritChange.URL)
 	}
 	return message
 }
 
-func (c *gerritClient) buildLabel(eventNR sdk.EventRunWorkflowNode) map[string]string {
+func (client *gerritClient) buildLabel(buildStatus sdk.VCSBuildStatus) map[string]string {
 	labels := make(map[string]string)
-	switch eventNR.Status {
+	switch buildStatus.Status {
 	case sdk.StatusSuccess:
 		labels["Verified"] = "1"
 	case sdk.StatusFail, sdk.StatusStopped:

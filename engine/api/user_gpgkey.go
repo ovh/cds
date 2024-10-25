@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -50,7 +50,7 @@ func (api *API) getUserGPGKeyHandler() ([]service.RbacChecker, service.Handler) 
 
 // postUserGPGGKeyHandler Get the given user gpg key
 func (api *API) postUserGPGGKeyHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.IsCurrentUser),
+	return service.RBAC(api.isCurrentUser),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			username := vars["user"]
@@ -83,13 +83,14 @@ func (api *API) postUserGPGGKeyHandler() ([]service.RbacChecker, service.Handler
 			if err := tx.Commit(); err != nil {
 				return err
 			}
+			event_v2.PublishUserGPGEvent(ctx, api.Cache, sdk.EventUserGPGKeyCreated, gpgKey, *u)
 			return service.WriteJSON(w, gpgKey, http.StatusOK)
 		}
 }
 
 // getUserGPGKeyHandler Get the given user gpg key
 func (api *API) deleteUserGPGKey() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.IsCurrentUser),
+	return service.RBAC(api.isCurrentUser),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			username := vars["user"]
@@ -120,6 +121,7 @@ func (api *API) deleteUserGPGKey() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return err
 			}
+			event_v2.PublishUserGPGEvent(ctx, api.Cache, sdk.EventUserGPGKeyDeleted, *gpgKey, *u)
 			return nil
 		}
 }

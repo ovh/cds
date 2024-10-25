@@ -54,7 +54,7 @@ func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc 
 			req.Parameters = make(map[string]string)
 		}
 		for _, p := range wt.Parameters {
-			if _, ok := req.Parameters[p.Key]; ok || !p.Required {
+			if v, ok := req.Parameters[p.Key]; (ok && v != "") || !p.Required {
 				continue
 			}
 			if p.Type == sdk.ParameterTypeSSHKey && defaultSSHKeyFound {
@@ -100,7 +100,7 @@ func requestModifyDefaultNameAndRepositories(proj sdk.Project, repoURL string) T
 			req.Parameters = make(map[string]string)
 		}
 		for _, p := range wt.Parameters {
-			if _, ok := req.Parameters[p.Key]; ok || !p.Required {
+			if v, ok := req.Parameters[p.Key]; (ok && v != "") || !p.Required {
 				continue
 			}
 			if p.Type == sdk.ParameterTypeRepository {
@@ -114,7 +114,7 @@ func requestModifyDefaultNameAndRepositories(proj sdk.Project, repoURL string) T
 
 // CheckAndExecuteTemplate will execute the workflow template if given workflow components contains a template instance.
 // When detached is set this will not create/update any template instance in database (this is useful for workflow ascode branches).
-func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, consumer sdk.AuthConsumer, p sdk.Project,
+func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, consumer sdk.AuthUserConsumer, p sdk.Project,
 	data *exportentities.WorkflowComponents, mods ...TemplateRequestModifierFunc) ([]sdk.Message, *sdk.WorkflowTemplateInstance, error) {
 	var allMsgs []sdk.Message
 
@@ -142,7 +142,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.St
 	// Check if the template can be used by the current consumer
 	var groupPermissionValid bool
 	// Maintainer and the Hooks micro-service are allowed
-	if consumer.Maintainer() || (consumer.Service != nil && consumer.Service.Type == sdk.TypeHooks) {
+	if consumer.Maintainer() || (consumer.AuthConsumerUser.Service != nil && consumer.AuthConsumerUser.Service.Type == sdk.TypeHooks) {
 		groupPermissionValid = true
 	} else if grp.ID == group.SharedInfraGroup.ID {
 		groupPermissionValid = true

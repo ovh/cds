@@ -9,7 +9,7 @@ import {
     Output
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { IdName, Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -41,7 +41,6 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
     project: Project;
     editMode: boolean;
 
-    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     node: WNode;
     nodeSub: Subscription;
 
@@ -60,7 +59,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
-        this.nodeSub = this.node$.subscribe(n => {
+        this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
            this.node = cloneDeep(n);
             if (this.node?.context?.application_id !== 0 && this.applications) {
                 this.change();
@@ -177,8 +176,11 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
             n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
         }
         n.context.application_id = this.node.context.application_id;
+        n.context.application_name = '';
         n.context.environment_id = this.node.context.environment_id;
+        n.context.environment_name = '';
         n.context.project_integration_id = this.node.context.project_integration_id;
+        n.context.project_integration_name = '';
         n.context.mutex = this.node.context.mutex;
 
         let previousName = n.name;

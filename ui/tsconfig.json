@@ -5,25 +5,30 @@
     "outDir": "./dist/out-tsc",
     "baseUrl": "src",
     "paths": {
-      "@cds/*": [".src/app/*"]
+      "@cds/*": [
+        ".src/app/*"
+      ],
+      "workflow-graph": [
+        "dist/workflow-graph"
+      ]
     },
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es5",
+    "target": "ES2022",
     "typeRoots": [
       "node_modules/@types"
     ],
     "lib": [
       "es2016",
       "dom"
-    ]
+    ],
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
-    "strictInjectionParameters": true,
-    "enableIvy": true
+    "strictInjectionParameters": true
   }
 }

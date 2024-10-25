@@ -1,8 +1,10 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -92,24 +94,26 @@ func (api *API) getWorkflowNodeRunJobStepLinksHandler() service.Handler {
 			refs = append(refs, ref)
 		}
 
-		datas := make([]sdk.CDNLogLinkData, 0, len(refs))
+		slices.SortFunc(refs, func(i, j sdk.CDNLogAPIRef) int {
+			return cmp.Compare(i.StepOrder, j.StepOrder)
+		})
 
+		datas := make([]sdk.CDNLogLink, 0, len(refs))
 		for _, r := range refs {
 			apiRefHashU, err := hashstructure.Hash(r, nil)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
 			apiRefHash := strconv.FormatUint(apiRefHashU, 10)
-			datas = append(datas, sdk.CDNLogLinkData{
-				APIRef:    apiRefHash,
-				StepOrder: r.StepOrder,
+			datas = append(datas, sdk.CDNLogLink{
+				APIRef:   apiRefHash,
+				ItemType: sdk.CDNTypeItemStepLog,
 			})
 		}
 
 		return service.WriteJSON(w, sdk.CDNLogLinks{
-			CDNURL:   httpURL,
-			ItemType: sdk.CDNTypeItemStepLog,
-			Data:     datas,
+			CDNURL: httpURL,
+			Data:   datas,
 		}, http.StatusOK)
 	}
 }
@@ -132,11 +136,6 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 	runJobID, err := requestVarInt(r, "runJobID")
 	if err != nil {
 		return sdk.NewErrorFrom(err, "invalid node job id")
-	}
-
-	httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
-	if err != nil {
-		return err
 	}
 
 	nodeRun, err := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
@@ -221,7 +220,6 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
 
 	return service.WriteJSON(w, sdk.CDNLogLink{
-		CDNURL:   httpURL,
 		ItemType: itemType,
 		APIRef:   apiRefHash,
 	}, http.StatusOK)
@@ -266,8 +264,8 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}

@@ -2,15 +2,14 @@ package bitbucketserver
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/ovh/cds/sdk"
 )
 
 func (b *bitbucketClient) Release(ctx context.Context, repo, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	return nil, sdk.WithStack(sdk.ErrNotImplemented)
 }
 func (b *bitbucketClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.Reader, fileLength int) error {
-	return fmt.Errorf("Not yet implemented")
+	return sdk.WithStack(sdk.ErrNotImplemented)
 }

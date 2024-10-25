@@ -21,8 +21,8 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -43,7 +43,7 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	var cs []sdk.AuthConsumer
+	var cs []sdk.AuthUserConsumer
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &cs))
 	require.Equal(t, 2, len(cs))
 	assert.Equal(t, localConsumer.ID, cs[0].ID)
@@ -69,15 +69,19 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 
 	g := assets.InsertGroup(t, db)
 	u, jwtRaw := assets.InsertLambdaUser(t, db, g)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 	require.NoError(t, err)
 	_, jwtRawAdmin := assets.InsertAdminUser(t, db)
 
-	data := sdk.AuthConsumer{
-		Name:            sdk.RandomString(10),
-		GroupIDs:        []int64{g.ID},
-		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+	data := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     []int64{g.ID},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
 	}
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
@@ -102,10 +106,10 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
 	assert.NotEmpty(t, created.Token)
 	assert.Equal(t, data.Name, created.Consumer.Name)
-	require.Equal(t, 1, len(created.Consumer.GroupIDs))
-	assert.Equal(t, g.ID, created.Consumer.GroupIDs[0])
-	require.Equal(t, 1, len(created.Consumer.ScopeDetails))
-	assert.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.ScopeDetails[0].Scope)
+	require.Equal(t, 1, len(created.Consumer.AuthConsumerUser.GroupIDs))
+	assert.Equal(t, g.ID, created.Consumer.AuthConsumerUser.GroupIDs[0])
+	require.Equal(t, 1, len(created.Consumer.AuthConsumerUser.ScopeDetails))
+	assert.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.AuthConsumerUser.ScopeDetails[0].Scope)
 	assert.Equal(t, localConsumer.ID, *created.Consumer.ParentID)
 }
 
@@ -114,8 +118,8 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 	consumerOptions := builtin.NewConsumerOptions{
 		Name:        sdk.RandomString(10),
@@ -125,7 +129,7 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 	}
 	newConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	cs, err := authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
+	cs, err := authentication.LoadUserConsumersByUserID(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(cs))
 
@@ -139,7 +143,7 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	cs, err = authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
+	cs, err = authentication.LoadUserConsumersByUserID(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(cs))
 }
@@ -148,8 +152,8 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Test that we can't regen a no builtin consumer
@@ -171,7 +175,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 
 	builtinConsumer, signinToken1, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	session, err := authentication.NewSession(context.TODO(), db, builtinConsumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &builtinConsumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err, "cannot create session")
 	jwt2, err := authentication.NewSessionJWT(session, "")
 	require.NoError(t, err, "cannot create jwt")
@@ -209,7 +213,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 
 	t.Logf("%+v", response)
 
-	session, err = authentication.NewSession(context.TODO(), db, builtinConsumer, 5*time.Minute)
+	session, err = authentication.NewSession(context.TODO(), db, &builtinConsumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err)
 	jwt3, err := authentication.NewSessionJWT(session, "")
 	require.NoError(t, err)
@@ -309,8 +313,8 @@ func Test_getSessionsByUserHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -319,9 +323,9 @@ func Test_getSessionsByUserHandler(t *testing.T) {
 	}
 	consumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	s2, err := authentication.NewSession(context.TODO(), db, consumer, time.Second)
+	s2, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, time.Second)
 	require.NoError(t, err)
-	s3, err := authentication.NewSession(context.TODO(), db, consumer, time.Second)
+	s3, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, time.Second)
 	require.NoError(t, err)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getSessionsByUserHandler, map[string]string{
@@ -345,8 +349,8 @@ func Test_deleteSessionByUserHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -355,7 +359,7 @@ func Test_deleteSessionByUserHandler(t *testing.T) {
 	}
 	consumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	s2, err := authentication.NewSession(context.TODO(), db, consumer, time.Second)
+	s2, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, time.Second)
 	require.NoError(t, err)
 
 	ss, err := authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{localConsumer.ID, consumer.ID})

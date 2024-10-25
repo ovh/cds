@@ -28,6 +28,10 @@ func (actPlugin *archiveActionPlugin) Manifest(ctx context.Context, _ *empty.Emp
 	}, nil
 }
 
+func (p *archiveActionPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	return sdk.ErrNotImplemented
+}
+
 func (actPlugin *archiveActionPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	source := q.GetOptions()["source"]
 	destination := q.GetOptions()["destination"]

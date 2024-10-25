@@ -25,9 +25,9 @@ func DisableDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 		}
 
 		log.Debug(ctx, "Disable worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
-		if errD := SetStatus(ctx, tx, workers[i].ID, sdk.StatusDisabled); errD != nil {
+		if err := SetStatus(ctx, tx, workers[i].ID, sdk.StatusDisabled); err != nil {
 			_ = tx.Rollback()
-			log.Warn(ctx, "Cannot disable worker %v: %v", workers[i].ID, errD)
+			log.Warn(ctx, "Cannot disable worker %v: %v", workers[i].ID, err)
 			continue
 		}
 

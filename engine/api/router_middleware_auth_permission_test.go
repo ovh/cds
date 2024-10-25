@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/organization"
+	"github.com/ovh/cds/engine/service"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,46 +35,46 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 
-	consumer := &sdk.AuthConsumer{}
+	consumer := &sdk.AuthUserConsumer{AuthConsumerUser: sdk.AuthUserConsumerData{}}
 
 	// test case: has enough permission
-	consumer.AuthentifiedUser = user
-	ctx = context.WithValue(ctx, contextConsumer, consumer)
-	err := api.checkWorkflowPermissions(ctx, &responseTracker{}, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
+	consumer.AuthConsumerUser.AuthentifiedUser = user
+	ctx = context.WithValue(ctx, contextUserConsumer, consumer)
+	err := api.checkWorkflowPermissions(ctx, &service.ResponseTracker{}, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
 	assert.NoError(t, err, "should be granted because has permission (max permission = 7)")
 
 	// test case: is Admin
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	consumer.AuthentifiedUser = admin
-	ctx = context.WithValue(ctx, contextConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, &responseTracker{}, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser = admin
+	ctx = context.WithValue(ctx, contextUserConsumer, consumer)
+	err = api.checkWorkflowPermissions(ctx, &service.ResponseTracker{}, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
 	assert.NoError(t, err, "should be granted because because is admin")
 
 	// test case: is Maintainer
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	consumer.AuthentifiedUser = maintainer
-	ctx = context.WithValue(ctx, contextConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, &responseTracker{}, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser = maintainer
+	ctx = context.WithValue(ctx, contextUserConsumer, consumer)
+	err = api.checkWorkflowPermissions(ctx, &service.ResponseTracker{}, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
 	assert.NoError(t, err, "should be granted because because is maintainer")
 
 	// test case: forbidden
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	consumer.AuthentifiedUser.Ring = ""
-	consumer.AuthentifiedUser = user
-	ctx = context.WithValue(ctx, contextConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, &responseTracker{}, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Ring = ""
+	consumer.AuthConsumerUser.AuthentifiedUser = user
+	ctx = context.WithValue(ctx, contextUserConsumer, consumer)
+	err = api.checkWorkflowPermissions(ctx, &service.ResponseTracker{}, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
@@ -79,18 +82,18 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	// test case: worker for same project
 	w2ctx := testRunWorkflowForProject(t, api, api.Router, wctx.project, wctx.userToken)
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser = admin
-	consumer.Worker = &sdk.Worker{
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser = admin
+	consumer.AuthConsumerUser.Worker = &sdk.Worker{
 		JobRunID: &wctx.job.ID,
 	}
-	ctx = context.WithValue(ctx, contextConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, &responseTracker{}, w2ctx.workflow.Name, sdk.PermissionRead, map[string]string{
+	ctx = context.WithValue(ctx, contextUserConsumer, consumer)
+	err = api.checkWorkflowPermissions(ctx, &service.ResponseTracker{}, w2ctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              w2ctx.project.Key,
 		"permWorkflowName": w2ctx.workflow.Name,
 	})
 	require.Error(t, err, "should not be granted")
-	err = api.checkWorkflowAdvancedPermissions(ctx, &responseTracker{}, w2ctx.workflow.Name, sdk.PermissionRead, map[string]string{
+	err = api.checkWorkflowAdvancedPermissions(ctx, &service.ResponseTracker{}, w2ctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              w2ctx.project.Key,
 		"permWorkflowName": w2ctx.workflow.Name,
 	})
@@ -98,13 +101,13 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	// test case: worker for different project
 	w3ctx := testRunWorkflow(t, api, api.Router)
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser = admin
-	consumer.Worker = &sdk.Worker{
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser = admin
+	consumer.AuthConsumerUser.Worker = &sdk.Worker{
 		JobRunID: &wctx.job.ID,
 	}
-	ctx = context.WithValue(ctx, contextConsumer, consumer)
-	err = api.checkWorkflowAdvancedPermissions(ctx, &responseTracker{}, w3ctx.workflow.Name, sdk.PermissionRead, map[string]string{
+	ctx = context.WithValue(ctx, contextUserConsumer, consumer)
+	err = api.checkWorkflowAdvancedPermissions(ctx, &service.ResponseTracker{}, w3ctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              w3ctx.project.Key,
 		"permWorkflowName": w3ctx.workflow.Name,
 	})
@@ -130,37 +133,37 @@ func Test_checkProjectPermissions(t *testing.T) {
 	require.NoError(t, err)
 	authUser.Groups = groups
 
-	var consumer sdk.AuthConsumer
-	consumer.AuthentifiedUser = authUser
+	consumer := sdk.AuthUserConsumer{AuthConsumerUser: sdk.AuthUserConsumerData{}}
+	consumer.AuthConsumerUser.AuthentifiedUser = authUser
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 
 	// test case: has enough permission
-	ctx = context.WithValue(ctx, contextConsumer, &consumer)
-	err = api.checkProjectPermissions(ctx, &responseTracker{}, p.Key, sdk.PermissionReadWriteExecute, nil)
+	ctx = context.WithValue(ctx, contextUserConsumer, &consumer)
+	err = api.checkProjectPermissions(ctx, &service.ResponseTracker{}, p.Key, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted because has permission (max permission = 7)")
 
 	// test case: is Admin
-	consumer.AuthentifiedUser.Ring = sdk.UserRingAdmin
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	ctx = context.WithValue(ctx, contextConsumer, &consumer)
-	err = api.checkProjectPermissions(ctx, &responseTracker{}, p.Key, sdk.PermissionReadWriteExecute, nil)
+	consumer.AuthConsumerUser.AuthentifiedUser.Ring = sdk.UserRingAdmin
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	ctx = context.WithValue(ctx, contextUserConsumer, &consumer)
+	err = api.checkProjectPermissions(ctx, &service.ResponseTracker{}, p.Key, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted because because is admin")
 
 	// test case: is Maintainer
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	ctx = context.WithValue(ctx, contextConsumer, &consumer)
-	err = api.checkProjectPermissions(ctx, &responseTracker{}, p.Key, sdk.PermissionRead, nil)
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	ctx = context.WithValue(ctx, contextUserConsumer, &consumer)
+	err = api.checkProjectPermissions(ctx, &service.ResponseTracker{}, p.Key, sdk.PermissionRead, nil)
 	assert.NoError(t, err, "should be granted because because is maintainer")
 
 	// test case: forbidden
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	consumer.AuthentifiedUser.Ring = ""
-	ctx = context.WithValue(ctx, contextConsumer, &consumer)
-	err = api.checkProjectPermissions(ctx, &responseTracker{}, p.Key, sdk.PermissionRead, nil)
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Ring = ""
+	ctx = context.WithValue(ctx, contextUserConsumer, &consumer)
+	err = api.checkProjectPermissions(ctx, &service.ResponseTracker{}, p.Key, sdk.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
 }
 
@@ -231,13 +234,17 @@ func Test_checkUserPermissions(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
-			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
-				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
-				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+			ctx := context.WithValue(context.TODO(), contextUserConsumer, &sdk.AuthUserConsumer{
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+					AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				},
+				AuthConsumer: sdk.AuthConsumer{
+					ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+				},
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
-			err := api.checkUserPermissions(ctx, &responseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
+			err := api.checkUserPermissions(ctx, &service.ResponseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
 			if c.Granted {
 				assert.NoError(t, err, "should be granted")
 			} else {
@@ -314,13 +321,17 @@ func Test_checkUserPublicPermissions(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
-			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
-				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
-				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+			ctx := context.WithValue(context.TODO(), contextUserConsumer, &sdk.AuthUserConsumer{
+				AuthConsumer: sdk.AuthConsumer{
+					ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+				},
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+					AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				},
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
-			err := api.checkUserPublicPermissions(ctx, &responseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
+			err := api.checkUserPublicPermissions(ctx, &service.ResponseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
 			if c.Granted {
 				assert.NoError(t, err, "should be granted")
 			} else {
@@ -334,17 +345,17 @@ func Test_checkConsumerPermissions(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	authUser, _ := assets.InsertLambdaUser(t, db)
-	authUserConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
+	authUserConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
 	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
-	authUserMaintainerConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserMaintainer.ID)
+	authUserMaintainerConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserMaintainer.ID)
 	require.NoError(t, err)
 	authUserAdmin, _ := assets.InsertAdminUser(t, db)
 
 	cases := []struct {
 		Name                     string
 		ConsumerAuthentifiedUser *sdk.AuthentifiedUser
-		TargetConsumer           *sdk.AuthConsumer
+		TargetConsumer           *sdk.AuthUserConsumer
 		Permission               int
 		Granted                  bool
 	}{
@@ -401,13 +412,17 @@ func Test_checkConsumerPermissions(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
-			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
-				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
-				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+			ctx := context.WithValue(context.TODO(), contextUserConsumer, &sdk.AuthUserConsumer{
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+					AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				},
+				AuthConsumer: sdk.AuthConsumer{
+					ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+				},
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
-			err := api.checkConsumerPermissions(ctx, &responseTracker{}, c.TargetConsumer.ID, c.Permission, nil)
+			err := api.checkConsumerPermissions(ctx, &service.ResponseTracker{}, c.TargetConsumer.ID, c.Permission, nil)
 			if c.Granted {
 				assert.NoError(t, err, "should be granted")
 			} else {
@@ -421,14 +436,14 @@ func Test_checkSessionPermissions(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	authUser, _ := assets.InsertLambdaUser(t, db)
-	authUserConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
+	authUserConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
-	authUserSession, err := authentication.NewSession(context.TODO(), db, authUserConsumer, 10*time.Second)
+	authUserSession, err := authentication.NewSession(context.TODO(), db, &authUserConsumer.AuthConsumer, 10*time.Second)
 	require.NoError(t, err)
 	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
-	authUserMaintainerConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserMaintainer.ID)
+	authUserMaintainerConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserMaintainer.ID)
 	require.NoError(t, err)
-	authUserMaintainerSession, err := authentication.NewSession(context.TODO(), db, authUserMaintainerConsumer, 10*time.Second)
+	authUserMaintainerSession, err := authentication.NewSession(context.TODO(), db, &authUserMaintainerConsumer.AuthConsumer, 10*time.Second)
 	require.NoError(t, err)
 	authUserAdmin, _ := assets.InsertAdminUser(t, db)
 
@@ -492,13 +507,17 @@ func Test_checkSessionPermissions(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
-			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
-				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
-				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+			ctx := context.WithValue(context.TODO(), contextUserConsumer, &sdk.AuthUserConsumer{
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+					AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				},
+				AuthConsumer: sdk.AuthConsumer{
+					ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+				},
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
-			err := api.checkSessionPermissions(ctx, &responseTracker{}, c.TargetSession.ID, c.Permission, nil)
+			err := api.checkSessionPermissions(ctx, &service.ResponseTracker{}, c.TargetSession.ID, c.Permission, nil)
 			if c.Granted {
 				assert.NoError(t, err, "should be granted")
 			} else {
@@ -529,13 +548,13 @@ func Test_checkWorkerModelPermissions(t *testing.T) {
 		require.NoError(t, workermodel.DeleteByID(db, m.ID))
 	}()
 
-	assert.Error(t, api.checkWorkerModelPermissions(context.TODO(), &responseTracker{}, m.Name, sdk.PermissionRead, map[string]string{
+	assert.Error(t, api.checkWorkerModelPermissions(context.TODO(), &service.ResponseTracker{}, m.Name, sdk.PermissionRead, map[string]string{
 		"permGroupName": sdk.RandomString(10),
 	}), "error should be returned for random worker model name")
-	assert.Error(t, api.checkWorkerModelPermissions(context.TODO(), &responseTracker{}, sdk.RandomString(10), sdk.PermissionRead, map[string]string{
+	assert.Error(t, api.checkWorkerModelPermissions(context.TODO(), &service.ResponseTracker{}, sdk.RandomString(10), sdk.PermissionRead, map[string]string{
 		"permGroupName": g.Name,
 	}), "error should be returned for random worker model name")
-	assert.NoError(t, api.checkWorkerModelPermissions(context.TODO(), &responseTracker{}, m.Name, sdk.PermissionRead, map[string]string{
+	assert.NoError(t, api.checkWorkerModelPermissions(context.TODO(), &service.ResponseTracker{}, m.Name, sdk.PermissionRead, map[string]string{
 		"permGroupName": g.Name,
 	}), "no error should be returned for the right group an worker model names")
 }
@@ -717,14 +736,14 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			}))
 		}
 
-		cons, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		cons, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		require.NoError(t, err)
-		ctx := context.WithValue(context.TODO(), contextConsumer, cons)
+		ctx := context.WithValue(context.TODO(), contextUserConsumer, cons)
 		ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 
 		m := map[string]string{}
 		m["key"] = tt.args.pKey
-		err = api.checkWorkflowPermissions(ctx, &responseTracker{}, tt.args.wName, tt.args.permissionLevel, m)
+		err = api.checkWorkflowPermissions(ctx, &service.ResponseTracker{}, tt.args.wName, tt.args.permissionLevel, m)
 		got := err == nil
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%q. Test_checkWorkflowPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
@@ -883,6 +902,8 @@ func Test_checkGroupPermissions(t *testing.T) {
 			},
 		},
 	}
+	organizations, err := organization.LoadOrganizations(context.TODO(), db)
+	require.NoError(t, err)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -899,14 +920,24 @@ func Test_checkGroupPermissions(t *testing.T) {
 			}
 
 			require.NoError(t, user.Insert(context.TODO(), db, &currentUser))
+			uo := user.UserOrganization{
+				AuthentifiedUserID: currentUser.ID,
+				OrganizationID:     organizations[0].ID,
+			}
+			require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
 
-			groupAdmin := &sdk.AuthentifiedUser{
+			userGrpAdmin := &sdk.AuthentifiedUser{
 				Username: prefix + "auto-group-admin",
 			}
-			require.NoError(t, user.Insert(context.TODO(), db, groupAdmin))
+			require.NoError(t, user.Insert(context.TODO(), db, userGrpAdmin))
+			uoAdmin := user.UserOrganization{
+				AuthentifiedUserID: userGrpAdmin.ID,
+				OrganizationID:     organizations[0].ID,
+			}
+			require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uoAdmin))
 
 			var err error
-			groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID)
+			userGrpAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), userGrpAdmin.ID, user.LoadOptions.WithOrganization)
 			require.NoError(t, err)
 
 			tt.args.groupName = prefix + tt.args.groupName
@@ -915,7 +946,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 				Name: tt.args.groupName,
 			}
 
-			require.NoError(t, group.Create(context.TODO(), db, &g, groupAdmin))
+			require.NoError(t, group.Create(context.TODO(), db, &g, userGrpAdmin))
 
 			for _, adm := range tt.setup.groupAdmins {
 				adm = prefix + adm
@@ -960,14 +991,14 @@ func Test_checkGroupPermissions(t *testing.T) {
 
 			consumer, err := local.NewConsumer(context.TODO(), db, currentUser.ID)
 			require.NoError(t, err)
-			consumer, err = authentication.LoadConsumerByID(context.TODO(), api.mustDB(), consumer.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+			consumer, err = authentication.LoadUserConsumerByID(context.TODO(), api.mustDB(), consumer.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 			require.NoError(t, err)
 
 			ctx := context.TODO()
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
-			ctx = context.WithValue(ctx, contextConsumer, consumer)
+			ctx = context.WithValue(ctx, contextUserConsumer, consumer)
 
-			err = api.checkGroupPermissions(ctx, &responseTracker{}, tt.args.groupName, tt.args.permissionLevel, nil)
+			err = api.checkGroupPermissions(ctx, &service.ResponseTracker{}, tt.args.groupName, tt.args.permissionLevel, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
@@ -1036,6 +1067,9 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 		},
 	}
 
+	organizations, err := organization.LoadOrganizations(context.TODO(), db)
+	require.NoError(t, err)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			prefix := sdk.RandomString(10) + "."
@@ -1045,9 +1079,14 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 					Username: prefix + "auto-group-admin",
 				}
 				require.NoError(t, user.Insert(context.TODO(), db, groupAdmin))
+				uo := user.UserOrganization{
+					AuthentifiedUserID: groupAdmin.ID,
+					OrganizationID:     organizations[0].ID,
+				}
+				require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
 
 				var err error
-				groupAdmin, err = user.LoadByID(context.TODO(), db, groupAdmin.ID)
+				groupAdmin, err = user.LoadByID(context.TODO(), db, groupAdmin.ID, user.LoadOptions.WithOrganization)
 				require.NoError(t, err)
 				tt.setup.groupName = prefix + tt.setup.groupName
 				g := sdk.Group{
@@ -1070,7 +1109,7 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 			}
 
 			ctx := context.TODO()
-			err := api.checkTemplateSlugPermissions(ctx, &responseTracker{}, prefix+tt.args.templateSlug, sdk.PermissionRead, map[string]string{"permGroupName": prefix + tt.args.groupName})
+			err := api.checkTemplateSlugPermissions(ctx, &service.ResponseTracker{}, prefix+tt.args.templateSlug, sdk.PermissionRead, map[string]string{"permGroupName": prefix + tt.args.groupName})
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
@@ -1098,13 +1137,13 @@ func Test_checkActionPermissions(t *testing.T) {
 		require.NoError(t, action.Delete(db, &a))
 	}()
 
-	assert.Error(t, api.checkActionPermissions(context.TODO(), &responseTracker{}, a.Name, sdk.PermissionRead, map[string]string{
+	assert.Error(t, api.checkActionPermissions(context.TODO(), &service.ResponseTracker{}, a.Name, sdk.PermissionRead, map[string]string{
 		"permGroupName": sdk.RandomString(10),
 	}), "error should be returned for random group name")
-	assert.Error(t, api.checkActionPermissions(context.TODO(), &responseTracker{}, sdk.RandomString(10), sdk.PermissionRead, map[string]string{
+	assert.Error(t, api.checkActionPermissions(context.TODO(), &service.ResponseTracker{}, sdk.RandomString(10), sdk.PermissionRead, map[string]string{
 		"permGroupName": g.Name,
 	}), "error should be returned for random action name")
-	assert.NoError(t, api.checkActionPermissions(context.TODO(), &responseTracker{}, a.Name, sdk.PermissionRead, map[string]string{
+	assert.NoError(t, api.checkActionPermissions(context.TODO(), &service.ResponseTracker{}, a.Name, sdk.PermissionRead, map[string]string{
 		"permGroupName": g.Name,
 	}), "no error should be returned for the right group an action names")
 }
@@ -1114,6 +1153,6 @@ func Test_checkActionBuiltinPermissions(t *testing.T) {
 
 	scriptAction := assets.GetBuiltinOrPluginActionByName(t, db, "Script")
 
-	assert.Error(t, api.checkActionBuiltinPermissions(context.TODO(), &responseTracker{}, sdk.RandomString(10), sdk.PermissionRead, nil), "error should be returned for random action name")
-	assert.NoError(t, api.checkActionBuiltinPermissions(context.TODO(), &responseTracker{}, scriptAction.Name, sdk.PermissionRead, nil), "no error should be returned for valid action name")
+	assert.Error(t, api.checkActionBuiltinPermissions(context.TODO(), &service.ResponseTracker{}, sdk.RandomString(10), sdk.PermissionRead, nil), "error should be returned for random action name")
+	assert.NoError(t, api.checkActionBuiltinPermissions(context.TODO(), &service.ResponseTracker{}, scriptAction.Name, sdk.PermissionRead, nil), "no error should be returned for valid action name")
 }

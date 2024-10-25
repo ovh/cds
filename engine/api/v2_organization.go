@@ -6,8 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/organization"
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -27,8 +27,13 @@ func (api *API) getOrganizationByIdentifier(ctx context.Context, orgaIdentifier 
 }
 
 func (api *API) postOrganizationHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.OrganizationManage),
+	return service.RBAC(api.globalOrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			var org sdk.Organization
 			if err := service.UnmarshalBody(req, &org); err != nil {
@@ -47,14 +52,16 @@ func (api *API) postOrganizationHandler() ([]service.RbacChecker, service.Handle
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			event_v2.PublishOrganizationEvent(ctx, api.Cache, sdk.EventOrganizationCreated, org, *u.AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, nil, http.StatusCreated)
 		}
 }
 
 func (api *API) getOrganizationsHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.OrganizationManage),
+	return service.RBAC(api.globalOrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			orgas, err := organization.LoadAllOrganizations(ctx, api.mustDB())
+			orgas, err := organization.LoadOrganizations(ctx, api.mustDB())
 			if err != nil {
 				return err
 			}
@@ -63,7 +70,7 @@ func (api *API) getOrganizationsHandler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getOrganizationHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.OrganizationManage),
+	return service.RBAC(api.globalOrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			orgaIdentifier := vars["organizationIdentifier"]
@@ -77,10 +84,15 @@ func (api *API) getOrganizationHandler() ([]service.RbacChecker, service.Handler
 }
 
 func (api *API) deleteOrganizationHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.OrganizationManage),
+	return service.RBAC(api.globalOrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			orgaIdentifier := vars["organizationIdentifier"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			orga, err := api.getOrganizationByIdentifier(ctx, orgaIdentifier)
 			if err != nil {
@@ -96,6 +108,7 @@ func (api *API) deleteOrganizationHandler() ([]service.RbacChecker, service.Hand
 			if err := organization.Delete(tx, orga.ID); err != nil {
 				return err
 			}
+			event_v2.PublishOrganizationEvent(ctx, api.Cache, sdk.EventOrganizationDeleted, *orga, *u.AuthConsumerUser.AuthentifiedUser)
 			return sdk.WithStack(tx.Commit())
 		}
 }

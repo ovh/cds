@@ -1,75 +1,64 @@
 <div class="workflow-page">
     <app-workflow-breadcrumb [project]="project" [workflow]="workflow">
-        <div class="floatRight" [title]="'favorite_add_btn' | translate">
-            <nz-spin nzSimple *ngIf="loadingFav"></nz-spin>
-            <ng-container *ngIf="!loadingFav">
-                <i nz-icon nzType="star" nzTheme="outline" class="star unfavorite" *ngIf="!workflow?.favorite" (click)="updateFav()"></i>
-                <i nz-icon nzType="star" nzTheme="fill" class="star favorite" *ngIf="workflow?.favorite" (click)="updateFav()"></i>
-            </ng-container>
-        </div>
-        <div class="floatRight labelFeature" [title]="'workflow_from_repository_btn' | translate">
-            <nz-tag [nzColor]="asCodeTagColor" nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
-            nzPopoverPlacement="rightBottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
-            <ng-template #popupFromRepository>
-                <div class="content infoPopup">
-                    <ng-container
-                        *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
-                        <app-ascode-event [events]="workflow.as_code_events" [project]="project" [workflow]="workflow">
-                        </app-ascode-event>
-                    </ng-container>
-                    <ng-container
-                        *ngIf="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)">
-                        <p>Your workflow was not imported from your code.</p>
-                        <p>Manage your workflow as code from your repository to automatically update it with changes on your branches.</p>
-                        <div class="footer">
-                            <a class="item" target="_blank" rel="noopener noreferrer" href="#"
-                                        [routerLink]="['/docs', 'docs', 'tutorials', 'init_workflow_with_cdsctl']">
-                                        Read more</a>
-                            <button nz-button nzType="primary" (click)="openSaveAsCodeModal()">Migrate</button>
-                        </div>
-                    </ng-container>
-                </div>
-            </ng-template>
-        </div>
-        <div class="floatRight labelFeature" [title]="'workflow_from_template_btn' | translate">
-            <nz-tag [nzColor]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : ''"
-                    nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromTemplate"
-                    nzPopoverPlacement="rightBottom"><i nz-icon nzType="copy" nzTheme="outline"></i>template</nz-tag>
-            <ng-template #popupFromTemplate>
-                <div class="content infoPopup">
-                    <div *ngIf="workflow && workflow.from_template;then fromTemplateInfo;else fromTemplateHelp"></div>
-                    <ng-template #fromTemplateInfo>
-                        <p>{{ 'workflow_from_template' | translate}}
-                            <a
-                                [routerLink]="['/settings/workflow-template/' + workflow.from_template.split('@')[0]]">{{workflow.from_template}}</a>
-                                <nz-tag *ngIf="!workflow.template_up_to_date" nzColor="orange">{{'common_not_up_to_date'
-                                    | translate }}</nz-tag>
-                        </p>
-                        <div class="footer">
-                            <button nz-button nzType="primary" nzSize="small" (click)="showTemplateFrom()">Update</button>
-                        </div>
-                    </ng-template>
-                    <ng-template #fromTemplateHelp>
-                        <p>Your workflow was not generated from a template.</p>
-                        <p>A workflow template allows you to quickly create then update a workflow and its components.</p>
-                        <p>You can init a new template from current workflow.</p>
-                        <div class="footer">
-                            <a class="item" target="_blank" rel="noopener noreferrer" href="#"
-                               [routerLink]="['/docs', 'docs', 'concepts', 'template']">
-                                Read more</a>
-                            <button nz-button nzType="primary" (click)="initTemplateFromWorkflow()">Init a template</button>
-                        </div>
-                    </ng-template>
-                </div>
-            </ng-template>
-        </div>
-        <div *ngIf="project && workflow && workflowV3Enabled" class="floatRight labelFeature preview"
-            [title]="'workflow_from_template_btn' | translate">
-            <nz-tag nzColor="blue"
-                    [routerLink]="runNumber ? ['/project', project.key, 'workflowv3', workflow.name, 'run', runNumber] : ['/project', project.key, 'workflowv3', workflow.name]">
-                Preview Workflow v3
-            </nz-tag>
-        </div>
+        <nz-tag class="labelFeature" [title]="'workflow_from_template_btn' | translate"
+            [nzColor]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : ''"
+            nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromTemplate"
+            nzPopoverPlacement="bottomRight"><i nz-icon nzType="copy" nzTheme="outline"></i>template</nz-tag>
+        <ng-template #popupFromTemplate>
+            <div class="content infoPopup">
+                <div *ngIf="workflow && workflow.from_template;then fromTemplateInfo;else fromTemplateHelp"></div>
+                <ng-template #fromTemplateInfo>
+                    <p>{{ 'workflow_from_template' | translate}}
+                        <a
+                            [routerLink]="['/settings/workflow-template/' + workflow.from_template.split('@')[0]]">{{workflow.from_template}}</a>
+                        <nz-tag *ngIf="!workflow.template_up_to_date" nzColor="orange">{{'common_not_up_to_date'
+                            | translate }}</nz-tag>
+                    </p>
+                    <div class="footer">
+                        <button nz-button nzType="primary" nzSize="small" (click)="showTemplateFrom()">Update</button>
+                    </div>
+                </ng-template>
+                <ng-template #fromTemplateHelp>
+                    <p>Your workflow was not generated from a template.</p>
+                    <p>A workflow template allows you to quickly create then update a workflow and its components.
+                    </p>
+                    <p>You can init a new template from current workflow.</p>
+                    <div class="footer">
+                        <a class="item" target="_blank" rel="noopener noreferrer" href="#"
+                            [routerLink]="['/docs', 'docs', 'concepts', 'template']">
+                            Read more</a>
+                        <button nz-button nzType="primary" (click)="initTemplateFromWorkflow()">Init a
+                            template</button>
+                    </div>
+                </ng-template>
+            </div>
+        </ng-template>
+        <nz-tag class="labelFeature" [title]="'workflow_from_repository_btn' | translate" [nzColor]="asCodeTagColor"
+            nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
+            nzPopoverPlacement="bottomRight"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
+        <ng-template #popupFromRepository>
+            <div class="content infoPopup">
+                <ng-container
+                    *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
+                    <app-ascode-event [events]="workflow.as_code_events" [project]="project" [workflow]="workflow">
+                    </app-ascode-event>
+                </ng-container>
+                <ng-container
+                    *ngIf="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)">
+                    <p>Your workflow was not imported from your code.</p>
+                    <p>Manage your workflow as code from your repository to automatically update it with changes on
+                        your branches.</p>
+                    <div class="footer">
+                        <a class="item" target="_blank" rel="noopener noreferrer" href="#"
+                            [routerLink]="['/docs', 'docs', 'tutorials', 'init_workflow_with_cdsctl']">
+                            Read more</a>
+                        <button nz-button nzType="primary" (click)="openSaveAsCodeModal()">Migrate</button>
+                    </div>
+                </ng-container>
+            </div>
+        </ng-template>
+        <app-favorite-button *ngIf="workflow" [active]="workflow?.favorite" (click)="updateFav()"
+            [loading]="loadingFav"></app-favorite-button>
     </app-workflow-breadcrumb>
     <div class="workflow-wrapper">
         <div class="sidebar expanded" *ngIf="project && workflow">

@@ -350,7 +350,7 @@ func TestCopyModelTypeData_OldRestricted(t *testing.T) {
 		Type:        sdk.Docker,
 		Restricted:  false,
 		PatternName: "",
-	}), "an error should occured as the is no pattern given and we can't reuse custom commands from old not restricted model")
+	}), "an error should occurred as the is no pattern given and we can't reuse custom commands from old not restricted model")
 
 	assert.NoError(t, workermodel.CopyModelTypeData(&old, &sdk.Model{
 		Type:        sdk.Docker,

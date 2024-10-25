@@ -1,8 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+    CUSTOM_ELEMENTS_SCHEMA,
+    NgModule
+} from '@angular/core';
+import {
+    FormsModule,
+    ReactiveFormsModule
+} from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NguiAutoCompleteModule } from '@sgu/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
@@ -19,8 +24,7 @@ import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { WorkflowRunJobVariableComponent } from 'app/views/workflow/run/node/pipeline/variables/job.variables.component';
 import { WorkflowRunJobComponent } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
-import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
-import { DragulaModule } from 'ng2-dragula-sgu';
+import { DragulaModule } from 'ng2-dragula';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';
@@ -61,7 +65,11 @@ import { RequirementsListComponent } from './requirements/list/requirements.list
 import { ScrollviewComponent } from './scrollview/scrollview.component';
 import { SharedService } from './shared.service';
 import { StatusIconComponent } from './status/status.component';
-import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
+import {
+    DataTableComponent,
+    SelectorPipe,
+    SelectPipe
+} from './table/data-table.component';
 import { TabComponent } from './tabs/tab.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
@@ -76,8 +84,6 @@ import { VariableFormComponent } from './variable/form/variable.form';
 import { VariableComponent } from './variable/list/variable.component';
 import { VariableValueComponent } from './variable/value/variable.value.component';
 import { VCSStrategyComponent } from './vcs/vcs.strategy.component';
-import { VulnerabilitiesListComponent } from './vulnerability/list/vulnerability.list.component';
-import { VulnerabilitiesComponent } from './vulnerability/vulnerabilities.component';
 import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-form/workflow-template.apply-form.component';
 import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
@@ -101,22 +107,119 @@ import { WorkflowWNodeOutGoingHookComponent } from './workflow/wnode/outgoinghoo
 import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.pipeline.component';
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.directive';
-import { NZ_CONFIG, NzConfig } from 'ng-zorro-antd/core/config';
+import {
+    NZ_CONFIG,
+    NzConfig
+} from 'ng-zorro-antd/core/config';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
+import {
+    en_US,
+    NZ_I18N
+} from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, FieldTimeOutline, FileTextOutline, FilterOutline, KeyOutline,
-    HighlightFill, HistoryOutline, InfoCircleOutline, LockOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
-    TableOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill } from '@ant-design/icons-angular/icons'
+import {
+    AimOutline,
+    ApartmentOutline,
+    ApiOutline,
+    ArrowDownOutline,
+    ArrowLeftOutline,
+    ArrowRightOutline,
+    AudioMutedOutline,
+    AudioOutline,
+    BellFill,
+    BellOutline,
+    BookOutline,
+    BorderOutline,
+    BranchesOutline,
+    BugOutline,
+    CalendarOutline,
+    CaretDownFill,
+    CaretRightFill,
+    CaretUpFill,
+    CheckCircleOutline,
+    CheckOutline,
+    CloseCircleOutline,
+    CloseOutline,
+    CodeOutline,
+    CompressOutline,
+    CopyOutline,
+    CrownOutline,
+    DeleteOutline,
+    DragOutline,
+    EllipsisOutline,
+    EnvironmentOutline,
+    ExpandOutline,
+    ExportOutline,
+    EyeInvisibleOutline,
+    EyeOutline,
+    FieldTimeOutline,
+    FileOutline,
+    FileTextOutline,
+    FilterOutline,
+    FolderOpenOutline,
+    FolderOutline,
+    FontColorsOutline,
+    GithubOutline,
+    GitlabOutline,
+    GlobalOutline,
+    HighlightFill,
+    HistoryOutline,
+    HomeOutline,
+    HourglassOutline,
+    IdcardOutline,
+    InfoCircleOutline,
+    KeyOutline,
+    LinkOutline,
+    LockOutline,
+    MailOutline,
+    MinusOutline,
+    MoreOutline,
+    PauseCircleOutline,
+    PhoneFill,
+    PlayCircleOutline,
+    PlusCircleFill,
+    PlusOutline,
+    PlusSquareOutline,
+    ProfileOutline,
+    QuestionCircleOutline,
+    QuestionOutline,
+    ReadOutline,
+    ReloadOutline,
+    RestOutline,
+    RocketOutline,
+    SafetyCertificateOutline,
+    SaveOutline,
+    SettingFill,
+    SettingOutline,
+    ShareAltOutline,
+    StarFill,
+    StarOutline,
+    StopOutline,
+    SyncOutline,
+    TableOutline,
+    TagOutline,
+    TagsOutline,
+    ToolFill,
+    UndoOutline,
+    UnlockFill,
+    UnorderedListOutline,
+    UploadOutline,
+    UsbOutline,
+    UserOutline,
+    UserSwitchOutline,
+    WarningFill,
+    WarningOutline
+} from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -133,6 +236,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { RequirementsValueComponent } from 'app/shared/requirements/value/requirements.value.component';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
@@ -141,63 +245,188 @@ import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { CardComponent } from 'app/shared/card/card.component';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
+import { BitbucketIconComponent } from 'app/shared/icons/bitbucket.icon.component';
+import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.success.component';
+import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
+import { NzCodeEditorModule } from "ng-zorro-antd/code-editor";
+import { APIConfigGuard } from 'app/guard/api-config.guard';
+import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
+import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
+import { EditorInputComponent } from './input/editor/editor.input.component';
+import { NzAvatarModule } from "ng-zorro-antd/avatar";
+import { CodemirrorComponent } from './codemirror';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NsAutoHeightTableDirective } from './directives/ns-auto-height-table.directive';
+import { NzTypographyModule } from 'ng-zorro-antd/typography';
+import { DateFromNowComponent } from './date-from-now/date-from-now';
+import { NzTreeModule } from 'ng-zorro-antd/tree';
+import { NzResultModule } from 'ng-zorro-antd/result';
+import { SearchableComponent } from './searchable/searchable.component';
+import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
+import { RepositoryRefSelectComponent } from './repository-ref-selector/repository-ref-select.component';
 
 const ngZorroConfig: NzConfig = {
-    notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
-    icon: {nzTheme: "outline"}
+    notification: {
+        nzPauseOnHover: true,
+        nzPlacement: "topRight"
+    },
+    icon: { nzTheme: "outline" },
+    codeEditor: {
+        monacoEnvironment: { globalAPI: true }
+    }
 };
 
-const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline,
-    EyeInvisibleOutline, EyeOutline, FileTextOutline, FieldTimeOutline, FilterOutline, KeyOutline, HighlightFill, HistoryOutline, InfoCircleOutline, LockOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
-    RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill ];
+const icons: IconDefinition[] = [
+    AimOutline,
+    ApartmentOutline,
+    ApiOutline,
+    ArrowDownOutline,
+    ArrowLeftOutline,
+    ArrowRightOutline,
+    AudioMutedOutline,
+    AudioOutline,
+    BellFill,
+    BellOutline,
+    BookOutline,
+    BorderOutline,
+    BranchesOutline,
+    BugOutline,
+    CalendarOutline,
+    CaretDownFill,
+    CaretRightFill,
+    CaretUpFill,
+    CheckCircleOutline,
+    CheckOutline,
+    CloseCircleOutline,
+    CloseOutline,
+    CodeOutline,
+    CompressOutline,
+    CopyOutline,
+    CrownOutline,
+    DeleteOutline,
+    DragOutline,
+    EllipsisOutline,
+    EnvironmentOutline,
+    ExpandOutline,
+    ExportOutline,
+    EyeInvisibleOutline,
+    EyeOutline,
+    FieldTimeOutline,
+    FileOutline,
+    FileTextOutline,
+    FilterOutline,
+    FolderOpenOutline,
+    FolderOutline,
+    FontColorsOutline,
+    GithubOutline,
+    GitlabOutline,
+    GlobalOutline,
+    HighlightFill,
+    HistoryOutline,
+    HomeOutline,
+    HourglassOutline,
+    IdcardOutline,
+    InfoCircleOutline,
+    KeyOutline,
+    LinkOutline,
+    LockOutline,
+    MailOutline,
+    MinusOutline,
+    MoreOutline,
+    PauseCircleOutline,
+    PhoneFill,
+    PlayCircleOutline,
+    PlusCircleFill,
+    PlusOutline,
+    PlusSquareOutline,
+    ProfileOutline,
+    QuestionCircleOutline,
+    QuestionOutline,
+    ReadOutline,
+    ReloadOutline,
+    RestOutline,
+    RocketOutline,
+    SafetyCertificateOutline,
+    SaveOutline,
+    SettingFill,
+    SettingOutline,
+    ShareAltOutline,
+    StarFill,
+    StarOutline,
+    StopOutline,
+    SyncOutline,
+    TableOutline,
+    TagOutline,
+    TagsOutline,
+    ToolFill,
+    UndoOutline,
+    UnlockFill,
+    UnorderedListOutline,
+    UploadOutline,
+    UsbOutline,
+    UserOutline,
+    UserSwitchOutline,
+    WarningFill,
+    WarningOutline
+];
 
 @NgModule({
     imports: [
-        NzAutocompleteModule,
+        ClipboardModule,
+        CommonModule,
+        DragulaModule.forRoot(),
+        FormsModule,
+        InfiniteScrollModule,
+        MarkdownModule.forRoot(),
+        MomentModule,
+        NgxChartsModule,
         NzAlertModule,
+        NzAutocompleteModule,
+        NzAvatarModule,
         NzBadgeModule,
         NzBreadCrumbModule,
         NzButtonModule,
         NzCardModule,
         NzCheckboxModule,
+        NzCodeEditorModule,
         NzCollapseModule,
+        NzDescriptionsModule,
         NzDividerModule,
+        NzDrawerModule,
         NzDropDownModule,
+        NzEmptyModule,
         NzFormModule,
         NzGridModule,
         NzIconModule.forRoot(icons),
         NzInputModule,
         NzLayoutModule,
         NzListModule,
+        NzMenuModule,
         NzModalModule,
         NzNotificationModule,
-        NzMenuModule,
+        NzPageHeaderModule,
+        NzPaginationModule,
         NzPopconfirmModule,
-        NzProgressModule,
         NzPopoverModule,
+        NzProgressModule,
         NzRadioModule,
+        NzResultModule,
         NzSelectModule,
         NzSpinModule,
         NzStepsModule,
         NzSwitchModule,
-        NzTabsModule,
         NzTableModule,
+        NzTabsModule,
         NzTagModule,
         NzToolTipModule,
+        NzTreeModule,
+        NzTreeViewModule,
+        NzTypographyModule,
         NzUploadModule,
-        CommonModule,
-        ClipboardModule,
-        FormsModule,
-        TranslateModule,
-        DragulaModule.forRoot(),
-        MomentModule,
-        CodemirrorModule,
         ReactiveFormsModule,
-        MarkdownModule.forRoot(),
-        NguiAutoCompleteModule,
         RouterModule,
-        InfiniteScrollModule,
-        NgxChartsModule
+        TranslateModule
     ],
     declarations: [
         ActionComponent,
@@ -209,17 +438,23 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         AsCodeSaveModalComponent,
         AuditListComponent,
         AutoFocusInputComponent,
+        BitbucketIconComponent,
+        BitbucketIconSuccessComponent,
         BreadcrumbComponent,
         CallbackPipe,
         CardComponent,
         ChartComponentComponent,
+        CodemirrorComponent,
         CommitListComponent,
         ConditionsComponent,
         CutPipe,
         DataTableComponent,
+        DateFromNowComponent,
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
+        EditorInputComponent,
+        FavoriteButtonComponent,
         FavoriteCardsComponent,
         ForMapPipe,
         KeysFormComponent,
@@ -228,24 +463,27 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         LabelsEditComponent,
         NgForNumber,
         NgxAutoScrollDirective,
+        NsAutoHeightTableDirective,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,
         PermissionFormComponent,
-        WorkflowPermissionFormComponent,
         PermissionListComponent,
         ProjectBreadcrumbComponent,
         RepoManagerFormComponent,
+        RepositoryRefSelectComponent,
         RequirementsFormComponent,
         RequirementsListComponent,
         RequirementsValueComponent,
+        ResizablePanelComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
+        SearchableComponent,
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,
-        TabsComponent,
         TabComponent,
+        TabsComponent,
         TruncatePipe,
         UploadButtonComponent,
         UsageApplicationsComponent,
@@ -259,8 +497,6 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         VariableFormComponent,
         VariableValueComponent,
         VCSStrategyComponent,
-        VulnerabilitiesComponent,
-        VulnerabilitiesListComponent,
         WorkflowDeleteNodeComponent,
         WorkflowHookMenuEditComponent,
         WorkflowHookModalComponent,
@@ -270,6 +506,7 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeRunParamComponent,
+        WorkflowPermissionFormComponent,
         WorkflowRunJobComponent,
         WorkflowRunJobVariableComponent,
         WorkflowSidebarRunListComponent,
@@ -287,17 +524,24 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         WorkflowWNodeJoinComponent,
         WorkflowWNodeMenuEditComponent,
         WorkflowWNodeOutGoingHookComponent,
-        WorkflowWNodePipelineComponent,
+        WorkflowWNodePipelineComponent
     ],
     providers: [
         PermissionService,
         SharedService,
         ToastService,
         AuthenticationGuard,
+        APIConfigGuard,
         NoAuthenticationGuard,
         FeatureGuard,
-        { provide: NZ_CONFIG, useValue: ngZorroConfig },
-        { provide: NZ_I18N, useValue: en_US }
+        {
+            provide: NZ_CONFIG,
+            useValue: ngZorroConfig
+        },
+        {
+            provide: NZ_I18N,
+            useValue: en_US
+        }
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -312,21 +556,26 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         AsCodeSaveModalComponent,
         AuditListComponent,
         AutoFocusInputComponent,
+        BitbucketIconComponent,
+        BitbucketIconSuccessComponent,
         BreadcrumbComponent,
         CallbackPipe,
         CardComponent,
         ChartComponentComponent,
         ClipboardModule,
-        CodemirrorModule,
+        CodemirrorComponent,
         CommitListComponent,
         CommonModule,
         ConditionsComponent,
         CutPipe,
         DataTableComponent,
+        DateFromNowComponent,
         DiffItemComponent,
         DiffListComponent,
         DragulaModule,
         DurationMsPipe,
+        EditorInputComponent,
+        FavoriteButtonComponent,
         FavoriteCardsComponent,
         ForMapPipe,
         FormsModule,
@@ -337,54 +586,68 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         LabelsEditComponent,
         MarkdownModule,
         MomentModule,
-        NzAutocompleteModule,
         NgForNumber,
         NgxAutoScrollDirective,
+        NsAutoHeightTableDirective,
         NzAlertModule,
+        NzAutocompleteModule,
+        NzAvatarModule,
         NzBadgeModule,
         NzBreadCrumbModule,
         NzButtonModule,
         NzCardModule,
         NzCheckboxModule,
+        NzCodeEditorModule,
         NzCollapseModule,
+        NzDescriptionsModule,
         NzDividerModule,
+        NzDrawerModule,
         NzDropDownModule,
+        NzEmptyModule,
         NzFormModule,
         NzGridModule,
         NzIconModule,
         NzInputModule,
         NzLayoutModule,
         NzListModule,
-        NzModalModule,
         NzMenuModule,
+        NzModalModule,
         NzNotificationModule,
+        NzPageHeaderModule,
+        NzPaginationModule,
         NzPopconfirmModule,
         NzPopoverModule,
         NzProgressModule,
         NzRadioModule,
+        NzResultModule,
         NzSelectModule,
         NzSpinModule,
         NzStepsModule,
         NzSwitchModule,
+        NzTableModule,
         NzTabsModule,
         NzTagModule,
-        NzTableModule,
         NzToolTipModule,
+        NzTreeModule,
+        NzTreeViewModule,
+        NzTypographyModule,
         NzUploadModule,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,
         PermissionFormComponent,
-        WorkflowPermissionFormComponent,
         PermissionListComponent,
         ProjectBreadcrumbComponent,
         ReactiveFormsModule,
         RepoManagerFormComponent,
+        RepositoryRefSelectComponent,
         RequirementsFormComponent,
         RequirementsListComponent,
         RequirementsValueComponent,
+        ResizablePanelComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
+        SearchableComponent,
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,
@@ -401,8 +664,6 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         VariableFormComponent,
         VariableValueComponent,
         VCSStrategyComponent,
-        VulnerabilitiesComponent,
-        VulnerabilitiesListComponent,
         WorkflowDeleteNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeEditModalComponent,
@@ -410,6 +671,7 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeRunParamComponent,
+        WorkflowPermissionFormComponent,
         WorkflowRunJobComponent,
         WorkflowRunJobVariableComponent,
         WorkflowSidebarRunListComponent,
@@ -422,5 +684,4 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         WorkflowWNodeMenuEditComponent
     ]
 })
-export class SharedModule {
-}
+export class SharedModule { }

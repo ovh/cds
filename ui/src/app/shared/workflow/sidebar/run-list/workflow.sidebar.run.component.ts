@@ -4,24 +4,24 @@ import {
     Component,
     ElementRef,
     Input,
-    OnDestroy, OnInit,
+    OnDestroy,
     ViewChild
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Select, Store } from '@ngxs/store';
+import { Router } from '@angular/router';
+import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { WorkflowRun, WorkflowRunSummary, WorkflowRunTags } from 'app/model/workflow.run.model';
+import { WorkflowRunSummary, WorkflowRunTags } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DurationService } from 'app/shared/duration/duration.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { ProjectState } from 'app/store/project.state';
 import { CleanWorkflowRun, ClearListRuns, SetWorkflowRuns } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
+import { DurationService } from '../../../../../../libs/workflow-graph/src/lib/duration.service';
 
 const limitWorkflowRun = 30;
 
@@ -56,11 +56,8 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         return this._workflow;
     }
 
-    @Select(WorkflowState.getSelectedWorkflowRun()) wrun$: Observable<WorkflowRun>
     wrunSub: Subscription;
-    @Select(WorkflowState.getListRuns()) listRuns$: Observable<Array<WorkflowRunSummary>>;
     listRunSubs: Subscription;
-    @Select(WorkflowState.getRunSidebarFilters()) filters$: Observable<{}>;
     filtersSubs: Subscription;
 
     project: Project;
@@ -88,7 +85,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 
-        this.wrunSub = this.wrun$.subscribe(wr => {
+        this.wrunSub = this._store.select(WorkflowState.getSelectedWorkflowRun()).subscribe(wr => {
             if (!wr && !this.currentWorkflowRunNumber) {
                 return;
             }
@@ -99,7 +96,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             this._cd.markForCheck();
         });
 
-        this.listRunSubs = this.listRuns$.subscribe(runs => {
+        this.listRunSubs = this._store.select(WorkflowState.getListRuns()).subscribe(runs => {
             if (runs.length === 0 && this.workflowRuns.length === 0) {
                 return;
             }
@@ -109,7 +106,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }
             this._cd.markForCheck();
         });
-        this.filtersSubs = this.filters$.subscribe(fs => {
+        this.filtersSubs = this._store.select(WorkflowState.getRunSidebarFilters()).subscribe(fs => {
             this.selectedTags = new Array<string>();
             for (const key in fs) {
                 if (fs.hasOwnProperty(key)) {

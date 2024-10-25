@@ -61,7 +61,7 @@ func hookUnregistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, st
 	if err != nil {
 		return err
 	}
-	_, code, errHooks := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+	_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
 		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
 		// so, it's just a warn log
@@ -166,12 +166,12 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			return err
 		}
 		hookToUpdate[h.UUID] = *h
-		log.Debug(ctx, "workflow.hookrRegistration> following hook must be updated: %+v", h)
+		log.Debug(ctx, "workflow.hookRegistration> following hook must be updated: %+v len(hookToUpdate):%d", h, len(hookToUpdate))
 	}
 
 	if len(hookToUpdate) > 0 {
 		// Create hook on µservice
-		_, code, errHooks := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
+		_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
 		if errHooks != nil || code >= 400 {
 			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
 		}
@@ -304,7 +304,7 @@ func createVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		return sdk.WrapError(err, "cannot get vcs web hook info")
 	}
 	if !webHookInfo.WebhooksSupported || webHookInfo.WebhooksDisabled {
-		return sdk.NewErrorFrom(sdk.ErrForbidden, "hook creation are forbidden")
+		return sdk.NewErrorFrom(sdk.ErrForbidden, fmt.Sprintf("hook creation are forbidden supported:%t disabled:%t", webHookInfo.WebhooksSupported, webHookInfo.WebhooksDisabled))
 	}
 
 	// Check hook config to avoid sending wrong hooks to VCS
@@ -356,9 +356,9 @@ func updateVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		log.Debug(ctx, "createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
 	}
-	webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(ctx, client)
-	if errWH != nil {
-		return sdk.WrapError(errWH, "cannot get vcs web hook info")
+	webHookInfo, err := repositoriesmanager.GetWebhooksInfos(ctx, client)
+	if err != nil {
+		return sdk.WrapError(err, "cannot get vcs web hook info")
 	}
 
 	vcsHook := sdk.VCSHook{

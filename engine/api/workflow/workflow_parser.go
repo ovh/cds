@@ -43,7 +43,7 @@ func Parse(ctx context.Context, proj sdk.Project, oldW *sdk.Workflow, ew exporte
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, consumer *sdk.AuthConsumer, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, consumer *sdk.AuthUserConsumer, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 

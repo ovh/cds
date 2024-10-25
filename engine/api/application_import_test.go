@@ -37,6 +37,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithoutSecret(t *testing.T)
 
 	body := `version: v1.0
 name: myNewApp
+description: myDescription
 variables:
   var1:
     value: value 1
@@ -63,8 +64,9 @@ variables:
 	app, err := application.LoadByName(context.TODO(), db, proj.Key, "myNewApp", application.LoadOptions.WithVariables)
 	require.NoError(t, err)
 
-	assert.NotNil(t, app)
-	assert.Equal(t, "myNewApp", app.Name)
+	require.NotNil(t, app)
+	require.Equal(t, "myNewApp", app.Name)
+	require.Equal(t, "myDescription", app.Description)
 
 	//Check variables
 	for _, v := range app.Variables {
@@ -109,7 +111,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 		ApplicationID: app.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
@@ -217,7 +219,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		ApplicationID: app.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
@@ -381,7 +383,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		ApplicationID: app.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k1.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k1.Name, "", "test@cds")
 	require.NoError(t, err)
 	k1.Public = kpgp.Public
 	k1.Private = kpgp.Private

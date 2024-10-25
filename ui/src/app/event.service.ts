@@ -4,9 +4,8 @@ import { AppService } from 'app/app.service';
 import { WebsocketEvent, WebsocketFilter, WebsocketFilterType } from 'app/model/websocket.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { from } from 'rxjs';
-import { WebSocketSubject } from 'rxjs/internal-compatibility';
 import { concatMap, delay, filter, retryWhen } from 'rxjs/operators';
-import { webSocket } from 'rxjs/webSocket';
+import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 
 @Injectable()
 export class EventService {
@@ -30,7 +29,7 @@ export class EventService {
     startWebsocket() {
         const protocol = window.location.protocol.replace('http', 'ws');
         const host = window.location.host;
-        const href = this._router['location']._baseHref;
+        const href = this._router['location']._basePath;
 
         this.websocket = webSocket({
             url: `${protocol}//${host}${href}/cdsapi/ws`,
@@ -100,9 +99,6 @@ export class EventService {
 
         let urlSplitted = url.substr(1, url.length - 1).split('/');
         switch (urlSplitted[0]) {
-            case 'home':
-                fs.push(<WebsocketFilter>{ type: WebsocketFilterType.TIMELINE });
-                break;
             case 'settings':
                 if (urlSplitted.length === 1) { // Ignore settings root page
                     break;
@@ -154,7 +150,6 @@ export class EventService {
                         });
                         break;
                     case 'workflow':
-                    case 'workflowv3':
                         fs.push(<WebsocketFilter>{
                             type: WebsocketFilterType.WORKFLOW,
                             project_key: projectKey,

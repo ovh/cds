@@ -1,0 +1,176 @@
+<app-resizable-panel growDirection="after" minSize="250" [initialSize]="panelSize"
+	(onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
+	<ng-container>
+		<app-projectv2-run-list-sidebar class="sidebar" [project]="project"></app-projectv2-run-list-sidebar>
+	</ng-container>
+</app-resizable-panel>
+
+<div class="content">
+	<div class="header">
+		<button nz-button nzType="secondary" title="Start new run" (click)="openRunStartDrawer()"><span nz-icon
+				nzType="caret-right" nzTheme="fill"></span> New run</button>
+		<ng-template #saveSearchTemplate>
+			<form class="save-search-form" nz-form (ngSubmit)="submitSaveSearch()">
+				<nz-form-item>
+					<nz-form-control>
+						<input placeholder="Name" [ngModel]="searchName" (ngModelChange)="onSearchNameChange($event)" nz-input
+							ngDefaultControl [ngModelOptions]="{standalone: true}" />
+					</nz-form-control>
+				</nz-form-item>
+			</form>
+		</ng-template>
+		<form nz-form (ngSubmit)="submitForm()">
+			<nz-form-item>
+				<nz-form-control>
+					<input placeholder="Filter workflow runs" nz-input [nzAutocomplete]="filterAutoComplete"
+						[ngModel]="filterText" (ngModelChange)="onFilterTextChange($event)" #filterInput
+						#filterInputDirective=nzAutocompleteTrigger (click)="onClickInput()" ngDefaultControl
+						[ngModelOptions]="{standalone: true}" />
+					<nz-autocomplete nzBackfill #filterAutoComplete>
+						<nz-auto-option *ngIf="!filterText || filterText.length > 0 && filterText[filterText.length-1] !== ':'"
+							[nzLabel]="filterText" [nzValue]="filterText">
+							{{filterText ? filterText + ' - ' : ''}}submit
+						</nz-auto-option>
+						<nz-auto-optgroup *ngIf="availableFilters.length > 0" nzLabel="Narrow your search">
+							<nz-auto-option *ngFor="let filter of availableFilters" [nzLabel]="computeFilterValue(filter)"
+								[nzValue]="computeFilterValue(filter)"><b>{{filter.key}}:</b>
+								{{filter.example}}
+							</nz-auto-option>
+						</nz-auto-optgroup>
+						<nz-auto-optgroup *ngIf="selectedFilter && selectedFilter.options?.length > 0" nzLabel="Narrow your search">
+							<nz-auto-option *ngFor="let option of selectedFilter.options"
+								[nzLabel]="computeFilterValue(selectedFilter, option)"
+								[nzValue]="computeFilterValue(selectedFilter, option)">{{selectedFilter.key}}:{{option}}
+							</nz-auto-option>
+						</nz-auto-optgroup>
+					</nz-autocomplete>
+				</nz-form-control>
+			</nz-form-item>
+			<nz-form-item>
+				<nz-form-control>
+					<button nz-button nzType="primary" (click)="refresh($event)" title="Refresh results"><span nz-icon
+							[nzType]="filterText === previousFilterText ? 'reload' : 'search'"></span></button>
+				</nz-form-control>
+			</nz-form-item>
+		</form>
+		<button nz-button nzType="secondary" nz-popconfirm [nzPopconfirmTitle]="saveSearchTemplate" title="Save search"
+			(nzOnConfirm)="confirmSaveSearch()" #saveSearchButton=nzPopconfirm><span nz-icon nzType="save"></span></button>
+		<ng-template #saveSearchTemplate>
+			<form class="save-search-form" nz-form (ngSubmit)="submitSaveSearch()">
+				<nz-form-item>
+					<nz-form-control>
+						<input placeholder="Name" [ngModel]="searchName" (ngModelChange)="onSearchNameChange($event)" nz-input
+							ngDefaultControl [ngModelOptions]="{standalone: true}" />
+					</nz-form-control>
+				</nz-form-item>
+			</form>
+		</ng-template>
+	</div>
+
+	<nz-list class="run-list" [nzLoading]="loading" nzSize="small" nzNoResult="test">
+		<nz-list-item *ngFor="let run of runs; let i = index; trackBy: trackRunElement"
+			[class.append]="!!animatedRuns[run.id]" [@appendToList]="animatedRuns[run.id] ? 'append' : 'active'"
+			(mouseenter)="onMouseEnterRun(run.id)">
+			<ng-container>
+				<nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
+				</nz-list-item-meta>
+				<ng-template #runAvatar>
+					<div class="run-avatar">
+						<span *ngIf="run.status === 'Success'" class="success" nz-icon nzType="check-circle"
+							nzTheme="outline"></span>
+						<span *ngIf="run.status === 'Fail'" class="fail" nz-icon nzType="close-circle" nzTheme="outline"></span>
+						<span *ngIf="run.status === 'Stopped'" class="fail" nz-icon nzType="pause-circle" nzTheme="outline"></span>
+						<span *ngIf="run.status === 'Building'" class="building" nz-icon nzType="play-circle"
+							nzTheme="outline"></span>
+					</div>
+				</ng-template>
+				<ng-template #runTitle>
+					<app-searchable [link]="['/project', project.key, 'run']"
+						[params]="{workflow: run.vcs_server+'/'+run.repository+'/'+run.workflow_name}" paramsHandling="merge">
+						<a [routerLink]="['/project', run.project_key, 'run', run.id]">{{run.vcs_server}}/{{run.repository}}/{{run.workflow_name}}
+							#{{run.run_number}}</a>
+					</app-searchable>
+				</ng-template>
+				<ng-template #runDescription>
+					<ng-container *ngIf="run.contexts.git">
+						Commit <a class="dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
+							rel="noopener noreferrer">{{run.contexts.git.sha?.substring(0,8)}}</a> by {{run.contexts.git.username}} on
+						repository
+						<app-searchable [style]="{display:'unset'}" [link]="['/project', project.key, 'run']"
+							[params]="{workflow_repository: run.contexts.git.server+'/'+run.contexts.git.repository}"
+							paramsHandling="merge">
+							<a class="dotted" href="{{run.contexts.git.repository_web_url}}" target="_blank"
+								rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
+						</app-searchable>
+					</ng-container>
+				</ng-template>
+				<div *ngIf="run.annotations" class="annotations">
+					<ng-container *ngFor="let annotation of run.annotations | keyvalue">
+						<app-searchable [link]="['/project', project.key, 'run']"
+							[params]="generateAnnotationQueryParams(annotation)" paramsHandling="merge">
+							<nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
+								title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
+								[nzPopoverContent]="contentAnnotationWithValue">
+								<b>{{annotation.key}}:</b> {{annotation.value}}
+								<ng-template #contentAnnotationWithValue>
+									key: {{annotation.key}} - value: <span nz-typography nzCopyable nzContent="{{annotation.value}}"
+										[nzCopyTooltips]="null"></span>
+								</ng-template>
+							</nz-tag>
+							<span *ngIf="annotation.value === 'true'" nzColor="default"
+								title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
+								[nzPopoverContent]="contentAnnotation">
+								{{annotation.key}}
+								<ng-template #contentAnnotation>
+									key: {{annotation.key}} - value: {{annotation.value}}
+								</ng-template>
+							</span>
+						</app-searchable>
+					</ng-container>
+				</div>
+				<div *ngIf="run.contexts.git" class="ref">
+					<app-searchable [link]="['/project', project.key, 'run']" [params]="{ref:run.contexts.git.ref}"
+						paramsHandling="merge">
+						<a class="ref" href="{{run.contexts.git.ref_web_url}}" target="_blank" rel="noopener noreferrer"
+							[title]="run.contexts.git.ref">{{run.contexts.git.ref}}</a>
+					</app-searchable>
+				</div>
+				<ul nz-list-item-actions>
+					<nz-list-item-action>
+						<app-date-from-now [value]="run.started"></app-date-from-now>
+					</nz-list-item-action>
+					<nz-list-item-action>
+						<button nz-button nzType="secondary" title="Run options" nz-dropdown [nzDropdownMenu]="menu"><span nz-icon
+								nzType="more" nzTheme="outline"></span></button>
+						<nz-dropdown-menu #menu="nzDropdownMenu">
+							<ul nz-menu nzSelectable>
+								<li nz-menu-item>
+									<a nz-button nzType="link" nzDanger nz-popconfirm nzPopconfirmTitle="Are you sure?" [nzIcon]="iconTpl"
+										(nzOnConfirm)="clickDeleteRun(run.id)">Delete</a>
+									<ng-template #iconTpl>
+										<span nz-icon nzType="question-circle-o" style="color: red;"></span>
+									</ng-template>
+								</li>
+							</ul>
+						</nz-dropdown-menu>
+					</nz-list-item-action>
+				</ul>
+			</ng-container>
+		</nz-list-item>
+		<nz-list-empty *ngIf="!loading && totalCount === 0" [nzNoResult]="emptyList"></nz-list-empty>
+	</nz-list>
+	<ng-template #emptyList>
+		<nz-empty nzNotFoundContent="No result found"></nz-empty>
+	</ng-template>
+	<div *ngIf="totalCount > 0" class="footer">
+		{{totalCount}} results - sorted by
+		<nz-select [ngModel]="sort" (ngModelChange)="onSortChange($event)" nzBorderless>
+			<nz-option nzValue="last_modified:desc" nzLabel="last modification desc"></nz-option>
+			<nz-option nzValue="last_modified:asc" nzLabel="last modification asc"></nz-option>
+			<nz-option nzValue="started:desc" nzLabel="started desc"></nz-option>
+			<nz-option nzValue="started:asc" nzLabel="started asc"></nz-option>
+		</nz-select>
+		<nz-pagination [nzPageIndex]="pageIndex" [nzPageSize]="20" [nzTotal]="totalCount" nzSize="small"
+			(nzPageIndexChange)="pageIndexChange($event)"></nz-pagination>
+	</div>
+</div>

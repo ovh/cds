@@ -18,7 +18,7 @@
                              <textarea *ngIf="edit;" nz-input [disabled]="!edit" name="actionDescription"
                                        [(ngModel)]="editableAction.description" rows="{{getDescriptionHeight()}}"
                                        (keydown)="editableAction.hasChanged = true; keyEvent($event)"></textarea>
-                            <markdown *ngIf="!edit;" [data]="editableAction.description"></markdown>
+                            <pre *ngIf="!edit;" class="inline">{{editableAction.description}}</pre>
                         </nz-form-control>
                     </nz-form-item>
                 </nz-col>
@@ -32,7 +32,7 @@
                        (click)="prepareEditRequirements(); requirementModalVisible = true">
                         {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
                     </a>
-                    <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="900px"
+                    <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="1300px"
                               (nzOnCancel)="requirementModalVisible = false">
                         <div *nzModalContent class="modalContent">
                             <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
@@ -80,7 +80,8 @@
             </div>
         </div>
     </div>
-    <nz-alert nzType="info" nzMessage="There is no step."  *ngIf="steps.length === 0"></nz-alert>
+    <nz-alert nzType="info" nzMessage="There is no step."  *ngIf="steps.length === 0 && stepsReady"></nz-alert>
+    <nz-spin *ngIf="!stepsReady" nzTip="Loading steps..."></nz-spin>
 </form>
 <nz-layout class="bottomBtnsWrapper"
      *ngIf="edit && !(pipeline && pipeline.previewMode)">

@@ -24,6 +24,6 @@ export default class LoginPage {
             .typeText(this.userNameInput, user)
             .typeText(this.passwordInput, password)
             .click(this.loginButton)
-            .expect(this.getLocation()).eql(config.baseUrl + '/home');
+            .expect(this.getLocation()).eql(config.baseUrl);
     }
 }

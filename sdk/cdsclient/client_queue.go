@@ -6,10 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/gorilla/websocket"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/sguiheux/go-coverage"
+	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
 // shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
@@ -42,19 +47,40 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...RequestModifier) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
 	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
-	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
-		c.WebsocketEventsListen(ctx, goRoutines, chanMessageToSend, chanMessageReceived, errs)
-	})
-	chanMessageToSend <- []sdk.WebsocketFilter{{
-		Type: sdk.WebsocketFilterTypeQueue,
-	}}
+	chanWsError := make(chan error, 10)
 
+	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
+		c.WebsocketEventsListen(ctx, goRoutines, chanMessageToSend, chanMessageReceived, chanWsError)
+		cancel()
+	})
+	goRoutines.Exec(ctx, "WebsocketError", func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					log.ErrorWithStackTrace(ctx, ctx.Err())
+				}
+			case e := <-chanWsError:
+				if strings.Contains(e.Error(), "websocket: close "+strconv.Itoa(websocket.CloseGoingAway)) || strings.Contains(e.Error(), "websocket: close "+strconv.Itoa(websocket.CloseAbnormalClosure)) {
+					log.ErrorWithStackTrace(ctx, e)
+					log.Debug(ctx, "QueuePolling: send websocket filter")
+					chanMessageToSend <- filters
+					continue
+				}
+				errs <- e
+			}
+		}
+	})
+	chanMessageToSend <- filters
 	for {
 		select {
 		case <-ctx.Done():
@@ -68,12 +94,13 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				continue
 			}
 			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" && wsEvent.Event.Status == sdk.StatusWaiting {
+				telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv1, 1)
 				var jobEvent sdk.EventRunWorkflowJob
 				if err := sdk.JSONUnmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
 					errs <- newError(fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err))
 					continue
 				}
-				job, err := c.QueueJobInfo(ctx, jobEvent.ID)
+				job, err := c.QueueJobInfo(ctx, strconv.FormatInt(jobEvent.ID, 10))
 				// Do not log the error if the job does not exist
 				if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
 					continue
@@ -86,14 +113,19 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				// push the job in the channel
 				if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
 					job.Header["WS"] = "true"
+
+					id := strconv.FormatInt(job.ID, 10)
+					if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
+						log.Debug(ctx, "skipping job %s", id)
+						continue
+					}
+					lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+					log.Debug(ctx, "v1_len_queue: %v", lenqueue)
+					telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
 					jobs <- *job
 				}
 			}
 		case <-jobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("jobsTicker")
-			}
-
 			if jobs == nil {
 				continue
 			}
@@ -108,15 +140,24 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				cancel()
 				continue
 			}
-
 			cancel()
 
-			if c.config.Verbose {
-				fmt.Println("Jobs Queue size: ", len(queue))
+			queueFiltered := sdk.WorkflowQueue{}
+			for _, job := range queue {
+				id := strconv.FormatInt(job.ID, 10)
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
+					log.Debug(ctx, "skipping job %s", id)
+					continue
+				}
+				queueFiltered = append(queueFiltered, job)
 			}
+			log.Debug(ctx, "v1_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), pendingWorkerCreation.NbJobInPendingWorkerCreation())
 
-			shrinkQueue(&queue, cap(jobs))
-			for _, j := range queue {
+			shrinkQueue(&queueFiltered, cap(jobs))
+			for _, j := range queueFiltered {
+				id := strconv.FormatInt(j.ID, 10)
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+				telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
 				jobs <- j
 			}
 		}
@@ -165,8 +206,8 @@ func (c *client) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (
 }
 
 // QueueJobInfo returns information about a job
-func (c *client) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
-	path := fmt.Sprintf("/queue/workflows/%d/infos", id)
+func (c *client) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
+	path := fmt.Sprintf("/queue/workflows/%s/infos", id)
 	var job sdk.WorkflowNodeJobRun
 
 	if _, err := c.GetJSON(context.Background(), path, &job); err != nil {
@@ -176,16 +217,16 @@ func (c *client) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJ
 }
 
 // QueueJobSendSpawnInfo sends a spawn info on a job
-func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
-	path := fmt.Sprintf("/queue/workflows/%d/spawn/infos", id)
+func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
+	path := fmt.Sprintf("/queue/workflows/%s/spawn/infos", id)
 	_, err := c.PostJSON(ctx, path, &in, nil)
 	return err
 }
 
 // QueueJobBook books a job for a Hatchery
-func (c *client) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (c *client) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	var resp sdk.WorkflowNodeJobRunBooked
-	path := fmt.Sprintf("/queue/workflows/%d/book", id)
+	path := fmt.Sprintf("/queue/workflows/%s/book", id)
 	_, err := c.PostJSON(ctx, path, nil, &resp)
 	return resp, err
 }
@@ -205,8 +246,8 @@ func (c *client) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, r
 }
 
 // QueueJobRelease release a job for a worker
-func (c *client) QueueJobRelease(ctx context.Context, id int64) error {
-	path := fmt.Sprintf("/queue/workflows/%d/book", id)
+func (c *client) QueueJobRelease(ctx context.Context, id string) error {
+	path := fmt.Sprintf("/queue/workflows/%s/book", id)
 	_, err := c.DeleteJSON(context.Background(), path, nil)
 	return err
 }
@@ -228,20 +269,8 @@ func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) 
 	return nil
 }
 
-func (c *client) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
-	path := fmt.Sprintf("/queue/workflows/%d/coverage", id)
-	_, err := c.PostJSON(ctx, path, report, nil)
-	return err
-}
-
 func (c *client) QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error {
 	path := fmt.Sprintf("/queue/workflows/%d/test", id)
-	_, err := c.PostJSON(ctx, path, report, nil)
-	return err
-}
-
-func (c *client) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
-	path := fmt.Sprintf("/queue/workflows/%d/vulnerability", id)
 	_, err := c.PostJSON(ctx, path, report, nil)
 	return err
 }

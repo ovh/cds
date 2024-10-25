@@ -1,12 +1,14 @@
 package sdk
 
 import (
+	"fmt"
 	"math/rand"
+	"net/http"
 	"time"
 )
 
 // IsInArray checks if the element is in the array
-func IsInArray(elt string, array []string) bool {
+func IsInArray[T comparable](elt T, array []T) bool {
 	for _, item := range array {
 		if item == elt {
 			return true
@@ -83,4 +85,68 @@ func StringFirstN(s string, i int) string {
 		return s
 	}
 	return s[:i]
+}
+
+type ReqNotHostMatcher struct {
+	NotHost string
+}
+
+func (m ReqNotHostMatcher) Matches(x interface{}) bool {
+	switch i := x.(type) {
+	case *http.Request:
+		return i.URL.Host != m.NotHost
+	default:
+		return false
+	}
+}
+
+func (m ReqNotHostMatcher) String() string {
+	return fmt.Sprintf("Not Host is %q", m.NotHost)
+}
+
+type ReqHostMatcher struct {
+	Host string
+}
+
+func (m ReqHostMatcher) Matches(x interface{}) bool {
+	switch i := x.(type) {
+	case *http.Request:
+		return i.URL.Host == m.Host
+	default:
+		return false
+	}
+}
+
+func (m ReqHostMatcher) String() string {
+	return fmt.Sprintf("Host is %q", m.Host)
+}
+
+type ReqMatcher struct {
+	Method  string
+	URLPath string
+}
+
+func (m ReqMatcher) Matches(x interface{}) bool {
+	switch i := x.(type) {
+	case *http.Request:
+		return i.URL.Path == m.URLPath && m.Method == i.Method
+	default:
+		return false
+	}
+}
+
+func (m ReqMatcher) String() string {
+	return fmt.Sprintf("Method is %q, URL Path is %q", m.Method, m.URLPath)
+}
+
+func Unique[T comparable](s []T) []T {
+	inResult := make(map[T]bool)
+	var result []T
+	for _, str := range s {
+		if _, ok := inResult[str]; !ok {
+			inResult[str] = true
+			result = append(result, str)
+		}
+	}
+	return result
 }

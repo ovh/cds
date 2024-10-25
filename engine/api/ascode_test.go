@@ -16,13 +16,13 @@ import (
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -60,14 +60,12 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	a, _ := assets.InsertService(t, db, "Test_postImportAsCodeHandler", sdk.TypeRepositories)
 	b, _ := assets.InsertService(t, db, "Test_VCSService", sdk.TypeVCS)
@@ -143,13 +141,12 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", sdk.TypeRepositories)
 	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", sdk.TypeVCS)
@@ -168,20 +165,6 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 		func(r *http.Request) (*http.Response, error) {
 			t.Logf("RequestURI: %s", r.URL.Path)
 			switch r.URL.Path {
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				body := new(bytes.Buffer)
-				w := new(http.Response)
-				enc := json.NewEncoder(body)
-				w.Body = io.NopCloser(body)
-				if err := enc.Encode(hookInfo); err != nil {
-					return writeError(w, err)
-				}
-				w.StatusCode = http.StatusOK
-				return w, nil
 			case "/vcs/github/repos/go-repo/branches":
 				b := sdk.VCSBranch{
 					Default:      true,
@@ -286,13 +269,12 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Add application
 	appS := `version: v1.0
@@ -303,7 +285,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, *p, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, *p, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	assert.NoError(t, globalError)
 
 	app.FromRepository = repoURL

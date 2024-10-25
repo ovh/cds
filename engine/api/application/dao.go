@@ -22,6 +22,7 @@ type dbApplication struct {
 func (e dbApplication) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ProjectID, e.Name}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ProjectID}}{{.Name}}",
 		"{{print .ProjectID}}{{.Name}}",
 	}
 }
@@ -38,7 +39,6 @@ var LoadOptions = struct {
 	WithClearKeys                  LoadOptionFunc
 	WithDeploymentStrategies       LoadOptionFunc
 	WithClearDeploymentStrategies  LoadOptionFunc
-	WithVulnerabilities            LoadOptionFunc
 	WithIcon                       LoadOptionFunc
 }{
 	Default:                        loadDefaultDependencies,
@@ -48,7 +48,6 @@ var LoadOptions = struct {
 	WithClearKeys:                  loadClearKeys,
 	WithDeploymentStrategies:       loadDeploymentStrategies,
 	WithClearDeploymentStrategies:  loadDeploymentStrategiesWithClearPassword,
-	WithVulnerabilities:            loadVulnerabilities,
 	WithIcon:                       loadIcon,
 }
 

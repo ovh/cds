@@ -1,0 +1,20 @@
+<div class="banner" *ngIf="v2BannerVisible">
+    CDS Ascode v2 is enabled for this project. It is currently in active development, some features may be missing or
+    incomplete.
+    <div class="close" (click)="clickCloseBanner()">
+        <span nz-icon nzType="close" nzTheme="outline"></span>
+    </div>
+</div>
+<div class="body">
+    <ng-container *ngIf="project">
+        <app-project-activity-bar [project]="project"></app-project-activity-bar>
+        <div class="content">
+            <router-outlet></router-outlet>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="!project">
+        <div class="loading">
+            <nz-spin nzTip="Loading project...."></nz-spin>
+        </div>
+    </ng-container>
+</div>

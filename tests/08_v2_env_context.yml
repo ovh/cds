@@ -1,0 +1,146 @@
+name: Env context
+vars:
+  cds_project: "ITV2ENVCONTEXT"
+  git_repo: "it_v2_env_context"
+  cds_workflow: "WorkflowEnvContext"
+testcases:
+- name: Prepare test
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+    - name: "Display username"
+      info: "Connected CDS user is {{.cdsUser}}"
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+    - name: Create variable set item var1
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 var1 '{\"key\": \"value\"}' string --force"
+    - name: Create variable set item secret one line
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 varSecret myLongSecret secret"
+    - name: Create variable set item secret multiline line
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 myMultilineSecret \"secretMultiline1 \n secretMultiline2\" secret" 
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+      
+- name: Push workflow file
+  steps:
+    - type: v2_push_cds_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        worker-models/debian.yml:
+          name: docker-debian
+          osarch: linux/amd64
+          type: docker
+          spec:
+            image: buildpack-deps:buster
+        workflows/envcontext.yaml:
+          name: {{.cds_workflow}}
+          on: [push]
+          env:
+            foo: barWorkflow
+          jobs:
+            overrideEnv:
+              vars: [varset1]
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              env:
+                foo: barJob
+              steps:
+                - run: "echo ${{ env.foo }}"
+                  env:
+                    foo: barStep
+                  id: stepEnv
+                - run: "echo ${{ env.foo }}"
+                  id: jobEnv
+                - run: "echo $CDS_WORKFLOW"
+                  id: globEnv
+                - run: "echo ${{ vars.varset1.var1.key }}" 
+                  id: stringVar
+                - run: "echo ${{ vars.varset1.varSecret }}" 
+                  id: secretVar 
+                - run: "echo \"${{ vars.varset1.myMultilineSecret }}\""
+                  id: varset1
+                - run: env
+                  id: env  
+            init:
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              steps:
+                - run: "echo ${{ env.foo }}"
+                  id: workflowEnv
+
+    - name: Check CDS project analyses status
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 100
+      delay: 1
+
+    - name: Check that the CDS workflow has at least one execution and is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      retry: 100
+      delay: 1
+      vars:
+        workflowRunID:
+          from: result.systemoutjson.systemoutjson0.id
+
+    - name: Get run info
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"
+    - name: Get job info
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        ls -l
+        # Check workflowEnv log content
+        cat {{.cds_workflow}}-1-1-init-workflowEnv | grep "barWorkflow"
+        # Check jobEnv log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-jobEnv | grep "barJob"
+        # Check stepEnv log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-stepEnv | grep "barStep"
+        # Check globEnv log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-globEnv | grep "{{.cds_workflow}}"
+        # Check stringVar log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-stringVar && cat {{.cds_workflow}}-1-1-overrideEnv-stringVar | grep "value"
+        # Check secretVar log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-secretVar && cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep "**********"
+        # Check multiline secret
+        cat {{.cds_workflow}}-1-1-overrideEnv-varset1 && cat {{.cds_workflow}}-1-1-overrideEnv-varset1 | grep "**********"
+      retry: 60
+      delay: 1

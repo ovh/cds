@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/mitchellh/hashstructure"
 )
 
 type ProjectIdentifiers struct {
@@ -28,33 +26,34 @@ func (projects Projects) Keys() []string {
 // Project represent a team with group of users and pipelines
 type Project struct {
 	ID           int64     `json:"-" yaml:"-" db:"id" cli:"-"`
-	Key          string    `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
+	Key          string    `json:"key" yaml:"key" db:"projectkey" cli:"key,key" action_metadata:"project-key"`
 	Name         string    `json:"name" yaml:"name" db:"name" cli:"name"`
 	Description  string    `json:"description" yaml:"description" db:"description" cli:"description"`
 	Icon         string    `json:"icon" yaml:"icon" db:"icon" cli:"-"`
 	Created      time.Time `json:"created" yaml:"created" db:"created" `
 	LastModified time.Time `json:"last_modified" yaml:"last_modified" db:"last_modified"`
 	// aggregates
-	Workflows        []Workflow           `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
-	WorkflowNames    IDNames              `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
-	Pipelines        []Pipeline           `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	PipelineNames    IDNames              `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
-	Applications     []Application        `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ApplicationNames IDNames              `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
-	ProjectGroups    GroupPermissions     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
-	Variables        []ProjectVariable    `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
-	Environments     []Environment        `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
-	EnvironmentNames IDNames              `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
-	Labels           []Label              `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Permissions      Permissions          `json:"permissions" yaml:"-" db:"-"  cli:"-"`
-	Metadata         Metadata             `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
-	Keys             []ProjectKey         `json:"keys,omitempty" yaml:"keys" db:"-" cli:"-"`
-	VCSServers       []VCSProject         `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
-	Integrations     []ProjectIntegration `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
-	Features         map[string]bool      `json:"features" yaml:"features" db:"-" cli:"-"`
-	Favorite         bool                 `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
-	URLs             URL                  `json:"urls" yaml:"-" db:"-" cli:"-"`
-	Organization     string               `json:"organization" yaml:"-" db:"-" cli:"-"`
+	Workflows         []Workflow           `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
+	WorkflowNames     IDNames              `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
+	Pipelines         []Pipeline           `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	PipelineNames     IDNames              `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	Applications      []Application        `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ApplicationNames  IDNames              `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ProjectGroups     GroupPermissions     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variables         []ProjectVariable    `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments      []Environment        `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
+	EnvironmentNames  IDNames              `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
+	Labels            []Label              `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
+	Permissions       Permissions          `json:"permissions" yaml:"-" db:"-"  cli:"-"`
+	Metadata          Metadata             `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
+	Keys              []ProjectKey         `json:"keys,omitempty" yaml:"keys" db:"-" cli:"-"`
+	VCSServers        []VCSProject         `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+	Integrations      []ProjectIntegration `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
+	Features          map[string]bool      `json:"features" yaml:"features" db:"-" cli:"-"`
+	Favorite          bool                 `json:"favorite,omitempty" yaml:"favorite" db:"-" cli:"favorite"`
+	URLs              URL                  `json:"urls" yaml:"-" db:"-" cli:"-"`
+	Organization      string               `json:"organization" yaml:"-" db:"-" cli:"-"`
+	WorkflowRetention int64                `json:"workflow_retention" yaml:"-" db:"workflow_retention" cli:"-"`
 }
 
 type GroupPermissions []GroupPermission
@@ -230,59 +229,6 @@ func (proj Project) GetIntegrationByID(id int64) *ProjectIntegration {
 	return nil
 }
 
-type ProjectVCSServerLink struct {
-	ID                       int64                      `json:"id" db:"id" cli:"-"`
-	ProjectID                int64                      `json:"project_id" db:"project_id" cli:"-"`
-	Name                     string                     `json:"name" db:"name" cli:"name"`
-	Username                 string                     `json:"username" db:"username" cli:"username"`
-	VCSProject               string                     `json:"vcs_project" db:"vcs_project" cli:"vcs_project"` // not used for the moment
-	ProjectVCSServerLinkData []ProjectVCSServerLinkData `json:"-" db:"-"`
-}
-
-func (l ProjectVCSServerLink) Get(key string) (string, bool) {
-	for _, d := range l.ProjectVCSServerLinkData {
-		if d.Key == key {
-			return d.Value, true
-		}
-	}
-	return "", false
-}
-
-func (l *ProjectVCSServerLink) Set(key, value string) {
-	for i := range l.ProjectVCSServerLinkData {
-		d := &l.ProjectVCSServerLinkData[i]
-		if d.Key == key {
-			d.Value = value
-			return
-		}
-	}
-	l.ProjectVCSServerLinkData = append(l.ProjectVCSServerLinkData, ProjectVCSServerLinkData{
-		ProjectVCSServerLinkID: l.ID,
-		Key:                    key,
-		Value:                  value,
-	})
-}
-
-type ProjectVCSServerLinkData struct {
-	ID                     int64  `json:"id" db:"id"`
-	ProjectVCSServerLinkID int64  `json:"project_vcs_server_link_id" db:"project_vcs_server_link_id"`
-	Key                    string `json:"key" db:"key"`
-	Value                  string `json:"value" db:"cipher_value" gorpmapping:"encrypted,ID,ProjectVCSServerLinkID"`
-}
-
-// ProjectVCSServer represents associations between a project and a vcs server
-type ProjectVCSServer struct {
-	Name     string            `json:"name" yaml:"name" db:"-" cli:"name"`
-	Username string            `json:"username" yaml:"username" db:"-" cli:"username"`
-	Data     map[string]string `json:"-" yaml:"data" db:"-" cli:"-"`
-}
-
-// Hash creating a unique hash value
-func (vcs ProjectVCSServer) Hash() uint64 {
-	hash, _ := hashstructure.Hash(vcs, nil)
-	return hash
-}
-
 // ProjectVariableAudit represents an audit on a project variable
 type ProjectVariableAudit struct {
 	ID             int64            `json:"id" yaml:"-" db:"id"`
@@ -316,7 +262,7 @@ func (a *Metadata) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal Metadata")
 }
 
-//LastModification is stored in cache and used for ProjectLastUpdates computing
+// LastModification is stored in cache and used for ProjectLastUpdates computing
 type LastModification struct {
 	Key          string `json:"key,omitempty"`
 	Name         string `json:"name"`
@@ -350,7 +296,7 @@ const (
 	ProjectIntegrationsLastModificationType = "project.integrations"
 )
 
-//ProjectLastUpdates update times of project, application and pipelines
+// ProjectLastUpdates update times of project, application and pipelines
 // Deprecated
 type ProjectLastUpdates struct {
 	LastModification

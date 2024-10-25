@@ -4,12 +4,18 @@ import (
 	"time"
 )
 
+type WorkerDirectories struct {
+	WorkingDir string
+	BaseDir    string
+}
+
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
 	ID           string    `json:"id" cli:"-" db:"id"`
 	Name         string    `json:"name" cli:"name,key" db:"name"`
 	LastBeat     time.Time `json:"lastbeat" cli:"lastbeat" db:"last_beat"`
 	ModelID      *int64    `json:"model_id" cli:"-"  db:"model_id"`
+	ModelName    *string   `json:"model_name" cli:"-"  db:"model_name"`
 	JobRunID     *int64    `json:"job_run_id" cli:"-"  db:"job_run_id"`
 	Status       string    `json:"status" cli:"status" db:"status"` // Waiting, Building, Disabled, Unknown
 	HatcheryID   *int64    `json:"hatchery_id,omitempty" cli:"-" db:"hatchery_id"`
@@ -41,6 +47,7 @@ type WorkflowNodeJobRunData struct {
 	NodeJobRun               WorkflowNodeJobRun
 	Secrets                  []Variable
 	Features                 map[FeatureName]bool
+	AscodeActions            map[string]V2Action
 	Number                   int64
 	SubNumber                int64
 	SigningKey               string

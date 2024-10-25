@@ -16,15 +16,6 @@ func (c client) PluginsList() ([]sdk.GRPCPlugin, error) {
 	return res, nil
 }
 
-func (c client) PluginsGet(name string) (*sdk.GRPCPlugin, error) {
-	path := "/admin/plugin/" + name
-	res := sdk.GRPCPlugin{}
-	if _, err := c.GetJSON(context.Background(), path, &res); err != nil {
-		return nil, err
-	}
-	return &res, nil
-}
-
 func (c client) PluginAdd(p *sdk.GRPCPlugin) error {
 	_, err := c.PostJSON(context.Background(), "/admin/plugin", p, p)
 	return err
@@ -64,12 +55,17 @@ func (c client) PluginGetBinary(name, os, arch string, w io.Writer) error {
 	path := fmt.Sprintf("/download/plugin/%s/binary/%s/%s?accept-redirect=true", name, os, arch)
 	var reader io.ReadCloser
 	var err error
+	var httpCode int
 
-	reader, _, _, err = c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", path, nil)
+	reader, _, httpCode, err = c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", path, nil)
 	if err != nil {
 		return err
 	}
 	defer reader.Close()
+
+	if httpCode >= 400 {
+		return newAPIError(fmt.Errorf("HTTP %d", httpCode))
+	}
 
 	_, err = io.Copy(w, reader)
 	return err

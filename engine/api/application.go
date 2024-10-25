@@ -80,7 +80,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 			if requestedUser != nil {
 				groupIDs = requestedUser.GetGroupIDs()
 			} else {
-				groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+				groupIDs = getUserConsumer(ctx).GetGroupIDs()
 			}
 
 			projectPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, groupIDs)
@@ -120,7 +120,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		withUsage := service.FormBool(r, "withUsage")
 		withIcon := service.FormBool(r, "withIcon")
 		withDeploymentStrategies := service.FormBool(r, "withDeploymentStrategies")
-		withVulnerabilities := service.FormBool(r, "withVulnerabilities")
 
 		loadOptions := []application.LoadOptionFunc{
 			application.LoadOptions.WithVariables,
@@ -130,9 +129,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 		if withDeploymentStrategies {
 			loadOptions = append(loadOptions, application.LoadOptions.WithDeploymentStrategies)
-		}
-		if withVulnerabilities {
-			loadOptions = append(loadOptions, application.LoadOptions.WithVulnerabilities)
 		}
 		if withIcon {
 			loadOptions = append(loadOptions, application.LoadOptions.WithIcon)
@@ -195,13 +191,9 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		applicationName := vars["applicationName"]
 		remote := r.FormValue("remote")
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
+		db := api.mustDB()
 
-		app, err := application.LoadByName(ctx, tx, projectKey, applicationName, application.LoadOptions.Default)
+		app, err := application.LoadByName(ctx, db, projectKey, applicationName, application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load application %s for project %s from db", applicationName, projectKey)
 		}
@@ -216,7 +208,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, app.VCSServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, projectKey, app.VCSServer)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get vcs server %s for project %s", app.VCSServer, projectKey))
 		}
@@ -237,14 +229,17 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		}
 		resp.Tags = tags
 
-		remotes, err := client.ListForks(ctx, repositoryFullname)
-		if err != nil {
-			return sdk.WrapError(err, "cannot get remotes from repository %s", repositoryFullname)
-		}
-		resp.Remotes = remotes
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
+		if remote == "" {
+			remotes, err := client.ListForks(ctx, repositoryFullname)
+			if err != nil {
+				return sdk.WrapError(err, "cannot get remotes from repository %s", repositoryFullname)
+			}
+			resp.Remotes = remotes
+			resp.Remotes = append(remotes, sdk.VCSRepo{
+				Name:     app.RepositoryFullname,
+				Slug:     app.RepositoryFullname,
+				Fullname: app.RepositoryFullname,
+			})
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)
@@ -288,7 +283,7 @@ func (api *API) addApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishAddApplication(ctx, proj.Key, app, getAPIConsumer(ctx))
+		event.PublishAddApplication(ctx, proj.Key, app, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -321,7 +316,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishDeleteApplication(ctx, projectKey, *app, getAPIConsumer(ctx))
+		event.PublishDeleteApplication(ctx, projectKey, *app, getUserConsumer(ctx))
 
 		return nil
 	}
@@ -402,12 +397,12 @@ func cloneApplication(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			return sdk.WithStack(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable type %s", newVar.Type))
 		}
 
-		if err := application.InsertVariable(db, newApp.ID, newVar, getAPIConsumer(ctx)); err != nil {
+		if err := application.InsertVariable(db, newApp.ID, newVar, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cloneApplication> Cannot add variable %s in application %s", newVar.Name, newApp.Name)
 		}
 	}
 
-	event.PublishAddApplication(ctx, proj.Key, *newApp, getAPIConsumer(ctx))
+	event.PublishAddApplication(ctx, proj.Key, *newApp, getUserConsumer(ctx))
 
 	return nil
 }
@@ -442,7 +437,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithClearKeys)
+		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithClearKeys, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
 		}
@@ -497,7 +492,19 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 		// create keys
 		for i := range a.Keys {
 			k := &a.Keys[i]
-			newKey, err := keys.GenerateKey(k.Name, k.Type)
+			var newKey sdk.Key
+			var err error
+			switch k.Type {
+			case sdk.KeyTypePGP:
+				var email string
+				email, err = api.gpgKeyEmailAddress(ctx, key, k.Name)
+				if err != nil {
+					return err
+				}
+				newKey, err = keys.GeneratePGPKeyPair(k.Name, "Application key generated by CDS", email)
+			case sdk.KeyTypeSSH:
+				newKey, err = keys.GenerateSSHKey(k.Name)
+			}
 			if err != nil {
 				return err
 			}
@@ -510,7 +517,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			a.RepositoryStrategy.Password = rootApp.RepositoryStrategy.Password
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 		a.ProjectID = proj.ID
 		app, err := application.ExportApplication(ctx, tx, a, project.EncryptWithBuiltinKey, fmt.Sprintf("app:%d:%s", appDB.ID, branch))
 		if err != nil {
@@ -603,7 +610,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishUpdateApplication(ctx, projectKey, *app, old, getAPIConsumer(ctx))
+		event.PublishUpdateApplication(ctx, projectKey, *app, old, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 
@@ -647,7 +654,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 			return sdk.WrapError(err, "unable to commit tx")
 		}
 
-		event.PublishUpdateApplication(ctx, projectKey, *app, oldApp, getAPIConsumer(ctx))
+		event.PublishUpdateApplication(ctx, projectKey, *app, oldApp, getUserConsumer(ctx))
 
 		return nil
 	}

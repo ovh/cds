@@ -19,10 +19,10 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -40,7 +40,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
 	assert.NoError(t, err)
@@ -48,13 +48,12 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -234,7 +233,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
 	assert.NoError(t, err)
@@ -242,13 +241,12 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -424,13 +422,12 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -547,7 +544,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	manualEvent.Payload = map[string]string{
 		"git.branch": "feat/branch",
 	}
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -578,13 +575,12 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	srvs, err := services.LoadAll(context.Background(), db)
 	require.NoError(t, err)
@@ -694,7 +690,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		"git.hash":   "currentcommit",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -725,13 +721,12 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter", sdk.TypeVCS)
 	defer func() {
@@ -917,7 +912,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 		"git.repository": "richardlt/demo",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -953,21 +948,19 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
-	vcsServer2 := sdk.ProjectVCSServerLink{
+	vcsServer2 := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "stash",
+		Type:      sdk.VCSTypeBitbucketServer,
 	}
-	vcsServer2.Set("token", "foo")
-	vcsServer2.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1149,7 +1142,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -1195,21 +1188,19 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
-	vcsServer2 := sdk.ProjectVCSServerLink{
+	vcsServer2 := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "stash",
+		Type:      sdk.VCSTypeBitbucketServer,
 	}
-	vcsServer2.Set("token", "foo")
-	vcsServer2.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1381,7 +1372,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -1427,21 +1418,19 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
-	vcsServer2 := sdk.ProjectVCSServerLink{
+	vcsServer2 := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "stash",
+		Type:      sdk.VCSTypeBitbucketServer,
 	}
-	vcsServer2.Set("token", "foo")
-	vcsServer2.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1571,7 +1560,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -1614,21 +1603,19 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
-	vcsServer2 := sdk.ProjectVCSServerLink{
+	vcsServer2 := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "stash",
+		Type:      sdk.VCSTypeBitbucketServer,
 	}
-	vcsServer2.Set("token", "foo")
-	vcsServer2.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1759,7 +1746,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -1788,6 +1775,157 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	assert.Equal(t, "super commit", mapParams2["git.message"])
 }
 
+func TestGitParamRunWithTag(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	u, _ := assets.InsertAdminUser(t, db)
+
+	// Create project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
+	vcsServer := &sdk.VCSProject{
+		ProjectID: proj.ID,
+		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
+	}
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
+
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
+	defer func() {
+		services.Delete(db, mockVCSSservice)
+	}()
+
+	//This is a mock for the vcs service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = io.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo":
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET BRANCH TO GET LATEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "666666",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/tags/v1.0.0":
+				b := sdk.VCSTag{
+					Tag:  "v1.0.0",
+					Hash: "123456",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
+			case "/vcs/github/repos/sguiheux/demo/commits/123456":
+				c := sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:  "steven.guiheux",
+						Email: "sg@foo.bar",
+					},
+					Hash:      "123456",
+					Message:   "super commit",
+					Timestamp: time.Now().Unix(),
+				}
+				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
+
+	pip := createEmptyPipeline(t, db, cache, proj, u)
+	app1 := createApplication1(t, db, cache, proj, u)
+
+	// RELOAD PROJECT WITH DEPENDENCIES
+	proj.Applications = append(proj.Applications, *app1)
+	proj.Pipelines = append(proj.Pipelines, *pip)
+
+	// WORKFLOW TO RUN
+	w := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:     proj.Pipelines[0].ID,
+					ApplicationID:  proj.Applications[0].ID,
+					DefaultPayload: map[string]string{"foo": "bar"},
+				},
+			},
+		},
+		Applications: map[int64]sdk.Application{
+			proj.Applications[0].ID: proj.Applications[0],
+		},
+		Pipelines: map[int64]sdk.Pipeline{
+			proj.Pipelines[0].ID: proj.Pipelines[0],
+		},
+	}
+
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+
+	// CREATE RUN
+	var manualEvent sdk.WorkflowNodeRunManual
+	manualEvent.Payload = map[string]string{
+		"git.tag":  "v1.0.0",
+		"my.value": "bar",
+	}
+
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
+	}
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
+	assert.NoError(t, err)
+	wr.Workflow = w
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
+	assert.NoError(t, errR)
+
+	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
+	assert.Equal(t, 1, len(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID]))
+
+	mapParams := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].BuildParameters)
+	assert.Equal(t, "v1.0.0", mapParams["git.tag"])
+	assert.Equal(t, "123456", mapParams["git.hash"])
+}
+
 // Payload: branch only
 func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
@@ -1797,21 +1935,12 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	vcsServer = sdk.ProjectVCSServerLink{
-		ProjectID: proj.ID,
-		Name:      "stash",
-	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1958,7 +2087,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		"my.value":   "bar",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -2000,21 +2129,12 @@ func TestGitParamWithJoin(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	vcsServer = sdk.ProjectVCSServerLink{
-		ProjectID: proj.ID,
-		Name:      "stash",
-	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -2171,7 +2291,7 @@ func TestGitParamWithJoin(t *testing.T) {
 		"my.value":   "bar",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -2305,7 +2425,7 @@ func TestIntegrationParam(t *testing.T) {
 		"my.value":   "bar",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -2338,21 +2458,12 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	vcsServer = sdk.ProjectVCSServerLink{
-		ProjectID: proj.ID,
-		Name:      "stash",
-	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -2508,7 +2619,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		"my.value":   "bar",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -2557,13 +2668,12 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -2701,7 +2811,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual:         &manualEvent,
 		AuthConsumerID: consumer.ID,
@@ -2821,7 +2931,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	assert.NoError(t, globalError)
 	return app
 }
@@ -2836,7 +2946,7 @@ vcs_ssh_key: proj-bloublou
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	assert.NoError(t, globalError)
 	return app
 }
@@ -2851,7 +2961,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	assert.NoError(t, globalError)
 	return app
 }
@@ -2863,7 +2973,7 @@ name: app-no-repo
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	assert.NoError(t, globalError)
 	return app
 }

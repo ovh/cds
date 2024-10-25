@@ -41,7 +41,7 @@
                         </a>
                     </nz-form-control>
                 </nz-form-item>
-                <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="900px"
+                <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="1300px"
                           (nzOnCancel)="requirementModalVisible = false">
                     <div *nzModalContent>
                         <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
@@ -51,7 +51,6 @@
                         <div class="requirementForm" *ngIf="action.editable">
                             <app-requirements-form [workerModels]="workerModels" [suggest]="suggest"
                                                    [config]="configRequirements"
-                                                   [modalVisible]="requirementModalVisible"
                                                    (event)="requirementEvent($event)">
                             </app-requirements-form>
                         </div>
@@ -69,12 +68,12 @@
                     <nz-form-control>
                         <ng-container *ngIf="action.editable;">
                     <textarea nz-input [disabled]="!action.editable" name="actionDescription"
-                              placeholder="Markdown description"
+                              placeholder="description"
                               [(ngModel)]="action.description" rows="{{getDescriptionHeight()}}"
                               (keydown)="action.hasChanged = true; keyEvent($event)"></textarea>
                         </ng-container>
                         <ng-container *ngIf="!action.editable;">
-                            <markdown [data]="action.description"></markdown>
+                            <pre>{{action.description}}</pre>
                         </ng-container>
                     </nz-form-control>
                 </nz-form-item>

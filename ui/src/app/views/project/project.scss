@@ -1,0 +1,53 @@
+@import "../../../common";
+
+:host {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .banner {
+        position: relative;
+        height: 50px;
+        background-color: $cds_color_teal;
+        text-align: center;
+        line-height: 50px;
+        color: white;
+        font-weight: 600;
+
+        .close {
+            position: absolute;
+            top: 0;
+            right: 20px;
+            height: 18px;
+            width: 18px;
+            font-size: 18px;
+            cursor: pointer;
+
+            &:hover {
+                color: white;
+            }
+
+            .icon {
+                margin: unset;
+            }
+        }
+    }
+
+    .body {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        flex-direction: row;
+        height: 100%;
+
+        .content {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .loading {
+            width: 100%;
+        }
+    }
+}

@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // WorkflowSendEvent Send event on workflow run
@@ -54,6 +55,7 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 			log.Warn(ctx, "workflowSendEvent > Cannot load workflow node run: %v", err)
 			continue
 		}
+		ctx := context.WithValue(ctx, cdslog.NodeRunID, nr.ID)
 
 		workDB, err := workflow.LoadWorkflowFromWorkflowRunID(db, wr.ID)
 		if err != nil {
@@ -64,13 +66,15 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 		eventsNotif := notification.GetUserWorkflowEvents(ctx, db, api.Cache, wr.Workflow.ProjectID, wr.Workflow.ProjectKey, workDB.Name, wr.Workflow.Notifications, previousNodeRun, *nr)
 		event.PublishWorkflowNodeRun(ctx, *nr, wr.Workflow, eventsNotif)
 		e := &workflow.VCSEventMessenger{}
-		if err := e.SendVCSEvent(ctx, db, api.Cache, proj, *wr, wnr); err != nil {
+		if err := e.SendVCSEvent(ctx, db, api.Cache, proj, *wr, wnr, api.Config.URL.UI); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Warn(ctx, "WorkflowSendEvent> Cannot send vcs notification err:%v", err)
 		}
 	}
 
 	for _, jobrun := range report.Jobs() {
+		ctx := context.WithValue(ctx, cdslog.PermJobID, jobrun.ID)
+
 		noderun, err := workflow.LoadNodeRunByID(ctx, db, jobrun.WorkflowNodeRunID, workflow.LoadRunOptions{})
 		if err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
@@ -100,6 +104,7 @@ func NewEventJobSummary(wr sdk.WorkflowRun, noderun sdk.WorkflowNodeRun, jobrun 
 		WorkflowRunNumber:    int(noderun.Number),
 		WorkflowRunSubNumber: int(noderun.SubNumber),
 		Created:              &jobrun.Queued,
+		CreatedHour:          jobrun.Queued.Hour(),
 		Pipeline:             noderun.WorkflowNodeName,
 		Job:                  jobrun.Job.Action.Name,
 		GitVCS:               noderun.VCSServer,

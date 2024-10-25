@@ -1,0 +1,22 @@
+name: hatchery initialization
+
+testcases:
+  - name: prepareTest
+    steps:
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery remove {{.hatchery.name}} --force
+
+  - name: addHatchery
+    steps:
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery add {{.hatchery.name}} --format json
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemoutjson.token ShouldNotBeEmpty
+        vars:
+          hatcheryToken:
+            from: result.systemoutjson.token
+      - script: echo "{{.hatcheryToken}}" > tmp.hatcheryv2.token
+  - name: createHatcheryPermission
+    steps:
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region add default
+      - script: export HATCHERY_NAME={{.hatchery.name}} && envsubst < ./fixtures/rbac/rbac_hatchery.yml > ./fixtures/rbac/rbac_hatchery_replaced.yml
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/rbac_hatchery_replaced.yml --force

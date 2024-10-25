@@ -16,7 +16,6 @@ import { ApplicationStateModel } from 'app/store/applications.state';
 import { ProjectStateModel } from 'app/store/project.state';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
@@ -29,6 +28,7 @@ import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import {
+    ConfigService,
     MonitoringService,
     RouterService,
     ServicesModule,
@@ -48,6 +48,7 @@ describe('CDS: Application', () => {
     let appStore: ApplicationStore;
     let store: Store;
     let router: Router;
+    let routerService: RouterService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -65,7 +66,6 @@ describe('CDS: Application', () => {
                 NavbarService,
                 ApplicationWorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
-                { provide: Router, useClass: MockRouter },
                 { provide: ToastService, useClass: MockToast },
                 TranslateService,
                 TranslateLoader,
@@ -76,7 +76,8 @@ describe('CDS: Application', () => {
                 Store,
                 UserService,
                 RouterService,
-                AuthenticationService
+                AuthenticationService,
+                ConfigService
             ],
             imports: [
                 ApplicationModule,
@@ -93,6 +94,8 @@ describe('CDS: Application', () => {
         appStore = injector.get(ApplicationStore);
         store = injector.get(Store);
         router = injector.get(Router);
+        routerService = injector.get(RouterService);
+        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({ key: 'key1', appName: 'app1' }));
     });
 
     afterEach(() => {
@@ -292,11 +295,6 @@ class MockToast {
     }
     error(title: string, msg: string) {
 
-    }
-}
-
-class MockRouter {
-    public navigate() {
     }
 }
 

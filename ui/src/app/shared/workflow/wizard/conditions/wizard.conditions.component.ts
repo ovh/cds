@@ -1,23 +1,21 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-// eslint-disable-next-line max-len
 import { WNode, WNodeContext, WNodeHook, Workflow, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Table } from 'app/shared/table/table';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { PreferencesState } from 'app/store/preferences.state';
 import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
-import { Observable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-node-conditions',
@@ -34,11 +32,9 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     @ViewChild('textareaCodeMirror') codemirror: any;
 
-    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     editableNode: WNode;
     nodeSub: Subscription;
 
-    @Select(WorkflowState.getSelectedHook()) hook$: Observable<WNodeHook>;
     editableHook: WNodeHook;
     hookSub: Subscription;
 
@@ -55,27 +51,26 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     triggerConditions: WorkflowTriggerConditionCache;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _workflowService: WorkflowService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef
     ) {
         super();
-        this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
-        this.editMode = this.store.selectSnapshot(WorkflowState).editMode;
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     getData(): Array<WorkflowNodeCondition> {
         return undefined;
     }
 
     ngOnInit(): void {
-        this.nodeSub = this.node$.subscribe(n => {
-            if (n && !this.store.selectSnapshot(WorkflowState).hook) {
+        this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
+            if (n && !this._store.selectSnapshot(WorkflowState).hook) {
                 this.editableNode = cloneDeep(n);
                 delete this.editableHook;
                 if (!this.editableNode.context) {
@@ -97,7 +92,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             }
             this._cd.markForCheck();
         });
-        this.hookSub = this.hook$.subscribe(h => {
+        this.hookSub = this._store.select(WorkflowState.getSelectedHook()).subscribe(h => {
             if (h) {
                 this.editableHook = cloneDeep(h);
                 delete this.editableNode;
@@ -129,12 +124,14 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             readOnly: this.readonly,
         };
 
-        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-            if (this.codemirror && this.codemirror.instance) {
-                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-        });
+        this.themeSubscription = this._store.select(PreferencesState.theme)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror && this.codemirror.instance) {
+                    this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+            });
 
         if (this.editableNode) {
             this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.editableNode.id)
@@ -237,7 +234,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         }
 
 
-        this.store.dispatch(new UpdateWorkflow({
+        this._store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow

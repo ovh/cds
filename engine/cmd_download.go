@@ -6,8 +6,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/mholt/archiver"
 	"github.com/rockbears/log"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
@@ -114,7 +114,13 @@ func downloadTarGzFromGithub(ctx context.Context, confPath, filename string) {
 	}
 
 	fullpath := path.Join(confPath, filename)
-	if err := archiver.DefaultTarGz.Unarchive(fullpath, confPath); err != nil {
+	src, err := os.Open(fullpath)
+	if err != nil {
+		sdk.Exit("Unable to open source file %s failed: %v", fullpath, err)
+	}
+	defer src.Close()
+
+	if err := sdk.UntarGz(afero.NewOsFs(), confPath, src); err != nil {
 		sdk.Exit("Unarchive %s failed: %v", filename, err)
 	}
 	fmt.Printf("Unarchive to %s\n", confPath)

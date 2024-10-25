@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Store } from '@ngxs/store';
 import { MonitoringStatusLine, MonitoringStatusLineUtil } from 'app/model/monitoring.model';
 import { Service } from 'app/model/service.model';
 import { ServiceService } from 'app/service/service/service.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
+import { PreferencesState } from 'app/store/preferences.state';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-service-show',
@@ -33,7 +34,7 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
     constructor(
         private _serviceService: ServiceService,
         private _route: ActivatedRoute,
-        private _theme: ThemeStore,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
@@ -66,9 +67,9 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
                 name: 'Status',
                 type: ColumnType.LABEL,
                 selector: (c: MonitoringStatusLine) => ({
-                        class: MonitoringStatusLineUtil.color(c),
-                        value: c.status
-                    })
+                    class: MonitoringStatusLineUtil.color(c),
+                    value: c.status
+                })
             },
             <Column<MonitoringStatusLine>>{
                 name: 'common_value',
@@ -94,21 +95,21 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
                     return line.status.toLowerCase().indexOf(lowerFilter) !== -1;
                 }
                 return line.status.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.value.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                (line.service && line.service.toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1);
+                    line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    line.value.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    line.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    (line.service && line.service.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1);
             };
         };
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);

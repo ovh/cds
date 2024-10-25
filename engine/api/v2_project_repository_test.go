@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/go-gorp/gorp"
-	"github.com/golang/mock/gomock"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/services/mock_services"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -39,7 +39,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -48,6 +48,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 		services.NewClient = services.NewDefaultClient
 	}()
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/v2/repository/event/vcs-github/ovh%2Fcds", gomock.Any(), gomock.Any(), gomock.Any())
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/ovh/cds", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
@@ -60,15 +61,12 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 				return nil, 200, nil
 			},
 		).MaxTimes(1)
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/task", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/ovh/cds/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	// Creation request
 	repo := sdk.ProjectRepository{
-		Name: "ovh/cds",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:       "ovh/cds",
+		ProjectKey: proj.Key,
 	}
 
 	vars := map[string]string{
@@ -99,8 +97,6 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 	var repositories []sdk.ProjectRepository
 	require.NoError(t, json.Unmarshal(w2.Body.Bytes(), &repositories))
 	require.Len(t, repositories, 1)
-
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/task/"+repositories[0].ID, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	// Then Delete repository
 	varsDelete := vars

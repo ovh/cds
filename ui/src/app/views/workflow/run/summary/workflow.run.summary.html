@@ -47,7 +47,6 @@
                                 [disabled]="loadingAction || !canExecute"
                                 [class.loading]="loadingAction" (click)="stopWorkflow()"
                                 *ngIf="workflowRun.status === pipelineStatusEnum.WAITING || workflowRun.status === pipelineStatusEnum.BUILDING">
-                            <i class="stop icon"></i>
                             Stop
                         </button>
                     </nz-col>

@@ -27,6 +27,11 @@ export class AuthentifiedUser {
     organization: string;
 }
 
+export class UserLink {
+    username: string;
+    type: string;
+}
+
 export class User {
     id: number;
     username: string;
@@ -58,4 +63,12 @@ export class Schema {
     pipeline: string;
     environment: string;
     workflow: string;
+}
+
+export class UserGPGKey {
+    id: string;
+    authentified_user_id: string;
+    key_id: string;
+    public_key: string;
+    created: string;
 }

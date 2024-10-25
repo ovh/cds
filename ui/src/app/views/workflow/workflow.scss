@@ -1,9 +1,5 @@
 @import "../../../common";
 
-.floatRight {
-  float: right;
-}
-
 .workflow-page {
     height: 100%;
     display: flex;
@@ -49,43 +45,36 @@ $sidebarWidth: 255px;
 }
 
 .labelFeature {
-    position: relative;
-    top: -3px;
-    margin-left: 10px;
-    margin-top: 5px;
-
-    nz-tag {
-      cursor: pointer;
-    }
+    margin-right: 10px;
+    cursor: pointer;
 
     i {
-      margin-right: 5px;
+        margin-right: 5px;
+    }
+
+    &.preview {
+        margin-right: 20px;
     }
 }
 
-i.favorite {
-  color: $cds_favorite_color;
-  &:hover {
-    opacity: 0.4;
-  }
-}
-.star {
-  cursor: pointer;
-  margin-left: 15px;
-  font-size: 1.3em;
+app-favorite-button {
+    margin-right: 10px;
 }
 
 .infoPopup {
     width: 450px;
     word-break: break-word;
+
     app-ascode-event {
-      min-height: 100px;
+        min-height: 100px;
     }
+
     .footer {
         display: flex;
         align-items: center;
+
         button {
-          margin-left: auto;
-      }
+            margin-left: auto;
+        }
     }
 }

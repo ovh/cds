@@ -57,6 +57,7 @@ type Author struct {
 	Email       string `json:"emailAddress"`
 	DisplayName string `json:"displayName"`
 	Slug        string `json:"slug"`
+	ID          int    `json:"id"`
 }
 
 type CommitsResponse struct {
@@ -67,10 +68,21 @@ type CommitsResponse struct {
 }
 
 type Commit struct {
-	Hash      string `json:"id"`
-	Author    Author `json:"author"`
-	Timestamp int64  `json:"authorTimestamp"`
-	Message   string `json:"message"`
+	Hash       string           `json:"id"`
+	Author     Author           `json:"author"`
+	Committer  Author           `json:"committer"`
+	Timestamp  int64            `json:"authorTimestamp"`
+	Message    string           `json:"message"`
+	Properties CommitProperties `json:"properties"`
+}
+
+type CommitProperties struct {
+	Signature CommitSignature `json:"signature"`
+}
+
+type CommitSignature struct {
+	IsVerified  bool   `json:"isVerified"`
+	Fingerprint string `json:"fingerprint"`
 }
 
 type Status struct {
@@ -134,7 +146,6 @@ type Repo struct {
 	Public  bool                        `json:"public"`
 	ScmID   string                      `json:"scmId"`
 	Project *sdk.BitbucketServerProject `json:"project"`
-	Link    *Link                       `json:"link"`
 	Links   *Links                      `json:"links"`
 }
 
@@ -177,4 +188,40 @@ type UsersPermissionResponse struct {
 type UserPermission struct {
 	User       sdk.BitbucketServerActor `json:"user"`
 	Permission string                   `json:"permission"`
+}
+
+type InsightReport struct {
+	Title    string              `json:"title"`
+	Detail   string              `json:"details,omitempty"`
+	Result   string              `json:"result,omitempty"`
+	Data     []InsightReportData `json:"data,omitempty"`
+	Reporter string              `json:"reporter,omitempty"`
+	Link     string              `json:"link,omitempty"`
+	LogoURL  string              `json:"logoUrl,omitempty"`
+}
+
+type InsightReportData struct {
+	Title string      `json:"title"`
+	Type  string      `json:"type"` // One of: BOOLEAN, DATE, DURATION, LINK, NUMBER, PERCENTAGE, TEXT
+	Value interface{} `json:"value"`
+}
+
+type InsightReportDataLink struct {
+	Text string `json:"linktext"`
+	Href string `json:"href"`
+}
+
+type ListContentResponse struct {
+	Values        []string `json:"values"`
+	Size          int      `json:"size"`
+	NextPageStart int      `json:"nextPageStart"`
+	IsLastPage    bool     `json:"isLastPage"`
+}
+
+type FileContentResponse struct {
+	Lines      []FileContentResponseLine `json:"lines"`
+	IsLastPage bool                      `json:"isLastPage"`
+}
+type FileContentResponseLine struct {
+	Text string `json:"text"`
 }

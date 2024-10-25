@@ -1,9 +1,0 @@
-version: v1.0
-name: my_vcs_server
-type: gitea
-description: "it's the test vcs server on project"
-url: "${GITEA_HOST}"
-auth:
-  username: gituser
-  password: gitpwd
-

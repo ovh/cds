@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { EventService } from 'app/event.service';
@@ -19,7 +19,15 @@ import { EventState } from 'app/store/event.state';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first, map } from 'rxjs/operators';
 import { ParamData } from '../save-form/ascode.save-form.component';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+
+interface IModalData {
+    dataToSave: any,
+    dataType: string,
+    project: Project,
+    workflow: Workflow,
+    name: string,
+}
 
 @Component({
     selector: 'app-ascode-save-modal',
@@ -44,6 +52,8 @@ export class AsCodeSaveModalComponent implements OnDestroy {
     canSave = false;
     displayCloseButton = false;
 
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
+
     constructor(
         private _modal: NzModalRef,
         private _cd: ChangeDetectorRef,
@@ -60,6 +70,12 @@ export class AsCodeSaveModalComponent implements OnDestroy {
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
+        this.project = this.nzModalData.project;
+        this.workflow = this.nzModalData.workflow;
+        this.dataToSave = this.nzModalData.dataToSave;
+        this.dataType = this.nzModalData.dataType;
+        this.name = this.nzModalData.name;
+
         if (this.workflow && this.workflow.workflow_data.node.context) {
             let rootAppID = this.workflow.workflow_data.node.context.application_id;
             if (rootAppID) {

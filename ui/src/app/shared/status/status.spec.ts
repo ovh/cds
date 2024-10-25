@@ -29,7 +29,7 @@ describe('CDS: Parameter Value Component', () => {
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.green.check.icon')).toBeTruthy('Success icon not displayed');
+        expect(compiled.querySelector('.green.anticon-check')).toBeTruthy('Success icon not displayed');
     }));
 
     it('should display building loader', fakeAsync(() => {
@@ -59,7 +59,7 @@ describe('CDS: Parameter Value Component', () => {
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.remove.red.icon')).toBeTruthy('Fail icon not displayed');
+        expect(compiled.querySelector('.red.anticon-close')).toBeTruthy('Fail icon not displayed');
     }));
 
     it('should display disabled icon', fakeAsync(() => {
@@ -74,7 +74,7 @@ describe('CDS: Parameter Value Component', () => {
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.ban.grey.icon')).toBeTruthy('Disabled icon not displayed');
+        expect(compiled.querySelector('.anticon-stop')).toBeTruthy('Disabled icon not displayed');
     }));
 
     it('should display skipped icon', fakeAsync(() => {
@@ -89,7 +89,7 @@ describe('CDS: Parameter Value Component', () => {
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.ban.grey.icon')).toBeTruthy('Skipped icon not displayed');
+        expect(compiled.querySelector('.anticon-stop')).toBeTruthy('Skipped icon not displayed');
     }));
 
     it('should display waiting icon', fakeAsync(() => {
@@ -104,7 +104,7 @@ describe('CDS: Parameter Value Component', () => {
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.wait.blue.icon')).toBeTruthy('Waiting icon not displayed');
+        expect(compiled.querySelector('.anticon-field-time.blue')).toBeTruthy('Waiting icon not displayed');
     }));
 });
 

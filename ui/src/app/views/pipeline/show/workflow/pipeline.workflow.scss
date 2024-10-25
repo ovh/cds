@@ -26,25 +26,27 @@ ul {
           padding-bottom: 5px;
           position: relative;
 
-          .job.ui.segment {
+          .job.nzSegment {
             height: 51px;
-            border: 2px solid transparent;
+            border: 1px solid $cds_color_light_grey;
             display: flex;
+            text-align: center;
+            line-height: 50px;
           }
 
-          .job.ui.segment.inactive {
+          .job.nzSegment.inactive {
             background-color: $cds_color_light_grey;
             color: rgba(0, 0, 0, 0.5);
           }
 
-          .job.ui.segment.active {
+          .job.nzSegment.active {
             border: 2px solid $cds_color_teal;
             background-color: $cds_color_teal;
             color: white;
             font-weight: 600;
           }
 
-          .new.job.ui.segment {
+          .new.job.nzSegment {
             background-color: transparent;
             border: 1px dashed grey;
             display: flex;
@@ -170,6 +172,26 @@ ul {
   }
 }
 
+nz-col {
+  margin-bottom: 20px;
+}
+
+.saveBtn {
+  margin-left: 10px;
+}
+
+.orange {
+  color: $cds_color_orange;
+}
+
+nz-col.center {
+  text-align: center;
+}
+
 .mb130 {
   margin-bottom: 130px;
+}
+.move {
+  float: right;
+  font-size: 1.5em;
 }

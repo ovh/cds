@@ -15,7 +15,7 @@ var (
 	rootKey       = cache.Key("repositories", "operations")
 	processorKey  = cache.Key("repositories", "processor")
 	locksKey      = cache.Key("repositories", "locks")
-	lastAccessKey = cache.Key("repositories", "access")
+	lastAccessKey = cache.Key("repositories", "lastAccess")
 )
 
 type dao struct {
@@ -87,15 +87,15 @@ func (d *dao) unlock(ctx context.Context, uuid string) error {
 	return nil
 }
 
-func (d *dao) isExpired(ctx context.Context, uuid string) bool {
+func (d *dao) isExpired(ctx context.Context, uuid string) (time.Time, bool) {
 	k := cache.Key(lastAccessKey, uuid)
-	var b bool
-	find, err := d.store.Get(k, &b)
+	var v time.Time
+	find, err := d.store.Get(k, &v)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
-		return false
+		return v, false
 	}
-	return true
+	return v, true
 }

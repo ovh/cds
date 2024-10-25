@@ -155,19 +155,30 @@ func loadChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) e
 			child.AlwaysExecuted = edges[i].AlwaysExecuted
 			child.Enabled = edges[i].Enabled
 
-			// replace action parameter with value configured by user when he created the child action
-			params := make([]sdk.Parameter, len(child.Parameters))
-			for j := range child.Parameters {
-				params[j] = child.Parameters[j]
-				for k := range edges[i].Parameters {
-					if edges[i].Parameters[k].Name == params[j].Name {
-						params[j].Value = edges[i].Parameters[k].Value
-						break
+			if child.Type != sdk.AsCodeAction {
+				// replace action parameter with value configured by user when he created the child action
+				params := make([]sdk.Parameter, len(child.Parameters))
+				for j := range child.Parameters {
+					params[j] = child.Parameters[j]
+					for k := range edges[i].Parameters {
+						if edges[i].Parameters[k].Name == params[j].Name {
+							params[j].Value = edges[i].Parameters[k].Value
+							break
+						}
 					}
 				}
+				child.Parameters = params
+			} else {
+				child.Parameters = make([]sdk.Parameter, 0, len(edges[i].Parameters))
+				for _, ep := range edges[i].Parameters {
+					child.Parameters = append(child.Parameters, sdk.Parameter{
+						Name:        ep.Name,
+						Type:        ep.Type,
+						Value:       ep.Value,
+						Description: ep.Description,
+					})
+				}
 			}
-			child.Parameters = params
-
 			children[i] = child
 		}
 

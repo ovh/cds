@@ -1,6 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ThemeStore } from 'app/service/theme/theme.store';
+import { NgxsModule } from '@ngxs/store';
 import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
 import { SharedModule } from '../../shared.module';
 import { SharedService } from '../../shared.service';
@@ -13,10 +13,10 @@ describe('CDS: Parameter Value Component', () => {
             ],
             providers: [
                 SharedService,
-                RepoManagerService,
-                ThemeStore,
+                RepoManagerService
             ],
             imports: [
+                NgxsModule.forRoot(),
                 SharedModule,
                 HttpClientTestingModule
             ]

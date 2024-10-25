@@ -1,7 +1,8 @@
 .asciinema-player-wrapper {
-  position: relative;
-  text-align: center;
   outline: none;
+  height: 100%;
+  display: flex;
+  justify-content: center;
 }
 .asciinema-player-wrapper .title-bar {
   display: none;
@@ -33,12 +34,6 @@
 .asciinema-player-wrapper:fullscreen {
   background-color: #000;
   width: 100%;
-  height: 100%;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-justify-content: center;
-  justify-content: center;
   -webkit-align-items: center;
   align-items: center;
 }
@@ -54,12 +49,6 @@
 .asciinema-player-wrapper:-webkit-full-screen {
   background-color: #000;
   width: 100%;
-  height: 100%;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-justify-content: center;
-  justify-content: center;
   -webkit-align-items: center;
   align-items: center;
 }
@@ -75,12 +64,6 @@
 .asciinema-player-wrapper:-moz-full-screen {
   background-color: #000;
   width: 100%;
-  height: 100%;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-justify-content: center;
-  justify-content: center;
   -webkit-align-items: center;
   align-items: center;
 }
@@ -96,12 +79,6 @@
 .asciinema-player-wrapper:-ms-fullscreen {
   background-color: #000;
   width: 100%;
-  height: 100%;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-justify-content: center;
-  justify-content: center;
   -webkit-align-items: center;
   align-items: center;
 }
@@ -124,6 +101,8 @@
   -webkit-box-sizing: content-box;
   overflow: hidden;
   max-width: 100%;
+  border-radius: 4px;
+  font-size: 12px;
 }
 .asciinema-terminal {
   box-sizing: content-box;
@@ -140,26 +119,46 @@
   border-radius: 0;
   border-style: solid;
   cursor: text;
-  border-width: 0.5em;
+  border-width: 0.75em;
   font-family: Consolas, Menlo, 'Bitstream Vera Sans Mono', monospace, 'Powerline Symbols';
-  line-height: 1.3333333333em;
 }
 .asciinema-terminal .line {
   letter-spacing: normal;
   overflow: hidden;
-  height: 1.3333333333em;
 }
 .asciinema-terminal .line span {
   padding: 0;
   display: inline-block;
-  height: 1.3333333333em;
+  height: 100%;
 }
 .asciinema-terminal .line {
   display: block;
   width: 200%;
 }
+.asciinema-terminal .line .cursor-a {
+  display: inline-block;
+}
+.asciinema-terminal .line .cursor-b {
+  display: none;
+  border-radius: 0.05em;
+}
+.asciinema-terminal .line .blink {
+  visibility: hidden;
+}
+.asciinema-terminal.cursor .line .cursor-a {
+  display: none;
+}
+.asciinema-terminal.cursor .line .cursor-b {
+  display: inline-block;
+}
+.asciinema-terminal.blink .line .blink {
+  visibility: visible;
+}
 .asciinema-terminal .bright {
   font-weight: bold;
+}
+.asciinema-terminal .faint {
+  opacity: 0.5;
 }
 .asciinema-terminal .underline {
   text-decoration: underline;
@@ -167,14 +166,11 @@
 .asciinema-terminal .italic {
   font-style: italic;
 }
-.asciinema-terminal.font-small {
-  font-size: 12px;
+.asciinema-terminal .strikethrough {
+  text-decoration: line-through;
 }
-.asciinema-terminal.font-medium {
-  font-size: 18px;
-}
-.asciinema-terminal.font-big {
-  font-size: 24px;
+.asciinema-player .loading > .asciinema-terminal {
+  background-color: transparent;
 }
 .asciinema-player .control-bar {
   width: 100%;
@@ -187,20 +183,28 @@
   /* Chrome10-25,Safari5.1-6 */
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, #000000 25%, #000000 100%);
   /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-  color: #bbbbbb;
+  color: #bbb;
   box-sizing: content-box;
   line-height: 1;
   position: absolute;
-  bottom: -35px;
+  bottom: 0;
   left: 0;
-  transition: bottom 0.15s linear;
+  opacity: 0;
+  transition: opacity 0.15s linear;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  z-index: 30;
 }
 .asciinema-player .control-bar * {
   box-sizing: inherit;
   font-size: 0;
 }
 .asciinema-player .control-bar svg.icon path {
-  fill: #bbbbbb;
+  fill: #bbb;
 }
 .asciinema-player .control-bar .playback-button {
   display: block;
@@ -247,7 +251,7 @@
 }
 .asciinema-player .control-bar .progressbar .bar {
   display: block;
-  cursor: pointer;
+  cursor: default;
   height: 100%;
   padding-top: 15px;
   font-size: 0;
@@ -260,11 +264,11 @@
 .asciinema-player .control-bar .progressbar .bar .gutter span {
   display: inline-block;
   height: 100%;
-  background-color: #bbbbbb;
+  background-color: #bbb;
   border-radius: 3px;
 }
-.asciinema-player .control-bar.live .progressbar .bar {
-  cursor: default;
+.asciinema-player .control-bar.seekable .progressbar .bar {
+  cursor: pointer;
 }
 .asciinema-player .control-bar .fullscreen-button {
   display: block;
@@ -285,7 +289,7 @@
   display: none;
 }
 .asciinema-player-wrapper.hud .control-bar {
-  bottom: 0px;
+  opacity: 1;
 }
 .asciinema-player-wrapper:fullscreen .fullscreen-button svg:first-child {
   display: none;
@@ -319,8 +323,10 @@
   top: 0;
   left: 0;
   right: 0;
-  bottom: 32px;
-  background-color: rgba(0, 0, 0, 0.5);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .asciinema-player .start-prompt {
   z-index: 10;
@@ -330,14 +336,12 @@
   top: 0;
   left: 0;
   right: 0;
-  bottom: 32px;
+  bottom: 0;
   z-index: 20;
   cursor: pointer;
 }
 .asciinema-player .start-prompt .play-button {
   font-size: 0px;
-}
-.asciinema-player .start-prompt .play-button {
   position: absolute;
   left: 0;
   top: 0;
@@ -345,98 +349,19 @@
   bottom: 0;
   text-align: center;
   color: white;
-  display: table;
-  width: 100%;
-  height: 100%;
+  height: 80px;
+  max-height: 66%;
+  margin: auto;
 }
 .asciinema-player .start-prompt .play-button div {
-  vertical-align: middle;
-  display: table-cell;
+  height: 100%;
 }
 .asciinema-player .start-prompt .play-button div span {
-  width: 96px;
-  height: 96px;
-  display: inline-block;
-}
-@-webkit-keyframes expand {
-  0% {
-    -webkit-transform: scale(0);
-  }
-  50% {
-    -webkit-transform: scale(1);
-  }
-  100% {
-    z-index: 1;
-  }
-}
-@-moz-keyframes expand {
-  0% {
-    -moz-transform: scale(0);
-  }
-  50% {
-    -moz-transform: scale(1);
-  }
-  100% {
-    z-index: 1;
-  }
-}
-@-o-keyframes expand {
-  0% {
-    -o-transform: scale(0);
-  }
-  50% {
-    -o-transform: scale(1);
-  }
-  100% {
-    z-index: 1;
-  }
-}
-@keyframes expand {
-  0% {
-    transform: scale(0);
-  }
-  50% {
-    transform: scale(1);
-  }
-  100% {
-    z-index: 1;
-  }
-}
-.loader {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  margin: -20px 0 0 -20px;
-  background-color: white;
-  border-radius: 50%;
-  box-shadow: 0 0 0 6.66667px #141414;
-  width: 40px;
-  height: 40px;
-}
-.loader:before,
-.loader:after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
+  height: 100%;
   display: block;
-  margin: -21px 0 0 -21px;
-  border-radius: 50%;
-  z-index: 2;
-  width: 42px;
-  height: 42px;
 }
-.loader:before {
-  background-color: #141414;
-  -webkit-animation: expand 1.6s linear infinite both;
-  -moz-animation: expand 1.6s linear infinite both;
-  animation: expand 1.6s linear infinite both;
-}
-.loader:after {
-  background-color: white;
-  -webkit-animation: expand 1.6s linear 0.8s infinite both;
-  -moz-animation: expand 1.6s linear 0.8s infinite both;
-  animation: expand 1.6s linear 0.8s infinite both;
+.asciinema-player .start-prompt .play-button div span svg {
+  height: 100%;
 }
 .asciinema-terminal .fg-16 {
   color: #000000;
@@ -1878,8 +1803,11 @@
 .asciinema-terminal .bg-255 {
   background-color: #eeeeee;
 }
+.asciinema-theme-asciinema {
+  background-color: #121314;
+}
 .asciinema-theme-asciinema .asciinema-terminal {
-  color: #cccccc;
+  color: #CCCCCC;
   background-color: #121314;
   border-color: #121314;
 }
@@ -1887,103 +1815,103 @@
   color: #121314;
 }
 .asciinema-theme-asciinema .bg-fg {
-  background-color: #cccccc;
+  background-color: #CCCCCC;
 }
 .asciinema-theme-asciinema .fg-0 {
-  color: #000000;
+  color: hsl(0, 0%, 0%);
 }
 .asciinema-theme-asciinema .bg-0 {
-  background-color: #000000;
+  background-color: hsl(0, 0%, 0%);
 }
 .asciinema-theme-asciinema .fg-1 {
-  color: #dd3c69;
+  color: hsl(343, 70%, 55%);
 }
 .asciinema-theme-asciinema .bg-1 {
-  background-color: #dd3c69;
+  background-color: hsl(343, 70%, 55%);
 }
 .asciinema-theme-asciinema .fg-2 {
-  color: #4ebf22;
+  color: hsl(103, 70%, 44%);
 }
 .asciinema-theme-asciinema .bg-2 {
-  background-color: #4ebf22;
+  background-color: hsl(103, 70%, 44%);
 }
 .asciinema-theme-asciinema .fg-3 {
-  color: #ddaf3c;
+  color: hsl(43, 70%, 55%);
 }
 .asciinema-theme-asciinema .bg-3 {
-  background-color: #ddaf3c;
+  background-color: hsl(43, 70%, 55%);
 }
 .asciinema-theme-asciinema .fg-4 {
-  color: #26b0d7;
+  color: hsl(193, 70%, 49.5%);
 }
 .asciinema-theme-asciinema .bg-4 {
-  background-color: #26b0d7;
+  background-color: hsl(193, 70%, 49.5%);
 }
 .asciinema-theme-asciinema .fg-5 {
-  color: #b954e1;
+  color: hsl(283, 70%, 60.5%);
 }
 .asciinema-theme-asciinema .bg-5 {
-  background-color: #b954e1;
+  background-color: hsl(283, 70%, 60.5%);
 }
 .asciinema-theme-asciinema .fg-6 {
-  color: #54e1b9;
+  color: hsl(163, 70%, 60.5%);
 }
 .asciinema-theme-asciinema .bg-6 {
-  background-color: #54e1b9;
+  background-color: hsl(163, 70%, 60.5%);
 }
 .asciinema-theme-asciinema .fg-7 {
-  color: #d9d9d9;
+  color: hsl(0, 0%, 85%);
 }
 .asciinema-theme-asciinema .bg-7 {
-  background-color: #d9d9d9;
+  background-color: hsl(0, 0%, 85%);
 }
 .asciinema-theme-asciinema .fg-8 {
-  color: #4d4d4d;
+  color: hsl(0, 0%, 30%);
 }
 .asciinema-theme-asciinema .bg-8 {
-  background-color: #4d4d4d;
+  background-color: hsl(0, 0%, 30%);
 }
 .asciinema-theme-asciinema .fg-9 {
-  color: #dd3c69;
+  color: hsl(343, 70%, 55%);
 }
 .asciinema-theme-asciinema .bg-9 {
-  background-color: #dd3c69;
+  background-color: hsl(343, 70%, 55%);
 }
 .asciinema-theme-asciinema .fg-10 {
-  color: #4ebf22;
+  color: hsl(103, 70%, 44%);
 }
 .asciinema-theme-asciinema .bg-10 {
-  background-color: #4ebf22;
+  background-color: hsl(103, 70%, 44%);
 }
 .asciinema-theme-asciinema .fg-11 {
-  color: #ddaf3c;
+  color: hsl(43, 70%, 55%);
 }
 .asciinema-theme-asciinema .bg-11 {
-  background-color: #ddaf3c;
+  background-color: hsl(43, 70%, 55%);
 }
 .asciinema-theme-asciinema .fg-12 {
-  color: #26b0d7;
+  color: hsl(193, 70%, 49.5%);
 }
 .asciinema-theme-asciinema .bg-12 {
-  background-color: #26b0d7;
+  background-color: hsl(193, 70%, 49.5%);
 }
 .asciinema-theme-asciinema .fg-13 {
-  color: #b954e1;
+  color: hsl(283, 70%, 60.5%);
 }
 .asciinema-theme-asciinema .bg-13 {
-  background-color: #b954e1;
+  background-color: hsl(283, 70%, 60.5%);
 }
 .asciinema-theme-asciinema .fg-14 {
-  color: #54e1b9;
+  color: hsl(163, 70%, 60.5%);
 }
 .asciinema-theme-asciinema .bg-14 {
-  background-color: #54e1b9;
+  background-color: hsl(163, 70%, 60.5%);
 }
 .asciinema-theme-asciinema .fg-15 {
-  color: #ffffff;
+  color: hsl(0, 0%, 100%);
 }
 .asciinema-theme-asciinema .bg-15 {
-  background-color: #ffffff;
+  background-color: hsl(0, 0%, 100%);
 }
 .asciinema-theme-asciinema .fg-8,
 .asciinema-theme-asciinema .fg-9,
@@ -1995,8 +1923,11 @@
 .asciinema-theme-asciinema .fg-15 {
   font-weight: bold;
 }
+.asciinema-theme-tango {
+  background-color: #121314;
+}
 .asciinema-theme-tango .asciinema-terminal {
-  color: #cccccc;
+  color: #CCCCCC;
   background-color: #121314;
   border-color: #121314;
 }
@@ -2004,7 +1935,7 @@
   color: #121314;
 }
 .asciinema-theme-tango .bg-fg {
-  background-color: #cccccc;
+  background-color: #CCCCCC;
 }
 .asciinema-theme-tango .fg-0 {
   color: #000000;
@@ -2013,46 +1944,46 @@
   background-color: #000000;
 }
 .asciinema-theme-tango .fg-1 {
-  color: #cc0000;
+  color: #CC0000;
 }
 .asciinema-theme-tango .bg-1 {
-  background-color: #cc0000;
+  background-color: #CC0000;
 }
 .asciinema-theme-tango .fg-2 {
-  color: #4e9a06;
+  color: #4E9A06;
 }
 .asciinema-theme-tango .bg-2 {
-  background-color: #4e9a06;
+  background-color: #4E9A06;
 }
 .asciinema-theme-tango .fg-3 {
-  color: #c4a000;
+  color: #C4A000;
 }
 .asciinema-theme-tango .bg-3 {
-  background-color: #c4a000;
+  background-color: #C4A000;
 }
 .asciinema-theme-tango .fg-4 {
-  color: #3465a4;
+  color: #3465A4;
 }
 .asciinema-theme-tango .bg-4 {
-  background-color: #3465a4;
+  background-color: #3465A4;
 }
 .asciinema-theme-tango .fg-5 {
-  color: #75507b;
+  color: #75507B;
 }
 .asciinema-theme-tango .bg-5 {
-  background-color: #75507b;
+  background-color: #75507B;
 }
 .asciinema-theme-tango .fg-6 {
-  color: #06989a;
+  color: #06989A;
 }
 .asciinema-theme-tango .bg-6 {
-  background-color: #06989a;
+  background-color: #06989A;
 }
 .asciinema-theme-tango .fg-7 {
-  color: #d3d7cf;
+  color: #D3D7CF;
 }
 .asciinema-theme-tango .bg-7 {
-  background-color: #d3d7cf;
+  background-color: #D3D7CF;
 }
 .asciinema-theme-tango .fg-8 {
   color: #555753;
@@ -2061,46 +1992,46 @@
   background-color: #555753;
 }
 .asciinema-theme-tango .fg-9 {
-  color: #ef2929;
+  color: #EF2929;
 }
 .asciinema-theme-tango .bg-9 {
-  background-color: #ef2929;
+  background-color: #EF2929;
 }
 .asciinema-theme-tango .fg-10 {
-  color: #8ae234;
+  color: #8AE234;
 }
 .asciinema-theme-tango .bg-10 {
-  background-color: #8ae234;
+  background-color: #8AE234;
 }
 .asciinema-theme-tango .fg-11 {
-  color: #fce94f;
+  color: #FCE94F;
 }
 .asciinema-theme-tango .bg-11 {
-  background-color: #fce94f;
+  background-color: #FCE94F;
 }
 .asciinema-theme-tango .fg-12 {
-  color: #729fcf;
+  color: #729FCF;
 }
 .asciinema-theme-tango .bg-12 {
-  background-color: #729fcf;
+  background-color: #729FCF;
 }
 .asciinema-theme-tango .fg-13 {
-  color: #ad7fa8;
+  color: #AD7FA8;
 }
 .asciinema-theme-tango .bg-13 {
-  background-color: #ad7fa8;
+  background-color: #AD7FA8;
 }
 .asciinema-theme-tango .fg-14 {
-  color: #34e2e2;
+  color: #34E2E2;
 }
 .asciinema-theme-tango .bg-14 {
-  background-color: #34e2e2;
+  background-color: #34E2E2;
 }
 .asciinema-theme-tango .fg-15 {
-  color: #eeeeec;
+  color: #EEEEEC;
 }
 .asciinema-theme-tango .bg-15 {
-  background-color: #eeeeec;
+  background-color: #EEEEEC;
 }
 .asciinema-theme-tango .fg-8,
 .asciinema-theme-tango .fg-9,
@@ -2111,6 +2042,9 @@
 .asciinema-theme-tango .fg-14,
 .asciinema-theme-tango .fg-15 {
   font-weight: bold;
+}
+.asciinema-theme-solarized-dark {
+  background-color: #002b36;
 }
 .asciinema-theme-solarized-dark .asciinema-terminal {
   color: #839496;
@@ -2219,6 +2153,9 @@
 .asciinema-theme-solarized-dark .bg-15 {
   background-color: #fdf6e3;
 }
+.asciinema-theme-solarized-light {
+  background-color: #fdf6e3;
+}
 .asciinema-theme-solarized-light .asciinema-terminal {
   color: #657b83;
   background-color: #fdf6e3;
@@ -2325,6 +2262,15 @@
 }
 .asciinema-theme-solarized-light .bg-15 {
   background-color: #fdf6e3;
+}
+.asciinema-theme-solarized-light .start-prompt .play-button svg .play-btn-fill {
+  fill: #dc322f;
+}
+.asciinema-theme-solarized-light .start-prompt .play-button svg .play-btn-stroke {
+  stroke: #dc322f;
+}
+.asciinema-theme-seti {
+  background-color: #111213;
 }
 .asciinema-theme-seti .asciinema-terminal {
   color: #cacecd;
@@ -2444,6 +2390,9 @@
   font-weight: bold;
 }
 /* Based on Monokai from base16 collection - https://github.com/chriskempson/base16 */
+.asciinema-theme-monokai {
+  background-color: #272822;
+}
 .asciinema-theme-monokai .asciinema-terminal {
   color: #f8f8f2;
   background-color: #272822;
@@ -2559,5 +2508,129 @@
 .asciinema-theme-monokai .fg-13,
 .asciinema-theme-monokai .fg-14,
 .asciinema-theme-monokai .fg-15 {
+  font-weight: bold;
+}
+/*
+  Based on Nord: https://github.com/arcticicestudio/nord
+  Via: https://github.com/neilotoole/asciinema-theme-nord
+ */
+.asciinema-theme-nord {
+  background-color: #2E3440;
+}
+.asciinema-theme-nord .asciinema-terminal {
+  color: #ECEFF4;
+  background-color: #2E3440;
+  border-color: #2E3440;
+}
+.asciinema-theme-nord .fg-bg {
+  color: #2E3440;
+}
+.asciinema-theme-nord .bg-fg {
+  background-color: #ECEFF4;
+}
+.asciinema-theme-nord .fg-0 {
+  color: #3B4252;
+}
+.asciinema-theme-nord .bg-0 {
+  background-color: #3B4252;
+}
+.asciinema-theme-nord .fg-1 {
+  color: #BF616A;
+}
+.asciinema-theme-nord .bg-1 {
+  background-color: #BF616A;
+}
+.asciinema-theme-nord .fg-2 {
+  color: #A3BE8C;
+}
+.asciinema-theme-nord .bg-2 {
+  background-color: #A3BE8C;
+}
+.asciinema-theme-nord .fg-3 {
+  color: #EBCB8B;
+}
+.asciinema-theme-nord .bg-3 {
+  background-color: #EBCB8B;
+}
+.asciinema-theme-nord .fg-4 {
+  color: #81A1C1;
+}
+.asciinema-theme-nord .bg-4 {
+  background-color: #81A1C1;
+}
+.asciinema-theme-nord .fg-5 {
+  color: #B48EAD;
+}
+.asciinema-theme-nord .bg-5 {
+  background-color: #B48EAD;
+}
+.asciinema-theme-nord .fg-6 {
+  color: #88C0D0;
+}
+.asciinema-theme-nord .bg-6 {
+  background-color: #88C0D0;
+}
+.asciinema-theme-nord .fg-7 {
+  color: #ECEFF4;
+}
+.asciinema-theme-nord .bg-7 {
+  background-color: #ECEFF4;
+}
+.asciinema-theme-nord .fg-8 {
+  color: #3B4252;
+}
+.asciinema-theme-nord .bg-8 {
+  background-color: #3B4252;
+}
+.asciinema-theme-nord .fg-9 {
+  color: #BF616A;
+}
+.asciinema-theme-nord .bg-9 {
+  background-color: #BF616A;
+}
+.asciinema-theme-nord .fg-10 {
+  color: #A3BE8C;
+}
+.asciinema-theme-nord .bg-10 {
+  background-color: #A3BE8C;
+}
+.asciinema-theme-nord .fg-11 {
+  color: #EBCB8B;
+}
+.asciinema-theme-nord .bg-11 {
+  background-color: #EBCB8B;
+}
+.asciinema-theme-nord .fg-12 {
+  color: #81A1C1;
+}
+.asciinema-theme-nord .bg-12 {
+  background-color: #81A1C1;
+}
+.asciinema-theme-nord .fg-13 {
+  color: #B48EAD;
+}
+.asciinema-theme-nord .bg-13 {
+  background-color: #B48EAD;
+}
+.asciinema-theme-nord .fg-14 {
+  color: #88C0D0;
+}
+.asciinema-theme-nord .bg-14 {
+  background-color: #88C0D0;
+}
+.asciinema-theme-nord .fg-15 {
+  color: #ECEFF4;
+}
+.asciinema-theme-nord .bg-15 {
+  background-color: #ECEFF4;
+}
+.asciinema-theme-nord .fg-8,
+.asciinema-theme-nord .fg-9,
+.asciinema-theme-nord .fg-10,
+.asciinema-theme-nord .fg-11,
+.asciinema-theme-nord .fg-12,
+.asciinema-theme-nord .fg-13,
+.asciinema-theme-nord .fg-14,
+.asciinema-theme-nord .fg-15 {
   font-weight: bold;
 }

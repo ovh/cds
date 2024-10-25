@@ -1,6 +1,5 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { PipelineModule } from 'app/views/pipeline/pipeline.module';
 import { ApplicationQueryParamResolver } from '../../service/application/application.resolver';
 import { ProjectResolver } from '../../service/project/project.resolver';
@@ -10,8 +9,6 @@ import { PipelineShowComponent } from './show/pipeline.show.component';
 const pipelineRoutes: Routes = [
     {
         path: '',
-        canActivate: [AuthenticationGuard],
-        canActivateChild: [AuthenticationGuard],
         children: [
             {
                 path: '',

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/driver/builtin"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -19,7 +19,7 @@ import (
 func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get the consumer builtin driver
-		driver, ok := api.AuthenticationDrivers[sdk.ConsumerBuiltin]
+		authDriver, ok := api.AuthenticationDrivers[sdk.ConsumerBuiltin]
 		if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
@@ -29,11 +29,15 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &req); err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
-		if err := driver.CheckSigninRequest(req); err != nil {
+
+		driv := authDriver.GetDriver().(sdk.DriverWithSignInRequest)
+
+		if err := driv.CheckSigninRequest(req); err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
+
 		// Convert code to external user info
-		userInfo, err := driver.GetUserInfo(ctx, req)
+		userInfo, err := authDriver.GetUserInfo(ctx, req)
 		if err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
@@ -45,7 +49,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Check if a consumer exists for consumer type and external user identifier
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, userInfo.ExternalID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, tx, userInfo.ExternalID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
@@ -71,36 +75,36 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 			if err := sdk.JSONUnmarshal(btes, &srv); err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
-			if consumer.ServiceName != nil && *consumer.ServiceName != srv.Name {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "service name %q doesn't match with consumer %q", srv.Name, *consumer.ServiceName)
+			if consumer.AuthConsumerUser.ServiceName != nil && *consumer.AuthConsumerUser.ServiceName != srv.Name {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "service name %q doesn't match with consumer %q", srv.Name, *consumer.AuthConsumerUser.ServiceName)
 			}
-			if consumer.ServiceType != nil && *consumer.ServiceType != srv.Type {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "service type %q doesn't match with consumer %q", srv.Type, *consumer.ServiceType)
+			if consumer.AuthConsumerUser.ServiceType != nil && *consumer.AuthConsumerUser.ServiceType != srv.Type {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "service type %q doesn't match with consumer %q", srv.Type, *consumer.AuthConsumerUser.ServiceType)
 			}
-			if consumer.ServiceRegion != nil {
+			if consumer.AuthConsumerUser.ServiceRegion != nil {
 				if srv.Region == nil {
-					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown service region doesn't match with consumer %q", *consumer.ServiceRegion)
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown service region doesn't match with consumer %q", *consumer.AuthConsumerUser.ServiceRegion)
 				}
-				if *consumer.ServiceRegion != *srv.Region {
-					return sdk.NewErrorFrom(sdk.ErrForbidden, "service region %q doesn't match with consumer %q", *srv.Region, *consumer.ServiceRegion)
+				if *consumer.AuthConsumerUser.ServiceRegion != *srv.Region {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "service region %q doesn't match with consumer %q", *srv.Region, *consumer.AuthConsumerUser.ServiceRegion)
 				}
 			}
-			if consumer.ServiceIgnoreJobWithNoRegion != nil {
+			if consumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion != nil {
 				if srv.IgnoreJobWithNoRegion == nil {
-					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown service ignore job with no region value doesn't match with consumer '%t'", *consumer.ServiceIgnoreJobWithNoRegion)
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown service ignore job with no region value doesn't match with consumer '%t'", *consumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion)
 				}
-				if *consumer.ServiceIgnoreJobWithNoRegion != *srv.IgnoreJobWithNoRegion {
-					return sdk.NewErrorFrom(sdk.ErrForbidden, "service ignore job with no region flag value '%t' doesn't match with consumer '%t'", *srv.IgnoreJobWithNoRegion, *consumer.ServiceIgnoreJobWithNoRegion)
+				if *consumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion != *srv.IgnoreJobWithNoRegion {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "service ignore job with no region flag value '%t' doesn't match with consumer '%t'", *srv.IgnoreJobWithNoRegion, *consumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion)
 				}
 			}
 		} else {
-			if consumer.ServiceName != nil || consumer.ServiceType != nil || consumer.ServiceRegion != nil || consumer.ServiceIgnoreJobWithNoRegion != nil {
+			if consumer.AuthConsumerUser.ServiceName != nil || consumer.AuthConsumerUser.ServiceType != nil || consumer.AuthConsumerUser.ServiceRegion != nil || consumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion != nil {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "signing request doesn't match with consumer %q service definition. missing service payload", consumer.Name)
 			}
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, authDriver.GetSessionDuration())
 		if err != nil {
 			return err
 		}
@@ -108,7 +112,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		// Store the last authentication date on the consumer
 		now := time.Now()
 		consumer.LastAuthentication = &now
-		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, &consumer.AuthConsumer); err != nil {
 			return err
 		}
 
@@ -119,17 +123,17 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		}
 
 		// Set those values (has it would be done in api.authOptionalMiddleware)
-		ctx = context.WithValue(ctx, contextConsumer, consumer)
-		ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthentifiedUserID)
-		SetTracker(w, cdslog.AuthUserID, consumer.AuthentifiedUserID)
+		ctx = context.WithValue(ctx, contextUserConsumer, consumer)
+		ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
+		service.SetTracker(w, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
 		ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
-		SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
+		service.SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
 
 		ctx = context.WithValue(ctx, contextSession, session)
 		ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
-		SetTracker(w, cdslog.AuthSessionID, session.ID)
+		service.SetTracker(w, cdslog.AuthSessionID, session.ID)
 		ctx = context.WithValue(ctx, cdslog.AuthSessionIAT, session.Created.Unix())
-		SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
+		service.SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
 		ctx = context.WithValue(ctx, contextSession, session)
 
 		var driverManifest *sdk.AuthDriverManifest
@@ -145,22 +149,22 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		// If the Signin has a *service* Payload, we have to perform the service registration
 		if hasService {
 			ctx = context.WithValue(ctx, cdslog.AuthServiceName, srv.Name)
-			SetTracker(w, cdslog.AuthServiceName, srv.Name)
+			service.SetTracker(w, cdslog.AuthServiceName, srv.Name)
 			ctx = context.WithValue(ctx, cdslog.AuthServiceType, srv.Type)
-			SetTracker(w, cdslog.AuthServiceType, srv.Type)
+			service.SetTracker(w, cdslog.AuthServiceType, srv.Type)
 
 			if err := api.serviceRegister(ctx, tx, &srv); err != nil {
 				return err
 			}
 		} else {
-			ctx = context.WithValue(ctx, cdslog.AuthUsername, consumer.AuthentifiedUser.Username)
-			SetTracker(w, cdslog.AuthUsername, consumer.AuthentifiedUser.Username)
+			ctx = context.WithValue(ctx, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
+			service.SetTracker(w, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
 		}
 
 		// Set a cookie with the jwt token
 		api.SetCookie(w, service.JWTCookieName, jwt, session.ExpireAt, true)
 
-		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+		usr, err := user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		if err != nil {
 			return err
 		}

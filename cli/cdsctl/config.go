@@ -79,10 +79,10 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 		if contextName != "" {
 			if cdsctx, err = internal.GetContext(f, contextName); err != nil {
-				return "", nil, cli.NewError("unable to load the current context from %s", contextName)
+				return "", nil, cli.NewError("unable to load the current context name %s", contextName)
 			}
 		} else if cdsctx, err = internal.GetCurrentContext(f); err != nil {
-			return "", nil, cli.NewError("unable to load the current context from %s", configFile)
+			return "", nil, cli.NewError("unable to load the current context file %s err:%v", configFile, err)
 		}
 
 		if verbose {
@@ -124,12 +124,13 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	configNbRetry, _ := strconv.ParseInt(configNbRetryFromEnv, 10, 64)
 
 	config := &cdsclient.Config{
-		Host:                              cdsctx.Host,
-		SessionToken:                      cdsctx.Session,
-		BuitinConsumerAuthenticationToken: cdsctx.Token,
-		Verbose:                           verbose,
-		InsecureSkipVerifyTLS:             insecureSkipVerifyTLS,
-		Retry:                             int(configNbRetry),
+		Host:                               cdsctx.Host,
+		CDNHost:                            os.Getenv("CDS_CDN_URL"),
+		SessionToken:                       cdsctx.Session,
+		BuiltinConsumerAuthenticationToken: cdsctx.Token,
+		Verbose:                            verbose,
+		InsecureSkipVerifyTLS:              insecureSkipVerifyTLS,
+		Retry:                              int(configNbRetry),
 	}
 
 	return configFile, config, nil
@@ -289,7 +290,7 @@ func discoverConf(ctxArg []cli.Arg) ([]string, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot get name from current repository")
 			}
-			ps, err := client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
+			ps, err := client.ProjectList(true, true, false, cdsclient.Filter{Name: "repo", Value: name})
 			if err != nil {
 				return nil, err
 			}
@@ -302,7 +303,7 @@ func discoverConf(ctxArg []cli.Arg) ([]string, error) {
 		}
 
 		if projects == nil {
-			ps, err := client.ProjectList(false, false)
+			ps, err := client.ProjectList(false, false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -336,7 +337,7 @@ func discoverConf(ctxArg []cli.Arg) ([]string, error) {
 			if project == nil {
 				// if the project found for current repo was not selected load all projects list
 				if repoExists && len(projects) == 1 {
-					ps, err := client.ProjectList(false, false)
+					ps, err := client.ProjectList(false, false, false)
 					if err != nil {
 						return nil, err
 					}

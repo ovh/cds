@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -22,7 +23,7 @@ type VCSEventMessenger struct {
 }
 
 // ResyncCommitStatus resync commit status for a workflow run
-func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun) error {
+func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, cdsUIURL string) error {
 	_, end := telemetry.Span(ctx, "workflow.resyncCommitStatus",
 		telemetry.Tag(telemetry.TagWorkflow, wr.Workflow.Name),
 		telemetry.Tag(telemetry.TagWorkflowRun, wr.Number),
@@ -36,7 +37,7 @@ func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		})
 		nodeRun := nodeRuns[0]
 
-		if err := eventMessenger.SendVCSEvent(ctx, db, store, proj, *wr, nodeRun); err != nil {
+		if err := eventMessenger.SendVCSEvent(ctx, db, store, proj, *wr, nodeRun, cdsUIURL); err != nil {
 			log.Error(ctx, "resyncCommitStatus > unable to send vcs event: %v", err)
 		}
 	}
@@ -44,16 +45,14 @@ func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	return nil
 }
 
-func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
+func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun, cdsUIURL string) error {
+	ctx = context.WithValue(ctx, cdslog.NodeRunID, nodeRun.ID)
 
 	if nodeRun.Status == sdk.StatusWaiting {
 		return nil
 	}
+
+	log.Info(ctx, "sending VCS event for status = %q", nodeRun.Status)
 
 	if e.commitsStatuses == nil {
 		e.commitsStatuses = make(map[string][]sdk.VCSCommitStatus)
@@ -61,31 +60,32 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 	if !node.IsLinkedToRepo(&wr.Workflow) {
+		log.Info(ctx, "node is not linked to the repo, skipping")
 		return nil
 	}
 
-	var notif *sdk.WorkflowNotification
+	var notifs []sdk.WorkflowNotification
 	// browse notification to find vcs one
-loopNotif:
 	for _, n := range wr.Workflow.Notifications {
 		if n.Type != sdk.VCSUserNotification {
 			continue
 		}
 		// If list of node is nill, send notification to all of them
 		if len(n.NodeIDs) == 0 {
-			notif = &n
-			break
+			notifs = append(notifs, n)
+			continue
 		}
 		// browser source node id
 		for _, src := range n.NodeIDs {
 			if src == node.ID {
-				notif = &n
-				break loopNotif
+				notifs = append(notifs, n)
+				break
 			}
 		}
 	}
 
-	if notif == nil {
+	if len(notifs) == 0 {
+		log.Info(ctx, "no vcs notification set in the node, skipping")
 		return nil
 	}
 
@@ -95,7 +95,7 @@ loopNotif:
 	//Get the RepositoriesManager Client
 	if e.vcsClient == nil {
 		var err error
-		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServerName)
+		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServerName)
 		if err != nil {
 			return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", proj.Key, vcsServerName)
 		}
@@ -109,15 +109,17 @@ loopNotif:
 	statuses, ok := e.commitsStatuses[ref]
 	if !ok {
 		var err error
+		log.Info(ctx, "getting status for %s %s", repoFullName, ref)
 		statuses, err = e.vcsClient.ListStatuses(ctx, repoFullName, ref)
 		if err != nil {
 			return sdk.WrapError(err, "can't ListStatuses for %v with vcs %v/%v", repoFullName, proj.Key, vcsServerName)
 		}
 		e.commitsStatuses[ref] = statuses
 	}
-	expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
+	expected := sdk.VCSCommitStatusContextV1(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
 		NodeName: nodeRun.WorkflowNodeName,
 	})
+	log.Info(ctx, "expected status description is %q", expected)
 
 	if e.vcsClient.IsBitbucketCloud() {
 		if len(expected) > 36 { // 40 maxlength on bitbucket cloud
@@ -134,8 +136,11 @@ loopNotif:
 	}
 
 	if statusFound == nil || statusFound.State == "" {
-		if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
-			return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
+		for i := range notifs {
+			log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
+			if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], cdsUIURL); err != nil {
+				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
+			}
 		}
 	} else {
 		skipStatus := false
@@ -143,24 +148,30 @@ loopNotif:
 		case sdk.StatusSuccess:
 			switch nodeRun.Status {
 			case sdk.StatusSuccess:
+				log.Info(ctx, "status %q %s found, skipping", expected, statusFound.State)
 				skipStatus = true
 			}
 		case sdk.StatusFail:
 			switch nodeRun.Status {
 			case sdk.StatusFail:
+				log.Info(ctx, "status %q %s found, skipping", expected, statusFound.State)
 				skipStatus = true
 			}
 
 		case sdk.StatusSkipped:
 			switch nodeRun.Status {
 			case sdk.StatusDisabled, sdk.StatusNeverBuilt, sdk.StatusSkipped:
+				log.Info(ctx, "status %q %s found, skipping", expected, statusFound.State)
 				skipStatus = true
 			}
 		}
 
 		if !skipStatus {
-			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
-				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
+			for i := range notifs {
+				log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
+				if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], cdsUIURL); err != nil {
+					return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
+				}
 			}
 		}
 	}
@@ -168,24 +179,22 @@ loopNotif:
 	if !sdk.StatusIsTerminated(nodeRun.Status) {
 		return nil
 	}
-	if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notif, vcsServerName); err != nil {
-		return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(err)
+	for i := range notifs {
+		if err := e.sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notifs[i]); err != nil {
+			return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
+		}
 	}
 
 	return nil
 }
 
 // sendVCSEventStatus send status
-func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification, vcsServerName string) error {
-	if notif == nil || notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
+func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, cdsUIURL string) error {
+	if notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
 		return nil
 	}
 
-	log.Debug(ctx, "Send status for node run %d", nodeRun.ID)
+	log.Info(ctx, "Send status %q for node run %d", nodeRun.Status, nodeRun.ID)
 	var app sdk.Application
 	var pip sdk.Pipeline
 	var env sdk.Environment
@@ -295,7 +304,18 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		EnvironmentName: envName,
 	}
 
-	if err := e.vcsClient.SetStatus(ctx, evt, e.vcsClient.IsDisableStatusDetails(ctx)); err != nil {
+	buildStatus := sdk.VCSBuildStatus{
+		Title:              sdk.VCSCommitStatusContextV1(evt.ProjectKey, evt.WorkflowName, eventWNR),
+		Description:        eventWNR.NodeName + ": " + eventWNR.Status,
+		URLCDS:             fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, evt.ProjectKey, evt.WorkflowName, eventWNR.Number),
+		Context:            fmt.Sprintf("%s-%s-%s", evt.ProjectKey, evt.WorkflowName, eventWNR.NodeName),
+		Status:             eventWNR.Status,
+		RepositoryFullname: eventWNR.RepositoryFullName,
+		GitHash:            eventWNR.Hash,
+		GerritChange:       eventWNR.GerritChange,
+	}
+
+	if err := e.vcsClient.SetStatus(ctx, buildStatus); err != nil {
 		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
 			return err2
 		}
@@ -305,20 +325,26 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 	return nil
 }
 
-func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification, vcsServerName string) error {
-	if notif == nil || notif.Settings.Template == nil || (notif.Settings.Template.DisableComment != nil && *notif.Settings.Template.DisableComment) {
+func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification) error {
+	log.Info(ctx, "Send pull-request comment for node run %d", nodeRun.ID)
+	if notif.Settings.Template == nil {
+		log.Info(ctx, "nothing to do: template is empty", nodeRun.ID)
+		return nil
+	}
+	if notif.Settings.Template.DisableComment != nil && *notif.Settings.Template.DisableComment {
+		log.Info(ctx, "nothing to do: comment are disabled")
 		return nil
 	}
 
 	if nodeRun.Status != sdk.StatusFail && nodeRun.Status != sdk.StatusStopped && notif.Settings.OnSuccess != sdk.UserNotificationAlways {
+		log.Info(ctx, "nothing to do: status is %v", nodeRun.Status)
 		return nil
 	}
-
-	log.Debug(ctx, "Send pull-request comment for node run %d", nodeRun.ID)
 
 	var app sdk.Application
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 	if !node.IsLinkedToRepo(&wr.Workflow) {
+		log.Info(ctx, "nothing to do: node is not linked to repo")
 		return nil
 	}
 
@@ -330,6 +356,7 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 
 	report, err := nodeRun.Report()
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return err
 	}
 
@@ -350,44 +377,38 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 
 	isGerrit, err := e.vcsClient.IsGerrit(ctx, db)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return err
 	}
 
 	if changeID != "" && isGerrit {
 		reqComment.ChangeID = changeID
 		if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return err
 		}
 	} else if !isGerrit {
 		//Check if this branch and this commit is a pullrequest
 		prs, err := e.vcsClient.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return err
 		}
 
 		//Send comment on pull request
 		for _, pr := range prs {
-			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && IsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
+			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
 				reqComment.ID = pr.ID
+				log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", reqComment.Revision, reqComment.ID, app.RepositoryFullname)
 				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
 					return err
 				}
 				break
+			} else {
+				log.Info(ctx, "nothing to do on pr %+v for branch %s", pr, nodeRun.VCSBranch)
 			}
 		}
 	}
 	return nil
-}
-
-func IsSameCommit(sha1, sha1b string) bool {
-	if len(sha1) == len(sha1b) {
-		return sha1 == sha1b
-	}
-	if len(sha1) == 12 && len(sha1b) >= 12 {
-		return sha1 == sha1b[0:len(sha1)]
-	}
-	if len(sha1b) == 12 && len(sha1) >= 12 {
-		return sha1b == sha1[0:len(sha1b)]
-	}
-	return false
 }

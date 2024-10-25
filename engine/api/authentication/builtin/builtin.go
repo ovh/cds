@@ -2,9 +2,8 @@ package builtin
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/driver/builtin"
 	"time"
-
-	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -15,11 +14,19 @@ var _ sdk.AuthDriver = new(AuthDriver)
 
 // NewDriver returns a new initialized driver for builtin authentication.
 func NewDriver() sdk.AuthDriver {
-	return &AuthDriver{}
+	return &AuthDriver{
+		driver: builtin.NewBuiltinDriver(),
+	}
 }
 
 // AuthDriver for builtin authentication.
-type AuthDriver struct{}
+type AuthDriver struct {
+	driver sdk.Driver
+}
+
+func (d AuthDriver) GetDriver() sdk.Driver {
+	return d.driver
+}
 
 func (d AuthDriver) GetManifest() sdk.AuthDriverManifest {
 	return sdk.AuthDriverManifest{
@@ -33,34 +40,7 @@ func (d AuthDriver) GetSessionDuration() time.Duration {
 }
 
 func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
-	var userInfo sdk.AuthDriverUserInfo
-
-	token, err := req.StringE("token")
-	if err != nil {
-		return userInfo, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
-	}
-
-	consumerID, _, err := CheckSigninConsumerToken(token)
-	if err != nil {
-		return userInfo, err
-	}
-
-	log.Debug(ctx, "builtin.GetUserInfo> %s", consumerID)
-
-	return sdk.AuthDriverUserInfo{
-		ExternalID: consumerID,
-	}, nil
-}
-
-// CheckSigninRequest checks that given driver request is valid for a signin with auth builtin.
-func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	token, err := req.StringE("token")
-	if err != nil {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
-	}
-
-	_, _, err = CheckSigninConsumerToken(token)
-	return err
+	return d.driver.GetUserInfoFromDriver(ctx, req)
 }
 
 // NewConsumer returns a new builtin consumer for given data.
@@ -77,7 +57,7 @@ type NewConsumerOptions struct {
 	ServiceIgnoreJobWithNoRegion *bool
 }
 
-func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewConsumerOptions, parentConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, string, error) {
+func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewConsumerOptions, parentConsumer *sdk.AuthUserConsumer) (*sdk.AuthUserConsumer, string, error) {
 	if opts.Name == "" {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")
 	}
@@ -87,7 +67,7 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 	// creating child with more permission than parents.
 	if parentConsumer.Type == sdk.ConsumerBuiltin || !parentConsumer.Admin() {
 		// Only if parentGroupIDs aren't empty. Because empty means all groups access
-		if len(parentConsumer.GroupIDs) > 0 {
+		if len(parentConsumer.AuthConsumerUser.GroupIDs) > 0 {
 			parentGroupIDs := parentConsumer.GetGroupIDs()
 			for i := range opts.GroupIDs {
 				if !sdk.IsInInt64Array(opts.GroupIDs[i], parentGroupIDs) {
@@ -95,34 +75,42 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 				}
 			}
 		}
+
 	}
 
 	// Check that given scopes are valid and if they match parent scopes
-	if err := checkNewConsumerScopes(parentConsumer.ScopeDetails, opts.Scopes); err != nil {
+
+	parentScope := parentConsumer.AuthConsumerUser.ScopeDetails
+
+	if err := checkNewConsumerScopes(parentScope, opts.Scopes); err != nil {
 		return nil, "", err
 	}
 
-	c := sdk.AuthConsumer{
-		Name:                         opts.Name,
-		Description:                  opts.Description,
-		ParentID:                     &parentConsumer.ID,
-		AuthentifiedUserID:           parentConsumer.AuthentifiedUserID,
-		Type:                         sdk.ConsumerBuiltin,
-		Data:                         map[string]string{},
-		GroupIDs:                     opts.GroupIDs,
-		ScopeDetails:                 opts.Scopes,
-		ValidityPeriods:              sdk.NewAuthConsumerValidityPeriod(time.Now(), opts.Duration),
-		ServiceName:                  opts.ServiceName,
-		ServiceType:                  opts.ServiceType,
-		ServiceRegion:                opts.ServiceRegion,
-		ServiceIgnoreJobWithNoRegion: opts.ServiceIgnoreJobWithNoRegion,
+	c := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            opts.Name,
+			Description:     opts.Description,
+			ParentID:        &parentConsumer.ID,
+			Type:            sdk.ConsumerBuiltin,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), opts.Duration),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			AuthentifiedUserID:           parentConsumer.AuthConsumerUser.AuthentifiedUserID,
+			Data:                         map[string]string{},
+			GroupIDs:                     opts.GroupIDs,
+			ScopeDetails:                 opts.Scopes,
+			ServiceName:                  opts.ServiceName,
+			ServiceType:                  opts.ServiceType,
+			ServiceRegion:                opts.ServiceRegion,
+			ServiceIgnoreJobWithNoRegion: opts.ServiceIgnoreJobWithNoRegion,
+		},
 	}
 
-	if err := authentication.InsertConsumer(ctx, db, &c); err != nil {
+	if err := authentication.InsertUserConsumer(ctx, db, &c); err != nil {
 		return nil, "", err
 	}
 
-	jws, err := NewSigninConsumerToken(&c)
+	jws, err := builtin.NewSigninConsumerToken(&c)
 	if err != nil {
 		return nil, "", err
 	}

@@ -2,6 +2,8 @@ package gitlab
 
 import (
 	"context"
+	"net/http"
+	"time"
 
 	"github.com/xanzy/go-gitlab"
 
@@ -16,25 +18,19 @@ var (
 
 // gitlabClient implements VCSAuthorizedClient interface
 type gitlabClient struct {
-	client               *gitlab.Client
-	accessToken          string
-	uiURL                string
-	proxyURL             string
-	disableStatus        bool
-	disableStatusDetails bool
+	client        *gitlab.Client
+	uiURL         string
+	proxyURL      string
+	disableStatus bool
 }
 
 // gitlabConsumer implements vcs.Server and it's used to instantiate a gitlabClient
 type gitlabConsumer struct {
 	URL                      string `json:"url"`
-	appID                    string
-	secret                   string
 	cache                    cache.Store
 	AuthorizationCallbackURL string
 	uiURL                    string
 	proxyURL                 string
-	disableStatus            bool
-	disableStatusDetails     bool
 	username                 string
 	personalAccessToken      string
 }
@@ -55,20 +51,18 @@ func New(URL, uiURL, proxyURL string, store cache.Store, username, token string)
 	}
 }
 
-func NewDeprecated(appID, clientSecret, URL, callbackURL, uiURL, proxyURL string, store cache.Store, disableStatus bool, disableStatusDetails bool) sdk.VCSServer {
-	return &gitlabConsumer{
-		URL:                      URL,
-		secret:                   clientSecret,
-		cache:                    store,
-		appID:                    appID,
-		AuthorizationCallbackURL: callbackURL,
-		uiURL:                    uiURL,
-		proxyURL:                 proxyURL,
-		disableStatus:            disableStatus,
-		disableStatusDetails:     disableStatusDetails,
+// GetAuthorized returns an authorized client
+func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	httpClient := &http.Client{
+		Timeout: 60 * time.Second,
 	}
-}
 
-func (c *gitlabClient) GetAccessToken(_ context.Context) string {
-	return c.accessToken
+	gclient := gitlab.NewClient(httpClient, vcsAuth.Token)
+	c := &gitlabClient{
+		client:   gclient,
+		uiURL:    g.uiURL,
+		proxyURL: g.proxyURL,
+	}
+	c.client.SetBaseURL(g.URL + "/api/v4")
+	return c, nil
 }

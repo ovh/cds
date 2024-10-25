@@ -4,14 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/md5"
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 	"path"
-	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -219,42 +217,46 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 		}
 	}
 
-	// Replace variable placeholder that may have been added by last step
-	if err := w.replaceVariablesPlaceholder(&a, w.currentJob.params); err != nil {
-		log.ErrorWithStackTrace(ctx, err)
-		w.SendLog(ctx, workerruntime.LevelError, err.Error())
-		return sdk.Result{
-			Status:  sdk.StatusFail,
-			BuildID: jobID,
-			Reason:  err.Error(),
-		}
-	}
-	if err := processActionVariables(&a, nil, w.currentJob.params); err != nil {
-		log.ErrorWithStackTrace(ctx, err)
-		w.SendLog(ctx, workerruntime.LevelError, err.Error())
-		return sdk.Result{
-			Status:  sdk.StatusFail,
-			BuildID: jobID,
-			Reason:  err.Error(),
-		}
-	}
+	if a.Type != sdk.AsCodeAction {
 
-	// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
-	if a.Name != sdk.ScriptAction {
-		var getFilteredEnv = func(s string) string {
-			if strings.HasPrefix(s, "CDS_") {
-				return s
+		// Replace variable placeholder that may have been added by last step
+		if err := w.replaceVariablesPlaceholder(&a, w.currentJob.params); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			w.SendLog(ctx, workerruntime.LevelError, err.Error())
+			return sdk.Result{
+				Status:  sdk.StatusFail,
+				BuildID: jobID,
+				Reason:  err.Error(),
 			}
-			return os.Getenv(s)
 		}
-		for i := range a.Parameters {
-			a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+		if err := processActionVariables(&a, nil, w.currentJob.params); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			w.SendLog(ctx, workerruntime.LevelError, err.Error())
+			return sdk.Result{
+				Status:  sdk.StatusFail,
+				BuildID: jobID,
+				Reason:  err.Error(),
+			}
 		}
-	}
 
-	//Set env variables from hooks
-	for k, v := range w.currentJob.envFromHooks {
-		os.Setenv(k, v)
+		// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
+		if a.Name != sdk.ScriptAction {
+			var getFilteredEnv = func(s string) string {
+				if strings.HasPrefix(s, "CDS_") {
+					return s
+				}
+				return os.Getenv(s)
+			}
+			for i := range a.Parameters {
+				a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+			}
+		}
+
+		//Set env variables from hooks
+		for k, v := range w.currentJob.envFromHooks {
+			os.Setenv(k, v)
+		}
+
 	}
 
 	//If the action if a edge of the action tree; run it
@@ -267,7 +269,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 		return res
 	}
 
-	// There is is no children actions (action is empty) to do, success !
+	// There is no children actions (action is empty) to do, success !
 	if len(a.Actions) == 0 {
 		return sdk.Result{
 			Status:  sdk.StatusSuccess,
@@ -276,7 +278,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	}
 
 	//Run children actions
-	r, nDisabled := w.runSteps(ctx, a.Actions, a, jobID, secrets, actionName)
+	r, nDisabled := w.runSteps(ctx, a.Actions, jobID, secrets, actionName)
 	//If all steps are disabled, set action status to disabled
 	if nDisabled >= len(a.Actions) {
 		r.Status = sdk.StatusDisabled
@@ -285,7 +287,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	return r
 }
 
-func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.Action, jobID int64, secrets []sdk.Variable, stepName string) (sdk.Result, int) {
+func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, jobID int64, secrets []sdk.Variable, stepName string) (sdk.Result, int) {
 	log.Info(ctx, "runSteps> start action steps %s %d len(steps):%d context=%p", stepName, jobID, len(steps), ctx)
 	defer func() {
 		log.Info(ctx, "runSteps> end action steps %s %d len(steps):%d context=%p (%s)", stepName, jobID, len(steps), ctx, ctx.Err())
@@ -369,209 +371,6 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 	return fmt.Errorf("updateStepStatus> Could not send built result 10 times on step %d, giving up. job: %d", stepOrder, buildID)
 }
 
-// creates a working directory in $HOME/PROJECT/APP/PIP/BN
-func setupWorkingDirectory(ctx context.Context, fs afero.Fs, wd string) (afero.File, error) {
-	log.Debug(ctx, "creating directory %s in Filesystem %s", wd, fs.Name())
-	if err := fs.MkdirAll(wd, 0755); err != nil {
-		return nil, err
-	}
-
-	u, err := user.Current()
-	if err != nil {
-		log.Error(ctx, "Error while getting current user %v", err)
-	} else if u != nil && u.HomeDir != "" {
-		if err := os.Setenv("HOME_CDS_PLUGINS", u.HomeDir); err != nil {
-			log.Error(ctx, "Error while setting home_plugin %v", err)
-		}
-	}
-
-	var absWD string
-	if x, ok := fs.(*afero.BasePathFs); ok {
-		absWD, _ = x.RealPath(wd)
-	} else {
-		absWD = wd
-	}
-	if err := os.Setenv("HOME", absWD); err != nil {
-		return nil, err
-	}
-
-	fi, err := fs.Open(wd)
-	if err != nil {
-		return nil, err
-	}
-	return fi, nil
-}
-
-func teardownDirectory(fs afero.Fs, dir string) error {
-	return fs.RemoveAll(dir)
-}
-
-func setupDirectory(ctx context.Context, fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
-	// Generate a hash of job name as workspace folder, this folder's name should not be too long as some tools are limiting path size.
-	data := []byte(jobInfo.NodeJobRun.Job.Job.Action.Name)
-	hashedName := fmt.Sprintf("%x", md5.Sum(data))
-	paths := append([]string{hashedName}, suffixes...)
-	dir := path.Join(paths...)
-
-	if _, err := fs.Stat(dir); os.IsExist(err) {
-		log.Info(ctx, "cleaning working directory %s", dir)
-		_ = fs.RemoveAll(dir)
-	}
-
-	if err := fs.MkdirAll(dir, os.FileMode(0700)); err != nil {
-		return dir, sdk.WithStack(err)
-	}
-
-	log.Debug(ctx, "directory %s is ready", dir)
-	return dir, nil
-}
-
-func (w *CurrentWorker) setupWorkingDirectory(ctx context.Context, jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
-	wd, err := setupDirectory(ctx, w.basedir, jobInfo, "run")
-	if err != nil {
-		return nil, "", err
-	}
-
-	wdFile, err := setupWorkingDirectory(ctx, w.basedir, wd)
-	if err != nil {
-		log.Debug(ctx, "setupWorkingDirectory error:%s", err)
-		return nil, "", err
-	}
-
-	wdAbs, err := filepath.Abs(wdFile.Name())
-	if err != nil {
-		log.Debug(ctx, "setupWorkingDirectory error:%s", err)
-		return nil, "", err
-	}
-
-	switch x := w.basedir.(type) {
-	case *afero.BasePathFs:
-		wdAbs, err = x.RealPath(wdFile.Name())
-		if err != nil {
-			return nil, "", err
-		}
-
-		wdAbs, err = filepath.Abs(wdAbs)
-		if err != nil {
-			log.Debug(ctx, "setupWorkingDirectory error:%s", err)
-			return nil, "", err
-		}
-	}
-
-	return wdFile, wdAbs, nil
-}
-
-func (w *CurrentWorker) setupKeysDirectory(ctx context.Context, jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
-	keysDirectory, err := setupDirectory(ctx, w.basedir, jobInfo, "keys")
-	if err != nil {
-		return nil, "", err
-	}
-
-	fs := w.basedir
-	if err := fs.MkdirAll(keysDirectory, 0700); err != nil {
-		return nil, "", err
-	}
-
-	kdFile, err := w.basedir.Open(keysDirectory)
-	if err != nil {
-		return nil, "", err
-	}
-
-	kdAbs, err := filepath.Abs(kdFile.Name())
-	if err != nil {
-		return nil, "", err
-	}
-
-	switch x := w.basedir.(type) {
-	case *afero.BasePathFs:
-		kdAbs, err = x.RealPath(kdFile.Name())
-		if err != nil {
-			return nil, "", err
-		}
-
-		kdAbs, err = filepath.Abs(kdAbs)
-		if err != nil {
-			return nil, "", err
-		}
-	}
-
-	return kdFile, kdAbs, nil
-}
-
-func (w *CurrentWorker) setupTmpDirectory(ctx context.Context, jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
-	tmpDirectory, err := setupDirectory(ctx, w.basedir, jobInfo, "tmp")
-	if err != nil {
-		return nil, "", err
-	}
-
-	fs := w.basedir
-	if err := fs.MkdirAll(tmpDirectory, 0700); err != nil {
-		return nil, "", err
-	}
-
-	tdFile, err := w.basedir.Open(tmpDirectory)
-	if err != nil {
-		return nil, "", err
-	}
-
-	tdAbs, err := filepath.Abs(tdFile.Name())
-	if err != nil {
-		return nil, "", err
-	}
-
-	switch x := w.basedir.(type) {
-	case *afero.BasePathFs:
-		tdAbs, err = x.RealPath(tdFile.Name())
-		if err != nil {
-			return nil, "", err
-		}
-
-		tdAbs, err = filepath.Abs(tdAbs)
-		if err != nil {
-			return nil, "", err
-		}
-	}
-
-	return tdFile, tdAbs, nil
-}
-
-func (w *CurrentWorker) setupHooksDirectory(ctx context.Context, jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
-	hooksDirectory, err := setupDirectory(ctx, w.basedir, jobInfo, "hooks")
-	if err != nil {
-		return nil, "", err
-	}
-
-	fs := w.basedir
-	if err := fs.MkdirAll(hooksDirectory, 0700); err != nil {
-		return nil, "", err
-	}
-
-	hdFile, err := w.basedir.Open(hooksDirectory)
-	if err != nil {
-		return nil, "", err
-	}
-
-	hdAbs, err := filepath.Abs(hdFile.Name())
-	if err != nil {
-		return nil, "", err
-	}
-
-	switch x := w.basedir.(type) {
-	case *afero.BasePathFs:
-		hdAbs, err = x.RealPath(hdFile.Name())
-		if err != nil {
-			return nil, "", err
-		}
-
-		hdAbs, err = filepath.Abs(hdAbs)
-		if err != nil {
-			return nil, "", err
-		}
-	}
-
-	return hdFile, hdAbs, nil
-}
-
 func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.Result) {
 	ctx := w.currentJob.context
 	t0 := time.Now()
@@ -590,17 +389,18 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 		log.Warn(ctx, "Status: %s | Reason: %s", res.Status, res.Reason)
 	}()
 
-	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, jobInfo)
+	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, jobInfo.NodeJobRun.Job.Job.Action.Name)
 	if err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: unable to setup workfing directory: %v", err),
 		}
 	}
+	w.workingDirAbs = wdAbs
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
 	log.Debug(ctx, "Setup workspace - %s", wdFile.Name())
 
-	kdFile, _, err := w.setupKeysDirectory(ctx, jobInfo)
+	kdFile, _, err := w.setupKeysDirectory(ctx, jobInfo.NodeJobRun.Job.Job.Action.Name)
 	if err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,
@@ -610,7 +410,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	ctx = workerruntime.SetKeysDirectory(ctx, kdFile)
 	log.Debug(ctx, "Setup key directory - %s", kdFile.Name())
 
-	tdFile, _, err := w.setupTmpDirectory(ctx, jobInfo)
+	tdFile, _, err := w.setupTmpDirectory(ctx, jobInfo.NodeJobRun.Job.Job.Action.Name)
 	if err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,
@@ -620,7 +420,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	ctx = workerruntime.SetTmpDirectory(ctx, tdFile)
 	log.Debug(ctx, "Setup tmp directory - %s", tdFile.Name())
 
-	hdFile, _, err := w.setupHooksDirectory(ctx, jobInfo)
+	hdFile, _, err := w.setupHooksDirectory(ctx, jobInfo.NodeJobRun.Job.Job.Action.Name)
 	if err != nil {
 		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("Error: unable to setup hooks directory: %v", err)}
 	}
@@ -661,7 +461,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	}
 
 	log.Info(ctx, "Executing hooks setup from directory: %s", hdFile.Name())
-	if err := w.executeHooksSetup(ctx, w.basedir, hdFile.Name()); err != nil {
+	if err := w.executeHooksSetup(ctx, w.basedir); err != nil {
 		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("Error: unable to setup hooks: %v", err)}
 	}
 
@@ -672,7 +472,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	}
 
 	// Teardown worker hooks
-	if err := w.executeHooksTeardown(ctx, w.basedir, hdFile.Name()); err != nil {
+	if err := w.executeHooksTeardown(ctx, w.basedir); err != nil {
 		log.Error(ctx, "error while executing teardown hook scripts: %v", err)
 	}
 
@@ -752,7 +552,7 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 				RemoteTime: time.Now(),
 				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookSetup.ID, Args: []interface{}{h.Config.Label}},
 			}}
-			if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+			if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(w.currentJob.wJob.ID, 10), infos); err != nil {
 				return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
 			}
 
@@ -786,7 +586,7 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 	return nil
 }
 
-func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, workingDir string) error {
+func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs) error {
 	if strings.EqualFold(runtime.GOOS, "windows") {
 		log.Warn(ctx, "hooks are not supported on windows")
 		return nil
@@ -799,7 +599,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, work
 		return sdk.WithStack(fmt.Errorf("invalid given basedir"))
 	}
 
-	workerEnv := w.Environ()
+	workerEnv := w.getEnvironmentForWorkerHook()
 
 	for _, h := range w.hooks {
 		filepath, err := basedir.RealPath(h.SetupPath)
@@ -811,7 +611,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, work
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookRun.ID, Args: []interface{}{h.Config.Label}},
 		}}
-		if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(w.currentJob.wJob.ID, 10), infos); err != nil {
 			return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
 		}
 
@@ -843,7 +643,17 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, work
 	return nil
 }
 
-func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, fs afero.Fs, workingDir string) error {
+func (w *CurrentWorker) getEnvironmentForWorkerHook() []string {
+	var workerEnv []string
+	for _, v := range w.Environ() {
+		if strings.HasPrefix(v, "CDS_INTEGRATION_") || strings.HasPrefix(v, "BASEDIR=") {
+			workerEnv = append(workerEnv, v)
+		}
+	}
+	return workerEnv
+}
+
+func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, fs afero.Fs) error {
 	basedir, ok := fs.(*afero.BasePathFs)
 	if !ok {
 		return sdk.WithStack(fmt.Errorf("invalid given basedir"))
@@ -859,7 +669,7 @@ func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, fs afero.Fs, w
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookRunTeardown.ID, Args: []interface{}{h.Config.Label}},
 		}}
-		if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(w.currentJob.wJob.ID, 10), infos); err != nil {
 			return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
 		}
 

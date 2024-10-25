@@ -3,8 +3,8 @@
 include ../../../.build/core.mk
 include ../../../.build/go.mk
 
-DIRS 			:= `ls -d plugin-* | cut -f1 -d'/'`
-ALL_PLUGINS 	:= $(if ${TARGET_NAME},${TARGET_NAME}, $(filter-out $(TARGET_DIST), $(shell for plugin in $(DIRS); do echo $(basename "$$plugin"); done)))
+DIRS 			:= `ls -d */ | grep -v "^dist" | cut -f1 -d'/'`
+ALL_PLUGINS 	:= $(if ${TARGET_NAME},${TARGET_NAME}, $(filter-out %-lib, $(filter-out $(TARGET_DIST), $(shell for plugin in $(DIRS); do echo $(basename "$$plugin"); done))))
 TARGET_PLUGINS 	:= $(foreach PLUGIN, $(ALL_PLUGINS), dist/$(PLUGIN).yml)
 TARGET_PLUGINS_DIST := $(foreach TARGET_PLUGIN, $(TARGET_PLUGINS), $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(TARGET_PLUGIN)-$(OS)-$(ARCH)$(if $(call isWindows, $(OS)),.exe))))
 TARGET_DIST 		:= ./dist
@@ -37,7 +37,7 @@ test:
 		$(MAKE) test -C $$P; \
 	done;
 
-publish: 
+publish:
 	@for P in $(ALL_PLUGINS); do \
 		$(MAKE) publish -C $$P; \
 	done;
@@ -46,4 +46,10 @@ clean: mk_go_clean ## clean binary and tests results
 	@rm -rf $(TARGET_DIST)
 	@for P in $(ALL_PLUGINS); do \
 		$(MAKE) clean -C $$P; \
+	done;
+
+tidy:
+	@for P in $(ALL_PLUGINS); do \
+		echo "Running tidy on $$P"; \
+		(cd $$P && go mod tidy); \
 	done;

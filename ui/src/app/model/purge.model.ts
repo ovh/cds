@@ -14,6 +14,7 @@ export class RetentionDryRunEvent {
     nb_runs_analyzed: number;
     status: string;
     error: string;
+    warnings: string[];
 }
 
 export class WorkflowDependencies {

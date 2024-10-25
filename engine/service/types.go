@@ -33,6 +33,7 @@ type HTTPRouterConfiguration struct {
 // HatcheryCommonConfiguration is the base configuration for all hatcheries
 type HatcheryCommonConfiguration struct {
 	Name          string                  `toml:"name" default:"" comment:"Name of Hatchery" json:"name"`
+	OSArch        string                  `toml:"osArch" default:"linux/amd64" comment:"Define which os/architecture of worker model the hatchery can spawn" json:"osArch"`
 	RSAPrivateKey string                  `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used by the hatchery.\nThis is mandatory." json:"-"`
 	HTTP          HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS Hatchery HTTP Configuration \n######################" json:"http"`
 	URL           string                  `toml:"url" default:"http://localhost:8086" comment:"URL of this Hatchery" json:"url"`
@@ -42,6 +43,7 @@ type HatcheryCommonConfiguration struct {
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
 		} `toml:"http" json:"http"`
 		Token                string `toml:"token" default:"" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/docs/components/cdsctl/token/ " json:"-"`
+		TokenV2              string `toml:"tokenV2" default:"" comment:"Hatchery consumer Token. Allow to reach CDS API on /v2 routes" json:"-"`
 		RequestTimeout       int    `toml:"requestTimeout" default:"10" comment:"Request CDS API: timeout in seconds" json:"requestTimeout"`
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine" json:"maxHeartbeatFailures"`
 	} `toml:"api" json:"api"`
@@ -81,6 +83,12 @@ type HatcheryCommonConfiguration struct {
 				ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN. You can use many keys: aaa,bbb" json:"extraKey"`
 				ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb" json:"-"`
 			} `toml:"graylog" json:"graylog"`
+			Syslog struct {
+				Host     string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
+				Port     int    `toml:"port" comment:"Example: 12202" json:"port"`
+				Protocol string `toml:"protocol" default:"tcp" comment:"tcp or udp" json:"protocol"`
+				ExtraTag string `toml:"extraTag" comment:"Example: X-OVH-TOKEN. You can use many keys: aaa,bbb" json:"extraTag"`
+			} `toml:"syslog" json:"syslog"`
 		} `toml:"workerLogsOptions" comment:"Worker Log Configuration" json:"workerLogsOptions"`
 		MaxAttemptsNumberBeforeFailure int `toml:"maxAttemptsNumberBeforeFailure" default:"5" commented:"true" comment:"Maximum attempts to start a same job. -1 to disable failing jobs when to many attempts" json:"maxAttemptsNumberBeforeFailure"`
 	} `toml:"provision" json:"provision"`
@@ -136,6 +144,7 @@ type Common struct {
 	GoRoutines            *sdk.GoRoutines
 	Region                string
 	IgnoreJobWithNoRegion bool
+	ModelType             string
 }
 
 // Service is the interface for a engine service

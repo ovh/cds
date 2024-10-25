@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/go-gorp/gorp"
@@ -225,6 +226,19 @@ func (s StringSlice) Contains(value string) bool {
 	return false
 }
 
+// Remove duplicated value from slice.
+func (s *StringSlice) Unique() {
+	m := make(map[string]struct{})
+	for _, i := range *s {
+		m[i] = struct{}{}
+	}
+	unique := make([]string, 0, len(m))
+	for k := range m {
+		unique = append(unique, k)
+	}
+	*s = unique
+}
+
 // Int64Slice type used for database json storage.
 type Int64Slice []int64
 
@@ -330,9 +344,19 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 	d.UseNumber()
 	err := d.Decode(i)
 	if err != nil {
-		return WithStack(err)
+		return NewErrorWithStack(err, ErrInvalidData)
 	}
 	return nil
+}
+
+func IsPointer(i any) bool {
+	val := reflect.ValueOf(i)
+	if val.Kind() != reflect.Ptr {
+		return false
+	}
+
+	val = val.Elem()
+	return val.CanAddr()
 }
 
 type KeyValues struct {
@@ -368,4 +392,32 @@ func NoPath(path string) string {
 		return ""
 	}
 	return filepath.Base(CleanPath(path))
+}
+
+func MapHasKeys(i interface{}, expectedKeys ...interface{}) bool {
+	valueOf := reflect.ValueOf(i)
+	if valueOf.Kind() != reflect.Map {
+		return false
+	}
+	actualKeyValues := valueOf.MapKeys()
+	for _, expectedKey := range expectedKeys {
+		var found = false
+		for _, actualKey := range actualKeyValues {
+			if actualKey.Equal(reflect.ValueOf(expectedKey)) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+func TimeSafe(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
 }

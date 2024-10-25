@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -157,7 +156,7 @@ func Insert(db gorpmapper.SqlExecutorWithTx, proj *sdk.Project) error {
 	}
 	*proj = sdk.Project(dbProj)
 
-	k, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
+	k, err := keys.GeneratePGPKeyPair(BuiltinGPGKey, "builtin gpg key", proj.Name+"-builtin"+"@cds")
 	if err != nil {
 		return sdk.WrapError(err, "Unable to generate PGPKeyPair: %v", err)
 	}
@@ -320,30 +319,18 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 		return nil, err
 	}
 
+	for i := range vcsProjects {
+		// We are loading with decryption, but we don't keep sensitive data
+		decryptedVCSProject, err := vcs.LoadVCSByIDAndProjectKey(ctx, db, p.Key, vcsProjects[i].ID, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return nil, err
+		}
+		vcsProjects[i].Auth.Username = decryptedVCSProject.Auth.Username
+		vcsProjects[i].Auth.SSHKeyName = decryptedVCSProject.Auth.SSHKeyName
+		vcsProjects[i].Auth.SSHUsername = decryptedVCSProject.Auth.SSHUsername
+	}
+
 	proj.VCSServers = vcsProjects
-
-	// DEPRECATED VCS
-	vcsServersDeprecated, err := repositoriesmanager.LoadAllProjectVCSServerLinksByProjectID(ctx, db, p.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, vcsDeprecated := range vcsServersDeprecated {
-		var found bool
-		for _, v := range vcsProjects {
-			if vcsDeprecated.Name == v.Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			toadd := sdk.VCSProject{
-				Name:      vcsDeprecated.Name,
-				CreatedBy: vcsDeprecated.Username,
-			}
-			proj.VCSServers = append(proj.VCSServers, toadd)
-		}
-	}
 
 	return &proj, nil
 }

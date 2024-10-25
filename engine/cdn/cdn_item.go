@@ -81,11 +81,11 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	ctx = context.WithValue(ctx, storage.FieldAPIRef, apiRefHash)
 
 	switch t {
-	case sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemStepLog:
+	case sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemStepLog, sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
 		if err := s.downloadLog(ctx, t, apiRefHash, w, opts); err != nil {
 			return err
 		}
-	case sdk.CDNTypeItemRunResult, sdk.CDNTypeItemWorkerCache:
+	case sdk.CDNTypeItemRunResultV2, sdk.CDNTypeItemRunResult, sdk.CDNTypeItemWorkerCache, sdk.CDNTypeItemWorkerCacheV2:
 		if err := s.downloadFile(ctx, t, apiRefHash, w); err != nil {
 			return err
 		}
@@ -156,7 +156,6 @@ type getItemLogOptions struct {
 }
 
 type getItemFileOptions struct {
-	cacheClean  bool
 	cacheSource string
 }
 

@@ -42,19 +42,19 @@
         </nz-form-item>
         <nz-form-item>
             <nz-form-label [nzSpan]="6">
-                <a href="#" [routerLink]="['/docs', 'docs', 'workflow', 'mutex']" target="_blank" rel="noopener noreferrer">
-                    {{ 'workflow_root_context_mutex' | translate }}
-                    <i class="external icon"></i>
+                <a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'mutex']" target="_blank" rel="noopener noreferrer">
+                    Limit one run at a time
+                    <span nz-icon nzType="link" nzTheme="outline"></span>
                 </a>
             </nz-form-label>
             <nz-form-control  [nzSpan]="12">
-                <nz-switch name="mutex" [ngModel]="node.context.mutex" (ngModelChange)="pushChange()" [nzDisabled]="readonly"></nz-switch>
+                <nz-switch name="mutex" [(ngModel)]="node.context.mutex" (ngModelChange)="pushChange()" [nzDisabled]="readonly"></nz-switch>
             </nz-form-control>
         </nz-form-item>
         <nz-form-item nzJustify="end">
             <button nz-button nzType="primary" *ngIf="!readonly" [nzLoading]="loading" (click)="updateWorkflow()">
-                <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
-                <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
+                <span *ngIf="!editMode">Save</span>
+                <span *ngIf="editMode">Apply</span>
             </button>
         </nz-form-item>
     </form>

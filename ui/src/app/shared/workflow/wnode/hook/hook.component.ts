@@ -1,17 +1,16 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
-import { WorkflowNodeRunHookEvent, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeRunHookEvent } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeHookDetailsComponent } from 'app/shared/workflow/node/hook/details/hook.details.component';
 import { ProjectState } from 'app/store/project.state';
 import { DeleteHookWorkflow, OpenEditModal } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable } from 'rxjs';
-import { Subscription } from 'rxjs/Subscription';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -26,7 +25,6 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
     @Input() workflow: Workflow;
     @Input() node: WNode;
 
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRunSub: Subscription;
 
     @ViewChild('workflowDetailsHook')
@@ -55,7 +53,7 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         // Check if hook event has changed
-        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+        this.workflowRunSub = this._store.select(WorkflowState.getSelectedWorkflowRun()).subscribe(wr => {
             if (!wr) {
                 return;
             }
@@ -72,6 +70,34 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
         });
 
         if (this.hook) {
+            if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
+                let model = this.workflow.hook_models[this.hook.hook_model_id];
+                if (model.type === 'builtin') {
+                    switch (model.name) {
+                        case 'Workflow':
+                            this.icon = 'share-alt';
+                            break;
+                        case 'WebHook':
+                            this.icon = 'link';
+                            break;
+                        case 'Scheduler':
+                            this.icon = 'field-time';
+                            break;
+                        case 'RepositoryWebHook':
+                            if (this.hook.config['hookIcon']) {
+                                this.icon = (<WorkflowNodeHookConfigValue>this.hook.config['hookIcon']).value.toLowerCase();
+                            } else if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
+                                this.icon = 'link';
+                            }
+                            break;
+                    }
+                }
+            }
+
+            if (this.icon === '') {
+                this.icon = 'link';
+            }
+            /*
             if (this.hook.config['hookIcon']) {
                 this.icon = (<WorkflowNodeHookConfigValue>this.hook.config['hookIcon']).value.toLowerCase();
             } else if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
@@ -79,6 +105,8 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
             } else {
                 this.icon = this.hook.model.icon;
             }
+
+             */
         }
     }
 
@@ -91,7 +119,7 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
                     nzTitle: 'Hook\'s details',
                     nzWidth: '900px',
                     nzContent: WorkflowNodeHookDetailsComponent,
-                    nzComponentParams: {
+                    nzData: {
                         currentHook: this.hook
                     }
                 });

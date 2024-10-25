@@ -22,11 +22,11 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 		groupName := vars["groupName"]
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		options := workflow.LoadOptions{}
@@ -88,7 +88,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, workflow.LoadOptions{})
@@ -142,7 +142,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishWorkflowPermissionUpdate(ctx, key, *wf, gp, oldGp, getAPIConsumer(ctx))
+		event.PublishWorkflowPermissionUpdate(ctx, key, *wf, gp, oldGp, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}
@@ -162,7 +162,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, workflow.LoadOptions{})
@@ -212,7 +212,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishWorkflowPermissionAdd(ctx, key, *wf, gp, getAPIConsumer(ctx))
+		event.PublishWorkflowPermissionAdd(ctx, key, *wf, gp, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}

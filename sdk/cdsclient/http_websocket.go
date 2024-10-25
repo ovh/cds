@@ -20,8 +20,8 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
-	if !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
-		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+	if !c.config.HasValidSessionToken() && c.config.BuiltinConsumerAuthenticationToken != "" {
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuiltinConsumerAuthenticationToken})
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-
+@import "../../../../../../common";
 form div {
   width: 100%;
 }
@@ -9,6 +9,9 @@ nz-alert {
   margin-bottom: 10px;
   i {
     font-size: 2em;
+  }
+  i.orange {
+    color: $cds_color_orange
   }
   .header {
     font-size: 1.15em;

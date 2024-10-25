@@ -1,0 +1,122 @@
+name: Manual job
+vars:
+  cds_project: "ITV2MANUALJOB"
+  git_repo: "it_v2_manual_job"
+  cds_workflow: "WorkflowManualJob"
+testcases:
+- name: Prepare test
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+    - name: "Display username"
+      info: "Connected CDS user is {{.cdsUser}}"
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+
+- name: Push workflow file
+  steps:
+    - type: v2_push_cds_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        worker-models/debian.yml:
+          name: docker-debian
+          osarch: linux/amd64
+          type: docker
+          spec:
+            image: buildpack-deps:buster
+        workflows/manual.yaml:
+          name: {{.cds_workflow}}
+          on: [push]
+          gates:
+            preprod:
+              if: ${{ gate.approve }}
+              inputs:
+                approve:
+                  type: boolean
+          jobs:
+            init:
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              steps:
+                - run: echo 'Hello'
+            manual:
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              gate: preprod
+              needs: [init]
+              steps:
+                - run: echo 'World'
+                  id: step2
+
+    - name: Check analyses
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 120
+      delay: 1
+
+    - name: Check that the CDS workflow has at least one execution
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      retry: 120
+      delay: 1
+      vars:
+        workflowRunID:
+          from: result.systemoutjson.systemoutjson0.id
+
+    - name: Manual job
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow job run {{.cds_project}} {{.workflowRunID}} manual --data '{ \"approve\": true}'"
+
+    - name: Check that the CDS workflow is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      retry: 120
+      delay: 1
+
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        # Check log content
+        cat {{.cds_workflow}}-1-2-manual-step2 | grep "World"
+      retry: 60
+      delay: 1

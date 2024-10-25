@@ -41,4 +41,4 @@ You can import / create metadata:
 cdsctl admin metadata project import export_metadata_projects.csv
 ```
 
-Notice that exporting metadata on appliation & workflows will export metadata from project. On the example above, the metadata `ou1` is setted on all workflows and applications on the third projects.
+Notice that exporting metadata on application & workflows will export metadata from project. On the example above, the metadata `ou1` is set on all workflows and applications on the third projects.

@@ -186,7 +186,7 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 				// Add job to Queue
 				// Insert data in workflow_node_run_job
 				log.Debug(ctx, "workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
-				r, err := addJobsToQueue(ctx, db, proj, stage, wr, workflowNodeRun, &previousStage)
+				r, err := addJobsToQueue(ctx, store, db, proj, stage, wr, workflowNodeRun, &previousStage)
 				report.Merge(ctx, r)
 				if err != nil {
 					return report, err
@@ -307,30 +307,27 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 			report.Merge(ctx, r1)
 		}
 
-		// Delete the line in workflow_node_run_job
-		if err := DeleteNodeJobRuns(db, workflowNodeRun.ID); err != nil {
-			// Checking the error:
-			// pq: update or delete on table "workflow_node_run_job" violates foreign key constraint "fk_worker_workflow_node_run_job" on table "worker")
-			type WorkerInfo struct {
-				WorkerID             string `db:"worker_id"`
-				WorkerName           string `db:"worker_name"`
-				WorkflowNodeRunJobID string `db:"workflow_node_run_job_id"`
-			}
-
-			var workers []WorkerInfo
-			if _, errSelect := db.Select(&workers, `
+		// Temporary debug:
+		// Listing worker for node run that block the job deletion
+		type WorkerInfo struct {
+			WorkerID             string `db:"worker_id"`
+			WorkerName           string `db:"worker_name"`
+			WorkflowNodeRunJobID string `db:"workflow_node_run_job_id"`
+		}
+		var blockingWorkers []WorkerInfo
+		if _, err := db.Select(&blockingWorkers, `
         SELECT worker.id as worker_id, worker.name as worker_name, workflow_node_run_job.id as workflow_node_run_job_id FROM worker
         JOIN workflow_node_run_job ON workflow_node_run_job.worker_id = worker.id
         WHERE workflow_node_run_job.workflow_node_run_id = $1
-      `, workflowNodeRun.ID); errSelect != nil {
-				log.ErrorWithStackTrace(ctx, sdk.WrapError(errSelect, "unable to get worker list for node run with id %d", workflowNodeRun.ID))
-			} else {
-				buf, _ := json.Marshal(workers)
-				log.Error(ctx, "list of workers for node run %d that block jobs deletion (len:%d): %q", workflowNodeRun.ID, len(workers), string(buf))
-			}
-
-			return nil, sdk.WrapError(err, "unable to delete node %d job runs", workflowNodeRun.ID)
+      `, workflowNodeRun.ID); err != nil {
+			log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get worker list for node run with id %d", workflowNodeRun.ID))
+		} else if len(blockingWorkers) > 0 {
+			buf, _ := json.Marshal(blockingWorkers)
+			log.Info(ctx, "list of workers for node run %d that could block jobs deletion (len:%d): %q", workflowNodeRun.ID, len(blockingWorkers), string(buf))
 		}
+		// End of temporary debug
+
+		// Delete the line in workflow_node_run_job is done asynchronously in a goroutine at api level
 
 		// If current node has a mutex, we want to trigger another node run that can be waiting for the mutex
 		node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
@@ -437,7 +434,7 @@ func checkRunOnlyFailedJobs(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*sdk.
 	return previousNR, nil
 }
 
-func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun, previousStage *sdk.Stage) (*ProcessorReport, error) {
+func addJobsToQueue(ctx context.Context, store cache.Store, db gorpmapper.SqlExecutorWithTx, proj sdk.Project, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun, previousStage *sdk.Stage) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
@@ -473,7 +470,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, 
 	//Browse the jobs
 jobLoop:
 	for j := range stage.Jobs {
-		job := &stage.Jobs[j]
+		job := stage.Jobs[j]
 
 		if previousStage != nil {
 			for _, rj := range previousStage.RunJobs {
@@ -487,20 +484,30 @@ jobLoop:
 		// errors generated in the loop will be added to job run spawn info
 		spawnErrs := sdk.MultiError{}
 
+		// Copy context from noderun
+		jobFullContext := sdk.JobRunContext{}
+		jobFullContext.Vars = nr.Contexts.Vars
+		jobFullContext.Git = nr.Contexts.Git
+
 		//Process variables for the jobs
 		_, next = telemetry.Span(ctx, "workflow..getNodeJobRunParameters")
-		jobParams, err := getNodeJobRunParameters(*job, nr, stage)
+		jobParams, err := getNodeJobRunParameters(job, nr, stage)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
+		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs, jobParams)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
+
+		// Retrieve service requirement
+		jobContext := sdk.JobContext{Services: make(map[string]sdk.JobContextService)}
+		jobContext.Status = strings.ToLower(sdk.StatusSuccess)
+		jobFullContext.Job = jobContext
 
 		if exist := featureflipping.Exists(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion); exist {
 			if err := checkJobRegion(ctx, db, proj.Key, proj.Organization, wr.Workflow.Name, jobRequirements); err != nil {
@@ -529,14 +536,13 @@ jobLoop:
 			ExecGroups:         groups,
 			IntegrationPlugins: integrationPlugins,
 			Job: sdk.ExecutedJob{
-				Job: *job,
+				Job: job,
 			},
 			Header:          nr.Header,
 			ContainsService: containsService,
+			Contexts:        jobFullContext,
 		}
-		if wm != nil {
-			wjob.ModelType = wm.Type
-		}
+		wjob.ModelType = modelType
 		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
 
 		// Set region from requirement on job run if exists
@@ -566,9 +572,16 @@ jobLoop:
 				})
 			}
 		} else {
-			wjob.SpawnInfos = []sdk.SpawnInfo{{
-				Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
-			}}
+			if wjob.Status == sdk.StatusDisabled {
+				wjob.SpawnInfos = []sdk.SpawnInfo{{
+					Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobDisabled.ID},
+				}}
+			} else {
+				wjob.SpawnInfos = []sdk.SpawnInfo{{
+					Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
+				}}
+			}
+
 		}
 
 		// insert in database
@@ -762,7 +775,7 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 	return params, nil
 }
 
-//NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
+// NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
 func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 	runContext := nodeRunContext{
 		WorkflowProjectIntegrations: wf.Integrations,
@@ -797,7 +810,7 @@ func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode
 		runContext.NodeGroups = refNode.Groups
 
 		var err error
-		res, err = getBuildParameterFromNodeContext(proj, *wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
+		res, _, err = getBuildParameterFromNodeContext(proj, *wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
 		}
@@ -916,7 +929,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 
 	if nodeRun.HookExecutionID != "" {
 		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
-		if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "POST", path, nil, nil); err != nil {
+		if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, "POST", path, nil, nil); err != nil {
 			return sdk.WrapError(err, "unable to stop task execution")
 		}
 	}
@@ -1171,7 +1184,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	vcsInfos.HTTPUrl = repo.HTTPCloneURL
 
 	switch {
-	case vcsInfos.Branch == "" && vcsInfos.Hash == "":
+	case vcsInfos.Branch == "" && vcsInfos.Hash == "" && vcsInfos.Tag == "":
 		// Get default branch
 		defaultB, errD := repositoriesmanager.DefaultBranch(ctx, client, vcsInfos.Repository)
 		if errD != nil {
@@ -1179,6 +1192,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		}
 		vcsInfos.Branch = defaultB.DisplayID
 		vcsInfos.Hash = defaultB.LatestCommit
+
 	case vcsInfos.Hash == "" && vcsInfos.Branch != "":
 		// GET COMMIT INFO
 		branch, errB := client.Branch(ctx, vcsInfos.Repository, sdk.VCSBranchFilters{BranchName: vcsInfos.Branch})
@@ -1192,6 +1206,12 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 			vcsInfos.Branch = branch.DisplayID
 		}
 		vcsInfos.Hash = branch.LatestCommit
+	case vcsInfos.Hash == "" && vcsInfos.Tag != "":
+		tag, err := client.Tag(ctx, vcsInfos.Repository, vcsInfos.Tag)
+		if err != nil {
+			return nil, err
+		}
+		vcsInfos.Hash = tag.Hash
 	}
 
 	// Get commit info if needed

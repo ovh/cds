@@ -11,32 +11,23 @@ const rootURL = "https://api.bitbucket.org/2.0"
 
 // bitbucketcloudClient is a https://bitbucket.org wrapper for CDS vcs. interface
 type bitbucketcloudClient struct {
-	appPassword          string
-	username             string
-	ClientID             string // DEPRECATED
-	OAuthToken           string // DEPRECATED
-	RefreshToken         string // DEPRECATED
-	DisableStatus        bool
-	DisableStatusDetails bool
-	Cache                cache.Store
-	apiURL               string
-	uiURL                string
-	proxyURL             string
+	appPassword string
+	username    string
+	Cache       cache.Store
+	apiURL      string
+	uiURL       string
+	proxyURL    string
 }
 
-//bitbucketcloudConsumer implements vcs.Server and it's used to instantiate a githubClient
+// bitbucketcloudConsumer implements vcs.Server and it's used to instantiate a githubClient
 type bitbucketcloudConsumer struct {
-	ClientID             string `json:"client-id"`
-	ClientSecret         string `json:"-"`
-	Cache                cache.Store
-	uiURL                string
-	apiURL               string
-	proxyURL             string
-	disableStatus        bool
-	disableStatusDetails bool
+	Cache    cache.Store
+	uiURL    string
+	apiURL   string
+	proxyURL string
 }
 
-//New creates a new GithubConsumer
+// New creates a new GithubConsumer
 func New(apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
 	return &bitbucketcloudConsumer{
 		Cache:    store,
@@ -46,20 +37,15 @@ func New(apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
 	}
 }
 
-// DEPRECATED VCS
-func NewDeprecated(ClientID, ClientSecret, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus, disableStatusDetails bool) sdk.VCSServer {
-	return &bitbucketcloudConsumer{
-		ClientID:             ClientID,
-		ClientSecret:         ClientSecret,
-		Cache:                store,
-		apiURL:               apiURL,
-		uiURL:                uiURL,
-		proxyURL:             proxyURL,
-		disableStatus:        disableStatus,
-		disableStatusDetails: disableStatusDetails,
+// GetAuthorized returns an authorized client
+func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	c := &bitbucketcloudClient{
+		appPassword: vcsAuth.Token,
+		username:    vcsAuth.Username,
+		Cache:       consumer.Cache,
+		apiURL:      consumer.apiURL,
+		uiURL:       consumer.uiURL,
+		proxyURL:    consumer.proxyURL,
 	}
-}
-
-func (client *bitbucketcloudClient) GetAccessToken(_ context.Context) string {
-	return client.OAuthToken
+	return c, nil
 }

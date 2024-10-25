@@ -1,0 +1,10 @@
+name: cacheRestore
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  Retrieve cache
+inputs:
+  path:
+  key:
+  fail-on-cache-miss:
+    default: 'false'

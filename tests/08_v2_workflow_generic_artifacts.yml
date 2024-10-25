@@ -1,0 +1,130 @@
+name: Upload and Download generic artifacts from Workflow as code v2
+vars:
+  cds_project: "ITV2ARTIFACTSGENERIC"
+  git_repo: "it_v2_artifacts_generic"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+
+testcases:
+- name: Prepare test
+  steps:
+  - name: "Verify cdsctl configuration"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+    vars:
+      cdsUser:
+        from: result.systemoutjson.username
+
+  - name: "Display username"
+    info: "Connected CDS user is {{.cdsUser}}"
+
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo}}"
+
+  - type: v2_install_gpg_key
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    vars:
+      emailaddress:
+        from: result.emailaddress
+
+
+- name: Push workflow file
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/debian.yaml:
+        name: docker-debian
+        description: my debian worker model
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:buster
+      workflows/workflowA.yaml:
+        name: WorkflowA
+        on: [push]
+        jobs:
+          First-Job:
+            runs-on: "{{.worker_model}}"
+            steps:
+              - run: |-
+                  #!/bin/bash -x
+                  env > env.txt
+                  echo "foobar" > foo.txt
+              - uses: actions/uploadArtifact
+                with:
+                  path: "*.txt"
+          Second-Job:
+            runs-on: "{{.worker_model}}"
+            needs: [First-Job]
+            steps:
+              - uses: actions/downloadArtifact
+              - run: |-
+                  #!/bin/bash
+                  ls -l
+                  cat env.txt
+                  cat foo.txt
+                  grep foobar foo.txt
+
+  - name: Check CDS project analyses
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    retry: 40
+    delay: 1
+    vars:
+      analysisID:
+        from:
+          result.systemoutjson.systemoutjson1.id
+
+  - name: Get CDS project analysis
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
+    assertions:
+    - 'result.systemout ShouldContainSubstring "status: Success"'
+    retry: 40
+    delay: 1
+
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+    retry: 150
+    delay: 1
+    vars:
+      runIdentifier:
+        from: result.systemoutjson.systemoutjson0.id
+
+  - name: List result
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.runIdentifier}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 2
+
+  - name: Download result
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result get {{.cds_project}} {{.runIdentifier}} --pattern generic:*"
+
+  - name: Check file foo 
+    script: "cat foo.txt && cat foo.txt | grep \"foobar\""
+
+     

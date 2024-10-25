@@ -1,6 +1,7 @@
 public
 .DS_Store
 resources
+node_modules
 
 # generated documentation
 content/docs/components/cdsctl
@@ -11,3 +12,4 @@ content/development/rest/*.md
 content/docs/actions/builtin-*
 content/docs/actions/plugin-*
 content/docs/actions/cds-*
+static/js/*.min.js

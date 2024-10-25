@@ -1,0 +1,18 @@
+@import '../../../common';
+
+:host {
+  ::ng-deep {
+    .ant-menu-horizontal {
+      line-height: 38px;
+    }
+
+    .ant-menu-item {
+      padding: 0 15px !important;
+    }
+
+    .ant-menu-item::after {
+      left: 15px !important;
+      right: 15px !important;
+    }
+  }
+}

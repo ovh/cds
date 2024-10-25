@@ -14,7 +14,6 @@ import { ParameterService } from 'app/service/parameter/parameter.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { RequirementService } from 'app/service/requirement/requirement.service';
 import { RequirementStore } from 'app/service/requirement/requirement.store';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { UserService } from 'app/service/user/user.service';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { ParameterEvent } from '../parameter/parameter.event.model';
@@ -25,10 +24,7 @@ import { ActionComponent } from './action.component';
 import { ActionEvent } from './action.event.model';
 import { StepEvent } from './step/step.event';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { By } from '@angular/platform-browser';
-import { NzDropDownDirective } from 'ng-zorro-antd/dropdown';
-import { OverlayContainer } from '@angular/cdk/overlay';
-import { Inject } from '@angular/core';
+import {ActionAsCodeService, ConfigService, EntityService} from 'app/service/services.module';
 
 describe('CDS: Action Component', () => {
 
@@ -36,6 +32,7 @@ describe('CDS: Action Component', () => {
         await TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                EntityService,
                 SharedService,
                 TranslateService,
                 RequirementStore,
@@ -47,9 +44,10 @@ describe('CDS: Action Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 { provide: APP_BASE_HREF, useValue: '/' },
-                ThemeStore,
                 UserService,
-                AuthenticationService
+                AuthenticationService,
+                ActionAsCodeService,
+                ConfigService
             ],
             imports: [
                 BrowserAnimationsModule,
@@ -60,7 +58,6 @@ describe('CDS: Action Component', () => {
             ]
         }).compileComponents();
     });
-
 
     it('should create and then delete a requirement', fakeAsync(() => {
         // Create component
@@ -204,6 +201,8 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.stepManagement(event);
         expect(fixture.componentInstance.steps.length).toBe(2, 'Action must have 2 steps');
         expect(fixture.componentInstance.steps[1].name).toBe('action2');
+
+        flush();
     }));
 
     it('should init step not always executed and step always executed', fakeAsync(() => {

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var workflowPushCmd = cli.Command{
@@ -30,6 +31,12 @@ For example if you have a workflow with pipelines build and tests you can push y
 		Name: "yaml-file",
 	},
 	Flags: []cli.Flag{
+		{
+			Type:    cli.FlagBool,
+			Name:    "force",
+			Usage:   "Override workflow if exists",
+			Default: "false",
+		},
 		{
 			Type:  cli.FlagBool,
 			Name:  "skip-update-files",
@@ -65,7 +72,7 @@ func workflowPushRun(c cli.Values) error {
 			dir = filepath.Dir(file)
 		}
 		if dir != filepath.Dir(file) {
-			return cli.NewError("files must be ine the same directory")
+			return cli.NewError("files must be in the same directory")
 		}
 
 		filesToRead = append(filesToRead, file)
@@ -83,8 +90,13 @@ func workflowPushRun(c cli.Values) error {
 	btes := buf.Bytes()
 	r := bytes.NewBuffer(btes)
 
+	var mods []cdsclient.RequestModifier
+	if c.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
 	// Push it !
-	msgList, tr, err := client.WorkflowPush(c.GetString(_ProjectKey), r)
+	msgList, tr, err := client.WorkflowPush(c.GetString(_ProjectKey), r, mods...)
 	for _, msg := range msgList {
 		fmt.Println(msg)
 	}

@@ -71,7 +71,7 @@ type ConditionEntry struct {
 	LuaScript       string                `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
-//WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+// WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type PlainConditionEntry struct {
 	Variable string `json:"variable" yaml:"variable"`
 	Operator string `json:"operator" yaml:"operator"`
@@ -113,7 +113,7 @@ func (h HookEntry) IsDefault(model sdk.WorkflowHookModel) bool {
 
 type ExportOptions func(w sdk.Workflow, exportedWorkflow *Workflow) error
 
-//NewWorkflow creates a new exportable workflow
+// NewWorkflow creates a new exportable workflow
 func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...ExportOptions) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
@@ -175,7 +175,8 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 		}
 		exportedWorkflow.Workflow[n.Name] = entry
 
-		for _, h := range n.Hooks {
+		for i := range n.Hooks {
+			h := n.Hooks[i]
 			if exportedWorkflow.Hooks == nil {
 				exportedWorkflow.Hooks = make(map[string][]HookEntry)
 			}
@@ -433,6 +434,10 @@ func (w Workflow) GetWorkflow(ctx context.Context) (*sdk.Workflow, error) {
 		wf.RetentionPolicy = *w.RetentionPolicy
 	}
 
+	if len(w.Workflow) == 0 {
+		return nil, sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "a workflow must contains at least 1 pipeline")
+	}
+
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	var attempt int
 	fakeID := r.Int63n(5000)
@@ -604,7 +609,7 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 	case 0:
 		// If there is already a root node, it is impossible have another one
 		if w.WorkflowData.Node.Name != "" {
-			return false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid node dependencies. %s should have at least one dependency because the workflow already have a root", n.Name)
+			return false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid node dependencies. %s should have at least one dependency because the workflow already has a root", n.Name)
 		}
 		w.WorkflowData.Node = *n
 		return true, nil

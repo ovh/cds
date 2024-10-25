@@ -1,6 +1,6 @@
 <div *ngIf="!loadingPatterns;then showPatterns;else loadPatterns"></div>
 <ng-template #showPatterns>
-    <form nz-form nzLayout="vertical">
+    <form nz-form nzLayout="vertical" *ngIf="pattern">
         <nz-row>
             <nz-col [nzSpan]="17">
                 <nz-row>
@@ -49,7 +49,7 @@
                 <nz-row>
                     <nz-col [nzSpan]="24">
                         <nz-form-item>
-                            <nz-form-label>Main worker command <i _ngcontent-c5="" class="fa fa-question-circle"></i></nz-form-label>
+                            <nz-form-label>Main worker command <i nz-icon nzType="question-circle" nzTheme="outline"></i></nz-form-label>
                             <nz-form-control>
                                 <input nz-input type="text" name="cmd" [(ngModel)]="pattern.model.cmd" [disabled]="loading">
                             </nz-form-control>
@@ -59,7 +59,7 @@
                 <ng-container *ngIf="pattern.type && pattern.type === 'docker'">
                     <nz-row>
                         <nz-form-item>
-                            <nz-form-label nz-tooltip [nzTooltipTitle]="'worker_model_env_tooltip' | translate"> {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i></nz-form-label>
+                            <nz-form-label nz-tooltip [nzTooltipTitle]="'worker_model_env_tooltip' | translate"> {{'worker_model_env' | translate}} <i nz-icon nzType="question-circle" nzTheme="outline"></i></nz-form-label>
                         </nz-form-item>
                     </nz-row>
                     <ng-container *ngIf="pattern.model.envs">
@@ -124,7 +124,7 @@
             </nz-col>
             <nz-col [nzSpan]="6" [nzOffset]="1">
                 <div class="nzSegment">
-                    <h2><i class="fa fa-book"></i>Tips</h2>
+                    <h2><i nz-icon nzType="book" nzTheme="outline"></i>Tips</h2>
                     <p>See Worker Model Pattern documentation:
                         <a class="item" target="_blank" rel="noopener noreferrer"
                            href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model', 'patterns']">

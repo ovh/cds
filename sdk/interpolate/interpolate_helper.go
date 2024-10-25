@@ -75,6 +75,16 @@ func init() {
 			}
 			return a
 		},
+		"sub": func(a, b interface{}) int64 { return toInt64(a) - toInt64(b) },
+		"mul": func(a interface{}, v ...interface{}) int64 {
+			val := toInt64(a)
+			for _, b := range v {
+				val = val * toInt64(b)
+			}
+			return val
+		},
+		"div":       func(a, b interface{}) int64 { return toInt64(a) / toInt64(b) },
+		"mod":       func(a, b interface{}) int64 { return toInt64(a) % toInt64(b) },
 		"ternary":   ternary,
 		"urlencode": func(s string) string { return url.QueryEscape(s) },
 		"dirname":   func(s string) string { return path.Dir(s) },

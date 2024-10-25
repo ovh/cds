@@ -29,12 +29,10 @@ export class ActionListComponent {
     ) {
         this.tabs = [<Tab>{
             title: 'Custom',
-            icon: '',
             key: 'custom',
             default: true
         }, <Tab>{
             title: 'Builtin',
-            icon: '',
             key: 'builtin'
         }];
 
@@ -52,7 +50,7 @@ export class ActionListComponent {
                 selector: (a: Action) => a.group.name
             },
             <Column<Action>>{
-                type: ColumnType.MARKDOWN,
+                type: ColumnType.TEXT_PRE,
                 name: 'common_description',
                 selector: (a: Action) => a.description
             }
@@ -68,7 +66,7 @@ export class ActionListComponent {
                     })
             },
             <Column<Action>>{
-                type: ColumnType.MARKDOWN,
+                type: ColumnType.TEXT_PRE,
                 name: 'common_description',
                 selector: (a: Action) => a.description
             }

@@ -50,7 +50,7 @@ func TestGetItemValue(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
 	s.Units = cdnUnits
 	var err error
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"], 0)
+	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
 
@@ -209,7 +209,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"], 0)
+	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
 
@@ -316,7 +316,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"], 0)
+	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
 
@@ -426,7 +426,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"], 0)
+	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
 

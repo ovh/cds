@@ -1,9 +1,11 @@
 package sdk
 
 import (
+	"context"
 	"sort"
 
 	"github.com/fsamin/go-dump"
+	"github.com/rockbears/log"
 )
 
 const (
@@ -74,7 +76,7 @@ func (n *Node) FilterHooksConfig(s ...string) {
 	}
 }
 
-//AddTrigger adds a trigger to the destination node from the node found by its name
+// AddTrigger adds a trigger to the destination node from the node found by its name
 func (n *Node) AddTrigger(name string, dest Node) {
 	if n.Name == name {
 		n.Triggers = append(n.Triggers, NodeTrigger{
@@ -88,14 +90,14 @@ func (n *Node) AddTrigger(name string, dest Node) {
 	}
 }
 
-//Sort sorts the workflow node
+// Sort sorts the workflow node
 func (n *Node) Sort() {
 	sort.Slice(n.Triggers, func(i, j int) bool {
 		return n.Triggers[i].ChildNode.Name < n.Triggers[j].ChildNode.Name
 	})
 }
 
-//VisitNode all the workflow and apply the visitor func on the current node and the children
+// VisitNode all the workflow and apply the visitor func on the current node and the children
 func (n *Node) VisitNode(w *Workflow, visitor func(node *Node, w *Workflow)) {
 	visitor(n, w)
 	for i := range n.Triggers {
@@ -264,7 +266,7 @@ func (n *Node) IsLinkedToRepo(w *Workflow) bool {
 }
 
 // CheckApplicationDeploymentStrategies checks application deployment strategies
-func (n Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) error {
+func (n *Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) error {
 	if n.Context == nil {
 		return nil
 	}
@@ -283,7 +285,8 @@ func (n Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) er
 
 	app := w.Applications[n.Context.ApplicationID]
 	if _, has := app.DeploymentStrategies[pf.Name]; !has {
-		return NewErrorFrom(ErrInvalidData, "integration %s unavailable on application %s", pf.Name, app.Name)
+		n.Context.ProjectIntegrationID = 0 // remove the integration from the context to still be able to load the workflow
+		log.Error(context.Background(), "integration %s(%d) unavailable on application %s/%s (%d)", pf.Name, pf.ID, proj.Key, app.Name, app.ID)
 	}
 	return nil
 }

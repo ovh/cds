@@ -50,7 +50,7 @@ func (c CDSContext) getTokens(contextName string) (*ContextTokens, error) {
 	item.SetReturnData(true)
 	results, err := keychain.QueryItem(item)
 	if err != nil {
-		return nil, cli.WrapError(err, "error while retreiving context")
+		return nil, cli.WrapError(err, "error while retrieving context")
 	}
 	if len(results) != 1 {
 		return nil, cli.NewError("context not found in keychain")

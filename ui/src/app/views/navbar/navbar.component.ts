@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
+import { APIConfig } from 'app/model/config.service';
 import { Help } from 'app/model/help.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
 import { Project } from 'app/model/project.model';
@@ -8,15 +9,20 @@ import { AuthSummary } from 'app/model/user.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
 import { ProjectStore } from 'app/service/services.module';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
+import { ConfigState } from 'app/store/config.state';
 import { HelpState } from 'app/store/help.state';
+import { PreferencesState } from 'app/store/preferences.state';
 import { List } from 'immutable';
-import { Subscription } from 'rxjs';
+import { Subscription, lastValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import * as actionPreferences from 'app/store/preferences.action';
+import { ProjectService } from 'app/service/project/project.service';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { ErrorUtils } from 'app/shared/error.utils';
 
 @Component({
     selector: 'app-navbar',
@@ -38,7 +44,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     listWorkflows: List<NavbarRecentData>;
     navbarSubscription: Subscription;
     authSubscription: Subscription;
-    currentRoute: {};
+    configSubscription: Subscription;
     recentView = true;
     currentAuthSummary: AuthSummary;
     themeSubscription: Subscription;
@@ -51,9 +57,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     containsResult = false;
     projectsSubscription: Subscription;
     workflowsSubscription: Subscription;
-
-
     showNotif = false;
+    apiConfig: APIConfig;
+    selectedProjectKey: string;
+    projectSubscription: Subscription;
+    projects: Array<Project> = [];
 
     constructor(
         private _navbarService: NavbarService,
@@ -61,16 +69,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _projectStore: ProjectStore,
         private _workflowStore: WorkflowStore,
         private _router: Router,
-        private _theme: ThemeStore,
         private _routerService: RouterService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _projectService: ProjectService,
+        private _messageService: NzMessageService
     ) {
         this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
             this.currentAuthSummary = s;
             this._cd.markForCheck();
         });
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
+            this.apiConfig = c;
+            this._cd.markForCheck();
+        });
+
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.darkActive = t === 'night';
             this._cd.markForCheck();
         });
@@ -83,20 +97,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.help = help;
                 this._cd.markForCheck();
             });
-
-        this._router.events.pipe(
-            filter(e => e instanceof NavigationEnd),
-        ).forEach(() => {
-            this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
-        });
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     changeTheme() {
         this.darkActive = !this.darkActive;
-        this._theme.set(this.darkActive ? 'night' : 'light');
         this._cd.markForCheck();
+        this._store.dispatch(new actionPreferences.SetTheme({ theme: this.darkActive ? 'night' : 'light' }));
     }
 
     ngOnInit() {
@@ -139,6 +147,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.items = this.recentItems;
                 this._cd.markForCheck();
             }
+        });
+
+        this._router.events.pipe(
+            filter(e => e instanceof NavigationEnd),
+        ).forEach(() => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            this.selectedProjectKey = params['key'] ?? null;
+            this._cd.markForCheck();
         });
     }
 
@@ -255,10 +271,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Listen change on project list.
-     */
-    getData(): void {
+    async getData() {
         this._navbarService.refreshData();
         this.navbarSubscription = this._navbarService.getObservable().subscribe(data => {
             if (Array.isArray(data) && data.length > 0) {
@@ -300,6 +313,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.loading = false;
             this._cd.markForCheck();
         });
+
+        try {
+            this.projects = await lastValueFrom(this._projectService.getProjects());
+        } catch (e) {
+            this._messageService.error(`Unable to list projects: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
     }
 
     /**

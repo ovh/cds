@@ -1,27 +1,25 @@
 #PipelineShow {
-  display: flex;
-  flex-direction: column;
-  align-content: stretch;
-  height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-content: stretch;
+    height: 100%;
 }
 
 .ascodeButton {
-  position: absolute;
-  right: 15px;
-  top: 135px;
+    position: absolute;
+    right: 15px;
+    top: 135px;
 }
 
 .labelFeature {
-  position: relative;
-  top: -3px;
-  margin-left: 10px;
-  margin-top: 5px;
-
-  nz-tag {
+    margin-right: 10px;
     cursor: pointer;
-  }
 
-  i {
-    margin-right: 5px;
-  }
+    i {
+        margin-right: 5px;
+    }
+}
+
+nz-spin {
+    margin-top: 30px;
 }

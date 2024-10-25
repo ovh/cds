@@ -48,9 +48,9 @@ func (c *client) ProjectUpdate(key string, project *sdk.Project) error {
 	return nil
 }
 
-func (c *client) ProjectList(withApplications, withWorkflows bool, filters ...Filter) ([]sdk.Project, error) {
+func (c *client) ProjectList(withApplications, withWorkflows, withFavorites bool, filters ...Filter) ([]sdk.Project, error) {
 	p := []sdk.Project{}
-	path := fmt.Sprintf("/project?application=%v&workflow=%v", withApplications, withWorkflows)
+	path := fmt.Sprintf("/project?application=%v&workflow=%v&withFavorites=%v", withApplications, withWorkflows, withFavorites)
 
 	for _, f := range filters {
 		path += fmt.Sprintf("&%s=%s", url.QueryEscape(f.Name), url.QueryEscape(f.Value))
@@ -64,6 +64,14 @@ func (c *client) ProjectList(withApplications, withWorkflows bool, filters ...Fi
 
 func (c *client) ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
 	url := fmt.Sprintf("/project/%s/type/%s/access", projectKey, itemType)
+	if _, err := c.GetJSON(ctx, url, nil, SetHeader(sdk.CDSSessionID, sessionID)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
+	url := fmt.Sprintf("/v2/project/%s/type/%s/access", projectKey, itemType)
 	if _, err := c.GetJSON(ctx, url, nil, SetHeader(sdk.CDSSessionID, sessionID)); err != nil {
 		return err
 	}

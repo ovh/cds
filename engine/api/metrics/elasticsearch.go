@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/olivere/elastic/v7"
 	"github.com/rockbears/log"
-	"github.com/sguiheux/go-coverage"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
@@ -39,7 +38,7 @@ func Init(ctx context.Context, DBFunc func() *gorp.DbMap) {
 				continue
 			}
 
-			_, code, errD := services.NewClient(DBFunc(), esServices).DoJSONRequest(context.Background(), "POST", "/metrics", e, nil)
+			_, code, errD := services.NewClient(esServices).DoJSONRequest(context.Background(), "POST", "/metrics", e, nil)
 			if code >= 400 || errD != nil {
 				log.Error(ctx, "metrics.pushInElasticSearch> Unable to send metrics to elasticsearch [%d]: %v", code, errD)
 				continue
@@ -62,29 +61,15 @@ func GetMetrics(ctx context.Context, db gorp.SqlExecutor, key string, appID int6
 	}
 
 	var esMetrics []elastic.SearchHit
-	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(context.Background(), "GET", "/metrics", metricsRequest, &esMetrics); err != nil {
+	if _, _, err := services.NewClient(srvs).DoJSONRequest(context.Background(), "GET", "/metrics", metricsRequest, &esMetrics); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get metrics")
 	}
 
 	events := make([]json.RawMessage, len(esMetrics))
 	for i := range esMetrics {
-		events[len(esMetrics)-1-i] = *esMetrics[i].Source
+		events[len(esMetrics)-1-i] = esMetrics[i].Source
 	}
 	return events, nil
-}
-
-// PushVulnerabilities Create metrics from vulnerabilities and send them
-func PushVulnerabilities(projKey string, appID int64, workflowID int64, num int64, summary map[string]float64) {
-	m := sdk.Metric{
-		Date:          time.Now(),
-		ProjectKey:    projKey,
-		WorkflowID:    workflowID,
-		Num:           num,
-		ApplicationID: appID,
-		Key:           sdk.MetricKeyVulnerability,
-		Value:         summary,
-	}
-	metricsChan <- m
 }
 
 // PushUnitTests Create metrics from unit tests and send them
@@ -103,27 +88,6 @@ func PushUnitTests(projKey string, appID int64, workflowID int64, num int64, tes
 	summary["ko"] = float64(tests.TotalKO)
 	summary["ok"] = float64(tests.TotalOK)
 	summary["skip"] = float64(tests.TotalSkipped)
-
-	m.Value = summary
-
-	metricsChan <- m
-}
-
-// PushCoverage Create metrics from coverage and send them
-func PushCoverage(projKey string, appID int64, workflowID int64, num int64, cover coverage.Report) {
-	m := sdk.Metric{
-		Date:          time.Now(),
-		ProjectKey:    projKey,
-		ApplicationID: appID,
-		WorkflowID:    workflowID,
-		Key:           sdk.MetricKeyCoverage,
-		Num:           num,
-	}
-
-	summary := make(map[string]float64, 3)
-	summary["covered_lines"] = float64(cover.CoveredLines)
-	summary["total_lines"] = float64(cover.TotalLines)
-	summary["percent"] = (summary["covered_lines"] / summary["total_lines"]) * 100
 
 	m.Value = summary
 

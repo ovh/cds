@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -33,6 +33,17 @@ type DeployRequest struct {
 	Metadata    map[string]string `json:"metadata"`
 }
 
+type DeployResponse struct {
+	FollowUpToken    string `json:"followup_token"`
+	DeploymentName   string `json:"deployment_name"`
+	DeploymentID     string `json:"deployment_id"`
+	DeploymentFamily string `json:"deployment_family"`
+	StackName        string `json:"stack_name"`
+	StackID          string `json:"stack_id"`
+	StackPlatform    string `json:"stack_platform"`
+	Namespace        string `json:"namespace"`
+}
+
 // String returns a string representation of a deploy request. Omits metadata.
 func (r *DeployRequest) String() string {
 	s := "Version: " + r.Version
@@ -55,6 +66,15 @@ type Client struct {
 	deploymentToken string
 }
 
+// RequestError represents an error from a HTTP 4XX status
+type RequestError struct {
+	msg string
+}
+
+func (r *RequestError) Error() string {
+	return r.msg
+}
+
 // NewClient creates a new client to call Arsenal public routes with a given host and deploymentToken.
 func NewClient(host, deploymentToken string) *Client {
 	return &Client{
@@ -65,29 +85,42 @@ func NewClient(host, deploymentToken string) *Client {
 }
 
 // Deploy makes a deploy request and returns a followup token if successful.
-func (ac *Client) Deploy(deployRequest *DeployRequest) (string, error) {
+func (ac *Client) Deploy(deployRequest *DeployRequest) (*DeployResponse, error) {
 	req, err := ac.newRequest(http.MethodPost, "/deploy", deployRequest)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
 
-	deployResult := make(map[string]string)
-	statusCode, rawBody, err := ac.doRequest(req, &deployResult)
-	if err != nil {
-		return "", err
-	}
-	if statusCode != http.StatusOK {
-		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
-			return "", fmt.Errorf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)
+	var (
+		deployResult DeployResponse
+		nbRetry      int
+		lastErr      error
+	)
+	for ; nbRetry < 5; nbRetry++ {
+		lastErr = nil
+		statusCode, rawBody, err := ac.doRequest(req, &deployResult)
+		if err != nil {
+			return nil, err
 		}
-		return "", fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
+		if statusCode == http.StatusOK {
+			return &deployResult, lastErr
+		}
+		if statusCode == http.StatusMethodNotAllowed {
+			lastErr = &RequestError{fmt.Sprintf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)}
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		if statusCode == http.StatusBadRequest {
+			return nil, &RequestError{fmt.Sprintf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)}
+		}
+		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
+			return nil, fmt.Errorf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)
+		}
+		return nil, fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
 	}
-	token, exists := deployResult["followup_token"]
-	if !exists {
-		return "", fmt.Errorf("no followup token returned")
-	}
-	return token, nil
+
+	return &deployResult, lastErr
 }
 
 // Follow makes a followup request with a followup token.
@@ -136,7 +169,7 @@ func (ac *Client) UpsertAlternative(altConfig *Alternative) error {
 
 // DeleteAlternative deletes an existing alternative.
 func (ac *Client) DeleteAlternative(altName string) error {
-	req, err := ac.newRequest(http.MethodDelete, "/alternative/"+altName, nil)
+	req, err := ac.newRequest(http.MethodDelete, "/alternative/"+url.PathEscape(altName), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create delete alternative request: %w", err)
 	}
@@ -162,7 +195,7 @@ func (ac *Client) newRequest(method, uri string, obj interface{}) (*http.Request
 		if err != nil {
 			return nil, fmt.Errorf("unable to encode request body: %w", err)
 		}
-		body = ioutil.NopCloser(bytes.NewReader(objData))
+		body = io.NopCloser(bytes.NewReader(objData))
 	}
 
 	req, err := http.NewRequest(method, ac.host+uri, body)
@@ -179,10 +212,11 @@ func (ac *Client) doRequest(req *http.Request, respObject interface{}) (int, []b
 	}
 	defer resp.Body.Close()
 
-	rawBody, err := ioutil.ReadAll(resp.Body)
+	rawBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return resp.StatusCode, nil, fmt.Errorf("failed to read body from %s %s: %w", req.Method, req.URL, err)
 	}
+
 	if resp.StatusCode == http.StatusOK && respObject != nil {
 		err = sdk.JSONUnmarshal(rawBody, respObject)
 		if err != nil {

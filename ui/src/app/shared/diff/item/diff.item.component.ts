@@ -8,8 +8,9 @@ import {
     OnInit,
     ViewChild
 } from '@angular/core';
-import { ThemeStore } from 'app/service/theme/theme.store';
+import { Store } from '@ngxs/store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { PreferencesState } from 'app/store/preferences.state';
 import * as JsDiff from 'diff';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -42,10 +43,11 @@ export class DiffItemComponent implements OnInit, OnChanges, OnDestroy {
     themeSubscription: Subscription;
 
     constructor(
-        private _theme: ThemeStore, private _cd: ChangeDetectorRef
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.codeMirrorConfig = {
@@ -58,17 +60,17 @@ export class DiffItemComponent implements OnInit, OnChanges, OnDestroy {
             lineNumbers: true
         };
 
-        this.themeSubscription = this._theme.get()
+        this.themeSubscription = this._store.select(PreferencesState.theme)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-            if (this.codeLeft && this.codeLeft.instance) {
-                this.codeLeft.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-            if (this.codeRight && this.codeRight.instance) {
-                this.codeRight.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-        });
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codeLeft && this.codeLeft.instance) {
+                    this.codeLeft.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                if (this.codeRight && this.codeRight.instance) {
+                    this.codeRight.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+            });
     }
 
     onCodeLeftChange() {

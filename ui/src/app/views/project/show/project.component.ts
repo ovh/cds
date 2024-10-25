@@ -5,7 +5,7 @@ import { Store } from '@ngxs/store';
 import { GroupPermission } from 'app/model/group.model';
 import { LoadOpts, Project } from 'app/model/project.model';
 import { HelpersService } from 'app/service/helpers/helpers.service';
-import { ProjectStore } from 'app/service/services.module';
+import { ProjectStore, RouterService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -14,6 +14,8 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
+import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
+import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 
 @Component({
     selector: 'app-project-show',
@@ -40,19 +42,20 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     loadingFav = false;
 
     constructor(
-        private _route: ActivatedRoute,
-        private _router: Router,
+        private _activatedRoute: ActivatedRoute,
         private _toast: ToastService,
         public _translate: TranslateService,
         private _helpersService: HelpersService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
         private _projectStore: ProjectStore,
+        private _routerService: RouterService,
+        private _router: Router
     ) {
         this.projectSubscriber = this._store.select(ProjectState)
             .pipe(filter((projState: ProjectStateModel) => projState && projState.project &&
                 projState.project.key !== null && !projState.project.externalChange &&
-                this._route.snapshot.params['key'] === projState.project.key))
+                this._activatedRoute.snapshot.parent.params['key'] === projState.project.key))
             .subscribe((projState: ProjectStateModel) => {
                 let proj = cloneDeep(projState.project); // TODO: to delete when all will be in store, here it is usefull to skip readonly
                 if (proj.labels) {
@@ -63,29 +66,8 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
                 this.project = proj;
                 this._projectStore.updateRecentProject(this.project);
-
                 this.initTabs();
-
-                if (this.project.integrations) {
-                    this.project.integrations.forEach(integ => {
-                        if (!integ.model.default_config) {
-                            return;
-                        }
-                        let keys = Object.keys(integ.model.default_config);
-                        if (keys) {
-                            keys.forEach(k => {
-                                if (!integ.config) {
-                                    integ.config = {};
-                                }
-                                if (!integ.config[k]) {
-                                    integ.config[k] = integ.model.default_config[k];
-                                }
-                            });
-                        }
-                    });
-                }
-
-
+               
                 if (!!this.project.organization) {
                     this.groupsOutsideOrganization = this.project.groups.filter(gp =>
                         gp.group.organization && gp.group.organization !== this.project.organization);
@@ -99,78 +81,61 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     ngOnInit() {
         this.initTabs();
-        this._route.queryParams.subscribe((queryParams) => {
-            if (queryParams['tab']) {
-                let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);
-                if (current_tab) {
-                    this.selectTab(current_tab);
+
+        this._activatedRoute.params.subscribe(_ => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            const key = params['key'];
+            if (key) {
+                if (this.project && this.project.key !== key) {
+                    this.project = undefined;
+                }
+                if (!this.project) {
+                    this.refreshDatas(key);
                 }
                 this._cd.markForCheck();
             }
-            this._route.params.subscribe(routeParams => {
-                const key = routeParams['key'];
-                if (key) {
-                    if (this.project && this.project.key !== key) {
-                        this.project = undefined;
-                    }
-                    if (!this.project) {
-                        this.refreshDatas(key);
-                    }
-                    this._cd.markForCheck();
-                }
-            });
         });
 
-        if (this._route.snapshot && this._route.snapshot.queryParams) {
-            this.workflowName = this._route.snapshot.queryParams['workflow'];
-            this.workflowNum = this._route.snapshot.queryParams['run'];
-            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
-            this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
+        if (this._activatedRoute.snapshot && this._activatedRoute.snapshot.queryParams) {
+            this.workflowName = this._activatedRoute.snapshot.queryParams['workflow'];
+            this.workflowNum = this._activatedRoute.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._activatedRoute.snapshot.queryParams['node'];
+            this.workflowPipeline = this._activatedRoute.snapshot.queryParams['wpipeline'];
         }
     }
 
     initTabs(): void {
         this.tabs = [<Tab>{
             title: 'Workflows',
-            icon: 'share alternate',
+            icon: 'share-alt',
+            iconTheme: 'outline',
             key: 'workflows',
             default: true,
         }, <Tab>{
             title: 'Applications',
             icon: 'rocket',
+            iconTheme: 'outline',
             key: 'applications'
         }, <Tab>{
             title: 'Pipelines',
-            icon: 'sitemap',
+            icon: 'apartment',
             key: 'pipelines'
         }, <Tab>{
             title: 'Environments',
-            icon: 'tree',
+            icon: 'environment',
+            iconTheme: 'outline',
             key: 'environments'
         }, <Tab>{
             title: 'Variables',
-            icon: 'font',
+            icon: 'font-colors',
+            iconTheme: 'outline',
             key: 'variables'
         }, <Tab>{
             title: 'Permissions',
             key: 'permissions',
-            icon: 'users',
-        }, <Tab>{
-            title: 'Keys',
-            icon: 'privacy',
-            key: 'keys'
-        }, <Tab>{
-            title: 'Integrations',
-            icon: 'plug',
-            key: 'integrations'
-        }]
-        if (this.project?.permissions?.writable) {
-            this.tabs.push(<Tab>{
-                title: 'Advanced',
-                icon: 'graduation',
-                key: 'advanced'
-            })
-        }
+            iconTheme: 'outline',
+            icon: 'user-switch',
+        }];
     }
 
     ngAfterViewInit(): void {
@@ -193,6 +158,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
+        this._cd.markForCheck();
     }
 
     refreshDatas(key: string): void {

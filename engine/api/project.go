@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
@@ -76,14 +77,14 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 			return err
 		}
 	} else {
-		projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
+		projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), getUserConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
 		if err != nil {
 			return err
 		}
 	}
 
 	pKeys := projects.Keys()
-	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, getAPIConsumer(ctx).GetGroupIDs())
+	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, getUserConsumer(ctx).GetGroupIDs())
 	if err != nil {
 		return err
 	}
@@ -122,6 +123,7 @@ func (api *API) getProjectsHandler() service.Handler {
 		withApplications := service.FormBool(r, "application")
 		withWorkflows := service.FormBool(r, "workflow")
 		withIcon := service.FormBool(r, "withIcon")
+		withFavorites := service.FormBool(r, "withFavorites")
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
 		var requestedUser *sdk.AuthentifiedUser
@@ -147,6 +149,14 @@ func (api *API) getProjectsHandler() service.Handler {
 			opts = append(opts, project.LoadOptions.WithIntegrations, project.LoadOptions.WithWorkflows)
 		}
 
+		if withFavorites {
+			if requestedUser == nil {
+				opts = append(opts, project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID))
+			} else {
+				opts = append(opts, project.LoadOptions.WithFavorites(requestedUser.ID))
+			}
+		}
+
 		var projects sdk.Projects
 		var err error
 		switch {
@@ -161,7 +171,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			log.Debug(ctx, "load all projects for user %s", requestedUser.Fullname)
 			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, requestedUser.GetGroupIDs(), opts...)
 		default:
-			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), opts...)
+			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getUserConsumer(ctx).GetGroupIDs(), opts...)
 		}
 		if err != nil {
 			return err
@@ -171,7 +181,7 @@ func (api *API) getProjectsHandler() service.Handler {
 		var admin bool
 		var maintainer bool
 		if requestedUser == nil {
-			groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+			groupIDs = getUserConsumer(ctx).GetGroupIDs()
 			admin = isAdmin(ctx)
 			maintainer = isMaintainer(ctx)
 		} else {
@@ -216,6 +226,11 @@ func (api *API) updateProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		proj := &sdk.Project{}
 		if err := service.UnmarshalBody(r, proj); err != nil {
 			return sdk.WrapError(err, "Unmarshall error")
@@ -228,6 +243,10 @@ func (api *API) updateProjectHandler() service.Handler {
 		// Check Request
 		if key != proj.Key {
 			return sdk.WrapError(sdk.ErrWrongRequest, "updateProject> bad Project key %s/%s ", key, proj.Key)
+		}
+
+		if proj.WorkflowRetention <= 0 {
+			proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
 		}
 
 		// Check is project exist
@@ -244,7 +263,8 @@ func (api *API) updateProjectHandler() service.Handler {
 		if errUp := project.Update(api.mustDB(), proj); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
-		event.PublishUpdateProject(ctx, proj, p, getAPIConsumer(ctx))
+		event.PublishUpdateProject(ctx, proj, p, getUserConsumer(ctx))
+		event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectUpdated, *proj, *u.AuthConsumerUser.AuthentifiedUser)
 
 		proj.Permissions.Readable = true
 		proj.Permissions.Writable = true
@@ -275,7 +295,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withLabels := service.FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -331,7 +351,7 @@ func (api *API) getProjectHandler() service.Handler {
 		if isAdmin(ctx) {
 			p.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
 		} else {
-			permissions, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{p.Key}, getAPIConsumer(ctx).GetGroupIDs())
+			permissions, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{p.Key}, getUserConsumer(ctx).GetGroupIDs())
 			if err != nil {
 				return err
 			}
@@ -426,7 +446,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
 			project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithIntegrations,
 		)
@@ -437,7 +457,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		p.Permissions.Readable = true
 		p.Permissions.Writable = true
 
-		event.PublishUpdateProject(ctx, p, proj, getAPIConsumer(ctx))
+		event.PublishUpdateProject(ctx, p, proj, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -445,24 +465,35 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 
 func (api *API) postProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
+		if consumer == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
-		var p sdk.Project
-		if err := service.UnmarshalBody(r, &p); err != nil {
+		if api.Config.Project.CreationDisabled && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "project creation is disabled")
+		}
+
+		var prj sdk.Project
+		if err := service.UnmarshalBody(r, &prj); err != nil {
 			return sdk.WrapError(err, "unable to unmarshal body")
 		}
 
 		// Check key pattern
-		if rgxp := regexp.MustCompile(sdk.ProjectKeyPattern); !rgxp.MatchString(p.Key) {
-			return sdk.WrapError(sdk.ErrInvalidProjectKey, "project key %s do not respect pattern %s", p.Key, sdk.ProjectKeyPattern)
+		if rgxp := regexp.MustCompile(sdk.ProjectKeyPattern); !rgxp.MatchString(prj.Key) {
+			return sdk.WrapError(sdk.ErrInvalidProjectKey, "project key %s do not respect pattern %s", prj.Key, sdk.ProjectKeyPattern)
 		}
 
 		// Check project name
-		if p.Name == "" {
+		if prj.Name == "" {
 			return sdk.WrapError(sdk.ErrInvalidProjectName, "project name must no be empty")
 		}
 
-		//Create a project within a transaction
+		if prj.WorkflowRetention <= 0 {
+			prj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
+		}
+
+		// Create a project within a transaction
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
@@ -470,21 +501,21 @@ func (api *API) postProjectHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Check that project does not already exists
-		exist, errExist := project.Exist(tx, p.Key)
+		exist, errExist := project.Exist(tx, prj.Key)
 		if errExist != nil {
-			return sdk.WrapError(errExist, "cannot check if project %s exist", p.Key)
+			return sdk.WrapError(errExist, "cannot check if project %s exist", prj.Key)
 		}
 		if exist {
-			return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "project %s already exists", p.Key)
+			return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "project %s already exists", prj.Key)
 		}
 
-		if err := project.Insert(tx, &p); err != nil {
+		if err := project.Insert(tx, &prj); err != nil {
 			return err
 		}
 
 		// Check that given project groups are valid
 		var groupIDs []int64
-		for _, gp := range p.ProjectGroups {
+		for _, gp := range prj.ProjectGroups {
 			var grp *sdk.Group
 			var err error
 			if gp.Group.ID != 0 {
@@ -515,7 +546,7 @@ func (api *API) postProjectHandler() service.Handler {
 
 		// If no groups were given, try to create a new one with project name
 		if len(groupIDs) == 0 {
-			groupSlug := slug.Convert(p.Name)
+			groupSlug := slug.Convert(prj.Name)
 			existingGroop, err := group.LoadByName(ctx, tx, groupSlug)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
@@ -525,7 +556,7 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 
 			newGroup := sdk.Group{Name: groupSlug}
-			if err := group.Create(ctx, tx, &newGroup, consumer.AuthentifiedUser); err != nil {
+			if err := group.Create(ctx, tx, &newGroup, consumer.AuthConsumerUser.AuthentifiedUser); err != nil {
 				return err
 			}
 
@@ -536,34 +567,46 @@ func (api *API) postProjectHandler() service.Handler {
 		for _, groupID := range groupIDs {
 			if err := group.InsertLinkGroupProject(ctx, tx, &group.LinkGroupProject{
 				GroupID:   groupID,
-				ProjectID: p.ID,
+				ProjectID: prj.ID,
 				Role:      sdk.PermissionReadWriteExecute,
 			}); err != nil {
-				return sdk.WrapError(err, "cannot add group %d in project %s", groupID, p.Name)
+				return sdk.WrapError(err, "cannot add group %d in project %s", groupID, prj.Name)
 			}
 		}
 
-		for _, v := range p.Variables {
-			if errVar := project.InsertVariable(tx, p.ID, &v, consumer); errVar != nil {
-				return sdk.WrapError(errVar, "addProjectHandler> Cannot add variable %s in project %s", v.Name, p.Name)
+		for _, v := range prj.Variables {
+			if errVar := project.InsertVariable(tx, prj.ID, &v, consumer); errVar != nil {
+				return sdk.WrapError(errVar, "addProjectHandler> Cannot add variable %s in project %s", v.Name, prj.Name)
 			}
 		}
 
-		p.Keys = []sdk.ProjectKey{
+		prj.Keys = []sdk.ProjectKey{
 			{
 				Type: sdk.KeyTypeSSH,
-				Name: sdk.GenerateProjectDefaultKeyName(p.Key, sdk.KeyTypeSSH),
+				Name: sdk.GenerateProjectDefaultKeyName(prj.Key, sdk.KeyTypeSSH),
 			},
 			{
 				Type: sdk.KeyTypePGP,
-				Name: sdk.GenerateProjectDefaultKeyName(p.Key, sdk.KeyTypePGP),
+				Name: sdk.GenerateProjectDefaultKeyName(prj.Key, sdk.KeyTypePGP),
 			},
 		}
-		for i := range p.Keys {
-			k := &p.Keys[i]
-			k.ProjectID = p.ID
+		for i := range prj.Keys {
+			k := &prj.Keys[i]
+			k.ProjectID = prj.ID
 
-			newKey, err := keys.GenerateKey(k.Name, k.Type)
+			var newKey sdk.Key
+			var err error
+			switch k.Type {
+			case sdk.KeyTypePGP:
+				var email string
+				email, err = api.gpgKeyEmailAddress(ctx, prj.Key, k.Name)
+				if err != nil {
+					return err
+				}
+				newKey, err = keys.GeneratePGPKeyPair(k.Name, "Project Key generated by CDS", email)
+			case sdk.KeyTypeSSH:
+				newKey, err = keys.GenerateSSHKey(k.Name)
+			}
 			if err != nil {
 				return err
 			}
@@ -572,7 +615,7 @@ func (api *API) postProjectHandler() service.Handler {
 			k.KeyID = newKey.KeyID
 
 			if err := project.InsertKey(tx, k); err != nil {
-				return sdk.WrapError(err, "cannot add key %s in project %s", k.Name, p.Name)
+				return sdk.WrapError(err, "cannot add key %s in project %s", k.Name, prj.Name)
 			}
 		}
 
@@ -581,9 +624,11 @@ func (api *API) postProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load integration models")
 		}
 
+		var created, updated []sdk.ProjectIntegration
 		for i := range integrationModels {
 			pf := &integrationModels[i]
-			if err := propagatePublicIntegrationModelOnProject(ctx, tx, api.Cache, *pf, p, consumer); err != nil {
+			created, updated, err = propagatePublicIntegrationModelOnProject(ctx, tx, api.Cache, *pf, prj, consumer)
+			if err != nil {
 				return sdk.WithStack(err)
 			}
 		}
@@ -592,18 +637,25 @@ func (api *API) postProjectHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishAddProject(ctx, &p, consumer)
+		event.PublishAddProject(ctx, &prj, consumer)
+		for _, pp := range created {
+			event_v2.PublishProjectIntegrationEvent(ctx, api.Cache, sdk.EventIntegrationCreated, permProjectKey, pp, *consumer.AuthConsumerUser.AuthentifiedUser)
+		}
+		for _, pp := range updated {
+			event_v2.PublishProjectIntegrationEvent(ctx, api.Cache, sdk.EventIntegrationUpdated, permProjectKey, pp, *consumer.AuthConsumerUser.AuthentifiedUser)
+		}
+		event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectCreated, prj, *consumer.AuthConsumerUser.AuthentifiedUser)
 
-		proj, err := project.Load(ctx, api.mustDB(), p.Key,
+		proj, err := project.Load(ctx, api.mustDB(), prj.Key,
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(consumer.AuthConsumerUser.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithVariables,
 		)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load project %s", p.Key)
+			return sdk.WrapError(err, "cannot load project %s", prj.Key)
 		}
 		proj.Permissions.Readable = true
 		proj.Permissions.Writable = true
@@ -617,6 +669,11 @@ func (api *API) deleteProjectHandler() service.Handler {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
+
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 		if err != nil {
@@ -647,7 +704,8 @@ func (api *API) deleteProjectHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishDeleteProject(ctx, p, getAPIConsumer(ctx))
+		event.PublishDeleteProject(ctx, p, getUserConsumer(ctx))
+		event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectDeleted, *p, *u.AuthConsumerUser.AuthentifiedUser)
 		return nil
 	}
 }
@@ -676,8 +734,8 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}

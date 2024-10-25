@@ -19,13 +19,14 @@ import (
 
 // QueueFilter contains all criteria used to fetch queue
 type QueueFilter struct {
-	ModelType []string
-	Rights    int
-	Since     *time.Time
-	Until     *time.Time
-	Limit     *int
-	Statuses  []string
-	Regions   []string
+	ModelType  []string
+	Rights     int
+	Since      *time.Time
+	Until      *time.Time
+	Limit      *int
+	Statuses   []string
+	Regions    []string
+	SkipBooked bool
 }
 
 func NewQueueFilter() QueueFilter {
@@ -101,7 +102,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		pq.StringArray(filter.Regions),   // $5
 	)
 
-	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
+	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit, filter.SkipBooked)
 }
 
 // LoadNodeJobRunQueueByGroupIDs load all workflow_node_run_job accessible
@@ -179,10 +180,10 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 		filter.Rights,                          // $7
 		pq.StringArray(filter.Regions),         // $8
 	)
-	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
+	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit, filter.SkipBooked)
 }
 
-func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query gorpmapping.Query, limit *int) ([]sdk.WorkflowNodeJobRun, error) {
+func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query gorpmapping.Query, limit *int, skipBooked bool) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.loadNodeJobRunQueue")
 	defer end()
 
@@ -199,6 +200,10 @@ func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	jobs := make([]sdk.WorkflowNodeJobRun, 0, len(sqlJobs))
 	for i := range sqlJobs {
 		getHatcheryInfo(ctx, store, &sqlJobs[i])
+		if skipBooked && sqlJobs[i].BookedBy.ID != 0 {
+			log.Info(ctx, "LoadNodeJobRunQueue> WorkflowNodeRunJob %d skipped (booked by %q)", sqlJobs[i].ID, sqlJobs[i].BookedBy.Name)
+			continue
+		}
 		jr, err := sqlJobs[i].WorkflowNodeRunJob()
 		if err != nil {
 			log.Error(ctx, "LoadNodeJobRunQueue> WorkflowNodeRunJob error: %v", err)
@@ -229,7 +234,7 @@ func LoadNodeJobRunIDByNodeRunID(db gorp.SqlExecutor, runNodeID int64) ([]int64,
 	return ids, nil
 }
 
-//LoadNodeJobRun load a NodeJobRun given its ID
+// LoadNodeJobRun load a NodeJobRun given its ID
 func LoadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
@@ -252,7 +257,7 @@ func LoadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return &jr, nil
 }
 
-//LoadDeadNodeJobRun load a NodeJobRun which is Building but without worker
+// LoadDeadNodeJobRun load a NodeJobRun which is Building but without worker
 func LoadDeadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
 	var deadJobsDB []JobRun
 	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE worker_id IS NULL`
@@ -279,7 +284,29 @@ func LoadDeadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	return deadJobs, nil
 }
 
-//LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
+func LoadAndLockTerminatedNodeJobRun(ctx context.Context, db gorp.SqlExecutor, limit int) ([]sdk.WorkflowNodeJobRun, error) {
+	var terminatedJobsDB []JobRun
+	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE status IN ($1, $2, $3) ORDER BY id ASC LIMIT $4 FOR UPDATE SKIP LOCKED`
+	if _, err := db.Select(&terminatedJobsDB, query, sdk.StatusStopped, sdk.StatusSuccess, sdk.StatusFail, limit); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	deadJobs := make([]sdk.WorkflowNodeJobRun, len(terminatedJobsDB))
+	for i, deadJob := range terminatedJobsDB {
+		jr, err := deadJob.WorkflowNodeRunJob()
+		if err != nil {
+			return nil, err
+		}
+		deadJobs[i] = jr
+	}
+
+	return deadJobs, nil
+}
+
+// LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
 func LoadAndLockNodeJobRunWait(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update`
@@ -294,7 +321,7 @@ func LoadAndLockNodeJobRunWait(ctx context.Context, db gorp.SqlExecutor, store c
 	return &jr, nil
 }
 
-//LoadAndLockNodeJobRunSkipLocked load for update a NodeJobRun given its ID
+// LoadAndLockNodeJobRunSkipLocked load for update a NodeJobRun given its ID
 func LoadAndLockNodeJobRunSkipLocked(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	var end func()
 	_, end = telemetry.Span(ctx, "workflow.LoadAndLockNodeJobRunSkipLocked")
@@ -329,7 +356,7 @@ func insertWorkflowNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) er
 	return nil
 }
 
-//DeleteNodeJobRuns deletes all workflow_node_run_job for a given workflow_node_run
+// DeleteNodeJobRuns deletes all workflow_node_run_job for a given workflow_node_run
 func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 	query := `delete from workflow_node_run_job where workflow_node_run_id = $1`
 	_, err := db.Exec(query, nodeID)
@@ -343,7 +370,7 @@ func DeleteNodeJobRun(db gorp.SqlExecutor, nodeRunJob int64) error {
 	return err
 }
 
-//UpdateNodeJobRun updates a workflow_node_run_job
+// UpdateNodeJobRun updates a workflow_node_run_job
 func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	var end func()
 	_, end = telemetry.Span(ctx, "workflow.UpdateNodeJobRun")
@@ -377,19 +404,4 @@ func getHatcheryInfo(ctx context.Context, store cache.Store, j *JobRun) {
 			ID:   h.ID,
 		}
 	}
-}
-
-// replaceWorkflowJobRunInQueue restart workflow node job
-func replaceWorkflowJobRunInQueue(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
-	query := "UPDATE workflow_node_run_job SET status = $1, retry = $2, worker_id = NULL WHERE id = $3"
-	if _, err := db.Exec(query, sdk.StatusWaiting, wNodeJob.Retry+1, wNodeJob.ID); err != nil {
-		return sdk.WrapError(err, "Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting)
-	}
-
-	query = "UPDATE worker SET status = $2, job_run_id = NULL where job_run_id = $1"
-	if _, err := db.Exec(query, wNodeJob.ID, sdk.StatusDisabled); err != nil {
-		return sdk.WrapError(err, "Unable to set workers")
-	}
-
-	return nil
 }

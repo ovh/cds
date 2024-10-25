@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/opensearch-project/opensearch-go/v4"
+	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 	"github.com/rockbears/log"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
@@ -99,11 +100,9 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Gracefully shutdown the http server
 	go func() {
-		select {
-		case <-ctx.Done():
-			log.Info(ctx, "ElasticSearch> Shutdown HTTP Server")
-			_ = server.Shutdown(ctx)
-		}
+		<-ctx.Done()
+		log.Info(ctx, "ElasticSearch> Shutdown HTTP Server")
+		_ = server.Shutdown(ctx)
 	}()
 
 	if s.Cfg.EventBus.JobSummaryKafka.BrokerAddresses != "" {
@@ -122,10 +121,14 @@ func (s *Service) Serve(c context.Context) error {
 }
 
 func (s *Service) initClient() (ESClient, error) {
-	x, err := elastic.NewClient(
-		elastic.SetURL(s.Cfg.ElasticSearch.URL),
-		elastic.SetBasicAuth(s.Cfg.ElasticSearch.Username, s.Cfg.ElasticSearch.Password),
-		elastic.SetSniff(false),
+	x, err := opensearchapi.NewClient(
+		opensearchapi.Config{
+			Client: opensearch.Config{
+				Addresses: []string{s.Cfg.ElasticSearch.URL},
+				Username:  s.Cfg.ElasticSearch.Username,
+				Password:  s.Cfg.ElasticSearch.Password,
+			},
+		},
 	)
 	if err != nil {
 		return nil, sdk.WithStack(err)

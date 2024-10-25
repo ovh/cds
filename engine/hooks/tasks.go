@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//This are all the types
+// This are all the types
 const (
 	TypeRepoManagerWebHook = "RepoWebHook"
 	TypeWebHook            = "Webhook"
@@ -26,12 +26,12 @@ const (
 	TypeWorkflowHook       = "Workflow"
 	TypeOutgoingWebHook    = "OutgoingWebhook"
 	TypeOutgoingWorkflow   = "OutgoingWorkflow"
-	TypeEntitiesHook       = "EntitiesHook"
 
 	GithubHeader         = "X-Github-Event"
 	GitlabHeader         = "X-Gitlab-Event"
 	BitbucketHeader      = "X-Event-Key"
 	BitbucketCloudHeader = "X-Event-Key_Cloud" // Fake header, do not use to fetch header, just to return custom header
+	GiteaHeader          = "X-Gitea-Event"
 
 	ConfigNumber    = "Number"
 	ConfigSubNumber = "SubNumber"
@@ -67,12 +67,6 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		log.Info(ctx, "Hooks> All tasks has been resynchronized (%.3fs)", time.Since(t0).Seconds())
 	}()
 
-	log.Info(ctx, "Hooks> Synchronizing entities hooks from CDS API (%s)", s.Cfg.API.HTTP.URL)
-	repos, err := s.Client.RepositoriesListAll(ctx)
-	if err != nil {
-		return sdk.WrapError(err, "unable to list all repositories")
-	}
-
 	log.Info(ctx, "Hooks> Synchronizing tasks from CDS API (%s)", s.Cfg.API.HTTP.URL)
 
 	// Get all hooks from CDS, and synchronize the tasks in cache
@@ -83,9 +77,6 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 	mHookIDs := make(map[string]struct{}, len(hooks))
 	for i := range hooks {
 		mHookIDs[hooks[i].UUID] = struct{}{}
-	}
-	for i := range repos {
-		mHookIDs[repos[i].ID] = struct{}{}
 	}
 
 	// Get all node run execution ids from CDS, and synchronize the outgoing tasks in cache
@@ -139,17 +130,6 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			continue
 		}
 	}
-	for _, r := range repos {
-		h := sdk.Hook{
-			UUID:          r.ID,
-			HookType:      sdk.RepositoryEntitiesHook,
-			Configuration: r.HookConfiguration,
-		}
-		if err := s.addTaskFromHook(h); err != nil {
-			log.Error(ctx, "Hook> Unable to save task %+v: %v", h, err)
-			continue
-		}
-	}
 
 	// Start listening to gerrit event stream
 	vcsGerritConfig, err := s.Client.VCSGerritConfiguration()
@@ -193,19 +173,6 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 	})
 	// Save the fact that we are listen the event stream for this gerrit
 	gerritRepoHooks[vcsName] = true
-}
-
-func (s *Service) hookToTask(r sdk.Hook) (*sdk.Task, error) {
-	switch r.HookType {
-	case sdk.RepositoryEntitiesHook:
-		return &sdk.Task{
-			UUID:          r.UUID,
-			Type:          TypeEntitiesHook,
-			Configuration: r.Configuration,
-		}, nil
-	default:
-		return nil, sdk.WithStack(sdk.ErrNotImplemented)
-	}
 }
 
 func (s *Service) nodeHookToTask(h *sdk.NodeHook) (*sdk.Task, error) {
@@ -318,7 +285,7 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	}
 
 	switch t.Type {
-	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook, TypeEntitiesHook:
+	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook:
 		return nil, nil
 	case TypeScheduler, TypeRepoPoller:
 		return nil, s.prepareNextScheduledTaskExecution(ctx, t)
@@ -415,15 +382,19 @@ func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
 	}
 
 	switch t.Type {
-	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka, TypeWorkflowHook:
+	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeWorkflowHook:
 		log.Debug(ctx, "Hooks> Tasks %s has been stopped", t.UUID)
+		return nil
+	case TypeKafka:
+		s.stopKafkaHook(t)
+		log.Debug(ctx, "Hooks> Kafka Task %s has been stopped", t.UUID)
 		return nil
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
 		log.Debug(ctx, "Hooks> Gerrit Task %s has been stopped", t.UUID)
 		return nil
 	default:
-		return fmt.Errorf("Unsupported task type %s", t.Type)
+		return fmt.Errorf("unsupported task type %s", t.Type)
 	}
 }
 
@@ -441,9 +412,6 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	switch {
 	case e.GerritEvent != nil:
 		h, err = s.doGerritExecution(e)
-	case e.Type == TypeEntitiesHook:
-		log.Info(ctx, "Entities hook executed")
-		err = s.doAnalyzeExecution(ctx, e)
 	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
 		err = s.doOutgoingWebHookExecution(ctx, e)
 	case e.Type == TypeOutgoingWorkflow:

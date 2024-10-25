@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -27,6 +31,7 @@ const (
 	// TODO: the flag below will be removed
 	flagBaseDir             = "basedir"
 	flagBookedWorkflowJobID = "booked-workflow-job-id"
+	flagRunJobID            = "run-job-id"
 	flagGraylogProtocol     = "graylog-protocol"
 	flagGraylogHost         = "graylog-host"
 	flagGraylogPort         = "graylog-port"
@@ -41,13 +46,88 @@ const (
 	flagHatcheryName        = "hatchery-name"
 )
 
+func isCI() bool {
+	return os.Getenv("CI") == "1"
+}
+
+func isLegacyMode() bool {
+	return os.Getenv("CDS_LEGACY_MODE") != "false"
+}
+
+func MustGetWorkerHTTPPort() int {
+	portS := os.Getenv(internal.WorkerServerPort)
+	if portS == "" {
+		sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
+	}
+
+	port, errPort := strconv.Atoi(portS)
+	if errPort != nil {
+		sdk.Exit("cannot parse '%s' as a port number", portS)
+	}
+	return port
+}
+
+func MustNewWorkerHTTPRequest(method string, path string, in interface{}) *http.Request {
+	port := MustGetWorkerHTTPPort()
+	var data []byte
+	var err error
+	if in != nil {
+		data, err = json.Marshal(in)
+		if err != nil {
+			sdk.Exit("unable to marshal payload: %v", err)
+		}
+	}
+
+	req, err := http.NewRequest(method, fmt.Sprintf("http://127.0.0.1:%d%s", port, path), bytes.NewReader(data))
+	if err != nil {
+		sdk.Exit("unable to prepare HTTP request: %v\n", err)
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	return req
+}
+
+func DoHTTPRequest(ctx context.Context, req *http.Request, out interface{}) error {
+	client := http.DefaultClient
+
+	req = req.WithContext(ctx)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		sdk.Exit("http call failed: %v\n", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "unable to read body")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return errors.Errorf("HTTP %d error: %s", resp.StatusCode, string(body))
+	}
+
+	if out != nil {
+		if err := sdk.JSONUnmarshal(body, out); err != nil {
+			return errors.Wrap(err, "unable to unmarshal body")
+		}
+	}
+
+	return nil
+}
+
 func initFlagsRun(cmd *cobra.Command) {
+	if isCI() { // when worker is running in CI, the flags are not setup
+		return
+	}
+
 	flags := cmd.Flags()
 	flags.String(flagConfig, "", "base64 encoded json configuration")
 
 	// TODO: the flag below will be removed
 	flags.String(flagBaseDir, "", "This directory (default TMPDIR os environment var) will contains worker working directory and temporary files")
 	flags.Int64(flagBookedWorkflowJobID, 0, "Booked Workflow job id")
+	flags.String(flagRunJobID, "", "Run job ID")
 	flags.String(flagGraylogProtocol, "", "Ex: --graylog-protocol=xxxx-yyyy")
 	flags.String(flagGraylogHost, "", "Ex: --graylog-host=xxxx-yyyy")
 	flags.String(flagGraylogPort, "", "Ex: --graylog-port=12202")

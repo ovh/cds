@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
-	types "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
@@ -19,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-//create the docker bridge
+// create the docker bridge
 func (h *HatcherySwarm) createNetwork(ctx context.Context, dockerClient *dockerClient, name string) error {
 	ctx, end := telemetry.Span(ctx, "swarm.createNetwork", telemetry.Tag("network", name))
 	defer end()
@@ -49,9 +50,9 @@ type containerArgs struct {
 	entryPoint                         strslice.StrSlice
 }
 
-//shortcut to create+start(=run) a container
+// shortcut to create+start(=run) a container
 func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
-	if spawnArgs.Model == nil {
+	if spawnArgs.Model.ModelV1 == nil && spawnArgs.Model.ModelV2 == nil {
 		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
@@ -100,50 +101,55 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 		}
 	}
 
-	_, next := telemetry.Span(ctx, "swarm.dockerClient.ImageList")
-	// Check the images to know if we had to pull or not
-	images, errl := dockerClient.ImageList(ctx, types.ImageListOptions{All: true})
-	if errl != nil {
-		log.Warn(ctx, "unable to list images: %s", errl)
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, sdk.V2SendJobRunInfo{
+			Time:    time.Now(),
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("starting docker pull %s...", cArgs.image),
+		}); err != nil {
+			log.Warn(ctx, "unable to send job info for job %s: %v", spawnArgs.JobID, err)
+		}
+	} else {
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryStartDockerPull, h.Name(), cArgs.image))
+	}
+
+	_, next := telemetry.Span(ctx, "swarm.dockerClient.pullImage", telemetry.Tag("image", cArgs.image))
+	if err := h.pullImage(dockerClient,
+		cArgs.image,
+		timeoutPullImage,
+		spawnArgs.Model); err != nil {
+		next()
+
+		if sdk.IsValidUUID(spawnArgs.JobID) {
+			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, sdk.V2SendJobRunInfo{
+				Time:    time.Now(),
+				Level:   sdk.WorkflowRunInfoLevelError,
+				Message: fmt.Sprintf("docker pull %s done with error: %v", cArgs.image, sdk.Cause(err)),
+			}); err != nil {
+				log.Warn(ctx, "unable to send job info for job %s: %v", spawnArgs.JobID, err)
+			}
+		} else {
+			spawnMsg := sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPullErr, h.Name(), cArgs.image, sdk.Cause(err))
+			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, spawnMsg)
+		}
+		return sdk.WrapError(err, "unable to pull image %s on %s", cArgs.image, dockerClient.name)
 	}
 	next()
 
-	var imageFound bool
-checkImage:
-	for _, img := range images {
-		for _, t := range img.RepoTags {
-			if cArgs.image == t {
-				imageFound = true
-				break checkImage
-			}
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, sdk.V2SendJobRunInfo{
+			Time:    time.Now(),
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("docker pull %s done", cArgs.image),
+		}); err != nil {
+			log.Warn(ctx, "unable to send job info for job %s: %v", spawnArgs.JobID, err)
 		}
-	}
-
-	if strings.HasSuffix(cArgs.image, ":latest") {
-		imageFound = false
-	}
-
-	if !imageFound {
-		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryStartDockerPull, h.Name(), cArgs.image))
-
-		_, next := telemetry.Span(ctx, "swarm.dockerClient.pullImage", telemetry.Tag("image", cArgs.image))
-		if err := h.pullImage(dockerClient,
-			cArgs.image,
-			timeoutPullImage,
-			*spawnArgs.Model); err != nil {
-			next()
-
-			spawnMsg := sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPullErr, h.Name(), cArgs.image, sdk.Cause(err))
-			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, spawnMsg)
-			return sdk.WrapError(err, "unable to pull image %s on %s", cArgs.image, dockerClient.name)
-		}
-		next()
-
+	} else {
 		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPull, h.Name(), cArgs.image))
 	}
 
 	_, next = telemetry.Span(ctx, "swarm.dockerClient.ContainerCreate", telemetry.Tag(telemetry.TagWorker, cArgs.name), telemetry.Tag("network", fmt.Sprintf("%v", networkingConfig)))
-	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
+	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, name)
 	if err != nil {
 		next()
 		return sdk.WrapError(err, "unable to create container %s on %s", name, dockerClient.name)
@@ -217,7 +223,7 @@ func (h *HatcherySwarm) computeDockerOptsOnModelRequirement(d *dockerOpts, req s
 		} else if opt == "--privileged" {
 			d.privileged = true
 		} else {
-			return fmt.Errorf("Options not supported: %s", opt)
+			return fmt.Errorf("options not supported: %s", opt)
 		}
 	}
 	return nil
@@ -252,5 +258,5 @@ func (d *dockerOpts) computeDockerOptsPorts(arg string) error {
 			nat.PortBinding{HostIP: "0.0.0.0", HostPort: s[1]})
 		return nil // no error
 	}
-	return fmt.Errorf("Wrong format of ports arguments. Example: --port=8081:8182/tcp")
+	return fmt.Errorf("wrong format of ports arguments. Example: --port=8081:8182/tcp")
 }

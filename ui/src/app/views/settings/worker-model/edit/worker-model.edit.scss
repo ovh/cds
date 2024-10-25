@@ -1,1 +1,18 @@
 @import '../../../../../common';
+
+nz-col {
+  padding: 0 5px;
+}
+
+.nzSegment {
+  margin-top: 15px;
+  padding: 15px 15px;
+}
+.nzSegment {
+  h3 {
+    .anticon {
+      cursor: pointer;
+    }
+  }
+}
+

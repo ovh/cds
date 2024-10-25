@@ -1,44 +1,40 @@
-<div *ngIf="project && pipeline;then showPipeline; else loadPipeline"></div>
-<ng-template #showPipeline>
-    <div id="PipelineShow">
+<div id="PipelineShow">
+    <div *ngIf="project && pipeline;then showPipeline; else loadPipeline"></div>
+    <ng-template #showPipeline>
         <app-project-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application"
             [workflow]="workflowName" [version]="version" [buildNumber]="buildNumber" [envName]="envName"
             [remote]="remote" [branch]="branch">
-            <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
-                <nz-tag [nzColor]="nzTagColor" nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
-                        nzPopoverPlacement="bottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
-
-                <ng-template #popupFromRepository>
-                    <div class="content infoPopup">
-                        <ng-container *ngIf="pipeline?.workflow_ascode_holder">
-                            <app-ascode-event [project]="project" [workflow]="pipeline.workflow_ascode_holder"
-                                [events]="pipeline.ascode_events"></app-ascode-event>
-                        </ng-container>
-                        <ng-container *ngIf="pipeline && !pipeline.from_repository">
-                            <p>{{'pipeline_repository_help_line_1' | translate}}</p>
-                            <p>{{'workflow_repository_help_line_2' | translate}}</p>
-                            <div class="footer">
-                                <div>
-                                    <div class="ui list">
-                                        <a class="item" target="_blank" rel="noopener noreferrer"
-                                            href="#" [routerLink]="['/docs', 'tutorials', 'init_workflow_with_cdsctl']">
-                                            {{'common_read_more'| translate}}
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </ng-container>
-                    </div>
-                </ng-template>
-            </div>
+            <nz-tag class="labelFeature" [title]="'workflow_from_repository_btn' | translate" [nzColor]="nzTagColor"
+                nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
+                nzPopoverPlacement="bottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
+            <ng-template #popupFromRepository>
+                <div class="content infoPopup">
+                    <ng-container *ngIf="pipeline?.workflow_ascode_holder">
+                        <app-ascode-event [project]="project" [workflow]="pipeline.workflow_ascode_holder"
+                            [events]="pipeline.ascode_events"></app-ascode-event>
+                    </ng-container>
+                    <ng-container *ngIf="pipeline && !pipeline.from_repository">
+                        <p>{{'pipeline_repository_help_line_1' | translate}}</p>
+                        <p>{{'workflow_repository_help_line_2' | translate}}</p>
+                        <div class="footer">
+                            <a class="item" target="_blank" rel="noopener noreferrer" href="#"
+                                [routerLink]="['/docs', 'tutorials', 'init_workflow_with_cdsctl']">
+                                Read more
+                            </a>
+                        </div>
+                    </ng-container>
+                </div>
+            </ng-template>
         </app-project-breadcrumb>
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <ng-container *ngIf="editMode && !readOnly">
             <nz-button-group class="ascodeButton">
                 <ng-container *ngIf="pipeline.editModeChanged">
-                    <button nz-button nzType="default" (click)="cancelPipeline()">{{'common_cancel' | translate }}</button>
+                    <button nz-button nzType="default" (click)="cancelPipeline()">{{'common_cancel' | translate
+                        }}</button>
                 </ng-container>
-                <button nz-button nzType="primary" [disabled]="!pipeline.editModeChanged" (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
+                <button nz-button nzType="primary" [disabled]="!pipeline.editModeChanged"
+                    (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
             </nz-button-group>
         </ng-container>
 
@@ -57,8 +53,8 @@
                         </app-parameter-list>
                         <ng-container *ngIf="!readOnly">
                             <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
-                            <app-parameter-form [project]="project"
-                                (createParameterEvent)="parameterEvent($event)" [keys]="keys"></app-parameter-form>
+                            <app-parameter-form [project]="project" (createParameterEvent)="parameterEvent($event)"
+                                [keys]="keys"></app-parameter-form>
                         </ng-container>
                     </div>
                     <div *ngSwitchCase="'usage'">
@@ -74,12 +70,12 @@
                 </div>
             </div>
         </div>
-    </div>
-    <section class="content-wrap" *ngIf="pipeline != null">
-        <app-pipeline-ascode-editor [project]="project" [pipeline]="pipeline" [open]="asCodeEditorOpen">
-        </app-pipeline-ascode-editor>
-    </section>
-</ng-template>
-<ng-template #loadPipeline>
-    <div class="ui text active loader">Loading pipeline...</div>
-</ng-template>
+        <section class="content-wrap" *ngIf="pipeline != null">
+            <app-pipeline-ascode-editor [project]="project" [pipeline]="pipeline" [open]="asCodeEditorOpen">
+            </app-pipeline-ascode-editor>
+        </section>
+    </ng-template>
+    <ng-template #loadPipeline>
+        <nz-spin nzTip="Loading pipeline..."></nz-spin>
+    </ng-template>
+</div>

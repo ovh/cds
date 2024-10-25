@@ -58,7 +58,7 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		artifactsJSON := []sdk.WorkflowRunResultArtifact{}
+		artifactsJSON := make([]interface{}, 0)
 
 		workflowRunResults, err := wk.client.WorkflowRunResultsList(ctx, projectKey, reqArgs.Workflow, reqArgs.Number)
 		if err != nil {
@@ -67,19 +67,41 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 		for _, result := range workflowRunResults {
-			if result.Type != sdk.WorkflowRunResultTypeArtifact {
-				continue
+			switch result.Type {
+			case sdk.WorkflowRunResultTypeArtifact:
+				artData, err := result.GetArtifact()
+				if err != nil {
+					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("item is not an artifact: %s", err))
+					writeError(w, r, newError)
+					return
+				}
+				if reqArgs.Pattern != "" && !regexp.MatchString(artData.Name) {
+					continue
+				}
+				artifactsJSON = append(artifactsJSON, artData)
+			case sdk.WorkflowRunResultTypeArtifactManager:
+				artData, err := result.GetArtifactManager()
+				if err != nil {
+					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("item is not from an artifact manager: %s", err))
+					writeError(w, r, newError)
+					return
+				}
+				if reqArgs.Pattern != "" && !regexp.MatchString(artData.Name) {
+					continue
+				}
+				artifactsJSON = append(artifactsJSON, artData)
+			case sdk.WorkflowRunResultTypeCoverage:
+				artData, err := result.GetCoverage()
+				if err != nil {
+					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("item is not a coverage: %s", err))
+					writeError(w, r, newError)
+					return
+				}
+				if reqArgs.Pattern != "" && !regexp.MatchString(artData.Name) {
+					continue
+				}
+				artifactsJSON = append(artifactsJSON, artData)
 			}
-			artData, err := result.GetArtifact()
-			if err != nil {
-				newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("item is not an artifact: %s", err))
-				writeError(w, r, newError)
-				return
-			}
-			if reqArgs.Pattern != "" && !regexp.MatchString(artData.Name) {
-				continue
-			}
-			artifactsJSON = append(artifactsJSON, artData)
 		}
 
 		writeJSON(w, artifactsJSON, http.StatusOK)

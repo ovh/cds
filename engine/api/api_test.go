@@ -7,20 +7,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/rockbears/log"
-	"github.com/stretchr/testify/require"
-
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	authdrivertest "github.com/ovh/cds/engine/api/authentication/test"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/link"
+	"github.com/ovh/cds/engine/api/organization"
 	apiTest "github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
+
+	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.FakeTransaction, *Router) {
@@ -38,12 +40,19 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 		Cache:               store,
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "", "")
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "default", "default")
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.AuthenticationDrivers[sdk.ConsumerTest] = authdrivertest.NewDriver(t)
 	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
+
+	api.LinkDrivers = make(map[sdk.AuthConsumerType]link.LinkDriver)
+	api.LinkDrivers[sdk.ConsumerGithub] = authdrivertest.NewDriver(t)
 	api.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
+	// Reset organization
+	_, err := db.Exec("DELETE FROM organization")
+	require.NoError(t, err)
+	require.NoError(t, organization.CreateDefaultOrganization(context.TODO(), db.DbMap, []string{"default"}))
 	api.InitRouter()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -54,7 +63,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 		// Clean all the pending crafting workflow runs
 		lockKey := cache.Key("api:workflowRunCraft")
 		require.NoError(t, store.DeleteAll(lockKey))
-		ids, _ := workflow.LoadCratingWorkflowRunIDs(api.mustDB())
+		ids, _ := workflow.LoadCraftingWorkflowRunIDs(api.mustDB())
 		for _, id := range ids {
 			require.NoError(t, workflow.UpdateCraftedWorkflowRun(api.mustDB(), id))
 		}

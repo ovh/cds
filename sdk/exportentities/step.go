@@ -41,14 +41,6 @@ func NewStep(act sdk.Action) Step {
 			if path != nil {
 				s.Coverage.Path = path.Value
 			}
-			format := sdk.ParameterFind(act.Parameters, "format")
-			if format != nil {
-				s.Coverage.Format = format.Value
-			}
-			minimum := sdk.ParameterFind(act.Parameters, "minimum")
-			if minimum != nil {
-				s.Coverage.Minimum = minimum.Value
-			}
 		case sdk.ArtifactDownload:
 			s.ArtifactDownload = &StepArtifactDownload{}
 			path := sdk.ParameterFind(act.Parameters, "path")
@@ -117,7 +109,7 @@ func NewStep(act sdk.Action) Step {
 			}
 			tag := sdk.ParameterFind(act.Parameters, "tag")
 			if tag != nil && tag.Value != sdk.DefaultGitCloneParameterTagValue {
-				s.GitClone.Tag = tag.Value
+				s.GitClone.Tag = &tag.Value
 			}
 		case sdk.GitTagAction:
 			s.GitTag = &StepGitTag{}
@@ -159,6 +151,10 @@ func NewStep(act sdk.Action) Step {
 			if destMaturity != nil {
 				s.Promote.DestMaturity = destMaturity.Value
 			}
+			setProperties := sdk.ParameterFind(act.Parameters, "setProperties")
+			if setProperties != nil {
+				s.Promote.SetProperties = setProperties.Value
+			}
 		case sdk.ReleaseAction:
 			s.Release = &StepRelease{}
 			artifacts := sdk.ParameterFind(act.Parameters, "artifacts")
@@ -176,6 +172,10 @@ func NewStep(act sdk.Action) Step {
 			destMaturity := sdk.ParameterFind(act.Parameters, "destMaturity")
 			if destMaturity != nil {
 				s.Release.DestMaturity = destMaturity.Value
+			}
+			setProperties := sdk.ParameterFind(act.Parameters, "setProperties")
+			if setProperties != nil {
+				s.Release.SetProperties = setProperties.Value
 			}
 		case sdk.ReleaseVCSAction:
 			s.ReleaseVCS = &StepReleaseVCS{}
@@ -231,6 +231,12 @@ func NewStep(act sdk.Action) Step {
 			step := StepDeploy("{{.cds.application}}")
 			s.Deploy = &step
 		}
+	case sdk.AsCodeAction:
+		step := make(StepAscodeAction)
+		for _, v := range act.Parameters {
+			step[v.Name] = v.Value
+		}
+		s.AsCodeAction = &step
 	default:
 		args := make(StepParameters)
 		for _, p := range act.Parameters {
@@ -262,9 +268,7 @@ type StepPushBuildInfo string
 
 // StepCoverage represents exported coverage step.
 type StepCoverage struct {
-	Format  string `json:"format,omitempty" yaml:"format,omitempty"`
-	Minimum string `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	Path    string `json:"path,omitempty" yaml:"path,omitempty"`
+	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 }
 
 // StepArtifactDownload represents exported artifact download step.
@@ -283,31 +287,33 @@ type StepArtifactUpload struct {
 
 // StepGitClone represents exported git clone step.
 type StepGitClone struct {
-	Branch     string `json:"branch,omitempty" yaml:"branch,omitempty"`
-	Commit     string `json:"commit,omitempty" yaml:"commit,omitempty"`
-	Depth      string `json:"depth,omitempty" yaml:"depth,omitempty"`
-	Directory  string `json:"directory,omitempty" yaml:"directory,omitempty"`
-	Password   string `json:"password,omitempty" yaml:"password,omitempty"`
-	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
-	SubModules string `json:"submodules,omitempty" yaml:"submodules,omitempty"`
-	Tag        string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	URL        string `json:"url,omitempty" yaml:"url,omitempty" jsonschema:"required"`
-	User       string `json:"user,omitempty" yaml:"user,omitempty"`
+	Branch     string  `json:"branch,omitempty" yaml:"branch,omitempty"`
+	Commit     string  `json:"commit,omitempty" yaml:"commit,omitempty"`
+	Depth      string  `json:"depth,omitempty" yaml:"depth,omitempty"`
+	Directory  string  `json:"directory,omitempty" yaml:"directory,omitempty"`
+	Password   string  `json:"password,omitempty" yaml:"password,omitempty"`
+	PrivateKey string  `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+	SubModules string  `json:"submodules,omitempty" yaml:"submodules,omitempty"`
+	Tag        *string `json:"tag,omitempty" yaml:"tag,omitempty"`
+	URL        string  `json:"url,omitempty" yaml:"url,omitempty" jsonschema:"required"`
+	User       string  `json:"user,omitempty" yaml:"user,omitempty"`
 }
 
 // StepPromote represents exported promote step.
 type StepPromote struct {
-	Artifacts    string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
-	SrcMaturity  string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
-	DestMaturity string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+	Artifacts     string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
+	SrcMaturity   string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
+	DestMaturity  string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+	SetProperties string `json:"setProperties,omitempty" yaml:"setProperties,omitempty"`
 }
 
 // StepRelease represents exported release step.
 type StepRelease struct {
-	Artifacts    string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
-	ReleaseNote  string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
-	SrcMaturity  string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
-	DestMaturity string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+	Artifacts     string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
+	ReleaseNote   string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
+	SrcMaturity   string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
+	DestMaturity  string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+	SetProperties string `json:"setProperties,omitempty" yaml:"setProperties,omitempty"`
 }
 
 // StepReleaseVCS represents exported release step.
@@ -340,6 +346,8 @@ type StepInstallKey interface{}
 // StepDeploy represents exported push build info step.
 type StepDeploy string
 
+type StepAscodeAction map[string]string
+
 // Step represents exported step used in a job.
 type Step struct {
 	// common step data
@@ -363,6 +371,7 @@ type Step struct {
 	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema:"oneof_required=actionCheckout" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
 	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema:"oneof_required=actionInstallKey" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
 	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema:"oneof_required=actionDeploy" jsonschema_description:"Deploy an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
+	AsCodeAction     *StepAscodeAction     `json:"asCodeAction,omitempty" yaml:"asCodeAction,omitempty" jsonschema:"oneof_required=asCodeAction" jsonschema_description:"ascode action"`
 }
 
 // MarshalJSON custom marshal json impl to inline custom step.
@@ -485,6 +494,9 @@ func (s Step) IsValid() bool {
 	if s.isPushBuildInfo() {
 		count++
 	}
+	if s.isAscodeAction() {
+		count++
+	}
 	count += len(s.StepCustom)
 
 	return count == 1
@@ -523,6 +535,8 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asScript()
 	} else if s.isPushBuildInfo() {
 		a = s.asPushBuildInfo()
+	} else if s.isAscodeAction() {
+		a = s.asAscodeAction()
 	} else {
 		a = s.asAction()
 	}
@@ -554,6 +568,8 @@ func (s Step) asScript() (sdk.Action, error) {
 			}
 		}
 		val = strings.Join(lines, "\n")
+	} else if script, ok := s.Script.([]string); ok {
+		val = strings.Join(script, "\n")
 	} else if script, ok := s.Script.(string); ok {
 		val = script
 	} else {
@@ -609,10 +625,21 @@ func (s Step) asCheckoutApplication() sdk.Action {
 
 func (s Step) isPushBuildInfo() bool { return s.PushBuildInfo != nil }
 
+func (s Step) isAscodeAction() bool { return s.AsCodeAction != nil }
+
 func (s Step) asPushBuildInfo() sdk.Action {
 	return sdk.Action{
 		Name: sdk.PushBuildInfo,
 		Type: sdk.BuiltinAction,
+	}
+}
+
+func (s Step) asAscodeAction() sdk.Action {
+	return sdk.Action{
+		Name:       sdk.AsCodeAction,
+		Type:       sdk.AsCodeAction,
+		StepName:   s.Name,
+		Parameters: sdk.ParametersFromMap(*s.AsCodeAction),
 	}
 }
 

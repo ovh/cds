@@ -8,21 +8,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 )
 
 // PubSub represents a subscriber
 type PubSub interface {
-	Unsubscribe(channels ...string) error
+	Unsubscribe(c context.Context, channels ...string) error
 	GetMessage(c context.Context) (string, error)
 }
 
-//Key make a key as expected
+// Key make a key as expected
 func Key(args ...string) string {
 	return strings.Join(args, ":")
 }
 
-//Store is an interface
+// Store is an interface
 type Store interface {
 	Get(key string, value interface{}) (bool, error)
 	Set(key string, value interface{}) error
@@ -58,6 +59,7 @@ type QueueStore interface {
 
 type SetStore interface {
 	SetAdd(rootKey string, memberKey string, member interface{}) error
+	SetAddWithTTL(rootKey string, memberKey string, member interface{}, ttl int) error
 	SetRemove(rootKey string, memberKey string, member interface{}) error
 	SetCard(key string) (int, error)
 	SetScan(ctx context.Context, key string, members ...interface{}) error
@@ -95,12 +97,12 @@ type SetValueWithScore struct {
 	Value json.RawMessage
 }
 
-//New init a cache
-func New(redisHost, redisPassword string, dbindex, TTL int) (Store, error) {
-	return NewRedisStore(redisHost, redisPassword, dbindex, TTL)
+// New init a cache
+func New(redisConf sdk.RedisConf, TTL int) (Store, error) {
+	return NewRedisStore(redisConf, TTL)
 }
 
-//NewWriteCloser returns a write closer
+// NewWriteCloser returns a write closer
 func NewWriteCloser(store Store, key string, ttl int) io.WriteCloser {
 	return &writerCloser{
 		store: store,

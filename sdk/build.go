@@ -124,6 +124,9 @@ const (
 	StatusStopped           = "Stopped"
 	StatusWorkerPending     = "Pending"
 	StatusWorkerRegistering = "Registering"
+
+	StatusCrafting   = "Crafting"
+	StatusScheduling = "Scheduling"
 )
 
 var (
@@ -134,7 +137,7 @@ var (
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
 func StatusIsTerminated(status string) bool {
 	switch status {
-	case StatusPending, StatusBuilding, StatusWaiting, "": // A stage does not have status when he's waiting a previous stage
+	case StatusPending, StatusBuilding, StatusWaiting, StatusCrafting, StatusScheduling, "": // A stage does not have status when he's waiting a previous stage
 		return false
 	default:
 		return true

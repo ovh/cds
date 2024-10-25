@@ -41,7 +41,6 @@ func New(w Writer, c Config, out string) *Packer {
 		if c.Command != "" {
 			c.SystemdServiceConfig.ExecStart = c.Command
 		}
-
 	}
 
 	return &Packer{

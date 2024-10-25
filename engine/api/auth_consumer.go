@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	builtindriver "github.com/ovh/cds/engine/api/driver/builtin"
 	"net/http"
 	"time"
 
@@ -25,7 +26,7 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 		}
@@ -33,8 +34,8 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 			return err
 		}
 
-		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID,
-			authentication.LoadConsumerOptions.Default)
+		cs, err := authentication.LoadUserConsumersByUserID(ctx, api.mustDB(), u.ID,
+			authentication.LoadUserConsumerOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -48,7 +49,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["permUsername"]
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -59,19 +60,19 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		// Only a user can create a consumer for itself, an admin can't create one for an other user
 		var u *sdk.AuthentifiedUser
 		if username == "me" {
-			u, err = user.LoadByID(ctx, tx, getAPIConsumer(ctx).AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, tx, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, tx, username)
 		}
 		if err != nil {
 			return err
 		}
-		if u.ID != consumer.AuthentifiedUserID {
+		if u.ID != consumer.AuthConsumerUser.AuthentifiedUserID {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "a user can't create a consumer for someone else")
 		}
 
 		// Check request data
-		var reqData sdk.AuthConsumer
+		var reqData sdk.AuthUserConsumer
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
 		}
@@ -88,18 +89,18 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 			Name:                         reqData.Name,
 			Description:                  reqData.Description,
 			Duration:                     reqData.ValidityPeriods.Latest().Duration,
-			GroupIDs:                     reqData.GroupIDs,
-			Scopes:                       reqData.ScopeDetails,
-			ServiceName:                  reqData.ServiceName,
-			ServiceType:                  reqData.ServiceType,
-			ServiceRegion:                reqData.ServiceRegion,
-			ServiceIgnoreJobWithNoRegion: reqData.ServiceIgnoreJobWithNoRegion,
+			GroupIDs:                     reqData.AuthConsumerUser.GroupIDs,
+			Scopes:                       reqData.AuthConsumerUser.ScopeDetails,
+			ServiceName:                  reqData.AuthConsumerUser.ServiceName,
+			ServiceType:                  reqData.AuthConsumerUser.ServiceType,
+			ServiceRegion:                reqData.AuthConsumerUser.ServiceRegion,
+			ServiceIgnoreJobWithNoRegion: reqData.AuthConsumerUser.ServiceIgnoreJobWithNoRegion,
 		}
 		newConsumer, token, err := builtin.NewConsumer(ctx, tx, consumerOpts, consumer)
 		if err != nil {
 			return err
 		}
-		if err := authentication.LoadConsumerOptions.Default(ctx, tx, newConsumer); err != nil {
+		if err := authentication.LoadUserConsumerOptions.Default(ctx, tx, newConsumer); err != nil {
 			return err
 		}
 
@@ -126,10 +127,11 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, tx, consumerID)
 		if err != nil {
 			return err
 		}
+
 		if consumer.Type != sdk.ConsumerBuiltin {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "can't delete a no builtin consumer")
 		}
@@ -164,7 +166,7 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Load the consumer from the input
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, tx, consumerID)
 		if err != nil {
 			return err
 		}
@@ -196,7 +198,7 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 			return err
 		}
 
-		jws, err := builtin.NewSigninConsumerToken(consumer) // Regen a new jws (signin token)
+		jws, err := builtindriver.NewSigninConsumerToken(consumer) // Regen a new jws (signin token)
 		if err != nil {
 			return err
 		}
@@ -233,7 +235,7 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 		}
@@ -241,7 +243,7 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 			return err
 		}
 
-		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID)
+		cs, err := authentication.LoadUserConsumersByUserID(ctx, api.mustDB(), u.ID)
 		if err != nil {
 			return err
 		}

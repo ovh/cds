@@ -22,14 +22,14 @@ func Test_crudOrganization(t *testing.T) {
 
 	// Insert rbac
 	perm := fmt.Sprintf(`name: perm-orga-%s
-globals:
+global:
   - role: %s
     users: [%s]
 `, sdk.RandomString(10), sdk.GlobalRoleManageOrganization, u.Username)
 
 	var rb sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
-	rb.Globals[0].RBACUsersIDs = []string{u.ID}
+	rb.Global[0].RBACUsersIDs = []string{u.ID}
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
 	orga := sdk.Organization{Name: sdk.RandomString(10)}
@@ -71,5 +71,6 @@ globals:
 
 	var orgs []sdk.Organization
 	require.NoError(t, json.Unmarshal(wList.Body.Bytes(), &orgs))
-	require.Len(t, orgs, 0)
+	require.Len(t, orgs, 1)
+	require.Equal(t, "default", orgs[0].Name)
 }

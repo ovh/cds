@@ -104,7 +104,7 @@ func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
 	return sdk.WithStack(err)
 }
 
-//CheckJob validate a job
+// CheckJob validate a job
 func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 	t := time.Now()
 	log.Debug(ctx, "CheckJob> Begin")
@@ -115,31 +115,43 @@ func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 		step := &job.Action.Actions[i]
 		log.Debug(ctx, "CheckJob> Checking step %s", step.Name)
 
-		a, err := action.RetrieveForGroupAndName(ctx, db, step.Group, step.Name)
-		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrNoAction) {
-				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
-				continue
+		if step.Type != sdk.AsCodeAction {
+			a, err := action.RetrieveForGroupAndName(ctx, db, step.Group, step.Name)
+			if err != nil {
+				if sdk.ErrorIs(err, sdk.ErrNoAction) {
+					errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
+					continue
+				}
+				return err
 			}
-			return err
-		}
-		job.Action.Actions[i].ID = a.ID
+			job.Action.Actions[i].ID = a.ID
 
-		// FIXME better check for params
-		for x := range step.Parameters {
-			sp := &step.Parameters[x]
-			log.Debug(ctx, "CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
-			var found bool
-			for y := range a.Parameters {
-				ap := a.Parameters[y]
-				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
-					found = true
-					break
+			// FIXME better check for params
+			for x := range step.Parameters {
+				sp := &step.Parameters[x]
+				log.Debug(ctx, "CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
+				var found bool
+				for y := range a.Parameters {
+					ap := a.Parameters[y]
+					if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
 				}
 			}
-			if !found {
-				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
+
+		} else {
+			ascodeAction, err := action.LoadAllByTypes(ctx, db, []string{sdk.AsCodeAction})
+			if err != nil {
+				return err
 			}
+			if len(ascodeAction) != 1 {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to find ascode action")
+			}
+			job.Action.Actions[i].ID = ascodeAction[0].ID
 		}
 
 		if len(errs) > 0 {
@@ -148,57 +160,4 @@ func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 	}
 
 	return nil
-}
-
-// CountInPipelineData represents the result of CountInVarValue function
-type CountInPipelineData struct {
-	PipName   string
-	StageName string
-	JobName   string
-	Count     int64
-}
-
-// CountInPipelines count how many times a text is used on all pipeline for the given project
-func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountInPipelineData, error) {
-	query := `
-	WITH RECURSIVE parent(pipName, stageName, actionName, id, child_id) as (
-
-		SELECT pipeline.name, pipeline_stage.name, action.name, action_edge.id as id, action_edge.child_id as child_id, action_edge_parameter.value
-		FROM pipeline
-		JOIN pipeline_stage on pipeline_stage.pipeline_id = pipeline.id
-		JOIN pipeline_action on pipeline_action.pipeline_stage_id = pipeline_stage.id
-		JOIN project on project.id = pipeline.project_id
-		JOIN action on action.id = pipeline_action.action_id
-		LEFT JOIN action_edge ON action_edge.parent_id = action.id
-		LEFT JOIN action_edge_parameter on action_edge_parameter.action_edge_id = action_edge.id
-		WHERE project.projectkey = $1 AND action_edge.id IS NOT NULL
-
-		UNION
-
-		SELECT p.pipName, p.stageName, p.actionName, c.id, c.child_id, action_edge_parameter.value FROM parent as p, action_edge as c
-		LEFT JOIN action_edge_parameter ON action_edge_parameter.action_edge_id = c.id
-		WHERE p.child_id = c.parent_id
-	)
-	SELECT pipName, stageName, actionName, id, child_id,
-		count(*) as nb
-	FROM parent
-	WHERE value LIKE $2
-	GROUP BY pipName, stageName, actionName, id, child_id;
-	`
-	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", element))
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to count usage")
-	}
-	defer rows.Close()
-
-	results := []CountInPipelineData{}
-	for rows.Next() {
-		var d CountInPipelineData
-		var id, childID int64
-		if err := rows.Scan(&d.PipName, &d.StageName, &d.JobName, &id, &childID, &d.Count); err != nil {
-			return nil, sdk.WrapError(err, "unable to scan")
-		}
-		results = append(results, d)
-	}
-	return results, nil
 }

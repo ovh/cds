@@ -143,3 +143,28 @@ Each job is composed of steps. A step is an action performed by a [CDS Worker]({
 ```
 
 Read more about available [actions]({{< relref "/docs/actions/_index.md" >}}).
+
+### Optional 
+
+It is possible to make a step optional. Even if this task fail the job will continue.
+
+
+```yaml
+- job: xxx
+  steps:
+  - myAction: 
+      myFistParameter: value
+      mySecondParameter: value
+    optional: true
+```
+
+This also work for built-in action
+
+```yaml
+- job: xxx
+  steps:
+  - coverage:
+      format: other
+      path: "{{.cds.workspace}}/target/site/jacoco/jacoco.xml"
+    optional: true
+```

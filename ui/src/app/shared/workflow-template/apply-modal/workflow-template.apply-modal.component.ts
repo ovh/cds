@@ -2,7 +2,7 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
+    EventEmitter, inject,
     Input,
     OnChanges, OnInit,
     Output,
@@ -17,8 +17,14 @@ import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { NzModalRef } from 'ng-zorro-antd/modal';
-import { ToastService } from 'app/shared/toast/ToastService';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
+
+interface IModalData {
+    workflowTemplateIn: WorkflowTemplate;
+    workflowTemplateInstanceIn: WorkflowTemplateInstance
+    projectIn: Project;
+    workflowIn: Workflow;
+}
 
 @Component({
     selector: 'app-workflow-template-apply-modal',
@@ -38,6 +44,8 @@ export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
     @Input('workflowTemplateInstance') workflowTemplateInstanceIn: WorkflowTemplateInstance;
     @Output() close = new EventEmitter();
 
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
+
     diffVisible: boolean;
     diffItems: Array<Item>;
     workflowTemplateAuditMessages: Array<string>;
@@ -52,8 +60,7 @@ export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
         private _projectService: ProjectService,
         private _workflowService: WorkflowService,
         private _templateService: WorkflowTemplateService,
-        private _cd: ChangeDetectorRef,
-        private _toast: ToastService
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnChanges() {
@@ -61,6 +68,10 @@ export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
+        this.workflowTemplateIn = this.nzModalData.workflowTemplateIn;
+        this.workflowTemplateInstanceIn = this.nzModalData.workflowTemplateInstanceIn;
+        this.projectIn = this.nzModalData.projectIn;
+        this.workflowIn = this.nzModalData.workflowIn;
         if (this.workflowTemplateIn && this.workflowTemplateInstanceIn) {
             this.workflowTemplate = this.workflowTemplateIn;
             this.workflowTemplateInstance = this.workflowTemplateInstanceIn;
@@ -105,12 +116,11 @@ export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
     }
 
     onApply() {
-        this._workflowService.getWorkflow(this.workflowTemplateInstance.project.key,
+        this._workflowService.getWorkflow(this.workflowTemplateInstance.request.project_key,
             this.workflowTemplateInstance.workflow_name).subscribe(w => {
                 this.workflowTemplateInstance = Object.assign({}, w.template_instance);
                 this._cd.markForCheck();
             });
-
     }
 
     loadAudits() {

@@ -3,8 +3,8 @@ type: action
 author: "François Samin <francois.samin@corp.ovh.com>"
 description: |
  Distributes a Artifactory Release Bundle on all the Jfrog Platform.
-parameters:
-  name: 
+inputs:
+  name:
     type: string
     description: Release Bundle name
   version:

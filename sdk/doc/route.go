@@ -107,6 +107,52 @@ func CleanURLParameter(u string) string {
 		u = "organization-identifier"
 	case "regionIdentifier":
 		u = "region-identifier"
+	case "hatcheryIdentifier":
+		u = "hatchery-identifier"
+	case "workerModelName":
+		u = "worker-model-name"
+	case "entityName":
+		u = "entity-name"
+	case "entityType":
+		u = "entity-type"
+	case "rbacIdentifier":
+		u = "rbac-identifier"
+	case "actionName":
+		u = "action-name"
+	case "runNumber":
+		u = "run-number"
+	case "runResultID":
+		u = "run-result-id"
+	case "regionName":
+		u = "region-name"
+	case "workerName":
+		u = "worker-name"
+	case "jobName":
+		u = "job-name"
+	case "jobIdentifier":
+		u = "job-identifier"
+	case "repositoryName":
+		u = "repository-name"
+	case "vcsType":
+		u = "vcs-type"
+	case "variableSetName":
+		u = "variable-set-name"
+	case "itemName":
+		u = "item-name"
+	case "eventID":
+		u = "event-id"
+	case "workflowRunID":
+		u = "workflow-run-id"
+	case "jobRunID":
+		u = "job-run-id"
+	case "keyName":
+		u = "key-name"
+	case "insightKey":
+		u = "insight-key"
+	case "cacheKey":
+		u = "cache-key"
+	case "hookID":
+		u = "hook-id"
 	}
 	return u
 }

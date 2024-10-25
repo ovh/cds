@@ -8,9 +8,8 @@ import (
 
 var experimentalCmd = cli.Command{
 	Name:    "experimental",
-	Aliases: []string{"exp"},
+	Aliases: []string{"exp", "X"},
 	Short:   "CDS Experimental commands",
-	Hidden:  true,
 }
 
 func experimentalCommands() []*cobra.Command {
@@ -19,7 +18,12 @@ func experimentalCommands() []*cobra.Command {
 		experimentalRegion(),
 		experimentalProject(),
 		experimentalRbac(),
+		experimentalPlugin(),
+		experimentalWorker(),
 		experimentalWorkerModel(),
+		experimentalHatchery(),
+		experimentalWorkflow(),
+		experimentalWorkflowTemplate(),
 	}
 }
 

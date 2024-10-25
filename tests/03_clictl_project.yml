@@ -73,6 +73,22 @@ testcases:
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} application variable delete ITCLIAPPPRJ TestApp var1
 
+- name: project keys list management
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys add ITCLIAPPPRJ mykeytest ssh
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys disable ITCLIAPPPRJ proj-mykeytest
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ --fields name,disabled | grep proj-mykeytest
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring true
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys enable ITCLIAPPPRJ proj-mykeytest
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ --fields name,disabled | grep proj-mykeytest
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring false
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys delete ITCLIAPPPRJ proj-mykeytest
+
 - name: clean
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project delete --force ITCLIAPPPRJ

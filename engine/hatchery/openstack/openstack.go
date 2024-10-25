@@ -3,6 +3,7 @@ package openstack
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -20,6 +21,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/slug"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -56,6 +58,7 @@ func (h *HatcheryOpenstack) Init(config interface{}) (cdsclient.ServiceConfig, e
 	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
+	cfg.TokenV2 = sConfig.API.TokenV2
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
 	return cfg, nil
@@ -85,6 +88,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	}
 	h.Common.Common.Region = h.Config.Provision.Region
 	h.Common.Common.IgnoreJobWithNoRegion = h.Config.Provision.IgnoreJobWithNoRegion
+	h.Common.Common.ModelType = h.ModelType()
 
 	return nil
 }
@@ -145,6 +149,16 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
+func (h *HatcheryOpenstack) Signin(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
+	if err := h.Common.Signin(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	if err := h.Common.SigninV2(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Start inits client and routines for hatchery
 func (h *HatcheryOpenstack) Start(ctx context.Context) error {
 	return hatchery.Create(ctx, h)
@@ -155,7 +169,7 @@ func (h *HatcheryOpenstack) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
 }
 
-//Configuration returns Hatchery CommonConfiguration
+// Configuration returns Hatchery CommonConfiguration
 func (h *HatcheryOpenstack) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }
@@ -191,6 +205,20 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 	sort.Slice(filteredModels, func(i, j int) bool {
 		flavorI, _ := h.flavor(filteredModels[i].ModelVirtualMachine.Flavor)
 		flavorJ, _ := h.flavor(filteredModels[j].ModelVirtualMachine.Flavor)
+
+		// If same flavor sort by model name
+		if flavorI.Name == flavorJ.Name {
+			return filteredModels[i].Name < filteredModels[j].Name
+		}
+
+		// Models with the default flavor should be at the beginning of the list
+		if flavorI.Name == h.Config.DefaultFlavor {
+			return true
+		}
+		if flavorJ.Name == h.Config.DefaultFlavor {
+			return false
+		}
+
 		return flavorI.VCPUs < flavorJ.VCPUs
 	})
 
@@ -204,25 +232,29 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, _ string, requirements []sdk.Requirement) bool {
+	ctx, end := telemetry.Span(ctx, "openstack.CanSpawn")
+	defer end()
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
+		}
+		if r.Type == sdk.FlavorRequirement && len(h.Config.AllowedFlavors) > 0 {
+			if !slices.Contains(h.Config.AllowedFlavors, r.Value) {
+				return false
+			}
 		}
 	}
 	return true
 }
 
 func (h *HatcheryOpenstack) main(ctx context.Context) {
-	serverListTick := time.NewTicker(10 * time.Second).C
 	killAwolServersTick := time.NewTicker(30 * time.Second).C
 	killErrorServersTick := time.NewTicker(60 * time.Second).C
 	killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
 
 	for {
 		select {
-		case <-serverListTick:
-			h.updateServerList(ctx)
 		case <-killAwolServersTick:
 			h.killAwolServers(ctx)
 		case <-killErrorServersTick:
@@ -239,33 +271,10 @@ func (h *HatcheryOpenstack) main(ctx context.Context) {
 	}
 }
 
-func (h *HatcheryOpenstack) updateServerList(ctx context.Context) {
-	var out string
-	var total int
-	status := map[string]int{}
-
-	for _, s := range h.getServers(ctx) {
-		out += fmt.Sprintf("- [%s] %s:%s ", s.Updated, s.Status, s.Name)
-		if _, ok := status[s.Status]; !ok {
-			status[s.Status] = 0
-		}
-		status[s.Status]++
-		total++
-	}
-	var st string
-	for k, s := range status {
-		st += fmt.Sprintf("%d %s ", s, k)
-	}
-	log.Debug(ctx, "Got %d servers %s", total, st)
-	if total > 0 {
-		log.Debug(ctx, out)
-	}
-}
-
 func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	workers, err := h.CDSClient().WorkerList(ctx)
+	workers, err := h.WorkerList(ctx)
 	now := time.Now().Unix()
 	if err != nil {
 		log.Warn(ctx, "killAwolServers> Cannot fetch worker list: %s", err)
@@ -288,14 +297,14 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 
 		var inWorkersList bool
 		for _, w := range workers {
-			if _, ok := workersAlive[w.Name]; !ok {
+			if _, ok := workersAlive[w.Name()]; !ok {
 				log.Debug(ctx, "killAwolServers> add %s to map workersAlive", w.Name)
-				workersAlive[w.Name] = now
+				workersAlive[w.Name()] = now
 			}
 
-			if w.Name == s.Name {
+			if w.Name() == s.Name {
 				inWorkersList = true
-				workersAlive[w.Name] = now
+				workersAlive[w.Name()] = now
 				break
 			}
 		}
@@ -406,7 +415,9 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 			}
 		}
 
-		h.resetImagesCache()
+		if err := h.refreshImagesCache(ctx); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
 	}
 }
 

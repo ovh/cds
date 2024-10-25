@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -29,15 +29,14 @@ func userGpg() *cobra.Command {
 var userGpgKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS users gpg keys",
-	Args: []cli.Arg{
-		{
-			Name: "username",
-		},
-	},
 }
 
 func userGpgKeyList(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.UserGpgKeyList(context.Background(), v.GetString("username"))
+	u, err := client.UserGetMe(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	keys, err := client.UserGpgKeyList(context.Background(), u.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +115,7 @@ func userGpgKeyImport(v cli.Values) error {
 		}
 		publicKey = keyBuilder.String()
 	} else {
-		keyBts, err := ioutil.ReadFile(v.GetString("pub-key-file"))
+		keyBts, err := os.ReadFile(v.GetString("pub-key-file"))
 		if err != nil {
 			return err
 		}

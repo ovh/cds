@@ -28,9 +28,14 @@ define get_executor_path_from_binary_file
 $(strip $(patsubst dist/%, %, $(patsubst %-, %, $(shell echo $(1) |awk '{n=split($$1,a,"-");for (i = 2; i < n-1; i++) printf a[i] "-"}'))))
 endef
 
+define PLUGIN_CDS_NAME
+$(if $(PLUGIN_NAME),$(PLUGIN_NAME),$(TARGET_NAME))
+endef
+export PLUGIN_CDS_NAME
+
 ## Prepare yml file for each os-arch
 $(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES)
-	$(info *** prepare conf $@)
+	$(info *** prepare conf $@, TARGET_NAME=$(TARGET_NAME))
 	@mkdir -p $(TARGET_DIST); \
 	echo "$$PLUGIN_MANIFEST_BINARY" > $@; \
 	OS=$(call get_os_from_binary_file,$@); \
@@ -38,7 +43,7 @@ $(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES)
 	perl -pi -e s,%os%,$$OS,g $@ ; \
 	perl -pi -e s,%arch%,$$ARCH,g $@ ; \
 	EXTENSION=""; \
-	if test "$(TARGET_NAME)" == *"windows"* ; then EXTENSION=".exe"; fi; \
+	if test "$(OS)" = "windows" ; then EXTENSION=".exe"; fi; \
 	FILENAME=$(TARGET_NAME)-$$OS-$$ARCH$$EXTENSION; \
 	perl -pi -e s,%filename%,$$FILENAME,g $@
 
@@ -47,10 +52,11 @@ $(PLUGIN_CONF):
 	@mkdir -p $(TARGET_DIST); \
 	cp $(TARGET_NAME).yml $@;
 
+OPT_LD_FLAGS = -s -w
 mk_go_build_plugin: $(CROSS_COMPILED_PLUGIN_CONF) $(PLUGIN_CONF) $(CROSS_COMPILED_BINARIES)
 
 mk_plugin_publish:
-	@echo "Updating plugin $(TARGET_NAME)..."
+	@echo "Updating plugin $(TARGET_NAME) for $(TARGET_OS), $(TARGET_ARCH)..."
 	cdsctl admin plugins import $(TARGET_DIST)/$(TARGET_NAME).yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
@@ -65,5 +71,21 @@ mk_plugin_publish:
 		done; \
 	done
 
-mk_plugin_package: 
+mk_plugin_package:
 	tar czf $(TARGET_DIST)/cds-$(TARGET_NAME)-all.tar.gz $(TARGET_DIST)/$(TARGET_NAME)*
+
+mk_v2_plugin_publish:
+	@echo "Updating plugin $(PLUGIN_CDS_NAME) for $(TARGET_OS) $(TARGET_ARCH)..."
+	cdsctl experimental plugin import $(TARGET_DIST)/$(TARGET_NAME).yml --force
+	@for GOOS in $(TARGET_OS); do \
+		for GOARCH in $(TARGET_ARCH); do \
+			EXTENSION=""; \
+			for V in $(OSARCHVALID); do \
+				if test "$$GOOS/$$GOARCH" = "$$V"; then \
+					if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
+					echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
+					cdsctl admin plugins binary-add $$PLUGIN_CDS_NAME $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+				fi; \
+			done; \
+		done; \
+	done

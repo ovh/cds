@@ -1,0 +1,39 @@
+name: Project hatchery Command TestSuite
+testcases:
+- name: prepareTest
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery remove my-local-hatchery --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete my-local-hatchery-group --force
+  - script: {{.engine}} config new hatchery:local > /tmp/hatchery.local.new.toml
+
+- name: addHatchery
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery add my-local-hatchery --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.token ShouldNotBeEmpty
+    vars:
+      hatcheryToken:
+        from: result.systemoutjson.token
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group add my-local-hatchery-group
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} consumer new --groups my-local-hatchery-group --description "Consumer for local hatchery - old mode" --name my-hatchery-local --scopes Hatchery,Service,WorkerModel,RunExecution --service-name my-local-hatchery --service-type hatchery --duration 365 --no-interactive
+    vars:
+      token:
+        from: result.systemout
+        regex: (ey.+)
+  - script: {{.engine}} config edit /tmp/hatchery.local.new.toml hatchery.local.commonConfiguration.api.token={{.token}} hatchery.local.basedir=/tmp hatchery.local.commonConfiguration.api.tokenV2={{.hatcheryToken}} hatchery.local.commonConfiguration.name=my-local-hatchery hatchery.local.commonConfiguration.api.http.url=http://$(hostname -I | awk '{print $1}'):8081 > /tmp/hatchery.local.toml
+
+- name: startHatchery
+  steps:
+    - script: {{.engine}} start hatchery:local --config /tmp/hatchery.local.toml > my-local-hatchery.log 2>&1 &
+    - script: ps -ef | grep "start hatchery:local" | grep -v 'grep' | awk '{print $2}'
+      vars:
+        pid:
+          from: result.systemout
+    - script: sleep 10
+      info: "PID to kill {{.pid}}"
+    - script: kill {{.pid}}
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery get my-local-hatchery
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.last_heartbeat ShouldNotContainSubstring "0001-01-01"

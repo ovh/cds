@@ -1,12 +1,24 @@
 .codebar {
     z-index: 10; // to be over code mirror fields of action component
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: auto;
+    width: 0;
     &.visible {
         width: 50%;
     }
     margin-top: 100px !important;
     overflow-y: auto;
+    height: 100%;
 
-    .transparent {
+    nz-spin {
+      margin-top: 30px;
+      position: absolute;
+      padding: 30px 50% 0 50%;
+    }
+
+  .transparent {
         background-color: transparent;
     }
 
@@ -14,21 +26,19 @@
         height: 87%;
     }
 
-    .mt5 {
-        margin-top: 5px;
-    }
-
     .bottomBtnsWrapper {
-        position: fixed;
-        bottom: 100px;
-        right: 0;
-        width: 430px;
-        padding-top: 20px;
-        padding-bottom: 20px;
+      position: absolute;
+      right: 0;
+      bottom: 102px;
+      width: 440px;
+      background-color: #f7f7f7;
 
-        .column {
-            padding-top: 5px;
-            padding-bottom: 5px;
+      nz-row {
+        padding: 8px 13px;
+        nz-col {
+          padding-top: 5px;
+          padding-bottom: 5px;
         }
+      }
     }
 }

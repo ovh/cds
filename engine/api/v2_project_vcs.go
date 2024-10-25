@@ -7,21 +7,25 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string) (*sdk.VCSProject, error) {
+func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
+	ctx, next := telemetry.Span(ctx, "api.getVCSByIdentifier")
+	defer next()
 	var vcsProject *sdk.VCSProject
 	var err error
 	if sdk.IsValidUUID(vcsIdentifier) {
-		vcsProject, err = vcs.LoadVCSByID(ctx, api.mustDB(), projectKey, vcsIdentifier)
+		vcsProject, err = vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	} else {
-		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier)
+		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	}
 	if err != nil {
 		return nil, err
@@ -30,10 +34,15 @@ func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsId
 }
 
 func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -41,7 +50,7 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 			}
 			defer tx.Rollback() // nolint
 
-			project, err := project.Load(ctx, tx, pKey)
+			project, err := project.Load(ctx, tx, pKey, project.LoadOptions.WithKeys)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
@@ -51,8 +60,12 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 				return err
 			}
 
+			if err := vcsProject.Lint(*project); err != nil {
+				return err
+			}
+
 			vcsProject.ProjectID = project.ID
-			vcsProject.CreatedBy = getAPIConsumer(ctx).GetUsername()
+			vcsProject.CreatedBy = getUserConsumer(ctx).GetUsername()
 
 			if err := vcs.Insert(ctx, tx, &vcsProject); err != nil {
 				return err
@@ -71,15 +84,27 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishVCSEvent(ctx, api.Cache, sdk.EventVCSCreated, pKey, vcsProject, *u.AuthConsumerUser.AuthentifiedUser)
+
 			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
 		}
 }
 
 func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey, project.LoadOptions.WithKeys)
+			if err != nil {
+				return err
+			}
 
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
@@ -107,6 +132,10 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			vcsProject.CreatedBy = vcsOld.CreatedBy
 			vcsProject.ProjectID = vcsOld.ProjectID
 
+			if err := vcsProject.Lint(*proj); err != nil {
+				return err
+			}
+
 			if err := vcs.Update(ctx, tx, &vcsProject); err != nil {
 				return err
 			}
@@ -115,15 +144,22 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishVCSEvent(ctx, api.Cache, sdk.EventVCSUpdated, proj.Key, vcsProject, *u.AuthConsumerUser.AuthentifiedUser)
+
 			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
 		}
 }
 
 func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
-		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+	return service.RBAC(api.projectManage),
+		func(ctx context.Context, _ http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
@@ -154,13 +190,15 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishVCSEvent(ctx, api.Cache, sdk.EventVCSDeleted, project.Key, *vcsProject, *u.AuthConsumerUser.AuthentifiedUser)
+
 			return nil
 		}
 }
 
 // getVCSProjectAllHandler returns list of vcs of one project key
 func (api *API) getVCSProjectAllHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]
@@ -175,7 +213,7 @@ func (api *API) getVCSProjectAllHandler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]
@@ -189,6 +227,15 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			if err != nil {
 				return err
 			}
+
+			vcsClear, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), pKey, vcsProject.ID, gorpmapping.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+			vcsProject.Auth.Username = vcsClear.Auth.Username
+			vcsProject.Auth.SSHKeyName = vcsClear.Auth.SSHKeyName
+			vcsProject.Auth.SSHUsername = vcsClear.Auth.SSHUsername
+			vcsProject.Auth.SSHPort = vcsClear.Auth.SSHPort
 			return service.WriteMarshal(w, r, vcsProject, http.StatusOK)
 		}
 }

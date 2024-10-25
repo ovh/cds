@@ -4,11 +4,14 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
+	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, region *sdk.Region) error {
@@ -33,7 +36,7 @@ func getRegion(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 		return nil, err
 	}
 	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to find region")
 	}
 
 	isValid, err := gorpmapping.CheckSignature(dbRegion, dbRegion.Signature)
@@ -74,6 +77,8 @@ func LoadAllRegions(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Region, err
 }
 
 func LoadRegionByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Region, error) {
+	ctx, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName", trace.StringAttribute(telemetry.TagRegion, name))
+	defer next()
 	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.name = $1`).Args(name)
 	return getRegion(ctx, db, query)
 }
@@ -81,4 +86,9 @@ func LoadRegionByName(ctx context.Context, db gorp.SqlExecutor, name string) (*s
 func LoadRegionByID(ctx context.Context, db gorp.SqlExecutor, ID string) (*sdk.Region, error) {
 	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.id = $1`).Args(ID)
 	return getRegion(ctx, db, query)
+}
+
+func LoadRegionByIDs(ctx context.Context, db gorp.SqlExecutor, IDs []string) ([]sdk.Region, error) {
+	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.id = ANY($1)`).Args(pq.StringArray(IDs))
+	return getAllRegions(ctx, db, query)
 }

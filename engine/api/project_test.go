@@ -275,7 +275,7 @@ func Test_getProjectsHandler_AsProvider(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -310,7 +310,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -428,7 +428,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -483,11 +483,11 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 
-	projs, err := sdkclientAdmin.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: "ovh/" + repofullName})
+	projs, err := sdkclientAdmin.ProjectList(true, true, false, cdsclient.Filter{Name: "repo", Value: "ovh/" + repofullName})
 	require.NoError(t, err)
 	require.True(t, len(projs) == 1)
 	require.True(t, len(projs[0].Workflows) == 1)

@@ -1,18 +1,17 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path"></app-breadcrumb>
     <app-scrollview class="scrollview">
-        <div class="ui grid">
-            <div class="thirteen wide column">
-                <div *ngIf="projectKey && workflowName" class="ui blue message">
-                    {{'workflow_template_help_add_from' | translate: {projectKey: projectKey, workflowName:
-                    workflowName} }}
+        <nz-row>
+            <nz-col [nzSpan]="18">
+                <div class="nzSegment">
+                    <nz-alert *ngIf="projectKey && workflowName" nzType="info" nzMessage=" {{'workflow_template_help_add_from' | translate: {projectKey: projectKey, workflowName: workflowName} }}"></nz-alert>
+                    <app-workflow-template-form mode="add" [loading]="loading" [workflowTemplate]="workflowTemplate"
+                                                [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate($event)"></app-workflow-template-form>
                 </div>
-                <app-workflow-template-form mode="add" [loading]="loading" [workflowTemplate]="workflowTemplate"
-                    [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate($event)"></app-workflow-template-form>
-            </div>
-            <div class="three wide column">
+            </nz-col>
+            <nz-col [nzSpan]="6">
                 <app-workflow-template-help></app-workflow-template-help>
-            </div>
-        </div>
+            </nz-col>
+        </nz-row>
     </app-scrollview>
 </div>

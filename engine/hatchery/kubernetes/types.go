@@ -20,7 +20,8 @@ var containerServiceNameRegexp = regexp.MustCompile(`service-([0-9]+)-(.*)`)
 type HatcheryConfiguration struct {
 	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
 	// DefaultCPU Worker default CPU
-	DefaultCPU string `mapstructure:"defaultCPU" toml:"defaultCPU" default:"500m" commented:"false" comment:"Worker default CPU" json:"defaultCPU"`
+	DefaultCPU      string `mapstructure:"defaultCPU" toml:"defaultCPU" default:"500m" commented:"false" comment:"Worker default CPU" json:"defaultCPU"`
+	DisableCPULimit bool   `mapstructure:"disableCPULimit" toml:"disableCPULimit" default:"false" commented:"false" comment:"Disable Worker default CPU" json:"disableCPULimit"`
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
 	// DefaultEphemeralStorage Worker default ephemeral storage size
@@ -49,6 +50,17 @@ type HatcheryConfiguration struct {
 	KubernetesClientCertData string `mapstructure:"clientCertData" toml:"clientCertData" default:"" commented:"true" comment:"Client certificate data (content, not path and not base64 encoded) for tls kubernetes (optional if no tls needed)" json:"-"`
 	// KubernetesKeyData Client certificate data for tls kubernetes (optional if no tls needed)
 	KubernetesClientKeyData string `mapstructure:"clientKeyData" toml:"clientKeyData" default:"" commented:"true" comment:"Client certificate data (content, not path and not base64 encoded) for tls kubernetes (optional if no tls needed)" json:"-"`
+	// CustomAnnotations that will be added to pods spawned by the hatchery
+	CustomAnnotations []CustomAnnotation `mapstructure:"customAnnotations" toml:"customAnnotations" default:"" commented:"true" comment:"CustomAnnotations that will be added to pods spawned by the hatchery" json:"-"`
+	// DeleteSecretsInterval used by deleteSecrets to clean secrets not used
+	DeleteSecretsInterval int `mapstructure:"deleteSecretsInterval" toml:"deleteSecretsInterval" commented:"true" comment:"Delete kubernetes worker secrets not used (seconds)" json:"deleteSecretsInterval"`
+	// KillAwolWorkersInterval used by killAwolWorkers to remove unused workers
+	KillAwolWorkersInterval int `mapstructure:"killAwolWorkersInterval" toml:"killAwolWorkersInterval" commented:"true" comment:"Kill awol worker interval (seconds)" json:"killAwolWorkersInterval"`
+}
+
+type CustomAnnotation struct {
+	Key   string `mapstructure:"key" toml:"key" default:"" commented:"true" json:"-"`
+	Value string `mapstructure:"value" toml:"value" default:"" commented:"true" json:"-"`
 }
 
 // HatcheryKubernetes implements HatcheryMode interface for local usage

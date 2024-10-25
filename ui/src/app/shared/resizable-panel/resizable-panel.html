@@ -1,0 +1,14 @@
+<div class="panel" [class.horizontal]="this.direction === 'horizontal'"
+    [class.vertical]="this.direction === 'vertical'">
+    <div *ngIf="this.growDirection === 'before'" class="grabber" (mousedown)="onMouseDownGrabber()" #grabber>
+        <i *ngIf="this.direction === 'horizontal'" nz-icon nzType="more" nzTheme="outline"></i>
+        <i *ngIf="this.direction === 'vertical'" nz-icon nzType="ellipsis" nzTheme="outline"></i>
+    </div>
+    <div class="content" [class.disableSelection]="grabbing" #content>
+        <ng-content></ng-content>
+    </div>
+    <div *ngIf="this.growDirection === 'after'" class="grabber" (mousedown)="onMouseDownGrabber()" #grabber>
+        <i *ngIf="this.direction === 'horizontal'" nz-icon nzType="more" nzTheme="outline"></i>
+        <i *ngIf="this.direction === 'vertical'" nz-icon nzType="ellipsis" nzTheme="outline"></i>
+    </div>
+</div>

@@ -3,12 +3,13 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, DefaultUrlSerializer, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
-import { ConfigService } from 'app/service/services.module';
+import {ConfigService, LinkService, UserService} from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { jws } from 'jsrsasign';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
+import {Store} from "@ngxs/store";
 
 @Component({
     selector: 'app-auth-callback',
@@ -38,7 +39,10 @@ export class CallbackComponent implements OnInit, OnDestroy {
         private _translate: TranslateService,
         private _router: Router,
         private _authenticationService: AuthenticationService,
-        private _configService: ConfigService
+        private _configService: ConfigService,
+        private _userService: UserService,
+        private _linkService: LinkService,
+        private _store: Store
     ) {
         this.loading = true;
     }
@@ -89,7 +93,11 @@ export class CallbackComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            this.sendSigninRequest();
+            if (this.payloadData && this.payloadData.link_user) {
+                this.linkUser();
+            } else {
+                this.sendSigninRequest();
+            }
         });
     }
 
@@ -103,6 +111,22 @@ export class CallbackComponent implements OnInit, OnDestroy {
 
     signin(f: NgForm): void {
         this.sendSigninRequest(f.value.init_token);
+    }
+
+    linkUser(): void {
+        this._authenticationService.getMe()
+            .pipe(first())
+            .subscribe(u => {
+                if (u && u?.user?.username) {
+                    this.loadingSignin = true;
+                    this._cd.markForCheck();
+                    this._linkService.link(this.consumerType, this.code, this.state)
+                        .pipe(first())
+                        .subscribe( () => {
+                            this._router.navigate(['/', 'settings', 'user', u.user.username])
+                        });
+                }
+            });
     }
 
     sendSigninRequest(initToken?: string): void {
@@ -120,7 +144,7 @@ export class CallbackComponent implements OnInit, OnDestroy {
                     let dus = new DefaultUrlSerializer();
                     this._router.navigateByUrl(dus.parse(this.payloadData.redirect_uri));
                 } else {
-                    this._router.navigate(['/home']);
+                    this._router.navigate(['/']);
                 }
             }, () => {
                 this.showErrorMessage = true;

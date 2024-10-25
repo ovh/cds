@@ -14,7 +14,7 @@ type Repository struct {
 // Application represent an application in a project
 type Application struct {
 	ID                   int64                        `json:"id" db:"id"`
-	Name                 string                       `json:"name" db:"name" cli:"name,key"`
+	Name                 string                       `json:"name" db:"name" cli:"name,key" action_metadata:"application-name"`
 	Description          string                       `json:"description" db:"description"`
 	Icon                 string                       `json:"icon" db:"icon"`
 	ProjectID            int64                        `json:"-" db:"project_id"`
@@ -29,7 +29,6 @@ type Application struct {
 	Keys                 []ApplicationKey             `json:"keys" yaml:"keys" db:"-"`
 	Usage                *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	DeploymentStrategies map[string]IntegrationConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`
-	Vulnerabilities      []Vulnerability              `json:"vulnerabilities,omitempty" db:"-" cli:"-"`
 	FromRepository       string                       `json:"from_repository,omitempty" db:"from_repository" cli:"-"`
 	// aggregate
 	WorkflowAscodeHolder *Workflow `json:"workflow_ascode_holder,omitempty" cli:"-" db:"-"`

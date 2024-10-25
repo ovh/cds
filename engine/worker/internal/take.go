@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 	"github.com/rockbears/log"
 )
 
@@ -35,6 +36,19 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	if err := w.SetSecrets(info.Secrets); err != nil {
 		return err
 	}
+	secretContext := make(map[string]string)
+	for _, secret := range w.currentJob.secrets {
+		s := strings.TrimPrefix(secret.Name, "cds.proj.")
+		s = strings.TrimPrefix(s, "cds.app.")
+		s = strings.TrimPrefix(s, "cds.env.")
+
+		s = strings.TrimPrefix(s, "cds.integration.")
+		s = strings.Replace(s, ".", "_", -1)
+
+		secretContext[strings.ToUpper(s)] = secret.Value
+	}
+	w.currentJob.wJob.Contexts.Secrets = secretContext
+
 	w.currentJob.projectKey = info.ProjectKey
 	w.currentJob.workflowName = info.WorkflowName
 	w.currentJob.workflowID = info.WorkflowID
@@ -42,6 +56,9 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.currentJob.nodeRunName = info.NodeRunName
 	w.currentJob.runNumber = info.Number
 	w.currentJob.features = info.Features
+	w.actions = info.AscodeActions
+
+	w.actionPlugin = make(map[string]*sdk.GRPCPlugin)
 
 	// Reset build variables
 	w.currentJob.newVariables = nil
@@ -54,15 +71,15 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	w.currentJob.signer = signer
+	w.signer = signer
 
 	log.Info(ctx, "Setup step logger %s", w.cfg.GelfServiceAddr)
-	throttlePolicy := hook.NewDefaultThrottlePolicy()
+	throttlePolicy := graylog.NewDefaultThrottlePolicy()
 
-	var graylogCfg = &hook.Config{
+	var graylogCfg = &graylog.Config{
 		Addr:     w.cfg.GelfServiceAddr,
 		Protocol: "tcp",
-		ThrottlePolicy: &hook.ThrottlePolicyConfig{
+		ThrottlePolicy: &graylog.ThrottlePolicyConfig{
 			Amount: 100,
 			Period: 10 * time.Millisecond,
 			Policy: throttlePolicy,
@@ -106,9 +123,8 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 				var j *sdk.WorkflowNodeJobRun
 				var err error
 				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctx, 5*time.Second)
-				defer cancelGetJSON()
-
-				if j, err = w.Client().QueueJobInfo(ctxGetJSON, jobID); err != nil {
+				if j, err = w.Client().QueueJobInfo(ctxGetJSON, strconv.FormatInt(jobID, 10)); err != nil {
+					cancelGetJSON()
 					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
 						log.Info(ctx, "takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
 						cancel()
@@ -127,7 +143,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 					continue // do not kill the worker here, could be a timeout
 				}
-
+				cancelGetJSON()
 				nbConnrefused = 0
 				if j == nil || j.Status != sdk.StatusBuilding {
 					log.Info(ctx, "takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
@@ -155,7 +171,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}},
 		}}
-		if err := w.Client().QueueJobSendSpawnInfo(ctx, job.ID, infos); err != nil {
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(job.ID, 10), infos); err != nil {
 			log.Error(ctx, "processJob> Unable to send spawn info: %v", err)
 		}
 	}

@@ -45,8 +45,8 @@ var workflowRunManualCmd = cli.Command{
 					return true
 				}
 				// Hacking cobra which split param with a double pipe
-				splittedParam := strings.Split(s, "||")
-				for _, p := range splittedParam {
+				splitParam := strings.Split(s, "||")
+				for _, p := range splitParam {
 					if strings.Count(p, "=") < 1 {
 						return false
 					}
@@ -145,8 +145,8 @@ func workflowRunManualRun(v cli.Values) error {
 			if sParam == "" {
 				continue
 			}
-			splittedParam := strings.SplitN(sParam, "=", 2)
-			sdk.AddParameter(&manual.PipelineParameters, splittedParam[0], sdk.StringParameter, splittedParam[1])
+			splitParam := strings.SplitN(sParam, "=", 2)
+			sdk.AddParameter(&manual.PipelineParameters, splitParam[0], sdk.StringParameter, splitParam[1])
 		}
 	}
 

@@ -16,6 +16,7 @@ const (
 	AuthSessionID      = log.Field("auth_session_id")
 	AuthSessionTokenID = log.Field("auth_session_token")
 	AuthUserID         = log.Field("auth_user_id")
+	AuthHatcheryID     = log.Field("auth_hatchery_id")
 	AuthUsername       = log.Field("auth_user_name")
 	AuthWorkerName     = log.Field("auth_worker_name")
 	RbackCheckerName   = log.Field("rbac_checker_name")
@@ -24,11 +25,13 @@ const (
 	Duration           = log.Field("duration_milliseconds_num")
 	Goroutine          = log.Field("goroutine")
 	Handler            = log.Field("handler")
+	HookEventID        = log.Field("hook_event_id")
 	IPAddress          = log.Field("ip_address")
 	Latency            = log.Field("latency")
 	LatencyNum         = log.Field("latency_num")
 	Method             = log.Field("method")
 	GpgKey             = log.Field("gpg_key")
+	RbacRole           = log.Field("rbac_role")
 	RequestID          = log.Field("request_id")
 	RequestURI         = log.Field("request_uri")
 	Repository         = log.Field("repository")
@@ -43,12 +46,20 @@ const (
 	VCSServer          = log.Field("vcs_server")
 	KafkaBroker        = log.Field("kafka_broker")
 	KafkaTopic         = log.Field("kafka_topic")
+	AnalyzeID          = log.Field("analyze_id")
+	NodeRunID          = log.Field("node_run_id")
+	PermJobID          = log.Field("permJobID")
+	Workflow           = log.Field("workflow")
+	WorkflowRunID      = log.Field("workflow_run_id")
+	Component          = log.Field("component")
+	Project            = log.Field("project")
 )
 
 func init() {
 	log.RegisterField(
 		Action,
 		AuthUserID,
+		AuthHatcheryID,
 		AuthUsername,
 		AuthServiceName,
 		AuthServiceType,
@@ -58,17 +69,22 @@ func init() {
 		AuthSessionIAT,
 		AuthSessionTokenID,
 		Commit,
+		Component,
 		Deprecated,
 		Duration,
 		Goroutine,
 		GpgKey,
 		Handler,
+		HookEventID,
 		IPAddress,
 		Latency,
 		LatencyNum,
 		Method,
+		Operation,
+		Project,
 		RbackCheckerName,
 		Repository,
+		RbacRole,
 		Route,
 		RequestID,
 		RequestURI,
@@ -81,6 +97,11 @@ func init() {
 		VCSServer,
 		KafkaBroker,
 		KafkaTopic,
+		AnalyzeID,
+		NodeRunID,
+		PermJobID,
+		Workflow,
+		WorkflowRunID,
 	)
 }
 

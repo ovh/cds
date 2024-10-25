@@ -23,10 +23,6 @@ const (
 	HeaderXVCSSSHPort       = "X-CDS-VCS-SSH-PORT"
 	HeaderXVCSSSHPrivateKey = "X-CDS-VCS-SSH-PRIVATE-KEY"
 
-	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"         // DEPRECATED
-	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED" // DEPRECATED
-	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"  // DEPRECATED
-
 	VCSTypeGitea           = "gitea"
 	VCSTypeGerrit          = "gerrit"
 	VCSTypeGitlab          = "gitlab"
@@ -37,25 +33,25 @@ const (
 
 var (
 	BitbucketEvents = []string{
-		"repo:refs_changed",
-		"repo:modified",
-		"repo:forked",
+		"repo:refs_changed", // position is important here
 		"repo:comment:added",
-		"repo:comment:edited",
 		"repo:comment:deleted",
-		"pr:from_ref_updated",
-		"pr:opened",
-		"pr:modified",
-		"pr:reviewer:updated",
-		"pr:reviewer:approved",
-		"pr:reviewer:unapproved",
-		"pr:reviewer:needs_work",
-		"pr:merged",
+		"repo:comment:edited",
+		"repo:forked",
+		"repo:modified",
+		"pr:comment:added",
+		"pr:comment:deleted",
+		"pr:comment:edited",
 		"pr:declined",
 		"pr:deleted",
-		"pr:comment:added",
-		"pr:comment:edited",
-		"pr:comment:deleted",
+		"pr:from_ref_updated",
+		"pr:merged",
+		"pr:modified",
+		"pr:opened",
+		"pr:reviewer:approved",
+		"pr:reviewer:needs_work",
+		"pr:reviewer:unapproved",
+		"pr:reviewer:updated",
 	}
 
 	BitbucketEventsDefault = []string{
@@ -63,29 +59,29 @@ var (
 	}
 
 	BitbucketCloudEvents = []string{
-		"repo:push",
-		"pullrequest:unapproved",
-		"issue:comment_created",
-		"pullrequest:approved",
+		"repo:push", // position is important here
+		"repo:commit_comment_created",
+		"repo:commit_status_created",
+		"repo:commit_status_updated",
 		"repo:created",
 		"repo:deleted",
+		"repo:fork",
 		"repo:imported",
-		"pullrequest:comment_updated",
+		"repo:transfer",
+		"repo:updated",
+		"issue:comment_created",
+		"issue:created",
 		"issue:updated",
 		"project:updated",
+		"pullrequest:approved",
 		"pullrequest:comment_created",
-		"repo:commit_status_updated",
-		"pullrequest:updated",
-		"issue:created",
-		"repo:fork",
 		"pullrequest:comment_deleted",
-		"repo:commit_status_created",
-		"repo:updated",
-		"pullrequest:rejected",
-		"pullrequest:fulfilled",
+		"pullrequest:comment_updated",
 		"pullrequest:created",
-		"repo:transfer",
-		"repo:commit_comment_created",
+		"pullrequest:fulfilled",
+		"pullrequest:rejected",
+		"pullrequest:unapproved",
+		"pullrequest:updated",
 	}
 
 	BitbucketCloudEventsDefault = []string{
@@ -93,19 +89,22 @@ var (
 	}
 
 	GitHubEvents = []string{
-		"push",
+		"push", // position is important here
+		"pull_request_review_comment",
+		"pull_request_review",
+		"pull_request",
 		"check_run",
 		"check_suite",
 		"commit_comment",
 		"create",
 		"delete",
-		"deployment",
 		"deployment_status",
+		"deployment",
 		"fork",
 		"github_app_authorization",
 		"gollum",
-		"installation",
 		"installation_repositories",
+		"installation",
 		"issue_comment",
 		"issues",
 		"label",
@@ -113,24 +112,21 @@ var (
 		"member",
 		"membership",
 		"milestone",
-		"organization",
 		"org_block",
+		"organization",
 		"page_build",
 		"project_card",
 		"project_column",
 		"project",
 		"public",
-		"pull_request_review_comment",
-		"pull_request_review",
-		"pull_request",
-		"repository",
+		"release",
 		"repository_import",
 		"repository_vulnerability_alert",
-		"release",
+		"repository",
 		"security_advisory",
 		"status",
-		"team",
 		"team_add",
+		"team",
 		"watch",
 	}
 
@@ -213,8 +209,12 @@ type VCSProject struct {
 }
 
 type VCSAuthProject struct {
-	Username      string `json:"username,omitempty" db:"-"`
-	Token         string `json:"token,omitempty" db:"-"`
+	// VCS Authentication
+	Username   string `json:"username,omitempty" db:"-"`
+	Token      string `json:"token,omitempty" db:"-"`
+	SSHKeyName string `json:"sshKeyName,omitempty" db:"-"`
+
+	// Used by gerrit
 	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
 	SSHPort       int    `json:"sshPort,omitempty" db:"-"`
 	SSHPrivateKey string `json:"sshPrivateKey,omitempty" db:"-"`
@@ -226,6 +226,33 @@ type VCSOptionsProject struct {
 	DisableStatusDetails bool   `json:"disableStatusDetails,omitempty" db:"-"`
 	DisablePolling       bool   `json:"disablePolling,omitempty" db:"-"`
 	URLAPI               string `json:"urlApi,omitempty" db:"-"` // optional
+}
+
+func (v VCSProject) Lint(prj Project) error {
+	// If it's not a gerrit vcs
+	if v.Auth.SSHUsername == "" {
+		if v.Auth.Username == "" {
+			return NewErrorFrom(ErrInvalidData, "missing auth username")
+		}
+		if v.Auth.Token == "" {
+			return NewErrorFrom(ErrInvalidData, "missing auth token")
+		}
+	}
+
+	if v.Auth.SSHKeyName != "" {
+		found := false
+		for _, k := range prj.Keys {
+			if k.Name == v.Auth.SSHKeyName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return NewErrorFrom(ErrNotFound, "unable to find ssh key %s on project", v.Auth.SSHKeyName)
+		}
+	}
+
+	return nil
 }
 
 func (v VCSOptionsProject) Value() (driver.Value, error) {
@@ -257,11 +284,6 @@ type VCSGerritConfiguration struct {
 	SSHPort       int    `json:"sshport"`
 }
 
-type VCSServerCommon interface {
-	AuthorizeRedirect(context.Context) (string, string, error)
-	AuthorizeToken(context.Context, string, string) (string, string, error)
-}
-
 // VCSAuth contains tokens (oauth2 tokens or personalAccessToken)
 type VCSAuth struct {
 	Type     string
@@ -272,30 +294,22 @@ type VCSAuth struct {
 
 	SSHUsername string
 	SSHPort     int
-
-	AccessToken        string // DEPRECATED
-	AccessTokenSecret  string // DEPRECATED
-	AccessTokenCreated int64  // DEPRECATED
 }
 
 // VCSServer is an interface for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient.
 type VCSServer interface {
-	VCSServerCommon
 	GetAuthorizedClient(context.Context, VCSAuth) (VCSAuthorizedClient, error)
-}
-
-type VCSServerService interface {
-	VCSServerCommon
-	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClientService, error)
 }
 
 type VCSBranchFilters struct {
 	BranchName string
 	Default    bool
+	NoCache    bool
 }
 
 type VCSBranchesFilter struct {
-	Limit int64
+	Limit   int64
+	NoCache bool
 }
 
 type VCSArchiveRequest struct {
@@ -316,6 +330,7 @@ type VCSAuthorizedClientCommon interface {
 
 	//Tags
 	Tags(ctx context.Context, repo string) ([]VCSTag, error)
+	Tag(ctx context.Context, repo string, tagName string) (VCSTag, error)
 
 	//Commits
 	Commits(ctx context.Context, repo, branch, since, until string) ([]VCSCommit, error)
@@ -341,9 +356,11 @@ type VCSAuthorizedClientCommon interface {
 	PullRequestEvents(context.Context, string, []interface{}) ([]VCSPullRequestEvent, error)
 
 	// Set build status on repository
-	SetStatus(ctx context.Context, event Event, disableStatusDetails bool) error
-	IsDisableStatusDetails(ctx context.Context) bool
+	SetStatus(ctx context.Context, buildStatus VCSBuildStatus) error
 	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
+
+	// Insight
+	CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, report VCSInsight) error
 
 	// Release
 	Release(ctx context.Context, repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
@@ -352,16 +369,13 @@ type VCSAuthorizedClientCommon interface {
 	// Forks
 	ListForks(ctx context.Context, repo string) ([]VCSRepo, error)
 
-	// Permissions
-	GrantWritePermission(ctx context.Context, repo string) error
-
-	// Access Token
-	GetAccessToken(ctx context.Context) string
-
 	// File
 	GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error)
-	ListContent(ctx context.Context, repo string, commit, dir string) ([]VCSContent, error)
+	ListContent(ctx context.Context, repo string, commit, dir string, offset, limit string) ([]VCSContent, error)
 	GetContent(ctx context.Context, repo string, commit, dir string) (VCSContent, error)
+
+	// Search
+	SearchPullRequest(ctx context.Context, repoFullName, commit, state string) (*VCSPullRequest, error)
 }
 
 type VCSAuthorizedClient interface {
@@ -396,12 +410,37 @@ func GetDefaultBranch(branches []VCSBranch) VCSBranch {
 	return VCSBranch{}
 }
 
-// VCSCommitStatusDescription return a node formated status description
-func VCSCommitStatusDescription(projKey, workflowName string, evt EventRunWorkflowNode) string {
+// VCSCommitStatusContextV1 return a node formated status Context for workflow V1
+func VCSCommitStatusContextV1(projKey, workflowName string, evt EventRunWorkflowNode) string {
 	key := fmt.Sprintf("%s-%s-%s",
 		projKey,
 		workflowName,
 		evt.NodeName,
 	)
-	return fmt.Sprintf("CDS/%s", key)
+	return fmt.Sprintf("%s", key)
+}
+
+type VCSBuildStatus struct {
+	// v2: fmt.Sprintf("%s-%s", event.ProjectKey, event.WorkflowName)
+	Title string `json:"title"`
+
+	// v1:eventNR.NodeName + ": " + eventNR.Status
+	// v2: Workflow.Name + ": " +Status
+	Description string `json:"description"`
+
+	// v1: fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, event.ProjectKey, event.WorkflowName, eventNR.Number)
+	// v2: fmt.Sprintf("%s/project/%s/run/%s", cdsUIURL, event.ProjectKey, event.WorkflowRunID)
+	URLCDS string `json:"url_cds"` //
+
+	// v1: fmt.Sprintf("%s-%s-%s", event.ProjectKey, event.WorkflowName, eventNR.NodeName)
+	// v2: fmt.Sprintf("%s-%s", event.ProjectKey, event.WorkflowName)
+	Context string `json:"context"`
+
+	Status string `json:"status"`
+
+	RepositoryFullname string `json:"repository_fullname"`
+	GitHash            string `json:"git_hash"`
+
+	// from v1 workflow only
+	GerritChange *GerritChangeEvent `json:"gerrit_change,omitempty"`
 }

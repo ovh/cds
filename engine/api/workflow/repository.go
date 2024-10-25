@@ -20,7 +20,7 @@ import (
 )
 
 // WorkflowAsCodePattern is the default code pattern to find cds files
-const WorkflowAsCodePattern = ".cds/**/*.yml"
+const WorkflowAsCodePattern = ".cds/*.yml"
 
 // PushOption is the set of options for workflow push
 type PushOption struct {
@@ -37,7 +37,7 @@ type PushOption struct {
 
 // CreateFromRepository a workflow from a repository.
 func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc) (*PushSecrets, []sdk.Message, error) {
+	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthUserConsumer, decryptFunc keys.DecryptFunc, emailFunc keys.EmailFunc) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
@@ -78,11 +78,11 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 			}
 		}
 	}
-	return extractWorkflow(ctx, db, store, p, wf, *ope, u, decryptFunc, uuid)
+	return extractWorkflow(ctx, db, store, p, wf, *ope, u, decryptFunc, uuid, emailFunc)
 }
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) (*PushSecrets, []sdk.Message, error) {
+	ope sdk.Operation, consumer sdk.AuthUserConsumer, decryptFunc keys.DecryptFunc, hookUUID string, emailFunc keys.EmailFunc) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 	var allMsgs []sdk.Message
@@ -125,7 +125,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	if err != nil {
 		return nil, allMsgs, err
 	}
-	msgPush, workflowPushed, _, secrets, err := Push(ctx, db, store, p, data, opt, &consumer, decryptFunc)
+	msgPush, workflowPushed, _, secrets, err := Push(ctx, db, store, p, data, opt, &consumer, decryptFunc, emailFunc)
 	// Filter workflow push message if generated from template
 	for i := range msgPush {
 		if wti != nil && msgPush[i].ID == sdk.MsgWorkflowDeprecatedVersion.ID {

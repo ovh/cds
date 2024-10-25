@@ -13,7 +13,6 @@ import (
 
 	repo "github.com/fsamin/go-repo"
 	"github.com/rockbears/log"
-	giturls "github.com/whilp/git-urls"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -78,7 +77,7 @@ func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, e
 		return defaultValue, nil
 	}
 
-	projs, err := client.ProjectList(false, false)
+	projs, err := client.ProjectList(false, false, false)
 	if err != nil {
 		return "", err
 	}
@@ -101,7 +100,6 @@ func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, e
 func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, error) {
 	switch len(proj.VCSServers) {
 	case 0:
-		//TODO ask to link the project
 		return "", cli.NewError("your CDS project must be linked to a repositories manager to perform this operation")
 	case 1:
 		return proj.VCSServers[0].Name, nil
@@ -110,28 +108,31 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 		if err != nil {
 			return "", cli.WrapError(err, "Unable to get remote URL")
 		}
-
-		originURL, err := giturls.Parse(fetchURL)
-		if err != nil {
-			return "", cli.WrapError(err, "Unable to parse remote URL")
-		}
-		originHost := strings.TrimSpace(strings.SplitN(originURL.Host, ":", 2)[0])
-
-		vcsConf, err := client.VCSConfiguration()
-		if err != nil {
-			return "", cli.WrapError(err, "Unable to get VCS Configuration")
+		if !strings.HasPrefix(fetchURL, "https://") && !strings.HasPrefix(fetchURL, "ssh://") && !strings.HasPrefix(fetchURL, "git@") {
+			return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
 		}
 
-		for rmName, cfg := range vcsConf {
-			rmURL, err := url.Parse(cfg.URL)
-			if err != nil {
-				return "", cli.WrapError(err, "Unable to get VCS Configuration")
+		for _, v := range proj.VCSServers {
+			if (strings.HasPrefix(fetchURL, "https://github.com/") || strings.HasPrefix(fetchURL, "git@github.com")) && v.Type == "github" && v.URL == "" {
+				fmt.Printf(" * using repositories manager %s", cli.Magenta(v.Name))
+				return v.Name, nil
 			}
-			rmHost := strings.TrimSpace(strings.SplitN(rmURL.Host, ":", 2)[0])
-			if originHost == rmHost {
-				fmt.Printf(" * using repositories manager %s (%s)", cli.Magenta(rmName), cli.Magenta(rmURL.String()))
-				fmt.Println()
-				return rmName, nil
+			if v.URL != "" {
+				rmURL, err := url.Parse(v.URL)
+				if err != nil {
+					return "", cli.WrapError(err, "Unable to get VCS Configuration")
+				}
+				rmHost := rmURL.Hostname()
+				fetchURLParsed, err := url.Parse(fetchURL)
+				if err != nil {
+					return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
+				}
+				originHost := fetchURLParsed.Hostname()
+				if originHost == rmHost {
+					fmt.Printf(" * using repositories manager %s (%s)", cli.Magenta(v.Name), cli.Magenta(rmURL.String()))
+					fmt.Println()
+					return v.Name, nil
+				}
 			}
 		}
 	}

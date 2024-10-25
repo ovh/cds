@@ -58,11 +58,11 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(ctx context.Context,
 }
 
 func getVariableFromBitbucketServerChange(payload map[string]interface{}, change sdk.BitbucketServerChange) {
-	if !strings.HasPrefix(change.RefID, "refs/tags/") {
-		branch := strings.TrimPrefix(change.RefID, "refs/heads/")
+	if !strings.HasPrefix(change.RefID, sdk.GitRefTagPrefix) {
+		branch := strings.TrimPrefix(change.RefID, sdk.GitRefBranchPrefix)
 		payload[GIT_BRANCH] = branch
 	} else {
-		payload[GIT_TAG] = strings.TrimPrefix(change.RefID, "refs/tags/")
+		payload[GIT_TAG] = strings.TrimPrefix(change.RefID, sdk.GitRefTagPrefix)
 	}
 	payload[GIT_HASH_BEFORE] = change.FromHash
 	payload[GIT_HASH] = change.ToHash

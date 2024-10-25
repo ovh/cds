@@ -1,4 +1,4 @@
-<h3><i class="share alternate icon"></i> {{'usage_workflow_list' | translate}}</h3>
+<h3><span nz-icon nzType="share-alt" nzTheme="outline"></span> {{'usage_workflow_list' | translate}}</h3>
 <div class="nzSegment">
     <div *ngIf="workflows && workflows.length > 0;then workflowsDisplay; else noworkflows"></div>
     <ng-template #workflowsDisplay>

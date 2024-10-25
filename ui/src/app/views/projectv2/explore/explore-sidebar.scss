@@ -1,0 +1,142 @@
+:host {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff0a;
+    overflow: hidden;
+}
+
+.header {
+    height: 32px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    background-color: #fafafa;
+
+    :host-context(.night) & {
+        background-color: #202020;
+    }
+
+    .toggle {
+        margin-left: 10px;
+    }
+
+    .title {
+        flex: 1;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        margin: 0 10px;
+    }
+
+    [nz-button] {
+        margin-right: 6px;
+    }
+}
+
+.content {
+    flex: 1;
+    background-color: #fff;
+    overflow-y: auto;
+
+    :host-context(.night) & {
+        background-color: #141414;
+    }
+}
+
+.tree-node-header {
+    height: 26px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 5px;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: node;
+    color: inherit;
+    overflow: hidden;
+
+    &.large {
+        height: 32px;
+
+        .name {
+            line-height: 32px;
+        }
+    }
+
+    .name {
+        flex: 1;
+        padding: 0 5px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        line-height: 26px;
+
+        [nz-icon] {
+            margin-right: 5px;
+        }
+    }
+
+    a {
+        color: inherit;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    &:has(>.active) {
+        background-color: #bae7ff;
+
+        :host-context(.night) & {
+            background-color: #11263c;
+        }
+    }
+
+    &:hover {
+        background-color: #f5f5f5;
+
+        :host-context(.night) & {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+    }
+
+    app-repository-ref-select {
+        overflow: hidden;
+        max-width: 50%;
+    }
+}
+
+.tree-node-content {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+    border-left: 2px dotted #f5f5f5;
+
+    :host-context(.night) & {
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    nz-alert {
+        margin: 10px;
+    }
+
+    nz-spin {
+        align-self: center;
+        margin: 10px;
+    }
+
+    &:has(~ .tree-node-header) {
+        margin-bottom: 3px;
+    }
+
+    &.large {
+        &:has(~ .tree-node-header) {
+            margin-bottom: 5px;
+        }
+    }
+}

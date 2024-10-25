@@ -13,7 +13,6 @@ import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { AppComponent } from './app.component';
 import { createTranslateLoader } from './app.module';
 import { AppService } from './app.service';
@@ -29,9 +28,6 @@ import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
 import { ProjectStore } from './service/project/project.store';
 import { RouterService } from './service/router/router.service';
-import { ThemeStore } from './service/theme/theme.store';
-import { TimelineService } from './service/timeline/timeline.service';
-import { TimelineStore } from './service/timeline/timeline.store';
 import { UserService } from './service/user/user.service';
 import { SharedModule } from './shared/shared.module';
 import { ToastService } from './shared/toast/ToastService';
@@ -39,6 +35,10 @@ import { FetchCurrentAuth } from './store/authentication.action';
 import { NgxsStoreModule } from './store/store.module';
 import { NavbarModule } from './views/navbar/navbar.module';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
+import { ConfigService } from 'app/service/services.module';
+import { AnalysisService } from "./service/analysis/analysis.service";
+import { EventV2Service } from './event-v2.service';
+import { FeatureService } from './service/feature/feature.service';
 
 describe('App: CDS', () => {
 
@@ -48,24 +48,25 @@ describe('App: CDS', () => {
                 AppComponent
             ],
             providers: [
-                Store,
-                WorkflowService,
-                WorkflowRunService,
-                UserService,
-                NavbarService,
+                AnalysisService,
+                AppService,
+                AuthenticationService,
+                ConfigService,
+                EnvironmentService,
+                EventService,
+                EventV2Service,
+                FeatureService,
                 HelpService,
                 MonitoringService,
-                EventService,
-                ProjectStore,
-                EnvironmentService,
-                AuthenticationService,
-                ThemeStore,
+                NavbarService,
                 NotificationService,
-                AppService,
+                ProjectStore,
                 RouterService,
+                Store,
                 ToastService,
-                TimelineStore,
-                TimelineService,
+                UserService,
+                WorkflowRunService,
+                WorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService },

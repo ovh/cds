@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/rockbears/log"
@@ -12,7 +13,25 @@ import (
 )
 
 func (s *Service) processor(ctx context.Context) error {
+	chanOperation := make(chan sdk.Operation, s.Cfg.MaxWorkers)
+	for w := 1; w <= s.Cfg.MaxWorkers; w++ {
+		s.GoRoutines.RunWithRestart(ctx, fmt.Sprintf("operation-worker-%d", w), func(ctx context.Context) {
+			for op := range chanOperation {
+				ctx := context.WithValue(ctx, cdslog.Operation, op.UUID)
+				ctx = context.WithValue(ctx, cdslog.VCSServer, op.VCSServer)
+				ctx = context.WithValue(ctx, cdslog.Repository, op.RepoFullName)
+				log.Debug(ctx, "work on %s on branch %s", op.URL, op.Setup.Checkout.Branch)
+				if err := s.do(ctx, op); err != nil {
+					log.Error(ctx, "repositories > processor > %v", err)
+				}
+			}
+		})
+	}
+
 	for {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		var uuid string
 		if err := s.dao.store.DequeueWithContext(ctx, processorKey, 250*time.Millisecond, &uuid); err != nil {
 			log.Error(ctx, "repositories > processor > store.DequeueWithContext err: %v", err)
@@ -20,24 +39,21 @@ func (s *Service) processor(ctx context.Context) error {
 		}
 		if uuid != "" {
 			op := s.dao.loadOperation(ctx, uuid)
-			ctx = context.WithValue(ctx, cdslog.RequestID, op.RequestID)
-			if err := s.do(ctx, *op); err != nil {
-				if err == errLockUnavailable {
-					s.GoRoutines.Exec(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
-						op.NbRetries++
-						log.Info(ctx, "repositories > processor > lock unavailable. retry")
-						time.Sleep(time.Duration(2*op.NbRetries) * time.Second)
-						if err := s.dao.pushOperation(op); err != nil {
-							log.Error(ctx, "repositories > processor > %v", err)
-						}
-					})
-				} else {
-					log.Error(ctx, "repositories > processor > %v", err)
-				}
+			r := s.Repo(*op)
+			_, has := s.localCache.Get(r.ID())
+			if has {
+				s.GoRoutines.Exec(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
+					op.NbRetries++
+					log.Info(ctx, "repositories > processor > lock unavailable on repository %s. Retry", op.RepoFullName)
+					time.Sleep(time.Duration(2*op.NbRetries) * time.Second)
+					if err := s.dao.pushOperation(op); err != nil {
+						log.Error(ctx, "repositories > processor > %v", err)
+					}
+				})
+				continue
 			}
-		}
-		if ctx.Err() != nil {
-			return ctx.Err()
+			s.localCache.Set(r.ID(), true, 10*time.Minute)
+			chanOperation <- *op
 		}
 	}
 }
@@ -50,28 +66,31 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	log.Debug(ctx, "processing > %v", op.UUID)
 
 	r := s.Repo(op)
-	if s.dao.lock(r.ID()) == errLockUnavailable {
-		return errLockUnavailable
-	}
 	defer func() {
-		s.dao.unlock(ctx, r.ID())
-		log.Info(ctx, "%s protected for %d days", r.ID(), s.Cfg.RepositoriesRetention)
-		s.dao.store.Lock(cache.Key(lastAccessKey, r.ID()), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRetention), -1, -1)
+		s.localCache.Delete(r.ID())
+		ttl := 3600 * 24 * s.Cfg.RepositoriesRetention
+		ttlTime := time.Now().Add(time.Duration(ttl) * time.Second)
+		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())
+		s.dao.store.SetWithTTL(cache.Key(lastAccessKey, r.ID()), ttlTime, ttl)
 	}()
 
 	switch {
 	// Load workflow as code file
 	case op.Setup.Checkout.Branch != "" || op.Setup.Checkout.Tag != "":
+
 		if err := s.processCheckout(ctx, &op); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, err.Error())
-			op.Error = sdk.ToOperationError(err)
+			op.Error = sdk.ToOperationError(sdk.FromGitToHumanError(sdk.ErrUnknownError, err))
 			op.Status = sdk.OperationStatusError
 		} else {
+
 			op.Error = nil
 			op.Status = sdk.OperationStatusDone
 			switch {
-			case op.LoadFiles.Pattern == "" && op.Setup.Checkout.CheckSignature:
+			case op.LoadFiles.Pattern == "" && op.Setup.Checkout.CheckSignature,
+				op.LoadFiles.Pattern == "" && op.Setup.Checkout.GetChangeSet,
+				op.LoadFiles.Pattern == "" && op.Setup.Checkout.ProcessSemver:
 				op.Error = nil
 				op.Status = sdk.OperationStatusDone
 				// do nothing
@@ -79,7 +98,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 				if err := s.processLoadFiles(ctx, &op); err != nil {
 					ctx := sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, err.Error())
-					op.Error = sdk.ToOperationError(err)
+					op.Error = sdk.ToOperationError(sdk.FromGitToHumanError(sdk.ErrUnknownError, err))
 					op.Status = sdk.OperationStatusError
 				} else {
 					op.Error = nil
@@ -95,7 +114,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 		if err := s.processPush(ctx, &op); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, err.Error())
-			op.Error = sdk.ToOperationError(err)
+			op.Error = sdk.ToOperationError(sdk.FromGitToHumanError(sdk.ErrUnknownError, err))
 			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = nil

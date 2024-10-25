@@ -1,0 +1,141 @@
+@import "../../../../../src/common.scss";
+
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.node {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border: 2px solid $polar_grey_3;
+    border-radius: 3px;
+    color: $polar_grey_1;
+    padding: 2px;
+    background-color: white;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    :host-context(.night) & {
+        background-color: $darkTheme_grey_1;
+        border-color: $darkTheme_grey_5;
+        color: $darkTheme_grey_6;
+
+        &.success {
+            background-color: $darkTheme_night_green;
+            border-color: $darkTheme_green;
+        }
+
+        &.fail {
+            background-color: $darkTheme_night_red;
+            border-color: $darkTheme_red;
+        }
+
+        &.building {
+            background-color: $darkTheme_night_blue;
+            border-color: $darkTheme_blue;
+        }
+
+        &.inactive {
+            background-color: $darkTheme_night_grey;
+            border-color: grey;
+        }
+
+        &.active,
+        &.highlight {
+            border-color: white;
+        }
+    }
+
+    .name {
+        font-size: 0.9em;
+        flex: 1;
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0 10px;
+    }
+
+    .duration {
+        font-size: 0.8em;
+        margin-right: 10px;
+    }
+
+    .durationTooltip {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .status {
+        position: absolute;
+        bottom: 5px;
+        right: 10px;
+        font-size: 0.6em;
+    }
+
+    &.success {
+        background-color: $cds_color_light_green;
+        border-color: $cds_color_green;
+    }
+
+    &.fail {
+        background-color: $cds_color_light_red;
+        border-color: $cds_color_red;
+    }
+
+    &.building {
+        background-color: $cds_color_light_teal;
+        border-color: $cds_color_teal;
+    }
+
+    &.inactive {
+        background-color: $cds_color_light_grey;
+        border-color: grey;
+    }
+
+    &.active {
+        border: 3px solid $polar_grey_0;
+        padding: 1px;
+    }
+
+    &.highlight {
+        border-color: $polar_grey_0;
+    }
+
+    .commands {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 100%;
+        background-color: inherit;
+
+        [nz-button] {
+            margin-left: 10px;
+            border-width: 2px;
+        }
+
+        [nzGhost] {
+            color: $polar_grey_1;
+            border-color: $polar_grey_1;
+
+            &:hover {
+                color: $polar_grey_0 !important;
+                border-color: $polar_grey_0 !important;
+            }
+
+            :host-context(.night) & {
+                color: $darkTheme_grey_6;
+                border-color: $darkTheme_grey_6;
+
+                &:hover {
+                    color: white !important;
+                    border-color: white !important;
+                }
+            }
+        }
+    }
+}

@@ -7,20 +7,29 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 
+	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/repository"
+	vcs2 "github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
+func processNodeJobRunRequirements(ctx context.Context, store cache.Store, db gorpmapper.SqlExecutorWithTx, projectKey string, wr sdk.WorkflowRun, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig, jobParams []sdk.Parameter) (sdk.RequirementList, bool, string, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
 	var model string
+	var modelType string
+	var wm *sdk.Model
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
 
 	if defaultOS != "" && defaultArch != "" {
@@ -80,18 +89,37 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 				errm.Append(sdk.ErrInvalidJobRequirementDuplicateModel)
 				break
 			}
-			model = value
-		}
+			if v.Type == sdk.ModelRequirement {
+				model = value
 
+				var err error
+				wm, err = processNodeJobRunRequirementsGetModel(ctx, db, model, execsGroupIDs)
+				if err != nil {
+					if sdk.ErrorIs(err, sdk.ErrNotFound) {
+						workerModelV2, workerModelFullPath, err := processNodeJobRunRequirementsGetModelV2(ctx, store, db, projectKey, wr, model, jobParams)
+						if err != nil {
+							log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
+							errm.Append(sdk.NewErrorFrom(sdk.ErrInvalidJobRequirement, "unable to get worker model %s", model))
+						}
+						if workerModelV2 != nil {
+							modelType = workerModelV2.Type
+							value = workerModelFullPath
+						}
+					} else {
+						log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
+						errm.Append(err)
+					}
+				}
+			}
+		}
 		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
 	}
-
-	wm, err := processNodeJobRunRequirementsGetModel(ctx, db, model, execsGroupIDs)
-	if err != nil {
-		log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
-		errm.Append(err)
-	}
 	if wm != nil {
+		if wm.Disabled {
+			errm.Append(sdk.NewErrorFrom(sdk.ErrInvalidData, "worker model %s is disabled. Please update your requirement", wm.Name))
+		}
+		modelType = wm.Type
+
 		// Check that the worker model has the binaries capabilitites
 		// only if the worker model doesn't need registration
 		if !wm.NeedRegistration && !wm.CheckRegistration {
@@ -167,9 +195,9 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 	}
 
 	if errm.IsEmpty() {
-		return requirements, containsService, wm, nil
+		return requirements, containsService, modelType, nil
 	}
-	return requirements, containsService, wm, &errm
+	return requirements, containsService, modelType, &errm
 }
 
 func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {
@@ -189,6 +217,112 @@ func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.P
 	return params
 }
 
+func processNodeJobRunRequirementsGetModelV2(ctx context.Context, store cache.Store, db gorpmapper.SqlExecutorWithTx, projectKey string, wr sdk.WorkflowRun, requirementValue string, jobParams []sdk.Parameter) (*sdk.V2WorkerModel, string, error) {
+	var workerProjKey, vcsName, repoName, workerModelName, branch string
+	var app sdk.Application
+
+	// complete format <ProjKey>/<VCSServer>/<RepoSLUG/RepoName>/<WorkerModelName@Branch
+
+	// Get branch if present
+	splitBranch := strings.Split(requirementValue, "@")
+	if len(splitBranch) == 2 {
+		branch = splitBranch[1]
+	}
+	modelFullPath := splitBranch[0]
+
+	// Search application on root node
+	nodeContext := wr.Workflow.WorkflowData.Node.Context
+	if nodeContext.ApplicationID != 0 {
+		app = wr.Workflow.Applications[nodeContext.ApplicationID]
+	}
+
+	modelPathSplit := strings.Split(modelFullPath, "/")
+	embeddedModel := false
+	switch len(modelPathSplit) {
+	case 1:
+		workerModelName = modelFullPath
+		embeddedModel = true
+	case 2:
+		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to find repository for this worker model")
+	case 3:
+		repoName = fmt.Sprintf("%s/%s", modelPathSplit[0], modelPathSplit[1])
+		workerModelName = modelPathSplit[2]
+	case 4:
+		vcsName = modelPathSplit[0]
+		repoName = fmt.Sprintf("%s/%s", modelPathSplit[1], modelPathSplit[2])
+		workerModelName = modelPathSplit[3]
+	case 5:
+		workerProjKey = modelPathSplit[0]
+		vcsName = modelPathSplit[1]
+		repoName = fmt.Sprintf("%s/%s", modelPathSplit[2], modelPathSplit[3])
+		workerModelName = modelPathSplit[4]
+	default:
+		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to handle the worker model requirement")
+	}
+
+	if workerProjKey == "" {
+		workerProjKey = projectKey
+	}
+	if vcsName == "" {
+		vcsName = app.VCSServer
+	}
+	if repoName == "" {
+		repoName = app.RepositoryFullname
+	}
+
+	if vcsName == "" || repoName == "" {
+		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to retrieve worker model data because the workflow root pipeline does not contain any vcs configuration")
+	}
+
+	vcs, err := vcs2.LoadVCSByProject(ctx, db, workerProjKey, vcsName)
+	if err != nil {
+		return nil, "", err
+	}
+	repo, err := repository.LoadRepositoryByName(ctx, db, vcs.ID, repoName)
+	if err != nil {
+		return nil, "", err
+	}
+	if branch == "" {
+		if embeddedModel {
+			// Get current git.branch parameters
+			for _, p := range jobParams {
+				if p.Name == "git.branch" {
+					branch = p.Value
+				}
+			}
+			if branch == "" {
+				return nil, "", sdk.NewErrorFrom(sdk.ErrNotFound, "worker model %s not found on the current branch", workerModelName)
+			}
+		} else {
+			// Get default branch
+			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, workerProjKey, vcs.Name)
+			if err != nil {
+				return nil, "", err
+			}
+			b, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+			if err != nil {
+				return nil, "", err
+			}
+			branch = b.DisplayID
+		}
+	}
+	// Only manage entities on branch
+	workerModelEntity, err := entity.LoadByRefTypeNameCommit(ctx, db, repo.ID, sdk.GitRefBranchPrefix+branch, sdk.EntityTypeWorkerModel, workerModelName, "HEAD")
+	if err != nil {
+		return nil, "", err
+	}
+	var model sdk.V2WorkerModel
+	if err := yaml.Unmarshal([]byte(workerModelEntity.Data), &model); err != nil {
+		return nil, "", err
+	}
+
+	completePath := fmt.Sprintf("%s/%s/%s/%s", workerProjKey, vcsName, repoName, workerModelName)
+	if branch != "" {
+		completePath += "@" + branch
+	}
+	return &model, completePath, nil
+}
+
 func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecutor, model string, execsGroupIDs []int64) (*sdk.Model, error) {
 	if model == "" {
 		return nil, nil
@@ -197,7 +331,7 @@ func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecu
 	var wm *sdk.Model
 
 	modelName := strings.Split(model, " ")[0]
-	modelPath := strings.SplitN(modelName, "/", 2)
+	modelPath := strings.Split(modelName, "/")
 	if len(modelPath) == 2 {
 		// if model contains group name (myGroup/myModel), try to find the model for the
 		g, err := group.LoadByName(ctx, db, modelPath[0])

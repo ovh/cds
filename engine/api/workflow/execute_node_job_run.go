@@ -81,7 +81,7 @@ func (r *ProcessorReport) addWorkflowNodeRun(nr sdk.WorkflowNodeRun) {
 	r.nodes = append(r.nodes, nr)
 }
 
-//All returns all the objects in the reports
+// All returns all the objects in the reports
 func (r *ProcessorReport) All() []interface{} {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -138,13 +138,13 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		return nil, sdk.WrapError(err, "Cannot select status from workflow_node_run_job node job run %d", job.ID)
 	}
 
-	log.Info(ctx, "job %d current status %q, new status %q", job.ID, status, currentStatus)
+	log.Info(ctx, "job %d current status %q, new status %q", job.ID, currentStatus, status)
 
 	switch status {
 	case sdk.StatusBuilding:
 		if currentStatus != sdk.StatusWaiting {
 			return nil, sdk.WithStack(fmt.Errorf("cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
-				job.ID, status, sdk.StatusWaiting, currentStatus))
+				job.ID, status, sdk.StatusWaiting, status))
 		}
 		job.Start = time.Now()
 		job.Status = status
@@ -351,8 +351,8 @@ func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workfl
 	return secrets, nil
 }
 
-//BookNodeJobRun  Book a job for a hatchery
-func BookNodeJobRun(ctx context.Context, store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
+// BookNodeJobRun  Book a job for a hatchery
+func BookNodeJobRun(ctx context.Context, store cache.Store, defaultBookDelay int64, customBookDelay map[string]int64, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookJob(id)
 	h := sdk.Service{}
 	find, err := store.Get(k, &h)
@@ -361,18 +361,24 @@ func BookNodeJobRun(ctx context.Context, store cache.Store, id int64, hatchery *
 	}
 	if !find {
 		// job not already booked, book it for 2 min
-		if err := store.SetWithTTL(k, hatchery, 120); err != nil {
+		delay := 120
+		if defaultBookDelay > 0 {
+			delay = int(defaultBookDelay)
+		}
+		if customBookDelay != nil {
+			if d, ok := customBookDelay[hatchery.Name]; ok {
+				delay = int(d)
+			}
+		}
+		if err := store.SetWithTTL(k, hatchery, delay); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
-		return nil, nil
-	}
-	if h.ID == hatchery.ID {
 		return nil, nil
 	}
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
-//FreeNodeJobRun  Free a job for a hatchery
+// FreeNodeJobRun  Free a job for a hatchery
 func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 	k := keyBookJob(id)
 	h := sdk.Service{}
@@ -387,45 +393,4 @@ func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 		return nil
 	}
 	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)
-}
-
-// RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
-func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun, maxLogSize int64) error {
-	var end func()
-	ctx, end = telemetry.Span(ctx, "workflow.RestartWorkflowNodeJob")
-	defer end()
-
-	for iS := range wNodeJob.Job.StepStatus {
-		step := &wNodeJob.Job.StepStatus[iS]
-		if step.Status == sdk.StatusNeverBuilt || step.Status == sdk.StatusSkipped || step.Status == sdk.StatusDisabled {
-			continue
-		}
-		wNodeJob.Job.Reason = "Killed (Reason: Timeout)\n"
-		step.Status = sdk.StatusWaiting
-		step.Done = time.Time{}
-	}
-
-	nodeRun, err := LoadAndLockNodeRunByID(ctx, db, wNodeJob.WorkflowNodeRunID)
-	if err != nil {
-		return err
-	}
-
-	//Synchronize struct but not in db
-	sync, err := SyncNodeRunRunJob(ctx, db, nodeRun, wNodeJob)
-	if err != nil {
-		return sdk.WrapError(err, "error on sync nodeJobRun")
-	}
-	if !sync {
-		log.Warn(ctx, "sync doesn't find a nodeJobRun")
-	}
-
-	if err := UpdateNodeRun(db, nodeRun); err != nil {
-		return sdk.WrapError(err, "cannot update node run")
-	}
-
-	if err := replaceWorkflowJobRunInQueue(db, wNodeJob); err != nil {
-		return sdk.WrapError(err, "cannot replace workflow job in queue")
-	}
-
-	return nil
 }

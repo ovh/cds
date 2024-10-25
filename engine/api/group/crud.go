@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/organization"
 
 	"github.com/go-gorp/gorp"
 
@@ -23,13 +24,16 @@ func Create(ctx context.Context, db gorpmapper.SqlExecutorWithTx, grp *sdk.Group
 		return err
 	}
 
-	if user.Organization != "" {
-		if err := InsertOrganization(ctx, db, &Organization{
-			GroupID:      grp.ID,
-			Organization: user.Organization,
-		}); err != nil {
-			return err
-		}
+	org, err := organization.LoadOrganizationByName(ctx, db, user.Organization)
+	if err != nil {
+		return err
+	}
+
+	if err := InsertGroupOrganization(ctx, db, &GroupOrganization{
+		GroupID:        grp.ID,
+		OrganizationID: org.ID,
+	}); err != nil {
+		return err
 	}
 
 	return nil
@@ -82,32 +86,42 @@ func EnsureOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g 
 	if err := LoadOptions.WithMembers(ctx, db, g); err != nil {
 		return err
 	}
-	exitingGroupOrganization, err := LoadOrganizationByGroupID(ctx, db, g.ID)
+	exitingGroupOrganization, err := LoadGroupOrganizationByGroupID(ctx, db, g.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
 	}
-	newGroupOrganization, err := g.Members.ComputeOrganization()
+
+	newOrganizationName, err := g.Members.ComputeOrganization()
 	if err != nil {
 		return err
 	}
 	if exitingGroupOrganization != nil {
-		g.Organization = exitingGroupOrganization.Organization
+		currentOrganization, err := organization.LoadOrganizationByID(ctx, db, exitingGroupOrganization.OrganizationID)
+		if err != nil {
+			return err
+		}
+		g.Organization = currentOrganization.Name
 	}
-	if g.Organization == newGroupOrganization {
+	if g.Organization == newOrganizationName {
 		return nil
 	}
 
-	g.Organization = newGroupOrganization
+	newGroupOrganization, err := organization.LoadOrganizationByName(ctx, db, newOrganizationName)
+	if err != nil {
+		return err
+	}
+
+	g.Organization = newOrganizationName
 	if exitingGroupOrganization == nil {
-		if err := InsertOrganization(ctx, db, &Organization{
-			GroupID:      g.ID,
-			Organization: newGroupOrganization,
+		if err := InsertGroupOrganization(ctx, db, &GroupOrganization{
+			GroupID:        g.ID,
+			OrganizationID: newGroupOrganization.ID,
 		}); err != nil {
 			return err
 		}
 	} else {
-		exitingGroupOrganization.Organization = newGroupOrganization
-		if err := UpdateOrganization(ctx, db, exitingGroupOrganization); err != nil {
+		exitingGroupOrganization.OrganizationID = newGroupOrganization.ID
+		if err := UpdateGroupOrganization(ctx, db, exitingGroupOrganization); err != nil {
 			return err
 		}
 	}

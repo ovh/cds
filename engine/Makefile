@@ -9,13 +9,9 @@ TARGET_ENGINE = cds-engine
 DBMIGRATE = $(words $(wildcard sql/*.sql))
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_ENGINE) -X github.com/ovh/cds/sdk.DBMIGRATE=$(DBMIGRATE)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm64)
 
 GO_BUILD = go build
-GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
-GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
-GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
-GO_XUTOOLS = ${GOPATH}/bin/xutools
 
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
@@ -53,17 +49,21 @@ TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profil
 $(TARGET_DIR):
 	@mkdir -p $(TARGET_DIR)
 
+GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 $(GO_COV_MERGE):
-	go get -u github.com/wadey/gocovmerge
+	go install github.com/wadey/gocovmerge@latest
 
+GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 $(GO_GOJUNIT):
-	go get -u github.com/jstemmer/go-junit-report
+	go install github.com/jstemmer/go-junit-report@latest
 
+GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 $(GO_COBERTURA):
-	go get -u github.com/richardlt/gocover-cobertura
+	go install github.com/richardlt/gocover-cobertura@latest
 
+GO_XUTOOLS = ${GOPATH}/bin/xutools
 $(GO_XUTOOLS):
-	go get -u github.com/richardlt/xutools
+	go install github.com/richardlt/xutools@latest
 
 default: build
 
@@ -211,8 +211,8 @@ test-xunit-report: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_DIR)
 			echo "Ignoring empty file \t\t$$TST"; \
 		fi; \
 	done; \
-	xutools pretty --show-failures ./dist/*.xml > $(TARGET_DIR)/report; \
-	xutools sort-duration ./dist/*.xml > $(TARGET_DIR)/duration; \
+	$(GO_XUTOOLS) pretty --show-failures ./dist/*.xml > $(TARGET_DIR)/report; \
+	$(GO_XUTOOLS) sort-duration ./dist/*.xml > $(TARGET_DIR)/duration; \
 	if [ -e $(TARGET_DIR)/report ]; then \
 		echo "Report:"; \
 		cat $(TARGET_DIR)/report; \

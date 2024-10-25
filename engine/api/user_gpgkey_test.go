@@ -21,7 +21,7 @@ func Test_crudGPGKey(t *testing.T) {
 
 	user1, pass := assets.InsertLambdaUser(t, db)
 
-	k, err := keys.GenerateKey(sdk.RandomString(10), sdk.KeyTypePGP)
+	k, err := keys.GeneratePGPKeyPair(sdk.RandomString(10), "", "test@cds")
 	require.NoError(t, err)
 
 	//------------ Create key

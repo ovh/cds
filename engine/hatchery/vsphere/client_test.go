@@ -296,7 +296,7 @@ func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 	).AnyTimes()
 
 	ctx := context.Background()
-	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{}, "foo")
+	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{})
 	require.NoError(t, err)
 	require.NotNil(t, cloneSpec)
 
@@ -310,12 +310,21 @@ func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 
 }
 
-func TestHatcheryVSphere_launchClientOp(t *testing.T) {
+func TestHatcheryVSphere_launchClientOpV1(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelPath: "group/worker1",
+					Username:  "user",
+					Password:  "password",
+				},
+			},
+		},
 	}
 
 	var vm = object.VirtualMachine{
@@ -324,9 +333,54 @@ func TestHatcheryVSphere_launchClientOp(t *testing.T) {
 		},
 	}
 
-	var model = sdk.ModelVirtualMachine{
-		User:     "user",
-		Password: "password",
+	var model = sdk.ModelVirtualMachine{}
+	modelV1 := sdk.Model{ModelVirtualMachine: model, Group: &sdk.Group{Name: "group"}, Name: "worker1"}
+
+	var procman = guest.ProcessManager{}
+
+	c.EXPECT().ProcessManager(gomock.Any(), &vm).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
+			return &procman, nil
+		},
+	)
+
+	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
+			t.Logf("req: %+v", req.Spec.GetGuestProgramSpec())
+			assert.Equal(t, "user", req.Auth.(*types.NamePasswordAuthentication).Username)
+			assert.Equal(t, "password", req.Auth.(*types.NamePasswordAuthentication).Password)
+			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;this is a script")
+			assert.EqualValues(t, []string{"env=1"}, req.Spec.GetGuestProgramSpec().EnvVariables)
+			return &types.StartProgramInGuestResponse{}, nil
+		},
+	)
+
+	ctx := context.Background()
+	h.launchClientOp(ctx, &vm, sdk.WorkerStarterWorkerModel{ModelV1: &modelV1}, "this is a script", []string{"env=1"})
+}
+
+func TestHatcheryVSphere_launchClientOpV2(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelVMWare: "vmware-model",
+					Username:    "user",
+					Password:    "password",
+				},
+			},
+		},
+	}
+
+	var vm = object.VirtualMachine{
+		Common: object.Common{
+			InventoryPath: "inventory-path",
+		},
 	}
 
 	var procman = guest.ProcessManager{}
@@ -350,5 +404,13 @@ func TestHatcheryVSphere_launchClientOp(t *testing.T) {
 	)
 
 	ctx := context.Background()
-	h.launchClientOp(ctx, &vm, model, "this is a script", []string{"env=1"})
+
+	h.launchClientOp(ctx, &vm,
+		sdk.WorkerStarterWorkerModel{ModelV2: &sdk.V2WorkerModel{},
+			VSphereSpec: sdk.V2WorkerModelVSphereSpec{
+				Image:    "vmware-model",
+				Username: "user",
+				Password: "password",
+			},
+		}, "this is a script", []string{"env=1"})
 }

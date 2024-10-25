@@ -12,9 +12,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/rockbears/log"
-	"github.com/sguiheux/go-coverage"
-
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/event"
@@ -32,6 +29,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
 func (api *API) postTakeWorkflowJobHandler() service.Handler {
@@ -45,11 +43,11 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 		// Locking for the parent consumer
 		var hatcheryName string
 		if consumer.ParentID != nil {
-			parentConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), *consumer.ParentID)
+			parentConsumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), *consumer.ParentID)
 			if err != nil {
 				return err
 			}
@@ -60,7 +58,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			hatcheryName = s.Name
 		}
 
-		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+		wk, err := worker.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Worker.ID)
 		if err != nil {
 			return err
 		}
@@ -82,6 +80,8 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 				return err
 			}
 			workerModelName = wm.Name
+		} else if wk.ModelName != nil {
+			workerModelName = *wk.ModelName
 		}
 
 		// Load job run
@@ -96,7 +96,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			telemetry.Tag(telemetry.TagJob, pbj.Job.Action.Name))
 
 		// Checks that the token used by the worker cas access to one of the execgroups
-		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
+		grantedGroupIDs := append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 		if !pbj.ExecGroups.HasOneOf(grantedGroupIDs...) {
 			return sdk.WrapError(sdk.ErrForbidden, "worker %s (%s) is not authorized to take this job:%d execGroups:%+v", wk.Name, workerModelName, id, pbj.ExecGroups)
 		}
@@ -117,8 +117,10 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
-		go api.WorkflowSendEvent(context.Background(), *p, report)
+		workflow.ResyncNodeRunsWithCommits(api.Router.Background, api.mustDBWithCtx(api.Router.Background), api.Cache, *p, report)
+		api.GoRoutines.Exec(api.Router.Background, "workflow-send-event", func(ctx context.Context) {
+			api.WorkflowSendEvent(ctx, *p, report)
+		})
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -192,6 +194,7 @@ func (api *API) takeJob(ctx context.Context, p *sdk.Project, id int64, workerMod
 	wnjri.WorkflowID = workflowRun.WorkflowID
 	wnjri.WorkflowName = workflowRun.Workflow.Name
 	wnjri.NodeRunName = noderun.WorkflowNodeName
+	wnjri.AscodeActions = workflowRun.Workflow.AscodeActions
 
 	secretsReqs := job.Job.Action.Requirements.FilterByType(sdk.SecretRequirement).Values()
 	secretsReqsRegs := make([]*regexp.Regexp, 0, len(secretsReqs))
@@ -255,16 +258,18 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		if ok := isHatchery(ctx); !ok {
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+		s, err := services.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 		if err != nil {
 			return err
 		}
 
-		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, id, s); err != nil {
+		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, api.Config.Workflow.JobDefaultBookDelay, api.Config.Workflow.CustomServiceJobBookDelay, id, s); err != nil {
 			return sdk.WrapError(err, "job already booked")
 		}
 
@@ -301,7 +306,9 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		if ok := isHatchery(ctx); !ok {
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -328,55 +335,6 @@ func (api *API) getWorkflowJobHandler() service.Handler {
 	}
 }
 
-func (api *API) postVulnerabilityReportHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if isWorker := isWorker(ctx); !isWorker {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		id, err := requestVarInt(r, "permJobID")
-		if err != nil {
-			return err
-		}
-
-		nr, err := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
-		})
-		if err != nil {
-			return sdk.WrapError(err, "unable to save vulnerability report")
-		}
-		if nr.ApplicationID == 0 {
-			return sdk.WrapError(sdk.ErrNotFound, "there is no application linked")
-		}
-
-		var report sdk.VulnerabilityWorkerReport
-		if err := service.UnmarshalBody(r, &report); err != nil {
-			return sdk.WrapError(err, "unable to read body")
-		}
-
-		p, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load project by nodeJobRunID: %d", id)
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "unable to start transaction")
-		}
-		defer tx.Rollback() // nolint
-
-		if err := workflow.SaveVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
-			return sdk.WrapError(err, "unable to handle report")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
-	}
-}
-
 func (api *API) postSpawnInfosWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, err := requestVarInt(r, "permJobID")
@@ -384,7 +342,11 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "invalid id")
 		}
 
-		if ok := isHatchery(ctx) || isWorker(ctx); !ok {
+		hatchery, err := isHatchery(ctx)
+		if err != nil {
+			return err
+		}
+		if ok := hatchery || isWorker(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -428,14 +390,16 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		var wk *sdk.Worker
 		var hatch *sdk.Service
 		if isWorker(ctx) {
-			wk, err = worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+			wk, err = worker.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Worker.ID)
 			if err != nil {
 				return err
 			}
 		}
 
-		if isHatchery(ctx) {
-			hatch, err = services.LoadByID(ctx, api.mustDBWithCtx(ctx), getAPIConsumer(ctx).Service.ID)
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if ok {
+			hatch, err = services.LoadByID(ctx, api.mustDBWithCtx(ctx), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 			if err != nil {
 				return err
 			}
@@ -505,9 +469,11 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			}
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *proj, report)
+		workflow.ResyncNodeRunsWithCommits(api.Router.Background, api.mustDBWithCtx(api.Router.Background), api.Cache, *proj, report)
 
-		go api.WorkflowSendEvent(context.Background(), *proj, report)
+		api.GoRoutines.Exec(api.Router.Background, "workflow-send-event", func(ctx context.Context) {
+			api.WorkflowSendEvent(ctx, *proj, report)
+		})
 
 		for i := range report.WorkflowRuns() {
 			run := &report.WorkflowRuns()[i]
@@ -630,10 +596,16 @@ func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	}
 	// ^ build variables are now updated on job run and on node
 
+	var reloadedWorker *sdk.Worker
 	if wr != nil {
 		//Update worker status
 		if err := worker.SetStatus(ctx, tx, wr.ID, sdk.StatusWaiting); err != nil {
 			return nil, sdk.WrapError(err, "cannot update worker %s status", wr.ID)
+		}
+		var err error
+		reloadedWorker, err = worker.LoadByID(ctx, tx, wr.ID)
+		if err != nil {
+			log.Error(ctx, "unable to reload worker %q: %v", wr.ID, err)
 		}
 	}
 
@@ -645,11 +617,9 @@ func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		// pq: update or delete on table "workflow_node_run_job" violates foreign key constraint "fk_worker_workflow_node_run_job" on table "worker")
 		if wr != nil && strings.Contains(err.Error(), "fk_worker_workflow_node_run_job") {
 			log.ErrorWithStackTrace(ctx, err)
-			statusFromDB, err := tx.SelectNullStr("select status from worker where id = $1", wr.ID)
-			if err != nil {
-				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get worker %q status in db with id %q", wr.Name, wr.ID))
+			if reloadedWorker != nil {
+				log.Error(ctx, "reloaded worker %s (%s) status is %q", reloadedWorker.Name, reloadedWorker.ID, reloadedWorker.Status)
 			}
-			log.Error(ctx, "worker %q status is %q (%q in DB)", wr.Name, wr.Status, statusFromDB)
 		}
 		return nil, sdk.WrapError(err, "cannot update NodeJobRun %d status", job.ID)
 	}
@@ -789,12 +759,12 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		var count sdk.WorkflowNodeJobRunCount
 
-		if consumer.Worker != nil {
-			if consumer.Worker.JobRunID != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
+			if consumer.AuthConsumerUser.Worker.JobRunID != nil {
 				count.Count = 1
 			}
 			return service.WriteJSON(w, count, http.StatusOK)
@@ -812,7 +782,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 		filter.Until = &until
 
 		if !isMaintainer(ctx) {
-			count, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
+			count, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getUserConsumer(ctx).GetGroupIDs())
 		} else {
 			count, err = workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
@@ -848,13 +818,13 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		jobs := make([]sdk.WorkflowNodeJobRun, 0)
 
-		if consumer.Worker != nil {
-			if consumer.Worker.JobRunID != nil {
-				job, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *consumer.Worker.JobRunID)
+		if consumer.AuthConsumerUser.Worker != nil {
+			if consumer.AuthConsumerUser.Worker.JobRunID != nil {
+				job, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *consumer.AuthConsumerUser.Worker.JobRunID)
 				if err != nil {
 					return err
 				}
@@ -878,10 +848,13 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		if modelType != "" {
 			filter.ModelType = []string{modelType}
 		}
+		if ok, _ := isHatchery(ctx); ok {
+			filter.SkipBooked = true
+		}
 
 		// If the consumer is a hatchery or a non maintainer user, filter the job by its groups
 		if isS || !isMaintainer(ctx) {
-			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
+			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getUserConsumer(ctx).GetGroupIDs())
 		} else {
 			jobs, err = workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
@@ -926,73 +899,8 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 	return since, until, limit
 }
 
-func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if isWorker := isWorker(ctx); !isWorker {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		// Load and lock Existing workflow Run Job
-		id, err := requestVarInt(r, "permJobID")
-		if err != nil {
-			return err
-		}
-
-		var report coverage.Report
-		if err := service.UnmarshalBody(r, &report); err != nil {
-			return err
-		}
-
-		wnr, err := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{})
-		if err != nil {
-			return sdk.WrapError(err, "unable to load node run")
-		}
-
-		existingReport, errLoad := workflow.LoadCoverageReport(api.mustDB(), wnr.ID)
-		if errLoad != nil && !sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
-			return sdk.WrapError(errLoad, "unable to load coverage report")
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		p, err := project.LoadProjectByNodeJobRunID(ctx, tx, api.Cache, id)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load project by nodeJobRunID:%d", id)
-		}
-		if sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
-			if err := workflow.ComputeNewReport(ctx, tx, api.Cache, report, wnr, *p); err != nil {
-				return sdk.WrapError(err, "cannot compute new coverage report")
-			}
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
-			}
-			return nil
-		}
-
-		// update
-		existingReport.Report = report
-		if err := workflow.ComputeLatestDefaultBranchReport(ctx, tx, api.Cache, *p, wnr, &existingReport); err != nil {
-			return sdk.WrapError(err, "cannot compute default branch coverage report")
-		}
-
-		if err := workflow.UpdateCoverage(tx, existingReport); err != nil {
-			return sdk.WrapError(err, "unable to update code coverage")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
-	}
-}
-
 func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return func(ctx context.Context, _ http.ResponseWriter, r *http.Request) error {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}

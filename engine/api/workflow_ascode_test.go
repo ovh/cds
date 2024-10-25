@@ -30,6 +30,7 @@ import (
 	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -128,14 +129,6 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/foo/myrepo/hooks":
 				hook := sdk.VCSHook{
 					ID: "myod",
@@ -179,8 +172,8 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	proj := createProject(t, db, api)
-	pip := createPipeline(t, db, api, proj)
-	app := createApplication(t, db, api, proj)
+	pip := createPipeline(t, db, proj)
+	app := createApplication(t, db, proj)
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
@@ -335,14 +328,6 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/foo/myrepo/hooks":
 				hook := sdk.VCSHook{
 					ID: "myod",
@@ -396,10 +381,10 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	proj := createProject(t, db, api)
 
 	// Create Pipeline
-	pip := createPipeline(t, db, api, proj)
+	pip := createPipeline(t, db, proj)
 
 	// Create Application
-	app := createApplication(t, db, api, proj)
+	app := createApplication(t, db, proj)
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
@@ -468,18 +453,17 @@ func createProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API) *sdk
 	// Create Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	return proj
 }
 
-func createPipeline(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Project) *sdk.Pipeline {
+func createPipeline(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project) *sdk.Pipeline {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
@@ -488,7 +472,7 @@ func createPipeline(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Proje
 	return &pip
 }
 
-func createApplication(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API, proj *sdk.Project) *sdk.Application {
+func createApplication(t *testing.T, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project) *sdk.Application {
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,
@@ -543,7 +527,7 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -555,13 +539,12 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
 	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Perform a "import as-code operation" to create a new workflow
 	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
@@ -795,26 +778,6 @@ version: v1.0`),
 		)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-
-				return nil, 200, nil
-			},
-		)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/grant", gomock.Any(), gomock.Any(), gomock.Any())
-
-	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
@@ -963,7 +926,7 @@ hooks:
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -975,16 +938,15 @@ hooks:
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	UUID := sdk.UUID()
 
@@ -1153,23 +1115,6 @@ hooks:
 		)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-
-				return nil, 200, nil
-			},
-		)
-
-	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
@@ -1200,7 +1145,7 @@ hooks:
 	// Import Application
 	var eapp exportentities.Application
 	require.NoError(t, err, yaml.Unmarshal([]byte(app), &eapp))
-	appDB, _, _, err := application.ParseAndImport(context.TODO(), db, api.Cache, *proj, &eapp, application.ImportOptions{Force: true, FromRepository: "https://github.com/fsamin/go-repo.git"}, nil, u)
+	appDB, _, _, err := application.ParseAndImport(context.TODO(), db, api.Cache, *proj, &eapp, application.ImportOptions{Force: true, FromRepository: "https://github.com/fsamin/go-repo.git"}, nil, u, nil)
 	require.NoError(t, err)
 	require.Equal(t, appDB.FromRepository, "https://github.com/fsamin/go-repo.git")
 
@@ -1219,7 +1164,10 @@ hooks:
 			},
 		},
 	}
-	_, _, err = workflow.CreateFromRepository(context.TODO(), api.mustDB(), api.Cache, proj, workflowInserted, opts, sdk.AuthConsumer{AuthentifiedUser: u}, project.DecryptWithBuiltinKey)
+	c := sdk.AuthUserConsumer{
+		AuthConsumerUser: sdk.AuthUserConsumerData{AuthentifiedUser: u},
+	}
+	_, _, err = workflow.CreateFromRepository(context.TODO(), api.mustDB(), api.Cache, proj, workflowInserted, opts, c, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 	require.NoError(t, err)
 }
 
@@ -1237,7 +1185,7 @@ func Test_WorkflowAsCodeWithPermissions(t *testing.T) {
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -1258,13 +1206,12 @@ func Test_WorkflowAsCodeWithPermissions(t *testing.T) {
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Perform a "import as-code operation" to create a new workflow
 	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
@@ -1428,26 +1375,6 @@ version: v1.0`),
 				return nil, 200, nil
 			},
 		)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-
-				return nil, 200, nil
-			},
-		)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/grant", gomock.Any(), gomock.Any(), gomock.Any())
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).

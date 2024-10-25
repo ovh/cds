@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    inject,
+    Input, OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
@@ -24,7 +33,16 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { finalize } from 'rxjs/operators';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+
+
+interface IModalData {
+    project: Project,
+    workflow: Workflow,
+    source: WNode,
+    isParent: boolean,
+    selectedType: string,
+}
 
 @Component({
     selector: 'app-workflow-trigger',
@@ -32,7 +50,7 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
     styleUrls: ['workflow.trigger.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowTriggerComponent {
+export class WorkflowTriggerComponent implements OnInit {
 
     @ViewChild('nodeWizard') nodeWizard: WorkflowNodeAddWizardComponent;
     @ViewChild('worklflowAddOutgoingHook')
@@ -49,8 +67,21 @@ export class WorkflowTriggerComponent {
     selectedType: string;
     isParent: boolean;
 
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
+
     constructor(private _pipService: PipelineService, private _store: Store, private _toast: ToastService, private _modal: NzModalRef,
                 private _envService: EnvironmentService, private _appService: ApplicationService, private _cd: ChangeDetectorRef) { }
+
+    ngOnInit() {
+        if (this.nzModalData) {
+            this.project = this.nzModalData.project;
+            this.workflow = this.nzModalData.workflow;
+            this.isParent = this.nzModalData.isParent;
+            this.source = this.nzModalData.source;
+            this.selectedType = this.nzModalData.selectedType;
+            this._cd.markForCheck();
+        }
+    }
 
     hide(): void {
         this._modal.close();

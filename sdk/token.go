@@ -14,22 +14,31 @@ import (
 	"github.com/spf13/cast"
 )
 
+type Driver interface {
+	GetUserInfoFromDriver(ctx context.Context, req AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
+}
+
+type DriverWithSignInRequest interface {
+	Driver
+	CheckSigninRequest(req AuthConsumerSigninRequest) error
+}
+
+type DriverWithRedirect interface {
+	DriverWithSignInRequest
+	GetSigninURI(AuthSigninConsumerToken) (AuthDriverSigningRedirect, error)
+}
+
+type DriverWithSigninStateToken interface {
+	DriverWithSignInRequest
+	CheckSigninStateToken(AuthConsumerSigninRequest) error
+}
+
 // AuthDriver interface.
 type AuthDriver interface {
 	GetManifest() AuthDriverManifest
 	GetSessionDuration() time.Duration
-	CheckSigninRequest(AuthConsumerSigninRequest) error
 	GetUserInfo(context.Context, AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
-}
-
-type AuthDriverWithRedirect interface {
-	AuthDriver
-	GetSigninURI(AuthSigninConsumerToken) (AuthDriverSigningRedirect, error)
-}
-
-type AuthDriverWithSigninStateToken interface {
-	AuthDriver
-	CheckSigninStateToken(AuthConsumerSigninRequest) error
+	GetDriver() Driver
 }
 
 type AuthDriverSigningRedirect struct {
@@ -261,8 +270,8 @@ type AuthConsumerSigninResponse struct {
 
 // AuthConsumerCreateResponse response for a auth consumer creation.
 type AuthConsumerCreateResponse struct {
-	Token    string        `json:"token"` // sign in token
-	Consumer *AuthConsumer `json:"consumer"`
+	Token    string            `json:"token"` // sign in token
+	Consumer *AuthUserConsumer `json:"consumer"`
 }
 
 // AuthDriverUserInfo struct discribed a user returns by a auth driver.
@@ -279,7 +288,7 @@ type AuthDriverUserInfo struct {
 // AuthCurrentConsumerResponse describe the current consumer and the current session
 type AuthCurrentConsumerResponse struct {
 	User           AuthentifiedUser   `json:"user"`
-	Consumer       AuthConsumer       `json:"consumer"`
+	Consumer       AuthUserConsumer   `json:"consumer"`
 	Session        AuthSession        `json:"session"`
 	DriverManifest AuthDriverManifest `json:"driver_manifest"`
 }
@@ -296,6 +305,7 @@ const (
 	ConsumerGithub       AuthConsumerType = "github"
 	ConsumerGitlab       AuthConsumerType = "gitlab"
 	ConsumerOIDC         AuthConsumerType = "openid-connect"
+	ConsumerHatchery     AuthConsumerType = "hatchery"
 	ConsumerTest         AuthConsumerType = "futurama"
 	ConsumerTest2        AuthConsumerType = "planet-express"
 )
@@ -394,37 +404,60 @@ func (w AuthConsumerWarnings) Value() (driver.Value, error) {
 	return j, WrapError(err, "cannot marshal AuthConsumerWarnings")
 }
 
-// AuthConsumers gives functions for auth consumer slice.
-type AuthConsumers []AuthConsumer
+// AuthUserConsumers gives functions for auth consumer slice.
+type AuthUserConsumers []AuthUserConsumer
 
-// AuthConsumer issues session linked to an authentified user.
 type AuthConsumer struct {
-	ID                           string                      `json:"id" cli:"id,key" db:"id"`
-	Name                         string                      `json:"name" cli:"name" db:"name"`
-	Description                  string                      `json:"description" cli:"description" db:"description"`
-	ParentID                     *string                     `json:"parent_id,omitempty" db:"parent_id"`
-	AuthentifiedUserID           string                      `json:"user_id,omitempty" db:"user_id"`
-	Type                         AuthConsumerType            `json:"type" cli:"type" db:"type"`
-	Data                         AuthConsumerData            `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
-	Created                      time.Time                   `json:"created" cli:"created" db:"created"`
-	GroupIDs                     Int64Slice                  `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
-	InvalidGroupIDs              Int64Slice                  `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
-	ScopeDetails                 AuthConsumerScopeDetails    `json:"scope_details,omitempty" cli:"scope_details" db:"scope_details"`
-	DeprecatedIssuedAt           time.Time                   `json:"issued_at" cli:"issued_at" db:"issued_at"`
-	Disabled                     bool                        `json:"disabled" cli:"disabled" db:"disabled"`
-	Warnings                     AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
-	LastAuthentication           *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
-	ValidityPeriods              AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
-	ServiceName                  *string                     `json:"service_name,omitempty" db:"service_name"`
-	ServiceType                  *string                     `json:"service_type,omitempty" db:"service_type"`
-	ServiceRegion                *string                     `json:"service_region,omitempty" db:"service_region"`
-	ServiceIgnoreJobWithNoRegion *bool                       `json:"service_ignore_job_with_no_region,omitempty" db:"service_ignore_job_with_no_region"`
+	ID                 string                      `json:"id" cli:"id,key" db:"id"`
+	Name               string                      `json:"name" cli:"name" db:"name"`
+	Type               AuthConsumerType            `json:"type" cli:"type" db:"type"`
+	Description        string                      `json:"description" cli:"description" db:"description"`
+	ParentID           *string                     `json:"parent_id,omitempty" db:"parent_id"`
+	Created            time.Time                   `json:"created" cli:"created" db:"created"`
+	DeprecatedIssuedAt time.Time                   `json:"issued_at" cli:"issued_at" db:"issued_at"`
+	Disabled           bool                        `json:"disabled" cli:"disabled" db:"disabled"`
+	Warnings           AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
+	LastAuthentication *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
+	ValidityPeriods    AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
+}
+
+// AuthUserConsumer issues session linked to an authentified user.
+type AuthUserConsumer struct {
+	AuthConsumer
+	AuthConsumerUser AuthUserConsumerData `json:"auth_consumer_user,omitempty" db:"-"`
+}
+
+// AuthHatcheryConsumer issues session linked to an authentified user.
+type AuthHatcheryConsumer struct {
+	AuthConsumer
+	AuthConsumerHatchery AuthConsumerHatcheryData `json:"auth_consumer_hatchery,omitempty" db:"-"`
+}
+
+// AuthUserConsumerData issues session linked to an authentified user.
+type AuthUserConsumerData struct {
+	ID                           string                   `json:"id" cli:"id,key" db:"id"`
+	AuthConsumerID               string                   `json:"auth_consumer_id" cli:"auth_consumer_id,key" db:"auth_consumer_id"`
+	AuthentifiedUserID           string                   `json:"user_id,omitempty" db:"user_id"`
+	Data                         AuthConsumerData         `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
+	GroupIDs                     Int64Slice               `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
+	InvalidGroupIDs              Int64Slice               `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
+	ScopeDetails                 AuthConsumerScopeDetails `json:"scope_details,omitempty" cli:"scope_details" db:"scope_details"`
+	ServiceName                  *string                  `json:"service_name,omitempty" db:"service_name"`
+	ServiceType                  *string                  `json:"service_type,omitempty" db:"service_type"`
+	ServiceRegion                *string                  `json:"service_region,omitempty" db:"service_region"`
+	ServiceIgnoreJobWithNoRegion *bool                    `json:"service_ignore_job_with_no_region,omitempty" db:"service_ignore_job_with_no_region"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
 	// aggregates by router auth middleware
 	Service *Service `json:"-" db:"-"`
 	Worker  *Worker  `json:"-" db:"-"`
+}
+
+type AuthConsumerHatcheryData struct {
+	ID             string `json:"id" cli:"id,key" db:"id"`
+	AuthConsumerID string `json:"auth_consumer_id" cli:"auth_consumer_id,key" db:"auth_consumer_id"`
+	HatcheryID     string `json:"hatchery_id" cli:"hatchery_id" db:"hatchery_id"`
 }
 
 func NewAuthConsumerValidityPeriod(iat time.Time, duration time.Duration) AuthConsumerValidityPeriods {
@@ -474,18 +507,18 @@ type AuthConsumerValidityPeriod struct {
 }
 
 // IsValid returns validity for auth consumer.
-func (c AuthConsumer) IsValid(scopeDetails AuthConsumerScopeDetails) error {
+func (c AuthUserConsumer) IsValid(scopeDetails AuthConsumerScopeDetails) error {
 	if c.Name == "" {
 		return NewErrorFrom(ErrWrongRequest, "invalid given name")
 	}
 
-	if err := c.ScopeDetails.IsValid(); err != nil {
+	if err := c.AuthConsumerUser.ScopeDetails.IsValid(); err != nil {
 		return err
 	}
 
 	mEndpoints := scopeDetails.ToEndpointsMap()
 
-	for _, s := range c.ScopeDetails {
+	for _, s := range c.AuthConsumerUser.ScopeDetails {
 		if !s.Scope.IsValid() {
 			return NewErrorFrom(ErrWrongRequest, "invalid given scope value %s", s)
 		}
@@ -511,46 +544,46 @@ func (c AuthConsumer) IsValid(scopeDetails AuthConsumerScopeDetails) error {
 
 // GetGroupIDs returns group ids for auth consumer, if empty
 // in consumer returns group ids from authentified user.
-func (c AuthConsumer) GetGroupIDs() []int64 {
+func (c AuthUserConsumer) GetGroupIDs() []int64 {
 	var groupIDs []int64
 
-	if len(c.GroupIDs) > 0 {
-		groupIDs = c.GroupIDs
-	} else if c.AuthentifiedUser != nil && c.Worker == nil {
-		groupIDs = c.AuthentifiedUser.GetGroupIDs()
+	if len(c.AuthConsumerUser.GroupIDs) > 0 {
+		groupIDs = c.AuthConsumerUser.GroupIDs
+	} else if c.AuthConsumerUser.AuthentifiedUser != nil && c.AuthConsumerUser.Worker == nil {
+		groupIDs = c.AuthConsumerUser.AuthentifiedUser.GetGroupIDs()
 	}
 
 	return groupIDs
 }
 
-func (c AuthConsumer) Admin() bool {
+func (c AuthUserConsumer) Admin() bool {
 	// Worker and Service can't be considered as admin
-	return c.AuthentifiedUser.Ring == UserRingAdmin && c.Worker == nil && c.Service == nil
+	return c.AuthConsumerUser.AuthentifiedUser.Ring == UserRingAdmin && c.AuthConsumerUser.Worker == nil && c.AuthConsumerUser.Service == nil
 }
 
-func (c AuthConsumer) Maintainer() bool {
-	return (c.AuthentifiedUser.Ring == UserRingMaintainer || c.AuthentifiedUser.Ring == UserRingAdmin) && c.Worker == nil && c.Service == nil
+func (c AuthUserConsumer) Maintainer() bool {
+	return (c.AuthConsumerUser.AuthentifiedUser.Ring == UserRingMaintainer || c.AuthConsumerUser.AuthentifiedUser.Ring == UserRingAdmin) && c.AuthConsumerUser.Worker == nil && c.AuthConsumerUser.Service == nil
 }
 
-func (c AuthConsumer) GetUsername() string {
-	if c.Service != nil || c.Worker != nil {
+func (c AuthUserConsumer) GetUsername() string {
+	if c.AuthConsumerUser.Service != nil || c.AuthConsumerUser.Worker != nil {
 		return c.Name
 	}
-	return c.AuthentifiedUser.GetUsername()
+	return c.AuthConsumerUser.AuthentifiedUser.GetUsername()
 }
 
-func (c AuthConsumer) GetEmail() string {
-	if c.Service != nil || c.Worker != nil {
+func (c AuthUserConsumer) GetEmail() string {
+	if c.AuthConsumerUser.Service != nil || c.AuthConsumerUser.Worker != nil {
 		return ""
 	}
-	return c.AuthentifiedUser.GetEmail()
+	return c.AuthConsumerUser.AuthentifiedUser.GetEmail()
 }
 
-func (c AuthConsumer) GetFullname() string {
-	if c.Service != nil || c.Worker != nil {
+func (c AuthUserConsumer) GetFullname() string {
+	if c.AuthConsumerUser.Service != nil || c.AuthConsumerUser.Worker != nil {
 		return c.Name
 	}
-	return c.AuthentifiedUser.GetFullname()
+	return c.AuthConsumerUser.AuthentifiedUser.GetFullname()
 }
 
 // AuthSessions gives functions for auth session slice.
@@ -564,10 +597,10 @@ type AuthSession struct {
 	Created    time.Time `json:"created" cli:"created" db:"created"`
 	MFA        bool      `json:"mfa" cli:"mfa" db:"mfa"`
 	// aggregates
-	Consumer     *AuthConsumer `json:"consumer,omitempty" db:"-"`
-	Groups       []Group       `json:"groups,omitempty" db:"-"`
-	Current      bool          `json:"current,omitempty" cli:"current" db:"-"`
-	LastActivity *time.Time    `json:"last_activity,omitempty" cli:"last_activity,omitempty" db:"-"`
+	Consumer     *AuthUserConsumer `json:"consumer,omitempty" db:"-"`
+	Groups       []Group           `json:"groups,omitempty" db:"-"`
+	Current      bool              `json:"current,omitempty" cli:"current" db:"-"`
+	LastActivity *time.Time        `json:"last_activity,omitempty" cli:"last_activity,omitempty" db:"-"`
 }
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.
@@ -580,7 +613,7 @@ type AuthSessionJWTClaims struct {
 // AuthSessionsToIDs returns ids of given auth sessions.
 
 // AuthConsumersToIDs returns ids of given auth consumers.
-func AuthConsumersToIDs(cs []AuthConsumer) []string {
+func AuthConsumersToIDs(cs []AuthUserConsumer) []string {
 	ids := make([]string, len(cs))
 	for i := range cs {
 		ids[i] = cs[i].ID
@@ -589,10 +622,10 @@ func AuthConsumersToIDs(cs []AuthConsumer) []string {
 }
 
 // AuthConsumersToAuthentifiedUserIDs returns ids of given auth consumers.
-func AuthConsumersToAuthentifiedUserIDs(cs []*AuthConsumer) []string {
+func AuthConsumersToAuthentifiedUserIDs(cs []*AuthUserConsumer) []string {
 	ids := make([]string, len(cs))
 	for i := range cs {
-		ids[i] = cs[i].AuthentifiedUserID
+		ids[i] = cs[i].AuthConsumerUser.AuthentifiedUserID
 	}
 	return ids
 }
@@ -622,4 +655,5 @@ type AuthSigninConsumerToken struct {
 	RedirectURI       string `json:"redirect_uri,omitempty"`
 	RequireMFA        bool   `json:"require_mfa,omitempty"`
 	IsFirstConnection bool   `json:"is_first_connection,omitempty"`
+	LinkUser          bool   `json:"link_user,omitempty"`
 }

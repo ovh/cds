@@ -159,16 +159,17 @@ func Subscribe(ch chan<- sdk.Event) {
 // DequeueEvent runs in a goroutine and dequeue event from cache
 func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 	for {
+		if err := ctx.Err(); err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "Exiting event.DequeueEvent : %v", err)
+			return
+		}
+
 		e := sdk.Event{}
 		if err := store.DequeueWithContext(ctx, "events", 250*time.Millisecond, &e); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "Event.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
-		}
-		if err := ctx.Err(); err != nil {
-			ctx := sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "Exiting event.DequeueEvent : %v", err)
-			return
 		}
 
 		// Filter "EventJobSummary" for globalKafka Broker
@@ -215,11 +216,15 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 					continue
 				}
 
+				if !projInt.Model.Event {
+					continue
+				}
+
 				kafkaCfg := getKafkaConfig(projInt.Config)
 				kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
 				if err != nil {
 					ctx := sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "Event.DequeueEvent> cannot get broker %q for project %q and user %q : %v", projInt.Config["broker url"].Value, e.ProjectKey, projInt.Config["username"].Value, err)
+					log.Error(ctx, "Event.DequeueEvent> cannot get broker %q for project %q and user %q - eventIntegrationID: %d: %v", projInt.Config["broker url"].Value, e.ProjectKey, projInt.Config["username"].Value, eventIntegrationID, err)
 					continue
 				}
 				if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {

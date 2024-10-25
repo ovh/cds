@@ -27,10 +27,10 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -1614,13 +1614,12 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	srvs, err := services.LoadAll(context.Background(), db)
 	require.NoError(t, err)
@@ -1692,16 +1691,6 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 				if err := enc.Encode(map[string]sdk.NodeHook{
 					hooks[k].UUID: hooks[k],
 				}); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/github/webhooks":
-
-				infos := repositoriesmanager.WebhooksInfos{
-					WebhooksDisabled:  false,
-					WebhooksSupported: true,
-					Icon:              "github",
-				}
-				if err := enc.Encode(infos); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":
@@ -1798,7 +1787,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	assert.NoError(t, globalError)
 
 	proj.Applications = append(proj.Applications, *app)
@@ -1835,7 +1824,7 @@ vcs_ssh_key: proj-blabla
 
 	// Add check on Hook
 	assert.Equal(t, "666", w.WorkflowData.Node.Hooks[0].Config["webHookID"].Value)
-	assert.Equal(t, "github", w.WorkflowData.Node.Hooks[0].Config["hookIcon"].Value)
+	assert.Equal(t, "Github", w.WorkflowData.Node.Hooks[0].Config["hookIcon"].Value)
 	assert.Equal(t, fmt.Sprintf("http://6.6.6:8080/%s", w.WorkflowData.Node.Hooks[0].UUID), w.WorkflowData.Node.Hooks[0].Config["webHookURL"].Value)
 	t.Logf("%+v", w.WorkflowData.Node.Hooks[0])
 
@@ -1934,7 +1923,7 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
 	u, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	bootstrap.InitiliazeDB(ctx, sdk.DefaultValues{}, func() *gorp.DbMap { return db.DbMap })
@@ -2001,15 +1990,6 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 				}); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				infos := repositoriesmanager.WebhooksInfos{
-					WebhooksDisabled:  false,
-					WebhooksSupported: true,
-					Icon:              "github",
-				}
-				if err := enc.Encode(infos); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":
 				pr := sdk.VCSHook{
 					ID: "666",
@@ -2030,13 +2010,12 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 	)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Add pipeline
 	pipS := `version: v1.0
@@ -2067,7 +2046,7 @@ vcs_ssh_key: proj-blabla`
 
 	var eapp = new(exportentities.Application)
 	require.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, err := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{FromRepository: "from/my-repo"}, nil, u)
+	app, _, _, err := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{FromRepository: "from/my-repo"}, nil, u, nil)
 	require.NotNil(t, app)
 	require.NoError(t, err)
 
@@ -2080,7 +2059,7 @@ values:
 
 	var eEnv = new(exportentities.Environment)
 	require.NoError(t, yaml.Unmarshal([]byte(envS), eEnv))
-	env, _, _, err := environment.ParseAndImport(ctx, db, *proj, *eEnv, environment.ImportOptions{FromRepository: "from/my-repo"}, project.DecryptWithBuiltinKey, u)
+	env, _, _, err := environment.ParseAndImport(ctx, db, *proj, *eEnv, environment.ImportOptions{FromRepository: "from/my-repo"}, project.DecryptWithBuiltinKey, u, nil)
 	require.NotNil(t, env)
 	require.NoError(t, err)
 
@@ -2129,7 +2108,7 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
 	u, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	bootstrap.InitiliazeDB(ctx, sdk.DefaultValues{}, func() *gorp.DbMap { return db.DbMap })
@@ -2196,15 +2175,6 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 				}); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				infos := repositoriesmanager.WebhooksInfos{
-					WebhooksDisabled:  false,
-					WebhooksSupported: true,
-					Icon:              "github",
-				}
-				if err := enc.Encode(infos); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":
 				pr := sdk.VCSHook{
 					ID: "666",
@@ -2225,13 +2195,12 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 	)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Add pipeline
 	pipS := `version: v1.0
@@ -2262,7 +2231,7 @@ vcs_ssh_key: proj-blabla`
 
 	var eapp = new(exportentities.Application)
 	require.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, err := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{FromRepository: "from/my-repo"}, nil, u)
+	app, _, _, err := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{FromRepository: "from/my-repo"}, nil, u, nil)
 	require.NotNil(t, app)
 	require.NoError(t, err)
 
@@ -2275,7 +2244,7 @@ values:
 
 	var eEnv = new(exportentities.Environment)
 	require.NoError(t, yaml.Unmarshal([]byte(envS), eEnv))
-	env, _, _, err := environment.ParseAndImport(ctx, db, *proj, *eEnv, environment.ImportOptions{FromRepository: "from/my-repo"}, project.DecryptWithBuiltinKey, u)
+	env, _, _, err := environment.ParseAndImport(ctx, db, *proj, *eEnv, environment.ImportOptions{FromRepository: "from/my-repo"}, project.DecryptWithBuiltinKey, u, nil)
 	require.NotNil(t, env)
 	require.NoError(t, err)
 

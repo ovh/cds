@@ -5,6 +5,22 @@ a {
   margin-top: 5px;
 }
 
+.nzSegment {
+
+  hr {
+    width: 100%;
+    margin-bottom: 25px;
+  }
+  button {
+    margin-bottom: 15px;
+    margin-left: 0;
+  }
+}
+
+.nzSegment.noborder {
+  border: none;
+}
+
 nz-alert {
   margin-bottom: 10px;
 }

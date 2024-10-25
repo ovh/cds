@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -48,7 +49,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Retrieve the authentifed Consumer from the hatchery
-		hatcheryConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), *hatchSrv.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		hatcheryConsumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), *hatchSrv.ConsumerID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load consumer %v", hatchSrv.ConsumerID)
 		}
@@ -60,7 +61,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// We have to issue a new consumer for the worker
-		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer)
+		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatcheryConsumer)
 		if err != nil {
 			return err
 		}
@@ -84,7 +85,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		log.Debug(ctx, "New worker: [%s] - %s", wk.ID, wk.Name)
 
-		workerSession, err := authentication.NewSession(ctx, tx, workerConsumer, workerauth.SessionDuration)
+		workerSession, err := authentication.NewSession(ctx, tx, &workerConsumer.AuthConsumer, workerauth.SessionDuration)
 		if err != nil {
 			return sdk.NewErrorWithStack(
 				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
@@ -95,7 +96,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		// Store the last authentication date on the consumer
 		now := time.Now()
 		workerConsumer.LastAuthentication = &now
-		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, workerConsumer); err != nil {
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, &workerConsumer.AuthConsumer); err != nil {
 			return err
 		}
 
@@ -152,9 +153,10 @@ func (api *API) getWorkerHandler() service.Handler {
 func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var workers []sdk.Worker
-		var err error
-		if isHatchery(ctx) {
-			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if ok {
+			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 			if err != nil {
 				return err
 			}
@@ -181,10 +183,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 		}
 
 		if !isAdmin(ctx) {
-			if wk.Status == sdk.StatusBuilding {
-				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wk.Status)
-			}
-			hatcherySrv, err := services.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+			hatcherySrv, err := services.LoadByConsumerID(ctx, api.mustDB(), getUserConsumer(ctx).ID)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}
@@ -198,10 +197,10 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 		trackSudo(ctx, w)
 
-		if err := DisableWorker(ctx, api.mustDB(), id, api.Config.Log.StepMaxSize); err != nil {
+		if err := DisableWorker(ctx, api.mustDB(), api.Cache, id, api.Config.Log.StepMaxSize); err != nil {
 			cause := sdk.Cause(err)
 			if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
-				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exists", id)
+				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exist", id)
 			}
 			return sdk.WrapError(err, "cannot update worker status")
 		}
@@ -215,7 +214,7 @@ func (api *API) postRefreshWorkerHandler() service.Handler {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		wk := getAPIConsumer(ctx).Worker
+		wk := getUserConsumer(ctx).AuthConsumerUser.Worker
 		if err := worker.RefreshWorker(api.mustDB(), wk.ID); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "cannot refresh last beat of %s", wk.Name)
 		}
@@ -228,8 +227,8 @@ func (api *API) postUnregisterWorkerHandler() service.Handler {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		wk := getAPIConsumer(ctx).Worker
-		if err := DisableWorker(ctx, api.mustDB(), wk.ID, api.Config.Log.StepMaxSize); err != nil {
+		wk := getUserConsumer(ctx).AuthConsumerUser.Worker
+		if err := DisableWorker(ctx, api.mustDB(), api.Cache, wk.ID, api.Config.Log.StepMaxSize); err != nil {
 			return sdk.WrapError(err, "cannot delete worker %s", wk.Name)
 		}
 		return nil
@@ -242,7 +241,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		wk := getAPIConsumer(ctx).Worker
+		wk := getUserConsumer(ctx).AuthConsumerUser.Worker
 
 		if wk.Status == sdk.StatusWaiting {
 			return nil
@@ -271,43 +270,67 @@ func (api *API) workerWaitingHandler() service.Handler {
 // the package workflow
 
 // DisableWorker disable a worker
-func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize int64) error {
-	tx, errb := db.Begin()
-	if errb != nil {
-		return fmt.Errorf("DisableWorker> Cannot start tx: %v", errb)
+func DisableWorker(ctx context.Context, db *gorp.DbMap, store cache.Store, workerID string, maxLogSize int64) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("DisableWorker> Cannot start tx: %v", err)
 	}
 	defer tx.Rollback() // nolint
 
 	query := `SELECT name, status, job_run_id FROM worker WHERE id = $1 FOR UPDATE`
-	var st, name string
+	var st, workerName string
 	var jobID sql.NullInt64
-	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID); err != nil {
-		log.Debug(ctx, "DisableWorker[%s]> Cannot lock worker: %v", id, err)
+	if err := tx.QueryRow(query, workerID).Scan(&workerName, &st, &jobID); err != nil {
+		log.Debug(ctx, "DisableWorker[%s]> Cannot lock worker: %v", workerID, err)
 		return nil
 	}
 
-	if st == sdk.StatusBuilding && jobID.Valid {
-		// Worker is awol while building !
-		// We need to restart this action
-		wNodeJob, errL := workflow.LoadNodeJobRun(ctx, tx, nil, jobID.Int64)
-		if errL == nil && wNodeJob.Retry < 3 {
-			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob, maxLogSize); err != nil {
-				log.Warn(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
-			} else {
-				log.Info(ctx, "DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
-			}
-		}
-
-		log.Info(ctx, "DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
-	}
-
-	if err := worker.SetStatus(ctx, tx, id, sdk.StatusDisabled); err != nil {
+	if err := worker.SetStatus(ctx, tx, workerID, sdk.StatusDisabled); err != nil {
 		cause := sdk.Cause(err)
 		if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
-			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exists", id)
+			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exist", workerID)
 		}
 		return sdk.WrapError(err, "cannot update worker status")
 	}
 
-	return tx.Commit()
+	if st == sdk.StatusBuilding && jobID.Valid {
+		log.Info(ctx, "DisableWorker> set job %v to fail", jobID.Int64)
+		wNodeJob, err := workflow.LoadNodeJobRun(ctx, tx, nil, jobID.Int64)
+		if err != nil {
+			return sdk.WrapError(err, "DisableWorker> Cannot LoadNodeJobRun node run job %d", jobID.Int64)
+		}
+		if !sdk.StatusIsTerminated(wNodeJob.Status) {
+			infos := []sdk.SpawnInfo{{
+				Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerDisabledByHatchery.ID, Args: []interface{}{workerName}},
+			}}
+			if isAdmin(ctx) {
+				infos = []sdk.SpawnInfo{{Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerDisabledByAdmin.ID, Args: []interface{}{workerName}}}}
+			}
+			if err := workflow.AddSpawnInfosNodeJobRun(tx, wNodeJob.WorkflowNodeRunID, jobID.Int64, infos); err != nil {
+				return sdk.WrapError(err, "cannot save spawn info on node job run %d", jobID.Int64)
+			}
+			if _, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, sdk.Project{}, wNodeJob, sdk.StatusFail); err != nil {
+				return sdk.WrapError(err, "DisableWorker> Cannot update node run job %d", jobID.Int64)
+			}
+			nodeRun, err := workflow.LoadAndLockNodeRunByID(ctx, tx, wNodeJob.WorkflowNodeRunID)
+			if err != nil {
+				return sdk.WrapError(err, "cannot load node run: %d", wNodeJob.WorkflowNodeRunID)
+			}
+			sync, err := workflow.SyncNodeRunRunJob(ctx, tx, nodeRun, *wNodeJob)
+			if err != nil {
+				return sdk.WrapError(err, "unable to sync nodeJobRun. JobID on handler: %d", jobID.Int64)
+			}
+			if !sync {
+				log.Warn(ctx, "DisableWorker> sync doesn't find a nodeJobRun. JobID on handler: %d", jobID.Int64)
+			}
+			if err := workflow.UpdateNodeRun(tx, nodeRun); err != nil {
+				return sdk.WrapError(err, "DisableWorker> cannot update node run. JobID on handler: %d", jobID.Int64)
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
 }

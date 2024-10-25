@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager/mock_artifact_manager"
 	"github.com/ovh/cds/engine/api/purge"
+	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/artifact_manager/mock_artifact_manager"
 	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, pass := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -101,10 +102,10 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 	chanErrorReceived := make(chan error)
 	client := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		User:                              u.Username,
-		InsecureSkipVerifyTLS:             true,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		User:                               u.Username,
+		InsecureSkipVerifyTLS:              true,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 	contextWS, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -162,7 +163,7 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 
 	// Create user
 	u, _ := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	w := assets.InsertTestWorkflow(t, db, api.Cache, p, sdk.RandomString(10))
@@ -227,9 +228,7 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 	api.initWorkflowRun(ctx, p.Key, w, wr, opts)
 
 	wr, err = workflow.LoadRunByID(context.Background(), db.DbMap, wr.ID, workflow.LoadRunOptions{
-		WithCoverage:        true,
-		WithTests:           true,
-		WithVulnerabilities: true,
+		WithTests: true,
 	})
 	require.NoError(t, err)
 
@@ -249,14 +248,17 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 
 	mockArtifactory := mock_artifact_manager.NewMockArtifactManager(ctrl)
 
-	mockArtifactory.EXPECT().GetFileInfo("repository", "path/to/foo").Return(
+	mockArtifactory.EXPECT().GetRepository("repository").Return(&services.RepositoryDetails{
+		PackageType: "docker",
+	}, nil)
+
+	mockArtifactory.EXPECT().GetFileInfo("repository", "path/to/foo/manifest.json").Return(
 		sdk.FileInfo{
-			Type:      "generic",
 			Checksums: &sdk.FileInfoChecksum{},
 		},
 		nil)
 
-	mockArtifactory.EXPECT().SetProperties("repository-snapshot", "path/to/foo", gomock.Any(), gomock.Any()).Return(nil)
+	mockArtifactory.EXPECT().SetProperties("repository-snapshot", "path/to/foo", gomock.Any()).Return(nil)
 
 	artifact_manager.DefaultClientFactory = func(_, _, _ string) (artifact_manager.ArtifactManager, error) {
 		return mockArtifactory, nil

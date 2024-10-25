@@ -27,7 +27,7 @@ func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX(t *testing.T) {
 	assets.SetUserGroupAdmin(t, db, g1.ID, u.ID)
 	assets.SetUserGroupAdmin(t, db, g2.ID, u.ID)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Insert workflow that will inherit from project permission
@@ -75,22 +75,11 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
-	g1 := &proj.ProjectGroups[0].Group
-	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-
-	// Set organization for groups
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g1.ID,
-		Organization: "one",
-	}))
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g2.ID,
-		Organization: "two",
-	}))
+	g2 := assets.InsertTestGroupInOrganization(t, db, sdk.RandomString(10), "two")
 
 	u, _ := assets.InsertAdminUser(t, db)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Insert workflow that will inherit from project permission
@@ -110,7 +99,7 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization(t *testing.T) {
 	}}
 	err = group.CheckWorkflowGroups(context.TODO(), db, proj, w, localConsumer)
 	require.Error(t, err)
-	require.Equal(t, "forbidden (from: given group with organization \"two\" don't match project organization \"one\")", err.Error(), err)
+	require.Equal(t, "forbidden (from: given group with organization \"two\" don't match project organization \"default\")", err.Error(), err)
 
 	// Can add R permission for g2 on workflow
 	w.Groups = sdk.GroupPermissions{{
@@ -133,7 +122,7 @@ func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX_Node(t *testing.T
 	assets.SetUserGroupAdmin(t, db, g1.ID, u.ID)
 	assets.SetUserGroupAdmin(t, db, g2.ID, u.ID)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Insert workflow that will inherit from project permission
@@ -183,22 +172,11 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization_Node(t *testing.T)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
-	g1 := &proj.ProjectGroups[0].Group
-	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-
-	// Set organization for groups
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g1.ID,
-		Organization: "one",
-	}))
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g2.ID,
-		Organization: "two",
-	}))
+	g2 := assets.InsertTestGroupInOrganization(t, db, sdk.RandomString(10), "two")
 
 	u, _ := assets.InsertAdminUser(t, db)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Insert workflow that will inherit from project permission
@@ -219,7 +197,7 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization_Node(t *testing.T)
 	}}
 	err = group.CheckWorkflowGroups(context.TODO(), db, proj, w, localConsumer)
 	require.Error(t, err)
-	require.Equal(t, "forbidden (from: given group with organization \"two\" don't match project organization \"one\")", err.Error(), err)
+	require.Equal(t, "forbidden (from: given group with organization \"two\" don't match project organization \"default\")", err.Error(), err)
 
 	// Can add R permission for g2 on workflow node
 	w.Groups = nil

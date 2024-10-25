@@ -151,7 +151,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	}
 	runContext.WorkflowProjectIntegrations = append(runContext.WorkflowProjectIntegrations, wr.Workflow.Integrations...)
 
-	// NODE CONTEXT BUILD PARAMETER
+	// NODE CONTEXT BUILD PARAMETER + NEW VARS CONTEXT
 	computeNodeContextBuildParameters(ctx, proj, wr, nr, n, runContext)
 
 	// PARENT BUILD PARAMETER WITH git.*
@@ -166,6 +166,19 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		mapParentParams := sdk.ParametersToMap(parentsParams)
 
 		nr.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
+	}
+
+	// If we rerun only failed job, retrieve cds.build variables from previous jobs
+	if nr.Manual != nil && nr.Manual.OnlyFailedJobs {
+		previousNodeRun, err := checkRunOnlyFailedJobs(wr, nr)
+		if err != nil {
+			return nil, false, err
+		}
+		for _, bp := range previousNodeRun.BuildParameters {
+			if strings.HasPrefix(bp.Name, "cds.build.") {
+				nr.BuildParameters = append(nr.BuildParameters, bp)
+			}
+		}
 	}
 
 	isRoot := n.ID == wr.Workflow.WorkflowData.Node.ID
@@ -265,7 +278,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		repl(&vcsInf.Message)
 		repl(&vcsInf.Tag)
 
-		setValuesGitInBuildParameters(nr, *vcsInf)
+		setValuesGitInBuildParameters(nr, runContext, *vcsInf)
 	}
 
 	// CONDITION
@@ -298,7 +311,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		repl(&vcsInf.Message)
 		repl(&vcsInf.Tag)
 
-		setValuesGitInBuildParameters(nr, *vcsInf)
+		setValuesGitInBuildParameters(nr, runContext, *vcsInf)
 	}
 
 	// ADD TAG
@@ -499,13 +512,18 @@ func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual
 }
 
 func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
-	nodeRunParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
+	allContexts := sdk.NodeRunContext{}
+
+	nodeRunParams, varsContext, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {
 		AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, sdk.ExtractHTTPError(errParam)))
 		// if there an error -> display it in workflowRunInfo and not stop the launch
 		log.Error(ctx, "processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
 	}
 	run.BuildParameters = append(run.BuildParameters, nodeRunParams...)
+
+	allContexts.Vars = varsContext
+	run.Contexts = allContexts
 }
 
 func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, parents []*sdk.WorkflowNodeRun, manual *sdk.WorkflowNodeRunManual) ([]sdk.Parameter, error) {

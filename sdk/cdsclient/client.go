@@ -19,15 +19,25 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var _ Interface = new(client)
+var _ Interface = new(serviceClient)
+var _ HatcheryServiceClient = new(hatcheryClient)
+
+type serviceClient struct {
+	client
+}
 
 type client struct {
-	httpClient                       *http.Client
-	httpNoTimeoutClient              *http.Client
-	httpWebsocketClient              *websocket.Dialer
-	config                           *Config
-	name                             string
-	serviceAuthConsumerSigninRequest *sdk.AuthConsumerSigninRequest
+	httpClient          *http.Client
+	httpNoTimeoutClient *http.Client
+	httpWebsocketClient *websocket.Dialer
+	config              *Config
+	name                string
+	consumerType        sdk.AuthConsumerType
+	signinRequest       interface{}
+}
+
+type hatcheryClient struct {
+	client
 }
 
 func NewWebsocketDialer(insecureSkipVerifyTLS bool) *websocket.Dialer {
@@ -51,7 +61,7 @@ func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Clie
 		IdleConnTimeout:       30 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-		ResponseHeaderTimeout: 30 * time.Second,
+		ResponseHeaderTimeout: timeout,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
 	}
 
@@ -68,12 +78,36 @@ func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Clie
 
 // New returns a client from a config struct
 func New(c Config) Interface {
-	cli := new(client)
+	cli := new(serviceClient)
 	cli.config = &c
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
 	cli.httpNoTimeoutClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(c.InsecureSkipVerifyTLS)
+	cli.consumerType = sdk.ConsumerBuiltin
+	cli.init()
+	return cli
+}
+
+func NewWorkerV2(endpoint string, name string, c *http.Client) V2WorkerInterface {
+	conf := Config{
+		Host:  endpoint,
+		Retry: 10,
+	}
+	cli := new(serviceClient)
+	cli.config = &conf
+	cli.config.Mutex = new(sync.Mutex)
+	cli.consumerType = sdk.ConsumerBuiltin
+
+	if c == nil {
+		cli.httpClient = NewHTTPClient(time.Second*360, false)
+	} else {
+		cli.httpClient = c
+	}
+	cli.httpNoTimeoutClient = NewHTTPClient(0, false)
+	cli.httpWebsocketClient = NewWebsocketDialer(false)
+
+	cli.name = name
 	cli.init()
 	return cli
 }
@@ -84,9 +118,10 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 		Host:  endpoint,
 		Retry: 10,
 	}
-	cli := new(client)
+	cli := new(serviceClient)
 	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
+	cli.consumerType = sdk.ConsumerBuiltin
 
 	if c == nil {
 		cli.httpClient = NewHTTPClient(time.Second*360, false)
@@ -104,46 +139,94 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 // NewProviderClient returns an implementation for ProviderClient interface
 func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	conf := Config{
-		Host:                              cfg.Host,
-		Retry:                             2,
-		BuitinConsumerAuthenticationToken: cfg.Token,
-		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
+		Host:                               cfg.Host,
+		Retry:                              2,
+		BuiltinConsumerAuthenticationToken: cfg.Token,
+		InsecureSkipVerifyTLS:              cfg.InsecureSkipVerifyTLS,
 	}
 
 	if cfg.RequestSecondsTimeout == 0 {
 		cfg.RequestSecondsTimeout = 60
 	}
 
-	cli := new(client)
+	cli := new(serviceClient)
 	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpNoTimeoutClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
+	cli.consumerType = sdk.ConsumerBuiltin
 	cli.init()
 	return cli
 }
 
-// NewServiceClient returns client for a service
-func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerPayload interface{}) (Interface, *sdk.Service, []byte, error) {
+func NewHatcheryServiceClient(ctx context.Context, clientConfig ServiceConfig, requestSign interface{}) (HatcheryServiceClient, []byte, string, error) {
 	conf := Config{
-		Host:                              clientConfig.Host,
-		Retry:                             2,
-		BuitinConsumerAuthenticationToken: clientConfig.Token,
-		InsecureSkipVerifyTLS:             clientConfig.InsecureSkipVerifyTLS,
+		Host:                               clientConfig.Host,
+		Retry:                              2,
+		BuiltinConsumerAuthenticationToken: clientConfig.TokenV2,
+		InsecureSkipVerifyTLS:              clientConfig.InsecureSkipVerifyTLS,
 	}
 
 	if clientConfig.RequestSecondsTimeout == 0 {
 		clientConfig.RequestSecondsTimeout = 60
 	}
 
-	cli := new(client)
+	cli := new(hatcheryClient)
 	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(clientConfig.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpNoTimeoutClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
 	cli.config.Verbose = clientConfig.Verbose
+	cli.consumerType = sdk.ConsumerHatchery
+	cli.init()
+
+	cli.signinRequest = requestSign
+
+	var nbError int
+retry:
+	var res sdk.AuthConsumerHatcherySigninResponse
+	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/v2/auth/consumer/"+string(sdk.ConsumerHatchery)+"/signin",
+		cli.signinRequest, &res)
+	if err != nil {
+		if code == 401 {
+			nbError++
+			if nbError == 60 {
+				time.Sleep(time.Minute)
+				goto retry
+			}
+		}
+		return nil, nil, "", err
+	}
+	cli.config.SessionToken = res.Token
+	base64EncodedPubKey := headers.Get("X-Api-Pub-Signing-Key")
+	pubKey, err := base64.StdEncoding.DecodeString(base64EncodedPubKey)
+
+	return cli, pubKey, res.Region, newError(err)
+}
+
+// NewServiceClient returns client for a service
+func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerPayload interface{}) (Interface, *sdk.Service, []byte, error) {
+	conf := Config{
+		Host:                               clientConfig.Host,
+		Retry:                              2,
+		BuiltinConsumerAuthenticationToken: clientConfig.Token,
+		InsecureSkipVerifyTLS:              clientConfig.InsecureSkipVerifyTLS,
+	}
+
+	if clientConfig.RequestSecondsTimeout == 0 {
+		clientConfig.RequestSecondsTimeout = 60
+	}
+
+	cli := new(serviceClient)
+	cli.config = &conf
+	cli.config.Mutex = new(sync.Mutex)
+	cli.httpClient = NewHTTPClient(time.Duration(clientConfig.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
+	cli.httpNoTimeoutClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
+	cli.config.Verbose = clientConfig.Verbose
+	cli.consumerType = sdk.ConsumerBuiltin
 	cli.init()
 
 	if clientConfig.Hook != nil {
@@ -152,7 +235,7 @@ func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerP
 		}
 	}
 
-	cli.serviceAuthConsumerSigninRequest = &sdk.AuthConsumerSigninRequest{
+	cli.signinRequest = &sdk.AuthConsumerSigninRequest{
 		"token":   clientConfig.Token,
 		"service": registerPayload,
 	}
@@ -161,7 +244,7 @@ func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerP
 retry:
 	var res sdk.AuthConsumerSigninResponse
 	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin",
-		cli.serviceAuthConsumerSigninRequest, &res)
+		cli.signinRequest, &res)
 	if err != nil {
 		if code == 401 {
 			nbError++
@@ -190,6 +273,17 @@ func (c *client) APIURL() string {
 	return c.config.Host
 }
 
+func (c *client) CDNURL() (string, error) {
+	if c.config.CDNHost == "" {
+		confCDN, err := c.ConfigCDN()
+		if err != nil {
+			return "", err
+		}
+		c.config.CDNHost = confCDN.HTTPURL
+	}
+	return c.config.CDNHost, nil
+}
+
 func (c *client) HTTPClient() *http.Client {
 	return c.httpClient
 }
@@ -198,6 +292,13 @@ func (c *client) HTTPNoTimeoutClient() *http.Client {
 }
 func (c *client) HTTPWebsocketClient() *websocket.Dialer {
 	return c.httpWebsocketClient
+}
+
+func (c *client) GetConsumerType() sdk.AuthConsumerType {
+	if c.consumerType == "" {
+		return sdk.ConsumerBuiltin
+	}
+	return c.consumerType
 }
 
 var _ error = new(Error)

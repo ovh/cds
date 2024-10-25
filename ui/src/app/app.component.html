@@ -1,29 +1,34 @@
-<div class="ui active massive text loader" *ngIf="loading">CDS is loading</div>
+<div class="app-loader" *ngIf="loading">
+    <span nz-icon [nzType]="'loading'"></span>CDS is loading
+</div>
 
 <div class="app" *ngIf="!loading">
-    <div class="page" *ngIf="!isAPIAvailable || (maintenance && isConnected && currentAuthSummary?.user?.ring !== 'ADMIN')">
+    <div class="page"
+        *ngIf="!isAPIAvailable || (maintenance && isConnected && currentAuthSummary?.user?.ring !== 'ADMIN')">
         <div class="content">
             <div class="wrapper loading">
                 <app-scrollview class="scrollview">
-                    <div class="ui padded centered grid">
-                        <div class="column">
-                            <img class="logo ui centered image grayscale" src="assets/images/cds.png" alt="CDS Logo">
+                    <nz-row nzJustify="center">
+                        <nz-col class="center">
+                            <img class="logo image grayscale" src="assets/images/cds.png" alt="CDS Logo">
                             <p *ngIf="!isAPIAvailable">{{ 'cdsapi_loading' | translate }}</p>
                             <p *ngIf="isAPIAvailable">{{ 'maintenance_title' | translate }}</p>
-                        </div>
-                    </div>
+                        </nz-col>
+                    </nz-row>
                 </app-scrollview>
             </div>
         </div>
     </div>
 
-    <ng-container *ngIf="isAPIAvailable && (!isConnected || !maintenance || currentAuthSummary?.user?.ring === 'ADMIN')">
+    <ng-container
+        *ngIf="isAPIAvailable && (!isConnected || !maintenance || currentAuthSummary?.user?.ring === 'ADMIN')">
         <nz-layout>
             <nz-header>
                 <app-navbar></app-navbar>
             </nz-header>
             <nz-content>
-                <div class="banner" *ngIf="(maintenance) && (!isConnected || currentAuthSummary?.user?.ring === 'ADMIN')">
+                <div class="banner"
+                    *ngIf="(maintenance) && (!isConnected || currentAuthSummary?.user?.ring === 'ADMIN')">
                     {{ 'maintenance_title' | translate }}
                 </div>
                 <div class="banner update" (click)="refresh()" *ngIf="showUIUpdatedBanner">
@@ -31,22 +36,18 @@
                 </div>
                 <div class="page" [class.connected]="isConnected && !hideNavBar">
                     <div class="content inner-content" [class.connected]="isConnected && !hideNavBar">
-                            <router-outlet></router-outlet>
-                        <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}
-                        </div>
+                        <router-outlet></router-outlet>
+                        <nz-spin nzTip="Loading..." *ngIf="displayResolver"></nz-spin>
                     </div>
                 </div>
                 <app-node-edit-modal></app-node-edit-modal>
             </nz-content>
-
         </nz-layout>
     </ng-container>
 </div>
 <ng-template #templateRootToast let-data="data">
     <div class="toastTitle">
-        <i nz-icon
-           nzType="exclamation-circle"
-        class="ant-notification-notice-icon-error"></i>
+        <i nz-icon nzType="exclamation-circle" class="ant-notification-notice-icon-error"></i>
         {{data.title}}
     </div>
     <span *ngIf="data.from">{{data.from}}<br /></span>

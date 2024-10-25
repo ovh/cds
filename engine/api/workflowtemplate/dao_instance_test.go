@@ -118,6 +118,7 @@ func TestLoad_Instance(t *testing.T) {
 
 	i, err = workflowtemplate.LoadInstanceByIDForTemplateIDAndProjectIDs(context.TODO(), db, wti2.ID, tmpl.ID, []int64{proj1.ID})
 	require.Error(t, err)
+	assert.Nil(t, i)
 
 	i, err = workflowtemplate.LoadInstanceByIDForTemplateIDAndProjectIDs(context.TODO(), db, wti2.ID, tmpl.ID, []int64{proj2.ID})
 	require.NoError(t, err)

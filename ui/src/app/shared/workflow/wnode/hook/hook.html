@@ -1,14 +1,25 @@
 <div class="workflowHook pointing" nz-popover nzPopoverTrigger="click" nzPopoverPlacement="right"
      [nzPopoverContent]="popupHook" [(nzPopoverVisible)]="menuVisible">
     <ng-container *ngIf="hookEvent && hookEvent.parent_workflow && !hookEvent.parent_workflow.name">
-        <i class="ui icon {{icon | lowercase }}" [class.green]="hookEvent.uuid === hook.uuid"></i>
+        <ng-container *ngIf="icon === 'bitbucket'">
+            <ng-container *ngIf="hookEvent.uuid !== hook.uuid">
+                <app-bitbucket-icon *ngIf="icon === 'bitbucket'"></app-bitbucket-icon>
+            </ng-container>
+            <ng-container *ngIf="hookEvent.uuid === hook.uuid">
+                <app-bitbucket-icon-success *ngIf="icon === 'bitbucket'"></app-bitbucket-icon-success>
+            </ng-container>
+        </ng-container>
+        <ng-container *ngIf="icon !== 'bitbucket'">
+            <i nz-icon nzType="{{icon | lowercase }}" nzTheme="outline" [class.green]="hookEvent.uuid === hook.uuid"></i>
+        </ng-container>
     </ng-container>
     <ng-container *ngIf="hookEvent && hookEvent.parent_workflow && hookEvent.parent_workflow.name">
-        <i class="ui icon {{icon | lowercase}}" [class.green]="hookEvent.uuid === hook.uuid"
+        <i nz-icon nzType="{{icon | lowercase }}" nzTheme="outline" [class.green]="hookEvent.uuid === hook.uuid"
            nz-tooltip nzTooltipTitle="{{hookEvent.parent_workflow.key}}/{{hookEvent.parent_workflow.name}} #{{hookEvent.parent_workflow.run}}"></i>
     </ng-container>
     <ng-container *ngIf="!hookEvent || !hookEvent.parent_workflow">
-        <i class="ui icon {{icon | lowercase}}"></i>
+        <app-bitbucket-icon *ngIf="icon === 'bitbucket'"></app-bitbucket-icon>
+        <i *ngIf="icon !== 'bitbucket'" nz-icon nzType="{{icon | lowercase}}" nzTheme="outline"></i>
     </ng-container>
 </div>
 <ng-template #popupHook>

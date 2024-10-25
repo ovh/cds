@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 	"time"
 
@@ -91,6 +92,41 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 	assert.Equal(t, groupShared.ID, newModel.GroupID)
 	assert.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
 	assert.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
+}
+
+func Test_postWorkerModelAsAdminWithWhiteList(t *testing.T) {
+	Test_DeleteAllWorkerModels(t)
+
+	api, db, _ := newTestAPI(t)
+	r := regexp.MustCompile("notbuildpack.*")
+	api.WorkerModelDockerImageWhiteList = append(api.WorkerModelDockerImageWhiteList, *r)
+
+	_, jwtRaw := assets.InsertAdminUser(t, db)
+
+	groupShared, err := group.LoadByName(context.TODO(), api.mustDB(), sdk.SharedInfraGroupName)
+	require.NoError(t, err)
+
+	model := sdk.Model{
+		Name:    "Test1",
+		GroupID: groupShared.ID,
+		Type:    sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Shell: "sh -c",
+			Cmd:   "worker --api={{.API}}",
+			Envs: map[string]string{
+				"CDS_TEST": "THIS IS A TEST",
+			},
+		},
+	}
+
+	// Send POST model request
+	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, "POST", uri, model)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code)
 }
 
 func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
@@ -935,7 +971,7 @@ func Test_getWorkerModels(t *testing.T) {
 	_, jwtGroupMember := assets.InsertLambdaUser(t, db, g1)
 
 	// Create a hatchery for the admin user
-	adminConsumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	adminConsumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	consumerOptions := builtin.NewConsumerOptions{
 		Name:     sdk.RandomString(10),
 		GroupIDs: []int64{g2.ID},
@@ -950,7 +986,7 @@ func Test_getWorkerModels(t *testing.T) {
 			ConsumerID: &hatcheryConsumer.ID,
 		},
 	}))
-	sessionHatchery, err := authentication.NewSession(context.TODO(), db, hatcheryConsumer, 5*time.Minute)
+	sessionHatchery, err := authentication.NewSession(context.TODO(), db, &hatcheryConsumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err)
 	jwtHatchery, err := authentication.NewSessionJWT(sessionHatchery, "")
 	require.NoError(t, err)

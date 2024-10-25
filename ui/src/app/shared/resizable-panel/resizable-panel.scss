@@ -1,0 +1,75 @@
+@import '../../../common';
+
+.panel {
+    display: flex;
+
+    &.horizontal {
+        flex-direction: row;
+        height: 100%;
+
+        .grabber {
+            height: 100%;
+            width: 10px;
+            border-left: 1px solid;
+            border-right: 1px solid;
+            cursor: col-resize;
+            flex-direction: row;
+
+            i {
+                margin-left: -6px;
+                font-size: 1.4em;
+            }
+        }
+
+        .content {
+            height: 100%;
+        }
+    }
+
+    &.vertical {
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+
+        .grabber {
+            width: 100%;
+            height: 10px;
+            border-top: 1px solid;
+            border-bottom: 1px solid;
+            cursor: row-resize;
+            flex-direction: column;
+
+            i {
+                margin-top: -6px;
+                font-size: 1.4em;
+            }
+        }
+
+        .content {
+            width: 100%;
+        }
+    }
+
+    .grabber {
+        display: flex;
+        background-color: $greyBackground;
+        align-items: center;
+        z-index: 2;
+        color: $darkTheme_grey_6;
+        border-color: #f0f0f0 !important;
+
+        :host-context(.night) & {
+            background-color: $darkBackground;
+            border-color: #303030 !important;
+        }
+    }
+
+    .content {
+        overflow: hidden;
+        z-index: 2;
+
+        &.disableSelection {
+            user-select: none;
+        }
+    }
+}

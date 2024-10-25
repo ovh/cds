@@ -4,20 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -212,13 +216,25 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	if err != nil {
 		return "", err
 	}
-	fileInfo, err := artifactClient.GetFileInfo(artNewResult.RepoName, artNewResult.Path)
+
+	repoDetails, err := artifactClient.GetRepository(artNewResult.RepoName)
+	if err != nil {
+		return "", err
+	}
+
+	filePath := artNewResult.Path
+	// To get FileInfo for a docker image, we have to check the manifest file
+	if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
+		filePath = path.Join(filePath, "manifest.json")
+	}
+
+	fileInfo, err := artifactClient.GetFileInfo(artNewResult.RepoName, filePath)
 	if err != nil {
 		return "", err
 	}
 	artNewResult.Size = fileInfo.Size
 	artNewResult.MD5 = fileInfo.Checksums.Md5
-	artNewResult.RepoType = fileInfo.Type
+	artNewResult.RepoType = repoDetails.PackageType
 	if artNewResult.FileType == "" {
 		artNewResult.FileType = artNewResult.RepoType
 	}
@@ -371,11 +387,15 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (
 }
 
 func LoadRunResultsByRunIDFilterByIDs(ctx context.Context, db gorp.SqlExecutor, runID int64, resultIDs ...string) (sdk.WorkflowRunResults, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.LoadRunResultsByRunIDFilterByIDs")
+	defer end()
 	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 AND id = ANY($2) ORDER BY sub_num DESC").Args(runID, pq.StringArray(resultIDs))
 	return getAll(ctx, db, query)
 }
 
 func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID int64) (sdk.WorkflowRunResults, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.LoadRunResultsByRunIDFilterByIDs")
+	defer end()
 	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 ORDER BY sub_num DESC").Args(runID)
 	return getAll(ctx, db, query)
 }
@@ -399,7 +419,7 @@ func LoadRunResultsByRunIDAndType(ctx context.Context, db gorp.SqlExecutor, runI
 	return getAll(ctx, db, query)
 }
 
-func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.DbMap, delay time.Duration) {
+func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, delay time.Duration) {
 	tick := time.NewTicker(delay)
 	defer tick.Stop()
 
@@ -419,30 +439,54 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 					continue
 				}
 				for _, id := range ids {
+					lockKey := cache.Key("api:resyncWorkflowRunResults", fmt.Sprintf("%d", id))
+					b, err := store.Lock(lockKey, 5*time.Minute, 0, 1)
+					if err != nil {
+						log.ErrorWithStackTrace(ctx, err)
+						continue
+					}
+					if !b {
+						log.Debug(ctx, "api.resyncWorkflowRunResults> workflow run %d is locked in cache", id)
+						continue
+					}
 					tx, err := DBFunc().Begin()
 					if err != nil {
 						log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
+						_ = store.Unlock(lockKey)
 						continue
 					}
 					if err := SyncRunResultArtifactManagerByRunID(ctx, tx, id); err != nil {
 						log.ErrorWithStackTrace(ctx, err)
 						tx.Rollback()
+						_ = store.Unlock(lockKey)
 						continue
 					}
 					if err := tx.Commit(); err != nil {
 						log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
 						tx.Rollback()
+						_ = store.Unlock(lockKey)
 						continue
 					}
+					_ = store.Unlock(lockKey)
 				}
 			}
 		}
 	}
 }
 
+type ArtifactSignature map[string]string
+
 func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbMap) ([]int64, error) {
 	var results []int64
-	_, err := dbmap.Select(&results, "select distinct workflow_run_id from workflow_run_result where sync is NULL order by workflow_run_id asc limit 100")
+	query := `
+    select distinct workflow_run_result.workflow_run_id
+    from workflow_run_result
+    join workflow_node_run on workflow_node_run.id = workflow_run_result.workflow_node_run_id
+    where sync is NULL
+    and workflow_node_run.status in ('Success', 'Fail', 'Stopped')
+    order by workflow_run_result.workflow_run_id asc
+    limit 100`
+	_, err := dbmap.Select(&results, query)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -450,6 +494,8 @@ func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbM
 }
 
 func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.WorkflowRunResult) error {
+	_, end := telemetry.Span(ctx, "workflow.UpdateRunResult")
+	defer end()
 	dbResult := dbRunResult(*result)
 	if err := gorpmapping.Update(db, &dbResult); err != nil {
 		return err
@@ -458,9 +504,11 @@ func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.Workf
 }
 
 func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64) error {
+	ctx, end := telemetry.Span(ctx, "workflow.SyncRunResultArtifactManagerByRunID")
+	defer end()
 	log.Info(ctx, "Sync run results for workflow run id %d", workflowRunID)
 
-	wr, err := LoadAndLockRunByID(ctx, db, workflowRunID, LoadRunOptions{})
+	wr, err := LoadRunByID(ctx, db, workflowRunID, LoadRunOptions{})
 	if err != nil {
 		return err
 	}
@@ -556,12 +604,6 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		return handleSyncError(sdk.Errorf("unable to find artifact manager %q token", artifactManagerInteg.ProjectIntegration.Name))
 	}
 
-	// Instanciate artifactory client
-	artifactClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
-	if err != nil {
-		return err
-	}
-
 	version := fmt.Sprintf("%d", wr.Number)
 	if wr.Version != nil {
 		version = *wr.Version
@@ -593,7 +635,12 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 	nodeRunURL := parameters["cds.ui.pipeline.run"][0]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
 
-	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
+	artiClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
+	if err != nil {
+		return err
+	}
+
+	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artiClient, art.BuildInfoRequest{
 		BuildInfoPrefix:          buildInfoPrefix,
 		ProjectKey:               wr.Workflow.ProjectKey,
 		WorkflowName:             wr.Workflow.Name,
@@ -614,18 +661,29 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		return handleSyncError(sdk.Errorf("unable to prepare build info for artifact manager"))
 	}
 
-	log.Debug(ctx, "artifact manager build info request: %+v", buildInfoRequest)
 	log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
+
+	// Instanciate artifactory client
+	artifactClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
+	if err != nil {
+		return err
+	}
+
+	ctxDelete, endDelete := telemetry.Span(ctx, "artifactClient.DeleteBuild")
 	if err := artifactClient.DeleteBuild(artifactoryProjectKey, buildInfoRequest.Name, buildInfoRequest.Number); err != nil {
-		ctx = log.ContextWithStackTrace(ctx, err)
+		ctx = log.ContextWithStackTrace(ctxDelete, err)
 		log.Warn(ctx, err.Error())
+		endDelete()
 		return handleSyncError(sdk.Errorf("unable to delete previous build info on artifact manager"))
 	}
+	endDelete()
 
 	var nbAttempts int
 	for {
 		nbAttempts++
+		_, endPublishBuildInfo := telemetry.Span(ctx, "artifactClient.PublishBuildInfo")
 		err := artifactClient.PublishBuildInfo(artifactoryProjectKey, buildInfoRequest)
+		endPublishBuildInfo()
 		if err == nil {
 			break
 		} else if nbAttempts >= 3 {
@@ -634,6 +692,135 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			return handleSyncError(sdk.Errorf("unable to publish build info on artifact manager"))
 		} else {
 			log.Error(ctx, "error while pushing buildinfo %s %s. Retrying...\n", buildInfoRequest.Name, buildInfoRequest.Number)
+		}
+	}
+
+	// Push git info as properties
+	for _, result := range runResults {
+		if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
+			continue
+		}
+
+		noderun, err := LoadNodeRunByID(ctx, db, result.WorkflowNodeRunID, LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			ctx = log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to load node run %d: %v", result.WorkflowNodeRunID, err)
+			continue
+		}
+
+		jobrun := noderun.GetJobRunByID(result.WorkflowRunJobID)
+		if jobrun == nil {
+			log.Error(ctx, "unable to load job run %d from node %d", result.WorkflowRunJobID, result.WorkflowNodeRunID)
+			continue
+		}
+
+		artifact, err := result.GetArtifactManager()
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact from result %s: %v", result.ID, err)
+			continue
+		}
+
+		maturity := lowMaturitySuffixFromConfig
+		if result.DataSync != nil && result.DataSync.LatestPromotionOrRelease() != nil {
+			maturity = result.DataSync.LatestPromotionOrRelease().ToMaturity
+		}
+		localRepository := fmt.Sprintf("%s-%s", artifact.RepoName, maturity)
+
+		repoDetails, err := artifactClient.GetRepository(localRepository)
+		if err != nil {
+			log.Error(ctx, "unable to get repository %q fror result %s: %v", localRepository, result.ID, err)
+			continue
+		}
+
+		// To get FileInfo for a docker image, we have to check the manifest file
+		filePath := artifact.Path
+		if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
+			filePath = path.Join(filePath, "manifest.json")
+		}
+
+		fi, err := artifactClient.GetFileInfo(artifact.RepoName, filePath)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
+			continue
+		}
+
+		existingProperties, err := artifactClient.GetProperties(localRepository, filePath)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
+			continue
+		}
+
+		if sdk.MapHasKeys(existingProperties, "cds.signature") {
+			log.Debug(ctx, "artifact is already signed by cds")
+			continue
+		}
+
+		// Push git properties as artifact properties
+		props := utils.NewProperties()
+		signedProps := make(ArtifactSignature)
+
+		props.AddProperty("cds.project", wr.Workflow.ProjectKey)
+		signedProps["cds.project"] = wr.Workflow.ProjectKey
+		props.AddProperty("cds.workflow", wr.Workflow.Name)
+		signedProps["cds.workflow"] = wr.Workflow.Name
+		if wr.Version != nil {
+			props.AddProperty("cds.version", *wr.Version)
+			signedProps["cds.version"] = *wr.Version
+		}
+		props.AddProperty("cds.run", strconv.FormatInt(wr.Number, 10))
+		signedProps["cds.run"] = strconv.FormatInt(wr.Number, 10)
+
+		if gitUrl != "" {
+			props.AddProperty("git.url", gitUrl)
+		}
+		signedProps["git.url"] = gitUrl
+		if gitHash != "" {
+			props.AddProperty("git.hash", gitHash)
+		}
+		signedProps["git.hash"] = gitHash
+		if gitBranch != "" {
+			props.AddProperty("git.branch", gitBranch)
+			signedProps["git.branch"] = gitBranch
+		}
+
+		// Prepare artifact signature
+		signedProps["repository"] = artifact.RepoName
+		signedProps["type"] = artifact.RepoType
+		signedProps["path"] = artifact.Path
+		signedProps["name"] = artifact.Name
+		var region = ""
+		if jobrun.Region != nil {
+			region = *jobrun.Region
+		}
+		signedProps["cds.region"] = region
+		signedProps["cds.worker"] = jobrun.WorkerName
+		signedProps["cds.hatchery"] = jobrun.HatcheryName
+
+		if fi.Checksums == nil {
+			log.Error(ctx, "unable to get checksums for artifact %s %s", artifact.RepoName, artifact.Path)
+		} else {
+			signedProps["md5"] = fi.Checksums.Md5
+			signedProps["sha1"] = fi.Checksums.Sha1
+			signedProps["sha256"] = fi.Checksums.Sha256
+		}
+
+		// Sign the properties with main CDS authentication key pair
+		signature, err := authentication.SignJWS(signedProps, time.Now(), 0)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
+			continue
+		}
+
+		log.Info(ctx, "setProperties artifact %s%s signature: %s", localRepository, artifact.Path, signature)
+		props.AddProperty("cds.signature", signature)
+		if err := artifactClient.SetProperties(localRepository, artifact.Path, props); err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
+			continue
 		}
 	}
 
@@ -653,10 +840,12 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 }
 
 func ProcessRunResultPromotionByRunID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64, promotionType sdk.WorkflowRunResultPromotionType, promotionRequest sdk.WorkflowRunResultPromotionRequest) error {
+	ctx, end := telemetry.Span(ctx, "workflow.ProcessRunResultPromotionByRunID")
+	defer end()
 	log.Info(ctx, "Process promotion for run results %v and workflow run with id %d to maturity %s",
 		promotionRequest.IDs, workflowRunID, promotionRequest.ToMaturity)
 
-	wr, err := LoadAndLockRunByID(ctx, db, workflowRunID, LoadRunOptions{})
+	wr, err := LoadRunByID(ctx, db, workflowRunID, LoadRunOptions{})
 	if err != nil {
 		return err
 	}
@@ -673,6 +862,7 @@ func ProcessRunResultPromotionByRunID(ctx context.Context, db gorpmapper.SqlExec
 		}
 	}
 	if len(filteredRunResults) == 0 {
+		log.Info(ctx, "nothing to process on workflow run %d", workflowRunID)
 		return nil
 	}
 
@@ -726,12 +916,14 @@ func ProcessRunResultPromotionByRunID(ctx context.Context, db gorpmapper.SqlExec
 				FromMaturity: currentMaturity,
 				ToMaturity:   promotionRequest.ToMaturity,
 			})
+			log.Info(ctx, "updating run result %s with release %+v", result.DataSync.Releases[len(result.DataSync.Releases)-1])
 		case sdk.WorkflowRunResultPromotionTypePromote:
 			result.DataSync.Promotions = append(result.DataSync.Promotions, sdk.WorkflowRunResultPromotion{
 				Date:         now,
 				FromMaturity: currentMaturity,
 				ToMaturity:   promotionRequest.ToMaturity,
 			})
+			log.Info(ctx, "updating run result %s with promotion %+v", result.DataSync.Promotions[len(result.DataSync.Promotions)-1])
 		}
 		if err := UpdateRunResult(ctx, db, &result); err != nil {
 			return err

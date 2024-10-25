@@ -1,7 +1,7 @@
 
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Application, Vulnerability } from 'app/model/application.model';
+import { Application } from 'app/model/application.model';
 import { Key } from 'app/model/keys.model';
 import { Operation } from 'app/model/operation.model';
 import { Observable } from 'rxjs';
@@ -19,7 +19,6 @@ export class ApplicationService {
         params = params.append('withIcon', 'true');
         params = params.append('withKeys', 'true');
         params = params.append('withDeploymentStrategies', 'true');
-        params = params.append('withVulnerabilities', 'true');
         return this._http.get<Application>(
             `/project/${key}/application/${appName}`,
             { params }
@@ -46,18 +45,6 @@ export class ApplicationService {
     getDeploymentStrategies(key: string, appName: string): Observable<Map<string, any>> {
         let url = '/project/' + key + '/application/' + appName + '/deployment/config';
         return this._http.get<Map<string, any>>(url);
-    }
-
-    /**
-     * Ignore vulnerability
-     *
-     * @param key project unique key
-     * @param appName application name
-     * @param id identifiant of the vulnerability
-     */
-    ignoreVulnerability(key: string, appName: string, v: Vulnerability): Observable<Vulnerability> {
-        let url = '/project/' + key + '/application/' + appName + '/vulnerability/' + v.id;
-        return this._http.post<Vulnerability>(url, v);
     }
 
     /**

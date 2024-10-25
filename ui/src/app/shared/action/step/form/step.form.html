@@ -6,18 +6,18 @@
                     <nz-card *ngIf="selected">
                         <nz-card-meta [nzTitle]="selected.group ? selected.group.name + '/' + selected.name : selected?.name"
                                       [nzDescription]="selected?.type"></nz-card-meta>
-                        <markdown [data]="selected?.description"></markdown>
+                        <span class="inline">{{selected?.description}}</span>
                     </nz-card>
                 </nz-form-control>
 
             </nz-form-item>
-            <nz-form-item *ngIf="selected && actions.length > 0">
+            <nz-form-item *ngIf="actions.length > 0">
                 <nz-select [(ngModel)]="selected" name="action" nzShowSearch>
                     <ng-container *ngFor="let a of actions">
                         <nz-option nzCustomContent [nzValue]="a" [nzLabel]="a.name" [nzDisabled]="a.deprecated">
                             {{a.group ? a.group.name + '/' + a.name : a.name}}
                             <span class="right floated" *ngIf="a.deprecated">
-                        <i class="warning orange sign icon"></i>
+                        <i nz-icon nzType="warning" nzTheme="outline" class="orange"></i>
                                 {{'common_deprecated' | translate}}
                         </span>
                         </nz-option>

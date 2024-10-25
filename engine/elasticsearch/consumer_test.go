@@ -32,7 +32,7 @@ func Test_consumeKafka(t *testing.T) {
 
 	mockESClient := mock_elasticsearch.NewMockESClient(ctrl)
 	s.esClient = mockESClient
-	mockESClient.EXPECT().IndexDoc(gomock.Any(), "IndexJobSummary", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(1)
+	mockESClient.EXPECT().IndexDocWithoutType(gomock.Any(), "IndexJobSummary", gomock.Any(), gomock.Any()).MinTimes(1)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeElasticsearch)
 	if cfg["broker"] == "" {

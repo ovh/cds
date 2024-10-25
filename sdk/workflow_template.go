@@ -16,6 +16,8 @@ type WorkflowTemplateRequest struct {
 	WorkflowName string            `json:"workflow_name"`
 	Parameters   map[string]string `json:"parameters"`
 	Detached     bool              `json:"detached,omitempty"`
+	Branch       string            `json:"branch,omitempty"`
+	Message      string            `json:"message,omitempty"`
 }
 
 // Value returns driver.Value from workflow template request.
@@ -146,18 +148,18 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 			switch p.Type {
 			case ParameterTypeBoolean:
 				if v != "" && !(v == "true" || v == "false") {
-					return NewErrorFrom(ErrInvalidData, "Given value it's not a boolean for %s", p.Key)
+					return NewErrorFrom(ErrInvalidData, "%q value should be a boolean", p.Key)
 				}
 			case ParameterTypeRepository:
 				sp := strings.Split(v, "/")
 				if len(sp) != 3 {
-					return NewErrorFrom(ErrInvalidData, "Given value don't match vcs/repository pattern for %s", p.Key)
+					return NewErrorFrom(ErrInvalidData, "%q value should match vcs/repository pattern", p.Key)
 				}
 			case ParameterTypeJSON:
 				if v != "" {
 					var res interface{}
 					if err := JSONUnmarshal([]byte(v), &res); err != nil {
-						return NewErrorFrom(ErrInvalidData, "Given value it's not json for %s", p.Key)
+						return NewErrorFrom(ErrInvalidData, "%q value should be json", p.Key)
 					}
 				}
 			}
@@ -420,18 +422,30 @@ func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInst
 type WorkflowTemplateBulk struct {
 	ID                 int64                          `json:"id" db:"id"`
 	UserID             string                         `json:"user_id" db:"authentified_user_id"`
+	AuthConsumerID     string                         `json:"auth_consumer_id" db:"auth_consumer_id"`
 	WorkflowTemplateID int64                          `json:"workflow_template_id" db:"workflow_template_id"`
+	Status             OperationStatus                `json:"status" db:"status"`
+	Parallel           bool                           `json:"parallel" db:"parallel"`
 	Operations         WorkflowTemplateBulkOperations `json:"operations" db:"operations"`
 }
 
-// IsDone returns true if all operations are complete.
-func (w WorkflowTemplateBulk) IsDone() bool {
+func (w *WorkflowTemplateBulk) UpdateOperation(o WorkflowTemplateBulkOperation) {
 	for i := range w.Operations {
-		if w.Operations[i].Status != OperationStatusDone && w.Operations[i].Status != OperationStatusError {
-			return false
+		if w.Operations[i].Request.ProjectKey == o.Request.ProjectKey && w.Operations[i].Request.WorkflowName == o.Request.WorkflowName {
+			w.Operations[i] = o
+			break
 		}
 	}
-	return true
+	done := true
+	for i := range w.Operations {
+		if w.Operations[i].Status != OperationStatusDone && w.Operations[i].Status != OperationStatusError {
+			done = false
+			break
+		}
+	}
+	if done {
+		w.Status = OperationStatusDone
+	}
 }
 
 // WorkflowTemplateBulkOperation contains one operation of a template bulk task.

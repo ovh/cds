@@ -8,6 +8,7 @@ import { Pipeline } from './pipeline.model';
 import { RepositoriesManager } from './repositories.model';
 import { Variable } from './variable.model';
 import { Workflow } from './workflow.model';
+import { VariableSet } from './variablesets.model';
 
 export class Project {
   key: string;
@@ -22,6 +23,7 @@ export class Project {
   application_names: Array<IdName>;
   groups: Array<GroupPermission>;
   variables: Array<Variable>;
+  variablesets: Array<VariableSet>;
   environments: Array<Environment>;
   environment_names: Array<IdName>;
   permissions: Permission;
@@ -33,6 +35,7 @@ export class Project {
   labels: Label[];
   metadata: {};
   favorite: boolean;
+  workflow_retention: number;
   // true if someone has updated the project ( used for warnings )
   externalChange: boolean;
   loading: boolean;
@@ -66,3 +69,77 @@ export class Label {
   // ui params
   font_color: string;
 }
+
+export class ProjectRepository {
+  id: string;
+  name: string;
+  clone_url: string;
+  created: Date;
+  created_by: string;
+}
+
+export enum WorkflowHookEventName {
+  WorkflowHookEventNameWorkflowUpdate = "workflow-update",
+  WorkflowHookEventNameModelUpdate = "model-update",
+  WorkflowHookEventNamePush = "push",
+  WorkflowHookEventNameManual = "manual",
+  WorkflowHookEventNameScheduler = "scheduler",
+  WorkflowHookEventNamePullRequest = "pull-request",
+  WorkflowHookEventNamePullRequestComment = "pull-request-comment",
+  WorkflowHookEventNamePullWorkflowRun = "workflow-run"
+
+}
+
+export class RepositoryHookEvent {
+  uuid: string;
+  created: number;
+  status: string;
+  event_name: WorkflowHookEventName;
+  event_type: string;
+  extracted_data: RepositoryHookEventExtractedData;
+  username: string;
+  last_error: string;
+  vcs_server_name: string;
+  repository_name: string;
+  analyses: Array<RepositoryHookEventAnalysis>;
+  workflows: Array<RepositoryHookWorkflow>;
+  sign_key: string;
+
+  // UI data
+  nbDone: number;
+  nbFailed: number;
+  nbScheduled: number;
+  nbSkipped: number;
+  created_string: string;
+}
+
+export class RepositoryHookEventAnalysis {
+  analyze_id: string;
+  status: string;
+  project_key: string;
+}
+
+export enum HookEventWorkflowStatus {
+  Scheduled = "Scheduled",
+  Skipped = "Skipped",
+  Error = "Error",
+  Done = "Done"
+}
+
+export class RepositoryHookEventExtractedData {
+  ref: string;
+  commit: string;
+  cds_event_name: WorkflowHookEventName;
+  cds_event_type: string;
+}
+
+export class RepositoryHookWorkflow {
+  project_key: string;
+  vcs_identifier: string;
+  repository_identifier: string;
+  workflow_name: string;
+  type: string;
+  status: string;
+  run_id: string;
+}
+

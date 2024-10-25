@@ -37,6 +37,11 @@ type CDNItemLinks struct {
 	Items      []CDNItem `json:"items"`
 }
 
+type CDNItemLink struct {
+	CDNHttpURL string  `json:"cdn_http_url"`
+	Item       CDNItem `json:"item"`
+}
+
 func (c CDNItem) MarshalJSON() ([]byte, error) {
 	type Alias CDNItem // prevent recursion
 	itemalias := Alias(c)
@@ -64,13 +69,19 @@ func (c *CDNItem) UnmarshalJSON(data []byte) error {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
+	case CDNTypeItemJobStepLog, CDNTypeItemServiceLogV2:
+		var apiRef CDNLogAPIRefV2
+		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
+			return WithStack(err)
+		}
+		itemAlias.APIRef = &apiRef
 	case CDNTypeItemRunResult:
 		var apiRef CDNRunResultAPIRef
 		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
-	case CDNTypeItemWorkerCache:
+	case CDNTypeItemWorkerCache, CDNTypeItemWorkerCacheV2:
 		var apiRef CDNWorkerCacheAPIRef
 		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
 			return WithStack(err)
@@ -106,29 +117,41 @@ type CDNLogsLines struct {
 }
 
 type CDNLogLinks struct {
-	CDNURL   string           `json:"cdn_url,omitempty"`
-	ItemType CDNItemType      `json:"item_type"`
-	Data     []CDNLogLinkData `json:"datas"`
-}
-
-type CDNLogLinkData struct {
-	APIRef    string `json:"api_ref"`
-	StepOrder int64  `json:"step_order"`
+	CDNURL string       `json:"cdn_url,omitempty"`
+	Data   []CDNLogLink `json:"datas"`
 }
 
 type CDNLogLink struct {
-	CDNURL   string      `json:"cdn_url,omitempty"`
 	ItemType CDNItemType `json:"item_type"`
 	APIRef   string      `json:"api_ref"`
 }
 
 type CDNMarkDelete struct {
-	RunID int64 `json:"run_id,omitempty"`
+	RunID   int64  `json:"run_id,omitempty"`
+	RunV2ID string `json:"run_v2_id,omitempty"`
 }
 
 type CDNApiRef interface {
 	ToHash() (string, error)
 	ToFilename() string
+}
+
+type CDNLogAPIRefV2 struct {
+	ProjectKey   string      `json:"project_key"`
+	WorkflowName string      `json:"workflow_name"`
+	RunID        string      `json:"run_id"`
+	RunJobID     string      `json:"run_job_id"`
+	RunJobName   string      `json:"run_job_name"`
+	RunNumber    int64       `json:"run_number"`
+	RunAttempt   int64       `json:"run_attempt"`
+	ItemType     CDNItemType `json:"item_type"`
+
+	// for workers
+	StepOrder int64  `json:"step_order"`
+	StepName  string `json:"step_name,omitempty"`
+
+	// for hatcheries
+	ServiceName string `json:"service_name,omitempty"`
 }
 
 type CDNLogAPIRef struct {
@@ -148,6 +171,20 @@ type CDNLogAPIRef struct {
 	// for hatcheries
 	RequirementServiceID   int64  `json:"service_id,omitempty"`
 	RequirementServiceName string `json:"service_name,omitempty"`
+}
+
+type CDNRunResultAPIRefV2 struct {
+	ProjectKey    string `json:"project_key"`
+	WorkflowName  string `json:"workflow_name"`
+	RunID         string `json:"run_id"`
+	RunJobRegion  string `json:"run_job_region"`
+	RunJobID      string `json:"run_job_id"`
+	RunJobName    string `json:"run_job_name"`
+	RunNumber     int64  `json:"run_number"`
+	RunAttempt    int64  `json:"run_attempt"`
+	RunResultID   string `json:"run_result_id"`
+	RunResultName string `json:"run_result_name"`
+	RunResultType string `json:"run_result_type"`
 }
 
 type CDNRunResultAPIRef struct {
@@ -175,8 +212,12 @@ func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
 		return NewCDNLogApiRef(signature), nil
 	case CDNTypeItemRunResult:
 		return NewCDNRunResultApiRef(signature), nil
-	case CDNTypeItemWorkerCache:
+	case CDNTypeItemWorkerCache, CDNTypeItemWorkerCacheV2:
 		return NewCDNWorkerCacheApiRef(signature), nil
+	case CDNTypeItemJobStepLog, CDNTypeItemServiceLogV2:
+		return NewCDNLogApiRefV2(signature), nil
+	case CDNTypeItemRunResultV2:
+		return NewCDNRunResultApiRefV2(signature), nil
 	}
 	return nil, WrapError(ErrInvalidData, "item type unknown")
 }
@@ -190,19 +231,61 @@ func NewCDNWorkerCacheApiRef(signature cdn.Signature) CDNApiRef {
 	return &apiRef
 }
 
+func NewCDNRunResultApiRefV2(signature cdn.Signature) CDNApiRef {
+	// Build cds api ref
+	apiRef := CDNRunResultAPIRefV2{
+		ProjectKey:    signature.ProjectKey,
+		WorkflowName:  signature.WorkflowName,
+		RunID:         signature.WorkflowRunID,
+		RunJobRegion:  signature.Region,
+		RunJobID:      signature.RunJobID,
+		RunJobName:    signature.NodeRunName,
+		RunNumber:     signature.RunNumber,
+		RunAttempt:    signature.RunAttempt,
+		RunResultID:   signature.Worker.RunResultID,
+		RunResultName: signature.Worker.RunResultName,
+		RunResultType: signature.Worker.RunResultType,
+	}
+	return &apiRef
+}
+
 func NewCDNRunResultApiRef(signature cdn.Signature) CDNApiRef {
 	// Build cds api ref
 	apiRef := CDNRunResultAPIRef{
-		ProjectKey:    signature.ProjectKey,
-		WorkflowName:  signature.WorkflowName,
-		WorkflowID:    signature.WorkflowID,
-		RunID:         signature.RunID,
-		RunNodeID:     signature.NodeRunID,
-		RunJobName:    signature.JobName,
-		RunJobID:      signature.JobID,
+		ProjectKey:   signature.ProjectKey,
+		WorkflowName: signature.WorkflowName,
+		WorkflowID:   signature.WorkflowID,
+		RunID:        signature.RunID,
+		RunNodeID:    signature.NodeRunID,
+		RunJobName:   signature.JobName,
+		RunJobID:     signature.JobID,
+
 		ArtifactName:  signature.Worker.FileName,
 		Perm:          signature.Worker.FilePerm,
 		RunResultType: WorkflowRunResultType(signature.Worker.RunResultType),
+	}
+	return &apiRef
+}
+
+func NewCDNLogApiRefV2(signature cdn.Signature) CDNApiRef {
+	// Build cds api ref
+	apiRef := CDNLogAPIRefV2{
+		ProjectKey:   signature.ProjectKey,
+		WorkflowName: signature.WorkflowName,
+		RunID:        signature.WorkflowRunID,
+		RunJobName:   signature.JobName,
+		RunJobID:     signature.RunJobID,
+		RunNumber:    signature.RunNumber,
+		RunAttempt:   signature.RunAttempt,
+	}
+	if signature.Worker != nil {
+		apiRef.StepName = signature.Worker.StepName
+		apiRef.StepOrder = signature.Worker.StepOrder
+		apiRef.ItemType = CDNTypeItemJobStepLog
+	}
+	if signature.HatcheryService != nil {
+		apiRef.ServiceName = signature.HatcheryService.ServiceName
+		apiRef.ItemType = CDNTypeItemServiceLogV2
 	}
 	return &apiRef
 }
@@ -235,6 +318,45 @@ type CDNItemResume struct {
 	Location map[string]CDNItemUnit `json:"item_units"`
 }
 
+func (a *CDNLogAPIRefV2) ToHash() (string, error) {
+	hashRefU, err := hashstructure.Hash(a, nil)
+	if err != nil {
+		return "", WithStack(err)
+	}
+	return strconv.FormatUint(hashRefU, 10), nil
+}
+
+func (a *CDNLogAPIRefV2) ToFilename() string {
+	jobName := strings.Replace(a.RunJobName, " ", "", -1)
+
+	isService := a.ServiceName != ""
+	var suffix string
+	if isService {
+		suffix = fmt.Sprintf("service.%s", a.ServiceName)
+	} else {
+		suffix = fmt.Sprintf("step.%d", a.StepOrder)
+	}
+
+	return fmt.Sprintf("project.%s-workflow.%s-job.%s-%s.log",
+		a.ProjectKey,
+		a.WorkflowName,
+		jobName,
+		suffix,
+	)
+}
+
+func (a *CDNRunResultAPIRefV2) ToHash() (string, error) {
+	hashRefU, err := hashstructure.Hash(a, nil)
+	if err != nil {
+		return "", WithStack(err)
+	}
+	return strconv.FormatUint(hashRefU, 10), nil
+}
+
+func (a *CDNRunResultAPIRefV2) ToFilename() string {
+	return a.RunResultID
+}
+
 func (a *CDNLogAPIRef) ToFilename() string {
 	jobName := strings.Replace(a.NodeRunJobName, " ", "", -1)
 
@@ -255,6 +377,11 @@ func (a *CDNLogAPIRef) ToFilename() string {
 	)
 }
 
+func (c CDNItem) GetCDNLogApiRefV2() (*CDNLogAPIRefV2, bool) {
+	apiRef, has := c.APIRef.(*CDNLogAPIRefV2)
+	return apiRef, has
+}
+
 func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {
 	apiRef, has := c.APIRef.(*CDNLogAPIRef)
 	return apiRef, has
@@ -262,6 +389,11 @@ func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {
 
 func (c CDNItem) GetCDNRunResultApiRef() (*CDNRunResultAPIRef, bool) {
 	apiRef, has := c.APIRef.(*CDNRunResultAPIRef)
+	return apiRef, has
+}
+
+func (c CDNItem) GetCDNRunResultApiRefV2() (*CDNRunResultAPIRefV2, bool) {
+	apiRef, has := c.APIRef.(*CDNRunResultAPIRefV2)
 	return apiRef, has
 }
 
@@ -338,7 +470,7 @@ type CDNItemType string
 
 func (t CDNItemType) Validate() error {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache, CDNTypeItemWorkerCacheV2, CDNTypeItemJobStepLog, CDNTypeItemRunResultV2, CDNTypeItemServiceLogV2:
 		return nil
 	}
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")
@@ -346,19 +478,23 @@ func (t CDNItemType) Validate() error {
 
 func (t CDNItemType) IsLog() bool {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemJobStepLog, CDNTypeItemServiceLogV2:
 		return true
 	}
 	return false
 }
 
 const (
-	CDNTypeItemStepLog     CDNItemType = "step-log"
-	CDNTypeItemServiceLog  CDNItemType = "service-log"
-	CDNTypeItemRunResult   CDNItemType = "run-result"
-	CDNTypeItemWorkerCache CDNItemType = "worker-cache"
-	CDNStatusItemIncoming              = "Incoming"
-	CDNStatusItemCompleted             = "Completed"
+	CDNTypeItemStepLog       CDNItemType = "step-log"
+	CDNTypeItemJobStepLog    CDNItemType = "job-step-log" // v2
+	CDNTypeItemServiceLog    CDNItemType = "service-log"
+	CDNTypeItemServiceLogV2  CDNItemType = "service-log-v2"
+	CDNTypeItemRunResult     CDNItemType = "run-result"
+	CDNTypeItemRunResultV2   CDNItemType = "run-result-v2"
+	CDNTypeItemWorkerCache   CDNItemType = "worker-cache"
+	CDNTypeItemWorkerCacheV2 CDNItemType = "worker-cache-v2"
+	CDNStatusItemIncoming                = "Incoming"
+	CDNStatusItemCompleted               = "Completed"
 )
 
 type CDNReaderFormat string
@@ -370,16 +506,16 @@ const (
 
 type CDNWSEvent struct {
 	ItemType   CDNItemType `json:"item_type"`
-	JobRunID   int64       `json:"job_run_id"`
+	JobRunID   string      `json:"job_run_id"`
 	ItemUnitID string      `json:"new_item_unit_id"`
 }
 
 type CDNStreamFilter struct {
-	JobRunID int64 `json:"job_run_id"`
+	JobRunID string `json:"job_run_id"`
 }
 
 func (f CDNStreamFilter) Validate() error {
-	if f.JobRunID == 0 {
+	if f.JobRunID == "0" || f.JobRunID == "" {
 		return NewErrorFrom(ErrWrongRequest, "invalid given job run identifier")
 	}
 	return nil
@@ -389,4 +525,9 @@ type CDNUnitHandlerRequest struct {
 	ID      string `json:"id" cli:"id"`
 	Name    string `json:"name" cli:"name"`
 	NbItems int64  `json:"nb_items" cli:"nb_items"`
+}
+
+type CDNDuplicateItemRequest struct {
+	FromJob string `json:"from_job"`
+	ToJob   string `json:"to_job"`
 }

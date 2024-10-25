@@ -37,7 +37,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 			)
 		} else {
 			ts, err = workflowtemplate.LoadAllByGroupIDs(ctx, api.mustDB(),
-				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
+				append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
 				workflowtemplate.LoadOptions.Default,
 				workflowtemplate.LoadOptions.WithAudits,
 			)
@@ -96,7 +96,7 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		if err := workflowtemplate.CreateAuditAdd(tx, *newTemplate, getAPIConsumer(ctx)); err != nil {
+		if err := workflowtemplate.CreateAuditAdd(tx, *newTemplate, getUserConsumer(ctx)); err != nil {
 			return err
 		}
 
@@ -207,7 +207,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		if err := workflowtemplate.CreateAuditUpdate(tx, *old, *newTemplate, data.ChangeMessage, getAPIConsumer(ctx)); err != nil {
+		if err := workflowtemplate.CreateAuditUpdate(tx, *old, *newTemplate, data.ChangeMessage, getUserConsumer(ctx)); err != nil {
 			return err
 		}
 
@@ -306,7 +306,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		// non admin user should have read/write to given project
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 		if !consumer.Admin() {
 			if err := api.checkProjectPermissions(ctx, w, req.ProjectKey, sdk.PermissionReadWriteExecute, nil); err != nil {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
@@ -429,7 +429,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return service.Write(w, buf, http.StatusOK, "application/tar")
 		}
 
-		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
+		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 		if err != nil {
 			return sdk.WrapError(err, "cannot push generated workflow")
 		}
@@ -447,9 +447,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		if oldWkf != nil {
-			event.PublishWorkflowUpdate(ctx, p.Key, *wkf, *oldWkf, getAPIConsumer(ctx))
+			event.PublishWorkflowUpdate(ctx, p.Key, *wkf, *oldWkf, getUserConsumer(ctx))
 		} else {
-			event.PublishWorkflowAdd(ctx, p.Key, *wkf, getAPIConsumer(ctx))
+			event.PublishWorkflowAdd(ctx, p.Key, *wkf, getUserConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, msgStrings, http.StatusOK)
@@ -476,9 +476,6 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 
-		branch := FormString(r, "branch")
-		message := FormString(r, "message")
-
 		// check all requests
 		var req sdk.WorkflowTemplateBulk
 		if err := service.UnmarshalBody(r, &req); err != nil {
@@ -499,7 +496,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			}
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// non admin user should have read/write access to all given project
 		if !consumer.Admin() {
@@ -512,198 +509,21 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 		// store the bulk request
 		bulk := sdk.WorkflowTemplateBulk{
-			UserID:             consumer.AuthentifiedUser.ID,
+			Parallel:           req.Parallel,
+			UserID:             consumer.AuthConsumerUser.AuthentifiedUser.ID,
+			AuthConsumerID:     consumer.ID,
 			WorkflowTemplateID: wt.ID,
 			Operations:         make([]sdk.WorkflowTemplateBulkOperation, len(req.Operations)),
 		}
 		for i := range req.Operations {
 			bulk.Operations[i].Status = sdk.OperationStatusPending
 			bulk.Operations[i].Request = req.Operations[i].Request
+			bulk.Operations[i].Request.Branch = FormString(r, "branch")
+			bulk.Operations[i].Request.Message = FormString(r, "message")
 		}
 		if err := workflowtemplate.InsertBulk(api.mustDB(), &bulk); err != nil {
 			return err
 		}
-
-		// start async bulk tasks
-		api.GoRoutines.Exec(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
-			for i := range bulk.Operations {
-				if bulk.Operations[i].Status == sdk.OperationStatusPending {
-					bulk.Operations[i].Status = sdk.OperationStatusProcessing
-					if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-						log.Error(ctx, "%v", err)
-						return
-					}
-
-					errorDefer := func(err error) error {
-						if err != nil {
-							err = sdk.WrapError(err, "error occurred in template bulk with id %d", bulk.ID)
-							ctx = sdk.ContextWithStacktrace(ctx, err)
-							log.Error(ctx, "%v", err)
-							bulk.Operations[i].Status = sdk.OperationStatusError
-							bulk.Operations[i].Error = fmt.Sprintf("%s", sdk.Cause(err))
-							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-								return err
-							}
-						}
-
-						return nil
-					}
-
-					// load project with key
-					p, err := project.Load(ctx, api.mustDB(), bulk.Operations[i].Request.ProjectKey,
-						project.LoadOptions.WithGroups,
-						project.LoadOptions.WithApplications,
-						project.LoadOptions.WithEnvironments,
-						project.LoadOptions.WithPipelines,
-						project.LoadOptions.WithApplicationWithDeploymentStrategies,
-						project.LoadOptions.WithIntegrations,
-						project.LoadOptions.WithClearKeys,
-					)
-					if err != nil {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					// apply and import workflow
-					data := exportentities.WorkflowComponents{
-						Template: exportentities.TemplateInstance{
-							Name:       bulk.Operations[i].Request.WorkflowName,
-							From:       wt.PathWithVersion(),
-							Parameters: bulk.Operations[i].Request.Parameters,
-						},
-					}
-
-					// In case we want to update a workflow that is ascode, we want to create a PR instead of pushing directly the new workflow.
-					wti, err := workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, api.mustDB(), wt.ID, p.ID, data.Template.Name)
-					if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-					if wti != nil && wti.WorkflowID != nil {
-						existingWorkflow, err := workflow.LoadByID(ctx, api.mustDB(), api.Cache, *p, *wti.WorkflowID, workflow.LoadOptions{})
-						if err != nil {
-							if errD := errorDefer(err); errD != nil {
-								log.Error(ctx, "%v", errD)
-								return
-							}
-							continue
-						}
-						if existingWorkflow.FromRepository != "" {
-							var rootApp *sdk.Application
-							if existingWorkflow.WorkflowData.Node.Context != nil && existingWorkflow.WorkflowData.Node.Context.ApplicationID != 0 {
-								rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(ctx, api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
-								if err != nil {
-									if errD := errorDefer(err); errD != nil {
-										log.Error(ctx, "%v", errD)
-										return
-									}
-									continue
-								}
-							}
-							if rootApp == nil {
-								if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-
-							if branch == "" || message == "" {
-								if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-
-							tx, err := api.mustDB().Begin()
-							if err != nil {
-								if errD := errorDefer(err); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-							ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
-							if err != nil {
-								tx.Rollback() // nolint
-								if errD := errorDefer(err); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-							if err := tx.Commit(); err != nil {
-								tx.Rollback() // nolint
-								if errD := errorDefer(err); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-
-							ed := ascode.EntityData{
-								Name:          existingWorkflow.Name,
-								ID:            existingWorkflow.ID,
-								Type:          ascode.WorkflowEvent,
-								FromRepo:      existingWorkflow.FromRepository,
-								OperationUUID: ope.UUID,
-							}
-							ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *p, *existingWorkflow, *rootApp, ed, consumer)
-
-							bulk.Operations[i].Status = sdk.OperationStatusDone
-							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-								log.Error(ctx, "%v", err)
-								return
-							}
-
-							continue
-						}
-					}
-
-					mods := []workflowtemplate.TemplateRequestModifierFunc{
-						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
-					}
-					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, *p, &data, mods...)
-					if err != nil {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					_, wkf, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
-					if err != nil {
-						if errD := errorDefer(sdk.WrapError(err, "cannot push generated workflow")); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wkf, *consumer, wti); err != nil {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					bulk.Operations[i].Status = sdk.OperationStatusDone
-					if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-						log.Error(ctx, "%v", err)
-						return
-					}
-				}
-			}
-		})
 
 		// returns created bulk
 		return service.WriteJSON(w, bulk, http.StatusOK)
@@ -735,11 +555,11 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 			return err
 		}
 
-		b, err := workflowtemplate.GetBulkByIDAndTemplateID(api.mustDB(), id, wt.ID)
-		if err != nil {
+		b, err := workflowtemplate.GetBulkByIDAndTemplateID(ctx, api.mustDB(), id, wt.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
-		if b == nil || (b.UserID != getAPIConsumer(ctx).AuthentifiedUser.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
+		if b == nil || (b.UserID != getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "no workflow template bulk found for id %d", id)
 		}
 		sort.Slice(b.Operations, func(i, j int) bool {
@@ -774,7 +594,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		if isMaintainer(ctx) {
 			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache, project.LoadOptions.WithKeys)
 		} else {
-			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), project.LoadOptions.WithKeys)
+			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getUserConsumer(ctx).GetGroupIDs(), project.LoadOptions.WithKeys)
 		}
 		if err != nil {
 			return err
@@ -832,7 +652,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 		if isAdmin(ctx) {
 			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache)
 		} else {
-			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs())
+			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getUserConsumer(ctx).GetGroupIDs())
 		}
 		if err != nil {
 			return err
@@ -932,7 +752,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 			return err
 		}
 
-		msgs, err := workflowtemplate.Push(ctx, api.mustDB(), &wt, getAPIConsumer(ctx))
+		msgs, err := workflowtemplate.Push(ctx, api.mustDB(), &wt, getUserConsumer(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "cannot push template")
 		}
@@ -1005,7 +825,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 		}
 
 		if !isMaintainer(ctx) {
-			consumer := getAPIConsumer(ctx)
+			consumer := getUserConsumer(ctx)
 
 			// filter usage in workflow by user's projects
 			ps, err := project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, consumer.GetGroupIDs())

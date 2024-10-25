@@ -21,6 +21,8 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 		return err
 	}
 
+	h.cache = NewCache(h.Config.Cache.ImagesExpirationDelay, h.Config.Cache.ServersExpirationDelay)
+
 	workersAlive = map[string]int64{}
 
 	authOpts := gophercloud.AuthOptions{

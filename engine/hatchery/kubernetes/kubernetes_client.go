@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -112,6 +114,7 @@ type KubernetesClient interface {
 	SecretDelete(ctx context.Context, ns string, name string, options metav1.DeleteOptions) error
 	SecretGet(ctx context.Context, ns string, name string, options metav1.GetOptions) (*corev1.Secret, error)
 	SecretList(ctx context.Context, ns string, options metav1.ListOptions) (*corev1.SecretList, error)
+	Events(ctx context.Context, ns string, options metav1.ListOptions) (watch.Interface, error)
 }
 
 type kubernetesClient struct {
@@ -123,6 +126,8 @@ var (
 )
 
 func (k *kubernetesClient) PodCreate(ctx context.Context, ns string, spec *corev1.Pod, options metav1.CreateOptions) (*corev1.Pod, error) {
+	ctx, end := telemetry.Span(ctx, "kubernetesClient.PodCreate")
+	defer end()
 	ctx = context.WithValue(ctx, logNS, ns)
 	ctx = context.WithValue(ctx, logPod, spec.Name)
 	log.Info(ctx, "creating pod %s", spec.Name)
@@ -140,7 +145,6 @@ func (k *kubernetesClient) PodDelete(ctx context.Context, ns string, name string
 
 func (k *kubernetesClient) PodList(ctx context.Context, ns string, opts metav1.ListOptions) (*corev1.PodList, error) {
 	ctx = context.WithValue(ctx, logNS, ns)
-	log.Info(ctx, "listing pod in namespace %s", ns)
 	pods, err := k.client.CoreV1().Pods(ns).List(ctx, opts)
 	return pods, sdk.WrapError(err, "unable to list pods in namespace %s", ns)
 }
@@ -171,4 +175,10 @@ func (k *kubernetesClient) PodGetRawLogs(ctx context.Context, ns string, name st
 	log.Debug(ctx, "get logs for pod %s", name)
 	logs, err := k.client.CoreV1().Pods(ns).GetLogs(name, options).DoRaw(ctx)
 	return logs, sdk.WrapError(err, "unable to get pod %s raw logs", name)
+}
+
+func (k *kubernetesClient) Events(ctx context.Context, ns string, options metav1.ListOptions) (watch.Interface, error) {
+	ctx = context.WithValue(ctx, logNS, ns)
+	evt, err := k.client.CoreV1().Events(ns).Watch(ctx, options)
+	return evt, sdk.WrapError(err, "unable to watch events on ns %s ", ns)
 }

@@ -25,7 +25,6 @@ You will have to create 2 users on gerrit: <a href="https://gerrit-review.google
  - An User on gerrit ( with httpPassword ), to comment changes with workflow result
  
 
-
 ### Import configuration
 
 Create a yml file:
@@ -35,16 +34,17 @@ version: v1.0
 name: gerrit
 type: gerrit
 description: "gerrit new dev"
+url: https://your-gerrit-instance:9080
 auth:
     sshUsername: gerrit-username # # User to access to gerrit event stream
     sshPort: 29418
-    sshPrivateKey: foofoofoo\non\none\nline\nhere # Private key of the user who access to gerrit event stream
-    username: admin # User that review changes
+    sshPrivateKey: -----BEGIN OPENSSH PRIVATE KEY-----\nfoofoofoo\non\none\nline\nhere\n-----END OPENSSH PRIVATE KEY-----" # Private key of the user who access to gerrit event stream
+    user: admin # User that review changes
     token: gerrit-generated-password # Http Password of the user that comment changes
 ```
 
 ```sh
-cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-gerrit.yml
+cdsctl project vcs import YOUR_CDS_PROJECT_KEY vcs-gerrit.yml
 ```
 
 See how to generate **[Configuration File]({{<relref "/hosting/configuration.md" >}})**

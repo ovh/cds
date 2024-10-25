@@ -50,13 +50,14 @@ workflow_node_run.uuid,
 workflow_node_run.outgoinghook,
 workflow_node_run.hook_execution_timestamp,
 workflow_node_run.execution_id,
-workflow_node_run.callback
+workflow_node_run.callback,
+workflow_node_run.contexts
 `
 
 const nodeRunTestsField string = ", workflow_node_run.tests"
 const withLightNodeRunTestsField string = ", json_build_object('ko', workflow_node_run.tests->'ko', 'ok', workflow_node_run.tests->'ok', 'skipped', workflow_node_run.tests->'skipped', 'total', workflow_node_run.tests->'total') AS tests"
 
-//LoadNodeRun load a specific node run on a workflow
+// LoadNodeRun load a specific node run on a workflow
 func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, noderunID int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
 	var testsField string
@@ -84,26 +85,10 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, noderunID
 		return nil, sdk.WithStack(err)
 	}
 
-	if loadOpts.WithCoverage {
-		cov, errCov := LoadCoverageReport(db, r.ID)
-		if errCov != nil && !sdk.ErrorIs(errCov, sdk.ErrNotFound) {
-			return nil, sdk.WrapError(errCov, "LoadNodeRun>Error loading coverage for run %d", r.ID)
-		}
-		r.Coverage = cov
-	}
-	if loadOpts.WithVulnerabilities {
-		vuln, err := loadVulnerabilityReport(db, r.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return nil, sdk.WrapError(err, "vulnerability report coverage for run %d", r.ID)
-		}
-		if vuln != nil {
-			r.VulnerabilitiesReport = *vuln
-		}
-	}
 	return r, nil
 }
 
-//LoadNodeRunByNodeJobID load a specific node run on a workflow from a node job run id
+// LoadNodeRunByNodeJobID load a specific node run on a workflow from a node job run id
 func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
 	var testsField string
@@ -133,7 +118,7 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 	return r, nil
 }
 
-//LoadAndLockNodeRunByID load and lock a specific node run on a workflow
+// LoadAndLockNodeRunByID load and lock a specific node run on a workflow
 func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun, error) {
 	var end func()
 	_, end = telemetry.Span(ctx, "workflow.LoadAndLockNodeRunByID")
@@ -153,7 +138,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) 
 	return fromDBNodeRun(rr, LoadRunOptions{})
 }
 
-//LoadAndLockNodeRunByJobID load and lock a specific node run on a workflow
+// LoadAndLockNodeRunByJobID load and lock a specific node run on a workflow
 func LoadAndLockNodeRunByJobID(ctx context.Context, db gorp.SqlExecutor, jobID int64) (*sdk.WorkflowNodeRun, error) {
 	_, end := telemetry.Span(ctx, "workflow.LoadAndLockNodeRunByJobID")
 	defer end()
@@ -175,7 +160,7 @@ func LoadAndLockNodeRunByJobID(ctx context.Context, db gorp.SqlExecutor, jobID i
 	return fromDBNodeRun(rr, LoadRunOptions{})
 }
 
-//LoadNodeRunByID load a specific node run on a workflow
+// LoadNodeRunByID load a specific node run on a workflow
 func LoadNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	_, end := telemetry.Span(ctx, "workflow.LoadNodeRunByID")
 	defer end()
@@ -205,7 +190,7 @@ func LoadNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, loadOpt
 	return r, nil
 }
 
-//insertWorkflowNodeRun insert in table workflow_node_run
+// insertWorkflowNodeRun insert in table workflow_node_run
 func insertWorkflowNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	nodeRunDB, err := makeDBNodeRun(*n)
 	if err != nil {
@@ -245,6 +230,7 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 	r.Start = rr.Start
 	r.Done = rr.Done
 	r.LastModified = rr.LastModified
+	r.Contexts = rr.Contexts
 
 	if rr.VCSHash.Valid {
 		r.VCSHash = rr.VCSHash.String
@@ -393,6 +379,7 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB.HookExecutionTimestamp.Int64 = n.HookExecutionTimeStamp
 	nodeRunDB.UUID.Valid = true
 	nodeRunDB.UUID.String = n.UUID
+	nodeRunDB.Contexts = n.Contexts
 
 	if n.TriggersRun != nil {
 		s, err := gorpmapping.JSONToNullString(n.TriggersRun)
@@ -485,7 +472,7 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	return nodeRunDB, nil
 }
 
-//UpdateNodeRunBuildParameters updates build_parameters in table workflow_node_run
+// UpdateNodeRunBuildParameters updates build_parameters in table workflow_node_run
 func UpdateNodeRunBuildParameters(db gorp.SqlExecutor, nodeID int64, buildParameters []sdk.Parameter) error {
 	if buildParameters == nil {
 		return nil
@@ -501,7 +488,7 @@ func UpdateNodeRunBuildParameters(db gorp.SqlExecutor, nodeID int64, buildParame
 	return sdk.WrapError(errU, "UpdateNodeRunBuildParameters>")
 }
 
-//UpdateNodeRun updates in table workflow_node_run
+// UpdateNodeRun updates in table workflow_node_run
 func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	log.Debug(context.TODO(), "workflow.UpdateNodeRun> node.id=%d, status=%s", n.ID, n.Status)
 	nodeRunDB, err := makeDBNodeRun(*n)
@@ -688,10 +675,10 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, nodeName strin
 	return pNodeRun, nil
 }
 
-//PreviousNodeRunVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url
-//for the current node run and the previous one on the same branch.
-//Returned value may be zero if node run are not found
-//If you don't have environment linked set envID to 0 or -1
+// PreviousNodeRunVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url
+// for the current node run and the previous one on the same branch.
+// Returned value may be zero if node run are not found
+// If you don't have environment linked set envID to 0 or -1
 func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKey string, wf sdk.Workflow, nodeName string, current sdk.BuildNumberAndHash, appID int64, envID int64) (sdk.BuildNumberAndHash, error) {
 	var previous sdk.BuildNumberAndHash
 	var prevHash, prevBranch, prevTag, prevRepository sql.NullString

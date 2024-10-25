@@ -1,18 +1,75 @@
 package sdk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+
+	"github.com/ovh/cds/sdk/glob"
+	"github.com/rockbears/log"
 
 	"database/sql/driver"
 )
 
-const (
-	RepositoryEntitiesHook = "EntitiesHook"
-	SignHeaderVCSName      = "X-Cds-Hooks-Vcs-Name"
-	SignHeaderRepoName     = "X-Cds-Hooks-Repo-Name"
-	SignHeaderVCSType      = "X-Cds-Hooks-Vcs-Type"
-)
+type HookListWorkflowRequest struct {
+	HookEventUUID       string                `json:"hook_event_uuid"`
+	VCSName             string                `json:"vcs_name"`
+	RepositoryName      string                `json:"repository_name"`
+	Ref                 string                `json:"ref"`
+	Sha                 string                `json:"sha"`
+	Paths               []string              `json:"paths"`
+	RepositoryEventName WorkflowHookEventName `json:"repository_event"`
+	RepositoryEventType WorkflowHookEventType `json:"repository_event_type"`
+	AnayzedProjectKeys  StringSlice           `json:"project_keys"`
+	Models              []EntityFullName      `json:"models"`
+	Workflows           []EntityFullName      `json:"workflows"`
+}
+
+func IsValidHookPath(ctx context.Context, configuredPaths []string, paths []string) bool {
+	if len(configuredPaths) == 0 {
+		return true
+	}
+	if len(paths) == 0 {
+		return false
+	}
+	regExps := make([]*regexp.Regexp, 0, len(configuredPaths))
+	for _, p := range configuredPaths {
+		regexpP, err := regexp.Compile(p)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			continue
+		}
+		regExps = append(regExps, regexpP)
+	}
+
+	for _, p := range paths {
+		for _, r := range regExps {
+			if r.MatchString(p) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func IsValidHookRefs(ctx context.Context, configuredRefs []string, currentEventRef string) bool {
+	if len(configuredRefs) == 0 {
+		return true
+	}
+	for _, b := range configuredRefs {
+		g := glob.New(b)
+		result, err := g.MatchString(currentEventRef)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			continue
+		}
+		if result != nil {
+			return true
+		}
+	}
+	return false
+}
 
 type HookAccessData struct {
 	URL         string `json:"url" cli:"url"`
@@ -41,40 +98,6 @@ func (hc *HookConfiguration) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(JSONUnmarshal(source, hc), "cannot unmarshal HookConfiguration")
-}
-
-func NewEntitiesHook(uuid, projectKey, vcsType, vcsName, repoName string) (Hook, error) {
-	hookSignKey, err := GenerateHookSecret()
-	if err != nil {
-		return Hook{}, err
-	}
-	return Hook{
-		UUID:     uuid,
-		HookType: RepositoryEntitiesHook,
-		Configuration: map[string]WorkflowNodeHookConfigValue{
-			HookConfigProject: {
-				Value:        projectKey,
-				Type:         HookConfigTypeString,
-				Configurable: false,
-			},
-			HookConfigVCSServer: {
-				Value:        vcsName,
-				Type:         HookConfigTypeString,
-				Configurable: false,
-			},
-			HookConfigVCSType: {
-				Value:        vcsType,
-				Type:         HookConfigTypeString,
-				Configurable: false,
-			},
-			HookConfigRepoFullName: {
-				Value:        repoName,
-				Type:         HookConfigTypeString,
-				Configurable: false,
-			},
-		},
-		HookSignKey: hookSignKey,
-	}, nil
 }
 
 // HookConfigValue represents the value of a node hook config
@@ -113,7 +136,6 @@ type TaskExecution struct {
 	RabbitMQ            *RabbitMQTaskExecution  `json:"rabbitmq,omitempty" cli:"-"`
 	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty" cli:"-"`
 	GerritEvent         *GerritEventExecution   `json:"gerrit,omitempty" cli:"-"`
-	EntitiesHook        *EntitiesHookExecution  `json:"entities_hook_execution,omitempty" cli:"-"`
 	Status              string                  `json:"status" cli:"status"`
 	Configuration       HookConfiguration       `json:"configuration" cli:"-"`
 	// DEPRECATED
@@ -133,16 +155,6 @@ type WebHookExecution struct {
 	RequestMethod string              `json:"request_method"`
 }
 
-type EntitiesHookExecution struct {
-	RequestURL    string              `json:"request_url"`
-	RequestBody   []byte              `json:"request_body"`
-	RequestHeader map[string][]string `json:"request_header"`
-	RequestMethod string              `json:"request_method"`
-
-	// Execution result
-	AnalysisID string `json:"analysis_id"`
-}
-
 // KafkaTaskExecution contains specific data for a kafka hook
 type KafkaTaskExecution struct {
 	Message []byte `json:"message"`
@@ -156,16 +168,4 @@ type RabbitMQTaskExecution struct {
 // ScheduledTaskExecution contains specific data for a scheduled task execution
 type ScheduledTaskExecution struct {
 	DateScheduledExecution string `json:"date_scheduled_execution"`
-}
-
-type AnalysisRequest struct {
-	ProjectKey string `json:"projectKey"`
-	VcsName    string `json:"vcsName"`
-	RepoName   string `json:"repoName"`
-	Branch     string `json:"branch"`
-	Commit     string `json:"commit"`
-}
-
-type AnalysisResponse struct {
-	AnalysisID string `json:"analysis_id"`
 }

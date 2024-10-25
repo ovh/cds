@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
@@ -48,15 +47,13 @@ type Client interface {
 }
 
 type defaultServiceClient struct {
-	db   gorp.SqlExecutor
 	srvs []sdk.Service
 }
 
-var NewClient func(gorp.SqlExecutor, []sdk.Service) Client = NewDefaultClient
+var NewClient func([]sdk.Service) Client = NewDefaultClient
 
-func NewDefaultClient(db gorp.SqlExecutor, srvs []sdk.Service) Client {
+func NewDefaultClient(srvs []sdk.Service) Client {
 	return &defaultServiceClient{
-		db:   db,
 		srvs: srvs,
 	}
 }
@@ -455,7 +452,7 @@ func doRequestFromURL(ctx context.Context, method string, callURL *url.URL, read
 
 	// Try to catch the CDS Error
 	if cdserr := sdk.DecodeError(body); cdserr != nil {
-		return nil, resp.Header, resp.StatusCode, cdserr
+		return nil, resp.Header, resp.StatusCode, sdk.WithStack(cdserr)
 	}
 
 	return nil, resp.Header, resp.StatusCode, sdk.WithStack(fmt.Errorf("request failed with status code: %d", resp.StatusCode))

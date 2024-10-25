@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, waitForAsync } from '@angular/core/testing';
@@ -63,7 +62,6 @@ describe('CDS: Artifact List', () => {
             name: 'proj1',
             key: 'test1',
         });
-        console.log(store.selectSnapshot(ProjectState.projectSnapshot));
 
         // Create component
         let fixture = TestBed.createComponent(WorkflowRunArtifactListComponent);

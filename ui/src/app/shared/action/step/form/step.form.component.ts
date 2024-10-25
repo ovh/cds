@@ -16,8 +16,17 @@ import { StepEvent } from 'app/shared/action/step/step.event';
     styleUrls: ['./step.form.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ActionStepFormComponent implements OnInit {
-    @Input() actions: Array<Action>;
+export class ActionStepFormComponent {
+
+    _actions: Array<Action>;
+    @Input() set actions(as: Array<Action>) {
+        this._actions = as;
+        this.initDefaultActionSelected();
+    }
+    get actions(): Array<Action> {
+        return this._actions;
+    }
+
     @Output() onEvent = new EventEmitter<StepEvent>();
 
     expended: boolean;
@@ -26,9 +35,9 @@ export class ActionStepFormComponent implements OnInit {
     constructor(private _cd: ChangeDetectorRef) {
     }
 
-    ngOnInit(): void {
-        let script = this.actions.find(a => a.name === 'Script' && a.type === 'Builtin');
-        if (script) {
+    initDefaultActionSelected(): void {
+        let script = this._actions?.find(a => a.name === 'Script' && a.type === 'Builtin');
+        if (script && !this.selected) {
             this.selected = script;
             this._cd.markForCheck();
         }

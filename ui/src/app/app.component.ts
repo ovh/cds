@@ -8,21 +8,26 @@ import { Store } from '@ngxs/store';
 import { EventService } from 'app/event.service';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
-import { interval, of, zip } from 'rxjs';
-import { WebSocketSubject } from 'rxjs/internal-compatibility';
+import { Subscription, interval, of, zip } from 'rxjs';
 import { concatMap, filter, map, mergeMap } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
-import * as format from 'string-format-obj';
+import format from 'string-format-obj';
 import { AppService } from './app.service';
 import { AuthSummary } from './model/user.model';
 import { NotificationService } from './service/notification/notification.service';
 import { HelpService, MonitoringService } from './service/services.module';
-import { ThemeStore } from './service/theme/theme.store';
 import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
 import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
 import { AddHelp } from './store/help.action';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzConfigService } from "ng-zorro-antd/core/config";
+import { CodeEditorConfig } from "ng-zorro-antd/core/config/config";
+import { PreferencesState } from './store/preferences.state';
+import { Editor } from './model/editor.model';
+import { WebSocketSubject } from 'rxjs/webSocket';
+import { EventV2Service } from './event-v2.service';
+
+declare const monaco: any;
 
 @Component({
     selector: 'app-root',
@@ -58,8 +63,7 @@ export class AppComponent implements OnInit, OnDestroy {
     loading = true;
 
     constructor(
-        _translate: TranslateService,
-        private _theme: ThemeStore,
+        private _translate: TranslateService,
         private _activatedRoute: ActivatedRoute,
         private _titleService: Title,
         private _router: Router,
@@ -72,19 +76,39 @@ export class AppComponent implements OnInit, OnDestroy {
         private _ngZone: NgZone,
         private _monitoringService: MonitoringService,
         private _nzNotificationService: NzNotificationService,
+        private _configService: NzConfigService,
+        private _eventV2Service: EventV2Service
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
-        _translate.addLangs(['en']);
-        _translate.setDefaultLang('en');
-        _translate.use('en');
+        this._translate.addLangs(['en']);
+        this._translate.setDefaultLang('en');
+        this._translate.use('en');
         registerLocaleData(localeEN);
 
-        this.themeSubscriber = this._theme.get().subscribe(t => {
-            if (t) {
-                document.body.className = t;
+        this.themeSubscriber = this._store.select(PreferencesState.theme).subscribe(t => {
+            document.body.className = t;
+
+            if (t === 'night') {
+                const style = document.createElement('link');
+                style.type = 'text/css';
+                style.rel = 'stylesheet';
+                style.id = 'dark-theme';
+                style.href = 'ngzorro.dark.css';
+                document.body.appendChild(style);
             } else {
-                _theme.set('light');
+                const dom = document.getElementById('dark-theme');
+                if (dom) {
+                    dom.remove();
+                }
             }
+
+            const defaultEditorOption: CodeEditorConfig = this._configService.getConfigForComponent('codeEditor')?.defaultEditorOption || {};
+            this._configService.set('codeEditor', {
+                defaultEditorOption: {
+                    ...defaultEditorOption,
+                    theme: t === 'night' ? 'vs-dark' : 'vs'
+                }
+            });
         });
 
         this._notification.requestPermission();
@@ -113,11 +137,18 @@ export class AppComponent implements OnInit, OnDestroy {
                 }, 30000);
             }
         );
-        this.toastSubs = this._toastService.getObservable().subscribe( data => {
+
+        this.toastSubs = this._toastService.getObservable().subscribe(data => {
             if (!this.toastTemplate) {
                 return;
             }
             this._nzNotificationService.template(this.toastTemplate, data)
+        });
+
+        const config: CodeEditorConfig = this._configService.getConfigForComponent('codeEditor');
+        this._configService.set('codeEditor', {
+            ...config,
+            onLoad: () => { monaco.languages.registerCompletionItemProvider("yaml", Editor.completionProvider(monaco)) }
         });
     }
 
@@ -134,6 +165,7 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.isConnected = true;
                 localStorage.setItem('CDS-USER', this.currentAuthSummary.user.username);
                 this._eventService.startWebsocket();
+                this._eventV2Service.startWebsocket();
             }
         });
         this.startVersionWorker();
@@ -155,9 +187,9 @@ export class AppComponent implements OnInit, OnDestroy {
                 if ((!this.previousURL || this.previousURL.split('?')[0] !== e.url.split('?')[0])) {
                     this.previousURL = e.url;
                     this._eventService.subscribeAutoFromUrl(e.url);
+                    this._eventV2Service.subscribeAutoFromUrl(e.url);
                     return;
                 }
-
             }))
             .pipe(map(() => this._activatedRoute))
             .pipe(map((route) => {

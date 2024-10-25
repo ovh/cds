@@ -78,25 +78,35 @@ export class AuthConsumer {
     name: string;
     description: string;
     parent_id: string;
-    authentified_user_id: string;
     type: string;
     created: string;
-    group_ids: Array<number>;
-    scope_details: Array<AuthConsumerScopeDetail>;
-    groups: Array<Group>;
     disabled: boolean;
     warnings: Array<AuthConsumerWarning>;
     validity_periods: Array<AuthConsumerValidityPeriod>;
     last_authentication: string;
-    service_name: string;
-    service_type: string;
-    service_region: string;
-    service_ignore_job_with_no_region: boolean;
+    auth_consumer_user: AuthConsumerUser;
 
     // UI fields
     parent: AuthConsumer;
     children: Array<AuthConsumer>;
     sessions: Array<AuthSession>;
+
+    constructor() {
+        this.auth_consumer_user = new AuthConsumerUser();
+    }
+}
+
+export class AuthConsumerUser {
+    id: string;
+    auth_consumer_id: string;
+    authentified_user_id: string;
+    group_ids: Array<number>;
+    scope_details: Array<AuthConsumerScopeDetail>;
+    groups: Array<Group>;
+    service_name: string;
+    service_type: string;
+    service_region: string;
+    service_ignore_job_with_no_region: boolean;
 }
 
 export class AuthSession {

@@ -1,15 +1,27 @@
-import { AfterViewChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    AfterViewChecked,
+    ChangeDetectionStrategy,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
+import { Store } from '@ngxs/store';
 import { AllKeys, Key } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
 import { RepositoriesManager, Repository } from 'app/model/repositories.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
+import { PreferencesState } from 'app/store/preferences.state';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 declare let CodeMirror: any;
 
@@ -20,7 +32,7 @@ declare let CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDestroy {
+export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDestroy, OnChanges {
 
     editableValue: string | number | boolean;
     @Input() type: string;
@@ -77,16 +89,16 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
     selectedRepoManager: RepositoriesManager;
     selectedRepo: string;
     loadingRepos: boolean;
-    connectRepos: boolean;
     alreadyRefreshed: boolean;
     list: Array<string>;
     themeSubscription: Subscription;
     _keys: AllKeys;
     allKeys: Key[];
+    suggestFiltered: string[];
 
     constructor(
         private _repoManagerService: RepoManagerService,
-        private _theme: ThemeStore,
+        private _store: Store,
         public _sharedService: SharedService // used in html
     ) {
         this.codeMirrorConfig = {
@@ -106,7 +118,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
         }
         this.updateListRepo();
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -114,12 +126,18 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
         });
     }
 
+    ngOnChanges(): void {
+        if (this.codemirror && this.codemirror.instance) {
+            this.codemirror.instance.refresh();
+        }
+    }
+
     ngAfterViewChecked(): void {
         if (this.codemirror && this.codemirror.instance && !this.alreadyRefreshed) {
             this.alreadyRefreshed = true;
             setTimeout(() => {
                 this.codemirror.instance.refresh();
-            }, 1);
+            }, 500);
         }
     }
 
@@ -205,6 +223,14 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
                 }, () => {
                     this.loadingRepos = false;
                 });
+        }
+    }
+
+    onInput(value: string): void {
+        if (value.indexOf("{{") === 0) {
+            this.suggestFiltered = this.suggest.filter(s => s.indexOf(value) === 0);
+        } else {
+            this.suggestFiltered = [];
         }
     }
 

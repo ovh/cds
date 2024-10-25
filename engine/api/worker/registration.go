@@ -59,8 +59,9 @@ type TakeForm struct {
 
 // RegisterWorker  Register new worker
 func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store,
-	spawnArgs hatchery.SpawnArgumentsJWT, hatcheryService sdk.Service, hatcheryConsumer *sdk.AuthConsumer, workerConsumer *sdk.AuthConsumer,
+	spawnArgs hatchery.SpawnArgumentsJWT, hatcheryService sdk.Service, hatcheryConsumer *sdk.AuthUserConsumer, workerConsumer *sdk.AuthUserConsumer,
 	registrationForm sdk.WorkerRegistrationForm, runNodeJob *sdk.WorkflowNodeJobRun) (*sdk.Worker, error) {
+
 	if err := spawnArgs.Validate(); err != nil {
 		return nil, err
 	}
@@ -86,11 +87,11 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 			return nil, err
 		}
 		canUseModel := sdk.IsInInt64Array(model.GroupID, hatcheryConsumer.GetGroupIDs()) || hatcheryConsumer.Maintainer() || model.GroupID == group.SharedInfraGroup.ID
-		cantUseRestrictedModel := model.Restricted && !sdk.IsInInt64Array(model.GroupID, hatcheryConsumer.GroupIDs)
+		cantUseRestrictedModel := model.Restricted && !sdk.IsInInt64Array(model.GroupID, hatcheryConsumer.AuthConsumerUser.GroupIDs)
 		if !canUseModel || cantUseRestrictedModel {
 			return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't use model %q", model.Path())
 		}
-		canRegisterModel := g.IsAdmin(*hatcheryConsumer.AuthentifiedUser) || hatcheryConsumer.Admin()
+		canRegisterModel := g.IsAdmin(*hatcheryConsumer.AuthConsumerUser.AuthentifiedUser) || hatcheryConsumer.Admin()
 		if spawnArgs.RegisterOnly && !canRegisterModel {
 			return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register model %q", model.Path())
 		}
@@ -113,12 +114,12 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 
 		// Check additional information based on the consumer if a region is set.
 		// Allows to register only job with same region or job without region if ServiceIgnoreJobWithNoRegion is not true.
-		if hatcheryConsumer.ServiceRegion != nil && *hatcheryConsumer.ServiceRegion != "" {
+		if hatcheryConsumer.AuthConsumerUser.ServiceRegion != nil && *hatcheryConsumer.AuthConsumerUser.ServiceRegion != "" {
 			if runNodeJob.Region == nil {
-				if hatcheryConsumer.ServiceIgnoreJobWithNoRegion != nil && *hatcheryConsumer.ServiceIgnoreJobWithNoRegion {
+				if hatcheryConsumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion != nil && *hatcheryConsumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion {
 					return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %d without region requirement", spawnArgs.JobID)
 				}
-			} else if *runNodeJob.Region != *hatcheryConsumer.ServiceRegion {
+			} else if *runNodeJob.Region != *hatcheryConsumer.AuthConsumerUser.ServiceRegion {
 				return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %d for region %s", spawnArgs.JobID, *runNodeJob.Region)
 			}
 		}
@@ -137,9 +138,11 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		OS:           registrationForm.OS,
 		Arch:         registrationForm.Arch,
 	}
+	w.ModelName = &spawnArgs.Model.Name
 	if model != nil {
 		w.ModelID = &spawnArgs.Model.ID
 	}
+
 	if spawnArgs.JobID > 0 {
 		w.JobRunID = &spawnArgs.JobID
 	}

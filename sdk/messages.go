@@ -12,13 +12,13 @@ type (
 	trad map[lang]string
 )
 
-//Supported API language
+// Supported API language
 var (
 	FR = lang(language.French)
 	EN = lang(language.AmericanEnglish)
 )
 
-//Message list
+// Message list
 var (
 	MsgAppCreated                           = &Message{"MsgAppCreated", trad{FR: "L'application %s a été créée avec succès", EN: "Application %s successfully created"}, nil, RunInfoTypInfo}
 	MsgAppUpdated                           = &Message{"MsgAppUpdated", trad{FR: "L'application %s a été mise à jour avec succès", EN: "Application %s successfully updated"}, nil, RunInfoTypInfo}
@@ -40,6 +40,7 @@ var (
 	MsgEnvironmentGroupDeleted              = &Message{"MsgEnvironmentGroupDeleted", trad{FR: "Le groupe %s de l'environnement %s a été supprimé", EN: "Group %s on environment %s has been deleted"}, nil, RunInfoTypInfo}
 	MsgEnvironmentGroupCannotBeDeleted      = &Message{"MsgEnvironmentGMsgEnvironmentGroupCannotBeDeletedroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être supprimé : %s", EN: "Group %s on environment %s cannot be deleted: %s"}, nil, RunInfoTypeError}
 	MsgEnvironmentKeyCreated                = &Message{"MsgEnvironmentKeyCreated", trad{FR: "La clé %s %s a été créée sur l'environnement %s", EN: "%s key %s created on environment %s"}, nil, RunInfoTypInfo}
+	MsgEnvironmentKeyCannotBeCreated        = &Message{"MsgEnvironmentKeyCannotBeCreated", trad{FR: "La clé %s %s n'a pas été créée sur l'environnement %s", EN: "%s key %s cannot be created on environment %s: %v"}, nil, RunInfoTypeError}
 	MsgJobNotValidActionNotFound            = &Message{"MsgJobNotValidActionNotFound", trad{FR: "Erreur de validation du Job %s : L'action %s à l'étape %d n'a pas été trouvée", EN: "Job %s validation Failure: Unknown action %s on step #%d"}, nil, RunInfoTypeError}
 	MsgJobNotValidInvalidActionParameter    = &Message{"MsgJobNotValidInvalidActionParameter", trad{FR: "Erreur de validation du Job %s : Le paramètre %s de l'étape %d - %s est invalide", EN: "Job %s validation Failure: Invalid parameter %s on step #%d %s"}, nil, RunInfoTypeError}
 	MsgPipelineGroupUpdated                 = &Message{"MsgPipelineGroupUpdated", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été mises à jour", EN: "Permission for group %s on pipeline %s has been updated"}, nil, RunInfoTypInfo}
@@ -58,13 +59,14 @@ var (
 	MsgApplicationDetached                  = &Message{"MsgApplicationDetached", trad{FR: "L'application %s est détachée du repository %s", EN: "The application %s is detached from repository %s"}, nil, RunInfoTypInfo}
 	MsgEnvironmentDetached                  = &Message{"MsgEnvironmentDetached", trad{FR: "L'environnement %s est détaché du repository %s", EN: "The environment %s is detached from repository %s"}, nil, RunInfoTypInfo}
 	MsgWorkflowDetached                     = &Message{"MsgWorkflowDetached", trad{FR: "Le workflow %s est détaché du repository %s", EN: "The workflow %s is detached from repository %s"}, nil, RunInfoTypInfo}
-	MsgSpawnInfoHatcheryStarts              = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s a démarré le lancement du worker avec le modèle %s", EN: "Hatchery %s starts spawn worker with model %s"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoHatcheryStarts              = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s a démarré le lancement du worker %s avec le modèle %s", EN: "Hatchery %s starts spawn worker %s with model %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryErrorSpawn          = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s a démarré un worker avec le modèle %s après %s, err: %s", EN: "Error while Hatchery %s spawns worker with model %s after %s, err: %s"}, nil, RunInfoTypeError}
 	MsgSpawnInfoHatcheryStartDockerPull     = &Message{"MsgSpawnInfoHatcheryStartDockerPull", trad{FR: "La Hatchery %s a démarré le docker pull de l'image %s...", EN: "Hatchery %s starts docker pull %s..."}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryEndDockerPull       = &Message{"MsgSpawnInfoHatcheryEndDockerPull", trad{FR: "La Hatchery %s a terminé le docker pull de l'image %s", EN: "Hatchery %s docker pull %s done"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryEndDockerPullErr    = &Message{"MsgSpawnInfoHatcheryEndDockerPullErr", trad{FR: "⚠ La Hatchery %s a terminé le docker pull de l'image %s en erreur: %s", EN: "⚠ Hatchery %s - docker pull %s done with error: %v"}, nil, RunInfoTypeError}
 	MsgSpawnInfoDeprecatedModel             = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "⚠ Attention vous utilisez un worker model (%s) déprécié", EN: "⚠ Pay attention you are using a deprecated worker model (%s)"}, nil, RunInfoTypeWarning}
 	MsgSpawnInfoWorkerEnd                   = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "✓ Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "✓ Worker %s finished working on this job"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoJobDisabled                 = &Message{"MsgSpawnInfoJobDisabled", trad{FR: "✓ Le job a désactivé", EN: "✓ Job is disabled"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobInQueue                  = &Message{"MsgSpawnInfoJobInQueue", trad{FR: "✓ Le job a été mis en file d'attente", EN: "✓ Job has been queued"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobTaken                    = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job %s a été pris par le worker %s", EN: "Job %s has been taken by worker %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobTakenWorkerVersion       = &Message{"MsgSpawnInfoJobTakenWorkerVersion", trad{FR: "Worker %s version:%s os:%s arch:%s", EN: "Worker %s version:%s os:%s arch:%s"}, nil, RunInfoTypInfo}
@@ -94,12 +96,14 @@ var (
 	MsgWorkflowGeneratedFromTemplateVersion = &Message{"MsgWorkflowGeneratedFromTemplateVersion", trad{FR: "Le workflow a été généré à partir du modèle de workflow: %s", EN: "The workflow was generated from the template: %s"}, nil, RunInfoTypInfo}
 	MsgTooMuchWorkflowRun                   = &Message{"MsgTooMuchWorkflowRun", trad{FR: "L'exécution de ce workflow est suspendu. Vous dépassez le nombre maximum d'éxécution autorisé (%.f). Merci de revoir la politique de retention de ce workflow", EN: "Workflow run is delayed. The maximum number of runs for this workflow has been reached ( %.f ). Please update your workflow retention policy"}, nil, RunInfoTypeWarning}
 	MsgSpawnErrorHatcheryRetryAttempt       = &Message{"MsgSpawnErrorHatcheryRetryAttempt", trad{EN: "Job execution failed by hatchery %s. Reason: %s"}, nil, RunInfoTypeError}
-	MsgWorkflowV3Preview                    = &Message{"MsgWorkflowV3Preview", trad{FR: "Le workflow a été généré en version 3 à partir d'une ancienne version", EN: "The workflow was generated in version 3 from an old version"}, nil, RunInfoTypeWarning}
 	MsgSpawnInfoDisableSecretInjection      = &Message{"MsgSpawnInfoDisableSecretInjection", trad{EN: "⚠ Project's secrets were not automatically injected for this job because of a region prerequisite: %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoManualSecretInjection       = &Message{"MsgSpawnInfoManualSecretInjection", trad{EN: "Prerequisites of type secret matched %s secret(s)"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerHookSetup             = &Message{"MsgSpawnInfoWorkerHookSetup", trad{EN: "Setting up worker hook %q"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerHookRun               = &Message{"MsgSpawnInfoWorkerHookRun", trad{EN: "Running worker hook %q"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerHookRunTeardown       = &Message{"MsgSpawnInfoWorkerHookRunTeardown", trad{EN: "Running worker hook %q teardown"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoWorkerDisabledByHatchery    = &Message{"MsgSpawnInfoWorkerDisabledByHatchery", trad{EN: "The worker (not responding) %s was disabled by hatchery"}, nil, RunInfoTypeWarning}
+	MsgSpawnInfoWorkerDisabledByAdmin       = &Message{"MsgSpawnInfoWorkerDisabledByAdmin", trad{EN: "The worker %s was disabled by an administrator"}, nil, RunInfoTypeWarning}
+	MsgSpawnInfoJobFailedCauseByWorkerLost  = &Message{"MsgSpawnInfoJobFailedCauseByWorkerLost", trad{EN: "The job %s was set to failed due to lost connection with the worker"}, nil, RunInfoTypeWarning}
 )
 
 // Messages contains all sdk Messages
@@ -124,6 +128,7 @@ var Messages = map[string]*Message{
 	MsgEnvironmentGroupDeleted.ID:              MsgEnvironmentGroupDeleted,
 	MsgEnvironmentGroupCannotBeDeleted.ID:      MsgEnvironmentGroupCannotBeDeleted,
 	MsgEnvironmentKeyCreated.ID:                MsgEnvironmentKeyCreated,
+	MsgEnvironmentKeyCannotBeCreated.ID:        MsgEnvironmentKeyCannotBeCreated,
 	MsgJobNotValidActionNotFound.ID:            MsgJobNotValidActionNotFound,
 	MsgJobNotValidInvalidActionParameter.ID:    MsgJobNotValidInvalidActionParameter,
 	MsgPipelineGroupUpdated.ID:                 MsgPipelineGroupUpdated,
@@ -149,6 +154,7 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoHatcheryEndDockerPullErr.ID:    MsgSpawnInfoHatcheryEndDockerPullErr,
 	MsgSpawnInfoDeprecatedModel.ID:             MsgSpawnInfoDeprecatedModel,
 	MsgSpawnInfoWorkerEnd.ID:                   MsgSpawnInfoWorkerEnd,
+	MsgSpawnInfoJobDisabled.ID:                 MsgSpawnInfoJobDisabled,
 	MsgSpawnInfoJobInQueue.ID:                  MsgSpawnInfoJobInQueue,
 	MsgSpawnInfoJobTaken.ID:                    MsgSpawnInfoJobTaken,
 	MsgSpawnInfoJobTakenWorkerVersion.ID:       MsgSpawnInfoJobTakenWorkerVersion,
@@ -178,15 +184,17 @@ var Messages = map[string]*Message{
 	MsgWorkflowGeneratedFromTemplateVersion.ID: MsgWorkflowGeneratedFromTemplateVersion,
 	MsgTooMuchWorkflowRun.ID:                   MsgTooMuchWorkflowRun,
 	MsgSpawnErrorHatcheryRetryAttempt.ID:       MsgSpawnErrorHatcheryRetryAttempt,
-	MsgWorkflowV3Preview.ID:                    MsgWorkflowV3Preview,
 	MsgSpawnInfoDisableSecretInjection.ID:      MsgSpawnInfoDisableSecretInjection,
 	MsgSpawnInfoManualSecretInjection.ID:       MsgSpawnInfoManualSecretInjection,
 	MsgSpawnInfoWorkerHookSetup.ID:             MsgSpawnInfoWorkerHookSetup,
 	MsgSpawnInfoWorkerHookRun.ID:               MsgSpawnInfoWorkerHookRun,
 	MsgSpawnInfoWorkerHookRunTeardown.ID:       MsgSpawnInfoWorkerHookRunTeardown,
+	MsgSpawnInfoWorkerDisabledByHatchery.ID:    MsgSpawnInfoWorkerDisabledByHatchery,
+	MsgSpawnInfoWorkerDisabledByAdmin.ID:       MsgSpawnInfoWorkerDisabledByAdmin,
+	MsgSpawnInfoJobFailedCauseByWorkerLost.ID:  MsgSpawnInfoJobFailedCauseByWorkerLost,
 }
 
-//Message represent a struc format translated messages
+// Message represent a struc format translated messages
 type Message struct {
 	ID     string
 	Format trad
@@ -198,7 +206,7 @@ func (m Message) ToSpawnMsg() SpawnMsg {
 	return SpawnMsg{ID: m.ID, Args: m.Args, Type: m.Type}
 }
 
-//NewMessage instanciantes a new message
+// NewMessage instanciantes a new message
 func NewMessage(m *Message, args ...interface{}) Message {
 	return Message{
 		Format: m.Format,
@@ -216,7 +224,7 @@ var (
 	}
 )
 
-//String returns formated string for the specified language
+// String returns formated string for the specified language
 func (m *Message) String() string {
 	return fmt.Sprintf(m.Format[EN], m.Args...)
 }
@@ -241,8 +249,6 @@ func ErrorToMessage(err error) (Message, bool) {
 		return NewMessage(MsgWorkflowErrorBadPipelineName, cdsError.Data), true
 	case ErrEnvironmentNotFound.ID:
 		return NewMessage(MsgWorkflowErrorBadEnvironmentName, cdsError.Data), true
-	case ErrIntegrationtNotFound.ID:
-		return NewMessage(MsgWorkflowErrorBadIntegrationName, cdsError.Data), true
 	}
 
 	return Message{}, false

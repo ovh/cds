@@ -16,7 +16,7 @@ import (
 
 func (api *API) postWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// parse request and check data validity
 		var data sdk.Model
@@ -28,6 +28,20 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		}
 		if err := data.IsValidType(); err != nil {
 			return err
+		}
+
+		// Verify the image if any whitelist is setup
+		if data.ModelDocker.Image != "" && len(api.WorkerModelDockerImageWhiteList) > 0 {
+			var allowedImage = false
+			for _, r := range api.WorkerModelDockerImageWhiteList { // At least one regexp must match
+				if r.MatchString(data.ModelDocker.Image) {
+					allowedImage = true
+					break
+				}
+			}
+			if !allowedImage {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
 		}
 
 		// check that given group id exits and that the user is admin of the group
@@ -105,6 +119,20 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 		if err := data.IsValid(); err != nil {
 			return err
+		}
+
+		// Verify the image if any whitelist is setup
+		if data.ModelDocker.Image != "" && len(api.WorkerModelDockerImageWhiteList) > 0 {
+			var allowedImage = false
+			for _, r := range api.WorkerModelDockerImageWhiteList { // At least one regexp must match
+				if r.MatchString(data.ModelDocker.Image) {
+					allowedImage = true
+					break
+				}
+			}
+			if !allowedImage {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
 		}
 
 		if old.GroupID != data.GroupID {
@@ -242,13 +270,13 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 			filter.State = o
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		models := make([]sdk.Model, 0)
 
-		if consumer.Worker != nil {
-			if consumer.Worker.ModelID != nil {
-				model, err := workermodel.LoadByID(ctx, api.mustDB(), *consumer.Worker.ModelID, workermodel.LoadOptions.Default)
+		if consumer.AuthConsumerUser.Worker != nil {
+			if consumer.AuthConsumerUser.Worker.ModelID != nil {
+				model, err := workermodel.LoadByID(ctx, api.mustDB(), *consumer.AuthConsumerUser.Worker.ModelID, workermodel.LoadOptions.Default)
 				if err != nil {
 					return err
 				}
@@ -257,8 +285,11 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 			return service.WriteJSON(w, models, http.StatusOK)
 		}
 
-		var err error
-		if ok := isHatchery(ctx); ok && len(consumer.GroupIDs) > 0 {
+		hatchery, err := isHatchery(ctx)
+		if err != nil {
+			return err
+		}
+		if hatchery && len(consumer.AuthConsumerUser.GroupIDs) > 0 {
 			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), consumer.GetGroupIDs(), &filter, workermodel.LoadOptions.Default)
 		} else if isMaintainer(ctx) {
 			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)
@@ -296,7 +327,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			pips, err = pipeline.LoadByWorkerModel(ctx, api.mustDB(), m)
 		} else {
 			pips, err = pipeline.LoadByWorkerModelAndGroupIDs(ctx, api.mustDB(), m,
-				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID))
+				append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID))
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipelines linked to worker model")
@@ -313,7 +344,7 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet %s", key)
+			return sdk.WrapError(err, "unable to load project %s", key)
 		}
 
 		groupIDs := make([]int64, len(proj.ProjectGroups))

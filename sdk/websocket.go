@@ -15,7 +15,6 @@ const (
 	WebsocketFilterTypeEnvironment             WebsocketFilterType = "environment"
 	WebsocketFilterTypeQueue                   WebsocketFilterType = "queue"
 	WebsocketFilterTypeOperation               WebsocketFilterType = "operation"
-	WebsocketFilterTypeTimeline                WebsocketFilterType = "timeline"
 	WebsocketFilterTypeAscodeEvent             WebsocketFilterType = "ascode-event"
 	WebsocketFilterTypeDryRunRetentionWorkflow WebsocketFilterType = "workflow-retention-dryrun"
 )
@@ -32,7 +31,6 @@ func (f WebsocketFilterType) IsValid() bool {
 		WebsocketFilterTypeEnvironment,
 		WebsocketFilterTypeQueue,
 		WebsocketFilterTypeOperation,
-		WebsocketFilterTypeTimeline,
 		WebsocketFilterTypeDryRunRetentionWorkflow,
 		WebsocketFilterTypeAscodeEvent:
 		return true
@@ -52,6 +50,12 @@ type WebsocketFilter struct {
 	WorkflowRunNumber int64               `json:"workflow_run_num"`
 	WorkflowNodeRunID int64               `json:"workflow_node_run_id"`
 	OperationUUID     string              `json:"operation_uuid"`
+	HatcheryType      string              `json:"hatchery_type"`
+}
+
+type WebsocketHatcheryFilter struct {
+	Region    string `json:"region"`
+	ModelType string `json:"model_type"`
 }
 
 // Key generates the unique key associated to given filter.
@@ -128,4 +132,14 @@ type WebsocketEvent struct {
 	Status string `json:"status"`
 	Error  string `json:"error"`
 	Event  Event  `json:"event"`
+}
+
+type WebsocketJobQueueEvent struct {
+	JobRunID     string `json:"job_run_id"`
+	Region       string `json:"region"`
+	ModelType    string `json:"model_type"`
+	ProjectKey   string `json:"project_key"`
+	WorkflowName string `json:"workflow_name"`
+	JobID        string `json:"job_id"`
+	RunNumber    int64  `json:"run_number"`
 }

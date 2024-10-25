@@ -28,7 +28,7 @@ EOF
 }
 
 function generatePluginsDocumentation {
-  for plugin in `ls ../contrib/grpcplugins/action/plugin-*/*.yml`; do
+  for plugin in `ls ../contrib/grpcplugins/action/**/*.yml`; do
 
   filename=$(basename "$plugin")
   pluginName=${filename/.yml/}
@@ -73,6 +73,19 @@ function generateBuiltinActionsDocumentation {
   done;
 }
 
+function generateStatic {
+  npm ci
+  cp node_modules/anchor-js/anchor.min.js static/js/anchor.min.js
+  cp node_modules/asciinema-player/dist/bundle/asciinema-player.css static/css/asciinema-player.css
+  cp node_modules/asciinema-player/dist/bundle/asciinema-player.min.js static/js/asciinema-player.min.js
+  cp node_modules/bootstrap/dist/js/bootstrap.min.js static/js/bootstrap.min.js
+  cp node_modules/jquery-ui/dist/jquery-ui.min.js static/js/jquery-ui.min.js
+  cp node_modules/jquery/dist/jquery.min.js static/js/jquery.min.js
+  cp node_modules/js-autocomplete/auto-complete.min.js static/js/auto-complete.min.js
+  cp node_modules/lunr/lunr.min.js static/js/lunr.min.js
+}
+
 generateUserActionsDocumentation
 generatePluginsDocumentation
 generateBuiltinActionsDocumentation
+generateStatic

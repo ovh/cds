@@ -1,6 +1,5 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { SettingsModule } from 'app/views/settings/settings.module';
 import { ActionAddComponent } from './action/add/action.add.component';
 import { ActionEditComponent } from './action/edit/action.edit.component';
@@ -20,13 +19,12 @@ import { WorkerModelListComponent } from './worker-model/list/worker-model.list.
 import { WorkflowTemplateAddComponent } from './workflow-template/add/workflow-template.add.component';
 import { WorkflowTemplateEditComponent } from './workflow-template/edit/workflow-template.edit.component';
 import { WorkflowTemplateListComponent } from './workflow-template/list/workflow-template.list.component';
+import { QueueV2Component } from './queue/queuev2.component';
 
 const routes: Routes = [
     {
         path: '',
         component: SettingsComponent,
-        canActivateChild: [AuthenticationGuard],
-        canActivate: [AuthenticationGuard],
         children: [
             { path: 'profile/:username', component: UserEditComponent, data: { title: 'Profile' } },
             { path: 'cdsctl', component: CdsctlComponent, data: { title: 'Cdsctl' } },
@@ -54,6 +52,7 @@ const routes: Routes = [
                 data: { title: '{actionName} • Action' }
             },
             { path: 'queue', component: QueueComponent, data: { title: 'Queue' } },
+            { path: 'queuev2', component: QueueV2Component, data: { title: 'Queue V2' } },
             { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } },
             { path: 'workflow-template', component: WorkflowTemplateListComponent, data: { title: 'Workflow template' } },
             { path: 'workflow-template/add', component: WorkflowTemplateAddComponent, data: { title: 'Add • Workflow template' } },

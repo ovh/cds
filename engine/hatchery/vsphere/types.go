@@ -23,12 +23,39 @@ type HatcheryConfiguration struct {
 	SubnetMask                          string                     `mapstructure:"subnetMask" toml:"subnetMask" default:"255.255.255.0" commented:"false" comment:"Subnet Mask" json:"subnetMask"`
 	WorkerTTL                           int                        `mapstructure:"workerTTL" toml:"workerTTL" default:"120" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 	WorkerRegistrationTTL               int                        `mapstructure:"workerRegistrationTTL" toml:"workerRegistrationTTL" commented:"false" comment:"Worker Registration TTL (minutes)" json:"workerRegistrationTTL"`
-	WorkerProvisioning                  []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"false" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
+	WorkerProvisioningInterval          int                        `mapstructure:"workerProvisioningInterval" toml:"workerProvisioningInterval" commented:"true" comment:"Worker Provisioning interval (seconds)" json:"workerProvisioningInterval"`
+	WorkerProvisioningPoolSize          int                        `mapstructure:"workerProvisioningPoolSize" toml:"workerProvisioningPoolSize" commented:"true" comment:"Worker Provisioning pool size" json:"workerProvisioningPoolSize"`
+	WorkerProvisioning                  []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
+	GuestCredentials                    []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"List of Guest credentials" json:"-"`
+	DefaultWorkerModelsV2               []DefaultWorkerModelsV2    `mapstructure:"defaultWorkerModelsV2" toml:"defaultWorkerModelsV2" commented:"true" comment:"List of default worker models v2 for declared binaries - used by workflow v1" json:"-"`
 }
 
 type WorkerProvisioningConfig struct {
-	ModelPath string `mapstructure:"modelPath" toml:"modelPath" json:"modelPath"`
-	Number    int64  `mapstructure:"number" toml:"number" json:"number"`
+	// ModelPath is the CDS worker model name, not the model from the VMWare point of view. It's used only by CDS Worker Model v1
+	ModelPath string `mapstructure:"modelPath" default:"my/model" commented:"true" toml:"modelPath" json:"modelPath"`
+
+	// ModelVMWare is the model from the VMWare point of view. It's used only by CDS Worker Model v2
+	ModelVMWare string `mapstructure:"modelVMWare" default:"debian12" commented:"true" toml:"modelVMWare" json:"modelVMWare"`
+
+	// Number of VM to provision for the current model
+	Number int `mapstructure:"number" commented:"true" toml:"number" json:"number"`
+}
+
+type GuestCredential struct {
+	// ModelPath is the CDS worker model name, it's used only by CDS Worker Model v1
+	ModelPath string `mapstructure:"modelPath" default:"my/model" commented:"true" toml:"modelPath" json:"-"`
+
+	// ModelVMWare is the model from the VMWare point of view. It's used only by CDS Worker Model v2
+	ModelVMWare string `mapstructure:"modelVMWare" default:"debian12" commented:"true" toml:"modelVMWare" json:"-"`
+
+	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
+	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
+}
+
+// this is used to run worker model v2 in a job v1
+type DefaultWorkerModelsV2 struct {
+	WorkerModelV2 string   `mapstructure:"workerModelV2" default:"" commented:"true" toml:"workerModelV2" json:"workerModelV2"`
+	Binaries      []string `mapstructure:"binaries" toml:"binaries" default:"" commented:"true" comment:"If one binary is matching this list, the default model associated is used." json:"binaries"`
 }
 
 // HatcheryVSphere spawns vm
@@ -41,12 +68,12 @@ type HatcheryVSphere struct {
 	reservedIPAddresses  []string
 	cachePendingJobID    struct {
 		mu   sync.Mutex
-		list []int64
+		list []string
 	}
 	cacheProvisioning struct {
-		mu         sync.Mutex
-		pending    []string
-		restarting []string
+		mu      sync.Mutex
+		pending []string
+		using   []string
 	}
 	cacheToDelete struct {
 		mu   sync.Mutex

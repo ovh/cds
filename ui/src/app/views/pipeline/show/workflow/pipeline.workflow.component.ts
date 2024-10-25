@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Job } from 'app/model/job.model';
@@ -15,7 +15,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import * as pipelineActions from 'app/store/pipelines.action';
 import { PipelinesStateModel } from 'app/store/pipelines.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { DragulaService } from 'ng2-dragula-sgu';
+import { DragulaService } from 'ng2-dragula';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
@@ -173,7 +173,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this._dragularService.destroy('bag-stage');
     }
 

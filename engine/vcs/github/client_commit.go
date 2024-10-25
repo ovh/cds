@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -169,6 +170,16 @@ func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, unti
 				Email:       c.Commit.Author.Email,
 				Name:        c.Commit.Author.Name,
 				Avatar:      c.Author.AvatarURL,
+				Slug:        c.Commit.Author.Name,
+				ID:          strconv.Itoa(c.Author.ID),
+			},
+			Committer: sdk.VCSAuthor{
+				DisplayName: c.Commit.Committer.Name,
+				Email:       c.Commit.Committer.Email,
+				Name:        c.Commit.Committer.Name,
+				Avatar:      c.Committer.AvatarURL,
+				Slug:        c.Committer.Login,
+				ID:          strconv.Itoa(c.Committer.ID),
 			},
 		}
 
@@ -266,10 +277,18 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 			Email:       c.Commit.Author.Email,
 			Name:        c.Author.Login,
 			Avatar:      c.Author.AvatarURL,
+			ID:          strconv.Itoa(c.Author.ID),
 		},
 		URL:       c.HTMLURL,
 		Verified:  c.Commit.Verification.Verified,
 		Signature: c.Commit.Verification.Signature,
+		Committer: sdk.VCSAuthor{
+			DisplayName: c.Commit.Author.Name,
+			Email:       c.Commit.Author.Email,
+			Name:        c.Author.Login,
+			Avatar:      c.Author.AvatarURL,
+			ID:          strconv.Itoa(c.Author.ID),
+		},
 	}
 
 	return commit, nil
@@ -312,6 +331,7 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 					Email:       commit.Commit.Author.Email,
 					Name:        commit.Author.Login,
 					Avatar:      commit.Author.AvatarURL,
+					ID:          strconv.Itoa(commit.Author.ID),
 				},
 				URL: commit.HTMLURL,
 			}

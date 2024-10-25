@@ -82,7 +82,7 @@ func (api *API) postAdminOrganizationHandler() service.Handler {
 
 func (api *API) getAdminOrganizationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		orgas, err := organization.LoadAllOrganizations(ctx, api.mustDB())
+		orgas, err := organization.LoadOrganizations(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
@@ -124,7 +124,7 @@ func (api *API) postMaintenanceHandler() service.Handler {
 				return err
 			}
 			url := fmt.Sprintf("/admin/maintenance?enable=%v", enable)
-			_, code, errHooks := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, url, nil, nil)
+			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, url, nil, nil)
 			if errHooks != nil || code >= 400 {
 				return fmt.Errorf("unable to change hook maintenant state to %v. Code result %d: %v", enable, code, errHooks)
 			}

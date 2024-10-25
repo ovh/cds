@@ -4,8 +4,8 @@
     right: 0;
     left: auto;
     z-index: unset;
-    height: 100%;
-    width: 0%;
+    height: 87%;
+    width: 0;
 
     &.visible {
         width: 50%;
@@ -18,7 +18,7 @@
     }
 
     .fullheight {
-        height: 87%;
+      height: 87%;
       width: 100%;
     }
 
@@ -26,21 +26,23 @@
         margin-top: 5px;
     }
 
-    .bottomBtnsWrapper {
-        position: absolute;
-        bottom: 100px;
-        right: 0;
-        width: 430px;
-        padding-top: 20px;
-        padding-bottom: 20px;
+  .bottomBtnsWrapper {
+    position: absolute;
+    right: 0;
+    width: 440px;
+    padding-top: 20px;
+    padding-bottom: 20px;
 
-        nz-row {
-          padding: 0 20px;
-          nz-col {
-            padding-top: 5px;
-            padding-bottom: 5px;
-          }
-        }
-
+    nz-row {
+      padding: 0 20px;
+      nz-col {
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
     }
+  }
+}
+
+nz-spin {
+  margin-top: 30px;
 }

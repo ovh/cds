@@ -5,8 +5,8 @@ description: |
  Creates and sign a Artifactory Release Bundle from a specification.
 
  Read more: https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
-parameters:
-  name: 
+inputs:
+  name:
     type: string
     description: Release Bundle name
   version:

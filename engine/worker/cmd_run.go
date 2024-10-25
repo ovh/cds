@@ -29,6 +29,9 @@ func cmdRun() *cobra.Command {
 
 func runCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
+		if isCI() {
+			log.Fatal(context.Background(), "unable to start worker in CI mode") // user should not use this command directly
+		}
 		var w = new(internal.CurrentWorker)
 
 		// Initialize context
@@ -47,12 +50,14 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 
 		// TODO: remove this code with all the flags replaces by config
 		// Get the booked job ID
-		if cfg.BookedJobID == 0 {
+		if cfg.RunJobID == "" && cfg.BookedJobID == 0 {
 			bookedWJobID := FlagInt64(cmd, flagBookedWorkflowJobID)
-			if bookedWJobID == 0 {
-				sdk.Exit("flag --booked-workflow-job-id is mandatory")
+			runJobID := FlagString(cmd, flagRunJobID)
+			if bookedWJobID == 0 && runJobID == "" {
+				sdk.Exit("flag --booked-workflow-job-id or run-job-id are mandatory")
 			}
 			cfg.BookedJobID = bookedWJobID
+			cfg.RunJobID = runJobID
 		}
 
 		// Gracefully shutdown connections
@@ -67,6 +72,7 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		go func() {
 			select {
 			case <-c:
+				log.Info(ctx, "Received syscall.SIGTERM")
 				cancel()
 				return
 			case <-ctx.Done():
@@ -74,6 +80,17 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 			}
 		}()
 		// Start the worker
+		if sdk.IsValidUUID(cfg.RunJobID) {
+			if err := internal.V2StartWorker(ctx, w, cfg.RunJobID, cfg.Region); err != nil {
+				ctx := sdk.ContextWithStacktrace(ctx, err)
+				ctx = context.WithValue(ctx, cdslog.RequestID, sdk.ExtractHTTPError(err).RequestID)
+				log.Error(ctx, err.Error())
+				time.Sleep(2 * time.Second)
+				sdk.Exit("error: %v", err)
+			}
+			return
+		}
+
 		if err := internal.StartWorker(ctx, w, cfg.BookedJobID); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			ctx = context.WithValue(ctx, cdslog.RequestID, sdk.ExtractHTTPError(err).RequestID)

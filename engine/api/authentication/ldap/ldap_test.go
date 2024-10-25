@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/driver/ldap"
 	"strconv"
 	"testing"
 
@@ -33,7 +34,7 @@ import (
 func TestGetUserInfo(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
-	ldapConfig := Config{
+	ldapConfig := ldap.Config{
 		RootDN:          cfg["ldapRootDN"],
 		UserSearchBase:  cfg["ldapUserSearchBase"],
 		UserSearch:      cfg["ldapUserSearch"],

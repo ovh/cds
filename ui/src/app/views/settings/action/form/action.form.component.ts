@@ -20,7 +20,7 @@ import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
 import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { DragulaService } from 'ng2-dragula-sgu';
+import { DragulaService } from 'ng2-dragula';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -55,8 +55,8 @@ export class ActionFormComponent implements OnDestroy {
         this.refreshActions();
     }
     get action(): Action {
- return this._action;
-}
+        return this._action;
+    }
 
     @Output() save = new EventEmitter<Action>();
     @Output() delete = new EventEmitter();
@@ -113,7 +113,7 @@ export class ActionFormComponent implements OnDestroy {
         }
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.dragulaService.destroy('bag-nonfinal');
         this.dragulaService.destroy('bag-final');
     }

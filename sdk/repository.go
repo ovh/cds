@@ -12,24 +12,21 @@ const (
 	RepositoryAnalysisStatusSucceed    = "Success"
 	RepositoryAnalysisStatusError      = "Error"
 	RepositoryAnalysisStatusSkipped    = "Skipped"
+
+	GitRefTagPrefix    = "refs/tags/"
+	GitRefBranchPrefix = "refs/heads/"
+	GitRefTypeBranch   = "branch"
+	GitRefTypeTag      = "tag"
 )
 
 type ProjectRepository struct {
-	ID                string                `json:"id" db:"id"`
-	Name              string                `json:"name" db:"name" cli:"name,key"`
-	Created           time.Time             `json:"created" db:"created"`
-	CreatedBy         string                `json:"created_by" db:"created_by"`
-	VCSProjectID      string                `json:"-" db:"vcs_project_id"`
-	HookConfiguration HookConfiguration     `json:"hook_configuration" db:"hook_configuration"`
-	HookSignKey       string                `json:"hook_sign_key" db:"hook_sign_key" gorpmapping:"encrypted,ID,VCSProjectID"`
-	CloneURL          string                `json:"clone_url" db:"clone_url"`
-	Auth              ProjectRepositoryAuth `json:"auth" db:"auth" gorpmapping:"encrypted,ID,VCSProjectID"`
-}
-
-type ProjectRepositoryAuth struct {
-	Username   string `json:"username,omitempty" db:"-"`
-	Token      string `json:"token,omitempty" db:"-"`
-	SSHKeyName string `json:"sshPrivateKey,omitempty" db:"-"`
+	ID           string    `json:"id" db:"id"`
+	ProjectKey   string    `json:"project_key" db:"project_key"`
+	Name         string    `json:"name" db:"name" cli:"name,key" action_metadata_name:"name"`
+	Created      time.Time `json:"created" db:"created"`
+	CreatedBy    string    `json:"created_by" db:"created_by"`
+	VCSProjectID string    `json:"-" db:"vcs_project_id"`
+	CloneURL     string    `json:"clone_url" db:"clone_url"`
 }
 
 type ProjectRepositoryAnalysis struct {
@@ -40,24 +37,28 @@ type ProjectRepositoryAnalysis struct {
 	VCSProjectID        string                `json:"vcs_project_id" db:"vcs_project_id"`
 	ProjectKey          string                `json:"project_key" db:"project_key"`
 	Status              string                `json:"status" db:"status" cli:"status"`
-	Branch              string                `json:"branch" db:"branch" cli:"branch"`
+	Ref                 string                `json:"ref" db:"ref" cli:"ref"`
 	Commit              string                `json:"commit" db:"commit" cli:"commit"`
 	Data                ProjectRepositoryData `json:"data" db:"data"`
 }
 
 type ProjectRepositoryData struct {
-	OperationUUID string                        `json:"operation_uuid"`
-	CommitCheck   bool                          `json:"commit_check"`
-	SignKeyID     string                        `json:"sign_key_id"`
-	CDSUserName   string                        `json:"cds_username"`
-	CDSUserID     string                        `json:"cds_username_id"`
-	Error         string                        `json:"error"`
-	Entities      []ProjectRepositoryDataEntity `json:"entities"`
+	HookEventUUID   string                        `json:"hook_event_uuid"`
+	HookEventKey    string                        `json:"hook_event_key"`
+	OperationUUID   string                        `json:"operation_uuid"`
+	CommitCheck     bool                          `json:"commit_check"`
+	SignKeyID       string                        `json:"sign_key_id"`
+	CDSUserName     string                        `json:"cds_username"`
+	CDSUserID       string                        `json:"cds_username_id"`
+	CDSAdminWithMFA bool                          `json:"cds_admin_mfa"`
+	Error           string                        `json:"error"`
+	Entities        []ProjectRepositoryDataEntity `json:"entities"`
 }
 
 type ProjectRepositoryDataEntity struct {
 	FileName string `json:"file_name"`
 	Path     string `json:"path"`
+	Status   string `json:"status"`
 }
 
 func (prd ProjectRepositoryData) Value() (driver.Value, error) {

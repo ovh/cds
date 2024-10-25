@@ -1,0 +1,21 @@
+slug: example-simple-safe
+name: 'Example simple safe 🤖️'
+group: shared.infra
+description: A example template for test purpose, made with ❤️ by
+  CDS team.
+parameters:
+- key: withDeploy
+  type: boolean
+  required: true
+- key: deployWhen
+  type: string
+  required: false
+- key: data
+  type: json
+  required: false
+workflow: workflow.yml
+pipelines:
+- 1.pipeline.yml
+- 2.pipeline.yml
+environments:
+- 1.environment.yml

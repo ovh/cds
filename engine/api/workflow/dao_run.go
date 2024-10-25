@@ -46,10 +46,8 @@ workflow_run.header
 
 // LoadRunOptions are options for loading a run (node or workflow)
 type LoadRunOptions struct {
-	WithCoverage            bool
 	WithTests               bool
 	WithLightTests          bool
-	WithVulnerabilities     bool
 	WithDeleted             bool
 	DisableDetailledNodeRun bool
 }
@@ -93,7 +91,7 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 	return nil
 }
 
-//UpdateWorkflowRunStatus update status of a workflow run
+// UpdateWorkflowRunStatus update status of a workflow run
 func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	wr.LastModified = time.Now()
 	if sdk.StatusIsTerminated(wr.Status) {
@@ -120,7 +118,7 @@ func LoadWorkflowFromWorkflowRunID(db gorp.SqlExecutor, wrID int64) (sdk.Workflo
 	return workflow, nil
 }
 
-//PostInsert is a db hook on WorkflowRun
+// PostInsert is a db hook on WorkflowRun
 func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 	if err := updateTags(db, r); err != nil {
 		return sdk.WrapError(err, "Unable to store tags")
@@ -129,7 +127,7 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 	return nil
 }
 
-//PostUpdate is a db hook on WorkflowRun
+// PostUpdate is a db hook on WorkflowRun
 func (r *Run) PostUpdate(db gorp.SqlExecutor) error {
 	return r.PostInsert(db)
 }
@@ -187,10 +185,13 @@ func LoadLastRun(ctx context.Context, db gorp.SqlExecutor, projectkey, workflown
 
 // LoadLastRuns returns the last run per workflowIDs
 func LoadLastRuns(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64, limit int) ([]sdk.WorkflowRun, error) {
-	query := fmt.Sprintf(`select %s
-	from workflow_run
-	where workflow_run.workflow_id = ANY($1)
-	order by workflow_run.workflow_id, workflow_run.num desc limit $2`, wfRunfields)
+	query := fmt.Sprintf(`
+    SELECT %s
+	  FROM workflow_run
+	  WHERE workflow_run.workflow_id = ANY($1)
+	  ORDER BY workflow_run.start DESC, workflow_run.num DESC
+    LIMIT $2
+  `, wfRunfields)
 	return loadRuns(ctx, db, query, pq.Int64Array(workflowIDs), limit)
 }
 
@@ -308,8 +309,8 @@ func LoadRunsIDsToDelete(db gorp.SqlExecutor, offset int64, limit int64) ([]int6
 	return ids, offset, limit, count, nil
 }
 
-//LoadRunsSummaries loads a short version of workflow runs
-//It returns runs, offset, limit count and an error
+// LoadRunsSummaries loads a short version of workflow runs
+// It returns runs, offset, limit count and an error
 func LoadRunsSummaries(ctx context.Context, db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRunSummary, int, int, int, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.LoadRunsSummaries",
 		telemetry.Tag(telemetry.TagProjectKey, projectkey),
@@ -346,7 +347,7 @@ func LoadRunsSummaries(ctx context.Context, db gorp.SqlExecutor, projectkey, wor
 			ORDER BY wr.start desc
 			LIMIT $3 OFFSET $4`, selectedColumn)
 
-	if len(tagFilter) > 0 {
+	if len(tagFilter) > 1 {
 		// Posgres operator: '<@' means 'is contained by' eg. 'ARRAY[2,7] <@ ARRAY[1,7,4,2,6]' ==> returns true
 		query = fmt.Sprintf(`
 			WITH workflowID as (
@@ -379,10 +380,22 @@ func LoadRunsSummaries(ctx context.Context, db gorp.SqlExecutor, projectkey, wor
 		for k, v := range tagFilter {
 			tags = append(tags, k+"="+v)
 		}
-
 		log.Debug(ctx, "tags=%v", tags)
-
 		args = append(args, strings.Join(tags, ","))
+	} else if len(tagFilter) == 1 {
+		query = fmt.Sprintf(`
+      SELECT %s
+      FROM workflow_run wr
+      JOIN workflow ON workflow.id = wr.workflow_id
+      JOIN project ON project.id = workflow.project_id
+      JOIN workflow_run_tag ON workflow_run_tag.workflow_run_id = wr.id
+      WHERE workflow.name = $2 AND project.projectkey = $1 AND workflow_run_tag.tag = $5 AND workflow_run_tag.value = $6
+      ORDER BY wr.start DESC OFFSET $4 LIMIT $3
+    `, selectedColumn)
+		for k, v := range tagFilter {
+			args = append(args, k, v)
+			break
+		}
 	}
 
 	var shortRuns []sdk.WorkflowRunSummary
@@ -482,7 +495,7 @@ func loadRun(ctx context.Context, db gorp.SqlExecutor, loadOpts LoadRunOptions, 
 }
 
 // CanBeRun return boolean to know if a workflow node run can be run or not
-//TODO: if no bugs are found, it could be used to refactor process.go
+// TODO: if no bugs are found, it could be used to refactor process.go
 func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun) bool {
 	if !sdk.StatusIsTerminated(workflowNodeRun.Status) {
 		return false
@@ -583,7 +596,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
-func LoadCratingWorkflowRunIDs(db gorp.SqlExecutor) ([]int64, error) {
+func LoadCraftingWorkflowRunIDs(db gorp.SqlExecutor) ([]int64, error) {
 	query := `
 		SELECT id
 		FROM workflow_run
@@ -637,9 +650,9 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 			wr.Tag(tagTriggeredBy, "cds.hook")
 		}
 	} else {
-		c, err := authentication.LoadConsumerByID(context.Background(), db, opts.AuthConsumerID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser,
-			authentication.LoadConsumerOptions.WithConsumerGroups)
+		c, err := authentication.LoadUserConsumerByID(context.Background(), db, opts.AuthConsumerID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser,
+			authentication.LoadUserConsumerOptions.WithConsumerGroups)
 		if err != nil {
 			return nil, err
 		}
@@ -649,7 +662,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, err
 		}
-		c.Service = s
+		c.AuthConsumerUser.Service = s
 
 		wr.Tag(tagTriggeredBy, c.GetUsername())
 	}
@@ -969,13 +982,6 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 			return err
 		}
 		wnr.CanBeRun = CanBeRun(wr, wnr)
-		if loadOpts.WithCoverage {
-			cov, errCov := LoadCoverageReport(db, wnr.ID)
-			if errCov != nil && !sdk.ErrorIs(errCov, sdk.ErrNotFound) {
-				return sdk.WrapError(errCov, "syncNodeRuns> Error loading code coverage report for node run %d", wnr.ID)
-			}
-			wnr.Coverage = cov
-		}
 		wnr.Translate()
 		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)
 	}

@@ -126,3 +126,55 @@ func TestNoPath(t *testing.T) {
 		})
 	}
 }
+
+func TestMapHasKeys(t *testing.T) {
+	type args struct {
+		i            interface{}
+		expectedKeys []interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "should return true",
+			args: args{
+				i:            map[string]string{"a": "a", "b": "b"},
+				expectedKeys: []interface{}{"a", "b"},
+			},
+			want: true,
+		},
+		{
+			name: "should return false (one key is missing)",
+			args: args{
+				i:            map[string]string{"a": "a", "b": "b"},
+				expectedKeys: []interface{}{"a", "b", "c"},
+			},
+			want: false,
+		},
+		{
+			name: "should return false (wrong key type)",
+			args: args{
+				i:            map[string]string{"a": "a", "b": "b"},
+				expectedKeys: []interface{}{1, 2},
+			},
+			want: false,
+		},
+		{
+			name: "should return false (wrong  type)",
+			args: args{
+				i:            "foo",
+				expectedKeys: []interface{}{1, 2},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MapHasKeys(tt.args.i, tt.args.expectedKeys...); got != tt.want {
+				t.Errorf("MapHasKeys() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

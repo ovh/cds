@@ -1,8 +1,8 @@
 ---
 title: "Variables"
 weight: 6
-tags: ["variable", "variables", "helper", "helpers", "interpolate"]
-card: 
+tags: ["variable", "variables", "helper", "helpers", "interpolate", "parameters", "parameters"]
+card:
   name: concept_pipeline
   weight: 4
 ---
@@ -103,15 +103,15 @@ Here is the list of git variables:
 - `{{.git.hook}}`: Name of the event that trigger the run
 - `{{.git.url}}`:  Git ssh URL used to clone
 - `{{.git.http_url}}`: Git http url used to clone
-- `{{.git.branch}}`: 
-  - Push event: Name of the branch where the push occured
+- `{{.git.branch}}`:
+  - Push event: Name of the branch where the push occurred
   - PullRequest event: Name of the source branch
 - `{{.git.tag}}`: Name of the tag that triggered the run
 - `{{.git.author}}`: Name of the most recent commit author
 - `{{.git.author.email}}`: Email of the most recent commit author
 - `{{.git.message}}`: Git message of the most recent commit
 - `{{.git.server}}`: Name of the repository manager
-- `{{.git.repository}}`: 
+- `{{.git.repository}}`:
   - Push event:  Name of the repository
   - PullRequest event: Name of the source repository
 
@@ -136,15 +136,53 @@ Here is the list of git variables available only for Bitbucket server
 - `{{.git.pr.comment.author}}`: Author name of the comment
 - `{{.git.pr.comment.author.email}}` Author email of the comment
 
-
-
 ## Pipeline parameters
 
-On a pipeline, you can add some parameters, this will let you to use `{{.cds.pip.varname}}` in your pipeline. 
+On a pipeline, you can add some parameters, this will let you to use `{{.cds.pip.param_name}}` in your pipeline.
+
+```yaml
+version: v1.0
+name: build
+
+parameters:
+  param_name:
+    type: string
+    default: default_value
+
+stages:
+  ...
+```
+
+This will let you to use `{{.cds.pip.param_name}}` in your pipeline.
 Then, in the workflow, you can set the value for pipeline parameter in the `pipeline context`.
+
+~~~yaml
+name: test-workflow
+version: v2.0
+workflow:
+  the-pipeline:
+    pipeline: build
+    parameters:
+      varname: the-value
+...
+~~~
+
+You can use a Git or Builtin variable. example:
+~~~yaml
+name: test-workflow
+version: v2.0
+workflow:
+  the-pipeline:
+    pipeline: build
+    parameters:
+      varname: {{.cds.version}}
+      varname2: {{.cds.pip.param_name}}
+...
+~~~
 
 Notice that you can't create a pipeline parameter of type `password`. If you want to use a variable of type password, you have to create it in your project / application or environment. Then, in your workflow, use this variable to set the value of the pipeline parameter - the pipeline parameter can be of type `string`.
 
+You can also access a pipeline parameter `myparam` of the pipeline `mypipeline` from another pipeline in the same workflow using `{{.workflow.mypipeline.pip.myparam}}`.
 
 ## Helpers
 
@@ -222,4 +260,4 @@ You can use many helpers:
 ### Deep in code
 
 Are you a Go developer? See all helpers on https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/sdk/interpolate/interpolate_helper.go#L23
-and some unit tests on https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/sdk/interpolate/interpolate_test.go#L72 
+and some unit tests on https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/sdk/interpolate/interpolate_test.go#L72

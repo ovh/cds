@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { finalize, first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 import { Action, Usage } from '../../../../model/action.model';
 import { AuditAction } from '../../../../model/audit.model';
 import { Group } from '../../../../model/group.model';
@@ -14,6 +13,7 @@ import { Item } from '../../../../shared/diff/list/diff.list.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 import { Tab } from '../../../../shared/tabs/tabs.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-action-edit',
@@ -52,16 +52,19 @@ export class ActionEditComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.tabs = [<Tab>{
             title: 'Action',
-            icon: 'list',
+            icon: 'unordered-list',
+            iconTheme: 'outline',
             key: 'action',
             default: true
         }, <Tab>{
             title: 'Audit',
             icon: 'history',
+            iconTheme: 'outline',
             key: 'audits'
         }, <Tab>{
             title: 'Usage',
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }];
 

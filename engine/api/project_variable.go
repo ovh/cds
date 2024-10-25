@@ -64,7 +64,7 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 
 		encryptedValue, erre := project.EncryptWithBuiltinKey(ctx, api.mustDB(), p.ID, variable.Name, variable.Value)
 		if erre != nil {
-			return sdk.WrapError(erre, "unable to encrypte content %s", variable.Name)
+			return sdk.WrapError(erre, "unable to encrypt content %s", variable.Name)
 		}
 
 		variable.Value = encryptedValue
@@ -128,6 +128,11 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		varName := vars["name"]
 
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
@@ -144,7 +149,7 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 			return sdk.WrapError(errV, "deleteVariableFromProject> Cannot load variable %s", varName)
 		}
 
-		if err := project.DeleteVariable(tx, p.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
+		if err := project.DeleteVariable(tx, p.ID, varToDelete, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot delete %s", varName)
 		}
 
@@ -152,7 +157,7 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectVariable(ctx, p, *varToDelete, getAPIConsumer(ctx))
+		event.PublishDeleteProjectVariable(ctx, p, *varToDelete, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -164,6 +169,11 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		varName := vars["name"]
+
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		var newVar sdk.ProjectVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
@@ -186,7 +196,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if err := project.UpdateVariable(tx, p.ID, &newVar, previousVar, getAPIConsumer(ctx)); err != nil {
+		if err := project.UpdateVariable(tx, p.ID, &newVar, previousVar, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: Cannot update variable %s in project %s", varName, p.Name)
 		}
 
@@ -194,7 +204,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "updateVariableInProject: cannot commit transaction")
 		}
 
-		event.PublishUpdateProjectVariable(ctx, p, newVar, *previousVar, getAPIConsumer(ctx))
+		event.PublishUpdateProjectVariable(ctx, p, newVar, *previousVar, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
@@ -206,6 +216,11 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		varName := vars["name"]
+
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		var newVar sdk.ProjectVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
@@ -231,7 +246,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 			return sdk.WithStack(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable type %s", newVar.Type))
 		}
 
-		if err := project.InsertVariable(tx, p.ID, &newVar, getAPIConsumer(ctx)); err != nil {
+		if err := project.InsertVariable(tx, p.ID, &newVar, getUserConsumer(ctx)); err != nil {
 			return err
 
 		}
@@ -241,7 +256,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		}
 
 		// Send Add variable event
-		event.PublishAddProjectVariable(ctx, p, newVar, getAPIConsumer(ctx))
+		event.PublishAddProjectVariable(ctx, p, newVar, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}

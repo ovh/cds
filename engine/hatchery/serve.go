@@ -23,32 +23,110 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 type Common struct {
 	service.Common
 	Router                        *api.Router
+	Clientv2                      cdsclient.HatcheryServiceClient
 	mapServiceNextLineNumberMutex sync.Mutex
 	mapServiceNextLineNumber      map[string]int64
+	mapPendingWorkerCreation      *sdk.HatcheryPendingWorkerCreation
+}
+
+func (c *Common) MaxHeartbeat() int {
+	return c.Common.MaxHeartbeatFailures
 }
 
 func (c *Common) Service() *sdk.Service {
 	return c.Common.ServiceInstance
+
 }
 
 func (c *Common) ServiceName() string {
 	return c.Common.ServiceName
 }
 
-//CDSClient returns cdsclient instance
+// CDSClient returns cdsclient instance
 func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
+}
+
+func (c *Common) CDSClientV2() cdsclient.HatcheryServiceClient {
+	return c.Clientv2
+}
+
+func (c *Common) GetRegion() string {
+	return c.Region
 }
 
 // GetGoRoutines returns the goRoutines manager
 func (c *Common) GetGoRoutines() *sdk.GoRoutines {
 	return c.GoRoutines
+}
+
+func (c *Common) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
+	if c.mapPendingWorkerCreation == nil {
+		c.mapPendingWorkerCreation = &sdk.HatcheryPendingWorkerCreation{}
+		c.mapPendingWorkerCreation.Init()
+	}
+	return c.mapPendingWorkerCreation
+}
+
+type WorkerInterface interface {
+	Name() string
+	Status() string
+}
+
+type workerImpl struct {
+	eitherV1 *sdk.Worker
+	eitherV2 *sdk.V2Worker
+}
+
+func (w workerImpl) Name() string {
+	if w.eitherV1 != nil {
+		return w.eitherV1.Name
+	}
+	return w.eitherV2.Name
+}
+
+func (w workerImpl) Status() string {
+	if w.eitherV1 != nil {
+		return w.eitherV1.Status
+	}
+	return w.eitherV2.Status
+}
+
+func (c *Common) WorkerList(ctx context.Context) ([]WorkerInterface, error) {
+	var (
+		v1Workers  []sdk.Worker
+		v2Workers  []sdk.V2Worker
+		err        error
+		allWorkers []WorkerInterface
+	)
+
+	if c.Client != nil {
+		v1Workers, err = c.CDSClient().WorkerList(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if c.Clientv2 != nil {
+		v2Workers, err = c.CDSClientV2().V2WorkerList(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for i := range v1Workers {
+		allWorkers = append(allWorkers, workerImpl{eitherV1: &v1Workers[i]})
+	}
+	for i := range v2Workers {
+		allWorkers = append(allWorkers, workerImpl{eitherV2: &v2Workers[i]})
+	}
+
+	return allWorkers, nil
 }
 
 // CommonServe start the HatcheryLocal server
@@ -115,6 +193,80 @@ func (c *Common) GetPrivateKey() *rsa.PrivateKey {
 	return c.Common.PrivateKey
 }
 
+func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
+	if clientConfig.TokenV2 == "" {
+		return nil
+	}
+	log.Info(ctx, "Init CDS client v2 for hatchery")
+	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	serviceConfig, err := service.ParseServiceConfig(srvConfig)
+	if err != nil {
+		return err
+	}
+
+	var pubKey []byte
+	if c.PrivateKey == nil {
+		return sdk.WrapError(sdk.ErrInvalidData, "missing private key")
+	}
+
+	pubKey, err = jws.ExportPublicKey(c.PrivateKey)
+	if err != nil {
+		return err
+	}
+
+	registerPayload := &sdk.AuthConsumerHatcherySigninRequest{
+		Token:        clientConfig.TokenV2,
+		Version:      sdk.VERSION,
+		PublicKey:    pubKey,
+		Config:       serviceConfig,
+		Name:         c.Name(),
+		HTTPURL:      c.HTTPURL,
+		HatcheryType: c.ModelType,
+	}
+
+	initClient := func(ctx context.Context) error {
+		var err error
+		// The call below should return the sdk.Service from the signin
+		fmt.Printf("New Hatchery Client \n")
+		c.Clientv2, c.APIPublicKey, c.Region, err = cdsclient.NewHatcheryServiceClient(ctx, clientConfig, registerPayload)
+		if err != nil {
+			fmt.Printf("Waiting for CDS API (%v)...\n", err)
+		}
+		return err
+	}
+
+	var lasterr error
+	if err := initClient(ctxTimeout); err != nil {
+		lasterr = err
+	loop:
+		for {
+			select {
+			case <-ctxTimeout.Done():
+				if lasterr != nil {
+					fmt.Printf("Timeout after 5min - last error: %v\n", lasterr)
+				}
+				return ctxTimeout.Err()
+			case <-ticker.C:
+				if err := initClient(ctxTimeout); err == nil {
+					lasterr = err //lint:ignore SA4006 false positive
+					break loop
+				}
+			}
+		}
+	}
+
+	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return nil
+}
+
 func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {
 	c.CDNConfig.HTTPURL = h.Configuration().CDN.URL
 	c.CDNConfig.TCPURL = h.Configuration().CDN.TCP.URL
@@ -126,6 +278,9 @@ func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {
 		var cfg sdk.CDNConfig
 		var err error
 		for {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			cfg, err = c.Client.ConfigCDN()
 			if err == nil {
 				break
@@ -155,7 +310,7 @@ func (c *Common) initServiceLogger(ctx context.Context) error {
 		c.Signer = signer
 	}
 
-	var graylogCfg = &hook.Config{
+	var graylogCfg = &graylog.Config{
 		Addr:     c.CDNConfig.TCPURL,
 		Protocol: "tcp",
 	}
@@ -300,7 +455,6 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 
 	cfg := workerruntime.WorkerConfig{
 		Name:                     spawnArgs.WorkerName,
-		BookedJobID:              spawnArgs.JobID,
 		HatcheryName:             h.Name(),
 		Model:                    spawnArgs.ModelName(),
 		APIToken:                 spawnArgs.WorkerToken,
@@ -310,7 +464,6 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		GelfServiceAddr:          cdnTCP,
 		GelfServiceAddrEnableTLS: cdnTCPEnableTLS,
 		InjectEnvVars:            envvars,
-		Region:                   h.Configuration().Provision.Region,
 		Basedir:                  h.Configuration().Provision.WorkerBasedir,
 		Log: cdslog.Conf{
 			GraylogHost:                h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
@@ -320,7 +473,76 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 			Level:                      h.Configuration().Provision.WorkerLogsOptions.Level,
 			GraylogFieldCDSServiceType: "worker",
 			GraylogFieldCDSServiceName: spawnArgs.WorkerName,
+			SyslogHost:                 h.Configuration().Provision.WorkerLogsOptions.Syslog.Host,
+			SyslogPort:                 strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Syslog.Port),
+			SyslogProtocol:             h.Configuration().Provision.WorkerLogsOptions.Syslog.Protocol,
+			SyslogExtraTag:             h.Configuration().Provision.WorkerLogsOptions.Syslog.ExtraTag,
 		},
 	}
+
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		cfg.RunJobID = spawnArgs.JobID
+		cfg.Region = h.GetRegion()
+	} else {
+		jobID, _ := strconv.ParseInt(spawnArgs.JobID, 10, 64)
+		cfg.BookedJobID = jobID
+		cfg.Region = h.Configuration().Provision.Region
+	}
 	return cfg
+}
+
+func (c *Common) HeartbeatV2(ctx context.Context, status func(ctx context.Context) *sdk.MonitoringStatus) error {
+	var heartbeatFailures int
+	execHeartbeat := func(ctx context.Context) error {
+		if err := c.Clientv2.Heartbeat(ctx, status(ctx)); err != nil {
+			if sdk.ErrorIs(err, sdk.ErrForbidden) {
+				return sdk.WrapError(err, "%s> HeartbeatV2 failed with forbidden error", c.Name())
+			}
+			heartbeatFailures++
+			log.Warn(ctx, "%s> HeartbeatV2 failure %d/%d: %v", c.Name(), heartbeatFailures, c.MaxHeartbeatFailures, err)
+
+			// if register failed too many time, stop heartbeat
+			if heartbeatFailures > c.MaxHeartbeatFailures {
+				return sdk.WithStack(fmt.Errorf("%s> HeartbeatV2 failed exceeded", c.Name()))
+			}
+			return nil
+		}
+		heartbeatFailures = 0
+		return nil
+	}
+
+	// exec first heartbeat immediately
+	if err := execHeartbeat(ctx); err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return sdk.WrapError(ctx.Err(), "%s> HeartbeatV2> Cancelled", c.Name())
+		case <-ticker.C:
+			if err := execHeartbeat(ctx); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+// Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
+func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) *sdk.MonitoringStatus) error {
+	// For now, no error returned if this heartbeat failed
+	if c.Clientv2 != nil {
+		go func() {
+			if err := c.HeartbeatV2(ctx, status); err != nil {
+				log.Error(ctx, "%s> Error heartbeatV2: %+v", c.Name(), err)
+			}
+		}()
+	}
+
+	if err := c.Common.Heartbeat(ctx, status); err != nil {
+		return err
+	}
+	return nil
 }

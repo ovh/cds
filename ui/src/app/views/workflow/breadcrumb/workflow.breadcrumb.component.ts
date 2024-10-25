@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Select } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-breadcrumb',
@@ -22,8 +22,8 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
         this.updatePath();
     }
     get project() {
- return this._project;
-}
+        return this._project;
+    }
 
     _workflow: Workflow;
     @Input() set workflow(w: Workflow) {
@@ -31,21 +31,20 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
         this.updatePath();
     }
     get workflow() {
- return this._workflow;
-}
+        return this._workflow;
+    }
 
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRunSub: Subscription;
     workflowRun: WorkflowRun;
 
     path: Array<PathItem>;
 
-    constructor(private _cd: ChangeDetectorRef) { }
+    constructor(private _cd: ChangeDetectorRef, private _store: Store) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+        this.workflowRunSub = this._store.select(WorkflowState.getSelectedWorkflowRun()).subscribe(wr => {
             if (!wr && !this.workflowRun) {
                 return;
             }
@@ -63,7 +62,8 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
 
         if (this._project) {
             path.push(<PathItem>{
-                icon: 'browser',
+                icon: 'profile',
+                iconTheme: 'outline',
                 text: this._project.name,
                 routerLink: ['/project', this._project.key],
                 queryParams: { tab: 'workflows' }
@@ -71,7 +71,8 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
 
             if (this._workflow) {
                 path.push(<PathItem>{
-                    icon: 'share alternate',
+                    icon: 'share-alt',
+                    iconTheme: 'outline',
                     text: this._workflow.name,
                     active: this._workflow && !this.workflowRun,
                     routerLink: ['/project', this._project.key, 'workflow', this._workflow.name],
@@ -80,6 +81,7 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
                 if (this.workflowRun) {
                     path.push(<PathItem>{
                         icon: 'tag',
+                        iconTheme: 'outline',
                         text: '' + (this.workflowRun.version ? this.workflowRun.version : this.workflowRun.num),
                         active: !!this._workflow.name && !!this.workflowRun.num,
                         routerLink: ['/project', this._project.key, 'workflow', this._workflow.name, 'run', this.workflowRun.num]

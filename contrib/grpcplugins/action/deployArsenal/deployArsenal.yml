@@ -1,0 +1,26 @@
+name: deployArsenal
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  This action trigger an arsenal deployment and retrieve the final status of it.
+inputs:
+  token:
+    type: text
+    description: "Deployment token"
+    default: 
+  retry-delay:
+    type: number
+    description: "Time between try of getting the deployment final status"
+    default: 10
+  retry-max:
+    type: number
+    description: "Maximum number of retry to get the deployment status"
+    default: 30
+  version:
+    type: text
+    description: "The version to deploy"
+    default: ${{git.semver_current}}
+  alternative-config:
+    type: text
+    description: Alternative configuration to push with the deployment
+    default: 

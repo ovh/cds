@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthDriverManifest } from 'app/model/authentication.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { finalize } from 'rxjs/operators';
-import * as zxcvbn from 'zxcvbn';
+import zxcvbn from 'zxcvbn';
 
 @Component({
     selector: 'app-auth-signin',
@@ -50,20 +50,23 @@ export class SigninComponent implements OnInit {
             }))
             .subscribe((data) => {
                 this.isFirstConnection = data.is_first_connection;
-                this.localDriver = data.manifests.find(d => d.type === 'local');
-                this.ldapDriver = data.manifests.find(d => d.type === 'ldap');
+                this.localDriver = data.manifests.find(d => d.type === 'local' && !d.signup_disabled);
+                this.ldapDriver = data.manifests.find(d => d.type === 'ldap' && !d.signup_disabled);
                 this.externalDrivers = data.manifests
-                    .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin')
+                    .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin' && !d.signup_disabled)
                     .sort((a, b) => a.type < b.type ? -1 : 1)
                     .map(d => {
                         switch (d.type) {
                             case 'corporate-sso': {
-                                d.icon = 'shield alternate';
+                                d.icon = 'safety-certificate';
                                 break;
                             }
                             case 'openid-connect': {
-                                d.icon = 'openid';
+                                d.icon = 'lock';
                                 break;
+                            }
+                            case 'ldap': {
+                                d.icon = 'book';
                             }
                             default: {
                                 d.icon = d.type;
@@ -136,7 +139,7 @@ export class SigninComponent implements OnInit {
             if (this.redirect) {
                 this._router.navigateByUrl(decodeURIComponent(this.redirect));
             } else {
-                this._router.navigate(['home']);
+                this._router.navigate(['/']);
             }
         });
     }
@@ -146,7 +149,7 @@ export class SigninComponent implements OnInit {
             if (this.redirect) {
                 this._router.navigateByUrl(decodeURIComponent(this.redirect));
             } else {
-                this._router.navigate(['home']);
+                this._router.navigate(['/']);
             }
         });
     }

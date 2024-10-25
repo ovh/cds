@@ -2,11 +2,8 @@ package github
 
 import (
 	"context"
-	"net/http"
 	"testing"
-	"time"
 
-	"github.com/pkg/browser"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,56 +13,30 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// TestNew needs githubClientID and githubClientSecret
-func TestNewClient(t *testing.T) {
-	ghConsummer := getNewConsumer(t)
-	assert.NotNil(t, ghConsummer)
-}
-
-func getNewConsumer(t *testing.T) sdk.VCSServer {
-	log.Factory = log.NewTestingWrapper(t)
-	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
-	clientID := cfg["githubClientID"]
-	clientSecret := cfg["githubClientSecret"]
-	redisHost := cfg["redisHost"]
-	redisPassword := cfg["redisPassword"]
-
-	if clientID == "" && clientSecret == "" {
-		t.Logf("Unable to read github configuration. Skipping this tests.")
-		t.SkipNow()
-	}
-
-	cache, err := cache.New(redisHost, redisPassword, 0, 30)
-	if err != nil {
-		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
-	}
-
-	ghConsummer := NewDeprecated(clientID, clientSecret, "", "", "http://localhost", "", "", "", "", cache, true, true)
-	return ghConsummer
-}
-
 func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
-	clientID := cfg["githubClientID"]
-	clientSecret := cfg["githubClientSecret"]
-	accessToken := cfg["githubAccessToken"]
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
 
-	if clientID == "" && clientSecret == "" {
+	githubUsername := cfg["githubUsername"]
+	githubToken := cfg["githubToken"]
+
+	if githubUsername == "" && githubToken == "" {
 		t.Logf("Unable to read github configuration. Skipping this tests.")
 		t.SkipNow()
 	}
 
-	cache, err := cache.New(redisHost, redisPassword, 0, 30)
+	cache, err := cache.New(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: 0}, 30)
 	if err != nil {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := NewDeprecated(clientID, clientSecret, "", "", "http://localhost", "", "", "", "", cache, true, true)
+	ghConsummer := New("", "", "http://localhost", "", "", cache)
 	vcsAuth := sdk.VCSAuth{
-		AccessToken: accessToken,
+		Type:     sdk.VCSTypeGithub,
+		Token:    githubToken,
+		Username: githubUsername,
 	}
 	cli, err := ghConsummer.GetAuthorizedClient(context.Background(), vcsAuth)
 	if err != nil {
@@ -73,61 +44,6 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	return cli
-}
-
-func TestClientAuthorizeToken(t *testing.T) {
-	ghConsummer := getNewConsumer(t)
-	token, url, err := ghConsummer.AuthorizeRedirect(context.Background())
-	t.Logf("token: %s", token)
-	t.Logf("url: %s", url)
-	assert.NotEmpty(t, token)
-	assert.NotEmpty(t, url)
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	out := make(chan http.Request, 1)
-
-	go callbackServer(ctx, t, out)
-
-	err = browser.OpenURL(url)
-	require.NoError(t, err)
-
-	r, ok := <-out
-	t.Logf("Chan request closed? %v", !ok)
-	t.Logf("OAuth request 2: %+v", r)
-	assert.NotNil(t, r)
-
-	cberr := r.FormValue("error")
-	errDescription := r.FormValue("error_description")
-	errURI := r.FormValue("error_uri")
-
-	assert.Empty(t, cberr)
-	assert.Empty(t, errDescription)
-	assert.Empty(t, errURI)
-
-	code := r.FormValue("code")
-	state := r.FormValue("state")
-
-	assert.NotEmpty(t, code)
-	assert.NotEmpty(t, state)
-
-	accessToken, accessTokenSecret, err := ghConsummer.AuthorizeToken(context.Background(), state, code)
-	assert.NotEmpty(t, accessToken)
-	assert.NotEmpty(t, accessTokenSecret)
-	require.NoError(t, err)
-
-	t.Logf("Token is %s", accessToken)
-
-	vcsAuth := sdk.VCSAuth{
-		AccessToken:       accessToken,
-		AccessTokenSecret: accessTokenSecret,
-	}
-
-	ghClient, err := ghConsummer.GetAuthorizedClient(context.Background(), vcsAuth)
-	require.NoError(t, err)
-	assert.NotNil(t, ghClient)
 }
 
 func TestAuthorizedClient(t *testing.T) {

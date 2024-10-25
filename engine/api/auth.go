@@ -9,6 +9,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
@@ -53,12 +54,12 @@ func (api *API) getAuthAskSigninHandler() service.Handler {
 		if !consumerType.IsValid() {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
-		driver, ok := api.AuthenticationDrivers[consumerType]
+		authDriver, ok := api.AuthenticationDrivers[consumerType]
 		if !ok {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		driverRedirect, ok := driver.(sdk.AuthDriverWithRedirect)
+		driverRedirect, ok := authDriver.GetDriver().(sdk.DriverWithRedirect)
 		if !ok {
 			return nil
 		}
@@ -99,34 +100,39 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		if !consumerType.IsValid() {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
-		driver, ok := api.AuthenticationDrivers[consumerType]
+		authDriver, ok := api.AuthenticationDrivers[consumerType]
 		if !ok {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
+		signInDriver := authDriver.GetDriver().(sdk.DriverWithSignInRequest)
 
 		// Extract and validate signin request
 		var req sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &req); err != nil {
 			return err
 		}
-		if err := driver.CheckSigninRequest(req); err != nil {
+		if err := signInDriver.CheckSigninRequest(req); err != nil {
 			return err
 		}
 
 		// Extract and validate signin state
-		switch x := driver.(type) {
-		case sdk.AuthDriverWithSigninStateToken:
+		switch x := authDriver.GetDriver().(type) {
+		case sdk.DriverWithSigninStateToken:
 			if err := x.CheckSigninStateToken(req); err != nil {
 				return err
 			}
 		}
 
 		// Convert code to external user info
-		userInfo, err := driver.GetUserInfo(ctx, req)
+		userInfo, err := authDriver.GetUserInfo(ctx, req)
 		if err != nil {
 			return err
 		}
 
+		ctx = context.WithValue(ctx, cdslog.AuthUsername, userInfo.Username)
+		service.SetTracker(w, cdslog.AuthUsername, userInfo.Username)
+
+		userCreated := false
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -138,8 +144,8 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		hasInitToken := initToken != ""
 
 		// Check if a consumer exists for consumer type and external user identifier
-		consumer, err := authentication.LoadConsumerByTypeAndUserExternalID(ctx, tx, consumerType, userInfo.ExternalID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByTypeAndUserExternalID(ctx, tx, consumerType, userInfo.ExternalID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
@@ -148,13 +154,13 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		// Then we want to create a new consumer for current type
 		var u *sdk.AuthentifiedUser
 		if consumer != nil {
-			u = consumer.AuthentifiedUser
+			u = consumer.AuthConsumerUser.AuthentifiedUser
 		} else {
-			currentConsumer := getAPIConsumer(ctx)
+			currentConsumer := getUserConsumer(ctx)
 			if currentConsumer != nil {
 				// If no consumer already exists for given request, but there is a current session
 				// We should create a new consumer for the current consumer's user
-				u = currentConsumer.AuthentifiedUser
+				u = currentConsumer.AuthConsumerUser.AuthentifiedUser
 
 				// If new consumer email not already on exiting user add it
 				existingContact, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
@@ -206,7 +212,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 					} else {
 						// We can't find any user with the same email address
 						// So we will do signup for a new user from the data got from the auth driver
-						if driver.GetManifest().SignupDisabled {
+						if authDriver.GetManifest().SignupDisabled {
 							return sdk.WithStack(sdk.ErrSignupDisabled)
 						}
 
@@ -231,6 +237,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						if err := user.Insert(ctx, tx, u); err != nil {
 							return err
 						}
+						userCreated = true
 
 						// Insert the primary contact for the new user in database
 						if err := user.InsertContact(ctx, tx, &sdk.UserContact{
@@ -273,7 +280,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		sessionDuration := driver.GetSessionDuration()
+		sessionDuration := authDriver.GetSessionDuration()
 		var session *sdk.AuthSession
 		if userInfo.MFA {
 			trackSudo(ctx, w)
@@ -283,7 +290,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 				log.Info(ctx, "starting new session %s with MFA for consumer %s", session.ID, consumer.ID)
 			}
 		} else {
-			session, err = authentication.NewSession(ctx, tx, consumer, sessionDuration)
+			session, err = authentication.NewSession(ctx, tx, &consumer.AuthConsumer, sessionDuration)
 		}
 		if err != nil {
 			return err
@@ -292,7 +299,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		// Store the last authentication date on the consumer
 		now := time.Now()
 		consumer.LastAuthentication = &now
-		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, &consumer.AuthConsumer); err != nil {
 			return err
 		}
 
@@ -304,13 +311,17 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			return err
 		}
 
-		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+		usr, err := user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		if err != nil {
 			return err
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
+		}
+
+		if userCreated {
+			event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserCreated, *usr)
 		}
 
 		// Set a cookie with the jwt token
@@ -356,7 +367,7 @@ func (api *API) postAuthDetachHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		currentConsumer := getAPIConsumer(ctx)
+		currentConsumer := getUserConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -364,7 +375,7 @@ func (api *API) postAuthDetachHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, consumerType, currentConsumer.AuthentifiedUserID)
+		consumer, err := authentication.LoadUserConsumerByTypeAndUserID(ctx, tx, consumerType, currentConsumer.AuthConsumerUser.AuthentifiedUserID)
 		if err != nil {
 			return err
 		}
@@ -389,16 +400,16 @@ func (api *API) postAuthDetachHandler() service.Handler {
 func (api *API) getAuthMe() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := getAuthDriverManifest(ctx)
-		c := getAPIConsumer(ctx)
+		c := getUserConsumer(ctx)
 		s := getAuthSession(ctx)
 		if m == nil || c == nil || s == nil {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
 		// Clean user and consumer aggregated data
-		u := *c.AuthentifiedUser
+		u := *c.AuthConsumerUser.AuthentifiedUser
 		u.Groups = nil
-		c.AuthentifiedUser = nil
+		c.AuthConsumerUser.AuthentifiedUser = nil
 
 		return service.WriteJSON(w, sdk.AuthCurrentConsumerResponse{
 			User:           u,
@@ -423,7 +434,7 @@ func (api *API) getAuthSession() service.Handler {
 			return err
 		}
 
-		c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), s.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUserWithContacts, authentication.LoadConsumerOptions.WithConsumerGroups)
+		c, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), s.ConsumerID, authentication.LoadUserConsumerOptions.WithAuthentifiedUserWithContacts, authentication.LoadUserConsumerOptions.WithConsumerGroups)
 		if err != nil {
 			return err
 		}

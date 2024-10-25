@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"testing"
@@ -28,6 +29,43 @@ type TestWorker struct {
 	client           cdsclient.WorkerInterface
 	Params           []sdk.Parameter
 	logBuffer        bytes.Buffer
+}
+
+func (*TestWorker) V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error) {
+	panic("unimplemented")
+}
+
+func (*TestWorker) V2GetCacheSignature(ctx context.Context, cacheKey string) (*workerruntime.CDNSignature, error) {
+	panic("unimplemented")
+}
+func (*TestWorker) V2GetCacheLink(ctx context.Context, cacheKey string) (*sdk.CDNItemLinks, error) {
+	panic("unimplemented")
+}
+
+// V2GetJobContext implements workerruntime.Runtime.
+func (*TestWorker) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
+	panic("unimplemented")
+}
+
+// V2GetJobRun implements workerruntime.Runtime.
+func (*TestWorker) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
+	panic("unimplemented")
+}
+
+func (*TestWorker) V2GetRunResult(ctx context.Context, filter workerruntime.V2FilterRunResult) (*workerruntime.V2GetResultResponse, error) {
+	panic("unimplemented")
+}
+
+func (w *TestWorker) ClientV2() cdsclient.V2WorkerInterface {
+	return nil
+}
+
+func (w *TestWorker) PluginGet(pluginName string) (*sdk.GRPCPlugin, error) {
+	return nil, nil
+}
+
+func (w *TestWorker) PluginGetBinary(name, os, arch string, wr io.Writer) error {
+	return nil
 }
 
 func (w *TestWorker) GetJobIdentifiers() (int64, int64, int64) {
@@ -63,10 +101,15 @@ func (w *TestWorker) Blur(i interface{}) error {
 	return nil
 }
 
-func (w *TestWorker) GetPlugin(t string) *sdk.GRPCPlugin {
+func (w *TestWorker) GetIntegrationPlugin(t string) *sdk.GRPCPlugin {
 	return nil
 }
+func (w *TestWorker) GetActionPlugin(t string) *sdk.GRPCPlugin {
+	return nil
+}
+func (w *TestWorker) SetActionPlugin(p *sdk.GRPCPlugin) {
 
+}
 func (w *TestWorker) Parameters() []sdk.Parameter {
 	return w.Params
 }
@@ -144,6 +187,22 @@ func (w *TestWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*wo
 		Type:    sdk.KeyType(key.Type),
 		PKey:    installedKeyPath,
 	}, nil
+}
+
+func (w *TestWorker) V2AddRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
+	return nil, nil
+}
+
+func (w *TestWorker) V2UpdateRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
+	return nil, nil
+}
+
+func (w *TestWorker) V2RunResultsSynchronize(ctx context.Context) error {
+	return nil
+}
+
+func (w *TestWorker) AddStepOutput(ctx context.Context, outputName string, outputValue string) {
+	return
 }
 
 var _ workerruntime.Runtime = new(TestWorker)

@@ -62,6 +62,14 @@ type EventProjectKeyDelete struct {
 	Key ProjectKey `json:"key"`
 }
 
+type EventProjectKeyDisable struct {
+	Key ProjectKey `json:"key"`
+}
+
+type EventProjectKeyEnable struct {
+	Key ProjectKey `json:"key"`
+}
+
 // EventProjectVCSServerAdd represents the event when adding a project vcs server
 type EventProjectVCSServerAdd struct {
 	VCSServerName string `json:"vcs_server"`
@@ -86,4 +94,21 @@ type EventProjectIntegrationUpdate struct {
 // EventProjectIntegrationDelete represents the event when deleting a project integration
 type EventProjectIntegrationDelete struct {
 	Integration ProjectIntegration `json:"integration"`
+}
+
+type EventProjectRepositoryDelete struct {
+	Repository ProjectRepository `json:"repository"`
+	VCS        VCSProject        `json:"vcs"`
+}
+
+type EventProjectRepositoryAdd struct {
+	Repository ProjectRepository `json:"repository"`
+	VCS        VCSProject        `json:"vcs"`
+}
+
+type EventProjectRepositoryAnalyze struct {
+	RepositoryID string `json:"repository_id"`
+	VCSID        string `json:"vcs_id"`
+	AnalysisID   string `json:"analysis_id"`
+	Status       string `json:"status"`
 }

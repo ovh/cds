@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -40,7 +41,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -168,7 +169,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
@@ -322,7 +323,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -438,7 +439,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -572,7 +573,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -689,7 +690,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -791,30 +792,6 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	lastrun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithTests: true})
 	require.NoError(t, err)
 
-	vuln := sdk.Vulnerability{
-		ApplicationID: app.ID,
-		Ignored:       false,
-		Component:     "lodash",
-		CVE:           "",
-		Description:   "",
-		FixIn:         "",
-		Origin:        "",
-		Severity:      "high",
-		Title:         "",
-		Version:       "",
-		Link:          "",
-	}
-	report := sdk.WorkflowNodeRunVulnerabilityReport{
-		ApplicationID:     app.ID,
-		WorkflowRunID:     lastrun.ID,
-		WorkflowNodeRunID: lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID,
-		Num:               lastrun.Number,
-		Report: sdk.WorkflowNodeRunVulnerability{
-			Vulnerabilities: []sdk.Vulnerability{vuln},
-		},
-	}
-	assert.NoError(t, workflow.InsertVulnerabilityReport(db, &report))
-
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -833,7 +810,6 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	var nr sdk.WorkflowNodeRun
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &nr))
-	assert.Equal(t, 1, len(nr.VulnerabilitiesReport.Report.Vulnerabilities))
 }
 
 func Test_postWorkflowRunHandler(t *testing.T) {
@@ -1237,13 +1213,12 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	require.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -1321,19 +1296,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 					Status: sdk.OperationStatusDone,
 				}
 				if err := enc.Encode(ope); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/github/webhooks":
-				res := struct {
-					WebhooksSupported bool   `json:"webhooks_supported"`
-					WebhooksDisabled  bool   `json:"webhooks_disabled"`
-					WebhooksIcon      string `json:"webhooks_icon"`
-				}{
-					WebhooksDisabled:  false,
-					WebhooksIcon:      "",
-					WebhooksSupported: true,
-				}
-				if err := enc.Encode(res); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/foo/myrepo":
@@ -2688,7 +2650,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	require.NoError(t, errP)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{
@@ -2730,7 +2692,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -2877,7 +2839,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -2995,6 +2957,14 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	}
 	assert.NoError(t, workflow.UpdateNodeRun(db, nr))
 
+	nr.BuildParameters = append(nr.BuildParameters, sdk.Parameter{
+		Name:  "cds.build.image",
+		Type:  "string",
+		Value: "myimage",
+	})
+	require.NoError(t, workflow.UpdateNodeRunBuildParameters(db, nr.ID, nr.BuildParameters))
+	wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0] = *nr
+
 	opts = sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			OnlyFailedJobs: true,
@@ -3008,11 +2978,17 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 
 	wrr, _ = workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 
-	assert.Equal(t, sdk.StatusBuilding, wrr.Status)
-	assert.Equal(t, firstJobEnd.Unix(), wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Start.Unix())
-	assert.NotEqual(t, firstJobEnd, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Start)
-	assert.Equal(t, sdk.StatusSuccess, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Status)
-	assert.Equal(t, sdk.StatusWaiting, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Status)
+	require.Equal(t, sdk.StatusBuilding, wrr.Status)
+	require.Equal(t, firstJobEnd.Unix(), wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Start.Unix())
+	require.NotEqual(t, firstJobEnd, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Start)
+	require.Equal(t, sdk.StatusSuccess, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Status)
+	require.Equal(t, sdk.StatusWaiting, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Status)
+
+	mapParams := sdk.ParametersToMap(wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].BuildParameters)
+	p, has := mapParams["cds.build.image"]
+	require.True(t, has)
+	require.Equal(t, p, "myimage")
+
 }
 
 func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
@@ -3036,7 +3012,7 @@ func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(ctx, db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(ctx, db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,

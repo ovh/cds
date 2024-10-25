@@ -1,0 +1,55 @@
+:host {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+
+    app-entity-json-form {
+        flex: 1;
+        overflow: hidden;
+        overflow-y: auto;
+
+        &.disableSelection {
+            user-select: none;
+        }
+    }
+
+    app-resizable-panel {
+        height: 100%;
+
+        ::ng-deep {
+            .ant-tabs-tab {
+                padding: 3px 16px !important;
+                cursor: inherit !important;
+
+                :host-context(.night) & {
+                    background-color: #1e1e1e;
+                    border-bottom-color: #1e1e1e !important;
+                }
+            }
+
+            .ant-tabs-tab-btn {
+                color: #979797;
+
+                :host-context(.night) & {
+                    color: #828282;
+                }
+            }
+
+            nz-tabs-nav {
+                margin: 0;
+            }
+        }
+
+        nz-code-editor {
+            height: 100%;
+            border-left: 1px solid #f0f0f0;
+
+            :host-context(.night) & {
+                background-color: #1e1e1e;
+                border-left: 1px solid #303030;
+            }
+        }
+    }
+}

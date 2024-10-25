@@ -46,7 +46,7 @@ options:
 ```
 
 ```sh
-cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-github.yml
+cdsctl project vcs import YOUR_CDS_PROJECT_KEY vcs-github.yml
 ```
 
 ### Add a repository webhook on a workflow
@@ -74,7 +74,7 @@ The webhook is automatically created on GitHub.
 ### **My CDS is not accessible from GitHub, how can I do?**
 
 When someone git push on your Git Repository, GitHub have to call your CDS to run your CDS Workflow.
-This is the behaviour of the [RepositoryWebhook]({{<relref "/docs/concepts/workflow/hooks/git-repo-webhook.md">}}). But if your CDS is not reacheable from GitHub, how can you do?
+This is the behaviour of the [RepositoryWebhook]({{<relref "/docs/concepts/workflow/hooks/git-repo-webhook.md">}}). But if your CDS is not reachable from GitHub, how can you do?
 
 By chance, you have two choices :) 
 

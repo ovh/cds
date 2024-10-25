@@ -373,10 +373,14 @@ func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) 
 
 	// consumer not found, create it
 	if signinToken == "" {
-		resCreate, err := client.AuthConsumerCreateForUser(username, sdk.AuthConsumer{
-			Name:         consumerName,
-			Description:  "Consumer created with cdsctl login",
-			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...),
+		resCreate, err := client.AuthConsumerCreateForUser(username, sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				Name:        consumerName,
+				Description: "Consumer created with cdsctl login",
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
+				ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...),
+			},
 		})
 		if err != nil {
 			return "", "", cli.WrapError(err, "cdsctl: failed to create consumer")
@@ -463,14 +467,14 @@ func loginVerifyFunc(v cli.Values) error {
 	}
 
 	token := v.GetString("token")
-	splittedToken := strings.Split(token, ":")
-	if len(splittedToken) != 2 {
+	splitToken := strings.Split(token, ":")
+	if len(splitToken) != 2 {
 		return cli.NewError("Invalid given token")
 	}
 
 	req := sdk.AuthConsumerSigninRequest{
-		"state": splittedToken[0],
-		"code":  splittedToken[1],
+		"state": splitToken[0],
+		"code":  splitToken[1],
 	}
 
 	// For first connection ask for an optional init token

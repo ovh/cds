@@ -3,16 +3,13 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -27,7 +24,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	workers, err := h.CDSClient().WorkerList(ctx)
+	workers, err := h.WorkerList(ctx)
 	if err != nil {
 		return err
 	}
@@ -46,7 +43,14 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 			errImagePull := (container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull")
 			if terminated || errImagePull {
 				toDelete = true
-				log.Debug(ctx, "pod %s/%s is terminated or in error", pod.Namespace, pod.Name)
+				var info string
+				if terminated {
+					info = fmt.Sprintf("container.State.Terminated.Reason: %v msg: %v", container.State.Terminated.Reason, container.State.Terminated.Message)
+				}
+				if errImagePull {
+					info += fmt.Sprintf("container.State.Waiting.Reason: %v msg: %v", container.State.Waiting.Reason, container.State.Waiting.Message)
+				}
+				log.Debug(ctx, "pod %s/%s is terminated or in error (terminated:%t errImagePull:%t) - info: %v", pod.Namespace, pod.Name, terminated, errImagePull, info)
 				break
 			}
 		}
@@ -54,7 +58,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		if !toDelete {
 			var found bool
 			for _, w := range workers {
-				if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.Name {
+				if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.Name() {
 					found = true
 					break
 				}
@@ -66,9 +70,9 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		}
 
 		if toDelete {
-			// If no job identifiers, no services on pod
-			jobIdentifiers := getJobIdentiers(labels)
-			if jobIdentifiers != nil {
+			// If no annotation LabelServiceJobName, no services on pod
+			if annotations[hatchery.LabelServiceJobName] != "" {
+				labels[hatchery.LabelServiceJobName] = annotations[hatchery.LabelServiceJobName]
 				// Browse container to send end log for each service
 				servicesLogs := make([]cdslog.Message, 0)
 				for _, container := range pod.Spec.Containers {
@@ -80,29 +84,20 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 						log.Error(ctx, "getServiceLogs> cannot find service id in the container name (%s) : %v", container.Name, subsStr)
 						continue
 					}
-					reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
-					finalLog := cdslog.Message{
-						Level: logrus.InfoLevel,
-						Value: "End of Job",
-						Signature: cdn.Signature{
-							Service: &cdn.SignatureService{
-								HatcheryID:      h.Service().ID,
-								HatcheryName:    h.ServiceName(),
-								RequirementID:   reqServiceID,
-								RequirementName: subsStr[0][2],
-								WorkerName:      pod.ObjectMeta.Name,
-							},
-							ProjectKey:   labels[hatchery.LabelServiceProjectKey],
-							WorkflowName: labels[hatchery.LabelServiceWorkflowName],
-							WorkflowID:   jobIdentifiers.WorkflowID,
-							RunID:        jobIdentifiers.RunID,
-							NodeRunName:  labels[hatchery.LabelServiceNodeRunName],
-							JobName:      annotations[hatchery.LabelServiceJobName],
-							JobID:        jobIdentifiers.JobID,
-							NodeRunID:    jobIdentifiers.NodeRunID,
-							Timestamp:    time.Now().UnixNano(),
-						},
+					labels[hatchery.LabelServiceID] = subsStr[0][1]
+					labels[hatchery.LabelServiceReqName] = subsStr[0][2]
+					labels[hatchery.LabelServiceWorker] = pod.ObjectMeta.Name
+
+					// If no job identifier, no service on the pod
+					jobIdentifiers := hatchery.GetServiceIdentifiersFromLabels(labels)
+					if jobIdentifiers == nil {
+						continue
 					}
+
+					finalLog := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, labels)
+					finalLog.Value = "End of Job"
+					finalLog.Signature.Timestamp = time.Now().UnixNano()
+
 					servicesLogs = append(servicesLogs, finalLog)
 				}
 				if len(servicesLogs) > 0 {
@@ -133,6 +128,11 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 				globalErr = err
 				log.Error(ctx, "hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
 			}
+
+			if err := h.deleteSecretByWorkerName(ctx, labels[LABEL_WORKER_NAME]); err != nil {
+				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secret for worker %s", labels[LABEL_WORKER_NAME]))
+			}
+
 			log.Debug(ctx, "pod %s/%s killed", pod.Namespace, pod.Name)
 		}
 	}

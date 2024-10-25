@@ -2,6 +2,7 @@ package purge
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -52,6 +53,9 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 		return err
 	}
 	for _, wf := range wfs {
+		ctx = context.WithValue(ctx, log.Field("action_metadata_project_key"), wf.ProjectKey)
+		ctx = context.WithValue(ctx, log.Field("action_metadata_workflow_name"), wf.Name)
+
 		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
 		if !enabled {
 			continue
@@ -80,19 +84,10 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			}
 			app = *appDB
 			if app.RepositoryFullname != "" {
-				tx, err := db.Begin()
-				if err != nil {
-					return sdk.WithStack(err)
-				}
 				//Get the RepositoriesManager Client
-				vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, wf.ProjectKey, app.VCSServer)
+				vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, db, store, wf.ProjectKey, app.VCSServer)
 				if err != nil {
-					_ = tx.Rollback()
 					return sdk.WithStack(err)
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
 				}
 			}
 		}
@@ -111,7 +106,9 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	var nbRunsAnalyzed int64
 	limit := 50
 	offset := 0
+	eventErrorMsg := make([]string, 0)
 	for {
+
 		wfRuns, _, _, count, err := workflow.LoadRunsSummaries(ctx, db, wf.ProjectKey, wf.Name, offset, limit, nil)
 		if err != nil {
 			return err
@@ -133,7 +130,13 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 					if vcsClient != nil {
 						forkBranches, err = getBranches(ctx, gitRepo, vcsClient)
 						if err != nil {
-							return err
+							log.ErrorWithStackTrace(ctx, err)
+							version := strconv.FormatInt(run.Number, 10)
+							if run.Version != nil {
+								version = *run.Version
+							}
+							eventErrorMsg = append(eventErrorMsg, fmt.Sprintf("unable to get branch from fork %s for run %s", gitRepo, version))
+							continue
 						}
 					}
 				}
@@ -150,15 +153,19 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			}
 			if err != nil {
 				log.Error(ctx, "error on run %v:%d err:%v", wf.Name, run.Number, err)
+				version := strconv.FormatInt(run.Number, 10)
+				if run.Version != nil {
+					version = *run.Version
+				}
+				eventErrorMsg = append(eventErrorMsg, fmt.Sprintf("unable to apply retention policy for run %s", version))
 				continue
-
 			}
 		}
 
 		if count > offset+limit {
 			offset += limit
 			if u != nil {
-				event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "INCOMING", "", runs, nbRunsAnalyzed, u)
+				event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "INCOMING", "", nil, runs, nbRunsAnalyzed, u)
 				runs = runs[:0]
 			}
 			continue
@@ -166,7 +173,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 		break
 	}
 	if u != nil {
-		event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "DONE", "", runs, nbRunsAnalyzed, u)
+		event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "DONE", "", eventErrorMsg, runs, nbRunsAnalyzed, u)
 	}
 	return nil
 }
@@ -175,7 +182,7 @@ func getBranches(ctx context.Context, repo string, vcsClient sdk.VCSAuthorizedCl
 	branchesMap := make(map[string]struct{})
 	branches, err := vcsClient.Branches(ctx, repo, sdk.VCSBranchesFilter{})
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "cannot retrieve branches for repo %q", repo)
 	}
 	log.Info(ctx, "Purge getting branch for repo %s - count: %d", repo, len(branches))
 	defaultBranchFound := false
@@ -291,11 +298,11 @@ func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run s
 	if has {
 		_, exist = branchesMap[b]
 	}
-	if has && vcsClient == nil {
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "vcsClient nil but git branch exists")
+	if vcsClient != nil {
+		// Only inject the "git_branch_exist" variable if a vcs client exists to make sure that its value is accurate
+		vars[RunGitBranchExist] = strconv.FormatBool(exist)
 	}
 	vars[RunHasGitBranch] = strconv.FormatBool(has)
-	vars[RunGitBranchExist] = strconv.FormatBool(exist)
 
 	vars[RunStatus] = run.Status
 

@@ -1,0 +1,13 @@
+name: addRunResult
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  Create a CDS run result from an artifact
+inputs:
+  path:
+    required: true
+  type:
+    required: true  
+  payload:
+    required: false
+

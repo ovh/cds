@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
+	"github.com/rockbears/yaml"
 
 	"github.com/jfrog/jfrog-cli-core/v2/artifactory/commands/distribution"
 	"github.com/jfrog/jfrog-cli-core/v2/common/commands"
@@ -17,6 +18,7 @@ import (
 	"github.com/jfrog/jfrog-cli/utils/cliutils"
 	distributionServicesUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
 
+	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
@@ -30,7 +32,7 @@ type artifactoryReleaseBundleCreatePlugin struct {
 	actionplugin.Common
 }
 
-func (actPlugin *artifactoryReleaseBundleCreatePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
+func (p *artifactoryReleaseBundleCreatePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
 		Name:        "plugin-artifactory-release-bundle-create",
 		Author:      "François Samin <francois.samin@corp.ovh.com>",
@@ -39,22 +41,46 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Manifest(ctx context.Cont
 	}, nil
 }
 
-func (actPlugin *artifactoryReleaseBundleCreatePlugin) PrepareSpecFiles(ctx context.Context, specification string) (*speccore.SpecFiles, error) {
+func (p *artifactoryReleaseBundleCreatePlugin) PrepareSpecFiles(ctx context.Context, specification string) (*speccore.SpecFiles, error) {
 	var content = []byte(specification)
 	var specFiles speccore.SpecFiles
 	if err := yaml.Unmarshal(content, &specFiles); err != nil {
-		return nil, errors.Errorf("invalid given spec files: %v", err)
+		return nil, errors.Wrapf(err, "invalid given spec files")
 	}
 
-	err := spec.ValidateSpec(specFiles.Files, true, true, false)
-	if err != nil {
+	if err := spec.ValidateSpec(specFiles.Files, false, true, false); err != nil {
 		return nil, err
 	}
 
 	return &specFiles, nil
 }
 
+func (p *artifactoryReleaseBundleCreatePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
+		Status: sdk.StatusSuccess,
+	}
+	if err := p.perform(ctx, q); err != nil {
+		res.Status = sdk.StatusFail
+		res.Details = fmt.Sprintf("%v", err)
+	}
+	return stream.Send(res)
+}
+
 func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	res := &actionplugin.ActionResult{
+		Status: sdk.StatusSuccess,
+	}
+	if err := actPlugin.perform(ctx, q); err != nil {
+		res.Status = sdk.StatusFail
+		res.Details = fmt.Sprintf("%v", err)
+	}
+	return res, nil
+}
+
+func (p *artifactoryReleaseBundleCreatePlugin) perform(ctx context.Context, q *actionplugin.ActionQuery) error {
 	name := q.GetOptions()["name"]
 	version := q.GetOptions()["version"]
 	description := q.GetOptions()["description"]
@@ -70,19 +96,39 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 		token = q.GetOptions()["cds.integration.artifact_manager.release.token"]
 		url = q.GetOptions()["cds.integration.artifact_manager.distribution.url"]
 
+		jobContext, err := grpcplugins.GetJobContext(ctx, &p.Common)
+		if err != nil {
+			return err
+		}
+		if jobContext.Integrations != nil && jobContext.Integrations.ArtifactManager.Name != "" {
+			integration := jobContext.Integrations.ArtifactManager
+
+			artiURL = integration.Get(sdk.ArtifactoryConfigURL)
+			artiToken = integration.Get(sdk.ArtifactoryConfigToken)
+
+			token = integration.Get(sdk.ArtifactoryConfigReleaseToken)
+			url = integration.Get(sdk.ArtifactoryConfigDistributionURL)
+		}
+
 		if url == "" {
 			url = artiURL
+			if url == "" {
+				url = os.Getenv("CDS_INTEGRATION_ARTIFACT_MANAGER_URL")
+			}
 		}
 		if token == "" {
 			token = artiToken
+			if token == "" {
+				token = os.Getenv("CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN")
+			}
 		}
 	}
 
 	if url == "" {
-		return actionplugin.Fail("missing Artifactory URL")
+		return fmt.Errorf("missing Artifactory URL")
 	}
 	if token == "" {
-		return actionplugin.Fail("missing Artifactory Distribution Token")
+		return fmt.Errorf("missing Artifactory Distribution Token")
 	}
 
 	fmt.Printf("Preparing release bundle %q version %q\n", name, version)
@@ -92,9 +138,9 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 	releaseBundleParams.ReleaseNotesSyntax = "markdown"
 	releaseBundleParams.SignImmediately = true
 
-	releaseBundleSpecs, err := actPlugin.PrepareSpecFiles(ctx, specification)
+	releaseBundleSpecs, err := p.PrepareSpecFiles(ctx, specification)
 	if err != nil {
-		return actionplugin.Fail(err.Error())
+		return err
 	}
 
 	rtDetails := new(config.ServerDetails)
@@ -118,15 +164,9 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 	}
 
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return &actionplugin.ActionResult{
-			Status: sdk.StatusFail,
-		}, nil
+		return err
 	}
-
-	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess,
-	}, nil
+	return nil
 }
 
 func main() {

@@ -16,18 +16,12 @@
 }
 
 .labelFeature {
-  position: relative;
-  top: -3px;
-  margin-left: 10px;
-  margin-top: 5px;
-
-  nz-tag {
+    margin-right: 10px;
     cursor: pointer;
-  }
 
-  i {
-    margin-right: 5px;
-  }
+    i {
+        margin-right: 5px;
+    }
 }
 
 nz-spin {

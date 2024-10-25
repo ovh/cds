@@ -5,14 +5,9 @@ package namesgenerator
 import (
 	"fmt"
 	"math/rand"
-	"time"
 
 	"github.com/ovh/cds/sdk/slug"
 )
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
 
 var (
 	left = [...]string{
@@ -242,9 +237,6 @@ var (
 
 		// Pafnuty Chebyshev - Russian mathematician. He is known fo his works on probability, statistics, mechanics, analytical geometry and number theory https://en.wikipedia.org/wiki/Pafnuty_Chebyshev
 		"chebyshev",
-
-		// Clifford Christopher Cocks - British mathematician and cryptographer employed by the GCHQ. Invented in 1973 an equivalent of what is now known as the RSA public-key cryptosystem (Rivest, Shamir and Adleman first publicly described RSA in 1978). https://en.wikipedia.org/wiki/Clifford_Cocks
-		"cocks",
 
 		// Bram Cohen - American computer programmer and author of the BitTorrent peer-to-peer protocol. https://en.wikipedia.org/wiki/Bram_Cohen
 		"cohen",
@@ -882,14 +874,8 @@ func GetRandomNameCDSWithMaxLength(maxLength int) string {
 // A worker name must be 63 char max, without '.' and '_', "/" -> replaced by '-'
 const maxWorkerNameLength = 63
 
-func GenerateWorkerName(model, prefix string) string {
-	nameFirstPart := model
-	if len(prefix) > 0 {
-		nameFirstPart = prefix + "-" + model
-	}
-	if len(nameFirstPart) > maxWorkerNameLength-10 {
-		nameFirstPart = nameFirstPart[:maxWorkerNameLength-10]
-	}
+func GenerateWorkerName(prefix string) string {
+	nameFirstPart := prefix
 	remainingLength := maxWorkerNameLength - len(nameFirstPart) - 1
 	random := GetRandomNameCDSWithMaxLength(remainingLength)
 	return slug.Convert(nameFirstPart + "-" + random)

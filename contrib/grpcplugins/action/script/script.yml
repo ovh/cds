@@ -1,0 +1,10 @@
+name: script
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  This action execute a script
+inputs:
+  content:
+    type: text
+    description: The script to execute
+    required: true

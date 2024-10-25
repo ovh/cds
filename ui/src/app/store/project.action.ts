@@ -8,6 +8,7 @@ import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
 import { Environment } from 'app/model/environment.model';
+import { VariableSet } from 'app/model/variablesets.model';
 
 // Use to load fetched Project in our app
 export class LoadProject {
@@ -56,6 +57,28 @@ export class DeleteProjectFromCache {
 export class UpdateFavoriteProject {
     static readonly type = '[Project] Update Project Favorite';
     constructor(public payload: { projectKey: string }) { }
+}
+
+//  ------- Variable Sets ---- //
+export class FetchVariableSetsInProject {
+    static readonly type = '[Project] Fetch VariableSets in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class ResyncVariableSetsInProject {
+    static readonly type = '[Project] Resync Variable Sets in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class LoadVariableSetsInProject {
+    static readonly type = '[Project] Load Variable Sets in Project';
+    constructor(public payload: VariableSet[]) { }
+}
+export class DeleteVariableSetInProject {
+    static readonly type = '[Project] Delete Variable Set in Project';
+    constructor(public payload: VariableSet) { }
+}
+export class AddVariableSetInProject {
+    static readonly type = '[Project] Add VariableSet in Project';
+    constructor(public name: string) { }
 }
 
 //  ------- Variable --------- //
@@ -220,14 +243,6 @@ export class DeleteKeyInProject {
 export class ConnectRepositoryManagerInProject {
     static readonly type = '[Project] Connect Repository Manager in Project';
     constructor(public payload: { projectKey: string, repoManager: string }) { }
-}
-export class CallbackRepositoryManagerInProject {
-    static readonly type = '[Project] Callback Repository Manager in Project';
-    constructor(public payload: { projectKey: string, repoManager: string, requestToken: string, code: string }) { }
-}
-export class CallbackRepositoryManagerBasicAuthInProject {
-    static readonly type = '[Project] Callback Repository Basic Auth Manager in Project';
-    constructor(public payload: { projectKey: string, repoManager: string, basicUser: string, basicPassword: string }) { }
 }
 export class DisconnectRepositoryManagerInProject {
     static readonly type = '[Project] Disconnect Repository Manager in Project';

@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 export enum FeatureNames {
     WorkflowRetentionPolicy = 'workflow-retention-policy',
     WorkflowRetentionMaxRuns = 'workflow-retention-maxruns',
-    WorkflowV3 = 'workflow-v3'
+    AllAsCode = 'all-as-code'
 }
 
 @Injectable()

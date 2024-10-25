@@ -12,12 +12,79 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (b *bitbucketClient) ListContent(_ context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
-	return nil, sdk.WithStack(sdk.ErrNotImplemented)
+func (b *bitbucketClient) ListContent(ctx context.Context, repo string, commit, dir string, offset, limit string) ([]sdk.VCSContent, error) {
+	_, end := telemetry.Span(ctx, "bitbucketserver.GetArchive", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
+
+	t := strings.Split(repo, "/")
+	if len(t) != 2 {
+		return nil, sdk.WithStack(sdk.ErrRepoNotFound)
+	}
+
+	path := fmt.Sprintf("/projects/%s/repos/%s/files/%s", t[0], t[1], dir)
+	params := url.Values{}
+	params.Set("at", commit)
+	params.Set("start", offset)
+	params.Set("limit", limit)
+
+	var contents ListContentResponse
+	if err := b.do(ctx, http.MethodGet, "core", path, params, nil, &contents, Options{DisableCache: true}); err != nil {
+		return nil, err
+	}
+
+	vcsContents := make([]sdk.VCSContent, 0)
+	for _, c := range contents.Values {
+		parts := strings.Split(c, "/")
+		for i, p := range parts {
+			var isFile, isDirectory bool
+
+			if i == len(parts)-1 {
+				isFile = true
+			} else {
+				isDirectory = true
+			}
+			vcsContents = append(vcsContents, sdk.VCSContent{
+				Name:        p,
+				IsFile:      isFile,
+				IsDirectory: isDirectory,
+			})
+		}
+	}
+
+	return vcsContents, nil
 }
 
 func (b *bitbucketClient) GetContent(ctx context.Context, repo string, commit, file string) (sdk.VCSContent, error) {
-	return sdk.VCSContent{}, sdk.WithStack(sdk.ErrNotImplemented)
+	_, end := telemetry.Span(ctx, "bitbucketserver.GetContent", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
+
+	t := strings.Split(repo, "/")
+	if len(t) != 2 {
+		return sdk.VCSContent{}, sdk.WithStack(sdk.ErrRepoNotFound)
+	}
+
+	path := fmt.Sprintf("/projects/%s/repos/%s/browse/%s", t[0], t[1], file)
+	params := url.Values{}
+	params.Set("at", commit)
+
+	var content FileContentResponse
+	if err := b.do(ctx, http.MethodGet, "core", path, params, nil, &content, Options{DisableCache: true}); err != nil {
+		return sdk.VCSContent{}, err
+	}
+
+	if len(content.Lines) == 0 {
+		return sdk.VCSContent{}, sdk.NewErrorFrom(sdk.ErrInvalidData, "empty file found")
+	}
+	var vcsContent sdk.VCSContent
+	for i, l := range content.Lines {
+		if i != 0 {
+			vcsContent.Content += "\n"
+		}
+		vcsContent.Content += l.Text
+
+	}
+	vcsContent.IsFile = true
+	return vcsContent, nil
 }
 
 func (b *bitbucketClient) GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error) {

@@ -85,7 +85,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, data, getAPIConsumer(ctx),
+		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, data, getUserConsumer(ctx),
 			pipeline.ImportOptions{Force: force})
 		msgListString := translate(allMsg)
 		if globalError != nil {
@@ -101,7 +101,7 @@ func (api *API) importPipelineHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishPipelineAdd(ctx, proj.Key, *pip, getAPIConsumer(ctx))
+		event.PublishPipelineAdd(ctx, proj.Key, *pip, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
@@ -146,7 +146,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		pip, allMsg, err := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, data, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
+		pip, allMsg, err := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, data, getUserConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(allMsg)
 		if err != nil {
 			return sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline")
@@ -156,7 +156,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishPipelineAdd(ctx, proj.Key, *pip, getAPIConsumer(ctx))
+		event.PublishPipelineAdd(ctx, proj.Key, *pip, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}

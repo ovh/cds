@@ -50,7 +50,7 @@ systemctl daemon-reload
 set -e
 echo "Create the {{.SystemdServiceConfig.User}} User, Group and Directories"
 {{if not (eq .SystemdServiceConfig.User "root") -}}
-adduser --system --group {{.SystemdServiceConfig.User}}
+adduser --system --group {{.SystemdServiceConfig.User}} --home /home/{{.SystemdServiceConfig.User}} --shell /bin/bash
 {{end -}}
 mkdir -p /var/lib/{{.PackageName}}
 chown -R {{.SystemdServiceConfig.User}}:{{.SystemdServiceConfig.User}} /var/lib/{{.PackageName}}

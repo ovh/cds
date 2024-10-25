@@ -13,6 +13,6 @@ var cmdVersion = &cobra.Command{
 	Aliases: []string{"v"},
 	Short:   "Print the version of the worker binary",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(sdk.VersionString())
+		fmt.Printf("CDS %s version:%s os:%s architecture:%s git.hash:%s build.time:%s\n", sdk.BINARY, sdk.VERSION, sdk.GOOS, sdk.GOARCH, sdk.GITHASH, sdk.BUILDTIME)
 	},
 }

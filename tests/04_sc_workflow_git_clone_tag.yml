@@ -10,12 +10,6 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW6"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw6"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW6 ITSCWRKFLW6"
-  - script: |-
-      {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
-      if [ $? -ne 0 ]; then
-          {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
-      fi
-
 
 - name: import pipeline
   steps:
@@ -42,5 +36,5 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Success
-    retry: 30
-    delay: 10
+    retry: 300
+    delay: 1

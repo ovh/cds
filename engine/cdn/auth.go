@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
 var (
@@ -59,7 +60,7 @@ func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWrite
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 
-	return ctx, s.itemAccessCheck(ctx, *item)
+	return ctx, s.itemAccessCheck(ctx, req, *item)
 }
 
 func (s *Service) sessionID(ctx context.Context) string {
@@ -73,20 +74,27 @@ func (s *Service) sessionID(ctx context.Context) string {
 	return ""
 }
 
-func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
+func (s *Service) itemAccessCheck(ctx context.Context, req *http.Request, item sdk.CDNItem) error {
 	sessionID := s.sessionID(ctx)
-	if sessionID == "" {
+	signature, err := s.verifySignatureFromRequest(ctx, req)
+
+	if sessionID == "" && err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+	}
+
+	if sessionID == "" && signature == nil {
 		return sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
 	keyPermissionForSession := cache.Key(keyPermission, string(item.Type), item.APIRefHash, sessionID)
-
-	exists, err := s.Cache.Exist(keyPermissionForSession)
-	if err != nil {
-		return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to check if permission %s exists", keyPermissionForSession), sdk.ErrUnauthorized)
-	}
-	if exists {
-		return nil
+	if sessionID != "" {
+		exists, err := s.Cache.Exist(keyPermissionForSession)
+		if err != nil {
+			return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to check if permission %s exists", keyPermissionForSession), sdk.ErrUnauthorized)
+		}
+		if exists {
+			return nil
+		}
 	}
 
 	var projectKey string
@@ -96,6 +104,9 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 		logRef, _ := item.GetCDNLogApiRef()
 		projectKey = logRef.ProjectKey
 		workflowID = logRef.WorkflowID
+	case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
+		logRef, _ := item.GetCDNLogApiRefV2()
+		projectKey = logRef.ProjectKey
 	case sdk.CDNTypeItemRunResult:
 		artRef, _ := item.GetCDNRunResultApiRef()
 		projectKey = artRef.ProjectKey
@@ -103,21 +114,60 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 	case sdk.CDNTypeItemWorkerCache:
 		artRef, _ := item.GetCDNWorkerCacheApiRef()
 		projectKey = artRef.ProjectKey
+	case sdk.CDNTypeItemRunResultV2:
+		artRef, _ := item.GetCDNRunResultApiRefV2()
+		projectKey = artRef.ProjectKey
+	case sdk.CDNTypeItemWorkerCacheV2:
+		artRef, _ := item.GetCDNWorkerCacheApiRef()
+		projectKey = artRef.ProjectKey
 	default:
 		return sdk.WrapError(sdk.ErrInvalidData, "wrong item type %s", item.Type)
 	}
 
 	switch item.Type {
+	case sdk.CDNTypeItemRunResultV2:
+		artRef, _ := item.GetCDNRunResultApiRefV2()
+		if sessionID != "" {
+			if err := s.Client.ProjectV2Access(ctx, projectKey, sessionID, sdk.CDNTypeItemRunResultV2); err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+			}
+			return nil
+		} else if signature != nil {
+			// Any worker associated to the current workflow run can get all run results
+			if artRef.ProjectKey == signature.ProjectKey &&
+				artRef.WorkflowName == signature.WorkflowName &&
+				artRef.RunID == signature.WorkflowRunID {
+				return nil
+			}
+		}
+		return sdk.WithStack(sdk.ErrNotFound)
 	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemRunResult:
 		if err := s.Client.WorkflowAccess(ctx, projectKey, workflowID, sessionID, item.Type); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 		}
+	case sdk.CDNTypeItemWorkerCacheV2:
+		if sessionID != "" {
+			if err := s.Client.ProjectV2Access(ctx, projectKey, sessionID, sdk.CDNTypeItemRunResultV2); err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+			}
+			return nil
+		} else if signature != nil {
+			// Any worker associated to the current project can get the cache
+			if projectKey == signature.ProjectKey {
+				return nil
+			}
+		}
+		return sdk.WithStack(sdk.ErrNotFound)
 	case sdk.CDNTypeItemWorkerCache:
 		if err := s.Client.ProjectAccess(ctx, projectKey, sessionID, item.Type); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 		}
+	case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
+		if err := s.Client.HasProjectRole(ctx, projectKey, sessionID, sdk.ProjectRoleRead); err != nil {
+			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+		}
 	default:
-		return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	if err := s.Cache.SetWithTTL(keyPermissionForSession, true, 3600); err != nil {

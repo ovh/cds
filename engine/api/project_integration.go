@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
@@ -54,6 +55,11 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKeyWithHooksAllowed"]
 		integrationName := vars["integrationName"]
+
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		var projectIntegration sdk.ProjectIntegration
 		if err := service.UnmarshalBody(r, &projectIntegration); err != nil {
@@ -133,7 +139,8 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishUpdateProjectIntegration(ctx, p, projectIntegration, ppDB, getAPIConsumer(ctx))
+		event.PublishUpdateProjectIntegration(ctx, p, projectIntegration, ppDB, getUserConsumer(ctx))
+		event_v2.PublishProjectIntegrationEvent(ctx, api.Cache, sdk.EventIntegrationUpdated, p.Key, ppDB, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, projectIntegration, http.StatusOK)
 	}
@@ -144,6 +151,11 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKeyWithHooksAllowed"]
 		integrationName := vars["integrationName"]
+
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		p, err := project.Load(ctx, api.mustDB(), projectKey, project.LoadOptions.WithIntegrations)
 		if err != nil {
@@ -158,8 +170,9 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 		var deletedIntegration sdk.ProjectIntegration
 		for _, plat := range p.Integrations {
 			if plat.Name == integrationName {
-				//If the integration model is public, it's forbidden to delete the integration
-				if plat.Model.Public {
+				//If the integration model is public
+				// it's forbidden to delete the integration if not admin
+				if plat.Model.Public && !isAdmin(ctx) {
 					return sdk.WithStack(sdk.ErrForbidden)
 				}
 
@@ -178,7 +191,8 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 		if deletedIntegration.Model.Event {
 			event.DeleteEventIntegration(deletedIntegration.ID)
 		}
-		event.PublishDeleteProjectIntegration(ctx, p, deletedIntegration, getAPIConsumer(ctx))
+		event.PublishDeleteProjectIntegration(ctx, p, deletedIntegration, getUserConsumer(ctx))
+		event_v2.PublishProjectIntegrationEvent(ctx, api.Cache, sdk.EventIntegrationDeleted, projectKey, deletedIntegration, *u.AuthConsumerUser.AuthentifiedUser)
 		return nil
 	}
 }
@@ -200,6 +214,11 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
+
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		p, err := project.Load(ctx, api.mustDB(), projectKey, project.LoadOptions.WithIntegrations)
 		if err != nil {
@@ -266,7 +285,8 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishAddProjectIntegration(ctx, p, pp, getAPIConsumer(ctx))
+		event.PublishAddProjectIntegration(ctx, p, pp, getUserConsumer(ctx))
+		event_v2.PublishProjectIntegrationEvent(ctx, api.Cache, sdk.EventIntegrationCreated, projectKey, pp, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, pp, http.StatusOK)
 	}

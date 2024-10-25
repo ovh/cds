@@ -14,63 +14,33 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-type statusData struct {
-	key         string
-	buildNumber int64
-	status      string
-	url         string
-	hash        string
-	description string
-}
-
-// DEPRECATED VCS
-func (b *bitbucketClient) IsDisableStatusDetails(ctx context.Context) bool {
-	return false
-}
-
-func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
+func (client *bitbucketClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.SetStatus")
 	defer end()
 
-	if b.consumer.disableStatus {
-		log.Warn(ctx, "bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
-		return nil
-	}
-
-	var statusData statusData
-	var err error
-	switch event.EventType {
-	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		statusData, err = processWorkflowNodeRunEvent(event, b.consumer.uiURL, disableStatusDetails)
-	default:
-		return nil
-	}
-
-	if err != nil {
-		return sdk.WrapError(err, "bitbucketClient.SetStatus: Cannot process Event")
-	}
-
-	state := getBitbucketStateFromStatus(statusData.status)
+	state := getBitbucketStateFromStatus(buildStatus.Status)
 	status := Status{
-		Key:         statusData.key,
-		Name:        fmt.Sprintf("%s%d", statusData.key, statusData.buildNumber),
+		Key:         buildStatus.Context,
+		Name:        buildStatus.Title,
 		State:       state,
-		URL:         statusData.url,
-		Description: statusData.description,
+		URL:         buildStatus.URLCDS,
+		Description: buildStatus.Description,
 	}
 
 	values, err := json.Marshal(status)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to marshall status")
+		return sdk.WrapError(err, "unable to marshal status")
 	}
 
-	if err := b.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil); err != nil {
+	log.Info(ctx, "sending build status for %s : %s %s - %s", buildStatus.GitHash, status.Key, status.Name, state)
+
+	if err := client.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", buildStatus.GitHash), nil, values, nil, Options{}); err != nil {
 		return sdk.WrapError(err, "Unable to post build-status name:%s status:%s", status.Name, state)
 	}
 	return nil
 }
 
-func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+func (client *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	ss := []Status{}
 
 	path := fmt.Sprintf("/commits/%s", ref)
@@ -86,7 +56,7 @@ func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref str
 		}
 
 		var response ResponseStatus
-		if err := b.do(ctx, "GET", "build-status", path, params, nil, &response, nil); err != nil {
+		if err := client.do(ctx, "GET", "build-status", path, params, nil, &response, Options{}); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get statuses")
 		}
 
@@ -133,33 +103,6 @@ const (
 	successful = "SUCCESSFUL"
 	failed     = "FAILED"
 )
-
-func processWorkflowNodeRunEvent(event sdk.Event, uiURL string, disableStatusDetails bool) (statusData, error) {
-	data := statusData{}
-	var eventNR sdk.EventRunWorkflowNode
-	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "cannot unmarshal payload")
-	}
-	data.key = fmt.Sprintf("%s-%s-%s",
-		event.ProjectKey,
-		event.WorkflowName,
-		eventNR.NodeName,
-	)
-	if !disableStatusDetails {
-		data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
-			uiURL,
-			event.ProjectKey,
-			event.WorkflowName,
-			eventNR.Number,
-		)
-	}
-	data.buildNumber = eventNR.Number
-	data.status = eventNR.Status
-	data.hash = eventNR.Hash
-	data.description = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
-
-	return data, nil
-}
 
 func getBitbucketStateFromStatus(status string) string {
 	switch status {

@@ -1,0 +1,190 @@
+<ng-container *ngIf="workflowRun">
+    <div class="content" [class.disableSelection]="resizing">
+
+        <!--  GRAPH -->
+        <div class="graph">
+            <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
+                <nz-page-header-title>
+                    <app-searchable [link]="['/project', projectKey, 'run']"
+                        [params]="{workflow: workflowRun.vcs_server+'/'+workflowRun.repository+'/'+workflowRun.workflow_name}">
+                        <a [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.vcs_server, 'repository', workflowRun.repository, 'workflow', workflowRun.workflow_name]"
+                            [queryParams]="{ref: workflowRun.workflow_ref}">
+                            {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}</a>
+                    </app-searchable>
+                    <span class="number">#{{workflowRun.run_number}}</span>
+                    <nz-select *ngIf="workflowRun.run_attempt > 1 && selectedRunAttempt" [ngModel]="selectedRunAttempt"
+                        (ngModelChange)="changeRunAttempt($event)" nzSize="small" title="Select run attempt">
+                        <nz-option *ngFor="let item of [].constructor(workflowRun.run_attempt); let i = index"
+                            [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
+                    </nz-select>
+                    <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
+                        (click)="navigatePanel('workflow')"><span nz-icon nzType="file-text"
+                            nzTheme="outline"></span></button>
+                    <button nz-button nzType="default" nzSize="small" title="Show workflow run contexts"
+                        (click)="navigatePanel('contexts')"><span nz-icon nzType="read"
+                            nzTheme="outline"></span></button>
+                </nz-page-header-title>
+                <nz-page-header-content>
+                    <span nz-typography nzType="secondary">
+                        Commit <a href="{{workflowRun.contexts.git.commit_web_url}}" target="_blank"
+                            rel="noopener noreferrer">{{workflowRun.contexts.git.sha?.substring(0,8)}}</a> - Semver
+                        <span nz-typography nzCopyable nzContent="{{workflowRun.contexts.git.semver_current}}"
+                            [nzCopyTooltips]="null"></span> -
+                        <a href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
+                            rel="noopener noreferrer">{{workflowRun.contexts.git.ref}}</a> by
+                        {{workflowRun.contexts.git.username}}
+                        on
+                        repository
+                        <a href="{{workflowRun.contexts.git.repository_web_url}}" target="_blank"
+                            rel="noopener noreferrer">{{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}</a>
+                        <span *ngIf="workflowRun.contexts.cds.workflow_template">
+                            <br />
+                            Generated from template
+                            <a
+                                [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.contexts.cds.workflow_template_vcs_server, 'repository', workflowRun.contexts.cds.workflow_template_repository, 'workflowtemplate', workflowRun.contexts.cds.workflow_template]">
+                                {{workflowRun.contexts.cds.workflow_template_vcs_server}}/{{workflowRun.contexts.cds.workflow_template_repository}}/{{workflowRun.contexts.cds.workflow_template}}</a>
+                            <span class="templateDetails" nz-icon nzType="eye" nzTheme="outline" nz-tooltip
+                                [nzTooltipTitle]="templateTooltip"></span>
+                            <ng-template #templateTooltip>
+                                Repository: <a href="{{workflowRun.contexts.cds.workflow_template_repository_web_url}}"
+                                    target="_blank"
+                                    rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_repository}}</a>
+                                <br /> Commit: <a href="{{workflowRun.contexts.cds.workflow_template_commit_web_url}}"
+                                    target="_blank"
+                                    rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_sha?.substring(0,8)}}</a>
+                                <br />Ref: <a href="{{workflowRun.contexts.cds.workflow_template_ref_web_url}}"
+                                    target="_blank"
+                                    rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_ref}}</a>
+                            </ng-template>
+                        </span>
+                    </span>
+                    <div *ngIf="workflowRun.annotations" class="annotations">
+                        <ng-container *ngFor="let annotation of workflowRun.annotations | keyvalue">
+                            <app-searchable [link]="['/project', projectKey, 'run']"
+                                [params]="generateAnnotationQueryParams(annotation)">
+                                <nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
+                                    title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
+                                    nzPopoverPlacement="bottom" [nzPopoverContent]="contentAnnotationWithValue">
+                                    <b>{{annotation.key}}:</b> {{annotation.value}}
+                                    <ng-template #contentAnnotationWithValue>
+                                        key: {{annotation.key}} - value: <span nz-typography nzCopyable
+                                            nzContent="{{annotation.value}}" [nzCopyTooltips]="null"></span>
+                                    </ng-template>
+                                </nz-tag>
+                                <span *ngIf="annotation.value === 'true'" nzColor="default"
+                                    title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
+                                    nzPopoverPlacement="bottom" [nzPopoverContent]="contentAnnotation">
+                                    {{annotation.key}}
+                                    <ng-template #contentAnnotation>
+                                        key: {{annotation.key}} - value: {{annotation.value}}
+                                    </ng-template>
+                                </span>
+                            </app-searchable>
+                        </ng-container>
+                    </div>
+                </nz-page-header-content>
+            </nz-page-header>
+            <div class="controls">
+                <button *ngIf="hasJobsFailed && !hasJobsNotTerminated" nz-button nzType="secondary" nzSize="large"
+                    title="Restart failed jobs" (click)="clickRestartJobs()">Restart
+                    failed jobs</button>
+                <button *ngIf="hasJobsNotTerminated" nz-button nzType="primary" nzSize="large" nzDanger
+                    title="Stop workflow run" (click)="clickStopRun()">Stop workflow run</button>
+            </div>
+            <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
+                [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
+                (onSelectJobRun)="navigatePanel('job', $event)" (onSelectHook)="navigatePanel('hook', $event)"
+                (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)"
+                #graph></app-stages-graph>
+        </div>
+
+        <!--  BOTTOM PANELS -->
+        <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
+            (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
+
+            <div class="bottom-panel">
+                <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+                <div *ngIf="selectedTab && selectedTab.key === 'infos'" class="infos">
+                    <div *ngFor="let info of workflowRunInfos" class="line">
+                        <span *ngIf="info.level === 'error'" class="error" nz-icon nzType="close-circle"
+                            nzTheme="fill"></span>
+                        <span *ngIf="info.level === 'warning'" class="warning" nz-icon nzType="warning"
+                            nzTheme="fill"></span>
+                        <span *ngIf="info.level==='info'" class="info" nz-icon nzType="info-circle"
+                            nzTheme="fill"></span>
+                        <div class="content">
+                            {{info.message}}
+                        </div>
+                        <div class="date">{{info.issued_at | date: 'YYYY-MM-dd HH:mm:ss.SSS Z'}}</div>
+                    </div>
+                </div>
+                <nz-table *ngIf="selectedTab && selectedTab.key === 'results'" class="results" [nsAutoHeightTable]="86"
+                    nzSize="small" [nzShowPagination]="false" [nzPageSize]="results?.length ?? 0" [nzData]="results"
+                    #autoHeightDirective=nsAutoHeightTable #resultsTable>
+                    <thead>
+                        <tr>
+                            <th nzWidth="100px">Type</th>
+                            <th>Label</th>
+                            <th>Identifier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="result" *ngFor="let result of resultsTable.data"
+                            (click)="navigatePanel('result', result.id)">
+                            <td>
+                                {{result.type}}
+                            </td>
+                            <td>
+                                {{result.label}}
+                            </td>
+                            <td>
+                                {{result.identifier}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </nz-table>
+                <app-run-tests *ngIf="selectedTab && selectedTab.key === 'tests'" [tests]="tests"
+                    (onSelectTest)="openPanel('test', $event)"></app-run-tests>
+                <ng-template #tabTestsTemplate>
+                    <div class="tests">
+                        Tests
+                        <span class="ok" *ngIf="tests && tests.ok > 0">
+                            <span nz-icon nzType="check" nzTheme="outline"></span>{{tests.ok}}
+                        </span>
+                        <span class="skipped" *ngIf="tests && tests.skipped > 0">
+                            <span nz-icon nzType="warning" nzTheme="fill"></span>{{tests.skipped}}
+                        </span>
+                        <span class="ko" *ngIf="tests && tests.ko > 0">
+                            <span nz-icon nzType="close" nzTheme="outline"></span>{{tests.ko}}
+                        </span>
+                    </div>
+                </ng-template>
+            </div>
+        </app-resizable-panel>
+    </div>
+
+    <!--  RIGHT PANELS -->
+    <app-resizable-panel *ngIf="selectedItemType" minSize="400" [initialSize]="jobPanelSize"
+        (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)"
+        (dblclick)="$event.stopPropagation(); dblClickOnPanel()">
+        <div class="controls">
+            <div class="control" (click)="clickClosePanel()">
+                <span nz-icon nzType="close" nzTheme="outline"></span>
+            </div>
+            <div class="control" [class.expand]="!panelExpanded" [class.expanded]="panelExpanded"
+                (click)="clickExpandPanel()">
+                <span nz-icon nzType="vertical-align-top" nzTheme="outline"></span>
+            </div>
+        </div>
+        <app-run-job *ngIf="selectedItemType === 'job'" [workflowRun]="workflowRun"
+            [jobRun]="selectedJobRun"></app-run-job>
+        <app-run-gate *ngIf="selectedItemType === 'gate'" [gateNode]="selectedJobGate" [run]="workflowRun"
+            (onSubmit)="onGateSubmit()"></app-run-gate>
+        <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"></app-run-hook>
+        <app-run-result *ngIf="selectedItemType === 'result'" [result]="selectedRunResult"></app-run-result>
+        <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"></app-run-workflow>
+        <app-run-contexts *ngIf="selectedItemType === 'contexts'" [run]="workflowRun"></app-run-contexts>
+        <app-run-test *ngIf="selectedItemType === 'test'" [test]="selectedTest"></app-run-test>
+    </app-resizable-panel>
+
+</ng-container>

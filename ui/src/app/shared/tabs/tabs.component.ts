@@ -1,22 +1,26 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, TemplateRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 
 export class Tab {
     title: string;
     icon: string;
+    iconTheme: string;
+    iconClassColor: string;
     key: string;
     default: boolean;
     template: TemplateRef<any>;
     warningText: string;
     warningTemplate: TemplateRef<any>;
     disabled: boolean;
+    link: string[];
 }
 
 @Component({
     selector: 'app-tabs',
     templateUrl: './tabs.html',
+    styleUrls: ['./tabs.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
@@ -29,32 +33,74 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     selected: Tab;
     queryParamsSub: Subscription;
 
-    constructor(private _route: ActivatedRoute, private _router: Router) { }
+    constructor(
+        private _route: ActivatedRoute,
+        private _router: Router,
+        private _cd: ChangeDetectorRef
+    ) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.select(this.tabs.find(t => t.default));
         this.queryParamsSub = this._route.queryParams.subscribe(params => {
-            if (params['tab'] && !this.disableNavigation) {
-                this.select(this.tabs.find(t => t.key === params['tab']));
+            if (!this.disableNavigation) {
+                if (params['tab']) {
+                    this.select(this.tabs.find(t => t.key === params['tab']));
+                } else {
+                    this.select(this.getDefaultTab());
+                }
             }
         });
     }
 
-    ngOnChanges() {
+    ngOnChanges(changes: SimpleChanges): void {
+        if (this.selected && !this.tabs.find(t => t.key === this.selected.key)) {
+            delete this.selected;
+        }
+
+        if (this.disableNavigation) {
+            const defaultChanged = changes.tabs && (changes.tabs.previousValue ?? []).find(t => t.default)?.key !== (changes.tabs.currentValue ?? []).find(t => t.default)?.key;
+            if (!this.selected || defaultChanged) {
+                this.select(this.getDefaultTab());
+                this._cd.markForCheck();
+            }
+            return;
+        }
+
+        if (this.selected && this._route.snapshot.queryParams['tab'] && this.selected.key !== this._route.snapshot.queryParams['tab']) {
+            delete this.selected;
+        }
+
         if (!this.selected) {
-            let default_tab = this.tabs.find(t => t.default);
-            if (default_tab) {
-                this.selected = default_tab;
+            const tab = this.tabs.find(t => t.key === this._route.snapshot.queryParams['tab']);
+            if (tab) {
+                this.select(tab);
             } else {
-                this.selected = this.tabs[0];
+                this.select(this.getDefaultTab());
             }
         }
+
+        this._cd.markForCheck();
+    }
+
+    getDefaultTab(): Tab {
+        let defaultTab = this.tabs.find(t => t.default);
+        if (defaultTab) {
+            return defaultTab;
+        }
+        return this.tabs[0];
     }
 
     clickSelect(tab: Tab) {
+        if (this.selected && this.selected.key === tab.key) {
+            return;
+        }
         if (tab.disabled) {
+            return;
+        }
+        if (tab.link?.length > 0) {
+            this._router.navigate(tab.link);
             return;
         }
         if (!this.disableNavigation) {

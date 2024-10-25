@@ -3,6 +3,7 @@ package hooks
 import "time"
 
 type GiteaEventPayload struct {
+	Action     string `json:"action"`
 	Secret     string `json:"secret"`
 	Ref        string `json:"ref"`    // refs/heads/branch_name
 	Before     string `json:"before"` // commit before
@@ -23,33 +24,335 @@ type GiteaEventPayload struct {
 			Username string `json:"username"`
 		} `json:"committer"`
 		Timestamp time.Time `json:"timestamp"`
+		Added     []string  `json:"added"`
+		Removed   []string  `json:"removed"`
+		Modified  []string  `json:"modified"`
 	} `json:"commits"`
+	PullRequest struct {
+		ID     int    `json:"id"`
+		URL    string `json:"url"`
+		Number int    `json:"number"`
+		User   struct {
+			ID                int       `json:"id"`
+			Login             string    `json:"login"`
+			LoginName         string    `json:"login_name"`
+			FullName          string    `json:"full_name"`
+			Email             string    `json:"email"`
+			AvatarURL         string    `json:"avatar_url"`
+			Language          string    `json:"language"`
+			IsAdmin           bool      `json:"is_admin"`
+			LastLogin         time.Time `json:"last_login"`
+			Created           time.Time `json:"created"`
+			Restricted        bool      `json:"restricted"`
+			Active            bool      `json:"active"`
+			ProhibitLogin     bool      `json:"prohibit_login"`
+			Location          string    `json:"location"`
+			Website           string    `json:"website"`
+			Description       string    `json:"description"`
+			Visibility        string    `json:"visibility"`
+			FollowersCount    int       `json:"followers_count"`
+			FollowingCount    int       `json:"following_count"`
+			StarredReposCount int       `json:"starred_repos_count"`
+			Username          string    `json:"username"`
+		} `json:"user"`
+		Title               string `json:"title"`
+		Body                string `json:"body"`
+		Labels              []any  `json:"labels"`
+		Milestone           any    `json:"milestone"`
+		Assignee            any    `json:"assignee"`
+		Assignees           any    `json:"assignees"`
+		RequestedReviewers  any    `json:"requested_reviewers"`
+		State               string `json:"state"`
+		IsLocked            bool   `json:"is_locked"`
+		Comments            int    `json:"comments"`
+		HTMLURL             string `json:"html_url"`
+		DiffURL             string `json:"diff_url"`
+		PatchURL            string `json:"patch_url"`
+		Mergeable           bool   `json:"mergeable"`
+		Merged              bool   `json:"merged"`
+		MergedAt            any    `json:"merged_at"`
+		MergeCommitSha      any    `json:"merge_commit_sha"`
+		MergedBy            any    `json:"merged_by"`
+		AllowMaintainerEdit bool   `json:"allow_maintainer_edit"`
+		Base                struct {
+			Label  string `json:"label"`
+			Ref    string `json:"ref"`
+			Sha    string `json:"sha"`
+			RepoID int    `json:"repo_id"`
+			Repo   struct {
+				ID    int `json:"id"`
+				Owner struct {
+					ID                int       `json:"id"`
+					Login             string    `json:"login"`
+					LoginName         string    `json:"login_name"`
+					FullName          string    `json:"full_name"`
+					Email             string    `json:"email"`
+					AvatarURL         string    `json:"avatar_url"`
+					Language          string    `json:"language"`
+					IsAdmin           bool      `json:"is_admin"`
+					LastLogin         time.Time `json:"last_login"`
+					Created           time.Time `json:"created"`
+					Restricted        bool      `json:"restricted"`
+					Active            bool      `json:"active"`
+					ProhibitLogin     bool      `json:"prohibit_login"`
+					Location          string    `json:"location"`
+					Website           string    `json:"website"`
+					Description       string    `json:"description"`
+					Visibility        string    `json:"visibility"`
+					FollowersCount    int       `json:"followers_count"`
+					FollowingCount    int       `json:"following_count"`
+					StarredReposCount int       `json:"starred_repos_count"`
+					Username          string    `json:"username"`
+				} `json:"owner"`
+				Name            string    `json:"name"`
+				FullName        string    `json:"full_name"`
+				Description     string    `json:"description"`
+				Empty           bool      `json:"empty"`
+				Private         bool      `json:"private"`
+				Fork            bool      `json:"fork"`
+				Template        bool      `json:"template"`
+				Parent          any       `json:"parent"`
+				Mirror          bool      `json:"mirror"`
+				Size            int       `json:"size"`
+				Language        string    `json:"language"`
+				LanguagesURL    string    `json:"languages_url"`
+				HTMLURL         string    `json:"html_url"`
+				URL             string    `json:"url"`
+				Link            string    `json:"link"`
+				SSHURL          string    `json:"ssh_url"`
+				CloneURL        string    `json:"clone_url"`
+				OriginalURL     string    `json:"original_url"`
+				Website         string    `json:"website"`
+				StarsCount      int       `json:"stars_count"`
+				ForksCount      int       `json:"forks_count"`
+				WatchersCount   int       `json:"watchers_count"`
+				OpenIssuesCount int       `json:"open_issues_count"`
+				OpenPrCounter   int       `json:"open_pr_counter"`
+				ReleaseCounter  int       `json:"release_counter"`
+				DefaultBranch   string    `json:"default_branch"`
+				Archived        bool      `json:"archived"`
+				CreatedAt       time.Time `json:"created_at"`
+				UpdatedAt       time.Time `json:"updated_at"`
+				ArchivedAt      time.Time `json:"archived_at"`
+				Permissions     struct {
+					Admin bool `json:"admin"`
+					Push  bool `json:"push"`
+					Pull  bool `json:"pull"`
+				} `json:"permissions"`
+				HasIssues       bool `json:"has_issues"`
+				InternalTracker struct {
+					EnableTimeTracker                bool `json:"enable_time_tracker"`
+					AllowOnlyContributorsToTrackTime bool `json:"allow_only_contributors_to_track_time"`
+					EnableIssueDependencies          bool `json:"enable_issue_dependencies"`
+				} `json:"internal_tracker"`
+				HasWiki                       bool      `json:"has_wiki"`
+				HasPullRequests               bool      `json:"has_pull_requests"`
+				HasProjects                   bool      `json:"has_projects"`
+				HasReleases                   bool      `json:"has_releases"`
+				HasPackages                   bool      `json:"has_packages"`
+				HasActions                    bool      `json:"has_actions"`
+				IgnoreWhitespaceConflicts     bool      `json:"ignore_whitespace_conflicts"`
+				AllowMergeCommits             bool      `json:"allow_merge_commits"`
+				AllowRebase                   bool      `json:"allow_rebase"`
+				AllowRebaseExplicit           bool      `json:"allow_rebase_explicit"`
+				AllowSquashMerge              bool      `json:"allow_squash_merge"`
+				AllowRebaseUpdate             bool      `json:"allow_rebase_update"`
+				DefaultDeleteBranchAfterMerge bool      `json:"default_delete_branch_after_merge"`
+				DefaultMergeStyle             string    `json:"default_merge_style"`
+				DefaultAllowMaintainerEdit    bool      `json:"default_allow_maintainer_edit"`
+				AvatarURL                     string    `json:"avatar_url"`
+				Internal                      bool      `json:"internal"`
+				MirrorInterval                string    `json:"mirror_interval"`
+				MirrorUpdated                 time.Time `json:"mirror_updated"`
+				RepoTransfer                  any       `json:"repo_transfer"`
+			} `json:"repo"`
+		} `json:"base"`
+		Head struct {
+			Label  string `json:"label"`
+			Ref    string `json:"ref"`
+			Sha    string `json:"sha"`
+			RepoID int    `json:"repo_id"`
+			Repo   struct {
+				ID    int `json:"id"`
+				Owner struct {
+					ID                int       `json:"id"`
+					Login             string    `json:"login"`
+					LoginName         string    `json:"login_name"`
+					FullName          string    `json:"full_name"`
+					Email             string    `json:"email"`
+					AvatarURL         string    `json:"avatar_url"`
+					Language          string    `json:"language"`
+					IsAdmin           bool      `json:"is_admin"`
+					LastLogin         time.Time `json:"last_login"`
+					Created           time.Time `json:"created"`
+					Restricted        bool      `json:"restricted"`
+					Active            bool      `json:"active"`
+					ProhibitLogin     bool      `json:"prohibit_login"`
+					Location          string    `json:"location"`
+					Website           string    `json:"website"`
+					Description       string    `json:"description"`
+					Visibility        string    `json:"visibility"`
+					FollowersCount    int       `json:"followers_count"`
+					FollowingCount    int       `json:"following_count"`
+					StarredReposCount int       `json:"starred_repos_count"`
+					Username          string    `json:"username"`
+				} `json:"owner"`
+				Name            string    `json:"name"`
+				FullName        string    `json:"full_name"`
+				Description     string    `json:"description"`
+				Empty           bool      `json:"empty"`
+				Private         bool      `json:"private"`
+				Fork            bool      `json:"fork"`
+				Template        bool      `json:"template"`
+				Parent          any       `json:"parent"`
+				Mirror          bool      `json:"mirror"`
+				Size            int       `json:"size"`
+				Language        string    `json:"language"`
+				LanguagesURL    string    `json:"languages_url"`
+				HTMLURL         string    `json:"html_url"`
+				URL             string    `json:"url"`
+				Link            string    `json:"link"`
+				SSHURL          string    `json:"ssh_url"`
+				CloneURL        string    `json:"clone_url"`
+				OriginalURL     string    `json:"original_url"`
+				Website         string    `json:"website"`
+				StarsCount      int       `json:"stars_count"`
+				ForksCount      int       `json:"forks_count"`
+				WatchersCount   int       `json:"watchers_count"`
+				OpenIssuesCount int       `json:"open_issues_count"`
+				OpenPrCounter   int       `json:"open_pr_counter"`
+				ReleaseCounter  int       `json:"release_counter"`
+				DefaultBranch   string    `json:"default_branch"`
+				Archived        bool      `json:"archived"`
+				CreatedAt       time.Time `json:"created_at"`
+				UpdatedAt       time.Time `json:"updated_at"`
+				ArchivedAt      time.Time `json:"archived_at"`
+				Permissions     struct {
+					Admin bool `json:"admin"`
+					Push  bool `json:"push"`
+					Pull  bool `json:"pull"`
+				} `json:"permissions"`
+				HasIssues       bool `json:"has_issues"`
+				InternalTracker struct {
+					EnableTimeTracker                bool `json:"enable_time_tracker"`
+					AllowOnlyContributorsToTrackTime bool `json:"allow_only_contributors_to_track_time"`
+					EnableIssueDependencies          bool `json:"enable_issue_dependencies"`
+				} `json:"internal_tracker"`
+				HasWiki                       bool      `json:"has_wiki"`
+				HasPullRequests               bool      `json:"has_pull_requests"`
+				HasProjects                   bool      `json:"has_projects"`
+				HasReleases                   bool      `json:"has_releases"`
+				HasPackages                   bool      `json:"has_packages"`
+				HasActions                    bool      `json:"has_actions"`
+				IgnoreWhitespaceConflicts     bool      `json:"ignore_whitespace_conflicts"`
+				AllowMergeCommits             bool      `json:"allow_merge_commits"`
+				AllowRebase                   bool      `json:"allow_rebase"`
+				AllowRebaseExplicit           bool      `json:"allow_rebase_explicit"`
+				AllowSquashMerge              bool      `json:"allow_squash_merge"`
+				AllowRebaseUpdate             bool      `json:"allow_rebase_update"`
+				DefaultDeleteBranchAfterMerge bool      `json:"default_delete_branch_after_merge"`
+				DefaultMergeStyle             string    `json:"default_merge_style"`
+				DefaultAllowMaintainerEdit    bool      `json:"default_allow_maintainer_edit"`
+				AvatarURL                     string    `json:"avatar_url"`
+				Internal                      bool      `json:"internal"`
+				MirrorInterval                string    `json:"mirror_interval"`
+				MirrorUpdated                 time.Time `json:"mirror_updated"`
+				RepoTransfer                  any       `json:"repo_transfer"`
+			} `json:"repo"`
+		} `json:"head"`
+		MergeBase string    `json:"merge_base"`
+		DueDate   any       `json:"due_date"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		ClosedAt  any       `json:"closed_at"`
+		PinOrder  int       `json:"pin_order"`
+	} `json:"pull_request"`
 	Repository struct {
-		Id    int `json:"id"`
+		ID    int `json:"id"`
 		Owner struct {
-			Id        int    `json:"id"`
-			Login     string `json:"login"`
-			FullName  string `json:"full_name"`
-			Email     string `json:"email"`
-			AvatarUrl string `json:"avatar_url"`
-			Username  string `json:"username"`
+			ID                int       `json:"id"`
+			Login             string    `json:"login"`
+			LoginName         string    `json:"login_name"`
+			FullName          string    `json:"full_name"`
+			Email             string    `json:"email"`
+			AvatarURL         string    `json:"avatar_url"`
+			Language          string    `json:"language"`
+			IsAdmin           bool      `json:"is_admin"`
+			LastLogin         time.Time `json:"last_login"`
+			Created           time.Time `json:"created"`
+			Restricted        bool      `json:"restricted"`
+			Active            bool      `json:"active"`
+			ProhibitLogin     bool      `json:"prohibit_login"`
+			Location          string    `json:"location"`
+			Website           string    `json:"website"`
+			Description       string    `json:"description"`
+			Visibility        string    `json:"visibility"`
+			FollowersCount    int       `json:"followers_count"`
+			FollowingCount    int       `json:"following_count"`
+			StarredReposCount int       `json:"starred_repos_count"`
+			Username          string    `json:"username"`
 		} `json:"owner"`
 		Name            string    `json:"name"`
 		FullName        string    `json:"full_name"`
 		Description     string    `json:"description"`
+		Empty           bool      `json:"empty"`
 		Private         bool      `json:"private"`
 		Fork            bool      `json:"fork"`
-		HtmlUrl         string    `json:"html_url"`
-		SshUrl          string    `json:"ssh_url"`
-		CloneUrl        string    `json:"clone_url"`
+		Template        bool      `json:"template"`
+		Parent          any       `json:"parent"`
+		Mirror          bool      `json:"mirror"`
+		Size            int       `json:"size"`
+		Language        string    `json:"language"`
+		LanguagesURL    string    `json:"languages_url"`
+		HTMLURL         string    `json:"html_url"`
+		URL             string    `json:"url"`
+		Link            string    `json:"link"`
+		SSHURL          string    `json:"ssh_url"`
+		CloneURL        string    `json:"clone_url"`
+		OriginalURL     string    `json:"original_url"`
 		Website         string    `json:"website"`
 		StarsCount      int       `json:"stars_count"`
 		ForksCount      int       `json:"forks_count"`
 		WatchersCount   int       `json:"watchers_count"`
 		OpenIssuesCount int       `json:"open_issues_count"`
+		OpenPrCounter   int       `json:"open_pr_counter"`
+		ReleaseCounter  int       `json:"release_counter"`
 		DefaultBranch   string    `json:"default_branch"`
+		Archived        bool      `json:"archived"`
 		CreatedAt       time.Time `json:"created_at"`
 		UpdatedAt       time.Time `json:"updated_at"`
+		ArchivedAt      time.Time `json:"archived_at"`
+		Permissions     struct {
+			Admin bool `json:"admin"`
+			Push  bool `json:"push"`
+			Pull  bool `json:"pull"`
+		} `json:"permissions"`
+		HasIssues       bool `json:"has_issues"`
+		InternalTracker struct {
+			EnableTimeTracker                bool `json:"enable_time_tracker"`
+			AllowOnlyContributorsToTrackTime bool `json:"allow_only_contributors_to_track_time"`
+			EnableIssueDependencies          bool `json:"enable_issue_dependencies"`
+		} `json:"internal_tracker"`
+		HasWiki                       bool      `json:"has_wiki"`
+		HasPullRequests               bool      `json:"has_pull_requests"`
+		HasProjects                   bool      `json:"has_projects"`
+		HasReleases                   bool      `json:"has_releases"`
+		HasPackages                   bool      `json:"has_packages"`
+		HasActions                    bool      `json:"has_actions"`
+		IgnoreWhitespaceConflicts     bool      `json:"ignore_whitespace_conflicts"`
+		AllowMergeCommits             bool      `json:"allow_merge_commits"`
+		AllowRebase                   bool      `json:"allow_rebase"`
+		AllowRebaseExplicit           bool      `json:"allow_rebase_explicit"`
+		AllowSquashMerge              bool      `json:"allow_squash_merge"`
+		AllowRebaseUpdate             bool      `json:"allow_rebase_update"`
+		DefaultDeleteBranchAfterMerge bool      `json:"default_delete_branch_after_merge"`
+		DefaultMergeStyle             string    `json:"default_merge_style"`
+		DefaultAllowMaintainerEdit    bool      `json:"default_allow_maintainer_edit"`
+		AvatarURL                     string    `json:"avatar_url"`
+		Internal                      bool      `json:"internal"`
+		MirrorInterval                string    `json:"mirror_interval"`
+		MirrorUpdated                 time.Time `json:"mirror_updated"`
+		RepoTransfer                  any       `json:"repo_transfer"`
 	} `json:"repository"`
 	Pusher struct {
 		Id        int    `json:"id"`
@@ -60,11 +363,26 @@ type GiteaEventPayload struct {
 		Username  string `json:"username"`
 	} `json:"pusher"`
 	Sender struct {
-		Id        int    `json:"id"`
-		Login     string `json:"login"`
-		FullName  string `json:"full_name"`
-		Email     string `json:"email"`
-		AvatarUrl string `json:"avatar_url"`
-		Username  string `json:"username"`
+		ID                int       `json:"id"`
+		Login             string    `json:"login"`
+		LoginName         string    `json:"login_name"`
+		FullName          string    `json:"full_name"`
+		Email             string    `json:"email"`
+		AvatarURL         string    `json:"avatar_url"`
+		Language          string    `json:"language"`
+		IsAdmin           bool      `json:"is_admin"`
+		LastLogin         time.Time `json:"last_login"`
+		Created           time.Time `json:"created"`
+		Restricted        bool      `json:"restricted"`
+		Active            bool      `json:"active"`
+		ProhibitLogin     bool      `json:"prohibit_login"`
+		Location          string    `json:"location"`
+		Website           string    `json:"website"`
+		Description       string    `json:"description"`
+		Visibility        string    `json:"visibility"`
+		FollowersCount    int       `json:"followers_count"`
+		FollowingCount    int       `json:"following_count"`
+		StarredReposCount int       `json:"starred_repos_count"`
+		Username          string    `json:"username"`
 	} `json:"sender"`
 }

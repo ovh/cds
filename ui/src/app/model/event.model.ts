@@ -30,6 +30,10 @@ export class EventType {
     static PROJECT_PERMISSION_PREFIX = 'sdk.EventProjectPermission';
     static PROJECT_KEY_PREFIX = 'sdk.EventProjectKey';
     static PROJECT_INTEGRATION_PREFIX = 'sdk.EventProjectIntegration';
+    static PROJECT_REPOSITORY_ADD = 'sdk.EventProjectRepositoryAdd';
+    static PROJECT_REPOSITORY_REMOVE = 'sdk.EventProjectRepositoryDelete';
+
+    static PROJECT_REPOSITORY_ANALYSE = 'sdk.EventProjectRepositoryAnalyze';
 
     static ENVIRONMENT_PREFIX = 'sdk.EventEnvironment';
 

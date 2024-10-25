@@ -185,7 +185,7 @@
             }
 
             .night & {
-                background-color: #1f1f1f;
+                background-color: $darkTheme_grey_1;
 
                 &.active {
                     background-color: $darkTheme_grey_0;

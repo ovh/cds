@@ -34,9 +34,6 @@ func Test_getAdminOrganizationCRUD(t *testing.T) {
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
-	_, err := db.Exec("DELETE FROM organization")
-	require.NoError(t, err)
-
 	orga := sdk.Organization{
 		Name: sdk.RandomString(10),
 	}
@@ -58,18 +55,17 @@ func Test_getAdminOrganizationCRUD(t *testing.T) {
 	body := wList.Body.Bytes()
 	require.NoError(t, json.Unmarshal(body, &orgs))
 
-	require.Equal(t, 1, len(orgs))
-	require.Equal(t, orga.Name, orgs[0].Name)
+	require.Equal(t, 2, len(orgs))
 
-	uriDelete := api.Router.GetRoute("DELETE", api.deleteAdminOrganizationsHandler, map[string]string{"organizationIdentifier": orgs[0].Name})
+	uriDelete := api.Router.GetRoute("DELETE", api.deleteAdminOrganizationsHandler, map[string]string{"organizationIdentifier": orgs[1].Name})
 	reqDelete := assets.NewJWTAuthentifiedRequest(t, jwt, "DELETE", uriDelete, nil)
 	wDelete := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(wDelete, reqDelete)
 	require.Equal(t, 204, wDelete.Code)
 
-	orgsDb, err := organization.LoadAllOrganizations(context.TODO(), db)
+	orgsDb, err := organization.LoadOrganizations(context.TODO(), db)
 	require.NoError(t, err)
-	require.Equal(t, 0, len(orgsDb))
+	require.Equal(t, 1, len(orgsDb))
 
 }
 
@@ -951,7 +947,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testi
 	}
 	require.NoError(t, vcs.Insert(context.TODO(), db, vcsProject))
 
-	vcsProject, err := vcs.LoadVCSByID(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
+	vcsProject, err := vcs.LoadVCSByIDAndProjectKey(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
 	uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "vcs.dbVCSProject", "pk": fmt.Sprintf("%s", vcsProject.ID)})
@@ -961,7 +957,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testi
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 204, w.Code)
 
-	vcsProject2, err := vcs.LoadVCSByID(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
+	vcsProject2, err := vcs.LoadVCSByIDAndProjectKey(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
 	require.Equal(t, vcsProject.Auth.SSHPrivateKey, vcsProject2.Auth.SSHPrivateKey)

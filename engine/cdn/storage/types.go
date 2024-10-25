@@ -116,6 +116,7 @@ type LogBufferUnit interface {
 	Card(i sdk.CDNItemUnit) (int, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Keys() ([]string, error)
+	Copy(ctx context.Context, srcItemID, destItemID string) error
 }
 
 type FileBufferUnit interface {
@@ -156,7 +157,7 @@ type Configuration struct {
 }
 
 type BufferConfiguration struct {
-	Redis      *RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
+	Redis      *sdk.RedisConf            `toml:"redis" json:"redis" mapstructure:"redis"`
 	Local      *LocalBufferConfiguration `toml:"local" json:"local" mapstructure:"local"`
 	Nfs        *NFSBufferConfiguration   `toml:"nfs" json:"nfs,omitempty" mapstructure:"nfs"`
 	BufferType CDNBufferType             `toml:"bufferType" json:"bufferType" comment:"it can be 'log' to receive logs or 'file' to receive artifacts"`
@@ -219,12 +220,6 @@ type WebdavStorageConfiguration struct {
 	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
-type RedisBufferConfiguration struct {
-	Host     string `toml:"host" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
-	Password string `toml:"password" json:"-"`
-	DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
-}
-
 type LocalBufferConfiguration struct {
 	Path       string                 `toml:"path" json:"path"`
 	Encryption []*keyloader.KeyConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
@@ -273,7 +268,7 @@ func (x RunningStorageUnits) LogsBuffer() LogBufferUnit {
 
 func (x RunningStorageUnits) GetBuffer(bufferType sdk.CDNItemType) BufferUnit {
 	switch bufferType {
-	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
+	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
 		return x.LogsBuffer()
 	default:
 		return x.FileBuffer()
@@ -313,7 +308,7 @@ func (x *RunningStorageUnits) FilterItemUnitFromBuffer(ius []sdk.CDNItemUnit) []
 
 func (x *RunningStorageUnits) FilterItemUnitReaderByType(ius []sdk.CDNItemUnit) []sdk.CDNItemUnit {
 	// Remove cds backend from getting something that is not a log
-	if ius[0].Type != sdk.CDNTypeItemStepLog && ius[0].Type != sdk.CDNTypeItemServiceLog {
+	if ius[0].Type != sdk.CDNTypeItemStepLog && ius[0].Type != sdk.CDNTypeItemServiceLog && ius[0].Type != sdk.CDNTypeItemJobStepLog && ius[0].Type != sdk.CDNTypeItemServiceLogV2 {
 		var cdsBackendID string
 		for _, unit := range x.Storages {
 			if unit.GetDriverName() == "cds" {

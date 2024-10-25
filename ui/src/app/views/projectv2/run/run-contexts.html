@@ -1,0 +1,5 @@
+<app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
+<ng-container *ngIf="selectedTab && selectedTab.key === 'contexts'">
+	<nz-code-editor #editor [ngModel]="contexts" [nzEditorOption]="editorOption"
+		(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>
+</ng-container>

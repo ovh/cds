@@ -28,7 +28,7 @@ func (localWorkerRunner) NewCmd(ctx context.Context, command string, args ...str
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	log.Debug(ctx, "HatcheryLocal.SpawnWorker> %s want to spawn a worker named %s (jobID = %d)", spawnArgs.HatcheryName, spawnArgs.WorkerName, spawnArgs.JobID)
 
-	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+	if sdk.IsJobIDForRegister(spawnArgs.JobID) && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
@@ -51,7 +51,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	workerConfig.Basedir = basedir
 
 	// Prefix the command with the directory where the worker binary has been downloaded
-	log.Debug(ctx, "Command exec: %v", workerBinary)
+	log.Info(ctx, "Command exec: %v", workerBinary)
 	var cmd *exec.Cmd
 	if spawnArgs.RegisterOnly {
 		cmd = h.LocalWorkerRunner.NewCmd(context.Background(), workerBinary, "register", "--config", workerConfig.EncodeBase64())

@@ -20,33 +20,39 @@ testcases:
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
 
+- name: wait for kafka to be ready
+  steps:
+  - script: sleep 30
+
 - name: check if consumer kafka is started
   steps:
-  - script: sleep 15 && {{.cdsctl}} -f {{.cdsctl.config}} admin services status --type=hooks|grep 'Hook Kafka Consumers' | grep OK
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin services status --type=hooks|grep 'Hook Kafka Consumers' | grep OK
+    retry: 100
+    delay: 1
     timeout: 100
 
 - name: run workflow by sending a kafka event
   steps:
-  - script: kafkacat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
-    retry: 10
-    delay: 10
+  - script: kcat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
+    retry: 100
+    delay: 1
     timeout: 100
 
 - name: check event in topic test.eventsproject
   steps:
-  - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
+  - script: kcat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
     - 'result.systemout MustNotContainSubstring "Leader not available"'
     - "result.systemoutjson.id ShouldNotBeEmpty"
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1
     timeout: 100
 
 - name: check event in topic test.eventspublic
   steps:
-  - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
+  - script: kcat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
@@ -55,7 +61,7 @@ testcases:
 
 - name: check event in topic test.jobs
   steps:
-  - script: kafkacat -b localhost:9092 -t test.jobs -C -o -1 -c 1
+  - script: kcat -b localhost:9092 -t test.jobs -C -o -1 -c 1
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
@@ -65,8 +71,8 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW 1 --format json
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty

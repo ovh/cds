@@ -26,12 +26,14 @@ func newSwiftStore(ctx context.Context, integration sdk.ProjectIntegration, conf
 	log.Info(ctx, "ObjectStore> Initialize Swift driver on url: %s", conf.Address)
 	s := &SwiftStore{
 		Connection: swift.Connection{
-			AuthUrl:  conf.Address,
-			Region:   conf.Region,
-			Tenant:   conf.Tenant,
-			Domain:   conf.Domain,
-			UserName: conf.Username,
-			ApiKey:   conf.Password,
+			AuthUrl:        conf.Address,
+			Region:         conf.Region,
+			Tenant:         conf.Tenant,
+			Domain:         conf.Domain,
+			UserName:       conf.Username,
+			ApiKey:         conf.Password,
+			ConnectTimeout: time.Minute * 1,
+			Timeout:        time.Minute * 10,
 		},
 		containerPrefix:    conf.ContainerPrefix,
 		disableTempURL:     conf.DisableTempURL,

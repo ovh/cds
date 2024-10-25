@@ -83,8 +83,9 @@ func isWindows() bool {
 	return sdk.GOOS == "windows" || runtime.GOOS == "windows" || os.Getenv("CDS_WORKER_PSHELL_MODE") == "true"
 }
 
-func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedir afero.File) (func(), error) {
-	fi, err := basedir.Stat()
+func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, workingDirectory afero.File) (func(), error) {
+
+	fi, err := workingDirectory.Stat()
 	if err != nil {
 		return nil, err
 	}
@@ -100,14 +101,14 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		return nil, err
 	}
 	tmpFileName := hex.EncodeToString(bs)[0:16]
-	log.Debug(ctx, "writeScriptContent> Basedir name is %s (%T)", basedir.Name(), basedir)
+	log.Debug(ctx, "writeScriptContent> Basedir name is %s (%T)", workingDirectory.Name(), workingDirectory)
 
 	if isWindows() {
 		tmpFileName += ".PS1"
 		log.Debug(ctx, "runScriptAction> renaming powershell script to %s", tmpFileName)
 	}
 
-	scriptPath := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
+	scriptPath := filepath.Join(path.Dir(workingDirectory.Name()), tmpFileName)
 	log.Debug(ctx, "writeScriptContent> Opening file %s", scriptPath)
 
 	tmpscript, err := fs.OpenFile(scriptPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
@@ -158,7 +159,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 	log.Debug(ctx, "writeScriptContent> script directory is %s", script.dir)
 
 	deferFunc := func() {
-		filename := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
+		filename := filepath.Join(path.Dir(workingDirectory.Name()), tmpFileName)
 		log.Debug(ctx, "writeScriptContent> removing file %s", filename)
 		if err := fs.Remove(filename); err != nil {
 			log.Error(ctx, "unable to remove %s: %v", filename, err)

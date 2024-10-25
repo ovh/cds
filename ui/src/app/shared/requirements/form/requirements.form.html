@@ -1,6 +1,6 @@
 <form nz-form name="addReqForm" *ngIf="availableRequirements.length > 0" #formAddRequirement="ngForm">
     <div nz-row>
-        <div nz-col nzSpan="6">
+        <div nz-col nzSpan="4">
             <nz-form-item>
                 <nz-select [(ngModel)]="requirementType" (ngModelChange)="selectType($event)" name="selectType"
                            nzPlaceHolder="{{ 'requirement_type' | translate }}">
@@ -8,7 +8,7 @@
                 </nz-select>
             </nz-form-item>
         </div>
-        <div nz-col nzSpan="12">
+        <div nz-col nzSpan="14">
             <div class="content">
                 <app-requirements-value [suggestArchOs]="suggestWithOsArch"
                                         [suggestWorkerModels]="suggestWithWorkerModel"
@@ -21,9 +21,9 @@
         </div>
         <div nz-col nzSpan="2">
             <nz-form-item *ngIf="workerModelLinked">
-                <span *ngIf="workerModelLinked.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_official_tooltip' | translate}}" nzTooltipPlacement="top"><i class="check circle outline icon large green"></i></span>
-                <span *ngIf="!workerModelLinked.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_unofficial' | translate}}" nzTooltipPlacement="top"><i class="remove circle outline icon large red"></i></span>
-                <span *ngIf="workerModelLinked.is_deprecated" nz-tooltip nzTooltipTitle="{{'worker_model_deprecated_tooltip' | translate}}" nzTooltipPlacement="top"><i class="exclamation circle icon large orange"></i></span>
+                <span *ngIf="workerModelLinked.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_official_tooltip' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="check-circle" nzTheme="outline" class="green"></i></span>
+                <span *ngIf="!workerModelLinked.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_unofficial' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="close-circle" nzTheme="outline" class="red"></i></span>
+                <span *ngIf="workerModelLinked.is_deprecated" nz-tooltip nzTooltipTitle="{{'worker_model_deprecated_tooltip' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="warning" nzTheme="outline" class="orange"></i></span>
             </nz-form-item>
         </div>
         <div nz-col nzSpan="4">
@@ -46,10 +46,8 @@
         </div>
     </div>
 
-
-
     <p>
-        <i class="fa fa-book"></i>
+        <span nz-icon nzType="book" nzTheme="outline"></span>
         <a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']" target="_blank" rel="noopener noreferrer">
         {{ 'requirement_documentation' | translate }} </a>
     </p>
@@ -72,7 +70,7 @@
                 <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker', 'docker-customized']">{{ 'requirement_help_model_3' | translate }}</a></li>
                 <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-openstack']">{{ 'requirement_help_model_4' | translate }}</a></li>
                 <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model']">{{ 'requirement_help_model_5' | translate }}</a></li>
-            </ul>        
+            </ul>
         </div>
         <div *ngSwitchCase="'memory'">
             {{ 'requirement_help_memory_0' | translate }}

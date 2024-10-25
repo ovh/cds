@@ -12,7 +12,7 @@ type RepositoryEvents struct {
 	PullRequestEvents []VCSPullRequestEvent `json:"pullrequest_events" db:"-"`
 }
 
-//RepositoryPollerExecution is a polling execution
+// RepositoryPollerExecution is a polling execution
 type RepositoryPollerExecution struct {
 	ID                    int64            `json:"id" db:"id"`
 	ApplicationID         int64            `json:"-" db:"application_id"`
@@ -31,43 +31,50 @@ type VCSRelease struct {
 	UploadURL string `json:"upload_url"`
 }
 
-//VCSRepo represents data about repository even on stash, or github, etc...
+// VCSRepo represents data about repository even on stash, or github, etc...
 type VCSRepo struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`     //On Github: Name = Slug
-	Slug         string `json:"slug"`     //On Github: Slug = Name
-	Fullname     string `json:"fullname"` //On Stash : projectkey/slug, on Github : owner/slug
-	URL          string `json:"url"`      //Web URL
-	HTTPCloneURL string `json:"http_url"` //Git clone URL  "https://<baseURL>/scm/PRJ/my-repo.git"
-	SSHCloneURL  string `json:"ssh_url"`  //Git clone URL  "ssh://git@<baseURL>/PRJ/my-repo.git"
+	ID              string `json:"id"`
+	Name            string `json:"name"`              // On Github: Name = Slug
+	Slug            string `json:"slug"`              // On Github: Slug = Name
+	Fullname        string `json:"fullname"`          // On Stash : projectkey/slug, on Github : owner/slug
+	URL             string `json:"url"`               // Web URL
+	URLCommitFormat string `json:"url_commit_format"` // Web URL to commit
+	URLBranchFormat string `json:"url_branch_format"` // Web URL to branch
+	URLTagFormat    string `json:"url_tag_format"`    // Web URL to tag
+	HTTPCloneURL    string `json:"http_url"`          // Git clone URL  "https://<baseURL>/scm/PRJ/my-repo.git"
+	SSHCloneURL     string `json:"ssh_url"`           // Git clone URL  "ssh://git@<baseURL>/PRJ/my-repo.git"
 }
 
-//VCSAuthor represents the auhor for every commit
+// VCSAuthor represents the auhor for every commit
 type VCSAuthor struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
 	Email       string `json:"emailAddress"`
 	Avatar      string `json:"avatar"`
+	Slug        string `json:"slug"`
+	ID          string `json:"id"`
 }
 
-//VCSCommit represents the commit in the repository
+// VCSCommit represents the commit in the repository
 type VCSCommit struct {
 	Hash      string    `json:"id"`
 	Author    VCSAuthor `json:"author"`
+	Committer VCSAuthor `json:"committer"`
 	Timestamp int64     `json:"authorTimestamp"`
 	Message   string    `json:"message"`
 	URL       string    `json:"url"`
 	Verified  bool      `json:"verified"`
 	Signature string    `json:"signature"`
+	KeyID     string    `json:"key_id"`
 }
 
-//VCSRemote represents remotes known by the repositories manager
+// VCSRemote represents remotes known by the repositories manager
 type VCSRemote struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
 }
 
-//VCSTag represents branches known by the repositories manager
+// VCSTag represents branches known by the repositories manager
 type VCSTag struct {
 	Tag     string    `json:"tag"`
 	Sha     string    `json:"sha"` // Represent sha of tag
@@ -76,7 +83,10 @@ type VCSTag struct {
 	Hash    string    `json:"hash"` // Represent hash of commit
 }
 
-//VCSBranch represents branches known by the repositories manager
+type VCSSearch struct {
+}
+
+// VCSBranch represents branches known by the repositories manager
 type VCSBranch struct {
 	ID           string   `json:"id"`
 	DisplayID    string   `json:"display_id"`
@@ -85,7 +95,20 @@ type VCSBranch struct {
 	Parents      []string `json:"parents"`
 }
 
-//VCSPullRequest represents a pull request
+type VCSInsight struct {
+	Title  string           `json:"title"`
+	Detail string           `json:"detail"`
+	Datas  []VCSInsightData `json:"data"`
+}
+
+type VCSInsightData struct {
+	Title string `json:"title"`
+	Type  string `json:"type"`
+	Text  string `json:"text"`
+	Href  string `json:"href"`
+}
+
+// VCSPullRequest represents a pull request
 type VCSPullRequest struct {
 	ID       int          `json:"id"`
 	ChangeID string       `json:"change_id"`
@@ -98,6 +121,8 @@ type VCSPullRequest struct {
 	Closed   bool         `json:"closed"`
 	Revision string       `json:"revision"`
 	Updated  time.Time    `json:"updated"`
+	MergeBy  VCSAuthor    `json:"merge_by"`
+	State    string       `json:"state"`
 }
 
 type VCSContent struct {
@@ -129,11 +154,13 @@ func (s VCSPullRequestState) IsValid() bool {
 }
 
 type VCSPullRequestCommentRequest struct {
-	VCSPullRequest
-	Message string `json:"message"`
+	ID       int    `json:"id"`
+	ChangeID string `json:"change_id"` // gerrit only
+	Revision string `json:"revision"`
+	Message  string `json:"message"`
 }
 
-//VCSPushEvent represents a push events for polling
+// VCSPushEvent represents a push events for polling
 type VCSPushEvent struct {
 	Repo     string    `json:"repo"`
 	Branch   VCSBranch `json:"branch"`
@@ -141,15 +168,15 @@ type VCSPushEvent struct {
 	CloneURL string    `json:"clone_url"`
 }
 
-//VCSCreateEvent represents a push events for polling
+// VCSCreateEvent represents a push events for polling
 type VCSCreateEvent VCSPushEvent
 
-//VCSDeleteEvent represents a push events for polling
+// VCSDeleteEvent represents a push events for polling
 type VCSDeleteEvent struct {
 	Branch VCSBranch `json:"branch"`
 }
 
-//VCSPullRequestEvent represents a push events for polling
+// VCSPullRequestEvent represents a push events for polling
 type VCSPullRequestEvent struct {
 	Action string       `json:"action"` // opened | closed
 	URL    string       `json:"url"`
@@ -179,4 +206,17 @@ type VCSCommitStatus struct {
 	CreatedAt  time.Time `json:"created_at"`
 	State      string    `json:"state"`
 	Decription string    `json:"description"`
+}
+
+func VCSIsSameCommit(sha1, sha1b string) bool {
+	if len(sha1) == len(sha1b) {
+		return sha1 == sha1b
+	}
+	if len(sha1) == 12 && len(sha1b) >= 12 {
+		return sha1 == sha1b[0:len(sha1)]
+	}
+	if len(sha1b) == 12 && len(sha1) >= 12 {
+		return sha1b == sha1[0:len(sha1b)]
+	}
+	return false
 }

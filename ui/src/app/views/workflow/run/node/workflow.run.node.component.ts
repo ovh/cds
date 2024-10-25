@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Tests } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { RouterService } from 'app/service/router/router.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
@@ -21,12 +20,10 @@ import { Tab } from 'app/shared/tabs/tabs.component';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
-    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
     // Context info
     project: Project;
-    project$: Subscription;
     workflowName: string;
 
     // data of the view
@@ -36,19 +33,12 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     artifactLength = 0;
     historyLength = 0;
     nodeRunTests: Tests;
-    hasVulnerability = false;
 
     pipelineName = '';
-
-    // History
-    nodeRunsHistory = new Array<WorkflowNodeRun>();
 
     // tabs
     tabs: Array<Tab>;
     selectedTab: Tab;
-
-    nbVuln = 0;
-    deltaVul = 0;
 
     paramsSub: Subscription;
 
@@ -99,7 +89,7 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+        this.nodeRunSubs = this._store.select(WorkflowState.getSelectedNodeRun()).subscribe(nr => {
             let w = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
             let wr = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
             if (!w || this.workflowName !== w.name) {
@@ -139,18 +129,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                     this.nodeRunTests = nr.tests;
                     refresh = true;
                 }
-                if (nr.vulnerabilities_report && nr.vulnerabilities_report.id !== 0) {
-                    this.hasVulnerability = true;
-                    let result = this.initVulnerabilitySummary(nr);
-                    if (this.nbVuln !== result['nbVuln']) {
-                        this.nbVuln = result['nbVuln'];
-                        refresh = true;
-                    }
-                    if (this.deltaVul !== result['deltaVuln']) {
-                        this.deltaVul = result['deltaVuln'];
-                        refresh = true;
-                    }
-                }
                 if (wr.tags) {
                     let branch = wr.tags.find((tag) => tag.tag === 'git.branch');
                     if (branch) {
@@ -174,13 +152,16 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
 
         let testTitle = this.nodeRunTests?.total > 1? 'Tests' : 'Test';
         let testIcon: string
+        let iconColor: string
         if (this.nodeRunTests?.total > 0) {
-            testIcon = 'green check no-mrr';
+            testIcon = 'check';
+            iconColor = 'green';
             testTitle = this.nodeRunTests?.total + ' ' + testTitle;
         }
         if (this.nodeRunTests?.ko > 0) {
             testTitle += ` (${this.nodeRunTests.ko} ko)`
-            testIcon = 'red remove status';
+            iconColor = 'red';
+            testIcon = 'close';
         }
 
         let artifactTitle = this.artifactLength > 1 ? 'Artifacts' : 'Artifact';
@@ -194,7 +175,8 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
             title: 'Pipeline',
             key: 'pipeline',
             default: true,
-            icon: 'sitemap'
+            icon: 'apartment',
+            iconTheme: 'outline'
         }, <Tab>{
             title: commitTitle,
             key: 'commit',
@@ -203,6 +185,8 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
             title: testTitle,
             key: 'test',
             icon: testIcon,
+            iconTheme: 'outline',
+            iconClassColor: iconColor,
             disabled: !this.nodeRunTests || this.nodeRunTests?.total === 0
         }, <Tab>{
             title: artifactTitle,
@@ -210,36 +194,13 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
             disabled: this.artifactLength === 0
         }, <Tab>{
             title: historyTitle,
-            key: 'history'
+            key: 'history',
+            icon: 'history',
+            iconTheme: 'outline'
         }]
     }
 
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
-    }
-
-    initVulnerabilitySummary(nodeRun: WorkflowNodeRun): any[] {
-        let result = [];
-        result['nbVuln'] = 0;
-        result['deltaVuln'] = 0;
-        if (nodeRun && nodeRun.vulnerabilities_report && nodeRun.vulnerabilities_report.report) {
-            if (nodeRun.vulnerabilities_report.report.summary) {
-                Object.keys(nodeRun.vulnerabilities_report.report.summary).forEach(k => {
-                    result['nbVuln'] += nodeRun.vulnerabilities_report.report.summary[k];
-                });
-            }
-            let previousNb = 0;
-            if (nodeRun.vulnerabilities_report.report.previous_run_summary) {
-                Object.keys(nodeRun.vulnerabilities_report.report.previous_run_summary).forEach(k => {
-                    previousNb += nodeRun.vulnerabilities_report.report.previous_run_summary[k];
-                });
-            } else if (nodeRun.vulnerabilities_report.report.default_branch_summary) {
-                Object.keys(nodeRun.vulnerabilities_report.report.default_branch_summary).forEach(k => {
-                    previousNb += nodeRun.vulnerabilities_report.report.default_branch_summary[k];
-                });
-            }
-            result['deltaVuln'] = this.nbVuln - previousNb;
-        }
-        return result;
     }
 }

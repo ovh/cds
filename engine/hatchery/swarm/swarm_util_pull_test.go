@@ -7,23 +7,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
+	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
-
-	"github.com/ovh/cds/sdk"
 )
 
 func Test_pullImage(t *testing.T) {
-	t.Cleanup(gock.Off)
+	defer gock.Off()
 
 	h := InitTestHatcherySwarm(t)
 
-	gock.New("https://lolcat.local").Post("/images/create").Times(5).AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
+	gock.New("https://lolcat.local").Post("/v6.66/images/create").Times(5).AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
 		values := r.URL.Query()
 
 		// Call 1
-		if values.Get("fromImage") == "my-registry.lolcat.local/my-image-1" && values.Get("tag") == "my-tag" {
+		if values.Get("fromImage") == "my-registry.lolcat.local/my-image-testpull-mage" && values.Get("tag") == "my-tag" {
 			return true, nil
 		}
 		// Call 2
@@ -33,8 +32,9 @@ func Test_pullImage(t *testing.T) {
 
 		buf, err := base64.StdEncoding.DecodeString(r.Header.Get("X-Registry-Auth"))
 		require.NoError(t, err)
-		var auth types.AuthConfig
-		require.NoError(t, json.Unmarshal(buf, &auth))
+		var auth registry.AuthConfig
+		err = json.Unmarshal(buf, &auth)
+		require.NoError(t, err)
 
 		t.Log("Auth config", auth)
 
@@ -56,8 +56,8 @@ func Test_pullImage(t *testing.T) {
 		return false, nil
 	}).Reply(http.StatusOK)
 
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-registry.lolcat.local/my-image-1:my-tag", time.Minute, sdk.Model{}))
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-2:my-tag", time.Minute, sdk.Model{}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-registry.lolcat.local/my-image-testpull-mage:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-2:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
 
 	h.Config.RegistryCredentials = []RegistryCredential{
 		{
@@ -77,9 +77,9 @@ func Test_pullImage(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-first-registry.lolcat.local/my-image-3:my-tag", time.Minute, sdk.Model{}))
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-second-registry.lolcat.local/my-image-4:my-tag", time.Minute, sdk.Model{}))
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-5:my-tag", time.Minute, sdk.Model{}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-first-registry.lolcat.local/my-image-3:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-second-registry.lolcat.local/my-image-4:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-5:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
 
 	require.True(t, gock.IsDone())
 }

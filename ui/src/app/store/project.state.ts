@@ -13,6 +13,7 @@ import { ProjectStore } from 'app/service/project/project.store';
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
+import { VariableSet } from 'app/model/variablesets.model';
 
 export class ProjectStateModel {
     public project: Project;
@@ -225,6 +226,76 @@ export class ProjectState {
             });
             return this._projectStore.getProjectsList(true);
         }));
+    }
+
+    //  ------- VariableSets ------//
+    @Action(ProjectAction.FetchVariableSetsInProject)
+    fetchVariableSets(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchVariableSetsInProject) {
+        const state = ctx.getState();
+
+        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
+            state.project && state.project.variablesets) {
+            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
+        }
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
+        }
+
+        return ctx.dispatch(new ProjectAction.ResyncVariableSetsInProject(action.payload));
+    }
+
+    @Action(ProjectAction.ResyncVariableSetsInProject)
+    resyncVariableSets(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncVariableSetsInProject) {
+        return this._http
+            .get<VariableSet[]>(`/v2/project/${action.payload.projectKey}/variableset`)
+            .pipe(tap((variables: VariableSet[]) => {
+                ctx.dispatch(new ProjectAction.LoadVariableSetsInProject(variables));
+            }));
+    }
+    @Action(ProjectAction.LoadVariableSetsInProject)
+    loadVariableSets(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadVariableSetsInProject) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, <Project>{ variablesets: action.payload }),
+        });
+    }
+    @Action(ProjectAction.DeleteVariableSetInProject)
+    deleteVariableSet(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteVariableSetInProject) {
+        const state = ctx.getState();
+        return this._http
+            .delete('/v2/project/' + state.project.key + '/variableset/' + action.payload.name + '?force=true')
+            .pipe(tap(() => {
+                let variablesets = state.project.variablesets ? state.project.variablesets.concat([]) : [];
+                variablesets = variablesets.filter((variable) => variable.name !== action.payload.name);
+
+                ctx.setState({
+                    ...state,
+                    project: Object.assign({}, state.project, <Project>{ variablesets }),
+                });
+            }));
+    }
+    @Action(ProjectAction.AddVariableSetInProject)
+    addVariableSet(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddVariableSetInProject) {
+        const state = ctx.getState();
+        return this._http.post<VariableSet>(`/v2/project/${state.project.key}/variableset`, {'name': action.name})
+            .pipe(tap((v: VariableSet) => {
+                let p = cloneDeep(state.project);
+                if (!p.variablesets) {
+                    p.variablesets = new Array<VariableSet>();
+                }
+                p.variablesets.push(v);
+                p.variablesets = p.variablesets.sort((v1, v2) => {
+                    if(v1.name < v2.name) {
+                        return -1;
+                    }
+                    return 1;
+                });
+                ctx.setState({
+                    ...state,
+                    project: p,
+                });
+            }));
     }
 
     //  ------- Variable --------- //
@@ -828,82 +899,6 @@ export class ProjectState {
             ctx.setState({
                 ...state,
                 project: Object.assign({}, state.project, <Project>{ integrations }),
-            });
-        }));
-    }
-
-    //  ------- Repository Manager --------- //
-    @Action(ProjectAction.ConnectRepositoryManagerInProject)
-    connectRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ConnectRepositoryManagerInProject) {
-        const state = ctx.getState();
-        return this._http.post<{ request_token: string, url: string, auth_type: string }>(
-            '/project/' + action.payload.projectKey + '/repositories_manager/' +
-            action.payload.repoManager + '/authorize',
-            null
-        ).pipe(tap(({ request_token, url, auth_type }) => {
-            ctx.setState({
-                ...state,
-                repoManager: {
-                    request_token,
-                    url,
-                    auth_type
-                },
-            });
-        }));
-    }
-
-    @Action(ProjectAction.CallbackRepositoryManagerBasicAuthInProject)
-    callbackRepositoryManagerBasicAuth(ctx: StateContext<ProjectStateModel>,
-        action: ProjectAction.CallbackRepositoryManagerBasicAuthInProject) {
-        const state = ctx.getState();
-        let data = {
-            username: action.payload.basicUser,
-            secret: action.payload.basicPassword
-        };
-        return this._http.post<Project>(
-            '/project/' + action.payload.projectKey + '/repositories_manager/' +
-            action.payload.repoManager + '/authorize/basicauth',
-            data
-        ).pipe(tap((project: Project) => {
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, <Project>{ vcs_servers: project.vcs_servers }),
-            });
-        }));
-    }
-
-    @Action(ProjectAction.CallbackRepositoryManagerInProject)
-    callbackRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.CallbackRepositoryManagerInProject) {
-        const state = ctx.getState();
-        let data = {
-            request_token: action.payload.requestToken,
-            verifier: action.payload.code
-        };
-        return this._http.post<Project>(
-            '/project/' + action.payload.projectKey + '/repositories_manager/' +
-            action.payload.repoManager + '/authorize/callback',
-            data
-        ).pipe(tap((project: Project) => {
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, <Project>{ vcs_servers: project.vcs_servers }),
-            });
-        }));
-    }
-
-    @Action(ProjectAction.DisconnectRepositoryManagerInProject)
-    disconnectRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DisconnectRepositoryManagerInProject) {
-        const state = ctx.getState();
-        let params = new HttpParams();
-        params = params.append('force', 'true');
-
-        return this._http.delete<Project>(
-            '/project/' + action.payload.projectKey + '/repositories_manager/' +
-            action.payload.repoManager, { params }
-        ).pipe(tap((project: Project) => {
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, <Project>{ vcs_servers: project.vcs_servers }),
             });
         }));
     }

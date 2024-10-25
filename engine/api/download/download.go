@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
-	"github.com/mholt/archiver"
 	"github.com/rockbears/log"
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -96,8 +97,14 @@ func ensureWorkerBinary(ctx context.Context, conf Conf) error {
 }
 
 // CheckBinary checks if binary exist and download it if needed
-func CheckBinary(ctx context.Context, conf Conf, name, os, arch, variant string) error {
-	filename := sdk.BinaryFilename(name, os, arch, variant)
+func CheckBinary(ctx context.Context, conf Conf, name, osName, arch, variant string) error {
+	var filename string
+	if sdk.Assets.Contains(name) {
+		filename = name
+	} else {
+		filename = sdk.BinaryFilename(name, osName, arch, variant)
+	}
+
 	if sdk.IsDownloadedBinary(conf.Directory, filename) {
 		return nil
 	}
@@ -123,12 +130,13 @@ func CheckBinary(ctx context.Context, conf Conf, name, os, arch, variant string)
 
 	if strings.HasSuffix(filenameToDownload, ".tar.gz") {
 		log.Info(ctx, "untar %v", filenameToDownload)
-		arc := archiver.TarGz{
-			Tar: &archiver.Tar{
-				OverwriteExisting: true,
-			},
+		srcPath := path.Join(conf.Directory, filenameToDownload)
+		src, err := os.Open(srcPath)
+		if err != nil {
+			return sdk.WrapError(err, "unable to open source file %s", srcPath)
 		}
-		if err := arc.Unarchive(path.Join(conf.Directory, filenameToDownload), conf.Directory); err != nil {
+		defer src.Close()
+		if err := sdk.UntarGz(afero.NewOsFs(), conf.Directory, src); err != nil {
 			return sdk.WrapError(err, "unarchive %s failed", filenameToDownload)
 		}
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/plugin"
@@ -51,11 +52,11 @@ func (api *API) postGRPCluginHandler() service.Handler {
 				return sdk.WithStack(err)
 			}
 			if old != nil {
-				if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters); err != nil {
+				if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Inputs); err != nil {
 					return sdk.WrapError(err, "error while updating action %s in database", p.Name)
 				}
 			} else {
-				if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Parameters); err != nil {
+				if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Inputs); err != nil {
 					return sdk.WrapError(err, "error while inserting action %s in database", p.Name)
 				}
 			}
@@ -134,7 +135,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 
 		if p.Type == sdk.GRPCPluginAction {
-			if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters); err != nil {
+			if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Inputs); err != nil {
 				return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 			}
 		}
@@ -155,14 +156,37 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := mux.Vars(r)["name"]
 
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		old, err := plugin.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load old plugin")
 		}
 
-		if err := plugin.Delete(ctx, api.mustDB(), api.SharedStorage, old); err != nil {
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
+
+		if old.Type == sdk.GRPCPluginAction {
+			if err := actionplugin.DeleteGRPCPlugin(ctx, tx, old); err != nil {
+				return err
+			}
+		}
+
+		if err := plugin.Delete(ctx, tx, api.SharedStorage, old); err != nil {
 			return sdk.WrapError(err, "unable to delete plugin")
 		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		event_v2.PublishPluginEvent(ctx, api.Cache, sdk.EventPluginDeleted, *old, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return nil
 	}
@@ -305,8 +329,8 @@ func (api *API) deleteGRPCluginBinaryHandler() service.Handler {
 		}
 
 		if err := plugin.DeleteBinary(ctx, tx, api.SharedStorage, p, os, arch); err != nil {
-      return err
-    }
+			return err
+		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "unable to commit tx")

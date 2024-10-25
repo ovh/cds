@@ -353,7 +353,7 @@ type TreeEntry struct {
 	Content *string `json:"content,omitempty"`
 }
 
-//Events represent repository events
+// Events represent repository events
 type Events []Event
 
 // Event represent a repository event
@@ -404,7 +404,7 @@ type Event struct {
 	} `json:"org"`
 }
 
-//CreateStatus represents create a Status API Payload
+// CreateStatus represents create a Status API Payload
 type CreateStatus struct {
 	State       string `json:"state"`
 	TargetURL   string `json:"target_url"`
@@ -412,7 +412,7 @@ type CreateStatus struct {
 	Context     string `json:"context"`
 }
 
-//Status represents Create a Status from API
+// Status represents Create a Status from API
 type Status struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -443,7 +443,7 @@ type Status struct {
 	} `json:"creator"`
 }
 
-//RateLimit represents Rate Limit API
+// RateLimit represents Rate Limit API
 type RateLimit struct {
 	Resources struct {
 		Core struct {
@@ -514,6 +514,7 @@ type PullRequest struct {
 	Additions           int       `json:"additions"`
 	Deletions           int       `json:"deletions"`
 	ChangedFiles        int       `json:"changed_files"`
+	MergedBy            *User     `json:"merged_by"`
 }
 
 // ReleaseRequest Request sent to Github to create a release
@@ -727,4 +728,17 @@ type Content struct {
 		Git  string `json:"git"`
 		Html string `json:"html"`
 	} `json:"_links"`
+}
+
+type SearchResult struct {
+	TotalCount        int64        `json:"total_count"`
+	IncompleteResults bool         `json:"incomplete_results"`
+	Items             []SearchItem `json:"items"`
+}
+
+type SearchItem struct {
+	RepositoryURL string `json:"repository_url"`
+	PullRequest   *struct {
+		URL string `json:"url"`
+	} `json:"pull_request"`
 }

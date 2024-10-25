@@ -12,9 +12,7 @@ export enum WebsocketFilterType {
     ENVIRONMENT = 'environment',
     QUEUE = 'queue',
     OPERATION = 'operation',
-    TIMELINE = 'timeline',
     ASCODE_EVENT = 'ascode-event'
-
 }
 
 export class WebsocketFilter {

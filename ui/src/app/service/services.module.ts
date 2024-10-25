@@ -42,7 +42,7 @@ import { ProjectAuditService } from './project/project.audit.service';
 import {
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
-    ProjectResolver
+    ProjectResolver, Projectv2Resolver
 } from './project/project.resolver';
 import { ProjectService } from './project/project.service';
 import { ProjectStore } from './project/project.store';
@@ -52,9 +52,6 @@ import { RequirementService } from './requirement/requirement.service';
 import { RequirementStore } from './requirement/requirement.store';
 import { RouterService } from './router/router.service';
 import { ServiceService } from './service/service.service';
-import { ThemeStore } from './theme/theme.store';
-import { TimelineService } from './timeline/timeline.service';
-import { TimelineStore } from './timeline/timeline.store';
 import { UserService } from './user/user.service';
 import { VariableService } from './variable/variable.service';
 import { WorkerModelService } from './worker-model/worker-model.service';
@@ -63,6 +60,13 @@ import { WorkflowRunService } from './workflow/run/workflow.run.service';
 import { WorkflowCoreService } from './workflow/workflow.core.service';
 import { WorkflowService } from './workflow/workflow.service';
 import { WorkflowStore } from './workflow/workflow.store';
+import { AnalysisService } from "./analysis/analysis.service";
+import { LinkService } from "./link/link.service";
+import { EntityService } from "./entity/entity.service";
+import { ActionAsCodeService } from "./action/actionAscode.service";
+import { PluginService } from "./plugin.service";
+import { V2WorkflowRunService } from "./workflowv2/workflow.service";
+import { CDNService } from './cdn.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -78,54 +82,61 @@ export class ServicesModule {
         return {
             ngModule: ServicesModule,
             providers: [
-                ApplicationAuditService,
-                ApplicationResolver,
-                ApplicationQueryParamResolver,
+                ActionAsCodeService,
                 ActionService,
-                ApplicationWorkflowService,
+                AnalysisService,
+                ApplicationAuditService,
+                ApplicationQueryParamResolver,
+                ApplicationResolver,
                 ApplicationService,
                 ApplicationStore,
+                ApplicationWorkflowService,
                 AscodeService,
                 AuthenticationService,
+                CDNService,
                 ConfigService,
                 DownloadService,
+                EntityService,
                 EnvironmentAuditService,
                 EnvironmentService,
                 FeatureService,
                 GroupService,
+                HelpersService,
                 HelpService,
                 HookService,
-                HelpersService,
                 ImportAsCodeService,
+                IntegrationService,
                 KeyService,
-                ThemeStore,
+                LinkService,
+                MonitoringService,
                 NavbarService,
                 NotificationService,
                 ParameterService,
-                MonitoringService,
                 PipelineCoreService,
                 PipelineService,
-                IntegrationService,
-                ProjectResolver,
+                PluginService,
+                ProjectAuditService,
                 ProjectForApplicationResolver,
                 ProjectForWorkflowResolver,
+                ProjectResolver,
                 ProjectService,
-                ProjectAuditService,
                 ProjectStore,
+                Projectv2Resolver,
                 QueueService,
                 RepoManagerService,
-                RequirementStore,
                 RequirementService,
+                RequirementStore,
                 RouterService,
                 ServiceService,
-                TimelineService,
-                TimelineStore,
                 UserService,
+                V2WorkflowRunService,
                 VariableService,
                 WorkerModelService,
-                WorkflowTemplateService,
+                WorkflowCoreService,
+                WorkflowRunService, 
                 WorkflowService,
-                WorkflowStore, WorkflowRunService, WorkflowCoreService,
+                WorkflowStore, 
+                WorkflowTemplateService,
                 {
                     provide: HTTP_INTERCEPTORS,
                     useClass: ProxyInterceptor,
@@ -152,43 +163,48 @@ export class ServicesModule {
 }
 
 export {
+    ActionAsCodeService,
     ApplicationAuditService,
-    ApplicationWorkflowService,
     ApplicationResolver,
     ApplicationStore,
+    ApplicationWorkflowService,
     AscodeService,
     AuthenticationService,
+    CDNService,
     ConfigService,
     DownloadService,
+    EntityService,
     EnvironmentAuditService,
     GroupService,
-    HelpService,
     HelpersService,
+    HelpService,
     HookService,
     ImportAsCodeService,
-    KeyService,
-    ThemeStore,
-    ParameterService,
-    MonitoringService,
-    PipelineCoreService,
     IntegrationService,
-    ProjectResolver,
+    KeyService,
+    LinkService,
+    MonitoringService,
+    ParameterService,
+    PipelineCoreService,
+    PluginService,
+    ProjectAuditService,
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
+    ProjectResolver,
     ProjectStore,
-    ProjectAuditService,
+    Projectv2Resolver,
     QueueService,
     RepoManagerService,
     RequirementStore,
     RouterService,
     ServiceService,
-    TimelineStore,
     UserService,
+    V2WorkflowRunService,
     VariableService,
     WorkerModelService,
-    WorkflowTemplateService,
-    WorkflowStore,
+    WorkflowCoreService,
     WorkflowRunService,
-    WorkflowCoreService
+    WorkflowStore,
+    WorkflowTemplateService
 };
 

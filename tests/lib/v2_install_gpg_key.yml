@@ -1,0 +1,67 @@
+executor: v2_install_gpg_key
+input:
+  cdsctl_command: ""
+  gpg_key_id: ""
+  git_host: ""
+  git_user: ""
+  git_password: ""
+
+steps:
+  # Add the emailaddress on the gitea user
+  - script: >
+      gpg --list-secret-keys | grep {{.input.gpg_key_id}} -A 1 | tail -n 1 | grep --only-matching --extended-regexp "<.*>" | head -n 1 | cut -c2- | rev | cut -c2- | rev
+    vars:
+      emailAddress:
+        from: result.systemout
+
+  - type: http
+    method: POST
+    url: "{{.input.git_host}}/api/v1/user/emails"
+    headers:
+      Content-Type: application/json
+    basic_auth_user: "{{.input.git_user}}"
+    basic_auth_password: "{{.input.git_password}}"
+    body: >
+      {
+        "emails": ["{{.emailAddress}}"]
+      }
+    assertions:
+    - or:
+      - result.statuscode ShouldEqual 201
+      - result.bodyjson.message ShouldContainSubstring "Email address has been used"
+
+  # Export the gpg public key in armor format and save it in a variable
+  - script: gpg --export --armor {{.input.gpg_key_id}} | awk '{printf "%s\\n", $0}'
+    vars:
+      gpgPubKey:
+        from: result.systemout
+
+  # Add the user gpg on gitea  
+  - type: http
+    method: POST
+    url: "{{.input.git_host}}/api/v1/user/gpg_keys"
+    basic_auth_user: "{{.input.git_user}}"
+    basic_auth_password: "{{.input.git_password}}"
+    headers:
+      Content-Type: application/json
+    body: >
+      {
+        "armored_public_key": "{{.gpgPubKey}}"
+      }
+    assertions:
+    - or:
+      - result.statuscode ShouldEqual 201
+      - result.systemout ShouldContainSubstring "A key with the same id already exists"
+
+  # Add the GPG key on cd CDS user
+  - script: |-
+      FILE=/tmp/`uuidgen`.pub
+      gpg --export --armor {{.input.gpg_key_id}} > $FILE
+      {{.input.cdsctl_command}} user gpg import --pub-key-file $FILE
+    assertions:
+    - or:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring "Data conflict"
+
+output:
+  emailaddress: "{{.emailaddress}}"

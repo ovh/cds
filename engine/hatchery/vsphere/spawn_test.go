@@ -20,12 +20,22 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+// used by worker model v1 only
 func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelPath: "shared.infra/model",
+					Username:  "user",
+					Password:  "password",
+				},
+			},
+		},
 	}
 
 	h.Config.VSphereNetworkString = "vbox-net"
@@ -134,13 +144,13 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 
 	var clonedVM object.VirtualMachine
 
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &clonedRef).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &clonedRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmname string) (*object.VirtualMachine, error) {
 			assert.False(t, cloneSpec.Template)
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation
 			json.Unmarshal([]byte(cloneSpec.Config.Annotation), &givenAnnotation)
-			assert.Equal(t, "model", givenAnnotation.WorkerModelPath)
+			assert.Equal(t, "shared.infra/model", givenAnnotation.WorkerModelPath)
 			assert.True(t, givenAnnotation.Model)
 			assert.Equal(t, "192.168.0.2", (cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp).IpAddress))
 			return &clonedVM, nil
@@ -189,17 +199,26 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 		},
 	)
 
-	vmTemplate, err := h.createVirtualMachineTemplate(ctx, validModel, "worker1")
+	vmTemplate, err := h.createVirtualMachineTemplate(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &validModel}, "worker1")
 	require.NoError(t, err)
 	require.NotNil(t, vmTemplate)
 }
 
-func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
+func TestHatcheryVSphere_launchScriptWorkerv1(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelPath: "shared.infra/model",
+					Username:  "user",
+					Password:  "password",
+				},
+			},
+		},
 	}
 	var ctx = context.Background()
 	var vm = object.VirtualMachine{
@@ -218,8 +237,8 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 		},
 	}
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vm, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vm, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
 			return nil
 		},
 	)
@@ -244,7 +263,7 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker ")
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
 			var foundConfig bool
 			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
@@ -260,22 +279,109 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 	spawnArgs := hatchery.SpawnArguments{
 		WorkerName:   "worker1",
 		WorkerToken:  "xxxxxxxx",
-		Model:        &validModel,
-		RegisterOnly: true,
+		Model:        sdk.WorkerStarterWorkerModel{ModelV1: &validModel},
+		RegisterOnly: false,
 	}
 
-	err := h.launchScriptWorker(ctx, spawnArgs, &vm)
+	err := h.launchScriptWorker(ctx, spawnArgs, &vm, "worker1")
 	require.NoError(t, err)
-
 }
 
-func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
+func TestHatcheryVSphere_launchScriptWorkerv2(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelVMWare: "the-model",
+					Username:    "user",
+					Password:    "password",
+				},
+			},
+		},
 	}
+	var ctx = context.Background()
+	var vm = object.VirtualMachine{
+		Common: object.Common{},
+	}
+
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vm, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
+			return nil
+		},
+	)
+
+	var procman = guest.ProcessManager{}
+
+	c.EXPECT().ProcessManager(gomock.Any(), &vm).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
+			return &procman, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
+			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
+			return &types.StartProgramInGuestResponse{}, nil
+		},
+	)
+
+	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
+			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
+			var foundConfig bool
+			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
+				if strings.HasPrefix(env, "CDS_CONFIG=") {
+					foundConfig = true
+				}
+			}
+			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
+			return &types.StartProgramInGuestResponse{}, nil
+		},
+	)
+
+	spawnArgs := hatchery.SpawnArguments{
+		WorkerName:  "worker1",
+		WorkerToken: "xxxxxxxx",
+		Model: sdk.WorkerStarterWorkerModel{
+			ModelV2: &sdk.V2WorkerModel{},
+			VSphereSpec: sdk.V2WorkerModelVSphereSpec{
+				Image: "the-model",
+			},
+			Cmd:     "./worker",
+			PostCmd: "shutdown -h now",
+		},
+		RegisterOnly: true,
+	}
+
+	err := h.launchScriptWorker(ctx, spawnArgs, &vm, "worker1")
+	require.NoError(t, err)
+}
+
+func TestHatcheryVSphere_SpawnWorkerv1(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelPath: "shared.infra/model",
+					Username:  "user",
+					Password:  "password",
+				},
+			},
+		},
+	}
+
 	h.Config.VSphereNetworkString = "vbox-net"
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
@@ -379,8 +485,8 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 
 	var workerVM object.VirtualMachine
 
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmname string) (*object.VirtualMachine, error) {
 			assert.False(t, cloneSpec.Template)
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation
@@ -392,8 +498,8 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
 			return nil
 		},
 	)
@@ -433,9 +539,9 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
 		WorkerName:  "worker-name",
 		WorkerToken: "worker.token.xxx",
-		Model:       &validModel,
+		Model:       sdk.WorkerStarterWorkerModel{ModelV1: &validModel},
 		JobName:     "job_name",
-		JobID:       666,
+		JobID:       "666",
 		NodeRunID:   999,
 		NodeRunName: "nore_run_name",
 		Requirements: []sdk.Requirement{
@@ -448,7 +554,206 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 		HatcheryName: "hatchery_name",
 	})
 	require.NoError(t, err)
+}
 
+func TestHatcheryVSphere_SpawnWorkerv2(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelVMWare: "the-model",
+					Username:    "user",
+					Password:    "password",
+				},
+			},
+		},
+	}
+
+	h.Config.VSphereNetworkString = "vbox-net"
+	h.Config.VSphereCardName = "ethernet-card"
+	h.Config.VSphereDatastoreString = "datastore"
+	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.Config.Gateway = "192.168.0.254"
+	h.Config.DNS = "192.168.0.253"
+
+	var ctx = context.Background()
+
+	var validModel = sdk.Model{
+		Name: "cds-model-name",
+		Type: sdk.VSphere,
+		ModelVirtualMachine: sdk.ModelVirtualMachine{
+			Cmd:     "./worker",
+			Image:   "the-model",
+			PostCmd: "shutdown -h now",
+		},
+		Group: &sdk.Group{
+			Name: sdk.SharedInfraGroupName,
+		},
+	}
+
+	var vmTemplate = object.VirtualMachine{
+		Common: object.Common{
+			InventoryPath: "the-model",
+		},
+	}
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{
+			{
+				ManagedEntity: mo.ManagedEntity{
+					Name: validModel.Name,
+				},
+				Summary: types.VirtualMachineSummary{
+					Config: types.VirtualMachineConfigSummary{
+						Template: true,
+					},
+				},
+				Config: &types.VirtualMachineConfigInfo{
+					Annotation: `{"vmware_model_path": "the-model", "model": true}`,
+				},
+			},
+		}, nil
+	}).AnyTimes()
+
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "the-model").DoAndReturn(
+		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
+			return &vmTemplate, nil
+		},
+	)
+
+	c.EXPECT().LoadVirtualMachineDevices(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error) {
+			card := types.VirtualEthernetCard{}
+			return object.VirtualDeviceList{
+				&card,
+			}, nil
+		},
+	)
+
+	c.EXPECT().LoadNetwork(gomock.Any(), "vbox-net").DoAndReturn(
+		func(ctx context.Context, s string) (object.NetworkReference, error) {
+			return &object.Network{}, nil
+		},
+	)
+
+	c.EXPECT().SetupEthernetCard(gomock.Any(), gomock.Any(), "ethernet-card", gomock.Any()).DoAndReturn(
+		func(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error {
+			return nil
+		},
+	)
+
+	c.EXPECT().LoadResourcePool(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) (*object.ResourcePool, error) {
+			return &object.ResourcePool{}, nil
+		},
+	)
+
+	c.EXPECT().LoadDatastore(gomock.Any(), "datastore").DoAndReturn(
+		func(ctx context.Context, name string) (*object.Datastore, error) {
+			return &object.Datastore{}, nil
+		},
+	)
+
+	var folder object.Folder
+
+	c.EXPECT().LoadFolder(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) (*object.Folder, error) {
+			return &folder, nil
+		},
+	)
+
+	var workerRef types.ManagedObjectReference
+
+	c.EXPECT().CloneVirtualMachine(gomock.Any(), &vmTemplate, &folder, "worker-name", gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error) {
+			return &workerRef, nil
+		},
+	)
+
+	var workerVM object.VirtualMachine
+
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmname string) (*object.VirtualMachine, error) {
+			assert.False(t, cloneSpec.Template)
+			assert.True(t, cloneSpec.PowerOn)
+			var givenAnnotation annotation
+			json.Unmarshal([]byte(cloneSpec.Config.Annotation), &givenAnnotation)
+			assert.Equal(t, "the-model", givenAnnotation.VMwareModelPath)
+			assert.False(t, givenAnnotation.Model)
+			assert.Equal(t, "192.168.0.1", (cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp).IpAddress))
+			return &workerVM, nil
+		},
+	)
+
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
+			return nil
+		},
+	)
+
+	var procman = guest.ProcessManager{}
+
+	c.EXPECT().ProcessManager(gomock.Any(), &workerVM).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
+			return &procman, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
+			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
+			return &types.StartProgramInGuestResponse{}, nil
+		},
+	)
+
+	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
+			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
+			var foundConfig bool
+			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
+				if strings.HasPrefix(env, "CDS_CONFIG=") {
+					foundConfig = true
+				}
+			}
+			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
+			return &types.StartProgramInGuestResponse{}, nil
+		},
+	)
+
+	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
+		WorkerName:  "worker-name",
+		WorkerToken: "worker.token.xxx",
+		Model: sdk.WorkerStarterWorkerModel{
+			ModelV2: &sdk.V2WorkerModel{
+				Name: "cds-model-name",
+				Spec: json.RawMessage(`{"image":"the-model"}`),
+			},
+			VSphereSpec: sdk.V2WorkerModelVSphereSpec{
+				Image:    "the-model",
+				Username: "user",
+				Password: "password",
+			},
+			PostCmd: "sudo shutdown -h now",
+		},
+		JobName: "job_name",
+		JobID:   "666",
+		Requirements: []sdk.Requirement{
+			{
+				Type:  sdk.ModelRequirement,
+				Value: validModel.Name,
+			},
+		},
+		RegisterOnly: false,
+		HatcheryName: "hatchery_name",
+	})
+	require.NoError(t, err)
 }
 
 func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
@@ -457,6 +762,15 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	c := NewVSphereClientTest(t)
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelPath: "shared.infra/model",
+					Username:  "user",
+					Password:  "password",
+				},
+			},
+		},
 	}
 	h.Config.VSphereNetworkString = "vbox-net"
 	h.Config.VSphereCardName = "ethernet-card"
@@ -508,7 +822,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 				},
 			}, {
 				ManagedEntity: mo.ManagedEntity{
-					Name: "provision-worker",
+					Name: "provision-v1-worker",
 				},
 				Runtime: types.VirtualMachineRuntimeInfo{
 					PowerState: types.VirtualMachinePowerStatePoweredOff,
@@ -526,17 +840,26 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "provision-worker").DoAndReturn(
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "provision-v1-worker").DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
 			return &vmProvisionned, nil
 		},
 	)
 
-	c.EXPECT().GetVirtualMachinePowerState(gomock.Any(), &vmProvisionned).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
-			return types.VirtualMachinePowerStateSuspended, nil
+	c.EXPECT().LoadVirtualMachineEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
+			t.Logf("LoadVirtualMachineEvents for %s", vm.Name())
+			return []types.BaseEvent{
+				&types.VmPoweredOffEvent{
+					VmEvent: types.VmEvent{
+						Event: types.Event{
+							CreatedTime: time.Now().Add(-10 * time.Minute),
+						},
+					},
+				},
+			}, nil
 		},
-	)
+	).Times(1)
 
 	c.EXPECT().RenameVirtualMachine(gomock.Any(), &vmProvisionned, "worker-name").DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine, s string) error {
@@ -578,8 +901,8 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		}, nil
 	})
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vmProvisionned, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vmProvisionned, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
 			return nil
 		},
 	).Times(2)
@@ -621,9 +944,9 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
 		WorkerName:  "worker-name",
 		WorkerToken: "worker.token.xxx",
-		Model:       &validModel,
+		Model:       sdk.WorkerStarterWorkerModel{ModelV1: &validModel},
 		JobName:     "job_name",
-		JobID:       666,
+		JobID:       "666",
 		NodeRunID:   999,
 		NodeRunName: "nore_run_name",
 		Requirements: []sdk.Requirement{
@@ -645,6 +968,15 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 	c := NewVSphereClientTest(t)
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelPath: "shared.infra/model",
+					Username:  "user",
+					Password:  "password",
+				},
+			},
+		},
 	}
 	h.Config.VSphereNetworkString = "vbox-net"
 	h.Config.VSphereCardName = "ethernet-card"
@@ -749,8 +1081,8 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 
 	var workerVM object.VirtualMachine
 
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmname string) (*object.VirtualMachine, error) {
 			assert.False(t, cloneSpec.Template)
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation
@@ -762,8 +1094,8 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
 			return nil
 		},
 	)
@@ -774,6 +1106,6 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 		},
 	)
 
-	err := h.ProvisionWorker(ctx, validModel, "provisionned-worker")
+	err := h.ProvisionWorkerV1(ctx, validModel, "provisionned-worker")
 	require.NoError(t, err)
 }

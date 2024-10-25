@@ -13,7 +13,23 @@
     </nz-row>
     <div class="page-content">
         <app-scrollview class="scrollview" *ngIf="selectedItem" [ngSwitch]="selectedItem">
-            <ng-container *ngSwitchCase="'profile'" class="ui grid">
+            <ng-container *ngSwitchCase="'links'">
+                <nz-form-item *ngFor="let d of linkDriver">
+                    <nz-form-label [nzSpan]="2">Link {{d}}</nz-form-label>
+                    <nz-form-control>
+                        <ng-container *ngIf="userLinks.has(d)">
+                            <input name="link-{{d}}" nz-input [readOnly]="true" [ngModel]="userLinks.get(d).username">
+                        </ng-container>
+                        <ng-container *ngIf="!userLinks.has(d)">
+                            <button nz-button nzType="primary" (click)="linkUser(d)">
+                                <i nz-icon nzType="{{d}}" nzTheme="outline"></i>
+                                Link
+                            </button>
+                        </ng-container>
+                    </nz-form-control>
+                </nz-form-item>
+            </ng-container>
+            <ng-container *ngSwitchCase="'profile'">
                 <div *ngIf="user;then showUser;else loadUser"></div>
                 <ng-template #showUser>
                     <form nz-form>
@@ -77,100 +93,99 @@
                     <nz-spin nzTip="Loading user..."></nz-spin>
                 </ng-template>
             </ng-container>
-            <div *ngSwitchCase="'groups'" class="ui grid">
+            <div *ngSwitchCase="'groups'">
                 <div class="wide column">
                     <app-data-table [withPagination]="10" [columns]="columnsGroups" [data]="groups"
                         [loading]="loadingGroups"></app-data-table>
                 </div>
             </div>
-            <div *ngSwitchCase="'contacts'" class="ui grid">
+            <div *ngSwitchCase="'contacts'">
                 <div class="wide column">
                     <app-data-table [withPagination]="10" [columns]="columnsContacts" [data]="contacts"
                         [loading]="loadingContacts"></app-data-table>
                 </div>
             </div>
-            <div *ngSwitchCase="'authentication'" class="ui grid">
-                <div class="sixteen wide column">
-                    <h2 class="ui header">
-                        <i class="id card icon small"></i>
-                        <div class="content">
-                            {{ 'user_auth_consumers' | translate }}
-                        </div>
-                    </h2>
-                    <div class="ui four stackable centered cards">
-                        <ng-container *ngFor="let d of drivers">
-                            <div class="ui card" *ngIf="mConsumers[d.type] || user.id === currentAuthSummary.user.id">
-                                <div class="content" [ngSwitch]="d.type">
-                                    <ng-container *ngSwitchCase="'local'">
-                                        <div class="center aligned header">
-                                            <i class="ui lock icon huge"></i>
+            <div *ngSwitchCase="'authentication'">
+                <nz-row>
+                    <nz-col [nzSpan]="24">
+                        <h1><span nz-icon nzType="idcard" nzTheme="outline"></span>Consumers</h1>
+                    </nz-col>
+                </nz-row>
+                <nz-row class="cardGrid" nzJustify="center">
+                    <ng-container *ngFor="let d of drivers">
+                        <nz-col [nzSpan]="6" *ngIf="mConsumers[d.type] || user.id === currentAuthSummary.user.id">
+                            <div class="entity-card" [ngSwitch]="d.type">
+                                <ng-container *ngSwitchCase="'local'">
+                                    <div class="image">
+                                        <span nz-icon nzType="lock" nzTheme="outline"></span>
+                                    </div>
+                                    <div class="content">
+                                        Local
+                                    </div>
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'corporate-sso'">
+                                    <div class="image">
+                                        <span nz-icon nzType="safety-certificate" nzTheme="outline"></span>
+                                    </div>
+                                    <div class="content">
+                                        Corporate SSO
+                                    </div>
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'ldap'">
+                                    <ng-container *ngIf="!showLDAPSigninForm">
+                                        <div class="image">
+                                            <span nz-icon nzType="book" nzTheme="outline"></span>
                                         </div>
-                                        <div class="center aligned description">
-                                            Local
-                                        </div>
-                                    </ng-container>
-                                    <ng-container *ngSwitchCase="'ldap'">
-                                        <div>
-                                            <ng-container *ngIf="!showLDAPSigninForm">
-                                                <div class="center aligned header">
-                                                    <i class="ui address book icon huge"></i>
-                                                </div>
-                                                <div class="center aligned description">
-                                                    LDAP
-                                                </div>
-                                            </ng-container>
-                                            <ng-container *ngIf="showLDAPSigninForm">
-                                                <form class="ui form" #ldapSigninForm="ngForm">
-                                                    <div class="field">
-                                                        <label>LDAP Bind*</label>
-                                                        <input type="text" name="bind" ngModel required>
-                                                    </div>
-                                                    <div class="field">
-                                                        <label>{{ 'user_label_password' | translate }}*</label>
-                                                        <input type="password" name="password" ngModel required>
-                                                    </div>
-                                                </form>
-                                            </ng-container>
+                                        <div class="content">
+                                            LDAP
                                         </div>
                                     </ng-container>
-                                    <ng-container *ngSwitchCase="'corporate-sso'">
-                                        <div class="center aligned header">
-                                            <i class="ui shield alternate icon huge"></i>
-                                        </div>
-                                        <div class="center aligned description">
-                                            Corporate SSO
-                                        </div>
-                                    </ng-container>
-                                    <ng-container *ngSwitchCase="'openid-connect'">
-                                        <div class="center aligned header">
-                                            <i class="ui openid icon huge"></i>
-                                        </div>
-                                        <div class="center aligned description">
-                                            OpenID Connect
-                                        </div>
-                                    </ng-container>
-                                    <ng-container *ngSwitchDefault>
-                                        <div class="center aligned header">
-                                            <i class="ui {{d.type}} icon huge"></i>
-                                        </div>
-                                        <div class="center aligned description">
-                                            {{d.type | titlecase}}
-                                        </div>
-                                    </ng-container>
-                                </div>
-                                <div class="extra content center aligned">
+                                        <ng-container *ngIf="showLDAPSigninForm">
+                                            <form nz-form #ldapSigninForm="ngForm">
+                                                <nz-form-item>
+                                                    <nz-form-label>LDAP Bind*</nz-form-label>
+                                                    <nz-form-control>
+                                                        <input nz-input type="text" name="bind" ngModel required>
+                                                    </nz-form-control>
+                                                </nz-form-item>
+                                                <nz-form-item>
+                                                    <nz-form-label>{{ 'user_label_password' | translate }}*</nz-form-label>
+                                                    <nz-form-control>
+                                                        <input nz-input type="password" name="password" ngModel required>
+                                                    </nz-form-control>
+                                                </nz-form-item>
+                                            </form>
+                                        </ng-container>
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'openid-connect'">
+                                    <div class="image">
+                                        <span nz-icon nzType="lock" nzTheme="outline"></span>
+                                    </div>
+                                    <div class="content">
+                                        OpenID Connect
+                                    </div>
+                                </ng-container>
+                                <ng-container *ngSwitchDefault>
+                                    <div class="image">
+                                        <span nz-icon nzType="{{d.type}}" nzTheme="outline"></span>
+                                    </div>
+                                    <div class="content">
+                                        {{d.type | titlecase}}
+                                    </div>
+                                </ng-container>
+                                <div class="foot">
                                     <ng-container *ngIf="mConsumers[d.type]" [ngSwitch]="d.type">
                                         <ng-container *ngSwitchCase="'local'">
                                             <button nz-button
-                                                (click)="clickConsumerDetails(mConsumers[d.type])">Details</button>
+                                                    (click)="clickConsumerDetails(mConsumers[d.type])">Details</button>
                                             <button *ngIf="user.id === currentAuthSummary.user.id"
-                                                nz-button nzType="primary"
-                                                (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' |
+                                                    nz-button nzType="primary"
+                                                    (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' |
                                                 translate}}</button>
                                         </ng-container>
                                         <ng-container *ngSwitchDefault>
                                             <button nz-button
-                                                (click)="clickConsumerDetails(mConsumers[d.type])">Details</button>
+                                                    (click)="clickConsumerDetails(mConsumers[d.type])">Details</button>
                                             <button *ngIf="user.id === currentAuthSummary.user.id" nz-button nzDanger nzType="primary"
                                                     nz-popconfirm nzPopconfirmTitle="Are you sure you want to detach it ?"
                                                     (nzOnConfirm)="clickConsumerDetach(mConsumers[d.type])">Detach</button>
@@ -178,55 +193,97 @@
                                     </ng-container>
                                     <ng-container *ngIf="!mConsumers[d.type]" [ngSwitch]="d.type">
                                         <ng-container *ngSwitchCase="'local'">
-                                            <button class="ui green button small" [class.loading]="loadingLocalReset"
-                                                (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' |
-                                                translate}}</button>
+                                            <button nz-button nzType="primary" [class.loading]="loadingLocalReset"
+                                                    (click)="clickConsumerLocalReset()">Reset password</button>
                                         </ng-container>
                                         <ng-container *ngSwitchCase="'ldap'">
-                                            <button class="ui green button small"
-                                                (click)="clickConsumerLDAPSignin()">{{(showLDAPSigninForm ?
+                                            <button nz-button nzType="primary"
+                                                    (click)="clickConsumerLDAPSignin()">{{(showLDAPSigninForm ?
                                                 'account_btn_submit' : 'account_btn_signin') | translate}}</button>
                                         </ng-container>
                                         <ng-container *ngSwitchDefault>
-                                            <a class="ui green button small" [routerLink]="'/auth/ask-signin/'+d.type"
-                                                [queryParams]="{redirect_uri: '/settings/user/'+user.username+'?item=authentication', require_mfa: false}">
-                                                {{'account_btn_signin' | translate}}
-                                            </a>
+                                            <button nz-button nz-button nzType="primary" [routerLink]="'/auth/ask-signin/'+d.type"
+                                                    [queryParams]="{redirect_uri: '/settings/user/'+user.username+'?item=authentication', require_mfa: false}">
+                                                Sign in
+                                            </button>
                                         </ng-container>
                                     </ng-container>
                                 </div>
                             </div>
-                        </ng-container>
-                    </div>
-                </div>
-                <div class="sixteen wide column">
-                    <h3 class="ui header">
-                        <div class="content">
-                            {{ 'user_auth_my_consumers' | translate }}
-                            <i *ngIf="user.id === currentAuthSummary.user.id" class="add circle link icon green"
-                                (click)="clickConsumerCreate()"></i>
-                        </div>
-                    </h3>
-                    <app-data-table [withFilter]="filterConsumers" [withPagination]="10" [columns]="columnsConsumers"
-                        [data]="myConsumers" [loading]="loadingAuthData">
-                    </app-data-table>
-                </div>
-                <div class="sixteen wide column">
-                    <h2 class="ui header">
-                        <i class="alternate ticket icon small"></i>
-                        <div class="content">
-                            {{ 'user_auth_sessions' | translate }}
-                        </div>
-                    </h2>
-                    <app-data-table [withFilter]="filterSessions" [withPagination]="10" [columns]="columnsSessions"
-                        [data]="sessions" [loading]="loadingAuthData"></app-data-table>
+                        </nz-col>
+                    </ng-container>
+                </nz-row>
+                <nz-row>
+                    <nz-col [nzSpan]="24">
+                        <h2>
+                            My consumers
+                            <span nz-icon nzType="plus-circle" nzTheme="fill" class="green" *ngIf="user.id === currentAuthSummary.user.id"
+                                  (click)="clickConsumerCreate()"></span>
+                        </h2>
+                        <app-data-table [withFilter]="filterConsumers" [withPagination]="10" [columns]="columnsConsumers"
+                                        [data]="myConsumers" [loading]="loadingAuthData">
+                        </app-data-table>
+                    </nz-col>
+                </nz-row>
+                <nz-row>
+                    <nz-col [nzSpan]="24">
+                        <h2>Sessions</h2>
+                        <app-data-table [withFilter]="filterSessions" [withPagination]="10" [columns]="columnsSessions"
+                                        [data]="sessions" [loading]="loadingAuthData"></app-data-table>
+                    </nz-col>
+                </nz-row>
+            </div>
+            <div *ngSwitchCase="'gpgkeys'">
+                <div class="wide column">
+                    <h2>Add a GPG Key</h2>
+                    <form nz-form>
+                        <nz-row>
+                            <nz-col [nzSpan]="15">
+                                <nz-form-item>
+                                    <nz-form-control>
+                                        <nz-input-group>
+                                            <textarea rows="4" nz-input [(ngModel)]="importPublicGPGKey" [ngModelOptions]="{standalone: true}" placeholder="Paste here a GPG public key "></textarea>
+                                        </nz-input-group>
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </nz-col>
+                            <nz-col [nzSpan]="2" [nzOffset]="1">
+                                <nz-form-item>
+                                    <nz-form-control>
+                                        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || importPublicGPGKey === ''" (click)="addGPGKey()">Add</button>
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </nz-col>
+                        </nz-row>
+                    </form>
+
+                    <h2>My GPG Keys</h2>
+                    <nz-table #gpgKeysTable [nzData]="gpgKeys">
+                        <thead>
+                          <tr>
+                            <th width="150px">Key ID</th>
+                            <th>Public Key</th>
+                            <th width="150px"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let data of gpgKeysTable.data">
+                            <td>{{data.key_id}}</td>
+                            <td>
+                                <textarea nz-input [ngModel]="data.public_key" readonly rows="10"></textarea>
+                            </td>
+                            <td>
+                                <button nz-button nzDanger nzType="primary" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this key ?" (nzOnConfirm)="deleteGPGKey(data)">Delete</button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </nz-table>
                 </div>
             </div>
         </app-scrollview>
     </div>
 </div>
 <ng-template #modalHeaderTmpl>
-    {{ 'auth_consumer_details_modal_title' | translate: { name: selectedConsumer?.name } }} <div *ngIf="selectedConsumer?.disabled"
-                                                                                        class="ui red label">
-    {{'user_auth_consumer_disabled' | translate}}</div>
+    Details for consumer '{{selectedConsumer?.name}}'
+    <nz-tag nzColor="error" *ngIf="selectedConsumer?.disabled">Disabled</nz-tag>
 </ng-template>

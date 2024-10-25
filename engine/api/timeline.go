@@ -24,13 +24,13 @@ func (api *API) getTimelineHandler() service.Handler {
 			return service.WriteJSON(w, []json.RawMessage{}, http.StatusOK)
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// Get index of the first element to return
 		currentItem := service.FormInt(r, "currentItem")
 
 		// Get workflow to mute
-		timelineFilter, err := user.LoadTimelineFilter(api.mustDB(), consumer.AuthentifiedUser.ID)
+		timelineFilter, err := user.LoadTimelineFilter(api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUser.ID)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load timeline filter")
 		}

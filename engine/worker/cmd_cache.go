@@ -10,12 +10,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -86,15 +84,7 @@ You can use you storage integration:
 
 func cachePushCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(internal.WorkerServerPort)
-		if portS == "" {
-			sdk.Exit("worker cache push > %s not found, are you running inside a CDS worker job?", internal.WorkerServerPort)
-		}
-
-		port, errPort := strconv.Atoi(portS)
-		if errPort != nil {
-			sdk.Exit("worker cache push > Cannot parse '%s' as a port number : %s", portS, errPort)
-		}
+		port := MustGetWorkerHTTPPort()
 
 		if len(args) < 2 {
 			sdk.Exit("worker cache push > Wrong usage: Example : worker cache push myTagValue filea fileb filec")
@@ -186,15 +176,7 @@ If you want to push a cache into a storage integration:
 
 func cachePullCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(internal.WorkerServerPort)
-		if portS == "" {
-			sdk.Exit("worker cache pull > %s not found, are you running inside a CDS worker job?", internal.WorkerServerPort)
-		}
-
-		port, errPort := strconv.Atoi(portS)
-		if errPort != nil {
-			sdk.Exit("worker cache pull > cannot parse '%s' as a port number: %s", portS, errPort)
-		}
+		port := MustGetWorkerHTTPPort()
 
 		if len(args) < 1 {
 			sdk.Exit("worker cache pull > Wrong usage: Example : worker cache pull myTagValue")

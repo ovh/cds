@@ -2,7 +2,7 @@
     <nz-row class="stepParams">
         <!-- Move and collapse -->
         <nz-col [nzSpan]="1" class="move">
-            <i class="move icon" *ngIf="edit"></i>
+            <span *ngIf="edit" class="move pointing">↕</span>
             <span class="pointing" (click)="collapsed = !collapsed">
                 <i nz-icon nzType="caret-right" nzTheme="fill" *ngIf="!collapsed"></i>
                 <i nz-icon nzType="caret-down" nzTheme="fill" *ngIf="collapsed"></i>
@@ -10,10 +10,10 @@
         </nz-col>
         <!-- Step name -->
         <nz-col [nzSpan]="5">
-                <ng-container *ngIf="edit">
+                <ng-container *ngIf="edit && step.type !== 'ActionAsCode'">
                     <input nz-input name="stepName" [(ngModel)]="step.step_name"  (keydown)="action.hasChanged = true">
                 </ng-container>
-                <ng-container *ngIf="!edit">
+                <ng-container *ngIf="!edit || step.type === 'ActionAsCode'">
                     {{step.step_name}}
                 </ng-container>
         </nz-col>

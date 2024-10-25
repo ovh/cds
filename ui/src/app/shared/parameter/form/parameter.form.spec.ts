@@ -5,12 +5,12 @@ import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } f
 import { Parameter } from 'app/model/parameter.model';
 import { ParameterService } from 'app/service/parameter/parameter.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { Observable, of } from 'rxjs';
 import { SharedModule } from '../../shared.module';
 import { ParameterEvent } from '../parameter.event.model';
 import { ParameterFormComponent } from './parameter.form';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NgxsModule } from '@ngxs/store';
 
 describe('CDS: parameter From Component', () => {
 
@@ -24,10 +24,10 @@ describe('CDS: parameter From Component', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                RepoManagerService,
-                ThemeStore
+                RepoManagerService
             ],
             imports: [
+                NgxsModule.forRoot(),
                 SharedModule,
                 BrowserAnimationsModule,
                 TranslateModule.forRoot(),

@@ -1,11 +1,11 @@
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component,
+    Component, inject,
     Input, OnInit,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { AuthConsumer, AuthConsumerScopeDetail } from 'app/model/authentication.model';
+import { AuthConsumer, AuthConsumerScopeDetail, AuthConsumerValidityPeriod } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
@@ -14,8 +14,11 @@ import { UserService } from 'app/service/user/user.service';
 import { Column, Select } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
 
+interface IModalData {
+    user: AuthentifiedUser;
+}
 export enum CloseEventType {
     CREATED = 'CREATED',
     CLOSED = 'CLOSED'
@@ -38,6 +41,9 @@ export enum FormStepName {
 export class ConsumerCreateModalComponent implements OnInit {
 
     @Input() user: AuthentifiedUser;
+
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
+
 
     newConsumer: AuthConsumer = new AuthConsumer();
     signinToken: string;
@@ -83,7 +89,15 @@ export class ConsumerCreateModalComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.user = this.nzModalData.user;
+
         this.newConsumer = new AuthConsumer();
+        this.newConsumer.validity_periods = new Array<AuthConsumerValidityPeriod>();
+        // Init a default validity period of 15 days
+        var ttl =  new AuthConsumerValidityPeriod();
+        ttl.issued_at = new Date().toISOString();
+        ttl.duration = 15;
+        this.newConsumer.validity_periods.push(ttl);
         this.signinToken = null;
         this.selectedGroupKeys = null;
         this.selectedScopeDetails = [];
@@ -126,11 +140,13 @@ export class ConsumerCreateModalComponent implements OnInit {
     }
 
     save(): void {
-        this.newConsumer.group_ids = this.groups.filter(g => this.selectedGroupKeys.find(k => k === g.key())).map(g => g.id);
-        this.newConsumer.scope_details = this.selectedScopeDetails;
+        this.newConsumer.auth_consumer_user.group_ids = this.groups.filter(g => this.selectedGroupKeys.find(k => k === g.key())).map(g => g.id);
+        this.newConsumer.auth_consumer_user.scope_details = this.selectedScopeDetails;
 
         this.loading = true;
         this._cd.markForCheck();
+        // transform validity_period.duration from days to nanosecond
+        this.newConsumer.validity_periods[0].duration = this.newConsumer.validity_periods[0].duration * 8.64e13
         this._userService.createConsumer(this.user.username, this.newConsumer)
             .pipe(finalize(() => {
                 this.loading = false;

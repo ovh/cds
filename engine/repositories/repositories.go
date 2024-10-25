@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
@@ -47,7 +48,11 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	var ok bool
 	s.Cfg, ok = config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid Repositories configuration")
+		return fmt.Errorf("invalid Repositories configuration")
+	}
+
+	if s.Cfg.MaxWorkers == 0 {
+		s.Cfg.MaxWorkers = 10
 	}
 
 	s.ServiceName = s.Cfg.Name
@@ -62,7 +67,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 func (s *Service) CheckConfiguration(config interface{}) error {
 	sConfig, ok := config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid Repositories configuration")
+		return fmt.Errorf("invalid Repositories configuration")
 	}
 
 	if sConfig.URL == "" {
@@ -83,10 +88,19 @@ func (s *Service) Serve(c context.Context) error {
 	//Init the cache
 	log.Info(ctx, "Initializing Redis connection (%s)...", s.Cfg.Cache.Redis.Host)
 	var errCache error
-	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.Redis.DbIndex, s.Cfg.Cache.TTL)
+	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
 	if errCache != nil {
 		return fmt.Errorf("cannot connect to redis instance : %v", errCache)
 	}
+
+	s.localCache = gocache.New(10*time.Minute, 10*time.Minute)
+
+	// Retrieve vcs public keys
+	keys, err := s.Client.ConfigVCSGPGKeys()
+	if err != nil {
+		return err
+	}
+	vcsPublicKeys = keys
 
 	var address = fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port)
 	log.Info(ctx, "Initializing HTTP router (%s)...", address)

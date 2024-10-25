@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -144,4 +145,37 @@ func TestLoadAll(t *testing.T) {
 
 	assert.NoError(t, project.Delete(db, "test_TestLoadAll1"))
 	assert.NoError(t, project.Delete(db, "test_TestLoadAll2"))
+}
+
+func TestLoad(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	key := sdk.RandomString(6)
+	name := key + sdk.RandomString(6)
+
+	proj := sdk.Project{
+		Name: name,
+		Key:  key,
+	}
+	require.NoError(t, project.Insert(db, &proj))
+
+	vcsProject := &sdk.VCSProject{
+		Name:        "the-name",
+		Type:        sdk.VCSTypeGithub,
+		Auth:        sdk.VCSAuthProject{Username: "the-username", Token: "the-token"},
+		Description: "the-username",
+		ProjectID:   proj.ID,
+	}
+
+	err := vcs.Insert(context.TODO(), db, vcsProject)
+	require.NoError(t, err)
+	require.NotEmpty(t, vcsProject.ID)
+
+	loadedProject, err := project.Load(context.TODO(), db, key)
+	require.NoError(t, err)
+	require.NotEmpty(t, loadedProject.VCSServers)
+	require.Len(t, loadedProject.VCSServers, 1)
+	require.Equal(t, "the-name", loadedProject.VCSServers[0].Name)
+	require.NotEmpty(t, loadedProject.VCSServers[0].Auth.Username)
+	require.Empty(t, loadedProject.VCSServers[0].Auth.Token)
 }

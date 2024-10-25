@@ -11,6 +11,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (g *githubClient) Tag(ctx context.Context, fullname string, tagName string) (sdk.VCSTag, error) {
+	tags, err := g.Tags(ctx, fullname)
+	if err != nil {
+		return sdk.VCSTag{}, err
+	}
+	for _, t := range tags {
+		if t.Tag == tagName {
+			return t, nil
+		}
+	}
+	return sdk.VCSTag{}, sdk.WrapError(sdk.ErrNotFound, "tag not found")
+}
+
 // Tags returns list of tags for a repo
 func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, error) {
 	var tags []Ref
@@ -80,7 +93,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 	j := 0
 	for i := len(tags) - 1; i >= 0; i-- {
 		tagsResult[j] = sdk.VCSTag{
-			Tag: strings.Replace(tags[i].Ref, "refs/tags/", "", 1),
+			Tag: strings.Replace(tags[i].Ref, sdk.GitRefTagPrefix, "", 1),
 			Sha: tags[i].Object.Sha,
 		}
 		j++

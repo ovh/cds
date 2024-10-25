@@ -1,19 +1,21 @@
 package swarm
 
 import (
-	docker "github.com/docker/docker/client"
-	"github.com/ovh/cds/engine/service"
+	docker "github.com/moby/moby/client"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
+	"github.com/ovh/cds/engine/service"
 )
 
 const (
 	LabelHatchery           = "hatchery"
 	LabelWorkerName         = "worker_name"
-	LabelServiceWorker      = "service_worker"
 	LabelServiceName        = "service_name"
 	LabelWorkerRequirements = "worker_requirements"
 	LabelWorkerModelPath    = "worker_model_path"
+	LabelJobID              = "job_id"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -39,6 +41,8 @@ type HatcheryConfiguration struct {
 	DockerEngines map[string]DockerEngineConfiguration `mapstructure:"dockerEngines" toml:"dockerEngines" comment:"List of Docker Engines" json:"dockerEngines,omitempty"`
 
 	RegistryCredentials []RegistryCredential `mapstructure:"registryCredentials" toml:"registryCredentials" commented:"true" comment:"List of Docker registry credentials" json:"-"`
+
+	WorkerMetricsRefreshDelay int64 `toml:"workerMetricsRefreshDelay" json:"workerMetricsRefreshDelay" commented:"true" comment:"Interval to compute worker metrics (in seconds), set to 0 will disable worker metrics."`
 }
 
 // HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
@@ -46,6 +50,16 @@ type HatcherySwarm struct {
 	hatcheryCommon.Common
 	Config        HatcheryConfiguration
 	dockerClients map[string]*dockerClient
+	workerMetrics struct {
+		CPU               *stats.Float64Measure
+		CPURequest        *stats.Float64Measure
+		Memory            *stats.Int64Measure
+		MemoryRequest     *stats.Int64Measure
+		CPUView           *view.View
+		CPURequestView    *view.View
+		MemoryView        *view.View
+		MemoryRequestView *view.View
+	}
 }
 
 type dockerClient struct {
@@ -62,7 +76,7 @@ type DockerEngineConfiguration struct {
 	TLSCAPEM              string `mapstructure:"TLSCAPEM" toml:"TLSCAPEM" comment:"content of your ca.pem" json:"-"`
 	TLSCERTPEM            string `mapstructure:"TLSCERTPEM" toml:"TLSCERTPEM" comment:"content of your cert.pem" json:"-"`
 	TLSKEYPEM             string `mapstructure:"TLSKEYPEM" toml:"TLSKEYPEM" comment:"content of your key.pem" json:"-"`
-	APIVersion            string `mapstructure:"APIVersion" toml:"APIVersion" comment:"DOCKER_API_VERSION" json:"APIVersion"` // DOCKER_API_VERSION
+	APIVersion            string `mapstructure:"APIVersion" toml:"APIVersion" default:"1.41" comment:"DOCKER_API_VERSION" json:"APIVersion"` // DOCKER_API_VERSION
 	MaxContainers         int    `mapstructure:"maxContainers" toml:"maxContainers" default:"10" commented:"false" comment:"Max Containers on Host managed by this Hatchery" json:"maxContainers"`
 }
 
@@ -70,4 +84,15 @@ type RegistryCredential struct {
 	Domain   string `mapstructure:"domain" default:"docker.io" commented:"true" toml:"domain" json:"-"`
 	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
 	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
+}
+
+type WorkerMetricsResource struct {
+	WorkerName    string
+	JobID         int64
+	Node          string
+	Name          string
+	CPU           float64
+	CPURequest    float64
+	Memory        int64
+	MemoryRequest int64
 }

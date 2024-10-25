@@ -214,6 +214,16 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			writeError(w, req, err)
 			return
 		}
+		//close archive before removing it
+		if err := archive.Close(); err != nil {
+			err = sdk.Error{
+				Message: fmt.Sprintf("worker cache pull > unable to close archive %s: %v", dest, err),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, req, err)
+			return
+		}
 		if err := wkDirFS.Remove(dest); err != nil {
 			e := sdk.Error{
 				Message: "unable to remove worker cache archive: " + err.Error(),
@@ -223,7 +233,6 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			writeError(w, req, e)
 			return
 		}
-		return
 	}
 }
 

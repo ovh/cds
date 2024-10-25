@@ -55,7 +55,7 @@ func (api *API) getServiceHandler() service.Handler {
 
 // This has to be called by the signin handler
 func (api *API) serviceRegister(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, data *sdk.Service) error {
-	consumer := getAPIConsumer(ctx)
+	consumer := getUserConsumer(ctx)
 	data.LastHeartbeat = time.Now()
 	if data.Name == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing service name")
@@ -138,7 +138,7 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+		s, err := services.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 		if err != nil {
 			return err
 		}

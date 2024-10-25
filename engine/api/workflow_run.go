@@ -224,7 +224,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		options := workflow.LoadOptions{}
@@ -354,10 +354,10 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
-		if consumer.Worker != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 
@@ -389,7 +389,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			// The function could be called with nil project so we need to test if project is not nil
 			if sdk.StatusIsTerminated(wRun.Status) && proj != nil {
 				wRun.LastExecution = time.Now()
-				if err := workflow.ResyncCommitStatus(context.Background(), api.mustDB(), api.Cache, *proj, wRun); err != nil {
+				if err := workflow.ResyncCommitStatus(context.Background(), api.mustDB(), api.Cache, *proj, wRun, api.Config.URL.UI); err != nil {
 					log.Error(ctx, "workflow.UpdateNodeJobRunStatus> %v", err)
 				}
 			}
@@ -411,7 +411,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 }
 
 func (api *API) stopWorkflowRun(ctx context.Context, p *sdk.Project, run *sdk.WorkflowRun, parentWorkflowRunID int64) (*workflow.ProcessorReport, error) {
-	ident := getAPIConsumer(ctx)
+	ident := getUserConsumer(ctx)
 	report := new(workflow.ProcessorReport)
 
 	tx, err := api.mustDB().Begin()
@@ -694,10 +694,10 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
-		if consumer.Worker != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 
@@ -721,7 +721,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 		}
 
 		r1, err := workflow.StopWorkflowNodeRun(ctx, api.mustDB, api.Cache, *p, *workflowRun, *workflowNodeRun, sdk.SpawnInfo{
-			Message: sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getAPIConsumer(ctx).GetUsername()}},
+			Message: sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUserConsumer(ctx).GetUsername()}},
 		})
 		if err != nil {
 			return sdk.WrapError(err, "unable to stop workflow node run")
@@ -774,7 +774,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			//The function could be called with nil project so we need to test if project is not nil
 			if sdk.StatusIsTerminated(wRun.Status) && p != nil {
 				wRun.LastExecution = time.Now()
-				if err := workflow.ResyncCommitStatus(context.Background(), api.mustDB(), api.Cache, *p, wRun); err != nil {
+				if err := workflow.ResyncCommitStatus(context.Background(), api.mustDB(), api.Cache, *p, wRun, api.Config.URL.UI); err != nil {
 					log.Error(ctx, "workflow.stopWorkflowNodeRun> %v", err)
 				}
 			}
@@ -794,9 +794,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			return err
 		}
 		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, id, workflow.LoadRunOptions{
-			WithTests:           true,
-			WithCoverage:        true,
-			WithVulnerabilities: true,
+			WithTests: true,
 		})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
@@ -813,10 +811,10 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowNameAdvanced"]
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
-		if consumer.Worker != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 
@@ -841,7 +839,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &opts); err != nil {
 			return err
 		}
-		opts.AuthConsumerID = getAPIConsumer(ctx).ID
+		opts.AuthConsumerID = getUserConsumer(ctx).ID
 
 		// Request check
 		if opts.Manual != nil && opts.Manual.OnlyFailedJobs && opts.Manual.Resync {
@@ -965,9 +963,9 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	var asCodeInfosMsg []sdk.Message
 	var report = new(workflow.ProcessorReport)
 
-	c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUserWithContacts,
-		authentication.LoadConsumerOptions.WithConsumerGroups)
+	c, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUserWithContacts,
+		authentication.LoadUserConsumerOptions.WithConsumerGroups)
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
 		report.Merge(ctx, r)
@@ -981,7 +979,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		report.Merge(ctx, r)
 		return report
 	}
-	c.Service = s
+	c.AuthConsumerUser.Service = s
 
 	p, err := project.Load(ctx, api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,
@@ -1064,7 +1062,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Debug(ctx, "workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
 			var asCodeInfosMsg []sdk.Message
-			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *c, project.DecryptWithBuiltinKey)
+			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *c, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 			for i, msg := range asCodeInfosMsg {
 				infos[i] = msg.ToSpawnMsg()
@@ -1125,7 +1123,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		report.Merge(ctx, r)
 		return report
 	}
-	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
+	workflow.ResyncNodeRunsWithCommits(api.Router.Background, api.mustDBWithCtx(api.Router.Background), api.Cache, *p, report)
 
 	api.initWorkflowRunPurge(ctx, wf)
 
@@ -1194,6 +1192,10 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 	}
 
 	for _, k := range p.Keys {
+		log.Debug(ctx, "checking %q (disabled:%v)", k.Name, k.Disabled)
+		if k.Disabled {
+			continue // skip disabled keys, so they are not usable in workers
+		}
 		wrSecret := sdk.WorkflowRunSecret{
 			WorkflowRunID: wr.ID,
 			Context:       workflow.SecretProjContext,
@@ -1449,10 +1451,10 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
-		if consumer.Worker != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 
@@ -1466,7 +1468,7 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow run")
 		}
 
-		if err := workflow.ResyncCommitStatus(ctx, api.mustDB(), api.Cache, *proj, wfr); err != nil {
+		if err := workflow.ResyncCommitStatus(ctx, api.mustDB(), api.Cache, *proj, wfr, api.Config.URL.UI); err != nil {
 			return sdk.WrapError(err, "cannot resync workflow run commit status")
 		}
 

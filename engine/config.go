@@ -12,13 +12,15 @@ import (
 
 	"github.com/fsamin/go-dump"
 	defaults "github.com/mcuadros/go-defaults"
+	"github.com/ovh/symmecrypt"
+	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
 	"github.com/ovh/symmecrypt/keyloader"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/driver/builtin"
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"
@@ -71,6 +73,10 @@ func configBootstrap(args []string) Configuration {
 			defaults.SetDefaults(conf.API)
 			conf.API.Database.Schema = "public"
 			conf.API.HTTP.Port = 8081
+			conf.API.Auth.AllowedOrganizations = []string{"default"}
+			conf.API.Workflow.CustomServiceJobBookDelay = map[string]int64{
+				"my-service": 120,
+			}
 		case sdk.TypeUI:
 			conf.UI = &ui.Configuration{}
 			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS()
@@ -101,10 +107,12 @@ func configBootstrap(args []string) Configuration {
 		case sdk.TypeHatchery + ":swarm":
 			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Swarm)
+			host := swarm.DockerEngineConfiguration{
+				Host: "unix:///var/run/docker.sock",
+			}
+			defaults.SetDefaults(&host)
 			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
-				"sample-docker-engine": {
-					Host: "unix:///var/run/docker.sock",
-				},
+				"default": host,
 			}
 			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.Swarm.HTTP.Port = 8086
@@ -116,55 +124,66 @@ func configBootstrap(args []string) Configuration {
 			defaults.SetDefaults(conf.Hatchery.VSphere)
 			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.VSphere.HTTP.Port = 8086
+			conf.Hatchery.VSphere.WorkerProvisioning = []vsphere.WorkerProvisioningConfig{{
+				ModelPath: "my/model",
+			}}
+			conf.Hatchery.VSphere.GuestCredentials = []vsphere.GuestCredential{{
+				ModelPath: "my/model",
+			}}
 		case sdk.TypeHooks:
 			conf.Hooks = &hooks.Configuration{}
 			defaults.SetDefaults(conf.Hooks)
 			conf.Hooks.Name = "cds-hooks-" + namesgenerator.GetRandomNameCDS()
 			conf.Hooks.HTTP.Port = 8083
-		case sdk.TypeVCS:
-			conf.VCS = &vcs.Configuration{}
-			defaults.SetDefaults(conf.VCS)
-			var github vcs.GithubServerConfiguration
-			defaults.SetDefaults(&github)
-			var bitbucket vcs.BitbucketServerConfiguration
-			defaults.SetDefaults(&bitbucket)
-			var bitbucketcloud vcs.BitbucketCloudConfiguration
-			defaults.SetDefaults(&bitbucketcloud)
-			var gitlab vcs.GitlabServerConfiguration
-			defaults.SetDefaults(&gitlab)
-			var gerrit vcs.GerritServerConfiguration
-			defaults.SetDefaults(&gerrit)
-			conf.VCS.Servers = map[string]vcs.ServerConfiguration{
-				"github":         {URL: "https://github.com", Github: &github},
-				"bitbucket":      {URL: "https://mybitbucket.com", Bitbucket: &bitbucket},
-				"bitbucketcloud": {BitbucketCloud: &bitbucketcloud},
-				"gitlab":         {URL: "https://gitlab.com", Gitlab: &gitlab},
-				"gerrit":         {URL: "http://localhost:8080", Gerrit: &gerrit},
-			}
-			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS()
-			conf.VCS.HTTP.Port = 8084
 		case sdk.TypeRepositories:
 			conf.Repositories = &repositories.Configuration{}
 			defaults.SetDefaults(conf.Repositories)
 			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS()
+			conf.Repositories.Basedir = "/var/lib/cds-engine/repositories"
 			conf.Repositories.HTTP.Port = 8085
+		case sdk.TypeVCS:
+			conf.VCS = &vcs.Configuration{}
+			defaults.SetDefaults(conf.VCS)
+			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS()
+			conf.VCS.HTTP.Port = 8084
 		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}
 			defaults.SetDefaults(conf.CDN)
 			conf.CDN.HTTP.Port = 8089
 			conf.CDN.Database.Schema = "cdn"
 			conf.CDN.Units.HashLocatorSalt = sdk.RandomString(8)
+
+			kc := keyloader.KeyConfig{
+				Identifier: "cdn-buffer-local",
+				Timestamp:  time.Now().Unix(),
+				Cipher:     aesgcm.CipherName,
+				Sealed:     false,
+			}
+
+			key, err := symmecrypt.NewRandomKey(kc.Cipher)
+			if err != nil {
+				sdk.Exit("Error generate cdn buffer key'%v'", err)
+			}
+
+			keyStr, err := key.String()
+			if err != nil {
+				sdk.Exit("Error getting cdn buffer key: '%v'", err)
+			}
+
+			kc.Key = keyStr
+
 			conf.CDN.Units.Buffers = map[string]storage.BufferConfiguration{
 				"redis": {
 					BufferType: storage.CDNBufferTypeLog,
-					Redis: &storage.RedisBufferConfiguration{
+					Redis: &sdk.RedisConf{
 						Host: "localhost:6379",
 					},
 				},
 				"local-buffer": {
 					BufferType: storage.CDNBufferTypeFile,
 					Local: &storage.LocalBufferConfiguration{
-						Path: "/var/lib/cds-engine/cdn-buffer",
+						Path:       "/var/lib/cds-engine/cdn-buffer",
+						Encryption: []*keyloader.KeyConfig{&kc},
 					},
 				},
 			}
@@ -351,13 +370,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: "Autogenerated configuration for ui service",
 			Type:        api.StartupConfigConsumerTypeUI,
 		}
-		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
-			ValidityPeriods: validityPediod,
+		var c = sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:              cfg.ID,
+				Name:            cfg.Name,
+				Description:     cfg.Description,
+				Type:            sdk.ConsumerBuiltin,
+				ValidityPeriods: validityPediod,
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
+				Data: map[string]string{},
+			},
 		}
 		conf.UI.API.Token, err = builtin.NewSigninConsumerToken(&c)
 		if err != nil {
@@ -374,13 +397,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: "Autogenerated configuration for local hatchery",
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
-			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
-				ValidityPeriods: validityPediod,
+			var c = sdk.AuthUserConsumer{
+				AuthConsumer: sdk.AuthConsumer{
+					ID:              cfg.ID,
+					Name:            cfg.Name,
+					Description:     cfg.Description,
+					Type:            sdk.ConsumerBuiltin,
+					ValidityPeriods: validityPediod,
+				},
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					Data: map[string]string{},
+				},
 			}
 			h.Local.API.Token, err = builtin.NewSigninConsumerToken(&c)
 			if err != nil {
@@ -399,13 +426,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: "Autogenerated configuration for openstack hatchery",
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
-			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
-				ValidityPeriods: validityPediod,
+			var c = sdk.AuthUserConsumer{
+				AuthConsumer: sdk.AuthConsumer{
+					ID:              cfg.ID,
+					Name:            cfg.Name,
+					Description:     cfg.Description,
+					Type:            sdk.ConsumerBuiltin,
+					ValidityPeriods: validityPediod,
+				},
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					Data: map[string]string{},
+				},
 			}
 			h.Openstack.API.Token, err = builtin.NewSigninConsumerToken(&c)
 			if err != nil {
@@ -424,13 +455,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: "Autogenerated configuration for vsphere hatchery",
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
-			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
-				ValidityPeriods: validityPediod,
+			var c = sdk.AuthUserConsumer{
+				AuthConsumer: sdk.AuthConsumer{
+					ID:              cfg.ID,
+					Name:            cfg.Name,
+					Description:     cfg.Description,
+					Type:            sdk.ConsumerBuiltin,
+					ValidityPeriods: validityPediod,
+				},
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					Data: map[string]string{},
+				},
 			}
 			h.VSphere.API.Token, err = builtin.NewSigninConsumerToken(&c)
 			if err != nil {
@@ -440,7 +475,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			privateKey, _ := jws.NewRandomRSAKey()
 			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
 			h.VSphere.RSAPrivateKey = string(privateKeyPEM)
-			h.VSphere.WorkerProvisioning = append(h.VSphere.WorkerProvisioning, vsphere.WorkerProvisioningConfig{ModelPath: "my/model", Number: 10})
 		}
 
 		if h.Swarm != nil {
@@ -450,13 +484,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: "Autogenerated configuration for swarm hatchery",
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
-			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
-				ValidityPeriods: validityPediod,
+			var c = sdk.AuthUserConsumer{
+				AuthConsumer: sdk.AuthConsumer{
+					ID:              cfg.ID,
+					Name:            cfg.Name,
+					Description:     cfg.Description,
+					Type:            sdk.ConsumerBuiltin,
+					ValidityPeriods: validityPediod,
+				},
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					Data: map[string]string{},
+				},
 			}
 			h.Swarm.API.Token, err = builtin.NewSigninConsumerToken(&c)
 			if err != nil {
@@ -475,13 +513,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: "Autogenerated configuration for kubernetes hatchery",
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
-			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
-				ValidityPeriods: validityPediod,
+			var c = sdk.AuthUserConsumer{
+				AuthConsumer: sdk.AuthConsumer{
+					ID:              cfg.ID,
+					Name:            cfg.Name,
+					Description:     cfg.Description,
+					Type:            sdk.ConsumerBuiltin,
+					ValidityPeriods: validityPediod,
+				},
+				AuthConsumerUser: sdk.AuthUserConsumerData{
+					Data: map[string]string{},
+				},
 			}
 			conf.Hatchery.Kubernetes.API.Token, err = builtin.NewSigninConsumerToken(&c)
 			if err != nil {
@@ -491,6 +533,9 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			privateKey, _ := jws.NewRandomRSAKey()
 			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
 			h.Kubernetes.RSAPrivateKey = string(privateKeyPEM)
+			var a kubernetes.CustomAnnotation
+			defaults.SetDefaults(&a)
+			conf.Hatchery.Kubernetes.CustomAnnotations = append(conf.Hatchery.Kubernetes.CustomAnnotations, a)
 		}
 	}
 
@@ -501,13 +546,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: "Autogenerated configuration for hooks service",
 			Type:        api.StartupConfigConsumerTypeHooks,
 		}
-		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
-			ValidityPeriods: validityPediod,
+		var c = sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:              cfg.ID,
+				Name:            cfg.Name,
+				Description:     cfg.Description,
+				Type:            sdk.ConsumerBuiltin,
+				ValidityPeriods: validityPediod,
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
+				Data: map[string]string{},
+			},
 		}
 		conf.Hooks.API.Token, err = builtin.NewSigninConsumerToken(&c)
 		if err != nil {
@@ -523,13 +572,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: "Autogenerated configuration for repositories service",
 			Type:        api.StartupConfigConsumerTypeRepositories,
 		}
-		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
-			ValidityPeriods: validityPediod,
+		var c = sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:              cfg.ID,
+				Name:            cfg.Name,
+				Description:     cfg.Description,
+				Type:            sdk.ConsumerBuiltin,
+				ValidityPeriods: validityPediod,
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
+				Data: map[string]string{},
+			},
 		}
 		conf.Repositories.API.Token, err = builtin.NewSigninConsumerToken(&c)
 		if err != nil {
@@ -545,13 +598,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: "Autogenerated configuration for migrate service",
 			Type:        api.StartupConfigConsumerTypeDBMigrate,
 		}
-		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
-			ValidityPeriods: validityPediod,
+		var c = sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:              cfg.ID,
+				Name:            cfg.Name,
+				Description:     cfg.Description,
+				Type:            sdk.ConsumerBuiltin,
+				ValidityPeriods: validityPediod,
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
+				Data: map[string]string{},
+			},
 		}
 		conf.DatabaseMigrate.API.Token, err = builtin.NewSigninConsumerToken(&c)
 		if err != nil {
@@ -567,13 +624,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: "Autogenerated configuration for vcs service",
 			Type:        api.StartupConfigConsumerTypeVCS,
 		}
-		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
-			ValidityPeriods: validityPediod,
+		var c = sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:              cfg.ID,
+				Name:            cfg.Name,
+				Description:     cfg.Description,
+				Type:            sdk.ConsumerBuiltin,
+				ValidityPeriods: validityPediod,
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
+				Data: map[string]string{},
+			},
 		}
 		conf.VCS.API.Token, err = builtin.NewSigninConsumerToken(&c)
 		if err != nil {
@@ -589,13 +650,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: "Autogenerated configuration for cdn service",
 			Type:        api.StartupConfigConsumerTypeCDN,
 		}
-		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
-			ValidityPeriods: validityPediod,
+		var c = sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:              cfg.ID,
+				Name:            cfg.Name,
+				Description:     cfg.Description,
+				Type:            sdk.ConsumerBuiltin,
+				ValidityPeriods: validityPediod,
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
+				Data: map[string]string{},
+			},
 		}
 		conf.CDN.API.Token, err = builtin.NewSigninConsumerToken(&c)
 		if err != nil {
@@ -611,13 +676,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: "Autogenerated configuration for elasticSearch service",
 			Type:        api.StartupConfigConsumerTypeElasticsearch,
 		}
-		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
-			ValidityPeriods: validityPediod,
+		var c = sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:              cfg.ID,
+				Name:            cfg.Name,
+				Description:     cfg.Description,
+				Type:            sdk.ConsumerBuiltin,
+				ValidityPeriods: validityPediod,
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
+				Data: map[string]string{},
+			},
 		}
 		conf.ElasticSearch.API.Token, err = builtin.NewSigninConsumerToken(&c)
 		if err != nil {

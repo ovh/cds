@@ -16,8 +16,9 @@ type dbEntity struct {
 }
 
 func (v dbEntity) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{v.ID, v.Name, v.ProjectKey, v.ProjectRepositoryID, v.Type, v.Branch, v.Commit}
+	_ = []interface{}{v.ID, v.Name, v.ProjectKey, v.ProjectRepositoryID, v.Type, v.Ref, v.Commit, v.Data}
 	return []gorpmapper.CanonicalForm{
-		"{{.ID}}{{.Name}}{{.ProjectKey}}{{.ProjectRepositoryID}}{{.Type}}{{.Branch}}{{.Commit}}",
+		"{{.ID}}{{.Name}}{{.ProjectKey}}{{.ProjectRepositoryID}}{{.Type}}{{.Ref}}{{.Commit}}{{md5sum .Data}}",
+		"{{.ID}}{{.Name}}{{.ProjectKey}}{{.ProjectRepositoryID}}{{.Type}}{{.Ref}}{{.Commit}}{{hash .Data}}",
 	}
 }

@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { Group } from 'app/model/group.model';
 import { AuthSummary } from 'app/model/user.model';
 import { ModelPattern, WorkerModel } from 'app/model/worker-model.model';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
+import { PreferencesState } from 'app/store/preferences.state';
 import omit from 'lodash-es/omit';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-worker-model-form',
@@ -74,7 +75,8 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
     constructor(
         private _sharedService: SharedService,
         private _workerModelService: WorkerModelService,
-        private _theme: ThemeStore, private _cd: ChangeDetectorRef
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -87,7 +89,7 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);

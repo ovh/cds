@@ -73,8 +73,8 @@ func StartAPI(ctx context.Context, c ConfigAPI) error {
 }
 
 func httpRootHandler(c echo.Context) error {
-	var s = fmt.Sprintf("SMTP server listenning on %d\n", configAPI.PortSMTP)
-	s += fmt.Sprintf("%d mails received to %d recipents\n", StoreCountMessages(), StoreCountRecipients())
+	var s = fmt.Sprintf("SMTP server listening on %d\n", configAPI.PortSMTP)
+	s += fmt.Sprintf("%d mails received to %d recipients\n", StoreCountMessages(), StoreCountRecipients())
 	return c.String(http.StatusOK, s)
 }
 

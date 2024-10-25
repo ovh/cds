@@ -1,0 +1,36 @@
+<div class="svg-wrapper" #svgGraph></div>
+
+<div *ngIf="_workflowRun" class="hooks">
+    <ng-container *ngFor="let h of hooks">
+        <div class="hook" *ngIf="h === selectedHook" [class.active]="true" (click)="clickHook(h)"
+            title="Show hook event">
+            <span nz-icon nzType="api" nzTheme="outline"></span>
+            Triggered by hook on&nbsp;<b>{{h}}</b>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="selectedHook === 'manual'">
+        <div class="hook" [class.active]="true" (click)="clickHook('manual')">
+            <span nz-icon nzType="api" nzTheme="outline"></span>
+            <b>Manual</b>&nbsp;trigger
+        </div>
+    </ng-container>
+</div>
+
+<div *ngIf="!_workflowRun" class="hooks">
+    <div class="hook" *ngFor="let h of hooks" (click)="clickHook(h)" title="Show hook configuration">
+        <span nz-icon nzType="api" nzTheme="outline"></span>
+        Hook on&nbsp;<b>{{h}}</b>
+    </div>
+</div>
+
+<div class="controls">
+    <button nz-button (click)="changeDirection()" nzSize="medium">
+        <span *ngIf="direction === 'horizontal'" nz-icon nzType="rotate-right" nzTheme="outline"
+            title="Rotate graph right"></span>
+        <span *ngIf="direction === 'vertical'" nz-icon nzType="rotate-left" nzTheme="outline"
+            title="Rotate graph left"></span>
+    </button>
+    <button nz-button (click)="clickOrigin()" nzSize="medium" title="Center graph">
+        <span nz-icon nzType="aim" nzTheme="outline"></span>
+    </button>
+</div>

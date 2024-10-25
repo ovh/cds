@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	gonfs "github.com/vmware/go-nfs-client/nfs"
 	"github.com/vmware/go-nfs-client/nfs/rpc"
@@ -173,6 +174,9 @@ func (n *Buffer) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.S
 	}
 	_, _, err = target.Lookup(path)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil
+		}
 		return false, sdk.WithStack(err)
 	}
 	return true, nil
@@ -351,13 +355,14 @@ func (n *Buffer) ResyncWithDatabase(ctx context.Context, db gorp.SqlExecutor, t 
 	}
 	for _, e := range entries {
 		if e.IsDir() {
-			log.Warn(ctx, "nfs-buffer: found directory inside %s: %s", string(t), e)
+			log.Warn(ctx, "nfs-buffer: found directory inside %s: %s", string(t), e.FileName)
 			continue
 		}
 		if e.FileName == "" {
 			log.Warn(ctx, "nfs-buffer: missing file name")
 			continue
 		}
+		log.Info(ctx, "Found file %s [%d]", e.FileName, e.Size())
 		has, err := storage.HashItemUnitByApiRefHash(db, e.FileName, n.ID())
 		if err != nil {
 			log.Error(ctx, "nfs-buffer: unable to check if unit item exist for api ref hash %s: %v", e.FileName, err)

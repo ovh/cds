@@ -17,7 +17,6 @@ import (
 	websocket "github.com/gorilla/websocket"
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
-	coverage "github.com/sguiheux/go-coverage"
 	afero "github.com/spf13/afero"
 )
 
@@ -196,6 +195,44 @@ func (m *MockTemplateClient) TemplatePush(tarContent io.Reader) ([]string, *tar.
 func (mr *MockTemplateClientMockRecorder) TemplatePush(tarContent interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplatePush", reflect.TypeOf((*MockTemplateClient)(nil).TemplatePush), tarContent)
+}
+
+// MockTemplateV2Client is a mock of TemplateV2Client interface.
+type MockTemplateV2Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockTemplateV2ClientMockRecorder
+}
+
+// MockTemplateV2ClientMockRecorder is the mock recorder for MockTemplateV2Client.
+type MockTemplateV2ClientMockRecorder struct {
+	mock *MockTemplateV2Client
+}
+
+// NewMockTemplateV2Client creates a new mock instance.
+func NewMockTemplateV2Client(ctrl *gomock.Controller) *MockTemplateV2Client {
+	mock := &MockTemplateV2Client{ctrl: ctrl}
+	mock.recorder = &MockTemplateV2ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTemplateV2Client) EXPECT() *MockTemplateV2ClientMockRecorder {
+	return m.recorder
+}
+
+// TemplateGenerateWorkflowFromFile mocks base method.
+func (m *MockTemplateV2Client) TemplateGenerateWorkflowFromFile(ctx context.Context, req sdk.V2WorkflowTemplateGenerateRequest) (*sdk.V2WorkflowTemplateGenerateResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemplateGenerateWorkflowFromFile", ctx, req)
+	ret0, _ := ret[0].(*sdk.V2WorkflowTemplateGenerateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TemplateGenerateWorkflowFromFile indicates an expected call of TemplateGenerateWorkflowFromFile.
+func (mr *MockTemplateV2ClientMockRecorder) TemplateGenerateWorkflowFromFile(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateGenerateWorkflowFromFile", reflect.TypeOf((*MockTemplateV2Client)(nil).TemplateGenerateWorkflowFromFile), ctx, req)
 }
 
 // MockAdmin is a mock of Admin interface.
@@ -534,6 +571,20 @@ func (m *MockAdmin) Features() ([]sdk.Feature, error) {
 func (mr *MockAdminMockRecorder) Features() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Features", reflect.TypeOf((*MockAdmin)(nil).Features))
+}
+
+// HasProjectRole mocks base method.
+func (m *MockAdmin) HasProjectRole(ctx context.Context, projectKey, sessionID, role string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasProjectRole", ctx, projectKey, sessionID, role)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HasProjectRole indicates an expected call of HasProjectRole.
+func (mr *MockAdminMockRecorder) HasProjectRole(ctx, projectKey, sessionID, role interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasProjectRole", reflect.TypeOf((*MockAdmin)(nil).HasProjectRole), ctx, projectKey, sessionID, role)
 }
 
 // ServiceCallDELETE mocks base method.
@@ -2518,6 +2569,711 @@ func (mr *MockRegionClientMockRecorder) RegionList(ctx interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionList", reflect.TypeOf((*MockRegionClient)(nil).RegionList), ctx)
 }
 
+// MockHatcheryClient is a mock of HatcheryClient interface.
+type MockHatcheryClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockHatcheryClientMockRecorder
+}
+
+// MockHatcheryClientMockRecorder is the mock recorder for MockHatcheryClient.
+type MockHatcheryClientMockRecorder struct {
+	mock *MockHatcheryClient
+}
+
+// NewMockHatcheryClient creates a new mock instance.
+func NewMockHatcheryClient(ctrl *gomock.Controller) *MockHatcheryClient {
+	mock := &MockHatcheryClient{ctrl: ctrl}
+	mock.recorder = &MockHatcheryClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockHatcheryClient) EXPECT() *MockHatcheryClientMockRecorder {
+	return m.recorder
+}
+
+// HatcheryAdd mocks base method.
+func (m *MockHatcheryClient) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) (*sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryAdd", ctx, h)
+	ret0, _ := ret[0].(*sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryAdd indicates an expected call of HatcheryAdd.
+func (mr *MockHatcheryClientMockRecorder) HatcheryAdd(ctx, h interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryAdd", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryAdd), ctx, h)
+}
+
+// HatcheryDelete mocks base method.
+func (m *MockHatcheryClient) HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryDelete", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HatcheryDelete indicates an expected call of HatcheryDelete.
+func (mr *MockHatcheryClientMockRecorder) HatcheryDelete(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryDelete", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryDelete), ctx, hatcheryIdentifier)
+}
+
+// HatcheryGet mocks base method.
+func (m *MockHatcheryClient) HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryGet", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryGet indicates an expected call of HatcheryGet.
+func (mr *MockHatcheryClientMockRecorder) HatcheryGet(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryGet", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryGet), ctx, hatcheryIdentifier)
+}
+
+// HatcheryList mocks base method.
+func (m *MockHatcheryClient) HatcheryList(ctx context.Context) ([]sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryList", ctx)
+	ret0, _ := ret[0].([]sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryList indicates an expected call of HatcheryList.
+func (mr *MockHatcheryClientMockRecorder) HatcheryList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryList", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryList), ctx)
+}
+
+// HatcheryRegenToken mocks base method.
+func (m *MockHatcheryClient) HatcheryRegenToken(ctx context.Context, hatcheryIdentifier string) (*sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryRegenToken", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(*sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryRegenToken indicates an expected call of HatcheryRegenToken.
+func (mr *MockHatcheryClientMockRecorder) HatcheryRegenToken(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryRegenToken", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryRegenToken), ctx, hatcheryIdentifier)
+}
+
+// MockHatcheryServiceClient is a mock of HatcheryServiceClient interface.
+type MockHatcheryServiceClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockHatcheryServiceClientMockRecorder
+}
+
+// MockHatcheryServiceClientMockRecorder is the mock recorder for MockHatcheryServiceClient.
+type MockHatcheryServiceClientMockRecorder struct {
+	mock *MockHatcheryServiceClient
+}
+
+// NewMockHatcheryServiceClient creates a new mock instance.
+func NewMockHatcheryServiceClient(ctrl *gomock.Controller) *MockHatcheryServiceClient {
+	mock := &MockHatcheryServiceClient{ctrl: ctrl}
+	mock.recorder = &MockHatcheryServiceClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockHatcheryServiceClient) EXPECT() *MockHatcheryServiceClientMockRecorder {
+	return m.recorder
+}
+
+// EntityGet mocks base method.
+func (m *MockHatcheryServiceClient) EntityGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, entityType, entityName string, mods ...cdsclient.RequestModifier) (*sdk.Entity, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EntityGet", varargs...)
+	ret0, _ := ret[0].(*sdk.Entity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityGet indicates an expected call of EntityGet.
+func (mr *MockHatcheryServiceClientMockRecorder) EntityGet(ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).EntityGet), varargs...)
+}
+
+// GetWorkerModel mocks base method.
+func (m *MockHatcheryServiceClient) GetWorkerModel(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, workerModelName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkerModel, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, workerModelName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetWorkerModel", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkerModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkerModel indicates an expected call of GetWorkerModel.
+func (mr *MockHatcheryServiceClientMockRecorder) GetWorkerModel(ctx, projKey, vcsIdentifier, repoIdentifier, workerModelName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, workerModelName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkerModel", reflect.TypeOf((*MockHatcheryServiceClient)(nil).GetWorkerModel), varargs...)
+}
+
+// Heartbeat mocks base method.
+func (m *MockHatcheryServiceClient) Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Heartbeat", ctx, mon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Heartbeat indicates an expected call of Heartbeat.
+func (mr *MockHatcheryServiceClientMockRecorder) Heartbeat(ctx, mon interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heartbeat", reflect.TypeOf((*MockHatcheryServiceClient)(nil).Heartbeat), ctx, mon)
+}
+
+// V2HatcheryReleaseJob mocks base method.
+func (m *MockHatcheryServiceClient) V2HatcheryReleaseJob(ctx context.Context, regionName, jobRunID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2HatcheryReleaseJob", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2HatcheryReleaseJob indicates an expected call of V2HatcheryReleaseJob.
+func (mr *MockHatcheryServiceClientMockRecorder) V2HatcheryReleaseJob(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2HatcheryReleaseJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2HatcheryReleaseJob), ctx, regionName, jobRunID)
+}
+
+// V2HatcheryTakeJob mocks base method.
+func (m *MockHatcheryServiceClient) V2HatcheryTakeJob(ctx context.Context, regionName, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2HatcheryTakeJob", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2HatcheryTakeJob indicates an expected call of V2HatcheryTakeJob.
+func (mr *MockHatcheryServiceClientMockRecorder) V2HatcheryTakeJob(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2HatcheryTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2HatcheryTakeJob), ctx, regionName, jobRunID)
+}
+
+// V2QueueGetCacheLinks mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueGetCacheLinks(ctx context.Context, regionName, id, cacheKey string) (*sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetCacheLinks", ctx, regionName, id, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetCacheLinks indicates an expected call of V2QueueGetCacheLinks.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueGetCacheLinks(ctx, regionName, id, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetCacheLinks", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueGetCacheLinks), ctx, regionName, id, cacheKey)
+}
+
+// V2QueueGetJobRun mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetJobRun", ctx, regionName, id)
+	ret0, _ := ret[0].(*sdk.V2QueueJobInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetJobRun indicates an expected call of V2QueueGetJobRun.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueGetJobRun(ctx, regionName, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetJobRun", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueGetJobRun), ctx, regionName, id)
+}
+
+// V2QueueJobResult mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueJobResult(ctx context.Context, region, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobResult", ctx, region, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobResult indicates an expected call of V2QueueJobResult.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobResult(ctx, region, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobResult", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobResult), ctx, region, jobRunID, result)
+}
+
+// V2QueueJobRunResultCreate mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueJobRunResultCreate(ctx context.Context, regionName, jobRunID string, result *sdk.V2WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultCreate", ctx, regionName, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultCreate indicates an expected call of V2QueueJobRunResultCreate.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultCreate(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultCreate", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultCreate), ctx, regionName, jobRunID, result)
+}
+
+// V2QueueJobRunResultGet mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueJobRunResultGet(ctx context.Context, regionName, jobRunID, runResultID string) (*sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultGet", ctx, regionName, jobRunID, runResultID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueJobRunResultGet indicates an expected call of V2QueueJobRunResultGet.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultGet(ctx, regionName, jobRunID, runResultID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultGet), ctx, regionName, jobRunID, runResultID)
+}
+
+// V2QueueJobRunResultUpdate mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueJobRunResultUpdate(ctx context.Context, regionName, jobRunID string, result *sdk.V2WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultUpdate", ctx, regionName, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultUpdate indicates an expected call of V2QueueJobRunResultUpdate.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultUpdate(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultUpdate", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultUpdate), ctx, regionName, jobRunID, result)
+}
+
+// V2QueueJobRunResultsGet mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
+}
+
+// V2QueueJobRunResultsSynchronize mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueJobRunResultsSynchronize(ctx context.Context, regionName, jobRunID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsSynchronize", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultsSynchronize indicates an expected call of V2QueueJobRunResultsSynchronize.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultsSynchronize(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsSynchronize", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultsSynchronize), ctx, regionName, jobRunID)
+}
+
+// V2QueueJobStepUpdate mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsStatus sdk.JobStepsStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsStatus)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobStepUpdate indicates an expected call of V2QueueJobStepUpdate.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsStatus interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsStatus)
+}
+
+// V2QueuePolling mocks base method.
+func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
+	for _, a := range ms {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "V2QueuePolling", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePolling indicates an expected call of V2QueuePolling.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueuePolling(ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}, ms...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueuePolling), varargs...)
+}
+
+// V2QueuePushJobInfo mocks base method.
+func (m *MockHatcheryServiceClient) V2QueuePushJobInfo(ctx context.Context, regionName, jobRunID string, msg sdk.V2SendJobRunInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueuePushJobInfo", ctx, regionName, jobRunID, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePushJobInfo indicates an expected call of V2QueuePushJobInfo.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueuePushJobInfo(ctx, regionName, jobRunID, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePushJobInfo", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueuePushJobInfo), ctx, regionName, jobRunID, msg)
+}
+
+// V2QueuePushRunInfo mocks base method.
+func (m *MockHatcheryServiceClient) V2QueuePushRunInfo(ctx context.Context, regionName, jobRunID string, msg sdk.V2WorkflowRunInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueuePushRunInfo", ctx, regionName, jobRunID, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePushRunInfo indicates an expected call of V2QueuePushRunInfo.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueuePushRunInfo(ctx, regionName, jobRunID, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePushRunInfo", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueuePushRunInfo), ctx, regionName, jobRunID, msg)
+}
+
+// V2QueueWorkerTakeJob mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueWorkerTakeJob", ctx, region, runJobID)
+	ret0, _ := ret[0].(*sdk.V2TakeJobResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueWorkerTakeJob indicates an expected call of V2QueueWorkerTakeJob.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueWorkerTakeJob(ctx, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueWorkerTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueWorkerTakeJob), ctx, region, runJobID)
+}
+
+// V2WorkerList mocks base method.
+func (m *MockHatcheryServiceClient) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerList", ctx)
+	ret0, _ := ret[0].([]sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerList indicates an expected call of V2WorkerList.
+func (mr *MockHatcheryServiceClientMockRecorder) V2WorkerList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerList", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2WorkerList), ctx)
+}
+
+// MockProjectClientV2 is a mock of ProjectClientV2 interface.
+type MockProjectClientV2 struct {
+	ctrl     *gomock.Controller
+	recorder *MockProjectClientV2MockRecorder
+}
+
+// MockProjectClientV2MockRecorder is the mock recorder for MockProjectClientV2.
+type MockProjectClientV2MockRecorder struct {
+	mock *MockProjectClientV2
+}
+
+// NewMockProjectClientV2 creates a new mock instance.
+func NewMockProjectClientV2(ctrl *gomock.Controller) *MockProjectClientV2 {
+	mock := &MockProjectClientV2{ctrl: ctrl}
+	mock.recorder = &MockProjectClientV2MockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockProjectClientV2) EXPECT() *MockProjectClientV2MockRecorder {
+	return m.recorder
+}
+
+// ProjectNotificationCreate mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationCreate", ctx, pKey, notif)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationCreate indicates an expected call of ProjectNotificationCreate.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationCreate(ctx, pKey, notif interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationCreate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationCreate), ctx, pKey, notif)
+}
+
+// ProjectNotificationDelete mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationDelete(ctx context.Context, pKey, notifName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationDelete", ctx, pKey, notifName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationDelete indicates an expected call of ProjectNotificationDelete.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationDelete(ctx, pKey, notifName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationDelete), ctx, pKey, notifName)
+}
+
+// ProjectNotificationGet mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationGet(ctx context.Context, pKey, notifName string) (*sdk.ProjectNotification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationGet", ctx, pKey, notifName)
+	ret0, _ := ret[0].(*sdk.ProjectNotification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectNotificationGet indicates an expected call of ProjectNotificationGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationGet(ctx, pKey, notifName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationGet), ctx, pKey, notifName)
+}
+
+// ProjectNotificationList mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationList", ctx, pKey)
+	ret0, _ := ret[0].([]sdk.ProjectNotification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectNotificationList indicates an expected call of ProjectNotificationList.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationList(ctx, pKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationList", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationList), ctx, pKey)
+}
+
+// ProjectNotificationUpdate mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationUpdate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationUpdate", ctx, pKey, notif)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationUpdate indicates an expected call of ProjectNotificationUpdate.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationUpdate(ctx, pKey, notif interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationUpdate), ctx, pKey, notif)
+}
+
+// ProjectV2Access mocks base method.
+func (m *MockProjectClientV2) ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectV2Access", ctx, projectKey, sessionID, itemType)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectV2Access indicates an expected call of ProjectV2Access.
+func (mr *MockProjectClientV2MockRecorder) ProjectV2Access(ctx, projectKey, sessionID, itemType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectV2Access", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectV2Access), ctx, projectKey, sessionID, itemType)
+}
+
+// ProjectVariableSetCreate mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetCreate", ctx, pKey, vs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetCreate indicates an expected call of ProjectVariableSetCreate.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetCreate(ctx, pKey, vs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetCreate), ctx, pKey, vs)
+}
+
+// ProjectVariableSetCreateFromApplication mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetCreateFromApplication(ctx context.Context, pKey string, req sdk.CopyApplicationVariableToVariableSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetCreateFromApplication", ctx, pKey, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetCreateFromApplication indicates an expected call of ProjectVariableSetCreateFromApplication.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetCreateFromApplication(ctx, pKey, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreateFromApplication", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetCreateFromApplication), ctx, pKey, req)
+}
+
+// ProjectVariableSetCreateFromEnvironment mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetCreateFromEnvironment", ctx, pKey, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetCreateFromEnvironment indicates an expected call of ProjectVariableSetCreateFromEnvironment.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetCreateFromEnvironment(ctx, pKey, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreateFromEnvironment", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetCreateFromEnvironment), ctx, pKey, req)
+}
+
+// ProjectVariableSetDelete mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetDelete(ctx context.Context, pKey, vsName string, mod ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, pKey, vsName}
+	for _, a := range mod {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProjectVariableSetDelete", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetDelete indicates an expected call of ProjectVariableSetDelete.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetDelete(ctx, pKey, vsName interface{}, mod ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, pKey, vsName}, mod...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetDelete), varargs...)
+}
+
+// ProjectVariableSetItemAdd mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemAdd(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemAdd", ctx, pKey, vsName, item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemAdd indicates an expected call of ProjectVariableSetItemAdd.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemAdd(ctx, pKey, vsName, item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemAdd", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemAdd), ctx, pKey, vsName, item)
+}
+
+// ProjectVariableSetItemDelete mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemDelete(ctx context.Context, pKey, vsName, itemName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemDelete", ctx, pKey, vsName, itemName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemDelete indicates an expected call of ProjectVariableSetItemDelete.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemDelete(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemDelete), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemFromAsCodeSecret mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, pKey, req}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemFromAsCodeSecret", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemFromAsCodeSecret indicates an expected call of ProjectVariableSetItemFromAsCodeSecret.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemFromAsCodeSecret(ctx, pKey, req interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, pKey, req}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemFromAsCodeSecret", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemFromAsCodeSecret), varargs...)
+}
+
+// ProjectVariableSetItemFromProjectVariable mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, pKey, req}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemFromProjectVariable", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemFromProjectVariable indicates an expected call of ProjectVariableSetItemFromProjectVariable.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemFromProjectVariable(ctx, pKey, req interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, pKey, req}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemFromProjectVariable", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemFromProjectVariable), varargs...)
+}
+
+// ProjectVariableSetItemGet mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemGet(ctx context.Context, pKey, vsName, itemName string) (*sdk.ProjectVariableSetItem, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemGet", ctx, pKey, vsName, itemName)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSetItem)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVariableSetItemGet indicates an expected call of ProjectVariableSetItemGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemGet(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemGet), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemUpdate mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemUpdate(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemUpdate", ctx, pKey, vsName, item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemUpdate indicates an expected call of ProjectVariableSetItemUpdate.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemUpdate(ctx, pKey, vsName, item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemUpdate), ctx, pKey, vsName, item)
+}
+
+// ProjectVariableSetList mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetList", ctx, pKey)
+	ret0, _ := ret[0].([]sdk.ProjectVariableSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVariableSetList indicates an expected call of ProjectVariableSetList.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetList(ctx, pKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetList", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetList), ctx, pKey)
+}
+
+// ProjectVariableSetShow mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetShow(ctx context.Context, pKey, vsName string) (*sdk.ProjectVariableSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetShow", ctx, pKey, vsName)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVariableSetShow indicates an expected call of ProjectVariableSetShow.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetShow(ctx, pKey, vsName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetShow", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetShow), ctx, pKey, vsName)
+}
+
 // MockProjectClient is a mock of ProjectClient interface.
 type MockProjectClient struct {
 	ctrl     *gomock.Controller
@@ -2752,6 +3508,34 @@ func (mr *MockProjectClientMockRecorder) ProjectKeysDelete(projectKey, keyProjec
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectKeysDelete), projectKey, keyProjectName)
 }
 
+// ProjectKeysDisable mocks base method.
+func (m *MockProjectClient) ProjectKeysDisable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysDisable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysDisable indicates an expected call of ProjectKeysDisable.
+func (mr *MockProjectClientMockRecorder) ProjectKeysDisable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDisable", reflect.TypeOf((*MockProjectClient)(nil).ProjectKeysDisable), projectKey, keyProjectName)
+}
+
+// ProjectKeysEnable mocks base method.
+func (m *MockProjectClient) ProjectKeysEnable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysEnable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysEnable indicates an expected call of ProjectKeysEnable.
+func (mr *MockProjectClientMockRecorder) ProjectKeysEnable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysEnable", reflect.TypeOf((*MockProjectClient)(nil).ProjectKeysEnable), projectKey, keyProjectName)
+}
+
 // ProjectKeysList mocks base method.
 func (m *MockProjectClient) ProjectKeysList(projectKey string) ([]sdk.ProjectKey, error) {
 	m.ctrl.T.Helper()
@@ -2768,9 +3552,9 @@ func (mr *MockProjectClientMockRecorder) ProjectKeysList(projectKey interface{})
 }
 
 // ProjectList mocks base method.
-func (m *MockProjectClient) ProjectList(withApplications, withWorkflow bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
+func (m *MockProjectClient) ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{withApplications, withWorkflow}
+	varargs := []interface{}{withApplications, withWorkflow, withFavorites}
 	for _, a := range filters {
 		varargs = append(varargs, a)
 	}
@@ -2781,9 +3565,9 @@ func (m *MockProjectClient) ProjectList(withApplications, withWorkflow bool, fil
 }
 
 // ProjectList indicates an expected call of ProjectList.
-func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkflow interface{}, filters ...interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkflow, withFavorites interface{}, filters ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{withApplications, withWorkflow}, filters...)
+	varargs := append([]interface{}{withApplications, withWorkflow, withFavorites}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockProjectClient)(nil).ProjectList), varargs...)
 }
 
@@ -2846,48 +3630,49 @@ func (mr *MockProjectClientMockRecorder) ProjectRepositoryDelete(ctx, projectKey
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryDelete), ctx, projectKey, vcsName, repositoryName)
 }
 
-// ProjectRepositoryHookRegenSecret mocks base method.
-func (m *MockProjectClient) ProjectRepositoryHookRegenSecret(ctx context.Context, projectKey, vcsName, repoName string) (sdk.HookAccessData, error) {
+// ProjectRepositoryEvent mocks base method.
+func (m *MockProjectClient) ProjectRepositoryEvent(ctx context.Context, projectKey, vcsName, repoName, eventID string) (*sdk.HookRepositoryEvent, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryHookRegenSecret", ctx, projectKey, vcsName, repoName)
+	ret := m.ctrl.Call(m, "ProjectRepositoryEvent", ctx, projectKey, vcsName, repoName, eventID)
+	ret0, _ := ret[0].(*sdk.HookRepositoryEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryEvent indicates an expected call of ProjectRepositoryEvent.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryEvent(ctx, projectKey, vcsName, repoName, eventID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvent", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryEvent), ctx, projectKey, vcsName, repoName, eventID)
+}
+
+// ProjectRepositoryEvents mocks base method.
+func (m *MockProjectClient) ProjectRepositoryEvents(ctx context.Context, projectKey, vcsName, repoName string) ([]sdk.HookRepositoryEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryEvents", ctx, projectKey, vcsName, repoName)
+	ret0, _ := ret[0].([]sdk.HookRepositoryEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryEvents indicates an expected call of ProjectRepositoryEvents.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
+}
+
+// ProjectRepositoryHookSecret mocks base method.
+func (m *MockProjectClient) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookSecret", ctx, projectKey, vcsType, vcsName, repoName)
 	ret0, _ := ret[0].(sdk.HookAccessData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ProjectRepositoryHookRegenSecret indicates an expected call of ProjectRepositoryHookRegenSecret.
-func (mr *MockProjectClientMockRecorder) ProjectRepositoryHookRegenSecret(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+// ProjectRepositoryHookSecret indicates an expected call of ProjectRepositoryHookSecret.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryHookSecret(ctx, projectKey, vcsType, vcsName, repoName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookRegenSecret", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryHookRegenSecret), ctx, projectKey, vcsName, repoName)
-}
-
-// ProjectRepositoryManagerDelete mocks base method.
-func (m *MockProjectClient) ProjectRepositoryManagerDelete(projectKey, repoManagerName string, force bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryManagerDelete", projectKey, repoManagerName, force)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjectRepositoryManagerDelete indicates an expected call of ProjectRepositoryManagerDelete.
-func (mr *MockProjectClientMockRecorder) ProjectRepositoryManagerDelete(projectKey, repoManagerName, force interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryManagerDelete), projectKey, repoManagerName, force)
-}
-
-// ProjectRepositoryManagerList mocks base method.
-func (m *MockProjectClient) ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryManagerList", projectKey)
-	ret0, _ := ret[0].([]sdk.ProjectVCSServer)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectRepositoryManagerList indicates an expected call of ProjectRepositoryManagerList.
-func (mr *MockProjectClientMockRecorder) ProjectRepositoryManagerList(projectKey interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerList", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryManagerList), projectKey)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookSecret", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryHookSecret), ctx, projectKey, vcsType, vcsName, repoName)
 }
 
 // ProjectUpdate mocks base method.
@@ -3136,10 +3921,39 @@ func (m *MockRBACClient) EXPECT() *MockRBACClientMockRecorder {
 	return m.recorder
 }
 
-// RBACImport mocks base method.
-func (m *MockRBACClient) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+// RBACDelete mocks base method.
+func (m *MockRBACClient) RBACDelete(ctx context.Context, permissionIdentifier string) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, content}
+	ret := m.ctrl.Call(m, "RBACDelete", ctx, permissionIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RBACDelete indicates an expected call of RBACDelete.
+func (mr *MockRBACClientMockRecorder) RBACDelete(ctx, permissionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACDelete", reflect.TypeOf((*MockRBACClient)(nil).RBACDelete), ctx, permissionIdentifier)
+}
+
+// RBACGet mocks base method.
+func (m *MockRBACClient) RBACGet(ctx context.Context, permissionIdentifier string) (sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACGet", ctx, permissionIdentifier)
+	ret0, _ := ret[0].(sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACGet indicates an expected call of RBACGet.
+func (mr *MockRBACClientMockRecorder) RBACGet(ctx, permissionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACGet", reflect.TypeOf((*MockRBACClient)(nil).RBACGet), ctx, permissionIdentifier)
+}
+
+// RBACImport mocks base method.
+func (m *MockRBACClient) RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, rbacRule}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -3150,10 +3964,25 @@ func (m *MockRBACClient) RBACImport(ctx context.Context, content io.Reader, mods
 }
 
 // RBACImport indicates an expected call of RBACImport.
-func (mr *MockRBACClientMockRecorder) RBACImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockRBACClientMockRecorder) RBACImport(ctx, rbacRule interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, content}, mods...)
+	varargs := append([]interface{}{ctx, rbacRule}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockRBACClient)(nil).RBACImport), varargs...)
+}
+
+// RBACList mocks base method.
+func (m *MockRBACClient) RBACList(ctx context.Context) ([]sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACList", ctx)
+	ret0, _ := ret[0].([]sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACList indicates an expected call of RBACList.
+func (mr *MockRBACClientMockRecorder) RBACList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACList", reflect.TypeOf((*MockRBACClient)(nil).RBACList), ctx)
 }
 
 // MockProjectKeysClient is a mock of ProjectKeysClient interface.
@@ -3205,6 +4034,34 @@ func (m *MockProjectKeysClient) ProjectKeysDelete(projectKey, keyProjectName str
 func (mr *MockProjectKeysClientMockRecorder) ProjectKeysDelete(projectKey, keyProjectName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDelete", reflect.TypeOf((*MockProjectKeysClient)(nil).ProjectKeysDelete), projectKey, keyProjectName)
+}
+
+// ProjectKeysDisable mocks base method.
+func (m *MockProjectKeysClient) ProjectKeysDisable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysDisable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysDisable indicates an expected call of ProjectKeysDisable.
+func (mr *MockProjectKeysClientMockRecorder) ProjectKeysDisable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDisable", reflect.TypeOf((*MockProjectKeysClient)(nil).ProjectKeysDisable), projectKey, keyProjectName)
+}
+
+// ProjectKeysEnable mocks base method.
+func (m *MockProjectKeysClient) ProjectKeysEnable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysEnable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysEnable indicates an expected call of ProjectKeysEnable.
+func (mr *MockProjectKeysClientMockRecorder) ProjectKeysEnable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysEnable", reflect.TypeOf((*MockProjectKeysClient)(nil).ProjectKeysEnable), projectKey, keyProjectName)
 }
 
 // ProjectKeysList mocks base method.
@@ -3361,6 +4218,221 @@ func (mr *MockProjectVariablesClientMockRecorder) VariableListEncrypt(projectKey
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableListEncrypt", reflect.TypeOf((*MockProjectVariablesClient)(nil).VariableListEncrypt), projectKey)
 }
 
+// MockV2QueueClient is a mock of V2QueueClient interface.
+type MockV2QueueClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockV2QueueClientMockRecorder
+}
+
+// MockV2QueueClientMockRecorder is the mock recorder for MockV2QueueClient.
+type MockV2QueueClientMockRecorder struct {
+	mock *MockV2QueueClient
+}
+
+// NewMockV2QueueClient creates a new mock instance.
+func NewMockV2QueueClient(ctrl *gomock.Controller) *MockV2QueueClient {
+	mock := &MockV2QueueClient{ctrl: ctrl}
+	mock.recorder = &MockV2QueueClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockV2QueueClient) EXPECT() *MockV2QueueClientMockRecorder {
+	return m.recorder
+}
+
+// V2QueueGetCacheLinks mocks base method.
+func (m *MockV2QueueClient) V2QueueGetCacheLinks(ctx context.Context, regionName, id, cacheKey string) (*sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetCacheLinks", ctx, regionName, id, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetCacheLinks indicates an expected call of V2QueueGetCacheLinks.
+func (mr *MockV2QueueClientMockRecorder) V2QueueGetCacheLinks(ctx, regionName, id, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetCacheLinks", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueGetCacheLinks), ctx, regionName, id, cacheKey)
+}
+
+// V2QueueGetJobRun mocks base method.
+func (m *MockV2QueueClient) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetJobRun", ctx, regionName, id)
+	ret0, _ := ret[0].(*sdk.V2QueueJobInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetJobRun indicates an expected call of V2QueueGetJobRun.
+func (mr *MockV2QueueClientMockRecorder) V2QueueGetJobRun(ctx, regionName, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetJobRun", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueGetJobRun), ctx, regionName, id)
+}
+
+// V2QueueJobResult mocks base method.
+func (m *MockV2QueueClient) V2QueueJobResult(ctx context.Context, region, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobResult", ctx, region, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobResult indicates an expected call of V2QueueJobResult.
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobResult(ctx, region, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobResult", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobResult), ctx, region, jobRunID, result)
+}
+
+// V2QueueJobRunResultCreate mocks base method.
+func (m *MockV2QueueClient) V2QueueJobRunResultCreate(ctx context.Context, regionName, jobRunID string, result *sdk.V2WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultCreate", ctx, regionName, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultCreate indicates an expected call of V2QueueJobRunResultCreate.
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultCreate(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultCreate", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultCreate), ctx, regionName, jobRunID, result)
+}
+
+// V2QueueJobRunResultGet mocks base method.
+func (m *MockV2QueueClient) V2QueueJobRunResultGet(ctx context.Context, regionName, jobRunID, runResultID string) (*sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultGet", ctx, regionName, jobRunID, runResultID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueJobRunResultGet indicates an expected call of V2QueueJobRunResultGet.
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultGet(ctx, regionName, jobRunID, runResultID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultGet", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultGet), ctx, regionName, jobRunID, runResultID)
+}
+
+// V2QueueJobRunResultUpdate mocks base method.
+func (m *MockV2QueueClient) V2QueueJobRunResultUpdate(ctx context.Context, regionName, jobRunID string, result *sdk.V2WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultUpdate", ctx, regionName, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultUpdate indicates an expected call of V2QueueJobRunResultUpdate.
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultUpdate(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultUpdate", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultUpdate), ctx, regionName, jobRunID, result)
+}
+
+// V2QueueJobRunResultsGet mocks base method.
+func (m *MockV2QueueClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
+}
+
+// V2QueueJobRunResultsSynchronize mocks base method.
+func (m *MockV2QueueClient) V2QueueJobRunResultsSynchronize(ctx context.Context, regionName, jobRunID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsSynchronize", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultsSynchronize indicates an expected call of V2QueueJobRunResultsSynchronize.
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultsSynchronize(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsSynchronize", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultsSynchronize), ctx, regionName, jobRunID)
+}
+
+// V2QueueJobStepUpdate mocks base method.
+func (m *MockV2QueueClient) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsStatus sdk.JobStepsStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsStatus)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobStepUpdate indicates an expected call of V2QueueJobStepUpdate.
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsStatus interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsStatus)
+}
+
+// V2QueuePolling mocks base method.
+func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
+	for _, a := range ms {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "V2QueuePolling", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePolling indicates an expected call of V2QueuePolling.
+func (mr *MockV2QueueClientMockRecorder) V2QueuePolling(ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}, ms...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueuePolling), varargs...)
+}
+
+// V2QueuePushJobInfo mocks base method.
+func (m *MockV2QueueClient) V2QueuePushJobInfo(ctx context.Context, regionName, jobRunID string, msg sdk.V2SendJobRunInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueuePushJobInfo", ctx, regionName, jobRunID, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePushJobInfo indicates an expected call of V2QueuePushJobInfo.
+func (mr *MockV2QueueClientMockRecorder) V2QueuePushJobInfo(ctx, regionName, jobRunID, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePushJobInfo", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueuePushJobInfo), ctx, regionName, jobRunID, msg)
+}
+
+// V2QueuePushRunInfo mocks base method.
+func (m *MockV2QueueClient) V2QueuePushRunInfo(ctx context.Context, regionName, jobRunID string, msg sdk.V2WorkflowRunInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueuePushRunInfo", ctx, regionName, jobRunID, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePushRunInfo indicates an expected call of V2QueuePushRunInfo.
+func (mr *MockV2QueueClientMockRecorder) V2QueuePushRunInfo(ctx, regionName, jobRunID, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePushRunInfo", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueuePushRunInfo), ctx, regionName, jobRunID, msg)
+}
+
+// V2QueueWorkerTakeJob mocks base method.
+func (m *MockV2QueueClient) V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueWorkerTakeJob", ctx, region, runJobID)
+	ret0, _ := ret[0].(*sdk.V2TakeJobResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueWorkerTakeJob indicates an expected call of V2QueueWorkerTakeJob.
+func (mr *MockV2QueueClientMockRecorder) V2QueueWorkerTakeJob(ctx, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueWorkerTakeJob", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueWorkerTakeJob), ctx, region, runJobID)
+}
+
 // MockQueueClient is a mock of QueueClient interface.
 type MockQueueClient struct {
 	ctrl     *gomock.Controller
@@ -3400,7 +4472,7 @@ func (mr *MockQueueClientMockRecorder) QueueCountWorkflowNodeJobRun(since, until
 }
 
 // QueueJobBook mocks base method.
-func (m *MockQueueClient) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockQueueClient) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -3415,7 +4487,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobBook(ctx, id interface{}) *gomock
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockQueueClient) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockQueueClient) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -3430,7 +4502,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobInfo(ctx, id interface{}) *gomock
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockQueueClient) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockQueueClient) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -3444,7 +4516,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobRelease(ctx, id interface{}) *gom
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockQueueClient) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockQueueClient) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)
@@ -3486,9 +4558,9 @@ func (mr *MockQueueClientMockRecorder) QueueJobTag(ctx, jobID, tags interface{})
 }
 
 // QueuePolling mocks base method.
-func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -3498,24 +4570,10 @@ func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRo
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockQueueClient)(nil).QueuePolling), varargs...)
-}
-
-// QueueSendCoverage mocks base method.
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendCoverage indicates an expected call of QueueSendCoverage.
-func (mr *MockQueueClientMockRecorder) QueueSendCoverage(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockQueueClient)(nil).QueueSendCoverage), ctx, id, report)
 }
 
 // QueueSendResult mocks base method.
@@ -3558,20 +4616,6 @@ func (m *MockQueueClient) QueueSendUnitTests(ctx context.Context, id int64, repo
 func (mr *MockQueueClientMockRecorder) QueueSendUnitTests(ctx, id, report interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendUnitTests", reflect.TypeOf((*MockQueueClient)(nil).QueueSendUnitTests), ctx, id, report)
-}
-
-// QueueSendVulnerability mocks base method.
-func (m *MockQueueClient) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendVulnerability", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendVulnerability indicates an expected call of QueueSendVulnerability.
-func (mr *MockQueueClientMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockQueueClient)(nil).QueueSendVulnerability), ctx, id, report)
 }
 
 // QueueTakeJob mocks base method.
@@ -3718,6 +4762,21 @@ func (mr *MockUserClientMockRecorder) UpdateFavorite(ctx, params interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockUserClient)(nil).UpdateFavorite), ctx, params)
 }
 
+// UserContacts mocks base method.
+func (m *MockUserClient) UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserContacts", ctx, username)
+	ret0, _ := ret[0].([]sdk.UserContact)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserContacts indicates an expected call of UserContacts.
+func (mr *MockUserClientMockRecorder) UserContacts(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserContacts", reflect.TypeOf((*MockUserClient)(nil).UserContacts), ctx, username)
+}
+
 // UserGet mocks base method.
 func (m *MockUserClient) UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
@@ -3776,6 +4835,21 @@ func (m *MockUserClient) UserGetSchema(ctx context.Context) (sdk.SchemaResponse,
 func (mr *MockUserClientMockRecorder) UserGetSchema(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockUserClient)(nil).UserGetSchema), ctx)
+}
+
+// UserGetSchemaV2 mocks base method.
+func (m *MockUserClient) UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGetSchemaV2", ctx, entityType)
+	ret0, _ := ret[0].(sdk.Schema)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGetSchemaV2 indicates an expected call of UserGetSchemaV2.
+func (mr *MockUserClientMockRecorder) UserGetSchemaV2(ctx, entityType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchemaV2", reflect.TypeOf((*MockUserClient)(nil).UserGetSchemaV2), ctx, entityType)
 }
 
 // UserGpgKeyCreate mocks base method.
@@ -3866,6 +4940,87 @@ func (mr *MockUserClientMockRecorder) UserUpdate(ctx, username, user interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserUpdate", reflect.TypeOf((*MockUserClient)(nil).UserUpdate), ctx, username, user)
 }
 
+// MockV2WorkerClient is a mock of V2WorkerClient interface.
+type MockV2WorkerClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockV2WorkerClientMockRecorder
+}
+
+// MockV2WorkerClientMockRecorder is the mock recorder for MockV2WorkerClient.
+type MockV2WorkerClientMockRecorder struct {
+	mock *MockV2WorkerClient
+}
+
+// NewMockV2WorkerClient creates a new mock instance.
+func NewMockV2WorkerClient(ctrl *gomock.Controller) *MockV2WorkerClient {
+	mock := &MockV2WorkerClient{ctrl: ctrl}
+	mock.recorder = &MockV2WorkerClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockV2WorkerClient) EXPECT() *MockV2WorkerClientMockRecorder {
+	return m.recorder
+}
+
+// V2WorkerProjectGetKey mocks base method.
+func (m *MockV2WorkerClient) V2WorkerProjectGetKey(ctx context.Context, region, runJobID, keyName string, clear bool) (*sdk.ProjectKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerProjectGetKey", ctx, region, runJobID, keyName, clear)
+	ret0, _ := ret[0].(*sdk.ProjectKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerProjectGetKey indicates an expected call of V2WorkerProjectGetKey.
+func (mr *MockV2WorkerClientMockRecorder) V2WorkerProjectGetKey(ctx, region, runJobID, keyName, clear interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerProjectGetKey", reflect.TypeOf((*MockV2WorkerClient)(nil).V2WorkerProjectGetKey), ctx, region, runJobID, keyName, clear)
+}
+
+// V2WorkerRefresh mocks base method.
+func (m *MockV2WorkerClient) V2WorkerRefresh(ctx context.Context, region, runJobID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerRefresh", ctx, region, runJobID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2WorkerRefresh indicates an expected call of V2WorkerRefresh.
+func (mr *MockV2WorkerClientMockRecorder) V2WorkerRefresh(ctx, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerRefresh", reflect.TypeOf((*MockV2WorkerClient)(nil).V2WorkerRefresh), ctx, region, runJobID)
+}
+
+// V2WorkerRegister mocks base method.
+func (m *MockV2WorkerClient) V2WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm, region, runJobID string) (*sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerRegister", ctx, authToken, form, region, runJobID)
+	ret0, _ := ret[0].(*sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerRegister indicates an expected call of V2WorkerRegister.
+func (mr *MockV2WorkerClientMockRecorder) V2WorkerRegister(ctx, authToken, form, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerRegister", reflect.TypeOf((*MockV2WorkerClient)(nil).V2WorkerRegister), ctx, authToken, form, region, runJobID)
+}
+
+// V2WorkerUnregister mocks base method.
+func (m *MockV2WorkerClient) V2WorkerUnregister(ctx context.Context, region, runJobID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerUnregister", ctx, region, runJobID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2WorkerUnregister indicates an expected call of V2WorkerUnregister.
+func (mr *MockV2WorkerClientMockRecorder) V2WorkerUnregister(ctx, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerUnregister", reflect.TypeOf((*MockV2WorkerClient)(nil).V2WorkerUnregister), ctx, region, runJobID)
+}
+
 // MockWorkerClient is a mock of WorkerClient interface.
 type MockWorkerClient struct {
 	ctrl     *gomock.Controller
@@ -3931,6 +5086,41 @@ func (m *MockWorkerClient) CDNItemUpload(ctx context.Context, cdnAddr, signature
 func (mr *MockWorkerClientMockRecorder) CDNItemUpload(ctx, cdnAddr, signature, fs, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemUpload", reflect.TypeOf((*MockWorkerClient)(nil).CDNItemUpload), ctx, cdnAddr, signature, fs, path)
+}
+
+// V2WorkerGet mocks base method.
+func (m *MockWorkerClient) V2WorkerGet(ctx context.Context, name string, mods ...cdsclient.RequestModifier) (*sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "V2WorkerGet", varargs...)
+	ret0, _ := ret[0].(*sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerGet indicates an expected call of V2WorkerGet.
+func (mr *MockWorkerClientMockRecorder) V2WorkerGet(ctx, name interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerGet", reflect.TypeOf((*MockWorkerClient)(nil).V2WorkerGet), varargs...)
+}
+
+// V2WorkerList mocks base method.
+func (m *MockWorkerClient) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerList", ctx)
+	ret0, _ := ret[0].([]sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerList indicates an expected call of V2WorkerList.
+func (mr *MockWorkerClientMockRecorder) V2WorkerList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerList", reflect.TypeOf((*MockWorkerClient)(nil).V2WorkerList), ctx)
 }
 
 // WorkerDisable mocks base method.
@@ -4099,21 +5289,6 @@ func (mr *MockWorkerClientMockRecorder) WorkerModelSpawnError(groupName, name, i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockWorkerClient)(nil).WorkerModelSpawnError), groupName, name, info)
 }
 
-// WorkerModelTemplateList mocks base method.
-func (m *MockWorkerClient) WorkerModelTemplateList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelTemplateFilter) ([]sdk.WorkerModelTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerModelTemplateList", ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-	ret0, _ := ret[0].([]sdk.WorkerModelTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkerModelTemplateList indicates an expected call of WorkerModelTemplateList.
-func (mr *MockWorkerClientMockRecorder) WorkerModelTemplateList(ctx, projKey, vcsIdentifier, repoIdentifier, filter interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelTemplateList", reflect.TypeOf((*MockWorkerClient)(nil).WorkerModelTemplateList), ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-}
-
 // WorkerModelv2List mocks base method.
 func (m *MockWorkerClient) WorkerModelv2List(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelV2Filter) ([]sdk.V2WorkerModel, error) {
 	m.ctrl.T.Helper()
@@ -4277,6 +5452,85 @@ func (m *MockHookClient) EXPECT() *MockHookClientMockRecorder {
 	return m.recorder
 }
 
+// CreateInsightReport mocks base method.
+func (m *MockHookClient) CreateInsightReport(ctx context.Context, projKey, vcsName, repoName, commit, insightKey string, insightReport sdk.VCSInsight) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateInsightReport", ctx, projKey, vcsName, repoName, commit, insightKey, insightReport)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateInsightReport indicates an expected call of CreateInsightReport.
+func (mr *MockHookClientMockRecorder) CreateInsightReport(ctx, projKey, vcsName, repoName, commit, insightKey, insightReport interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInsightReport", reflect.TypeOf((*MockHookClient)(nil).CreateInsightReport), ctx, projKey, vcsName, repoName, commit, insightKey, insightReport)
+}
+
+// EntityGet mocks base method.
+func (m *MockHookClient) EntityGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, entityType, entityName string, mods ...cdsclient.RequestModifier) (*sdk.Entity, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EntityGet", varargs...)
+	ret0, _ := ret[0].(*sdk.Entity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityGet indicates an expected call of EntityGet.
+func (mr *MockHookClientMockRecorder) EntityGet(ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityGet", reflect.TypeOf((*MockHookClient)(nil).EntityGet), varargs...)
+}
+
+// HookGetWorkflowHook mocks base method.
+func (m *MockHookClient) HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V2WorkflowHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HookGetWorkflowHook", ctx, hookID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HookGetWorkflowHook indicates an expected call of HookGetWorkflowHook.
+func (mr *MockHookClientMockRecorder) HookGetWorkflowHook(ctx, hookID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookGetWorkflowHook", reflect.TypeOf((*MockHookClient)(nil).HookGetWorkflowHook), ctx, hookID)
+}
+
+// HookRepositoriesList mocks base method.
+func (m *MockHookClient) HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HookRepositoriesList", ctx, vcsServer, repoName)
+	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HookRepositoriesList indicates an expected call of HookRepositoriesList.
+func (mr *MockHookClientMockRecorder) HookRepositoriesList(ctx, vcsServer, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookRepositoriesList", reflect.TypeOf((*MockHookClient)(nil).HookRepositoriesList), ctx, vcsServer, repoName)
+}
+
+// ListWorkflowToTrigger mocks base method.
+func (m *MockHookClient) ListWorkflowToTrigger(ctx context.Context, req sdk.HookListWorkflowRequest) ([]sdk.V2WorkflowHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWorkflowToTrigger", ctx, req)
+	ret0, _ := ret[0].([]sdk.V2WorkflowHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWorkflowToTrigger indicates an expected call of ListWorkflowToTrigger.
+func (mr *MockHookClientMockRecorder) ListWorkflowToTrigger(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkflowToTrigger", reflect.TypeOf((*MockHookClient)(nil).ListWorkflowToTrigger), ctx, req)
+}
+
 // PollVCSEvents mocks base method.
 func (m *MockHookClient) PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (sdk.RepositoryEvents, time.Duration, error) {
 	m.ctrl.T.Helper()
@@ -4293,49 +5547,49 @@ func (mr *MockHookClientMockRecorder) PollVCSEvents(uuid, workflowID, vcsServer,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PollVCSEvents", reflect.TypeOf((*MockHookClient)(nil).PollVCSEvents), uuid, workflowID, vcsServer, timestamp)
 }
 
-// RepositoriesListAll mocks base method.
-func (m *MockHookClient) RepositoriesListAll(ctx context.Context) ([]sdk.ProjectRepository, error) {
+// RetrieveHookEventSigningKey mocks base method.
+func (m *MockHookClient) RetrieveHookEventSigningKey(ctx context.Context, req sdk.HookRetrieveSignKeyRequest) (sdk.Operation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RepositoriesListAll", ctx)
-	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret := m.ctrl.Call(m, "RetrieveHookEventSigningKey", ctx, req)
+	ret0, _ := ret[0].(sdk.Operation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// RepositoriesListAll indicates an expected call of RepositoriesListAll.
-func (mr *MockHookClientMockRecorder) RepositoriesListAll(ctx interface{}) *gomock.Call {
+// RetrieveHookEventSigningKey indicates an expected call of RetrieveHookEventSigningKey.
+func (mr *MockHookClientMockRecorder) RetrieveHookEventSigningKey(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoriesListAll", reflect.TypeOf((*MockHookClient)(nil).RepositoriesListAll), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventSigningKey", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventSigningKey), ctx, req)
 }
 
-// RepositoryHook mocks base method.
-func (m *MockHookClient) RepositoryHook(ctx context.Context, uuid string) (sdk.Hook, error) {
+// RetrieveHookEventSigningKeyOperation mocks base method.
+func (m *MockHookClient) RetrieveHookEventSigningKeyOperation(ctx context.Context, operationUUID string) (sdk.Operation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RepositoryHook", ctx, uuid)
-	ret0, _ := ret[0].(sdk.Hook)
+	ret := m.ctrl.Call(m, "RetrieveHookEventSigningKeyOperation", ctx, operationUUID)
+	ret0, _ := ret[0].(sdk.Operation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// RepositoryHook indicates an expected call of RepositoryHook.
-func (mr *MockHookClientMockRecorder) RepositoryHook(ctx, uuid interface{}) *gomock.Call {
+// RetrieveHookEventSigningKeyOperation indicates an expected call of RetrieveHookEventSigningKeyOperation.
+func (mr *MockHookClientMockRecorder) RetrieveHookEventSigningKeyOperation(ctx, operationUUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoryHook", reflect.TypeOf((*MockHookClient)(nil).RepositoryHook), ctx, uuid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventSigningKeyOperation", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventSigningKeyOperation), ctx, operationUUID)
 }
 
-// VCSConfiguration mocks base method.
-func (m *MockHookClient) VCSConfiguration() (map[string]sdk.VCSConfiguration, error) {
+// RetrieveHookEventUser mocks base method.
+func (m *MockHookClient) RetrieveHookEventUser(ctx context.Context, req sdk.HookRetrieveUserRequest) (sdk.HookRetrieveUserResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VCSConfiguration")
-	ret0, _ := ret[0].(map[string]sdk.VCSConfiguration)
+	ret := m.ctrl.Call(m, "RetrieveHookEventUser", ctx, req)
+	ret0, _ := ret[0].(sdk.HookRetrieveUserResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// VCSConfiguration indicates an expected call of VCSConfiguration.
-func (mr *MockHookClientMockRecorder) VCSConfiguration() *gomock.Call {
+// RetrieveHookEventUser indicates an expected call of RetrieveHookEventUser.
+func (mr *MockHookClientMockRecorder) RetrieveHookEventUser(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockHookClient)(nil).VCSConfiguration))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventUser", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventUser), ctx, req)
 }
 
 // VCSGerritConfiguration mocks base method.
@@ -4389,6 +5643,331 @@ func (m *MockServiceClient) ServiceConfigurationGet(arg0 context.Context, arg1 s
 func (mr *MockServiceClientMockRecorder) ServiceConfigurationGet(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceConfigurationGet", reflect.TypeOf((*MockServiceClient)(nil).ServiceConfigurationGet), arg0, arg1)
+}
+
+// MockWorkflowV2Client is a mock of WorkflowV2Client interface.
+type MockWorkflowV2Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockWorkflowV2ClientMockRecorder
+}
+
+// MockWorkflowV2ClientMockRecorder is the mock recorder for MockWorkflowV2Client.
+type MockWorkflowV2ClientMockRecorder struct {
+	mock *MockWorkflowV2Client
+}
+
+// NewMockWorkflowV2Client creates a new mock instance.
+func NewMockWorkflowV2Client(ctrl *gomock.Controller) *MockWorkflowV2Client {
+	mock := &MockWorkflowV2Client{ctrl: ctrl}
+	mock.recorder = &MockWorkflowV2ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockWorkflowV2Client) EXPECT() *MockWorkflowV2ClientMockRecorder {
+	return m.recorder
+}
+
+// WorkflowV2JobStart mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2JobStart(ctx context.Context, projectKey, workflowRunID, jobIdentifier string, payload map[string]interface{}, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, workflowRunID, jobIdentifier, payload}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2JobStart", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2JobStart indicates an expected call of WorkflowV2JobStart.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2JobStart(ctx, projectKey, workflowRunID, jobIdentifier, payload interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, workflowRunID, jobIdentifier, payload}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2JobStart", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2JobStart), varargs...)
+}
+
+// WorkflowV2Restart mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, workflowRunID}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2Restart", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2Restart indicates an expected call of WorkflowV2Restart.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Restart(ctx, projectKey, workflowRunID interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, workflowRunID}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Restart", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2Restart), varargs...)
+}
+
+// WorkflowV2Run mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRunManualResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2Run", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunManualResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2Run indicates an expected call of WorkflowV2Run.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Run(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Run", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2Run), varargs...)
+}
+
+// WorkflowV2RunFromHook mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunHookRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunFromHook", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunFromHook indicates an expected call of WorkflowV2RunFromHook.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunFromHook(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunFromHook", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunFromHook), varargs...)
+}
+
+// WorkflowV2RunInfoList mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunInfoList(ctx context.Context, projectKey, workflowRunID string, mods ...cdsclient.RequestModifier) ([]sdk.V2WorkflowRunInfo, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, workflowRunID}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunInfoList", varargs...)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunInfoList indicates an expected call of WorkflowV2RunInfoList.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunInfoList(ctx, projectKey, workflowRunID interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, workflowRunID}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunInfoList", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunInfoList), varargs...)
+}
+
+// WorkflowV2RunJob mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunJob(ctx context.Context, projKey, workflowRunID, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunJob", ctx, projKey, workflowRunID, jobRunID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunJob indicates an expected call of WorkflowV2RunJob.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunJob(ctx, projKey, workflowRunID, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJob", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunJob), ctx, projKey, workflowRunID, jobRunID)
+}
+
+// WorkflowV2RunJobInfoList mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunJobInfoList(ctx context.Context, projKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJobInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunJobInfoList", ctx, projKey, workflowRunID, jobRunID)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunJobInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunJobInfoList indicates an expected call of WorkflowV2RunJobInfoList.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunJobInfoList(ctx, projKey, workflowRunID, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobInfoList", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunJobInfoList), ctx, projKey, workflowRunID, jobRunID)
+}
+
+// WorkflowV2RunJobLogLinks mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunJobLogLinks(ctx context.Context, projKey, workflowRunID, jobRunID string) (sdk.CDNLogLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunJobLogLinks", ctx, projKey, workflowRunID, jobRunID)
+	ret0, _ := ret[0].(sdk.CDNLogLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunJobLogLinks indicates an expected call of WorkflowV2RunJobLogLinks.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunJobLogLinks(ctx, projKey, workflowRunID, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobLogLinks", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunJobLogLinks), ctx, projKey, workflowRunID, jobRunID)
+}
+
+// WorkflowV2RunJobs mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunJobs(ctx context.Context, projKey, workflowRunID string) ([]sdk.V2WorkflowRunJob, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunJobs", ctx, projKey, workflowRunID)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunJob)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunJobs indicates an expected call of WorkflowV2RunJobs.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunJobs(ctx, projKey, workflowRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobs", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunJobs), ctx, projKey, workflowRunID)
+}
+
+// WorkflowV2RunResultList mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunResultList", ctx, projKey, runIdentifier)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunResultList indicates an expected call of WorkflowV2RunResultList.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunResultList(ctx, projKey, runIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunResultList", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunResultList), ctx, projKey, runIdentifier)
+}
+
+// WorkflowV2RunSearch mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunSearch(ctx context.Context, projectKey string, mods ...cdsclient.RequestModifier) ([]sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunSearch", varargs...)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunSearch indicates an expected call of WorkflowV2RunSearch.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunSearch(ctx, projectKey interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunSearch", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunSearch), varargs...)
+}
+
+// WorkflowV2RunSearchAllProjects mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunSearchAllProjects(ctx context.Context, offset, limit int64, mods ...cdsclient.RequestModifier) ([]sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, offset, limit}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunSearchAllProjects", varargs...)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunSearchAllProjects indicates an expected call of WorkflowV2RunSearchAllProjects.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunSearchAllProjects(ctx, offset, limit interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, offset, limit}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunSearchAllProjects", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunSearchAllProjects), varargs...)
+}
+
+// WorkflowV2RunStatus mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunStatus(ctx context.Context, projectKey, workflowRunID string) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunStatus", ctx, projectKey, workflowRunID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunStatus indicates an expected call of WorkflowV2RunStatus.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunStatus(ctx, projectKey, workflowRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunStatus", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunStatus), ctx, projectKey, workflowRunID)
+}
+
+// WorkflowV2Stop mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2Stop(ctx context.Context, projKey, workflowRunID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2Stop", ctx, projKey, workflowRunID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2Stop indicates an expected call of WorkflowV2Stop.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Stop(ctx, projKey, workflowRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Stop", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2Stop), ctx, projKey, workflowRunID)
+}
+
+// WorkflowV2StopJob mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2StopJob(ctx context.Context, projKey, workflowRunID, jobIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2StopJob", ctx, projKey, workflowRunID, jobIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2StopJob indicates an expected call of WorkflowV2StopJob.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2StopJob(ctx, projKey, workflowRunID, jobIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2StopJob", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2StopJob), ctx, projKey, workflowRunID, jobIdentifier)
+}
+
+// WorkflowV2VersionDelete mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionDelete", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2VersionDelete indicates an expected call of WorkflowV2VersionDelete.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2VersionDelete(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionDelete", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2VersionDelete), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+}
+
+// WorkflowV2VersionGet mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionGet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+	ret0, _ := ret[0].(*sdk.V2WorkflowVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2VersionGet indicates an expected call of WorkflowV2VersionGet.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2VersionGet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionGet", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2VersionGet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+}
+
+// WorkflowV2VersionList mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionList", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+	ret0, _ := ret[0].([]sdk.V2WorkflowVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2VersionList indicates an expected call of WorkflowV2VersionList.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2VersionList(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionList", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2VersionList), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
 }
 
 // MockWorkflowClient is a mock of WorkflowClient interface.
@@ -4905,49 +6484,6 @@ func (m *MockWorkflowClient) WorkflowUpdate(projectKey, name string, wf *sdk.Wor
 func (mr *MockWorkflowClientMockRecorder) WorkflowUpdate(projectKey, name, wf interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowUpdate", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowUpdate), projectKey, name, wf)
-}
-
-// MockWorkflowV3Client is a mock of WorkflowV3Client interface.
-type MockWorkflowV3Client struct {
-	ctrl     *gomock.Controller
-	recorder *MockWorkflowV3ClientMockRecorder
-}
-
-// MockWorkflowV3ClientMockRecorder is the mock recorder for MockWorkflowV3Client.
-type MockWorkflowV3ClientMockRecorder struct {
-	mock *MockWorkflowV3Client
-}
-
-// NewMockWorkflowV3Client creates a new mock instance.
-func NewMockWorkflowV3Client(ctrl *gomock.Controller) *MockWorkflowV3Client {
-	mock := &MockWorkflowV3Client{ctrl: ctrl}
-	mock.recorder = &MockWorkflowV3ClientMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockWorkflowV3Client) EXPECT() *MockWorkflowV3ClientMockRecorder {
-	return m.recorder
-}
-
-// WorkflowV3Get mocks base method.
-func (m *MockWorkflowV3Client) WorkflowV3Get(projectKey, workflowName string, opts ...cdsclient.RequestModifier) ([]byte, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, workflowName}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "WorkflowV3Get", varargs...)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowV3Get indicates an expected call of WorkflowV3Get.
-func (mr *MockWorkflowV3ClientMockRecorder) WorkflowV3Get(projectKey, workflowName interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, workflowName}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV3Get", reflect.TypeOf((*MockWorkflowV3Client)(nil).WorkflowV3Get), varargs...)
 }
 
 // MockMonitoringClient is a mock of MonitoringClient interface.
@@ -5783,7 +7319,7 @@ func (mr *MockInterfaceMockRecorder) ApplicationVariablesList(projectKey, appNam
 }
 
 // AuthConsumerCreateForUser mocks base method.
-func (m *MockInterface) AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error) {
+func (m *MockInterface) AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerCreateForUser", username, request)
 	ret0, _ := ret[0].(sdk.AuthConsumerCreateResponse)
@@ -5811,11 +7347,26 @@ func (mr *MockInterfaceMockRecorder) AuthConsumerDelete(username, id interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerDelete", reflect.TypeOf((*MockInterface)(nil).AuthConsumerDelete), username, id)
 }
 
+// AuthConsumerHatcherySigninV2 mocks base method.
+func (m *MockInterface) AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthConsumerHatcherySigninV2", request)
+	ret0, _ := ret[0].(sdk.AuthConsumerHatcherySigninResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthConsumerHatcherySigninV2 indicates an expected call of AuthConsumerHatcherySigninV2.
+func (mr *MockInterfaceMockRecorder) AuthConsumerHatcherySigninV2(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerHatcherySigninV2", reflect.TypeOf((*MockInterface)(nil).AuthConsumerHatcherySigninV2), request)
+}
+
 // AuthConsumerListByUser mocks base method.
-func (m *MockInterface) AuthConsumerListByUser(username string) (sdk.AuthConsumers, error) {
+func (m *MockInterface) AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerListByUser", username)
-	ret0, _ := ret[0].(sdk.AuthConsumers)
+	ret0, _ := ret[0].(sdk.AuthUserConsumers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -5900,7 +7451,7 @@ func (mr *MockInterfaceMockRecorder) AuthConsumerRegen(username, id, newDuration
 }
 
 // AuthConsumerSignin mocks base method.
-func (m *MockInterface) AuthConsumerSignin(arg0 sdk.AuthConsumerType, arg1 sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error) {
+func (m *MockInterface) AuthConsumerSignin(arg0 sdk.AuthConsumerType, arg1 interface{}) (sdk.AuthConsumerSigninResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerSignin", arg0, arg1)
 	ret0, _ := ret[0].(sdk.AuthConsumerSigninResponse)
@@ -6046,6 +7597,21 @@ func (mr *MockInterfaceMockRecorder) CDNItemUpload(ctx, cdnAddr, signature, fs, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemUpload", reflect.TypeOf((*MockInterface)(nil).CDNItemUpload), ctx, cdnAddr, signature, fs, path)
 }
 
+// CDNURL mocks base method.
+func (m *MockInterface) CDNURL() (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CDNURL")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CDNURL indicates an expected call of CDNURL.
+func (mr *MockInterfaceMockRecorder) CDNURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNURL", reflect.TypeOf((*MockInterface)(nil).CDNURL))
+}
+
 // ConfigCDN mocks base method.
 func (m *MockInterface) ConfigCDN() (sdk.CDNConfig, error) {
 	m.ctrl.T.Helper()
@@ -6074,6 +7640,35 @@ func (m *MockInterface) ConfigUser() (sdk.ConfigUser, error) {
 func (mr *MockInterfaceMockRecorder) ConfigUser() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfigUser", reflect.TypeOf((*MockInterface)(nil).ConfigUser))
+}
+
+// ConfigVCSGPGKeys mocks base method.
+func (m *MockInterface) ConfigVCSGPGKeys() (map[string][]sdk.Key, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfigVCSGPGKeys")
+	ret0, _ := ret[0].(map[string][]sdk.Key)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfigVCSGPGKeys indicates an expected call of ConfigVCSGPGKeys.
+func (mr *MockInterfaceMockRecorder) ConfigVCSGPGKeys() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfigVCSGPGKeys", reflect.TypeOf((*MockInterface)(nil).ConfigVCSGPGKeys))
+}
+
+// CreateInsightReport mocks base method.
+func (m *MockInterface) CreateInsightReport(ctx context.Context, projKey, vcsName, repoName, commit, insightKey string, insightReport sdk.VCSInsight) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateInsightReport", ctx, projKey, vcsName, repoName, commit, insightKey, insightReport)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateInsightReport indicates an expected call of CreateInsightReport.
+func (mr *MockInterfaceMockRecorder) CreateInsightReport(ctx, projKey, vcsName, repoName, commit, insightKey, insightReport interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInsightReport", reflect.TypeOf((*MockInterface)(nil).CreateInsightReport), ctx, projKey, vcsName, repoName, commit, insightKey, insightReport)
 }
 
 // DeleteJSON mocks base method.
@@ -6123,6 +7718,41 @@ func (m *MockInterface) DownloadURLFromAPI(name, os, arch, variant string) strin
 func (mr *MockInterfaceMockRecorder) DownloadURLFromAPI(name, os, arch, variant interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadURLFromAPI", reflect.TypeOf((*MockInterface)(nil).DownloadURLFromAPI), name, os, arch, variant)
+}
+
+// EntityGet mocks base method.
+func (m *MockInterface) EntityGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, entityType, entityName string, mods ...cdsclient.RequestModifier) (*sdk.Entity, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EntityGet", varargs...)
+	ret0, _ := ret[0].(*sdk.Entity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityGet indicates an expected call of EntityGet.
+func (mr *MockInterfaceMockRecorder) EntityGet(ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityGet", reflect.TypeOf((*MockInterface)(nil).EntityGet), varargs...)
+}
+
+// EntityLint mocks base method.
+func (m *MockInterface) EntityLint(ctx context.Context, entityType string, data interface{}) (*sdk.EntityCheckResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EntityLint", ctx, entityType, data)
+	ret0, _ := ret[0].(*sdk.EntityCheckResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityLint indicates an expected call of EntityLint.
+func (mr *MockInterfaceMockRecorder) EntityLint(ctx, entityType, data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityLint", reflect.TypeOf((*MockInterface)(nil).EntityLint), ctx, entityType, data)
 }
 
 // EnvironmentCreate mocks base method.
@@ -6613,6 +8243,124 @@ func (mr *MockInterfaceMockRecorder) HTTPWebsocketClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPWebsocketClient", reflect.TypeOf((*MockInterface)(nil).HTTPWebsocketClient))
 }
 
+// HasProjectRole mocks base method.
+func (m *MockInterface) HasProjectRole(ctx context.Context, projectKey, sessionID, role string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasProjectRole", ctx, projectKey, sessionID, role)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HasProjectRole indicates an expected call of HasProjectRole.
+func (mr *MockInterfaceMockRecorder) HasProjectRole(ctx, projectKey, sessionID, role interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasProjectRole", reflect.TypeOf((*MockInterface)(nil).HasProjectRole), ctx, projectKey, sessionID, role)
+}
+
+// HatcheryAdd mocks base method.
+func (m *MockInterface) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) (*sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryAdd", ctx, h)
+	ret0, _ := ret[0].(*sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryAdd indicates an expected call of HatcheryAdd.
+func (mr *MockInterfaceMockRecorder) HatcheryAdd(ctx, h interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryAdd", reflect.TypeOf((*MockInterface)(nil).HatcheryAdd), ctx, h)
+}
+
+// HatcheryDelete mocks base method.
+func (m *MockInterface) HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryDelete", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HatcheryDelete indicates an expected call of HatcheryDelete.
+func (mr *MockInterfaceMockRecorder) HatcheryDelete(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryDelete", reflect.TypeOf((*MockInterface)(nil).HatcheryDelete), ctx, hatcheryIdentifier)
+}
+
+// HatcheryGet mocks base method.
+func (m *MockInterface) HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryGet", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryGet indicates an expected call of HatcheryGet.
+func (mr *MockInterfaceMockRecorder) HatcheryGet(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryGet", reflect.TypeOf((*MockInterface)(nil).HatcheryGet), ctx, hatcheryIdentifier)
+}
+
+// HatcheryList mocks base method.
+func (m *MockInterface) HatcheryList(ctx context.Context) ([]sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryList", ctx)
+	ret0, _ := ret[0].([]sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryList indicates an expected call of HatcheryList.
+func (mr *MockInterfaceMockRecorder) HatcheryList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryList", reflect.TypeOf((*MockInterface)(nil).HatcheryList), ctx)
+}
+
+// HatcheryRegenToken mocks base method.
+func (m *MockInterface) HatcheryRegenToken(ctx context.Context, hatcheryIdentifier string) (*sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryRegenToken", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(*sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryRegenToken indicates an expected call of HatcheryRegenToken.
+func (mr *MockInterfaceMockRecorder) HatcheryRegenToken(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryRegenToken", reflect.TypeOf((*MockInterface)(nil).HatcheryRegenToken), ctx, hatcheryIdentifier)
+}
+
+// HookGetWorkflowHook mocks base method.
+func (m *MockInterface) HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V2WorkflowHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HookGetWorkflowHook", ctx, hookID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HookGetWorkflowHook indicates an expected call of HookGetWorkflowHook.
+func (mr *MockInterfaceMockRecorder) HookGetWorkflowHook(ctx, hookID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookGetWorkflowHook", reflect.TypeOf((*MockInterface)(nil).HookGetWorkflowHook), ctx, hookID)
+}
+
+// HookRepositoriesList mocks base method.
+func (m *MockInterface) HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HookRepositoriesList", ctx, vcsServer, repoName)
+	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HookRepositoriesList indicates an expected call of HookRepositoriesList.
+func (mr *MockInterfaceMockRecorder) HookRepositoriesList(ctx, vcsServer, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookRepositoriesList", reflect.TypeOf((*MockInterface)(nil).HookRepositoriesList), ctx, vcsServer, repoName)
+}
+
 // IntegrationModelAdd mocks base method.
 func (m_2 *MockInterface) IntegrationModelAdd(m *sdk.IntegrationModel) error {
 	m_2.ctrl.T.Helper()
@@ -6683,6 +8431,21 @@ func (m_2 *MockInterface) IntegrationModelUpdate(m *sdk.IntegrationModel) error 
 func (mr *MockInterfaceMockRecorder) IntegrationModelUpdate(m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IntegrationModelUpdate", reflect.TypeOf((*MockInterface)(nil).IntegrationModelUpdate), m)
+}
+
+// ListWorkflowToTrigger mocks base method.
+func (m *MockInterface) ListWorkflowToTrigger(ctx context.Context, req sdk.HookListWorkflowRequest) ([]sdk.V2WorkflowHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWorkflowToTrigger", ctx, req)
+	ret0, _ := ret[0].([]sdk.V2WorkflowHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWorkflowToTrigger indicates an expected call of ListWorkflowToTrigger.
+func (mr *MockInterfaceMockRecorder) ListWorkflowToTrigger(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkflowToTrigger", reflect.TypeOf((*MockInterface)(nil).ListWorkflowToTrigger), ctx, req)
 }
 
 // Maintenance mocks base method.
@@ -7005,6 +8768,25 @@ func (mr *MockInterfaceMockRecorder) PluginGetBinaryInfos(name, os, arch interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginGetBinaryInfos", reflect.TypeOf((*MockInterface)(nil).PluginGetBinaryInfos), name, os, arch)
 }
 
+// PluginImport mocks base method.
+func (m *MockInterface) PluginImport(arg0 *sdk.GRPCPlugin, arg1 ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PluginImport", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginImport indicates an expected call of PluginImport.
+func (mr *MockInterfaceMockRecorder) PluginImport(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginImport", reflect.TypeOf((*MockInterface)(nil).PluginImport), varargs...)
+}
+
 // PluginUpdate mocks base method.
 func (m *MockInterface) PluginUpdate(arg0 *sdk.GRPCPlugin) error {
 	m.ctrl.T.Helper()
@@ -7296,6 +9078,34 @@ func (mr *MockInterfaceMockRecorder) ProjectKeysDelete(projectKey, keyProjectNam
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDelete", reflect.TypeOf((*MockInterface)(nil).ProjectKeysDelete), projectKey, keyProjectName)
 }
 
+// ProjectKeysDisable mocks base method.
+func (m *MockInterface) ProjectKeysDisable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysDisable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysDisable indicates an expected call of ProjectKeysDisable.
+func (mr *MockInterfaceMockRecorder) ProjectKeysDisable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDisable", reflect.TypeOf((*MockInterface)(nil).ProjectKeysDisable), projectKey, keyProjectName)
+}
+
+// ProjectKeysEnable mocks base method.
+func (m *MockInterface) ProjectKeysEnable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysEnable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysEnable indicates an expected call of ProjectKeysEnable.
+func (mr *MockInterfaceMockRecorder) ProjectKeysEnable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysEnable", reflect.TypeOf((*MockInterface)(nil).ProjectKeysEnable), projectKey, keyProjectName)
+}
+
 // ProjectKeysList mocks base method.
 func (m *MockInterface) ProjectKeysList(projectKey string) ([]sdk.ProjectKey, error) {
 	m.ctrl.T.Helper()
@@ -7312,9 +9122,9 @@ func (mr *MockInterfaceMockRecorder) ProjectKeysList(projectKey interface{}) *go
 }
 
 // ProjectList mocks base method.
-func (m *MockInterface) ProjectList(withApplications, withWorkflow bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
+func (m *MockInterface) ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{withApplications, withWorkflow}
+	varargs := []interface{}{withApplications, withWorkflow, withFavorites}
 	for _, a := range filters {
 		varargs = append(varargs, a)
 	}
@@ -7325,10 +9135,82 @@ func (m *MockInterface) ProjectList(withApplications, withWorkflow bool, filters
 }
 
 // ProjectList indicates an expected call of ProjectList.
-func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow interface{}, filters ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow, withFavorites interface{}, filters ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{withApplications, withWorkflow}, filters...)
+	varargs := append([]interface{}{withApplications, withWorkflow, withFavorites}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockInterface)(nil).ProjectList), varargs...)
+}
+
+// ProjectNotificationCreate mocks base method.
+func (m *MockInterface) ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationCreate", ctx, pKey, notif)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationCreate indicates an expected call of ProjectNotificationCreate.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationCreate(ctx, pKey, notif interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationCreate", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationCreate), ctx, pKey, notif)
+}
+
+// ProjectNotificationDelete mocks base method.
+func (m *MockInterface) ProjectNotificationDelete(ctx context.Context, pKey, notifName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationDelete", ctx, pKey, notifName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationDelete indicates an expected call of ProjectNotificationDelete.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationDelete(ctx, pKey, notifName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationDelete", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationDelete), ctx, pKey, notifName)
+}
+
+// ProjectNotificationGet mocks base method.
+func (m *MockInterface) ProjectNotificationGet(ctx context.Context, pKey, notifName string) (*sdk.ProjectNotification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationGet", ctx, pKey, notifName)
+	ret0, _ := ret[0].(*sdk.ProjectNotification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectNotificationGet indicates an expected call of ProjectNotificationGet.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationGet(ctx, pKey, notifName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationGet", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationGet), ctx, pKey, notifName)
+}
+
+// ProjectNotificationList mocks base method.
+func (m *MockInterface) ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationList", ctx, pKey)
+	ret0, _ := ret[0].([]sdk.ProjectNotification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectNotificationList indicates an expected call of ProjectNotificationList.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationList(ctx, pKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationList", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationList), ctx, pKey)
+}
+
+// ProjectNotificationUpdate mocks base method.
+func (m *MockInterface) ProjectNotificationUpdate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationUpdate", ctx, pKey, notif)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationUpdate indicates an expected call of ProjectNotificationUpdate.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationUpdate(ctx, pKey, notif interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationUpdate", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationUpdate), ctx, pKey, notif)
 }
 
 // ProjectRepositoryAnalysis mocks base method.
@@ -7390,48 +9272,49 @@ func (mr *MockInterfaceMockRecorder) ProjectRepositoryDelete(ctx, projectKey, vc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryDelete", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryDelete), ctx, projectKey, vcsName, repositoryName)
 }
 
-// ProjectRepositoryHookRegenSecret mocks base method.
-func (m *MockInterface) ProjectRepositoryHookRegenSecret(ctx context.Context, projectKey, vcsName, repoName string) (sdk.HookAccessData, error) {
+// ProjectRepositoryEvent mocks base method.
+func (m *MockInterface) ProjectRepositoryEvent(ctx context.Context, projectKey, vcsName, repoName, eventID string) (*sdk.HookRepositoryEvent, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryHookRegenSecret", ctx, projectKey, vcsName, repoName)
+	ret := m.ctrl.Call(m, "ProjectRepositoryEvent", ctx, projectKey, vcsName, repoName, eventID)
+	ret0, _ := ret[0].(*sdk.HookRepositoryEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryEvent indicates an expected call of ProjectRepositoryEvent.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryEvent(ctx, projectKey, vcsName, repoName, eventID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvent", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryEvent), ctx, projectKey, vcsName, repoName, eventID)
+}
+
+// ProjectRepositoryEvents mocks base method.
+func (m *MockInterface) ProjectRepositoryEvents(ctx context.Context, projectKey, vcsName, repoName string) ([]sdk.HookRepositoryEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryEvents", ctx, projectKey, vcsName, repoName)
+	ret0, _ := ret[0].([]sdk.HookRepositoryEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryEvents indicates an expected call of ProjectRepositoryEvents.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
+}
+
+// ProjectRepositoryHookSecret mocks base method.
+func (m *MockInterface) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookSecret", ctx, projectKey, vcsType, vcsName, repoName)
 	ret0, _ := ret[0].(sdk.HookAccessData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ProjectRepositoryHookRegenSecret indicates an expected call of ProjectRepositoryHookRegenSecret.
-func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookRegenSecret(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+// ProjectRepositoryHookSecret indicates an expected call of ProjectRepositoryHookSecret.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookSecret(ctx, projectKey, vcsType, vcsName, repoName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookRegenSecret", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookRegenSecret), ctx, projectKey, vcsName, repoName)
-}
-
-// ProjectRepositoryManagerDelete mocks base method.
-func (m *MockInterface) ProjectRepositoryManagerDelete(projectKey, repoManagerName string, force bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryManagerDelete", projectKey, repoManagerName, force)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjectRepositoryManagerDelete indicates an expected call of ProjectRepositoryManagerDelete.
-func (mr *MockInterfaceMockRecorder) ProjectRepositoryManagerDelete(projectKey, repoManagerName, force interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerDelete", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryManagerDelete), projectKey, repoManagerName, force)
-}
-
-// ProjectRepositoryManagerList mocks base method.
-func (m *MockInterface) ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryManagerList", projectKey)
-	ret0, _ := ret[0].([]sdk.ProjectVCSServer)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectRepositoryManagerList indicates an expected call of ProjectRepositoryManagerList.
-func (mr *MockInterfaceMockRecorder) ProjectRepositoryManagerList(projectKey interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerList", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryManagerList), projectKey)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookSecret", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookSecret), ctx, projectKey, vcsType, vcsName, repoName)
 }
 
 // ProjectUpdate mocks base method.
@@ -7446,6 +9329,20 @@ func (m *MockInterface) ProjectUpdate(key string, project *sdk.Project) error {
 func (mr *MockInterfaceMockRecorder) ProjectUpdate(key, project interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectUpdate", reflect.TypeOf((*MockInterface)(nil).ProjectUpdate), key, project)
+}
+
+// ProjectV2Access mocks base method.
+func (m *MockInterface) ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectV2Access", ctx, projectKey, sessionID, itemType)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectV2Access indicates an expected call of ProjectV2Access.
+func (mr *MockInterfaceMockRecorder) ProjectV2Access(ctx, projectKey, sessionID, itemType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectV2Access", reflect.TypeOf((*MockInterface)(nil).ProjectV2Access), ctx, projectKey, sessionID, itemType)
 }
 
 // ProjectVCSDelete mocks base method.
@@ -7584,6 +9481,192 @@ func (mr *MockInterfaceMockRecorder) ProjectVariableGet(projectKey, varName inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableGet", reflect.TypeOf((*MockInterface)(nil).ProjectVariableGet), projectKey, varName)
 }
 
+// ProjectVariableSetCreate mocks base method.
+func (m *MockInterface) ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetCreate", ctx, pKey, vs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetCreate indicates an expected call of ProjectVariableSetCreate.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetCreate(ctx, pKey, vs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreate", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetCreate), ctx, pKey, vs)
+}
+
+// ProjectVariableSetCreateFromApplication mocks base method.
+func (m *MockInterface) ProjectVariableSetCreateFromApplication(ctx context.Context, pKey string, req sdk.CopyApplicationVariableToVariableSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetCreateFromApplication", ctx, pKey, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetCreateFromApplication indicates an expected call of ProjectVariableSetCreateFromApplication.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetCreateFromApplication(ctx, pKey, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreateFromApplication", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetCreateFromApplication), ctx, pKey, req)
+}
+
+// ProjectVariableSetCreateFromEnvironment mocks base method.
+func (m *MockInterface) ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetCreateFromEnvironment", ctx, pKey, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetCreateFromEnvironment indicates an expected call of ProjectVariableSetCreateFromEnvironment.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetCreateFromEnvironment(ctx, pKey, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreateFromEnvironment", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetCreateFromEnvironment), ctx, pKey, req)
+}
+
+// ProjectVariableSetDelete mocks base method.
+func (m *MockInterface) ProjectVariableSetDelete(ctx context.Context, pKey, vsName string, mod ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, pKey, vsName}
+	for _, a := range mod {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProjectVariableSetDelete", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetDelete indicates an expected call of ProjectVariableSetDelete.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetDelete(ctx, pKey, vsName interface{}, mod ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, pKey, vsName}, mod...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetDelete), varargs...)
+}
+
+// ProjectVariableSetItemAdd mocks base method.
+func (m *MockInterface) ProjectVariableSetItemAdd(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemAdd", ctx, pKey, vsName, item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemAdd indicates an expected call of ProjectVariableSetItemAdd.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemAdd(ctx, pKey, vsName, item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemAdd", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemAdd), ctx, pKey, vsName, item)
+}
+
+// ProjectVariableSetItemDelete mocks base method.
+func (m *MockInterface) ProjectVariableSetItemDelete(ctx context.Context, pKey, vsName, itemName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemDelete", ctx, pKey, vsName, itemName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemDelete indicates an expected call of ProjectVariableSetItemDelete.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemDelete(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemDelete), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemFromAsCodeSecret mocks base method.
+func (m *MockInterface) ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, pKey, req}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemFromAsCodeSecret", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemFromAsCodeSecret indicates an expected call of ProjectVariableSetItemFromAsCodeSecret.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemFromAsCodeSecret(ctx, pKey, req interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, pKey, req}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemFromAsCodeSecret", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemFromAsCodeSecret), varargs...)
+}
+
+// ProjectVariableSetItemFromProjectVariable mocks base method.
+func (m *MockInterface) ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, pKey, req}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemFromProjectVariable", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemFromProjectVariable indicates an expected call of ProjectVariableSetItemFromProjectVariable.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemFromProjectVariable(ctx, pKey, req interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, pKey, req}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemFromProjectVariable", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemFromProjectVariable), varargs...)
+}
+
+// ProjectVariableSetItemGet mocks base method.
+func (m *MockInterface) ProjectVariableSetItemGet(ctx context.Context, pKey, vsName, itemName string) (*sdk.ProjectVariableSetItem, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemGet", ctx, pKey, vsName, itemName)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSetItem)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVariableSetItemGet indicates an expected call of ProjectVariableSetItemGet.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemGet(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemGet", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemGet), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemUpdate mocks base method.
+func (m *MockInterface) ProjectVariableSetItemUpdate(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemUpdate", ctx, pKey, vsName, item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemUpdate indicates an expected call of ProjectVariableSetItemUpdate.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemUpdate(ctx, pKey, vsName, item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemUpdate", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemUpdate), ctx, pKey, vsName, item)
+}
+
+// ProjectVariableSetList mocks base method.
+func (m *MockInterface) ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetList", ctx, pKey)
+	ret0, _ := ret[0].([]sdk.ProjectVariableSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVariableSetList indicates an expected call of ProjectVariableSetList.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetList(ctx, pKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetList", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetList), ctx, pKey)
+}
+
+// ProjectVariableSetShow mocks base method.
+func (m *MockInterface) ProjectVariableSetShow(ctx context.Context, pKey, vsName string) (*sdk.ProjectVariableSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetShow", ctx, pKey, vsName)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVariableSetShow indicates an expected call of ProjectVariableSetShow.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetShow(ctx, pKey, vsName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetShow", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetShow), ctx, pKey, vsName)
+}
+
 // ProjectVariableUpdate mocks base method.
 func (m *MockInterface) ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error {
 	m.ctrl.T.Helper()
@@ -7649,7 +9732,7 @@ func (mr *MockInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, 
 }
 
 // QueueJobBook mocks base method.
-func (m *MockInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -7664,7 +9747,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobBook(ctx, id interface{}) *gomock.C
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockInterface) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockInterface) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -7679,7 +9762,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobInfo(ctx, id interface{}) *gomock.C
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockInterface) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockInterface) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -7693,7 +9776,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobRelease(ctx, id interface{}) *gomoc
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockInterface) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockInterface) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)
@@ -7735,9 +9818,9 @@ func (mr *MockInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags interface{}) *
 }
 
 // QueuePolling mocks base method.
-func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -7747,24 +9830,10 @@ func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRout
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockInterface)(nil).QueuePolling), varargs...)
-}
-
-// QueueSendCoverage mocks base method.
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendCoverage indicates an expected call of QueueSendCoverage.
-func (mr *MockInterfaceMockRecorder) QueueSendCoverage(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockInterface)(nil).QueueSendCoverage), ctx, id, report)
 }
 
 // QueueSendResult mocks base method.
@@ -7807,20 +9876,6 @@ func (m *MockInterface) QueueSendUnitTests(ctx context.Context, id int64, report
 func (mr *MockInterfaceMockRecorder) QueueSendUnitTests(ctx, id, report interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendUnitTests", reflect.TypeOf((*MockInterface)(nil).QueueSendUnitTests), ctx, id, report)
-}
-
-// QueueSendVulnerability mocks base method.
-func (m *MockInterface) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendVulnerability", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendVulnerability indicates an expected call of QueueSendVulnerability.
-func (mr *MockInterfaceMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockInterface)(nil).QueueSendVulnerability), ctx, id, report)
 }
 
 // QueueTakeJob mocks base method.
@@ -7929,10 +9984,39 @@ func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJob
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID, runResultIDs, to)
 }
 
-// RBACImport mocks base method.
-func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+// RBACDelete mocks base method.
+func (m *MockInterface) RBACDelete(ctx context.Context, permissionIdentifier string) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, content}
+	ret := m.ctrl.Call(m, "RBACDelete", ctx, permissionIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RBACDelete indicates an expected call of RBACDelete.
+func (mr *MockInterfaceMockRecorder) RBACDelete(ctx, permissionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACDelete", reflect.TypeOf((*MockInterface)(nil).RBACDelete), ctx, permissionIdentifier)
+}
+
+// RBACGet mocks base method.
+func (m *MockInterface) RBACGet(ctx context.Context, permissionIdentifier string) (sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACGet", ctx, permissionIdentifier)
+	ret0, _ := ret[0].(sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACGet indicates an expected call of RBACGet.
+func (mr *MockInterfaceMockRecorder) RBACGet(ctx, permissionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACGet", reflect.TypeOf((*MockInterface)(nil).RBACGet), ctx, permissionIdentifier)
+}
+
+// RBACImport mocks base method.
+func (m *MockInterface) RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, rbacRule}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -7943,10 +10027,25 @@ func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods 
 }
 
 // RBACImport indicates an expected call of RBACImport.
-func (mr *MockInterfaceMockRecorder) RBACImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) RBACImport(ctx, rbacRule interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, content}, mods...)
+	varargs := append([]interface{}{ctx, rbacRule}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockInterface)(nil).RBACImport), varargs...)
+}
+
+// RBACList mocks base method.
+func (m *MockInterface) RBACList(ctx context.Context) ([]sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACList", ctx)
+	ret0, _ := ret[0].([]sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACList indicates an expected call of RBACList.
+func (mr *MockInterfaceMockRecorder) RBACList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACList", reflect.TypeOf((*MockInterface)(nil).RBACList), ctx)
 }
 
 // RegionAdd mocks base method.
@@ -8022,36 +10121,6 @@ func (mr *MockInterfaceMockRecorder) RepositoriesList(projectKey, repoManager, r
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoriesList", reflect.TypeOf((*MockInterface)(nil).RepositoriesList), projectKey, repoManager, resync)
 }
 
-// RepositoriesListAll mocks base method.
-func (m *MockInterface) RepositoriesListAll(ctx context.Context) ([]sdk.ProjectRepository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RepositoriesListAll", ctx)
-	ret0, _ := ret[0].([]sdk.ProjectRepository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RepositoriesListAll indicates an expected call of RepositoriesListAll.
-func (mr *MockInterfaceMockRecorder) RepositoriesListAll(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoriesListAll", reflect.TypeOf((*MockInterface)(nil).RepositoriesListAll), ctx)
-}
-
-// RepositoryHook mocks base method.
-func (m *MockInterface) RepositoryHook(ctx context.Context, uuid string) (sdk.Hook, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RepositoryHook", ctx, uuid)
-	ret0, _ := ret[0].(sdk.Hook)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RepositoryHook indicates an expected call of RepositoryHook.
-func (mr *MockInterfaceMockRecorder) RepositoryHook(ctx, uuid interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoryHook", reflect.TypeOf((*MockInterface)(nil).RepositoryHook), ctx, uuid)
-}
-
 // Request mocks base method.
 func (m *MockInterface) Request(ctx context.Context, method, path string, body io.Reader, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
 	m.ctrl.T.Helper()
@@ -8123,6 +10192,51 @@ func (m *MockInterface) Requirements() ([]sdk.Requirement, error) {
 func (mr *MockInterfaceMockRecorder) Requirements() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Requirements", reflect.TypeOf((*MockInterface)(nil).Requirements))
+}
+
+// RetrieveHookEventSigningKey mocks base method.
+func (m *MockInterface) RetrieveHookEventSigningKey(ctx context.Context, req sdk.HookRetrieveSignKeyRequest) (sdk.Operation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventSigningKey", ctx, req)
+	ret0, _ := ret[0].(sdk.Operation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventSigningKey indicates an expected call of RetrieveHookEventSigningKey.
+func (mr *MockInterfaceMockRecorder) RetrieveHookEventSigningKey(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventSigningKey", reflect.TypeOf((*MockInterface)(nil).RetrieveHookEventSigningKey), ctx, req)
+}
+
+// RetrieveHookEventSigningKeyOperation mocks base method.
+func (m *MockInterface) RetrieveHookEventSigningKeyOperation(ctx context.Context, operationUUID string) (sdk.Operation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventSigningKeyOperation", ctx, operationUUID)
+	ret0, _ := ret[0].(sdk.Operation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventSigningKeyOperation indicates an expected call of RetrieveHookEventSigningKeyOperation.
+func (mr *MockInterfaceMockRecorder) RetrieveHookEventSigningKeyOperation(ctx, operationUUID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventSigningKeyOperation", reflect.TypeOf((*MockInterface)(nil).RetrieveHookEventSigningKeyOperation), ctx, operationUUID)
+}
+
+// RetrieveHookEventUser mocks base method.
+func (m *MockInterface) RetrieveHookEventUser(ctx context.Context, req sdk.HookRetrieveUserRequest) (sdk.HookRetrieveUserResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventUser", ctx, req)
+	ret0, _ := ret[0].(sdk.HookRetrieveUserResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventUser indicates an expected call of RetrieveHookEventUser.
+func (mr *MockInterfaceMockRecorder) RetrieveHookEventUser(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventUser", reflect.TypeOf((*MockInterface)(nil).RetrieveHookEventUser), ctx, req)
 }
 
 // ServiceCallDELETE mocks base method.
@@ -8372,6 +10486,21 @@ func (mr *MockInterfaceMockRecorder) TemplateDeleteInstance(groupName, templateS
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateDeleteInstance", reflect.TypeOf((*MockInterface)(nil).TemplateDeleteInstance), groupName, templateSlug, id)
 }
 
+// TemplateGenerateWorkflowFromFile mocks base method.
+func (m *MockInterface) TemplateGenerateWorkflowFromFile(ctx context.Context, req sdk.V2WorkflowTemplateGenerateRequest) (*sdk.V2WorkflowTemplateGenerateResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemplateGenerateWorkflowFromFile", ctx, req)
+	ret0, _ := ret[0].(*sdk.V2WorkflowTemplateGenerateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TemplateGenerateWorkflowFromFile indicates an expected call of TemplateGenerateWorkflowFromFile.
+func (mr *MockInterfaceMockRecorder) TemplateGenerateWorkflowFromFile(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateGenerateWorkflowFromFile", reflect.TypeOf((*MockInterface)(nil).TemplateGenerateWorkflowFromFile), ctx, req)
+}
+
 // TemplateGet mocks base method.
 func (m *MockInterface) TemplateGet(groupName, templateSlug string) (*sdk.WorkflowTemplate, error) {
 	m.ctrl.T.Helper()
@@ -8478,6 +10607,21 @@ func (mr *MockInterfaceMockRecorder) UpdateFavorite(ctx, params interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockInterface)(nil).UpdateFavorite), ctx, params)
 }
 
+// UserContacts mocks base method.
+func (m *MockInterface) UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserContacts", ctx, username)
+	ret0, _ := ret[0].([]sdk.UserContact)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserContacts indicates an expected call of UserContacts.
+func (mr *MockInterfaceMockRecorder) UserContacts(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserContacts", reflect.TypeOf((*MockInterface)(nil).UserContacts), ctx, username)
+}
+
 // UserGet mocks base method.
 func (m *MockInterface) UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
@@ -8536,6 +10680,21 @@ func (m *MockInterface) UserGetSchema(ctx context.Context) (sdk.SchemaResponse, 
 func (mr *MockInterfaceMockRecorder) UserGetSchema(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema), ctx)
+}
+
+// UserGetSchemaV2 mocks base method.
+func (m *MockInterface) UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGetSchemaV2", ctx, entityType)
+	ret0, _ := ret[0].(sdk.Schema)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGetSchemaV2 indicates an expected call of UserGetSchemaV2.
+func (mr *MockInterfaceMockRecorder) UserGetSchemaV2(ctx, entityType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchemaV2", reflect.TypeOf((*MockInterface)(nil).UserGetSchemaV2), ctx, entityType)
 }
 
 // UserGpgKeyCreate mocks base method.
@@ -8626,19 +10785,231 @@ func (mr *MockInterfaceMockRecorder) UserUpdate(ctx, username, user interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserUpdate", reflect.TypeOf((*MockInterface)(nil).UserUpdate), ctx, username, user)
 }
 
-// VCSConfiguration mocks base method.
-func (m *MockInterface) VCSConfiguration() (map[string]sdk.VCSConfiguration, error) {
+// V2QueueGetCacheLinks mocks base method.
+func (m *MockInterface) V2QueueGetCacheLinks(ctx context.Context, regionName, id, cacheKey string) (*sdk.CDNItemLinks, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VCSConfiguration")
-	ret0, _ := ret[0].(map[string]sdk.VCSConfiguration)
+	ret := m.ctrl.Call(m, "V2QueueGetCacheLinks", ctx, regionName, id, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// VCSConfiguration indicates an expected call of VCSConfiguration.
-func (mr *MockInterfaceMockRecorder) VCSConfiguration() *gomock.Call {
+// V2QueueGetCacheLinks indicates an expected call of V2QueueGetCacheLinks.
+func (mr *MockInterfaceMockRecorder) V2QueueGetCacheLinks(ctx, regionName, id, cacheKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockInterface)(nil).VCSConfiguration))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetCacheLinks", reflect.TypeOf((*MockInterface)(nil).V2QueueGetCacheLinks), ctx, regionName, id, cacheKey)
+}
+
+// V2QueueGetJobRun mocks base method.
+func (m *MockInterface) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetJobRun", ctx, regionName, id)
+	ret0, _ := ret[0].(*sdk.V2QueueJobInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetJobRun indicates an expected call of V2QueueGetJobRun.
+func (mr *MockInterfaceMockRecorder) V2QueueGetJobRun(ctx, regionName, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetJobRun", reflect.TypeOf((*MockInterface)(nil).V2QueueGetJobRun), ctx, regionName, id)
+}
+
+// V2QueueJobResult mocks base method.
+func (m *MockInterface) V2QueueJobResult(ctx context.Context, region, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobResult", ctx, region, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobResult indicates an expected call of V2QueueJobResult.
+func (mr *MockInterfaceMockRecorder) V2QueueJobResult(ctx, region, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobResult", reflect.TypeOf((*MockInterface)(nil).V2QueueJobResult), ctx, region, jobRunID, result)
+}
+
+// V2QueueJobRunResultCreate mocks base method.
+func (m *MockInterface) V2QueueJobRunResultCreate(ctx context.Context, regionName, jobRunID string, result *sdk.V2WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultCreate", ctx, regionName, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultCreate indicates an expected call of V2QueueJobRunResultCreate.
+func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultCreate(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultCreate", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultCreate), ctx, regionName, jobRunID, result)
+}
+
+// V2QueueJobRunResultGet mocks base method.
+func (m *MockInterface) V2QueueJobRunResultGet(ctx context.Context, regionName, jobRunID, runResultID string) (*sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultGet", ctx, regionName, jobRunID, runResultID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueJobRunResultGet indicates an expected call of V2QueueJobRunResultGet.
+func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultGet(ctx, regionName, jobRunID, runResultID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultGet", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultGet), ctx, regionName, jobRunID, runResultID)
+}
+
+// V2QueueJobRunResultUpdate mocks base method.
+func (m *MockInterface) V2QueueJobRunResultUpdate(ctx context.Context, regionName, jobRunID string, result *sdk.V2WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultUpdate", ctx, regionName, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultUpdate indicates an expected call of V2QueueJobRunResultUpdate.
+func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultUpdate(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultUpdate", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultUpdate), ctx, regionName, jobRunID, result)
+}
+
+// V2QueueJobRunResultsGet mocks base method.
+func (m *MockInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
+func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
+}
+
+// V2QueueJobRunResultsSynchronize mocks base method.
+func (m *MockInterface) V2QueueJobRunResultsSynchronize(ctx context.Context, regionName, jobRunID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsSynchronize", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultsSynchronize indicates an expected call of V2QueueJobRunResultsSynchronize.
+func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultsSynchronize(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsSynchronize", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultsSynchronize), ctx, regionName, jobRunID)
+}
+
+// V2QueueJobStepUpdate mocks base method.
+func (m *MockInterface) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsStatus sdk.JobStepsStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsStatus)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobStepUpdate indicates an expected call of V2QueueJobStepUpdate.
+func (mr *MockInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsStatus interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockInterface)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsStatus)
+}
+
+// V2QueuePolling mocks base method.
+func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
+	for _, a := range ms {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "V2QueuePolling", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePolling indicates an expected call of V2QueuePolling.
+func (mr *MockInterfaceMockRecorder) V2QueuePolling(ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}, ms...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockInterface)(nil).V2QueuePolling), varargs...)
+}
+
+// V2QueuePushJobInfo mocks base method.
+func (m *MockInterface) V2QueuePushJobInfo(ctx context.Context, regionName, jobRunID string, msg sdk.V2SendJobRunInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueuePushJobInfo", ctx, regionName, jobRunID, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePushJobInfo indicates an expected call of V2QueuePushJobInfo.
+func (mr *MockInterfaceMockRecorder) V2QueuePushJobInfo(ctx, regionName, jobRunID, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePushJobInfo", reflect.TypeOf((*MockInterface)(nil).V2QueuePushJobInfo), ctx, regionName, jobRunID, msg)
+}
+
+// V2QueuePushRunInfo mocks base method.
+func (m *MockInterface) V2QueuePushRunInfo(ctx context.Context, regionName, jobRunID string, msg sdk.V2WorkflowRunInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueuePushRunInfo", ctx, regionName, jobRunID, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePushRunInfo indicates an expected call of V2QueuePushRunInfo.
+func (mr *MockInterfaceMockRecorder) V2QueuePushRunInfo(ctx, regionName, jobRunID, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePushRunInfo", reflect.TypeOf((*MockInterface)(nil).V2QueuePushRunInfo), ctx, regionName, jobRunID, msg)
+}
+
+// V2QueueWorkerTakeJob mocks base method.
+func (m *MockInterface) V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueWorkerTakeJob", ctx, region, runJobID)
+	ret0, _ := ret[0].(*sdk.V2TakeJobResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueWorkerTakeJob indicates an expected call of V2QueueWorkerTakeJob.
+func (mr *MockInterfaceMockRecorder) V2QueueWorkerTakeJob(ctx, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueWorkerTakeJob", reflect.TypeOf((*MockInterface)(nil).V2QueueWorkerTakeJob), ctx, region, runJobID)
+}
+
+// V2WorkerGet mocks base method.
+func (m *MockInterface) V2WorkerGet(ctx context.Context, name string, mods ...cdsclient.RequestModifier) (*sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "V2WorkerGet", varargs...)
+	ret0, _ := ret[0].(*sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerGet indicates an expected call of V2WorkerGet.
+func (mr *MockInterfaceMockRecorder) V2WorkerGet(ctx, name interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerGet", reflect.TypeOf((*MockInterface)(nil).V2WorkerGet), varargs...)
+}
+
+// V2WorkerList mocks base method.
+func (m *MockInterface) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerList", ctx)
+	ret0, _ := ret[0].([]sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerList indicates an expected call of V2WorkerList.
+func (mr *MockInterfaceMockRecorder) V2WorkerList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerList", reflect.TypeOf((*MockInterface)(nil).V2WorkerList), ctx)
 }
 
 // VCSGerritConfiguration mocks base method.
@@ -8931,21 +11302,6 @@ func (m *MockInterface) WorkerModelSpawnError(groupName, name string, info sdk.S
 func (mr *MockInterfaceMockRecorder) WorkerModelSpawnError(groupName, name, info interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockInterface)(nil).WorkerModelSpawnError), groupName, name, info)
-}
-
-// WorkerModelTemplateList mocks base method.
-func (m *MockInterface) WorkerModelTemplateList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelTemplateFilter) ([]sdk.WorkerModelTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerModelTemplateList", ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-	ret0, _ := ret[0].([]sdk.WorkerModelTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkerModelTemplateList indicates an expected call of WorkerModelTemplateList.
-func (mr *MockInterfaceMockRecorder) WorkerModelTemplateList(ctx, projKey, vcsIdentifier, repoIdentifier, filter interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelTemplateList", reflect.TypeOf((*MockInterface)(nil).WorkerModelTemplateList), ctx, projKey, vcsIdentifier, repoIdentifier, filter)
 }
 
 // WorkerModelv2List mocks base method.
@@ -9640,24 +11996,738 @@ func (mr *MockInterfaceMockRecorder) WorkflowUpdate(projectKey, name, wf interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowUpdate", reflect.TypeOf((*MockInterface)(nil).WorkflowUpdate), projectKey, name, wf)
 }
 
-// WorkflowV3Get mocks base method.
-func (m *MockInterface) WorkflowV3Get(projectKey, workflowName string, opts ...cdsclient.RequestModifier) ([]byte, error) {
+// WorkflowV2JobStart mocks base method.
+func (m *MockInterface) WorkflowV2JobStart(ctx context.Context, projectKey, workflowRunID, jobIdentifier string, payload map[string]interface{}, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, workflowName}
-	for _, a := range opts {
+	varargs := []interface{}{ctx, projectKey, workflowRunID, jobIdentifier, payload}
+	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "WorkflowV3Get", varargs...)
-	ret0, _ := ret[0].([]byte)
+	ret := m.ctrl.Call(m, "WorkflowV2JobStart", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// WorkflowV3Get indicates an expected call of WorkflowV3Get.
-func (mr *MockInterfaceMockRecorder) WorkflowV3Get(projectKey, workflowName interface{}, opts ...interface{}) *gomock.Call {
+// WorkflowV2JobStart indicates an expected call of WorkflowV2JobStart.
+func (mr *MockInterfaceMockRecorder) WorkflowV2JobStart(ctx, projectKey, workflowRunID, jobIdentifier, payload interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, workflowName}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV3Get", reflect.TypeOf((*MockInterface)(nil).WorkflowV3Get), varargs...)
+	varargs := append([]interface{}{ctx, projectKey, workflowRunID, jobIdentifier, payload}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2JobStart", reflect.TypeOf((*MockInterface)(nil).WorkflowV2JobStart), varargs...)
+}
+
+// WorkflowV2Restart mocks base method.
+func (m *MockInterface) WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, workflowRunID}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2Restart", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2Restart indicates an expected call of WorkflowV2Restart.
+func (mr *MockInterfaceMockRecorder) WorkflowV2Restart(ctx, projectKey, workflowRunID interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, workflowRunID}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Restart", reflect.TypeOf((*MockInterface)(nil).WorkflowV2Restart), varargs...)
+}
+
+// WorkflowV2Run mocks base method.
+func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRunManualResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2Run", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunManualResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2Run indicates an expected call of WorkflowV2Run.
+func (mr *MockInterfaceMockRecorder) WorkflowV2Run(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Run", reflect.TypeOf((*MockInterface)(nil).WorkflowV2Run), varargs...)
+}
+
+// WorkflowV2RunFromHook mocks base method.
+func (m *MockInterface) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunHookRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunFromHook", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunFromHook indicates an expected call of WorkflowV2RunFromHook.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunFromHook(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunFromHook", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunFromHook), varargs...)
+}
+
+// WorkflowV2RunInfoList mocks base method.
+func (m *MockInterface) WorkflowV2RunInfoList(ctx context.Context, projectKey, workflowRunID string, mods ...cdsclient.RequestModifier) ([]sdk.V2WorkflowRunInfo, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, workflowRunID}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunInfoList", varargs...)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunInfoList indicates an expected call of WorkflowV2RunInfoList.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunInfoList(ctx, projectKey, workflowRunID interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, workflowRunID}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunInfoList", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunInfoList), varargs...)
+}
+
+// WorkflowV2RunJob mocks base method.
+func (m *MockInterface) WorkflowV2RunJob(ctx context.Context, projKey, workflowRunID, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunJob", ctx, projKey, workflowRunID, jobRunID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunJob indicates an expected call of WorkflowV2RunJob.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunJob(ctx, projKey, workflowRunID, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJob", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunJob), ctx, projKey, workflowRunID, jobRunID)
+}
+
+// WorkflowV2RunJobInfoList mocks base method.
+func (m *MockInterface) WorkflowV2RunJobInfoList(ctx context.Context, projKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJobInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunJobInfoList", ctx, projKey, workflowRunID, jobRunID)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunJobInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunJobInfoList indicates an expected call of WorkflowV2RunJobInfoList.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunJobInfoList(ctx, projKey, workflowRunID, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobInfoList", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunJobInfoList), ctx, projKey, workflowRunID, jobRunID)
+}
+
+// WorkflowV2RunJobLogLinks mocks base method.
+func (m *MockInterface) WorkflowV2RunJobLogLinks(ctx context.Context, projKey, workflowRunID, jobRunID string) (sdk.CDNLogLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunJobLogLinks", ctx, projKey, workflowRunID, jobRunID)
+	ret0, _ := ret[0].(sdk.CDNLogLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunJobLogLinks indicates an expected call of WorkflowV2RunJobLogLinks.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunJobLogLinks(ctx, projKey, workflowRunID, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobLogLinks", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunJobLogLinks), ctx, projKey, workflowRunID, jobRunID)
+}
+
+// WorkflowV2RunJobs mocks base method.
+func (m *MockInterface) WorkflowV2RunJobs(ctx context.Context, projKey, workflowRunID string) ([]sdk.V2WorkflowRunJob, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunJobs", ctx, projKey, workflowRunID)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunJob)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunJobs indicates an expected call of WorkflowV2RunJobs.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunJobs(ctx, projKey, workflowRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobs", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunJobs), ctx, projKey, workflowRunID)
+}
+
+// WorkflowV2RunResultList mocks base method.
+func (m *MockInterface) WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunResultList", ctx, projKey, runIdentifier)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunResultList indicates an expected call of WorkflowV2RunResultList.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunResultList(ctx, projKey, runIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunResultList", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunResultList), ctx, projKey, runIdentifier)
+}
+
+// WorkflowV2RunSearch mocks base method.
+func (m *MockInterface) WorkflowV2RunSearch(ctx context.Context, projectKey string, mods ...cdsclient.RequestModifier) ([]sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunSearch", varargs...)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunSearch indicates an expected call of WorkflowV2RunSearch.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunSearch(ctx, projectKey interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunSearch", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunSearch), varargs...)
+}
+
+// WorkflowV2RunSearchAllProjects mocks base method.
+func (m *MockInterface) WorkflowV2RunSearchAllProjects(ctx context.Context, offset, limit int64, mods ...cdsclient.RequestModifier) ([]sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, offset, limit}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunSearchAllProjects", varargs...)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunSearchAllProjects indicates an expected call of WorkflowV2RunSearchAllProjects.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunSearchAllProjects(ctx, offset, limit interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, offset, limit}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunSearchAllProjects", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunSearchAllProjects), varargs...)
+}
+
+// WorkflowV2RunStatus mocks base method.
+func (m *MockInterface) WorkflowV2RunStatus(ctx context.Context, projectKey, workflowRunID string) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunStatus", ctx, projectKey, workflowRunID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunStatus indicates an expected call of WorkflowV2RunStatus.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunStatus(ctx, projectKey, workflowRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunStatus", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunStatus), ctx, projectKey, workflowRunID)
+}
+
+// WorkflowV2Stop mocks base method.
+func (m *MockInterface) WorkflowV2Stop(ctx context.Context, projKey, workflowRunID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2Stop", ctx, projKey, workflowRunID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2Stop indicates an expected call of WorkflowV2Stop.
+func (mr *MockInterfaceMockRecorder) WorkflowV2Stop(ctx, projKey, workflowRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Stop", reflect.TypeOf((*MockInterface)(nil).WorkflowV2Stop), ctx, projKey, workflowRunID)
+}
+
+// WorkflowV2StopJob mocks base method.
+func (m *MockInterface) WorkflowV2StopJob(ctx context.Context, projKey, workflowRunID, jobIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2StopJob", ctx, projKey, workflowRunID, jobIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2StopJob indicates an expected call of WorkflowV2StopJob.
+func (mr *MockInterfaceMockRecorder) WorkflowV2StopJob(ctx, projKey, workflowRunID, jobIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2StopJob", reflect.TypeOf((*MockInterface)(nil).WorkflowV2StopJob), ctx, projKey, workflowRunID, jobIdentifier)
+}
+
+// WorkflowV2VersionDelete mocks base method.
+func (m *MockInterface) WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionDelete", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2VersionDelete indicates an expected call of WorkflowV2VersionDelete.
+func (mr *MockInterfaceMockRecorder) WorkflowV2VersionDelete(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionDelete", reflect.TypeOf((*MockInterface)(nil).WorkflowV2VersionDelete), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+}
+
+// WorkflowV2VersionGet mocks base method.
+func (m *MockInterface) WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionGet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+	ret0, _ := ret[0].(*sdk.V2WorkflowVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2VersionGet indicates an expected call of WorkflowV2VersionGet.
+func (mr *MockInterfaceMockRecorder) WorkflowV2VersionGet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionGet", reflect.TypeOf((*MockInterface)(nil).WorkflowV2VersionGet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+}
+
+// WorkflowV2VersionList mocks base method.
+func (m *MockInterface) WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionList", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+	ret0, _ := ret[0].([]sdk.V2WorkflowVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2VersionList indicates an expected call of WorkflowV2VersionList.
+func (mr *MockInterfaceMockRecorder) WorkflowV2VersionList(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionList", reflect.TypeOf((*MockInterface)(nil).WorkflowV2VersionList), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+}
+
+// MockV2WorkerInterface is a mock of V2WorkerInterface interface.
+type MockV2WorkerInterface struct {
+	ctrl     *gomock.Controller
+	recorder *MockV2WorkerInterfaceMockRecorder
+}
+
+// MockV2WorkerInterfaceMockRecorder is the mock recorder for MockV2WorkerInterface.
+type MockV2WorkerInterfaceMockRecorder struct {
+	mock *MockV2WorkerInterface
+}
+
+// NewMockV2WorkerInterface creates a new mock instance.
+func NewMockV2WorkerInterface(ctrl *gomock.Controller) *MockV2WorkerInterface {
+	mock := &MockV2WorkerInterface{ctrl: ctrl}
+	mock.recorder = &MockV2WorkerInterfaceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockV2WorkerInterface) EXPECT() *MockV2WorkerInterfaceMockRecorder {
+	return m.recorder
+}
+
+// PluginAdd mocks base method.
+func (m *MockV2WorkerInterface) PluginAdd(arg0 *sdk.GRPCPlugin) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginAdd", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginAdd indicates an expected call of PluginAdd.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginAdd(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginAdd", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginAdd), arg0)
+}
+
+// PluginAddBinary mocks base method.
+func (m *MockV2WorkerInterface) PluginAddBinary(arg0 *sdk.GRPCPlugin, arg1 *sdk.GRPCPluginBinary) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginAddBinary", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginAddBinary indicates an expected call of PluginAddBinary.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginAddBinary(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginAddBinary", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginAddBinary), arg0, arg1)
+}
+
+// PluginDelete mocks base method.
+func (m *MockV2WorkerInterface) PluginDelete(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginDelete", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginDelete indicates an expected call of PluginDelete.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginDelete(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginDelete", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginDelete), arg0)
+}
+
+// PluginDeleteBinary mocks base method.
+func (m *MockV2WorkerInterface) PluginDeleteBinary(name, os, arch string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginDeleteBinary", name, os, arch)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginDeleteBinary indicates an expected call of PluginDeleteBinary.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginDeleteBinary(name, os, arch interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginDeleteBinary", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginDeleteBinary), name, os, arch)
+}
+
+// PluginGetBinary mocks base method.
+func (m *MockV2WorkerInterface) PluginGetBinary(name, os, arch string, w io.Writer) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginGetBinary", name, os, arch, w)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginGetBinary indicates an expected call of PluginGetBinary.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginGetBinary(name, os, arch, w interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginGetBinary", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginGetBinary), name, os, arch, w)
+}
+
+// PluginGetBinaryInfos mocks base method.
+func (m *MockV2WorkerInterface) PluginGetBinaryInfos(name, os, arch string) (*sdk.GRPCPluginBinary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginGetBinaryInfos", name, os, arch)
+	ret0, _ := ret[0].(*sdk.GRPCPluginBinary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PluginGetBinaryInfos indicates an expected call of PluginGetBinaryInfos.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginGetBinaryInfos(name, os, arch interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginGetBinaryInfos", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginGetBinaryInfos), name, os, arch)
+}
+
+// PluginUpdate mocks base method.
+func (m *MockV2WorkerInterface) PluginUpdate(arg0 *sdk.GRPCPlugin) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginUpdate", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginUpdate indicates an expected call of PluginUpdate.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginUpdate(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginUpdate", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginUpdate), arg0)
+}
+
+// PluginsGet mocks base method.
+func (m *MockV2WorkerInterface) PluginsGet(arg0 string) (*sdk.GRPCPlugin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginsGet", arg0)
+	ret0, _ := ret[0].(*sdk.GRPCPlugin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PluginsGet indicates an expected call of PluginsGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginsGet(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginsGet), arg0)
+}
+
+// PluginsList mocks base method.
+func (m *MockV2WorkerInterface) PluginsList() ([]sdk.GRPCPlugin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginsList")
+	ret0, _ := ret[0].([]sdk.GRPCPlugin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PluginsList indicates an expected call of PluginsList.
+func (mr *MockV2WorkerInterfaceMockRecorder) PluginsList() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsList", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginsList))
+}
+
+// ProjectIntegrationGet mocks base method.
+func (m *MockV2WorkerInterface) ProjectIntegrationGet(projectKey, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectIntegrationGet", projectKey, integrationName, clearPassword)
+	ret0, _ := ret[0].(sdk.ProjectIntegration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectIntegrationGet indicates an expected call of ProjectIntegrationGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationGet(projectKey, integrationName, clearPassword interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectIntegrationGet), projectKey, integrationName, clearPassword)
+}
+
+// ProjectIntegrationWorkerHookGet mocks base method.
+func (m *MockV2WorkerInterface) ProjectIntegrationWorkerHookGet(projectKey, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHookGet", projectKey, integrationName)
+	ret0, _ := ret[0].(*sdk.WorkerHookProjectIntegrationModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectIntegrationWorkerHookGet indicates an expected call of ProjectIntegrationWorkerHookGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationWorkerHookGet(projectKey, integrationName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHookGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectIntegrationWorkerHookGet), projectKey, integrationName)
+}
+
+// V2QueueGetCacheLinks mocks base method.
+func (m *MockV2WorkerInterface) V2QueueGetCacheLinks(ctx context.Context, regionName, id, cacheKey string) (*sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetCacheLinks", ctx, regionName, id, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetCacheLinks indicates an expected call of V2QueueGetCacheLinks.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueGetCacheLinks(ctx, regionName, id, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetCacheLinks", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueGetCacheLinks), ctx, regionName, id, cacheKey)
+}
+
+// V2QueueGetJobRun mocks base method.
+func (m *MockV2WorkerInterface) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetJobRun", ctx, regionName, id)
+	ret0, _ := ret[0].(*sdk.V2QueueJobInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetJobRun indicates an expected call of V2QueueGetJobRun.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueGetJobRun(ctx, regionName, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetJobRun", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueGetJobRun), ctx, regionName, id)
+}
+
+// V2QueueJobResult mocks base method.
+func (m *MockV2WorkerInterface) V2QueueJobResult(ctx context.Context, region, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobResult", ctx, region, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobResult indicates an expected call of V2QueueJobResult.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobResult(ctx, region, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobResult", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobResult), ctx, region, jobRunID, result)
+}
+
+// V2QueueJobRunResultCreate mocks base method.
+func (m *MockV2WorkerInterface) V2QueueJobRunResultCreate(ctx context.Context, regionName, jobRunID string, result *sdk.V2WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultCreate", ctx, regionName, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultCreate indicates an expected call of V2QueueJobRunResultCreate.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultCreate(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultCreate", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultCreate), ctx, regionName, jobRunID, result)
+}
+
+// V2QueueJobRunResultGet mocks base method.
+func (m *MockV2WorkerInterface) V2QueueJobRunResultGet(ctx context.Context, regionName, jobRunID, runResultID string) (*sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultGet", ctx, regionName, jobRunID, runResultID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueJobRunResultGet indicates an expected call of V2QueueJobRunResultGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultGet(ctx, regionName, jobRunID, runResultID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultGet), ctx, regionName, jobRunID, runResultID)
+}
+
+// V2QueueJobRunResultUpdate mocks base method.
+func (m *MockV2WorkerInterface) V2QueueJobRunResultUpdate(ctx context.Context, regionName, jobRunID string, result *sdk.V2WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultUpdate", ctx, regionName, jobRunID, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultUpdate indicates an expected call of V2QueueJobRunResultUpdate.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultUpdate(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultUpdate", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultUpdate), ctx, regionName, jobRunID, result)
+}
+
+// V2QueueJobRunResultsGet mocks base method.
+func (m *MockV2WorkerInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
+}
+
+// V2QueueJobRunResultsSynchronize mocks base method.
+func (m *MockV2WorkerInterface) V2QueueJobRunResultsSynchronize(ctx context.Context, regionName, jobRunID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsSynchronize", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobRunResultsSynchronize indicates an expected call of V2QueueJobRunResultsSynchronize.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultsSynchronize(ctx, regionName, jobRunID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsSynchronize", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultsSynchronize), ctx, regionName, jobRunID)
+}
+
+// V2QueueJobStepUpdate mocks base method.
+func (m *MockV2WorkerInterface) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsStatus sdk.JobStepsStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsStatus)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueueJobStepUpdate indicates an expected call of V2QueueJobStepUpdate.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsStatus interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsStatus)
+}
+
+// V2QueuePolling mocks base method.
+func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
+	for _, a := range ms {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "V2QueuePolling", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePolling indicates an expected call of V2QueuePolling.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueuePolling(ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}, ms...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueuePolling), varargs...)
+}
+
+// V2QueuePushJobInfo mocks base method.
+func (m *MockV2WorkerInterface) V2QueuePushJobInfo(ctx context.Context, regionName, jobRunID string, msg sdk.V2SendJobRunInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueuePushJobInfo", ctx, regionName, jobRunID, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePushJobInfo indicates an expected call of V2QueuePushJobInfo.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueuePushJobInfo(ctx, regionName, jobRunID, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePushJobInfo", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueuePushJobInfo), ctx, regionName, jobRunID, msg)
+}
+
+// V2QueuePushRunInfo mocks base method.
+func (m *MockV2WorkerInterface) V2QueuePushRunInfo(ctx context.Context, regionName, jobRunID string, msg sdk.V2WorkflowRunInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueuePushRunInfo", ctx, regionName, jobRunID, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2QueuePushRunInfo indicates an expected call of V2QueuePushRunInfo.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueuePushRunInfo(ctx, regionName, jobRunID, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePushRunInfo", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueuePushRunInfo), ctx, regionName, jobRunID, msg)
+}
+
+// V2QueueWorkerTakeJob mocks base method.
+func (m *MockV2WorkerInterface) V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueWorkerTakeJob", ctx, region, runJobID)
+	ret0, _ := ret[0].(*sdk.V2TakeJobResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueWorkerTakeJob indicates an expected call of V2QueueWorkerTakeJob.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueWorkerTakeJob(ctx, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueWorkerTakeJob", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueWorkerTakeJob), ctx, region, runJobID)
+}
+
+// V2WorkerProjectGetKey mocks base method.
+func (m *MockV2WorkerInterface) V2WorkerProjectGetKey(ctx context.Context, region, runJobID, keyName string, clear bool) (*sdk.ProjectKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerProjectGetKey", ctx, region, runJobID, keyName, clear)
+	ret0, _ := ret[0].(*sdk.ProjectKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerProjectGetKey indicates an expected call of V2WorkerProjectGetKey.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2WorkerProjectGetKey(ctx, region, runJobID, keyName, clear interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerProjectGetKey", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2WorkerProjectGetKey), ctx, region, runJobID, keyName, clear)
+}
+
+// V2WorkerRefresh mocks base method.
+func (m *MockV2WorkerInterface) V2WorkerRefresh(ctx context.Context, region, runJobID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerRefresh", ctx, region, runJobID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2WorkerRefresh indicates an expected call of V2WorkerRefresh.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2WorkerRefresh(ctx, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerRefresh", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2WorkerRefresh), ctx, region, runJobID)
+}
+
+// V2WorkerRegister mocks base method.
+func (m *MockV2WorkerInterface) V2WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm, region, runJobID string) (*sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerRegister", ctx, authToken, form, region, runJobID)
+	ret0, _ := ret[0].(*sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerRegister indicates an expected call of V2WorkerRegister.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2WorkerRegister(ctx, authToken, form, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerRegister", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2WorkerRegister), ctx, authToken, form, region, runJobID)
+}
+
+// V2WorkerUnregister mocks base method.
+func (m *MockV2WorkerInterface) V2WorkerUnregister(ctx context.Context, region, runJobID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerUnregister", ctx, region, runJobID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// V2WorkerUnregister indicates an expected call of V2WorkerUnregister.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2WorkerUnregister(ctx, region, runJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerUnregister", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2WorkerUnregister), ctx, region, runJobID)
 }
 
 // MockWorkerInterface is a mock of WorkerInterface interface.
@@ -9902,7 +12972,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, u
 }
 
 // QueueJobBook mocks base method.
-func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -9917,7 +12987,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobBook(ctx, id interface{}) *go
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockWorkerInterface) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockWorkerInterface) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -9932,7 +13002,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobInfo(ctx, id interface{}) *go
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockWorkerInterface) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockWorkerInterface) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -9946,7 +13016,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobRelease(ctx, id interface{}) 
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockWorkerInterface) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockWorkerInterface) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)
@@ -9988,9 +13058,9 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags interfac
 }
 
 // QueuePolling mocks base method.
-func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -10000,24 +13070,10 @@ func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockWorkerInterface)(nil).QueuePolling), varargs...)
-}
-
-// QueueSendCoverage mocks base method.
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendCoverage indicates an expected call of QueueSendCoverage.
-func (mr *MockWorkerInterfaceMockRecorder) QueueSendCoverage(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendCoverage), ctx, id, report)
 }
 
 // QueueSendResult mocks base method.
@@ -10060,20 +13116,6 @@ func (m *MockWorkerInterface) QueueSendUnitTests(ctx context.Context, id int64, 
 func (mr *MockWorkerInterfaceMockRecorder) QueueSendUnitTests(ctx, id, report interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendUnitTests", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendUnitTests), ctx, id, report)
-}
-
-// QueueSendVulnerability mocks base method.
-func (m *MockWorkerInterface) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendVulnerability", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendVulnerability indicates an expected call of QueueSendVulnerability.
-func (mr *MockWorkerInterfaceMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendVulnerability), ctx, id, report)
 }
 
 // QueueTakeJob mocks base method.
@@ -10210,6 +13252,41 @@ func (m *MockWorkerInterface) ServiceConfigurationGet(arg0 context.Context, arg1
 func (mr *MockWorkerInterfaceMockRecorder) ServiceConfigurationGet(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceConfigurationGet", reflect.TypeOf((*MockWorkerInterface)(nil).ServiceConfigurationGet), arg0, arg1)
+}
+
+// V2WorkerGet mocks base method.
+func (m *MockWorkerInterface) V2WorkerGet(ctx context.Context, name string, mods ...cdsclient.RequestModifier) (*sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "V2WorkerGet", varargs...)
+	ret0, _ := ret[0].(*sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerGet indicates an expected call of V2WorkerGet.
+func (mr *MockWorkerInterfaceMockRecorder) V2WorkerGet(ctx, name interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerGet", reflect.TypeOf((*MockWorkerInterface)(nil).V2WorkerGet), varargs...)
+}
+
+// V2WorkerList mocks base method.
+func (m *MockWorkerInterface) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerList", ctx)
+	ret0, _ := ret[0].([]sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerList indicates an expected call of V2WorkerList.
+func (mr *MockWorkerInterfaceMockRecorder) V2WorkerList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerList", reflect.TypeOf((*MockWorkerInterface)(nil).V2WorkerList), ctx)
 }
 
 // WorkerDisable mocks base method.
@@ -10376,21 +13453,6 @@ func (m *MockWorkerInterface) WorkerModelSpawnError(groupName, name string, info
 func (mr *MockWorkerInterfaceMockRecorder) WorkerModelSpawnError(groupName, name, info interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerModelSpawnError), groupName, name, info)
-}
-
-// WorkerModelTemplateList mocks base method.
-func (m *MockWorkerInterface) WorkerModelTemplateList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelTemplateFilter) ([]sdk.WorkerModelTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerModelTemplateList", ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-	ret0, _ := ret[0].([]sdk.WorkerModelTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkerModelTemplateList indicates an expected call of WorkerModelTemplateList.
-func (mr *MockWorkerInterfaceMockRecorder) WorkerModelTemplateList(ctx, projKey, vcsIdentifier, repoIdentifier, filter interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelTemplateList", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerModelTemplateList), ctx, projKey, vcsIdentifier, repoIdentifier, filter)
 }
 
 // WorkerModelv2List mocks base method.
@@ -10903,6 +13965,48 @@ func (mr *MockGRPCPluginsClientMockRecorder) PluginsList() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsList", reflect.TypeOf((*MockGRPCPluginsClient)(nil).PluginsList))
 }
 
+// MockGRPCPluginsV2Client is a mock of GRPCPluginsV2Client interface.
+type MockGRPCPluginsV2Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockGRPCPluginsV2ClientMockRecorder
+}
+
+// MockGRPCPluginsV2ClientMockRecorder is the mock recorder for MockGRPCPluginsV2Client.
+type MockGRPCPluginsV2ClientMockRecorder struct {
+	mock *MockGRPCPluginsV2Client
+}
+
+// NewMockGRPCPluginsV2Client creates a new mock instance.
+func NewMockGRPCPluginsV2Client(ctrl *gomock.Controller) *MockGRPCPluginsV2Client {
+	mock := &MockGRPCPluginsV2Client{ctrl: ctrl}
+	mock.recorder = &MockGRPCPluginsV2ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGRPCPluginsV2Client) EXPECT() *MockGRPCPluginsV2ClientMockRecorder {
+	return m.recorder
+}
+
+// PluginImport mocks base method.
+func (m *MockGRPCPluginsV2Client) PluginImport(arg0 *sdk.GRPCPlugin, arg1 ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PluginImport", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginImport indicates an expected call of PluginImport.
+func (mr *MockGRPCPluginsV2ClientMockRecorder) PluginImport(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginImport", reflect.TypeOf((*MockGRPCPluginsV2Client)(nil).PluginImport), varargs...)
+}
+
 // MockProviderClient is a mock of ProviderClient interface.
 type MockProviderClient struct {
 	ctrl     *gomock.Controller
@@ -11047,7 +14151,7 @@ func (m *MockAuthClient) EXPECT() *MockAuthClientMockRecorder {
 }
 
 // AuthConsumerCreateForUser mocks base method.
-func (m *MockAuthClient) AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error) {
+func (m *MockAuthClient) AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerCreateForUser", username, request)
 	ret0, _ := ret[0].(sdk.AuthConsumerCreateResponse)
@@ -11075,11 +14179,26 @@ func (mr *MockAuthClientMockRecorder) AuthConsumerDelete(username, id interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerDelete", reflect.TypeOf((*MockAuthClient)(nil).AuthConsumerDelete), username, id)
 }
 
+// AuthConsumerHatcherySigninV2 mocks base method.
+func (m *MockAuthClient) AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthConsumerHatcherySigninV2", request)
+	ret0, _ := ret[0].(sdk.AuthConsumerHatcherySigninResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthConsumerHatcherySigninV2 indicates an expected call of AuthConsumerHatcherySigninV2.
+func (mr *MockAuthClientMockRecorder) AuthConsumerHatcherySigninV2(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerHatcherySigninV2", reflect.TypeOf((*MockAuthClient)(nil).AuthConsumerHatcherySigninV2), request)
+}
+
 // AuthConsumerListByUser mocks base method.
-func (m *MockAuthClient) AuthConsumerListByUser(username string) (sdk.AuthConsumers, error) {
+func (m *MockAuthClient) AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerListByUser", username)
-	ret0, _ := ret[0].(sdk.AuthConsumers)
+	ret0, _ := ret[0].(sdk.AuthUserConsumers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -11164,7 +14283,7 @@ func (mr *MockAuthClientMockRecorder) AuthConsumerRegen(username, id, newDuratio
 }
 
 // AuthConsumerSignin mocks base method.
-func (m *MockAuthClient) AuthConsumerSignin(arg0 sdk.AuthConsumerType, arg1 sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error) {
+func (m *MockAuthClient) AuthConsumerSignin(arg0 sdk.AuthConsumerType, arg1 interface{}) (sdk.AuthConsumerSigninResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerSignin", arg0, arg1)
 	ret0, _ := ret[0].(sdk.AuthConsumerSigninResponse)

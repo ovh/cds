@@ -5,7 +5,9 @@ type contextKey int
 const (
 	contextClaims contextKey = iota
 	contextSession
-	contextConsumer
+	contextUserConsumer
+	contextHatcheryConsumer
 	contextDriverManifest
 	contextDate
+	contextWorker
 )

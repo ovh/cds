@@ -64,7 +64,7 @@ Type `file`:
           path = "/var/lib/cds-engine/cdn-buffer"
 ```
 
-To multi-instanciate the cdn service, you can use a NFS for the bufferType file, example:
+To multi-instantiate the cdn service, you can use a NFS for the bufferType file, example:
     
 ```toml
       [cdn.storageUnits.buffers.buffer-nfs]
@@ -79,7 +79,7 @@ To multi-instanciate the cdn service, you can use a NFS for the bufferType file,
           [[cdn.storageUnits.buffers.buffer-nfs.nfs.encryption]]
             Cipher = "aes-gcm"
             Identifier = "nfs-buffer-id"
-            ## enter a key here, 32 lenght
+            ## enter a key here, 32 length
             Key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             Sealed = false   
 ```
@@ -99,7 +99,7 @@ Example of storage unit `local`:
         # flag to disabled backend synchronization
         disableSync = false
 
-        # global bandwith shared by the sync processes (in Mb)
+        # global bandwidth shared by the sync processes (in Mb)
         syncBandwidth = 128
 
         # number of parallel sync processes

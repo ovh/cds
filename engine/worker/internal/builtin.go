@@ -7,6 +7,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/worker/internal/action"
+	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
@@ -55,22 +56,14 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, secrets []
 func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a sdk.Action) sdk.Result {
 	log.Info(ctx, "running grpc plugin %q", a.Name)
 
-	chanRes := make(chan sdk.Result, 1)
-	done := make(chan struct{})
-	sdk.NewGoRoutines(ctx).Run(ctx, "runGRPCPlugin", func(ctx context.Context) {
-		action.RunGRPCPlugin(ctx, a.Name, w.currentJob.params, a, w, chanRes, done)
-	})
-
-	select {
-	case <-ctx.Done():
-		log.Error(ctx, "CDS Worker execution cancelled: %v", ctx.Err())
-		return sdk.Result{
-			Status: sdk.StatusFail,
-			Reason: "CDS Worker execution cancelled",
-		}
-	case res := <-chanRes:
-		// Useful to wait all logs are send before sending final status and log
-		<-done
-		return res
+	pluginClient, err := plugin.NewClient(ctx, w, plugin.TypeAction, a.Name, plugin.InputManagementDefault, nil)
+	if err != nil {
+		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("Unable to start grpc plugin... Aborting (%v)", err)}
 	}
+	defer pluginClient.Close(ctx)
+
+	opts := sdk.ParametersMapMerge(sdk.ParametersToMap(w.currentJob.params), sdk.ParametersToMap(a.Parameters), sdk.MapMergeOptions.ExcludeGitParams)
+
+	result := pluginClient.Run(ctx, opts)
+	return sdk.Result{Status: result.Status, Reason: result.Details}
 }

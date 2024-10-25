@@ -14,7 +14,6 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	hatchery "github.com/ovh/cds/sdk/hatchery"
-	logrus "github.com/sirupsen/logrus"
 )
 
 // MockInterface is a mock of Interface interface.
@@ -54,8 +53,22 @@ func (mr *MockInterfaceMockRecorder) CDSClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClient", reflect.TypeOf((*MockInterface)(nil).CDSClient))
 }
 
+// CDSClientV2 mocks base method.
+func (m *MockInterface) CDSClientV2() cdsclient.HatcheryServiceClient {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CDSClientV2")
+	ret0, _ := ret[0].(cdsclient.HatcheryServiceClient)
+	return ret0
+}
+
+// CDSClientV2 indicates an expected call of CDSClientV2.
+func (mr *MockInterfaceMockRecorder) CDSClientV2() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClientV2", reflect.TypeOf((*MockInterface)(nil).CDSClientV2))
+}
+
 // CanSpawn mocks base method.
-func (m *MockInterface) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (m *MockInterface) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
@@ -96,18 +109,18 @@ func (mr *MockInterfaceMockRecorder) GetGoRoutines() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoRoutines", reflect.TypeOf((*MockInterface)(nil).GetGoRoutines))
 }
 
-// GetLogger mocks base method.
-func (m *MockInterface) GetLogger() *logrus.Logger {
+// GetMapPendingWorkerCreation mocks base method.
+func (m *MockInterface) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLogger")
-	ret0, _ := ret[0].(*logrus.Logger)
+	ret := m.ctrl.Call(m, "GetMapPendingWorkerCreation")
+	ret0, _ := ret[0].(*sdk.HatcheryPendingWorkerCreation)
 	return ret0
 }
 
-// GetLogger indicates an expected call of GetLogger.
-func (mr *MockInterfaceMockRecorder) GetLogger() *gomock.Call {
+// GetMapPendingWorkerCreation indicates an expected call of GetMapPendingWorkerCreation.
+func (mr *MockInterfaceMockRecorder) GetMapPendingWorkerCreation() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogger", reflect.TypeOf((*MockInterface)(nil).GetLogger))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMapPendingWorkerCreation", reflect.TypeOf((*MockInterface)(nil).GetMapPendingWorkerCreation))
 }
 
 // GetPrivateKey mocks base method.
@@ -122,6 +135,20 @@ func (m *MockInterface) GetPrivateKey() *rsa.PrivateKey {
 func (mr *MockInterfaceMockRecorder) GetPrivateKey() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrivateKey", reflect.TypeOf((*MockInterface)(nil).GetPrivateKey))
+}
+
+// GetRegion mocks base method.
+func (m *MockInterface) GetRegion() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRegion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetRegion indicates an expected call of GetRegion.
+func (mr *MockInterfaceMockRecorder) GetRegion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegion", reflect.TypeOf((*MockInterface)(nil).GetRegion))
 }
 
 // InitHatchery mocks base method.
@@ -260,8 +287,22 @@ func (mr *MockInterfaceWithModelsMockRecorder) CDSClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClient", reflect.TypeOf((*MockInterfaceWithModels)(nil).CDSClient))
 }
 
+// CDSClientV2 mocks base method.
+func (m *MockInterfaceWithModels) CDSClientV2() cdsclient.HatcheryServiceClient {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CDSClientV2")
+	ret0, _ := ret[0].(cdsclient.HatcheryServiceClient)
+	return ret0
+}
+
+// CDSClientV2 indicates an expected call of CDSClientV2.
+func (mr *MockInterfaceWithModelsMockRecorder) CDSClientV2() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClientV2", reflect.TypeOf((*MockInterfaceWithModels)(nil).CDSClientV2))
+}
+
 // CanSpawn mocks base method.
-func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
@@ -302,18 +343,18 @@ func (mr *MockInterfaceWithModelsMockRecorder) GetGoRoutines() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoRoutines", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetGoRoutines))
 }
 
-// GetLogger mocks base method.
-func (m *MockInterfaceWithModels) GetLogger() *logrus.Logger {
+// GetMapPendingWorkerCreation mocks base method.
+func (m *MockInterfaceWithModels) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLogger")
-	ret0, _ := ret[0].(*logrus.Logger)
+	ret := m.ctrl.Call(m, "GetMapPendingWorkerCreation")
+	ret0, _ := ret[0].(*sdk.HatcheryPendingWorkerCreation)
 	return ret0
 }
 
-// GetLogger indicates an expected call of GetLogger.
-func (mr *MockInterfaceWithModelsMockRecorder) GetLogger() *gomock.Call {
+// GetMapPendingWorkerCreation indicates an expected call of GetMapPendingWorkerCreation.
+func (mr *MockInterfaceWithModelsMockRecorder) GetMapPendingWorkerCreation() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogger", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetLogger))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMapPendingWorkerCreation", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetMapPendingWorkerCreation))
 }
 
 // GetPrivateKey mocks base method.
@@ -328,6 +369,20 @@ func (m *MockInterfaceWithModels) GetPrivateKey() *rsa.PrivateKey {
 func (mr *MockInterfaceWithModelsMockRecorder) GetPrivateKey() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrivateKey", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetPrivateKey))
+}
+
+// GetRegion mocks base method.
+func (m *MockInterfaceWithModels) GetRegion() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRegion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetRegion indicates an expected call of GetRegion.
+func (mr *MockInterfaceWithModelsMockRecorder) GetRegion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegion", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetRegion))
 }
 
 // InitHatchery mocks base method.

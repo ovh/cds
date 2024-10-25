@@ -1,0 +1,83 @@
+<div class="header">
+    <div class="title">
+        Workspace
+    </div>
+    <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip
+        nzTooltipTitle="Click to refresh the workspace" (click)="clickRefresh()">
+        <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
+    </button>
+</div>
+<div class="content">
+    <ng-container *ngFor="let vcs of vcss">
+        <div class="tree-node-header large" (click)="clickVCS(vcs)">
+            <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
+            <div class="name">{{vcs.name}}</div>
+            <button nz-button nzType="text" nzSize="small">
+                <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"
+                    (click)="$event.stopPropagation()"></i>
+            </button>
+            <nz-dropdown-menu #menu="nzDropdownMenu">
+                <ul nz-menu>
+                    <li nz-menu-item
+                        [routerLink]="['/', 'project', project.key, 'explore', 'vcs', vcs.name, 'repository']">
+                        Add a repository
+                    </li>
+                </ul>
+            </nz-dropdown-menu>
+        </div>
+        <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name]">
+            <nz-alert *ngIf="repositories[vcs.name].length === 0" nzType="info"
+                nzMessage="No repository found"></nz-alert>
+            <ng-container *ngFor="let repo of repositories[vcs.name]">
+                <div class="tree-node-header large" (click)="clickRepository(vcs, repo)">
+                    <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
+                        nzTheme="fill"></span>
+                    <a class="name"
+                        [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']"
+                        routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)"
+                        [title]="repo.name">{{repo.name}}</a>
+                    <app-repository-ref-select *ngIf="treeExpandState[vcs.name+'/'+repo.name]" [size]="'small'"
+                        [branches]="branches[vcs.name+'/'+repo.name]" [tags]="tags[vcs.name+'/'+repo.name]"
+                        [ngModel]="refSelectState[vcs.name+'/'+repo.name]"
+                        (ngModelChange)="selectRepositoryRef(vcs, repo, $event)"></app-repository-ref-select>
+                </div>
+                <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name+'/'+repo.name]">
+                    <nz-alert *ngIf="!entities[vcs.name+'/'+repo.name] && !loadingEntities[vcs.name+'/'+repo.name]"
+                        nzType="info" nzMessage="No resource found"></nz-alert>
+                    <nz-spin *ngIf="loadingEntities[vcs.name+'/'+repo.name]" nzSimple></nz-spin>
+                    <ng-container *ngFor="let entity of entities[vcs.name+'/'+repo.name] | keyvalue">
+                        <div class="tree-node-header" (click)="clickEntityType(vcs, repo, entity.key)">
+                            <span nz-icon
+                                [nzType]="!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key] ? 'folder' : 'folder-open'"
+                                nzTheme="outline"></span>
+                            <div class="name">{{entity.key}}</div>
+                        </div>
+                        <div class="tree-node-content" *ngIf="treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]">
+                            <ng-container *ngFor="let v of entity.value">
+                                <div class="tree-node-header">
+                                    <a class="name"
+                                        [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
+                                        [queryParams]="{ref: refSelectState[vcs.name+'/'+repo.name]}"
+                                        routerLinkActive="active" [title]="v.name">
+                                        <span nz-icon nzType="file"></span>{{v.name}}
+                                    </a>
+                                    <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
+                                        (click)="openRunStartDrawer(vcs.name+'/'+repo.name+'/'+v.name, refSelectState[vcs.name+'/'+repo.name])"
+                                        title="Start workflow">
+                                        <span nz-icon nzType="caret-right" nzTheme="fill"></span>
+                                    </button>
+                                    <a *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
+                                        [routerLink]="['/', 'project', project.key, 'run']"
+                                        [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name, workflow_ref: refSelectState[vcs.name+'/'+repo.name]}"
+                                        (click)="$event.stopPropagation();" title="Display workflow runs">
+                                        <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
+                                    </a>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </ng-container>
+                </div>
+            </ng-container>
+        </div>
+    </ng-container>
+</div>

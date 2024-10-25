@@ -2,6 +2,7 @@ package exportentities_test
 
 import (
 	"encoding/json"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/ovh/cds/sdk/exportentities"
@@ -129,11 +130,6 @@ var (
 												Name:  "path",
 												Type:  sdk.StringParameter,
 												Value: "lcov.info",
-											},
-											{
-												Name:  "format",
-												Type:  sdk.StringParameter,
-												Value: "lcov",
 											},
 										},
 									},
@@ -899,4 +895,14 @@ func TestExportAndImportPipelineV1_YAML(t *testing.T) {
 			}
 		}
 	}
+}
+
+func Test_ImportPipelineWithFloatVersion(t *testing.T) {
+	in := `version: 1.0
+name: echo
+jobs:
+- job: New Job
+`
+	_, err := exportentities.ParsePipeline(exportentities.FormatYAML, []byte(in))
+	require.Error(t, err)
 }

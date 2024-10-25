@@ -3,18 +3,18 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
+import { AuthConsumer, AuthDriverManifest, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
-import { AuthentifiedUser, AuthSummary, UserContact } from 'app/model/user.model';
+import { AuthentifiedUser, AuthSummary, UserContact, UserLink, UserGPGKey } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
-import * as moment from 'moment';
+import moment from 'moment';
 import { forkJoin } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import {
     CloseEvent,
@@ -22,6 +22,8 @@ import {
     ConsumerDetailsModalComponent
 } from '../consumer-details-modal/consumer-details-modal.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { HttpClient } from "@angular/common/http";
+import { LinkService } from "../../../../service/link/link.service";
 
 const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -46,10 +48,11 @@ export class UserEditComponent implements OnInit {
     currentAuthSummary: AuthSummary;
     editable: boolean;
     path: Array<PathItem>;
-    menuItems: Map<string,string>;
+    menuItems: Map<string, string>;
     selectedItem: string;
     loadingUser: boolean;
     user: AuthentifiedUser;
+    userLinks: Map<string, UserLink>;
     columnsGroups: Array<Column<Group>>;
     loadingGroups = false;
     groups: Array<Group>;
@@ -69,6 +72,11 @@ export class UserEditComponent implements OnInit {
     sessions: Array<AuthSession>;
     loadingLocalReset: boolean;
     showLDAPSigninForm: boolean;
+    loadingGPGKeys: boolean;
+    gpgKeys: Array<UserGPGKey>;
+    importPublicGPGKey: string;
+
+    linkDriver: string[] = [];
 
     constructor(
         private _authenticationService: AuthenticationService,
@@ -79,9 +87,20 @@ export class UserEditComponent implements OnInit {
         private _store: Store,
         private _toast: ToastService,
         private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _http: HttpClient,
+        private _linkService: LinkService
     ) {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
+
+        this._linkService.getDrivers()
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe((data) => {
+                this.linkDriver = data;
+            });
 
         this.menuItems = new Map<string, string>();
         this.selectedItem = "profile";
@@ -98,7 +117,7 @@ export class UserEditComponent implements OnInit {
             <Column<Group>>{
                 name: 'user_group_role',
                 selector: (g: Group) => g.admin ? this._translate.instant('user_group_admin') : this._translate.instant('user_group_member')
-            },
+            }
         ];
 
         this.columnsContacts = [
@@ -134,9 +153,9 @@ export class UserEditComponent implements OnInit {
             return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
-                (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (!c.groups && lowerFilter === '*');
+                c.auth_consumer_user.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                (c.auth_consumer_user.groups && c.auth_consumer_user.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (!c.auth_consumer_user.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -160,7 +179,7 @@ export class UserEditComponent implements OnInit {
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_scopes',
-                selector: (c: AuthConsumer) => c.scope_details.map(s => s.scope).join(', ')
+                selector: (c: AuthConsumer) => c.auth_consumer_user.scope_details.map(s => s.scope).join(', ')
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.TEXT_ICONS,
@@ -191,7 +210,7 @@ export class UserEditComponent implements OnInit {
                     }
 
                     return {
-                        value: c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*',
+                        value: c.auth_consumer_user.groups ? c.auth_consumer_user.groups.map((g: Group) => g.name).join(', ') : '*',
                         icons
                     };
                 }
@@ -357,6 +376,16 @@ export class UserEditComponent implements OnInit {
         });
     }
 
+    linkUser(type: string): void {
+        this._linkService.askLink(type, "/settings/user/" + this.user.username)
+            .pipe(first())
+            .subscribe(redirect => {
+                if (redirect.method.toLowerCase() === ('get')) {
+                    window.location.replace(redirect.url);
+                }
+            })
+    }
+
     clickConsumerDetails(selected: AuthConsumer): void {
         this.selectedConsumer = selected;
 
@@ -369,7 +398,7 @@ export class UserEditComponent implements OnInit {
             nzTitle: this.modalTitleTmpl,
             nzWidth: '900px',
             nzContent: ConsumerDetailsModalComponent,
-            nzComponentParams: {
+            nzData: {
                 consumer: this.selectedConsumer,
                 user: this.user,
             },
@@ -430,7 +459,7 @@ export class UserEditComponent implements OnInit {
             nzTitle: 'Create a new consumer',
             nzWidth: '900px',
             nzContent: ConsumerCreateModalComponent,
-            nzComponentParams: {
+            nzData: {
                 user: this.user
             },
             nzOnOk: () => {
@@ -515,6 +544,9 @@ export class UserEditComponent implements OnInit {
             case 'authentication':
                 this.getAuthData();
                 break;
+            case 'gpgkeys':
+                this.getGPGKeys();
+                break;
         }
         this.selectedItem = item;
         this._router.navigate([], {
@@ -528,16 +560,24 @@ export class UserEditComponent implements OnInit {
     getUser(): void {
         this.loadingUser = true;
         this._cd.markForCheck();
-        this._userService.get(this.username)
-            .pipe(finalize(() => {
-                this.loadingUser = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(u => {
-                this.user = u;
-                this.setDataFromUser();
-                this.updatePath();
-            });
+
+        forkJoin([
+            this._userService.get(this.username),
+            this._userService.getLinks(this.username)
+        ]).pipe(finalize(() => {
+            this.loadingUser = false;
+            this._cd.markForCheck();
+        })).subscribe(result => {
+            this.user = result[0];
+            if (result[1]) {
+                this.userLinks = new Map<string, UserLink>();
+                result[1].forEach(l => {
+                    this.userLinks.set(l.type, l);
+                })
+            }
+            this.setDataFromUser();
+            this.updatePath();
+        });
     }
 
     setDataFromUser(): void {
@@ -545,11 +585,14 @@ export class UserEditComponent implements OnInit {
         this.menuItems = new Map<string, string>();
         this.menuItems.set("profile", "Profile");
         this.menuItems.set("groups", "Groups");
-
+        if (this.linkDriver.length > 0) {
+            this.menuItems.set("links", "Links");
+        }
         if (this.user.id === this.currentAuthSummary.user.id || this.currentAuthSummary.isMaintainer()) {
             this.menuItems.set("contacts", "Contacts");
             this.menuItems.set("authentication", "Authentication");
         }
+        this.menuItems.set("gpgkeys", "GPG Keys");
 
         // Enable revoke session button only if editable
         this.columnsSessions[4].disabled = !this.editable;
@@ -584,11 +627,11 @@ export class UserEditComponent implements OnInit {
     getAuthData(): void {
         this.loadingAuthData = true;
         this._cd.markForCheck();
-        forkJoin<AuthDriverManifests, Array<AuthConsumer>, Array<AuthSession>>(
+        forkJoin([
             this._authenticationService.getDrivers(),
             this._userService.getConsumers(this.username),
             this._userService.getSessions(this.username)
-        )
+        ])
             .pipe(finalize(() => {
                 this.loadingAuthData = false;
                 this._cd.markForCheck();
@@ -648,5 +691,41 @@ export class UserEditComponent implements OnInit {
             this.getAuthData();
             return;
         }
+    }
+
+    getGPGKeys(): void {
+        this.loadingGPGKeys = true;
+        this._cd.markForCheck();
+        this._userService.getGPGKeys(this.username).pipe(
+            finalize(() => {
+                this.loadingGPGKeys = false;
+                this._cd.markForCheck();
+            }
+        )).subscribe(result => {
+            this.gpgKeys = result;
+        });
+    }
+
+    deleteGPGKey(k: UserGPGKey): void {
+        this.loadingGPGKeys = true;
+        this._cd.markForCheck();
+        this._userService.deleteGPGKey(this.username, k.key_id).pipe(
+            finalize(() => {
+                this.getGPGKeys();
+            }
+        )).subscribe();
+    }
+
+    addGPGKey(): void {
+        this.loadingGPGKeys = true;
+        this._cd.markForCheck();
+        
+        let k = new UserGPGKey();
+        k.public_key = this.importPublicGPGKey;
+        this._userService.addGPGKey(this.username, k).pipe(
+            finalize(() => {
+                this.getGPGKeys();
+            }
+        )).subscribe(() => this.importPublicGPGKey = null);;
     }
 }

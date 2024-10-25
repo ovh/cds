@@ -18,10 +18,12 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
+	ehatchery "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // New instanciates a new hatchery local
@@ -44,8 +46,10 @@ func (h *HatcheryLocal) Init(config interface{}) (cdsclient.ServiceConfig, error
 	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
+	cfg.TokenV2 = sConfig.API.TokenV2
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+
 	return cfg, nil
 }
 
@@ -116,6 +120,16 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Basedir doesn't exist")
 	} else if err != nil {
 		return fmt.Errorf("Invalid basedir: %v", err)
+	}
+	return nil
+}
+
+func (h *HatcheryLocal) Signin(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
+	if err := h.Common.Signin(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	if err := h.Common.SigninV2(ctx, clientConfig, srvConfig); err != nil {
+		return err
 	}
 	return nil
 }
@@ -203,14 +217,16 @@ func (h *HatcheryLocal) getWorkerBinaryName() string {
 	return workerName
 }
 
-//Configuration returns Hatchery CommonConfiguration
+// Configuration returns Hatchery CommonConfiguration
 func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+	ctx, end := telemetry.Span(ctx, "local.CanSpawn")
+	defer end()
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
@@ -220,17 +236,17 @@ func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64,
 	}
 
 	for _, r := range requirements {
-		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.FlavorRequirement {
 			log.Debug(ctx, "CanSpawn false service or memory")
 			return false
 		}
 
 		if r.Type == sdk.OSArchRequirement && r.Value != (runtime.GOOS+"/"+runtime.GOARCH) {
-			log.Debug(ctx, "CanSpawn> job %d cannot spawn on this OSArch.", jobID)
+			log.Debug(ctx, "CanSpawn> job %s cannot spawn on this OSArch.", jobID)
 			return false
 		}
 	}
-	log.Debug(ctx, "CanSpawn true for job %d", jobID)
+	log.Debug(ctx, "CanSpawn true for job %s", jobID)
 	return true
 }
 
@@ -314,14 +330,14 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	apiWorkers, err := h.CDSClient().WorkerList(ctx)
+	apiWorkers, err := h.WorkerList(ctx)
 	if err != nil {
 		return err
 	}
 
-	mAPIWorkers := make(map[string]sdk.Worker, len(apiWorkers))
+	mAPIWorkers := make(map[string]ehatchery.WorkerInterface, len(apiWorkers))
 	for _, w := range apiWorkers {
-		mAPIWorkers[w.Name] = w
+		mAPIWorkers[w.Name()] = w
 	}
 
 	killedWorkers := []string{}
@@ -336,7 +352,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 			}
 			log.Info(ctx, "Killing AWOL worker %s", name)
 			kill = true
-		} else if w.Status == sdk.StatusDisabled {
+		} else if w.Status() == sdk.StatusDisabled {
 			log.Info(ctx, "Killing disabled worker %s", w.Name)
 			kill = true
 		}

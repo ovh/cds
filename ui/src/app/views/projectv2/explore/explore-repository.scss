@@ -1,0 +1,88 @@
+@import '../../../../common.scss';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  display:flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+
+  nz-alert {
+    margin-bottom: 30px;
+  }
+
+  .events {
+    flex: 1;
+    overflow: hidden;
+    margin-top: 10px;
+
+    h3 {
+      margin-bottom: 20px;
+
+      i {
+        margin-left: 10px;
+      }
+    }
+  }
+}
+
+.footer {
+  display: flex;
+  height: 50px;
+  border-top: 1px solid #d9d9d9;
+  padding: 0 20px;
+  flex-direction: row;
+  align-items: center;
+
+  :host-context(.night) & {
+    border-top: 1px solid #434343;
+  }
+
+  .buttons {
+    margin-left: auto;
+
+    button {
+      margin-left: 10px;
+    }
+  }
+}
+
+nz-spin {
+  margin-top: 50px;
+}
+
+.modal-content {
+  max-height: 80%;
+  overflow: hidden;
+
+  nz-descriptions:not(:first-child) {
+    margin-top: 20px;
+  }
+
+  .workflows {
+    h3 {
+      margin: 20px 0;
+    }
+
+    nz-list-item {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+
+      app-status-icon {
+        margin-right: 10px;
+      }
+
+      &>*:not(app-status-icon) {
+        flex: 1;
+      }
+    }
+  }
+}

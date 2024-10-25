@@ -28,6 +28,7 @@ import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { RouterService } from 'app/service/services.module';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -86,7 +87,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         private _keyService: KeyService,
         private _pipCoreService: PipelineCoreService,
         private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _routerService: RouterService
     ) {
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
@@ -117,8 +119,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             });
     }
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     refreshDatas(key: string, pipName: string) {
         this._store.dispatch(new FetchPipeline({
@@ -138,7 +139,9 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         this.projectKey = this._routeActivated.snapshot.params['key'];
         this.pipName = this._routeActivated.snapshot.params['pipName'];
 
-        this._routeActivated.params.subscribe(params => {
+        this._routeActivated.params.subscribe(_ => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            
             if (!this.pipeline || this.projectKey !== params['key'] || this.pipName !== params['pipName']) {
                 this.projectKey = params['key'];
                 this.pipName = params['pipName'];
@@ -197,7 +200,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                     this.pipeline = cloneDeep(pip.pipeline);
                 }
 
-                if (this.pipeline.from_repository && (!this.pipeline.ascode_events || this.pipeline.ascode_events.length ===0)) {
+                if (this.pipeline.from_repository && (!this.pipeline.ascode_events || this.pipeline.ascode_events.length === 0)) {
                     this.nzTagColor = 'green';
                 } else if (this.pipeline.from_repository && this.pipeline?.ascode_events?.length > 0) {
                     this.nzTagColor = 'orange';
@@ -215,7 +218,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 this.initTabs();
                 this._cd.markForCheck();
             }, () => {
-                this._router.navigate(['/project', this.projectKey], {queryParams: {tab: 'pipelines'}});
+                this._router.navigate(['/project', this.projectKey], { queryParams: { tab: 'pipelines' } });
             });
     }
 
@@ -228,27 +231,32 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             title: 'Pipeline',
             key: 'pipeline',
             default: true,
-            icon: 'sitemap'
+            icon: 'apartment',
+            iconTheme: 'outline'
         }, <Tab>{
             title: 'Parameters',
             key: 'parameters',
-            icon: 'font'
+            icon: 'font-colors',
+            iconTheme: 'outline'
         }, <Tab>{
             title: usageText,
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }]
         if (!this.pipeline?.from_repository) {
             this.tabs.push(<Tab>{
                 title: 'Audits',
                 icon: 'history',
+                iconTheme: 'outline',
                 key: 'audits'
             })
         }
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
                 title: 'Advanced',
-                icon: 'graduation',
+                icon: 'setting',
+                iconTheme: 'fill',
                 key: 'advanced'
             })
         }
@@ -323,7 +331,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 nzWidth: '900px',
                 nzTitle: 'Save pipeline as code',
                 nzContent: AsCodeSaveModalComponent,
-                nzComponentParams: {
+                nzData: {
                     dataToSave: this.pipeline,
                     dataType: 'pipeline',
                     project: this.project,

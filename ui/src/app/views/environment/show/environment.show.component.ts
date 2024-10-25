@@ -18,6 +18,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { RouterService } from 'app/service/services.module';
 
 @Component({
     selector: 'app-environment-show',
@@ -61,29 +62,32 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     usageCount = 0;
 
     constructor(
-        private _route: ActivatedRoute,
+        private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _routerService: RouterService
     ) {
-        this.project = this._route.snapshot.data['project'];
+        this.project = this._activatedRoute.snapshot.data['project'];
         this.projectSubscription = this._store.select(ProjectState)// Update data if route change
             .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
-        this._routeDataSub = this._route.data.subscribe(datas => {
+        this._routeDataSub = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
-        if (this._route.snapshot && this._route.queryParams) {
-            this.workflowName = this._route.snapshot.queryParams['workflow'];
-            this.workflowNum = this._route.snapshot.queryParams['run'];
-            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+        if (this._activatedRoute.snapshot && this._activatedRoute.queryParams) {
+            this.workflowName = this._activatedRoute.snapshot.queryParams['workflow'];
+            this.workflowNum = this._activatedRoute.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._activatedRoute.snapshot.queryParams['node'];
         }
-        this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
+        this.workflowPipeline = this._activatedRoute.snapshot.queryParams['wpipeline'];
 
-        this._routeParamsSub = this._route.params.subscribe(params => {
+        this._routeParamsSub = this._activatedRoute.params.subscribe(_ => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+
             let key = params['key'];
             let envName = params['envName'];
             if (key && envName) {
@@ -134,7 +138,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.initTabs();
-        this._queryParamsSub = this._route.queryParams.subscribe(params => {
+        this._queryParamsSub = this._activatedRoute.queryParams.subscribe(params => {
             let tab = params['tab'];
             if (tab) {
                 let current_tab = this.tabs.find((t) => t.key === tab);
@@ -155,20 +159,24 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
             title: 'Variables',
             key: 'variables',
             default: true,
-            icon: 'font'
+            icon: 'font-colors',
+            iconTheme: 'outline'
         }, <Tab>{
             title: 'Keys',
             key: 'keys',
-            icon: 'privacy'
+            icon: 'lock',
+            iconTheme: 'outline',
         }, <Tab>{
             title: usageText,
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }]
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
                 title: 'Advanced',
-                icon: 'graduation',
+                icon: 'setting',
+                iconTheme: 'fill',
                 key: 'advanced'
             })
         }
@@ -178,7 +186,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
         this.selectedTab = tab;
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this._store.dispatch(new CleanEnvironmentState());
     }
 
@@ -264,7 +272,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                 nzWidth: '900px',
                 nzTitle: 'Save environment as code',
                 nzContent: AsCodeSaveModalComponent,
-                nzComponentParams: {
+                nzData: {
                     dataToSave: this.environment,
                     dataType: 'environment',
                     project: this.project,

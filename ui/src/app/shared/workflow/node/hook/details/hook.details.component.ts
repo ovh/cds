@@ -1,15 +1,26 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    inject,
+    OnDestroy,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { Store } from '@ngxs/store';
 import { HookStatus, TaskExecution } from 'app/model/workflow.hook.model';
 import { WNodeHook, Workflow } from 'app/model/workflow.model';
 import { HookService } from 'app/service/hook/hook.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+
+interface IModalData {
+    currentHook: WNodeHook
+}
 
 @Component({
     selector: 'app-workflow-node-hook-details',
@@ -21,7 +32,6 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
 export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
     @ViewChild('code') codemirror: any;
 
-    currentHook: WNodeHook;
     task: TaskExecution;
     executions: Array<TaskExecution>;
     codeMirrorConfig: any;
@@ -32,9 +42,10 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
 
     hookStatus = HookStatus;
 
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
+
     constructor(
         public _modal: NzModalRef,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef,
         private _store: Store,
         private _hookService: HookService
@@ -49,8 +60,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
         };
     }
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
@@ -62,7 +72,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
         } else {
             workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
         }
-        this._hookService.getHookLogs(project.key, workflow.name, this.currentHook.uuid)
+        this._hookService.getHookLogs(project.key, workflow.name, this.nzModalData.currentHook.uuid)
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

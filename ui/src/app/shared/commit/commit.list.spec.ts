@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {TestBed, fakeAsync} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {APP_BASE_HREF} from '@angular/common';
 import {SharedModule} from '../shared.module';
 import {CommitListComponent} from './commit.list.component';
+import {NgxsModule} from "@ngxs/store";
 
 describe('CDS: Commit List', () => {
 
@@ -20,7 +20,8 @@ describe('CDS: Commit List', () => {
             imports: [
                 RouterTestingModule.withRoutes([]),
                 TranslateModule.forRoot(),
-                SharedModule
+                SharedModule,
+                NgxsModule.forRoot()
             ]
         }).compileComponents();
     });

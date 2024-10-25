@@ -22,7 +22,6 @@ export class Application {
     keys: Array<Key>;
     vcs_strategy: VCSStrategy;
     deployment_strategies: {};
-    vulnerabilities: Array<Vulnerability>;
     project_key: string; // project unique key
     from_repository: string;
     overview: any;
@@ -40,63 +39,6 @@ export class Application {
 
         return applicationNamePattern.test(name);
 
-    }
-}
-
-export class Vulnerability {
-    id: number;
-    application_id: number;
-    title: string;
-    description: string;
-    cve: string;
-    link: string;
-    component: string;
-    version: string;
-    origin: string;
-    severity: string;
-    fix_in: string;
-    ignored: boolean;
-
-    // ui param
-    loading: boolean;
-}
-
-export class Severity {
-    static UNKNOWN = 'unknown';
-    static NEGLIGIBLE = 'negligible';
-    static LOW = 'low';
-    static MEDIUM = 'medium';
-    static HIGH = 'high';
-    static CRITICAL = 'critical';
-    static DEFCON1 = 'defcon1';
-
-    static Severities = [
-        Severity.UNKNOWN,
-        Severity.NEGLIGIBLE,
-        Severity.LOW,
-        Severity.MEDIUM,
-        Severity.HIGH,
-        Severity.CRITICAL,
-        Severity.DEFCON1
-    ];
-
-    static getColors(s: string) {
-        switch (s) {
-            case Severity.DEFCON1:
-                return '#000000';
-            case Severity.CRITICAL:
-                return '#8B0000';
-            case Severity.HIGH:
-                return '#FF4F60';
-            case Severity.MEDIUM:
-                return '#FFA500';
-            case Severity.LOW:
-                return '#21BA45';
-            case Severity.NEGLIGIBLE:
-                return '#808080';
-            case Severity.UNKNOWN:
-                return '#D3D3D3';
-        }
     }
 }
 

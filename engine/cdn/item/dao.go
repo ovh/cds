@@ -147,16 +147,12 @@ func Update(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 	return nil
 }
 
-func MarkToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
-	runIdS := strconv.FormatInt(runID, 10)
-	query := `
-		UPDATE item SET to_delete = true WHERE api_ref->>'run_id' = $1
-	`
-	_, err := db.Exec(query, runIdS)
-	return sdk.WrapError(err, "unable to mark item to delete for run %d", runID)
+func MarkToDeleteByRunID(db gorpmapper.SqlExecutorWithTx, runID string) error {
+	_, err := db.Exec("UPDATE item SET to_delete = true WHERE api_ref->>'run_id' = $1", runID)
+	return sdk.WrapError(err, "unable to mark item to delete for run with id: %s", runID)
 }
 
-func LoadWorkerCacheItemByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, projKey string, cacheTag string) (*sdk.CDNItem, error) {
+func LoadWorkerCacheItemByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, cacheType string, projKey string, cacheTag string) (*sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
 		SELECT *
 		FROM item
@@ -166,7 +162,7 @@ func LoadWorkerCacheItemByProjectAndCacheTag(ctx context.Context, m *gorpmapper.
 		AND to_delete = false
     ORDER BY created DESC
     LIMIT 1
-  `).Args(sdk.CDNTypeItemWorkerCache, projKey, cacheTag)
+  `).Args(cacheType, projKey, cacheTag)
 	return getItem(ctx, m, db, query)
 }
 
@@ -183,6 +179,7 @@ func LoadWorkerCacheItemsByProjectAndCacheTag(ctx context.Context, m *gorpmapper
 }
 
 // LoadByJobRunID load an item by his job id and type
+// DEPRECATED
 func LoadByJobRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, jobRunId int64, itemTypes []string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
 		SELECT *
@@ -192,6 +189,18 @@ func LoadByJobRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecut
 		AND to_delete = false
 		ORDER BY created DESC
 	`).Args(strconv.FormatInt(jobRunId, 10), pq.StringArray(itemTypes))
+	return getItems(ctx, m, db, query, opts...)
+}
+
+// LoadByRunJobID load an item by his job id and type
+func LoadByRunJobID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, runJobID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT *
+		FROM item
+		WHERE api_ref->>'run_job_id' = $1
+		AND to_delete = false
+		ORDER BY created DESC
+	`).Args(runJobID)
 	return getItems(ctx, m, db, query, opts...)
 }
 

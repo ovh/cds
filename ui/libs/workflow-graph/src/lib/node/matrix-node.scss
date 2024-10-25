@@ -1,0 +1,214 @@
+@import "../../../../../src/common.scss";
+
+:host {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+[nzGhost] {
+    color: $polar_grey_1;
+    border-color: $polar_grey_1;
+
+    &:hover {
+        color: black !important;
+        border-color: black !important;
+    }
+
+    :host-context(.night) & {
+        color: $darkTheme_grey_6;
+        border-color: $darkTheme_grey_6;
+
+        &:hover {
+            color: white !important;
+            border-color: white !important;
+        }
+    }
+}
+
+.label {
+    height: 34px;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    [nz-button] {
+        height: 18px;
+        width: 18px;
+        min-width: unset;
+        margin-left: 2px;
+        margin-bottom: 4px;
+        border-width: 2px;
+
+        [nz-icon] {
+            font-size: 12px;
+        }
+    }
+
+    .name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-left: 5px;
+        margin-bottom: 6px;
+        font-weight: bold;
+    }
+}
+
+.node {
+    width: 100%;
+    flex: 1;
+    border: 2px solid $polar_grey_3;
+    border-radius: 3px;
+    color: $polar_grey_1;
+    padding: 2px;
+    background-color: white;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    :host-context(.night) & {
+        background-color: $darkTheme_grey_1;
+        border-color: $darkTheme_grey_5;
+        color: $darkTheme_grey_6;
+    }
+
+    .jobs {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 10px;
+
+        .job {
+            position: relative;
+            height: 30px;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            background-color: white;
+            align-items: center;
+            border: 2px solid $polar_grey_3;
+            border-radius: 3px;
+            padding: 2px;
+
+            &:not(:first-child) {
+                margin-top: 10px;
+            }
+
+            .name {
+                flex: 1;
+                font-size: 0.8em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin: 0 5px;
+            }
+
+            .infos {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                margin-right: 5px;
+                align-items: end;
+
+                .duration {
+                    font-size: 0.7em;
+                    line-height: 0.7em;
+                }
+
+                .durationTooltip {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .status {
+                    margin-top: 4px;
+                    font-size: 0.5em;
+                    line-height: 0.5em;
+                }
+            }
+
+            .commands {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                height: 100%;
+                background-color: inherit;
+
+                [nz-button] {
+                    height: 18px;
+                    width: 18px;
+                    min-width: unset;
+                    margin-left: 4px;
+                }
+            }
+
+            &.success {
+                background-color: $cds_color_light_green;
+                border-color: $cds_color_green;
+            }
+
+            &.fail {
+                background-color: $cds_color_light_red;
+                border-color: $cds_color_red;
+            }
+
+            &.building {
+                background-color: $cds_color_light_teal;
+                border-color: $cds_color_teal;
+            }
+
+            &.inactive {
+                background-color: $cds_color_light_grey;
+                border-color: grey;
+            }
+
+            &.active {
+                border: 3px solid $polar_grey_0;
+                padding: 1px;
+            }
+
+            &.highlight {
+                border-color: $polar_grey_0;
+            }
+
+            :host-context(.night) & {
+                background-color: $darkTheme_grey_1;
+                border-color: $darkTheme_grey_5;
+                color: $darkTheme_grey_6;
+
+                &.success {
+                    background-color: $darkTheme_night_green;
+                    border-color: $darkTheme_green;
+                }
+
+                &.fail {
+                    background-color: $darkTheme_night_red;
+                    border-color: $darkTheme_red;
+                }
+
+                &.building {
+                    background-color: $darkTheme_night_blue;
+                    border-color: $darkTheme_blue;
+                }
+
+                &.inactive {
+                    background-color: $darkTheme_night_grey;
+                    border-color: grey;
+                }
+
+                &.active,
+                &.highlight {
+                    border-color: white;
+                }
+            }
+        }
+    }
+}

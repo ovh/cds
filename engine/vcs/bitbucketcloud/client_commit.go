@@ -15,9 +15,9 @@ import (
 func (client *bitbucketcloudClient) Commits(ctx context.Context, repo, theBranch, since, until string) ([]sdk.VCSCommit, error) {
 	var commitsResult []sdk.VCSCommit
 	//Get Commit List
-	theCommits, err := client.allCommitBetween(ctx, repo, since, until, theBranch)
+	theCommits, err := client.allCommitBetween(ctx, repo, since, until)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot load all commit between since=%s and until=%s on branch %s", since, until, theBranch)
+		return nil, sdk.WrapError(err, "cannot load all commit between since=%s and until=%s", since, until)
 	}
 
 	commitsResult = make([]sdk.VCSCommit, 0, len(theCommits))
@@ -34,6 +34,7 @@ func (client *bitbucketcloudClient) Commits(ctx context.Context, repo, theBranch
 				Email:       email,
 				Name:        c.Author.User.Username,
 				Avatar:      c.Author.User.Links.Avatar.Href,
+				ID:          c.Author.User.UUID,
 			},
 		}
 
@@ -43,7 +44,7 @@ func (client *bitbucketcloudClient) Commits(ctx context.Context, repo, theBranch
 	return commitsResult, nil
 }
 
-func (client *bitbucketcloudClient) allCommitBetween(ctx context.Context, repo, sinceCommit, untilCommit, branch string) ([]Commit, error) {
+func (client *bitbucketcloudClient) allCommitBetween(ctx context.Context, repo, sinceCommit, untilCommit string) ([]Commit, error) {
 	var commits []Commit
 	params := url.Values{}
 	params.Add("exclude", sinceCommit)
@@ -107,6 +108,7 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 			Email:       email,
 			Name:        c.Author.User.Username,
 			Avatar:      c.Author.User.Links.Avatar.Href,
+			ID:          c.Author.User.UUID,
 		},
 	}
 
@@ -164,6 +166,7 @@ func (client *bitbucketcloudClient) CommitsBetweenRefs(ctx context.Context, repo
 				Email:       email,
 				Name:        c.Author.User.Username,
 				Avatar:      c.Author.User.Links.Avatar.Href,
+				ID:          c.Author.User.UUID,
 			},
 		}
 

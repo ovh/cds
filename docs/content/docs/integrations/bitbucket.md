@@ -34,7 +34,7 @@ type: bitbucketserver
 description: "My Bitbucket Datacenter"
 url: "http://localhost:7990/bitbucket"
 auth:
-    username: username-on-bitbucket
+    user: username-on-bitbucket
     token: the-long-token-here
 options:
     disableStatus: false    # Set to true if you don't want CDS to push statuses on the VCS server - optional
@@ -44,7 +44,7 @@ options:
 ```
 
 ```sh
-cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-bitbucket.yml
+cdsctl project vcs import YOUR_CDS_PROJECT_KEY vcs-bitbucket.yml
 ```
 
 ## Vcs events

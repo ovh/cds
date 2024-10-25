@@ -20,7 +20,7 @@ import (
 // @params force=true or false. If false and if the worker model already exists, raise an error
 func (api *API) postWorkerModelImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		force := service.FormBool(r, "force")
 

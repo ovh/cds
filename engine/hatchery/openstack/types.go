@@ -55,6 +55,17 @@ type HatcheryConfiguration struct {
 	// This count will prevent big flavor to take all the CPUs available for the hatchery and will keep some available for smaller flavors.
 	// Ex: if two flavors are available with 8 and 4 cpus and count to keep equals 2 the hatchery will need 8+4*2=16cpus available to start a 8cpus flavor.
 	CountSmallerFlavorToKeep int `mapstructure:"countSmallerFlavorToKeep" toml:"countSmallerFlavorToKeep" default:"" commented:"true" comment:"Count of smaller flavors that the hatchery should be able to boot when booting a larger flavor." json:"countSmallerFlavorToKeep"`
+
+	// DefaultFlavor, if set the hatchery will use a model with the default flavor in priority to start jobs without model requirement
+	DefaultFlavor string `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"" commented:"true" comment:"If set the hatchery will use a model with the default flavor in priority to start jobs without model requirement" json:"defaultFlavor"`
+
+	// DefaultSecurityGroups, if set the VMs spawned by the hatchery will have the given security groups
+	DefaultSecurityGroups []string `mapstructure:"defaultSecurityGroups" toml:"defaultSecurityGroups" default:"" commented:"true" comment:"If set the hatchery will add given groups on spawned VMs" json:"defaultSecurityGroups"`
+
+	Cache struct {
+		ImagesExpirationDelay  int `mapstructure:"imagesExpirationDelay" toml:"imagesExpirationDelay" default:"30" commented:"true" comment:"Expiration delay for Openstack images list cache (in seconds)." json:"imagesExpirationDelay"`
+		ServersExpirationDelay int `mapstructure:"serversExpirationDelay" toml:"serversExpirationDelay" default:"2" commented:"true" comment:"Expiration delay for Openstack servers list cache (in seconds)." json:"serversExpirationDelay"`
+	} `mapstructure:"cache" toml:"cache" json:"cache"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
@@ -64,8 +75,8 @@ type HatcheryOpenstack struct {
 	Config          HatcheryConfiguration
 	flavors         []flavors.Flavor
 	openstackClient *gophercloud.ServiceClient
-
-	networkID string // computed from networkString
+	cache           *cache
+	networkID       string // computed from networkString
 }
 
 type ipInfos struct {

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -14,6 +15,31 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/afero"
 )
+
+type V2RunResultRequest struct {
+	RunResult   *sdk.V2WorkflowRunResult
+	CDNItemLink sdk.CDNItemLink // TODO
+}
+
+type V2AddResultResponse struct {
+	RunResult    *sdk.V2WorkflowRunResult
+	CDNSignature string
+	CDNAddress   string
+}
+
+type V2GetResultResponse struct {
+	RunResults   []sdk.V2WorkflowRunResult
+	CDNSignature string
+}
+
+type V2UpdateResultResponse struct {
+	RunResult *sdk.V2WorkflowRunResult
+}
+
+type V2FilterRunResult struct {
+	Pattern string
+	Type    []sdk.V2WorkflowRunResultType
+}
 
 type WorkerConfig struct {
 	Name                     string            `json:"name"`
@@ -28,6 +54,7 @@ type WorkerConfig struct {
 	GelfServiceAddrEnableTLS bool              `json:"gelf_service_addr_enable_tls,omitempty"`
 	Model                    string            `json:"model"`
 	BookedJobID              int64             `json:"booked_job_id,omitempty"`
+	RunJobID                 string            `json:"run_job_id,omitempty"`
 	Region                   string            `json:"region,omitempty"`
 	InjectEnvVars            map[string]string `json:"inject_env_vars,omitempty"`
 }
@@ -53,6 +80,13 @@ type UploadArtifact struct {
 
 type FilePath struct {
 	Path string `json:"path"`
+}
+
+type OutputRequest struct {
+	Name             string `json:"name"`
+	Value            string `json:"value"`
+	WorkflowRunID    string `json:"workflow_run_id"`
+	WorkflowRunJobID string `json:"workflow_run_job_id"`
 }
 
 type KeyResponse struct {
@@ -83,6 +117,11 @@ type (
 	contextKey int
 )
 
+type CDNSignature struct {
+	Signature  string `json:"signature"`
+	CDNAddress string `json:"cdn_address"`
+}
+
 const (
 	jobID contextKey = iota
 	stepOrder
@@ -90,6 +129,8 @@ const (
 	workDir
 	keysDir
 	tmpDir
+	runJobID
+	readiness
 )
 
 type Runtime interface {
@@ -101,18 +142,34 @@ type Runtime interface {
 	RunResultSignature(fileName string, perm uint32, t sdk.WorkflowRunResultType) (string, error)
 	WorkerCacheSignature(tag string) (string, error)
 	FeatureEnabled(featureName sdk.FeatureName) bool
-	GetPlugin(pluginType string) *sdk.GRPCPlugin
+	GetIntegrationPlugin(pluginType string) *sdk.GRPCPlugin
+	GetActionPlugin(pluginName string) *sdk.GRPCPlugin
+	SetActionPlugin(p *sdk.GRPCPlugin)
 	GetJobIdentifiers() (int64, int64, int64)
 	CDNHttpURL() string
 	InstallKey(key sdk.Variable) (*KeyResponse, error)
 	InstallKeyTo(key sdk.Variable, destinationPath string) (*KeyResponse, error)
 	Unregister(ctx context.Context) error
 	Client() cdsclient.WorkerInterface
+	ClientV2() cdsclient.V2WorkerInterface
 	BaseDir() afero.Fs
 	Environ() []string
 	Blur(interface{}) error
 	HTTPPort() int32
 	Parameters() []sdk.Parameter
+	PluginGet(pluginName string) (*sdk.GRPCPlugin, error)
+	PluginGetBinary(name, os, arch string, w io.Writer) error
+
+	V2AddRunResult(ctx context.Context, req V2RunResultRequest) (*V2AddResultResponse, error)
+	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)
+	AddStepOutput(ctx context.Context, outputName string, outputValue string)
+	V2RunResultsSynchronize(ctx context.Context) error
+	V2GetRunResult(ctx context.Context, filter V2FilterRunResult) (*V2GetResultResponse, error)
+	V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob
+	V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext
+	V2GetCacheSignature(ctx context.Context, cacheKey string) (*CDNSignature, error)
+	V2GetCacheLink(ctx context.Context, cacheKey string) (*sdk.CDNItemLinks, error)
+	V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 func JobID(ctx context.Context) (int64, error) {
@@ -128,6 +185,17 @@ func SetJobID(ctx context.Context, i int64) context.Context {
 	return context.WithValue(ctx, jobID, i)
 }
 
+func RunJobID(ctx context.Context) string {
+	if ctx.Value(runJobID) == nil {
+		return ""
+	}
+	return ctx.Value(runJobID).(string)
+}
+
+func SetRunJobID(ctx context.Context, i string) context.Context {
+	return context.WithValue(ctx, runJobID, i)
+}
+
 func StepOrder(ctx context.Context) (int, error) {
 	stepOrderStr := ctx.Value(stepOrder)
 	stepOrder, ok := stepOrderStr.(int)
@@ -135,6 +203,19 @@ func StepOrder(ctx context.Context) (int, error) {
 		return -1, fmt.Errorf("unable to get step order: got %v", stepOrder)
 	}
 	return stepOrder, nil
+}
+
+func IsReadinessServices(ctx context.Context) (bool, error) {
+	readinessStr := ctx.Value(readiness)
+	readiness, ok := readinessStr.(bool)
+	if !ok {
+		return false, fmt.Errorf("unable to get readiness service: got %v", readiness)
+	}
+	return readiness, nil
+}
+
+func SetIsReadinessServices(ctx context.Context, i bool) context.Context {
+	return context.WithValue(ctx, readiness, i)
 }
 
 func SetStepOrder(ctx context.Context, i int) context.Context {

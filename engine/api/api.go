@@ -5,10 +5,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
+	"regexp"
 	"runtime/pprof"
 	"strings"
 	"time"
@@ -32,13 +34,19 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/download"
+	corpsso2 "github.com/ovh/cds/engine/api/driver/corpsso"
+	ldap2 "github.com/ovh/cds/engine/api/driver/ldap"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/link"
+	githublink "github.com/ovh/cds/engine/api/link/github"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -55,6 +63,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // Configuration is the configuration structure for CDS API
@@ -73,12 +82,8 @@ type Configuration struct {
 	} `toml:"secrets" json:"secrets"`
 	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache    struct {
-		TTL   int `toml:"ttl" default:"60" json:"ttl"`
-		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379" json:"host"`
-			Password string `toml:"password" json:"-"`
-			DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
-		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
+		TTL   int           `toml:"ttl" default:"60" json:"ttl"`
+		Redis sdk.RedisConf `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################" json:"cache"`
 	Download struct {
 		Directory          string   `toml:"directory" default:"/var/lib/cds-engine" json:"directory" comment:"this directory contains cds binaries. If it's empty, cds will download binaries from GitHub (property downloadFromGitHub) or from an artifactory instance (property artifactory) to it"`
@@ -102,10 +107,34 @@ type Configuration struct {
 		DisableAddUserInDefaultGroup bool                       `toml:"disableAddUserInDefaultGroup" default:"false" comment:"If false, user are automatically added in the default group" json:"disableAddUserInDefaultGroup"`
 		RSAPrivateKey                string                     `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
 		RSAPrivateKeys               []authentication.KeyConfig `toml:"rsaPrivateKeys" default:"" comment:"RSA Private Keys used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-" mapstructure:"rsaPrivateKeys"`
-		AllowedOrganizations         sdk.StringSlice            `toml:"allowedOrganizations" default:"[default]" comment:"The list of allowed organizations for CDS users, let empty to authorize all organizations." json:"allowedOrganizations"`
+		AllowedOrganizations         sdk.StringSlice            `toml:"allowedOrganizations" comment:"The list of allowed organizations for CDS users, let empty to authorize all organizations." json:"allowedOrganizations"`
 		LDAP                         struct {
-			Enabled         bool   `toml:"enabled" default:"false" json:"enabled"`
-			SignupDisabled  bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
+			SigninEnabled bool `toml:"signinEnabled" default:"false" json:"SigninEnabled"`
+		} `toml:"ldap" json:"ldap"`
+		Local struct {
+			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
+			SignupDisabled       bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
+			SigninEnabled        bool   `toml:"signinEnabled" default:"true" json:"SigninEnabled"`
+			Organization         string `toml:"organization" default:"default" comment:"Organization assigned to user created by local authentication" json:"organization"`
+		} `toml:"local" json:"local"`
+		CorporateSSO struct {
+			SigninEnabled bool `toml:"signinEnabled" default:"false" json:"SigninEnabled"`
+		} `json:"corporate_sso" toml:"corporateSSO"`
+		Github struct {
+			SigninEnabled bool   `toml:"signinEnabled" default:"false" json:"SigninEnabled"`
+			Organization  string `toml:"organization" default:"default" comment:"Organization assigned to user created by github authentication" json:"organization"`
+		} `toml:"github" json:"github" comment:"#######\n CDS <-> GitHub Auth. Documentation on https://ovh.github.io/cds/docs/integrations/github/github_authentication/ \n######"`
+		Gitlab struct {
+			SigninEnabled bool   `toml:"signinEnabled" default:"false" json:"SigninEnabled"`
+			Organization  string `toml:"organization" default:"default" comment:"Organization assigned to user created by gitlab authentication" json:"organization"`
+		} `toml:"gitlab" json:"gitlab" comment:"#######\n CDS <-> GitLab Auth. Documentation on https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/ \n######"`
+		OIDC struct {
+			SigninEnabled bool   `toml:"signinEnabled" default:"false" json:"signinEnabled"`
+			Organization  string `toml:"organization" default:"default" comment:"Organization assigned to user created by openid authentication" json:"organization"`
+		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
+	} `toml:"auth" comment:"##############################\n CDS Authentication Settings# \n#############################" json:"auth"`
+	Drivers struct {
+		LDAP struct {
 			Host            string `toml:"host" json:"host"`
 			Port            int    `toml:"port" default:"636" json:"port"`
 			SSL             bool   `toml:"ssl" default:"true" json:"ssl"`
@@ -116,16 +145,8 @@ type Configuration struct {
 			ManagerDN       string `toml:"managerDN" default:"cn=admin,dc=myorganization,dc=com" comment:"Define it if ldapsearch need to be authenticated" json:"managerDN"`
 			ManagerPassword string `toml:"managerPassword" default:"SECRET_PASSWORD_MANAGER" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
 		} `toml:"ldap" json:"ldap"`
-		Local struct {
-			Enabled              bool   `toml:"enabled" default:"true" json:"enabled"`
-			SignupDisabled       bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
-			Organization         string `toml:"organization" default:"default" comment:"Organization assigned to user created by local authentication" commented:"true" json:"organization"`
-		} `toml:"local" json:"local"`
 		CorporateSSO struct {
 			MFASupportEnabled bool   `json:"mfa_support_enabled" default:"false" toml:"mfaSupportEnabled"`
-			Enabled           bool   `json:"enabled" default:"false" toml:"enabled"`
-			SignupDisabled    bool   `json:"signupDisabled" default:"false" toml:"signupDisabled"`
 			RedirectMethod    string `json:"redirect_method" toml:"redirectMethod"`
 			RedirectURL       string `json:"redirect_url" toml:"redirectURL"`
 			Keys              struct {
@@ -138,31 +159,27 @@ type Configuration struct {
 			} `json:"-" toml:"keys"`
 		} `json:"corporate_sso" toml:"corporateSSO"`
 		Github struct {
-			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
-			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"GitHub URL"`
-			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"GitHub API URL"`
-			ClientID       string `toml:"clientId" json:"-" comment:"GitHub OAuth Client ID"`
-			ClientSecret   string `toml:"clientSecret" json:"-" comment:"GitHub OAuth Client Secret"`
-			Organization   string `toml:"organization" default:"default" comment:"Organization assigned to user created by github authentication" commented:"true" json:"organization"`
+			URL          string `toml:"url" json:"url" default:"https://github.com" comment:"GitHub URL"`
+			APIURL       string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"GitHub API URL"`
+			ClientID     string `toml:"clientId" json:"-" comment:"GitHub OAuth Client ID"`
+			ClientSecret string `toml:"clientSecret" json:"-" comment:"GitHub OAuth Client Secret"`
 		} `toml:"github" json:"github" comment:"#######\n CDS <-> GitHub Auth. Documentation on https://ovh.github.io/cds/docs/integrations/github/github_authentication/ \n######"`
 		Gitlab struct {
-			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
-			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			URL            string `toml:"url" json:"url" default:"https://gitlab.com" comment:"GitLab URL"`
-			ApplicationID  string `toml:"applicationID" json:"-" comment:"GitLab OAuth Application ID"`
-			Secret         string `toml:"secret" json:"-" comment:"GitLab OAuth Application Secret"`
-			Organization   string `toml:"organization" default:"default" comment:"Organization assigned to user created by gitlab authentication" commented:"true" json:"organization"`
+			URL           string `toml:"url" json:"url" default:"https://gitlab.com" comment:"GitLab URL"`
+			ApplicationID string `toml:"applicationID" json:"-" comment:"GitLab OAuth Application ID"`
+			Secret        string `toml:"secret" json:"-" comment:"GitLab OAuth Application Secret"`
 		} `toml:"gitlab" json:"gitlab" comment:"#######\n CDS <-> GitLab Auth. Documentation on https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/ \n######"`
 		OIDC struct {
-			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
-			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			URL            string `toml:"url" json:"url" default:"" comment:"Open ID connect config URL"`
-			ClientID       string `toml:"clientId" json:"-" comment:"OIDC Client ID"`
-			ClientSecret   string `toml:"clientSecret" json:"-" comment:"OIDC Client Secret"`
-			Organization   string `toml:"organization" default:"default" comment:"Organization assigned to user created by openid authentication" commented:"true" json:"organization"`
+			URL          string `toml:"url" json:"url" default:"" comment:"Open ID connect config URL"`
+			ClientID     string `toml:"clientId" json:"-" comment:"OIDC Client ID"`
+			ClientSecret string `toml:"clientSecret" json:"-" comment:"OIDC Client Secret"`
 		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
-	} `toml:"auth" comment:"##############################\n CDS Authentication Settings# \n#############################" json:"auth"`
+	} `toml:"drivers" comment:"##############################\n CDS External drivers Settings\n#############################" json:"drivers"`
+	Link struct {
+		Github struct {
+			Enabled bool `toml:"enabled" default:"false" json:"enabled"`
+		} `toml:"github" json:"github" comment:"#######\n GithubLink allows you to link your github user to your cds user \n######"`
+	} `toml:"link" comment:"##############################\n CDS Link Settings.# \n#############################" json:"link"`
 	SMTP struct {
 		Disable               bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client. If false, emails will be displayed in CDS API Log."`
 		Host                  string `toml:"host" json:"host" comment:"smtp host"`
@@ -212,13 +229,42 @@ type Configuration struct {
 	Help struct {
 		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
-	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
+	} `toml:"help" comment:"######################\n 'Help' information \n######################" json:"help"`
 	Workflow struct {
-		MaxRuns                int64  `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
-		DefaultRetentionPolicy string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
-		DisablePurgeDeletion   bool   `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
+		MaxRuns                         int64            `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+		DefaultRetentionPolicy          string           `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
+		DisablePurgeDeletion            bool             `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
+		TemplateBulkRunnerCount         int64            `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
+		JobDefaultRegion                string           `toml:"jobDefaultRegion" comment:"The default region where the job will be sent if no one is defined on a job" json:"jobDefaultRegion"`
+		JobDefaultBookDelay             int64            `toml:"jobDefaultBookDelay" comment:"The default book delay for a job in queue (in seconds)" json:"jobDefaultBookDelay" default:"120"`
+		CustomServiceJobBookDelay       map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery (in seconds)" json:"customServiceJobBookDelay" commented:"true"`
+		WorkerModelDockerImageWhiteList []string         `toml:"workerModelDockerImageWhiteList" comment:"White list for docker image worker model " json:"workerModelDockerImageWhiteList" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
+	WorkflowV2 struct {
+		JobSchedulingTimeout   int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
+		RunRetentionScheduling int64  `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"15"`
+		WorkflowRunRetention   int64  `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
+		LibraryProjectKey      string `toml:"libraryProjectKey" comment:"Library project key" json:"libraryProjectKey" commented:"true"`
+	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
+	Entity struct {
+		RoutineDelay int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
+		Retention    string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
+	Project struct {
+		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
+		InfoCreationDisabled       string `toml:"infoCreationDisabled" comment:"Optional message to display if project creation is disabled." json:"infoCreationDisabled" default:"" commented:"true"`
+		VCSManagementDisabled      bool   `toml:"vcsManagementDisabled" comment:"Disable VCS management on project for CDS non admin users." json:"vcsManagementDisabled" default:"false" commented:"true"`
+		GPGKeyEmailAddressTemplate string `toml:"gpgKeyEmailAddressTemplate" comment:"Template for GPG Keys email address" json:"gpgKeyEmailAddressTemplate" default:"noreply+cds-{{.ProjectKey}}-{{.KeyName}}@localhost.local" commented:"true"`
+	} `toml:"project" comment:"######################\n 'Project' global configuration \n######################" json:"project"`
 	EventBus event.Config `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
+	VCS      struct {
+		GPGKeys map[string][]GPGKey `toml:"gpgKeys" comment:"map of public gpg keys from vcs server" json:"gpgKeys"`
+	} `toml:"vcs" json:"vcs"`
+}
+
+type GPGKey struct {
+	ID        string `toml:"id" comment:"gpg public key id" json:"id"`
+	PublicKey string `toml:"publicKey" comment:"gpg public key" json:"publicKey"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -264,7 +310,11 @@ type API struct {
 	StartupTime         time.Time
 	Maintenance         bool
 	WSBroker            *websocket.Broker
+	WSV2Broker          *websocket.Broker
 	WSServer            *websocketServer
+	WSV2Server          *websocketV2Server
+	WSHatcheryBroker    *websocket.Broker
+	WSHatcheryServer    *websocketHatcheryServer
 	Cache               cache.Store
 	Metrics             struct {
 		WorkflowRunFailed          *stats.Int64Measure
@@ -276,6 +326,7 @@ type API struct {
 		nbGroups                   *stats.Int64Measure
 		nbPipelines                *stats.Int64Measure
 		nbWorkflows                *stats.Int64Measure
+		nbWorkflowsAsCodeV2        *stats.Int64Measure
 		nbArtifacts                *stats.Int64Measure
 		nbWorkerModels             *stats.Int64Measure
 		nbWorkflowRuns             *stats.Int64Measure
@@ -289,7 +340,11 @@ type API struct {
 		RunResultSynchronized      *stats.Int64Measure
 		RunResultSynchronizedError *stats.Int64Measure
 	}
-	AuthenticationDrivers map[sdk.AuthConsumerType]sdk.AuthDriver
+	workflowRunCraftChan            chan string
+	workflowRunTriggerChan          chan sdk.V2WorkflowRunEnqueue
+	AuthenticationDrivers           map[sdk.AuthConsumerType]sdk.AuthDriver
+	LinkDrivers                     map[sdk.AuthConsumerType]link.LinkDriver
+	WorkerModelDockerImageWhiteList []regexp.Regexp
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -336,7 +391,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 
 	if ok, err := sdk.DirectoryExists(aConfig.Download.Directory); !ok {
 		if err := os.MkdirAll(aConfig.Download.Directory, os.FileMode(0700)); err != nil {
-			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Download.Directory, err)
+			return fmt.Errorf("unable to create directory %s: %v", aConfig.Download.Directory, err)
 		}
 		log.Info(context.Background(), "Directory %s has been created", aConfig.Download.Directory)
 	} else if err != nil {
@@ -355,7 +410,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		}
 		if ok, err := sdk.DirectoryExists(aConfig.Artifact.Local.BaseDirectory); !ok {
 			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0700)); err != nil {
-				return fmt.Errorf("Unable to create directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
+				return fmt.Errorf("unable to create directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 			}
 			log.Info(context.Background(), "Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
 		} else if err != nil {
@@ -371,11 +426,29 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if (aConfig.DefaultOS == "" && aConfig.DefaultArch != "") || (aConfig.DefaultOS != "" && aConfig.DefaultArch == "") {
-		return fmt.Errorf("You can't specify just defaultArch without defaultOS in your configuration and vice versa")
+		return fmt.Errorf("you can't specify just defaultArch without defaultOS in your configuration and vice versa")
 	}
 
 	if aConfig.Auth.RSAPrivateKey == "" && len(aConfig.Auth.RSAPrivateKeys) == 0 {
 		return errors.New("invalid given authentication rsa private key")
+	}
+
+	if len(aConfig.Auth.AllowedOrganizations) == 0 {
+		return errors.New("you must allow at least one organization in field 'allowedOrganizations'")
+	}
+
+	// Check authentication driver
+	if aConfig.Auth.Local.SigninEnabled && (aConfig.Auth.Local.Organization == "" || !aConfig.Auth.AllowedOrganizations.Contains(aConfig.Auth.Local.Organization)) {
+		return errors.New("local authentication driver organization empty or not allowed in field 'allowedOrganizations'")
+	}
+	if aConfig.Auth.OIDC.SigninEnabled && (aConfig.Auth.OIDC.Organization == "" || !aConfig.Auth.AllowedOrganizations.Contains(aConfig.Auth.OIDC.Organization)) {
+		return errors.New("oidc authentication driver organization empty or not allowed in field 'allowedOrganizations'")
+	}
+	if aConfig.Auth.Gitlab.SigninEnabled && (aConfig.Auth.Gitlab.Organization == "" || !aConfig.Auth.AllowedOrganizations.Contains(aConfig.Auth.Gitlab.Organization)) {
+		return errors.New("gitlab authentication driver organization empty or not allowed in field 'allowedOrganizations'")
+	}
+	if aConfig.Auth.Github.SigninEnabled && (aConfig.Auth.Github.Organization == "" || !aConfig.Auth.AllowedOrganizations.Contains(aConfig.Auth.Github.Organization)) {
+		return errors.New("github authentication driver organization empty or not allowed in field 'allowedOrganizations'")
 	}
 
 	return nil
@@ -421,9 +494,31 @@ type StartupConfigConsumer struct {
 
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
+
+	// Skip this verbose log
+	log.Skip(cdslog.Handler, "api.(*API).postServiceHearbeatHandler-fm.(*API).postServiceHearbeatHandler")
+
 	log.Info(ctx, "Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
+
+	if a.Config.Entity.RoutineDelay == 0 {
+		a.Config.Entity.RoutineDelay = 15
+	}
+	if a.Config.Entity.Retention == "" {
+		a.Config.Entity.Retention = "24h"
+	}
+	entityRetention, err := time.ParseDuration(a.Config.Entity.Retention)
+	if err != nil {
+		return sdk.WrapError(err, "wrong entity retention %s, bad format.", a.Config.Entity.Retention)
+	}
+	if a.Config.WorkflowV2.RunRetentionScheduling == 0 {
+		a.Config.WorkflowV2.RunRetentionScheduling = 15
+	}
+
+	if a.Config.WorkflowV2.WorkflowRunRetention <= 0 {
+		a.Config.WorkflowV2.WorkflowRunRetention = 90
+	}
 
 	// Checking downloadable binaries
 	if err := download.Init(ctx, a.getDownloadConf()); err != nil {
@@ -445,7 +540,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return sdk.WrapError(err, "unable to initialize the JWT Layer")
 	}
 
-	// Intialize service mesh httpclient
+	// Initialize service mesh httpclient
 	if a.Config.InternalServiceMesh.RequestSecondsTimeout == 0 {
 		a.Config.InternalServiceMesh.RequestSecondsTimeout = 60
 	}
@@ -515,14 +610,13 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	// API Storage will be a public integration
-	var err error
 	a.SharedStorage, err = objectstore.Init(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("cannot initialize storage: %v", err)
 	}
 
 	log.Info(ctx, "Initializing database connection...")
-	//Intialize database
+	// Initialize database
 	a.DBConnectionFactory, err = database.Init(ctx, a.Config.Database)
 	if err != nil {
 		return fmt.Errorf("cannot connect to database: %v", err)
@@ -541,32 +635,81 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info(ctx, "Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	// Init the cache
 	a.Cache, err = cache.New(
-		a.Config.Cache.Redis.Host,
-		a.Config.Cache.Redis.Password,
-		a.Config.Cache.Redis.DbIndex,
+		a.Config.Cache.Redis,
 		a.Config.Cache.TTL)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to cache store")
 	}
 
+	// Manage worker model docker image whitelist
+	if len(a.Config.Workflow.WorkerModelDockerImageWhiteList) > 0 {
+		for _, s := range a.Config.Workflow.WorkerModelDockerImageWhiteList {
+			r, err := regexp.Compile(s)
+			if err != nil {
+				return sdk.WrapError(err, "wront WorkerModelDockerImageWhiteList regexp %q", s)
+			}
+			a.WorkerModelDockerImageWhiteList = append(a.WorkerModelDockerImageWhiteList, *r)
+		}
+	}
+
 	a.GoRoutines = sdk.NewGoRoutines(ctx)
 
 	log.Info(ctx, "Running migration")
-	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
+	migrate.Add(ctx, sdk.Migration{Name: "OrganizationMigration", Release: "0.52.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		usersToMigrate, err := migrate.GetOrganizationUsersToMigrate(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+		if err != nil {
+			return err
+		}
+		for _, u := range usersToMigrate {
+			tx, err := a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			if err := a.userSetOrganization(ctx, tx, u.User, u.OrganizationName); err != nil {
+				return err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+		}
+		return nil
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "ConsumerMigration", Release: "0.52.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateConsumers(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "HashSignatureMigration", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateHashSignature(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateProjectRepositories", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateProjectRepositories(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunJobSignature", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateRunJobSignature(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateBranchToRef", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateBranchToRef(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunContextsToJSON", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateRunContextsToJSON(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunRepositoryInfo", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateRunRepositoryInfo(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateHeadEntity", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateHeadEntity(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunSignature", Release: "0.53.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateRunSignatureWithoutContext(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateHookSignature", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateWorkflowHookSignatureWithoutData(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 	}})
 
-	migrate.Add(ctx, sdk.Migration{Name: "AuthConsumerTokenExpiration", Release: "0.47.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.AuthConsumerTokenExpiration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), time.Duration(a.Config.Auth.TokenDefaultDuration)*(24*time.Hour))
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "ArtifactoryIntegration", Release: "0.49.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.ArtifactoryIntegration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
-	}})
-
-	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
-	if errF != nil {
-		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
+	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
+	if err != nil {
+		return sdk.WrapError(err, "Unable to check if it's a fresh installation of CDS")
 	}
 
 	if isFreshInstall {
@@ -575,9 +718,9 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	} else {
 		if sdk.VersionCurrent().Version != "" && !strings.HasPrefix(sdk.VersionCurrent().Version, "snapshot") {
-			major, minor, _, errV := version.MaxVersion(a.mustDB())
-			if errV != nil {
-				return sdk.WrapError(errV, "Cannot fetch max version of CDS already started")
+			major, minor, _, err := version.MaxVersion(a.mustDB())
+			if err != nil {
+				return sdk.WrapError(err, "Cannot fetch max version of CDS already started")
 			}
 			if major != 0 || minor != 0 {
 				minSemverCompatible, _ := semver.Parse(migrate.MinCompatibleRelease)
@@ -601,6 +744,12 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
 		return err
 	}
+	if err := a.initWebsocketV2(event_v2.EventUIWS); err != nil {
+		return err
+	}
+	if err := a.initHatcheryWebsocket(event_v2.EventHatcheryWS); err != nil {
+		return err
+	}
 	if err := InitRouterMetrics(ctx, a); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
@@ -610,14 +759,14 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error(ctx, "unable to init api metrics: %v", err)
 	}
 
-	// Intialize notification package
+	// Initialize notification package
 	notification.Init(a.Config.URL.UI)
 
 	log.Info(ctx, "Initializing Authentication drivers...")
 	a.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-
 	a.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
-	if a.Config.Auth.Local.Enabled {
+
+	if a.Config.Auth.Local.SigninEnabled {
 		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(
 			ctx,
 			a.Config.Auth.Local.SignupDisabled,
@@ -627,54 +776,56 @@ func (a *API) Serve(ctx context.Context) error {
 		)
 	}
 
-	if a.Config.Auth.LDAP.Enabled {
+	if a.Config.Auth.LDAP.SigninEnabled {
 		a.AuthenticationDrivers[sdk.ConsumerLDAP], err = ldap.NewDriver(
 			ctx,
-			a.Config.Auth.LDAP.SignupDisabled,
-			ldap.Config{
-				Host:            a.Config.Auth.LDAP.Host,
-				Port:            a.Config.Auth.LDAP.Port,
-				SSL:             a.Config.Auth.LDAP.SSL,
-				RootDN:          a.Config.Auth.LDAP.RootDN,
-				UserSearchBase:  a.Config.Auth.LDAP.UserSearchBase,
-				UserSearch:      a.Config.Auth.LDAP.UserSearch,
-				UserFullname:    a.Config.Auth.LDAP.UserFullname,
-				ManagerDN:       a.Config.Auth.LDAP.ManagerDN,
-				ManagerPassword: a.Config.Auth.LDAP.ManagerPassword,
+			false,
+			ldap2.Config{
+				Host:            a.Config.Drivers.LDAP.Host,
+				Port:            a.Config.Drivers.LDAP.Port,
+				SSL:             a.Config.Drivers.LDAP.SSL,
+				RootDN:          a.Config.Drivers.LDAP.RootDN,
+				UserSearchBase:  a.Config.Drivers.LDAP.UserSearchBase,
+				UserSearch:      a.Config.Drivers.LDAP.UserSearch,
+				UserFullname:    a.Config.Drivers.LDAP.UserFullname,
+				ManagerDN:       a.Config.Drivers.LDAP.ManagerDN,
+				ManagerPassword: a.Config.Drivers.LDAP.ManagerPassword,
 			},
 		)
 		if err != nil {
 			return err
 		}
 	}
-	if a.Config.Auth.Github.Enabled {
+
+	if a.Config.Auth.Github.SigninEnabled {
 		a.AuthenticationDrivers[sdk.ConsumerGithub] = github.NewDriver(
-			a.Config.Auth.Github.SignupDisabled,
+			false,
 			a.Config.URL.UI,
-			a.Config.Auth.Github.URL,
-			a.Config.Auth.Github.APIURL,
-			a.Config.Auth.Github.ClientID,
-			a.Config.Auth.Github.ClientSecret,
+			a.Config.Drivers.Github.URL,
+			a.Config.Drivers.Github.APIURL,
+			a.Config.Drivers.Github.ClientID,
+			a.Config.Drivers.Github.ClientSecret,
 			a.Config.Auth.Github.Organization,
 		)
 	}
-	if a.Config.Auth.Gitlab.Enabled {
+	if a.Config.Auth.Gitlab.SigninEnabled {
 		a.AuthenticationDrivers[sdk.ConsumerGitlab] = gitlab.NewDriver(
-			a.Config.Auth.Gitlab.SignupDisabled,
+			false,
 			a.Config.URL.UI,
-			a.Config.Auth.Gitlab.URL,
-			a.Config.Auth.Gitlab.ApplicationID,
-			a.Config.Auth.Gitlab.Secret,
+			a.Config.Drivers.Gitlab.URL,
+			a.Config.Drivers.Gitlab.ApplicationID,
+			a.Config.Drivers.Gitlab.Secret,
 			a.Config.Auth.Gitlab.Organization,
 		)
 	}
-	if a.Config.Auth.OIDC.Enabled {
+
+	if a.Config.Auth.OIDC.SigninEnabled {
 		a.AuthenticationDrivers[sdk.ConsumerOIDC], err = oidc.NewDriver(
-			a.Config.Auth.OIDC.SignupDisabled,
+			false,
 			a.Config.URL.UI,
-			a.Config.Auth.OIDC.URL,
-			a.Config.Auth.OIDC.ClientID,
-			a.Config.Auth.OIDC.ClientSecret,
+			a.Config.Drivers.OIDC.URL,
+			a.Config.Drivers.OIDC.ClientID,
+			a.Config.Drivers.OIDC.ClientSecret,
 			a.Config.Auth.OIDC.Organization,
 		)
 		if err != nil {
@@ -682,19 +833,30 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	}
 
-	if a.Config.Auth.CorporateSSO.Enabled {
-		driverConfig := corpsso.Config{
-			MFASupportEnabled: a.Config.Auth.CorporateSSO.MFASupportEnabled,
+	if a.Config.Auth.CorporateSSO.SigninEnabled {
+		driverConfig := corpsso2.SSOConfig{
+			MFASupportEnabled: a.Config.Drivers.CorporateSSO.MFASupportEnabled,
 		}
-		driverConfig.Request.Keys.RequestSigningKey = a.Config.Auth.CorporateSSO.Keys.RequestSigningKey
-		driverConfig.Request.RedirectMethod = a.Config.Auth.CorporateSSO.RedirectMethod
-		driverConfig.Request.RedirectURL = a.Config.Auth.CorporateSSO.RedirectURL
-		driverConfig.Token.SigningKey = a.Config.Auth.CorporateSSO.Keys.TokenSigningKey
-		driverConfig.Token.KeySigningKey.KeySigningKey = a.Config.Auth.CorporateSSO.Keys.TokenKeySigningKey.KeySigningKey
-		driverConfig.Token.KeySigningKey.SigningKeyClaim = a.Config.Auth.CorporateSSO.Keys.TokenKeySigningKey.SigningKeyClaim
+		driverConfig.Request.Keys.RequestSigningKey = a.Config.Drivers.CorporateSSO.Keys.RequestSigningKey
+		driverConfig.Request.RedirectMethod = a.Config.Drivers.CorporateSSO.RedirectMethod
+		driverConfig.Request.RedirectURL = a.Config.Drivers.CorporateSSO.RedirectURL
+		driverConfig.Token.SigningKey = a.Config.Drivers.CorporateSSO.Keys.TokenSigningKey
+		driverConfig.Token.KeySigningKey.KeySigningKey = a.Config.Drivers.CorporateSSO.Keys.TokenKeySigningKey.KeySigningKey
+		driverConfig.Token.KeySigningKey.SigningKeyClaim = a.Config.Drivers.CorporateSSO.Keys.TokenKeySigningKey.SigningKeyClaim
 		driverConfig.AllowedOrganizations = a.Config.Auth.AllowedOrganizations
 
 		a.AuthenticationDrivers[sdk.ConsumerCorporateSSO] = corpsso.NewDriver(driverConfig)
+	}
+
+	log.Info(ctx, "Initializing link driver...")
+	a.LinkDrivers = make(map[sdk.AuthConsumerType]link.LinkDriver, 0)
+	if a.Config.Link.Github.Enabled {
+		d := githublink.NewLinkGithubDriver(a.Config.URL.UI,
+			a.Config.Drivers.Github.URL,
+			a.Config.Drivers.Github.APIURL,
+			a.Config.Drivers.Github.ClientID,
+			a.Config.Drivers.Github.ClientSecret)
+		a.LinkDrivers[sdk.ConsumerGithub] = d
 	}
 
 	log.Info(ctx, "Initializing event broker...")
@@ -704,6 +866,10 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.GoRoutines.RunWithRestart(ctx, "event.dequeue", func(ctx context.Context) {
 		event.DequeueEvent(ctx, a.mustDB())
+	})
+
+	a.GoRoutines.RunWithRestart(ctx, "event_v2.dequeue", func(ctx context.Context) {
+		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines, a.Config.URL.UI)
 	})
 
 	log.Info(ctx, "Initializing internal routines...")
@@ -738,7 +904,7 @@ func (a *API) Serve(ctx context.Context) error {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
 	a.GoRoutines.RunWithRestart(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
-		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache)
+		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
@@ -749,9 +915,37 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
 	})
+
+	a.workflowRunCraftChan = make(chan string, 50)
+	a.workflowRunTriggerChan = make(chan sdk.V2WorkflowRunEnqueue, 1)
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
+	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunJobDeletion", func(ctx context.Context) {
+		a.WorkflowRunJobDeletion(ctx, time.Duration(10*rand.Float64())*time.Second, 10)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunCraft", func(ctx context.Context) {
+		a.V2WorkflowRunCraft(ctx, 10*time.Second)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunEngineChan", func(ctx context.Context) {
+		a.V2WorkflowRunEngineChan(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunEngineDequeue", func(ctx context.Context) {
+		a.V2WorkflowRunEngineDequeue(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.ReEnqueueScheduledJobs", func(ctx context.Context) {
+		a.ReEnqueueScheduledJobs(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.StopDeadJobs", func(ctx context.Context) {
+		a.StopDeadJobs(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.TriggerBlockedWorkflowRuns", func(ctx context.Context) {
+		a.TriggerBlockedWorkflowRuns(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.CancelAbandonnedRunResults", func(ctx context.Context) {
+		a.CancelAbandonnedRunResults(ctx)
+	})
+
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {
 		a.repositoryAnalysisPoller(ctx, 5*time.Second)
 	})
@@ -759,13 +953,32 @@ func (a *API) Serve(ctx context.Context) error {
 		a.cleanRepositoryAnalysis(ctx, 1*time.Hour)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "workflow.ResyncWorkflowRunResultsRoutine", func(ctx context.Context) {
-		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, 5*time.Second)
+		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, a.Cache, 5*time.Second)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "project.CleanAsCodeEntities", func(ctx context.Context) {
+		a.cleanProjectEntities(ctx, entityRetention)
+	})
+
+	a.GoRoutines.RunWithRestart(ctx, "worker.DeleteDisabledWorkers", func(ctx context.Context) {
+		DeleteDisabledWorkers(ctx, a.Cache, a.mustDB)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "worker.DisabledDeadWorkers", func(ctx context.Context) {
+		DisabledDeadWorkers(ctx, a.Cache, a.mustDB)
 	})
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {
 			a.cleanWorkflowRunSecrets(ctx)
 		})
 	}
+	if a.Config.Workflow.TemplateBulkRunnerCount == 0 {
+		a.Config.Workflow.TemplateBulkRunnerCount = 10
+	}
+	chanWorkflowTemplateBulkOperation := make(chan WorkflowTemplateBulkOperation, a.Config.Workflow.TemplateBulkRunnerCount*10)
+	defer close(chanWorkflowTemplateBulkOperation)
+	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowTemplateBulk", func(ctx context.Context) {
+		a.WorkflowTemplateBulk(ctx, 100*time.Millisecond, chanWorkflowTemplateBulkOperation)
+	})
+	a.WorkflowTemplateBulkOperation(ctx, chanWorkflowTemplateBulkOperation)
 
 	log.Info(ctx, "Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
@@ -785,6 +998,10 @@ func (a *API) Serve(ctx context.Context) error {
 
 	if err := integration.CreateBuiltinModels(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)()); err != nil {
 		return fmt.Errorf("cannot setup integrations: %v", err)
+	}
+
+	if err := organization.CreateDefaultOrganization(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Config.Auth.AllowedOrganizations); err != nil {
+		return sdk.WrapError(err, "unable to initialize organizations")
 	}
 
 	pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
@@ -825,6 +1042,10 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.Run(ctx, "Purge-Workflow",
 		func(ctx context.Context) {
 			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
+		})
+	a.GoRoutines.Run(ctx, "Purge-Runs-V2",
+		func(ctx context.Context) {
+			purge.WorkflowRunsV2(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Config.WorkflowV2.RunRetentionScheduling)
 		})
 
 	// Check maintenance on redis

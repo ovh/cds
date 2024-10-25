@@ -40,15 +40,15 @@ name: ` + appName + `
 	require.NoError(t, errapp)
 
 	// try to import without force, it must give an error
-	_, _, _, globalError := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: false}, nil, u)
+	_, _, _, globalError := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: false}, nil, u, nil)
 	require.Error(t, globalError)
 
 	// try to import with force, but with another repository, it must give an error
-	_, _, _, globalError2 := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true, FromRepository: "bar"}, nil, u)
+	_, _, _, globalError2 := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true, FromRepository: "bar"}, nil, u, nil)
 	require.Error(t, globalError2)
 
 	// try to import with force, without a repo, it's ok
-	_, _, _, globalError3 := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	_, _, _, globalError3 := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	require.NoError(t, globalError3)
 
 }
@@ -96,7 +96,7 @@ name: ` + appName + `
 	assert.Equal(t, 1, len(events))
 
 	// try to import with force, without a repo, it's ok
-	_, _, _, globalError3 := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	_, _, _, globalError3 := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	require.NoError(t, globalError3)
 
 	events, err = ascode.LoadEventsByWorkflowID(context.TODO(), db, wf.ID)

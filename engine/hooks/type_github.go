@@ -9,19 +9,37 @@ import (
 
 // GithubWebHookEvent represents payload send by github on a push event
 type GithubWebHookEvent struct {
-	Ref        string            `json:"ref"`
-	Before     string            `json:"before"`
-	After      string            `json:"after"`
-	Created    bool              `json:"created"`
-	Deleted    bool              `json:"deleted"`
-	Forced     bool              `json:"forced"`
-	BaseRef    interface{}       `json:"base_ref"`
-	Compare    string            `json:"compare"`
-	Commits    []GithubCommit    `json:"commits"`
-	HeadCommit *GithubCommit     `json:"head_commit"`
-	Repository *GithubRepository `json:"repository"`
-	Pusher     GithubOwner       `json:"pusher"`
-	Sender     GithubSender      `json:"sender"`
+	Action      string             `json:"action,omitempty"` // used by pull_request event
+	Ref         string             `json:"ref"`
+	Before      string             `json:"before"`
+	After       string             `json:"after"`
+	Created     bool               `json:"created"`
+	Deleted     bool               `json:"deleted"`
+	Forced      bool               `json:"forced"`
+	BaseRef     interface{}        `json:"base_ref"`
+	Compare     string             `json:"compare"`
+	Commits     []GithubCommit     `json:"commits"`
+	HeadCommit  *GithubCommit      `json:"head_commit"`
+	Repository  *GithubRepository  `json:"repository"`
+	Pusher      GithubOwner        `json:"pusher"`
+	Sender      GithubSender       `json:"sender"`
+	PullRequest *GithubPullRequest `json:"pull_request"`
+}
+
+type GithubPullRequest struct {
+	ID   int64             `json:"id"`
+	URL  string            `json:"url"`
+	Body string            `json:"body"`
+	Head PullRequestCommit `json:"head"`
+	Base PullRequestCommit `json:"base"`
+}
+
+type PullRequestCommit struct {
+	Label string           `json:"label"`
+	Ref   string           `json:"ref"` // branch name ( not refs/heads )
+	Sha   string           `json:"sha"`
+	User  GithubSender     `json:"user"`
+	Repo  GithubRepository `json:"repo"`
 }
 
 type GithubSender struct {
@@ -45,17 +63,17 @@ type GithubSender struct {
 }
 
 type GithubCommit struct {
-	ID        string        `json:"id"`
-	TreeID    string        `json:"tree_id"`
-	Distinct  bool          `json:"distinct"`
-	Message   string        `json:"message"`
-	Timestamp time.Time     `json:"timestamp"`
-	URL       string        `json:"url"`
-	Author    GithubAuthor  `json:"author"`
-	Committer GithubAuthor  `json:"committer"`
-	Added     []interface{} `json:"added"`
-	Removed   []interface{} `json:"removed"`
-	Modified  []string      `json:"modified"`
+	ID        string       `json:"id"`
+	TreeID    string       `json:"tree_id"`
+	Distinct  bool         `json:"distinct"`
+	Message   string       `json:"message"`
+	Timestamp time.Time    `json:"timestamp"`
+	URL       string       `json:"url"`
+	Author    GithubAuthor `json:"author"`
+	Committer GithubAuthor `json:"committer"`
+	Added     []string     `json:"added"`
+	Removed   []string     `json:"removed"`
+	Modified  []string     `json:"modified"`
 }
 
 type GithubAuthor struct {

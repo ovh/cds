@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Select } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Commit } from 'app/model/repositories.model';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Column, ColumnType } from '../table/data-table.component';
 
 @Component({
@@ -16,13 +15,12 @@ import { Column, ColumnType } from '../table/data-table.component';
 @AutoUnsubscribe()
 export class CommitListComponent implements OnInit, OnDestroy {
 
-    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
     @Input() commits: Array<Commit>;
     columns: Column<Commit>[];
 
-    constructor(private _cd: ChangeDetectorRef) {
+    constructor(private _cd: ChangeDetectorRef, private _store: Store) {
         this.columns = [
             <Column<Commit>>{
                 type: ColumnType.IMG_TEXT,
@@ -47,7 +45,7 @@ export class CommitListComponent implements OnInit, OnDestroy {
                 }
             },
             <Column<Commit>>{
-                type: ColumnType.TEXT_HTML,
+                type: ColumnType.TEXT_PRE,
                 name: 'commit_message',
                 class: 'middle',
                 selector: (commit: Commit) => commit.message,
@@ -68,7 +66,7 @@ export class CommitListComponent implements OnInit, OnDestroy {
         if (this.commits && this.commits.length) {
             return;
         }
-        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+        this.nodeRunSubs = this._store.select(WorkflowState.getSelectedNodeRun()).subscribe(nr => {
            if (!nr) {
                return;
            }

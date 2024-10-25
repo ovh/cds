@@ -12,7 +12,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
@@ -57,7 +59,7 @@ func (f webSocketFilters) HasOneKey(keys ...string) (found bool, needCheckPermis
 			if keys[i] == filter.Key() {
 				found = true
 				switch filter.Type {
-				case sdk.WebsocketFilterTypeGlobal, sdk.WebsocketFilterTypeQueue, sdk.WebsocketFilterTypeTimeline, sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
+				case sdk.WebsocketFilterTypeGlobal, sdk.WebsocketFilterTypeQueue, sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
 					needCheckPermission = true
 				}
 				// If we found a filter that don't need to check permission we can return directly
@@ -72,9 +74,10 @@ func (f webSocketFilters) HasOneKey(keys ...string) (found bool, needCheckPermis
 }
 
 type websocketClientData struct {
-	AuthConsumer sdk.AuthConsumer
-	mutex        sync.Mutex
-	filters      webSocketFilters
+	AuthConsumer  sdk.AuthUserConsumer
+	mutex         sync.Mutex
+	filters       webSocketFilters
+	isSharedInfra bool
 }
 
 func (c *websocketClientData) updateEventFilters(ctx context.Context, db gorp.SqlExecutor, msg []byte) error {
@@ -90,8 +93,8 @@ func (c *websocketClientData) updateEventFilters(ctx context.Context, db gorp.Sq
 	}
 
 	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
-	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
+	var isHatchery = c.AuthConsumer.AuthConsumerUser.Service != nil && c.AuthConsumer.AuthConsumerUser.Service.Type == sdk.TypeHatchery
+	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.AuthConsumerUser.GroupIDs) > 0
 
 	// Check validity of given filters
 	for _, f := range fs {
@@ -139,13 +142,13 @@ func (c *websocketClientData) updateEventFilters(ctx context.Context, db gorp.Sq
 }
 
 // We need to check permission for some kind of events, when permission can't be verified at filter subscription.
-func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.SqlExecutor, event sdk.Event) (bool, error) {
+func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, event sdk.Event) (bool, error) {
 	var isMaintainer = c.AuthConsumer.Maintainer()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
-	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
+	var isHatchery = c.AuthConsumer.AuthConsumerUser.Service != nil && c.AuthConsumer.AuthConsumerUser.Service.Type == sdk.TypeHatchery
+	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.AuthConsumerUser.GroupIDs) > 0
 
 	if strings.HasPrefix(event.EventType, "sdk.EventRetentionWorkflowDryRun") {
-		return event.Username == c.AuthConsumer.AuthentifiedUser.Username, nil
+		return event.Username == c.AuthConsumer.AuthConsumerUser.AuthentifiedUser.Username, nil
 	}
 
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) || event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
@@ -153,8 +156,45 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 		if isMaintainer && !isHatcheryWithGroups {
 			return true, nil
 		}
+		if isHatchery && event.Status != sdk.StatusWaiting {
+			return false, nil
+		}
+
+		if isHatchery && event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
+
+			var hatcheryType string
+			for _, f := range c.filters {
+				if f.HatcheryType != "" {
+					hatcheryType = f.HatcheryType
+				}
+			}
+			if event.ModelType != "" && event.ModelType != hatcheryType {
+				return false, nil
+			}
+
+			ignoreJobWithNoRegion := false
+			if c.AuthConsumer.AuthConsumerUser.Service.IgnoreJobWithNoRegion != nil {
+				ignoreJobWithNoRegion = *c.AuthConsumer.AuthConsumerUser.Service.IgnoreJobWithNoRegion
+			}
+
+			var region = ""
+			if c.AuthConsumer.AuthConsumerUser.Service.Region != nil {
+				region = *c.AuthConsumer.AuthConsumerUser.Service.Region
+			}
+
+			regCond := event.Region == region || (event.Region == "" && !ignoreJobWithNoRegion)
+
+			if !regCond {
+				return false, nil
+			}
+
+			if isHatchery && c.isSharedInfra {
+				return true, nil
+			}
+		}
+
 		// We search permission from database to allow events for project created after websocket init to be retuned.
-		// As the AuthConsumer group list is not updated, events for project where a group will be added after websocket
+		// As the AuthUserConsumer group list is not updated, events for project where a group will be added after websocket
 		// init will not be returned until socket reconnection.
 		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, event.ProjectKey, []string{event.WorkflowName}, c.AuthConsumer.GetGroupIDs())
 		if err != nil {
@@ -218,10 +258,22 @@ func (a *API) getWebsocketHandler() service.Handler {
 		}
 		defer c.Close()
 
+		uc := getUserConsumer(ctx)
+
 		wsClient := websocket.NewClient(c)
 		wsClientData := &websocketClientData{
-			AuthConsumer: *getAPIConsumer(ctx),
+			AuthConsumer: *uc,
 		}
+		if uc != nil && len(uc.AuthConsumerUser.GroupIDs) == 1 {
+			sharedInfraGroup, err := group.LoadByName(ctx, a.mustDBWithCtx(ctx), sdk.SharedInfraGroupName)
+			if err != nil {
+				return err
+			}
+			if sharedInfraGroup.ID == uc.AuthConsumerUser.GroupIDs[0] {
+				wsClientData.isSharedInfra = true
+			}
+		}
+
 		wsClient.OnMessage(func(m []byte) {
 			if err := wsClientData.updateEventFilters(ctx, a.mustDBWithCtx(ctx), m); err != nil {
 				err = sdk.WithStack(err)
@@ -244,10 +296,9 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 		return
 	}
 
-	// Randomize the order of client to prevent the old client to always received new events in priority
 	clientIDs := a.WSServer.server.ClientIDs()
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	r.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
+	// Randomize the order of client to prevent the old client to always received new events in priority
+	rand.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
 
 	for _, id := range clientIDs {
 		// Copy idx for goroutine
@@ -263,11 +314,13 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 			c.mutex.Lock()
 			found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
 			c.mutex.Unlock()
+
 			if !found {
 				return
 			}
+
 			if needCheckPermission {
-				allowed, err := c.checkEventPermission(ctx, a.mustDBWithCtx(ctx), e)
+				allowed, err := c.checkEventPermission(ctx, a.mustDBWithCtx(ctx), a.Cache, e)
 				if err != nil {
 					err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", clientID, c.AuthConsumer.ID)
 					ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -391,12 +444,6 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			Type:          sdk.WebsocketFilterTypeOperation,
 			ProjectKey:    event.ProjectKey,
 			OperationUUID: event.OperationUUID,
-		}.Key())
-	}
-	// Event that match timeline filter
-	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
-		keys = append(keys, sdk.WebsocketFilter{
-			Type: sdk.WebsocketFilterTypeTimeline,
 		}.Key())
 	}
 	// Event that match as code event filter

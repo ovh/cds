@@ -1,0 +1,266 @@
+@import '../../../../common';
+
+:host {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+
+    .graph {
+        flex: 1;
+        position: relative;
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        width: 100%;
+        overflow: hidden;
+
+        .title {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            background-color: white;
+            border-bottom-right-radius: 40px;
+
+            :host-context(.night) & {
+                background-color: #141414;
+            }
+
+            [nzCopyable] {
+                color: inherit;
+
+                ::ng-deep {
+                    .ant-typography-copy {
+                        color: inherit;
+                        margin: 0 2px 0 0;
+                    }
+
+                    &:hover {
+                        color: #177ddc;
+                    }
+                }
+            }
+
+            .annotations {
+                display: flex;
+                align-items: center;
+                margin: 8px 0;
+
+                &>* {
+                    margin-right: 8px;
+                }
+            }
+        }
+
+        .controls {
+            z-index: 100;
+            margin-bottom: 20px;
+            padding: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            button:not([nzDanger]) {
+                background-color: #fff;
+
+                :host-context(.night) & {
+                    background-color: #141414;
+                }
+            }
+        }
+
+        app-stages-graph {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%s;
+        }
+
+        nz-page-header-title {
+            font-size: 16px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            button,
+            nz-select,
+            .number {
+                margin-left: 5px;
+            }
+
+            .number {
+                margin-right: 5px;
+            }
+        }
+
+        nz-page-header-content {
+            padding: 0 0 0 32px;
+
+            .templateDetails {
+                margin-left: 5px;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: underline dotted;
+
+                &:hover {
+                    color: #177ddc;
+                }
+            }
+        }
+    }
+
+    &.disableSelection {
+        user-select: none;
+    }
+
+    app-tabs {
+        ::ng-deep {
+            .ant-menu {
+                background-color: $greyBackground !important;
+
+                :host-context(.night) & {
+                    background-color: $darkBackground !important;
+                    color: $darkTheme_grey_6;
+                }
+            }
+        }
+    }
+
+    .tests {
+        [nz-icon] {
+            margin-left: 8px;
+            margin-right: 2px;
+        }
+
+        .ko {
+            color: $darkTheme_red;
+        }
+
+        .skipped {
+            color: $darkTheme_orange;
+        }
+
+        .ok {
+            color: $darkTheme_green;
+        }
+    }
+
+    .bottom-panel {
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+
+        .infos {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+
+            .line:first-child {
+                margin-top: 2px;
+            }
+
+            .line {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                padding: 0 5px;
+                min-height: 21px;
+
+                &:hover {
+                    background-color: #177ddc;
+                }
+
+                .content {
+                    flex: 1;
+                    margin: 0 5px;
+                }
+
+                .error {
+                    color: $darkTheme_red;
+                }
+
+                .warning {
+                    color: $darkTheme_orange;
+                }
+
+                .info {
+                    color: $darkTheme_blue;
+                }
+            }
+        }
+    }
+}
+
+.result {
+    cursor: pointer;
+}
+
+app-resizable-panel {
+    z-index: 200;
+    position: relative;
+
+    .controls {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        top: 0;
+        left: -37px;
+        background-color: $greyBackground;
+        border-bottom-left-radius: 5px;
+        border: 1px solid #f0f0f0;
+        border-top: none;
+        border-right: none;
+
+        :host-context(.night) & {
+            background-color: $darkBackground;
+            border-color: #303030;
+        }
+
+        .control {
+            height: 38px;
+            width: 38px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 18px;
+            line-height: 38px;
+
+            :host-context(.night) & {
+                color: $darkTheme_grey_6;
+            }
+
+            &:hover {
+                color: $darkTheme_grey_5;
+
+                :host-context(.night) & {
+                    color: white;
+                }
+            }
+
+            &.expand {
+                [nz-icon] {
+                    transform: rotate(270deg);
+                }
+            }
+
+            &.expanded {
+                [nz-icon] {
+                    transform: rotate(90deg);
+                }
+            }
+        }
+    }
+}

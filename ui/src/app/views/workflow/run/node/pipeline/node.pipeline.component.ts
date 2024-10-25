@@ -1,21 +1,22 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Select, Store } from '@ngxs/store';
-import { CDNLine, CDNStreamFilter, PipelineStatus } from 'app/model/pipeline.model';
+import { Store } from '@ngxs/store';
+import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workflow-run-job.component';
+import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration.service';
+import { CDNLine, CDNStreamFilter } from 'app/model/cdn.model';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -25,15 +26,12 @@ import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workfl
 })
 @AutoUnsubscribe()
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
-    readonly initLoadLinesCount = 10;
 
     @ViewChild('scrollContent') scrollContent: ElementRef;
     @ViewChild('runjobComponent') runjobComponent: WorkflowRunJobComponent;
 
-    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
-    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
 
     project: Project;
@@ -46,7 +44,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     mapJobStatus: Map<number, { status: string, warnings: number, start: string, done: string }>
         = new Map<number, { status: string, warnings: number, start: string, done: string }>();
 
-    queryParamsSub: Subscription;
     pipelineStatusEnum = PipelineStatus;
 
     currentNodeRunID: number;
@@ -73,7 +70,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
+        this.nodeJobRunSubs = this._store.select(WorkflowState.getSelectedWorkflowNodeJobRun()).subscribe(rj => {
             if (!rj && !this.currentNodeJobRun) {
                 this.stopWebsocketSubscription();
                 return;
@@ -96,13 +93,13 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             this.currentNodeJobRun = cloneDeep(rj);
             // Start websocket if job is not finished
             if (!PipelineStatus.isDone(this.currentNodeJobRun.status)) {
-                this.startStreamingLogsForJob().then(() => {});
+                this.startStreamingLogsForJob().then(() => { });
             }
 
             this._cd.markForCheck();
         });
 
-        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+        this.nodeRunSubs = this._store.select(WorkflowState.getSelectedNodeRun()).subscribe(nr => {
             if (!nr) {
                 return;
             }
@@ -137,13 +134,13 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         if (!this.websocket) {
             const protocol = window.location.protocol.replace('http', 'ws');
             const host = window.location.host;
-            const href = this._router['location']._baseHref;
+            const href = this._router['location']._basePath;
             this.websocket = webSocket({
                 url: `${protocol}//${host}${href}/cdscdn/item/stream`,
                 openObserver: {
                     next: value => {
                         if (value.type === 'open') {
-                            this.cdnFilter.job_run_id = this.currentNodeJobRun.id;
+                            this.cdnFilter.job_run_id = this.currentNodeJobRun.id.toString();
                             this.websocket.next(this.cdnFilter);
                         }
                     }
@@ -165,8 +162,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 });
         } else {
             // Refresh cdn filter if job changed
-            if (this.cdnFilter.job_run_id !== this.currentNodeJobRun.id) {
-                this.cdnFilter.job_run_id = this.currentNodeJobRun.id;
+            if (this.cdnFilter.job_run_id !== this.currentNodeJobRun.id.toString()) {
+                this.cdnFilter.job_run_id = this.currentNodeJobRun.id.toString();
                 this.websocket.next(this.cdnFilter);
             }
         }

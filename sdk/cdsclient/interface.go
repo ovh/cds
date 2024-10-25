@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/afero"
 
 	"github.com/gorilla/websocket"
-	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -35,6 +34,10 @@ type TemplateClient interface {
 	TemplateDeleteInstance(groupName, templateSlug string, id int64) error
 }
 
+type TemplateV2Client interface {
+	TemplateGenerateWorkflowFromFile(ctx context.Context, req sdk.V2WorkflowTemplateGenerateRequest) (*sdk.V2WorkflowTemplateGenerateResponse, error)
+}
+
 // Admin expose all function to CDS administration
 type Admin interface {
 	AdminDatabaseMigrationDelete(service string, id string) error
@@ -54,6 +57,7 @@ type Admin interface {
 	AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error)
 	AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error
 	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
+	HasProjectRole(ctx context.Context, projectKey, sessionID string, role string) error
 	Features() ([]sdk.Feature, error)
 	FeatureCreate(f sdk.Feature) error
 	FeatureDelete(name sdk.FeatureName) error
@@ -216,6 +220,50 @@ type RegionClient interface {
 	RegionDelete(ctx context.Context, regionIdentifier string) error
 }
 
+type HatcheryClient interface {
+	HatcheryAdd(ctx context.Context, h *sdk.Hatchery) (*sdk.HatcheryGetResponse, error)
+	HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.HatcheryGetResponse, error)
+	HatcheryList(ctx context.Context) ([]sdk.HatcheryGetResponse, error)
+	HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error
+	HatcheryRegenToken(ctx context.Context, hatcheryIdentifier string) (*sdk.HatcheryGetResponse, error)
+}
+
+type HatcheryServiceClient interface {
+	Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error
+	GetWorkerModel(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, workerModelName string, mods ...RequestModifier) (*sdk.V2WorkerModel, error)
+	V2HatcheryTakeJob(ctx context.Context, regionName string, jobRunID string) (*sdk.V2WorkflowRunJob, error)
+
+	V2HatcheryReleaseJob(ctx context.Context, regionName string, jobRunID string) error
+	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string, mods ...RequestModifier) (*sdk.Entity, error)
+	V2QueueClient
+	V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error)
+}
+
+// ProjectClientV2 exposes project related functions
+type ProjectClientV2 interface {
+	ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error
+	ProjectNotificationUpdate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error
+	ProjectNotificationDelete(ctx context.Context, pKey string, notifName string) error
+	ProjectNotificationGet(ctx context.Context, pKey string, notifName string) (*sdk.ProjectNotification, error)
+	ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error)
+
+	ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error
+	ProjectVariableSetCreateFromApplication(ctx context.Context, pKey string, req sdk.CopyApplicationVariableToVariableSet) error
+	ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error
+	ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string, mod ...RequestModifier) error
+	ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error)
+	ProjectVariableSetShow(ctx context.Context, pKey string, vsName string) (*sdk.ProjectVariableSet, error)
+
+	ProjectVariableSetItemAdd(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
+	ProjectVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
+	ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
+	ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
+	ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...RequestModifier) error
+	ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...RequestModifier) error
+
+	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
+}
+
 // ProjectClient exposes project related functions
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project) error
@@ -224,15 +272,13 @@ type ProjectClient interface {
 	ProjectGroupDelete(projectKey, groupName string) error
 	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
 	ProjectUpdate(key string, project *sdk.Project) error
-	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
+	ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error)
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	ProjectIntegrationList(projectKey string) ([]sdk.ProjectIntegration, error)
 	ProjectIntegrationDelete(projectKey string, integrationName string) error
-	ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error)
-	ProjectRepositoryManagerDelete(projectKey string, repoManagerName string, force bool) error
 	ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 	ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hook sdk.WorkerHookProjectIntegrationModel) error
@@ -242,15 +288,20 @@ type ProjectClient interface {
 	ProjectVCSDelete(ctx context.Context, projectKey string, vcsName string) error
 	ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repo sdk.ProjectRepository) error
 	ProjectVCSRepositoryList(ctx context.Context, projectKey string, vcsName string) ([]sdk.ProjectRepository, error)
-	ProjectRepositoryHookRegenSecret(ctx context.Context, projectKey, vcsName, repoName string) (sdk.HookAccessData, error)
+	ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error)
 	ProjectRepositoryDelete(ctx context.Context, projectKey string, vcsName string, repositoryName string) error
 	ProjectRepositoryAnalysis(ctx context.Context, analysis sdk.AnalysisRequest) (sdk.AnalysisResponse, error)
 	ProjectRepositoryAnalysisList(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string) ([]sdk.ProjectRepositoryAnalysis, error)
 	ProjectRepositoryAnalysisGet(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string, analysisID string) (sdk.ProjectRepositoryAnalysis, error)
+	ProjectRepositoryEvents(ctx context.Context, projectKey, vcsName, repoName string) ([]sdk.HookRepositoryEvent, error)
+	ProjectRepositoryEvent(ctx context.Context, projectKey, vcsName, repoName, eventID string) (*sdk.HookRepositoryEvent, error)
 }
 
 type RBACClient interface {
-	RBACImport(ctx context.Context, content io.Reader, mods ...RequestModifier) (sdk.RBAC, error)
+	RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...RequestModifier) (sdk.RBAC, error)
+	RBACDelete(ctx context.Context, permissionIdentifier string) error
+	RBACGet(ctx context.Context, permissionIdentifier string) (sdk.RBAC, error)
+	RBACList(ctx context.Context) ([]sdk.RBAC, error)
 }
 
 // ProjectKeysClient exposes project keys related functions
@@ -258,6 +309,8 @@ type ProjectKeysClient interface {
 	ProjectKeysList(projectKey string) ([]sdk.ProjectKey, error)
 	ProjectKeyCreate(projectKey string, key *sdk.ProjectKey) error
 	ProjectKeysDelete(projectKey string, keyProjectName string) error
+	ProjectKeysDisable(projectKey string, keyProjectName string) error
+	ProjectKeysEnable(projectKey string, keyProjectName string) error
 }
 
 // ProjectVariablesClient exposes project variables related functions
@@ -272,19 +325,33 @@ type ProjectVariablesClient interface {
 	VariableEncryptDelete(projectKey, name string) error
 }
 
+type V2QueueClient interface {
+	V2QueueGetJobRun(ctx context.Context, regionName string, id string) (*sdk.V2QueueJobInfo, error)
+	V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
+	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
+	V2QueueJobRunResultGet(ctx context.Context, regionName string, jobRunID string, runResultID string) (*sdk.V2WorkflowRunResult, error)
+	V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string) ([]sdk.V2WorkflowRunResult, error)
+	V2QueueJobRunResultsSynchronize(ctx context.Context, regionName string, jobRunID string) error
+	V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
+	V2QueueJobRunResultUpdate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
+	V2QueuePushRunInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2WorkflowRunInfo) error
+	V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error
+	V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error)
+	V2QueueJobStepUpdate(ctx context.Context, regionName string, id string, stepsStatus sdk.JobStepsStatus) error
+	V2QueueGetCacheLinks(ctx context.Context, regionName string, id string, cacheKey string) (*sdk.CDNItemLinks, error)
+}
+
 // QueueClient exposes queue related functions
 type QueueClient interface {
 	QueueWorkflowNodeJobRun(mods ...RequestModifier) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error)
-	QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
+	QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...RequestModifier) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error)
-	QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error)
-	QueueJobRelease(ctx context.Context, id int64) error
-	QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error)
-	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error
-	QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error
+	QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error)
+	QueueJobRelease(ctx context.Context, id string) error
+	QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error)
+	QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error
 	QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error
-	QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error
 	QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error
@@ -302,13 +369,23 @@ type UserClient interface {
 	UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error)
 	UserUpdate(ctx context.Context, username string, user *sdk.AuthentifiedUser) error
 	UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error)
+	UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error)
 	UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error)
 	UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error)
 	UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error)
+	UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error)
 	UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error)
 	UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error)
 	UserGpgKeyDelete(ctx context.Context, username string, keyID string) error
 	UserGpgKeyCreate(ctx context.Context, username string, publicKey string) (sdk.UserGPGKey, error)
+}
+
+type V2WorkerClient interface {
+	V2WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm, region, runJobID string) (*sdk.V2Worker, error)
+	V2WorkerUnregister(ctx context.Context, region, runJobID string) error
+	V2WorkerRefresh(ctx context.Context, region, runJobID string) error
+
+	V2WorkerProjectGetKey(ctx context.Context, region, runJobID, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 // WorkerClient exposes workers functions
@@ -330,7 +407,8 @@ type WorkerClient interface {
 	WorkerSetStatus(ctx context.Context, status string) error
 
 	WorkerModelv2List(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, filter *WorkerModelV2Filter) ([]sdk.V2WorkerModel, error)
-	WorkerModelTemplateList(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, filter *WorkerModelTemplateFilter) ([]sdk.WorkerModelTemplate, error)
+	V2WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.V2Worker, error)
+	V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error)
 	CDNClient
 }
 
@@ -343,15 +421,42 @@ type CDNClient interface {
 // HookClient exposes functions used for hooks services
 type HookClient interface {
 	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
-	VCSConfiguration() (map[string]sdk.VCSConfiguration, error)
 	VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error)
-	RepositoriesListAll(ctx context.Context) ([]sdk.ProjectRepository, error)
-	RepositoryHook(ctx context.Context, uuid string) (sdk.Hook, error)
+
+	HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V2WorkflowHook, error)
+	HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error)
+	ListWorkflowToTrigger(ctx context.Context, req sdk.HookListWorkflowRequest) ([]sdk.V2WorkflowHook, error)
+	RetrieveHookEventSigningKey(ctx context.Context, req sdk.HookRetrieveSignKeyRequest) (sdk.Operation, error)
+	RetrieveHookEventSigningKeyOperation(ctx context.Context, operationUUID string) (sdk.Operation, error)
+	RetrieveHookEventUser(ctx context.Context, req sdk.HookRetrieveUserRequest) (sdk.HookRetrieveUserResponse, error)
+	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string, mods ...RequestModifier) (*sdk.Entity, error)
+	CreateInsightReport(ctx context.Context, projKey string, vcsName string, repoName string, commit string, insightKey string, insightReport sdk.VCSInsight) error
 }
 
 // ServiceClient exposes functions used for services
 type ServiceClient interface {
 	ServiceConfigurationGet(context.Context, string) ([]sdk.ServiceConfiguration, error)
+}
+
+type WorkflowV2Client interface {
+	WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunHookRequest, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...RequestModifier) (*sdk.V2WorkflowRunManualResponse, error)
+	WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2JobStart(ctx context.Context, projectKey, workflowRunID, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2RunSearchAllProjects(ctx context.Context, offset, limit int64, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)
+	WorkflowV2RunSearch(ctx context.Context, projectKey string, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)
+	WorkflowV2RunInfoList(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) ([]sdk.V2WorkflowRunInfo, error)
+	WorkflowV2RunStatus(ctx context.Context, projectKey, workflowRunID string) (*sdk.V2WorkflowRun, error)
+	WorkflowV2RunJobs(ctx context.Context, projKey, workflowRunID string) ([]sdk.V2WorkflowRunJob, error)
+	WorkflowV2RunJob(ctx context.Context, projKey, workflowRunID, jobRunID string) (*sdk.V2WorkflowRunJob, error)
+	WorkflowV2RunJobInfoList(ctx context.Context, projKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJobInfo, error)
+	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, workflowRunID, jobRunID string) (sdk.CDNLogLinks, error)
+	WorkflowV2Stop(ctx context.Context, projKey, workflowRunID string) error
+	WorkflowV2StopJob(ctx context.Context, projKey, workflowRunID, jobIdentifier string) error
+	WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error)
+	WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error)
+	WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error)
+	WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error
 }
 
 // WorkflowClient exposes workflows functions
@@ -390,10 +495,6 @@ type WorkflowClient interface {
 	WorkflowTransformAsCode(projectKey, workflowName, branch, message string) (*sdk.Operation, error)
 }
 
-type WorkflowV3Client interface {
-	WorkflowV3Get(projectKey string, workflowName string, opts ...RequestModifier) ([]byte, error)
-}
-
 // MonitoringClient exposes monitoring functions
 type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
@@ -411,16 +512,19 @@ type IntegrationClient interface {
 }
 
 // Interface is the main interface for cdsclient package
-// generate mock with "mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface" from directory ${GOPATH}/src/github.com/ovh/cds/sdk/cdsclient
+//
+//go:generate mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface
 type Interface interface {
 	Raw
 	AuthClient
 	ActionClient
 	Admin
 	APIURL() string
+	CDNURL() (string, error)
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
 	ConfigCDN() (sdk.CDNConfig, error)
+	ConfigVCSGPGKeys() (map[string][]sdk.Key, error)
 	DownloadClient
 	EnvironmentClient
 	EventsClient
@@ -428,10 +532,13 @@ type Interface interface {
 	FeatureEnabled(name sdk.FeatureName, params map[string]string) (sdk.FeatureEnabledResponse, error)
 	GroupClient
 	GRPCPluginsClient
+	GRPCPluginsV2Client
+	HatcheryClient
 	MaintenanceClient
 	PipelineClient
 	IntegrationClient
 	ProjectClient
+	ProjectClientV2
 	RBACClient
 	OrganizationClient
 	RegionClient
@@ -444,12 +551,23 @@ type Interface interface {
 	UserClient
 	WorkerClient
 	WorkflowClient
-	WorkflowV3Client
+	WorkflowV2Client
 	MonitoringClient
 	HookClient
 	Version() (*sdk.Version, error)
 	TemplateClient
+	TemplateV2Client
 	WebsocketClient
+	V2QueueClient
+	EntityLint(ctx context.Context, entityType string, data interface{}) (*sdk.EntityCheckResponse, error)
+}
+
+type V2WorkerInterface interface {
+	V2WorkerClient
+	V2QueueClient
+	GRPCPluginsClient
+	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
+	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 }
 
 type WorkerInterface interface {
@@ -492,6 +610,10 @@ type GRPCPluginsClient interface {
 	PluginDeleteBinary(name, os, arch string) error
 	PluginGetBinary(name, os, arch string, w io.Writer) error
 	PluginGetBinaryInfos(name, os, arch string) (*sdk.GRPCPluginBinary, error)
+}
+
+type GRPCPluginsV2Client interface {
+	PluginImport(*sdk.GRPCPlugin, ...RequestModifier) error
 }
 
 /*
@@ -659,19 +781,30 @@ func ModelType(modelType string) RequestModifier {
 	}
 }
 
+func Workflows(ws ...string) RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		for _, w := range ws {
+			q.Add("workflow", w)
+		}
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
 // AuthClient is the interface for authentication management.
 type AuthClient interface {
 	AuthDriverList() (sdk.AuthDriverResponse, error)
-	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerSignin(sdk.AuthConsumerType, interface{}) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error)
 	AuthConsumerLocalAskResetPassword(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalResetPassword(token, newPassword string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerLocalSignup(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalSignupVerify(token, initToken string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerSignout() error
-	AuthConsumerListByUser(username string) (sdk.AuthConsumers, error)
+	AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error)
 	AuthConsumerDelete(username, id string) error
 	AuthConsumerRegen(username, id string, newDuration int64, overlapDuration string) (sdk.AuthConsumerCreateResponse, error)
-	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
+	AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error)
 	AuthSessionListByUser(username string) (sdk.AuthSessions, error)
 	AuthSessionDelete(username, id string) error
 	AuthSessionGet(id string) (sdk.AuthCurrentConsumerResponse, error)

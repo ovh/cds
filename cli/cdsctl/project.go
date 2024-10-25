@@ -28,8 +28,8 @@ func projectCommands() []*cobra.Command {
 		cli.NewCommand(projectFavoriteCmd, projectFavoriteRun, nil, withAllCommandModifiers()...),
 		projectKey(),
 		projectVariable(),
+		projectVCS(),
 		projectIntegration(),
-		projectRepositoryManager(),
 	}
 }
 
@@ -49,7 +49,7 @@ var projectListCmd = cli.Command{
 }
 
 func projectListRun(v cli.Values) (cli.ListResult, error) {
-	projs, err := client.ProjectList(false, false)
+	projs, err := client.ProjectList(false, false, true)
 	if err != nil {
 		return nil, err
 	}

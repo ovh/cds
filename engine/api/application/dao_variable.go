@@ -25,8 +25,9 @@ type dbApplicationVariable struct {
 }
 
 func (e dbApplicationVariable) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type}
+	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type, e.ClearValue}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ApplicationID}}{{printf .ID}}{{.Name}}{{.Type}}{{.ClearValue}}",
 		"{{print .ApplicationID}}{{print .ID}}{{.Name}}{{.Type}}",
 	}
 }

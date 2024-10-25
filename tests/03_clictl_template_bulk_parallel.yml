@@ -1,0 +1,38 @@
+name: Template bulk command TestSuite with cdsctl with parallel
+testcases:
+- name: push example simple
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template push ./fixtures/template/simple-safe/*.yml --skip-update-files
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring Template successfully pushed
+
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project delete --force ITCLIPRJBULKPARA
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete --force testgroupparallel
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project add ITCLIPRJBULKPARA TestGroupParallel
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group show testgroupparallel
+
+- name: sendTemplateBulkRequest
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template bulk --parallel --instances-file ./fixtures/template/bulk_request_parallel.yml --no-interactive
+    vars:
+      bulkid:
+        from: result.systemout
+        regex: Bulk request with id ([0-9]+) successfully created for template shared.infra/example-simple-safe with (?:[0-9]+) operations
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: check bulk request status
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /template/shared.infra/example-simple-safe/bulk/{{.sendTemplateBulkRequest.bulkid}}
+    retry: 20
+    delay: 1
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.operations.operations0.status ShouldEqual 2
+    - result.systemoutjson.operations.operations1.status ShouldEqual 2
+    - result.systemoutjson.operations.operations2.status ShouldEqual 2
+    - result.systemoutjson.operations.operations3.status ShouldEqual 2
+    - result.systemoutjson.operations.operations4.status ShouldEqual 2

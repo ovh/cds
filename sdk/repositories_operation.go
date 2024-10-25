@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"encoding/base64"
+	"strings"
 	"time"
 )
 
@@ -34,6 +35,10 @@ type OperationError struct {
 	Message    string `json:"message"`
 	StackTrace string `json:"stack_trace,omitempty"`
 	From       string `json:"from,omitempty"`
+}
+
+func FromGitToHumanError(targetError, err error) error {
+	return NewErrorFrom(targetError, strings.Split(err.Error(), "\n")[0])
 }
 
 func ToOperationError(err error) *OperationError {
@@ -83,15 +88,30 @@ type OperationLoadFiles struct {
 
 // OperationCheckout represents a smart git checkout
 type OperationCheckout struct {
-	Tag            string `json:"tag,omitempty"`
-	Branch         string `json:"branch,omitempty"`
-	Commit         string `json:"commit,omitempty"`
-	CheckSignature bool   `json:"check_signature,omitempty"`
-	Result         struct {
+	Tag                  string `json:"tag,omitempty"`
+	Branch               string `json:"branch,omitempty"`
+	Commit               string `json:"commit,omitempty"`
+	CheckSignature       bool   `json:"check_signature,omitempty"`
+	ProcessSemver        bool   `json:"process_semver,omitempty"`
+	GetChangeSet         bool   `json:"get_changeset,omitempty"`
+	ChangeSetCommitSince string `json:"changeset_commit,omitempty"`
+	GetMessage           bool   `json:"get_message,omitempty"`
+	Result               struct {
 		SignKeyID      string `json:"sign_key_id"`
 		CommitVerified bool   `json:"verified"`
 		Msg            string `json:"msg"`
+		Semver         struct {
+			Current string `json:"current"`
+			Next    string `json:"next"`
+		} `json:"semver"`
+		CommitMessage string `json:"commit_message"`
+		Files         map[string]OperationChangetsetFile
 	} `json:"result"`
+}
+
+type OperationChangetsetFile struct {
+	Filename string
+	Status   string
 }
 
 // OperationPush represents information about push operation

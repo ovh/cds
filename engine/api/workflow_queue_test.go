@@ -1,12 +1,9 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -14,11 +11,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/rockbears/log"
-	"github.com/sguiheux/go-coverage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +26,6 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -82,7 +78,16 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 	for i := range proj.Keys {
 		k := &proj.Keys[i]
 		k.ProjectID = proj.ID
-		newKey, err := keys.GenerateKey(k.Name, k.Type)
+
+		var newKey sdk.Key
+		var err error
+		switch k.Type {
+		case sdk.KeyTypePGP:
+			newKey, err = keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
+		case sdk.KeyTypeSSH:
+			newKey, err = keys.GenerateSSHKey(k.Name)
+		}
+
 		require.NoError(t, err)
 		k.Private = newKey.Private
 		k.Public = newKey.Public
@@ -90,13 +95,12 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 		require.NoError(t, project.InsertKey(db, k))
 	}
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	require.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	require.NoError(t, db.Commit())
 
@@ -155,7 +159,7 @@ func testRunWorkflowForProject(t *testing.T, api *API, router *Router, proj *sdk
 		ApplicationID: app.ID,
 	}
 
-	pgpK, err := keys.GeneratePGPKeyPair(k.Name)
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 
 	k.Public = pgpK.Public
@@ -177,7 +181,7 @@ func testRunWorkflowForProject(t *testing.T, api *API, router *Router, proj *sdk
 		EnvironmentID: env.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(envk.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(envk.Name, "", "test@cds")
 	require.NoError(t, err)
 
 	envk.Public = kpgp.Public
@@ -906,7 +910,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 
 	// Create user
 	u, jwtAdmin := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -1013,449 +1017,6 @@ func TestWorkerPrivateKey(t *testing.T) {
 	require.Equal(t, "mysecret", string(wkFromDB.PrivateKey))
 }
 
-func TestPostVulnerabilityReportHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	// Create user
-	u, jwtAdmin := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
-
-	// Create project
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-
-	// add group
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
-		GroupID:            proj.ProjectGroups[0].Group.ID,
-		AuthentifiedUserID: u.ID,
-		Admin:              true,
-	}))
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
-
-	// Create pipeline
-	pip := &sdk.Pipeline{
-		ProjectID: proj.ID,
-		Name:      sdk.RandomString(10),
-	}
-	assert.NoError(t, pipeline.InsertPipeline(db, pip))
-
-	s := sdk.Stage{
-		PipelineID: pip.ID,
-		Name:       "foo",
-		Enabled:    true,
-	}
-
-	assert.NoError(t, pipeline.InsertStage(db, &s))
-
-	// get script action
-	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
-
-	j := sdk.Job{
-		Enabled:         true,
-		PipelineStageID: s.ID,
-		Action: sdk.Action{
-			Name: "script",
-			Actions: []sdk.Action{
-				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
-			},
-		},
-	}
-	assert.NoError(t, pipeline.InsertJob(db, &j, s.ID, pip))
-
-	var errPip error
-	pip, errPip = pipeline.LoadPipelineByID(context.TODO(), db, pip.ID, true)
-	assert.NoError(t, errPip)
-
-	// Create application
-	app := sdk.Application{
-		ProjectID: proj.ID,
-		Name:      sdk.RandomString(10),
-	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
-
-	// Create workflow
-	w := sdk.Workflow{
-		Name:       sdk.RandomString(10),
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		WorkflowData: sdk.WorkflowData{
-			Node: sdk.Node{
-				Name: "node1",
-				Ref:  "node1",
-				Type: sdk.NodeTypePipeline,
-				Context: &sdk.NodeContext{
-					PipelineID:    pip.ID,
-					ApplicationID: app.ID,
-				},
-			},
-		},
-	}
-
-	p, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
-	assert.NoError(t, err)
-	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
-
-	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
-	assert.NoError(t, err)
-
-	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
-	assert.NoError(t, errwr)
-	wrDB.Workflow = *workflowDeepPipeline
-
-	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrDB,
-		&sdk.WorkflowRunPostHandlerOption{
-			Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-		},
-		*consumer, nil)
-	assert.NoError(t, errmr)
-
-	log.Debug(context.TODO(), "%+v", wrDB.WorkflowNodeRuns)
-
-	// Call post coverage report handler
-	// Prepare request
-	vars := map[string]string{
-		"permJobID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
-	}
-
-	ctx := testRunWorkflowCtx{
-		user:      u,
-		userToken: jwtAdmin,
-		project:   proj,
-		workflow:  &w,
-		run:       wrDB,
-	}
-	testRegisterWorker(t, api, db, router, &ctx)
-	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, nil))
-
-	request := sdk.VulnerabilityWorkerReport{
-		Vulnerabilities: []sdk.Vulnerability{
-			{
-				Version:     "1.0.0",
-				Title:       "lodash",
-				Severity:    "high",
-				Origin:      "parsejson>lodash",
-				Link:        "",
-				FixIn:       "",
-				Description: "",
-				CVE:         "",
-				Component:   "",
-				Ignored:     false,
-			},
-		},
-	}
-
-	uri := router.GetRoute("POST", api.postVulnerabilityReportHandler, vars)
-	test.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, request)
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 204, rec.Code)
-}
-
-func TestInsertNewCodeCoverageReport(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	// Create user
-	u, jwtAdmin := assets.InsertAdminUser(t, db)
-
-	// Create project
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-
-	// add group
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
-		GroupID:            proj.ProjectGroups[0].Group.ID,
-		AuthentifiedUserID: u.ID,
-		Admin:              true,
-	}))
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
-
-	vcsServer := sdk.ProjectVCSServerLink{
-		ProjectID: proj.ID,
-		Name:      "repoManServ",
-	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	// Create pipeline
-	pip := &sdk.Pipeline{
-		ProjectID: proj.ID,
-		Name:      sdk.RandomString(10),
-	}
-	assert.NoError(t, pipeline.InsertPipeline(db, pip))
-
-	s := sdk.Stage{
-		PipelineID: pip.ID,
-		Name:       "foo",
-		Enabled:    true,
-	}
-
-	assert.NoError(t, pipeline.InsertStage(db, &s))
-
-	// get script action
-	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
-
-	j := sdk.Job{
-		Enabled:         true,
-		PipelineStageID: s.ID,
-		Action: sdk.Action{
-			Name: "script",
-			Actions: []sdk.Action{
-				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
-			},
-		},
-	}
-	assert.NoError(t, pipeline.InsertJob(db, &j, s.ID, pip))
-
-	var errPip error
-	pip, errPip = pipeline.LoadPipelineByID(context.TODO(), db, pip.ID, true)
-	assert.NoError(t, errPip)
-
-	// Create application
-	app := sdk.Application{
-		ProjectID:          proj.ID,
-		Name:               sdk.RandomString(10),
-		RepositoryFullname: "foo/bar",
-		VCSServer:          "repoManServ",
-	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
-
-	// Create workflow
-	w := sdk.Workflow{
-		Name:       sdk.RandomString(10),
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		WorkflowData: sdk.WorkflowData{
-			Node: sdk.Node{
-				Name: "node1",
-				Ref:  "node1",
-				Type: sdk.NodeTypePipeline,
-				Context: &sdk.NodeContext{
-					PipelineID:    pip.ID,
-					ApplicationID: app.ID,
-				},
-			},
-		},
-	}
-
-	p, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
-	require.NoError(t, err)
-	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
-
-	allSrv, err := services.LoadAll(context.TODO(), db)
-	require.NoError(t, err)
-	for _, s := range allSrv {
-		if err := services.Delete(db, &s); err != nil {
-			t.Fatalf("unable to delete service: %v", err)
-		}
-	}
-
-	a, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", sdk.TypeVCS)
-
-	defer func() {
-		_ = services.Delete(db, a)
-	}()
-
-	//This is a mock for the repositories service
-	services.HTTPClient = mock(
-		func(r *http.Request) (*http.Response, error) {
-			body := new(bytes.Buffer)
-			wri := new(http.Response)
-			enc := json.NewEncoder(body)
-			wri.Body = io.NopCloser(body)
-
-			switch r.URL.String() {
-			case "/vcs/repoManServ/repos/foo/bar":
-				repo := sdk.VCSRepo{
-					ID:           "1",
-					Name:         "bar",
-					URL:          "url",
-					Fullname:     "foo/bar",
-					HTTPCloneURL: "",
-					Slug:         "",
-					SSHCloneURL:  "",
-				}
-				if err := enc.Encode(repo); err != nil {
-					return writeError(wri, err)
-				}
-			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=&default=true":
-				b := sdk.VCSBranch{
-					DisplayID: "master",
-					Default:   true,
-				}
-				if err := enc.Encode(b); err != nil {
-					return writeError(wri, err)
-				}
-			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=master&default=false":
-				b := sdk.VCSBranch{
-					DisplayID: "master",
-					Default:   true,
-				}
-				if err := enc.Encode(b); err != nil {
-					return writeError(wri, err)
-				}
-			case "/vcs/repoManServ/repos/foo/bar/commits/":
-				c := sdk.VCSCommit{
-					URL:       "url",
-					Message:   "Msg",
-					Timestamp: time.Now().Unix(),
-					Hash:      "123",
-				}
-				if err := enc.Encode(c); err != nil {
-					return writeError(wri, err)
-				}
-			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=my-branch&default=false":
-				b := sdk.VCSBranch{
-					DisplayID: "my-branch",
-					Default:   true,
-				}
-				if err := enc.Encode(b); err != nil {
-					return writeError(wri, err)
-				}
-				wri.StatusCode = http.StatusCreated
-			}
-			return wri, nil
-		},
-	)
-
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
-
-	// Create previous run on default branch
-	wrDB, errwr := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
-	assert.NoError(t, errwr)
-
-	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
-	assert.NoError(t, err)
-
-	wrDB.Workflow = *workflowWithDeepPipeline
-	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrDB, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{
-			Username: u.Username,
-			Payload: map[string]string{
-				"git.branch": "master",
-			},
-		},
-	}, *consumer, nil)
-
-	assert.NoError(t, errmr)
-
-	// Create previous run on a branch
-	wrCB, errwr2 := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
-	assert.NoError(t, errwr2)
-	wrCB.Workflow = w
-	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrCB, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{
-			Username: u.Username,
-			Payload: map[string]string{
-				"git.branch": "my-branch",
-			},
-		},
-	}, *consumer, nil)
-	assert.NoError(t, errmr)
-
-	// Add a coverage report on default branch node run
-	coverateReportDefaultBranch := sdk.WorkflowNodeRunCoverage{
-		WorkflowID:        w.ID,
-		WorkflowRunID:     wrDB.ID,
-		WorkflowNodeRunID: wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].ID,
-		ApplicationID:     app.ID,
-		Num:               wrDB.Number,
-		Branch:            wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSBranch,
-		Repository:        wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSRepository,
-		Report: coverage.Report{
-			CoveredBranches:  20,
-			TotalBranches:    30,
-			CoveredLines:     20,
-			TotalLines:       23,
-			TotalFunctions:   25,
-			CoveredFunctions: 30,
-		},
-	}
-	assert.NoError(t, workflow.InsertCoverage(db, coverateReportDefaultBranch))
-
-	// Add a coverage report on current branch node run
-	coverateReportCurrentBranch := sdk.WorkflowNodeRunCoverage{
-		WorkflowID:        w.ID,
-		WorkflowRunID:     wrCB.ID,
-		WorkflowNodeRunID: wrCB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].ID,
-		ApplicationID:     app.ID,
-		Num:               wrCB.Number,
-		Branch:            wrCB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSBranch,
-		Repository:        wrCB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSRepository,
-		Report: coverage.Report{
-			CoveredBranches:  0,
-			TotalBranches:    30,
-			CoveredLines:     0,
-			TotalLines:       23,
-			TotalFunctions:   25,
-			CoveredFunctions: 0,
-		},
-	}
-	assert.NoError(t, workflow.InsertCoverage(db, coverateReportCurrentBranch))
-
-	// Run test
-
-	// Create a workflow run
-	wrToTest, errwr3 := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
-	assert.NoError(t, errwr3)
-	wrToTest.Workflow = *workflowWithDeepPipeline
-
-	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{
-			Username: u.Username,
-			Payload: map[string]string{
-				"git.branch": "my-branch",
-			},
-		},
-	}, *consumer, nil)
-	assert.NoError(t, errT)
-
-	wrr, err := workflow.LoadRunByID(context.Background(), db, wrToTest.ID, workflow.LoadRunOptions{})
-	assert.NoError(t, err)
-
-	log.Warn(context.Background(), "%s", wrr.Status)
-	// Call post coverage report handler
-	// Prepare request
-	vars := map[string]string{
-		"permJobID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
-	}
-
-	request := coverage.Report{
-		CoveredBranches:  1,
-		TotalBranches:    30,
-		CoveredLines:     1,
-		TotalLines:       23,
-		TotalFunctions:   25,
-		CoveredFunctions: 1,
-	}
-
-	ctx := testRunWorkflowCtx{
-		user:      u,
-		userToken: jwtAdmin,
-		project:   proj,
-		workflow:  &w,
-		run:       wrr,
-	}
-	testRegisterWorker(t, api, db, router, &ctx)
-	ctx.worker.JobRunID = &wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, nil))
-
-	uri := router.GetRoute("POST", api.postWorkflowJobCoverageResultsHandler, vars)
-	test.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, request)
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 204, rec.Code)
-
-	covDB, errL := workflow.LoadCoverageReport(db, wrToTest.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].ID)
-	assert.NoError(t, errL)
-
-	require.Equal(t, coverateReportDefaultBranch.Report.CoveredBranches, covDB.Trend.DefaultBranch.CoveredBranches)
-}
-
 func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
@@ -1527,7 +1088,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 	t.Cleanup(func() { _ = services.Delete(db, cdnServices) })
 
 	u, _ := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1605,7 +1166,7 @@ func Test_workflowRunResultCheckUpload(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)

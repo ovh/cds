@@ -115,13 +115,13 @@ func (s *Service) Start(ctx context.Context) error {
 
 	var err error
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
-	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.Redis.DbIndex, s.Cfg.Cache.TTL)
+	s.Cache, err = cache.New(s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to redis instance")
 	}
 
 	log.Info(ctx, "Initializing database connection...")
-	// Intialize database
+	// Initialize database
 	s.DBConnectionFactory, err = database.Init(ctx, s.Cfg.Database)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to database")
@@ -140,7 +140,7 @@ func (s *Service) Start(ctx context.Context) error {
 	storage.InitDBMapping(s.Mapper)
 
 	log.Info(ctx, "Initializing lru connection...")
-	s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.Redis.DbIndex)
+	s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to redis instance for lru")
 	}

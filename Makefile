@@ -1,15 +1,15 @@
 .PHONY: clean doc modclean mod goinstall build dist deb
 
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm64)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 GIT_DESCRIBE := $(shell git describe --tags)
-GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},0.0.0-0-snapshot)
+GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE:v%=%},0.0.0-0-snapshot)
 SHA512 := $(if ifeq ${UNAME} "Darwin",shasum -a 512,sha512sum)
 
-TARGET_ENGINE = engine
-TARGET_WORKER = worker
-TARGET_CDSCTL = cdsctl
+TARGET_ENGINE := $(if ${TARGET_ENGINE},${TARGET_ENGINE},engine)
+TARGET_WORKER := $(if ${TARGET_WORKER},${TARGET_WORKER},worker)
+TARGET_CDSCTL := $(if ${TARGET_CDSCTL},${TARGET_CDSCTL},cdsctl)
 
 doc:
 ifndef GEN_PATH
@@ -48,6 +48,7 @@ build:
 	$(MAKE) build_cli -j4
 	$(MAKE) build_contrib -j4
 	$(MAKE) package -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
+	$(MAKE) archive -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
 
 build_ui:
 	$(MAKE) build -C ui
@@ -59,10 +60,10 @@ build_worker:
 	$(MAKE) build -C engine/worker OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 
 build_cli:
-	$(MAKE) build -C cli/cdsctl OS="$(foreach OS,${TARGET_OS},${OS}/%)" ARCH="$(foreach ARCH,${TARGET_ARCH},%/${ARCH})"
+	$(MAKE) build -C cli/cdsctl OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 
 build_contrib:
-	 $(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
+	$(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 
 define get_dist_from_target
 $(filter %/$(notdir $(1)), $(ALL_DIST))
@@ -104,15 +105,15 @@ target/cds-engine.tar.gz: $(TARGET_DIR)/config.toml.sample $(TARGET_DIR)/tmpl-co
 	mkdir -p target
 	tar -czvf target/cds-engine.tar.gz -C $(TARGET_DIR) .
 
-PLUGINS := `ls -d contrib/grpcplugins/action/plugin-*`
-
 tidy:
 	@echo "Running tidy on cds main project"
 	@go mod tidy
-	@for P in $(PLUGINS); do \
-		echo "Running tidy on $$P"; \
-		(cd $$P && go mod tidy); \
-	done;
+	@echo "Running tidy on contrib/grpcplugins/action/"
+	$(MAKE) tidy -C contrib/grpcplugins/action
+
+	@echo "Running tidy on contrib/integrations/"
+	$(MAKE) tidy -C contrib/integrations
+
 	@echo "Running tidy on tests/fixtures/04SCWorkflowRunSimplePlugin"
 	@(cd tests/fixtures/04SCWorkflowRunSimplePlugin && go mod tidy)
 	@(cd sdk/interpolate && go mod tidy)

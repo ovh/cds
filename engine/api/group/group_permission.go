@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func CheckGroupPermission(ctx context.Context, db gorp.SqlExecutor, projectGroups sdk.GroupPermissions, gp *sdk.GroupPermission, consumer *sdk.AuthConsumer) error {
+func CheckGroupPermission(ctx context.Context, db gorp.SqlExecutor, projectGroups sdk.GroupPermissions, gp *sdk.GroupPermission, consumer *sdk.AuthUserConsumer) error {
 	if gp.Group.ID == 0 {
 		g, err := LoadByName(ctx, db, gp.Group.Name)
 		if err != nil {

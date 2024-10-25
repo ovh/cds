@@ -2,71 +2,82 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	stdlog "log"
 	"math"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
 )
 
-//RedisStore a redis client and a default ttl
+// RedisStore a redis client and a default ttl
 type RedisStore struct {
 	ttl    int
 	Client *redis.Client
 }
 
-//NewRedisStore initiate a new redisStore
-func NewRedisStore(host, password string, dbindex, ttl int) (*RedisStore, error) {
+type redisLogger struct{}
+
+func (r redisLogger) Printf(ctx context.Context, format string, v ...interface{}) {
+	log.Debug(ctx, format, v...)
+}
+
+// NewRedisStore initiate a new redisStore
+func NewRedisStore(redisConf sdk.RedisConf, ttl int) (*RedisStore, error) {
 	var client *redis.Client
 
+	var tlsConfig *tls.Config
+
+	if redisConf.EnableTLS {
+		tlsConfig = &tls.Config{InsecureSkipVerify: redisConf.InsecureSkipVerifyTLS, MinVersion: tls.VersionTLS13}
+	}
+
 	//if host is line master@localhost:26379,localhost:26380 => it's a redis sentinel cluster
-	if strings.Contains(host, "@") && strings.Contains(host, ",") {
-		masterName := strings.Split(host, "@")[0]
-		sentinelsStr := strings.Split(host, "@")[1]
+	if strings.Contains(redisConf.Host, "@") {
+		masterName := strings.Split(redisConf.Host, "@")[0]
+		sentinelsStr := strings.Split(redisConf.Host, "@")[1]
 		sentinels := strings.Split(sentinelsStr, ",")
 		opts := &redis.FailoverOptions{
-			MasterName:         masterName,
-			SentinelAddrs:      sentinels,
-			Password:           password,
-			DB:                 dbindex,
-			IdleCheckFrequency: 10 * time.Second,
-			IdleTimeout:        10 * time.Second,
-			PoolSize:           25,
-			MaxRetries:         10,
-			MinRetryBackoff:    30 * time.Millisecond,
-			MaxRetryBackoff:    100 * time.Millisecond,
+			MasterName:      masterName,
+			SentinelAddrs:   sentinels,
+			Password:        redisConf.Password,
+			DB:              redisConf.DbIndex,
+			PoolSize:        25,
+			MaxRetries:      10,
+			MinRetryBackoff: 30 * time.Millisecond,
+			MaxRetryBackoff: 100 * time.Millisecond,
+			TLSConfig:       tlsConfig,
 		}
 		client = redis.NewFailoverClient(opts)
 	} else {
 		client = redis.NewClient(&redis.Options{
-			Addr:               host,
-			Password:           password, // no password set
-			DB:                 dbindex,
-			IdleCheckFrequency: 30 * time.Second,
-			MaxRetries:         10,
-			MinRetryBackoff:    30 * time.Millisecond,
-			MaxRetryBackoff:    100 * time.Millisecond,
+			Addr:            redisConf.Host,
+			Password:        redisConf.Password, // no password set
+			DB:              redisConf.DbIndex,
+			MaxRetries:      10,
+			MinRetryBackoff: 30 * time.Millisecond,
+			MaxRetryBackoff: 100 * time.Millisecond,
+			TLSConfig:       tlsConfig,
 		})
 	}
 
-	redis.SetLogger(stdlog.New(io.Discard, "", stdlog.LstdFlags|stdlog.Lshortfile))
+	redis.SetLogger(new(redisLogger))
 
-	pong, err := client.Ping().Result()
+	pong, err := client.Ping(context.Background()).Result()
 	if err != nil {
-		return nil, sdk.WithStack(err)
+		return nil, sdk.WrapError(err, "unable to connect to redis %s:%d", redisConf.Host, redisConf.DbIndex)
 	}
 	if pong != "PONG" {
-		return nil, fmt.Errorf("cannot ping Redis on %s", host)
+		return nil, fmt.Errorf("cannot ping Redis on %s", redisConf.Host)
 	}
 	return &RedisStore{
 		ttl:    ttl,
@@ -76,7 +87,7 @@ func NewRedisStore(host, password string, dbindex, ttl int) (*RedisStore, error)
 
 // DBSize: Return the number of keys in the currently-selected database
 func (s *RedisStore) DBSize() (int64, error) {
-	size, err := s.Client.DBSize().Result()
+	size, err := s.Client.DBSize(context.Background()).Result()
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
@@ -84,7 +95,7 @@ func (s *RedisStore) DBSize() (int64, error) {
 }
 
 func (s *RedisStore) Ping() error {
-	pong, err := s.Client.Ping().Result()
+	pong, err := s.Client.Ping(context.Background()).Result()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -98,7 +109,7 @@ func (s *RedisStore) Keys(pattern string) ([]string, error) {
 	if s.Client == nil {
 		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
-	keys, err := s.Client.Keys(pattern).Result()
+	keys, err := s.Client.Keys(context.Background(), pattern).Result()
 	if err != nil {
 		return nil, sdk.WrapError(err, "redis> cannot list keys: %s", pattern)
 	}
@@ -111,7 +122,7 @@ func (s *RedisStore) Get(key string, value interface{}) (bool, error) {
 		return false, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
-	val, errRedis := s.Client.Get(key).Result()
+	val, errRedis := s.Client.Get(context.Background(), key).Result()
 	if errRedis != nil && errRedis != redis.Nil {
 		return false, sdk.WrapError(errRedis, "redis> get error %s", key)
 	}
@@ -136,7 +147,7 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) error {
 		return sdk.WrapError(err, "redis> error caching %s", key)
 	}
 
-	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
+	if err := s.Client.Set(context.Background(), key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
 		return sdk.WrapError(err, "redis> set error %s", key)
 	}
 	return nil
@@ -153,7 +164,7 @@ func (s *RedisStore) SetWithDuration(key string, value interface{}, duration tim
 		return sdk.WithStack(err)
 	}
 
-	if err := s.Client.Set(key, string(b), duration).Err(); err != nil {
+	if err := s.Client.Set(context.Background(), key, string(b), duration).Err(); err != nil {
 		return sdk.WrapError(err, "set error %s", key)
 	}
 
@@ -166,7 +177,7 @@ func (s *RedisStore) UpdateTTL(key string, ttl int) error {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
-	if err := s.Client.Expire(key, time.Duration(ttl)*time.Second).Err(); err != nil {
+	if err := s.Client.Expire(context.Background(), key, time.Duration(ttl)*time.Second).Err(); err != nil {
 		return sdk.WrapError(err, "redis>UpdateTTL> set error %s", key)
 	}
 	return nil
@@ -183,7 +194,7 @@ func (s *RedisStore) Delete(key string) error {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
-	if err := s.Client.Del(key).Err(); err != nil {
+	if err := s.Client.Del(context.Background(), key).Err(); err != nil {
 		return sdk.WrapError(err, "redis> error deleting %s", key)
 	}
 	return nil
@@ -194,14 +205,14 @@ func (s *RedisStore) DeleteAll(pattern string) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
-	keys, err := s.Client.Keys(pattern).Result()
+	keys, err := s.Client.Keys(context.Background(), pattern).Result()
 	if err != nil {
 		return sdk.WrapError(err, "redis> Error deleting %s", pattern)
 	}
 	if len(keys) == 0 {
 		return nil
 	}
-	if err := s.Client.Del(keys...).Err(); err != nil {
+	if err := s.Client.Del(context.Background(), keys...).Err(); err != nil {
 		return sdk.WrapError(err, "redis> Error deleting %s", pattern)
 	}
 	return nil
@@ -212,7 +223,7 @@ func (s *RedisStore) Exist(key string) (bool, error) {
 	if s.Client == nil {
 		return false, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
-	ok, err := s.Client.Exists(key).Result()
+	ok, err := s.Client.Exists(context.Background(), key).Result()
 	if err != nil {
 		return false, sdk.WrapError(err, "unable to test if key %s exists", key)
 	}
@@ -228,7 +239,7 @@ func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 	if err != nil {
 		return sdk.WrapError(err, "error queueing %s:%s", queueName, err)
 	}
-	if err := s.Client.LPush(queueName, string(b)).Err(); err != nil {
+	if err := s.Client.LPush(context.Background(), queueName, string(b)).Err(); err != nil {
 		return sdk.WrapError(err, "error while LPUSH to %s: %s", queueName, err)
 	}
 	return nil
@@ -241,7 +252,7 @@ func (s *RedisStore) QueueLen(queueName string) (int, error) {
 	}
 	var errRedis error
 	var res int64
-	res, errRedis = s.Client.LLen(queueName).Result()
+	res, errRedis = s.Client.LLen(context.Background(), queueName).Result()
 	if errRedis != nil {
 		return 0, sdk.WrapError(errRedis, "redis> Cannot read %s", queueName)
 	}
@@ -263,7 +274,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 			if c.Err() != nil {
 				return c.Err()
 			}
-			res, err := s.Client.BRPop(time.Second, queueName).Result()
+			res, err := s.Client.BRPop(context.Background(), time.Second, queueName).Result()
 			if err == redis.Nil {
 				continue
 			}
@@ -276,7 +287,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 				break
 			}
 		case <-c.Done():
-			return nil
+			return c.Err()
 		}
 	}
 	if elem != "" {
@@ -303,7 +314,7 @@ func (s *RedisStore) DequeueJSONRawMessagesWithContext(ctx context.Context, queu
 			if ctx.Err() != nil {
 				return msgs, ctx.Err()
 			}
-			res, err := s.Client.BRPop(time.Second, queueName).Result()
+			res, err := s.Client.BRPop(context.Background(), time.Second, queueName).Result()
 			if err == redis.Nil {
 				continue
 			}
@@ -349,7 +360,7 @@ func (s *RedisStore) Publish(ctx context.Context, channel string, value interfac
 	}
 
 	for i := 0; i < 10; i++ {
-		_, errP := s.Client.Publish(channel, iUnquoted).Result()
+		_, errP := s.Client.Publish(context.Background(), channel, iUnquoted).Result()
 		if errP == nil {
 			break
 		}
@@ -365,13 +376,13 @@ func (s *RedisStore) Subscribe(channel string) (PubSub, error) {
 		return nil, fmt.Errorf("redis> cannot get redis client")
 	}
 	return &RedisPubSub{
-		PubSub: s.Client.Subscribe(channel),
+		PubSub: s.Client.Subscribe(context.Background(), channel),
 	}, nil
 }
 
 // RemoveFromQueue removes a member from a list
 func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) error {
-	if err := s.Client.LRem(rootKey, 0, memberKey).Err(); err != nil {
+	if err := s.Client.LRem(context.Background(), rootKey, 0, memberKey).Err(); err != nil {
 		return sdk.WrapError(err, "error on RemoveFromQueue: rooKey:%v memberKey:%v", rootKey, memberKey)
 	}
 	return nil
@@ -379,19 +390,24 @@ func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) error {
 
 // SetAdd add a member (identified by a key) in the cached set
 func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}) error {
-	err := s.Client.ZAdd(rootKey, redis.Z{
+	return s.SetAddWithTTL(rootKey, memberKey, member, -1)
+}
+
+// SetAddSetAddWithTTL add a member (identified by a key) in the cached set
+func (s *RedisStore) SetAddWithTTL(rootKey string, memberKey string, member interface{}, ttlInseconds int) error {
+	err := s.Client.ZAdd(context.Background(), rootKey, redis.Z{
 		Member: memberKey,
 		Score:  float64(time.Now().UnixNano()),
 	}).Err()
 	if err != nil {
 		return sdk.WrapError(err, "error on SetAdd")
 	}
-	return s.SetWithTTL(Key(rootKey, memberKey), member, -1)
+	return s.SetWithTTL(Key(rootKey, memberKey), member, ttlInseconds)
 }
 
 // SetRemove removes a member from a set
 func (s *RedisStore) SetRemove(rootKey string, memberKey string, _ interface{}) error {
-	if err := s.Client.ZRem(rootKey, memberKey).Err(); err != nil {
+	if err := s.Client.ZRem(context.Background(), rootKey, memberKey).Err(); err != nil {
 		return sdk.WrapError(err, "error on SetRemove")
 	}
 	return s.Delete(Key(rootKey, memberKey))
@@ -399,13 +415,13 @@ func (s *RedisStore) SetRemove(rootKey string, memberKey string, _ interface{}) 
 
 // SetCard returns the cardinality of a ZSet
 func (s *RedisStore) SetCard(key string) (int, error) {
-	v := s.Client.ZCard(key)
+	v := s.Client.ZCard(context.Background(), key)
 	return int(v.Val()), v.Err()
 }
 
 // SetScan scans a ZSet
 func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interface{}) error {
-	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
+	values, err := s.Client.ZRangeByScore(context.Background(), key, &redis.ZRangeBy{
 		Min: "-inf",
 		Max: "+inf",
 	}).Result()
@@ -419,7 +435,7 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 	}
 
 	if len(keys) > 0 {
-		res, err := s.Client.MGet(keys...).Result()
+		res, err := s.Client.MGet(context.Background(), keys...).Result()
 		if err != nil {
 			return fmt.Errorf("redis mget error: %v", err)
 		}
@@ -433,7 +449,7 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 				//If the member is not found, return an error because the members are inconsistents
 				// but try to delete the member from the Redis ZSET
 				log.Error(ctx, "redis>SetScan member %s not found", keys[i])
-				if err := s.Client.ZRem(key, values[i]).Err(); err != nil {
+				if err := s.Client.ZRem(context.Background(), key, values[i]).Err(); err != nil {
 					return sdk.WrapError(err, "redis>SetScan unable to delete member %s", keys[i])
 				}
 				log.Info(ctx, "redis> member %s deleted", keys[i])
@@ -449,7 +465,7 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 }
 
 func (s *RedisStore) SetSearch(key, pattern string) ([]string, error) {
-	keys, _, err := s.Client.ZScan(key, 0, pattern, 0).Result()
+	keys, _, err := s.Client.ZScan(context.Background(), key, 0, pattern, 0).Result()
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -467,7 +483,7 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 		retryCount = 3
 	}
 	for i := 0; i < retryCount; i++ {
-		res, errRedis = s.Client.SetNX(key, "true", expiration).Result()
+		res, errRedis = s.Client.SetNX(context.Background(), key, "true", expiration).Result()
 		if errRedis == nil && res {
 			break
 		}
@@ -482,7 +498,7 @@ func (s *RedisStore) Unlock(key string) error {
 }
 
 func (s *RedisStore) Size(key string) (int64, error) {
-	oct, err := s.Client.MemoryUsage(key).Result()
+	oct, err := s.Client.MemoryUsage(context.Background(), key).Result()
 	return oct, sdk.WithStack(err)
 }
 
@@ -491,12 +507,12 @@ func (s *RedisStore) ScoredSetGetScore(key string, member interface{}) (float64,
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
-	score, err := s.Client.ZScore(key, string(bts)).Result()
+	score, err := s.Client.ZScore(context.Background(), key, string(bts)).Result()
 	return score, sdk.WithStack(err)
 }
 
 func (s *RedisStore) ScoredSetAppend(ctx context.Context, key string, value interface{}) error {
-	highItem, err := s.Client.ZRevRange(key, 0, 0).Result()
+	highItem, err := s.Client.ZRevRange(context.Background(), key, 0, 0).Result()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -504,7 +520,7 @@ func (s *RedisStore) ScoredSetAppend(ctx context.Context, key string, value inte
 		return s.ScoredSetAdd(ctx, key, value, 1)
 	}
 
-	maxScore, err := s.Client.ZScore(key, highItem[0]).Result()
+	maxScore, err := s.Client.ZScore(context.Background(), key, highItem[0]).Result()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -517,7 +533,7 @@ func (s *RedisStore) ScoredSetAdd(_ context.Context, key string, value interface
 		return sdk.WithStack(err)
 	}
 
-	if err := s.Client.ZAdd(key, redis.Z{
+	if err := s.Client.ZAdd(context.Background(), key, redis.Z{
 		Member: string(btes),
 		Score:  score,
 	}).Err(); err != nil {
@@ -532,12 +548,12 @@ const (
 )
 
 func (s *RedisStore) ScoredSetRem(_ context.Context, key string, members ...string) error {
-	_, err := s.Client.ZRem(key, members).Result()
+	_, err := s.Client.ZRem(context.Background(), key, members).Result()
 	return sdk.WithStack(err)
 }
 
 func (s *RedisStore) ScoredSetRange(_ context.Context, key string, from, to int64, dest interface{}) error {
-	values, err := s.Client.ZRange(key, from, to).Result()
+	values, err := s.Client.ZRange(context.Background(), key, from, to).Result()
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("redis zrange error: %v", err))
 	}
@@ -565,7 +581,7 @@ func (s *RedisStore) ScoredSetRange(_ context.Context, key string, from, to int6
 }
 
 func (s *RedisStore) ScoredSetRevRange(_ context.Context, key string, offset int64, limit int64, dest interface{}) error {
-	values, err := s.Client.ZRevRange(key, offset, limit).Result()
+	values, err := s.Client.ZRevRange(context.Background(), key, offset, limit).Result()
 	if err != nil {
 		return fmt.Errorf("redis zrevrange error: %v", err)
 	}
@@ -603,7 +619,7 @@ func (s *RedisStore) ScoredSetScan(_ context.Context, key string, from, to float
 		max = strconv.FormatFloat(to, 'E', -1, 64)
 	}
 
-	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
+	values, err := s.Client.ZRangeByScore(context.Background(), key, &redis.ZRangeBy{
 		Min: min,
 		Max: max,
 	}).Result()
@@ -644,7 +660,7 @@ func (s *RedisStore) ScoredSetScanWithScores(_ context.Context, key string, from
 		max = strconv.FormatFloat(to, 'E', -1, 64)
 	}
 
-	values, err := s.Client.ZRangeByScoreWithScores(key, redis.ZRangeBy{
+	values, err := s.Client.ZRangeByScoreWithScores(context.Background(), key, &redis.ZRangeBy{
 		Min: min,
 		Max: max,
 	}).Result()
@@ -670,7 +686,7 @@ type RedisPubSub struct {
 }
 
 func (p *RedisPubSub) GetMessage(ctx context.Context) (string, error) {
-	if msg, _ := p.PubSub.ReceiveTimeout(time.Second); msg != nil {
+	if msg, _ := p.PubSub.ReceiveTimeout(context.Background(), time.Second); msg != nil {
 		if redisMsg, ok := msg.(*redis.Message); ok {
 			return redisMsg.Payload, nil
 		}
@@ -681,7 +697,7 @@ func (p *RedisPubSub) GetMessage(ctx context.Context) (string, error) {
 	for {
 		select {
 		case <-ticker.C:
-			if msg, _ := p.PubSub.ReceiveTimeout(time.Second); msg != nil {
+			if msg, _ := p.PubSub.ReceiveTimeout(context.Background(), time.Second); msg != nil {
 				if redisMsg, ok := msg.(*redis.Message); ok {
 					return redisMsg.Payload, nil
 				}
@@ -693,7 +709,7 @@ func (p *RedisPubSub) GetMessage(ctx context.Context) (string, error) {
 }
 
 func (s *RedisStore) ScoredSetScanMaxScore(_ context.Context, key string) (*SetValueWithScore, error) {
-	values, err := s.Client.ZRevRangeByScoreWithScores(key, redis.ZRangeBy{
+	values, err := s.Client.ZRevRangeByScoreWithScores(context.Background(), key, &redis.ZRangeBy{
 		Min:    "-inf",
 		Max:    "+inf",
 		Offset: 0,
@@ -719,7 +735,7 @@ func (s *RedisStore) ScoredSetScanMaxScore(_ context.Context, key string) (*SetV
 }
 
 func (s *RedisStore) Eval(expr string, args ...string) (string, error) {
-	result, err := s.Client.Eval(expr, args).Result()
+	result, err := s.Client.Eval(context.Background(), expr, args).Result()
 	if err != nil {
 		return "", sdk.WithStack(err)
 	}

@@ -1,7 +1,7 @@
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component,
+    Component, inject,
     Input, OnInit,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,9 +14,12 @@ import { UserService } from 'app/service/user/user.service';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
-import * as moment from 'moment';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 
+interface IModalData {
+    user: AuthentifiedUser;
+    consumer: AuthConsumer;
+}
 
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
@@ -48,7 +51,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
     columnsConsumers: Array<Column<AuthConsumer>>;
     filterChildren: Filter<AuthConsumer>;
     selectedChildDetails: AuthConsumer;
-    menuItems: Map<string,string>;
+    menuItems: Map<string, string>;
     selectedItem: string;
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
@@ -56,6 +59,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
     regenConsumerSigninToken: string;
     warningText: string;
     columnsValidityPeriods: Array<Column<AuthConsumerValidityPeriod>>;
+
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     constructor(
         private _modal: NzModalRef,
@@ -72,11 +77,11 @@ export class ConsumerDetailsModalComponent implements OnInit {
         this.filterChildren = f => {
             const lowerFilter = f.toLowerCase();
             return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                    (!c.groups && lowerFilter === '*');
+                c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                c.auth_consumer_user.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                (c.auth_consumer_user.groups && c.auth_consumer_user.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (!c.auth_consumer_user.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -98,31 +103,31 @@ export class ConsumerDetailsModalComponent implements OnInit {
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_scopes',
-                selector: (c: AuthConsumer) => c.scope_details ? c.scope_details.map(s => s.scope).join(', ') : '*'
+                selector: (c: AuthConsumer) => c.auth_consumer_user.scope_details ? c.auth_consumer_user.scope_details.map(s => s.scope).join(', ') : '*'
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_groups',
-                selector: (c: AuthConsumer) => c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*'
+                selector: (c: AuthConsumer) => c.auth_consumer_user.groups ? c.auth_consumer_user.groups.map((g: Group) => g.name).join(', ') : '*'
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
                 name: 'Action',
                 class: 'rightAlign',
                 selector: (c: AuthConsumer) => ({
-                        title: 'Details',
-                        buttonDanger: false,
-                        click: () => this.clickConsumerDetails(c)
-                    })
+                    title: 'Details',
+                    buttonDanger: false,
+                    click: () => this.clickConsumerDetails(c)
+                })
             }
         ];
 
         this.filterSessions = f => {
             const lowerFilter = f.toLowerCase();
             return (s: AuthSession) => s.consumer.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
+                s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
         };
 
         this.columnsSessions = [
@@ -158,7 +163,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
             <Column<AuthConsumerValidityPeriod>>{
                 type: ColumnType.DATE,
                 name: 'Issued at',
-                selector: (s: AuthConsumerValidityPeriod) => moment(s.issued_at).format()
+                selector: (s: AuthConsumerValidityPeriod) => new Date(s.issued_at)
             },
             <Column<AuthConsumerValidityPeriod>>{
                 type: ColumnType.TEXT_LABELS,
@@ -166,7 +171,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
                 selector: (s: AuthConsumerValidityPeriod) => {
                     let labels = [];
                     if (s.duration === 0) {
-                        return {value: '-', labels};
+                        return { value: '-', labels };
                     }
 
                     let ms = (s.duration / 1000000);
@@ -185,6 +190,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.consumer = this.nzModalData.consumer;
+        this.user = this.nzModalData.user;
         if (!this.consumer) {
             return;
         }
@@ -192,8 +199,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
 
         this.selectedChildDetails = null;
         this.consumerDeletedOrDetached = false;
-        this.scopes = this.consumer.scope_details ? this.consumer.scope_details.map(s => s.scope).join(', ') : '*';
-        this.groups = this.consumer.groups ? this.consumer.groups.map(g => g.name).join(', ') : '*';
+        this.scopes = this.consumer.auth_consumer_user.scope_details ? this.consumer.auth_consumer_user.scope_details.map(s => s.scope).join(', ') : '*';
+        this.groups = this.consumer.auth_consumer_user.groups ? this.consumer.auth_consumer_user.groups.map(g => g.name).join(', ') : '*';
 
         if (this.consumer.warnings && this.consumer.warnings.length > 0) {
             this.warningText = this.consumer.warnings.map(w => {
@@ -267,7 +274,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
 
     clickClose(): void {
         if (this.regenConsumerSigninToken) {
-            this._modal.close (<CloseEvent>{
+            this._modal.close(<CloseEvent>{
                 type: CloseEventType.REGEN,
                 payload: this.consumer.id
             });

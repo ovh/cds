@@ -1,8 +1,0 @@
-name: perm-test
-projects:
-  - role: manage
-    projects: [ITCLIPRJVCS]
-    users: [cds.integration.tests.rw]
-globals:
-  - role: manage-permission
-    users: [cds.integration.tests.rw]

@@ -72,12 +72,12 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	consumer := getAPIConsumer(ctx)
+	consumer := getUserConsumer(ctx)
 
 	// If the expected permission if >= RX and the consumer is a worker
 	// We check that the worker has took this job
-	if consumer.Worker != nil {
-		wk := consumer.Worker
+	if consumer.AuthConsumerUser.Worker != nil {
+		wk := consumer.AuthConsumerUser.Worker
 		if wk.JobRunID != nil && runNodeJob.ID == *wk.JobRunID && perm <= sdk.PermissionReadExecute {
 			return nil
 		}
@@ -85,11 +85,15 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 	}
 
 	// Else we check the exec groups
-	if runNodeJob.ExecGroups.HasOneOf(getAPIConsumer(ctx).GetGroupIDs()...) {
+	if runNodeJob.ExecGroups.HasOneOf(getUserConsumer(ctx).GetGroupIDs()...) {
 		return nil
 	}
 	if perm == sdk.PermissionRead {
-		if isHatcheryShared(ctx) || isMaintainer(ctx) {
+		isShared, err := isHatcheryShared(ctx)
+		if err != nil {
+			return err
+		}
+		if isShared || isMaintainer(ctx) {
 			return nil
 		}
 	} else {
@@ -128,11 +132,11 @@ func (api *API) checkProjectAdvancedPermissionsWithOpts(ctx context.Context, w h
 		return err
 	}
 
-	consumer := getAPIConsumer(ctx)
+	consumer := getUserConsumer(ctx)
 
 	// A worker can only read/exec access the project of the its job.
-	if consumer.Worker != nil {
-		jobRunID := consumer.Worker.JobRunID
+	if consumer.AuthConsumerUser.Worker != nil {
+		jobRunID := consumer.AuthConsumerUser.Worker.JobRunID
 		if jobRunID != nil {
 			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
 			if err != nil {
@@ -144,10 +148,10 @@ func (api *API) checkProjectAdvancedPermissionsWithOpts(ctx context.Context, w h
 			}
 		}
 
-		return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for project %q", consumer.Worker.Name, consumer.Worker.ID, projectKey)
+		return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for project %q", consumer.AuthConsumerUser.Worker.Name, consumer.AuthConsumerUser.Worker.ID, projectKey)
 	}
 
-	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
+	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getUserConsumer(ctx).GetGroupIDs())
 	if err != nil {
 		return sdk.WrapError(err, "cannot get max project permissions for %s", projectKey)
 	}
@@ -159,32 +163,32 @@ func (api *API) checkProjectAdvancedPermissionsWithOpts(ctx context.Context, w h
 		// If it's about READ: we have to check if the user is a maintainer or an admin
 		if requiredPerm == sdk.PermissionRead {
 			if isMaintainer(ctx) {
-				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getUserConsumer(ctx).Name, getUserConsumer(ctx).ID, projectKey)
 				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
 				return nil
 			}
 			if opts.AllowHooks && isHooks(ctx) {
-				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is hooks", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is hooks", getUserConsumer(ctx).Name, getUserConsumer(ctx).ID, projectKey)
 				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
 				return nil
 			}
 			// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
-			log.Debug(ctx, "checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+			log.Debug(ctx, "checkProjectPermissions> %s(%s) is not authorized to %s", getUserConsumer(ctx).Name, getUserConsumer(ctx).ID, projectKey)
 			return sdk.WrapError(sdk.ErrNoProject, "not authorized for project %s", projectKey)
 		}
 
 		// If it's about Execute of Write: we have to check if the user is an admin
 		if !isAdmin(ctx) {
 			// The caller doesn't enough permission level from its groups and is not an admin
-			log.Debug(ctx, "checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+			log.Debug(ctx, "checkProjectPermissions> %s(%s) is not authorized to %s", getUserConsumer(ctx).Name, getUserConsumer(ctx).ID, projectKey)
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey)
 		}
-		log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is admin", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+		log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is admin", getUserConsumer(ctx).Name, getUserConsumer(ctx).ID, projectKey)
 		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
 		trackSudo(ctx, w)
 		return nil
 	}
-	log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, callerPermission)
+	log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getUserConsumer(ctx).Name, getUserConsumer(ctx).ID, projectKey, callerPermission)
 	telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
 	return nil
 }
@@ -246,11 +250,11 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// A worker can only read/exec access the workflow of the its job.
-		if consumer.Worker != nil {
-			jobRunID := consumer.Worker.JobRunID
+		if consumer.AuthConsumerUser.Worker != nil {
+			jobRunID := consumer.AuthConsumerUser.Worker.JobRunID
 			if jobRunID != nil {
 				nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
 				if err != nil {
@@ -286,10 +290,10 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 				}
 			}
 
-			return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for workflow %s/%s", consumer.Worker.Name, consumer.Worker.ID, projectKey, workflowName)
+			return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for workflow %s/%s", consumer.AuthConsumerUser.Worker.Name, consumer.AuthConsumerUser.Worker.ID, projectKey, workflowName)
 		}
 
-		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getAPIConsumer(ctx).GetGroupIDs())
+		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getUserConsumer(ctx).GetGroupIDs())
 		if err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
@@ -301,26 +305,26 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 			if perm < sdk.PermissionReadExecute {
 				if isMaintainer(ctx) || (isHooks(ctx) && opts.AllowHooks) {
 					if isHooks(ctx) {
-						log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is hooks service", getAPIConsumer(ctx).ID, projectKey, workflowName)
+						log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is hooks service", getUserConsumer(ctx).ID, projectKey, workflowName)
 						telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
 					} else if isMaintainer(ctx) {
-						log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
+						log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getUserConsumer(ctx).ID, projectKey, workflowName)
 						telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
 					}
 					return nil
 				}
 				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
-				log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
+				log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getUserConsumer(ctx).ID, projectKey, workflowName)
 				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
 			}
 
 			// If it's about Execute of Write: we have to check if the user is an admin or if it hooks service
 			if isAdmin(ctx) || (isHooks(ctx) && opts.AllowHooks) {
 				if isHooks(ctx) {
-					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is hooks service", getAPIConsumer(ctx).ID, projectKey, workflowName)
+					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is hooks service", getUserConsumer(ctx).ID, projectKey, workflowName)
 					telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
 				} else if isAdmin(ctx) {
-					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is admin", getAPIConsumer(ctx).ID, projectKey, workflowName)
+					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is admin", getUserConsumer(ctx).ID, projectKey, workflowName)
 					telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
 					trackSudo(ctx, w)
 				}
@@ -328,10 +332,10 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 			}
 
 			// The caller doesn't enough permission level from its groups and is not an admin
-			log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
+			log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getUserConsumer(ctx).ID, projectKey, workflowName)
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
 		}
-		log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
+		log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getUserConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
 		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
 		return nil
 	}
@@ -356,7 +360,9 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 
 	if permissionValue > sdk.PermissionRead {
 		// Hatcheries started for "shared.infra" group are granted for group "shared.infra"
-		if isHatcheryShared(ctx) {
+		if ok, err := isHatcheryShared(ctx); err != nil {
+			return err
+		} else if ok {
 			return nil
 		}
 		// Only group administror or CDS administrator can update a group or its dependencies
@@ -369,7 +375,9 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 		}
 	} else {
 		// Hatcheries started for "shared.infra" group are granted for group "shared.infra"
-		if isHatcheryShared(ctx) {
+		if ok, err := isHatcheryShared(ctx); err != nil {
+			return err
+		} else if ok {
 			return nil
 		}
 		if !isGroupMember(ctx, g) && !isMaintainer(ctx) { // Only group member or CDS maintainer can get a group or its dependencies
@@ -471,14 +479,14 @@ func (api *API) checkUserPublicPermissions(ctx context.Context, w http.ResponseW
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid username")
 	}
 
-	consumer := getAPIConsumer(ctx)
+	consumer := getUserConsumer(ctx)
 
 	var u *sdk.AuthentifiedUser
 	var err error
 
 	// Load user from database, returns an error if not exists
 	if username == "me" {
-		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID)
+		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUserID)
 	} else {
 		u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 	}
@@ -487,25 +495,25 @@ func (api *API) checkUserPublicPermissions(ctx context.Context, w http.ResponseW
 	}
 
 	// Valid if the current consumer match given username
-	if consumer.AuthentifiedUserID == u.ID {
-		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
+	if consumer.AuthConsumerUser.AuthentifiedUserID == u.ID {
+		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because itself", getUserConsumer(ctx).ID, u.ID)
 		return nil
 	}
 
 	// Everyone can read public user data
 	if permissionValue == sdk.PermissionRead {
-		log.Debug(ctx, "checkUserPermissions> %s read access granted to %s on public user data", getAPIConsumer(ctx).ID, u.ID)
+		log.Debug(ctx, "checkUserPermissions> %s read access granted to %s on public user data", getUserConsumer(ctx).ID, u.ID)
 		return nil
 	}
 
 	// If the current user is an admin
 	if isAdmin(ctx) {
-		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because is admin", getAPIConsumer(ctx).ID, u.ID)
+		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because is admin", getUserConsumer(ctx).ID, u.ID)
 		trackSudo(ctx, w)
 		return nil
 	}
 
-	log.Debug(ctx, "checkUserPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, u.ID)
+	log.Debug(ctx, "checkUserPermissions> %s is not authorized to %s", getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Fullname, u.ID)
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
 }
 
@@ -515,14 +523,14 @@ func (api *API) checkUserPermissions(ctx context.Context, w http.ResponseWriter,
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid username")
 	}
 
-	consumer := getAPIConsumer(ctx)
+	consumer := getUserConsumer(ctx)
 
 	var u *sdk.AuthentifiedUser
 	var err error
 
 	// Load user from database, returns an error if not exists
 	if username == "me" {
-		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID)
+		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUserID)
 	} else {
 		u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 	}
@@ -531,25 +539,25 @@ func (api *API) checkUserPermissions(ctx context.Context, w http.ResponseWriter,
 	}
 
 	// Valid if the current consumer match given username
-	if consumer.AuthentifiedUserID == u.ID {
-		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
+	if consumer.AuthConsumerUser.AuthentifiedUserID == u.ID {
+		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because itself", getUserConsumer(ctx).ID, u.ID)
 		return nil
 	}
 
 	// If the current user is a maintainer and we want to read a user
 	if permissionValue == sdk.PermissionRead && isMaintainer(ctx) {
-		log.Debug(ctx, "checkUserPermissions> %s read access granted to %s because is maintainer", getAPIConsumer(ctx).ID, u.ID)
+		log.Debug(ctx, "checkUserPermissions> %s read access granted to %s because is maintainer", getUserConsumer(ctx).ID, u.ID)
 		return nil
 	}
 
 	// If the current user is an admin, gives RW on the user
 	if isAdmin(ctx) {
-		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because is admin", getAPIConsumer(ctx).ID, u.ID)
+		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because is admin", getUserConsumer(ctx).ID, u.ID)
 		trackSudo(ctx, w)
 		return nil
 	}
 
-	log.Debug(ctx, "checkUserPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, u.ID)
+	log.Debug(ctx, "checkUserPermissions> %s is not authorized to %s", getUserConsumer(ctx).ID, u.ID)
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
 }
 
@@ -558,14 +566,15 @@ func (api *API) checkConsumerPermissions(ctx context.Context, w http.ResponseWri
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given consumer id")
 	}
 
-	authConsumer := getAPIConsumer(ctx)
-	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), consumerID)
+	authConsumer := getUserConsumer(ctx)
+
+	consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), consumerID)
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", consumerID))
 	}
 
 	// If current consumer's authentified user match given one
-	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
+	if consumer.AuthConsumerUser.AuthentifiedUserID == authConsumer.AuthConsumerUser.AuthentifiedUserID {
 		log.Debug(ctx, "checkConsumerPermissions> %s access granted to %s because is owner", authConsumer.ID, consumer.ID)
 		return nil
 	}
@@ -592,18 +601,19 @@ func (api *API) checkSessionPermissions(ctx context.Context, w http.ResponseWrit
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given session id")
 	}
 
-	authConsumer := getAPIConsumer(ctx)
+	authConsumer := getUserConsumer(ctx)
+
 	session, err := authentication.LoadSessionByID(ctx, api.mustDB(), sessionID)
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID))
 	}
-	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID)
+	consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), session.ConsumerID)
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID))
 	}
 
 	// If current consumer's authentified user match session's consumer
-	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
+	if consumer.AuthConsumerUser.AuthentifiedUserID == authConsumer.AuthConsumerUser.AuthentifiedUserID {
 		log.Debug(ctx, "checkSessionPermissions> %s access granted to %s because is owner", authConsumer.ID, session.ID)
 		return nil
 	}

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -41,8 +42,8 @@ func Test_authMiddleware(t *testing.T) {
 	require.NoError(t, err)
 	ctx, err = api.authMiddleware(ctx, w, req, config)
 	require.NoError(t, err, "no error should be returned because a jwt was given and is valid")
-	require.NotNil(t, getAPIConsumer(ctx))
-	require.Equal(t, u.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	require.NotNil(t, getUserConsumer(ctx))
+	require.Equal(t, u.ID, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 
 	req = assets.NewJWTAuthentifiedRequest(t, sdk.RandomString(10), http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
@@ -57,7 +58,7 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 
 	g := assets.InsertGroup(t, db)
 	u, _ := assets.InsertLambdaUser(t, db, g)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -67,7 +68,7 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	}
 	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
+	builtinSession, err := authentication.NewSession(context.TODO(), db, &builtinConsumer.AuthConsumer, time.Second*5)
 	require.NoError(t, err)
 	jwt, err := authentication.NewSessionJWT(builtinSession, "")
 	require.NoError(t, err)
@@ -104,7 +105,7 @@ func Test_authOptionalMiddleware(t *testing.T) {
 	require.NoError(t, err)
 	ctx, err = api.authOptionalMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because no jwt was given and auth not required")
-	assert.Nil(t, getAPIConsumer(ctx))
+	assert.Nil(t, getUserConsumer(ctx))
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
@@ -112,8 +113,8 @@ func Test_authOptionalMiddleware(t *testing.T) {
 	require.NoError(t, err)
 	ctx, err = api.authOptionalMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given and is valid")
-	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, u.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	require.NotNil(t, getUserConsumer(ctx))
+	assert.Equal(t, u.ID, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 
 	req = assets.NewJWTAuthentifiedRequest(t, sdk.RandomString(10), http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
@@ -121,7 +122,7 @@ func Test_authOptionalMiddleware(t *testing.T) {
 	require.NoError(t, err)
 	ctx, err = api.authOptionalMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned for an invalid jwt when auth is not required")
-	assert.Nil(t, getAPIConsumer(ctx))
+	assert.Nil(t, getUserConsumer(ctx))
 }
 
 func Test_authAdminMiddleware(t *testing.T) {
@@ -152,8 +153,8 @@ func Test_authAdminMiddleware(t *testing.T) {
 	require.NoError(t, err)
 	ctx, err = api.authAdminMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given for an admin user")
-	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	require.NotNil(t, getUserConsumer(ctx))
+	assert.Equal(t, admin.ID, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 }
 
 func Test_authMaintainerMiddleware(t *testing.T) {
@@ -185,8 +186,8 @@ func Test_authMaintainerMiddleware(t *testing.T) {
 	require.NoError(t, err)
 	ctx, err = api.authMaintainerMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given for an maintainer user")
-	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, maintainer.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	require.NotNil(t, getUserConsumer(ctx))
+	assert.Equal(t, maintainer.ID, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
@@ -194,8 +195,8 @@ func Test_authMaintainerMiddleware(t *testing.T) {
 	require.NoError(t, err)
 	ctx, err = api.authMaintainerMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given for an admin user")
-	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	require.NotNil(t, getUserConsumer(ctx))
+	assert.Equal(t, admin.ID, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 }
 
 func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
@@ -203,7 +204,7 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 
 	g := assets.InsertGroup(t, db)
 	u, _ := assets.InsertLambdaUser(t, db, g)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -230,7 +231,7 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 
 	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
+	builtinSession, err := authentication.NewSession(context.TODO(), db, &builtinConsumer.AuthConsumer, time.Second*5)
 	require.NoError(t, err)
 	jwt, err := authentication.NewSessionJWT(builtinSession, "")
 	require.NoError(t, err)
@@ -323,10 +324,14 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 		"permUsername": admin.Username,
 	})
 	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, sdk.AuthConsumer{
-		Name:            sdk.RandomString(10),
-		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeAdmin),
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeAdmin),
+		},
 	})
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -366,7 +371,7 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 	jwtWorkerSignin, err := hatchery.NewWorkerToken(hSrv.Name, privateKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
 		WorkerName:   hSrv.Name + "-worker",
-		JobID:        workflowTestContext.job.ID,
+		JobID:        fmt.Sprintf("%d", workflowTestContext.job.ID),
 	})
 	require.NoError(t, err)
 	uri = api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)

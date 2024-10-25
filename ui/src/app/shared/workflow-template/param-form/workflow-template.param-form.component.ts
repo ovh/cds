@@ -9,6 +9,7 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import {
     ParamData,
@@ -17,8 +18,8 @@ import {
     WorkflowTemplateInstance
 } from 'app/model/workflow-template.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { PreferencesState } from 'app/store/preferences.state';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
@@ -53,13 +54,11 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
     result: WorkflowTemplateApplyResult;
     codeMirrorConfig: any;
     themeSubscription: Subscription;
-    focusParam: string;
-    filteredRepo: any[] = [];
 
     constructor(
         private _repoManagerService: RepoManagerService,
         private _cd: ChangeDetectorRef,
-        private _theme: ThemeStore
+        private _store: Store
     ) {
         this.codeMirrorConfig = this.codeMirrorConfig = {
             matchBrackets: true,
@@ -70,7 +69,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
             lineNumbers: true,
         };
 
-        this.themeSubscription = this._theme.get()
+        this.themeSubscription = this._store.select(PreferencesState.theme)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(t => {
                 this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
@@ -84,7 +83,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.initProject();
-        this.changeParam();
+        this.emitParam();
     }
 
     initProject() {
@@ -110,24 +109,26 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
     }
 
     fetchRepos(parameterKey: string, repoMan: string): void {
-        this._repoManagerService.getRepositories(this.project.key, repoMan, false).subscribe(rs => {
-            let repoNames = rs.map(r => r.fullname);
+        this.parameterValues[parameterKey] = repoMan;
+        this.emitParam();
 
-            this.parameterValues[parameterKey + '-repositories'] = repoNames;
+        this._repoManagerService.getRepositories(this.project.key, repoMan, false).subscribe(rs => {
+            this.parameterValues[parameterKey + '-repositories'] = rs.map(r => r.fullname);
+            this.parameterValues[parameterKey + '-repositories-filtered'] = rs.map(r => r.fullname).splice(0, 100);
+            this._cd.markForCheck()
 
             if (this.workflowTemplateInstance && this.workflowTemplateInstance.request.parameters[parameterKey]) {
                 let v = this.workflowTemplateInstance.request.parameters[parameterKey];
                 let s = v.split('/');
                 if (s.length > 1) {
                     let selectedRepo = s.splice(1, s.length - 1).join('/');
-                    let existingRepo = repoNames.find(n => n === selectedRepo);
+                    let existingRepo = rs.map(r => r.fullname).find(n => n === selectedRepo);
                     if (existingRepo) {
                         this.parameterValues[parameterKey + '-repository'] = existingRepo;
-                        this.changeParam();
+                        this.emitParam();
                     }
                 }
             }
-            this._cd.markForCheck();
         });
     }
 
@@ -141,6 +142,8 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
                 }))
                 .subscribe(rs => {
                     this.parameterValues[parameterKey + '-repositories'] = rs.map(r => r.fullname);
+                    this.parameterValues[parameterKey + '-repositories-filtered'] = rs.map(r => r.fullname).splice(0, 100);
+                    this._cd.markForCheck()
                 });
         }
     }
@@ -174,26 +177,27 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
         }
 
         if (this.workflowTemplate) {
-            this.changeParam();
+            this.emitParam();
         }
     }
 
-    focusRepo(key: string) {
-        this.focusParam = key;
-        this.filteredRepo = this.parameterValues[this.focusParam + '-repositories'].splice(0, 100);
-        this._cd.markForCheck();
-    }
-
-    filterRepo(query: string): void {
+    filterRepo(parameterKey: string, query: string): void {
         if (!query || query.length < 3) {
+            this.parameterValues[parameterKey + '-repositories-filtered'] = [].concat(this.parameterValues[parameterKey + '-repositories']);
+            this._cd.markForCheck()
             return;
         }
         let queryLowerCase = query.toLowerCase();
-        this.filteredRepo = this.parameterValues[this.focusParam + '-repositories'].filter(name => name.toLowerCase().indexOf(queryLowerCase) !== -1)
+        this.parameterValues[parameterKey + '-repositories-filtered'] = this.parameterValues[parameterKey + '-repositories'].filter(name => name.toLowerCase().indexOf(queryLowerCase) !== -1);
         this._cd.markForCheck()
     }
 
-    changeParam() {
+    changeParam(key: string, value: any): void {
+        this.parameterValues[key] = value;
+        this.emitParam();
+    }
+
+    emitParam(): void {
         let parameters = new ParamData();
 
         this.workflowTemplate.parameters.forEach(parameter => {

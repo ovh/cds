@@ -11,12 +11,20 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
+	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
+	"github.com/ovh/cds/engine/api/organization"
+	"github.com/ovh/cds/engine/api/region"
+	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/worker_v2"
+	sdkhatch "github.com/ovh/cds/sdk/hatchery"
+
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -40,6 +48,60 @@ import (
 	"github.com/ovh/cds/sdk/jws"
 )
 
+func InsertRBAcPublicProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string) {
+	perm := fmt.Sprintf(`name: perm-%s-project-%s
+projects:
+  - role: %s
+    projects: [%s]
+    all_users: true
+`, role, projKey, role, projKey)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.Projects[0].RBACProjectKeys = []string{projKey}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
+func InsertRBAcRegion(t *testing.T, db gorpmapper.SqlExecutorWithTx, org, regionName, role string, user sdk.AuthentifiedUser) {
+	reg, err := region.LoadRegionByName(context.TODO(), db, regionName)
+	require.NoError(t, err)
+
+	orga, err := organization.LoadOrganizationByName(context.TODO(), db, org)
+	require.NoError(t, err)
+
+	perm := fmt.Sprintf(`name: perm-%s-region-%s
+regions:
+  - role: %s
+    region: %s
+    organization: [%s]
+    users: [%s]
+`, role, reg.Name, role, reg.Name, orga.Name, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.Regions[0].RegionID = reg.ID
+	rb.Regions[0].RBACOrganizationIDs = []string{orga.ID}
+	rb.Regions[0].RBACUsersIDs = []string{user.ID}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
+func InsertRBAcVariableSet(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string, vsName string, user sdk.AuthentifiedUser) {
+	perm := fmt.Sprintf(`name: perm-%s-variablesets-%s
+variablesets:
+  - role: %s
+    project: %s
+    variablesets: [%s]
+    users: [%s]
+`, role, projKey, role, projKey, vsName, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.VariableSets[0].ProjectKey = projKey
+	rb.VariableSets[0].RBACVariableSetNames = []string{vsName}
+	rb.VariableSets[0].RBACUsersIDs = []string{user.ID}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
 func InsertRBAcProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string, user sdk.AuthentifiedUser) {
 	perm := fmt.Sprintf(`name: perm-%s-project-%s
 projects:
@@ -53,6 +115,27 @@ projects:
 	rb.Projects[0].RBACProjectKeys = []string{projKey}
 	rb.Projects[0].RBACUsersIDs = []string{user.ID}
 	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
+func InsertWorker(t *testing.T, ctx context.Context, db gorpmapper.SqlExecutorWithTx, hatcheryConsumer *sdk.AuthHatcheryConsumer, hatch sdk.Hatchery, workerName string, jobRun sdk.V2WorkflowRunJob) (*sdk.V2Worker, string) {
+	workerConsumer, err := authentication.NewConsumerWorkerV2(ctx, db, workerName, hatcheryConsumer)
+	require.NoError(t, err)
+
+	spawnaargs := sdkhatch.SpawnArgumentsJWTV2{
+		WorkerName: workerName,
+		RunJobID:   jobRun.ID,
+		ModelName:  jobRun.Job.RunsOn.Model,
+	}
+	wk, err := worker_v2.RegisterWorker(ctx, db, spawnaargs, hatch, workerConsumer, sdk.WorkerRegistrationForm{Arch: "amd64", OS: "linux"})
+	require.NoError(t, err)
+
+	workerSession, err := authentication.NewSession(ctx, db, &workerConsumer.AuthConsumer, workerauth.SessionDuration)
+	require.NoError(t, err)
+
+	jwt, err := authentication.NewSessionJWT(workerSession, "")
+	require.NoError(t, err)
+
+	return wk, jwt
 }
 
 // InsertTestProject create a test project.
@@ -110,6 +193,19 @@ func InsertTestVCSProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, projID 
 	return &vcsProj
 }
 
+func InsertTestProjectRepository(t *testing.T, db gorpmapper.SqlExecutorWithTx, pKey string, vcsServerID string, name string) *sdk.ProjectRepository {
+	repo := sdk.ProjectRepository{
+		Name:         strings.ToLower(name),
+		Created:      time.Now(),
+		VCSProjectID: vcsServerID,
+		CreatedBy:    "test",
+		CloneURL:     "myurl",
+		ProjectKey:   pKey,
+	}
+	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
+	return &repo
+}
+
 // DeleteTestProject delete a test project
 func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key string) error {
 	t.Logf("Delete Project %s", key)
@@ -118,16 +214,35 @@ func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key
 
 // InsertTestGroup create a test group
 func InsertTestGroup(t *testing.T, db gorpmapper.SqlExecutorWithTx, name string) *sdk.Group {
+	return InsertTestGroupInOrganization(t, db, name, "default")
+}
+
+// InsertTestGroupInOrganization create a test group
+func InsertTestGroupInOrganization(t *testing.T, db gorpmapper.SqlExecutorWithTx, name string, orgaName string) *sdk.Group {
 	g := sdk.Group{
 		Name: name,
 	}
 
-	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
+	eg, _ := group.LoadByName(context.TODO(), db, g.Name, group.LoadOptions.WithOrganization)
 	if eg != nil {
 		g = *eg
 	} else if err := group.Insert(context.TODO(), db, &g); err != nil {
 		t.Fatalf("cannot insert group: %s", err)
 		return nil
+	}
+
+	if g.Organization == "" {
+		o, err := organization.LoadOrganizationByName(context.TODO(), db, orgaName)
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			o = &sdk.Organization{Name: orgaName}
+			require.NoError(t, organization.Insert(context.TODO(), db, o))
+			err = nil
+		}
+		grpOrg := group.GroupOrganization{
+			OrganizationID: o.ID,
+			GroupID:        g.ID,
+		}
+		require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &grpOrg))
 	}
 
 	return &g
@@ -171,13 +286,27 @@ func InsertAdminUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.Authen
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		o = &sdk.Organization{Name: "default"}
+		require.NoError(t, organization.Insert(context.TODO(), db, o))
+		err = nil
+	}
+	require.NoError(t, err)
+
+	uo := user.UserOrganization{
+		OrganizationID:     o.ID,
+		AuthentifiedUserID: data.ID,
+	}
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
+
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithContacts)
 	require.NoError(t, err, "user cannot be load for id %s", data.ID)
 
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err, "cannot create auth session")
 
 	jwt, err := authentication.NewSessionJWT(session, "")
@@ -210,13 +339,25 @@ func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.A
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		o = &sdk.Organization{Name: "default"}
+		require.NoError(t, organization.Insert(context.TODO(), db, o))
+		err = nil
+	}
+	uo := user.UserOrganization{
+		OrganizationID:     o.ID,
+		AuthentifiedUserID: data.ID,
+	}
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
+
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithContacts)
 	require.NoErrorf(t, err, "user cannot be load for id %s", data.ID)
 
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err, "cannot create auth session")
 
 	jwt, err := authentication.NewSessionJWT(session, "")
@@ -227,6 +368,11 @@ func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.A
 
 // InsertLambdaUser have to be used only for tests.
 func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
+	return InsertLambdaUserInOrganization(t, db, "default", groups...)
+}
+
+// InsertLambdaUserInOrganization have to be used only for tests.
+func InsertLambdaUserInOrganization(t *testing.T, db gorpmapper.SqlExecutorWithTx, orgaName string, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
 	u := &sdk.AuthentifiedUser{
 		Username: "lambda-" + sdk.RandomString(10),
 		Fullname: "lambda-" + sdk.RandomString(10),
@@ -234,13 +380,27 @@ func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, u))
 
-	u, err := user.LoadByID(context.Background(), db, u.ID)
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, orgaName)
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		o = &sdk.Organization{Name: orgaName}
+		require.NoError(t, organization.Insert(context.TODO(), db, o))
+		err = nil
+	}
+	require.NoError(t, err)
+	uo := user.UserOrganization{
+		OrganizationID:     o.ID,
+		AuthentifiedUserID: u.ID,
+	}
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
+
+	u, err = user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithOrganization)
 	require.NoError(t, err)
 
 	for i := range groups {
 		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
 		if existingGroup == nil {
 			require.NoError(t, group.Create(context.Background(), db, groups[i], u))
+			require.NoError(t, group.EnsureOrganization(context.TODO(), db, groups[i]))
 		} else {
 			groups[i].ID = existingGroup.ID
 			require.NoError(t, group.InsertLinkGroupUser(context.Background(), db,
@@ -260,7 +420,7 @@ func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err, "cannot create session")
 
 	jwt, err := authentication.NewSessionJWT(session, "")
@@ -275,7 +435,21 @@ func AuthentifyRequest(t *testing.T, req *http.Request, _ *sdk.AuthentifiedUser,
 	req.Header.Add("Authorization", auth)
 }
 
-//NewAuthentifiedRequest prepare a request
+func NewAuthentifiedStringRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method, uri string, i string) *http.Request {
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer([]byte(i)))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	AuthentifyRequest(t, req, nil, pass)
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
+
+	return req
+}
+
+// NewAuthentifiedRequest prepare a request
 func NewAuthentifiedRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method, uri string, i interface{}) *http.Request {
 	var btes []byte
 	var err error
@@ -486,11 +660,11 @@ func InsertWorkerModel(t *testing.T, db gorpmapper.SqlExecutorWithTx, name strin
 	return &m
 }
 
-func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
+func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthUserConsumer, string) {
 	usr1, _ := InsertLambdaUser(t, db, &grp)
 	SetUserGroupAdmin(t, db, grp.ID, usr1.ID)
 
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -518,13 +692,13 @@ func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group
 
 	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
-	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &hConsumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err)
 
 	jwt, err := authentication.NewSessionJWT(session, "")
 	require.NoError(t, err)
 
-	require.NoError(t, authentication.LoadConsumerOptions.WithAuthentifiedUser(context.TODO(), db, hConsumer))
+	require.NoError(t, authentication.LoadUserConsumerOptions.WithAuthentifiedUser(context.TODO(), db, hConsumer))
 
 	return &srv, privateKey, hConsumer, jwt
 }
@@ -532,7 +706,7 @@ func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group
 func InsertService(t *testing.T, db gorpmapper.SqlExecutorWithTx, name, serviceType string, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
 	usr1, _ := InsertAdminUser(t, db)
 
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
@@ -567,7 +741,7 @@ func InsertService(t *testing.T, db gorpmapper.SqlExecutorWithTx, name, serviceT
 func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey, string) {
 	usr1, _ := InsertAdminUser(t, db)
 
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
@@ -601,7 +775,7 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 
 	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
-	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &hConsumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err)
 
 	jwt, err := authentication.NewSessionJWT(session, "")

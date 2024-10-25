@@ -230,7 +230,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             nzTitle: 'Delete ' + this.node.name,
             nzWidth: '900px',
             nzContent: WorkflowDeleteNodeComponent,
-            nzComponentParams: {
+            nzData: {
                 project: this.project,
                 node: this.node,
                 workflow: this.workflow
@@ -248,7 +248,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
                 nzTitle: title,
                 nzWidth: '1300px',
                 nzContent: WorkflowTriggerComponent,
-                nzComponentParams: {
+                nzData: {
                     project: this.project,
                     workflow: this.workflow,
                     source: this.node,
@@ -265,7 +265,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
                 nzTitle: 'Hook creation',
                 nzWidth: '900px',
                 nzContent: WorkflowHookModalComponent,
-                nzComponentParams: {
+                nzData: {
                     project: this.project,
                     workflow: this.workflow,
                     node: this.node
@@ -283,7 +283,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             n = Workflow.getNodeByID(this.node.id, this.workflow);
         }
         let fork = new WNode();
-        fork.name = 'fork';
         fork.ref = new Date().getTime().toString();
         fork.type = WNodeType.FORK;
         let t = new WNodeTrigger();
@@ -301,7 +300,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
 
     createJoin(): void {
         let join = new WNode();
-        join.name = 'join';
         join.ref = new Date().getTime().toString();
         join.type = WNodeType.JOIN;
         join.parents = new Array<WNodeJoin>();
@@ -327,9 +325,8 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     run(): void {
         this._modalService.create({
             nzWidth: '900px',
-            nzTitle: 'Run worklow',
+            nzTitle: 'Run workflow',
             nzContent: WorkflowNodeRunParamComponent,
-            nzComponentParams: {}
         });
     }
 }

@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"text/template"
+
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/contrib/integrations/arsenal"
-	"text/template"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
@@ -30,6 +31,10 @@ func (e *arsenalDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) 
 		Description: "OVH Arsenal plugin to delete an alternative from a deployment",
 		Version:     sdk.VERSION,
 	}, nil
+}
+
+func (p *arsenalDeploymentPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	return sdk.ErrNotImplemented
 }
 
 func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {

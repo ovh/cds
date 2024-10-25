@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/luascript"
 )
 
-func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
+func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, runContext nodeRunContext, vcsInfos vcsInfos) {
 	if run.ApplicationID != 0 {
 		run.VCSRepository = vcsInfos.Repository
 		if vcsInfos.Tag == "" {
@@ -37,6 +37,7 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.URL)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.HTTPUrl)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitServer, sdk.StringParameter, vcsInfos.Server)
+
 }
 
 func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {

@@ -15,15 +15,15 @@ import { Commit } from 'app/model/repositories.model';
 import { WNode, WNodeContext, WNodeType, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest } from 'app/model/workflow.run.model';
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { debounceTime, finalize, first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 import { NzModalRef } from 'ng-zorro-antd/modal';
+import { PreferencesState } from 'app/store/preferences.state';
+import { Subscription } from 'rxjs';
 
 declare let CodeMirror: any;
 
@@ -74,7 +74,6 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit, OnD
         private _workflowRunService: WorkflowRunService,
         private _router: Router,
         private _appWorkflowService: ApplicationWorkflowService,
-        private _theme: ThemeStore,
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
@@ -90,7 +89,7 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit, OnD
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit() {
-        this.themeSubscription = this._theme.get()
+        this.themeSubscription = this._store.select(PreferencesState.theme)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(t => {
                 this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
@@ -369,9 +368,9 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit, OnD
                 this._cd.detectChanges();
             }))
             .subscribe(wr => {
-            this.close();
-            this._router.navigate(['/project', this.projectKey, 'workflow', this.workflow.name, 'run', wr.num]);
-        });
+                this.close();
+                this._router.navigate(['/project', this.projectKey, 'workflow', this.workflow.name, 'run', wr.num]);
+            });
     }
 
     refreshVCSInfos(remote?: string) {

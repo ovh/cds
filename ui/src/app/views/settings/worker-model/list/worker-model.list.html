@@ -1,7 +1,6 @@
 <div class="wrapper">
   <app-breadcrumb [path]="path">
-    <a class="ui right floated green button small buttonBreadcrumb" [routerLink]="['add']">{{ 'btn_add' | translate
-      }}</a>
+      <button nz-button nzType="primary" [routerLink]="['add']" class="floatRight">Add</button>
   </app-breadcrumb>
   <app-scrollview class="scrollview">
       <nz-row>

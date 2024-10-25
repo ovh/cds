@@ -1,5 +1,0 @@
-keys:
-  mysshkey:
-    type: ssh
-  mypgpkey:
-    type: pgp

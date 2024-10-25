@@ -142,7 +142,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		// load the workflow from database if exists
 		workflowExists, err := workflow.Exists(ctx, tx, proj.Key, ew.GetName())
@@ -157,7 +157,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			}
 		}
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, getAPIConsumer(ctx), workflow.ImportOptions{Force: force})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, getUserConsumer(ctx), workflow.ImportOptions{Force: force})
 		msgListString := translate(msgList)
 		if globalError != nil {
 			if len(msgListString) != 0 {
@@ -223,7 +223,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, wfName, workflow.LoadOptions{WithIcon: true})
 		if err != nil {
@@ -292,15 +292,15 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		log.Debug(ctx, "Read %d bytes from body", len(btes))
 		tr := tar.NewReader(bytes.NewReader(btes))
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
-		var pushOptions *workflow.PushOption
+		pushOptions := &workflow.PushOption{}
 		if r.Header.Get(sdk.WorkflowAsCodeHeader) != "" {
-			pushOptions = &workflow.PushOption{
-				FromRepository:  r.Header.Get(sdk.WorkflowAsCodeHeader),
-				IsDefaultBranch: true,
-				Force:           service.FormBool(r, "force"),
-			}
+			pushOptions.FromRepository = r.Header.Get(sdk.WorkflowAsCodeHeader)
+			pushOptions.IsDefaultBranch = true
+		}
+		if service.FormBool(r, "force") {
+			pushOptions.Force = true
 		}
 
 		//Load project
@@ -325,7 +325,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
 		}
-		if pushOptions != nil && pushOptions.FromRepository != "" {
+		if pushOptions.FromRepository != "" {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*proj, pushOptions.FromRepository))
 		}
 		var allMsg []sdk.Message
@@ -334,7 +334,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		msgPush, wrkflw, oldWrkflw, _, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, consumer, project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, oldWrkflw, _, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, consumer, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return err

@@ -1,7 +1,7 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
+import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -17,7 +17,6 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePipelineParameter } from 'app/store/pipelines.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -32,8 +31,11 @@ import { SharedModule } from 'app/shared/shared.module';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
+import { ConfigService } from 'app/service/services.module';
 
 describe('CDS: Pipeline Show', () => {
+
+    let routerService: RouterService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -57,7 +59,8 @@ describe('CDS: Pipeline Show', () => {
                 WorkflowRunService,
                 UserService,
                 RouterService,
-                AuthenticationService
+                AuthenticationService,
+                ConfigService
             ],
             imports: [
                 PipelineModule,
@@ -68,6 +71,9 @@ describe('CDS: Pipeline Show', () => {
                 HttpClientTestingModule
             ]
         }).compileComponents();
+        const injector = getTestBed();
+        routerService = injector.get(RouterService);
+        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({key: 'key1', pipName: 'pip1'}));
     });
 
     it('should load component', fakeAsync(() => {

@@ -47,7 +47,6 @@ func main() {
 		version(),
 		worker(),
 		workflow(),
-		preview(),
 	})
 	if err := root.Execute(); err != nil {
 		cli.ExitOnError(err)
@@ -95,7 +94,9 @@ var mainCmd = cli.Command{
 
 ## Download
 
-You will find latest release of ` + "`cdsctl`" + ` on [GitHub Releases](https://github.com/ovh/cds/releases/latest).
+You can find the cdsctl version corresponding to your CDS version on the UI: Menu -> Settings -> Command line cdsctl. You'll also find the instructions to configure your cdsctl according to your CDS instance.
+
+The latest release is available on [GitHub Releases](https://github.com/ovh/cds/releases/latest).
 
 
 ## Authentication
@@ -128,6 +129,10 @@ Advanced usages:
 * you define a maximum number of retries for HTTP calls:
 
 	CDS_API_URL="https://instance.cds.api" CDS_SESSION_TOKEN="yourtoken" CDS_HTTP_MAX_RETRY=10 cdsctl [command]
+
+* you can override CDN url if needed using the variable CDS_CDN_URL:
+
+  CDS_API_URL="https://instance.cds.api" CDS_TOKEN="yourtoken" CDS_CDN_URL="https://instance.cds.cdn" cdsctl [command]
 
 `,
 }

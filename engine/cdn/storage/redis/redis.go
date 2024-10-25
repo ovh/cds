@@ -22,7 +22,7 @@ var (
 
 type Redis struct {
 	storage.AbstractUnit
-	config     storage.RedisBufferConfiguration
+	config     sdk.RedisConf
 	store      cache.ScoredSetStore
 	bufferType storage.CDNBufferType
 }
@@ -38,13 +38,13 @@ func (s *Redis) GetDriverName() string {
 }
 
 func (s *Redis) Init(_ context.Context, cfg interface{}, bufferType storage.CDNBufferType) error {
-	config, is := cfg.(*storage.RedisBufferConfiguration)
+	config, is := cfg.(*sdk.RedisConf)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
 	s.config = *config
 	var err error
-	s.store, err = cache.New(s.config.Host, s.config.Password, s.config.DbIndex, 60)
+	s.store, err = cache.New(s.config, 60)
 	if err != nil {
 		return err
 	}
@@ -73,6 +73,19 @@ func (s *Redis) Size(i sdk.CDNItemUnit) (int64, error) {
 func (s *Redis) Add(i sdk.CDNItemUnit, score uint, since uint, value string) error {
 	value = fmt.Sprintf("%d%d#%s", score, since, value)
 	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(score))
+}
+
+func (s *Redis) Copy(ctx context.Context, srcItemID, destItemID string) error {
+	res, err := s.store.ScoredSetScanWithScores(ctx, cache.Key(keyBuffer, srcItemID), cache.MIN, cache.MAX)
+	if err != nil {
+		return err
+	}
+	for _, r := range res {
+		if err := s.store.ScoredSetAdd(ctx, cache.Key(keyBuffer, destItemID), r.Value, r.Score); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {

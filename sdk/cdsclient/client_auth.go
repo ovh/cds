@@ -14,7 +14,13 @@ func (c *client) AuthDriverList() (sdk.AuthDriverResponse, error) {
 	return response, nil
 }
 
-func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error) {
+func (c *client) AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error) {
+	var res sdk.AuthConsumerHatcherySigninResponse
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/v2/auth/consumer/hatchery/signin", request, &res)
+	return res, err
+}
+
+func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request interface{}) (sdk.AuthConsumerSigninResponse, error) {
 	var res sdk.AuthConsumerSigninResponse
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(consumerType)+"/signin", request, &res)
 	return res, err
@@ -50,8 +56,8 @@ func (c *client) AuthConsumerLocalSignupVerify(token, initToken string) (sdk.Aut
 	return res, nil
 }
 
-func (c *client) AuthConsumerListByUser(username string) (sdk.AuthConsumers, error) {
-	var consumers sdk.AuthConsumers
+func (c *client) AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error) {
+	var consumers sdk.AuthUserConsumers
 	if _, err := c.GetJSON(context.Background(), "/user/"+username+"/auth/consumer", &consumers); err != nil {
 		return nil, err
 	}
@@ -73,7 +79,7 @@ func (c *client) AuthConsumerRegen(username, id string, newDuration int64, overl
 	return consumer, err
 }
 
-func (c *client) AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error) {
+func (c *client) AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
 	var consumer sdk.AuthConsumerCreateResponse
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/user/"+username+"/auth/consumer", request, &consumer)
 	return consumer, err

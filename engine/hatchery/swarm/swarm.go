@@ -14,15 +14,14 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
+	docker "github.com/moby/moby/client"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdn"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -37,10 +36,28 @@ func New() *HatcherySwarm {
 
 var _ hatchery.InterfaceWithModels = new(HatcherySwarm)
 
+func (h *HatcherySwarm) Signin(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
+	if err := h.Common.Signin(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	if err := h.Common.SigninV2(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	return nil
+}
+
 // InitHatchery connect the hatchery to the docker api
 func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 	if err := h.Common.Init(ctx, h); err != nil {
 		return err
+	}
+
+	if err := h.InitWorkersMetrics(ctx); err != nil {
+		return err
+	}
+
+	if h.Config.OSArch == "" {
+		h.Config.OSArch = "linux/amd64"
 	}
 
 	h.dockerClients = map[string]*dockerClient{}
@@ -146,9 +163,9 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 				}
 			}
 
-			var opts = []func(*docker.Client) error{docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient)}
-			if strings.HasPrefix(cfg.Host, "unix:///") {
-				opts = []func(*docker.Client) error{docker.WithHost(cfg.Host)}
+			var opts = []docker.Opt{docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion)}
+			if !strings.HasPrefix(cfg.Host, "unix:///") {
+				opts = append(opts, docker.WithHTTPClient(httpClient))
 			}
 
 			d, errc := docker.NewClientWithOpts(opts...)
@@ -181,6 +198,12 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		h.routines(ctx)
 	})
 
+	if h.Config.WorkerMetricsRefreshDelay > 0 {
+		h.GoRoutines.Run(ctx, "worker-metrics", func(ctx context.Context) {
+			h.StartWorkerMetricsRoutine(ctx, h.Config.WorkerMetricsRefreshDelay)
+		})
+	}
+
 	return nil
 }
 
@@ -191,7 +214,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	ctx, end := telemetry.Span(ctx, "swarm.SpawnWorker")
 	defer end()
 
-	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+	if sdk.IsJobIDForRegister(spawnArgs.JobID) && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register"))
 	}
 
@@ -251,14 +274,14 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//Memory for the worker
 	memory := int64(h.Config.DefaultMemory)
 
-	if spawnArgs.Model.ModelDocker.Memory != 0 {
-		memory = spawnArgs.Model.ModelDocker.Memory
+	if spawnArgs.Model.Memory != 0 {
+		memory = spawnArgs.Model.Memory
 	}
 
 	var network, networkAlias string
 	services := []string{}
 
-	if spawnArgs.JobID > 0 {
+	if !sdk.IsJobIDForRegister(spawnArgs.JobID) {
 		for _, r := range spawnArgs.Requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
@@ -314,22 +337,24 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 				//labels are used to make container cleanup easier. We "link" the service to its worker this way.
 				labels := map[string]string{
-					LabelServiceWorker: spawnArgs.WorkerName,
-					LabelServiceName:   serviceName,
-					LabelHatchery:      h.Config.Name,
+					LabelServiceName: serviceName,
+					LabelHatchery:    h.Config.Name,
+					LabelJobID:       spawnArgs.JobID,
 				}
 
-				if spawnArgs.JobID > 0 {
+				if spawnArgs.JobID != "0" {
 					labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
 					labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
 					labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
-					labels[hatchery.LabelServiceRunID] = fmt.Sprintf("%d", spawnArgs.RunID)
+					labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
 					labels[hatchery.LabelServiceNodeRunID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
 					labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
 					labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
-					labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%d", spawnArgs.JobID)
+					labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
 					labels[hatchery.LabelServiceID] = fmt.Sprintf("%d", r.ID)
 					labels[hatchery.LabelServiceReqName] = r.Name
+					labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion1
+					labels[hatchery.LabelServiceWorker] = spawnArgs.WorkerName
 				}
 
 				//Start the services
@@ -356,17 +381,39 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		}
 	}
 
+	// Create services V2
+	for sName, service := range spawnArgs.Services {
+		//Create a network if not already created
+		if network == "" {
+			network = spawnArgs.WorkerName + "-net"
+			networkAlias = "worker"
+			if err := h.createNetwork(ctx, dockerClient, network); err != nil {
+				log.Warn(ctx, "hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
+				next()
+				return err
+			}
+		}
+
+		serviceName, err := h.SpawnWorkerService(ctx, dockerClient, spawnArgs, sName, service, network)
+		if err != nil {
+			return err
+		}
+		services = append(services, serviceName)
+	}
+
+	var cmd = spawnArgs.Model.GetCmd()
 	if spawnArgs.RegisterOnly {
-		spawnArgs.Model.ModelDocker.Cmd += " register"
+		cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
 	}
 
-	//labels are used to make container cleanup easier
+	// labels are used to make container cleanup easier
 	labels := map[string]string{
-		LabelWorkerModelPath:    spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
+		LabelWorkerModelPath:    spawnArgs.Model.GetFullPath(),
 		LabelWorkerName:         spawnArgs.WorkerName,
 		LabelWorkerRequirements: strings.Join(services, ","),
 		LabelHatchery:           h.Config.Name,
+		LabelJobID:              spawnArgs.JobID,
 	}
 
 	// Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one: #4594
@@ -382,7 +429,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		API: workerConfig.APIEndpoint,
 	}
 
-	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
+	tmpl, errt := template.New("cmd").Parse(cmd)
 	if errt != nil {
 		return errt
 	}
@@ -390,12 +437,12 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
 		return errTmpl
 	}
-	cmds := strings.Fields(spawnArgs.Model.ModelDocker.Shell)
+	cmds := strings.Fields(spawnArgs.Model.GetShell())
 	cmds = append(cmds, buffer.String())
 
 	// copy envs to avoid data race
-	modelEnvs := make(map[string]string, len(spawnArgs.Model.ModelDocker.Envs))
-	for k, v := range spawnArgs.Model.ModelDocker.Envs {
+	modelEnvs := make(map[string]string, len(spawnArgs.Model.GetDockerEnvs()))
+	for k, v := range spawnArgs.Model.GetDockerEnvs() {
 		modelEnvs[k] = v
 	}
 
@@ -416,7 +463,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	args := containerArgs{
 		name:         spawnArgs.WorkerName,
-		image:        spawnArgs.Model.ModelDocker.Image,
+		image:        spawnArgs.Model.GetDockerImage(),
 		network:      network,
 		networkAlias: networkAlias,
 		cmd:          cmds,
@@ -430,11 +477,89 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//start the worker
 	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Warn(ctx, "unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
+		log.Warn(ctx, "unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.GetDockerImage(), err)
 		return err
 	}
 
 	return nil
+}
+
+// v2
+func (h *HatcherySwarm) SpawnWorkerService(ctx context.Context, dockerClient *dockerClient, spawnArgs hatchery.SpawnArguments, sName string, service sdk.V2JobService, network string) (string, error) {
+	serviceMemory := int64(1024)
+	if sm, ok := service.Env["CDS_SERVICE_MEMORY"]; ok {
+		i, err := strconv.ParseUint(sm, 10, 32)
+		if err != nil {
+			log.Warn(ctx, "SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
+		} else {
+			// too low values are checked in HatcherySwarm.createAndStartContainer() below
+			serviceMemory = int64(i)
+		}
+	}
+	serviceMemorySwap := int64(-1)
+	if h.Config.DisableMemorySwap {
+		serviceMemorySwap = 0
+	}
+
+	var cmdArgs []string
+	if sa, ok := service.Env["CDS_SERVICE_ARGS"]; ok {
+		cmdArgs = hatchery.ParseArgs(sa)
+	}
+	if cmdArgs == nil {
+		cmdArgs = []string{}
+	}
+
+	env := make([]string, 0, len(service.Env))
+	for key, val := range service.Env {
+		env = append(env, key+"="+val)
+	}
+
+	serviceName := sName + "-" + spawnArgs.WorkerName
+
+	// labels are used to make container cleanup easier. We "link" the service to its worker this way.
+	labels := map[string]string{
+		LabelServiceName: serviceName,
+		LabelHatchery:    h.Config.Name,
+		LabelJobID:       spawnArgs.JobID,
+	}
+
+	if spawnArgs.JobID != "0" {
+		labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
+		labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
+		labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
+		labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
+		labels[hatchery.LabelServiceRunJobID] = spawnArgs.RunJobID
+		labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+		labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
+		labels[hatchery.LabelServiceReqName] = sName
+		labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion2
+		labels[hatchery.LabelServiceWorker] = spawnArgs.WorkerName
+
+		labels[hatchery.LabelServiceRunNumber] = strconv.FormatInt(spawnArgs.RunNumber, 10)
+		labels[hatchery.LabelServiceRunAttempt] = strconv.FormatInt(spawnArgs.RunAttempt, 10)
+		labels[hatchery.LabelServiceRegion] = spawnArgs.Region
+	}
+
+	args := containerArgs{
+		name:         serviceName,
+		image:        service.Image,
+		network:      network,
+		networkAlias: sName,
+		cmd:          cmdArgs,
+		env:          env,
+		labels:       labels,
+		memory:       serviceMemory,
+		memorySwap:   serviceMemorySwap,
+		entryPoint:   nil,
+	}
+
+	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "unable to start required container on %s: %s", dockerClient.name, err)
+		return serviceName, err
+	}
+
+	return serviceName, nil
 }
 
 // ModelType returns type of hatchery
@@ -448,14 +573,23 @@ const (
 
 // CanSpawn checks if the model can be spawned by this hatchery
 // it checks on every docker engine is one of the docker has availability
-func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	ctx, end := telemetry.Span(ctx, "hatchery.CanSpawn", telemetry.Tag(telemetry.TagWorker, model.Name))
+func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+	ctx, end := telemetry.Span(ctx, "swarm.CanSpawn", telemetry.Tag(telemetry.TagWorker, model.GetName()))
 	defer end()
+
+	// For workflow v2, check os/arch of worker model
+	if model.ModelV2 != nil {
+		modelOSArch := model.ModelV2.OSArch
+		if h.Config.OSArch != modelOSArch {
+			log.Debug(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, modelOSArch, h.Config.OSArch)
+			return false
+		}
+	}
 
 	// Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
-			log.Debug(ctx, "CanSpawn> Job %d has a hostname requirement. Swarm can't spawn a worker for this job", jobID)
+			log.Debug(ctx, "CanSpawn> Job %s has a hostname requirement. Swarm can't spawn a worker for this job", jobID)
 			return false
 		}
 	}
@@ -517,7 +651,7 @@ func (h *HatcherySwarm) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
 }
 
-//Configuration returns Hatchery CommonConfiguration
+// Configuration returns Hatchery CommonConfiguration
 func (h *HatcherySwarm) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }
@@ -561,7 +695,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers Cont
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	apiworkers, err := h.CDSClient().WorkerList(ctx)
+	apiworkers, err := h.WorkerList(ctx)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workers on %s", dockerClientName)
 	}
@@ -586,10 +720,10 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers Cont
 		//Try to find the worker matching this container
 		var found = false
 		for _, n := range apiworkers {
-			if n.Name == c.Names[0] || n.Name == strings.Replace(c.Names[0], "/", "", 1) {
+			if n.Name() == c.Names[0] || n.Name() == strings.Replace(c.Names[0], "/", "", 1) {
 				found = true
 				// If worker is disabled, kill it
-				if n.Status == sdk.StatusDisabled {
+				if n.Status() == sdk.StatusDisabled {
 					log.Debug(ctx, "hatchery> swarm> listAwolWorkers> Worker %s is disabled. Kill it with fire!", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break
@@ -638,46 +772,29 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 		// Checking services
 		for _, c := range containers {
 			// checks if the container is a service based on its labels
-			if c.Labels[LabelServiceWorker] == "" {
+			if c.Labels[hatchery.LabelServiceWorker] == "" {
 				continue
 			}
 			// if the worker associated to this service is still alive do not kill the service
-			if _, workerStillAlive := mContainers[c.Labels[LabelServiceWorker]]; workerStillAlive {
+			if _, workerStillAlive := mContainers[c.Labels[hatchery.LabelServiceWorker]]; workerStillAlive {
 				continue
 			}
 
 			if !strings.Contains(c.Status, "Exited") && time.Now().Add(-3*time.Minute).Unix() < c.Created {
-				log.Debug(ctx, "hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels[LabelServiceWorker])
+				log.Debug(ctx, "hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels[hatchery.LabelServiceWorker])
 				continue
 			}
 
 			// Send final logs before deleting service container
-			jobIdentifiers := h.GetIdentifiersFromLabels(c)
+			jobIdentifiers := hatchery.GetServiceIdentifiersFromLabels(c.Labels)
 			if jobIdentifiers == nil {
 				continue
 			}
-			endLog := cdslog.Message{
-				Level: logrus.InfoLevel,
-				Value: string("End of Job"),
-				Signature: cdn.Signature{
-					Service: &cdn.SignatureService{
-						HatcheryID:      h.Service().ID,
-						HatcheryName:    h.ServiceName(),
-						RequirementID:   jobIdentifiers.ServiceID,
-						RequirementName: c.Labels[hatchery.LabelServiceReqName],
-						WorkerName:      c.Labels[LabelServiceWorker],
-					},
-					ProjectKey:   c.Labels[hatchery.LabelServiceProjectKey],
-					WorkflowName: c.Labels[hatchery.LabelServiceWorkflowName],
-					WorkflowID:   jobIdentifiers.WorkflowID,
-					RunID:        jobIdentifiers.RunID,
-					NodeRunName:  c.Labels[hatchery.LabelServiceNodeRunName],
-					JobName:      c.Labels[hatchery.LabelServiceJobName],
-					JobID:        jobIdentifiers.JobID,
-					NodeRunID:    jobIdentifiers.NodeRunID,
-					Timestamp:    time.Now().UnixNano(),
-				},
-			}
+
+			endLog := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, c.Labels)
+			endLog.Value = string("End of Job")
+			endLog.Signature.Timestamp = time.Now().UnixNano()
+
 			h.Common.SendServiceLog(ctx, []cdslog.Message{endLog}, sdk.StatusTerminated)
 
 			log.Debug(ctx, "hatchery> swarm> killAwolWorker> Delete worker (service) %s on %s", c.Names[0], dockerClient.name)

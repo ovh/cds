@@ -8,12 +8,9 @@ TARGET_DIR = ./dist
 TARGET_BINARY = cds-worker
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_BINARY)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm64)
 
 GO_BUILD = go build
-GO_LINT = ${GOPATH}/bin/gometalinter
-GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
-GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
 
 TEST_PKGS = $(shell go list ./... | grep -v vendor)
 TEST_CMD = go test -v -timeout 180s -coverprofile=profile.coverprofile
@@ -22,14 +19,17 @@ $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)
 	@mkdir -p $(TARGET_DIR)
 
+GO_LINT = ${GOPATH}/bin/gometalinter
 $(GO_LINT):
-	go get -u github.com/alecthomas/gometalinter
+	go install github.com/alecthomas/gometalinter@latest
 
+GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 $(GO_COV_MERGE):
-	go get -u github.com/wadey/gocovmerge
+	go install github.com/wadey/gocovmerge@latest
 
+GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
 $(GO_GO2XUNIT):
-	go get -u github.com/tebeka/go2xunit
+	go install github.com/tebeka/go2xunit@latest
 
 default: build
 

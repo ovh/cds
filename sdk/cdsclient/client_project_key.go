@@ -24,3 +24,13 @@ func (c *client) ProjectKeysDelete(projectKey string, keyName string) error {
 	_, _, _, err := c.Request(context.Background(), "DELETE", "/project/"+projectKey+"/keys/"+url.QueryEscape(keyName), nil)
 	return err
 }
+
+func (c *client) ProjectKeysDisable(projectKey string, keyProjectName string) error {
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/keys/"+url.QueryEscape(keyProjectName)+"/disable", nil, nil)
+	return err
+}
+
+func (c *client) ProjectKeysEnable(projectKey string, keyProjectName string) error {
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/keys/"+url.QueryEscape(keyProjectName)+"/enable", nil, nil)
+	return err
+}

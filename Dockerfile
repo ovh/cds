@@ -1,12 +1,15 @@
-FROM alpine:3.16
-RUN apk update && apk update && \
+FROM alpine:3.20
+RUN apk update && \
     apk --no-cache add curl && \
     apk --no-cache add gpg && \
     apk --no-cache add git && \
     apk --no-cache add tzdata && \
     apk --no-cache add openssh-client && \
-    apk --no-cache add ca-certificates && rm -rf /var/cache/apk/* 
+    apk --no-cache add gpg-agent && \
+    apk --no-cache add ca-certificates && \
+    apk upgrade && rm -rf /var/cache/apk/*
 RUN update-ca-certificates
+RUN echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /etc/ssh/ssh_config
 RUN mkdir -p /app/sql /app/ui_static_files
 COPY dist/cds-engine-* /app/
 COPY dist/cdsctl-* /app/

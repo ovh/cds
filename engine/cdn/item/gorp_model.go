@@ -26,13 +26,25 @@ func (c cdnItemDB) ToCDSItem() (sdk.CDNItem, error) {
 			return item, sdk.WithStack(err)
 		}
 		item.APIRef = &apiRef
+	case sdk.CDNTypeItemRunResultV2:
+		var apiRef sdk.CDNRunResultAPIRefV2
+		if err := sdk.JSONUnmarshal(c.APIRefDB, &apiRef); err != nil {
+			return item, sdk.WithStack(err)
+		}
+		item.APIRef = &apiRef
+	case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
+		var apiRef sdk.CDNLogAPIRefV2
+		if err := sdk.JSONUnmarshal(c.APIRefDB, &apiRef); err != nil {
+			return item, sdk.WithStack(err)
+		}
+		item.APIRef = &apiRef
 	case sdk.CDNTypeItemRunResult:
 		var apiRef sdk.CDNRunResultAPIRef
 		if err := sdk.JSONUnmarshal(c.APIRefDB, &apiRef); err != nil {
 			return item, sdk.WithStack(err)
 		}
 		item.APIRef = &apiRef
-	case sdk.CDNTypeItemWorkerCache:
+	case sdk.CDNTypeItemWorkerCache, sdk.CDNTypeItemWorkerCacheV2:
 		var apiRef sdk.CDNWorkerCacheAPIRef
 		if err := sdk.JSONUnmarshal(c.APIRefDB, &apiRef); err != nil {
 			return item, sdk.WithStack(err)

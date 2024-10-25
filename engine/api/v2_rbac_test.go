@@ -2,12 +2,15 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/rbac"
 	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -15,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_postImportRbacHandler(t *testing.T) {
+func Test_crudRbacHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	_, err := db.Exec("DELETE FROM rbac")
@@ -25,8 +28,16 @@ func Test_postImportRbacHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
+	reg := sdk.Region{
+		Name: sdk.RandomString(10),
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	t.Cleanup(func() {
+		db.Exec("DELETE FROM region WHERE id = $1", reg.ID)
+	})
+
 	vars := map[string]string{}
-	uri := api.Router.GetRouteV2("POST", api.postImportRbacHandler, vars)
+	uri := api.Router.GetRouteV2("POST", api.postImportRBACHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
 
@@ -36,11 +47,25 @@ projects:
     projects: [%s]
     users: [%s]
     groups: [%s]
-globals:
- - role: manage-permission
-   users: [%s]
-   groups: [%s]
-`, p.Key, u.Username, g.Name, u.Username, g.Name)
+global:
+  - role: manage-permission
+    users: [%s]
+    groups: [%s]
+workflows:
+  - role: trigger
+    all_users: true  
+    all_workflows: true
+    project: %s
+variablesets:
+  - role: manage
+    all_users: true
+    all_variablesets: true
+    project: %s	
+region_projects:
+  - role: execute
+    projects: [%s]
+    region: %s	
+`, p.Key, u.Username, g.Name, u.Username, g.Name, p.Key, p.Key, p.Key, reg.Name)
 
 	// Here, we insert the vcs server as a CDS administrator
 	req.Body = io.NopCloser(strings.NewReader(body))
@@ -50,20 +75,49 @@ globals:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 
-	rbacDB, err := rbac.LoadRBACByName(context.TODO(), db, "perm-test", rbac.LoadOptions.LoadRBACProject, rbac.LoadOptions.LoadRBACGlobal)
-	require.NoError(t, err)
+	// GET RBAC
+	varsGET := map[string]string{"rbacIdentifier": "perm-test"}
+	uriGET := api.Router.GetRouteV2("GET", api.getRBACHandler, varsGET)
+	test.NotEmpty(t, uriGET)
+	reqGET := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGET, nil)
 
-	require.Equal(t, 1, len(rbacDB.Globals))
-	require.Equal(t, "manage-permission", rbacDB.Globals[0].Role)
-	require.Equal(t, 1, len(rbacDB.Globals[0].RBACUsersIDs))
-	require.Equal(t, 1, len(rbacDB.Globals[0].RBACGroupsIDs))
-	require.Equal(t, u.ID, rbacDB.Globals[0].RBACUsersIDs[0])
-	require.Equal(t, g.ID, rbacDB.Globals[0].RBACGroupsIDs[0])
+	wGET := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wGET, reqGET)
+	require.Equal(t, 200, wGET.Code)
+	var rbacGET sdk.RBAC
+	require.NoError(t, json.Unmarshal(wGET.Body.Bytes(), &rbacGET))
 
-	require.Equal(t, 1, len(rbacDB.Projects))
-	require.Equal(t, "read", rbacDB.Projects[0].Role)
-	require.Equal(t, 1, len(rbacDB.Projects[0].RBACUsersIDs))
-	require.Equal(t, 1, len(rbacDB.Projects[0].RBACGroupsIDs))
-	require.Equal(t, u.ID, rbacDB.Projects[0].RBACUsersIDs[0])
-	require.Equal(t, g.ID, rbacDB.Projects[0].RBACGroupsIDs[0])
+	require.Equal(t, 1, len(rbacGET.Global))
+	require.Equal(t, "manage-permission", rbacGET.Global[0].Role)
+	require.Equal(t, 1, len(rbacGET.Global[0].RBACUsersName))
+	require.Equal(t, 1, len(rbacGET.Global[0].RBACGroupsName))
+	require.Equal(t, u.Username, rbacGET.Global[0].RBACUsersName[0])
+	require.Equal(t, g.Name, rbacGET.Global[0].RBACGroupsName[0])
+
+	require.Equal(t, 1, len(rbacGET.Projects))
+	require.Equal(t, "read", rbacGET.Projects[0].Role)
+	require.Equal(t, 1, len(rbacGET.Projects[0].RBACUsersName))
+	require.Equal(t, 1, len(rbacGET.Projects[0].RBACGroupsName))
+	require.Equal(t, u.Username, rbacGET.Projects[0].RBACUsersName[0])
+	require.Equal(t, g.Name, rbacGET.Projects[0].RBACGroupsName[0])
+
+	require.Equal(t, 1, len(rbacGET.Workflows))
+
+	require.Equal(t, 1, len(rbacGET.VariableSets))
+
+	require.Equal(t, 1, len(rbacGET.RegionProjects))
+	require.Equal(t, reg.Name, rbacGET.RegionProjects[0].RegionName)
+
+	// Delete
+	varsDelete := map[string]string{"rbacIdentifier": rbacGET.ID}
+	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteRBACHandler, varsDelete)
+	test.NotEmpty(t, uriDelete)
+	reqDelete := assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uriDelete, nil)
+
+	wDelete := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wDelete, reqDelete)
+	require.Equal(t, 200, wDelete.Code)
+
+	_, err = rbac.LoadRBACByID(context.TODO(), db, rbacGET.ID)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 }

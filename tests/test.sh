@@ -1,13 +1,15 @@
 #!/bin/bash
 
+trap 'kill $(jobs -p)' EXIT
+
 # script usage definition
-usage() { 
-    echo "Usage: ./test.sh <target...>" 
+usage() {
+    echo "Usage: ./test.sh <target...>"
     echo "   Available targets: smoke_api, smoke_services, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties, admin"
-} 
+}
 
 # Arguments are mandatory
-[[ $# -lt 1 ]] && usage && exit 1 
+[[ $# -lt 1 ]] && usage && exit 1
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 NOCOLOR='\033[0m'
@@ -37,22 +39,27 @@ CDS_HOOKS_URL="${CDS_HOOKS_URL:-http://localhost:8083}"
 CDSCTL="${CDSCTL:-`which cdsctl`}"
 CDSCTL_CONFIG="${CDSCTL_CONFIG:-.cdsrc}"
 CDS_ENGINE_CTL="${CDS_ENGINE_CTL:-`which cds-engine`}"
+CDS_ENGINE_CONFIG="${CDS_ENGINE_CONFIG:-cds-engine.toml}"
+CDS_HATCHERY_NAME="${CDS_HATCHERY_NAME:-hatchery-swarm}"
+CDS_REGION="${CDS_REGION:-default}"
 SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
 INIT_TOKEN="${INIT_TOKEN:-}"
 GITEA_USER="${GITEA_USER:-gituser}"
 GITEA_PASSWORD="${GITEA_PASSWORD:-gitpwd}"
 GITEA_HOST="${GITEA_HOST:-http://localhost:3000}"
 GITEA_CDS_HOOKS_URL="${GITEA_CDS_HOOKS_URL:-http://localhost:8083}"
+GPG_KEY_ID="${GPG_KEY_ID:-`gpg --list-secret-keys | grep --only-matching --extended-regexp "[[:xdigit:]]{40}" | head -n 1`}"
 
-# If you want to run some tests with a specific model requirements, set CDS_MODEL_REQ
-CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
+PLUGINS_DIRECTORY="${PLUGINS_DIRECTORY:-dist}"
+
 # If you want to run some tests with a specific region requirement, set CDS_REGION_REQ
-CDS_REGION_REQ="${CDS_REGION_REQ:-""}" 
+CDS_REGION_REQ="${CDS_REGION_REQ:-""}"
 
 HOSTNAME="${HOSTNAME:-localhost}"
+MAX_CHILDREN="${MAX_CHILDREN:-10}"
 
 # The default values below fit to default minio installation.
-# Run "make minio_start" to start a minio docker container 
+# Run "make minio_start" to start a minio docker container
 AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
 S3_BUCKET="${S3_BUCKET:-cds-it}"
 AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-AKIAIOSFODNN7EXAMPLE}"
@@ -70,6 +77,7 @@ echo -e "  CDS_UI_URL=${CYAN}${CDS_UI_URL}${NOCOLOR}"
 echo -e "  CDS_HATCHERY_URL=${CYAN}${CDS_HATCHERY_URL}${NOCOLOR}"
 echo -e "  CDSCTL=${CYAN}${CDSCTL}${NOCOLOR}"
 echo -e "  CDSCTL_CONFIG=${CYAN}${CDSCTL_CONFIG}${NOCOLOR}"
+echo -e "  GPG_KEY_ID=${CYAN}${GPG_KEY_ID}${NOCOLOR}"
 echo ""
 
 check_failure() {
@@ -111,7 +119,6 @@ initialization_tests() {
     CMD="${VENOM} run ${VENOM_OPTS} 01_signup.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_user --var api.url=${CDS_API_URL} --var username=cds.integration.tests.ro --var email=it-user-ro@localhost.local --var fullname=IT_User_RO --var smtpmock.url=${SMTP_MOCK_URL} --var ring=USER"
     echo -e "  ${YELLOW}01_signup.yml (user) ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_signup_user.yml.output 2>&1
-
     check_failure $? 01_signup_user.yml.output
     mv_results ${f}
 
@@ -119,6 +126,18 @@ initialization_tests() {
     echo -e "  ${YELLOW}01_queue_stopall.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_queue_stopall.yml.output 2>&1
     check_failure $? 01_queue_stopall.yml.output
+    mv_results ${f}
+
+    CMD="${VENOM} run ${VENOM_OPTS} 01_init_hatchery.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL} --var engine.config=${CDS_ENGINE_CONFIG} --var hatchery.name=${CDS_HATCHERY_NAME}"
+    echo -e "  ${YELLOW}01_init_hatchery.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_init_hatchery.yml.output 2>&1
+    check_failure $? 01_init_hatchery.yml.output
+    mv_results ${f}
+
+    CMD="${VENOM} run ${VENOM_OPTS} 01_init_plugins.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL} --var dist=${PLUGINS_DIRECTORY}"
+    echo -e "  ${YELLOW}01_init_plugins.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_init_hatchery.yml.output 2>&1
+    check_failure $? 01_init_hatchery.yml.output
     mv_results ${f}
 }
 
@@ -149,16 +168,42 @@ cli_tests() {
 }
 
 workflow_tests() {
-    echo "Running Workflow tests:"
+    CMD="${VENOM} run ${VENOM_OPTS} 01_init_model.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL}"
+    echo -e "  ${YELLOW}01_init_model.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_init_model.yml.output 2>&1
+    check_failure $? 01_init_model.yml.output
+    mv_results ${f}    
+
+    echo "Running Workflow tests"
     for f in $(ls -1 04_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
-        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
-        START="$(date +%s)"
-        ${CMD} >${f}.output 2>&1
-        check_failure $? ${f}.output
-        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
-        mv_results ${f}
+        run_workflow_tests $f &
+        local my_pid=$$
+        local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
+        children=$((children-1))
+        if [[ $children -ge $MAX_CHILDREN ]]; then
+            wait -n
+        fi
     done
+    wait
+}
+
+run_workflow_tests() {
+    f=$1
+    rm -rf ./results/${f} && mkdir -p ./results/${f}
+    CMD="${VENOM} run ${VENOM_OPTS} --output-dir ./results/${f} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
+    echo -e "  ${YELLOW}${f} ${BLUE}STARTING ${DARKGRAY}cmd: ${CMD}${NOCOLOR}"
+    START="$(date +%s)"
+    ${CMD} > ./results/${f}/${f}.output 2>&1
+    exit_status=$?    
+    if [ $exit_status -ne 0 ]; then
+        out=`cat ./results/${f}/${f}.output`
+        echo -e "  ${YELLOW}${f} ${LIGHTRED}FAILURE ${DARKGRAY}code: ${exit_status}\n${RED}${out}${NOCOLOR}"
+        mv ./results/${f}/venom.log ./results/${f}/${f}-venom.log
+    else
+        echo -e "  ${YELLOW}${f} ${GREEN}SUCCESS ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
+    fi
+    mv ./results/${f}/* ./results
+    exit $exit_status
 }
 
 workflow_with_integration_tests() {
@@ -187,7 +232,6 @@ workflow_with_third_parties() {
     check_failure $? 01_queue_stopall.yml.output
     mv_results ${f}
 
-    if [ -z "$CDS_MODEL_REQ" ]; then echo "missing CDS_MODEL_REQ variable"; exit 1; fi
     if [ -z "$CDS_REGION_REQ" ]; then echo "missing CDS_REGION_REQ variable"; exit 1; fi
     if [ -z "$VENOM_VAR_projectKey" ]; then echo "missing VENOM_VAR_projectKey variable"; exit 1; fi
     if [ -z "$VENOM_VAR_integrationName" ]; then echo "missing VENOM_VAR_integrationName variable"; exit 1; fi
@@ -222,14 +266,34 @@ cds_v2_tests() {
     curl --fail -I -X GET ${GITEA_HOST}/api/swagger
     echo "Running CDS v2 tests:"
     for f in $(ls -1 08_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD}"
-        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
-        START="$(date +%s)"
-        ${CMD} >${f}.output 2>&1
-        check_failure $? ${f}.output
-        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
-        mv_results ${f}
+        run_cds_v2_tests $f &
+        local my_pid=$$
+        local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
+        children=$((children-1))
+        if [[ $children -ge $MAX_CHILDREN ]]; then
+            wait -n
+        fi
     done
+    wait
+}
+
+run_cds_v2_tests() {
+    f=$1
+    rm -rf ./results/${f} && mkdir -p ./results/${f}
+    CMD="${VENOM} run ${VENOM_OPTS} --output-dir ./results/${f} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME} --var gpg.key_id=${GPG_KEY_ID} --var cds.region=${CDS_REGION}"
+    echo -e "  ${YELLOW}${f} ${BLUE}STARTING ${DARKGRAY}cmd: ${CMD}${NOCOLOR}"
+    START="$(date +%s)"
+    ${CMD} > ./results/${f}/${f}.output 2>&1
+    exit_status=$?    
+    if [ $exit_status -ne 0 ]; then
+        out=`cat ./results/${f}/${f}.output`
+        echo -e "  ${YELLOW}${f} ${LIGHTRED}FAILURE ${DARKGRAY}code: ${exit_status}\n${RED}${out}${NOCOLOR}"
+        mv ./results/${f}/venom.log ./results/${f}/${f}-venom.log
+    else
+        echo -e "  ${YELLOW}${f} ${GREEN}SUCCESS ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
+    fi
+    mv ./results/${f}/* ./results
+    exit $exit_status
 }
 
 rm -rf ./results
@@ -237,26 +301,24 @@ mkdir results
 
 for target in $@; do
     case $target in
-        smoke_api) 
+        smoke_api)
             smoke_tests_api;;
-        initialization) 
+        initialization)
             initialization_tests;;
-        smoke_services) 
+        smoke_services)
             smoke_tests_services;;
-        cli) 
+        cli)
             cli_tests;;
-        workflow) 
+        workflow)
             workflow_tests;;
-        workflow_with_integration) 
+        workflow_with_integration)
             export AWS_DEFAULT_REGION
             export S3_BUCKET
             export AWS_ACCESS_KEY_ID
             export AWS_SECRET_ACCESS_KEY
             export AWS_ENDPOINT_URL
-            workflow_with_integration_tests
-            admin_tests;;
+            workflow_with_integration_tests;;
         workflow_with_third_parties)
-            export CDS_MODEL_REQ
             export CDS_REGION_REQ
             workflow_with_third_parties;;
         admin)
@@ -266,5 +328,5 @@ for target in $@; do
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
             usage
             exit 1;;
-    esac    
+    esac
 done

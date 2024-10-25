@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -35,7 +36,7 @@ func (api *API) getActionsHandler() service.Handler {
 			)
 		} else {
 			as, err = action.LoadAllTypeDefaultByGroupIDs(ctx, api.mustDB(),
-				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
+				append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
 				action.LoadOptions.WithGroup,
@@ -57,7 +58,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet %s", key)
+			return sdk.WrapError(err, "unable to load project %s", key)
 		}
 
 		groupIDs := make([]int64, len(proj.ProjectGroups))
@@ -115,6 +116,7 @@ func (api *API) postActionHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
+		data.Name = strings.TrimSpace(data.Name)
 		if err := data.IsValidDefault(); err != nil {
 			return err
 		}
@@ -169,7 +171,7 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionAdd(ctx, *newAction, getAPIConsumer(ctx))
+		event.PublishActionAdd(ctx, *newAction, getUserConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -308,7 +310,7 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
+		event.PublishActionUpdate(ctx, *old, *newAction, getUserConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -586,7 +588,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
+		event.PublishActionUpdate(ctx, *old, *newAction, getUserConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -789,9 +791,9 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		if exists {
-			event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
+			event.PublishActionUpdate(ctx, *old, *newAction, getUserConsumer(ctx))
 		} else {
-			event.PublishActionAdd(ctx, *newAction, getAPIConsumer(ctx))
+			event.PublishActionAdd(ctx, *newAction, getUserConsumer(ctx))
 		}
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
@@ -906,7 +908,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return usage, err
 	}
 
-	consumer := getAPIConsumer(ctx)
+	consumer := getUserConsumer(ctx)
 
 	if !isMaintainer(ctx) {
 		// filter usage in pipeline by user's projects

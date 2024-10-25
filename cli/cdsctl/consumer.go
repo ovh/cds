@@ -185,39 +185,46 @@ func authConsumerNewRun(v cli.Values) error {
 	}
 
 	var svcType = v.GetString("service-type")
-	if svcType == "" && !v.GetBool("no-interactive") {
-		svcType = cli.AskValue("Service type")
-	}
-
 	var svcRegion = v.GetString("service-region")
-	if svcRegion == "" && !v.GetBool("no-interactive") {
-		svcRegion = cli.AskValue("Service region")
-	}
-
 	var svcIgnoreJobWithNoRegion = v.GetBool("service-ignore-job-with-no-region")
-	if !svcIgnoreJobWithNoRegion && !v.GetBool("no-interactive") {
-		svcIgnoreJobWithNoRegion = cli.AskConfirm("Service ignore job with no region")
+
+	if svcName != "" {
+		if svcType == "" && !v.GetBool("no-interactive") {
+			svcType = cli.AskValue("Service type")
+		}
+
+		if svcRegion == "" && !v.GetBool("no-interactive") {
+			svcRegion = cli.AskValue("Service region")
+		}
+
+		if !svcIgnoreJobWithNoRegion && !v.GetBool("no-interactive") {
+			svcIgnoreJobWithNoRegion = cli.AskConfirm("Service ignore job with no region")
+		}
 	}
 
-	var consumer = sdk.AuthConsumer{
-		Name:            name,
-		Description:     description,
-		GroupIDs:        groupIDs,
-		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(scopes...),
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), duration),
+	var consumer = sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            name,
+			Description:     description,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), duration),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     groupIDs,
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(scopes...),
+		},
 	}
 
 	if svcName != "" {
-		consumer.ServiceName = &svcName
+		consumer.AuthConsumerUser.ServiceName = &svcName
 	}
 	if svcType != "" {
-		consumer.ServiceType = &svcType
+		consumer.AuthConsumerUser.ServiceType = &svcType
 	}
 	if svcRegion != "" {
-		consumer.ServiceRegion = &svcRegion
+		consumer.AuthConsumerUser.ServiceRegion = &svcRegion
 	}
 	if svcIgnoreJobWithNoRegion {
-		consumer.ServiceIgnoreJobWithNoRegion = &svcIgnoreJobWithNoRegion
+		consumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion = &svcIgnoreJobWithNoRegion
 	}
 
 	res, err := client.AuthConsumerCreateForUser(username, consumer)

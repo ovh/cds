@@ -6,11 +6,12 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
-
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
@@ -34,12 +35,12 @@ func (api *API) getUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["permUsernamePublic"]
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.WithOrganization)
+			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUserID, user.LoadOptions.WithOrganization)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithOrganization)
 		}
@@ -64,7 +65,7 @@ func (api *API) putUserHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -74,7 +75,7 @@ func (api *API) putUserHandler() service.Handler {
 
 		var oldUser *sdk.AuthentifiedUser
 		if username == "me" {
-			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			oldUser, err = user.LoadByUsername(ctx, tx, username)
 		}
@@ -83,6 +84,18 @@ func (api *API) putUserHandler() service.Handler {
 		}
 
 		newUser := *oldUser
+
+		if oldUser.Username != data.Username {
+			// Only an admin can change the username
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+				log.Info(ctx, "putUserHandler> %s change username of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Username, data.Username)
+				newUser.Username = data.Username
+			} else {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+		}
+
 		newUser.Fullname = data.Fullname
 
 		// Only an admin can change the ring of a user
@@ -116,7 +129,7 @@ func (api *API) putUserHandler() service.Handler {
 			}
 
 			newUser.Ring = data.Ring
-			log.Debug(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
+			log.Info(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
 		}
 
 		if err := user.Update(ctx, tx, &newUser); err != nil {
@@ -137,6 +150,8 @@ func (api *API) putUserHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
+		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserUpdated, newUser)
+
 		if err := user.LoadOptions.WithOrganization(ctx, api.mustDBWithCtx(ctx), &newUser); err != nil {
 			return err
 		}
@@ -149,9 +164,14 @@ func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecut
 	if org == "" {
 		return nil
 	}
-	isAllowed := len(api.Config.Auth.AllowedOrganizations) == 0 || api.Config.Auth.AllowedOrganizations.Contains(org)
+	isAllowed := api.Config.Auth.AllowedOrganizations.Contains(org)
 	if !isAllowed {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "user organization %q is not allowed", org)
+	}
+
+	existingOrg, err := organization.LoadOrganizationByName(ctx, db, org)
+	if err != nil {
+		return err
 	}
 
 	if err := user.LoadOptions.WithOrganization(ctx, db, u); err != nil {
@@ -165,9 +185,9 @@ func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecut
 	}
 
 	u.Organization = org
-	if err := user.InsertOrganization(ctx, db, &user.Organization{
+	if err := user.InsertUserOrganization(ctx, db, &user.UserOrganization{
 		AuthentifiedUserID: u.ID,
-		Organization:       org,
+		OrganizationID:     existingOrg.ID,
 	}); err != nil {
 		return err
 	}
@@ -191,7 +211,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["permUsernamePublic"]
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -201,7 +221,7 @@ func (api *API) deleteUserHandler() service.Handler {
 
 		var u *sdk.AuthentifiedUser
 		if username == "me" {
-			u, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, tx, username)
 		}
@@ -228,7 +248,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		}
 		for i := range gus {
 			if gus[i].Admin {
-				adminGroupIDs = append(adminGroupIDs, gus[i].ID)
+				adminGroupIDs = append(adminGroupIDs, gus[i].GroupID)
 			}
 		}
 		if len(adminGroupIDs) > 0 {
@@ -259,6 +279,8 @@ func (api *API) deleteUserHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserDeleted, *u)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

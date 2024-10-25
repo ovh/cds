@@ -11,11 +11,6 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW15"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw15 "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW15 ITSCWRKFLW15"
-  - script: |-
-      {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
-      if [ $? -ne 0 ]; then
-          {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
-      fi
 
 - name: import integration
   steps:
@@ -65,8 +60,8 @@ testcases:
 - name: check workflow
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json"
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -82,8 +77,8 @@ testcases:
 - name: check workflow
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json"
-    retry: 20
-    delay: 3
+    retry: 60
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Success
@@ -91,8 +86,8 @@ testcases:
 - name: check result
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --pattern NewJob"
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
   - script: grep "Retry.max 100" *.log
   - script: grep "Retry.delay 50" *.log
   - script: grep "Deployment.token drowssapnusiusej" *.log

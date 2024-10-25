@@ -75,7 +75,7 @@ func resetFunc(v cli.Values) error {
 		return err
 	}
 
-	fmt.Println("Reset successful. Instuctions have been sent to your email address.")
+	fmt.Println("Reset successful. Instructions have been sent to your email address.")
 	return nil
 }
 

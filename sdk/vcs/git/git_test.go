@@ -89,6 +89,7 @@ func Test_gitCloneOverHTTPS(t *testing.T) {
 	}
 	for _, tt := range tests {
 		os.RemoveAll(test.GetTestName(t))
+		t.Cleanup(func() { os.RemoveAll(test.GetTestName(t)) })
 		out := new(bytes.Buffer)
 		err := new(bytes.Buffer)
 		tt.args.output = &OutputOpts{
@@ -142,6 +143,7 @@ func Test_gitCloneOverSSH(t *testing.T) {
 		}
 
 		os.RemoveAll(test.GetTestName(t))
+		t.Cleanup(func() { os.RemoveAll(test.GetTestName(t)) })
 		out := new(bytes.Buffer)
 		err := new(bytes.Buffer)
 		tt.args.output = &OutputOpts{
@@ -231,6 +233,7 @@ func Test_gitCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		os.RemoveAll(test.GetTestName(t))
+		t.Cleanup(func() { os.RemoveAll(test.GetTestName(t)) })
 		os.MkdirAll(test.GetTestName(t), os.FileMode(0755))
 		if _, got, _ := prepareGitCloneCommands(tt.args.repo, test.GetTestName(t), tt.args.path, tt.args.opts); !reflect.DeepEqual(got.Strings(), tt.want) {
 			t.Errorf("%q. gitCloneCommand() = %v, want %v", tt.name, got, tt.want)

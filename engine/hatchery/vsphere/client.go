@@ -117,7 +117,7 @@ func (h *HatcheryVSphere) getVirtualMachineTemplateByName(ctx context.Context, n
 
 	for _, m := range models {
 		if m.Name != name {
-			log.Debug(ctx, "%q (%+v) doens't match  with %q", m.Name, m.Config, name)
+			log.Debug(ctx, "%q (%+v) doesn't match  with %q", m.Name, m.Config, name)
 			continue
 		}
 
@@ -152,9 +152,10 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 			var spawnErr = sdk.SpawnErrorForm{
 				Error: err.Error(),
 			}
+			log.Error(ctx, "failed check worker model register: %v", err)
 			tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
 			if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-				log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
+				log.Error(ctx, "deleteServer> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
 			}
 		}
 	}
@@ -163,9 +164,15 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 
 	if isPoweredOn {
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
-			return err
+			log.Warn(ctx, "deleteServer> can't shutdown %q because err:%v", s.Name, err)
+			// do not return here, the err could be :
+			// err: The attempted operation cannot be performed in the current state (Powered off).
 		}
 	}
+
+	h.cacheToDelete.mu.Lock()
+	h.cacheToDelete.list = sdk.DeleteFromArray(h.cacheToDelete.list, s.Name)
+	h.cacheToDelete.mu.Unlock()
 
 	if err := h.vSphereClient.DestroyVirtualMachine(ctx, vm); err != nil {
 		return err
@@ -175,7 +182,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 }
 
 // prepareCloneSpec create a basic configuration in order to create a vm
-func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation, workerName string) (*types.VirtualMachineCloneSpec, error) {
+func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation) (*types.VirtualMachineCloneSpec, error) {
 	devices, err := h.vSphereClient.LoadVirtualMachineDevices(ctx, vm)
 	if err != nil {
 		return nil, err
@@ -235,15 +242,15 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 
 	if len(h.availableIPAddresses) > 0 {
 		var err error
-		ip, err := h.findAvailableIP(ctx, workerName)
+		ip, err := h.findAvailableIP(ctx)
 		if err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, err
 		}
 		log.Debug(ctx, "Found %s as available IP", ip)
 		// Once we found an IP Address, we have to reserve this IP in local memory
 		// because the IP address won't be used directly on the server
 		if err := h.reserveIPAddress(ctx, ip); err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, err
 		}
 
 		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{{
@@ -292,15 +299,40 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 }
 
 // launchClientOp launch a script on the virtual machine given in parameters
-func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) error {
+func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.WorkerStarterWorkerModel, script string, env []string) error {
 	procman, err := h.vSphereClient.ProcessManager(ctx, vm)
 	if err != nil {
 		return err
 	}
 
-	auth := types.NamePasswordAuthentication{
-		Username: model.User,
-		Password: model.Password,
+	var auth types.NamePasswordAuthentication
+
+	if model.ModelV2 != nil {
+		// For model v2, we search the credentials from the VM Model name
+		for i := range h.Config.GuestCredentials {
+			if h.Config.GuestCredentials[i].ModelVMWare == model.GetVSphereImage() {
+				auth.Username = h.Config.GuestCredentials[i].Username
+				auth.Password = h.Config.GuestCredentials[i].Password
+				break
+			}
+		}
+	} else {
+		// For model v1, we search the credentials from the CDS Worker model name
+		for i := range h.Config.GuestCredentials {
+			if h.Config.GuestCredentials[i].ModelPath == model.GetFullPath() {
+				auth.Username = h.Config.GuestCredentials[i].Username
+				auth.Password = h.Config.GuestCredentials[i].Password
+				break
+			}
+		}
+	}
+
+	if auth.Username == "" || auth.Password == "" {
+		if model.ModelV2 != nil {
+			return sdk.WithStack(fmt.Errorf("username and/or password not well configured for GetVSphereImage:%q", model.GetVSphereImage()))
+		} else {
+			return sdk.WithStack(fmt.Errorf("username and/or password not well configured for modelFullPath:%q", model.GetFullPath()))
+		}
 	}
 
 	guestspec := types.GuestProgramSpec{
@@ -316,7 +348,7 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		Spec: &guestspec,
 	}
 
-	log.Debug(ctx, "starting program %+v in guest...", guestspec)
+	log.Debug(ctx, "starting program in guest. username:%v ProgramPath:%v Arguments:%v", auth.Username, guestspec.ProgramPath, guestspec.Arguments)
 
 	_, err = h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
 	return err

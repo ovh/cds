@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -12,14 +13,29 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.RBAC, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM rbac`)
+	return getAll(ctx, db, query)
+}
+
 func LoadRBACByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...LoadOptionFunc) (*sdk.RBAC, error) {
 	query := `SELECT * FROM rbac WHERE name = $1`
 	return get(ctx, db, gorpmapping.NewQuery(query).Args(name), opts...)
 }
 
+func LoadRBACByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.RBAC, error) {
+	query := `SELECT * FROM rbac WHERE id = $1`
+	return get(ctx, db, gorpmapping.NewQuery(query).Args(id), opts...)
+}
+
+func LoadRBACByIDs(ctx context.Context, db gorp.SqlExecutor, IDs sdk.StringSlice, opts ...LoadOptionFunc) ([]sdk.RBAC, error) {
+	query := `SELECT * FROM rbac WHERE id = ANY ($1)`
+	return getAll(ctx, db, gorpmapping.NewQuery(query).Args(pq.StringArray(IDs)), opts...)
+}
+
 // Insert a RBAC permission in database
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) error {
-	if err := sdk.IsValidRBAC(rb); err != nil {
+	if err := IsValidRBAC(ctx, db, rb); err != nil {
 		return err
 	}
 	if rb.ID == "" {
@@ -34,10 +50,10 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 		return err
 	}
 
-	for i := range rb.Globals {
+	for i := range rb.Global {
 		dbRbGlobal := rbacGlobal{
 			RbacID:     dbRb.ID,
-			RBACGlobal: rb.Globals[i],
+			RBACGlobal: rb.Global[i],
 		}
 		if err := insertRBACGlobal(ctx, db, &dbRbGlobal); err != nil {
 			return err
@@ -52,6 +68,51 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 			return err
 		}
 	}
+	for i := range rb.Workflows {
+		dbRbWorkflow := rbacWorkflow{
+			RbacID:       dbRb.ID,
+			RBACWorkflow: rb.Workflows[i],
+		}
+		if err := insertRBACWorkflow(ctx, db, &dbRbWorkflow); err != nil {
+			return err
+		}
+	}
+	for i := range rb.Regions {
+		rbRegion := &rb.Regions[i]
+		rbRegion.RbacID = dbRb.ID
+		dbRbRegion := rbacRegion{RBACRegion: *rbRegion}
+		if err := insertRBACRegion(ctx, db, &dbRbRegion); err != nil {
+			return err
+		}
+	}
+	for i := range rb.Hatcheries {
+		dbRbHatchery := rbacHatchery{
+			RbacID:       dbRb.ID,
+			RBACHatchery: rb.Hatcheries[i],
+		}
+		if err := insertRBACHatchery(ctx, db, &dbRbHatchery); err != nil {
+			return err
+		}
+	}
+	for i := range rb.VariableSets {
+		dbRbVariableSet := rbacVariableSet{
+			RbacID:          dbRb.ID,
+			RBACVariableSet: rb.VariableSets[i],
+		}
+		if err := insertRBACVariableSet(ctx, db, &dbRbVariableSet); err != nil {
+			return err
+		}
+	}
+	for i := range rb.RegionProjects {
+		dbRbRegionProject := rbacRegionProject{
+			RbacID:            dbRb.ID,
+			RBACRegionProject: rb.RegionProjects[i],
+		}
+		if err := insertRBACRegionProject(ctx, db, &dbRbRegionProject); err != nil {
+			return err
+		}
+	}
+
 	*rb = dbRb.RBAC
 	return nil
 }
@@ -69,6 +130,32 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, rb sdk.RBAC) err
 		return err
 	}
 	return nil
+}
+
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.RBAC, error) {
+	var rs []sdk.RBAC
+	var rbacsDB []rbac
+	if err := gorpmapping.GetAll(ctx, db, q, &rbacsDB); err != nil {
+		return nil, err
+	}
+
+	for _, rbac := range rbacsDB {
+		isValid, err := gorpmapping.CheckSignature(rbac, rbac.Signature)
+		if err != nil {
+			return nil, sdk.WrapError(err, "error when checking signature for rbac %s", rbac.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac.get> rbac %s (%s) data corrupted", rbac.Name, rbac.ID)
+			continue
+		}
+		for _, f := range opts {
+			if err := f(ctx, db, &rbac); err != nil {
+				return nil, err
+			}
+		}
+		rs = append(rs, rbac.RBAC)
+	}
+	return rs, nil
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.RBAC, error) {

@@ -102,7 +102,7 @@ func (c *CommonClient) Listen(ctx context.Context, gorts *sdk.GoRoutines) error 
 		_, msg, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				err = sdk.WrapError(err, "websocket unexpected error occured")
+				err = sdk.WrapError(err, "websocket unexpected error occurred")
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "%v", err)
 			}

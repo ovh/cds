@@ -3,9 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 import { Group } from '../../../../model/group.model';
 import { Pipeline } from '../../../../model/pipeline.model';
 import { AuthSummary } from '../../../../model/user.model';
@@ -65,16 +64,17 @@ export class WorkerModelEditComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.tabs = [<Tab>{
             title: 'Worker Model',
-            icon: '',
             key: 'worker_model',
             default: true
         }, <Tab>{
             title: 'Capabilities',
-            icon: 'file outline',
+            icon: 'file',
+            iconTheme: 'outline',
             key: 'capabilities'
         }, <Tab>{
             title: 'Usage',
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }];
 

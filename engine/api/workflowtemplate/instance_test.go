@@ -26,9 +26,9 @@ func TestCheckAndExecuteTemplate(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	grp := proj.ProjectGroups[0].Group
 	usr, _ := assets.InsertLambdaUser(t, db, &grp)
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser,
-		authentication.LoadConsumerOptions.WithConsumerGroups,
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser,
+		authentication.LoadUserConsumerOptions.WithConsumerGroups,
 	)
 	require.NoError(t, err)
 
@@ -179,9 +179,9 @@ func TestUpdateTemplateInstanceWithWorkflow(t *testing.T) {
 	usr, _ := assets.InsertLambdaUser(t, db, &grp)
 	assets.SetUserGroupAdmin(t, db, grp.ID, usr.ID)
 
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser,
-		authentication.LoadConsumerOptions.WithConsumerGroups,
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser,
+		authentication.LoadUserConsumerOptions.WithConsumerGroups,
 	)
 	require.NoError(t, err)
 
@@ -218,7 +218,7 @@ name: Pipeline-[[.id]]`)),
 	_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db.DbMap, cache, *consumer, *proj, &data)
 	require.NoError(t, err)
 
-	_, wkf, _, _, err := workflow.Push(context.TODO(), db.DbMap, cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey)
+	_, wkf, _, _, err := workflow.Push(context.TODO(), db.DbMap, cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey, nil)
 	require.NoError(t, err)
 
 	require.NoError(t, workflowtemplate.UpdateTemplateInstanceWithWorkflow(context.TODO(), db, *wkf, consumer, wti))

@@ -1,6 +1,7 @@
 package exportentities
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/ovh/cds/sdk"
@@ -53,6 +54,7 @@ type Job struct {
 type Requirement struct {
 	Binary            string             `json:"binary,omitempty" yaml:"binary,omitempty"`
 	Model             string             `json:"model,omitempty" yaml:"model,omitempty"`
+	Modelv2           string             `json:"modelv2,omitempty" yaml:"modelv2,omitempty"`
 	Hostname          string             `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 	Plugin            string             `json:"plugin,omitempty" yaml:"plugin,omitempty"`
 	Service           ServiceRequirement `json:"service,omitempty" yaml:"service,omitempty"`
@@ -60,6 +62,7 @@ type Requirement struct {
 	OSArchRequirement string             `json:"os-architecture,omitempty" yaml:"os-architecture,omitempty"`
 	RegionRequirement string             `json:"region,omitempty" yaml:"region,omitempty"`
 	SecretRequirement string             `json:"secret,omitempty" yaml:"secret,omitempty"`
+	FlavorRequirement string             `json:"flavor,omitempty" yaml:"flavor,omitempty"`
 }
 
 // ServiceRequirement represents an exported sdk.Requirement of type ServiceRequirement
@@ -68,7 +71,7 @@ type ServiceRequirement struct {
 	Value string `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
-//NewPipelineV1 creates an exportable pipeline from a sdk.Pipeline
+// NewPipelineV1 creates an exportable pipeline from a sdk.Pipeline
 func NewPipelineV1(pip sdk.Pipeline) (p PipelineV1) {
 	p.Name = pip.Name
 	p.Description = pip.Description
@@ -155,6 +158,8 @@ func NewRequirements(req []sdk.Requirement) []Requirement {
 			res = append(res, Requirement{Memory: r.Value})
 		case sdk.SecretRequirement:
 			res = append(res, Requirement{SecretRequirement: r.Value})
+		case sdk.FlavorRequirement:
+			res = append(res, Requirement{FlavorRequirement: r.Value})
 		}
 	}
 	return res
@@ -276,7 +281,7 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 	return &job, nil
 }
 
-//Pipeline returns a sdk.Pipeline entity
+// Pipeline returns a sdk.Pipeline entity
 func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	pip = new(sdk.Pipeline)
 	pip.Name = p.Name
@@ -372,7 +377,8 @@ func ParsePipeline(format Format, data []byte) (Pipeliner, error) {
 
 	version := PipelineVersion1
 	if v, ok := rawPayload["version"]; ok {
-		switch v.(string) {
+		vString := fmt.Sprintf("%v", v)
+		switch vString {
 		case PipelineVersion1:
 			version = PipelineVersion1
 		default:

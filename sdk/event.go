@@ -30,6 +30,8 @@ type Event struct {
 	Status              string           `json:"status,omitempty"`
 	Tags                []WorkflowRunTag `json:"tag,omitempty"`
 	EventIntegrationsID []int64          `json:"event_integrations_id"`
+	Region              string           `json:"region,omitempty"`
+	ModelType           string           `json:"model_type,omitempty"`
 }
 
 // EventFilter represents filters when getting events
@@ -143,7 +145,8 @@ type EventFake struct {
 }
 
 type EventJobSummary struct {
-	ID                   int64      `json:"id"`
+	ID                   int64      `json:"id"`         // job v1
+	JobRunID             string     `json:"job_run_id"` // ascode job v2, it's the uuid
 	ProjectKey           string     `json:"project_key"`
 	Workflow             string     `json:"workflow"`
 	Pipeline             string     `json:"pipeline"`
@@ -159,6 +162,7 @@ type EventJobSummary struct {
 	InQueueDuration      int        `json:"in_queue_duration"`
 	BuildDuration        int        `json:"build_duration"`
 	TotalDuration        int        `json:"total_duration"`
+	CreatedHour          int        `json:"created_hour"`
 	WorkerModel          string     `json:"worker_model"`
 	WorkerModelType      string     `json:"worker_model_type"`
 	Worker               string     `json:"worker"`

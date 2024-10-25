@@ -3,13 +3,12 @@ package sdk
 type FeatureName string
 
 const (
-	FeatureCDNJobLogs   FeatureName = "cdn-job-logs"
 	FeatureMFARequired  FeatureName = "mfa_required"
 	FeaturePurgeName    FeatureName = "workflow-retention-policy"
 	FeaturePurgeMaxRuns FeatureName = "workflow-retention-maxruns"
 	FeatureTracing      FeatureName = "tracing"
-	FeatureWorkflowV3   FeatureName = "workflow-v3"
 	FeatureRegion       FeatureName = "region"
+	FeatureCDSAsCode    FeatureName = "all-as-code"
 )
 
 type Feature struct {

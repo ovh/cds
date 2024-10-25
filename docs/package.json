@@ -1,0 +1,14 @@
+{
+  "name": "docs",
+  "version": "0.0.0",
+  "scripts": {},
+  "dependencies": {
+    "anchor-js": "5.0.0",
+    "asciinema-player": "3.2.0",
+    "bootstrap": "3.4.1",
+    "jquery": "3.6.4",
+    "jquery-ui": "1.13.2",
+    "js-autocomplete": "1.0.4",
+    "lunr": "2.3.9"
+  }
+}

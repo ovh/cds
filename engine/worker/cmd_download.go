@@ -11,7 +11,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
@@ -35,7 +34,7 @@ Inside a job, there are two ways to download an artifact:
 
 Worker Command:
 
-	worker download --tag=<tag> <path>
+	worker download --tag=<tag>
 
 Example:
 
@@ -51,22 +50,14 @@ Theses two commands have the same result:
 	}
 	c.Flags().StringVar(&cmdDownloadWorkflowName, "workflow", "", "Workflow name to download from. Optional, default: current workflow")
 	c.Flags().StringVar(&cmdDownloadNumber, "number", "", "Workflow Number to download from. Optional, default: current workflow run")
-	c.Flags().StringVar(&cmdDownloadArtifactName, "pattern", "", "Pattern matching files to download. Optional, default: *")
+	c.Flags().StringVar(&cmdDownloadArtifactName, "pattern", "", "Pattern matching files to download. Optional, default: .*")
 	c.Flags().StringVar(&cmdDownloadTag, "tag", "", "Tag matching files to download. Optional")
 	return c
 }
 
 func downloadCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(internal.WorkerServerPort)
-		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
-		}
-
-		port, errPort := strconv.Atoi(portS)
-		if errPort != nil {
-			sdk.Exit("cannot parse '%s' as a port number", portS)
-		}
+		port := MustGetWorkerHTTPPort()
 
 		var number int64
 		if cmdDownloadNumber != "" {

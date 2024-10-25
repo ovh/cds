@@ -29,8 +29,8 @@
         <ng-container *ngFor="let c of (columns | selector:d:i)">
             <td *ngIf="!c.disabled && c.hidden"></td>
             <td *ngIf="!c.disabled && !c.hidden" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
-                <ng-container *ngSwitchCase="'text-html'">
-                    <pre [innerHTML]="c.selector"></pre>
+                <ng-container *ngSwitchCase="'text-pre'">
+                    <pre>{{c.selector}}</pre>
                 </ng-container>
                 <i *ngSwitchCase="'icon'" nz-icon nzType="{{c.selector.iconType}}" nzTheme="{{c.selector.iconTheme}}" class="{{c.selector.iconColor}}"></i>
                 <div *ngSwitchCase="'img-text'" class="vcenter">
@@ -58,7 +58,6 @@
                     <a [routerLink]="c.selector.link">{{c.selector.value}}</a>
                     {{' '}}<nz-tag *ngFor="let l of c.selector.labels" nzColor="{{l.color}}">{{l.title | translate}}</nz-tag>
                 </ng-container>
-                <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
                 <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
                 <button *ngSwitchCase="'button'" nz-button nzType="{{c.selector.buttonType}}" [nzDanger]="c.selector.buttonDanger" class="{{c.class}}"
                         (click)="c.selector.click()">
