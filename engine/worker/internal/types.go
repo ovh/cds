@@ -498,6 +498,6 @@ func (wk *CurrentWorker) SetSecrets(secrets []sdk.Variable) error {
 type ActionPostJob struct {
 	ContinueOnError bool
 	PluginName      string
-	Inputs          map[string]string
+	Inputs          map[string]interface{}
 	StepName        string
 }

@@ -575,21 +575,42 @@ func (a *ActionParser) compare(operands []interface{}, operator string) (bool, e
 	if len(operands) != 2 {
 		return false, NewErrorFrom(ErrInvalidData, "cannot compare more or less than 2 operands")
 	}
-	operand1, ok := operands[0].(float64)
+	var operand1, operand2 float64
+
+	jsonNum1, ok := operands[0].(json.Number)
 	if !ok {
-		operand1Int, ok := operands[0].(int)
+		operand1, ok = operands[0].(float64)
 		if !ok {
-			return false, NewErrorFrom(ErrInvalidData, "%v must be a float or an int, got [%T]", operands[0], operands[0])
+			operand1Int, ok := operands[0].(int)
+			if !ok {
+				return false, NewErrorFrom(ErrInvalidData, "%v must be a float or an int, got [%T]", operands[0], operands[0])
+			}
+			operand1 = float64(operand1Int)
 		}
-		operand1 = float64(operand1Int)
+	} else {
+		var err error
+		operand1, err = jsonNum1.Float64()
+		if err != nil {
+			return false, NewErrorFrom(ErrInvalidData, "unable to cast %s into a float", operands[0])
+		}
 	}
-	operand2, ok := operands[1].(float64)
+
+	jsonNum2, ok := operands[1].(json.Number)
 	if !ok {
-		operand2Int, ok := operands[1].(int)
+		operand2, ok = operands[1].(float64)
 		if !ok {
-			return false, NewErrorFrom(ErrInvalidData, "%v must be a float or an int, got [%T]", operands[1], operands[1])
+			operand2Int, ok := operands[1].(int)
+			if !ok {
+				return false, NewErrorFrom(ErrInvalidData, "%v must be a float or an int, got [%T]", operands[1], operands[1])
+			}
+			operand2 = float64(operand2Int)
 		}
-		operand2 = float64(operand2Int)
+	} else {
+		var err error
+		operand2, err = jsonNum2.Float64()
+		if err != nil {
+			return false, NewErrorFrom(ErrInvalidData, "unable to cast %s into a float", operands[1])
+		}
 	}
 
 	switch operator {
@@ -611,14 +632,49 @@ func (a *ActionParser) equal(operands []interface{}, operator string) (bool, err
 		return false, NewErrorFrom(ErrInvalidData, "cannot equalize more or less than 2 operands")
 	}
 
+	operand0 := a.getPrimitiveType(operands[0])
+	operand1 := a.getPrimitiveType(operands[1])
+
 	switch operator {
 	case "==":
-		return operands[0] == operands[1], nil
+		return operand0 == operand1, nil
 	case "!=":
-		return operands[0] != operands[1], nil
+		return operand0 != operand1, nil
 	default:
 		return false, NewErrorFrom(ErrInvalidData, "unknown equalizer operator %s", operator)
 	}
+}
+
+func (a ActionParser) getPrimitiveType(operand interface{}) interface{} {
+	s, ok := operand.(string)
+	if ok {
+		return s
+	}
+	b, ok := operand.(bool)
+	if ok {
+		return b
+	}
+	jn, ok := operand.(json.Number)
+	if ok {
+		f, err := jn.Float64()
+		if err != nil {
+			return jn.String()
+		}
+		return f
+	}
+	f, ok := operand.(float64)
+	if ok {
+		return f
+	}
+	i64, ok := operand.(int64)
+	if ok {
+		return float64(i64)
+	}
+	i, ok := operand.(int)
+	if ok {
+		return float64(i)
+	}
+	return fmt.Sprintf("%v", operand)
 }
 
 func (a *ActionParser) and(operands []interface{}) (bool, error) {

@@ -132,7 +132,7 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
-	Inputs       map[string]string        `json:"inputs,omitempty"`
+	Inputs       map[string]interface{}   `json:"inputs,omitempty"`
 	Jobs         JobsResultContext        `json:"jobs"`
 	Needs        NeedsContext             `json:"needs"`
 	Steps        StepsContext             `json:"steps"`

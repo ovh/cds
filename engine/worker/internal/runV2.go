@@ -175,7 +175,12 @@ func (w *CurrentWorker) computeContextForJob(ctx context.Context) error {
 		}
 		ap := sdk.NewActionParser(parserContext, sdk.DefaultFuncs)
 		for k, e := range w.currentJobV2.runJobContext.Inputs {
-			interpolatedValue, err := ap.InterpolateToString(ctx, e)
+			stringInput, ok := e.(string)
+			if !ok {
+				w.currentJobV2.runJobContext.Inputs[k] = e
+				continue
+			}
+			interpolatedValue, err := ap.InterpolateToString(ctx, stringInput)
 			if err != nil {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate env variabke %s: %v", k, err)
 			}
@@ -497,7 +502,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	return result, postActionsJob
 }
 
-func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionStep, currentStepContext sdk.WorkflowRunJobsContext, parentStepName string, inputWith map[string]string) (sdk.V2WorkflowRunJobResult, *ActionPostJob) {
+func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionStep, currentStepContext sdk.WorkflowRunJobsContext, parentStepName string, inputWith map[string]interface{}) (sdk.V2WorkflowRunJobResult, *ActionPostJob) {
 	name := strings.TrimPrefix(step.Uses, "actions/")
 	actionRefSplit := strings.Split(name, "@")
 	actionPath := strings.Split(actionRefSplit[0], "/")
@@ -507,7 +512,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	}
 
 	// Set action inputs
-	inputs := make(map[string]string)
+	inputs := make(map[string]interface{})
 	if len(actionPath) == 1 {
 		p := w.GetActionPlugin(actionPath[0])
 		if p == nil {
@@ -558,7 +563,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			stepPostAction = &ActionPostJob{
 				ContinueOnError: postActionDefinition.ContinueOnError,
 				PluginName:      postActionDefinition.PluginName,
-				Inputs:          make(map[string]string),
+				Inputs:          make(map[string]interface{}),
 			}
 			jsonContext, _ := json.Marshal(actionContext)
 			// Interpolate post script
@@ -568,7 +573,12 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			}
 			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 			for k, v := range postActionDefinition.Inputs {
-				interpolatedValue, err := ap.InterpolateToString(ctx, v)
+				inputString, ok := v.(string)
+				if !ok {
+					stepPostAction.Inputs[k] = v
+					continue
+				}
+				interpolatedValue, err := ap.InterpolateToString(ctx, inputString)
 				if err != nil {
 					return w.failJob(ctx, err.Error()), nil
 				}
@@ -640,7 +650,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 
 			stepPostAction = &ActionPostJob{
 				PluginName: "script",
-				Inputs:     map[string]string{"content": interpolatedPost},
+				Inputs:     map[string]interface{}{"content": interpolatedPost},
 				StepName:   parentStepName,
 			}
 		}
@@ -766,13 +776,13 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("%v", err))
 	}
-	res, _ := w.runPlugin(ctx, "script", map[string]string{
+	res, _ := w.runPlugin(ctx, "script", map[string]interface{}{
 		"content": contentString,
 	}, env)
 	return res
 }
 
-func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]string, env map[string]string) (sdk.V2WorkflowRunJobResult, *ActionPostJob) {
+func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]interface{}, env map[string]string) (sdk.V2WorkflowRunJobResult, *ActionPostJob) {
 	pluginClient, err := w.pluginFactory.NewClient(ctx, w, plugin.TypeStream, pluginName, plugin.InputManagementStrict, env)
 	if pluginClient != nil {
 		defer pluginClient.Close(ctx)
@@ -781,7 +791,11 @@ func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts m
 		return w.failJob(ctx, fmt.Sprintf("%v", err)), nil
 	}
 
-	pluginResult := pluginClient.Run(ctx, opts)
+	optsString := make(map[string]string)
+	for k, v := range opts {
+		optsString[k] = fmt.Sprintf("%v", v)
+	}
+	pluginResult := pluginClient.Run(ctx, optsString)
 
 	if pluginResult.Status == sdk.StatusFail {
 		return w.failJob(ctx, pluginResult.Details), nil
@@ -818,7 +832,7 @@ func (w *CurrentWorker) failJob(ctx context.Context, reason string) sdk.V2Workfl
 }
 
 // For actions, only pass CDS/GIT/ENV/Integration context from parent
-func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]string) (*sdk.WorkflowRunJobsContext, error) {
+func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]interface{}) (*sdk.WorkflowRunJobsContext, error) {
 	actionContext := sdk.WorkflowRunJobsContext{
 		WorkflowRunContext: sdk.WorkflowRunContext{
 			CDS: parentContext.CDS,
@@ -826,7 +840,7 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 			Env: map[string]string{},
 		},
 		Integrations: parentContext.Integrations,
-		Inputs:       make(map[string]string),
+		Inputs:       make(map[string]interface{}),
 	}
 	for k, v := range parentContext.Env {
 		actionContext.Env[k] = v
@@ -844,7 +858,12 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 
 		// Interpolate step inputs and set them in context
 		for k, e := range inputs {
-			interpolatedValue, err := ap.InterpolateToString(ctx, e)
+			stringInput, ok := e.(string)
+			if !ok {
+				actionContext.Inputs[k] = e
+				continue
+			}
+			interpolatedValue, err := ap.Interpolate(ctx, stringInput)
 			if err != nil {
 				return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate inputs %s: %s: %v", k, e, err)
 			}
