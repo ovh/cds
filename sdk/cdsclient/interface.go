@@ -454,6 +454,9 @@ type WorkflowV2Client interface {
 	WorkflowV2Stop(ctx context.Context, projKey, workflowRunID string) error
 	WorkflowV2StopJob(ctx context.Context, projKey, workflowRunID, jobIdentifier string) error
 	WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error)
+	WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error)
+	WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error)
+	WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error
 }
 
 // WorkflowClient exposes workflows functions

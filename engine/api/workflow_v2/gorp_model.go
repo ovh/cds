@@ -57,6 +57,10 @@ type dbV2WorkflowRunResult struct {
 	sdk.V2WorkflowRunResult
 }
 
+type dbV2WorkflowVersion struct {
+	sdk.V2WorkflowVersion
+}
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbWorkflowRun{}, "v2_workflow_run", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbWorkflowRunJob{}, "v2_workflow_run_job", false, "id"))
@@ -64,4 +68,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbWorkflowRunJobInfo{}, "v2_workflow_run_job_info", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbWorkflowHook{}, "v2_workflow_hook", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbV2WorkflowRunResult{}, "v2_workflow_run_result", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbV2WorkflowVersion{}, "v2_workflow_version", false, "id"))
 }
