@@ -721,7 +721,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 			strings.ToLower(jobContext.Git.Repository),
 			jobContext.CDS.ProjectKey,
 			jobContext.CDS.Workflow,
-			jobContext.Git.SemverCurrent)
+			jobContext.CDS.Version)
 
 		response.RunResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
 		response.RunResult.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository

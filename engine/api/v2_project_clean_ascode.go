@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
@@ -31,6 +33,156 @@ type EntitiesCleaner struct {
 	repoName  string
 	refs      map[string]string
 	retention time.Duration
+}
+
+func (a *API) cleanWorkflowVersion(ctx context.Context) {
+	ticker := time.NewTicker(time.Duration(a.Config.WorkflowV2.VersionRetentionScheduling) * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
+		case <-ticker.C:
+			workflows, err := workflow_v2.LoadDistinctWorkflowVersionByWorkflow(ctx, a.mustDB())
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				continue
+			}
+			inputChan := make(chan workflow_v2.V2WorkflowVersionWorkflowShort, len(workflows))
+			resultChan := make(chan bool)
+			for w := 0; w < 10; w++ {
+				a.GoRoutines.Exec(ctx, "cleanWorkflowVersion-"+strconv.Itoa(w), func(ctx context.Context) {
+					for w := range inputChan {
+						if err := workerCleanWorkflowVersion(ctx, a.mustDB(), a.Cache, w, a.Config.WorkflowV2.VersionRetention); err != nil {
+							log.ErrorWithStackTrace(ctx, err)
+						}
+						resultChan <- true
+					}
+				})
+			}
+			for _, w := range workflows {
+				inputChan <- w
+			}
+			close(inputChan)
+			for r := 0; r < len(workflows); r++ {
+				<-resultChan
+			}
+		}
+	}
+}
+
+func workerCleanWorkflowVersion(ctx context.Context, db *gorp.DbMap, store cache.Store, w workflow_v2.V2WorkflowVersionWorkflowShort, nbVersionToKeep int64) error {
+	ctx = context.WithValue(ctx, cdslog.Action, "workerCleanWorkflowVersion")
+	ctx = context.WithValue(ctx, "action_metadata_project_key", w.ProjectKey)
+	ctx = context.WithValue(ctx, cdslog.VCSServer, w.WorkflowVCS)
+	ctx = context.WithValue(ctx, cdslog.Repository, w.WorkflowRepository)
+	ctx = context.WithValue(ctx, cdslog.Workflow, w.WorkflowName)
+
+	log.Info(ctx, "Clean workflow version for "+w.String())
+	lockKey := cache.Key("workflow", "version", w.String())
+	locked, err := store.Lock(lockKey, 5*time.Minute, 500, 1)
+	if err != nil {
+		return err
+	}
+	if !locked {
+		return nil
+	}
+	defer store.Unlock(lockKey)
+	if err := cleanWorkflowVersion(ctx, db, store, w, nbVersionToKeep); err != nil {
+		return err
+	}
+	return nil
+}
+
+func cleanWorkflowVersion(ctx context.Context, db *gorp.DbMap, store cache.Store, w workflow_v2.V2WorkflowVersionWorkflowShort, nbVersionToKeep int64) error {
+	allVersions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, w.ProjectKey, w.WorkflowVCS, w.WorkflowRepository, w.WorkflowName)
+	if err != nil {
+		return err
+	}
+	if len(allVersions) < int(nbVersionToKeep) {
+		return nil
+	}
+
+	versions := make([]*semver.Version, 0, len(allVersions))
+	for _, v := range allVersions {
+		sVer, _ := semver.NewVersion(v.Version)
+		versions = append(versions, sVer)
+	}
+	sort.Slice(versions, func(i, j int) bool {
+		return versions[i].LessThan(versions[j])
+	})
+
+	var versionsToClean []*semver.Version
+	cleanAll := false
+	// Check if the workflow still exists on default branch
+	vcsProject, err := vcs.LoadVCSByProject(ctx, db, w.ProjectKey, w.WorkflowVCS)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
+	}
+	// If vcs doesn't exist, cleann all
+	if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+		log.Info(ctx, "vcs %s doesn't exist anymore. Cleaning all versions", w.WorkflowVCS)
+		cleanAll = true
+	}
+
+	if !cleanAll {
+		repository, err := repository.LoadRepositoryByName(ctx, db, vcsProject.ID, w.WorkflowRepository)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+			log.Info(ctx, "repository %s doesn't exist anymore. Cleaning all versions", w.WorkflowRepository)
+			cleanAll = true
+		}
+
+		if !cleanAll {
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, w.ProjectKey, w.WorkflowVCS)
+			if err != nil {
+				return err
+			}
+			defaultBranch, err := vcsClient.Branch(ctx, w.WorkflowRepository, sdk.VCSBranchFilters{Default: true})
+			if err != nil {
+				return err
+			}
+			_, err = entity.LoadByRefTypeNameCommit(ctx, db, repository.ID, defaultBranch.ID, sdk.EntityTypeWorkflow, w.WorkflowName, "HEAD")
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+				log.Info(ctx, "workflow %s doesn't exist anymore. Cleaning all versions", w.WorkflowName)
+				cleanAll = true
+			}
+		}
+	}
+
+	if cleanAll {
+		versionsToClean = versions
+	} else {
+		versionsToClean = versions[0 : len(versions)-int(nbVersionToKeep)]
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback()
+	for _, v := range versionsToClean {
+		wkfVersion, err := workflow_v2.LoadWorkflowVersion(ctx, tx, w.ProjectKey, w.WorkflowVCS, w.WorkflowRepository, w.WorkflowName, v.String())
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			continue
+		}
+		if err := workflow_v2.DeleteWorkflowVersion(ctx, tx, wkfVersion); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			continue
+		}
+		log.Info(ctx, "version %s deleted for %s", v.String(), w.String())
+	}
+	return sdk.WithStack(tx.Commit())
 }
 
 func (a *API) cleanProjectEntities(ctx context.Context, entityRetention time.Duration) {

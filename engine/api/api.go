@@ -241,10 +241,12 @@ type Configuration struct {
 		WorkerModelDockerImageWhiteList []string         `toml:"workerModelDockerImageWhiteList" comment:"White list for docker image worker model " json:"workerModelDockerImageWhiteList" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	WorkflowV2 struct {
-		JobSchedulingTimeout   int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
-		RunRetentionScheduling int64  `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"15"`
-		WorkflowRunRetention   int64  `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
-		LibraryProjectKey      string `toml:"libraryProjectKey" comment:"Library project key" json:"libraryProjectKey" commented:"true"`
+		JobSchedulingTimeout       int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
+		RunRetentionScheduling     int64  `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"15"`
+		WorkflowRunRetention       int64  `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
+		LibraryProjectKey          string `toml:"libraryProjectKey" comment:"Library project key" json:"libraryProjectKey" commented:"true"`
+		VersionRetentionScheduling int64  `toml:"versionRetentionScheduling" comment:"Time in minute between 2 run of the workflow version purge" json:"versionRetentionScheduling" default:"60"`
+		VersionRetention           int64  `toml:"versionRetention" comment:"Number of Workflow version CDS keep" json:"versionRetention" commented:"true"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Entity struct {
 		RoutineDelay int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
@@ -507,6 +509,12 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	if a.Config.Entity.Retention == "" {
 		a.Config.Entity.Retention = "24h"
+	}
+	if a.Config.WorkflowV2.VersionRetentionScheduling == 0 {
+		a.Config.WorkflowV2.VersionRetentionScheduling = 60
+	}
+	if a.Config.WorkflowV2.VersionRetention == 0 {
+		a.Config.WorkflowV2.VersionRetention = 25
 	}
 	entityRetention, err := time.ParseDuration(a.Config.Entity.Retention)
 	if err != nil {
@@ -957,6 +965,9 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	a.GoRoutines.RunWithRestart(ctx, "project.CleanAsCodeEntities", func(ctx context.Context) {
 		a.cleanProjectEntities(ctx, entityRetention)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "project.CleanWorkflowVersion", func(ctx context.Context) {
+		a.cleanWorkflowVersion(ctx)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "worker.DeleteDisabledWorkers", func(ctx context.Context) {

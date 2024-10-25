@@ -616,8 +616,8 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		signedProps["cds.project"] = run.ProjectKey
 		props.AddProperty("cds.workflow", run.WorkflowName)
 		signedProps["cds.workflow"] = run.WorkflowName
-		props.AddProperty("cds.version", run.Contexts.Git.SemverCurrent)
-		signedProps["cds.version"] = run.Contexts.Git.SemverCurrent
+		props.AddProperty("cds.version", run.Contexts.CDS.Version)
+		signedProps["cds.version"] = run.Contexts.CDS.Version
 		props.AddProperty("cds.run", strconv.FormatInt(run.RunNumber, 10))
 		signedProps["cds.run"] = strconv.FormatInt(run.RunNumber, 10)
 		props.AddProperty("git.url", run.Contexts.Git.RepositoryURL)
@@ -676,7 +676,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		VCS:                      run.Contexts.CDS.WorkflowVCSServer,
 		Repository:               run.Contexts.CDS.WorkflowRepository,
 		WorkflowName:             run.WorkflowName,
-		Version:                  run.Contexts.Git.SemverCurrent,
+		Version:                  run.Contexts.CDS.Version,
 		AgentName:                "cds-api",
 		TokenName:                rtTokenName,
 		RunURL:                   fmt.Sprintf("%s/project/%s/run/%s", api.Config.URL.UI, run.ProjectKey, runID),
