@@ -644,7 +644,7 @@ skipEntity:
 	defer tx.Rollback() // nolint
 
 	for i := range entitiesToUpdate {
-		e := &entities[i]
+		e := &entitiesToUpdate[i]
 
 		// Check if entity has changed from current HEAD
 		var entityUpdated bool
@@ -661,6 +661,7 @@ skipEntity:
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on git ref %s", e.Name, e.Type, e.Ref))
 		}
+
 		if existingEntity != nil {
 			if existingEntity.Data == e.Entity.Data {
 				continue
@@ -682,7 +683,6 @@ skipEntity:
 		if entityUpdated {
 			entitiesUpdated = append(entitiesUpdated, e.Entity)
 		}
-
 		// If current commit is HEAD, create/update HEAD entity
 		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || (currentAnalysisTag.Sha == e.Commit) || currentAnalysisTag.Sha == "" {
 			if entityUpdated {
