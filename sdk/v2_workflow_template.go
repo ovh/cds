@@ -30,8 +30,8 @@ type V2WorkflowTemplate struct {
 
 type V2WorkflowTemplateParameter struct {
 	Key      string                      `json:"key" jsonschema_extras:"order=1" jsonschema_description:"Name of the parameter"`
-	Type     V2WorkflowTemplateParamType `json:"type" jsonschema_extras:"order=2" jsonschema_description:"Type of the parameter"`
-	Required bool                        `json:"required" jsonschema_extras:"order=3" jsonschema_description:"Indicate if the parameter is mandatory"`
+	Type     V2WorkflowTemplateParamType `json:"type,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Type of the parameter"`
+	Required bool                        `json:"required,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Indicate if the parameter is mandatory"`
 }
 
 type V2WorkflowTemplateGenerateRequest struct {
