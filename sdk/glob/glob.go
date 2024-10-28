@@ -205,6 +205,7 @@ func Glob(cwd string, pattern string) (*FileResults, error) {
 		} else {
 			retaliveExpressions = append(retaliveExpressions, s)
 		}
+		splittedExpression[i] = filepath.Clean(s)
 	}
 
 	if len(absoluteExpressions) > 0 && len(retaliveExpressions) > 0 {
