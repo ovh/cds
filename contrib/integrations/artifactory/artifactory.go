@@ -135,8 +135,8 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data FileToPromote
 				if nbFailed > 0 || nbSuccess == 0 {
 					return hasBeenPromoted, fmt.Errorf("%s: copy failed with no reason", data.Name)
 				}
-				hasBeenPromoted = true
 			}
+			hasBeenPromoted = true
 		} else {
 			fmt.Printf("%s already exists on destination repository\n", data.Name)
 		}
