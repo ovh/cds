@@ -49,7 +49,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 		return 0, nil
 	}
 
-	latestCommit, err := r.LatestCommit(ctx)
+	latestCommit, err := r.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
 	if err != nil {
 		return 0, cli.WrapError(err, "unable to get latest commit")
 	}
