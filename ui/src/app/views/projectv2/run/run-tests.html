@@ -1,6 +1,6 @@
 <div class="form">
 	<nz-input-group [nzSuffix]="suffixIcon">
-		<input type="text" nz-input placeholder="Search" [(ngModel)]="searchValue" />
+		<input type="text" nz-input placeholder="Search" [ngModel]="searchValue" (ngModelChange)="updateSearch($event)" />
 	</nz-input-group>
 	<ng-template #suffixIcon>
 		<span nz-icon nzType="search"></span>
@@ -13,5 +13,42 @@
 		<nz-checkbox-group [ngModel]="filterOptions" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
 	</ng-template>
 </div>
-<nz-tree [nzData]="nodes" [nzSearchValue]="searchValue" [nzMultiple]="false" nzShowIcon (nzClick)="nzEvent($event)"
-	(nzSearchValueChange)="nzEvent($event)" #tree></nz-tree>
+<div class="content">
+	<ng-container *ngFor="let node of nodes">
+		<div class="tree-node-header large" (click)="clickTestSuite(node.key)">
+			<span nz-icon [nzType]="!treeExpandState[node.key] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
+			<div class="name" [title]="node.title">
+				{{node.title}}
+				<span class="ok" *ngIf="node.success > 0">
+					<span nz-icon nzType="check" nzTheme="outline"></span>{{node.success}}
+				</span>
+				<span class="skipped" *ngIf="node.skipped > 0">
+					<span nz-icon nzType="warning" nzTheme="fill"></span>{{node.skipped}}
+				</span>
+				<span class="ko" *ngIf="node.failed > 0">
+					<span nz-icon nzType="close" nzTheme="outline"></span>{{node.failed}}
+				</span>
+			</div>
+			<div class="time">{{node.time}}</div>
+		</div>
+		<div class="tree-node-content" *ngIf="treeExpandState[node.key]">
+			<ng-container *ngFor="let child of node.children">
+				<div class="tree-node-header" (click)="clickTestCase(child.testCase)">
+					<span class="ok" *ngIf="child.status ==='success'">
+						<span nz-icon nzType="check" nzTheme="outline"></span>
+					</span>
+					<span class="skipped" *ngIf="child.status ==='skipped'">
+						<span nz-icon nzType="warning" nzTheme="fill"></span>
+					</span>
+					<span class="ko" *ngIf="child.status ==='failed'">
+						<span nz-icon nzType="close" nzTheme="outline"></span>
+					</span>
+					<div class="name" [title]="child.title">
+						{{child.title}}
+					</div>
+					<div class="time">{{child.time}}</div>
+				</div>
+			</ng-container>
+		</div>
+	</ng-container>
+</div>

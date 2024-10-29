@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
 import { TestCase, Tests } from "app/model/pipeline.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
-import { NzFormatEmitEvent, NzTreeComponent, NzTreeNodeOptions } from "ng-zorro-antd/tree";
 
 @Component({
 	selector: 'app-run-tests',
@@ -11,8 +10,6 @@ import { NzFormatEmitEvent, NzTreeComponent, NzTreeNodeOptions } from "ng-zorro-
 })
 @AutoUnsubscribe()
 export class RunTestsComponent implements OnChanges {
-	@ViewChild('tree') tree: NzTreeComponent;
-
 	@Input() tests: Tests;
 	@Output() onSelectTest = new EventEmitter<TestCase>();
 
@@ -22,6 +19,7 @@ export class RunTestsComponent implements OnChanges {
 	activeFilters: Array<string>;
 	filterOptions = [];
 	nodes = [];
+	treeExpandState: { [key: string]: boolean } = {};
 
 	constructor(
 		private _cd: ChangeDetectorRef
@@ -57,66 +55,47 @@ export class RunTestsComponent implements OnChanges {
 		}
 
 		const nodes = this.tests.test_suites.map(ts => {
-			let node = <NzTreeNodeOptions>{
-				title: `${ts.name} - ${ts.time}s`,
+			let node = {
+				title: `${ts.name}`,
 				key: ts.name,
 				children: [],
-				expanded: false,
-				selectable: false
+				time: `${ts.time}s`
 			};
 
-			const filteredTests = (ts.tests ?? []).filter(t => this.activeFilters.indexOf(this.computeTestCaseStatus(t)) !== -1);
+			const filteredTests = (ts.tests ?? []).filter(t => {
+				const statusMatch = this.activeFilters.indexOf(this.computeTestCaseStatus(t)) !== -1;
+				const nameMatch = !this.searchValue || t.name.toLowerCase().indexOf(this.searchValue.toLowerCase()) !== -1;
+				return statusMatch && nameMatch;
+			});
 
 			// Try to aggregate tests sub runs
 			node.children = filteredTests.filter(t => t.name.indexOf('/') === -1).map(t => {
-				const status = this.computeTestCaseStatus(t);
-				let icon = 'check';
-				switch (status) {
-					case 'skipped':
-						icon = 'warning';
-						break;
-					case 'failed':
-						icon = 'close';
-						break;
-				}
-				return <NzTreeNodeOptions>{
-					title: `${t.name} - ${t.time}s`,
+				return {
+					title: `${t.name}`,
 					key: `${ts.name}/${t.name}`,
-					children: [],
-					icon,
-					testCase: t
+					testCase: t,
+					status: this.computeTestCaseStatus(t),
+					time: `${t.time}s`
 				};
 			});
 			filteredTests.filter(t => t.name.indexOf('/') !== -1).forEach(t => {
 				const split = t.name.split(('/'));
 				const parentIdx = node.children.findIndex(c => c.key === split[0]);
-
-				const status = this.computeTestCaseStatus(t);
-				let icon = 'check';
-				switch (status) {
-					case 'skipped':
-						icon = 'warning';
-						break;
-					case 'failed':
-						icon = 'close';
-						break;
-				}
-
 				if (parentIdx >= 0) {
-					node.children[parentIdx].children.push(<NzTreeNodeOptions>{
-						title: `${split[1]} - ${t.time}s`,
+					node.children[parentIdx].children.push({
+						title: `${split[1]}`,
 						key: `${ts.name}/${split[0]}/${split[1]}`,
-						isLeaf: true,
-						icon,
-						testCase: t
+						testCase: t,
+						status: this.computeTestCaseStatus(t),
+						time: `${t.time}s`
 					})
 				} else {
-					node.children.push(<NzTreeNodeOptions>{
-						title: `${t.name} - ${t.time}s`,
+					node.children.push({
+						title: `${t.name}`,
 						key: `${ts.name}/${t.name}`,
-						isLeaf: true,
-						icon,
-						testCase: t
+						testCase: t,
+						status: this.computeTestCaseStatus(t),
+						time: `${t.time}s`
 					})
 				}
 			});
@@ -129,7 +108,42 @@ export class RunTestsComponent implements OnChanges {
 			return node;
 		});
 
-		this.nodes = nodes.filter(n => (n.children.length > 0 && this.filtered) || !this.filtered);
+		this.nodes = nodes.filter(n => (n.children.length > 0 && this.filtered) || !this.filtered).map(n => {
+			return {
+				...n,
+				success: n.children.filter(t => t.status === 'success').length,
+				failed: n.children.filter(t => t.status === 'failed').length,
+				skipped: n.children.filter(t => t.status === 'skipped').length
+			}
+		});
+
+		// Sort test cases for each test suites
+		for (let i = 0; i < this.nodes.length; i++) {
+			this.nodes[i].children.sort((a, b) => {
+				return a.title < b.title ? -1 : 1;
+			});
+		}
+
+		// Sort test suites
+		this.nodes.sort((a, b) => {
+			if (a.failed !== b.failed) {
+				return a.failed > b.failed ? -1 : 1;
+			}
+			if (a.skipped !== b.skipped) {
+				return a.skipped > b.skipped ? -1 : 1;
+			}
+			if (a.success !== b.success) {
+				return a.success > b.success ? -1 : 1;
+			}
+			return a.title < b.title ? -1 : 1;
+		});
+
+		// Expand test suites with failed tests by default
+		this.nodes.forEach(s => {
+			if (!this.treeExpandState.hasOwnProperty(s.key) && s.failed > 0) {
+				this.treeExpandState[s.key] = true;
+			}
+		});
 	}
 
 	updateFilters(event): void {
@@ -141,34 +155,6 @@ export class RunTestsComponent implements OnChanges {
 		this._cd.markForCheck();
 	}
 
-	nzEvent(event: NzFormatEmitEvent): void {
-		if (!event.node) {
-			return;
-		}
-		const recursiveSelectNode = (n: NzTreeNodeOptions): NzTreeNodeOptions => {
-			let copy = <NzTreeNodeOptions>{ ...n };
-			if (event.node.isLeaf) {
-				copy.selected = false;
-			}
-			if (copy.key === event.node.key) {
-				if (copy.children && copy.children.length > 0) {
-					copy.expanded = !copy.expanded;
-				} else {
-					copy.selected = true;
-				}
-			}
-			if (copy.children) {
-				copy.children = copy.children.map(n => recursiveSelectNode(n));
-			}
-			return copy;
-		};
-		this.nodes = this.nodes.map(n => recursiveSelectNode(n));
-		if (event.node.isLeaf) {
-			this.onSelectTest.emit(event.node.origin.testCase);
-		}
-		this._cd.markForCheck();
-	}
-
 	computeTestCaseStatus(tc: TestCase): string {
 		if (!tc.errors && !tc.failures && !tc.skipped) {
 			return 'success';
@@ -177,5 +163,20 @@ export class RunTestsComponent implements OnChanges {
 		} else {
 			return 'skipped';
 		}
+	}
+
+	clickTestSuite(key: string): void {
+		this.treeExpandState[key] = !this.treeExpandState[key];
+		this._cd.markForCheck();
+	}
+
+	clickTestCase(t: TestCase): void {
+		this.onSelectTest.emit(t);
+	}
+
+	updateSearch(value: string): void {
+		this.searchValue = value;
+		this.initTestTree();
+		this._cd.markForCheck();
 	}
 }

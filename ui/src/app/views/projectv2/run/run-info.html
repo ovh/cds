@@ -1,0 +1,11 @@
+<div class="content">
+	<div *ngFor="let i of info" class="line">
+		<span *ngIf="i.level === 'error'" class="error" nz-icon nzType="close-circle" nzTheme="fill"></span>
+		<span *ngIf="i.level === 'warning'" class="warning" nz-icon nzType="warning" nzTheme="fill"></span>
+		<span *ngIf="i.level==='info'" class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
+		<div class="message" [title]="i.message">
+			{{i.message}}
+		</div>
+		<div class="date">{{i.issued_at | date: 'YYYY-MM-dd HH:mm:ss Z'}}</div>
+	</div>
+</div>

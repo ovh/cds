@@ -1,0 +1,59 @@
+@import '../../../../common';
+
+:host {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  padding: 10px;
+  flex: 1;
+  overflow-y: auto;
+
+  .line {
+    height: 26px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 5px;
+
+    &:hover {
+      background-color: #f5f5f5;
+
+      :host-context(.night) & {
+        background-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    .message {
+      flex: 1;
+      padding: 0 5px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .date {
+      margin-left: 10px;
+      color: rgba(0, 0, 0, .45);
+
+      :host-context(.night) & {
+        color: rgba(255, 255, 255, 0.45);
+      }
+    }
+
+    .error {
+      color: $darkTheme_red;
+    }
+
+    .warning {
+      color: $darkTheme_orange;
+    }
+
+    .info {
+      color: $darkTheme_blue;
+    }
+  }
+}

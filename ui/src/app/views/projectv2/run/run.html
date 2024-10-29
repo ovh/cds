@@ -103,20 +103,7 @@
             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
             <div class="bottom-panel">
                 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
-                <div *ngIf="selectedTab && selectedTab.key === 'infos'" class="infos">
-                    <div *ngFor="let info of workflowRunInfos" class="line">
-                        <span *ngIf="info.level === 'error'" class="error" nz-icon nzType="close-circle"
-                            nzTheme="fill"></span>
-                        <span *ngIf="info.level === 'warning'" class="warning" nz-icon nzType="warning"
-                            nzTheme="fill"></span>
-                        <span *ngIf="info.level==='info'" class="info" nz-icon nzType="info-circle"
-                            nzTheme="fill"></span>
-                        <div class="content">
-                            {{info.message}}
-                        </div>
-                        <div class="date">{{info.issued_at | date: 'YYYY-MM-dd HH:mm:ss.SSS Z'}}</div>
-                    </div>
-                </div>
+                <app-run-info *ngIf="selectedTab && selectedTab.key === 'info'" [info]="workflowRunInfo"></app-run-info>
                 <app-run-results *ngIf="selectedTab && selectedTab.key === 'results'" [results]="results"
                     (onSelectResult)="openPanel('result', $event)"></app-run-results>
                 <app-run-tests *ngIf="selectedTab && selectedTab.key === 'tests'" [tests]="tests"

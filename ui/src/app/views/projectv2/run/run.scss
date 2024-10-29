@@ -162,55 +162,6 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-
-        .infos {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow-y: auto;
-
-            .line:first-child {
-                margin-top: 2px;
-            }
-
-            .line {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                padding: 0 5px;
-                min-height: 21px;
-
-                &:hover {
-                  background-color: #f5f5f5;
-            
-                  :host-context(.night) & {
-                    background-color: rgba(255, 255, 255, 0.08);
-                  }
-                }
-
-                .content {
-                    flex: 1;
-                    margin: 0 5px;
-                }
-
-                .error {
-                    color: $darkTheme_red;
-                }
-
-                .warning {
-                    color: $darkTheme_orange;
-                }
-
-                .info {
-                    color: $darkTheme_blue;
-                }
-            }
-        }
-
-        .results {
-            width: 100%;
-            overflow: hidden;
-        }
     }
 }
 

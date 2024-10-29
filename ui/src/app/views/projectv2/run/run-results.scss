@@ -9,7 +9,7 @@
 .form {
   display: flex;
   flex-direction: row;
-  margin: 10px;
+  margin: 10px 10px 0 10px;
 
   [nz-button] {
     margin-left: 5px;
@@ -32,22 +32,32 @@ nz-checkbox-group {
 }
 
 nz-list {
-  margin: 0 10px;
+  padding: 10px;
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
 
   nz-list-item {
     display: flex;
     flex-direction: row;
+    overflow: hidden;
     cursor: pointer;
+    width: 100%;
 
     .identifier {
-      flex: 1;
+      max-width: 70%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
     .label {
+      flex: 1;
+      text-align: right;
       margin-left: 20px;
       color: rgba(0, 0, 0, .45);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
 
       :host-context(.night) & {
         color: rgba(255, 255, 255, 0.45);
