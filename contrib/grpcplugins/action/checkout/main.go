@@ -98,7 +98,7 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 
 		// Check commit
 		if sha != "" && sha != "HEAD" {
-			currentCommit, err := clonedRepo.LatestCommit(ctx)
+			currentCommit, err := clonedRepo.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
 			if err != nil {
 				res.Status = sdk.StatusFail
 				res.Details = fmt.Sprintf("unable to get current commit: %v", err)

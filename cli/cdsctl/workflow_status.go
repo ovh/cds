@@ -57,7 +57,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	if err != nil {
 		return nil, cli.WrapError(err, "unable to get latest commit")
 	}
-	latestCommit, err := r.LatestCommit(ctx)
+	latestCommit, err := r.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
 	if err != nil {
 		return nil, cli.WrapError(err, "unable to get latest commit")
 	}
