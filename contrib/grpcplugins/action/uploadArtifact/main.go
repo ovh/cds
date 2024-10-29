@@ -48,7 +48,7 @@ func (p *runActionUploadArtifactPlugin) Stream(q *actionplugin.ActionQuery, stre
 	ifNoFilesFound := q.GetOptions()["if-no-files-found"]
 
 	runResultType := sdk.V2WorkflowRunResultType(sdk.V2WorkflowRunResultTypeGeneric)
-	if q.GetOptions()["type"] == sdk.V2WorkflowRunResultTypeCoverage {
+	if sdk.V2WorkflowRunResultType(q.GetOptions()["type"]) == sdk.V2WorkflowRunResultTypeCoverage {
 		runResultType = sdk.V2WorkflowRunResultType(sdk.V2WorkflowRunResultTypeCoverage)
 	}
 

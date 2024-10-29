@@ -62,9 +62,9 @@ type V2WorkflowRunResultDetailInterface interface {
 type V2WorkflowRunResultDetailMetadataType string
 
 const (
-	V2WorkflowRunResultDetailMetadataTypeText   = "TEXT"
-	V2WorkflowRunResultDetailMetadataTypeNUMBER = "NUMBER"
-	V2WorkflowRunResultDetailMetadataTypeURL    = "URL"
+	V2WorkflowRunResultDetailMetadataTypeText   V2WorkflowRunResultDetailMetadataType = "TEXT"
+	V2WorkflowRunResultDetailMetadataTypeNUMBER V2WorkflowRunResultDetailMetadataType = "NUMBER"
+	V2WorkflowRunResultDetailMetadataTypeURL    V2WorkflowRunResultDetailMetadataType = "URL"
 )
 
 type V2WorkflowRunResultDetailMetadata struct {
@@ -198,19 +198,19 @@ func (s *V2WorkflowRunResultDetail) Scan(src interface{}) error {
 type V2WorkflowRunResultType string
 
 const (
-	V2WorkflowRunResultTypeCoverage          = "coverage"
-	V2WorkflowRunResultTypeTest              = "tests"
-	V2WorkflowRunResultTypeRelease           = "release"
-	V2WorkflowRunResultTypeGeneric           = "generic"
-	V2WorkflowRunResultTypeVariable          = "variable"
-	V2WorkflowRunResultTypeDocker            = "docker"
-	V2WorkflowRunResultTypeDebian            = "debian"
-	V2WorkflowRunResultTypePython            = "python"
-	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
-	V2WorkflowRunResultTypeHelm              = "helm"
-	V2WorkflowRunResultTypeTerraformProvider = "terraformProvider"
-	V2WorkflowRunResultTypeTerraformModule   = "terraformModule"
-	V2WorkflowRunResultTypeStaticFiles       = "staticFiles"
+	V2WorkflowRunResultTypeCoverage          V2WorkflowRunResultType = "coverage"
+	V2WorkflowRunResultTypeTest              V2WorkflowRunResultType = "tests"
+	V2WorkflowRunResultTypeRelease           V2WorkflowRunResultType = "release"
+	V2WorkflowRunResultTypeGeneric           V2WorkflowRunResultType = "generic"
+	V2WorkflowRunResultTypeVariable          V2WorkflowRunResultType = "variable"
+	V2WorkflowRunResultTypeDocker            V2WorkflowRunResultType = "docker"
+	V2WorkflowRunResultTypeDebian            V2WorkflowRunResultType = "debian"
+	V2WorkflowRunResultTypePython            V2WorkflowRunResultType = "python"
+	V2WorkflowRunResultTypeArsenalDeployment V2WorkflowRunResultType = "deployment"
+	V2WorkflowRunResultTypeHelm              V2WorkflowRunResultType = "helm"
+	V2WorkflowRunResultTypeTerraformProvider V2WorkflowRunResultType = "terraformProvider"
+	V2WorkflowRunResultTypeTerraformModule   V2WorkflowRunResultType = "terraformModule"
+	V2WorkflowRunResultTypeStaticFiles       V2WorkflowRunResultType = "staticFiles"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 

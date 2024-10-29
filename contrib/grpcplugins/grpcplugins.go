@@ -383,6 +383,30 @@ func GetJobContext(ctx context.Context, c *actionplugin.Common) (*sdk.WorkflowRu
 	return &context, nil
 }
 
+func GetWorkerConfig(ctx context.Context, c *actionplugin.Common) (*workerruntime.V2WorkerConfig, error) {
+	r, err := c.NewRequest(ctx, "GET", "/v2/workerConfig", nil)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to prepare request")
+	}
+
+	resp, err := c.DoRequest(r)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get job context")
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to read response")
+	}
+
+	defer resp.Body.Close()
+
+	var config workerruntime.V2WorkerConfig
+	if err := sdk.JSONUnmarshal(btes, &config); err != nil {
+		return nil, sdk.WrapError(err, "unable to read response")
+	}
+	return &config, nil
+}
+
 type ArtifactoryConfig struct {
 	URL             string
 	Token           string
@@ -643,12 +667,12 @@ func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, patte
 	}, nil
 }
 
-func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi ArtifactoryFileInfo, name, resultType, localRepository, repository, maturity string) {
+func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi ArtifactoryFileInfo, name string, resultType sdk.V2WorkflowRunResultType, localRepository, repository, maturity string) {
 	runResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
 	runResult.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
 	runResult.ArtifactManagerMetadata.Set("maturity", maturity)
 	runResult.ArtifactManagerMetadata.Set("name", name)
-	runResult.ArtifactManagerMetadata.Set("type", resultType)
+	runResult.ArtifactManagerMetadata.Set("type", string(resultType))
 	runResult.ArtifactManagerMetadata.Set("path", fi.Path)
 	runResult.ArtifactManagerMetadata.Set("md5", fi.Checksums.Md5)
 	runResult.ArtifactManagerMetadata.Set("sha1", fi.Checksums.Sha1)
@@ -665,6 +689,12 @@ func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi Artifac
 }
 
 func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, fileName string, f fs.File, size int64, fileChecksum ChecksumResult) (*workerruntime.V2UpdateResultResponse, error) {
+	workerConfig, err := GetWorkerConfig(ctx, actplugin)
+	if err != nil {
+		Error(actplugin, err.Error())
+		return nil, err
+	}
+
 	response, err := CreateRunResult(ctx, actplugin, runresultReq)
 	if err != nil {
 		Error(actplugin, err.Error())
@@ -675,12 +705,12 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 	var d time.Duration
 	var runResultRequest workerruntime.V2RunResultRequest
 	switch {
-	case response.CDNAddress != "":
+	case response.CDNSignature != "":
 		reader, ok := f.(io.ReadSeeker)
 		var item *sdk.CDNItem
 		var err error
 		if ok {
-			item, d, err = CDNItemUpload(ctx, actplugin, response.CDNAddress, response.CDNSignature, reader)
+			item, d, err = CDNItemUpload(ctx, actplugin, workerConfig.CDNEndpoint, response.CDNSignature, reader)
 			if err != nil {
 				Error(actplugin, "An error occurred during file upload upload: "+err.Error())
 				return nil, err
@@ -692,14 +722,12 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 
 		// Update the run result status
 		runResultRequest = workerruntime.V2RunResultRequest{RunResult: response.RunResult}
-		i := sdk.CDNItemLink{CDNHttpURL: response.CDNAddress, Item: *item}
+		i := sdk.CDNItemLink{CDNHttpURL: workerConfig.CDNEndpoint, Item: *item}
 		runResultRequest.RunResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{
-			"uri":              i.CDNHttpURL,
-			"cdn_http_url":     i.CDNHttpURL,
-			"cdn_id":           i.Item.ID,
-			"cdn_type":         string(i.Item.Type),
-			"cdn_api_ref_hash": i.Item.APIRefHash,
-			"downloadURI":      fmt.Sprintf("%s/item/%s/%s/download", i.CDNHttpURL, string(i.Item.Type), i.Item.APIRefHash),
+			"cdn_id":            i.Item.ID,
+			"cdn_type":          string(i.Item.Type),
+			"cdn_api_ref_hash":  i.Item.APIRefHash,
+			"cdn_download_path": fmt.Sprintf("/item/%s/%s/download", string(i.Item.Type), i.Item.APIRefHash),
 		}
 		Logf(actplugin, "  CDN API Ref Hash: %s", i.Item.APIRefHash)
 		Logf(actplugin, "  CDN HTTP URL: %s", i.CDNHttpURL)
@@ -1085,7 +1113,6 @@ func DownloadFromCDN(ctx context.Context, c *actionplugin.Common, CDNSignature s
 }
 
 func BodyToFile(resp *http.Response, workDirs sdk.WorkerDirectories, path string, name string, mode fs.FileMode) (string, int64, error) {
-
 	var destinationDir string
 	if path != "" && filepath.IsAbs(path) {
 		destinationDir = path
@@ -1111,7 +1138,6 @@ func BodyToFile(resp *http.Response, workDirs sdk.WorkerDirectories, path string
 	}
 	_ = resp.Body.Close()
 	return destinationFile, n, nil
-
 }
 
 func BuildCacheURL(integ sdk.JobIntegrationsContext, projKey string, cacheKey string) string {

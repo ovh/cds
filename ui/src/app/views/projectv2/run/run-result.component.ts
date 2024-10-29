@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Tab } from "app/shared/tabs/tabs.component";
@@ -31,9 +31,12 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 		private _store: Store
 	) {
 		this.tabs = [<Tab>{
-			title: 'Raw',
-			key: 'raw',
+			title: 'Description',
+			key: 'description',
 			default: true
+		}, <Tab>{
+			title: 'Raw',
+			key: 'raw'
 		}];
 	}
 

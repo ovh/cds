@@ -181,7 +181,11 @@
                 min-height: 21px;
 
                 &:hover {
-                    background-color: #177ddc;
+                  background-color: #f5f5f5;
+            
+                  :host-context(.night) & {
+                    background-color: rgba(255, 255, 255, 0.08);
+                  }
                 }
 
                 .content {
@@ -202,11 +206,12 @@
                 }
             }
         }
-    }
-}
 
-.result {
-    cursor: pointer;
+        .results {
+            width: 100%;
+            overflow: hidden;
+        }
+    }
 }
 
 app-resizable-panel {

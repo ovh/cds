@@ -140,6 +140,7 @@
             cursor: pointer;
             min-height: 25px;
             line-height: 25px;
+            padding-right: 8px;
 
             .value {
                 color: #FFFF91;
@@ -169,6 +170,7 @@
             display: flex;
             flex-direction: row;
             align-items: center;
+            margin-left: 5px;
 
             div {
                 height: 15px;
@@ -186,6 +188,7 @@
             display: flex;
             flex-direction: row;
             align-items: center;
+            margin-left: 2px;
 
             a {
                 cursor: pointer;
@@ -208,7 +211,7 @@
 .footer {
     position: fixed;
     bottom: 0;
-    right: 0;
+    right: 8px;
 
     .goto {
         display: inline-block;

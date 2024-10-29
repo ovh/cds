@@ -24,7 +24,6 @@ type V2RunResultRequest struct {
 type V2AddResultResponse struct {
 	RunResult    *sdk.V2WorkflowRunResult
 	CDNSignature string
-	CDNAddress   string
 }
 
 type V2GetResultResponse struct {
@@ -39,6 +38,10 @@ type V2UpdateResultResponse struct {
 type V2FilterRunResult struct {
 	Pattern string
 	Type    []sdk.V2WorkflowRunResultType
+}
+
+type V2WorkerConfig struct {
+	CDNEndpoint string `json:"cdn_endpoint"`
 }
 
 type WorkerConfig struct {

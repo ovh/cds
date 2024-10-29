@@ -1,0 +1,26 @@
+<div class="form">
+	<nz-input-group [nzSuffix]="suffixIcon">
+		<input type="text" nz-input placeholder="Search" [ngModel]="searchValue" (ngModelChange)="updateSearch($event)" />
+	</nz-input-group>
+	<ng-template #suffixIcon>
+		<span nz-icon nzType="search"></span>
+	</ng-template>
+	<button [class.active]="filtered" nz-button nzType="default" nz-popover [nzPopoverContent]="contentFilter"
+		nzPopoverTrigger="bottomRight" nzPopoverTrigger="click">
+		<span nz-icon nzType="filter" nzTheme="outline"></span>
+	</button>
+	<ng-template #contentFilter>
+		<nz-checkbox-group [ngModel]="filterOptions" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
+	</ng-template>
+</div>
+<nz-list nzSize="small">
+	<nz-list-item *ngFor="let item of filteredResults" (click)="clickResult(item.result)">
+		<span class="identifier">{{item.result.identifier}}</span>
+		<span class="label">{{item.result.label}}</span>
+		<a *ngIf="item.downloadLink" [href]="item.downloadLink" target="_blank" rel="noopener noreferrer"
+			title="Download the result" (click)="$event.stopPropagation()"><i nz-icon nzType="download"
+				nzTheme="outline"></i></a>
+		<a *ngIf="item.viewLink" [href]="item.viewLink" target="_blank" rel="noopener noreferrer" title="View the result"
+			(click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
+	</nz-list-item>
+</nz-list>

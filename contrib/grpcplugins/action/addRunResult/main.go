@@ -42,7 +42,7 @@ func (p *addRunResultPlugin) Stream(q *actionplugin.ActionQuery, stream actionpl
 		Status: sdk.StatusSuccess,
 	}
 
-	resultType := q.GetOptions()["type"]
+	resultType := sdk.V2WorkflowRunResultType(q.GetOptions()["type"])
 	path := q.GetOptions()["path"]
 	payload := q.GetOptions()["payload"]
 
@@ -71,7 +71,7 @@ func (p *addRunResultPlugin) Stream(q *actionplugin.ActionQuery, stream actionpl
 
 }
 
-func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPath string, detail sdk.V2WorkflowRunResultDetail) (bool, error) {
+func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2WorkflowRunResultType, artifactPath string, detail sdk.V2WorkflowRunResultDetail) (bool, error) {
 	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
 	if err != nil {
 		return true, err

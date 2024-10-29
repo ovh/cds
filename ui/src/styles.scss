@@ -196,27 +196,6 @@ app-workflow-admin .CodeMirror-scroll {
     overflow: hidden;
 }
 
-$scrollbarsize: 10px;
-$scrollbarradius: 0px;
-
-body ::-webkit-scrollbar {
-    width: $scrollbarsize;
-    height: $scrollbarsize;
-}
-
-* ::-webkit-scrollbar {
-    width: $scrollbarsize;
-    height: $scrollbarsize;
-}
-
-body ::-webkit-scrollbar-thumb {
-    border-radius: $scrollbarradius;
-}
-
-* ::-webkit-scrollbar-thumb {
-    border-radius: $scrollbarradius;
-}
-
 .toast {
     padding: 0;
     margin: 0;

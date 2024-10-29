@@ -16,6 +16,20 @@ import (
 	"github.com/rockbears/log"
 )
 
+func V2_workerConfig(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			writeJSON(w, V2WorkerConfig{
+				CDNEndpoint: wk.CDNHttpURL(),
+			}, http.StatusOK)
+		default:
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+	}
+}
+
 func V2_cacheLinkHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -40,7 +54,6 @@ func V2_cacheLinkHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			return
 		}
 	}
-
 }
 
 func V2_cacheSignatureHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
@@ -64,12 +77,10 @@ func V2_cacheSignatureHandler(ctx context.Context, wk Runtime) http.HandlerFunc 
 			return
 		}
 	}
-
 }
 
 func V2_outputHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		btes, err := io.ReadAll(r.Body)
 		if err != nil {
 			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
@@ -114,7 +125,6 @@ func V2_projectKeyHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			}
 			writeJSON(w, k, http.StatusOK)
 		default:
-
 			return
 		}
 	}

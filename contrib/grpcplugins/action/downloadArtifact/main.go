@@ -91,6 +91,12 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 		return errors.New("unable to retrieve job context")
 	}
 
+	workerConfig, err := grpcplugins.GetWorkerConfig(ctx, &actPlugin.Common)
+	if err != nil {
+		grpcplugins.Errorf(&actPlugin.Common, err.Error())
+		return errors.New("unable to retrieve worker config")
+	}
+
 	grpcplugins.Logf(&actPlugin.Common, "Total number of files that will be downloaded: %d", len(response.RunResults))
 
 	for _, r := range filteredRunResults {
@@ -113,12 +119,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 				return sdk.Errorf("unable to download artifact %q (caused by: missing cdn_type property", r.Name())
 			}
 
-			cdnAddr, has := (*r.ArtifactManagerMetadata)["cdn_http_url"]
-			if !has {
-				return sdk.Errorf("unable to download artifact %q (caused by: missing cdn_http_url property", r.Name())
-			}
-
-			destinationFile, n, err := grpcplugins.DownloadFromCDN(ctx, &actPlugin.Common, response.CDNSignature, *workDirs, cdnApirefhash, cdnType, cdnAddr, path, x.Name, x.Mode)
+			destinationFile, n, err := grpcplugins.DownloadFromCDN(ctx, &actPlugin.Common, response.CDNSignature, *workDirs, cdnApirefhash, cdnType, workerConfig.CDNEndpoint, path, x.Name, x.Mode)
 			if err != nil {
 				grpcplugins.Errorf(&actPlugin.Common, err.Error())
 				hasError = true
@@ -126,7 +127,6 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 			}
 			grpcplugins.Logf(&actPlugin.Common, "Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
 		case r.ArtifactManagerIntegrationName != nil: // download from artifactory
-
 			// Get integration from the local cache, or from the worker
 			if jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager.Name == "" {
 				grpcplugins.Errorf(&actPlugin.Common, "unable to retrieve artifactory integration")

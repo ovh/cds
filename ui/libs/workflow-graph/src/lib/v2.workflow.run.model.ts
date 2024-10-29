@@ -239,12 +239,32 @@ export class WorkflowRunInfo {
 
 export class WorkflowRunResult {
     id: string;
-    type: WorkflowRunResultType;
+    type: WorkflowRunResultType | string;
     detail: WorkflowRunResultDetail;
+    metadata: { [key: string]: WorkflowRunResultMetadata };
+    url: string;
+    label: string;
+    identifier: string;
+    artifact_manager_metadata: any;
+}
+
+export enum WorkflowRunResultMetadataType {
+    text = 'TEXT',
+    number = 'NUMBER',
+    url = 'URL'
+}
+
+export class WorkflowRunResultMetadata {
+    type: WorkflowRunResultMetadataType
+    value: any;
 }
 
 export enum WorkflowRunResultType {
-    tests = 'tests'
+    tests = 'tests',
+    coverage = "coverage",
+	release = "release",
+	generic = "generic",
+	variable = "variable"
 }
 
 export class WorkflowRunResultDetail {

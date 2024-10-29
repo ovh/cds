@@ -24,6 +24,7 @@ import { EntityJSONFormComponent } from './explore/entity/entity-json-form.compo
 import { EntityJSONFormFieldComponent } from './explore/entity/entity-json-form-field.component';
 import { ProjectV2RunStartComponent } from './run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent } from './explore/trigger-analysis/trigger-analysis.component';
+import { RunResultsComponent } from './run/run-results.component';
 
 @NgModule({
     declarations: [
@@ -46,6 +47,7 @@ import { ProjectV2TriggerAnalysisComponent } from './explore/trigger-analysis/tr
         RunHookComponent,
         RunJobComponent,
         RunResultComponent,
+        RunResultsComponent,
         RunTestComponent,
         RunTestsComponent,
         RunWorkflowComponent

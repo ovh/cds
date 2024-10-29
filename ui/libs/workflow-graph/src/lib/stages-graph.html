@@ -2,8 +2,8 @@
 
 <div *ngIf="_workflowRun" class="hooks">
     <ng-container *ngFor="let h of hooks">
-        <div class="hook" *ngIf="h === selectedHook" [class.active]="true" (click)="clickHook(h)"
-            title="Show hook event">
+        <div class="hook" *ngIf="h === selectedHook || (selectedHook === 'scheduler' && h === 'schedule')"
+            [class.active]="true" (click)="clickHook(h)" title="Show hook event">
             <span nz-icon nzType="api" nzTheme="outline"></span>
             Triggered by hook on&nbsp;<b>{{h}}</b>
         </div>
