@@ -73,6 +73,7 @@ testcases:
             manual:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               gate: preprod
+              if: success()
               needs: [init]
               steps:
                 - run: echo 'World'
@@ -113,7 +114,7 @@ testcases:
       script: |-
         #!/bin/bash
         set -e
-        FILE=/tmp/`uuidgen`
+        FILE=/tmp/`uuid`
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
         # Check log content
