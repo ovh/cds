@@ -1321,7 +1321,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 	}
 
 	// check job condition
-	canRun, err := checkJobCondition(ctx, db, run, inputs, *jobDef, currentJobContext, u, wrEnqueue.IsAdminWithMFA)
+	canRun, err := checkCanRunJob(ctx, db, run, inputs, *jobDef, currentJobContext, u, wrEnqueue.IsAdminWithMFA)
 	if err != nil {
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -1423,13 +1423,11 @@ func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) bool {
 	return true
 }
 
-func checkJobCondition(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobInputs map[string]interface{}, jobDef sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext, u sdk.AuthentifiedUser, isAdminWithMFA bool) (bool, error) {
+func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobInputs map[string]interface{}, jobDef sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext, u sdk.AuthentifiedUser, isAdminWithMFA bool) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "checkJobCondition")
 	defer next()
 
-	// On keep ancestor of the current job
-	var jobCondition string
-
+	// Check job Gate
 	if jobDef.Gate != "" {
 		gate := run.WorkflowData.Workflow.Gates[jobDef.Gate]
 
@@ -1471,22 +1469,39 @@ func checkJobCondition(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workf
 			}
 		}
 
-		jobCondition = gate.If
-
 		// Override with value sent by user
 		for k, v := range jobInputs {
 			if _, has := currentJobContext.Gate[k]; has {
 				currentJobContext.Gate[k] = v
 			}
 		}
-	} else {
-		jobCondition = jobDef.If
+
+		gateConditionResult, err := checkCondition(ctx, db, gate.If, currentJobContext)
+		if err != nil {
+			return false, err
+		}
+		if !gateConditionResult {
+			return false, nil
+		}
 	}
-	if jobCondition == "" {
-		jobCondition = "${{success()}}"
+
+	// Check Job IF
+	jobIfResult, err := checkCondition(ctx, db, jobDef.If, currentJobContext)
+	if err != nil {
+		return false, err
 	}
-	if !strings.HasPrefix(jobCondition, "${{") {
-		jobCondition = fmt.Sprintf("${{ %s }}", jobCondition)
+	return jobIfResult, nil
+}
+
+func checkCondition(ctx context.Context, db gorp.SqlExecutor, condition string, currentJobContext sdk.WorkflowRunJobsContext) (bool, error) {
+	ctx, next := telemetry.Span(ctx, "checkJobGateCondition")
+	defer next()
+
+	if condition == "" {
+		condition = "${{success()}}"
+	}
+	if !strings.HasPrefix(condition, "${{") {
+		condition = fmt.Sprintf("${{ %s }}", condition)
 	}
 
 	bts, err := json.Marshal(currentJobContext)
@@ -1500,9 +1515,9 @@ func checkJobCondition(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workf
 	}
 
 	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-	booleanResult, err := ap.InterpolateToBool(ctx, jobCondition)
+	booleanResult, err := ap.InterpolateToBool(ctx, condition)
 	if err != nil {
-		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to parse if statement %s into a boolean: %v", jobCondition, err)
+		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to parse statement %s into a boolean: %v", condition, err)
 	}
 	return booleanResult, nil
 }

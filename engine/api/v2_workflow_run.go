@@ -1169,7 +1169,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 
 			runJobsContexts, _ := computeExistingRunJobContexts(ctx, runJobs, runResults)
 			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow, runJobsContexts, wr.Contexts, stages, jobToRuns[0].JobID)
-			booleanResult, err := checkJobCondition(ctx, api.mustDBWithCtx(ctx), *wr, inputs, jobToRuns[0].Job, jobContext, *u.AuthConsumerUser.AuthentifiedUser, isAdmin(ctx))
+			booleanResult, err := checkCanRunJob(ctx, api.mustDBWithCtx(ctx), *wr, inputs, jobToRuns[0].Job, jobContext, *u.AuthConsumerUser.AuthentifiedUser, isAdmin(ctx))
 			if err != nil {
 				return err
 			}
