@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fsamin/go-repo"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
@@ -49,7 +50,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 				return sdk.WithStack(err)
 			}
 		} else {
-			currentCommit, err := gitRepo.LatestCommit(ctx)
+			currentCommit, err := gitRepo.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
 			if err != nil {
 				return sdk.WithStack(err)
 			}
@@ -69,7 +70,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	}
 
 	if op.Setup.Checkout.GetMessage {
-		currentCommit, err := gitRepo.LatestCommit(ctx)
+		currentCommit, err := gitRepo.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
 		if err != nil {
 			return err
 		}
@@ -100,7 +101,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 			gpgKeyID = t.GPGKeyID
 		} else {
 			log.Debug(ctx, "retrieve gpg key id from commit %s", op.Setup.Checkout.Commit)
-			c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit)
+			c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit, repo.CommitOption{DisableDiffDetail: true})
 			if err != nil {
 				return sdk.WithStack(err)
 			}
@@ -184,7 +185,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		}
 
 		if computeFromLastCommit {
-			commitWithChangesets, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit)
+			commitWithChangesets, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit, repo.CommitOption{DisableDiffDetail: true})
 			if err != nil {
 				return err
 			}
