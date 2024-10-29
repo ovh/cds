@@ -18,6 +18,7 @@ import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive, V2Work
 import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
 import { RouterService } from "app/service/services.module";
 import { ErrorUtils } from "app/shared/error.utils";
+import moment from "moment";
 
 @Component({
     selector: 'app-projectv2-run',
@@ -32,8 +33,7 @@ export class ProjectV2RunComponent implements OnDestroy {
     @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
 
     workflowRun: V2WorkflowRun;
-    workflowRunInfos: Array<WorkflowRunInfo>;
-    workflowRunInfosContainsProblems: boolean = false;
+    workflowRunInfo: Array<WorkflowRunInfo>;
     selectedItemType: string;
     selectedJobRun: V2WorkflowRunJob;
     selectedJobGate: { gate: string, job: string };
@@ -111,7 +111,7 @@ export class ProjectV2RunComponent implements OnDestroy {
 
         this.defaultTabs = [<Tab>{
             title: 'Info',
-            key: 'infos'
+            key: 'info'
         }, <Tab>{
             title: 'Results',
             key: 'results'
@@ -166,7 +166,8 @@ export class ProjectV2RunComponent implements OnDestroy {
             this._messageService.error(`Unable to get results: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
         try {
-            this.workflowRunInfos = await lastValueFrom(this._workflowService.getRunInfos(this.workflowRun));
+            this.workflowRunInfo = await lastValueFrom(this._workflowService.getRunInfos(this.workflowRun));
+            this.workflowRunInfo.sort((a, b) => moment(a.issued_at).isBefore(moment(b.issued_at)) ? 1 : -1);
         } catch (e) {
             this._messageService.error(`Unable to get run infos: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
