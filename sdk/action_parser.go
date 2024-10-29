@@ -646,35 +646,22 @@ func (a *ActionParser) equal(operands []interface{}, operator string) (bool, err
 }
 
 func (a ActionParser) getPrimitiveType(operand interface{}) interface{} {
-	s, ok := operand.(string)
-	if ok {
+	switch s := operand.(type) {
+	case string, bool, float64:
 		return s
-	}
-	b, ok := operand.(bool)
-	if ok {
-		return b
-	}
-	jn, ok := operand.(json.Number)
-	if ok {
-		f, err := jn.Float64()
+	case int64:
+		return float64(s)
+	case int:
+		return float64(s)
+	case json.Number:
+		f, err := s.Float64()
 		if err != nil {
-			return jn.String()
+			return s.String()
 		}
 		return f
+	default:
+		return fmt.Sprintf("%v", operand)
 	}
-	f, ok := operand.(float64)
-	if ok {
-		return f
-	}
-	i64, ok := operand.(int64)
-	if ok {
-		return float64(i64)
-	}
-	i, ok := operand.(int)
-	if ok {
-		return float64(i)
-	}
-	return fmt.Sprintf("%v", operand)
 }
 
 func (a *ActionParser) and(operands []interface{}) (bool, error) {
