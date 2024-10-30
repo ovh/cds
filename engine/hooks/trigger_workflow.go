@@ -109,19 +109,20 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
 
 				runRequest := sdk.V2WorkflowRunHookRequest{
-					HookEventID:   hre.UUID,
-					UserID:        hre.UserID,
-					Ref:           hre.ExtractData.Ref,
-					Sha:           hre.ExtractData.Commit,
-					CommitMessage: hre.ExtractData.CommitMessage,
-					Payload:       event,
-					EventName:     hre.EventName,
-					HookType:      wh.Type,
-					SemverCurrent: wh.SemverCurrent,
-					SemverNext:    wh.SemverNext,
-					ChangeSets:    wh.UpdatedFiles,
-					AdminMFA:      hre.ExtractData.AdminMFA,
-					PullrequestID: hre.ExtractData.PullRequestID,
+					HookEventID:      hre.UUID,
+					UserID:           hre.UserID,
+					Ref:              hre.ExtractData.Ref,
+					Sha:              hre.ExtractData.Commit,
+					CommitMessage:    hre.ExtractData.CommitMessage,
+					Payload:          event,
+					EventName:        hre.EventName,
+					HookType:         wh.Type,
+					SemverCurrent:    wh.SemverCurrent,
+					SemverNext:       wh.SemverNext,
+					ChangeSets:       wh.UpdatedFiles,
+					AdminMFA:         hre.ExtractData.AdminMFA,
+					PullrequestID:    hre.ExtractData.PullRequestID,
+					PullrequestToRef: hre.ExtractData.PullRequestRefTo,
 				}
 
 				// Override repository ref to clone in the workflow

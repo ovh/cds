@@ -61,6 +61,7 @@ const (
 
 	HookEventStatusScheduled     = "Scheduled"
 	HookEventStatusAnalysis      = "Analyzing"
+	HookEventStatusCheckAnalysis = "CheckAnalyzing"
 	HookEventStatusWorkflowHooks = "WorkflowHooks"
 	HookEventStatusSignKey       = "SignKey"
 	HookEventStatusGitInfo       = "GitInfo"
@@ -261,18 +262,19 @@ func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
 }
 
 type HookRepositoryEventExtractData struct {
-	CDSEventName  WorkflowHookEventName                       `json:"cds_event_name"`
-	CDSEventType  WorkflowHookEventType                       `json:"cds_event_type"`
-	Commit        string                                      `json:"commit"`
-	CommitFrom    string                                      `json:"commit_from"`
-	CommitMessage string                                      `json:"commit_message"`
-	Paths         []string                                    `json:"paths"`
-	Ref           string                                      `json:"ref"`
-	PullRequestID int64                                       `json:"pullrequest_id"`
-	Manual        HookRepositoryEventExtractedDataManual      `json:"manual"`
-	AdminMFA      bool                                        `json:"admin_mfa"`
-	Scheduler     HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
-	WorkflowRun   HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
+	CDSEventName     WorkflowHookEventName                       `json:"cds_event_name"`
+	CDSEventType     WorkflowHookEventType                       `json:"cds_event_type"`
+	Commit           string                                      `json:"commit"`
+	CommitFrom       string                                      `json:"commit_from"`
+	CommitMessage    string                                      `json:"commit_message"`
+	Paths            []string                                    `json:"paths"`
+	Ref              string                                      `json:"ref"`
+	PullRequestID    int64                                       `json:"pullrequest_id"`
+	PullRequestRefTo string                                      `json:"pullrequest_ref_to"`
+	Manual           HookRepositoryEventExtractedDataManual      `json:"manual"`
+	AdminMFA         bool                                        `json:"admin_mfa"`
+	Scheduler        HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
+	WorkflowRun      HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
 }
 
 type HookRepositoryEventExtractedDataManual struct {
@@ -307,10 +309,11 @@ func (h *HookRepositoryEvent) GetFullName() string {
 }
 
 type HookRepositoryEventAnalysis struct {
-	AnalyzeID  string `json:"analyze_id"`
-	Status     string `json:"status"`
-	ProjectKey string `json:"project_key"`
-	Error      string `json:"error"`
+	AnalyzeID      string `json:"analyze_id"`
+	Status         string `json:"status"`
+	ProjectKey     string `json:"project_key"`
+	Error          string `json:"error"`
+	FindRetryCount int64  `json:"find_retry_count"`
 }
 
 type HookRetrieveSignKeyRequest struct {

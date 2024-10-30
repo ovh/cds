@@ -11,6 +11,103 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
+	allEnded := true
+
+	repos, err := s.Client.HookRepositoriesList(ctx, hre.VCSServerName, hre.RepositoryName)
+	if err != nil {
+		return err
+	}
+	// If there are known repositories, and no project checked, init analyses map
+	if len(hre.Analyses) == 0 && len(repos) > 0 {
+		log.Info(ctx, "found %d repositories to check analyze", len(repos))
+		hre.Analyses = make([]sdk.HookRepositoryEventAnalysis, 0, len(repos))
+		for _, r := range repos {
+			hre.Analyses = append(hre.Analyses, sdk.HookRepositoryEventAnalysis{
+				ProjectKey: r.ProjectKey,
+			})
+		}
+		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+			return err
+		}
+	}
+
+	// For each project, check analysis
+	for i := range hre.Analyses {
+		hreAnl := &hre.Analyses[i]
+		// If first time, retrieve analysis by commit
+		if hreAnl.AnalyzeID == "" {
+			foundAnl := false
+			as, err := s.Client.ProjectRepositoryAnalysisList(ctx, hreAnl.ProjectKey, hre.VCSServerName, hre.RepositoryName)
+			if err != nil {
+				return err
+			}
+			for _, a := range as {
+				if a.Commit == hre.ExtractData.Commit {
+					hreAnl.AnalyzeID = a.ID
+					hreAnl.Status = a.Status
+					foundAnl = true
+					break
+				}
+			}
+			if !foundAnl {
+				hreAnl.FindRetryCount++
+				if hreAnl.FindRetryCount > s.Cfg.OldRepositoryEventRetry {
+					hreAnl.Status = sdk.RepositoryAnalysisStatusError
+					hreAnl.AnalyzeID = ""
+					hreAnl.Error = "unable to find analysis"
+				} else {
+					allEnded = false
+				}
+
+			} else {
+				// Reset error for next part
+				hreAnl.FindRetryCount = 0
+			}
+			if hreAnl.Status == sdk.RepositoryAnalysisStatusInProgress {
+				allEnded = false
+			}
+		} else {
+			// Check status
+			apiAnalysis, err := s.Client.ProjectRepositoryAnalysisGet(ctx, hreAnl.ProjectKey, hre.VCSServerName, hre.RepositoryName, hreAnl.AnalyzeID)
+			if err != nil {
+				return err
+			}
+			hreAnl.Status = apiAnalysis.Status
+			if hreAnl.Status == sdk.RepositoryAnalysisStatusInProgress {
+				hreAnl.FindRetryCount++
+				if hreAnl.FindRetryCount > s.Cfg.OldRepositoryEventRetry {
+					hreAnl.Status = sdk.RepositoryAnalysisStatusError
+					hreAnl.Error = "analysis is too long"
+				} else {
+					allEnded = false
+				}
+			}
+		}
+		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+			return err
+		}
+	}
+
+	if !allEnded {
+		// If there is still analysis to check, wait and renqueue
+		s.GoRoutines.Exec(ctx, "hook-repository-event-"+hre.UUID, func(ctx context.Context) {
+			time.Sleep(10 * time.Second)
+			if err := s.Dao.EnqueueRepositoryEvent(ctx, hre); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+		})
+		return nil
+	}
+
+	hre.Status = sdk.HookEventStatusWorkflowHooks
+	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+		return err
+	}
+	return s.triggerGetWorkflowHooks(ctx, hre)
+
+}
+
 func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
 	ctx, next := telemetry.Span(ctx, "s.triggerAnalyses")
 	defer next()

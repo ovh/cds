@@ -66,7 +66,7 @@ testcases:
           on:
             pull-request:
               comment: "a comment here"
-              types: ["opened"]
+              types: ["opened", "edited"]
           jobs:
             myjob:
               runs-on: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
@@ -191,4 +191,33 @@ testcases:
       - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
       - "result.bodyjson.statuses.statuses0.context ShouldEqual \"ITV2WFNOTIF-WorkflowNotificationsLog #1\""
     retry: 10
+    delay: 1
+
+- name: Update the pull request by adding a new commit
+  steps:
+  - name: Update the branch
+    script: |- 
+      cd /tmp/repos/{{.git_repo}}
+      echo 'FOO' > foo_updated.md
+      git add --all
+      git commit --gpg-sign={{.gpg.key_id}} -m "add file and sign" --author "{{.git.user}} <{{.Prepare-test.emailaddress}}>"
+      git push origin new-branch
+
+  - name: Check CDS project analyses status after push on new-branch
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 4
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+      - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
+      - result.systemoutjson.systemoutjson3.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 2
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 200
     delay: 1

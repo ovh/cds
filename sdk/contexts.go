@@ -97,25 +97,27 @@ type CDSContext struct {
 }
 
 type GitContext struct {
-	Server           string   `json:"server,omitempty"`
-	Repository       string   `json:"repository,omitempty"`
-	RepositoryURL    string   `json:"repositoryUrl,omitempty"`
-	RepositoryWebURL string   `json:"repository_web_url,omitempty"`
-	RefWebURL        string   `json:"ref_web_url,omitempty"`
-	CommitWebURL     string   `json:"commit_web_url,omitempty"`
-	CommitMessage    string   `json:"commit_message,omitempty"`
-	Ref              string   `json:"ref,omitempty"`
-	RefName          string   `json:"ref_name,omitempty"`
-	Sha              string   `json:"sha,omitempty"`
-	RefType          string   `json:"ref_type,omitempty"`
-	Connection       string   `json:"connection,omitempty"`
-	SSHKey           string   `json:"ssh_key,omitempty"`
-	Username         string   `json:"username,omitempty"`
-	Token            string   `json:"token,omitempty"`
-	SemverCurrent    string   `json:"semver_current,omitempty"`
-	SemverNext       string   `json:"semver_next,omitempty"`
-	ChangeSets       []string `json:"changesets,omitempty"`
-	PullRequestID    int64    `json:"pullrequest_id,omitempty"`
+	Server               string   `json:"server,omitempty"`
+	Repository           string   `json:"repository,omitempty"`
+	RepositoryURL        string   `json:"repositoryUrl,omitempty"`
+	RepositoryWebURL     string   `json:"repository_web_url,omitempty"`
+	RefWebURL            string   `json:"ref_web_url,omitempty"`
+	CommitWebURL         string   `json:"commit_web_url,omitempty"`
+	CommitMessage        string   `json:"commit_message,omitempty"`
+	Ref                  string   `json:"ref,omitempty"`
+	RefName              string   `json:"ref_name,omitempty"`
+	Sha                  string   `json:"sha,omitempty"`
+	RefType              string   `json:"ref_type,omitempty"`
+	Connection           string   `json:"connection,omitempty"`
+	SSHKey               string   `json:"ssh_key,omitempty"`
+	Username             string   `json:"username,omitempty"`
+	Token                string   `json:"token,omitempty"`
+	SemverCurrent        string   `json:"semver_current,omitempty"`
+	SemverNext           string   `json:"semver_next,omitempty"`
+	ChangeSets           []string `json:"changesets,omitempty"`
+	PullRequestID        int64    `json:"pullrequest_id,omitempty"`
+	PullRequestToRef     string   `json:"pullrequest_to_ref,omitempty"`
+	PullRequestToRefName string   `json:"pullrequest_to_ref_name,omitempty"`
 }
 
 type JobContext struct {

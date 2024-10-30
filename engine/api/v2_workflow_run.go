@@ -1351,21 +1351,22 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
 
 	runEvent := sdk.V2WorkflowRunEvent{
-		HookType:      runRequest.HookType,
-		EventName:     runRequest.EventName,
-		Ref:           runRequest.Ref,
-		Sha:           runRequest.Sha,
-		PullRequestID: runRequest.PullrequestID,
-		CommitMessage: runRequest.CommitMessage,
-		SemverCurrent: runRequest.SemverCurrent,
-		SemverNext:    runRequest.SemverNext,
-		ChangeSets:    runRequest.ChangeSets,
-		EntityUpdated: runRequest.EntityUpdated,
-		Payload:       runRequest.Payload,
-		Cron:          runRequest.Cron,
-		CronTimezone:  runRequest.CronTimezone,
-		WorkflowRun:   runRequest.WorkflowRun,
-		WorkflowRunID: runRequest.WorkflowRunID,
+		HookType:         runRequest.HookType,
+		EventName:        runRequest.EventName,
+		Ref:              runRequest.Ref,
+		Sha:              runRequest.Sha,
+		PullRequestID:    runRequest.PullrequestID,
+		PullRequestToRef: runRequest.PullrequestToRef,
+		CommitMessage:    runRequest.CommitMessage,
+		SemverCurrent:    runRequest.SemverCurrent,
+		SemverNext:       runRequest.SemverNext,
+		ChangeSets:       runRequest.ChangeSets,
+		EntityUpdated:    runRequest.EntityUpdated,
+		Payload:          runRequest.Payload,
+		Cron:             runRequest.Cron,
+		CronTimezone:     runRequest.CronTimezone,
+		WorkflowRun:      runRequest.WorkflowRun,
+		WorkflowRunID:    runRequest.WorkflowRunID,
 	}
 
 	var msg string
