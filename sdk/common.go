@@ -196,6 +196,9 @@ func DirectoryExists(path string) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	}
+	if s == nil {
+		return false, err
+	}
 	return s.IsDir(), err
 }
 
