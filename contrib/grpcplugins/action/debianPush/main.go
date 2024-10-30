@@ -195,7 +195,7 @@ func (p *debianPushPlugin) UploadArtifactoryDebianPackage(ctx context.Context, o
 	}
 
 	debInfo := fmt.Sprintf("%s;%s;%s", distribLayout, componentLayout, archLayout)
-	cdsInfo := fmt.Sprintf("cds_version=%s;cds_workflow=%s", opts.jobContext.Git.SemverCurrent, opts.jobContext.CDS.Workflow)
+	cdsInfo := fmt.Sprintf("cds_version=%s;cds_workflow=%s", opts.jobContext.CDS.Version, opts.jobContext.CDS.Workflow)
 	maturity := opts.jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 	path := fmt.Sprintf("/pool/%s;%s;%s;deb.release.origin=%s;deb.release.label=%s",
 		fileName, debInfo, cdsInfo, opts.origin, opts.label)

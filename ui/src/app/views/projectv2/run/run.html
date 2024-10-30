@@ -28,7 +28,7 @@
                     <span nz-typography nzType="secondary">
                         Commit <a href="{{workflowRun.contexts.git.commit_web_url}}" target="_blank"
                             rel="noopener noreferrer">{{workflowRun.contexts.git.sha?.substring(0,8)}}</a> - Semver
-                        <span nz-typography nzCopyable nzContent="{{workflowRun.contexts.git.semver_current}}"
+                        <span nz-typography nzCopyable nzContent="{{workflowRun.contexts.cds.version}}"
                             [nzCopyTooltips]="null"></span> -
                         <a href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
                             rel="noopener noreferrer">{{workflowRun.contexts.git.ref}}</a> by

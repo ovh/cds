@@ -705,21 +705,36 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 }
 
 func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAuthorizedClientService, runContext sdk.WorkflowRunContext, workflowDef sdk.V2Workflow) (*semver.Version, bool, error) {
-	filePath := strings.TrimPrefix(filepath.Clean(workflowDef.Semver.Path), "/")
-	content, err := vcsClient.GetContent(ctx, runContext.Git.Repository, runContext.Git.Sha, filePath)
-	if err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "file %s doesn't not exist on commit %s", filePath, runContext.Git.Sha)
+	// If not git, retrieve file
+	var content sdk.VCSContent
+	if workflowDef.Semver.From != sdk.SemverTypeGit {
+		filePath := strings.TrimPrefix(filepath.Clean(workflowDef.Semver.Path), "/")
+		var err error
+		content, err = vcsClient.GetContent(ctx, runContext.Git.Repository, runContext.Git.Sha, filePath)
+		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "file %s doesn't not exist on commit %s", filePath, runContext.Git.Sha)
+			}
+			return nil, false, err
 		}
-		return nil, false, err
-	}
-	if !content.IsFile {
-		return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute cds version: file not found wih path "+workflowDef.Semver.Path)
+		if !content.IsFile {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute cds version: file not found wih path "+workflowDef.Semver.Path)
+		}
+		if content.Content == "" {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "the file found %s is empty", workflowDef.Semver.Path)
+		}
 	}
 
 	// Retrieve version from file
 	var fileVersion string
+	var cdsVersion string
 	switch workflowDef.Semver.From {
+	case sdk.SemverTypeGit:
+		v, _ := semver.NewVersion(runContext.Git.SemverCurrent)
+		fileVersion = fmt.Sprintf("%d.%d.%d", v.Major(), v.Minor(), v.Patch())
+		if runContext.Git.RefType == sdk.GitRefTypeTag {
+			cdsVersion = runContext.Git.SemverCurrent
+		}
 	case sdk.SemverTypeHelm:
 		var file sdk.SemverHelmChart
 		if err := yaml.Unmarshal([]byte(content.Content), &file); err != nil {
@@ -732,34 +747,49 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read cargo file: %v", err)
 		}
 		fileVersion = file.Package.Version
+	case sdk.SemverTypeNpm, sdk.SemverTypeYarn:
+		var file sdk.SemverNpmYarnPackage
+		if err := json.Unmarshal([]byte(content.Content), &file); err != nil {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read npm/yarn file: %v", err)
+		}
+		fileVersion = file.Version
+	case sdk.SemverTypeFile:
+		fileVersion = strings.Split(content.Content, "\n")[0]
+	case sdk.SemverTypePoetry:
+		var file sdk.SemverPoetry
+		if err := toml.Unmarshal([]byte(content.Content), &file); err != nil {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read poetry file: %v", err)
+		}
+		fileVersion = file.Tool.Poetry.Version
 	default:
 		return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "the semver type %s not managed", workflowDef.Semver.From)
 	}
 
-	// Check defaultBranch
 	isReleaseRef := false
-	if len(workflowDef.Semver.ReleaseRefs) == 0 {
-		defaultBranch, err := vcsClient.Branch(ctx, runContext.Git.Repository, sdk.VCSBranchFilters{Default: true})
-		if err != nil {
-			return nil, false, err
-		}
-		isReleaseRef = defaultBranch.ID == runContext.Git.Ref
-	} else {
-		for _, r := range workflowDef.Semver.ReleaseRefs {
-			g := glob.New(r)
-			result, err := g.MatchString(runContext.Git.Ref)
+	if workflowDef.Semver.From != sdk.SemverTypeGit {
+		// Check defaultBranch
+		if len(workflowDef.Semver.ReleaseRefs) == 0 {
+			defaultBranch, err := vcsClient.Branch(ctx, runContext.Git.Repository, sdk.VCSBranchFilters{Default: true})
 			if err != nil {
-				return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to check release ref with pattern %s: %v", r, err)
+				return nil, false, err
 			}
-			if result == nil {
-				continue
+			isReleaseRef = defaultBranch.ID == runContext.Git.Ref
+		} else {
+			for _, r := range workflowDef.Semver.ReleaseRefs {
+				g := glob.New(r)
+				result, err := g.MatchString(runContext.Git.Ref)
+				if err != nil {
+					return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to check release ref with pattern %s: %v", r, err)
+				}
+				if result == nil {
+					continue
+				}
+				isReleaseRef = true
 			}
-			isReleaseRef = true
 		}
 	}
 
 	mustSaveVersion := false
-	var cdsVersion string
 	if isReleaseRef {
 		// Check if the release exists
 		_, err := workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.CDS.WorkflowVCSServer, runContext.CDS.WorkflowRepository, runContext.CDS.Workflow, fileVersion)
@@ -800,10 +830,16 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		if err := json.Unmarshal(bts, &mapContexts); err != nil {
 			return nil, false, sdk.WithStack(err)
 		}
-		versionContext := map[string]interface{}{
-			"version": fileVersion,
+		if workflowDef.Semver.From != sdk.SemverTypeGit {
+			versionContext := map[string]interface{}{
+				"version": fileVersion,
+			}
+			mapContexts[string(workflowDef.Semver.From)] = versionContext
+		} else {
+			gitMap := mapContexts["git"].(map[string]interface{})
+			gitMap["version"] = fileVersion
 		}
-		mapContexts[string(workflowDef.Semver.From)] = versionContext
+
 		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 		cdsVersion, err = ap.InterpolateToString(ctx, pattern)
 		if err != nil {

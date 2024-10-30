@@ -19,7 +19,7 @@ inputs:
   version:
     type: text
     description: "The version to deploy"
-    default: ${{git.semver_current}}
+    default: ${{cds.version}}
   alternative-config:
     type: text
     description: Alternative configuration to push with the deployment

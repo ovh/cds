@@ -10,7 +10,7 @@ inputs:
     description: Relative path to chart folder to be published	
     required: true
   chartVersion:
-    default: ${{git.semver_current}}
+    default: ${{cds.version}}
     type: string
     description: |-
       (Optional) Override the chart version before push to registry.
