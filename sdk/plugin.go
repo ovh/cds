@@ -63,7 +63,7 @@ type PluginPost struct {
 	With            PluginPostWith `json:"with,omitempty"`
 }
 
-type PluginPostWith map[string]string
+type PluginPostWith map[string]interface{}
 
 // Scan plugin inputs.
 func (p *PluginInputs) Scan(src interface{}) error {
