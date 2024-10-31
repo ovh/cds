@@ -149,6 +149,19 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().HookRepositoriesList(gomock.Any(), gomock.Any(), gomock.Any()).Return([]sdk.ProjectRepository{
+		{
+			ProjectKey: "PROJ",
+		},
+	}, nil)
+
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().ProjectRepositoryAnalysisList(gomock.Any(), "PROJ", "private-github", "ovh/cds").Return([]sdk.ProjectRepositoryAnalysis{
+		{
+			ID:     "123456",
+			Status: sdk.RepositoryAnalysisStatusSucceed,
+		},
+	}, nil)
+
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().CreateInsightReport(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().ListWorkflowToTrigger(gomock.Any(), gomock.Any()).Return([]sdk.V2WorkflowHook{
