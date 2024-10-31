@@ -51,12 +51,17 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 		}
 	case "pull_request":
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
-		extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
+		switch request.Action {
+		case "synchronized":
+			extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestEdited
+		default:
+			extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
+		}
 		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		extractedData.Commit = request.PullRequest.Head.Sha
 		extractedData.CommitFrom = request.PullRequest.Base.Sha
 		extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
-		extractedData.PullRequestID = int64(request.PullRequest.ID)
+		extractedData.PullRequestID = int64(request.PullRequest.Number)
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
 	}
