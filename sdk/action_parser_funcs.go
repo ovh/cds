@@ -264,7 +264,7 @@ func fromJSON(ctx context.Context, _ *ActionParser, inputs ...interface{}) (inte
 
 func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) == 0 {
-		return nil, NewErrorFrom(ErrInvalidData, "hashFiles function must not have arguments")
+		return nil, NewErrorFrom(ErrInvalidData, "hashFiles function must have arguments")
 	}
 	var cdsContext CDSContext
 	ctxInt, has := a.contexts["cds"]

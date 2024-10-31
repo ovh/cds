@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bugsnag/osext"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"github.com/spf13/afero"
@@ -482,7 +483,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	}
 
 	if !booleanResult {
-		w.SendLog(ctx, workerruntime.LevelInfo, "not executed")
+		w.SendLog(ctx, workerruntime.LevelInfo, stepName+": not executed")
 		return sdk.V2WorkflowRunJobResult{
 			Status: sdk.V2WorkflowRunJobStatusSkipped,
 			Time:   time.Now(),
@@ -589,14 +590,14 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	case 5:
 		// <project_key> / vcs / my / repo / actionName
 
-		// Save current step status before running a subaction
+		// Save current step status before running a subaction, and re set it at the end
 		parentStepStatus := w.GetCurrentStepsStatus()
 		defer func() {
 			w.SetCurrentStepsStatus(parentStepStatus)
 			w.SetSubStepName(parentStepName)
 		}()
 
-		// create new steps status for the child action
+		// create new steps status for the child action - a map that will contains all step results
 		subStepStatus := sdk.JobStepsStatus{}
 		w.SetCurrentStepsStatus(subStepStatus)
 
@@ -665,10 +666,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			return w.failJob(ctx, err.Error()), stepPostAction
 		}
 
-		if err := w.collectActionOutputs(outputs, resolvedOutputs); err != nil {
-			return w.failJob(ctx, err.Error()), stepPostAction
-		}
-		if err := w.updateParentStepStatusWithOutputs(ctx, parentStepStatus, parentStepName, *actionContext, resolvedOutputs); err != nil {
+		if err := w.updateParentStepStatusWithOutputs(ctx, parentStepStatus, parentStepName, outputs, resolvedOutputs); err != nil {
 			return w.failJob(ctx, err.Error()), stepPostAction
 		}
 
@@ -688,27 +686,24 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	return actionResult, stepPostAction
 }
 
-func (w *CurrentWorker) collectActionOutputs(outputs map[string]sdk.ActionOutput, resolvedOutputs map[string]string) error {
-	for k, output := range outputs {
-		switch output.Type {
-		case sdk.ActionOutputTypePath:
-			if v, ok := resolvedOutputs[k]; ok {
-				w.paths = append(w.paths, v)
-			}
-		default:
-			// noop
-		}
-	}
-	return nil
-}
-
-func (w *CurrentWorker) updateParentStepStatusWithOutputs(ctx context.Context, parentStepStatus sdk.JobStepsStatus, parentStepName string, actionContext sdk.WorkflowRunJobsContext, outputs map[string]string) error {
+func (w *CurrentWorker) updateParentStepStatusWithOutputs(ctx context.Context, parentStepStatus sdk.JobStepsStatus, parentStepName string, outputs map[string]sdk.ActionOutput, resolvedOutputs map[string]string) error {
 	parentStep := parentStepStatus[parentStepName]
 	parentStep.Outputs = sdk.JobResultOutput{}
+	parentStep.PathOutputs = sdk.StringSlice{}
 
-	for name, value := range outputs {
-		parentStep.Outputs[name] = value
+	for k, output := range outputs {
+		v, ok := resolvedOutputs[k]
+		if !ok {
+			continue
+		}
+		// If path set it on path outputs
+		if output.Type == sdk.ActionOutputTypePath {
+			parentStep.PathOutputs = append(parentStep.PathOutputs, v)
+		}
+		// In any case, create output. Allow the path to be reexported in the parent action
+		parentStep.Outputs[k] = v
 	}
+	parentStep.PathOutputs.Unique()
 	parentStepStatus[parentStepName] = parentStep
 	return nil
 }
@@ -932,35 +927,28 @@ func (w *CurrentWorker) GetEnvVariable(ctx context.Context, contexts sdk.Workflo
 			newEnvVar[k] = v
 		}
 	}
-	if len(w.paths) != 0 {
-		// Inject paths from the previous steps outputs.
-		pathList := filepath.SplitList(os.Getenv("PATH"))
-		if len(pathList) == 0 {
-			pathList = []string{""}
-		}
-		// Add current worker paths to the path list.
-		pathList = append(pathList, w.paths...)
 
-		// Remove duplicate paths.
-		pathList = removeDuplicate(pathList)
-
-		// Inject supercharged PATH environ variable.
-		newEnvVar["PATH"] = strings.Join(pathList, string(filepath.ListSeparator))
+	// Add in path, the current directory of the worker to be able to use worker command
+	workerpath, err := osext.Executable()
+	if err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to get current executable path")
 	}
+
+	pathList := sdk.StringSlice{}
+	pathListSplitted := filepath.SplitList(os.Getenv("PATH"))
+	pathList = append(pathList, pathListSplitted...)
+	pathList = append(pathList, path.Dir(workerpath))
+
+	currentStepsStatus := w.GetCurrentStepsStatus()
+	for _, ss := range currentStepsStatus {
+		pathList = append(pathList, ss.PathOutputs...)
+	}
+
+	// Remove duplicate paths.
+	pathList.Unique()
+	// Inject supercharged PATH environ variable.
+	newEnvVar["PATH"] = strings.Join(pathList, string(filepath.ListSeparator))
 	return newEnvVar, nil
-}
-
-func removeDuplicate[T comparable](s []T) []T {
-	all := make(map[T]bool)
-
-	var list []T
-	for _, item := range s {
-		if _, ok := all[item]; !ok {
-			all[item] = true
-			list = append(list, item)
-		}
-	}
-	return list
 }
 
 func computeIntegrationConfigToEnvVar(integ sdk.JobIntegrationsContext, prefix string) map[string]string {
