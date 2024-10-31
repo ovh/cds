@@ -74,12 +74,17 @@ testcases:
                   CHILD: BAR  
               - run: echo "Tag=${{ steps.firststep.outputs.tag }}"
               - run: echo "ChildInParent=${{steps.callchild.outputs.exportedChild}}"
+              - id: testpath
+                run: echo $PATH
             post: echo "Post from parent-action"
           outputs:
             parentOutFromChild:
               value: ${{ steps.callchild.outputs.exportedChild}}   
             image:
-              value: $${{ steps.firststep.outputs.image}}   
+              value: ${{ steps.firststep.outputs.image}}   
+            childPath1:
+              type: path
+              value: ${{ steps.callchild.outputs.childPath1}}
                   
         actions/child-action.yaml:
           name: child-action
@@ -100,10 +105,20 @@ testcases:
               - id: step3
                 run: worker export childvar2 childvalue2
               - run: echo "ChildVar=${{ steps.step2.outputs.childvar1}}"
+              - id: path1
+                run: worker export childPath1 /child/path/1
+              - id: path2
+                run: worker export childPath2 /child/path/2
             post: echo "Post from child-action"  
           outputs:
             exportedChild:
-              value: ${{ steps.step3.outputs.childvar2 }}      
+              value: ${{ steps.step3.outputs.childvar2 }}  
+            childPath1:
+              value: ${{ steps.path1.outputs.childPath1 }}  
+              type: path
+            childPath2:
+              value: ${{ steps.path2.outputs.childPath2 }}  
+              type: path  
         workflows/sub-action.yaml:
           name: {{.cds_workflow}}
           on: [push]
@@ -119,7 +134,9 @@ testcases:
                   run: |
                     echo "Hello" > myfile.log
                     echo "World" >> myfile.log
-                    cat myfile.log | worker export myfile    
+                    cat myfile.log | worker export myfile   
+                - id: jobPath
+                  run: echo $PATH     
               outputs:
                 fromParent:
                   value: ${{ steps.action.outputs.parentOutFromChild }}
@@ -187,8 +204,19 @@ testcases:
         cat {{.cds_workflow}}-1-1-init-action | grep "ChildInParent=childvalue2"
         # Check Post Child action
         cat {{.cds_workflow}}-1-1-init-action | grep "Post from child-action"
+        # Check childpath1 in parent action
+        cat {{.cds_workflow}}-1-1-init-action | grep "/child/path/1"
+        # Check childpath2 in parent action
+        cat {{.cds_workflow}}-1-1-init-action | grep "/child/path/2"
         # Check Post parent action
         cat {{.cds_workflow}}-1-1-init-Post-action | grep "Post from parent-action"
+        # Check childPath1 in job step log
+        cat {{.cds_workflow}}-1-1-init-jobPath | grep "/child/path/1"
+        # Check that childPath2 does not exist
+        if grep -q "/child/path/2" {{.cds_workflow}}-1-1-init-jobPath; then
+          echo "child path2 has been expoerted"
+          exit 1
+        fi
         # Check export from second job
         cat {{.cds_workflow}}-1-1-second-echo
         cat {{.cds_workflow}}-1-1-second-echo | grep "Hello"
