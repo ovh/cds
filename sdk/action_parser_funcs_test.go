@@ -55,6 +55,33 @@ func Test_result_as_script_expression(t *testing.T) {
 	require.NotNil(t, r)
 }
 
+func Test_result_as_script_expression_multiple(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	// Usage as expression in script
+	a := ActionParser{
+		contexts: map[string]interface{}{
+			"jobs": map[string]interface{}{
+				"myJob": map[string]interface{}{
+					"JobRunResults": map[string]interface{}{
+						"generic:foo.txt": V2WorkflowRunResultGenericDetail{
+							Name: "foo.txt",
+						},
+						"generic:foo.zip": V2WorkflowRunResultGenericDetail{
+							Name: "foo.zip",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	r, err := result(context.TODO(), &a, "generic", "foo.*")
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	t.Logf("==> %+v", r)
+}
+
 func TestHashFiles(t *testing.T) {
 	path := filepath.Join(os.TempDir(), "testdata", t.Name())
 	defer os.RemoveAll(path)

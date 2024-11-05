@@ -74,6 +74,8 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 		return nil, errors.New("map jobs not found in context")
 	}
 
+	var results []any
+
 	for _, jobContextI := range jobsMap { // Iterate over all the jobs
 		var jobRunResultsAsMap map[string]interface{}
 
@@ -113,14 +115,23 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 				if err != nil {
 					return nil, err
 				}
+				log.Debug(ctx, "%+v\n", g)
 				if g != nil {
-					return v, nil
+					results = append(results, v)
 				}
 			}
 		}
 	}
 
-	return nil, nil
+	if len(results) == 0 {
+		return nil, nil
+	}
+
+	if len(results) == 1 {
+		return results[0], nil
+	}
+
+	return results, nil
 }
 
 // contains(search, item)
