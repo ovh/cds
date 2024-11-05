@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/kardianos/osext"
@@ -113,13 +114,32 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 		dir = workdir.Name()
 	}
 
-	envs := w.Environ()
-
-	// Add jobv2 env variable
-	if env != nil {
-		for k, v := range env {
-			envs = append(envs, fmt.Sprintf("%s=%s", k, v))
+	// Merge worker envs variable with envs from context
+	workerEnvs := w.Environ()
+	mWorkerEnvs := make(map[string]string, len(workerEnvs))
+	for _, e := range mWorkerEnvs {
+		splitted := strings.SplitN(e, "=", 2)
+		if len(splitted) != 2 {
+			continue
 		}
+		mWorkerEnvs[splitted[0]] = splitted[1]
+	}
+	for k, v := range env {
+		if _, ok := mWorkerEnvs[k]; !ok || k != "PATH" {
+			mWorkerEnvs[k] = v
+			continue
+		}
+		existingPath := mWorkerEnvs["PATH"]
+		existingPathList := filepath.SplitList(existingPath)
+		newPath := v
+		newPathList := filepath.SplitList(newPath)
+		newPathList = append(newPathList, existingPathList...)
+		newPathList = sdk.Unique(newPathList)
+		mWorkerEnvs[k] = strings.Join(newPathList, string(filepath.ListSeparator))
+	}
+	var envs []string
+	for k, v := range mWorkerEnvs {
+		envs = append(envs, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	c := clientSocket{}
