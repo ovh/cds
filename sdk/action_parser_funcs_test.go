@@ -79,6 +79,7 @@ func Test_result_as_script_expression_multiple(t *testing.T) {
 	r, err := result(context.TODO(), &a, "generic", "foo.*")
 	require.NoError(t, err)
 	require.NotNil(t, r)
+	require.Len(t, r, 2)
 	t.Logf("==> %+v", r)
 }
 
