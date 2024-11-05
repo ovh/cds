@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/rockbears/log"
@@ -81,6 +82,28 @@ func Test_result_as_script_expression_multiple(t *testing.T) {
 	require.NotNil(t, r)
 	require.Len(t, r, 2)
 	t.Logf("==> %+v", r)
+}
+
+func Test_toArray(t *testing.T) {
+	x, _ := toArray(nil, nil, "foo")
+	t.Logf("%T %+v", x, x)
+	require.Equal(t, reflect.Slice.String(), reflect.ValueOf(x).Kind().String())
+
+	x, _ = toArray(nil, nil, []string{"foo"})
+	t.Logf("%T %+v", x, x)
+	require.Equal(t, reflect.Slice.String(), reflect.ValueOf(x).Kind().String())
+
+	x, _ = toArray(nil, nil, []string{"foo", "bar"})
+	t.Logf("%T %+v", x, x)
+	require.Equal(t, reflect.Slice.String(), reflect.ValueOf(x).Kind().String())
+
+	x, _ = toArray(nil, nil, "foo", "bar")
+	t.Logf("%T %+v", x, x)
+	require.Equal(t, reflect.Slice.String(), reflect.ValueOf(x).Kind().String())
+
+	x, _ = toArray(nil, nil, map[string]string{"foo": "bar"})
+	t.Logf("%T %+v", x, x)
+	require.Equal(t, reflect.Slice.String(), reflect.ValueOf(x).Kind().String())
 }
 
 func TestHashFiles(t *testing.T) {

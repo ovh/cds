@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -47,10 +48,36 @@ var (
 		"trimAll":    newStringStringActionFunc("trimAll", strings.Trim),
 		"trimPrefix": newStringStringActionFunc("trimPrefix", strings.TrimPrefix),
 		"trimSuffix": newStringStringActionFunc("trimSuffix", strings.TrimSuffix),
+		"toArray":    toArray,
 	}
 )
 
 type ActionFunc func(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error)
+
+func toArray(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) == 0 {
+		return nil, NewErrorFrom(ErrInvalidData, "contains: wrong number of arguments to call toArray()")
+	}
+
+	if len(inputs) == 1 {
+		val := reflect.ValueOf(inputs[0])
+		switch val.Kind() {
+		case reflect.Array, reflect.Slice:
+			return inputs[0], nil
+		case reflect.Map:
+			keys := val.MapKeys()
+			var values []any
+			for _, k := range keys {
+				values = append(values, val.MapIndex(k).Interface())
+			}
+			return values, nil
+		default:
+			return []any{inputs[0]}, nil
+		}
+	}
+
+	return inputs, nil
+}
 
 func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) != 2 {
