@@ -73,6 +73,7 @@ testcases:
             manual:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               gate: preprod
+              if: success()
               needs: [init]
               steps:
                 - run: echo 'World'

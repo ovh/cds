@@ -547,9 +547,6 @@ func (w V2Workflow) Lint() []error {
 func (w V2Workflow) CheckGates() []error {
 	errs := make([]error, 0)
 	for jobID, j := range w.Jobs {
-		if j.If != "" && j.Gate != "" {
-			errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: if and gate cannot be set together", jobID))
-		}
 		if j.Gate != "" {
 			if _, has := w.Gates[j.Gate]; !has {
 				errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: gate %s not found", jobID, j.Gate))

@@ -88,7 +88,7 @@ func TestJobConditionSuccess(t *testing.T) {
 			}
 			jobDef := run.WorkflowData.Workflow.Jobs["job4"]
 			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow, jobsContext, sdk.WorkflowRunContext{}, nil, "job4")
-			b, err := checkJobCondition(context.TODO(), db, run, nil, jobDef, currentJobContext, *admin, true)
+			b, err := checkCanRunJob(context.TODO(), db, run, nil, jobDef, currentJobContext, *admin, true)
 			require.NoError(t, err)
 			require.Equal(t, tt.result, b)
 		})
@@ -152,7 +152,7 @@ func TestJobConditionReviewers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			jobDef := run.WorkflowData.Workflow.Jobs["job1"]
 			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow, jobsContext, sdk.WorkflowRunContext{}, nil, "job1")
-			b, err := checkJobCondition(context.TODO(), db, run, nil, jobDef, currentJobContext, tt.u, tt.isAdminWithMFA)
+			b, err := checkCanRunJob(context.TODO(), db, run, nil, jobDef, currentJobContext, tt.u, tt.isAdminWithMFA)
 			require.NoError(t, err)
 			require.Equal(t, tt.result, b)
 		})
