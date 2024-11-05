@@ -12,7 +12,7 @@ const (
 	NoCommit = "0000000000000000000000000000000000000000"
 )
 
-func (s *Service) extractDataFromPayload(headers http.Header, vcsServerType string, body []byte, eventName string) (string, sdk.HookRepositoryEventExtractData, error) {
+func (s *Service) extractDataFromPayload(_ http.Header, vcsServerType string, body []byte, eventName string) (string, sdk.HookRepositoryEventExtractData, error) {
 	switch vcsServerType {
 	case sdk.VCSTypeBitbucketServer:
 		return s.extractDataFromBitbucketRequest(body)
@@ -51,11 +51,17 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 		}
 	case "pull_request":
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
-		extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
+		switch request.Action {
+		case "synchronized":
+			extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestEdited
+		default:
+			extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
+		}
 		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		extractedData.Commit = request.PullRequest.Head.Sha
 		extractedData.CommitFrom = request.PullRequest.Base.Sha
-		extractedData.PullRequestID = int64(request.PullRequest.ID)
+		extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+		extractedData.PullRequestID = int64(request.PullRequest.Number)
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
 	}
@@ -157,6 +163,7 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 		}
 		if request.PullRequest != nil {
 			extractedData.CommitFrom = request.PullRequest.Base.Sha
+			extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
 		}
 	case "pull_request_comment":
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
@@ -168,6 +175,7 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 		}
 		if request.PullRequest != nil {
 			extractedData.CommitFrom = request.PullRequest.Base.Sha
+			extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
 		}
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
@@ -206,6 +214,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestOpened
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	case "pr:reopened":
 		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
@@ -213,6 +222,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestReopened
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	case "pr:declined":
 		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
@@ -220,6 +230,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestClosed
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	case "pr:from_ref_updated":
 		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
@@ -227,6 +238,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestEdited
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	case "pr:comment:added":
 		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
@@ -234,6 +246,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestCommentCreated
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	case "pr:comment:edited":
 		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
@@ -241,6 +254,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestCommentEdited
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	case "pr:comment:deleted":
 		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
@@ -248,6 +262,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestCommentDeleted
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", request.EventKey)
 	}

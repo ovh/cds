@@ -21,24 +21,25 @@ const (
 )
 
 type V2WorkflowRunHookRequest struct {
-	HookEventID   string                 `json:"hook_event_id"`
-	UserID        string                 `json:"user_id"`
-	EventName     WorkflowHookEventName  `json:"event_name"`
-	Ref           string                 `json:"ref,omitempty"`
-	Sha           string                 `json:"sha,omitempty"`
-	PullrequestID int64                  `json:"pr_id,omitempty"`
-	CommitMessage string                 `json:"commit_message,omitempty"`
-	Payload       map[string]interface{} `json:"payload"`
-	HookType      string                 `json:"hook_type"`
-	EntityUpdated string                 `json:"entity_updated"`
-	SemverCurrent string                 `json:"semver_current"`
-	SemverNext    string                 `json:"semver_next"`
-	ChangeSets    []string               `json:"changesets"`
-	Cron          string                 `json:"cron"`
-	CronTimezone  string                 `json:"cron_timezone"`
-	AdminMFA      bool                   `json:"admin_mfa"`
-	WorkflowRun   string                 `json:"workflow_run"`
-	WorkflowRunID string                 `json:"workflow_run_id"`
+	HookEventID      string                 `json:"hook_event_id"`
+	UserID           string                 `json:"user_id"`
+	EventName        WorkflowHookEventName  `json:"event_name"`
+	Ref              string                 `json:"ref,omitempty"`
+	Sha              string                 `json:"sha,omitempty"`
+	PullrequestID    int64                  `json:"pr_id,omitempty"`
+	PullrequestToRef string                 `json:"pr_to_ref,omitempty"`
+	CommitMessage    string                 `json:"commit_message,omitempty"`
+	Payload          map[string]interface{} `json:"payload"`
+	HookType         string                 `json:"hook_type"`
+	EntityUpdated    string                 `json:"entity_updated"`
+	SemverCurrent    string                 `json:"semver_current"`
+	SemverNext       string                 `json:"semver_next"`
+	ChangeSets       []string               `json:"changesets"`
+	Cron             string                 `json:"cron"`
+	CronTimezone     string                 `json:"cron_timezone"`
+	AdminMFA         bool                   `json:"admin_mfa"`
+	WorkflowRun      string                 `json:"workflow_run"`
+	WorkflowRunID    string                 `json:"workflow_run_id"`
 }
 
 type V2WorkflowRun struct {
@@ -201,21 +202,22 @@ func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunEvent struct {
-	HookType      string                 `json:"hook_type"`
-	EventName     WorkflowHookEventName  `json:"event_name"`
-	Ref           string                 `json:"ref"`
-	Sha           string                 `json:"sha"`
-	PullRequestID int64                  `json:"pullrequest_id"`
-	CommitMessage string                 `json:"commit_message"`
-	SemverCurrent string                 `json:"semver_current"`
-	SemverNext    string                 `json:"semver_next"`
-	ChangeSets    []string               `json:"changesets"`
-	Payload       map[string]interface{} `json:"payload,omitempty"`
-	EntityUpdated string                 `json:"entity_updated,omitempty"`
-	Cron          string                 `json:"cron,omitempty"`
-	CronTimezone  string                 `json:"timezone,omitempty"`
-	WorkflowRun   string                 `json:"workflow_run"`
-	WorkflowRunID string                 `json:"workflow_run_id"`
+	HookType         string                 `json:"hook_type"`
+	EventName        WorkflowHookEventName  `json:"event_name"`
+	Ref              string                 `json:"ref"`
+	Sha              string                 `json:"sha"`
+	PullRequestID    int64                  `json:"pullrequest_id"`
+	PullRequestToRef string                 `json:"pullrequest_to_ref,omitempty"`
+	CommitMessage    string                 `json:"commit_message"`
+	SemverCurrent    string                 `json:"semver_current"`
+	SemverNext       string                 `json:"semver_next"`
+	ChangeSets       []string               `json:"changesets"`
+	Payload          map[string]interface{} `json:"payload,omitempty"`
+	EntityUpdated    string                 `json:"entity_updated,omitempty"`
+	Cron             string                 `json:"cron,omitempty"`
+	CronTimezone     string                 `json:"timezone,omitempty"`
+	WorkflowRun      string                 `json:"workflow_run"`
+	WorkflowRunID    string                 `json:"workflow_run_id"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {

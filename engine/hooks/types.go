@@ -58,6 +58,7 @@ type Configuration struct {
 	OldRepositoryEventRetry     int64                           `toml:"oldRepositoryEventRetry" default:"1" comment:"Delay of old repository event check in minute" json:"oldRepositoryEventRetry"`
 	OldRepositoryEventQueueLen  int                             `toml:"oldRepositoryEventQueueLen" default:"200" comment:"Maximum queue len allowed to re-enqueue old repository events" json:"oldRepositoryEventQueueLen"`
 	DisableRepositoryEventRetry bool                            `toml:"disableRepositoryEventRetry" default:"false" comment:"" json:"disableRepositoryEventRetry"`
+	AnalysisCheckMaxRetry       int64                           `toml:"analysisCheckMaxRetry" default:"30" comment:""  json:"analysisCheckMaxRetry"`
 	RetryDelay                  int64                           `toml:"retryDelay" default:"120" comment:"Execution retry delay in seconds" json:"retryDelay"`
 	RetryError                  int64                           `toml:"retryError" default:"3" comment:"Retry execution while this number of error is not reached" json:"retryError"`
 	ExecutionHistory            int                             `toml:"executionHistory" default:"10" comment:"Number of execution to keep" json:"executionHistory"`

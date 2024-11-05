@@ -597,18 +597,20 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	workflowVCSServer := *vcsTmp
 
 	gitContext := sdk.GitContext{
-		Server:        workflowVCSServer.Name,
-		SSHKey:        workflowVCSServer.Auth.SSHKeyName,
-		Username:      workflowVCSServer.Auth.Username,
-		Ref:           ref,
-		RefName:       strings.TrimPrefix(strings.TrimPrefix(ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix),
-		RefType:       refType,
-		Sha:           commit,
-		CommitMessage: wr.RunEvent.CommitMessage,
-		SemverCurrent: semverCurrent,
-		SemverNext:    semverNext,
-		ChangeSets:    wr.RunEvent.ChangeSets,
-		PullRequestID: wr.RunEvent.PullRequestID,
+		Server:               workflowVCSServer.Name,
+		SSHKey:               workflowVCSServer.Auth.SSHKeyName,
+		Username:             workflowVCSServer.Auth.Username,
+		Ref:                  ref,
+		RefName:              strings.TrimPrefix(strings.TrimPrefix(ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix),
+		RefType:              refType,
+		Sha:                  commit,
+		CommitMessage:        wr.RunEvent.CommitMessage,
+		SemverCurrent:        semverCurrent,
+		SemverNext:           semverNext,
+		ChangeSets:           wr.RunEvent.ChangeSets,
+		PullRequestID:        wr.RunEvent.PullRequestID,
+		PullRequestToRef:     wr.RunEvent.PullRequestToRef,
+		PullRequestToRefName: strings.TrimPrefix(strings.TrimPrefix(wr.RunEvent.PullRequestToRef, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix),
 	}
 
 	if gitContext.SSHKey != "" {

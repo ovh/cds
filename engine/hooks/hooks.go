@@ -72,6 +72,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if s.Cfg.OutgoingEventTTL == 0 {
 		s.Cfg.OutgoingEventTTL = 7
 	}
+	if s.Cfg.AnalysisCheckMaxRetry == 0 {
+		s.Cfg.AnalysisCheckMaxRetry = 30
+	}
 	return nil
 }
 
