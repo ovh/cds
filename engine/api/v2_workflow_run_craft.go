@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -763,6 +764,14 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read poetry file: %v", err)
 		}
 		fileVersion = file.Tool.Poetry.Version
+	case sdk.SemverTypeDebian:
+		firsLine := strings.Split(content.Content, "\n")[0]
+		r, _ := regexp.Compile(`.*\((.*)\).*`) // format: package (version) distribution; urgency=low
+		result := r.FindStringSubmatch(firsLine)
+		if r.NumSubexp() == 0 {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to extract version from [%s]", firsLine)
+		}
+		fileVersion = result[1]
 	default:
 		return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "the semver type %s not managed", workflowDef.Semver.From)
 	}

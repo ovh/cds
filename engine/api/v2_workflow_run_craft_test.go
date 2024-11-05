@@ -1621,3 +1621,164 @@ readme = "README.md"`,
 	require.Equal(t, 1, len(versions))
 	require.Equal(t, "2.0.0-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
 }
+
+func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
+
+	wkName := sdk.RandomString(10)
+	wr := sdk.V2WorkflowRun{
+		UserID:       admin.ID,
+		ProjectKey:   proj.Key,
+		Status:       sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:  vcsProject.ID,
+		RepositoryID: repo.ID,
+		RunNumber:    1,
+		RunAttempt:   0,
+		WorkflowRef:  "refs/heads/master",
+		WorkflowSha:  "123456",
+		WorkflowName: wkName,
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: sdk.V2Workflow{
+				Name: wkName,
+				Semver: &sdk.WorkflowSemver{
+					From:        "debian",
+					Path:        "debian/changelog",
+					ReleaseRefs: []string{"refs/heads/mai*"},
+				},
+				Jobs: map[string]sdk.V2Job{
+					"job1": {
+						Name:   "My super job",
+						If:     "cds.workflow == 'toto'",
+						Region: "build",
+						RunsOn: sdk.V2JobRunsOn{
+							Model: "myworker-model",
+						},
+						Steps: []sdk.ActionStep{
+							{
+								Run: "echo toto",
+							},
+						},
+					},
+				},
+			},
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "refs/heads/main",
+			Sha:       "123456",
+			EventName: sdk.WorkflowHookEventNamePush,
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	myWMEnt := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		FilePath:            ".cds/worker-models/myworker-model.yml",
+		Name:                "myworker-model",
+		Ref:                 "refs/heads/master",
+		Commit:              "123456",
+		LastUpdate:          time.Time{},
+		Data:                "name: myworkermodel",
+	}
+	require.NoError(t, entity.Insert(ctx, db, &myWMEnt))
+
+	// Mock VCS
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/debian%2Fchangelog?commit=123456", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			b := &sdk.VCSContent{
+				IsFile: true,
+				Content: `mypackage (0.9.12-1) UNRELEASED; urgency=low
+2
+3   * Initial Release. Closes: #12345
+4   * This is my first Debian package.
+5   * Adjusted the Makefile to fix $(DESTDIR) problems.
+6
+7  -- Steven Guiheux <steven.guiheux@somewhere.com>  Mon, 22 Mar 2010 00:37:31 +0100`,
+			}
+			*(out.(*sdk.VCSContent)) = *b
+			return nil, 200, nil
+		}).Times(2)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				b := &sdk.VCSRepo{}
+				*(out.(*sdk.VCSRepo)) = *b
+				return nil, 200, nil
+			},
+		).Times(2)
+
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
+	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+
+	require.NoError(t, rbac.Insert(ctx, db, &sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}))
+
+	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
+
+	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	assert.Equal(t, wrDB.Status, sdk.V2WorkflowRunStatusBuilding)
+	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(wrInfos), "Error found: %v", wrInfos)
+
+	require.Equal(t, "0.9.12-1", wrDB.Contexts.CDS.Version)
+
+	version, err := workflow_v2.LoadWorkflowVersion(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow, "0.9.12-1")
+	require.NoError(t, err)
+
+	require.NotNil(t, version)
+
+	// Update the run and craft it again
+	wrDB.Status = sdk.V2WorkflowRunStatusCrafting
+	require.NoError(t, workflow_v2.UpdateRun(ctx, db, wrDB))
+	require.NoError(t, api.craftWorkflowRunV2(ctx, wrDB.ID))
+
+	wrDB, err = workflow_v2.LoadRunByID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(versions))
+	require.Equal(t, "0.9.12-1-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
+}
