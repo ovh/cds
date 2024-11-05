@@ -22,7 +22,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
     project: Project;
     routerSub: Subscription;
     v2Enabled: boolean = false;
-    v2BannerVisible: boolean = false;
 
     constructor(
         private _route: ActivatedRoute,
@@ -47,15 +46,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
             });
             this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: projectKey }).subscribe(f => {
                 this.v2Enabled = f.enabled;
-                const state = this._store.selectSnapshot(PreferencesState.selectMessageState('ascode-v2'));
-                this.v2BannerVisible = !state && this.v2Enabled;
                 this._cd.markForCheck();
             });
-        });
-
-        this._store.select(PreferencesState.selectMessageState('ascode-v2')).subscribe(state => {
-            this.v2BannerVisible = !state && this.v2Enabled;
-            this._cd.markForCheck();
         });
     }
 
