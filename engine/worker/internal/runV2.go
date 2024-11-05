@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bugsnag/osext"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"github.com/spf13/afero"
@@ -928,26 +927,19 @@ func (w *CurrentWorker) GetEnvVariable(ctx context.Context, contexts sdk.Workflo
 		}
 	}
 
-	// Add in path, the current directory of the worker to be able to use worker command
-	workerpath, err := osext.Executable()
-	if err != nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to get current executable path")
-	}
-
 	pathList := sdk.StringSlice{}
-	pathListSplitted := filepath.SplitList(os.Getenv("PATH"))
-	pathList = append(pathList, pathListSplitted...)
-	pathList = append(pathList, path.Dir(workerpath))
-
+	// Retrieve path outputs from previous steps
 	currentStepsStatus := w.GetCurrentStepsStatus()
 	for _, ss := range currentStepsStatus {
 		pathList = append(pathList, ss.PathOutputs...)
 	}
-
 	// Remove duplicate paths.
 	pathList.Unique()
 	// Inject supercharged PATH environ variable.
-	newEnvVar["PATH"] = strings.Join(pathList, string(filepath.ListSeparator))
+	if len(pathList) > 0 {
+		newEnvVar["PATH"] = strings.Join(pathList, string(filepath.ListSeparator))
+	}
+
 	return newEnvVar, nil
 }
 

@@ -114,29 +114,37 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 		dir = workdir.Name()
 	}
 
-	// Merge worker envs variable with envs from context
+	// Retrieve worker environment variables
 	workerEnvs := w.Environ()
 	mWorkerEnvs := make(map[string]string, len(workerEnvs))
-	for _, e := range mWorkerEnvs {
+	for _, e := range workerEnvs {
 		splitted := strings.SplitN(e, "=", 2)
 		if len(splitted) != 2 {
 			continue
 		}
 		mWorkerEnvs[splitted[0]] = splitted[1]
 	}
+
+	// Add env variable from execution context
 	for k, v := range env {
-		if _, ok := mWorkerEnvs[k]; !ok || k != "PATH" {
+		// Set all env ( do not ovveride existing var )
+		if _, ok := mWorkerEnvs[k]; !ok && k != "PATH" {
 			mWorkerEnvs[k] = v
 			continue
 		}
+	}
+
+	// Manage PATH
+	if v, has := env["PATH"]; has {
 		existingPath := mWorkerEnvs["PATH"]
 		existingPathList := filepath.SplitList(existingPath)
 		newPath := v
 		newPathList := filepath.SplitList(newPath)
 		newPathList = append(newPathList, existingPathList...)
 		newPathList = sdk.Unique(newPathList)
-		mWorkerEnvs[k] = strings.Join(newPathList, string(filepath.ListSeparator))
+		mWorkerEnvs["PATH"] = strings.Join(newPathList, string(filepath.ListSeparator))
 	}
+
 	var envs []string
 	for k, v := range mWorkerEnvs {
 		envs = append(envs, fmt.Sprintf("%s=%s", k, v))
