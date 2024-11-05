@@ -53,7 +53,6 @@ var (
 type ActionFunc func(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error)
 
 func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
-	log.Debug(ctx, "function: contains with args: %v", inputs)
 	if len(inputs) != 2 {
 		return nil, NewErrorFrom(ErrInvalidData, "contains: wrong number of arguments to call contains(type, name)")
 	}
@@ -115,7 +114,6 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 				if err != nil {
 					return nil, err
 				}
-				log.Debug(ctx, "%+v\n", g)
 				if g != nil {
 					results = append(results, v)
 				}
