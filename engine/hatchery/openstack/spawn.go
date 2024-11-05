@@ -10,6 +10,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/rockbears/log"
 
@@ -30,16 +31,16 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	if err := h.checkSpawnLimits(ctx, spawnArgs); err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, err.Error())
-		return nil
-	}
-
 	// Get flavor for target model
 	flavor, err := h.flavor(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
 	if err != nil {
 		return err
+	}
+
+	if err := h.checkSpawnLimits(ctx, flavor, spawnArgs); err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, err.Error())
+		return nil
 	}
 
 	// Get image ID
@@ -170,23 +171,17 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	return nil
 }
 
-func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
+func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors.Flavor, spawnArgs hatchery.SpawnArguments) error {
 	existingServers := h.getServers(ctx)
 	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
 		return sdk.WithStack(fmt.Errorf("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker))
-	}
-
-	// Get flavor for target model
-	flavor, err := h.flavor(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
-	if err != nil {
-		return err
 	}
 
 	// If a max CPUs count is set in configuration we will check that there are enough CPUs available to spawn the model
 	var totalCPUsUsed int
 	if h.Config.MaxCPUs > 0 {
 		for i := range existingServers {
-			flavorName, _ := existingServers[i].Metadata["flavor"]
+			flavorName := existingServers[i].Metadata["flavor"]
 			flavor, err := h.flavor(flavorName)
 			if err == nil {
 				totalCPUsUsed += flavor.VCPUs
