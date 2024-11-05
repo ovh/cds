@@ -92,7 +92,6 @@ type CurrentWorker struct {
 	client   cdsclient.WorkerInterface
 	blur     *sdk.Blur
 	hooks    []workerHook
-	paths    []string
 }
 
 type workerHook struct {

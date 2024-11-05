@@ -356,6 +356,9 @@ type JobStepStatus struct {
 	Outputs    JobResultOutput        `json:"outputs"`
 	Started    time.Time              `json:"started"`
 	Ended      time.Time              `json:"ended"`
+
+	// Path Outputs
+	PathOutputs StringSlice `json:"-"`
 }
 
 type GateInputs map[string]interface{}
