@@ -417,6 +417,7 @@ func (w *CurrentWorker) createStepContext(ctx context.Context, step sdk.ActionSt
 		Integrations: parentContext.Integrations,
 		Gate:         parentContext.Gate,
 		Vars:         parentContext.Vars,
+		ParentPaths:  parentContext.ParentPaths,
 	}
 
 	// Copy parent env context
@@ -541,8 +542,11 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		}
 	}
 
-	// Compute action/plugin context
-	actionContext, err := w.computeContextForAction(ctx, currentStepContext, inputs)
+	// Retrieve parent step status
+	parentStepStatus := w.GetCurrentStepsStatus()
+
+	// Create a dedicated action context from the context of the current step + parentStepStatus to get previous exported PATHs
+	actionContext, err := w.computeContextForAction(ctx, currentStepContext, inputs, parentStepStatus)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("unable to compute context for action %s: %v", name, err)), nil
 	}
@@ -589,8 +593,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	case 5:
 		// <project_key> / vcs / my / repo / actionName
 
-		// Save current step status before running a subaction, and re set it at the end
-		parentStepStatus := w.GetCurrentStepsStatus()
+		// At the end of the action, set parent step status as the current step
 		defer func() {
 			w.SetCurrentStepsStatus(parentStepStatus)
 			w.SetSubStepName(parentStepName)
@@ -826,7 +829,7 @@ func (w *CurrentWorker) failJob(ctx context.Context, reason string) sdk.V2Workfl
 }
 
 // For actions, only pass CDS/GIT/ENV/Integration context from parent
-func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]interface{}) (*sdk.WorkflowRunJobsContext, error) {
+func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]interface{}, parentStepStatus sdk.JobStepsStatus) (*sdk.WorkflowRunJobsContext, error) {
 	actionContext := sdk.WorkflowRunJobsContext{
 		WorkflowRunContext: sdk.WorkflowRunContext{
 			CDS: parentContext.CDS,
@@ -835,6 +838,7 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 		},
 		Integrations: parentContext.Integrations,
 		Inputs:       make(map[string]interface{}),
+		ParentPaths:  parentContext.ParentPaths,
 	}
 	for k, v := range parentContext.Env {
 		actionContext.Env[k] = v
@@ -864,6 +868,15 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 			actionContext.Inputs[k] = interpolatedValue
 		}
 	}
+
+	// Retrieve previous exported path and set it on action context
+	parentPathOutpus := sdk.StringSlice{}
+	for _, ss := range parentStepStatus {
+		parentPathOutpus = append(parentPathOutpus, ss.PathOutputs...)
+	}
+	actionContext.ParentPaths = append(actionContext.ParentPaths, parentPathOutpus...)
+	actionContext.ParentPaths.Unique()
+
 	return &actionContext, nil
 }
 
@@ -928,6 +941,9 @@ func (w *CurrentWorker) GetEnvVariable(ctx context.Context, contexts sdk.Workflo
 	}
 
 	pathList := sdk.StringSlice{}
+	// Retrieve path step contexts (path that comes from parent)
+	pathList = append(pathList, contexts.ParentPaths...)
+
 	// Retrieve path outputs from previous steps
 	currentStepsStatus := w.GetCurrentStepsStatus()
 	for _, ss := range currentStepsStatus {

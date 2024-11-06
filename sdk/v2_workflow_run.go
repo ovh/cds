@@ -141,6 +141,9 @@ type WorkflowRunJobsContext struct {
 	Integrations *JobIntegrationsContexts `json:"integrations,omitempty"`
 	Gate         map[string]interface{}   `json:"gate"`
 	Vars         map[string]interface{}   `json:"vars"`
+
+	// Parent path - internal worker
+	ParentPaths StringSlice `json:"-"`
 }
 
 type ComputeAnnotationsContext struct {
