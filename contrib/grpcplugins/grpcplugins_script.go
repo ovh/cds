@@ -14,7 +14,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/bugsnag/osext"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/pkg/errors"
@@ -52,21 +51,6 @@ func RunScript(ctx context.Context, actPlug *actionplugin.Common, chanRes chan *
 	cmd.Stdout = pw
 	cmd.Stderr = pw
 	cmd.Env = os.Environ()
-
-	workerpath, err := osext.Executable()
-	if err != nil {
-		gores.Status = sdk.StatusFail
-		gores.Details = fmt.Sprintf("failure due to internal error (Worker Path): %v", err)
-		chanRes <- gores
-		return err
-	}
-
-	for i := range cmd.Env {
-		if strings.HasPrefix(cmd.Env[i], "PATH") {
-			cmd.Env[i] = fmt.Sprintf("%s:%s", cmd.Env[i], path.Dir(workerpath))
-			break
-		}
-	}
 
 	reader := bufio.NewReader(pr)
 
