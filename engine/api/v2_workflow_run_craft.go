@@ -817,19 +817,32 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 	// Compute cds version from a pattern
 	if cdsVersion == "" {
 		// Retrieve version pattern
-		pattern := fmt.Sprintf(sdk.DefaultVersionPattern, workflowDef.Semver.From)
+		cdsDefaultPattern := fmt.Sprintf(sdk.DefaultVersionPattern, workflowDef.Semver.From)
+		var pattern string
 		if workflowDef.Semver.Schema != nil {
+			// Check non default pattern
 			for k, v := range workflowDef.Semver.Schema {
-				g := glob.New(k)
-				result, err := g.MatchString(runContext.Git.Ref)
-				if err != nil {
-					return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to check branch with pattern %s: %v", k, err)
-				}
-				if result != nil {
-					pattern = v
-					break
+				if k != "**/*" {
+					g := glob.New(k)
+					result, err := g.MatchString(runContext.Git.Ref)
+					if err != nil {
+						return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to check branch with pattern %s: %v", k, err)
+					}
+					if result != nil {
+						pattern = v
+						break
+					}
 				}
 			}
+		}
+		// If no pattern found, check default pattern
+		if pattern == "" {
+			if p, has := workflowDef.Semver.Schema["**/*"]; has {
+				pattern = p
+			} else {
+				pattern = cdsDefaultPattern
+			}
+
 		}
 
 		// Compute new dev version
