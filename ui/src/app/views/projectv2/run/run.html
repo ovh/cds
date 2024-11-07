@@ -5,13 +5,14 @@
         <div class="graph">
             <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
                 <nz-page-header-title>
-                    <app-searchable [link]="['/project', projectKey, 'run']"
+                    <app-searchable style="margin-right: 10px;" [fixed]="true" [link]="['/project', projectKey, 'run']"
+                        title="Show workflow's runs"
                         [params]="{workflow: workflowRun.vcs_server+'/'+workflowRun.repository+'/'+workflowRun.workflow_name}">
                         <a [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.vcs_server, 'repository', workflowRun.repository, 'workflow', workflowRun.workflow_name]"
                             [queryParams]="{ref: workflowRun.workflow_ref}">
                             {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}</a>
+                        <span class="number">#{{workflowRun.run_number}}</span>
                     </app-searchable>
-                    <span class="number">#{{workflowRun.run_number}}</span>
                     <nz-select *ngIf="workflowRun.run_attempt > 1 && selectedRunAttempt" [ngModel]="selectedRunAttempt"
                         (ngModelChange)="changeRunAttempt($event)" nzSize="small" title="Select run attempt">
                         <nz-option *ngFor="let item of [].constructor(workflowRun.run_attempt); let i = index"
@@ -19,29 +20,17 @@
                     </nz-select>
                     <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
                         (click)="navigatePanel('workflow')"><span nz-icon nzType="file-text"
-                            nzTheme="outline"></span></button>
+                            nzTheme="outline"></span>Sources</button>
                     <button nz-button nzType="default" nzSize="small" title="Show workflow run contexts"
                         (click)="navigatePanel('contexts')"><span nz-icon nzType="read"
-                            nzTheme="outline"></span></button>
+                            nzTheme="outline"></span>Contexts</button>
                 </nz-page-header-title>
                 <nz-page-header-content>
                     <span nz-typography nzType="secondary">
-                        Commit <a href="{{workflowRun.contexts.git.commit_web_url}}" target="_blank"
-                            rel="noopener noreferrer">{{workflowRun.contexts.git.sha?.substring(0,8)}}</a> - Semver
-                        <span nz-typography nzCopyable nzContent="{{workflowRun.contexts.cds.version}}"
-                            [nzCopyTooltips]="null"></span> -
-                        <a href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
-                            rel="noopener noreferrer">{{workflowRun.contexts.git.ref}}</a> by
-                        {{workflowRun.contexts.git.username}}
-                        on
-                        repository
-                        <a href="{{workflowRun.contexts.git.repository_web_url}}" target="_blank"
-                            rel="noopener noreferrer">{{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}</a>
                         <span *ngIf="workflowRun.contexts.cds.workflow_template">
-                            <br />
-                            Generated from template
+                            <b>Template:</b>&nbsp;
                             <a
-                                [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.contexts.cds.workflow_template_vcs_server, 'repository', workflowRun.contexts.cds.workflow_template_repository, 'workflowtemplate', workflowRun.contexts.cds.workflow_template]">
+                                [routerLink]="['/project', workflowRun.contexts.cds.workflow_template_project_key, 'explore', 'vcs', workflowRun.contexts.cds.workflow_template_vcs_server, 'repository', workflowRun.contexts.cds.workflow_template_repository, 'workflowtemplate', workflowRun.contexts.cds.workflow_template]">
                                 {{workflowRun.contexts.cds.workflow_template_vcs_server}}/{{workflowRun.contexts.cds.workflow_template_repository}}/{{workflowRun.contexts.cds.workflow_template}}</a>
                             <span class="templateDetails" nz-icon nzType="eye" nzTheme="outline" nz-tooltip
                                 [nzTooltipTitle]="templateTooltip"></span>
@@ -56,6 +45,32 @@
                                     target="_blank"
                                     rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_ref}}</a>
                             </ng-template>
+                            <br />
+                        </span>
+                        <span style="margin-right: 10px;">
+                            <b>Repository:</b>&nbsp;
+                            <a href="{{workflowRun.contexts.git.repository_web_url}}" target="_blank"
+                                rel="noopener noreferrer">{{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}</a>
+                        </span>
+                        <br />
+                        <span style="margin-right: 10px;">
+                            <b>Ref:</b>&nbsp;
+                            <a href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
+                                rel="noopener noreferrer">{{workflowRun.contexts.git.ref}}</a>
+                        </span>
+                        <span style="margin-right: 10px;">
+                            <b>Commit:</b>&nbsp;
+                            <a href="{{workflowRun.contexts.git.commit_web_url}}" target="_blank"
+                                rel="noopener noreferrer">{{workflowRun.contexts.git.sha?.substring(0,8)}}</a>
+                        </span>
+                        <span style="margin-right: 10px;">
+                            <b>By:</b>&nbsp;{{workflowRun.contexts.git.username}}
+                        </span>
+                        <br />
+                        <span style="margin-right: 10px;">
+                            <b>Semver:</b>&nbsp;
+                            <span nz-typography nzCopyable nzContent="{{workflowRun.contexts.cds.version}}"
+                                [nzCopyTooltips]="null"></span>
                         </span>
                     </span>
                     <div *ngIf="workflowRun.annotations" class="annotations">
@@ -85,6 +100,8 @@
                 </nz-page-header-content>
             </nz-page-header>
             <div class="controls">
+                <button *ngIf="!hasJobsNotTerminated" nz-button nzType="secondary" nzSize="large" title="Start new run"
+                    (click)="openRunStartDrawer()">Start new run</button>
                 <button *ngIf="hasJobsFailed && !hasJobsNotTerminated" nz-button nzType="secondary" nzSize="large"
                     title="Restart failed jobs" (click)="clickRestartJobs()">Restart
                     failed jobs</button>

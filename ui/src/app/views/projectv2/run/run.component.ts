@@ -19,6 +19,8 @@ import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.mode
 import { RouterService } from "app/service/services.module";
 import { ErrorUtils } from "app/shared/error.utils";
 import moment from "moment";
+import { NzDrawerService } from "ng-zorro-antd/drawer";
+import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "../run-start/run-start.component";
 
 @Component({
     selector: 'app-projectv2-run',
@@ -77,7 +79,8 @@ export class ProjectV2RunComponent implements OnDestroy {
         private _router: Router,
         private _route: ActivatedRoute,
         private _messageService: NzMessageService,
-        private _routerService: RouterService
+        private _routerService: RouterService,
+        private _drawerService: NzDrawerService
     ) {
         this.paramsSub = this._route.params.subscribe(_ => {
             const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
@@ -416,5 +419,23 @@ export class ProjectV2RunComponent implements OnDestroy {
     async onGateSubmit() {
         this.clickClosePanel();
         await this.load(this.workflowRun.id);
+    }
+
+    openRunStartDrawer(): void {
+        const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
+            nzTitle: 'Start new worklfow run',
+            nzContent: ProjectV2RunStartComponent,
+            nzContentParams: {
+                params: <ProjectV2RunStartComponentParams>{
+                    workflow_repository: this.workflowRun.contexts.cds.workflow_vcs_server + '/' + this.workflowRun.contexts.cds.workflow_repository,
+                    repository: this.workflowRun.contexts.git.server + '/' + this.workflowRun.contexts.git.repository,
+                    workflow_ref: this.workflowRun.contexts.cds.workflow_ref,
+                    ref: this.workflowRun.contexts.git.ref,
+                    workflow: this.workflowRun.contexts.cds.workflow_vcs_server + '/' + this.workflowRun.contexts.cds.workflow_repository + '/' + this.workflowRun.contexts.cds.workflow
+                }
+            },
+            nzSize: 'large'
+        });
+        drawerRef.afterClose.subscribe(data => { });
     }
 }
