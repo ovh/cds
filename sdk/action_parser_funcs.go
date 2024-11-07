@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -47,13 +48,38 @@ var (
 		"trimAll":    newStringStringActionFunc("trimAll", strings.Trim),
 		"trimPrefix": newStringStringActionFunc("trimPrefix", strings.TrimPrefix),
 		"trimSuffix": newStringStringActionFunc("trimSuffix", strings.TrimSuffix),
+		"toArray":    toArray,
 	}
 )
 
 type ActionFunc func(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error)
 
+func toArray(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) == 0 {
+		return nil, NewErrorFrom(ErrInvalidData, "contains: wrong number of arguments to call toArray()")
+	}
+
+	if len(inputs) == 1 {
+		val := reflect.ValueOf(inputs[0])
+		switch val.Kind() {
+		case reflect.Array, reflect.Slice:
+			return inputs[0], nil
+		case reflect.Map:
+			keys := val.MapKeys()
+			var values []any
+			for _, k := range keys {
+				values = append(values, val.MapIndex(k).Interface())
+			}
+			return values, nil
+		default:
+			return []any{inputs[0]}, nil
+		}
+	}
+
+	return inputs, nil
+}
+
 func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
-	log.Debug(ctx, "function: contains with args: %v", inputs)
 	if len(inputs) != 2 {
 		return nil, NewErrorFrom(ErrInvalidData, "contains: wrong number of arguments to call contains(type, name)")
 	}
@@ -73,6 +99,8 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 	if jobsMap == nil {
 		return nil, errors.New("map jobs not found in context")
 	}
+
+	var results []any
 
 	for _, jobContextI := range jobsMap { // Iterate over all the jobs
 		var jobRunResultsAsMap map[string]interface{}
@@ -114,13 +142,21 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 					return nil, err
 				}
 				if g != nil {
-					return v, nil
+					results = append(results, v)
 				}
 			}
 		}
 	}
 
-	return nil, nil
+	if len(results) == 0 {
+		return nil, nil
+	}
+
+	if len(results) == 1 {
+		return results[0], nil
+	}
+
+	return results, nil
 }
 
 // contains(search, item)
