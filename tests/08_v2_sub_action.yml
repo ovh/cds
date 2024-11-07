@@ -119,6 +119,12 @@ testcases:
             childPath2:
               value: ${{ steps.path2.outputs.childPath2 }}  
               type: path  
+        actions/echoPath.yaml:
+          name: path-action
+          runs:
+            steps:
+              - id: echo
+                run: echo "${PATH}"     
         workflows/sub-action.yaml:
           name: {{.cds_workflow}}
           on: [push]
@@ -130,6 +136,8 @@ testcases:
                   id: action
                   env:
                     PARENT: FOO
+                - id: echoPath
+                  uses: .cds/actions/echoPath.yaml
                 - id: exportFile
                   run: |
                     echo "Hello" > myfile.log
@@ -208,6 +216,8 @@ testcases:
         cat {{.cds_workflow}}-1-1-init-action | grep "/child/path/1"
         # Check childpath2 in parent action
         cat {{.cds_workflow}}-1-1-init-action | grep "/child/path/2"
+        # Check path in second step action
+        cat {{.cds_workflow}}-1-1-init-echoPath | grep "/child/path/1"
         # Check Post parent action
         cat {{.cds_workflow}}-1-1-init-Post-action | grep "Post from parent-action"
         # Check childPath1 in job step log

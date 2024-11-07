@@ -185,7 +185,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 			// Check push analysis to be completed
 			hre.Status = sdk.HookEventStatusCheckAnalysis
 			if err := s.triggerCheckAnalyses(ctx, hre); err != nil {
-				return sdk.WrapError(err, "unable to trigger analyses")
+				return sdk.WrapError(err, "unable to check analyses")
 			}
 		case sdk.WorkflowHookEventNameWorkflowRun:
 			hre.Status = sdk.HookEventStatusSignKey
@@ -206,7 +206,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		}
 	case sdk.HookEventStatusCheckAnalysis:
 		if err := s.triggerCheckAnalyses(ctx, hre); err != nil {
-			return sdk.WrapError(err, "unable to trigger analyses")
+			return sdk.WrapError(err, "unable to check analyses")
 		}
 		// Retrieve workflow hooks
 	case sdk.HookEventStatusWorkflowHooks:
