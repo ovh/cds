@@ -12,6 +12,10 @@
     &:hover {
       color: #177ddc;
     }
+
+    &.fixed {
+      display: inline-block;
+    }
   }
 
   &:hover {

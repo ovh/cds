@@ -10,4 +10,6 @@ export class SearchableComponent {
 	@Input() link: Array<string>;
 	@Input() params: any;
 	@Input() paramsHandling: string;
+	@Input() fixed: boolean;
+	@Input() title: string;
 }
