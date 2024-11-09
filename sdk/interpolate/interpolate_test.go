@@ -3,6 +3,8 @@ package interpolate
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path"
 	"testing"
 	"text/template"
 
@@ -587,6 +589,30 @@ func TestDo(t *testing.T) {
 			want:   "bar",
 			enable: true,
 		},
+		{
+			name: "fromFile truthy",
+			args: args{
+				input: "{{.assert | fromFile}}",
+				vars: map[string]string{
+					"assert": tempFileWithContent("foobar"),
+				},
+			},
+			wantErr: false,
+			want:    "foobar",
+			enable:  true,
+		},
+		{
+			name: "fromFile falsy path",
+			args: args{
+				input: "{{.assert | fromFile}}",
+				vars: map[string]string{
+					"assert": path.Join(os.TempDir(), "nonexistent"),
+				},
+			},
+			wantErr: false,
+			want:    "",
+			enable:  true,
+		},
 	}
 	for _, tt := range tests {
 		if !tt.enable {
@@ -604,6 +630,15 @@ func TestDo(t *testing.T) {
 			}
 		})
 	}
+}
+
+func tempFileWithContent(s string) string {
+	f := path.Join(os.TempDir(), s)
+	err := os.WriteFile(f, []byte(s), 0600)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
 
 func TestWrapHelpers(t *testing.T) {

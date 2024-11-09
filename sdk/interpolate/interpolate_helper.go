@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"path"
 	"reflect"
 	"strconv"
@@ -89,6 +90,7 @@ func init() {
 		"urlencode": func(s string) string { return url.QueryEscape(s) },
 		"dirname":   func(s string) string { return path.Dir(s) },
 		"basename":  func(s string) string { return path.Base(s) },
+		"fromFile":  fromFile,
 	})
 }
 
@@ -404,4 +406,12 @@ func ternary(v, v2, a interface{}) interface{} {
 // toInt64 converts integer types to 64-bit integers
 func toInt64(v interface{}) int64 {
 	return cast.ToInt64(v)
+}
+
+func fromFile(s string) string {
+	bytes, err := os.ReadFile(s)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
 }
