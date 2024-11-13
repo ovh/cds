@@ -1221,7 +1221,8 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 						runPermutations++
 					}
 				}
-				if nbPermutations != runPermutations {
+				// If there is still permutation to run
+				if nbPermutations > runPermutations {
 					jobsToCheck[jobID] = jobDef
 				}
 			}
