@@ -8,9 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTempalte(t *testing.T) {
+func TestWorkflowTemplate(t *testing.T) {
 	wk := `name: myworkflow
 from: library/myTemplate
+annotations:
+  type: override
 parameters:
   it_env: |-
    [{
@@ -26,6 +28,9 @@ parameters:
 - key: it_env
   type: json
 spec: |-
+  annotations:
+    foo: bar
+    type: baz
   jobs:
    myJob:
       [[- if .params.it_env]]
@@ -55,4 +60,16 @@ spec: |-
 	require.Equal(t, "${{vars.myvarset.myvalue}}", value1)
 	value2 := resolvedWorkflow.Jobs["myJob"].Env["MY_VAR_2"]
 	require.Equal(t, "${{vars.myvarset.myvalue2}}", value2)
+
+	require.Len(t, work.Annotations, 2)
+
+	require.Contains(t, work.Annotations, "type")
+	require.Contains(t, work.Annotations, "foo")
+
+	if v, _ := work.Annotations["type"]; v != "override" {
+		t.Errorf("annotations 'type' should have value 'override', got %s", v)
+	}
+	if v, _ := work.Annotations["foo"]; v != "bar" {
+		t.Errorf("annotations 'foo' should have value 'bar', got %s", v)
+	}
 }
