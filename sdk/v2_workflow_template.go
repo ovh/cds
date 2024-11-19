@@ -77,7 +77,7 @@ func (wt V2WorkflowTemplate) GetName() string {
 	return wt.Name
 }
 
-func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (string, error) {
+func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, error) {
 	type innerWorkflow struct {
 		Stages       map[string]WorkflowStage `json:"stages,omitempty"`
 		Gates        map[string]V2JobGate     `json:"gates,omitempty"`
@@ -85,10 +85,11 @@ func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (string
 		Env          map[string]string        `json:"env,omitempty"`
 		Integrations []string                 `json:"integrations,omitempty"`
 		VariableSets []string                 `json:"vars,omitempty"`
+		Annotations  map[string]string        `json:"annotations,omitempty"`
 	}
 
 	if wt.Spec.tpl == nil {
-		return "", errors.New("uninitiliazed workflow spec")
+		return "", errors.New("uninitialized workflow spec")
 	}
 
 	paramsDef := make(map[string]V2WorkflowTemplateParamType)
@@ -122,7 +123,7 @@ func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (string
 
 	var in innerWorkflow
 	if err := yaml.Unmarshal(buf.Bytes(), &in); err != nil {
-		return buf.String(), err
+		return "", err
 	}
 
 	// fill workflow
@@ -144,7 +145,19 @@ func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (string
 	if in.VariableSets != nil {
 		w.VariableSets = in.VariableSets
 	}
-
+	// Use workflow template annotations only if
+	// they are not already defined by the template
+	// or their value is an empty string.
+	if len(in.Annotations) > 0 {
+		if w.Annotations == nil {
+			w.Annotations = make(map[string]string)
+		}
+		for k, v := range in.Annotations {
+			if _, ok := w.Annotations[k]; !ok {
+				w.Annotations[k] = v
+			}
+		}
+	}
 	return buf.String(), nil
 }
 
