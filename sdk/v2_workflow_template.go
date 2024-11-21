@@ -86,6 +86,7 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 		Integrations []string                 `json:"integrations,omitempty"`
 		VariableSets []string                 `json:"vars,omitempty"`
 		Annotations  map[string]string        `json:"annotations,omitempty"`
+		On           *WorkflowOn              `json:"on,omitempty"`
 	}
 
 	if wt.Spec.tpl == nil {
@@ -158,6 +159,11 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 			}
 		}
 	}
+
+	if w.On == nil {
+		w.On = in.On
+	}
+
 	return buf.String(), nil
 }
 
