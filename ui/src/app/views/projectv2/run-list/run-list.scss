@@ -78,6 +78,21 @@
           width: unset !important;
         }
       }
+
+      [nzCopyable] {
+        color: inherit;
+
+        ::ng-deep {
+          .ant-typography-copy {
+            color: inherit;
+            margin: 0 2px 0 0;
+          }
+
+          &:hover {
+            color: #177ddc;
+          }
+        }
+      }
     }
 
     .dotted {

@@ -93,15 +93,27 @@
 				</ng-template>
 				<ng-template #runDescription>
 					<ng-container *ngIf="run.contexts.git">
-						Commit <a class="dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
-							rel="noopener noreferrer">{{run.contexts.git.sha?.substring(0,8)}}</a> by {{run.contexts.git.username}} on
-						repository
-						<app-searchable [style]="{display:'unset'}" [link]="['/project', project.key, 'run']"
-							[params]="{workflow_repository: run.contexts.git.server+'/'+run.contexts.git.repository}"
-							paramsHandling="merge">
-							<a class="dotted" href="{{run.contexts.git.repository_web_url}}" target="_blank"
-								rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
-						</app-searchable>
+						<span style="margin-right: 10px;">
+							<b>Repository:</b>&nbsp;
+							<app-searchable [style]="{display:'unset'}" [link]="['/project', project.key, 'run']"
+								[params]="{workflow_repository: run.contexts.git.server+'/'+run.contexts.git.repository}"
+								paramsHandling="merge">
+								<a class="dotted" href="{{run.contexts.git.repository_web_url}}" target="_blank"
+									rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
+							</app-searchable>
+						</span>
+						<span style="margin-right: 10px;">
+							<b>Commit:</b>&nbsp;
+							<a class="dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
+								rel="noopener noreferrer">{{run.contexts.git.sha?.substring(0,8)}}</a>
+						</span>
+						<span style="margin-right: 10px;">
+							<b>By:</b>&nbsp;{{run.contexts.git.username}}
+						</span>
+						<span>
+							<b>Version:</b>&nbsp;
+							<span nz-typography nzCopyable nzContent="{{run.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
+						</span>
 					</ng-container>
 				</ng-template>
 				<div *ngIf="run.annotations" class="annotations">

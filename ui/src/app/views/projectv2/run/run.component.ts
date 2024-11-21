@@ -400,7 +400,7 @@ export class ProjectV2RunComponent implements OnDestroy {
         let queryParams = {
             'workflow': this.workflowRun.vcs_server + '/' + this.workflowRun.repository + '/' + this.workflowRun.workflow_name
         };
-        queryParams[annotation.key] = annotation.value;
+        queryParams[annotation.key] = encodeURI(annotation.value);
         return queryParams;
     }
 
