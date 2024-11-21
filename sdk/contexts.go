@@ -107,6 +107,7 @@ type GitContext struct {
 	Ref                  string   `json:"ref,omitempty"`
 	RefName              string   `json:"ref_name,omitempty"`
 	Sha                  string   `json:"sha,omitempty"`
+	ShaShort             string   `json:"sha_short,omitempty"`
 	RefType              string   `json:"ref_type,omitempty"`
 	Connection           string   `json:"connection,omitempty"`
 	SSHKey               string   `json:"ssh_key,omitempty"`

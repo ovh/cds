@@ -1303,6 +1303,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
 	require.Equal(t, "1.2.3-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
+
 }
 
 func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
