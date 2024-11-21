@@ -671,7 +671,9 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 			gitContext.Sha = t.Hash
 		}
 	}
-	gitContext.ShaShort = gitContext.Sha[0:7]
+	if len(gitContext.Sha) > 7 {
+		gitContext.ShaShort = gitContext.Sha[0:7]
+	}
 
 	gitContext.CommitWebURL = fmt.Sprintf(vcsRepo.URLCommitFormat, gitContext.Sha)
 	switch gitContext.RefType {
