@@ -210,7 +210,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 				if (!mFilters[s[0]]) {
 					mFilters[s[0]] = [];
 				}
-				mFilters[s[0]].push(s[1]);
+				mFilters[s[0]].push(decodeURI(s[1]));
 			}
 		});
 
@@ -324,7 +324,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 
 	computeFilterValue(filter: WorkflowRunFilter, option?: string): string {
 		const textFilters = [].concat(this.textFilters);
-		textFilters[this.cursorTextFilterPosition] = filter.key + ':' + (option ?? '');
+		textFilters[this.cursorTextFilterPosition] = filter.key + ':' + (option ? encodeURI(option) : '');
 		return textFilters.join(' ');
 	}
 
@@ -403,7 +403,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 
 	generateAnnotationQueryParams(annotation: { key: string, value: string }): any {
 		let queryParams = {};
-		queryParams[annotation.key] = annotation.value;
+		queryParams[annotation.key] = encodeURI(annotation.value);
 		return queryParams;
 	}
 
