@@ -8,6 +8,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestOverrideWorkflowOn(t *testing.T) {
+	wk := `name: myworkflow
+from: library/myTemplate
+on: [push]
+`
+
+	tmpl := `name: myTemplate
+parameters:
+- key: it_env
+  type: json
+spec: |-
+  on:
+    push:
+      branches: [master]
+    pull-request:
+      type: [opened]  `
+
+	var work V2Workflow
+	require.NoError(t, yaml.Unmarshal([]byte(wk), &work))
+
+	var template V2WorkflowTemplate
+	require.NoError(t, yaml.Unmarshal([]byte(tmpl), &template))
+
+	yamlWorkflow, err := template.Resolve(context.TODO(), &work)
+	require.NoError(t, err)
+
+	var resolvedWorkflow V2Workflow
+	require.NoError(t, yaml.Unmarshal([]byte(yamlWorkflow), &resolvedWorkflow))
+
+	require.NotNil(t, work.On)
+	require.Nil(t, work.On.PullRequest)
+	require.NotNil(t, work.On.Push)
+	require.Equal(t, 0, len(work.On.Push.Branches))
+}
+
 func TestWorkflowTemplate(t *testing.T) {
 	wk := `name: myworkflow
 from: library/myTemplate
@@ -28,6 +63,9 @@ parameters:
 - key: it_env
   type: json
 spec: |-
+  on:
+    push:
+      branches: [master]
   annotations:
     foo: bar
     type: baz
@@ -72,4 +110,9 @@ spec: |-
 	if v, _ := work.Annotations["foo"]; v != "bar" {
 		t.Errorf("annotations 'foo' should have value 'bar', got %s", v)
 	}
+
+	require.NotNil(t, work.On)
+	require.NotNil(t, work.On.Push)
+	require.Equal(t, 1, len(work.On.Push.Branches))
+	require.Equal(t, "master", work.On.Push.Branches[0])
 }

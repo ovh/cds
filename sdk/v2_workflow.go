@@ -36,7 +36,7 @@ const (
 	SemverTypePoetry WorkflowSemverType = "poetry"
 	SemverTypeDebian WorkflowSemverType = "debian"
 
-	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}-sha-${{git.sha}}"
+	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}.sha.${{git.sha_short}}"
 )
 
 type V2Workflow struct {

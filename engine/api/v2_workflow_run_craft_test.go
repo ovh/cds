@@ -70,7 +70,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 		RunNumber:    0,
 		RunAttempt:   0,
 		WorkflowRef:  "master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -93,7 +93,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -157,7 +157,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 		RunNumber:    0,
 		RunAttempt:   0,
 		WorkflowRef:  "master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -183,7 +183,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -289,7 +289,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 		RunNumber:    0,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -324,7 +324,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -337,7 +337,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 		FilePath:            ".cds/actions/myaction.yml",
 		Name:                "myaction",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myaction",
 	}
@@ -350,7 +350,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -420,7 +420,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		RunNumber:    0,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -455,7 +455,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -494,7 +494,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -589,7 +589,7 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 		RunNumber:    1,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -619,7 +619,7 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -632,7 +632,7 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -653,7 +653,7 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/Cargo.toml?commit=123456", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/Cargo.toml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -728,7 +728,7 @@ version = "0.85.0"`,
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "0.85.0-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "0.85.0-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
@@ -757,7 +757,7 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 		RunNumber:    1,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -788,7 +788,7 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -801,7 +801,7 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -822,7 +822,7 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/Chart.yaml?commit=123456", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/Chart.yaml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -887,7 +887,7 @@ description: A single-sentence description of this project`,
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "1.11.0-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "1.11.0-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
@@ -916,7 +916,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
 		RunNumber:    1,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/develop",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -924,7 +924,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
 				Semver: &sdk.WorkflowSemver{
 					From: "git",
 					Schema: map[string]string{
-						"refs/heads/develop": "${{git.version}}-rc-${{git.sha}}",
+						"refs/heads/develop": "${{git.version}}-rc-${{git.sha_short}}",
 					},
 				},
 				Jobs: map[string]sdk.V2Job{
@@ -948,7 +948,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/develop",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -961,7 +961,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -1015,7 +1015,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(wrInfos), "Error found: %v", wrInfos)
 
-	require.Equal(t, "0.1.0-rc-123456", wrDB.Contexts.CDS.Version)
+	require.Equal(t, "0.1.0-rc-1234567", wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_GitOnTag(t *testing.T) {
@@ -1044,7 +1044,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnTag(t *testing.T) {
 		RunNumber:    1,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/tags/1.0.0",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -1052,7 +1052,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnTag(t *testing.T) {
 				Semver: &sdk.WorkflowSemver{
 					From: "git",
 					Schema: map[string]string{
-						"refs/heads/develop": "${{git.version}}-rc-${{git.sha}}",
+						"refs/heads/develop": "${{git.version}}-rc-${{git.sha_short}}",
 					},
 				},
 				Jobs: map[string]sdk.V2Job{
@@ -1076,7 +1076,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnTag(t *testing.T) {
 			HookType:      sdk.WorkflowHookTypeRepository,
 			Payload:       nil,
 			Ref:           "refs/tags/1.0.0",
-			Sha:           "123456",
+			Sha:           "123456789",
 			EventName:     sdk.WorkflowHookEventNamePush,
 			SemverCurrent: "1.0.0",
 		},
@@ -1090,7 +1090,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnTag(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/tags/1.0.0",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -1173,7 +1173,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 		RunNumber:    1,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -1204,7 +1204,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -1217,7 +1217,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -1238,7 +1238,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/package.json?commit=123456", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/package.json?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -1302,7 +1302,8 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "1.2.3-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "1.2.3-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
+
 }
 
 func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
@@ -1331,7 +1332,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 		RunNumber:    1,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -1362,7 +1363,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -1375,7 +1376,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -1396,7 +1397,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/.version?commit=123456", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/.version?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile:  true,
@@ -1457,7 +1458,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "6.6.6-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "6.6.6-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
@@ -1486,7 +1487,7 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 		RunNumber:    1,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -1517,7 +1518,7 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -1530,7 +1531,7 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -1551,7 +1552,7 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/pyproject.toml?commit=123456", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/pyproject.toml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -1619,7 +1620,7 @@ readme = "README.md"`,
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "2.0.0-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "2.0.0-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
@@ -1648,7 +1649,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 		RunNumber:    1,
 		RunAttempt:   0,
 		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456",
+		WorkflowSha:  "123456789",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
@@ -1679,7 +1680,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
 			Ref:       "refs/heads/main",
-			Sha:       "123456",
+			Sha:       "123456789",
 			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
@@ -1692,7 +1693,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
 	}
@@ -1713,7 +1714,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/debian%2Fchangelog?commit=123456", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/debian%2Fchangelog?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -1780,5 +1781,5 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "0.9.12-1-1-sha-"+wrDB.Contexts.Git.Sha, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "0.9.12-1-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
