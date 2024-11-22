@@ -1783,3 +1783,178 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 	require.Equal(t, 1, len(versions))
 	require.Equal(t, "0.9.12-1-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
+
+func TestCraftWorkflowFromTemplateFail(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
+
+	reg1 := sdk.Region{Name: "myregion"}
+	require.NoError(t, region.Insert(ctx, db, &reg1))
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
+
+	model := sdk.IntegrationModel{Name: sdk.RandomString(10), Event: true, DefaultConfig: sdk.IntegrationConfig{
+		"myparam": {
+			Value: "myregion",
+			Type:  sdk.IntegrationConfigTypeRegion,
+		},
+	}}
+	require.NoError(t, integration.InsertModel(db, &model))
+	projInt := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"test": sdk.IntegrationConfigValue{
+				Description: "here is a test",
+				Type:        sdk.IntegrationConfigTypeString,
+				Value:       "test",
+			},
+			"myparam": model.DefaultConfig["myparam"],
+		},
+		Name:               sdk.RandomString(10),
+		ProjectID:          proj.ID,
+		Model:              model,
+		IntegrationModelID: model.ID,
+	}
+	require.NoError(t, integration.InsertIntegration(db, &projInt))
+
+	// Create template
+	e := sdk.Entity{
+		ProjectKey:          proj.Key,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/mytmpl.yml",
+		Name:                "myTemplate",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		ProjectRepositoryID: repo.ID,
+		UserID:              &admin.ID,
+		Data: `name: db-schema-model
+spec: |-
+  stages:
+    package: {}
+    release:
+      needs: [lab]
+  jobs:
+    build:
+      stage: package
+    deploy:
+      stage: release`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &e))
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	t.Cleanup(func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	})
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				b := &sdk.VCSRepo{}
+				*(out.(*sdk.VCSRepo)) = *b
+				return nil, 200, nil
+			},
+		).Times(1)
+
+	wkName := sdk.RandomString(10)
+	wr := sdk.V2WorkflowRun{
+		UserID:       admin.ID,
+		ProjectKey:   proj.Key,
+		Status:       sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:  vcsProject.ID,
+		RepositoryID: repo.ID,
+		RunNumber:    0,
+		RunAttempt:   0,
+		WorkflowRef:  "refs/heads/master",
+		WorkflowSha:  "123456789",
+		WorkflowName: wkName,
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: sdk.V2Workflow{
+				Name: wkName,
+				From: fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsProject.Name, repo.Name, "myTemplate"),
+			},
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "refs/heads/main",
+			Sha:       "123456789",
+			EventName: sdk.WorkflowHookEventNamePush,
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	myactionEnt := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeAction,
+		FilePath:            ".cds/actions/myaction.yml",
+		Name:                "myaction",
+		Ref:                 "refs/heads/master",
+		Commit:              "123456789",
+		LastUpdate:          time.Time{},
+		Data:                "name: myaction",
+	}
+	require.NoError(t, entity.Insert(ctx, db, &myactionEnt))
+
+	myWMEnt := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		FilePath:            ".cds/worker-models/myworker-model.yml",
+		Name:                "myworker-model",
+		Ref:                 "refs/heads/master",
+		Commit:              "123456789",
+		LastUpdate:          time.Time{},
+		Data:                "name: myworkermodel",
+	}
+	require.NoError(t, entity.Insert(ctx, db, &myWMEnt))
+
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
+	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg1.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(ctx, db, &perm))
+
+	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
+
+	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
+	require.NoError(t, err)
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	t.Logf("%+v", runInfos)
+
+	require.Equal(t, sdk.V2WorkflowRunStatusFail, wrDB.Status)
+	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
+
+	require.NoError(t, err)
+	require.Equal(t, 1, len(wrInfos))
+
+	require.Contains(t, wrInfos[0].Message, "Stage release: needs not found lab")
+}

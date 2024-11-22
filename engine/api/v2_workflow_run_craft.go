@@ -187,6 +187,24 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			})
 		}
 
+		// Lint generated workflow
+		// Create tmp workflow without FROM to check workflow structure
+		tmpWkf := run.WorkflowData.Workflow
+		tmpWkf.From = ""
+		if errsLint := Lint(ctx, api, tmpWkf, wref.ef); errsLint != nil {
+			//run.Status = sdk.V2WorkflowRunStatusFail
+			msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
+			for _, e := range errsLint {
+				msgs = append(msgs, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       e.Error(),
+				})
+			}
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, msgs...)
+		}
+
 		// Build context for workflow
 		repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), e.Entity.ProjectRepositoryID)
 		if err != nil {
