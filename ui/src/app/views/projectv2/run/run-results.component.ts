@@ -80,6 +80,9 @@ export class RunResultsComponent implements OnChanges {
 	}
 
 	generateDownloadLink(result: WorkflowRunResult): string {
+		if (!result.artifact_manager_metadata) {
+			return null;
+		}
 		let downloadLink = result.artifact_manager_metadata['downloadURI'];
 		if (downloadLink) {
 			return downloadLink;
