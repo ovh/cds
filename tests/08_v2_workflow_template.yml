@@ -66,6 +66,8 @@ testcases:
         - key: name
         - key: subname
         spec: |-
+          on:
+            push: {}
           jobs:
             hello:
               runs-on:
@@ -83,14 +85,15 @@ testcases:
               [[- end ]]
       workflows/local.yaml:
         name: "{{.cds_workflow_local}}"
-        on: [push]
         from: ".cds/workflow-templates/test.yaml"
         parameters:
           name: foo
           subname: bar
       workflows/backend.yaml:
         name: "{{.cds_workflow_backend}}"
-        on: [push]
+        on:
+          push:
+            branches: [master]
         from: "{{.workflow_template}}"
         parameters:
           name: foo
