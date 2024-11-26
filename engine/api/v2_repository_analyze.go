@@ -858,6 +858,33 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 	ctx, next := telemetry.Span(ctx, "manageWorkflowHooks")
 	defer next()
 
+	// If there is a workflow template and non hooks on workflow, check the workflow template
+	if e.Workflow.From != "" && e.Workflow.On == nil {
+		var wkfTmpl sdk.V2WorkflowTemplate
+		if strings.HasPrefix(e.Workflow.From, ".cds/") {
+			tmpl, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, e.ProjectRepositoryID, e.Workflow.From, e.Ref, e.Commit)
+			if err != nil {
+				return nil, err
+			}
+			if err := yaml.Unmarshal([]byte(tmpl.Data), &wkfTmpl); err != nil {
+				return nil, err
+			}
+		} else {
+			completePath, errMsg, err := ef.searchEntity(ctx, db, cache, e.Workflow.From, sdk.EntityTypeWorkflowTemplate)
+			if err != nil {
+				return nil, err
+			}
+			if errMsg != "" {
+				return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, errMsg)
+			}
+			workflowTemplate := ef.templatesCache[completePath]
+			wkfTmpl = workflowTemplate.Template
+		}
+		if _, err := wkfTmpl.Resolve(ctx, &e.Workflow); err != nil {
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute workflow from template: %v", err)
+		}
+	}
+
 	hooks := make([]sdk.V2WorkflowHook, 0)
 
 	// Remove existing hook for the current branch

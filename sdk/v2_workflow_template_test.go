@@ -8,6 +8,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestOverrideWorkflowOnEmpty(t *testing.T) {
+	wk := `name: myworkflow
+from: library/myTemplate
+`
+
+	tmpl := `name: myTemplate
+parameters:
+- key: it_env
+  type: json
+spec: |-
+  on:
+    push: {}`
+
+	var work V2Workflow
+	require.NoError(t, yaml.Unmarshal([]byte(wk), &work))
+
+	var template V2WorkflowTemplate
+	require.NoError(t, yaml.Unmarshal([]byte(tmpl), &template))
+
+	yamlWorkflow, err := template.Resolve(context.TODO(), &work)
+	require.NoError(t, err)
+
+	var resolvedWorkflow V2Workflow
+	require.NoError(t, yaml.Unmarshal([]byte(yamlWorkflow), &resolvedWorkflow))
+
+	require.NotNil(t, work.On)
+	require.Nil(t, work.On.PullRequest)
+	require.NotNil(t, work.On.Push)
+	require.Equal(t, 0, len(work.On.Push.Branches))
+}
+
 func TestOverrideWorkflowOn(t *testing.T) {
 	wk := `name: myworkflow
 from: library/myTemplate
