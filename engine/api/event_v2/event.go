@@ -15,6 +15,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/interpolate"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/rockbears/log"
 
@@ -232,7 +233,7 @@ func sendVCSPullRequestComment(ctx context.Context, db *gorp.DbMap, vcsClient sd
 	tmplParams["event"] = eventContext
 
 	// Templating
-	tmpl, err := template.New("workflow_template").Delims("[[", "]]").Parse(comment)
+	tmpl, err := template.New("workflow_template").Funcs(interpolate.InterpolateHelperFuncs).Delims("[[", "]]").Parse(comment)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		runInfo := sdk.V2WorkflowRunInfo{

@@ -598,7 +598,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		}
 	} else {
 		// If no semver found, compute it from 0.1.0
-		semverCurrent = "0.1.0+" + strconv.FormatInt(wr.RunNumber, 10) + ".sha." + sdk.StringFirstN(commit, 8)
+		semverCurrent = "0.1.0+" + strconv.FormatInt(wr.RunNumber, 10) + ".sha.g" + sdk.StringFirstN(commit, 7)
 	}
 
 	semverNext = strings.ReplaceAll(semverNext, "+", "-")
