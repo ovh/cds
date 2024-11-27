@@ -78,7 +78,12 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	}
 
 	if op.Setup.Checkout.ProcessSemver {
-		describe, err := gitRepo.Describe(ctx, nil)
+		describe, err := gitRepo.Describe(ctx, &repo.DescribeOpt{
+			DirtySemver: true,
+			Long:        true,
+			Match:       []string{"v[0-9]*", "[0-9]*"},
+			DirtyMark:   "-dirty",
+		})
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, errors.Wrap(err, "git describe failed"))
 		} else {

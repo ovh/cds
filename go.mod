@@ -16,7 +16,6 @@ require (
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/buger/goterm v0.0.0-20170918171949-d443b9114f9c
-	github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/confluentinc/bincover v0.2.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -30,7 +29,7 @@ require (
 	github.com/eapache/go-resiliency v1.3.0
 	github.com/fatih/color v1.16.0
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.5.4
+	github.com/fsamin/go-repo v0.6.0
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/go-gorp/gorp v2.0.0+incompatible
