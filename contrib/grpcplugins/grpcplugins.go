@@ -31,6 +31,7 @@ func Logf(c *actionplugin.Common, s string, i ...any) {
 }
 
 func Log(c *actionplugin.Common, s string) {
+	s = strings.ToValidUTF8(s, "")
 	if c.StreamServer == nil {
 		fmt.Println(s)
 	} else {
