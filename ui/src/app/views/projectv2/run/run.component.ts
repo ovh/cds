@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, TemplateRef, ViewChild } from "@angular/core";
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, TemplateRef, ViewChild } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { from, interval, lastValueFrom, Subscription } from "rxjs";
 import { dump } from "js-yaml";
@@ -29,9 +29,10 @@ import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "..
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2RunComponent implements OnDestroy {
+export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     @ViewChild('graph') graph: WorkflowV2StagesGraphComponent;
     @ViewChild('autoHeightDirective') autoHeightDirective: NsAutoHeightTableDirective;
+    @ViewChild('tabResultsTemplate') tabResultsTemplate: TemplateRef<any>;
     @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
 
     workflowRun: V2WorkflowRun;
@@ -65,7 +66,6 @@ export class ProjectV2RunComponent implements OnDestroy {
     jobPanelSize: string;
     panelExpanded: boolean;
 
-    defaultTabs: Array<Tab>;
     tabs: Array<Tab>;
     selectedTab: Tab;
 
@@ -111,16 +111,23 @@ export class ProjectV2RunComponent implements OnDestroy {
         });
         this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunComponent.INFO_PANEL_KEY));
         this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunComponent.JOB_PANEL_KEY)) ?? '50%';
+    }
 
-        this.defaultTabs = [<Tab>{
+    ngAfterViewInit(): void {
+        this.tabs = [<Tab>{
             title: 'Info',
-            key: 'info'
+            key: 'info',
+            default: true
         }, <Tab>{
             title: 'Results',
-            key: 'results'
+            key: 'results',
+            template: this.tabResultsTemplate
+        }, <Tab>{
+            title: 'Tests',
+            key: 'tests',
+            template: this.tabTestsTemplate
         }];
-        this.tabs = [...this.defaultTabs.map(t => Object.assign({}, t))];
-        this.tabs[0].default = true;
+        this._cd.markForCheck();
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -148,8 +155,6 @@ export class ProjectV2RunComponent implements OnDestroy {
     }
 
     async loadJobsAndResults() {
-        this.tabs = [...this.defaultTabs.map(t => Object.assign({}, t))];
-
         try {
             this.jobs = await lastValueFrom(this._workflowService.getJobs(this.workflowRun, this.selectedRunAttempt));
         } catch (e) {
@@ -159,11 +164,6 @@ export class ProjectV2RunComponent implements OnDestroy {
             this.results = await lastValueFrom(this._workflowService.getResults(this.workflowRun, this.selectedRunAttempt));
             if (!!this.results.find(r => r.type === WorkflowRunResultType.tests)) {
                 this.computeTestsReport();
-                this.tabs = this.tabs.concat(<Tab>{
-                    title: 'Tests',
-                    key: 'tests',
-                    template: this.tabTestsTemplate
-                });
             }
         } catch (e) {
             this._messageService.error(`Unable to get results: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });

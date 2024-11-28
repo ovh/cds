@@ -8,6 +8,8 @@
 	<button [class.active]="filtered" nz-button nzType="default" nz-popover [nzPopoverContent]="contentFilter"
 		nzPopoverTrigger="bottomRight" nzPopoverTrigger="click">
 		<span nz-icon nzType="filter" nzTheme="outline"></span>
+		<span *ngIf="filtered && ((tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)) > 0">
+			{{countDisplayedTests}}/{{(tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)}}</span>
 	</button>
 	<ng-template #contentFilter>
 		<nz-checkbox-group [ngModel]="filterOptions" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
@@ -18,7 +20,9 @@
 		<div class="tree-node-header large" (click)="clickTestSuite(node.key)">
 			<span nz-icon [nzType]="!treeExpandState[node.key] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
 			<div class="name" [title]="node.title">
-				{{node.title}}
+				<span class="title">
+					{{node.title}}
+				</span>
 				<span class="ok" *ngIf="node.success > 0">
 					<span nz-icon nzType="check" nzTheme="outline"></span>{{node.success}}
 				</span>
@@ -43,7 +47,7 @@
 					<span class="ko" *ngIf="child.status ==='failed'">
 						<span nz-icon nzType="close" nzTheme="outline"></span>
 					</span>
-					<div class="name" [title]="child.title">
+					<div class="name title" [title]="child.title">
 						{{child.title}}
 					</div>
 					<div class="time">{{child.time}}</div>
@@ -51,4 +55,5 @@
 			</ng-container>
 		</div>
 	</ng-container>
+	<nz-list-empty *ngIf="nodes.length === 0" />
 </div>

@@ -1,3 +1,22 @@
+<ng-template #tabResultsTemplate>
+    Results{{ results?.length > 0 ? ' ('+results.length+')' : '' }}
+</ng-template>
+
+<ng-template #tabTestsTemplate>
+    <div class="tests">
+        Tests
+        <span class="ok" *ngIf="tests && tests.ok > 0">
+            <span nz-icon nzType="check" nzTheme="outline"></span>{{tests.ok}}
+        </span>
+        <span class="skipped" *ngIf="tests && tests.skipped > 0">
+            <span nz-icon nzType="warning" nzTheme="fill"></span>{{tests.skipped}}
+        </span>
+        <span class="ko" *ngIf="tests && tests.ko > 0">
+            <span nz-icon nzType="close" nzTheme="outline"></span>{{tests.ko}}
+        </span>
+    </div>
+</ng-template>
+
 <ng-container *ngIf="workflowRun">
     <div class="content" [class.disableSelection]="resizing">
 
@@ -125,20 +144,6 @@
                     (onSelectResult)="openPanel('result', $event)"></app-run-results>
                 <app-run-tests *ngIf="selectedTab && selectedTab.key === 'tests'" [tests]="tests"
                     (onSelectTest)="openPanel('test', $event)"></app-run-tests>
-                <ng-template #tabTestsTemplate>
-                    <div class="tests">
-                        Tests
-                        <span class="ok" *ngIf="tests && tests.ok > 0">
-                            <span nz-icon nzType="check" nzTheme="outline"></span>{{tests.ok}}
-                        </span>
-                        <span class="skipped" *ngIf="tests && tests.skipped > 0">
-                            <span nz-icon nzType="warning" nzTheme="fill"></span>{{tests.skipped}}
-                        </span>
-                        <span class="ko" *ngIf="tests && tests.ko > 0">
-                            <span nz-icon nzType="close" nzTheme="outline"></span>{{tests.ko}}
-                        </span>
-                    </div>
-                </ng-template>
             </div>
         </app-resizable-panel>
     </div>
