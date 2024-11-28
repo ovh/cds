@@ -142,6 +142,88 @@ func (api *API) postMigrateEnvironmentVariableToVariableSetHandler() ([]service.
 		}
 }
 
+func (api *API) postMigrateApplicationIntegrationVariableToVariableSetHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectManage),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+
+			var copyRequest sdk.CopyApplicationIntegrationVariableToVariableSet
+			if err := service.UnmarshalBody(req, &copyRequest); err != nil {
+				return err
+			}
+
+			app, err := application.LoadByName(ctx, api.mustDB(), pKey, copyRequest.ApplicationName, application.LoadOptions.WithClearDeploymentStrategies)
+			if err != nil {
+				return err
+			}
+
+			var value, itemType string
+
+			for k, integ := range app.DeploymentStrategies {
+				if k != copyRequest.IntegrationName {
+					continue
+				}
+				for varName, config := range integ {
+					if varName != copyRequest.VariableName {
+						continue
+					}
+					value = config.Value
+					if config.Type == sdk.IntegrationConfigTypePassword {
+						itemType = sdk.ProjectVariableTypeSecret
+					} else {
+						itemType = sdk.ProjectVariableTypeString
+					}
+				}
+			}
+			if value == "" {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "variable %s not found", copyRequest.VariableName)
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback() //nolint
+
+			vs, err := project.LoadVariableSetByName(ctx, api.mustDB(), pKey, copyRequest.VariableSetName)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				vs = &sdk.ProjectVariableSet{
+					Name:       copyRequest.VariableSetName,
+					ProjectKey: pKey,
+				}
+				if err := project.InsertVariableSet(ctx, tx, vs); err != nil {
+					return err
+				}
+			}
+
+			it := &sdk.ProjectVariableSetItem{
+				ProjectVariableSetID: vs.ID,
+				Name:                 slug.Convert(copyRequest.VariableSetItemName),
+				Type:                 itemType,
+				Value:                value,
+			}
+			switch it.Type {
+			case sdk.ProjectVariableTypeSecret:
+				if err := project.InsertVariableSetItemSecret(ctx, tx, it); err != nil {
+					return err
+				}
+			default:
+				if err := project.InsertVariableSetItemText(ctx, tx, it); err != nil {
+					return err
+				}
+			}
+
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+			return service.WriteJSON(w, nil, http.StatusOK)
+
+		}
+}
 func (api *API) postMigrateApplicationVariableToVariableSetHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

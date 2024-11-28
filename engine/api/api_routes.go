@@ -463,6 +463,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/item", nil, r.POSTv2(api.postMigrateProjectVariableHandler))
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/application", nil, r.POSTv2(api.postMigrateApplicationVariableToVariableSetHandler))
+	r.Handle("/v2/migrate/project/{projectKey}/variableset/application/integration", nil, r.POSTv2(api.postMigrateApplicationIntegrationVariableToVariableSetHandler))
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/environment", nil, r.POSTv2(api.postMigrateEnvironmentVariableToVariableSetHandler))
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/ascode", nil, r.POSTv2(api.postMigrateAsCodeVariableToVariableSetItemHandler))
 

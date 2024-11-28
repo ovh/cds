@@ -3177,6 +3177,25 @@ func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemDelete(ctx, pKe
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemDelete), ctx, pKey, vsName, itemName)
 }
 
+// ProjectVariableSetItemFromApplicationIntegrationVariable mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemFromApplicationIntegrationVariable(ctx context.Context, pKey string, req sdk.CopyApplicationIntegrationVariableToVariableSet, mods ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, pKey, req}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemFromApplicationIntegrationVariable", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemFromApplicationIntegrationVariable indicates an expected call of ProjectVariableSetItemFromApplicationIntegrationVariable.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemFromApplicationIntegrationVariable(ctx, pKey, req interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, pKey, req}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemFromApplicationIntegrationVariable", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemFromApplicationIntegrationVariable), varargs...)
+}
+
 // ProjectVariableSetItemFromAsCodeSecret mocks base method.
 func (m *MockProjectClientV2) ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
@@ -9568,6 +9587,25 @@ func (m *MockInterface) ProjectVariableSetItemDelete(ctx context.Context, pKey, 
 func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemDelete(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemDelete), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemFromApplicationIntegrationVariable mocks base method.
+func (m *MockInterface) ProjectVariableSetItemFromApplicationIntegrationVariable(ctx context.Context, pKey string, req sdk.CopyApplicationIntegrationVariableToVariableSet, mods ...cdsclient.RequestModifier) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, pKey, req}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemFromApplicationIntegrationVariable", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemFromApplicationIntegrationVariable indicates an expected call of ProjectVariableSetItemFromApplicationIntegrationVariable.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemFromApplicationIntegrationVariable(ctx, pKey, req interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, pKey, req}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemFromApplicationIntegrationVariable", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemFromApplicationIntegrationVariable), varargs...)
 }
 
 // ProjectVariableSetItemFromAsCodeSecret mocks base method.

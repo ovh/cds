@@ -89,3 +89,11 @@ func (c *client) ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKe
 	}
 	return nil
 }
+
+func (c *client) ProjectVariableSetItemFromApplicationIntegrationVariable(ctx context.Context, pKey string, req sdk.CopyApplicationIntegrationVariableToVariableSet, mods ...RequestModifier) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/application/integration", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil); err != nil {
+		return err
+	}
+	return nil
+}
