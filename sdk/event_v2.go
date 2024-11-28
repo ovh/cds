@@ -384,6 +384,9 @@ func NewEventWorkflowRunPayload(wr V2WorkflowRun, rjs map[string]V2WorkflowRunJo
 			Outputs: JobResultOutput{},
 		}
 		for _, r := range runResults {
+			if rj.ID != r.WorkflowRunJobID {
+				continue
+			}
 			switch r.Type {
 			case V2WorkflowRunResultTypeVariable, V2WorkflowRunResultVariableDetailType:
 				x, err := GetConcreteDetail[*V2WorkflowRunResultVariableDetail](&r)
