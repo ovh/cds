@@ -213,7 +213,7 @@ type VCSAuthProject struct {
 	Username   string `json:"username,omitempty" db:"-"`
 	Token      string `json:"token,omitempty" db:"-"`
 	SSHKeyName string `json:"sshKeyName,omitempty" db:"-"`
-	GPGKeyName string `json:"sshKeyName,omitempty" db:"-"`
+	GPGKeyName string `json:"gpgKeyName,omitempty" db:"-"`
 
 	// Used by gerrit
 	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
