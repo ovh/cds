@@ -27,6 +27,7 @@ func projectVariableSetItem() *cobra.Command {
 		cli.NewGetCommand(projectVariableSetItemShowCmd, projectVariableSetItemShowFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableSetItemFromProjectCmd, projectVariableSetItemFromProjectFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableSetItemFromAsCodeCmd, projectVariableSetItemFromAsCodeFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableSetItemFromApplicationIntegrationCmd, projectVariableSetItemFromApplicationIntegrationFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -227,4 +228,38 @@ func projectVariableSetItemFromAsCodeFunc(v cli.Values) error {
 		AsCodeIdentifier:    ascode,
 	}
 	return client.ProjectVariableSetItemFromAsCodeSecret(context.Background(), v.GetString(_ProjectKey), copyRequest)
+}
+
+var projectVariableSetItemFromApplicationIntegrationCmd = cli.Command{
+	Name:    "from-app-integration",
+	Aliases: []string{"fai"},
+	Short:   "Copy an ascode secret to the given variable set",
+	Example: "cdsctl X project variableset item from-app-integration PROJECT_KEY MY-VARIABLESET-NAME MY-VARIABLESET-ITEM APPLICATION_NAME INTEGRATION_NAME VAR_NAME",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "variableset-name"},
+		{Name: "variableset-item-name"},
+		{Name: "application-name"},
+		{Name: "integration-name"},
+		{Name: "variable-name"},
+	},
+}
+
+func projectVariableSetItemFromApplicationIntegrationFunc(v cli.Values) error {
+	itemName := v.GetString("variableset-item-name")
+	vsName := v.GetString("variableset-name")
+	app := v.GetString("application-name")
+	integration := v.GetString("integration-name")
+	varName := v.GetString("variable-name")
+
+	copyRequest := sdk.CopyApplicationIntegrationVariableToVariableSet{
+		VariableSetItemName: itemName,
+		VariableSetName:     vsName,
+		ApplicationName:     app,
+		IntegrationName:     integration,
+		VariableName:        varName,
+	}
+	return client.ProjectVariableSetItemFromApplicationIntegrationVariable(context.Background(), v.GetString(_ProjectKey), copyRequest)
 }

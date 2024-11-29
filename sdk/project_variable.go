@@ -38,6 +38,14 @@ type CopyAsCodeSecretToVariableSet struct {
 	AsCodeIdentifier    string `json:"ascode_id"`
 }
 
+type CopyApplicationIntegrationVariableToVariableSet struct {
+	VariableSetItemName string `json:"variable_set_item_name"`
+	VariableSetName     string `json:"variable_set_name"`
+	ApplicationName     string `json:"application_name"`
+	IntegrationName     string `json:"integration_name"`
+	VariableName        string `json:"variable_name"`
+}
+
 type CopyApplicationVariableToVariableSet struct {
 	ApplicationName string `json:"application_name"`
 	VariableSetName string `json:"variable_set_name"`
