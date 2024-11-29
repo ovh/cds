@@ -8,12 +8,13 @@
 	<button [class.active]="filtered" nz-button nzType="default" nz-popover [nzPopoverContent]="contentFilter"
 		nzPopoverTrigger="bottomRight" nzPopoverTrigger="click">
 		<span nz-icon nzType="filter" nzTheme="outline"></span>
+		<span *ngIf="filtered && results?.length > 0">{{filteredResults?.length}}/{{results?.length}}</span>
 	</button>
 	<ng-template #contentFilter>
 		<nz-checkbox-group [ngModel]="filterOptions" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
 	</ng-template>
 </div>
-<nz-list nzSize="small">
+<nz-list nzSize="small" [nzDataSource]="filteredResults">
 	<nz-list-item *ngFor="let item of filteredResults" (click)="clickResult(item.result)">
 		<span class="identifier" [title]="item.result.identifier">{{item.result.identifier}}</span>
 		<span class="label" [title]="item.result.label">{{item.result.label}}</span>

@@ -20,6 +20,7 @@ export class RunTestsComponent implements OnChanges {
 	filterOptions = [];
 	nodes = [];
 	treeExpandState: { [key: string]: boolean } = {};
+	countDisplayedTests = 0;
 
 	constructor(
 		private _cd: ChangeDetectorRef
@@ -33,6 +34,9 @@ export class RunTestsComponent implements OnChanges {
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
+		if (!this.tests) {
+			return
+		}
 		if (!this.filterModified) {
 			if (this.tests.ko > 0 || this.tests.skipped > 0) {
 				this.filterOptions = [
@@ -144,6 +148,10 @@ export class RunTestsComponent implements OnChanges {
 				this.treeExpandState[s.key] = true;
 			}
 		});
+
+		this.countDisplayedTests = this.nodes.map(n => n.success + n.failed + n.skipped).reduce((previous, n) => {
+			return previous + n;
+		}, 0);
 	}
 
 	updateFilters(event): void {
