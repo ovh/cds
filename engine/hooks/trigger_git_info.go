@@ -110,7 +110,7 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 		return err
 	}
 	if hre.IsTerminated() {
-		return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre)
+		return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID)
 	}
 	return s.triggerWorkflows(ctx, hre)
 }

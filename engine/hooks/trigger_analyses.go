@@ -191,7 +191,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			return err
 		}
 		return nil

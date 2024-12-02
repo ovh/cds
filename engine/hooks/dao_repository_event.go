@@ -42,8 +42,8 @@ func (d *dao) SaveRepositoryEvent(_ context.Context, e *sdk.HookRepositoryEvent)
 	return d.store.SetAdd(k, e.UUID, e)
 }
 
-func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, e sdk.HookRepositoryEvent) error {
-	return d.store.SetRemove(repositoryEventInProgressKey, e.UUID, e)
+func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, eventUUID string) error {
+	return d.store.SetRemove(repositoryEventInProgressKey, eventUUID, nil)
 }
 
 func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
@@ -93,12 +93,12 @@ func (d *dao) ListInProgressRepositoryEvent(ctx context.Context) ([]string, erro
 		return nil, sdk.WrapError(err, "Unable to scan %s", repositoryEventInProgressKey)
 	}
 
-	eventKeys := make([]string, 0, len(inProgressEvents))
+	eventUUIDs := make([]string, 0, len(inProgressEvents))
 	for _, k := range inProgressEvents {
-		eventKeys = append(eventKeys, *k)
+		eventUUIDs = append(eventUUIDs, *k)
 	}
 
-	return eventKeys, nil
+	return eventUUIDs, nil
 }
 
 func (d *dao) DeleteRepositoryEvent(ctx context.Context, vcsServer, repository, uuid string) error {

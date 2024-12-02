@@ -33,12 +33,12 @@ func (s *Service) manageOldRepositoryEvent(ctx context.Context) {
 				continue
 			}
 
-			repositoryEventKeys, err := s.Dao.ListInProgressRepositoryEvent(ctx)
+			repositoryEventUUIDs, err := s.Dao.ListInProgressRepositoryEvent(ctx)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				continue
 			}
-			for _, k := range repositoryEventKeys {
+			for _, k := range repositoryEventUUIDs {
 				ctx := telemetry.New(ctx, s, "hooks.manageOldRepositoryEvent", nil, trace.SpanKindUnspecified)
 				if err := s.checkInProgressEvent(ctx, k); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
@@ -49,18 +49,18 @@ func (s *Service) manageOldRepositoryEvent(ctx context.Context) {
 	}
 }
 
-func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string) error {
+func (s *Service) checkInProgressEvent(ctx context.Context, repoEventUUID string) error {
 	ctx, next := telemetry.Span(ctx, "s.checkInProgressEvent")
 	defer next()
 
 	var repoEventTmp sdk.HookRepositoryEvent
-	find, err := s.Cache.Get(repoEventKey, &repoEventTmp)
+	find, err := s.Cache.Get(repoEventUUID, &repoEventTmp)
 	if err != nil {
 		return err
 	}
 	if !find {
-		log.Info(ctx, "repository event %s does not exist anymore.", repoEventTmp.GetFullName())
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoEventTmp); err != nil {
+		log.Info(ctx, "repository event %s does not exist anymore.", repoEventUUID)
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoEventUUID); err != nil {
 			return err
 		}
 	}
@@ -80,13 +80,13 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 	defer s.Dao.UnlockRepositoryEvent(repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
 
 	var hre sdk.HookRepositoryEvent
-	find, err = s.Cache.Get(repoEventKey, &hre)
+	find, err = s.Cache.Get(repoEventUUID, &hre)
 	if err != nil {
 		return sdk.WrapError(err, "unable to retrieve repository event")
 	}
 	if !find {
-		log.Info(ctx, "repository event %s does not exist anymore.", hre.GetFullName())
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
+		log.Info(ctx, "repository event %s %s does not exist anymore.", repoEventUUID, repoEventTmp.GetFullName())
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoEventUUID); err != nil {
 			return err
 		}
 		return nil

@@ -112,7 +112,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 			return sdk.WrapError(err, "norepo > unable to save repository event: %s", hre.GetFullName())
 		}
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			return sdk.WrapError(err, "norepo > unable to remove event %s from inprogress list", hre.GetFullName())
 		}
 		return nil
@@ -125,7 +125,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 			return sdk.WrapError(err, "stopped > unable to save repository event %s", hre.GetFullName())
 		}
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			return sdk.WrapError(err, "stopped > unable to remove event %s from inprogress list", hre.GetFullName())
 		}
 		return nil
@@ -136,7 +136,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 			return sdk.WrapError(err, "maxerror > unable to save repository event %s", hre.GetFullName())
 		}
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			return sdk.WrapError(err, "maxerror > unable to remove event %s from inprogress list", hre.GetFullName())
 		}
 		return nil
@@ -230,7 +230,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		}
 	case sdk.HookEventStatusDone, sdk.HookEventStatusSkipped, sdk.HookEventStatusError:
 		// Remove event from inprogressList
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			log.Error(ctx, "executeEvent >unable to remove event %s from inprogress list: %v", hre.UUID, err)
 		}
 	}
