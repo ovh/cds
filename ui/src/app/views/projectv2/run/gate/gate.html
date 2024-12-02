@@ -2,7 +2,7 @@
 <div class="content">
     <ng-container *ngFor="let k of request | keys">
         <nz-form-item>
-            <nz-form-label [nzSpan]="4">{{k}}</nz-form-label>
+            <nz-form-label [nzSpan]="4">{{k}}<i nz-icon nzType="info-circle" nzTheme="outline" [nz-tooltip]="currentGate.inputs[k].description"></i></nz-form-label>
             <ng-container [ngSwitch]="currentGate.inputs[k].type">
                 <nz-form-control *ngSwitchCase="'number'">
                     <input nz-input [(ngModel)]="request[k]" type="number" />

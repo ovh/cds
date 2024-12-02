@@ -315,9 +315,10 @@ type V2JobGate struct {
 }
 
 type V2JobGateInput struct {
-	Type    string      `json:"type"`
-	Default interface{} `json:"default,omitempty"`
-	Values  []string    `json:"values,omitempty"`
+	Type        string      `json:"type"`
+	Default     interface{} `json:"default,omitempty"`
+	Values      []string    `json:"values,omitempty"`
+	Description string      `json:"description,omitempty"`
 }
 
 type V2JobGateReviewers struct {
