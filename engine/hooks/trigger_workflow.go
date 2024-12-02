@@ -43,7 +43,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		}
 
 		if hre.IsTerminated() {
-			return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre)
+			return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID)
 		}
 	}
 
@@ -202,7 +202,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		return err
 	}
 	if hre.IsTerminated() {
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			return err
 		}
 	}
