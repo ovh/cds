@@ -32,9 +32,6 @@ type HatcheryConfiguration struct {
 	// DockerOpts Docker options
 	DockerOpts string `mapstructure:"dockerOpts" toml:"dockerOpts" default:"" commented:"true" comment:"Docker Options. --add-host and --privileged supported. Example: dockerOpts=\"--add-host=myhost:x.x.x.x,myhost2:y.y.y.y --privileged\"" json:"dockerOpts,omitempty"`
 
-	// TODO refactor DockerOpts globally: issue #4594
-	DisableDockerOptsOnRequirements bool `mapstructure:"disableDockerOptsOnRequirements" toml:"disableDockerOptsOnRequirements" default:"" commented:"true" comment:"disable dockerOpts on requirements"`
-
 	// NetworkEnableIPv6 if true: set ipv6 to true
 	NetworkEnableIPv6 bool `mapstructure:"networkEnableIPv6" toml:"networkEnableIPv6" default:"false" commented:"false" comment:"if true: hatchery creates private network between services with ipv6 enabled" json:"networkEnableIPv6"`
 

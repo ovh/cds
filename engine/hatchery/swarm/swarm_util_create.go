@@ -3,13 +3,10 @@ package swarm
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
@@ -46,7 +43,6 @@ type containerArgs struct {
 	labels                             map[string]string
 	memory                             int64
 	memorySwap                         int64
-	dockerOpts                         dockerOpts
 	entryPoint                         strslice.StrSlice
 }
 
@@ -80,12 +76,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 		config.Entrypoint = cArgs.entryPoint
 	}
 
-	hostConfig := &container.HostConfig{
-		PortBindings: cArgs.dockerOpts.ports,
-		Privileged:   cArgs.dockerOpts.privileged,
-		Mounts:       cArgs.dockerOpts.mounts,
-		ExtraHosts:   cArgs.dockerOpts.extraHosts,
-	}
+	hostConfig := &container.HostConfig{}
 	hostConfig.Resources = container.Resources{
 		Memory:     cArgs.memory * 1024 * 1024, //from MB to B
 		MemorySwap: cArgs.memorySwap,
@@ -163,100 +154,4 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	}
 	next()
 	return nil
-}
-
-var regexPort = regexp.MustCompile("^--port=(.*):(.*)$")
-
-type dockerOpts struct {
-	ports      nat.PortMap
-	privileged bool
-	mounts     []mount.Mount
-	extraHosts []string
-}
-
-func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dockerOpts, error) {
-	dockerOpts := &dockerOpts{}
-
-	// support for add-host on hatchery configuration
-	for _, opt := range strings.Split(h.Config.DockerOpts, " ") {
-		if strings.HasPrefix(opt, "--add-host=") {
-			if err := dockerOpts.computeDockerOptsExtraHosts(opt); err != nil {
-				return nil, err
-			}
-		} else if opt == "--privileged" {
-			dockerOpts.privileged = true
-		}
-	}
-
-	for _, r := range requirements {
-		switch r.Type {
-		case sdk.ModelRequirement:
-			if err := h.computeDockerOptsOnModelRequirement(dockerOpts, r); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return dockerOpts, nil
-}
-
-func (h *HatcherySwarm) computeDockerOptsOnModelRequirement(d *dockerOpts, req sdk.Requirement) error {
-	// args are separated by a space
-	// example: myGroup/golang:1.9.1 --port=8080:8080/tcp
-	for idx, opt := range strings.Split(req.Value, " ") {
-		if idx == 0 || strings.TrimSpace(opt) == "" {
-			continue // it's image name
-		}
-
-		if h.Config.DisableDockerOptsOnRequirements {
-			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
-		}
-
-		if strings.HasPrefix(opt, "--port=") {
-			if err := d.computeDockerOptsPorts(opt); err != nil {
-				return err
-			}
-		} else if strings.HasPrefix(opt, "--add-host=") {
-			if err := d.computeDockerOptsExtraHosts(opt); err != nil {
-				return err
-			}
-		} else if opt == "--privileged" {
-			d.privileged = true
-		} else {
-			return fmt.Errorf("options not supported: %s", opt)
-		}
-	}
-	return nil
-}
-
-func (d *dockerOpts) computeDockerOptsExtraHosts(arg string) error {
-	value := strings.TrimPrefix(strings.TrimSpace(arg), "--add-host=")
-	d.extraHosts = append(d.extraHosts, value)
-	return nil
-}
-
-func (d *dockerOpts) computeDockerOptsPorts(arg string) error {
-	if regexPort.MatchString(arg) {
-		s := regexPort.FindStringSubmatch(arg)
-		//s = --port=8081:8182/tcp // hostPort:containerPort
-		//s[0] = --port=8081:8182/tcp
-		//s[1] = 8081 // hostPort
-		//s[2] = 8182/tcp  // containerPort
-		containerPort := s[2]
-		if !strings.Contains(containerPort, "/") {
-			// tcp is the default
-			containerPort += "/tcp"
-		}
-		if d.ports == nil {
-			d.ports = nat.PortMap{}
-		}
-		if _, ok := d.ports[nat.Port(containerPort)]; !ok {
-			d.ports[nat.Port(containerPort)] = []nat.PortBinding{}
-		}
-		//  "8182/tcp": {{HostIP: "0.0.0.0", HostPort: "8081"}}
-		d.ports[nat.Port(containerPort)] = append(d.ports[nat.Port(containerPort)],
-			nat.PortBinding{HostIP: "0.0.0.0", HostPort: s[1]})
-		return nil // no error
-	}
-	return fmt.Errorf("wrong format of ports arguments. Example: --port=8081:8182/tcp")
 }

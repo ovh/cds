@@ -208,8 +208,6 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 }
 
 // SpawnWorker start a new docker container
-// User can add option on prerequisite, as --port and --privileged
-// but only hatchery NOT 'shared.infra' can launch containers with options
 func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	ctx, end := telemetry.Span(ctx, "swarm.SpawnWorker")
 	defer end()
@@ -416,12 +414,6 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		LabelJobID:              spawnArgs.JobID,
 	}
 
-	// Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one: #4594
-	dockerOpts, errDockerOpts := h.computeDockerOpts(spawnArgs.Requirements)
-	if errDockerOpts != nil {
-		return errDockerOpts
-	}
-
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 	udataParam := struct {
 		API string
@@ -469,7 +461,6 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		cmd:          cmds,
 		labels:       labels,
 		memory:       memory,
-		dockerOpts:   *dockerOpts,
 		entryPoint:   []string{},
 		env:          envs,
 	}
