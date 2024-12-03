@@ -63,7 +63,10 @@ func (e *EntityWithObject) Interpolate(ctx context.Context) error {
 	default:
 		refName = strings.TrimPrefix(e.Entity.Ref, GitRefBranchPrefix)
 	}
-	ap := NewActionParser(map[string]interface{}{"git": map[string]interface{}{"ref_name": refName}}, nil)
+	ap := NewActionParser(map[string]interface{}{"git": map[string]interface{}{
+		"ref_name": refName,
+		"sha":      e.Commit,
+	}}, nil)
 	var err error
 	switch e.Model.Type {
 	case WorkerModelTypeDocker:
