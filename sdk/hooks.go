@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/ovh/cds/sdk/glob"
 	"github.com/rockbears/log"
@@ -57,18 +58,14 @@ func IsValidHookRefs(ctx context.Context, configuredRefs []string, currentEventR
 	if len(configuredRefs) == 0 {
 		return true
 	}
-	for _, b := range configuredRefs {
-		g := glob.New(b)
-		result, err := g.MatchString(currentEventRef)
-		if err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-			continue
-		}
-		if result != nil {
-			return true
-		}
+	fullPattern := strings.Join(configuredRefs, " ")
+	g := glob.New(fullPattern)
+	result, err := g.MatchString(currentEventRef)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return false
 	}
-	return false
+	return result != nil
 }
 
 type HookAccessData struct {
