@@ -115,6 +115,7 @@ export class V2JobGateInput {
     type: string;
     default: any;
     values: Array<string>;
+    description: string;
 }
 
 export class V2JobGateReviewers {

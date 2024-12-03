@@ -93,12 +93,12 @@ func (d *dao) ListInProgressRepositoryEvent(ctx context.Context) ([]string, erro
 		return nil, sdk.WrapError(err, "Unable to scan %s", repositoryEventInProgressKey)
 	}
 
-	eventUUIDs := make([]string, 0, len(inProgressEvents))
+	eventKeys := make([]string, 0, len(inProgressEvents))
 	for _, k := range inProgressEvents {
-		eventUUIDs = append(eventUUIDs, *k)
+		eventKeys = append(eventKeys, *k)
 	}
 
-	return eventUUIDs, nil
+	return eventKeys, nil
 }
 
 func (d *dao) DeleteRepositoryEvent(ctx context.Context, vcsServer, repository, uuid string) error {

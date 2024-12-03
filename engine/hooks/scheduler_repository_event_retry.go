@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/rockbears/log"
@@ -33,12 +34,12 @@ func (s *Service) manageOldRepositoryEvent(ctx context.Context) {
 				continue
 			}
 
-			repositoryEventUUIDs, err := s.Dao.ListInProgressRepositoryEvent(ctx)
+			repositoryEventKeys, err := s.Dao.ListInProgressRepositoryEvent(ctx)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				continue
 			}
-			for _, k := range repositoryEventUUIDs {
+			for _, k := range repositoryEventKeys {
 				ctx := telemetry.New(ctx, s, "hooks.manageOldRepositoryEvent", nil, trace.SpanKindUnspecified)
 				if err := s.checkInProgressEvent(ctx, k); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
@@ -49,18 +50,20 @@ func (s *Service) manageOldRepositoryEvent(ctx context.Context) {
 	}
 }
 
-func (s *Service) checkInProgressEvent(ctx context.Context, repoEventUUID string) error {
+func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string) error {
 	ctx, next := telemetry.Span(ctx, "s.checkInProgressEvent")
 	defer next()
 
 	var repoEventTmp sdk.HookRepositoryEvent
-	find, err := s.Cache.Get(repoEventUUID, &repoEventTmp)
+	find, err := s.Cache.Get(repoEventKey, &repoEventTmp)
 	if err != nil {
 		return err
 	}
 	if !find {
-		log.Info(ctx, "repository event %s does not exist anymore.", repoEventUUID)
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoEventUUID); err != nil {
+		keySplit := strings.Split(repoEventKey, ":")
+		repoUUID := keySplit[len(keySplit)-1]
+		log.Info(ctx, "repository event with id %s does not exist anymore.", repoEventKey)
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoUUID); err != nil {
 			return err
 		}
 	}
@@ -80,13 +83,15 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventUUID string
 	defer s.Dao.UnlockRepositoryEvent(repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
 
 	var hre sdk.HookRepositoryEvent
-	find, err = s.Cache.Get(repoEventUUID, &hre)
+	find, err = s.Cache.Get(repoEventKey, &hre)
 	if err != nil {
 		return sdk.WrapError(err, "unable to retrieve repository event")
 	}
 	if !find {
-		log.Info(ctx, "repository event %s %s does not exist anymore.", repoEventUUID, repoEventTmp.GetFullName())
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoEventUUID); err != nil {
+		keySplit := strings.Split(repoEventKey, ":")
+		repoUUID := keySplit[len(keySplit)-1]
+		log.Info(ctx, "repository event %s does not exist anymore.", repoEventKey)
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoUUID); err != nil {
 			return err
 		}
 		return nil
