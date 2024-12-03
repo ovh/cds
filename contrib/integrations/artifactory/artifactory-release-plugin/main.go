@@ -261,7 +261,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient art.DistribC
 			return "", "", fmt.Errorf("unable to create release bundle %s/%s: %v", params.Name, params.Version, err)
 		}
 	} else {
-		fmt.Printf("Release bundle %s/%s already exist\n", params.Name, params.Version)
+		fmt.Printf("Release bundle %s/%s already exists\n", params.Name, params.Version)
 	}
 	return params.Name, params.Version, nil
 }

@@ -732,7 +732,7 @@ queueRun:
 			}
 		}
 
-		// there is one job with a CDS Model prerequisiste
+		// there is one job with a CDS Model prerequisite
 		// we get the queue with a modelType openstack : we don't want
 		// job with worker model type docker in result
 		filter = workflow.NewQueueFilter()

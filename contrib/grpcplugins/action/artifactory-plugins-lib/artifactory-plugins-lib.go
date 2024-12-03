@@ -174,6 +174,9 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 	// Update metadata
 	r.ArtifactManagerMetadata.Set("localRepository", r.ArtifactManagerMetadata.Get("repository")+"-"+newPromotion.ToMaturity)
 	r.ArtifactManagerMetadata.Set("maturity", newPromotion.ToMaturity)
+	u := strings.TrimSuffix(artifactClient.GetURL(), "/") + "/" + promotedArtifact
+	r.ArtifactManagerMetadata.Set("downloadURI", u)
+	r.ArtifactManagerMetadata.Set("uri", u)
 
 	if _, err := grpcplugins.UpdateRunResult(ctx, c, &workerruntime.V2RunResultRequest{RunResult: &r}); err != nil {
 		return promotedArtifact, err
@@ -398,7 +401,7 @@ func createReleaseBundle(ctx context.Context, c *actionplugin.Common, distriClie
 
 		grpcplugins.Successf(c, "Release Bundle %s %s created", params.Name, params.Version)
 	} else {
-		grpcplugins.Logf(c, "Release Bundle %s/%s already exist\n", params.Name, params.Version)
+		grpcplugins.Logf(c, "Release Bundle %s/%s already exists\n", params.Name, params.Version)
 	}
 	return params.Name, params.Version, nil
 }
