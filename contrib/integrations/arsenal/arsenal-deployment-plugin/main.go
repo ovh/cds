@@ -88,11 +88,14 @@ const deployData = `{
 func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	// Read and check inputs
 	var (
-		application       = getStringOption(q, "cds.application")
-		workflowRunNumber = getStringOption(q, "cds.run.number")
-		arsenalHost       = getStringOption(q, "cds.integration.deployment.host")
-		deploymentToken   = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
-		alternative       = getStringOption(q, "cds.integration.deployment.alternative.config")
+		application          = getStringOption(q, "cds.application")
+		workflowRunNumber    = getStringOption(q, "cds.run.number")
+		arsenalHost          = getStringOption(q, "cds.integration.deployment.host")
+		deploymentToken      = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
+		arsenalGWTokenSource = getStringOption(q, "cds.integration.deployment.gw.source")
+		arsenalGWTokenSecret = getStringOption(q, "cds.integration.deployment.gw.token")
+		arsenalGWServiceName = getStringOption(q, "cds.integration.deployment.gw.service")
+		alternative          = getStringOption(q, "cds.integration.deployment.alternative.config")
 	)
 	maxRetry, err := getIntOption(q, "cds.integration.deployment.retry.max")
 	if err != nil {
@@ -111,7 +114,13 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 		return fail("missing arsenal deployment token")
 	}
 
-	arsenalClient := arsenal.NewClient(arsenalHost, deploymentToken)
+	arsenalClient := arsenal.NewClient(arsenal.Conf{
+		Host:            arsenalHost,
+		DeploymentToken: deploymentToken,
+		GWServiceName:   arsenalGWServiceName,
+		GWTokenSource:   arsenalGWTokenSource,
+		GWTokenSecret:   arsenalGWTokenSecret,
+	})
 
 	// Read alternative if configured.
 	var altConfig *arsenal.Alternative

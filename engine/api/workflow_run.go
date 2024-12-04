@@ -1235,12 +1235,23 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 			if v.Type != sdk.SecretVariable {
 				continue
 			}
+			value := v.Value
+			if value == sdk.PasswordPlaceholder {
+				if publicIntegrationConfig, has := projectIntegration.Model.PublicConfigurations[projectIntegration.Name]; has {
+					if publicConfigValue, has2 := publicIntegrationConfig[k]; has2 {
+						if publicConfigValue.Value == sdk.PasswordPlaceholder || publicConfigValue.Value == "" {
+							continue
+						}
+						value = publicConfigValue.Value
+					}
+				}
+			}
 			wrSecret := sdk.WorkflowRunSecret{
 				WorkflowRunID: wr.ID,
 				Context:       fmt.Sprintf(workflow.SecretProjIntegrationContext, ppID),
 				Name:          fmt.Sprintf("cds.integration.%s.%s", sdk.GetIntegrationVariablePrefix(projectIntegration.Model), k),
 				Type:          v.Type,
-				Value:         []byte(v.Value),
+				Value:         []byte(value),
 			}
 			if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {
 				return err

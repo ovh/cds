@@ -55,12 +55,12 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 
 	// Read and check inputs
 	var (
-		token             = q.GetOptions()["token"]
+		deploymentToken   = q.GetOptions()["token"]
 		version           = q.GetOptions()["version"]
 		alternativeConfig = q.GetOptions()["alternative-config"]
 	)
 
-	if token == "" {
+	if deploymentToken == "" {
 		return fail(p, "missing deployment token")
 	}
 	if version == "" {
@@ -91,13 +91,20 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 	if contexts.Integrations == nil || contexts.Integrations.Deployment.Name == "" {
 		return fail(p, "unable to retrieve a deployment integration")
 	}
-	deploymentIntgration := contexts.Integrations.Deployment
+	deploymentIntegration := contexts.Integrations.Deployment
 
-	host := deploymentIntgration.Get("host")
+	host := deploymentIntegration.Get("host")
 	if host == "" {
 		return fail(p, "missing arsenal host")
 	}
-	arsenalClient := arsenal.NewClient(host, token)
+
+	arsenalClient := arsenal.NewClient(arsenal.Conf{
+		Host:            host,
+		DeploymentToken: deploymentToken,
+		GWServiceName:   deploymentIntegration.Get("gw.service"),
+		GWTokenSource:   deploymentIntegration.Get("gw.source"),
+		GWTokenSecret:   deploymentIntegration.Get("gw.token"),
+	})
 	altConfig, err := createAlternative(ctx, &p.Common, arsenalClient, alternativeConfig, *contexts, mapContexts)
 	if err != nil {
 		return fail(p, err.Error())
@@ -163,7 +170,7 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 		StackName:       deploymentResult.StackName,
 		StackPlatform:   deploymentResult.StackPlatform,
 		Namespace:       deploymentResult.Namespace,
-		IntegrationName: deploymentIntgration.Name,
+		IntegrationName: deploymentIntegration.Name,
 		Alternative:     nil,
 	}
 	if altConfig != nil {
@@ -288,5 +295,4 @@ func main() {
 	if err := actionplugin.Start(context.Background(), &dp); err != nil {
 		panic(err)
 	}
-	return
 }

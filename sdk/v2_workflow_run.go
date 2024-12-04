@@ -324,12 +324,12 @@ func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
 }
 
 type JobIntegrationsContext struct {
-	Name      string                      `json:"name,omitempty"`
-	Config    JobIntegratiosContextConfig `json:"config,omitempty"`
-	ModelName string                      `json:"model_name,omitempty"`
+	Name      string                       `json:"name,omitempty"`
+	Config    JobIntegrationsContextConfig `json:"config,omitempty"`
+	ModelName string                       `json:"model_name,omitempty"`
 }
 
-type JobIntegratiosContextConfig map[string]interface{}
+type JobIntegrationsContextConfig map[string]interface{}
 
 func (j JobIntegrationsContext) Get(key string) string {
 	keySplit := strings.Split(key, ".")

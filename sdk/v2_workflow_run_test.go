@@ -12,7 +12,7 @@ func TestGetContextConfig(t *testing.T) {
 
 	j := JobIntegrationsContext{
 		ModelName: ArtifactoryIntegrationModelName,
-		Config: JobIntegratiosContextConfig{
+		Config: JobIntegrationsContextConfig{
 			"repo": map[string]interface{}{
 				"build": map[string]interface{}{
 					"info": map[string]interface{}{

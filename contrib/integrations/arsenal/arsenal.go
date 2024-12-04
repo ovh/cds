@@ -16,6 +16,10 @@ import (
 const (
 	arsenalDeploymentTokenHeader = "X-Arsenal-Deployment-Token"
 	arsenalFollowupTokenHeader   = "X-Arsenal-Followup-Token"
+
+	arsenalGatewaySourceHeader      = "X-Ovh-Gateway-Source"
+	arsenalGatewayTokenHeader       = "X-Ovh-Gateway-Token"
+	arsenalGatewayServiceNameHeader = "X-Ovh-Gateway-Service-Name"
 )
 
 // Alternative represents an alternative to a deployment.
@@ -61,9 +65,8 @@ type FollowupState struct {
 
 // Client is a helper client to call arsenal public API.
 type Client struct {
-	client          *http.Client
-	host            string
-	deploymentToken string
+	client *http.Client
+	conf   Conf
 }
 
 // RequestError represents an error from a HTTP 4XX status
@@ -75,12 +78,32 @@ func (r *RequestError) Error() string {
 	return r.msg
 }
 
+type Conf struct {
+	Host            string
+	DeploymentToken string
+	GWServiceName   string
+	GWTokenSource   string
+	GWTokenSecret   string
+}
+
 // NewClient creates a new client to call Arsenal public routes with a given host and deploymentToken.
-func NewClient(host, deploymentToken string) *Client {
+func NewClient(conf Conf) *Client {
 	return &Client{
-		client:          cdsclient.NewHTTPClient(60*time.Second, false),
-		host:            host,
-		deploymentToken: deploymentToken,
+		client: cdsclient.NewHTTPClient(60*time.Second, false),
+		conf:   conf,
+	}
+}
+
+func (ac *Client) addHeaders(req *http.Request) {
+	req.Header.Add(arsenalDeploymentTokenHeader, ac.conf.DeploymentToken)
+	if ac.conf.GWTokenSource != "" {
+		req.Header.Add(arsenalGatewaySourceHeader, ac.conf.GWTokenSource)
+	}
+	if ac.conf.GWTokenSecret != "" {
+		req.Header.Add(arsenalGatewayTokenHeader, ac.conf.GWTokenSecret)
+	}
+	if ac.conf.GWServiceName != "" {
+		req.Header.Add(arsenalGatewayServiceNameHeader, "arsenal")
 	}
 }
 
@@ -90,7 +113,7 @@ func (ac *Client) Deploy(deployRequest *DeployRequest) (*DeployResponse, error) 
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
+	ac.addHeaders(req)
 
 	var (
 		deployResult DeployResponse
@@ -115,7 +138,7 @@ func (ac *Client) Deploy(deployRequest *DeployRequest) (*DeployResponse, error) 
 			return nil, &RequestError{fmt.Sprintf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)}
 		}
 		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
-			return nil, fmt.Errorf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)
+			return nil, fmt.Errorf("deploy request failed (HTTP status %d): %s req: %+v", statusCode, rawBody, req)
 		}
 		return nil, fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
 	}
@@ -130,6 +153,7 @@ func (ac *Client) Follow(followupToken string) (*FollowupState, error) {
 		return nil, fmt.Errorf("failed to create Follow request: %w", err)
 	}
 	req.Header.Add(arsenalFollowupTokenHeader, followupToken)
+	ac.addHeaders(req)
 
 	state := &FollowupState{}
 	statusCode, rawBody, err := ac.doRequest(req, state)
@@ -152,7 +176,7 @@ func (ac *Client) UpsertAlternative(altConfig *Alternative) error {
 	if err != nil {
 		return fmt.Errorf("failed to create upsert alternative request: %w", err)
 	}
-	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
+	ac.addHeaders(req)
 
 	statusCode, rawBody, err := ac.doRequest(req, nil)
 	if err != nil {
@@ -173,7 +197,7 @@ func (ac *Client) DeleteAlternative(altName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create delete alternative request: %w", err)
 	}
-	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
+	ac.addHeaders(req)
 
 	statusCode, rawBody, err := ac.doRequest(req, nil)
 	if err != nil {
@@ -198,7 +222,7 @@ func (ac *Client) newRequest(method, uri string, obj interface{}) (*http.Request
 		body = io.NopCloser(bytes.NewReader(objData))
 	}
 
-	req, err := http.NewRequest(method, ac.host+uri, body)
+	req, err := http.NewRequest(method, ac.conf.Host+uri, body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to prepare request on %s %s: %v", method, uri, err)
 	}
