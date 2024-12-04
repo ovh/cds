@@ -817,6 +817,7 @@ var (
 		"guiheux",
 		"esnault",
 		"le-terrier",
+		"bétrancourt",
 	}
 )
 
