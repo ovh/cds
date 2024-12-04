@@ -1,10 +1,9 @@
-name: Workflow Template
+name: Workflow Job Template
 vars:
-  cds_project: "ITV2WFTMPL"
-  git_repo: "it_v2_workflow_templates"
-  cds_workflow_template: "WorkflowTemplate"
-  cds_workflow_local: "WorkflowFromLocalTemplate"
-  cds_workflow_backend: "WorkflowFromBackendTemplate"
+  cds_project: "ITV2WFJOBTMPL"
+  git_repo: "it_v2_workflow_job_templates"
+  cds_workflow_template: "WorkflowJobTemplate"
+  cds_workflow_local: "WorkflowWithJobTemplate"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
   workflow_template: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/{{.cds_workflow_template}}"
 testcases:
