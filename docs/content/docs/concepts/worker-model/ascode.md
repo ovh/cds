@@ -51,7 +51,6 @@ type: openstack
 osarch: linux/amd64
 spec: 
   image: Ubuntu
-  flavor: "b2-4"
 ```
 
 Fields:
@@ -61,7 +60,6 @@ Fields:
 * <span style="color:red">*</span>`osarch`: OS and architecture of the model
 * <span style="color:red">*</span>`type`: Type of worker model
 * <span style="color:red">*</span>`spec.image`: Openstack image name
-* <span style="color:red">*</span>`spec.flavor`: Openstack flavor to use
 
 
 ## vSphere
