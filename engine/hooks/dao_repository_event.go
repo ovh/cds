@@ -128,6 +128,7 @@ func (d *dao) DeleteAllRepositoryEvent(ctx context.Context, vcsServer, repoName 
 		return err
 	}
 	for _, re := range repoEvents {
+		_ = d.RemoveRepositoryEventFromInProgressList(ctx, re.UUID)
 		if err := d.DeleteRepositoryEvent(ctx, re.VCSServerName, re.RepositoryName, re.UUID); err != nil {
 			return err
 		}
