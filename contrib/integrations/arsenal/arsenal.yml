@@ -2,6 +2,12 @@ name: Arsenal
 default_config:
   host:
     type: string
+  gw.source:
+    type: string
+  gw.token:
+    type: password
+  gw.service:
+    type: string
 deployment: true
 additional_default_config:
   version:

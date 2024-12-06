@@ -40,10 +40,13 @@ func (p *arsenalDeploymentPlugin) Stream(q *actionplugin.ActionQuery, stream act
 func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	// Read and check inputs
 	var (
-		arsenalHost     = getStringOption(q, "cds.integration.deployment.host")
-		deploymentToken = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
-		alternative     = getStringOption(q, "cds.integration.deployment.alternative.config")
-		alternativeName = getStringOption(q, "alternative_name")
+		arsenalHost          = getStringOption(q, "cds.integration.deployment.host")
+		deploymentToken      = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
+		arsenalGWTokenSource = getStringOption(q, "cds.integration.deployment.gw.source")
+		arsenalGWTokenSecret = getStringOption(q, "cds.integration.deployment.gw.token")
+		arsenalGWServiceName = getStringOption(q, "cds.integration.deployment.gw.service")
+		alternative          = getStringOption(q, "cds.integration.deployment.alternative.config")
+		alternativeName      = getStringOption(q, "alternative_name")
 	)
 	if arsenalHost == "" {
 		return fail("missing arsenal host")
@@ -64,7 +67,13 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *actionplugin.Actio
 	}
 
 	// Delete alternative.
-	arsenalClient := arsenal.NewClient(arsenalHost, deploymentToken)
+	arsenalClient := arsenal.NewClient(arsenal.Conf{
+		Host:            arsenalHost,
+		DeploymentToken: deploymentToken,
+		GWServiceName:   arsenalGWServiceName,
+		GWTokenSource:   arsenalGWTokenSource,
+		GWTokenSecret:   arsenalGWTokenSecret,
+	})
 	fmt.Printf("Deleting alternative %q\n", alternativeName)
 	if err := arsenalClient.DeleteAlternative(alternativeName); err != nil {
 		return fail("failed to delete alternative: %v", err)

@@ -8,6 +8,7 @@ import (
 
 func TestIntegConfigToJobContext(t *testing.T) {
 	pi := ProjectIntegration{
+		Name:   "foo",
 		Config: IntegrationConfig{},
 		Model:  ArtifactoryIntegration,
 	}
@@ -26,6 +27,17 @@ func TestIntegConfigToJobContext(t *testing.T) {
 	pi.Config["token.name"] = IntegrationConfigValue{
 		Value: "myuser",
 	}
+	pi.Config["my_token"] = IntegrationConfigValue{
+		Value: PasswordPlaceholder,
+		Type:  SecretVariable,
+	}
+	pi.Model.PublicConfigurations = make(IntegrationConfigMap)
+	pi.Model.PublicConfigurations["foo"] = IntegrationConfig{
+		"my_token": IntegrationConfigValue{
+			Value: "the_value_token",
+			Type:  IntegrationConfigTypePassword,
+		},
+	}
 
 	result := pi.ToJobRunContextConfig()
 
@@ -36,9 +48,12 @@ func TestIntegConfigToJobContext(t *testing.T) {
 	require.NotNil(t, buildMap["info"])
 
 	infoMap := buildMap["info"].(map[string]interface{})
-	require.Equal(t, infoMap["prefix"], "pref")
-	require.Equal(t, infoMap["toto"], "tata")
+	require.Equal(t, "pref", infoMap["prefix"])
+	require.Equal(t, "tata", infoMap["toto"])
 
-	require.Equal(t, result["token"], "mytoken")
-	require.Equal(t, result["token_name"], "myuser")
+	require.Equal(t, "mytoken", result["token"])
+	require.Equal(t, "myuser", result["token_name"])
+
+	t.Logf("result: %+v", result)
+	require.Equal(t, "the_value_token", result["my_token"])
 }
