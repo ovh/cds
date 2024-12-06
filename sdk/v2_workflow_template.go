@@ -32,6 +32,7 @@ type V2WorkflowTemplateParameter struct {
 	Key      string                      `json:"key" jsonschema_extras:"order=1" jsonschema_description:"Name of the parameter"`
 	Type     V2WorkflowTemplateParamType `json:"type,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Type of the parameter"`
 	Required bool                        `json:"required,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Indicate if the parameter is mandatory"`
+	Default  *string                     `json:"default,omitempty" jsonschema_extras:"order=4" jsonschema_description:"Default value"`
 }
 
 type V2WorkflowTemplateGenerateRequest struct {
@@ -112,6 +113,13 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 			default:
 				params[k] = v
 			}
+		}
+	}
+
+	// Add parameter with default value
+	for _, v := range wt.Parameters {
+		if _, has := params[v.Key]; !has && v.Default != nil {
+			params[v.Key] = *v.Default
 		}
 	}
 

@@ -8,6 +8,75 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDefaultValue(t *testing.T) {
+	wk := `name: myworkflow
+from: library/myTemplate
+parameters:
+  keyNormal: myValue
+  keyWithDefault: mySurchargedValue
+  keyEmptyValue: ""`
+
+	tmpl := `name: myTemplate
+parameters:
+- key: keyNormal
+- key: keyWithDefault
+  default: myDefaultValue
+- key: keyEmptyValue
+  default: not
+- key: keyGoodDefault
+  default: mySuperDefaultValue
+- key: noDefault  
+spec: |-
+  on:
+    push: {}
+  jobs:
+    [[- if eq .params.keyNormal "myValue" ]]
+    normal: 
+      runs-on: mymodel
+    [[- end ]]	
+    [[- if eq .params.keyWithDefault "mySurchargedValue" ]]
+    withDefault: 
+      runs-on: mymodel
+    [[- end ]]	
+    [[- if eq .params.keyEmptyValue "" ]]
+    emptyValue: 
+      runs-on: mymodel
+    [[- end]]
+    [[- if eq .params.keyGoodDefault "mySuperDefaultValue" ]]
+    goodDefault: 
+      runs-on: mymodel
+    [[- end]]
+    [[- if .params.noDefault ]]
+    noDefault: 
+      runs-on: mymodel
+    [[- end]]`
+
+	var work V2Workflow
+	require.NoError(t, yaml.Unmarshal([]byte(wk), &work))
+
+	var template V2WorkflowTemplate
+	require.NoError(t, yaml.Unmarshal([]byte(tmpl), &template))
+
+	yamlWorkflow, err := template.Resolve(context.TODO(), &work)
+	require.NoError(t, err)
+
+	var resolvedWorkflow V2Workflow
+	require.NoError(t, yaml.Unmarshal([]byte(yamlWorkflow), &resolvedWorkflow))
+
+	normal := work.Jobs["normal"]
+	withDefault := work.Jobs["withDefault"]
+	emptyValue := work.Jobs["emptyValue"]
+	goodDefault := work.Jobs["goodDefault"]
+	_, has := work.Jobs["noDefault"]
+
+	require.Equal(t, "mymodel", normal.RunsOn.Model)
+	require.Equal(t, "mymodel", withDefault.RunsOn.Model)
+	require.Equal(t, "mymodel", emptyValue.RunsOn.Model)
+	require.Equal(t, "mymodel", goodDefault.RunsOn.Model)
+	require.False(t, has)
+
+	require.Equal(t, 4, len(work.Jobs))
+}
 func TestOverrideWorkflowOnEmpty(t *testing.T) {
 	wk := `name: myworkflow
 from: library/myTemplate
