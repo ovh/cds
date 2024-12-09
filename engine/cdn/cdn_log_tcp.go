@@ -172,7 +172,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature,
 		if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID || workerData.ID != unsafeSign.Worker.WorkerID {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		jobID = string(signature.JobID)
+		jobID = strconv.Itoa(int(signature.JobID))
 	case unsafeSign.RunJobID != "":
 		// Get worker data from cache
 		workerData, err := s.getWorkerV2(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
