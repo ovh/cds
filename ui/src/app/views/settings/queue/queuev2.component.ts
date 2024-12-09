@@ -48,7 +48,7 @@ export class QueueV2Component implements OnDestroy {
 
         this._activatedRoute.queryParams.subscribe(q => {
             this.pageIndex = q['page'] ?? 1;
-            this.statusFilters = q['status'] ?? 1;
+            this.statusFilters = q['status'] ?? [];
             this.loadQueue();
         });
     }
