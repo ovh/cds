@@ -13,7 +13,7 @@ package-workflow-graph: workflow-graph
 	cd ../../ui/dist/workflow-graph && npm pack
 
 webviews: package-workflow-graph
-	cd webviews/workflow-preview && npm ci && npm run build
+	cd webviews/workflow-preview && npm install && npm run build
 
 plugin: $(TARGET_DIST)
 	npm ci
