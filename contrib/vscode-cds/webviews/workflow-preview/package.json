@@ -34,6 +34,7 @@
     "@angular-devkit/build-angular": "16.2.11",
     "@angular/cli": "16.2.11",
     "@angular/compiler-cli": "16.2.12",
+    "@jridgewell/gen-mapping": "0.3.5",
     "@types/d3": "5.9.2",
     "@types/dagre": "0.7.52",
     "@types/dagre-d3": "0.6.6",
