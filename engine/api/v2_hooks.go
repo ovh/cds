@@ -292,7 +292,7 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 
 				hooksWithReadRight := make([]sdk.V2WorkflowHook, 0)
 				for _, h := range filteredWorkflowHooks {
-					if !hookRequest.AnayzedProjectKeys.Contains(h.ProjectKey) {
+					if !hookRequest.AnalyzedProjectKeys.Contains(h.ProjectKey) {
 						// Check project right
 						vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, h.ProjectKey, hookRequest.VCSName)
 						if err != nil {
@@ -428,7 +428,7 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 			if len(w.Data.TypesFilter) > 0 {
 				validType = sdk.IsInArray(hookRequest.RepositoryEventType, w.Data.TypesFilter)
 			}
-			if w.Data.ValidateRef(ctx, hookRequest.Ref) && validType {
+			if w.Data.ValidateRef(ctx, hookRequest.PullRequestRefTo) && validType {
 				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 			}
 			continue
