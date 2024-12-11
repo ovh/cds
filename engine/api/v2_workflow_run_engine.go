@@ -156,7 +156,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return nil
 	}
 
-	u, err := user.LoadByID(ctx, api.mustDB(), wrEnqueue.UserID)
+	u, err := user.LoadByID(ctx, api.mustDB(), wrEnqueue.UserID, user.LoadOptions.WithContacts)
 	if err != nil {
 		return err
 	}

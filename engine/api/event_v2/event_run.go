@@ -128,6 +128,7 @@ func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.Event
 		WorkflowRunID: wr.ID,
 		UserID:        u.ID,
 		Username:      u.Username,
+		UserEmail:     u.GetEmail(),
 	}
 	publish(ctx, store, e)
 }
