@@ -81,3 +81,43 @@ func TestMarshalV2WorkflowRunResultReleaseDetail(t *testing.T) {
 	err = JSONUnmarshal(btes, &a)
 	require.NoError(t, err)
 }
+
+func TestJobIntegrationsContext_GetEmpty(t *testing.T) {
+	j := JobIntegrationsContext{
+		Name:      "name",
+		Config:    JobIntegrationsContextConfig{},
+		ModelName: "modelName",
+	}
+	got := j.Get("gw.token")
+
+	require.Equal(t, "", got)
+}
+func TestJobIntegrationsContext_GetEmptyValue(t *testing.T) {
+	j := JobIntegrationsContext{
+		Name: "name",
+		Config: JobIntegrationsContextConfig{
+			"gw": map[string]interface{}{
+				"token": "",
+			},
+		},
+		ModelName: "modelName",
+	}
+	got := j.Get("gw.token")
+
+	require.Equal(t, "", got)
+
+}
+func TestJobIntegrationsContext_GetValue(t *testing.T) {
+	j := JobIntegrationsContext{
+		Name: "name",
+		Config: JobIntegrationsContextConfig{
+			"gw": map[string]interface{}{
+				"token": "value_of_token",
+			},
+		},
+		ModelName: "modelName",
+	}
+	got := j.Get("gw.token")
+
+	require.Equal(t, "value_of_token", got)
+}
