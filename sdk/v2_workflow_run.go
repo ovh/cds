@@ -343,6 +343,9 @@ func (j JobIntegrationsContext) Get(key string) string {
 
 	currentValue := j.Config
 	for _, k := range keySplit {
+		if _, ok := currentValue[k]; !ok {
+			return ""
+		}
 		if itemMap, ok := currentValue[k].(map[string]interface{}); ok {
 			currentValue = itemMap
 		} else {
