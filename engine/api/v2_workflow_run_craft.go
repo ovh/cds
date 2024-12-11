@@ -145,7 +145,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	u, err := user.LoadByID(ctx, api.mustDB(), run.UserID)
+	u, err := user.LoadByID(ctx, api.mustDB(), run.UserID, user.LoadOptions.WithContacts)
 	if err != nil {
 		return err
 	}

@@ -874,7 +874,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			}
 
 			var u *sdk.AuthentifiedUser
-			u, err = user.LoadByID(ctx, api.mustDB(), runRequest.UserID)
+			u, err = user.LoadByID(ctx, api.mustDB(), runRequest.UserID, user.LoadOptions.WithContacts)
 			if err != nil {
 				return err
 			}

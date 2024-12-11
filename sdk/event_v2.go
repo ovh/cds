@@ -286,6 +286,7 @@ type WorkflowRunEvent struct {
 	WorkflowRunID string              `json:"workflow_run_id"`
 	UserID        string              `json:"user_id"`
 	Username      string              `json:"username"`
+	UserEmail     string              `json:"user_mail"`
 }
 
 type WorkflowRunJobEvent struct {
