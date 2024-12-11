@@ -49,6 +49,7 @@ var (
 		"trimPrefix": newStringStringActionFunc("trimPrefix", strings.TrimPrefix),
 		"trimSuffix": newStringStringActionFunc("trimSuffix", strings.TrimSuffix),
 		"toArray":    toArray,
+		"match":      match,
 	}
 )
 
@@ -157,6 +158,30 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 	}
 
 	return results, nil
+}
+
+func match(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+	log.Debug(ctx, "function: match with args: %v", inputs)
+	if len(inputs) != 2 {
+		return nil, NewErrorFrom(ErrInvalidData, "match: wrong number of arguments to call match(stringToTest, globPattern)")
+	}
+
+	globPattern, ok := inputs[1].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "match: globPattern argument must be a string")
+	}
+
+	stringToTest, ok := inputs[0].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "match: stringToTest argument must be a string")
+	}
+
+	g := glob.New(globPattern)
+	result, err := g.MatchString(stringToTest)
+	if err != nil {
+		return nil, NewErrorFrom(ErrInvalidData, "match: unable to check %s with pattern %s: %v", stringToTest, globPattern, err)
+	}
+	return result != nil, nil
 }
 
 // contains(search, item)

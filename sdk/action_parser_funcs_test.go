@@ -12,6 +12,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_match(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	a := ActionParser{}
+
+	r, err := match(context.TODO(), &a, "dev/ma/branch", "**/* !master")
+	require.NoError(t, err)
+	require.NotNil(t, r)
+
+	bo, ok := r.(bool)
+	require.True(t, ok)
+	require.True(t, bo)
+}
+
 func Test_result_as_annotation_expression(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
