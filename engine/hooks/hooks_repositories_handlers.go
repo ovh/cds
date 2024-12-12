@@ -55,6 +55,7 @@ func (s *Service) deleteRepositoryEventHandler() service.Handler {
 			return err
 		}
 		for _, e := range events {
+			_ = s.Dao.RemoveRepositoryEventFromInProgressList(ctx, e.UUID)
 			if err := s.Dao.DeleteRepositoryEvent(ctx, vcsServer, repo, e.UUID); err != nil {
 				return err
 			}
