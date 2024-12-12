@@ -18,11 +18,12 @@ type HookListWorkflowRequest struct {
 	VCSName             string                `json:"vcs_name"`
 	RepositoryName      string                `json:"repository_name"`
 	Ref                 string                `json:"ref"`
+	PullRequestRefTo    string                `json:"pullrequest_ref_to"`
 	Sha                 string                `json:"sha"`
 	Paths               []string              `json:"paths"`
 	RepositoryEventName WorkflowHookEventName `json:"repository_event"`
 	RepositoryEventType WorkflowHookEventType `json:"repository_event_type"`
-	AnayzedProjectKeys  StringSlice           `json:"project_keys"`
+	AnalyzedProjectKeys StringSlice           `json:"project_keys"`
 	Models              []EntityFullName      `json:"models"`
 	Workflows           []EntityFullName      `json:"workflows"`
 }
