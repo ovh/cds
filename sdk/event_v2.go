@@ -103,6 +103,7 @@ type FullEventV2 struct {
 	Status           string          `json:"status,omitempty"`
 	UserID           string          `json:"user_id,omitempty"`
 	Username         string          `json:"username,omitempty"`
+	UserEmail        string          `json:"user_mail"`
 	RunResult        string          `json:"run_result,omitempty"`
 	Entity           string          `json:"entity,omitempty"`
 	Organization     string          `json:"organization,omitempty"`
