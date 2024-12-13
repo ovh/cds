@@ -133,10 +133,10 @@ func LoadQueuedRunJobByModelTypeAndRegion(ctx context.Context, db gorp.SqlExecut
 	return getAllRunJobs(ctx, db, query)
 }
 
-func LoadRunJobsByRunIDAndStatus(ctx context.Context, db gorp.SqlExecutor, runID string, status []string) ([]sdk.V2WorkflowRunJob, error) {
+func LoadRunJobsByRunIDAndStatus(ctx context.Context, db gorp.SqlExecutor, runID string, status []string, runAttempt int64) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobsByRunIDAndStatus")
 	defer next()
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND status = ANY($2)").Args(runID, pq.StringArray(status))
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND status = ANY($2) AND run_attempt = $3").Args(runID, pq.StringArray(status), runAttempt)
 	return getAllRunJobs(ctx, db, query)
 }
 

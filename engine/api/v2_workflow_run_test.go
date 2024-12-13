@@ -1721,6 +1721,8 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
