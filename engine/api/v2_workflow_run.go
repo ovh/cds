@@ -714,7 +714,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, api.mustDB(), wr.ID, []string{sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusScheduling})
+			runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, api.mustDB(), wr.ID, []string{sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusScheduling}, wr.RunAttempt)
 			if err != nil {
 				return err
 			}
