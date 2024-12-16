@@ -455,12 +455,12 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			return nil, err
 		}
 		if msg != "" {
-			msg := sdk.V2WorkflowRunInfo{
+			runMsg := sdk.V2WorkflowRunInfo{
 				WorkflowRunID: wref.run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       msg,
 			}
-			return &msg, nil
+			return &runMsg, nil
 		}
 		step.Uses = "actions/" + completePath
 		msgAction, err := searchActions(ctx, db, store, wref, act.Runs.Steps)
@@ -901,12 +901,12 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			return "", &msg, nil
 		}
 		if msg != "" {
-			msg := sdk.V2WorkflowRunInfo{
+			runMsg := sdk.V2WorkflowRunInfo{
 				WorkflowRunID: wref.run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       msg,
 			}
-			return "", &msg, nil
+			return "", &runMsg, nil
 		}
 		modelType = wm.Model.Type
 		modelCompleteName = fullName
@@ -1015,12 +1015,12 @@ func (wref *WorkflowRunEntityFinder) checkWorkflowTemplate(ctx context.Context, 
 		return sdk.EntityWithObject{}, nil, err
 	}
 	if msg != "" {
-		msg := sdk.V2WorkflowRunInfo{
+		runMsg := sdk.V2WorkflowRunInfo{
 			WorkflowRunID: wref.run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf("Unable to find workflow template %s %s %s %s", wref.ef.currentRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha),
+			Message:       msg,
 		}
-		return sdk.EntityWithObject{}, &msg, nil
+		return sdk.EntityWithObject{}, &runMsg, nil
 	}
 	return *e, nil, nil
 }
