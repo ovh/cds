@@ -913,8 +913,14 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 		if err := wm.Interpolate(ctx); err != nil {
 			return "", nil, err
 		}
+		if strings.HasPrefix(workerModel, ".cds/worker-models/") {
+			wref.ef.localWorkerModelCache[workerModel] = *wm
+		} else {
+			wref.ef.workerModelCache[fullName] = *wm
+		}
 		modelType = wm.Model.Type
 		modelCompleteName = fullName
+
 	}
 
 	for _, h := range hatcheries {
