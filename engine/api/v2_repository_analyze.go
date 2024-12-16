@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/operation"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -536,6 +537,14 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, *repo, *vcsProjectWithSecret, *u, analysis.Data.CDSAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
 
+	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+	if err != nil {
+		return err
+	}
+	for _, p := range plugins {
+		ef.plugins[p.Name] = p
+	}
+
 	// Transform file content into entities
 	entities, multiErr := api.handleEntitiesFiles(ctx, ef, filesContent, analysis)
 	if multiErr != nil {
@@ -860,27 +869,14 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 
 	// If there is a workflow template and non hooks on workflow, check the workflow template
 	if e.Workflow.From != "" && e.Workflow.On == nil {
-		var wkfTmpl sdk.V2WorkflowTemplate
-		if strings.HasPrefix(e.Workflow.From, ".cds/") {
-			tmpl, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, e.ProjectRepositoryID, e.Workflow.From, e.Ref, e.Commit)
-			if err != nil {
-				return nil, err
-			}
-			if err := yaml.Unmarshal([]byte(tmpl.Data), &wkfTmpl); err != nil {
-				return nil, err
-			}
-		} else {
-			completePath, errMsg, err := ef.searchEntity(ctx, db, cache, e.Workflow.From, sdk.EntityTypeWorkflowTemplate)
-			if err != nil {
-				return nil, err
-			}
-			if errMsg != "" {
-				return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, errMsg)
-			}
-			workflowTemplate := ef.templatesCache[completePath]
-			wkfTmpl = workflowTemplate.Template
+		entTemplate, _, msg, err := ef.searchWorkflowTemplate(ctx, db, cache, e.Workflow.From)
+		if err != nil {
+			return nil, err
 		}
-		if _, err := wkfTmpl.Resolve(ctx, &e.Workflow); err != nil {
+		if msg != "" {
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, msg)
+		}
+		if _, err := entTemplate.Template.Resolve(ctx, &e.Workflow); err != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute workflow from template: %v", err)
 		}
 	}
@@ -1565,44 +1561,58 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 	case sdk.V2Workflow:
 		switch {
 		case x.From != "":
-			var tmpl *sdk.V2WorkflowTemplate
-			if strings.HasPrefix(x.From, ".cds/workflow-templates/") {
-				// Retrieve tmpl from current analysis
-				for _, v := range ef.templatesCache {
-					if v.FilePath == x.From {
-						tmpl = &v.Template
-						break
-					}
-				}
-			} else {
-				// Retrieve existing template in DB
-				path, msg, errSearch := ef.searchEntity(ctx, api.mustDB(), api.Cache, x.From, sdk.EntityTypeWorkflowTemplate)
-				if errSearch != nil {
-					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to retrieve entity %s of type %s: %v", x.From, sdk.EntityTypeWorkflowTemplate, errSearch))
-					break
-				}
-				if msg != "" {
-					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, msg))
-					break
-				}
-				t := ef.templatesCache[path].Template
-				tmpl = &t
+			entTmpl, _, msg, errSearch := ef.searchWorkflowTemplate(ctx, api.mustDB(), api.Cache, x.From)
+			if errSearch != nil {
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: unable to retrieve template %s of type %s: %v", x.Name, x.From, sdk.EntityTypeWorkflowTemplate, errSearch))
+				break
 			}
-			if tmpl == nil || tmpl.Name == "" {
-				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unknown workflow template %s", x.From))
-			} else {
-				// Check required parameters
-				for _, v := range tmpl.Parameters {
-					if wkfP, has := x.Parameters[v.Key]; (!has || len(wkfP) == 0) && v.Required {
-						err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "required template parameter %s is missing or empty", x.From))
-					}
+			if msg != "" {
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: %s", x.Name, msg))
+				break
+			}
+
+			if entTmpl == nil || entTmpl.Template.Name == "" {
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: unknown workflow template %s", x.Name, x.From))
+			}
+			// Check required parameters
+			for _, v := range entTmpl.Template.Parameters {
+				if wkfP, has := x.Parameters[v.Key]; (!has || len(wkfP) == 0) && v.Required {
+					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: required template parameter %s is missing or empty", x.Name, x.From))
 				}
 			}
+
 		default:
 			sameVCS := x.Repository == nil || x.Repository.VCSServer == ef.currentVCS.Name || x.Repository.VCSServer == ""
 			sameRepo := x.Repository == nil || x.Repository.Name == ef.currentRepo.Name || x.Repository.Name == ""
 			if sameVCS && sameRepo && x.Repository != nil && x.Repository.InsecureSkipSignatureVerify {
-				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workfow.repository.name`. "))
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workfow.repository.name`. ", x.Name))
+			}
+			for _, j := range x.Jobs {
+				// Check if worker model exists
+				if !strings.Contains(j.RunsOn.Model, "${{") && len(j.Steps) > 0 {
+					_, _, msg, errSearch := ef.searchWorkerModel(ctx, api.mustDB(), api.Cache, j.RunsOn.Model)
+					if errSearch != nil {
+						err = append(err, errSearch)
+					}
+					if msg != "" {
+						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s: %s", x.Name, msg))
+					}
+				}
+
+				// Check if actions/plugins exists
+				for _, s := range j.Steps {
+					if s.Uses == "" {
+						continue
+					}
+					_, _, msg, errSearch := ef.searchAction(ctx, api.mustDB(), api.Cache, s.Uses)
+					if errSearch != nil {
+						err = append(err, errSearch)
+					}
+					if msg != "" {
+						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, msg))
+					}
+				}
+
 			}
 		}
 	}
@@ -1646,14 +1656,17 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 		switch t {
 		case sdk.EntityTypeWorkerModel:
 			eo.Model = any(o).(sdk.V2WorkerModel)
+			ef.localWorkerModelCache[eo.Entity.FilePath] = eo
 			ef.workerModelCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Model.Name, analysis.Ref)] = eo
 		case sdk.EntityTypeAction:
 			eo.Action = any(o).(sdk.V2Action)
+			ef.localActionsCache[eo.Entity.FilePath] = eo.Action
 			ef.actionsCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Action.Name, analysis.Ref)] = eo.Action
 		case sdk.EntityTypeWorkflow:
 			eo.Workflow = any(o).(sdk.V2Workflow)
 		case sdk.EntityTypeWorkflowTemplate:
 			eo.Template = any(o).(sdk.V2WorkflowTemplate)
+			ef.localTemplatesCache[eo.Entity.FilePath] = eo
 			ef.templatesCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Template.Name, analysis.Ref)] = eo
 		}
 

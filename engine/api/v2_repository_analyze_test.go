@@ -2459,7 +2459,7 @@ parameters:
 	anal, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusError, anal.Status)
-	require.Equal(t, "unable to find workflow dependency: mytemplate", anal.Data.Error)
+	require.Equal(t, "workflow myworkflow: unable to find workflow dependency: mytemplate", anal.Data.Error)
 }
 func TestAnalyzeGithubUpdateWorkflowNoRight(t *testing.T) {
 	api, db, _ := newTestAPI(t)
@@ -2597,13 +2597,21 @@ GDFkaTe3nUJdYV4=
 
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
-	wkf := `
-    name: myworkflow
-    jobs:
-      root:
-        steps:
-        - run: echo toto`
+	wkf := `name: myworkflow
+jobs:
+  root:
+    runs-on: .cds/worker-models/mymodel.yml 
+    steps:
+    - run: echo toto`
 	encodedWorkflow := base64.StdEncoding.EncodeToString([]byte(wkf))
+
+	wm := `name: mymodel
+osarch: linux/amd64
+type: docker
+spec:
+  image: myimage`
+
+	encodedWorkerModel := base64.StdEncoding.EncodeToString([]byte(wm))
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=devBranch&default=false&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -2642,6 +2650,10 @@ GDFkaTe3nUJdYV4=
 						IsDirectory: true,
 						Name:        "workflows",
 					},
+					{
+						IsDirectory: true,
+						Name:        "worker-models",
+					},
 				}
 				*(out.(*[]sdk.VCSContent)) = contents
 				return nil, 200, nil
@@ -2656,6 +2668,21 @@ GDFkaTe3nUJdYV4=
 						IsDirectory: false,
 						IsFile:      true,
 						Name:        "myworkflow.yml",
+					},
+				}
+				*(out.(*[]sdk.VCSContent)) = contents
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds%2Fworker-models?commit=zyxwv&offset=0&limit=100", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := []sdk.VCSContent{
+					{
+						IsDirectory: false,
+						IsFile:      true,
+						Name:        "mymodel.yml",
 					},
 				}
 				*(out.(*[]sdk.VCSContent)) = contents
@@ -2678,6 +2705,22 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/content/.cds%2Fworker-models%2Fmymodel.yml?commit=zyxwv", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+
+				content := sdk.VCSContent{
+					IsDirectory: false,
+					IsFile:      true,
+					Name:        "mymodel.yml",
+					Content:     encodedWorkerModel,
+				}
+				*(out.(*sdk.VCSContent)) = content
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
@@ -2694,6 +2737,7 @@ GDFkaTe3nUJdYV4=
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
+	t.Logf(">>>>%+v", analysisUpdated.Data.Error)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
 
 	entitiesNonHEad, err := entity.LoadByTypeAndRefCommit(context.TODO(), db, repo.ID, sdk.EntityTypeWorkflow, "refs/heads/devBranch", "zyxwv")
