@@ -462,10 +462,12 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			}
 			return &runMsg, nil
 		}
-		step.Uses = "actions/" + completePath
-		msgAction, err := searchActions(ctx, db, store, wref, act.Runs.Steps)
-		if msgAction != nil || err != nil {
-			return msgAction, err
+		if act != nil {
+			step.Uses = "actions/" + completePath
+			msgAction, err := searchActions(ctx, db, store, wref, act.Runs.Steps)
+			if msgAction != nil || err != nil {
+				return msgAction, err
+			}
 		}
 	}
 	return nil, nil
