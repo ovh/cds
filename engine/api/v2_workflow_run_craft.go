@@ -910,6 +910,9 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			}
 			return "", &runMsg, nil
 		}
+		if err := wm.Interpolate(ctx); err != nil {
+			return "", nil, err
+		}
 		modelType = wm.Model.Type
 		modelCompleteName = fullName
 	}
