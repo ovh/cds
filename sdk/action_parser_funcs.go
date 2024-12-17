@@ -65,13 +65,6 @@ func toArray(_ context.Context, _ *ActionParser, inputs ...interface{}) (interfa
 		switch val.Kind() {
 		case reflect.Array, reflect.Slice:
 			return inputs[0], nil
-		case reflect.Map:
-			keys := val.MapKeys()
-			var values []any
-			for _, k := range keys {
-				values = append(values, val.MapIndex(k).Interface())
-			}
-			return values, nil
 		default:
 			return []any{inputs[0]}, nil
 		}
