@@ -467,6 +467,15 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/environment", nil, r.POSTv2(api.postMigrateEnvironmentVariableToVariableSetHandler))
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/ascode", nil, r.POSTv2(api.postMigrateAsCodeVariableToVariableSetItemHandler))
 
+	r.Handle("/v2/project", nil, r.GETv2(api.getProjectsV2Handler))
+	r.Handle("/v2/project/{projectKey}", nil, r.GETv2(api.getProjectV2Handler), r.PUTv2(api.updateProjectV2Handler), r.DELETEv2(api.deleteProjectV2Handler))
+	r.Handle("/v2/project/{projectKey}/integrations", nil, r.GETv2(api.getProjectV2IntegrationsHandler), r.POSTv2(api.postProjectV2IntegrationHandler))
+	r.Handle("/v2/project/{projectKey}/integrations/{integrationName}", nil, r.GETv2(api.getProjectV2IntegrationHandler), r.PUTv2(api.putProjectV2IntegrationHandler), r.DELETEv2(api.deleteProjectV2IntegrationHandler))
+	r.Handle("/v2/project/{projectKey}/keys", nil, r.GETv2(api.getKeysInProjectV2Handler), r.POSTv2(api.addKeyInProjectV2Handler))
+	r.Handle("/v2/project/{projectKey}/keys/{name}", nil, r.DELETEv2(api.deleteKeyInProjectV2Handler))
+	r.Handle("/v2/project/{projectKey}/keys/{name}/disable", nil, r.POSTv2(api.postDisableKeyInProjectV2Handler))
+	r.Handle("/v2/project/{projectKey}/keys/{name}/enable", nil, r.POSTv2(api.postEnableKeyInProjectV2Handler))
+
 	r.Handle("/v2/project/{projectKey}/type/{type}/access", Scope(sdk.AuthConsumerScopeService), r.GETv2(api.getProjectV2AccessHandler))
 
 	r.Handle("/v2/project/{projectKey}/notification", nil, r.GETv2(api.getProjectNotifsHandler), r.POSTv2(api.postProjectNotificationHandler))
