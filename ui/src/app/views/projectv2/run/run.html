@@ -38,10 +38,10 @@
                             [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
                     </nz-select>
                     <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
-                        (click)="navigatePanel('workflow')"><span nz-icon nzType="file-text"
+                        (click)="openPanel('workflow')"><span nz-icon nzType="file-text"
                             nzTheme="outline"></span>Sources</button>
                     <button nz-button nzType="default" nzSize="small" title="Show workflow run contexts"
-                        (click)="navigatePanel('contexts')"><span nz-icon nzType="read"
+                        (click)="openPanel('contexts')"><span nz-icon nzType="read"
                             nzTheme="outline"></span>Contexts</button>
                 </nz-page-header-title>
                 <nz-page-header-content>
@@ -129,7 +129,7 @@
             </div>
             <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
                 [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
-                (onSelectJobRun)="navigatePanel('job', $event)" (onSelectHook)="navigatePanel('hook', $event)"
+                (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
                 (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)"
                 #graph></app-stages-graph>
         </div>
@@ -138,7 +138,7 @@
         <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
             <div class="bottom-panel">
-                <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+                <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
                 <app-run-info *ngIf="selectedTab && selectedTab.key === 'info'" [info]="workflowRunInfo"></app-run-info>
                 <app-run-results *ngIf="selectedTab && selectedTab.key === 'results'" [results]="results"
                     (onSelectResult)="openPanel('result', $event)"></app-run-results>
@@ -160,16 +160,19 @@
                 (click)="clickExpandPanel()">
                 <span nz-icon nzType="vertical-align-top" nzTheme="outline"></span>
             </div>
+            <a class="control" [href]="selectedItemShareLink" #shareLink (click)="confirmCopy($event)">
+                <span nz-icon nzType="share-alt" nzTheme="outline"></span>
+            </a>
         </div>
         <app-run-job *ngIf="selectedItemType === 'job'" [workflowRun]="workflowRun"
             [jobRun]="selectedJobRun"></app-run-job>
-        <app-run-gate *ngIf="selectedItemType === 'gate'" [gateNode]="selectedJobGate" [run]="workflowRun"
+        <app-run-gate *ngIf="selectedItemType === 'gate'" [job]="selectedJob" [run]="workflowRun"
             (onSubmit)="onGateSubmit()"></app-run-gate>
         <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"></app-run-hook>
         <app-run-result *ngIf="selectedItemType === 'result'" [result]="selectedRunResult"></app-run-result>
         <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"></app-run-workflow>
         <app-run-contexts *ngIf="selectedItemType === 'contexts'" [run]="workflowRun"></app-run-contexts>
-        <app-run-test *ngIf="selectedItemType === 'test'" [test]="selectedTest"></app-run-test>
+        <app-run-test *ngIf="selectedItemType === 'test'" [tests]="tests" [test]="selectedTest"></app-run-test>
     </app-resizable-panel>
 
 </ng-container>

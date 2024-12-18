@@ -7,7 +7,7 @@ import { PreferencesState } from "app/store/preferences.state";
 import { Store } from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
 import { Tab } from "app/shared/tabs/tabs.component";
-import { TestCase, Tests } from "../../../model/pipeline.model";
+import { Tests } from "../../../model/pipeline.model";
 import { concatMap } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
@@ -15,12 +15,14 @@ import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-gra
 import { NavigationState } from "app/store/navigation.state";
 import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height-table.directive";
 import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive, V2WorkflowRunJobStatusIsFailed, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
-import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
 import { RouterService } from "app/service/services.module";
 import { ErrorUtils } from "app/shared/error.utils";
 import moment from "moment";
 import { NzDrawerService } from "ng-zorro-antd/drawer";
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "../run-start/run-start.component";
+import { HttpParams } from "@angular/common/http";
+import { ToastService } from "app/shared/toast/ToastService";
+import { Clipboard } from '@angular/cdk/clipboard';
 
 @Component({
     selector: 'app-projectv2-run',
@@ -34,15 +36,17 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     @ViewChild('autoHeightDirective') autoHeightDirective: NsAutoHeightTableDirective;
     @ViewChild('tabResultsTemplate') tabResultsTemplate: TemplateRef<any>;
     @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
+    @ViewChild('shareLink') shareLink: any;
 
     workflowRun: V2WorkflowRun;
     workflowRunInfo: Array<WorkflowRunInfo>;
     selectedItemType: string;
+    selectedItemShareLink: string;
     selectedJobRun: V2WorkflowRunJob;
-    selectedJobGate: { gate: string, job: string };
+    selectedJob: string;
     selectedHookName: string;
     selectedRunResult: WorkflowRunResult;
-    selectedTest: TestCase;
+    selectedTest: string;
     jobs: Array<V2WorkflowRunJob>;
     workflowGraph: any;
     selectedRunAttempt: number;
@@ -80,7 +84,9 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         private _route: ActivatedRoute,
         private _messageService: NzMessageService,
         private _routerService: RouterService,
-        private _drawerService: NzDrawerService
+        private _drawerService: NzDrawerService,
+        private _toast: ToastService,
+        private _clipboard: Clipboard
     ) {
         this.paramsSub = this._route.params.subscribe(_ => {
             const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
@@ -93,7 +99,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
                 const params = this._route.snapshot.queryParams;
                 if (params['panel']) {
                     const splitted = params['panel'].split(':');
-                    this.openPanel(splitted[0], splitted[1] ?? null);
+                    this.openPanel(splitted[0], decodeURI(splitted[1]) ?? null);
                 }
             });
         });
@@ -174,8 +180,6 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         } catch (e) {
             this._messageService.error(`Unable to get run infos: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
-
-        this.tabs[0].default = true;
 
         await this.refreshPanel();
 
@@ -261,27 +265,21 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    navigatePanel(type: string, data: string = null): void {
-        this._router.navigate(['/project', this.projectKey, 'run', this.workflowRun.id], {
-            queryParams: {
-                panel: type + (data ? ':' + data : '')
-            },
-            queryParamsHandling: "merge"
-        });
-    }
-
-    async openPanel(type: string, data: any = null) {
+    async openPanel(type: string, data: string = null) {
         this.clearPanel();
 
         this.selectedItemType = type;
+
+        let params = new HttpParams();
+        params = params.append('panel', `${type}:${encodeURI(data)}`);
+        this.selectedItemShareLink = `/project/${this.projectKey}/run/${this.workflowRun.id}?${params.toString()}`;
 
         switch (type) {
             case 'hook':
                 this.selectedHookName = data;
                 break;
             case 'gate':
-                const node = <GraphNode>(data);
-                this.selectedJobGate = { gate: node.job.gate, job: node.name };
+                this.selectedJob = data;
                 break;
             case 'result':
                 this.selectedRunResult = this.results.find(r => r.id === data);
@@ -330,9 +328,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     clearPanel(): void {
         delete this.selectedItemType;
+        delete this.selectedItemShareLink;
         delete this.selectedHookName;
         delete this.selectedRunResult;
-        delete this.selectedJobGate;
+        delete this.selectedJob;
         delete this.selectedJobRun;
         delete this.selectedTest;
     }
@@ -437,5 +436,12 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             nzSize: 'large'
         });
         drawerRef.afterClose.subscribe(data => { });
+    }
+
+    confirmCopy(event: any) {
+        event.stopPropagation();
+        event.preventDefault();
+        this._clipboard.copy(this.shareLink.nativeElement.href);
+        this._toast.success('', 'Share link copied!');
     }
 }

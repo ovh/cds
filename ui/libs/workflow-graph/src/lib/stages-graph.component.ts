@@ -127,7 +127,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     @Input() navigationDisabled: boolean = false;
 
     @Output() onSelectJob = new EventEmitter<string>();
-    @Output() onSelectJobGate = new EventEmitter<GraphNode>();
+    @Output() onSelectJobGate = new EventEmitter<string>();
     @Output() onSelectJobRun = new EventEmitter<string>();
     @Output() onSelectJobRunRestart = new EventEmitter<string>();
     @Output() onSelectJobRunStop = new EventEmitter<string>();
@@ -437,7 +437,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
                 if (options && options['jobRunID']) {
                     this.onSelectJobRun.emit(options['jobRunID']);
                 } else if (options && options['gateName']) {
-                    this.onSelectJobGate.emit(n);
+                    this.onSelectJobGate.emit(n.name);
                 } else {
                     this.onSelectJob.emit(n.name);
                 }

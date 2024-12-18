@@ -37,7 +37,7 @@
 		</div>
 		<div class="tree-node-content" *ngIf="treeExpandState[node.key]">
 			<ng-container *ngFor="let child of node.children">
-				<div class="tree-node-header" (click)="clickTestCase(child.testCase)">
+				<div class="tree-node-header" (click)="clickTestCase(child.key)">
 					<span class="ok" *ngIf="child.status ==='success'">
 						<span nz-icon nzType="check" nzTheme="outline"></span>
 					</span>

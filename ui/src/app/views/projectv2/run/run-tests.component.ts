@@ -11,7 +11,7 @@ import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 @AutoUnsubscribe()
 export class RunTestsComponent implements OnChanges {
 	@Input() tests: Tests;
-	@Output() onSelectTest = new EventEmitter<TestCase>();
+	@Output() onSelectTest = new EventEmitter<string>();
 
 	searchValue = '';
 	filterModified: boolean;
@@ -178,8 +178,8 @@ export class RunTestsComponent implements OnChanges {
 		this._cd.markForCheck();
 	}
 
-	clickTestCase(t: TestCase): void {
-		this.onSelectTest.emit(t);
+	clickTestCase(key: string): void {
+		this.onSelectTest.emit(key);
 	}
 
 	updateSearch(value: string): void {
