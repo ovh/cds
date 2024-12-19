@@ -25,14 +25,33 @@
 
         .title {
             position: absolute;
-            top: 0;
+            top: 16px;
             left: 0;
             z-index: 100;
-            background-color: white;
-            border-bottom-right-radius: 40px;
+            padding: 0;
 
-            :host-context(.night) & {
-                background-color: #141414;
+            ::ng-deep {
+
+                .ant-page-header-heading,
+                nz-page-header-content {
+                    background-color: white;
+
+                    :host-context(.night) & {
+                        background-color: #141414;
+                    }
+                }
+
+                .ant-page-header-heading {
+                    border-top-right-radius: 10px;
+                    border-bottom-right-radius: 10px;
+                    padding: 0 0 0 24px;
+                }
+
+                nz-page-header-content {
+                    display: inline-block;
+                    border-bottom-right-radius: 40px;
+                    padding: 0 0 0 56px;
+                }
             }
 
             [nzCopyable] {
