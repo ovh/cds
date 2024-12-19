@@ -1236,7 +1236,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 				continue
 			}
 			value := v.Value
-			if value == sdk.PasswordPlaceholder {
+			if value == sdk.PasswordPlaceholder || value == "" {
 				if publicIntegrationConfig, has := projectIntegration.Model.PublicConfigurations[projectIntegration.Name]; has {
 					if publicConfigValue, has2 := publicIntegrationConfig[k]; has2 {
 						if publicConfigValue.Value == sdk.PasswordPlaceholder || publicConfigValue.Value == "" {

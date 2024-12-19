@@ -110,14 +110,7 @@ func (c *client) GetPostAction() *sdk.PluginPost {
 func (c *client) Run(ctx context.Context, opts map[string]string) *Result {
 	var inputs map[string]string
 	if c.inputManagement == InputManagementStrict {
-		var err error
 		inputs = c.getInputs(ctx, opts)
-		if err != nil {
-			return &Result{
-				Status:  sdk.StatusFail,
-				Details: fmt.Sprintf("unable to interpolate secrets: %v", err),
-			}
-		}
 	} else {
 		inputs = opts
 	}
@@ -133,7 +126,7 @@ func (c *client) Run(ctx context.Context, opts map[string]string) *Result {
 
 }
 
-func (c *client) getInputs(ctx context.Context, opts map[string]string) map[string]string {
+func (c *client) getInputs(_ context.Context, opts map[string]string) map[string]string {
 	inputs := make(map[string]string)
 
 	// Get default value

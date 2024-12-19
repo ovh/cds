@@ -335,6 +335,14 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 				sensitiveDatas = append(sensitiveDatas, v.Value)
 			}
 		}
+
+		if _, has := currentInteg.Model.PublicConfigurations[currentInteg.Name]; has {
+			for _, publicConfigValue := range currentInteg.Model.PublicConfigurations[currentInteg.Name] {
+				if publicConfigValue.Type == sdk.IntegrationConfigTypePassword {
+					sensitiveDatas = append(sensitiveDatas, publicConfigValue.Value)
+				}
+			}
+		}
 		return nil
 	}
 
