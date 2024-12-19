@@ -30,7 +30,6 @@ type Client interface {
 }
 
 type client struct {
-	ctx             context.Context
 	socket          *clientSocket
 	grpcClient      interface{}
 	done            chan struct{}

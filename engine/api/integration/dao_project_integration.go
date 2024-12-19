@@ -140,8 +140,8 @@ func loadAllWithClearPassword(ctx context.Context, db gorp.SqlExecutor, query go
 		integrations[i] = p.ProjectIntegration
 	}
 	return integrations, nil
-
 }
+
 func loadAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
 	var pp []dbProjectIntegration
 	if err := gorpmapping.GetAll(ctx, db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
