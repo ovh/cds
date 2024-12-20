@@ -1594,7 +1594,7 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 				// Check required parameters
 				for _, v := range tmpl.Parameters {
 					if wkfP, has := x.Parameters[v.Key]; (!has || len(wkfP) == 0) && v.Required {
-						err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "required template parameter %s is missing or empty", x.From))
+						err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "required template parameter %s is required by template %s", v.Key, x.From))
 					}
 				}
 			}
