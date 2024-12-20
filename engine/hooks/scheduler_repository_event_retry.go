@@ -62,7 +62,7 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 	if !find {
 		keySplit := strings.Split(repoEventKey, ":")
 		repoUUID := keySplit[len(keySplit)-1]
-		log.Info(ctx, "repository event with id %s does not exist anymore.", repoEventKey)
+		log.Info(ctx, "repository event with id %s does not exist anymore", repoEventKey)
 		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoUUID); err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 	if !find {
 		keySplit := strings.Split(repoEventKey, ":")
 		repoUUID := keySplit[len(keySplit)-1]
-		log.Info(ctx, "repository event %s does not exist anymore.", repoEventKey)
+		log.Info(ctx, "repository event %s does not exist anymore", repoEventKey)
 		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoUUID); err != nil {
 			return err
 		}
