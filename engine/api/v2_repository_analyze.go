@@ -1031,7 +1031,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 			}
 			hooks = append(hooks, wh)
 
-			if e.Commit == defaultBranch.LatestCommit {
+			if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
 				// Load existing head hook
 				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventNamePullRequest, defaultBranch.ID)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {

@@ -165,7 +165,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooks(t *testing.T) {
 		RepositoryName:      repo.Name,
 		VCSName:             vcs.Name,
 		RepositoryEventName: sdk.WorkflowHookEventNamePush,
-		AnayzedProjectKeys:  []string{p.Key},
+		AnalyzedProjectKeys: []string{p.Key},
 		Ref:                 "refs/heads/master",
 		Sha:                 "123456",
 	}
@@ -230,7 +230,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequest(t *t
 		RepositoryEventType: sdk.WorkflowHookEventTypePullRequestOpened,
 		Ref:                 "refs/heads/master",
 		Sha:                 "123456",
-		AnayzedProjectKeys:  []string{p.Key},
+		AnalyzedProjectKeys: []string{p.Key},
 	}
 
 	uri := api.Router.GetRouteV2("POST", api.postRetrieveWorkflowToTriggerHandler, nil)
@@ -290,7 +290,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequestFilte
 		VCSName:             vcs.Name,
 		RepositoryEventName: sdk.WorkflowHookEventNamePullRequest,
 		RepositoryEventType: sdk.WorkflowHookEventTypePullRequestOpened,
-		AnayzedProjectKeys:  []string{p.Key},
+		AnalyzedProjectKeys: []string{p.Key},
 	}
 
 	uri := api.Router.GetRouteV2("POST", api.postRetrieveWorkflowToTriggerHandler, nil)
@@ -347,7 +347,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 		Ref:                 "refs/heads/master",
 		Sha:                 "123456",
 		RepositoryEventName: sdk.WorkflowHookEventNamePush,
-		AnayzedProjectKeys:  []string{p.Key},
+		AnalyzedProjectKeys: []string{p.Key},
 		Models: []sdk.EntityFullName{
 			{
 				Name:       "MySuperModel",
