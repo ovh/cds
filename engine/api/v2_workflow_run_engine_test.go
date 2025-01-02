@@ -356,6 +356,11 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       "var1",
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
 
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
@@ -474,6 +479,12 @@ func TestWorkflowTrigger1JobAdminNoMFA(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       "var1",
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
 
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
@@ -1497,6 +1508,12 @@ func TestWorkflowTrigger1JobNoPermissionOnVarset(t *testing.T) {
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       "var1",
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
@@ -1695,7 +1712,6 @@ func TestWorkflowIntegrationInterpoloated(t *testing.T) {
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
-	t.Logf("%+v", runInfos)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(runInfos))
 
