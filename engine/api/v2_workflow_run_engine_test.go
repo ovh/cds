@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/organization"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -354,6 +356,11 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       "var1",
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
 
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
@@ -472,6 +479,12 @@ func TestWorkflowTrigger1JobAdminNoMFA(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       "var1",
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
 
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
@@ -1495,6 +1508,12 @@ func TestWorkflowTrigger1JobNoPermissionOnVarset(t *testing.T) {
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       "var1",
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
@@ -1552,4 +1571,161 @@ func TestWorkflowTrigger1JobNoPermissionOnVarset(t *testing.T) {
 	require.Equal(t, 1, len(runjobs))
 	require.Equal(t, sdk.V2WorkflowRunJobStatusSkipped, runjobs[0].Status)
 	require.Equal(t, "job1", runjobs[0].JobID)
+}
+
+func TestWorkflowIntegrationInterpoloated(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	reg2 := sdk.Region{
+		Name: "myregion",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg2))
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	model := sdk.IntegrationModel{Name: sdk.RandomString(10), Event: true, DefaultConfig: sdk.IntegrationConfig{
+		"myparam": {
+			Value: "myregion",
+			Type:  sdk.IntegrationConfigTypeRegion,
+		},
+	}}
+	require.NoError(t, integration.InsertModel(db, &model))
+	projInt := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"myparam": model.DefaultConfig["myparam"],
+		},
+		Name:               "myinteg-eu",
+		ProjectID:          proj.ID,
+		Model:              model,
+		IntegrationModelID: model.ID,
+	}
+	require.NoError(t, integration.InsertIntegration(db, &projInt))
+
+	vs := sdk.ProjectVariableSet{
+		Name:       "myvar",
+		ProjectKey: proj.Key,
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+
+	vsItem := sdk.ProjectVariableSetItem{
+		ProjectVariableSetID: vs.ID,
+		Name:                 "item",
+		Type:                 sdk.ProjectVariableTypeString,
+		Value:                `{"region": "eu", "token": "mytoken"}`,
+	}
+	require.NoError(t, project.InsertVariableSetItemText(context.TODO(), db, &vsItem))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		VariableSets: []sdk.RBACVariableSet{
+			{
+				AllUsers:        true,
+				Role:            sdk.VariableSetRoleUse,
+				AllVariableSets: true,
+				ProjectKey:      proj.Key,
+			},
+		},
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+			{
+				RegionID:            reg2.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				RegionID:        reg.ID,
+				RBACProjectKeys: []string{proj.Key},
+				Role:            sdk.RegionRoleExecute,
+			},
+			{
+				RegionID:        reg2.ID,
+				RBACProjectKeys: []string{proj.Key},
+				Role:            sdk.RegionRoleExecute,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
+					Integrations: []string{"myinteg-${{vars.myvar.item.region}}"},
+					VariableSets: []string{"myvar"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
+
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID:  wr.ID,
+		UserID: admin.ID,
+	}))
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(runInfos))
+
+	runjobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
+	require.NoError(t, err)
+
+	jobInfos, err := workflow_v2.LoadRunJobInfosByRunJobID(context.TODO(), db, runjobs[0].ID)
+	t.Logf("%+v", jobInfos)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(runInfos))
+
+	t.Logf("%+v", runjobs[0])
+	require.Equal(t, []string{"myinteg-eu"}, runjobs[0].Job.Integrations)
+	require.Equal(t, "myregion", runjobs[0].Job.Region)
+	require.Equal(t, "myregion", runjobs[0].Region)
+
 }

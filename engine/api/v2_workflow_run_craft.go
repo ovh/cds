@@ -311,14 +311,16 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		if len(j.Integrations) > 0 && j.Region == "" {
 		regionLoop:
 			for _, jobInt := range j.Integrations {
-				for _, integ := range integrations {
-					if integ.Name != jobInt {
-						continue
-					}
-					for _, v := range integ.Config {
-						if v.Type == sdk.IntegrationConfigTypeRegion {
-							j.Region = v.Value
-							break regionLoop
+				if !strings.Contains(jobInt, "${{") {
+					for _, integ := range integrations {
+						if integ.Name != jobInt {
+							continue
+						}
+						for _, v := range integ.Config {
+							if v.Type == sdk.IntegrationConfigTypeRegion {
+								j.Region = v.Value
+								break regionLoop
+							}
 						}
 					}
 				}
@@ -1171,29 +1173,31 @@ func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *
 
 	for jobID, job := range wref.run.WorkflowData.Workflow.Jobs {
 		for _, integ := range job.Integrations {
-			var found bool
-			for j := range availableIntegrations {
-				if integ == availableIntegrations[j].Name {
-					found = true
-					if availableIntegrations[j].Model.ArtifactManager {
-						infos = append(infos, sdk.V2WorkflowRunInfo{
-							WorkflowRunID: wref.run.ID,
-							Level:         sdk.WorkflowRunInfoLevelError,
-							IssuedAt:      time.Now(),
-							Message:       fmt.Sprintf("wrong configuration on job %q. Integration %q cannot be used at the job level", jobID, integ),
-						})
+			if !strings.Contains(integ, "${{") {
+				var found bool
+				for j := range availableIntegrations {
+					if integ == availableIntegrations[j].Name {
+						found = true
+						if availableIntegrations[j].Model.ArtifactManager {
+							infos = append(infos, sdk.V2WorkflowRunInfo{
+								WorkflowRunID: wref.run.ID,
+								Level:         sdk.WorkflowRunInfoLevelError,
+								IssuedAt:      time.Now(),
+								Message:       fmt.Sprintf("wrong configuration on job %q. Integration %q cannot be used at the job level", jobID, integ),
+							})
+						}
+						integrations[integ] = availableIntegrations[j]
+						break
 					}
-					integrations[integ] = availableIntegrations[j]
-					break
 				}
-			}
-			if !found {
-				infos = append(infos, sdk.V2WorkflowRunInfo{
-					WorkflowRunID: wref.run.ID,
-					Level:         sdk.WorkflowRunInfoLevelError,
-					IssuedAt:      time.Now(),
-					Message:       fmt.Sprintf("wrong configuration on job %q. Integration %q does not exist", jobID, integ),
-				})
+				if !found {
+					infos = append(infos, sdk.V2WorkflowRunInfo{
+						WorkflowRunID: wref.run.ID,
+						Level:         sdk.WorkflowRunInfoLevelError,
+						IssuedAt:      time.Now(),
+						Message:       fmt.Sprintf("wrong configuration on job %q. Integration %q does not exist", jobID, integ),
+					})
+				}
 			}
 		}
 	}

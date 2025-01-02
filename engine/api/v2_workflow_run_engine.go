@@ -714,7 +714,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	return nil
 }
 
-func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, rj *sdk.V2WorkflowRunJob, defaultRegion string, regionPermCache map[string]*sdk.V2WorkflowRunJobInfo, wrEnqueue sdk.V2WorkflowRunEnqueue, u sdk.AuthentifiedUser) (*sdk.V2WorkflowRunJobInfo, bool) {
+func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, rj *sdk.V2WorkflowRunJob, defaultRegion string, regionPermCache map[string]*sdk.V2WorkflowRunJobInfo, jobResultsCtx sdk.JobsResultContext, varsCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, u sdk.AuthentifiedUser) (*sdk.V2WorkflowRunJobInfo, bool) {
 	runUpdated := false
 	if rj.Status.IsTerminated() {
 		return nil, false
@@ -724,7 +724,10 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		WorkflowRunContext: run.Contexts,
 		Matrix:             rj.Matrix,
 		Gate:               rj.GateInputs,
+		Jobs:               jobResultsCtx,
+		Vars:               varsCtx,
 	}
+
 	bts, _ := json.Marshal(computeModelCtx)
 	var mapContexts map[string]interface{}
 	if err := json.Unmarshal(bts, &mapContexts); err != nil {
@@ -739,6 +742,48 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 
 	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 
+	for i, integ := range rj.Job.Integrations {
+		if strings.Contains(integ, "${{") {
+			integName, err := ap.InterpolateToString(ctx, integ)
+			if err != nil {
+				rj.Status = sdk.V2WorkflowRunJobStatusFail
+				return &sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    run.ID,
+					Level:            sdk.WorkflowRunInfoLevelError,
+					WorkflowRunJobID: rj.ID,
+					IssuedAt:         time.Now(),
+					Message:          fmt.Sprintf("Job %s: unable to interpolate integration %s into a string: %v", rj.JobID, integ, err),
+				}, false
+			}
+			rj.Job.Integrations[i] = integName
+			foundInteg := false
+		integLoop:
+			for _, pi := range wref.project.Integrations {
+				if pi.Name != integName {
+					continue
+				}
+				foundInteg = true
+				for _, v := range pi.Config {
+					if v.Type == sdk.IntegrationConfigTypeRegion {
+						rj.Job.Region = v.Value
+						rj.Region = v.Value
+						break integLoop
+					}
+				}
+			}
+			if !foundInteg {
+				rj.Status = sdk.V2WorkflowRunJobStatusFail
+				return &sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    run.ID,
+					Level:            sdk.WorkflowRunInfoLevelError,
+					WorkflowRunJobID: rj.ID,
+					IssuedAt:         time.Now(),
+					Message:          fmt.Sprintf("Job %s: unable to find integration %s: %v", rj.JobID, integName, err),
+				}, false
+			}
+		}
+	}
+
 	if strings.Contains(rj.Job.Name, "${{") {
 		jobName, err := ap.InterpolateToString(ctx, rj.Job.Name)
 		if err != nil {
@@ -748,7 +793,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 				Level:            sdk.WorkflowRunInfoLevelError,
 				WorkflowRunJobID: rj.ID,
 				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("Job %s: unable to interpolate %s into a string: %v", rj.JobID, rj.Job.Name, err),
+				Message:          fmt.Sprintf("Job %s: unable to interpolate job name %s into a string: %v", rj.JobID, rj.Job.Name, err),
 			}, false
 		}
 		rj.Job.Name = jobName
@@ -763,7 +808,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 				Level:            sdk.WorkflowRunInfoLevelError,
 				WorkflowRunJobID: rj.ID,
 				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("Job %s: unable to interpolate %s into a string: %v", rj.JobID, rj.Job.Region, err),
+				Message:          fmt.Sprintf("Job %s: unable to interpolate region %s into a string: %v", rj.JobID, rj.Job.Region, err),
 			}, false
 		}
 		rj.Region = reg
@@ -921,42 +966,44 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 			continue
 		}
 
+		// Add vars context
+		vss := make([]sdk.ProjectVariableSet, 0)
+		for _, vs := range jobDef.VariableSets {
+			if _, has := runVarsetCtx[vs]; !has {
+				vsDB, err := project.LoadVariableSetByName(ctx, db, run.ProjectKey, vs)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return nil, nil, nil, hasToUpdateRun, err
+				}
+				// If not found stop the run
+				if err != nil {
+					msg := &sdk.V2WorkflowRunInfo{
+						WorkflowRunID: run.ID,
+						IssuedAt:      time.Now(),
+						Level:         sdk.WorkflowRunInfoLevelError,
+						Message:       fmt.Sprintf("variable set %s not found on project", vs),
+					}
+					return nil, nil, msg, hasToUpdateRun, nil
+				}
+				vsDB.Items, err = project.LoadVariableSetAllItem(ctx, db, vsDB.ID)
+				if err != nil {
+					return nil, nil, nil, hasToUpdateRun, err
+				}
+				vss = append(vss, *vsDB)
+			}
+		}
+		jobVarsCtx, _, err := buildVarsContext(ctx, vss)
+		if err != nil {
+			return nil, nil, nil, hasToUpdateRun, err
+		}
+		for k, v := range runVarsetCtx {
+			jobVarsCtx[k] = v
+		}
+		rootJobContext.Vars = jobVarsCtx
+
 		// Compute job matrix strategy
 		keys := make([]string, 0)
 		interpolatedMatrix := make(map[string][]string)
 		if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
-			vss := make([]sdk.ProjectVariableSet, 0)
-			for _, vs := range jobDef.VariableSets {
-				if _, has := runVarsetCtx[vs]; !has {
-					vsDB, err := project.LoadVariableSetByName(ctx, db, run.ProjectKey, vs)
-					if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-						return nil, nil, nil, hasToUpdateRun, err
-					}
-					// If not found stop the run
-					if err != nil {
-						msg := &sdk.V2WorkflowRunInfo{
-							WorkflowRunID: run.ID,
-							IssuedAt:      time.Now(),
-							Level:         sdk.WorkflowRunInfoLevelError,
-							Message:       fmt.Sprintf("variable set %s not found on project", vs),
-						}
-						return nil, nil, msg, hasToUpdateRun, nil
-					}
-					vsDB.Items, err = project.LoadVariableSetAllItem(ctx, db, vsDB.ID)
-					if err != nil {
-						return nil, nil, nil, hasToUpdateRun, err
-					}
-					vss = append(vss, *vsDB)
-				}
-			}
-			jobVarsCtx, _, err := buildVarsContext(ctx, vss)
-			if err != nil {
-				return nil, nil, nil, hasToUpdateRun, err
-			}
-			for k, v := range runVarsetCtx {
-				jobVarsCtx[k] = v
-			}
-			rootJobContext.Vars = jobVarsCtx
 			bts, _ := json.Marshal(rootJobContext)
 			var mapContexts map[string]interface{}
 			_ = json.Unmarshal(bts, &mapContexts) // error cannot happen here
@@ -1069,7 +1116,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 				}
 				runJob.GateInputs = jobEvent.Inputs
 			}
-			runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, wrEnqueue, u)
+			runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, rootJobContext.Jobs, jobVarsCtx, wrEnqueue, u)
 			if runJobInfo != nil {
 				runJobsInfo[runJob.ID] = *runJobInfo
 			}
@@ -1114,7 +1161,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 					}
 					runJob.GateInputs = jobEvent.Inputs
 				}
-				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, wrEnqueue, u)
+				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, rootJobContext.Jobs, jobVarsCtx, wrEnqueue, u)
 				if runJobInfo != nil {
 					runJobsInfo[runJob.ID] = *runJobInfo
 				}
@@ -1477,7 +1524,7 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 			}
 		}
 
-		gateConditionResult, err := checkCondition(ctx, db, gate.If, currentJobContext)
+		gateConditionResult, err := checkCondition(ctx, gate.If, currentJobContext)
 		if err != nil {
 			return false, err
 		}
@@ -1487,14 +1534,14 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 	}
 
 	// Check Job IF
-	jobIfResult, err := checkCondition(ctx, db, jobDef.If, currentJobContext)
+	jobIfResult, err := checkCondition(ctx, jobDef.If, currentJobContext)
 	if err != nil {
 		return false, err
 	}
 	return jobIfResult, nil
 }
 
-func checkCondition(ctx context.Context, db gorp.SqlExecutor, condition string, currentJobContext sdk.WorkflowRunJobsContext) (bool, error) {
+func checkCondition(ctx context.Context, condition string, currentJobContext sdk.WorkflowRunJobsContext) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "checkJobGateCondition")
 	defer next()
 
