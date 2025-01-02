@@ -62,6 +62,8 @@ func (s *Service) cleanRepositoryEvent(ctx context.Context, repoKey string) erro
 	for len(events) > s.Cfg.RepositoryEventRetention {
 		var repoEvent sdk.HookRepositoryEvent
 		repoEvent, events = events[0], events[1:]
+
+		_ = s.Dao.RemoveRepositoryEventFromInProgressList(ctx, repoEvent.UUID)
 		if err := s.Dao.DeleteRepositoryEvent(ctx, repoEvent.VCSServerName, repoEvent.RepositoryName, repoEvent.UUID); err != nil {
 			return err
 		}
