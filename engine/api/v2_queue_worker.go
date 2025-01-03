@@ -227,7 +227,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		return nil, nil, err
 	}
 
-	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped})
+	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped}, run.RunAttempt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -333,6 +333,14 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		for _, v := range currentInteg.Config {
 			if v.Type == sdk.IntegrationConfigTypePassword {
 				sensitiveDatas = append(sensitiveDatas, v.Value)
+			}
+		}
+
+		if _, has := currentInteg.Model.PublicConfigurations[currentInteg.Name]; has {
+			for _, publicConfigValue := range currentInteg.Model.PublicConfigurations[currentInteg.Name] {
+				if publicConfigValue.Type == sdk.IntegrationConfigTypePassword {
+					sensitiveDatas = append(sensitiveDatas, publicConfigValue.Value)
+				}
 			}
 		}
 		return nil

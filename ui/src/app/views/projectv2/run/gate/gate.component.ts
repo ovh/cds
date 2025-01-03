@@ -16,7 +16,7 @@ import { ErrorUtils } from "app/shared/error.utils";
 @AutoUnsubscribe()
 export class RunGateComponent implements OnInit {
     @Input() run: V2WorkflowRun;
-    @Input() gateNode: { gate, job };
+    @Input() job: string;
     @Output() onSubmit = new EventEmitter<void>();
 
     currentGate: V2JobGate;
@@ -31,7 +31,8 @@ export class RunGateComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.currentGate = <V2JobGate>this.run.workflow_data.workflow.gates[this.gateNode.gate];
+        const job = this.run.workflow_data.workflow.jobs[this.job];
+        this.currentGate = <V2JobGate>this.run.workflow_data.workflow.gates[job.gate];
         this.request = {};
         Object.keys(this.currentGate.inputs).forEach(k => {
             if (this.currentGate.inputs[k].default) {
@@ -50,7 +51,7 @@ export class RunGateComponent implements OnInit {
             }
         });
         if (this.run.job_events) {
-            const jobEvent = this.run.job_events.find(je => je.job_id === this.gateNode.job && je.run_attempt === this.run.run_attempt);
+            const jobEvent = this.run.job_events.find(je => je.job_id === this.job && je.run_attempt === this.run.run_attempt);
             if (jobEvent) {
                 Object.keys(jobEvent.inputs).forEach(k => {
                     this.request[k] = jobEvent.inputs[k];
@@ -64,8 +65,8 @@ export class RunGateComponent implements OnInit {
         this.loading = true;
         this._cd.markForCheck();
         try {
-            await lastValueFrom(this._workflowService.triggerJob(this.run.project_key, this.run.id, this.gateNode.job, this.request));
-            this._toastService.success('', `Job ${this.gateNode.job} started`);
+            await lastValueFrom(this._workflowService.triggerJob(this.run.project_key, this.run.id, this.job, this.request));
+            this._toastService.success('', `Job ${this.job} started`);
             this.onSubmit.emit();
         } catch (e) {
             this._messageService.error(`Unable to get trigger job gate: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });

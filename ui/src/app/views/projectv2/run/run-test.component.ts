@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { Store } from "@ngxs/store";
-import { TestCase } from "app/model/pipeline.model";
+import { TestCase, Tests } from "app/model/pipeline.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Tab } from "app/shared/tabs/tabs.component";
 import { PreferencesState } from "app/store/preferences.state";
@@ -18,7 +18,8 @@ import { Subscription } from "rxjs";
 export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
-	@Input() test: TestCase;
+	@Input() tests: Tests;
+	@Input() test: string;
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
@@ -55,7 +56,17 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	ngOnChanges(): void {
-		this.testRaw = JSON.stringify(this.test, null, 2);
+		let t: TestCase;
+		for (let i = 0; i < this.tests.test_suites.length; i++) {
+			for (let j = 0; j < this.tests.test_suites[i].tests.length; j++) {
+				const key = this.tests.test_suites[i].name + '/' + this.tests.test_suites[i].tests[j].name;
+				if (key === this.test) {
+					t = this.tests.test_suites[i].tests[j];
+					break
+				}
+			}
+		}
+		this.testRaw = JSON.stringify(t, null, 2);
 		this._cd.markForCheck();
 	}
 

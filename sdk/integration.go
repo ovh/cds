@@ -456,7 +456,7 @@ func (pi *ProjectIntegration) ToJobRunContextConfig() JobIntegrationsContextConf
 		value := configValue.Value
 
 		// if we found a password with a placeholder, we try to find the value from the public_configuration
-		if configValue.Type == SecretVariable && value == PasswordPlaceholder {
+		if configValue.Type == SecretVariable && (value == PasswordPlaceholder || value == "") {
 			if publicIntegrationConfig, has := pi.Model.PublicConfigurations[pi.Name]; has {
 				if publicConfigValue, has2 := publicIntegrationConfig[key]; has2 {
 					if publicConfigValue.Value == PasswordPlaceholder || publicConfigValue.Value == "" {

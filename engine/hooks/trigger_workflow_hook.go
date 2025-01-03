@@ -79,6 +79,7 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 	request := sdk.HookListWorkflowRequest{
 		HookEventUUID:       hre.UUID,
 		Ref:                 hre.ExtractData.Ref,
+		PullRequestRefTo:    hre.ExtractData.PullRequestRefTo,
 		Sha:                 hre.ExtractData.Commit,
 		Models:              hre.ModelUpdated,
 		Workflows:           hre.WorkflowUpdated,
@@ -87,15 +88,15 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 		RepositoryEventType: hre.EventType,
 		VCSName:             hre.VCSServerName,
 		RepositoryName:      hre.RepositoryName,
-		AnayzedProjectKeys:  sdk.StringSlice{},
+		AnalyzedProjectKeys: sdk.StringSlice{},
 	}
 	for _, a := range hre.Analyses {
 		// Only retrieve hooks from project where analysis is OK
 		if a.Status == sdk.RepositoryAnalysisStatusSucceed {
-			request.AnayzedProjectKeys = append(request.AnayzedProjectKeys, a.ProjectKey)
+			request.AnalyzedProjectKeys = append(request.AnalyzedProjectKeys, a.ProjectKey)
 		}
 	}
-	request.AnayzedProjectKeys.Unique()
+	request.AnalyzedProjectKeys.Unique()
 	workflowHooks, err := s.Client.ListWorkflowToTrigger(ctx, request)
 	if err != nil {
 		return err
