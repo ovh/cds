@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -79,6 +80,18 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	ORDER by project.name, project.projectkey ASC`
 	args := []interface{}{gorpmapping.IDsToQueryString(IDs), group.SharedInfraGroup.ID}
 	return loadprojects(ctx, db, opts, query, args...)
+}
+
+func LoadAllByKeys(ctx context.Context, db gorp.SqlExecutor, keys []string) (sdk.Projects, error) {
+	var end func()
+	ctx, end = telemetry.Span(ctx, "project.LoadAllByKeys")
+	defer end()
+	query := `SELECT project.*
+	FROM project
+	WHERE project.projectkey = ANY($1)
+	ORDER by project.name, project.projectkey ASC`
+	args := []interface{}{pq.StringArray(keys)}
+	return loadprojects(ctx, db, nil, query, args...)
 }
 
 // LoadAll returns all projects
