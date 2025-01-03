@@ -74,6 +74,7 @@ testcases:
                 model: "{{.worker_model}}"
                 memory: "512"
               steps:
+              - uses: actions/checkout
               - run: |-
                   #!/bin/bash
                   env
