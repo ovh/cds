@@ -167,6 +167,13 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	run.Contexts = *runContext
 	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, *u, run.AdminMFA, api.Config.WorkflowV2.LibraryProjectKey)
+	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+	if err != nil {
+		return err
+	}
+	for _, p := range plugins {
+		wref.ef.plugins[p.Name] = p
+	}
 
 	// Resolve workflow template if applicable
 	if run.WorkflowData.Workflow.From != "" {
@@ -252,14 +259,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 		// Update after applying template
 		wref.run = *run
-	}
-
-	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
-	if err != nil {
-		return err
-	}
-	for _, p := range plugins {
-		wref.ef.plugins[p.Name] = p
 	}
 
 	allVariableSets, err := project.LoadVariableSetsByProject(ctx, api.mustDB(), p.Key)
