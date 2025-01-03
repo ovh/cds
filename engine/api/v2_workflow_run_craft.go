@@ -19,7 +19,6 @@ import (
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/integration"
@@ -593,60 +592,25 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			continue
 		}
 
-		if strings.HasPrefix(step.Uses, ".cds/actions/") {
-			// Find action from path
-			localAct, has := wref.ef.localActionsCache[step.Uses]
-			if !has {
-				actionEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.ef.currentRepo.ID, step.Uses, wref.run.WorkflowRef, wref.run.WorkflowSha)
-				if err != nil {
-					msg := sdk.V2WorkflowRunInfo{
-						WorkflowRunID: wref.run.ID,
-						Level:         sdk.WorkflowRunInfoLevelError,
-						Message:       fmt.Sprintf("Unable to find action %s", step.Uses),
-					}
-					return &msg, nil
-				}
-				if err := yaml.Unmarshal([]byte(actionEntity.Data), &localAct); err != nil {
-					return nil, err
-				}
-				wref.ef.localActionsCache[step.Uses] = localAct
-				msg, err := searchActions(ctx, db, store, wref, localAct.Runs.Steps)
-				if msg != nil || err != nil {
-					return msg, err
-				}
+		act, completePath, msg, err := wref.ef.searchAction(ctx, db, store, step.Uses)
+		if err != nil {
+			return nil, err
+		}
+		if msg != "" {
+			runMsg := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wref.run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       msg,
 			}
-			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, localAct.Name, wref.run.WorkflowRef)
-			step.Uses = "actions/" + completeName
-		} else {
-			actionName := strings.TrimPrefix(step.Uses, "actions/")
-			actionSplit := strings.Split(actionName, "/")
-			// If plugins
-			if strings.HasPrefix(step.Uses, "actions/") && len(actionSplit) == 1 {
-				// Check plugins
-				if _, has := wref.ef.plugins[actionSplit[0]]; !has {
-					msg := sdk.V2WorkflowRunInfo{
-						WorkflowRunID: wref.run.ID,
-						Level:         sdk.WorkflowRunInfoLevelError,
-						Message:       fmt.Sprintf("Action %s doesn't exist", actionSplit[0]),
-					}
-					return &msg, nil
-				}
-				continue
-			} else {
-				completeName, msg, err := wref.ef.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
-				if msg != "" || err != nil {
-					return &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: msg}, err
-				}
-				// rewrite step with full path
-				step.Uses = "actions/" + completeName
-				act := wref.ef.actionsCache[completeName]
-				runInfo, err := searchActions(ctx, db, store, wref, act.Runs.Steps)
-				if runInfo != nil || err != nil {
-					return runInfo, err
-				}
+			return &runMsg, nil
+		}
+		if act != nil {
+			step.Uses = "actions/" + completePath
+			msgAction, err := searchActions(ctx, db, store, wref, act.Runs.Steps)
+			if msgAction != nil || err != nil {
+				return msgAction, err
 			}
 		}
-
 	}
 	return nil, nil
 }
@@ -1071,42 +1035,34 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 	modelType := ""
 
 	if workerModel != "" {
-		if strings.HasPrefix(workerModel, ".cds/worker-models/") {
-			// Find action from path
-			localWM, has := wref.ef.localWorkerModelCache[workerModel]
-			if !has {
-				wmEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.ef.currentRepo.ID, workerModel, wref.run.WorkflowRef, wref.run.WorkflowSha)
-				if err != nil {
-					msg := sdk.V2WorkflowRunInfo{
-						WorkflowRunID: wref.run.ID,
-						Level:         sdk.WorkflowRunInfoLevelError,
-						Message:       fmt.Sprintf("Unable to find worker model %s", workerModel),
-					}
-					return "", &msg, nil
-				}
-				var wm sdk.V2WorkerModel
-				if err := yaml.Unmarshal([]byte(wmEntity.Data), &wm); err != nil {
-					return "", nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read worker model %s: %v", workerModel, err)
-				}
-				localWM = sdk.EntityWithObject{Entity: *wmEntity, Model: wm}
-				if err := localWM.Interpolate(ctx); err != nil {
-					return "", nil, err
-				}
-				wref.ef.localWorkerModelCache[workerModel] = localWM
+		wm, fullName, msg, err := wref.ef.searchWorkerModel(ctx, db, store, workerModel)
+		if err != nil {
+			msg := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wref.run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("Unable to find worker model %s", workerModel),
 			}
-			modelCompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, localWM.Model.Name, wref.run.WorkflowRef)
-			modelType = localWM.Model.Type
-		} else {
-			completeName, msg, err := wref.ef.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
-			if err != nil {
-				return "", nil, err
-			}
-			if msg != "" {
-				return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: msg}, nil
-			}
-			modelType = wref.ef.workerModelCache[completeName].Model.Type
-			modelCompleteName = completeName
+			return "", &msg, nil
 		}
+		if msg != "" {
+			runMsg := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wref.run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       msg,
+			}
+			return "", &runMsg, nil
+		}
+		if err := wm.Interpolate(ctx); err != nil {
+			return "", nil, err
+		}
+		if strings.HasPrefix(workerModel, ".cds/worker-models/") {
+			wref.ef.localWorkerModelCache[workerModel] = *wm
+		} else {
+			wref.ef.workerModelCache[fullName] = *wm
+		}
+		modelType = wm.Model.Type
+		modelCompleteName = fullName
+
 	}
 
 	for _, h := range hatcheries {
@@ -1209,37 +1165,17 @@ func (wref *WorkflowRunEntityFinder) checkWorkflowTemplate(ctx context.Context, 
 	ctx, next := telemetry.Span(ctx, "wref.checkWorkflowTemplate", trace.StringAttribute(telemetry.TagWorkflowTemplate, templateName))
 	defer next()
 
-	var e sdk.EntityWithObject
-	if strings.HasPrefix(templateName, ".cds/workflow-templates/") {
-		// Find action from path
-		localEntity, has := wref.ef.localTemplatesCache[templateName]
-		if !has {
-			wtEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.ef.currentRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha)
-			if err != nil {
-				msg := sdk.V2WorkflowRunInfo{
-					WorkflowRunID: wref.run.ID,
-					Level:         sdk.WorkflowRunInfoLevelError,
-					Message:       fmt.Sprintf("Unable to find workflow template %s %s %s %s", wref.ef.currentRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha),
-				}
-				return e, &msg, nil
-			}
-			if err := yaml.Unmarshal([]byte(wtEntity.Data), &localEntity.Template); err != nil {
-				return e, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read workflow template %s: %v", templateName, err)
-			}
-			localEntity.Entity = *wtEntity
-			wref.ef.localTemplatesCache[templateName] = localEntity
-		}
-		e = localEntity
-	} else {
-		completeName, msg, err := wref.ef.searchEntity(ctx, db, store, templateName, sdk.EntityTypeWorkflowTemplate)
-		if err != nil {
-			return e, nil, err
-		}
-		if msg != "" {
-			return e, &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: msg}, nil
-		}
-		e = wref.ef.templatesCache[completeName]
+	e, _, msg, err := wref.ef.searchWorkflowTemplate(ctx, db, store, templateName)
+	if err != nil {
+		return sdk.EntityWithObject{}, nil, err
 	}
-
-	return e, nil, nil
+	if msg != "" {
+		runMsg := sdk.V2WorkflowRunInfo{
+			WorkflowRunID: wref.run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       msg,
+		}
+		return sdk.EntityWithObject{}, &runMsg, nil
+	}
+	return *e, nil, nil
 }

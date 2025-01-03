@@ -334,3 +334,106 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 	}
 	return completePath, "", nil
 }
+
+func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.V2Action, string, string, error) {
+	// Local def
+	if strings.HasPrefix(name, ".cds/actions/") {
+		// Find action from path
+		localAct, has := ef.localActionsCache[name]
+		if !has {
+			actionEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
+			if err != nil {
+				return nil, "", fmt.Sprintf("Unable to find action %s", name), nil
+			}
+			if err := yaml.Unmarshal([]byte(actionEntity.Data), &localAct); err != nil {
+				return nil, "", "", err
+			}
+			ef.localActionsCache[name] = localAct
+		}
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localAct.Name, ef.currentRef)
+		return &localAct, completeName, "", nil
+	}
+
+	actionName := strings.TrimPrefix(name, "actions/")
+	actionSplit := strings.Split(actionName, "/")
+
+	// If plugins
+	if strings.HasPrefix(name, "actions/") && len(actionSplit) == 1 {
+		// Check plugins
+		if _, has := ef.plugins[actionSplit[0]]; !has {
+			return nil, "", fmt.Sprintf("Action %s doesn't exist", actionSplit[0]), nil
+		}
+		return nil, "", "", nil
+	}
+
+	// Others
+	completePath, msg, err := ef.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
+	if msg != "" || err != nil {
+		return nil, completePath, msg, err
+	}
+	act := ef.actionsCache[completePath]
+	return &act, completePath, msg, err
+}
+
+func (ef *EntityFinder) searchWorkerModel(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, string, error) {
+	// Local def
+	if strings.HasPrefix(name, ".cds/worker-models/") {
+		// Find worker model from path
+		localWM, has := ef.localWorkerModelCache[name]
+		if !has {
+			wmEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
+			if err != nil {
+				return nil, "", fmt.Sprintf("Unable to find worker model %s", name), nil
+			}
+			var wm sdk.V2WorkerModel
+			if err := yaml.Unmarshal([]byte(wmEntity.Data), &wm); err != nil {
+				return nil, "", "", err
+			}
+			localWM = sdk.EntityWithObject{Entity: *wmEntity, Model: wm}
+			ef.localWorkerModelCache[name] = localWM
+		}
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localWM.Model.Name, ef.currentRef)
+		return &localWM, completeName, "", nil
+	}
+
+	completeName, msg, err := ef.searchEntity(ctx, db, store, name, sdk.EntityTypeWorkerModel)
+	if err != nil {
+		return nil, completeName, "", err
+	}
+	if msg != "" {
+		return nil, completeName, msg, nil
+	}
+	wm := ef.workerModelCache[completeName]
+	return &wm, completeName, "", nil
+}
+
+func (ef *EntityFinder) searchWorkflowTemplate(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, string, error) {
+	if strings.HasPrefix(name, ".cds/workflow-templates/") {
+		// Find tempalte from path
+		localEntity, has := ef.localTemplatesCache[name]
+		if !has {
+			wtEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
+			if err != nil {
+				msg := fmt.Sprintf("Unable to find workflow template %s %s %s %s", ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
+				return nil, "", msg, nil
+			}
+			if err := yaml.Unmarshal([]byte(wtEntity.Data), &localEntity.Template); err != nil {
+				return nil, "", "", sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read workflow template %s: %v", name, err)
+			}
+			localEntity.Entity = *wtEntity
+			ef.localTemplatesCache[name] = localEntity
+		}
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localEntity.Template.Name, ef.currentRef)
+		return &localEntity, completeName, "", nil
+	}
+	completeName, msg, err := ef.searchEntity(ctx, db, store, name, sdk.EntityTypeWorkflowTemplate)
+	if err != nil {
+		return nil, completeName, "", err
+	}
+	if msg != "" {
+		return nil, completeName, msg, nil
+	}
+	e := ef.templatesCache[completeName]
+	return &e, completeName, "", nil
+
+}
