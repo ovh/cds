@@ -14,6 +14,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -96,7 +97,7 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 	var data []WorkerMetricsResource
 
 	for host, dockerClient := range h.dockerClients {
-		cs, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
+		cs, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to list containers")
 		}
