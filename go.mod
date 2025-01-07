@@ -20,9 +20,9 @@ require (
 	github.com/confluentinc/bincover v0.2.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/defensestation/osquery v1.0.0
-	github.com/docker/cli v26.1.0+incompatible
+	github.com/docker/cli v26.1.5+incompatible
 	github.com/docker/distribution v2.8.3+incompatible
-	github.com/docker/docker v26.1.0+incompatible
+	github.com/docker/docker v26.1.5+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/docker/go-units v0.5.0
 	github.com/dustin/go-humanize v1.0.1
@@ -61,7 +61,7 @@ require (
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/moby/moby v26.1.0+incompatible
+	github.com/moby/moby v26.1.5+incompatible
 	github.com/mum4k/termdash v0.10.0
 	github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
 	github.com/ncw/swift v1.0.52
