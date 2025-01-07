@@ -16,6 +16,6 @@ build-plugin:
 	--rm \
 	-e "GOOS=$(OS)" \
 	-e "GOARCH=$(ARCH)" \
-	golang:1.22-alpine \
+	golang:1.23-alpine \
 	/bin/sh -c \
 	"cd /go/src/github.com/ovh/cds/tests/fixtures/04SCWorkflowRunSimplePlugin && go version && CGO_ENABLED=0 go build -installsuffix cgo -ldflags '-extldflags "-static"' -o plugin-simple-$(OS)-$(ARCH) ."
