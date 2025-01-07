@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"regexp"
 	"time"
 
 	"github.com/ovh/cds/engine/service"
@@ -66,6 +67,9 @@ type HatcheryConfiguration struct {
 		ImagesExpirationDelay  int `mapstructure:"imagesExpirationDelay" toml:"imagesExpirationDelay" default:"30" commented:"true" comment:"Expiration delay for Openstack images list cache (in seconds)." json:"imagesExpirationDelay"`
 		ServersExpirationDelay int `mapstructure:"serversExpirationDelay" toml:"serversExpirationDelay" default:"2" commented:"true" comment:"Expiration delay for Openstack servers list cache (in seconds)." json:"serversExpirationDelay"`
 	} `mapstructure:"cache" toml:"cache" json:"cache"`
+
+	// OverrideImagesUsername define the username to use for the specified image.
+	OverrideImagesUsername []ImageUsernameOverride `mapstructure:"overrideImagesUsername" toml:"overrideImagesUsername" default:"" commented:"true" comment:"Override the user used for the images" json:"overrideImagesUsername"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
@@ -76,10 +80,16 @@ type HatcheryOpenstack struct {
 	flavors         []flavors.Flavor
 	openstackClient *gophercloud.ServiceClient
 	cache           *cache
-	networkID       string // computed from networkString
+	networkID       string                    // computed from networkString
+	imagesUsername  map[*regexp.Regexp]string // computed from initImagesUsername
 }
 
 type ipInfos struct {
 	workerName     string
 	dateLastBooked time.Time
+}
+
+type ImageUsernameOverride struct {
+	Image    string `mapstructure:"image" toml:"image" default:"" commented:"true" comment:"The image name regular expression." json:"image"`
+	Username string `mapstructure:"username" toml:"username" default:"" commented:"true" comment:"The username to use." json:"username"`
 }
