@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/tlsconfig"
 	docker "github.com/moby/moby/client"
 	"github.com/rockbears/log"
@@ -229,7 +229,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	_, next := telemetry.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
-		containers, err := dclient.ContainerList(ctxList, types.ContainerListOptions{All: true})
+		containers, err := dclient.ContainerList(ctxList, container.ListOptions{All: true})
 		if err != nil {
 			log.Error(ctx, "hatchery> swarm> SpawnWorker> unable to list containers on %s: %v", dname, err)
 			cancelList()
@@ -586,7 +586,7 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 	}
 	for dockerName, dockerClient := range h.dockerClients {
 		// List all containers to check if we can spawn a new one
-		cs, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
+		cs, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
 			log.Error(ctx, "hatchery> swarm> CanSpawn> Unable to list containers on %s: %s", dockerName, err)
 			continue
@@ -620,7 +620,7 @@ func (h *HatcherySwarm) WorkersStarted(ctx context.Context) ([]string, error) {
 	defer end()
 	res := make([]string, 0)
 	for _, dockerClient := range h.dockerClients {
-		containers, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
+		containers, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to list containers")
 		}
@@ -733,7 +733,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers Cont
 
 func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 	for _, dockerClient := range h.dockerClients {
-		containers, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
+		containers, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
 			log.Warn(ctx, "hatchery> swarm> killAwolWorker> Cannot list containers: %s on %s", err, dockerClient.name)
 			return err

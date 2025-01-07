@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -30,7 +30,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 	}
 
 	for _, dockerClient := range h.dockerClients {
-		containers, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
+		containers, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
 			return sdk.WrapError(err, "Cannot get containers list from %s", dockerClient.name)
 		}
@@ -55,7 +55,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			}
 
 			ctxLogs, cancelLogs := context.WithTimeout(ctx, time.Minute*2)
-			logsOpts := types.ContainerLogsOptions{
+			logsOpts := container.LogsOptions{
 				Details:    true,
 				ShowStderr: true,
 				ShowStdout: true,

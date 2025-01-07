@@ -148,7 +148,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	next()
 
 	_, next = telemetry.Span(ctx, "swarm.dockerClient.ContainerStart", telemetry.Tag(telemetry.TagWorker, cArgs.name), telemetry.Tag("network", fmt.Sprintf("%v", networkingConfig)))
-	if err := dockerClient.ContainerStart(ctx, c.ID, types.ContainerStartOptions{}); err != nil {
+	if err := dockerClient.ContainerStart(ctx, c.ID, container.StartOptions{}); err != nil {
 		next()
 		return sdk.WrapError(err, "unable to start container on %s: %s", dockerClient.name, sdk.StringFirstN(c.ID, 12))
 	}
