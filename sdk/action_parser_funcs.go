@@ -24,40 +24,94 @@ import (
 
 var (
 	DefaultFuncs = map[string]ActionFunc{
-		"contains":   contains,
-		"startsWith": startsWith,
-		"endsWith":   endsWith,
-		"format":     format,
-		"join":       join,
-		"toJSON":     toJSON,
-		"fromJSON":   fromJSON,
-		"hashFiles":  hashFiles,
-		"success":    success,
-		"always":     always,
-		"cancelled":  cancelled,
-		"failure":    failure,
-		"result":     result,
-		"toLower":    newStringActionFunc("toLower", nilerr(strings.ToLower)),
-		"toUpper":    newStringActionFunc("toUpper", nilerr(strings.ToUpper)),
-		"toTitle":    newStringActionFunc("toTitle", nilerr(strings.ToTitle)),
-		"title":      newStringActionFunc("title", nilerr(strings.Title)),
-		"b64enc":     newStringActionFunc("b64enc", nilerr(base64encode)),
-		"b64dec":     newStringActionFunc("b64dec", base64decode),
-		"b32enc":     newStringActionFunc("b32enc", nilerr(base32encode)),
-		"b32dec":     newStringActionFunc("b32dec", base32decode),
-		"trimAll":    newStringStringActionFunc("trimAll", strings.Trim),
-		"trimPrefix": newStringStringActionFunc("trimPrefix", strings.TrimPrefix),
-		"trimSuffix": newStringStringActionFunc("trimSuffix", strings.TrimSuffix),
-		"toArray":    toArray,
-		"match":      match,
+		"contains":     contains,
+		"startsWith":   startsWith,
+		"endsWith":     endsWith,
+		"format":       format,
+		"join":         join,
+		"toJSON":       toJSON,
+		"fromJSON":     fromJSON,
+		"hashFiles":    hashFiles,
+		"success":      success,
+		"always":       always,
+		"cancelled":    cancelled,
+		"failure":      failure,
+		"result":       result,
+		"toLower":      newStringActionFunc("toLower", nilerr(strings.ToLower)),
+		"toUpper":      newStringActionFunc("toUpper", nilerr(strings.ToUpper)),
+		"toTitle":      newStringActionFunc("toTitle", nilerr(strings.ToTitle)),
+		"title":        newStringActionFunc("title", nilerr(strings.Title)),
+		"b64enc":       newStringActionFunc("b64enc", nilerr(base64encode)),
+		"b64dec":       newStringActionFunc("b64dec", base64decode),
+		"b32enc":       newStringActionFunc("b32enc", nilerr(base32encode)),
+		"b32dec":       newStringActionFunc("b32dec", base32decode),
+		"trimAll":      newStringStringActionFunc("trimAll", strings.Trim),
+		"trimPrefix":   newStringStringActionFunc("trimPrefix", strings.TrimPrefix),
+		"trimSuffix":   newStringStringActionFunc("trimSuffix", strings.TrimSuffix),
+		"toArray":      toArray,
+		"match":        match,
+		"contextValue": contextValue,
 	}
 )
 
 type ActionFunc func(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error)
 
+func contextValue(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) == 0 {
+		return nil, NewErrorFrom(ErrInvalidData, "contextValue: wrong number of arguments")
+	}
+
+	var currentObject any
+	for i, index := range inputs {
+		if i > 0 && currentObject == nil {
+			return nil, NewErrorFrom(ErrInvalidData, "contextValue: object %v doesn't not exist", inputs[0:i])
+		}
+		switch t := index.(type) {
+		case string:
+			if currentObject == nil {
+				obj, has := a.contexts[t]
+				if !has {
+					return nil, NewErrorFrom(ErrInvalidData, "contextValue: unable to find context %s", t)
+				}
+				currentObject = obj
+				continue
+			}
+			switch m := currentObject.(type) {
+			case map[string]interface{}:
+				currentObject = m[t]
+			default:
+				return nil, NewErrorFrom(ErrInvalidData, "contextValue: cannot get value at index %s in object of type %T", t, currentObject)
+			}
+		case int:
+			if currentObject == nil {
+				return nil, NewErrorFrom(ErrInvalidData, "contextValue: first argument must be a context name")
+			}
+			switch m := currentObject.(type) {
+			case map[int]interface{}:
+				currentObject = m[t]
+			case map[int64]interface{}:
+				currentObject = m[int64(t)]
+			case []map[int64]interface{}:
+				currentObject = m[t]
+			case []map[int]interface{}:
+				currentObject = m[t]
+			case []map[string]interface{}:
+				currentObject = m[t]
+			case []interface{}:
+				currentObject = m[t]
+			default:
+				return nil, NewErrorFrom(ErrInvalidData, "contextValue: cannot get value at int index %d in object of type %T", t, currentObject)
+			}
+		default:
+			return nil, NewErrorFrom(ErrInvalidData, "contextValue: wrong type of argument. Got %T, Need string or integrer ", index)
+		}
+	}
+	return currentObject, nil
+}
+
 func toArray(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) == 0 {
-		return nil, NewErrorFrom(ErrInvalidData, "contains: wrong number of arguments to call toArray()")
+		return nil, NewErrorFrom(ErrInvalidData, "toArray: wrong number of arguments to call toArray()")
 	}
 
 	if len(inputs) == 1 {
@@ -75,23 +129,23 @@ func toArray(_ context.Context, _ *ActionParser, inputs ...interface{}) (interfa
 
 func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) != 2 {
-		return nil, NewErrorFrom(ErrInvalidData, "contains: wrong number of arguments to call contains(type, name)")
+		return nil, NewErrorFrom(ErrInvalidData, "result: wrong number of arguments to call result(type, name)")
 	}
 
 	typ, ok := inputs[0].(string)
 	if !ok {
-		return nil, NewErrorFrom(ErrInvalidData, "contains: item argument must be a string")
+		return nil, NewErrorFrom(ErrInvalidData, "result: item argument must be a string")
 	}
 
 	name, ok := inputs[1].(string)
 	if !ok {
-		return nil, NewErrorFrom(ErrInvalidData, "contains: item argument must be a string")
+		return nil, NewErrorFrom(ErrInvalidData, "result: item argument must be a string")
 	}
 	glob := glob.New(name)
 
 	jobsMap := cast.ToStringMap(a.contexts["jobs"])
 	if jobsMap == nil {
-		return nil, errors.New("map jobs not found in context")
+		return nil, errors.New("result: map jobs not found in context")
 	}
 
 	var results []any
@@ -101,7 +155,7 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 
 		jobContext := cast.ToStringMap(jobContextI)
 		if jobContext == nil {
-			return nil, errors.New("unable to cast job context to map")
+			return nil, errors.New("result: unable to cast job context to map")
 		}
 
 		resultsMapI := jobContext["results"]
@@ -111,7 +165,7 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 			if jobRunResultsI != nil {
 				jobRunResults := cast.ToStringMap(jobRunResultsI)
 				if jobRunResults == nil {
-					return nil, errors.New("unable to cast jobRunResults context to map")
+					return nil, errors.New("result: unable to cast jobRunResults context to map")
 				}
 				var err error
 				jobRunResultsAsMap, err = cast.ToStringMapE(jobRunResults)
@@ -124,7 +178,7 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 			if jobRunResultsAsMapI != nil {
 				jobRunResultsAsMap = cast.ToStringMap(jobRunResultsAsMapI)
 				if jobRunResultsAsMap == nil {
-					return nil, errors.New("unable to cast jobRunResultsAsMap context to map")
+					return nil, errors.New("result: unable to cast jobRunResultsAsMap context to map")
 				}
 			}
 		}

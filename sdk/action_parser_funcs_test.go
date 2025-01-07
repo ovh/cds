@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/rockbears/log"
@@ -23,6 +24,107 @@ func Test_match(t *testing.T) {
 	bo, ok := r.(bool)
 	require.True(t, ok)
 	require.True(t, bo)
+}
+
+func TestContextValue(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	// Usage as annotations expression
+	a := ActionParser{
+		contexts: map[string]interface{}{
+			"vars": map[string]interface{}{
+				"myvarset": map[string]interface{}{
+					"item1": "myvalue",
+				},
+			},
+			"git": map[string]interface{}{
+				"changesets": []interface{}{
+					"file1",
+					"file2",
+				},
+			},
+			"fakeCtx1": map[string]interface{}{
+				"changesets": []map[string]interface{}{
+					{
+						"item": "value1",
+					},
+					{
+						"item2": "value2",
+					},
+				},
+			},
+			"fakeCtx2": map[string]interface{}{
+				"changesets": []map[int64]interface{}{
+					{
+						23: "value23",
+					},
+					{
+						25: "value25",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range []struct {
+		name   string
+		args   []interface{}
+		output interface{}
+		err    string
+	}{
+		{
+			"onlyMap",
+			[]interface{}{"vars", "myvarset", "item1"},
+			"myvalue",
+			"",
+		},
+		{
+			"stringSlice",
+			[]interface{}{"git", "changesets", 1},
+			"file2",
+			"",
+		},
+		{
+			"sliceofMap",
+			[]interface{}{"fakeCtx1", "changesets", 0, "item"},
+			"value1",
+			"",
+		},
+		{
+			"sliceofMapInt",
+			[]interface{}{"fakeCtx2", "changesets", 1, 25},
+			"value25",
+			"",
+		},
+		{
+			"rootObjectDoesntExist",
+			[]interface{}{"vars", "myvarset2", "item1"},
+			nil,
+			"object [vars myvarset2] doesn't not exist",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := contextValue(context.TODO(), &a, tt.args...)
+			if tt.err != "" {
+				if !strings.Contains(err.Error(), tt.err) {
+					t.Fatalf("expected error %s, got %v", tt.err, err)
+				}
+			} else if err != nil {
+				t.Fatal(err)
+			}
+			if tt.err == "" {
+				got, ok := v.(string)
+				if !ok {
+					t.Fatalf("expected string, got %T", v)
+				}
+				if tt.output != got {
+					t.Errorf("got %q, want %q", got, tt.output)
+				}
+				t.Logf(got)
+			}
+		})
+	}
+
 }
 
 func Test_result_as_annotation_expression(t *testing.T) {
