@@ -1555,7 +1555,7 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 				}
 			}
 			if !allowedImage {
-				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "image %q is not allowed", dockerSpec.Image))
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "worker model %s: image %q is not allowed", x.Name, dockerSpec.Image))
 			}
 		}
 	case sdk.V2Workflow:
