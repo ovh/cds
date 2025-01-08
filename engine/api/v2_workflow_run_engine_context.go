@@ -47,7 +47,6 @@ func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2Workflow
 					}
 				}
 			}
-			log.Error(ctx, ">>>>>>%T <<<<<<<", result.JobRunResults)
 			jobsContext[rj.JobID] = result
 			if len(rj.GateInputs) > 0 {
 				gatesContext[rj.JobID] = rj.GateInputs
