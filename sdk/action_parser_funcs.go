@@ -111,7 +111,7 @@ func contextValue(_ context.Context, a *ActionParser, inputs ...interface{}) (in
 
 func toArray(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) == 0 {
-		return nil, NewErrorFrom(ErrInvalidData, "toArray: wrong number of arguments to call toArray()")
+		return []any{}, nil
 	}
 
 	if len(inputs) == 1 {
@@ -120,6 +120,9 @@ func toArray(_ context.Context, _ *ActionParser, inputs ...interface{}) (interfa
 		case reflect.Array, reflect.Slice:
 			return inputs[0], nil
 		default:
+			if inputs[0] == nil {
+				return []any{}, nil
+			}
 			return []any{inputs[0]}, nil
 		}
 	}

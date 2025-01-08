@@ -137,7 +137,7 @@ func Test_result_as_annotation_expression(t *testing.T) {
 				"myJob": map[string]interface{}{
 					"results": map[string]interface{}{
 						"JobRunResults": map[string]interface{}{
-							"generic:foo.txt": V2WorkflowRunResultGenericDetail{},
+							"generic:foo.txt": map[string]interface{}{},
 						},
 					},
 				},
@@ -159,7 +159,7 @@ func Test_result_as_script_expression(t *testing.T) {
 			"jobs": map[string]interface{}{
 				"myJob": map[string]interface{}{
 					"JobRunResults": map[string]interface{}{
-						"generic:foo.txt": V2WorkflowRunResultGenericDetail{},
+						"generic:foo.txt": map[string]interface{}{},
 					},
 				},
 			},
@@ -180,11 +180,11 @@ func Test_result_as_script_expression_multiple(t *testing.T) {
 			"jobs": map[string]interface{}{
 				"myJob": map[string]interface{}{
 					"JobRunResults": map[string]interface{}{
-						"generic:foo.txt": V2WorkflowRunResultGenericDetail{
-							Name: "foo.txt",
+						"generic:foo.txt": map[string]interface{}{
+							"name": "foo.txt",
 						},
-						"generic:foo.zip": V2WorkflowRunResultGenericDetail{
-							Name: "foo.zip",
+						"generic:foo.zip": map[string]interface{}{
+							"name": "foo.zip",
 						},
 					},
 				},
