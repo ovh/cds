@@ -87,7 +87,7 @@ func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2Workflow
 		}
 	}
 
-	// Manage matric jobs
+	// Manage matrix jobs
 nextjob:
 	for k := range matrixJobs {
 		outputs := sdk.JobResultOutput{}
