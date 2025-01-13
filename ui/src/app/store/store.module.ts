@@ -21,6 +21,7 @@ import { QueueState } from './queue.state';
 import { WorkflowState } from './workflow.state';
 import { NavigationState } from './navigation.state';
 import { EventV2State } from './event-v2.state';
+import { ProjectV2State } from './project-v2.state';
 
 @NgModule({
     imports: [
@@ -43,6 +44,7 @@ import { EventV2State } from './event-v2.state';
             PipelinesState,
             PreferencesState,
             ProjectState,
+            ProjectV2State,
             QueueState,
             WorkflowState
         ], { developmentMode: !env.production })

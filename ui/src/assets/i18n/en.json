@@ -266,8 +266,6 @@
   "project_variable_list_title": "List of project variables: ",
   "project_variable_form_title": "Add a new variable: ",
   "project_vcs_no": "The project is not linked to a repository manager",
-  "integration_add_title": "Link an integration: ",
-  "integration_list_title": "Linked integrations: ",
   "integration_name": "Name",
   "integration_model": "Model",
   "integration_configuration": "Configuration",

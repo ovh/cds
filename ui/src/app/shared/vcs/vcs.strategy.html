@@ -15,8 +15,6 @@
             <nz-form-item>
                 <nz-form-label [nzSpan]="3">
                     SSH key*
-                    <a class="keyLink" (click)="openCreateKeyModal('ssh')"
-                          *ngIf="createOnProject">(Create)</a>
                 </nz-form-label>
                 <nz-form-control [nzSpan]="7">
                     <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
@@ -78,9 +76,6 @@
     <nz-row *ngIf="strategy.connection_type === connectionType.SSH">
         <nz-col [nzSpan]="3" [nzOffset]="2">
             SSH key*
-            <a class="keyLink" (click)="openCreateKeyModal('ssh')"
-               *ngIf="createOnProject">(Create)
-            </a>
         </nz-col>
         <nz-col [nzSpan]="6" [nzOffset]="1">
             <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
@@ -121,9 +116,3 @@
         </nz-col>
     </nz-row>
 </div>
-<nz-modal [(nzVisible)]="modalKeyVisible" nzTitle="Add a key" [nzFooter]="null" nzWidth="900px" (nzOnCancel)="modalKeyVisible = false">
-    <div *nzModalContent>
-        <app-keys-form [loading]="loading" (keyEvent)="addKey($event)" [defaultType]="defaultKeyType" prefix="proj-">
-        </app-keys-form>
-    </div>
-</nz-modal>

@@ -8,7 +8,7 @@
                 <nz-form-label>Integration/Deployment</nz-form-label>
                 <nz-form-control>
                     <nz-select nzShowSearch name="selectIntegration" [(ngModel)]="selectedIntegration" >
-                        <nz-option *ngFor="let t of filteredIntegrations" [nzLabel]="t.name" [nzValue]="t"></nz-option>
+                        <nz-option *ngFor="let t of deploymentIntegrations" [nzLabel]="t.name" [nzValue]="t"></nz-option>
                     </nz-select>
                 </nz-form-control>
             </nz-form-item>

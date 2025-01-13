@@ -6,7 +6,6 @@ import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEven
 import { VCSProject } from "app/model/vcs.model";
 import { ProjectService } from "app/service/project/project.service";
 import { V2WorkflowRunService } from "app/service/services.module";
-import { ProjectState } from "app/store/project.state";
 import { lastValueFrom } from "rxjs";
 import { V2Workflow, V2WorkflowRunManualRequest } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { NzMessageService } from "ng-zorro-antd/message";
@@ -14,6 +13,7 @@ import { NzDrawerRef } from "ng-zorro-antd/drawer";
 import { LoadOptions, load } from "js-yaml";
 import { Branch, Tag } from "app/model/repositories.model";
 import { ErrorUtils } from "app/shared/error.utils";
+import { ProjectV2State } from "app/store/project-v2.state";
 
 export class ProjectV2RunStartComponentParams {
   workflow_repository: string;
@@ -69,7 +69,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     private _cd: ChangeDetectorRef,
     private _workflowRunService: V2WorkflowRunService,
   ) {
-    this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+    this.project = this._store.selectSnapshot(ProjectV2State.current);
     this.validateForm = this._fb.group({
       repository: this._fb.control<string | null>(null, Validators.required),
       ref: this._fb.control<string | null>(null, Validators.required),

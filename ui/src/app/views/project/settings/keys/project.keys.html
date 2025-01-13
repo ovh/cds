@@ -1,0 +1,42 @@
+<ng-container *ngIf="project.permissions.writable">
+    <h3>Create a key:</h3>
+    <app-keys-form [loading]="loading.action" (keyEvent)="addKey($event)" prefix="proj-"></app-keys-form>
+</ng-container>
+
+<h3>Keys list:</h3>
+<div class="list">
+    <nz-table [nzData]="keys" #keylist [nsAutoHeightTable]="39" [nzFrontPagination]="false" nzSize="small"
+        [nzLoading]="loading.list">
+        <thead>
+            <tr>
+                <th nzWidth="50px">Key name</th>
+                <th nzWidth="50px">Key type</th>
+                <th nzWidth="400px">Public key</th>
+                <th nzWidth="25px" *ngIf="project.permissions.writable"></th>
+            </tr>
+        </thead>
+        <tbody *ngFor="let k of keylist.data">
+            <tr>
+                <td>
+                    {{ k.name }} <span *ngIf="k.disabled" class="disabledKey">(disabled)</span>
+                </td>
+                <td>
+                    {{ k.type }}
+                </td>
+                <td nzBreakWord>
+                    <ng-container *ngIf="k.type === 'ssh'">
+                        <input nz-input readonly [ngModel]="k.public">
+                    </ng-container>
+                    <ng-container *ngIf="k.type === 'pgp'">
+                        <textarea nz-input [ngModel]="k.public" readonly rows="29"></textarea>
+                    </ng-container>
+                </td>
+                <td *ngIf="project.permissions.writable">
+                    <button nz-button nzDanger nzType="primary" [nzLoading]="loading.action" nz-popconfirm
+                        nzPopconfirmTitle="Are you sure you want to delete this key ?"
+                        (nzOnConfirm)="deleteKey(k)">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </nz-table>
+</div>

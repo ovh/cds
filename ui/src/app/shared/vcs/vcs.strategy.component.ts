@@ -16,7 +16,6 @@ import { VCSConnections, VCSStrategy } from 'app/model/vcs.model';
 import { KeyService } from 'app/service/keys/keys.service';
 import { KeyEvent } from 'app/shared/keys/key.event';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AddKeyInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
@@ -31,7 +30,6 @@ export class VCSStrategyComponent implements OnInit {
     @Input() appName: string;
     @Input() loading: boolean;
     @Input() hideButton = false;
-    @Input() createOnProject = false;
     @Input() sshWarning = false;
     @Input() projectKeysOnly = false;
     @Input() withoutForm = false;
@@ -53,8 +51,6 @@ export class VCSStrategyComponent implements OnInit {
     @Output() strategyChange = new EventEmitter<VCSStrategy>();
     keys: AllKeys;
     connectionType = VCSConnections;
-    defaultKeyType = 'ssh';
-    modalKeyVisible: boolean = false;
 
     constructor(
         private store: Store,
@@ -77,44 +73,25 @@ export class VCSStrategyComponent implements OnInit {
             this._keyService.getAllKeys(this.project.key)
                 .pipe(finalize(() => this._cd.markForCheck()))
                 .subscribe(k => {
-                this.keys = k;
-                if (this.strategy?.ssh_key) {
-                    this.updatePublicKey(this.strategy.ssh_key);
-                }
-            });
+                    this.keys = k;
+                    if (this.strategy?.ssh_key) {
+                        this.updatePublicKey(this.strategy.ssh_key);
+                    }
+                });
         } else {
             this._keyService.getAllKeys(this.project.key, this.appName)
                 .pipe(finalize(() => this._cd.markForCheck()))
                 .subscribe(k => {
-                this.keys = k;
-                if (this.strategy?.ssh_key) {
-                    this.updatePublicKey(this.strategy.ssh_key);
-                }
-            });
+                    this.keys = k;
+                    if (this.strategy?.ssh_key) {
+                        this.updatePublicKey(this.strategy.ssh_key);
+                    }
+                });
         }
     }
 
     saveStrategy() {
         this.strategyChange.emit(this.strategy);
-    }
-
-    openCreateKeyModal(k): void {
-        this.defaultKeyType = k;
-        this.modalKeyVisible = true;
-        this._cd.markForCheck();
-    }
-
-    addKey(event: KeyEvent): void {
-        this.loading = true;
-        this.store.dispatch(new AddKeyInProject({
-            projectKey: this.project.key,
-            key: event.key
-        })).pipe(finalize(() => {
-            this.loading = false;
-            this.modalKeyVisible = false;
-            this.loadKeys();
-            this._cd.markForCheck();
-        })).subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
     }
 
     updatePublicKey(keyName: string): void {

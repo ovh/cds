@@ -50,7 +50,7 @@ export class EventService {
             .pipe(
                 filter((message: WebsocketEvent): boolean => {
                     let ok = message.status === 'OK';
-                    if (!ok) {
+                    if (!ok && message.error !== 'forbidden') {
                         this._toastService.error('', message.error);
                     }
                     return ok;

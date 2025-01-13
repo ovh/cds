@@ -1,14 +1,11 @@
 
 import { Application } from 'app/model/application.model';
 import { GroupPermission } from 'app/model/group.model';
-import { ProjectIntegration } from 'app/model/integration.model';
-import { Key } from 'app/model/keys.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
 import { Environment } from 'app/model/environment.model';
-import { VariableSet } from 'app/model/variablesets.model';
 
 // Use to load fetched Project in our app
 export class LoadProject {
@@ -33,16 +30,6 @@ export class AddProject {
     constructor(public payload: Project) { }
 }
 
-export class UpdateProject {
-    static readonly type = '[Project] Update Project';
-    constructor(public payload: Project) { }
-}
-
-export class DeleteProject {
-    static readonly type = '[Project] Delete Project';
-    constructor(public payload: { projectKey: string }) { }
-}
-
 export class ExternalChangeProject {
     static readonly type = '[Project] External Change Project';
     constructor(public payload: { projectKey: string }) { }
@@ -50,35 +37,13 @@ export class ExternalChangeProject {
 
 export class DeleteProjectFromCache {
     static readonly type = '[Project] Delete Project From cache';
-    constructor(public payload: { projectKey: string }) { }
+    constructor() { }
 }
 
 //  ------- Misc --------- //
 export class UpdateFavoriteProject {
     static readonly type = '[Project] Update Project Favorite';
     constructor(public payload: { projectKey: string }) { }
-}
-
-//  ------- Variable Sets ---- //
-export class FetchVariableSetsInProject {
-    static readonly type = '[Project] Fetch VariableSets in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
-export class ResyncVariableSetsInProject {
-    static readonly type = '[Project] Resync Variable Sets in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
-export class LoadVariableSetsInProject {
-    static readonly type = '[Project] Load Variable Sets in Project';
-    constructor(public payload: VariableSet[]) { }
-}
-export class DeleteVariableSetInProject {
-    static readonly type = '[Project] Delete Variable Set in Project';
-    constructor(public payload: VariableSet) { }
-}
-export class AddVariableSetInProject {
-    static readonly type = '[Project] Add VariableSet in Project';
-    constructor(public name: string) { }
 }
 
 //  ------- Variable --------- //
@@ -189,54 +154,6 @@ export class AddLabelWorkflowInProject {
 export class DeleteLabelWorkflowInProject {
     static readonly type = '[Project] Delete Label on Workflow in Project';
     constructor(public payload: { workflowName: string, labelId: number }) { }
-}
-
-//  ------- Integration --------- //
-export class ResyncIntegrationsInProject {
-    static readonly type = '[Project] Resync Integrations in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
-export class FetchIntegrationsInProject {
-    static readonly type = '[Project] Fetch Integrations in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
-export class LoadIntegrationsInProject {
-    static readonly type = '[Project] Load Integrations in Project';
-    constructor(public payload: ProjectIntegration[]) { }
-}
-export class AddIntegrationInProject {
-    static readonly type = '[Project] Add Integration in Project';
-    constructor(public payload: { projectKey: string, integration: ProjectIntegration }) { }
-}
-export class UpdateIntegrationInProject {
-    static readonly type = '[Project] Update integration in Project';
-    constructor(public payload: { projectKey: string, integrationName: string, changes: ProjectIntegration }) { }
-}
-export class DeleteIntegrationInProject {
-    static readonly type = '[Project] Delete Integration in Project';
-    constructor(public payload: { projectKey: string, integration: ProjectIntegration }) { }
-}
-
-//  ------- Key --------- //
-export class ResyncKeysInProject {
-    static readonly type = '[Project] Resync Keys in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
-export class FetchKeysInProject {
-    static readonly type = '[Project] Fetch Keys in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
-export class LoadKeysInProject {
-    static readonly type = '[Project] Load Keys in Project';
-    constructor(public payload: Key[]) { }
-}
-export class AddKeyInProject {
-    static readonly type = '[Project] Add Key in Project';
-    constructor(public payload: { projectKey: string, key: Key }) { }
-}
-export class DeleteKeyInProject {
-    static readonly type = '[Project] Delete Key in Project';
-    constructor(public payload: { projectKey: string, key: Key }) { }
 }
 
 //  ------- Repository Manager --------- //

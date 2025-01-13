@@ -1,20 +1,19 @@
-<a [routerLink]="['/project', project.key]" [class.active]="homeActive">
+<a *ngIf="projectv1" [routerLink]="['/project', project.key]" [class.active]="homeActive">
 	<button nz-button nzType="text" nzSize="large" nzBlock>
 		<span nz-icon nzType="home" nzTheme="outline"></span>
 	</button>
 </a>
-<a *ngIf="v2Enabled" [routerLink]="['/project', project.key, 'explore']" routerLinkActive="active" title="Explore">
+<a [routerLink]="['/project', project.key, 'explore']" routerLinkActive="active" title="Explore">
 	<button nz-button nzType="text" nzSize="large" nzBlock (click)="clickActivity($event, 'explore')">
 		<span nz-icon nzType="folder" nzTheme="outline"></span>
 	</button>
-	<div class="label">v2</div>
+	<div class="label" *ngIf="projectv1">v2</div>
 </a>
-<a *ngIf="v2Enabled" [routerLink]="['/project', project.key, 'run']" routerLinkActive="active"
-	title="Workflow V2 run list">
+<a [routerLink]="['/project', project.key, 'run']" routerLinkActive="active" title="Workflow V2 run list">
 	<button nz-button nzType="text" nzSize="large" nzBlock (click)="clickActivity($event, 'run')">
 		<span nz-icon nzType="play-circle" nzTheme="outline"></span>
 	</button>
-	<div class="label">v2</div>
+	<div class="label" *ngIf="projectv1">v2</div>
 </a>
 <a [routerLink]="['/project', project.key, 'settings']" routerLinkActive="active" title="Project settings">
 	<button nz-button nzType="text" nzSize="large" nzBlock>

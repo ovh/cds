@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
@@ -140,8 +139,6 @@ func (api *API) updateProjectV2Handler() ([]service.RbacChecker, service.Handler
 			}
 			event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectUpdated, *proj, *u.AuthConsumerUser.AuthentifiedUser)
 
-			// TODO REMOVE
-			proj.Permissions.Readable = true
 			proj.Permissions.Writable = true
 
 			return service.WriteJSON(w, proj, http.StatusOK)
@@ -155,22 +152,23 @@ func (api *API) getProjectV2Handler() ([]service.RbacChecker, service.Handler) {
 			vars := mux.Vars(r)
 			key := vars["projectKey"]
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			p, errProj := project.Load(ctx, api.mustDB(), key)
 			if errProj != nil {
 				return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 			}
 
-			// TODO REMOVE
 			if isAdmin(ctx) {
-				p.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+				p.Permissions.Writable = true
 			} else {
-				permissions, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{p.Key}, getUserConsumer(ctx).GetGroupIDs())
+				var err error
+				p.Permissions.Writable, err = rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), sdk.ProjectRoleManage, u.AuthConsumerUser.AuthentifiedUser.ID, key)
 				if err != nil {
 					return err
-				}
-				p.Permissions = permissions.Permissions(p.Key)
-				if isMaintainer(ctx) {
-					p.Permissions.Readable = true
 				}
 			}
 

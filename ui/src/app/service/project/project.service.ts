@@ -11,12 +11,7 @@ import { RepositoryAnalysis } from "../../model/analysis.model";
 import { Branch, Tag } from "../../model/repositories.model";
 import { Entity, EntityType } from "../../model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
-import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 
-/**
- * Service to access Project from API.
- * Only used by ProjectStore
- */
 @Injectable()
 export class ProjectService {
 
@@ -24,12 +19,6 @@ export class ProjectService {
         private _http: HttpClient
     ) { }
 
-    /**
-     * Get one specific project from API.
-     *
-     * @param key Unique key of the project
-     * @returns
-     */
     getProject(key: string, opts: LoadOpts[]): Observable<Project> {
         let params = new HttpParams();
 
@@ -43,21 +32,15 @@ export class ProjectService {
             ];
         }
         opts.push(new LoadOpts('withFeatures', 'features'));
-        opts.push(new LoadOpts('withIntegrations', 'integrations'));
         opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
 
         return this._http.get<Project>('/project/' + key, { params });
     }
 
-    /**
-     * Get all projects that the user can access.
-     *
-     * @returns
-     */
-    getProjects(): Observable<Project[]> {
+    getProjects(): Observable<Array<Project>> {
         let params = new HttpParams();
         params = params.append('withIcon', 'true');
-        return this._http.get<Project[]>('/project', { params });
+        return this._http.get<Array<Project>>('/project', { params });
     }
 
     /**
@@ -78,32 +61,18 @@ export class ProjectService {
         return this._http.post<Project>(url, request);
     }
 
-    /**
-     * Add a project key
-     *
-     * @param projKey Project unique key
-     * @param key Key to add
-     * @returns
-     */
     addKey(projKey: string, key: Key): Observable<Key> {
         return this._http.post<Key>('/project/' + projKey + '/keys', key);
     }
 
-    /**
-     * Update project integration configuration
-     *
-     * @param key Project unique key
-     * @param integration Integration to update
-     * @returns
-     */
+    getIntegrations(key: string): Observable<Array<ProjectIntegration>> {
+        return this._http.get<Array<ProjectIntegration>>(`/project/${key}/integrations`);
+    }
+
     updateIntegration(key: string, integration: ProjectIntegration): Observable<ProjectIntegration> {
         return this._http.put<ProjectIntegration>('/project/' + key + '/integrations/' + integration.name, integration);
     }
 
-    /**
-     * Get the list of VCS attached to the given project from the API
-     * @param key
-     */
     listVCSProject(key: string): Observable<Array<VCSProject>> {
         return this._http.get<Array<VCSProject>>(`/v2/project/${key}/vcs`);
     }
@@ -196,17 +165,5 @@ export class ProjectService {
         return this._http.get<Schema>(`/v2/jsonschema/${type}`).pipe(
             map(s => Object.assign(new Schema(), s))
         );
-    }
-
-    getVariableSet(key: string, vsName: string): Observable<VariableSet> {
-        return this._http.get<VariableSet>(`/v2/project/${key}/variableset/${vsName}`)
-    }
-
-    postVariableSetItem(key: string, vsName: string, vsItem: VariableSetItem): Observable<VariableSetItem> {
-        return this._http.post<VariableSetItem>(`/v2/project/${key}/variableset/${vsName}/item`, vsItem)
-    }
-
-    deleteVariableSetItem(key: string, vsName: string, itemName: string): Observable<any> {
-        return this._http.delete(`/v2/project/${key}/variableset/${vsName}/item/${itemName}`);
     }
 }

@@ -78,18 +78,9 @@ export class EventV2Service {
                 }
 
                 let projectKey = urlSplitted[1].split('?')[0];
-                // avoid list from route /project/list/all
-                if (projectKey === "list") {
-                    break;
-                }
-
-                this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: projectKey }).subscribe(f => {
-                    if (f.enabled) {
-                        fs.push(<WebsocketV2Filter>{
-                            type: WebsocketV2FilterType.PROJECT,
-                            project_key: projectKey
-                        });
-                    }
+                fs.push(<WebsocketV2Filter>{
+                    type: WebsocketV2FilterType.PROJECT,
+                    project_key: projectKey
                 });
 
                 break;

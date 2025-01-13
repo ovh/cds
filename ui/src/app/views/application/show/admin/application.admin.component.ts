@@ -3,11 +3,15 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
+import { ProjectIntegration } from 'app/model/integration.model';
 import { Project } from 'app/model/project.model';
+import { ProjectService } from 'app/service/project/project.service';
+import { ErrorUtils } from 'app/shared/error.utils';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteApplication, UpdateApplication } from 'app/store/applications.action';
-import { FetchIntegrationsInProject } from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { lastValueFrom } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -23,26 +27,39 @@ export class ApplicationAdminComponent implements OnInit {
 
     newName: string;
     fileTooLarge = false;
-    public loading = false;
+    loading = false;
+    deploymentIntegrations: Array<ProjectIntegration> = [];
 
     constructor(
         private _toast: ToastService,
         public _translate: TranslateService,
         private _router: Router,
         private _store: Store,
-        private _cd: ChangeDetectorRef
-    ) {
-    }
+        private _cd: ChangeDetectorRef,
+        private _messageService: NzMessageService,
+        private _projectService: ProjectService
+    ) { }
 
     ngOnInit() {
-        // Fetch project integration
-        this._store.dispatch(new FetchIntegrationsInProject({projectKey: this.project.key}));
-
         this.newName = this.application.name;
         if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],
-                {queryParams: {tab: 'workflow'}});
+                { queryParams: { tab: 'workflow' } });
         }
+        this.load();
+    }
+
+    async load() {
+        this.loading = true;
+        this._cd.markForCheck();
+        try {
+            const projectIntegrations = await lastValueFrom(this._projectService.getIntegrations(this.project.key));
+            this.deploymentIntegrations = projectIntegrations.filter(p => p.model.deployment);
+        } catch (e) {
+            this._messageService.error(`Unable to load project integrations: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+        this.loading = false;
+        this._cd.markForCheck();
     }
 
     onSubmitApplicationUpdate(): void {
@@ -67,7 +84,6 @@ export class ApplicationAdminComponent implements OnInit {
                         this._router.navigate(['/project', this.project.key, 'application', this.newName]);
                     }
                 }
-
             });
 
     }
@@ -84,7 +100,7 @@ export class ApplicationAdminComponent implements OnInit {
             }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('application_deleted'));
-                this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'applications'}});
+                this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
             });
     }
 

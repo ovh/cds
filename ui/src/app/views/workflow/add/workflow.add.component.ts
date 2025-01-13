@@ -22,8 +22,8 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first, map } from 'rxjs/operators';
-import {APIConfig} from "app/model/config.service";
-import {ConfigState} from "app/store/config.state";
+import { APIConfig } from "app/model/config.service";
+import { ConfigState } from "app/store/config.state";
 
 @Component({
     selector: 'app-workflow-add',

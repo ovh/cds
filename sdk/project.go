@@ -44,7 +44,6 @@ type Project struct {
 	Environments      []Environment        `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
 	EnvironmentNames  IDNames              `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
 	Labels            []Label              `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Permissions       Permissions          `json:"permissions" yaml:"-" db:"-"  cli:"-"`
 	Metadata          Metadata             `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
 	Keys              []ProjectKey         `json:"keys,omitempty" yaml:"keys" db:"-" cli:"-"`
 	VCSServers        []VCSProject         `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
@@ -54,6 +53,10 @@ type Project struct {
 	URLs              URL                  `json:"urls" yaml:"-" db:"-" cli:"-"`
 	Organization      string               `json:"organization" yaml:"-" db:"-" cli:"-"`
 	WorkflowRetention int64                `json:"workflow_retention" yaml:"-" db:"workflow_retention" cli:"-"`
+	// fields used by UI
+	Permissions struct {
+		Writable bool `json:"writable"`
+	} `json:"permissions" yaml:"-" db:"-"  cli:"-"`
 }
 
 type GroupPermissions []GroupPermission

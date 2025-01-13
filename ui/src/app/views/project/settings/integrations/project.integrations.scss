@@ -1,0 +1,33 @@
+@import '../../../../../common.scss';
+
+:host {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+form {
+  .controls {
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}
+
+.list {
+  flex: 1;
+  overflow: hidden;
+}
+
+i {
+  margin-left: 5px;
+  font-size: 1.2em;
+}
+
+.green {
+  color: $cds_color_green;
+}

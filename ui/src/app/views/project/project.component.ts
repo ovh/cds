@@ -1,13 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
 import { Project } from 'app/model/project.model';
-import { ProjectStore } from 'app/service/project/project.store';
 import { Store } from '@ngxs/store';
-import { PreferencesState } from 'app/store/preferences.state';
-import * as actionPreferences from "app/store/preferences.action";
-import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
+import { ProjectState } from 'app/store/project.state';
+import { ProjectV2State } from 'app/store/project-v2.state';
 
 @Component({
     selector: 'app-project',
@@ -17,46 +14,28 @@ import { FeatureNames, FeatureService } from 'app/service/feature/feature.servic
 })
 @AutoUnsubscribe()
 export class ProjectComponent implements OnInit, OnDestroy {
-    routeSub: Subscription;
-    projSub: Subscription;
+    projectSub: Subscription;
+    projectv2Sub: Subscription;
     project: Project;
-    routerSub: Subscription;
-    v2Enabled: boolean = false;
+    projectv2: Project;
 
     constructor(
-        private _route: ActivatedRoute,
-        private _projectStore: ProjectStore,
         private _cd: ChangeDetectorRef,
-        private _store: Store,
-        private _featureService: FeatureService
+        private _store: Store
     ) { }
-
-    ngOnInit(): void {
-        this.routeSub = this._route.params.subscribe(r => {
-            let projectKey = r['key'];
-            if (this.projSub) {
-                this.projSub.unsubscribe();
-            }
-            this.projSub = this._projectStore.getProjects(projectKey).subscribe((projCache) => {
-                let proj = projCache.get(projectKey);
-                if (proj) {
-                    this.project = proj;
-                    this._cd.markForCheck();
-                }
-            });
-            this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: projectKey }).subscribe(f => {
-                this.v2Enabled = f.enabled;
-                this._cd.markForCheck();
-            });
-        });
-    }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
-    clickCloseBanner(): void {
-        this._store.dispatch(new actionPreferences.SaveMessageState({
-            messageKey: 'ascode-v2',
-            value: true
-        }));
+    ngOnInit(): void {
+        this.projectSub = this._store.select(ProjectState.projectSnapshot).subscribe(p => {
+            if (!p) { return; }
+            this.project = p;
+            this._cd.markForCheck();
+        });
+        this.projectv2Sub = this._store.select(ProjectV2State.current).subscribe(p => {
+            if (!p) { return; }
+            this.project = p;
+            this._cd.markForCheck();
+        });
     }
 }
