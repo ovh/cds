@@ -488,7 +488,7 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 		log.ErrorWithStackTrace(ctx, err)
 		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to resolve workflow template %s: %s", j.From, err)
 	}
-	tmpWorkflow.Name = "tmpJobs"
+	tmpWorkflow.Name = e.Name
 
 	// Add stage from parent workflow to lint jobs
 	if tmpWorkflow.Stages == nil {
@@ -531,7 +531,7 @@ func (a *API) computeJobFromTemplate(ctx context.Context, wref *WorkflowRunEntit
 	// If there is no matrix, compute the final workflow now. Else it will be done at runtime
 	if j.Strategy == nil || len(j.Strategy.Matrix) == 0 {
 
-		msg := handleTemplatedJobInWorkflow(run, *tmpWorkflow, jobID, j)
+		msg := handleTemplatedJobInWorkflow(run, tmpWorkflow.Jobs, tmpWorkflow.Stages, tmpWorkflow.Gates, tmpWorkflow.Annotations, jobID, j)
 		if msg != nil {
 			return []sdk.V2WorkflowRunInfo{*msg}, nil
 		}
@@ -542,11 +542,11 @@ func (a *API) computeJobFromTemplate(ctx context.Context, wref *WorkflowRunEntit
 	return nil, nil
 }
 
-func handleTemplatedJobInWorkflow(run *sdk.V2WorkflowRun, templatedWorkflow sdk.V2Workflow, jobID string, j sdk.V2Job) *sdk.V2WorkflowRunInfo {
+func handleTemplatedJobInWorkflow(run *sdk.V2WorkflowRun, newJobs map[string]sdk.V2Job, newStages map[string]sdk.WorkflowStage, newGates map[string]sdk.V2JobGate, newAnnotations map[string]string, jobID string, j sdk.V2Job) *sdk.V2WorkflowRunInfo {
 	// Check duplication of jobID
 	// Retrieve root job
 	rootJobs := make([]string, 0)
-	for subJobID, subJob := range templatedWorkflow.Jobs {
+	for subJobID, subJob := range newJobs {
 		if _, exist := run.WorkflowData.Workflow.Jobs[subJobID]; exist {
 			msg := &sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
@@ -559,20 +559,13 @@ func handleTemplatedJobInWorkflow(run *sdk.V2WorkflowRun, templatedWorkflow sdk.
 		if len(subJob.Needs) == 0 {
 			rootJobs = append(rootJobs, subJobID)
 		}
-
-		// If no stage on templated job and stage on parent workflow job, add it
-		if subJob.Stage == "" && j.Stage != "" {
-			subJob.Stage = j.Stage
-			templatedWorkflow.Jobs[subJobID] = subJob
-		}
-
 	}
 
 	// Retrieve final jobs
 	finalJobs := make([]string, 0)
 loop:
-	for subJobID := range templatedWorkflow.Jobs {
-		for _, jobDef := range templatedWorkflow.Jobs {
+	for subJobID := range newJobs {
+		for _, jobDef := range newJobs {
 			if slices.Contains(jobDef.Needs, subJobID) {
 				continue loop
 			}
@@ -583,12 +576,12 @@ loop:
 	// Set needs on templated root job
 	if len(j.Needs) > 0 {
 		for _, id := range rootJobs {
-			jobDef := templatedWorkflow.Jobs[id]
+			jobDef := newJobs[id]
 
 			// If new root templated job has a diffent stage from the old one
 			if jobDef.Stage == j.Stage {
 				jobDef.Needs = append(jobDef.Needs, j.Needs...)
-				templatedWorkflow.Jobs[id] = jobDef
+				newJobs[id] = jobDef
 			}
 		}
 	}
@@ -607,24 +600,24 @@ loop:
 	}
 
 	// Add new stage on parent workflow
-	for k, v := range templatedWorkflow.Stages {
+	for k, v := range newStages {
 		if _, has := run.WorkflowData.Workflow.Stages[k]; !has {
 			run.WorkflowData.Workflow.Stages[k] = v
 		}
 	}
 
 	// Set job on workflow
-	for k, v := range templatedWorkflow.Jobs {
+	for k, v := range newJobs {
 		run.WorkflowData.Workflow.Jobs[k] = v
 	}
 	// Set gate on workflow
-	for k, v := range templatedWorkflow.Gates {
+	for k, v := range newGates {
 		if _, has := run.WorkflowData.Workflow.Gates[k]; !has {
 			run.WorkflowData.Workflow.Gates[k] = v
 		}
 	}
 	// Set annotations on workflow
-	for k, v := range templatedWorkflow.Annotations {
+	for k, v := range newAnnotations {
 		if _, has := run.WorkflowData.Workflow.Annotations[k]; !has {
 			run.WorkflowData.Workflow.Annotations[k] = v
 		}
