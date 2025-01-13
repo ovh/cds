@@ -1528,7 +1528,7 @@ func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, files
 
 }
 
-func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) []error {
+func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store, o T, ef *EntityFinder, wmDockerImageWhiteList []regexp.Regexp) []error {
 	// 1. Static lint
 	if err := o.Lint(); err != nil {
 		return err
@@ -1546,9 +1546,9 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 			break
 		}
 		// Verify the image if any whitelist is setup
-		if dockerSpec.Image != "" && len(api.WorkerModelDockerImageWhiteList) > 0 {
+		if dockerSpec.Image != "" && len(wmDockerImageWhiteList) > 0 {
 			var allowedImage = false
-			for _, r := range api.WorkerModelDockerImageWhiteList { // At least one regexp must match
+			for _, r := range wmDockerImageWhiteList { // At least one regexp must match
 				if r.MatchString(dockerSpec.Image) {
 					allowedImage = true
 					break
@@ -1561,7 +1561,7 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 	case sdk.V2Workflow:
 		switch {
 		case x.From != "":
-			entTmpl, _, msg, errSearch := ef.searchWorkflowTemplate(ctx, api.mustDB(), api.Cache, x.From)
+			entTmpl, _, msg, errSearch := ef.searchWorkflowTemplate(ctx, db, store, x.From)
 			if errSearch != nil {
 				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: unable to retrieve template %s of type %s: %v", x.Name, x.From, sdk.EntityTypeWorkflowTemplate, errSearch))
 				break
@@ -1589,7 +1589,7 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 			for _, j := range x.Jobs {
 				// Check if worker model exists
 				if !strings.Contains(j.RunsOn.Model, "${{") && len(j.Steps) > 0 {
-					_, _, msg, errSearch := ef.searchWorkerModel(ctx, api.mustDB(), api.Cache, j.RunsOn.Model)
+					_, _, msg, errSearch := ef.searchWorkerModel(ctx, db, store, j.RunsOn.Model)
 					if errSearch != nil {
 						err = append(err, errSearch)
 					}
@@ -1603,7 +1603,7 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 					if s.Uses == "" {
 						continue
 					}
-					_, _, msg, errSearch := ef.searchAction(ctx, api.mustDB(), api.Cache, s.Uses)
+					_, _, msg, errSearch := ef.searchAction(ctx, db, store, s.Uses)
 					if errSearch != nil {
 						err = append(err, errSearch)
 					}
@@ -1634,7 +1634,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 	}
 	var entities []sdk.EntityWithObject
 	for _, o := range *out {
-		if err := Lint(ctx, api, o, ef); err != nil {
+		if err := Lint(ctx, api.mustDB(), api.Cache, o, ef, api.WorkerModelDockerImageWhiteList); err != nil {
 			return nil, err
 		}
 		eo := sdk.EntityWithObject{
