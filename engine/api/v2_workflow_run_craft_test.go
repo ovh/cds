@@ -2049,16 +2049,16 @@ spec: |-
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    0,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -2251,16 +2251,16 @@ spec: |-
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    0,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -2465,16 +2465,16 @@ spec: |-
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    0,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,

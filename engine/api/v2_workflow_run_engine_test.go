@@ -1758,22 +1758,22 @@ func TestWorkflowIntegrationInterpoloated(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   1,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {
@@ -1791,8 +1791,8 @@ func TestWorkflowIntegrationInterpoloated(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:            wr.ID,
+		DeprecatedUserID: admin.ID,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
