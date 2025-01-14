@@ -35,4 +35,8 @@ inputs:
   submodules:
     type: text
     description: "Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules"
+  gpg-key:
+    type: text
+    description: "The gpg-key used to sign git commits"
+    default: ${{git.gpg_key}}
 
