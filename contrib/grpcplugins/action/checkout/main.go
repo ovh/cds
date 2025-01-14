@@ -148,6 +148,7 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 			res.Details = fmt.Sprintf("unable to get current user: %v", err)
 			return stream.Send(res)
 		}
+		// Install id_rsa priv key
 		if u != nil && u.HomeDir != "" {
 			sshFilePath := u.HomeDir + "/.ssh/id_rsa"
 			if _, err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, sshFilePath, key.Private); err != nil {
@@ -188,6 +189,15 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 				}
 			}
 		}
+	}
+
+	// Install and import GPG Key
+	gpgkey, err := grpcplugins.GetProjectKey(ctx, &p.Common, gpgKeyfromIntegration)
+	if err != nil {
+
+	}
+	if _, _, err := sdk.ImportGPGKey(workDirs.BaseDir, gpgkey.Name, gpgkey.Private); err != nil {
+		return fmt.Errorf("unable to install pgp key %s: %v", gpgkey, err)
 	}
 
 	return stream.Send(res)

@@ -312,14 +312,14 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 				*(out.(*sdk.VCSCommit)) = *commit
 				return nil, 200, nil
 			},
-		).MaxTimes(1)
+		).MaxTimes(2)
 
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "gpgkey F344BDDCE15F17D7 not found", analysisUpdated.Data.Error)
+	require.Equal(t, "unable to find commiter for commit abcdef", analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubUserNotEnoughPerm(t *testing.T) {

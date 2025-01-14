@@ -78,7 +78,7 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 			if err != nil {
 				return err
 			}
-			resp.Initiator = *initiator
+			resp.Initiator = initiator
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
 }

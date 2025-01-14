@@ -169,7 +169,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 					hre.SignKey = apiAnalysis.Data.SignKeyID
 					hre.DeprecatedUsername = apiAnalysis.Data.Initiator.Username()
 					hre.DeprecatedUserID = apiAnalysis.Data.Initiator.UserID
-					hre.Initiator = *apiAnalysis.Data.Initiator
+					hre.Initiator = apiAnalysis.Data.Initiator
 				}
 			}
 		}

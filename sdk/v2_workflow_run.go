@@ -21,26 +21,26 @@ const (
 )
 
 type V2WorkflowRunHookRequest struct {
-	HookEventID        string                 `json:"hook_event_id"`
-	DeprecatedUserID   string                 `json:"user_id"` // Deprecated
-	EventName          WorkflowHookEventName  `json:"event_name"`
-	Ref                string                 `json:"ref,omitempty"`
-	Sha                string                 `json:"sha,omitempty"`
-	PullrequestID      int64                  `json:"pr_id,omitempty"`
-	PullrequestToRef   string                 `json:"pr_to_ref,omitempty"`
-	CommitMessage      string                 `json:"commit_message,omitempty"`
-	Payload            map[string]interface{} `json:"payload"`
-	HookType           string                 `json:"hook_type"`
-	EntityUpdated      string                 `json:"entity_updated"`
-	SemverCurrent      string                 `json:"semver_current"`
-	SemverNext         string                 `json:"semver_next"`
-	ChangeSets         []string               `json:"changesets"`
-	Cron               string                 `json:"cron"`
-	CronTimezone       string                 `json:"cron_timezone"`
-	DeprecatedAdminMFA bool                   `json:"admin_mfa"` // Deprecated
-	WorkflowRun        string                 `json:"workflow_run"`
-	WorkflowRunID      string                 `json:"workflow_run_id"`
-	Initiator          V2WorkflowRunInitiator `json:"initiator"`
+	HookEventID        string                  `json:"hook_event_id"`
+	DeprecatedUserID   string                  `json:"user_id"` // Deprecated
+	EventName          WorkflowHookEventName   `json:"event_name"`
+	Ref                string                  `json:"ref,omitempty"`
+	Sha                string                  `json:"sha,omitempty"`
+	PullrequestID      int64                   `json:"pr_id,omitempty"`
+	PullrequestToRef   string                  `json:"pr_to_ref,omitempty"`
+	CommitMessage      string                  `json:"commit_message,omitempty"`
+	Payload            map[string]interface{}  `json:"payload"`
+	HookType           string                  `json:"hook_type"`
+	EntityUpdated      string                  `json:"entity_updated"`
+	SemverCurrent      string                  `json:"semver_current"`
+	SemverNext         string                  `json:"semver_next"`
+	ChangeSets         []string                `json:"changesets"`
+	Cron               string                  `json:"cron"`
+	CronTimezone       string                  `json:"cron_timezone"`
+	DeprecatedAdminMFA bool                    `json:"admin_mfa"` // Deprecated
+	WorkflowRun        string                  `json:"workflow_run"`
+	WorkflowRunID      string                  `json:"workflow_run_id"`
+	Initiator          *V2WorkflowRunInitiator `json:"initiator"`
 }
 
 type V2WorkflowRun struct {
@@ -447,6 +447,9 @@ type V2WorkflowRunInitiator struct {
 }
 
 func (i *V2WorkflowRunInitiator) Username() string {
+	if i == nil {
+		return ""
+	}
 	if i.UserID != "" {
 		return i.User.Username // Yes it can panic
 	}

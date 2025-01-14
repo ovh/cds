@@ -16,7 +16,7 @@ func TestTriggerWorkflow(t *testing.T) {
 
 	ctx := context.TODO()
 	hre := sdk.HookRepositoryEvent{
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: &sdk.V2WorkflowRunInitiator{
 			UserID: "1234567890",
 		},
 		ExtractData: sdk.HookRepositoryEventExtractData{
