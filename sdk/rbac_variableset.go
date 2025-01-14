@@ -20,6 +20,7 @@ type RBACVariableSet struct {
 	RBACGroupsName       []string             `json:"groups,omitempty" db:"-"`
 	RBACVariableSetNames RBACVariableSetNames `json:"variablesets,omitempty" db:"variablesets"`
 	AllVariableSets      bool                 `json:"all_variablesets" db:"all_variablesets"`
+	RBACVCSUsers         RBACVCSUsers         `json:"vcs_users,omitempty" db:"vcs_users"`
 
 	RBACUsersIDs  []string `json:"-" db:"-"`
 	RBACGroupsIDs []int64  `json:"-" db:"-"`

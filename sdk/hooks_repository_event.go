@@ -86,13 +86,14 @@ type HookEventCallback struct {
 }
 
 type HookAnalysisCallback struct {
-	AnalysisID     string           `json:"analysis_id"`
-	AnalysisStatus string           `json:"analysis_status"`
-	Error          string           `json:"error"`
-	Models         []EntityFullName `json:"models"`
-	Workflows      []EntityFullName `json:"workflows"`
-	Username       string           `json:"username"`
-	UserID         string           `json:"user_id"`
+	AnalysisID         string                 `json:"analysis_id"`
+	AnalysisStatus     string                 `json:"analysis_status"`
+	Error              string                 `json:"error"`
+	Models             []EntityFullName       `json:"models"`
+	Workflows          []EntityFullName       `json:"workflows"`
+	DeprecatedUsername string                 `json:"username"`
+	DeprecatedUserID   string                 `json:"user_id"`
+	Initiator          V2WorkflowRunInitiator `json:"initiator"`
 }
 
 type HookRepository struct {
@@ -143,11 +144,12 @@ type HookRepositoryEvent struct {
 	ModelUpdated              []EntityFullName               `json:"model_updated"`
 	WorkflowUpdated           []EntityFullName               `json:"workflow_updated"`
 	WorkflowHooks             []HookRepositoryEventWorkflow  `json:"workflows"`
-	UserID                    string                         `json:"user_id"`
-	Username                  string                         `json:"username"`
+	DeprecatedUserID          string                         `json:"user_id"`  // Deprecated
+	DeprecatedUsername        string                         `json:"username"` // Deprecated
 	SignKey                   string                         `json:"sign_key"`
 	SigningKeyOperation       string                         `json:"signing_key_operation"`
 	SigningKeyOperationStatus OperationStatus                `json:"signing_key_operation_status"`
+	Initiator                 V2WorkflowRunInitiator         `json:"initiator"`
 }
 
 func (h *HookRepositoryEvent) IsTerminated() bool {
@@ -341,20 +343,22 @@ type HookRetrieveUserRequest struct {
 }
 
 type HookRetrieveUserResponse struct {
-	UserID   string `json:"user_id"`
-	Username string `json:"username"`
+	DeprecatedUserID   string                 `json:"user_id"`  // Deprecated
+	DeprecatedUsername string                 `json:"username"` // Deprecated
+	Initiator          V2WorkflowRunInitiator `json:"initiator"`
 }
 
 type AnalysisRequest struct {
-	ProjectKey    string `json:"projectKey"`
-	VcsName       string `json:"vcsName"`
-	RepoName      string `json:"repoName"`
-	Ref           string `json:"ref"`
-	Commit        string `json:"commit"`
-	HookEventUUID string `json:"hook_event_uuid"`
-	HookEventKey  string `json:"hook_event_key"`
-	UserID        string `json:"user_id"`
-	AdminMFA      bool   `json:"admin_mfa"`
+	ProjectKey         string                 `json:"projectKey"`
+	VcsName            string                 `json:"vcsName"`
+	RepoName           string                 `json:"repoName"`
+	Ref                string                 `json:"ref"`
+	Commit             string                 `json:"commit"`
+	HookEventUUID      string                 `json:"hook_event_uuid"`
+	HookEventKey       string                 `json:"hook_event_key"`
+	DeprecatedUserID   string                 `json:"user_id"`
+	DeprecatedAdminMFA bool                   `json:"admin_mfa"`
+	Initiator          V2WorkflowRunInitiator `json:"initiator"`
 }
 
 type AnalysisResponse struct {

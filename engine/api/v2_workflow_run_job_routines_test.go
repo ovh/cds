@@ -38,9 +38,11 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -58,24 +60,28 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		Scheduled:     &nowMinus20Min,
-		JobID:         sdk.RandomString(10),
-		Status:        sdk.V2WorkflowRunJobStatusScheduling,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		Scheduled:  &nowMinus20Min,
+		JobID:      sdk.RandomString(10),
+		Status:     sdk.V2WorkflowRunJobStatusScheduling,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		Scheduled:     &now,
-		JobID:         sdk.RandomString(10),
-		Status:        sdk.V2WorkflowRunJobStatusScheduling,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		Scheduled:  &now,
+		JobID:      sdk.RandomString(10),
+		Status:     sdk.V2WorkflowRunJobStatusScheduling,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 
@@ -116,9 +122,11 @@ func TestStopDeadJobs(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -139,11 +147,13 @@ func TestStopDeadJobs(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		JobID:         sdk.RandomString(10),
-		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		JobID:      sdk.RandomString(10),
+		Status:     sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -159,11 +169,13 @@ func TestStopDeadJobs(t *testing.T) {
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		JobID:         sdk.RandomString(10),
-		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		JobID:      sdk.RandomString(10),
+		Status:     sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 

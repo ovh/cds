@@ -47,7 +47,7 @@ func TestPostRetrieveEventUserHandler(t *testing.T) {
 
 	var signKeyResponse sdk.HookRetrieveUserResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &signKeyResponse))
-	require.Equal(t, admin.ID, signKeyResponse.UserID)
+	require.Equal(t, admin.ID, signKeyResponse.Initiator.UserID)
 
 }
 func TestPostHookEventRetrieveSignKeyHandler(t *testing.T) {

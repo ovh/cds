@@ -54,8 +54,7 @@ type createAnalysisRequest struct {
 	commit        string
 	hookEventUUID string
 	hookEventKey  string
-	user          *sdk.AuthentifiedUser
-	adminMFA      bool
+	initiator     sdk.V2WorkflowRunInitiator
 }
 
 func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration) {
@@ -248,19 +247,20 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 			}
 
 			isAdminMFA := false
-			var u *sdk.AuthentifiedUser
 			if !isHooks(ctx) {
 				uc := getUserConsumer(ctx)
-				if uc != nil {
-					u = uc.AuthConsumerUser.AuthentifiedUser
-				}
+				u := uc.AuthConsumerUser.AuthentifiedUser
 				isAdminMFA = isAdmin(ctx)
-			} else if isHooks(ctx) && analysis.UserID != "" {
-				u, err = user.LoadByID(ctx, api.mustDB(), analysis.UserID)
+				analysis.Initiator.User = u
+				analysis.Initiator.UserID = u.ID
+				analysis.Initiator.IsAdminWithMFA = isAdminMFA
+			} else if isHooks(ctx) && analysis.Initiator.UserID != "" {
+				u, err := user.LoadByID(ctx, api.mustDB(), analysis.Initiator.UserID)
 				if err != nil {
 					return err
 				}
-				isAdminMFA = analysis.AdminMFA
+				analysis.Initiator.User = u
+				isAdminMFA = analysis.Initiator.IsAdminWithMFA
 				if isAdminMFA && u.Ring != sdk.UserRingAdmin {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s is not admin", u.Username)
 				}
@@ -274,8 +274,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				commit:        analysis.Commit,
 				hookEventUUID: analysis.HookEventUUID,
 				hookEventKey:  analysis.HookEventKey,
-				user:          u,
-				adminMFA:      isAdminMFA,
+				initiator:     analysis.Initiator,
 			}
 
 			tx, err := api.mustDB().Begin()
@@ -317,12 +316,8 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		Data: sdk.ProjectRepositoryData{
 			HookEventUUID: analysisRequest.hookEventUUID,
 			HookEventKey:  analysisRequest.hookEventKey,
+			Initiator:     &analysisRequest.initiator,
 		},
-	}
-	if analysisRequest.user != nil {
-		repoAnalysis.Data.CDSUserID = analysisRequest.user.ID
-		repoAnalysis.Data.CDSUserName = analysisRequest.user.Username
-		repoAnalysis.Data.CDSAdminWithMFA = analysisRequest.adminMFA
 	}
 
 	if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
@@ -442,7 +437,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
 
 	// If no user triggered the analysis, retrieve the signing key
-	if analysis.Data.CDSUserID == "" {
+	if analysis.Data.Initiator.UserID == "" {
 		// Check Commit Signature
 		var keyID, analysisError string
 		switch vcsProjectWithSecret.Type {
@@ -467,17 +462,15 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			analysis.Data.CommitCheck = true
 
 			// retrieve the committer
-			u, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), analysis.Commit, analysis.Data.SignKeyID, analysis.ProjectKey, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
+			commitInitiator, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), analysis.Commit, analysis.Data.SignKeyID, analysis.ProjectKey, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
 			}
-			if u == nil {
+			if commitInitiator == nil {
 				analysis.Status = analysisStatus
 				analysis.Data.Error = analysisError
-			} else {
-				analysis.Data.CDSUserID = u.ID
-				analysis.Data.CDSUserName = u.Username
 			}
+			analysis.Data.Initiator = commitInitiator
 		}
 	}
 
@@ -495,11 +488,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}
 
 	// Load committer / user that trigger the analysis
-	u, err := user.LoadByID(ctx, api.mustDB(), analysis.Data.CDSUserID)
-	if err != nil {
-		return api.stopAnalysis(ctx, analysis, err)
+	if analysis.Data.Initiator.UserID != "" && analysis.Data.Initiator.User == nil { // Should not happen
+		analysis.Data.Initiator.User, err = user.LoadByID(ctx, api.mustDB(), analysis.Data.Initiator.UserID)
+		if err != nil {
+			return api.stopAnalysis(ctx, analysis, err)
+		}
 	}
-	userDB = *u
 
 	// Retrieve files content
 	var filesContent map[string][]byte
@@ -535,7 +529,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return sdk.WithStack(tx.Commit())
 	}
 
-	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, *repo, *vcsProjectWithSecret, *u, analysis.Data.CDSAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
+	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, *repo, *vcsProjectWithSecret, *analysis.Data.Initiator, api.Config.WorkflowV2.LibraryProjectKey)
 
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
 	if err != nil {
@@ -568,12 +562,22 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
 			}
-			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), roleName, analysis.Data.CDSUserID, analysis.ProjectKey)
-			if err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check user permission"))
+
+			if analysis.Data.Initiator.IsUser() {
+				hasRole, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), roleName, analysis.Data.Initiator.UserID, analysis.ProjectKey)
+				if err != nil {
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check user permission"))
+				}
+				userRoles[t] = analysis.Data.Initiator.IsAdminWithMFA || hasRole
+				log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, t, b)
+			} else {
+				hasRole, err := rbac.HasRoleOnProjectAndVCSUsername(ctx, api.mustDB(), roleName, analysis.Data.Initiator.VCS, analysis.Data.Initiator.VCSUsername, analysis.ProjectKey)
+				if err != nil {
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check VCS User permission"))
+				}
+				userRoles[t] = hasRole
+				log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, t, b)
 			}
-			userRoles[t] = analysis.Data.CDSAdminWithMFA || b
-			log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, t, b)
 		}
 	}
 
@@ -804,7 +808,7 @@ skipEntity:
 			if _, has := foundEntities[e.Type+"-"+e.Name]; !has {
 				// Check right
 				if !userRoles[e.Type] {
-					log.Warn(ctx, "user %s [%s] removed the entity %s [%s] but it has not the right to do it", u.Username, u.ID, e.Name, e.Type)
+					log.Warn(ctx, "user %s removed the entity %s [%s] but has not the right to do it", analysis.Data.Initiator.Username(), e.Name, e.Type)
 					continue
 				}
 				if err := DeleteEntity(ctx, tx, &e, srvs, delOpts); err != nil {
@@ -1310,8 +1314,10 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 			Error:          analysis.Data.Error,
 			Models:         make([]sdk.EntityFullName, 0),
 			Workflows:      make([]sdk.EntityFullName, 0),
-			Username:       analysis.Data.CDSUserName,
-			UserID:         analysis.Data.CDSUserID,
+			// Username:       analysis.Data.CDSUserName,
+			// UserID:         analysis.Data.CDSUserID,
+			// VCSUsername:    analysis.Data.VCSUsername,
+			Initiator: *analysis.Data.Initiator,
 		},
 	}
 	for _, e := range entities {
@@ -1336,12 +1342,40 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 	return nil
 }
 
+/*
+func findCommitterFromVCSRealm(ctx context.Context, db *gorp.DbMap, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject) (*sdk.V2WorkflowRunInitiator, string, string, error) {
+	gpgKeyname := vcsProjectWithSecret.Auth.GPGKeyName
+	keys, err := project.LoadAllKeysByProjectKey(ctx, db, projKey)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	var gpgKey *sdk.ProjectKey
+	for _, k := range keys {
+		if k.Type == sdk.KeyTypePGP && k.Name == gpgKeyname {
+			gpgKey = &k
+			break
+		}
+	}
+
+	if gpgKey != nil && gpgKey.KeyID == signKeyID {
+		var res sdk.V2WorkflowRunInitiator
+		res.VCS = vcsProjectWithSecret.Name
+		res.VCSUsername = vcsProjectWithSecret.Auth.Username
+		return &res, "", "", nil
+	}
+
+	return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("gpgkey %s not found", signKeyID), nil
+}*/
+
 // findCommitter
-func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
+func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2WorkflowRunInitiator, string, string, error) {
 	ctx, next := telemetry.Span(ctx, "findCommitter", trace.StringAttribute(telemetry.TagProjectKey, projKey), trace.StringAttribute(telemetry.TagVCSServer, vcsProjectWithSecret.Name), trace.StringAttribute(telemetry.TagRepository, repoName))
 	defer next()
 
 	publicKeyFound := false
+
+	// Checking known public gpg keys from vcs server (from configuration)
 	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Name]
 	if has {
 		for _, k := range publicKeys {
@@ -1352,32 +1386,41 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}
 	}
 
+	// Checking CDS users public gpg keys
+	var userGPGKey *sdk.UserGPGKey
 	if !publicKeyFound {
-		gpgKey, err := user.LoadGPGKeyByKeyID(ctx, db, signKeyID)
+		var err error
+		userGPGKey, err = user.LoadGPGKeyByKeyID(ctx, db, signKeyID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", sdk.NewErrorFrom(err, "unable get gpg key: %s", signKeyID)
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("gpgkey %s not found", signKeyID), nil
+			// return findCommitterFromVCSRealm(ctx, db, signKeyID, projKey, vcsProjectWithSecret) // If CDS user is not found, lets checks user from VCS realm
 		}
+	}
 
-		cdsUser, err := user.LoadByID(ctx, db, gpgKey.AuthentifiedUserID)
+	// Is the GPG Key matches a CDS User, load the User
+	var cdsUser *sdk.AuthentifiedUser
+	if userGPGKey != nil {
+		var err error
+		cdsUser, err = user.LoadByID(ctx, db, userGPGKey.AuthentifiedUserID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to load user %s", gpgKey.AuthentifiedUserID))
+				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to load user %s", userGPGKey.AuthentifiedUserID))
 			}
-			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("user %s not found for gpg key %s", gpgKey.AuthentifiedUserID, gpgKey.KeyID), nil
+			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("user %s not found for gpg key %s", userGPGKey.AuthentifiedUserID, userGPGKey.KeyID), nil
 		}
-		return cdsUser, "", "", nil
 
+		return &sdk.V2WorkflowRunInitiator{
+			UserID: cdsUser.ID,
+			User:   cdsUser,
+		}, "", "", nil
 	}
 
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, cache, projKey, vcsProjectWithSecret.Name)
 	if err != nil {
 		return nil, "", "", sdk.WithStack(err)
 	}
-
-	var commitUser *sdk.AuthentifiedUser
 
 	// Get commit
 	tx, err := db.Begin()
@@ -1386,18 +1429,23 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	}
 	defer tx.Rollback() // nolint
 
+	var vcsUsername string
+
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
 			return nil, "", "", err
 		}
-		commitUser, err = user.LoadByUsername(ctx, db, commit.Committer.Slug)
+		cdsUser, err = user.LoadByUsername(ctx, db, commit.Committer.Slug)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", commit.Committer.Slug))
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
+
+			vcsUsername = commit.Committer.Slug
+			// Commiter is not a CDS User
+			// return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
 		}
 	case sdk.VCSTypeGithub:
 		commit, err := client.Commit(ctx, repoName, sha)
@@ -1428,12 +1476,14 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}
 
 		// Load user
-		commitUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
+		cdsUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Name), nil
+			vcsUsername = commit.Committer.Name
+			// Commiter is not a CDS User
+			// return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Name), nil
 		}
 	}
 
@@ -1441,7 +1491,22 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		return nil, "", "", sdk.WithStack(err)
 	}
 
-	return commitUser, "", "", nil
+	if vcsUsername != "" {
+		return &sdk.V2WorkflowRunInitiator{
+			VCS:         vcsProjectWithSecret.Name,
+			VCSUsername: vcsUsername,
+		}, "", "", nil
+	}
+
+	if cdsUser != nil {
+		return &sdk.V2WorkflowRunInitiator{
+			UserID: cdsUser.ID,
+			User:   cdsUser,
+		}, "", "", nil
+	}
+
+	// This error should not happen
+	return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("Unknown committer"), nil
 }
 
 func sortEntitiesFiles(filesContent map[string][]byte) []string {

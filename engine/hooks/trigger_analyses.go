@@ -167,8 +167,9 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 						return err
 					}
 					hre.SignKey = apiAnalysis.Data.SignKeyID
-					hre.Username = apiAnalysis.Data.CDSUserName
-					hre.UserID = apiAnalysis.Data.CDSUserID
+					hre.DeprecatedUsername = apiAnalysis.Data.Initiator.Username()
+					hre.DeprecatedUserID = apiAnalysis.Data.Initiator.UserID
+					hre.Initiator = *apiAnalysis.Data.Initiator
 				}
 			}
 		}
@@ -218,15 +219,16 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 	}
 
 	analyze := sdk.AnalysisRequest{
-		RepoName:      hre.RepositoryName,
-		VcsName:       hre.VCSServerName,
-		ProjectKey:    analysis.ProjectKey,
-		Ref:           hre.ExtractData.Ref,
-		Commit:        hre.ExtractData.Commit,
-		HookEventUUID: hre.UUID,
-		HookEventKey:  cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
-		UserID:        hre.UserID,
-		AdminMFA:      hre.ExtractData.AdminMFA,
+		RepoName:           hre.RepositoryName,
+		VcsName:            hre.VCSServerName,
+		ProjectKey:         analysis.ProjectKey,
+		Ref:                hre.ExtractData.Ref,
+		Commit:             hre.ExtractData.Commit,
+		HookEventUUID:      hre.UUID,
+		HookEventKey:       cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
+		DeprecatedUserID:   hre.DeprecatedUserID,
+		DeprecatedAdminMFA: hre.ExtractData.AdminMFA,
+		Initiator:          hre.Initiator,
 	}
 	resp, err := s.Client.ProjectRepositoryAnalysis(ctx, analyze)
 	if err != nil {

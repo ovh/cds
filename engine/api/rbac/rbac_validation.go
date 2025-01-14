@@ -59,7 +59,7 @@ func isValidRBACGlobal(rbacName string, rg sdk.RBACGlobal) error {
 
 func isValidRBACWorkflow(rbacName string, rbacWorkflow sdk.RBACWorkflow) error {
 	// Check empty group and users
-	if len(rbacWorkflow.RBACGroupsIDs) == 0 && len(rbacWorkflow.RBACUsersIDs) == 0 && !rbacWorkflow.AllUsers {
+	if len(rbacWorkflow.RBACGroupsIDs) == 0 && len(rbacWorkflow.RBACUsersIDs) == 0 && !rbacWorkflow.AllUsers && len(rbacWorkflow.RBACVCSUsers) == 0 {
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: missing groups or users on workflow permission", rbacName)
 	}
 
@@ -86,7 +86,7 @@ func isValidRBACWorkflow(rbacName string, rbacWorkflow sdk.RBACWorkflow) error {
 
 func isValidRBACProject(rbacName string, rbacProject sdk.RBACProject) error {
 	// Check empty group and users
-	if len(rbacProject.RBACGroupsIDs) == 0 && len(rbacProject.RBACUsersIDs) == 0 && !rbacProject.AllUsers {
+	if len(rbacProject.RBACGroupsIDs) == 0 && len(rbacProject.RBACUsersIDs) == 0 && !rbacProject.AllUsers && len(rbacProject.RBACVCSUsers) == 0 {
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: missing groups or users on project permission", rbacName)
 	}
 
@@ -129,7 +129,7 @@ func isValidRBACRegion(ctx context.Context, db gorp.SqlExecutor, rbacName string
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: must have at least one organization", rbacName)
 	}
 
-	if len(rbacRegion.RBACGroupsIDs)+len(rbacRegion.RBACUsersIDs) == 0 && !rbacRegion.AllUsers {
+	if len(rbacRegion.RBACGroupsIDs)+len(rbacRegion.RBACUsersIDs) == 0 && !rbacRegion.AllUsers && len(rbacRegion.RBACVCSUsers) == 0 {
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: missing groups or users on region permission", rbacName)
 	}
 	if len(rbacRegion.RBACGroupsIDs)+len(rbacRegion.RBACUsersIDs) > 0 && rbacRegion.AllUsers {

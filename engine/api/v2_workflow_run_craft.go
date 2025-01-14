@@ -28,7 +28,6 @@ import (
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
@@ -44,8 +43,8 @@ type WorkflowRunEntityFinder struct {
 	project sdk.Project
 }
 
-func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser, isAdminWithMFA bool, libraryProjectKey string) *WorkflowRunEntityFinder {
-	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, u, isAdminWithMFA, libraryProjectKey)
+func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, libraryProjectKey string) *WorkflowRunEntityFinder {
+	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, *run.Initiator, libraryProjectKey)
 	return &WorkflowRunEntityFinder{
 		ef:      ef,
 		run:     run,
@@ -145,28 +144,25 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	u, err := user.LoadByID(ctx, api.mustDB(), run.UserID, user.LoadOptions.WithContacts)
-	if err != nil {
-		return err
-	}
-
 	p, err := project.Load(ctx, api.mustDB(), run.ProjectKey)
 	if err != nil {
 		return err
 	}
 
 	// Build run context
-	runContext, mustSaveVersion, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, *u, api.Config.URL.UI)
+	runContext, mustSaveVersion, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, api.Config.URL.UI)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+		return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
 			Message:       fmt.Sprintf("%v", err),
 		})
 	}
 	run.Contexts = *runContext
-	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, *u, run.AdminMFA, api.Config.WorkflowV2.LibraryProjectKey)
+
+	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, api.Config.WorkflowV2.LibraryProjectKey)
+
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
 	if err != nil {
 		return err
@@ -182,12 +178,12 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			return err
 		}
 		if msg != nil {
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, *msg)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *msg)
 		}
 
 		if _, err := e.Template.Resolve(ctx, &run.WorkflowData.Workflow); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("Unable to resolve workflow template %s: %s", run.WorkflowData.Workflow.From, err),
@@ -209,14 +205,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 					Message:       e.Error(),
 				})
 			}
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, msgs...)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, msgs...)
 		}
 
 		// Build context for workflow
 		repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), e.Entity.ProjectRepositoryID)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("Unable to resolve workflow template repository: %s", err),
@@ -226,7 +222,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		vcsProj, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), repo.ProjectKey, repo.VCSProjectID)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("Unable to resolve workflow template vcs: %s", err),
@@ -269,14 +265,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+		return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
 			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
 		})
 	}
 	if len(infos) > 0 {
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
+		return stopRun(ctx, api.mustDB(), api.Cache, run, infos...)
 	}
 
 	// Apply all job templates
@@ -286,14 +282,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			msg, err := api.computeJobFromTemplate(ctx, wref, jobID, j, run)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
-				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+				return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
 					Message:       fmt.Sprintf("unable to compute job[%s] with template %s: %v", jobID, j.From, err),
 				})
 			}
 			if msg != nil {
-				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, msg...)
+				return stopRun(ctx, api.mustDB(), api.Cache, run, msg...)
 			}
 		}
 	}
@@ -329,14 +325,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		msg, err := searchActions(ctx, api.mustDB(), api.Cache, wref, j.Steps)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("unable to retrieve job[%s] definition. Please contact an administrator", jobID),
 			})
 		}
 		if msg != nil {
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, *msg)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *msg)
 		}
 
 		// Check worker model
@@ -344,14 +340,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, jobID, j.RunsOn.Model, j.Region, api.Config.Workflow.JobDefaultRegion)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
-				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+				return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
 					Message:       fmt.Sprintf("unable to compute worker model %s: %v", j.RunsOn.Model, err),
 				})
 			}
 			if msg != nil {
-				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, *msg)
+				return stopRun(ctx, api.mustDB(), api.Cache, run, *msg)
 			}
 			j.RunsOn.Model = completeName
 		}
@@ -359,7 +355,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		// Check variable set
 		if err := checkWorkflowVariableSets(*run, j, allVariableSets); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				IssuedAt:      time.Now(),
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -419,8 +415,8 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			Ref:                run.Contexts.Git.Ref,
 			Type:               string(run.WorkflowData.Workflow.Semver.From),
 			File:               run.WorkflowData.Workflow.Semver.Path,
-			Username:           run.Username,
-			UserID:             run.UserID,
+			Username:           run.Initiator.Username(),
+			UserID:             run.Initiator.UserID,
 		}
 		if err := workflow_v2.InsertWorkflowVersion(ctx, tx, &wkfVersion); err != nil {
 			return err
@@ -431,9 +427,9 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return sdk.WithStack(tx.Commit())
 	}
 
-	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, nil, nil, *u)
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, nil, nil)
 
-	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber, run.AdminMFA)
+	api.EnqueueWorkflowRun(ctx, run.ID, *run.Initiator, run.WorkflowName, run.RunNumber)
 	return nil
 }
 
@@ -614,7 +610,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 	return nil, nil
 }
 
-func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, u sdk.AuthentifiedUser, messages ...sdk.V2WorkflowRunInfo) error {
+func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, messages ...sdk.V2WorkflowRunInfo) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -642,12 +638,12 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 		return sdk.WithStack(err)
 	}
 
-	event_v2.PublishRunEvent(ctx, store, sdk.EventRunEnded, *run, nil, nil, u)
+	event_v2.PublishRunEvent(ctx, store, sdk.EventRunEnded, *run, nil, nil)
 
 	return nil
 }
 
-func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser, uiURL string) (*sdk.WorkflowRunContext, bool, error) {
+func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, uiURL string) (*sdk.WorkflowRunContext, bool, error) {
 	var runContext sdk.WorkflowRunContext
 
 	cdsContext := sdk.CDSContext{
@@ -662,7 +658,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		WorkflowVCSServer:  vcsServer.Name,
 		WorkflowRepository: repo.Name,
 		Event:              wr.RunEvent.Payload,
-		TriggeringActor:    u.Username,
+		TriggeringActor:    wr.Initiator.Username(),
 		EventName:          wr.RunEvent.EventName,
 	}
 

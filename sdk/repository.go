@@ -43,16 +43,17 @@ type ProjectRepositoryAnalysis struct {
 }
 
 type ProjectRepositoryData struct {
-	HookEventUUID   string                        `json:"hook_event_uuid"`
-	HookEventKey    string                        `json:"hook_event_key"`
-	OperationUUID   string                        `json:"operation_uuid"`
-	CommitCheck     bool                          `json:"commit_check"`
-	SignKeyID       string                        `json:"sign_key_id"`
-	CDSUserName     string                        `json:"cds_username"`
-	CDSUserID       string                        `json:"cds_username_id"`
-	CDSAdminWithMFA bool                          `json:"cds_admin_mfa"`
-	Error           string                        `json:"error"`
-	Entities        []ProjectRepositoryDataEntity `json:"entities"`
+	HookEventUUID             string                        `json:"hook_event_uuid"`
+	HookEventKey              string                        `json:"hook_event_key"`
+	OperationUUID             string                        `json:"operation_uuid"`
+	CommitCheck               bool                          `json:"commit_check"`
+	SignKeyID                 string                        `json:"sign_key_id"`
+	DeprecatedCDSUserName     string                        `json:"cds_username"`    // Deprecated
+	DeprecatedCDSUserID       string                        `json:"cds_username_id"` // Deprecated
+	DeprecatedCDSAdminWithMFA bool                          `json:"cds_admin_mfa"`   // Deprecated
+	Error                     string                        `json:"error"`
+	Entities                  []ProjectRepositoryDataEntity `json:"entities"`
+	Initiator                 *V2WorkflowRunInitiator       `json:"initiator"`
 }
 
 type ProjectRepositoryDataEntity struct {
@@ -74,5 +75,17 @@ func (prd *ProjectRepositoryData) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(JSONUnmarshal(source, prd), "cannot unmarshal ProjectRepositoryData")
+
+	if err := JSONUnmarshal(source, prd); err != nil {
+		return WrapError(err, "cannot unmarshal ProjectRepositoryData")
+	}
+
+	if prd.Initiator == nil {
+		prd.Initiator = &V2WorkflowRunInitiator{
+			UserID:         prd.DeprecatedCDSUserID,
+			IsAdminWithMFA: prd.Initiator.IsAdminWithMFA,
+		}
+	}
+
+	return nil
 }

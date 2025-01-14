@@ -35,24 +35,27 @@ func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		ProjectKey:   proj.Key,
-		UserID:       admin.ID,
-		WorkflowName: wkfName,
-		RepositoryID: repo.ID,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		Repository:   repo.Name,
+		Status:           sdk.V2WorkflowRunStatusBuilding,
+		ProjectKey:       proj.Key,
+		DeprecatedUserID: admin.ID,
+		WorkflowName:     wkfName,
+		RepositoryID:     repo.ID,
+		VCSServerID:      vcsServer.ID,
+		VCSServer:        vcsServer.Name,
+		Repository:       repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
 
@@ -131,14 +134,14 @@ func TestPostJobResultHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		ProjectKey:   proj.Key,
-		UserID:       admin.ID,
-		WorkflowName: wkfName,
-		RepositoryID: repo.ID,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		Repository:   repo.Name,
+		Status:           sdk.V2WorkflowRunStatusBuilding,
+		ProjectKey:       proj.Key,
+		DeprecatedUserID: admin.ID,
+		WorkflowName:     wkfName,
+		RepositoryID:     repo.ID,
+		VCSServerID:      vcsServer.ID,
+		VCSServer:        vcsServer.Name,
+		Repository:       repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -163,12 +166,15 @@ hatcheries:
 
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
 
@@ -216,36 +222,42 @@ func TestUserGetJobsQueuedHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		ProjectKey:   proj.Key,
-		UserID:       admin.ID,
-		WorkflowName: wkfName,
-		RepositoryID: repo.ID,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		Repository:   repo.Name,
+		Status:           sdk.V2WorkflowRunStatusBuilding,
+		ProjectKey:       proj.Key,
+		DeprecatedUserID: admin.ID,
+		WorkflowName:     wkfName,
+		RepositoryID:     repo.ID,
+		VCSServerID:      vcsServer.ID,
+		VCSServer:        vcsServer.Name,
+		Repository:       repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
 
 	jobRun2 := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj2.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job2",
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun2))
 
@@ -284,47 +296,56 @@ func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		ProjectKey:   proj.Key,
-		UserID:       admin.ID,
-		WorkflowName: wkfName,
-		RepositoryID: repo.ID,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		Repository:   repo.Name,
+		Status:           sdk.V2WorkflowRunStatusBuilding,
+		ProjectKey:       proj.Key,
+		DeprecatedUserID: admin.ID,
+		WorkflowName:     wkfName,
+		RepositoryID:     repo.ID,
+		VCSServerID:      vcsServer.ID,
+		VCSServer:        vcsServer.Name,
+		Repository:       repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
 
 	jobRun2 := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job2",
 		ModelType:     "docker",
 		Region:        "default2",
 		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun2))
 
 	jobRun3 := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job3",
 		ModelType:     "openstack",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun3))
 
@@ -391,25 +412,28 @@ func TestGetJobHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		ProjectKey:   proj.Key,
-		UserID:       admin.ID,
-		WorkflowName: wkfName,
-		RepositoryID: repo.ID,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		Repository:   repo.Name,
+		Status:           sdk.V2WorkflowRunStatusBuilding,
+		ProjectKey:       proj.Key,
+		DeprecatedUserID: admin.ID,
+		WorkflowName:     wkfName,
+		RepositoryID:     repo.ID,
+		VCSServerID:      vcsServer.ID,
+		VCSServer:        vcsServer.Name,
+		Repository:       repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
 
@@ -476,25 +500,28 @@ func TestPostJobRunInfoHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		ProjectKey:   proj.Key,
-		UserID:       admin.ID,
-		WorkflowName: wkfName,
-		RepositoryID: repo.ID,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		Repository:   repo.Name,
+		Status:           sdk.V2WorkflowRunStatusBuilding,
+		ProjectKey:       proj.Key,
+		DeprecatedUserID: admin.ID,
+		WorkflowName:     wkfName,
+		RepositoryID:     repo.ID,
+		VCSServerID:      vcsServer.ID,
+		VCSServer:        vcsServer.Name,
+		Repository:       repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
-		UserID:        admin.ID,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
 

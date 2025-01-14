@@ -63,16 +63,16 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    0,
-		RunAttempt:   0,
-		WorkflowRef:  "master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -150,16 +150,16 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    0,
-		RunAttempt:   0,
-		WorkflowRef:  "master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -282,16 +282,16 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    0,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -413,16 +413,16 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    0,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -582,16 +582,16 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    1,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -750,16 +750,16 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    1,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -909,16 +909,16 @@ func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    1,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/develop",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/develop",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -1037,16 +1037,16 @@ func TestCraftWorkflowRunCustomVersion_GitOnTag(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    1,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/tags/1.0.0",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/tags/1.0.0",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -1166,16 +1166,16 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    1,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -1325,16 +1325,16 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    1,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -1480,16 +1480,16 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    1,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -1642,16 +1642,16 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    1,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
@@ -1874,16 +1874,16 @@ spec: |-
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		UserID:       admin.ID,
-		ProjectKey:   proj.Key,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		VCSServerID:  vcsProject.ID,
-		RepositoryID: repo.ID,
-		RunNumber:    0,
-		RunAttempt:   0,
-		WorkflowRef:  "refs/heads/master",
-		WorkflowSha:  "123456789",
-		WorkflowName: wkName,
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
 			Workflow: sdk.V2Workflow{
 				Name: wkName,

@@ -56,6 +56,18 @@ func LoadAllKeys(ctx context.Context, db gorp.SqlExecutor, projectID int64) ([]s
 	return getAllKeys(ctx, db, query)
 }
 
+func LoadAllKeysByProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectKey, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_key
+		JOIN project ON project.id = project_key.project_id
+		WHERE project.projectKey = $1
+		AND project_key.builtin = false
+	`).Args(projectKey)
+
+	return getAllKeys(ctx, db, query)
+}
+
 // LoadAllKeysWithPrivateContent load all keys for the given project
 func LoadAllKeysWithPrivateContent(ctx context.Context, db gorp.SqlExecutor, projID int64) ([]sdk.ProjectKey, error) {
 	keys, err := LoadAllKeys(ctx, db, projID)

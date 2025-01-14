@@ -234,6 +234,7 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			}
 			vcsProject.Auth.Username = vcsClear.Auth.Username
 			vcsProject.Auth.SSHKeyName = vcsClear.Auth.SSHKeyName
+			vcsProject.Auth.GPGKeyName = vcsClear.Auth.GPGKeyName
 			vcsProject.Auth.SSHUsername = vcsClear.Auth.SSHUsername
 			vcsProject.Auth.SSHPort = vcsClear.Auth.SSHPort
 			return service.WriteMarshal(w, r, vcsProject, http.StatusOK)

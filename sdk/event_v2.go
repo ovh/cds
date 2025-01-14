@@ -367,9 +367,9 @@ func NewEventWorkflowRunPayload(wr V2WorkflowRun, rjs map[string]V2WorkflowRunJo
 		LastModified: wr.LastModified,
 
 		WorkflowData: wr.WorkflowData,
-		UserID:       wr.UserID,
-		Username:     wr.Username,
-		AdminMFA:     wr.AdminMFA,
+		UserID:       wr.Initiator.UserID,
+		Username:     wr.Initiator.Username(),
+		AdminMFA:     wr.Initiator.IsAdminWithMFA,
 		RunEvent:     wr.RunEvent,
 		RunJobEvent:  wr.RunJobEvent,
 		Annotations:  wr.Annotations,
@@ -379,6 +379,7 @@ func NewEventWorkflowRunPayload(wr V2WorkflowRun, rjs map[string]V2WorkflowRunJo
 			Env: wr.Contexts.Env,
 		},
 	}
+
 	p.Contexts.Jobs = JobsResultContext{}
 	for _, rj := range rjs {
 		jobResult := JobResultContext{

@@ -68,9 +68,11 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		Started:      time.Now().Add(-24 * 365 * time.Hour),
 		LastModified: time.Now(),
 		Status:       sdk.StatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		Contexts: sdk.WorkflowRunContext{
 			Git: sdk.GitContext{
 				Server:     "github",
@@ -98,9 +100,11 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.StatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		Contexts: sdk.WorkflowRunContext{
 			Git: sdk.GitContext{
 				Server:     "github",
@@ -147,9 +151,11 @@ func TestSearchAllWorkflow(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.StatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		Contexts: sdk.WorkflowRunContext{
 			Git: sdk.GitContext{
 				Server:     "github",
@@ -198,9 +204,11 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       lambda.ID,
-		Username:     lambda.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: lambda.ID,
+			User:   lambda,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -357,9 +365,11 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -519,9 +529,11 @@ func TestRunManualSkippedJob(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -658,9 +670,12 @@ func TestRunManualSkippedJob(t *testing.T) {
 
 	// trigger jobs
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:          wr.ID,
-		UserID:         admin.ID,
-		IsAdminWithMFA: true,
+		RunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID:         admin.ID,
+			User:           admin,
+			IsAdminWithMFA: true,
+		},
 	}))
 
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
@@ -695,7 +710,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 	v, has := rJob2.GateInputs["approve"]
 	require.True(t, has)
 	require.Equal(t, "true", fmt.Sprintf("%v", v))
-	require.True(t, rJob2.AdminMFA)
+	require.True(t, rJob2.Initiator.IsAdminWithMFA)
 }
 
 func TestRunManualSuccessJob(t *testing.T) {
@@ -726,9 +741,11 @@ func TestRunManualSuccessJob(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -777,9 +794,12 @@ func TestRunManualSuccessJob(t *testing.T) {
 
 	// trigger jobs
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:          wr.ID,
-		UserID:         admin.ID,
-		IsAdminWithMFA: true,
+		RunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID:         admin.ID,
+			User:           admin,
+			IsAdminWithMFA: true,
+		},
 	}))
 
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
@@ -829,9 +849,11 @@ func TestRunManualFailedJob(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -880,9 +902,12 @@ func TestRunManualFailedJob(t *testing.T) {
 
 	// trigger jobs
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:          wr.ID,
-		UserID:         admin.ID,
-		IsAdminWithMFA: true,
+		RunID: wr.ID,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID:         admin.ID,
+			User:           admin,
+			IsAdminWithMFA: true,
+		},
 	}))
 
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
@@ -932,14 +957,16 @@ func TestRunManualSkippedJobWithoutGate(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
 			},
 		}},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
@@ -1004,9 +1031,11 @@ func TestPutWorkflowRun(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusFail,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1168,9 +1197,11 @@ func TestPostRestartWorkflowRun_BuildingRun(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1215,9 +1246,11 @@ func TestPostRestartWorkflowRun_NoFailingJob(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1262,9 +1295,11 @@ func TestGetWorkflowRunInfoV2Handler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1324,9 +1359,11 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1341,11 +1378,13 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunAttempt:    wr.RunAttempt,
-		JobID:         sdk.RandomString(10),
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		RunAttempt: wr.RunAttempt,
+		JobID:      sdk.RandomString(10),
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -1388,9 +1427,11 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1405,11 +1446,13 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunAttempt:    wr.RunAttempt,
-		JobID:         sdk.RandomString(10),
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		RunAttempt: wr.RunAttempt,
+		JobID:      sdk.RandomString(10),
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -1467,9 +1510,11 @@ func TestPostJobRunStepHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1509,12 +1554,14 @@ hatcheries:
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		JobID:         sdk.RandomString(10),
-		Region:        reg.Name,
-		HatcheryName:  hatch.Name,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey:   wr.ProjectKey,
+		JobID:        sdk.RandomString(10),
+		Region:       reg.Name,
+		HatcheryName: hatch.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -1570,9 +1617,11 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1587,11 +1636,13 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunAttempt:    wr.RunAttempt,
-		JobID:         sdk.RandomString(10),
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		RunAttempt: wr.RunAttempt,
+		JobID:      sdk.RandomString(10),
 		StepsStatus: sdk.JobStepsStatus{
 			"step1": {
 				Outcome:    sdk.StatusSuccess,
@@ -1639,9 +1690,11 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1656,10 +1709,12 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		RunAttempt: wr.RunAttempt,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -1701,9 +1756,11 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1718,12 +1775,14 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunNumber:     wr.RunNumber,
-		RunAttempt:    wr.RunAttempt,
-		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		RunNumber:  wr.RunNumber,
+		RunAttempt: wr.RunAttempt,
+		Status:     sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -1768,9 +1827,11 @@ func TestPostStopJobHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1786,11 +1847,13 @@ func TestPostStopJobHandler(t *testing.T) {
 		JobID:         sdk.RandomString(10),
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		Status:        sdk.V2WorkflowRunJobStatusBuilding,
-		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
+		ProjectKey: wr.ProjectKey,
+		Status:     sdk.V2WorkflowRunJobStatusBuilding,
+		RunAttempt: wr.RunAttempt,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
