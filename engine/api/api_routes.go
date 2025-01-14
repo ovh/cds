@@ -471,6 +471,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}", nil, r.GETv2(api.getProjectV2Handler), r.PUTv2(api.updateProjectV2Handler), r.DELETEv2(api.deleteProjectV2Handler))
 	r.Handle("/v2/project/{projectKey}/integrations", nil, r.GETv2(api.getProjectV2IntegrationsHandler), r.POSTv2(api.postProjectV2IntegrationHandler))
 	r.Handle("/v2/project/{projectKey}/integrations/{integrationName}", nil, r.GETv2(api.getProjectV2IntegrationHandler), r.PUTv2(api.putProjectV2IntegrationHandler), r.DELETEv2(api.deleteProjectV2IntegrationHandler))
+	r.Handle("/v2/project/{projectKey}/integrations/{integrationName}/workerhooks", nil, r.GETv2(api.getV2ProjectIntegrationWorkerHookHandler), r.POSTv2(api.postV2ProjectIntegrationWorkerHookHandler))
 	r.Handle("/v2/project/{projectKey}/keys", nil, r.GETv2(api.getKeysInProjectV2Handler), r.POSTv2(api.addKeyInProjectV2Handler))
 	r.Handle("/v2/project/{projectKey}/keys/{name}", nil, r.DELETEv2(api.deleteKeyInProjectV2Handler))
 	r.Handle("/v2/project/{projectKey}/keys/{name}/disable", nil, r.POSTv2(api.postDisableKeyInProjectV2Handler))
