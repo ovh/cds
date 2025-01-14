@@ -54,7 +54,7 @@ type createAnalysisRequest struct {
 	commit        string
 	hookEventUUID string
 	hookEventKey  string
-	initiator     sdk.V2WorkflowRunInitiator
+	initiator     *sdk.V2WorkflowRunInitiator
 }
 
 func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration) {
@@ -316,7 +316,7 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		Data: sdk.ProjectRepositoryData{
 			HookEventUUID: analysisRequest.hookEventUUID,
 			HookEventKey:  analysisRequest.hookEventKey,
-			Initiator:     &analysisRequest.initiator,
+			Initiator:     analysisRequest.initiator,
 		},
 	}
 
@@ -1309,15 +1309,14 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 		HookEventUUID:  analysis.Data.HookEventUUID,
 		HookEventKey:   analysis.Data.HookEventKey,
 		AnalysisCallback: &sdk.HookAnalysisCallback{
-			AnalysisStatus: analysis.Status,
-			AnalysisID:     analysis.ID,
-			Error:          analysis.Data.Error,
-			Models:         make([]sdk.EntityFullName, 0),
-			Workflows:      make([]sdk.EntityFullName, 0),
-			// Username:       analysis.Data.CDSUserName,
-			// UserID:         analysis.Data.CDSUserID,
-			// VCSUsername:    analysis.Data.VCSUsername,
-			Initiator: *analysis.Data.Initiator,
+			AnalysisStatus:     analysis.Status,
+			AnalysisID:         analysis.ID,
+			Error:              analysis.Data.Error,
+			Models:             make([]sdk.EntityFullName, 0),
+			Workflows:          make([]sdk.EntityFullName, 0),
+			DeprecatedUsername: analysis.Data.Initiator.Username(),
+			DeprecatedUserID:   analysis.Data.Initiator.UserID,
+			Initiator:          analysis.Data.Initiator,
 		},
 	}
 	for _, e := range entities {
