@@ -83,7 +83,7 @@ func (prd *ProjectRepositoryData) Scan(src interface{}) error {
 	if prd.Initiator == nil {
 		prd.Initiator = &V2WorkflowRunInitiator{
 			UserID:         prd.DeprecatedCDSUserID,
-			IsAdminWithMFA: prd.Initiator.IsAdminWithMFA,
+			IsAdminWithMFA: prd.DeprecatedCDSAdminWithMFA,
 		}
 	}
 
