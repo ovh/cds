@@ -789,6 +789,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	gitContext := sdk.GitContext{
 		Server:               workflowVCSServer.Name,
 		SSHKey:               workflowVCSServer.Auth.SSHKeyName,
+		GPGKey:               workflowVCSServer.Auth.GPGKeyName,
 		Username:             workflowVCSServer.Auth.Username,
 		Ref:                  ref,
 		RefName:              strings.TrimPrefix(strings.TrimPrefix(ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix),

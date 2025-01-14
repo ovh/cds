@@ -42,6 +42,7 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	authUsername := q.GetOptions()["username"]
 	authToken := q.GetOptions()["token"]
 	submodules := q.GetOptions()["submodules"]
+	gpgKey := q.GetOptions()["gpg-key"]
 
 	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
@@ -133,15 +134,16 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	}
 	grpcplugins.Logf(&p.Common, "Checkout completed\n")
 
+	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
+	if err != nil {
+		err := fmt.Errorf("unable to get working directory: %v", err)
+		res.Status = sdk.StatusFail
+		res.Details = err.Error()
+		return stream.Send(res)
+	}
+
 	if key != nil {
 		// Install key
-		workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
-		if err != nil {
-			err := fmt.Errorf("unable to get working directory: %v", err)
-			res.Status = sdk.StatusFail
-			res.Details = err.Error()
-			return stream.Send(res)
-		}
 		u, err := user.Current()
 		if err != nil {
 			res.Status = sdk.StatusFail
@@ -192,16 +194,21 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	}
 
 	// Install and import GPG Key
-	// gpgkey, err := grpcplugins.GetProjectKey(ctx, &p.Common, gpgKeyfromIntegration)
-	// if err != nil {
-
-	// }
-	// if _, _, err := sdk.ImportGPGKey(workDirs.BaseDir, gpgkey.Name, gpgkey.Private); err != nil {
-	//	return fmt.Errorf("unable to install pgp key %s: %v", gpgkey, err)
-	//}
+	if gpgKey != "" {
+		k, err := grpcplugins.GetProjectKey(ctx, &p.Common, gpgKey)
+		if err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to get GPG key %q: %v", gpgKey, err)
+			return stream.Send(res)
+		}
+		if _, _, err := sdk.ImportGPGKey(workDirs.BaseDir, k.Name, k.Private); err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to install GPG key %q: %v", gpgKey, err)
+			return stream.Send(res)
+		}
+	}
 
 	return stream.Send(res)
-
 }
 
 func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
