@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	types "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/require"
 	context "golang.org/x/net/context"
 
@@ -31,10 +32,10 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	err := h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
 
-	containers, err := h.getContainers(context.TODO(), h.dockerClients["default"], types.ContainerListOptions{})
+	containers, err := h.getContainers(context.TODO(), h.dockerClients["default"], container.ListOptions{})
 	require.NoError(t, err)
 
-	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
+	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, container.ListOptions{})
 	require.NoError(t, err)
 
 	err = h.killAndRemove(context.TODO(), h.dockerClients["default"], cntr.ID, containers)
@@ -65,17 +66,17 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
 
-	containers, err := h.getContainers(context.TODO(), h.dockerClients["default"], types.ContainerListOptions{})
+	containers, err := h.getContainers(context.TODO(), h.dockerClients["default"], container.ListOptions{})
 	require.NoError(t, err)
 
-	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
+	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, container.ListOptions{})
 	require.NoError(t, err)
 
 	err = h.killAndRemove(context.TODO(), h.dockerClients["default"], cntr.ID, containers)
 	require.NoError(t, err)
 }
 
-func getContainer(dockerClient *dockerClient, containers []types.Container, name string, options types.ContainerListOptions) (*types.Container, error) {
+func getContainer(dockerClient *dockerClient, containers []types.Container, name string, options container.ListOptions) (*types.Container, error) {
 	for i := range containers {
 		if strings.Replace(containers[i].Names[0], "/", "", 1) == strings.Replace(name, "/", "", 1) {
 			return &containers[i], nil

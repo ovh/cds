@@ -81,7 +81,7 @@ test-docker-compose:
 	./test.sh smoke_services cli;
 
 merge-coverage:
-	@docker run -v `pwd`:/workspace golang:1.22-alpine sh -c "\
+	@docker run -v `pwd`:/workspace golang:1.23-alpine sh -c "\
 			go install github.com/wadey/gocovmerge@latest && \
 			cd /workspace && \
       gocovmerge $(COVER_FILES) > /workspace/cdsctl.cover.out \

@@ -1072,6 +1072,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 
 			runJobs = append(runJobs, runJob)
 		} else {
+			permJobDef := jobDef.Copy()
 			allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
 			if err != nil {
 				return nil, nil, nil, false, err
@@ -1095,13 +1096,16 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				runJobContext:   runJobContext,
 				existingRunJobs: existingRunJobs,
 				jobID:           jobID,
-				jobToTrigger:    jobToTrigger,
+				jobToTrigger: JobToTrigger{
+					Status: jobToTrigger.Status,
+					Job:    permJobDef,
+				},
 				defaultRegion:   defaultRegion,
 				regionPermCache: regionPermCache,
 				integrations:    integrations,
 				allVariableSets: allVariableSets,
 			}
-			if jobDef.From == "" {
+			if permJobDef.From == "" {
 				jobs, runUpdated := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData)
 				runJobs = append(runJobs, jobs...)
 				if runUpdated {

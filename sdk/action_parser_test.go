@@ -9,6 +9,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_resultFilter1rray(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	// Usage as annotations expression
+	a := ActionParser{
+		contexts: map[string]interface{}{
+			"jobs": map[string]interface{}{
+				"myJob": map[string]interface{}{
+					"results": map[string]interface{}{
+						"JobRunResults": map[string]interface{}{
+							"generic:foo.txt": map[string]interface{}{
+								"name": "bar",
+							},
+						},
+					},
+				},
+			},
+		},
+		funcs: DefaultFuncs,
+	}
+	result, err := a.InterpolateToBool(context.TODO(), "${{ contains( toArray( result('generic', 'bar.*') ).*.name, 'bar') }}")
+	require.NoError(t, err)
+	require.False(t, result)
+
+	result, err = a.InterpolateToBool(context.TODO(), "${{ contains(toArray(result('generic', '*.txt')).*.name, 'bar') }}")
+	require.NoError(t, err)
+	require.True(t, result)
+}
+
 func TestParserValidate(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)

@@ -303,6 +303,46 @@ type V2Job struct {
 	Concurrency V2JobConcurrency `json:"-"`
 }
 
+func (j V2Job) Copy() V2Job {
+	new := j
+	new.Env = make(map[string]string)
+	for k, v := range j.Env {
+		new.Env[k] = v
+	}
+	new.Integrations = append(new.Integrations, j.Integrations...)
+
+	new.Parameters = make(map[string]string)
+	for k, v := range j.Parameters {
+		new.Parameters[k] = v
+	}
+	new.Services = make(map[string]V2JobService)
+	for k, v := range j.Services {
+		newService := v
+		newService.Env = make(map[string]string)
+		for envK, envV := range v.Env {
+			newService.Env[envK] = envV
+		}
+		new.Services[k] = newService
+	}
+	new.VariableSets = append(new.VariableSets, j.VariableSets...)
+
+	new.Steps = make([]ActionStep, 0, len(j.Steps))
+	for _, v := range j.Steps {
+		as := v
+		as.Env = make(map[string]string)
+		for kEnv, vEnv := range v.Env {
+			as.Env[kEnv] = vEnv
+		}
+		as.With = make(map[string]interface{})
+		for kWith, vWith := range v.With {
+			as.With[kWith] = vWith
+		}
+		new.Steps = append(new.Steps, as)
+	}
+
+	return new
+}
+
 type V2JobRunsOn struct {
 	Model  string `json:"model"`
 	Memory string `json:"memory"`

@@ -71,6 +71,19 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
+	var cmdPrefix string
+	if cmdUsername := h.GetImageUsername(ctx, spawnArgs.Model.GetOpenstackImage()); cmdUsername != "" {
+		cmdPrefix = fmt.Sprintf("sudo -u %s -i ", cmdUsername)
+		hatcheryTakeInfo := sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Time:    time.Now(),
+			Message: fmt.Sprintf("Hatchery %q is configured to use the username '%s' for this worker", h.Name(), cmdUsername),
+		}
+		if err = h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, hatcheryTakeInfo); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}
+
 	var cmdSuffix string
 	if spawnArgs.RegisterOnly {
 		cmdSuffix = fmt.Sprintf(" --config %s register", workerConfig.EncodeBase64())
@@ -78,7 +91,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		cmdSuffix += fmt.Sprintf(" --config %s", workerConfig.EncodeBase64())
 	}
 
-	udata := spawnArgs.Model.GetPreCmd() + "\n" + spawnArgs.Model.GetCmd() + cmdSuffix + "\n" + spawnArgs.Model.GetPostCmd()
+	udata := spawnArgs.Model.GetPreCmd() + "\n" + cmdPrefix + spawnArgs.Model.GetCmd() + cmdSuffix + "\n" + spawnArgs.Model.GetPostCmd()
 	tmpl, err := template.New("udata").Parse(udata)
 	if err != nil {
 		return err
