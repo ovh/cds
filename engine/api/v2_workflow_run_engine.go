@@ -1130,17 +1130,20 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 			// Check permutation to trigger
 			permutations := searchPermutationToTrigger(ctx, alls, existingRunJobs, jobID)
 			for _, m := range permutations {
+
+				permJobDef := jobDef.Copy()
+
 				runJob := sdk.V2WorkflowRunJob{
 					ID:            sdk.UUID(),
 					WorkflowRunID: run.ID,
 					Status:        jobToTrigger.Status,
 					JobID:         jobID,
-					Job:           jobDef,
+					Job:           permJobDef,
 					UserID:        wrEnqueue.UserID,
 					Username:      u.Username,
 					AdminMFA:      wrEnqueue.IsAdminWithMFA,
 					ProjectKey:    run.ProjectKey,
-					Region:        jobDef.Region,
+					Region:        permJobDef.Region,
 					WorkflowName:  run.WorkflowName,
 					RunNumber:     run.RunNumber,
 					RunAttempt:    run.RunAttempt,
@@ -1149,8 +1152,8 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 				for k, v := range m {
 					runJob.Matrix[k] = v
 				}
-				if jobDef.RunsOn.Model != "" {
-					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
+				if permJobDef.RunsOn.Model != "" {
+					runJob.ModelType = run.WorkflowData.WorkerModels[permJobDef.RunsOn.Model].Type
 				}
 				for _, jobEvent := range run.RunJobEvent {
 					if jobEvent.RunAttempt != run.RunAttempt {
