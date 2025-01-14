@@ -567,18 +567,18 @@ func (w V2Workflow) Lint() []error {
 	if w.On != nil {
 		for _, s := range w.On.Schedule {
 			if _, err := cronexpr.Parse(s.Cron); err != nil {
-				errs = append(errs, NewErrorFrom(err, "unable to parse cron expression: %s", s.Cron))
+				errs = append(errs, NewErrorFrom(err, "workflow %s: unable to parse cron expression: %s", w.Name, s.Cron))
 			}
 		}
 	}
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(ErrInvalidData, "unable to validate workflow: "+err.Error())}
+		return []error{NewErrorFrom(ErrInvalidData, "unable to validate workflow %s: %v", w.Name, err.Error())}
 	}
 
 	for _, e := range result.Errors() {
-		errs = append(errs, NewErrorFrom(ErrInvalidData, "yaml validation failed: "+e.String()))
+		errs = append(errs, NewErrorFrom(ErrInvalidData, "workfow %s: yaml validation failed: %s", w.Name, e.String()))
 	}
 
 	if len(errs) > 0 {
@@ -592,14 +592,14 @@ func (w V2Workflow) CheckGates() []error {
 	for jobID, j := range w.Jobs {
 		if j.Gate != "" {
 			if _, has := w.Gates[j.Gate]; !has {
-				errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: gate %s not found", jobID, j.Gate))
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: gate %s not found", w.Name, jobID, j.Gate))
 			}
 		}
 	}
 
 	for gateName, g := range w.Gates {
 		if g.If == "" {
-			errs = append(errs, NewErrorFrom(ErrInvalidData, "Gate %s: if cannot be empty", gateName))
+			errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s gate %s: if cannot be empty", w.Name, gateName))
 		}
 	}
 	return errs
@@ -617,17 +617,17 @@ func (w V2Workflow) CheckSemver() error {
 		}
 	}
 	if !found {
-		return NewErrorFrom(ErrInvalidData, "semver from %s not implemented", w.Semver.From)
+		return NewErrorFrom(ErrInvalidData, "workflow %s: semver from %s not implemented", w.Name, w.Semver.From)
 	}
 
 	if w.Semver.From == SemverTypeGit && w.Semver.Path != "" {
-		return NewErrorFrom(ErrInvalidData, "emver.path is not allowed for semver from git")
+		return NewErrorFrom(ErrInvalidData, "workflow %s: semver.path is not allowed for semver from git", w.Name)
 	}
 	if w.Semver.From != SemverTypeGit && w.Semver.Path == "" {
-		return NewErrorFrom(ErrInvalidData, "missing required field semver.path")
+		return NewErrorFrom(ErrInvalidData, "workflow %s: missing required field semver.path", w.Name)
 	}
 	if w.Semver.From == SemverTypeGit && len(w.Semver.ReleaseRefs) > 0 {
-		return NewErrorFrom(ErrInvalidData, " semver.release_refs is not allowed for semver from git")
+		return NewErrorFrom(ErrInvalidData, " workflow %s: semver.release_refs is not allowed for semver from git", w.Name)
 	}
 	return nil
 }
@@ -647,37 +647,37 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 		for k := range stages {
 			for _, n := range stages[k].Needs {
 				if _, exist := stages[n]; !exist {
-					errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s: needs not found %s", k, n))
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "workfow %s stage %s: needs not found %s", w.Name, k, n))
 				}
 			}
 		}
 		// Check job needs
 		for k, j := range w.Jobs {
 			if j.Stage == "" {
-				errs = append(errs, NewErrorFrom(ErrInvalidData, "Missing stage on job %s", k))
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "workfow %s: missing stage on job %s", w.Name, k))
 				continue
 			}
 			if _, stageExist := stages[j.Stage]; !stageExist {
-				errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s on job %s does not exist", j.Stage, k))
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s stage %s on job %s does not exist", w.Name, j.Stage, k))
 			}
 			for _, n := range j.Needs {
 				jobNeed, exist := jobs[n]
 				if !exist {
-					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: needs not found %s", k, n))
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: needs not found %s", w.Name, k, n))
 				}
 				if jobNeed.Stage != j.Stage {
-					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: need %s must be in the same stage", k, n))
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: need %s must be in the same stage", w.Name, k, n))
 				}
 			}
 		}
 	} else {
 		for k, j := range w.Jobs {
 			if j.Stage != "" {
-				errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s on job %s does not exist", j.Stage, k))
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s stage %s on job %s does not exist", w.Name, j.Stage, k))
 			}
 			for _, n := range j.Needs {
 				if _, exist := w.Jobs[n]; !exist {
-					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: needs not found [%s]", k, n))
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: needs not found [%s]", w.Name, k, n))
 				}
 			}
 		}

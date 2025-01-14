@@ -183,7 +183,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 	// If all analysis are in errors
 	if allInError {
 		if len(hre.Analyses) == 1 {
-			hre.LastError = "Repository analysis failed: " + hre.Analyses[0].Error
+			hre.LastError = hre.Analyses[0].Error
 		} else {
 			hre.LastError = "All Repository analyses failed: " + hre.Analyses[0].Error
 		}

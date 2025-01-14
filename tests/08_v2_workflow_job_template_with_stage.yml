@@ -1,0 +1,142 @@
+name: Workflow Job Template With Stage
+vars:
+  cds_project: "ITV2WFJOBTMPLWITHSTAGE"
+  git_repo: "it_v2_workflow_job_templates_with_stage"
+  cds_workflow_template: "WorkflowJobTemplateWithStage"
+  cds_workflow_local: "WorkflowWithJobTemplateWIthStage"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+  workflow_template: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/{{.cds_workflow_template}}"
+testcases:
+- name: Prepare test
+  steps:
+  - name: "Verify cdsctl configuration"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+    vars:
+      cdsUser:
+        from: result.systemoutjson.username
+  - name: "Display username"
+    info: "Connected CDS user is {{.cdsUser}}"
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo}}"
+
+  - type: v2_install_gpg_key
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    vars:
+      emailaddress:
+        from: result.emailaddress
+
+- name: Push workflow template files
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/debian.yml:
+        name: docker-debian
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:buster
+      workflow-templates/test.yaml:
+        name: "{{.cds_workflow_template}}"
+        parameters:
+        - key: region
+        spec: |-
+          stages:
+            stage-[[.params.region]]:
+              needs: [test]  
+          jobs:
+            job_[[.params.region]]:
+              stage: stage-[[.params.region]]
+              runs-on: "{{.worker_model}}"
+              steps:
+              - run: echo "Inside test_1"    
+            job2_[[.params.region]]:
+              stage: stage-[[.params.region]]
+              runs-on: "{{.worker_model}}"
+              needs:
+              - job_[[.params.region]]
+              steps:
+              - run: echo "Inside test_2"    
+      workflows/local.yaml:
+        name: "{{.cds_workflow_local}}"
+        on: [push]
+        stages:
+          build:
+            needs: []
+          test:
+            needs: [build]  
+        jobs:
+          build:
+            stage: build
+            runs-on: "{{.worker_model}}"
+            steps:
+              - run: echo "Inside build" 
+          test:
+            stage: test
+            runs-on: "{{.worker_model}}"
+            steps:
+              - run: echo "Inside deploy"   
+          deploy:
+            stage: test
+            needs: [test]
+            strategy:
+              matrix:
+                region: [region1, region2]
+            from: ".cds/workflow-templates/test.yaml"    
+            parameters:
+              region: ${{ matrix.region }}
+ 
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_local}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 1
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+    retry: 200
+    delay: 1
+    vars:
+      workflowFromLocalRunID:
+        from: result.systemoutjson.systemoutjson0.id
+
+  - name: Get job info
+    script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowFromLocalRunID}} --format json" 
+    assertions:
+    - result.systemoutjson ShouldHaveLength 6
+
+  - name: Get job info for job_region1
+    script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} {{.workflowFromLocalRunID}} job_region1"
+
+  - name: Get job info for job_region2
+    script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} {{.workflowFromLocalRunID}} job_region2"  
+
