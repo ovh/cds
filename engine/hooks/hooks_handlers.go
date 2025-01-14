@@ -182,16 +182,23 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 	}
 
 	exec := &sdk.HookRepositoryEvent{
-		UUID:           sdk.UUID(),
-		UserID:         runRequest.UserID,
-		Username:       runRequest.Username,
-		EventName:      sdk.WorkflowHookEventNameManual,
-		VCSServerName:  runRequest.VCSServer,
-		RepositoryName: runRequest.Repository,
-		Body:           request,
-		Created:        time.Now().UnixNano(),
-		Status:         sdk.HookEventStatusScheduled,
-		ExtractData:    extractedData,
+		UUID:               sdk.UUID(),
+		DeprecatedUserID:   runRequest.UserID,
+		DeprecatedUsername: runRequest.Username,
+		EventName:          sdk.WorkflowHookEventNameManual,
+		VCSServerName:      runRequest.VCSServer,
+		RepositoryName:     runRequest.Repository,
+		Body:               request,
+		Created:            time.Now().UnixNano(),
+		Status:             sdk.HookEventStatusScheduled,
+		ExtractData:        extractedData,
+	}
+
+	exec.Initiator.UserID = runRequest.UserID
+	var err error
+	exec.Initiator.User, err = s.Client.UserGet(ctx, runRequest.Username)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get user %s", runRequest.Username)
 	}
 
 	// Save event

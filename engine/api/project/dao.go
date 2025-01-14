@@ -355,6 +355,7 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 		vcsProjects[i].Auth.Username = decryptedVCSProject.Auth.Username
 		vcsProjects[i].Auth.SSHKeyName = decryptedVCSProject.Auth.SSHKeyName
 		vcsProjects[i].Auth.SSHUsername = decryptedVCSProject.Auth.SSHUsername
+		vcsProjects[i].Auth.GPGKeyName = decryptedVCSProject.Auth.GPGKeyName
 	}
 
 	proj.VCSServers = vcsProjects

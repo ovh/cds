@@ -252,7 +252,17 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			for i := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, runJobs[i])
 			}
-			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber, isAdmin(ctx))
+
+			initiator := sdk.V2WorkflowRunInitiator{
+				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
+				IsAdminWithMFA: isAdmin(ctx),
+			}
+			initiator.User, err = user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			api.EnqueueWorkflowRun(ctx, wr.ID, initiator, wr.WorkflowName, wr.RunNumber)
 
 			return nil
 		}
@@ -791,7 +801,17 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 			}
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, jobMaps, runResults, *u.AuthConsumerUser.AuthentifiedUser)
+
+			initiator := sdk.V2WorkflowRunInitiator{
+				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
+				IsAdminWithMFA: isAdmin(ctx),
+			}
+			initiator.User, err = user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, jobMaps, runResults)
 
 			return nil
 		}
@@ -869,25 +889,38 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
+			// TODO i don't what i need to do in this case
 			if wk.Repository != nil && wk.Repository.InsecureSkipSignatureVerify {
 				// Use entity owner as user fallback
 				if workflowEntity.UserID == nil {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown workflow owner. Please analyse your repository.")
 				}
-				runRequest.UserID = *workflowEntity.UserID
+				runRequest.Initiator.UserID = *workflowEntity.UserID
 			}
 
-			var u *sdk.AuthentifiedUser
-			u, err = user.LoadByID(ctx, api.mustDB(), runRequest.UserID, user.LoadOptions.WithContacts)
-			if err != nil {
-				return err
+			var (
+				theOneWhoTriggers = runRequest.Initiator
+				hasRole           bool
+			)
+
+			if !runRequest.Initiator.IsUser() {
+				hasRole, err = rbac.HasRoleOnWorkflowAndVCSUsername(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, runRequest.Initiator.VCSUsername, proj.Key, vcsProject.Name, repo.Name, wk.Name)
+				if err != nil {
+					return err
+				}
+			} else {
+				u, err := user.LoadByID(ctx, api.mustDB(), runRequest.Initiator.UserID, user.LoadOptions.WithContacts)
+				if err != nil {
+					return err
+				}
+				theOneWhoTriggers.User = u
+				hasRole, err = rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, vcsProject.Name, repo.Name, wk.Name)
+				if err != nil {
+					return err
+				}
 			}
 
-			hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, vcsProject.Name, repo.Name, wk.Name)
-			if err != nil {
-				return err
-			}
-			if !hasRole && runRequest.AdminMFA && u.Ring == sdk.UserRingAdmin {
+			if theOneWhoTriggers.IsUser() && !hasRole && theOneWhoTriggers.IsAdminWithMFA && theOneWhoTriggers.User.Ring == sdk.UserRingAdmin {
 				hasRole = true
 				trackSudo(ctx, w)
 			}
@@ -903,7 +936,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				}
 			}
 
-			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, u)
+			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, theOneWhoTriggers)
 			if err != nil {
 				return err
 			}
@@ -985,10 +1018,19 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 				log.ErrorWithStackTrace(ctx, err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults, *u.AuthConsumerUser.AuthentifiedUser)
+			initiator := sdk.V2WorkflowRunInitiator{
+				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
+				IsAdminWithMFA: isAdmin(ctx),
+			}
+			initiator.User, err = user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults)
 
 			// Then continue the workflow
-			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber, isAdmin(ctx))
+			api.EnqueueWorkflowRun(ctx, wr.ID, initiator, wr.WorkflowName, wr.RunNumber)
 			return service.WriteJSON(w, wr, http.StatusOK)
 		}
 }
@@ -1173,7 +1215,12 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 
 			runJobsContexts, _ := computeExistingRunJobContexts(ctx, runJobs, runResults)
 			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow, runJobsContexts, wr.Contexts, stages, jobToRuns[0].JobID)
-			booleanResult, err := checkCanRunJob(ctx, api.mustDBWithCtx(ctx), *wr, inputs, jobToRuns[0].Job, jobContext, *u.AuthConsumerUser.AuthentifiedUser, isAdmin(ctx))
+			initiator := sdk.V2WorkflowRunInitiator{
+				UserID:         u.AuthConsumerUser.AuthentifiedUser.ID,
+				User:           u.AuthConsumerUser.AuthentifiedUser,
+				IsAdminWithMFA: isAdmin(ctx),
+			}
+			booleanResult, err := checkCanRunJob(ctx, api.mustDBWithCtx(ctx), *wr, inputs, jobToRuns[0].Job, jobContext, initiator)
 			if err != nil {
 				return err
 			}
@@ -1225,11 +1272,11 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults, *u.AuthConsumerUser.AuthentifiedUser)
-			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRuns[0].JobID, inputs, *u.AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults)
+			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRuns[0].JobID, inputs)
 
 			// Then continue the workflow
-			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber, isAdmin(ctx))
+			api.EnqueueWorkflowRun(ctx, wr.ID, initiator, wr.WorkflowName, wr.RunNumber)
 			return service.WriteJSON(w, wr, http.StatusOK)
 		}
 }
@@ -1351,7 +1398,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 		}
 }
 
-func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, u *sdk.AuthentifiedUser) (*sdk.V2WorkflowRun, error) {
+func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, initiator sdk.V2WorkflowRunInitiator) (*sdk.V2WorkflowRun, error) {
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
 
 	runEvent := sdk.V2WorkflowRunEvent{
@@ -1376,13 +1423,13 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	var msg string
 	switch runEvent.HookType {
 	case sdk.WorkflowHookTypeManual:
-		msg = fmt.Sprintf("Workflow was manually triggered by user %s", u.Username)
+		msg = fmt.Sprintf("Workflow was manually triggered by user %s", initiator.Username())
 	case sdk.WorkflowHookTypeRepository:
-		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.EventName, u.Username)
+		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.EventName, initiator.Username())
 	case sdk.WorkflowHookTypeWorkflow:
-		msg = fmt.Sprintf("Workflow was triggered by the workflow-update hook by user %s", u.Username)
+		msg = fmt.Sprintf("Workflow was triggered by the workflow-update hook by user %s", initiator.Username())
 	case sdk.WorkflowHookTypeWorkerModel:
-		msg = fmt.Sprintf("Workflow was triggered by the model-update hook by user %s", u.Username)
+		msg = fmt.Sprintf("Workflow was triggered by the model-update hook by user %s", initiator.Username())
 	case sdk.WorkflowHookTypeScheduler:
 		msg = fmt.Sprintf("Workflow was triggered by the scheduler %s %s", runEvent.Cron, runEvent.CronTimezone)
 	case sdk.WorkflowHookTypeWorkflowRun:
@@ -1392,25 +1439,26 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	}
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsProject.ID,
-		VCSServer:    vcsProject.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: wk.Name,
-		WorkflowRef:  wkEntity.Ref,
-		WorkflowSha:  wkEntity.Commit,
-		Status:       sdk.V2WorkflowRunStatusCrafting,
-		RunAttempt:   0,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		ToDelete:     false,
-		WorkflowData: sdk.V2WorkflowRunData{Workflow: wk},
-		UserID:       u.ID,
-		AdminMFA:     runRequest.AdminMFA,
-		Username:     u.Username,
-		RunEvent:     runEvent,
-		Contexts:     sdk.WorkflowRunContext{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsProject.ID,
+		VCSServer:          vcsProject.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       wk.Name,
+		WorkflowRef:        wkEntity.Ref,
+		WorkflowSha:        wkEntity.Commit,
+		Status:             sdk.V2WorkflowRunStatusCrafting,
+		RunAttempt:         0,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		ToDelete:           false,
+		WorkflowData:       sdk.V2WorkflowRunData{Workflow: wk},
+		RunEvent:           runEvent,
+		Contexts:           sdk.WorkflowRunContext{},
+		Initiator:          &initiator,
+		DeprecatedUserID:   initiator.UserID,         // Deprecated
+		DeprecatedAdminMFA: initiator.IsAdminWithMFA, // Deprecated
+		DeprecatedUsername: initiator.Username(),     // Deprecated
 	}
 
 	wrNumber, err := workflow_v2.WorkflowRunNextNumber(api.mustDB(), repo.ID, wk.Name)
@@ -1468,7 +1516,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, sdk.WithStack(err)
 	}
 
-	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr, nil, nil, *u)
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr, nil, nil)
 
 	select {
 	case api.workflowRunCraftChan <- wr.ID:

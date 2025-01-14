@@ -99,6 +99,10 @@ func HasRoleOnVariableSetAndUserID(ctx context.Context, db gorp.SqlExecutor, rol
 	return false, nil
 }
 
+func HasRoleOnVariableSetsAndVCSUsername(ctx context.Context, db gorp.SqlExecutor, role string, vcs, username string, projectKey string, vsNames []string) (bool, string, error) {
+	return false, "", nil
+}
+
 func HasRoleOnVariableSetsAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, vsNames []string) (bool, string, error) {
 	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnVariableSetAndUserID")
 	defer next()

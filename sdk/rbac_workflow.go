@@ -19,9 +19,34 @@ type RBACWorkflow struct {
 	RBACGroupsName     []string          `json:"groups,omitempty" db:"-"`
 	RBACWorkflowsNames RBACWorkflowNames `json:"workflows,omitempty" db:"workflows"`
 	AllWorkflows       bool              `json:"all_workflows" db:"all_workflows"`
+	RBACVCSUsers       RBACVCSUsers      `json:"vcs_users,omitempty" db:"vcs_users"`
 
 	RBACUsersIDs  []string `json:"-" db:"-"`
 	RBACGroupsIDs []int64  `json:"-" db:"-"`
+}
+
+type RBACVCSUsers []RBACVCSUser
+
+func (rwn RBACVCSUsers) Value() (driver.Value, error) {
+	names, err := json.Marshal(rwn)
+	return names, WrapError(err, "cannot marshal RBACVCSUsers")
+}
+
+// Scan action.
+func (rwn *RBACVCSUsers) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, rwn), "cannot unmarshal RBACVCSUsers")
+}
+
+type RBACVCSUser struct {
+	VCSServer   string `json:"server"`
+	VCSUsername string `json:"username"`
 }
 
 type RBACWorkflowNames []string

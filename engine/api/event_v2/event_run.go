@@ -36,13 +36,13 @@ func PublishRunJobRunResult(ctx context.Context, store cache.Store, eventType sd
 		JobID:         rj.JobID,
 		RunResult:     rr.Name(),
 		Status:        rr.Status,
-		UserID:        rj.UserID,
-		Username:      rj.Username,
+		UserID:        rj.Initiator.UserID,
+		Username:      rj.Initiator.Username(),
 	}
 	publish(ctx, store, e)
 }
 
-func PublishRunJobManualEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobID string, gateInputs map[string]interface{}, u sdk.AuthentifiedUser) {
+func PublishRunJobManualEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobID string, gateInputs map[string]interface{}) {
 	bts, _ := json.Marshal(gateInputs)
 	e := sdk.WorkflowRunJobManualEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
@@ -61,8 +61,8 @@ func PublishRunJobManualEvent(ctx context.Context, store cache.Store, eventType 
 		RunAttempt:    wr.RunAttempt,
 		Status:        wr.Status,
 		WorkflowRunID: wr.ID,
-		UserID:        u.ID,
-		Username:      u.Username,
+		UserID:        wr.Initiator.UserID,
+		Username:      wr.Initiator.Username(),
 		JobID:         jobID,
 	}
 	publish(ctx, store, e)
@@ -92,8 +92,8 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.Ev
 		ModelType:     rj.ModelType,
 		JobID:         rj.JobID,
 		Status:        rj.Status,
-		UserID:        rj.UserID,
-		Username:      rj.Username,
+		UserID:        rj.Initiator.UserID,
+		Username:      rj.Initiator.Username(),
 	}
 	publish(ctx, store, e)
 
@@ -101,7 +101,7 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.Ev
 	event.PublishEventJobSummary(ctx, ev, nil)
 }
 
-func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobs map[string]sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult, u sdk.AuthentifiedUser) {
+func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobs map[string]sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) {
 	eventPayload, err := sdk.NewEventWorkflowRunPayload(wr, jobs, runResults)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
@@ -126,10 +126,14 @@ func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.Event
 		RunAttempt:    wr.RunAttempt,
 		Status:        wr.Status,
 		WorkflowRunID: wr.ID,
-		UserID:        u.ID,
-		Username:      u.Username,
-		UserEmail:     u.GetEmail(),
+		UserID:        wr.Initiator.UserID,
+		Username:      wr.Initiator.Username(),
 	}
+
+	if wr.Initiator.User != nil {
+		e.UserEmail = wr.Initiator.User.GetEmail()
+	}
+
 	publish(ctx, store, e)
 }
 

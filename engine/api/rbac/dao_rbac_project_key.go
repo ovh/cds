@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+
 	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/lib/pq"
@@ -49,6 +50,10 @@ func loadRBACProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacProject *
 func loadAllRBACProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacProjectIDs []int64) ([]rbacProjectKey, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM rbac_project_keys WHERE rbac_project_id = ANY($1)`).Args(pq.Int64Array(rbacProjectIDs))
 	return getAllRBACProjectKeys(ctx, db, query)
+}
+
+func HasRoleOnProjectAndVCSUsername(ctx context.Context, db gorp.SqlExecutor, role string, vcsName, vcsUsername string, projectKey string) (bool, error) {
+	return false, nil
 }
 
 func HasRoleOnProjectAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string) (bool, error) {

@@ -20,7 +20,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	log.Info(ctx, "triggering workflow for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// Check if we know the user that trigger the event
-	if hre.UserID == "" && hre.SignKey != "" {
+	if hre.Initiator.UserID == "" && hre.SignKey != "" {
 		var req sdk.HookRetrieveUserRequest
 		switch {
 		case hre.ExtractData.WorkflowRun.OutgoingHookEventUUID != "":
@@ -47,12 +47,13 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		if err != nil {
 			return err
 		}
-		if r.UserID == "" {
+		if r.Initiator.UserID == "" && r.Initiator.VCSUsername == "" {
 			hre.Status = sdk.HookEventStatusSkipped
-			hre.LastError = fmt.Sprintf("User with key %s not found in CDS", hre.SignKey)
+			hre.LastError = fmt.Sprintf("User with key %s not found", hre.SignKey)
 		}
-		hre.UserID = r.UserID
-		hre.Username = r.Username
+
+		r.Initiator = hre.Initiator
+
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}
@@ -69,7 +70,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 
 	for i := range hre.WorkflowHooks {
 		wh := &hre.WorkflowHooks[i]
-		if !wh.Data.InsecureSkipSignatureVerify && hre.UserID == "" {
+		if !wh.Data.InsecureSkipSignatureVerify && hre.Initiator.UserID == "" && hre.Initiator.VCSUsername == "" {
 			wh.Status = sdk.HookEventWorkflowStatusSkipped
 			wh.Error = "unknown user"
 			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
@@ -124,20 +125,21 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
 
 				runRequest := sdk.V2WorkflowRunHookRequest{
-					HookEventID:      hre.UUID,
-					UserID:           hre.UserID,
-					Ref:              hre.ExtractData.Ref,
-					Sha:              hre.ExtractData.Commit,
-					CommitMessage:    hre.ExtractData.CommitMessage,
-					Payload:          event,
-					EventName:        hre.EventName,
-					HookType:         wh.Type,
-					SemverCurrent:    wh.SemverCurrent,
-					SemverNext:       wh.SemverNext,
-					ChangeSets:       wh.UpdatedFiles,
-					AdminMFA:         hre.ExtractData.AdminMFA,
-					PullrequestID:    hre.ExtractData.PullRequestID,
-					PullrequestToRef: hre.ExtractData.PullRequestRefTo,
+					HookEventID:        hre.UUID,
+					DeprecatedUserID:   hre.DeprecatedUserID,
+					Ref:                hre.ExtractData.Ref,
+					Sha:                hre.ExtractData.Commit,
+					CommitMessage:      hre.ExtractData.CommitMessage,
+					Payload:            event,
+					EventName:          hre.EventName,
+					HookType:           wh.Type,
+					SemverCurrent:      wh.SemverCurrent,
+					SemverNext:         wh.SemverNext,
+					ChangeSets:         wh.UpdatedFiles,
+					DeprecatedAdminMFA: hre.ExtractData.AdminMFA,
+					PullrequestID:      hre.ExtractData.PullRequestID,
+					PullrequestToRef:   hre.ExtractData.PullRequestRefTo,
+					Initiator:          hre.Initiator,
 				}
 
 				// Override repository ref to clone in the workflow

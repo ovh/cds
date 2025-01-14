@@ -76,6 +76,10 @@ func getAllRBACWorkflows(ctx context.Context, db gorp.SqlExecutor, q gorpmapping
 	return worflowsFiltered, nil
 }
 
+func HasRoleOnWorkflowAndVCSUsername(ctx context.Context, db gorp.SqlExecutor, role string, VCSUsername string, projectKey string, vcs, repo, workflowName string) (bool, error) {
+	return false, nil
+}
+
 func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, vcs, repo, workflowName string) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnWorkflowAndUserID")
 	defer next()

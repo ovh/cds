@@ -10,6 +10,7 @@ import (
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -52,6 +53,13 @@ func getRunJob(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 		log.Error(ctx, "run job %s on run %s: data corrupted", dbWkfRunJob.ID, dbWkfRunJob.WorkflowRunID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
+	if dbWkfRunJob.Initiator.UserID == "" {
+		dbWkfRunJob.Initiator.UserID = dbWkfRunJob.DeprecatedUserID
+	}
+	dbWkfRunJob.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRunJob.Initiator.UserID)
+	if err != nil {
+		return nil, err
+	}
 	return &dbWkfRunJob.V2WorkflowRunJob, nil
 }
 
@@ -65,6 +73,9 @@ func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 		wrj.Queued = time.Now()
 	}
 	dbWkfRunJob := &dbWorkflowRunJob{V2WorkflowRunJob: *wrj}
+
+	// Compat code
+	dbWkfRunJob.DeprecatedUserID = dbWkfRunJob.Initiator.UserID
 
 	if err := gorpmapping.InsertAndSign(ctx, db, dbWkfRunJob); err != nil {
 		return err

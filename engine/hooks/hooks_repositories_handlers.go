@@ -118,8 +118,8 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		}
 
 		e.Status = sdk.HookEventStatusScheduled
-		e.UserID = ""
-		e.Username = ""
+		e.DeprecatedUserID = ""
+		e.DeprecatedUsername = ""
 		e.SignKey = ""
 		e.SigningKeyOperation = ""
 		e.LastError = ""
@@ -129,6 +129,7 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		e.WorkflowHooks = nil
 		e.Analyses = nil
 		e.LastUpdate = time.Now().UnixNano()
+		e.Initiator = sdk.V2WorkflowRunInitiator{}
 
 		if err := s.Dao.SaveRepositoryEvent(ctx, e); err != nil {
 			return err

@@ -282,8 +282,11 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				ref:           defaultBranch.ID,
 				commit:        defaultBranch.LatestCommit,
 				hookEventUUID: "",
-				user:          u.AuthConsumerUser.AuthentifiedUser,
-				adminMFA:      isAdmin(ctx),
+				initiator: sdk.V2WorkflowRunInitiator{
+					UserID:         u.AuthConsumerUser.AuthentifiedUser.ID,
+					User:           u.AuthConsumerUser.AuthentifiedUser,
+					IsAdminWithMFA: isAdmin(ctx),
+				},
 			}
 			a, err := api.createAnalyze(ctx, tx, createAnalysis)
 			if err != nil {
