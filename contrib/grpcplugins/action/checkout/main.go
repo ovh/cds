@@ -192,13 +192,13 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	}
 
 	// Install and import GPG Key
-	gpgkey, err := grpcplugins.GetProjectKey(ctx, &p.Common, gpgKeyfromIntegration)
-	if err != nil {
+	// gpgkey, err := grpcplugins.GetProjectKey(ctx, &p.Common, gpgKeyfromIntegration)
+	// if err != nil {
 
-	}
-	if _, _, err := sdk.ImportGPGKey(workDirs.BaseDir, gpgkey.Name, gpgkey.Private); err != nil {
-		return fmt.Errorf("unable to install pgp key %s: %v", gpgkey, err)
-	}
+	// }
+	// if _, _, err := sdk.ImportGPGKey(workDirs.BaseDir, gpgkey.Name, gpgkey.Private); err != nil {
+	//	return fmt.Errorf("unable to install pgp key %s: %v", gpgkey, err)
+	//}
 
 	return stream.Send(res)
 
