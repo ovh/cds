@@ -31,6 +31,13 @@ func getAllRunJobs(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Q
 			log.Error(ctx, "run job %s on run %s: data corrupted", rj.ID, rj.WorkflowRunID)
 			continue
 		}
+		if rj.Initiator.UserID == "" {
+			rj.Initiator.UserID = rj.DeprecatedUserID
+		}
+		rj.Initiator.User, err = user.LoadByID(ctx, db, rj.Initiator.UserID)
+		if err != nil {
+			return nil, err
+		}
 		jobRuns = append(jobRuns, rj.V2WorkflowRunJob)
 	}
 	return jobRuns, nil
