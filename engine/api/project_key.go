@@ -9,9 +9,11 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -49,6 +51,17 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 		p, errP := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
+		}
+
+		vcsProject, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapping.GetOptions.WithDecryption)
+		if err != nil {
+			return err
+		}
+
+		for _, v := range vcsProject {
+			if v.Auth.SSHKeyName == keyName {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "the ssh key is used by the vcs integration %s", v.Name)
+			}
 		}
 
 		tx, errT := api.mustDB().Begin()
