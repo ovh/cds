@@ -1085,6 +1085,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunAttempt:    wr.RunAttempt,
 		RunNumber:     wr.RunNumber,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -1197,6 +1198,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo1",
 		},
+		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo1))
 
@@ -1211,6 +1213,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo2",
 		},
+		Initiator: *wr.Initiator,
 	}
 	err = workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo2)
 	t.Logf("%+v", err)
@@ -1343,6 +1346,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo1",
 		},
+		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo1))
 
@@ -1357,6 +1361,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo2",
 		},
+		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo2))
 
@@ -1502,6 +1507,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo1",
 		},
+		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj1))
 
