@@ -1087,6 +1087,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunAttempt:    wr.RunAttempt,
 		RunNumber:     wr.RunNumber,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -1199,6 +1200,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo1",
 		},
+		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo1))
 
@@ -1213,6 +1215,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo2",
 		},
+		Initiator: *wr.Initiator,
 	}
 	err = workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo2)
 	t.Logf("%+v", err)
@@ -1345,6 +1348,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo1",
 		},
+		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo1))
 
@@ -1359,6 +1363,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		Matrix: map[string]string{
 			"foo": "foo2",
 		},
+		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo2))
 
@@ -1501,6 +1506,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunNumber:     wr.RunNumber,
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj1))
 
@@ -1933,22 +1939,22 @@ spec:
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "abcdef",
-		WorkflowRef:  "refs/heads/master",
-		RunAttempt:   1,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "abcdef",
+		WorkflowRef:        "refs/heads/master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
 			Jobs: map[string]sdk.V2Job{
@@ -1978,25 +1984,25 @@ spec:
 
 	now := time.Now()
 	job1RunJob := sdk.V2WorkflowRunJob{
-		JobID:         "job1",
-		WorkflowRunID: wr.ID,
-		ProjectKey:    proj.Key,
-		WorkflowName:  wr.WorkflowName,
-		RunNumber:     wr.RunNumber,
-		RunAttempt:    wr.RunAttempt,
-		Status:        sdk.V2WorkflowRunJobStatusSuccess,
-		Queued:        time.Now(),
-		Scheduled:     &now,
-		Started:       &now,
-		Ended:         &now,
-		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		UserID:        admin.ID,
+		JobID:            "job1",
+		WorkflowRunID:    wr.ID,
+		ProjectKey:       proj.Key,
+		WorkflowName:     wr.WorkflowName,
+		RunNumber:        wr.RunNumber,
+		RunAttempt:       wr.RunAttempt,
+		Status:           sdk.V2WorkflowRunJobStatusSuccess,
+		Queued:           time.Now(),
+		Scheduled:        &now,
+		Started:          &now,
+		Ended:            &now,
+		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
+		DeprecatedUserID: admin.ID,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:            wr.ID,
+		DeprecatedUserID: admin.ID,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -2169,22 +2175,22 @@ spec:
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "abcdef",
-		WorkflowRef:  "refs/heads/master",
-		RunAttempt:   1,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "abcdef",
+		WorkflowRef:        "refs/heads/master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
 			Stages: map[string]sdk.WorkflowStage{
@@ -2218,25 +2224,25 @@ spec:
 
 	now := time.Now()
 	job1RunJob := sdk.V2WorkflowRunJob{
-		JobID:         "job1",
-		WorkflowRunID: wr.ID,
-		ProjectKey:    proj.Key,
-		WorkflowName:  wr.WorkflowName,
-		RunNumber:     wr.RunNumber,
-		RunAttempt:    wr.RunAttempt,
-		Status:        sdk.V2WorkflowRunJobStatusSuccess,
-		Queued:        time.Now(),
-		Scheduled:     &now,
-		Started:       &now,
-		Ended:         &now,
-		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		UserID:        admin.ID,
+		JobID:            "job1",
+		WorkflowRunID:    wr.ID,
+		ProjectKey:       proj.Key,
+		WorkflowName:     wr.WorkflowName,
+		RunNumber:        wr.RunNumber,
+		RunAttempt:       wr.RunAttempt,
+		Status:           sdk.V2WorkflowRunJobStatusSuccess,
+		Queued:           time.Now(),
+		Scheduled:        &now,
+		Started:          &now,
+		Ended:            &now,
+		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
+		DeprecatedUserID: admin.ID,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:            wr.ID,
+		DeprecatedUserID: admin.ID,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -2423,22 +2429,22 @@ spec:
 	require.NoError(t, project.InsertVariableSetItemText(context.TODO(), db, &items))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "abcdef",
-		WorkflowRef:  "refs/heads/master",
-		RunAttempt:   1,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "abcdef",
+		WorkflowRef:        "refs/heads/master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
 			Jobs: map[string]sdk.V2Job{
@@ -2462,8 +2468,8 @@ spec:
 	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:            wr.ID,
+		DeprecatedUserID: admin.ID,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -2615,22 +2621,22 @@ spec:
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "abcdef",
-		WorkflowRef:  "refs/heads/master",
-		RunAttempt:   1,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "abcdef",
+		WorkflowRef:        "refs/heads/master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
 			Jobs: map[string]sdk.V2Job{
@@ -2660,25 +2666,25 @@ spec:
 
 	now := time.Now()
 	job1RunJob := sdk.V2WorkflowRunJob{
-		JobID:         "job1",
-		WorkflowRunID: wr.ID,
-		ProjectKey:    proj.Key,
-		WorkflowName:  wr.WorkflowName,
-		RunNumber:     wr.RunNumber,
-		RunAttempt:    wr.RunAttempt,
-		Status:        sdk.V2WorkflowRunJobStatusSuccess,
-		Queued:        time.Now(),
-		Scheduled:     &now,
-		Started:       &now,
-		Ended:         &now,
-		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		UserID:        admin.ID,
+		JobID:            "job1",
+		WorkflowRunID:    wr.ID,
+		ProjectKey:       proj.Key,
+		WorkflowName:     wr.WorkflowName,
+		RunNumber:        wr.RunNumber,
+		RunAttempt:       wr.RunAttempt,
+		Status:           sdk.V2WorkflowRunJobStatusSuccess,
+		Queued:           time.Now(),
+		Scheduled:        &now,
+		Started:          &now,
+		Ended:            &now,
+		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
+		DeprecatedUserID: admin.ID,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:            wr.ID,
+		DeprecatedUserID: admin.ID,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -2816,22 +2822,22 @@ spec:
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "abcdef",
-		WorkflowRef:  "refs/heads/master",
-		RunAttempt:   1,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "abcdef",
+		WorkflowRef:        "refs/heads/master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
 			Jobs: map[string]sdk.V2Job{
@@ -2854,19 +2860,19 @@ spec:
 
 	now := time.Now()
 	job1RunJob := sdk.V2WorkflowRunJob{
-		JobID:         "job1",
-		WorkflowRunID: wr.ID,
-		ProjectKey:    proj.Key,
-		WorkflowName:  wr.WorkflowName,
-		RunNumber:     wr.RunNumber,
-		RunAttempt:    wr.RunAttempt,
-		Status:        sdk.V2WorkflowRunJobStatusSuccess,
-		Queued:        time.Now(),
-		Scheduled:     &now,
-		Started:       &now,
-		Ended:         &now,
-		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		UserID:        admin.ID,
+		JobID:            "job1",
+		WorkflowRunID:    wr.ID,
+		ProjectKey:       proj.Key,
+		WorkflowName:     wr.WorkflowName,
+		RunNumber:        wr.RunNumber,
+		RunAttempt:       wr.RunAttempt,
+		Status:           sdk.V2WorkflowRunJobStatusSuccess,
+		Queued:           time.Now(),
+		Scheduled:        &now,
+		Started:          &now,
+		Ended:            &now,
+		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
+		DeprecatedUserID: admin.ID,
 		Matrix: sdk.JobMatrix{
 			"region": "region1",
 		},
@@ -2874,8 +2880,8 @@ spec:
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:            wr.ID,
+		DeprecatedUserID: admin.ID,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -3061,22 +3067,22 @@ spec:
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "abcdef",
-		WorkflowRef:  "refs/heads/master",
-		RunAttempt:   1,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "abcdef",
+		WorkflowRef:        "refs/heads/master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
 			Jobs: map[string]sdk.V2Job{
@@ -3102,25 +3108,25 @@ spec:
 
 	now := time.Now()
 	job1RunJob := sdk.V2WorkflowRunJob{
-		JobID:         "job1",
-		WorkflowRunID: wr.ID,
-		ProjectKey:    proj.Key,
-		WorkflowName:  wr.WorkflowName,
-		RunNumber:     wr.RunNumber,
-		RunAttempt:    wr.RunAttempt,
-		Status:        sdk.V2WorkflowRunJobStatusSuccess,
-		Queued:        time.Now(),
-		Scheduled:     &now,
-		Started:       &now,
-		Ended:         &now,
-		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		UserID:        admin.ID,
+		JobID:            "job1",
+		WorkflowRunID:    wr.ID,
+		ProjectKey:       proj.Key,
+		WorkflowName:     wr.WorkflowName,
+		RunNumber:        wr.RunNumber,
+		RunAttempt:       wr.RunAttempt,
+		Status:           sdk.V2WorkflowRunJobStatusSuccess,
+		Queued:           time.Now(),
+		Scheduled:        &now,
+		Started:          &now,
+		Ended:            &now,
+		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
+		DeprecatedUserID: admin.ID,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:            wr.ID,
+		DeprecatedUserID: admin.ID,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)

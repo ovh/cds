@@ -255,6 +255,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: lambda.ID,
+			User:   lambda,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -265,6 +269,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		JobID:         "job2",
 		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: lambda.ID,
+			User:   lambda,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -274,6 +282,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: lambda.ID,
+			User:   lambda,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -283,6 +295,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: lambda.ID,
+			User:   lambda,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -292,6 +308,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: lambda.ID,
+			User:   lambda,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -301,6 +321,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: lambda.ID,
+			User:   lambda,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -310,6 +334,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: lambda.ID,
+			User:   lambda,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -581,6 +609,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -591,6 +623,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 		JobID:         "job2",
 		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -600,6 +636,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -609,6 +649,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -618,6 +662,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -627,6 +675,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -636,6 +688,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -760,6 +816,10 @@ func TestRunManualSuccessJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -868,6 +928,10 @@ func TestRunManualFailedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2WorkflowRunInitiator{
+			UserID: admin.ID,
+			User:   admin,
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -1948,22 +2012,23 @@ func TestRunManualJob_GateArrayInput(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   0,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusSuccess,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -2035,22 +2100,23 @@ func TestRunManualJob_GateArrayWrongValue(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   0,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusSuccess,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -2122,22 +2188,23 @@ func TestRunManualJob_GateArrayMultipleValues(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   0,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusSuccess,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -2210,22 +2277,23 @@ func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   0,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusSuccess,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -2256,6 +2324,7 @@ func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		Initiator:     sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 

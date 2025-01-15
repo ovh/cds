@@ -34,9 +34,11 @@ func getAllRunJobs(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Q
 		if rj.Initiator.UserID == "" {
 			rj.Initiator.UserID = rj.DeprecatedUserID
 		}
-		rj.Initiator.User, err = user.LoadByID(ctx, db, rj.Initiator.UserID)
-		if err != nil {
-			return nil, err
+		if rj.Initiator.UserID != "" {
+			rj.Initiator.User, err = user.LoadByID(ctx, db, rj.Initiator.UserID)
+			if err != nil {
+				return nil, err
+			}
 		}
 		jobRuns = append(jobRuns, rj.V2WorkflowRunJob)
 	}
@@ -63,9 +65,11 @@ func getRunJob(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 	if dbWkfRunJob.Initiator.UserID == "" {
 		dbWkfRunJob.Initiator.UserID = dbWkfRunJob.DeprecatedUserID
 	}
-	dbWkfRunJob.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRunJob.Initiator.UserID)
-	if err != nil {
-		return nil, err
+	if dbWkfRunJob.Initiator.UserID != "" {
+		dbWkfRunJob.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRunJob.Initiator.UserID)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &dbWkfRunJob.V2WorkflowRunJob, nil
 }
@@ -83,6 +87,9 @@ func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 
 	// Compat code
 	dbWkfRunJob.DeprecatedUserID = dbWkfRunJob.Initiator.UserID
+	if dbWkfRunJob.Initiator.UserID == "" && dbWkfRunJob.Initiator.VCSUsername == "" {
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "V2WorkflowRunJob initiator should not be nil")
+	}
 
 	if err := gorpmapping.InsertAndSign(ctx, db, dbWkfRunJob); err != nil {
 		return err
