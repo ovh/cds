@@ -255,10 +255,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: lambda.ID,
-			User:   lambda,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -269,10 +266,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		JobID:         "job2",
 		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: lambda.ID,
-			User:   lambda,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -282,10 +276,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: lambda.ID,
-			User:   lambda,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -295,10 +286,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: lambda.ID,
-			User:   lambda,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -308,10 +296,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: lambda.ID,
-			User:   lambda,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -321,10 +306,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: lambda.ID,
-			User:   lambda,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -334,10 +316,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: lambda.ID,
-			User:   lambda,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -441,6 +420,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -451,6 +431,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		JobID:         "job2",
 		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -460,6 +441,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -469,6 +451,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -478,6 +461,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -487,6 +471,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -496,6 +481,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -609,10 +595,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -623,10 +606,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		JobID:         "job2",
 		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -636,10 +616,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -649,10 +626,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -662,10 +636,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -675,10 +646,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -688,10 +656,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -816,10 +781,7 @@ func TestRunManualSuccessJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -928,10 +890,7 @@ func TestRunManualFailedJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
-			UserID: admin.ID,
-			User:   admin,
-		},
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -1040,6 +999,7 @@ func TestRunManualSkippedJobWithoutGate(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -1132,6 +1092,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -1141,6 +1102,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job2",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -1150,6 +1112,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -1159,6 +1122,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -1168,6 +1132,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -1177,6 +1142,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -1186,6 +1152,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
