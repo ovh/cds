@@ -1244,8 +1244,72 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 			b := &sdk.VCSContent{
 				IsFile: true,
 				Content: `{
-  "name": "my-awesome-package",
-  "version": "1.2.3"
+  "name": "cloudstore-ui-react",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest --coverage --run",
+    "test:watch": "vitest --coverage",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --cache --write \"src/**/*.{ts,tsx,css,json,md}\"",
+    "prepare": "husky",
+    "openapi:cs-api": "openapi-typescript ./src/types/cloudstore-api.yaml -o ./src/types/cloudstoreApi.d.ts",
+    "openapi": "pnpm /openapi:.+/ && pnpm format",
+    "mock:backend": "mockoon-cli start --data ./src/types/cloudstore-api.yaml"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint",
+    "*.{tsx,ts,css,json}": "prettier --write"
+  },
+  "dependencies": {
+    "@ovhcloud/ods-components": "^18.4.1",
+    "@ovhcloud/ods-themes": "^18.4.1",
+    "@tanstack/react-query": "^5.62.7",
+    "date-fns": "^4.1.0",
+    "openapi-fetch": "^0.13.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.54.1",
+    "react-router": "^7.0.2",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.16.0",
+    "@mockoon/cli": "^9.1.0",
+    "@tanstack/eslint-plugin-query": "^5.62.1",
+    "@tanstack/react-query": "^5.62.7",
+    "@tsconfig/strictest": "^2.0.5",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react-swc": "^3.7.2",
+    "@vitest/coverage-v8": "2.1.8",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "globals": "^15.13.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "openapi-typescript": "^7.4.4",
+    "postcss": "^8.4.49",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vite": "^6.0.3",
+    "vitest": "^2.1.8",
+    "zustand": "^5.0.2"
+  }
 }`,
 			}
 			*(out.(*sdk.VCSContent)) = *b
