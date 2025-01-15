@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -819,7 +820,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	mustSaveVersion := false
 	if wr.WorkflowData.Workflow.Semver != nil {
 		var cdsVersion *semver.Version
-		cdsVersion, mustSaveVersion, err = getCDSversion(ctx, db, vcsClient, runContext, wr.WorkflowData.Workflow)
+		cdsVersion, mustSaveVersion, err = getCDSversion(ctx, db, vcsClient, workflowVCSServer.Type, runContext, wr.WorkflowData.Workflow)
 		if err != nil {
 			return nil, false, err
 		}
@@ -833,7 +834,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	return &runContext, mustSaveVersion, nil
 }
 
-func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAuthorizedClientService, runContext sdk.WorkflowRunContext, workflowDef sdk.V2Workflow) (*semver.Version, bool, error) {
+func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAuthorizedClientService, typeVCS string, runContext sdk.WorkflowRunContext, workflowDef sdk.V2Workflow) (*semver.Version, bool, error) {
 	// If not git, retrieve file
 	var content sdk.VCSContent
 	if workflowDef.Semver.From != sdk.SemverTypeGit {
@@ -854,6 +855,18 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		}
 	}
 
+	var fileContent string
+	switch typeVCS {
+	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
+		contentBts, err := base64.StdEncoding.DecodeString(content.Content)
+		if err != nil {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to decode file at path %s", workflowDef.Semver.Path)
+		}
+		fileContent = string(contentBts)
+	default:
+		fileContent = content.Content
+	}
+
 	// Retrieve version from file
 	var fileVersion string
 	var cdsVersion string
@@ -866,32 +879,32 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		}
 	case sdk.SemverTypeHelm:
 		var file sdk.SemverHelmChart
-		if err := yaml.Unmarshal([]byte(content.Content), &file); err != nil {
+		if err := yaml.Unmarshal([]byte(fileContent), &file); err != nil {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read helm chart file: %v", err)
 		}
 		fileVersion = file.Version
 	case sdk.SemverTypeCargo:
 		var file sdk.SemverCargoFile
-		if err := toml.Unmarshal([]byte(content.Content), &file); err != nil {
+		if err := toml.Unmarshal([]byte(fileContent), &file); err != nil {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read cargo file: %v", err)
 		}
 		fileVersion = file.Package.Version
 	case sdk.SemverTypeNpm, sdk.SemverTypeYarn:
 		var file sdk.SemverNpmYarnPackage
-		if err := json.Unmarshal([]byte(content.Content), &file); err != nil {
+		if err := json.Unmarshal([]byte(fileContent), &file); err != nil {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read npm/yarn file: %v", err)
 		}
 		fileVersion = file.Version
 	case sdk.SemverTypeFile:
-		fileVersion = strings.Split(content.Content, "\n")[0]
+		fileVersion = strings.Split(fileContent, "\n")[0]
 	case sdk.SemverTypePoetry:
 		var file sdk.SemverPoetry
-		if err := toml.Unmarshal([]byte(content.Content), &file); err != nil {
+		if err := toml.Unmarshal([]byte(fileContent), &file); err != nil {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read poetry file: %v", err)
 		}
 		fileVersion = file.Tool.Poetry.Version
 	case sdk.SemverTypeDebian:
-		firsLine := strings.Split(content.Content, "\n")[0]
+		firsLine := strings.Split(fileContent, "\n")[0]
 		r, _ := regexp.Compile(`.*\((.*)\).*`) // format: package (version) distribution; urgency=low
 		result := r.FindStringSubmatch(firsLine)
 		if r.NumSubexp() == 0 {
