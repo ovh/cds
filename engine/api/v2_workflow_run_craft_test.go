@@ -1956,7 +1956,7 @@ spec: |-
 	require.NoError(t, err)
 	require.Equal(t, 1, len(wrInfos))
 
-	require.Contains(t, wrInfos[0].Message, "Stage release: needs not found lab")
+	require.Contains(t, wrInfos[0].Message, "stage release: needs not found lab")
 }
 
 func TestComputeJobFromTemplate(t *testing.T) {
