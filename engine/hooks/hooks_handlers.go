@@ -192,14 +192,10 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		Created:            time.Now().UnixNano(),
 		Status:             sdk.HookEventStatusScheduled,
 		ExtractData:        extractedData,
+		Initiator:          &sdk.V2WorkflowRunInitiator{},
 	}
 
 	exec.Initiator.UserID = runRequest.UserID
-	var err error
-	exec.Initiator.User, err = s.Client.UserGet(ctx, runRequest.Username)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to get user %s", runRequest.Username)
-	}
 
 	// Save event
 	if err := s.Dao.SaveRepositoryEvent(ctx, exec); err != nil {
