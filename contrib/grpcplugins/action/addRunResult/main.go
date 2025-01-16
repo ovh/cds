@@ -108,6 +108,8 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		repository += "-terraformProvider"
 	case sdk.V2WorkflowRunResultTypeTerraformModule:
 		repository += "-terraformModule"
+	case sdk.V2WorkflowRunResultTypeNpm:
+		repository += "-npm"
 	case sdk.V2WorkflowRunResultTypeStaticFiles:
 		return false, performStaticFiles(ctx, &p.Common, path, detail)
 	}
@@ -227,7 +229,12 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		if err := performTerraformModule(&runResult, fileProps); err != nil {
 			return true, err
 		}
+	case sdk.V2WorkflowRunResultTypeNpm:
+		runResult.Type = sdk.V2WorkflowRunResultTypeNpm
+		if err := performNpm(&runResult, fileInfo, fileProps, fileName); err != nil {
+			return true, err
 
+		}
 	default:
 		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unsupported result type %s", resultType)
 	}
@@ -507,6 +514,35 @@ func performTerraformProvider(runResult *sdk.V2WorkflowRunResult, props map[stri
 			Namespace: nsProps[0],
 			Type:      typeProps[0],
 			Version:   versionProps[0],
+		},
+	}
+	return nil
+}
+
+func performNpm(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.ArtifactoryFileInfo, props map[string][]string, fileName string) error {
+	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
+	if err != nil {
+		return err
+	}
+	npmName, ok := props["npm.name"]
+	if !ok || len(npmName) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property npm.name")
+	}
+	npmVersion, ok := props["npm.version"]
+	if !ok || len(npmName) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property npm.version")
+	}
+
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultNpmDetail{
+			FileName: fileName,
+			Package:  npmName[0],
+			Version:  npmVersion[0],
+			Size:     size,
+			Mode:     os.FileMode(0755),
+			MD5:      fileInfo.Checksums.Md5,
+			SHA1:     fileInfo.Checksums.Sha1,
+			SHA256:   fileInfo.Checksums.Sha256,
 		},
 	}
 	return nil
