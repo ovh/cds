@@ -264,6 +264,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				uc := getUserConsumer(ctx)
 				u := uc.AuthConsumerUser.AuthentifiedUser
 				isAdminMFA = isAdmin(ctx)
+				analysis.Initiator = &sdk.V2WorkflowRunInitiator{}
 				analysis.Initiator.User = u
 				analysis.Initiator.UserID = u.ID
 				analysis.Initiator.IsAdminWithMFA = isAdminMFA
