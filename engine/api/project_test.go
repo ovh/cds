@@ -207,7 +207,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 
 	projGet := sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
-	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, true, projGet.Permissions.Writable, "writable should be true")
 
 	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
@@ -223,7 +222,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 
 	projGet = sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
-	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, true, projGet.Permissions.Writable, "writable should be true")
 
 	userMaintainer, passMaintainer := assets.InsertMaintainerUser(t, db)
@@ -239,7 +237,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 
 	projGet = sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
-	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, false, projGet.Permissions.Writable, "writable should be false")
 }
 

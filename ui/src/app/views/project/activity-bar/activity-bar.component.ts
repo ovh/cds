@@ -52,6 +52,7 @@ export class ProjectActivityBarComponent implements OnInit, OnDestroy {
 
 		this.projectV2Sub = this._store.select(ProjectV2State.current).subscribe(p => {
 			this.projectv2 = p;
+			if (!p) { return; }
 			if (!this.project || this.project.key !== this.projectv2.key) { this.project = this.projectv2; }
 		});
 
