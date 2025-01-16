@@ -362,11 +362,6 @@ type V2JobGateInput struct {
 	Description string      `json:"description,omitempty"`
 }
 
-type V2JobGateValues struct {
-	Multiple bool          `json:"multiple"`
-	Values   []interface{} `json:"values"`
-}
-
 type V2JobGateReviewers struct {
 	Groups []string `json:"groups,omitempty"`
 	Users  []string `json:"users,omitempty"`
