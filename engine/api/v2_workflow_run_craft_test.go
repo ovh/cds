@@ -577,7 +577,7 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
 
-	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
@@ -654,7 +654,7 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/Cargo.toml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo/content/Cargo.toml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -667,7 +667,7 @@ version = "0.85.0"`,
 		}).Times(2)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSBranch{
 				DisplayID: "main",
@@ -679,7 +679,7 @@ version = "0.85.0"`,
 		}).Times(2)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSRepo{}
@@ -745,7 +745,7 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
 
-	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
@@ -823,7 +823,7 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/Chart.yaml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo/content/Chart.yaml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -838,7 +838,7 @@ description: A single-sentence description of this project`,
 		}).Times(2)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSRepo{}
@@ -1161,7 +1161,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
 
-	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
@@ -1239,85 +1239,20 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/package.json?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo/content/package.json?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
 				Content: `{
-  "name": "cloudstore-ui-react",
-  "private": true,
-  "version": "0.0.1",
-  "type": "module",
-  "scripts": {
-    "dev": "vite --open",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "test": "vitest --coverage --run",
-    "test:watch": "vitest --coverage",
-    "lint": "eslint . --max-warnings 0",
-    "format": "prettier --cache --write \"src/**/*.{ts,tsx,css,json,md}\"",
-    "prepare": "husky",
-    "openapi:cs-api": "openapi-typescript ./src/types/cloudstore-api.yaml -o ./src/types/cloudstoreApi.d.ts",
-    "openapi": "pnpm /openapi:.+/ && pnpm format",
-    "mock:backend": "mockoon-cli start --data ./src/types/cloudstore-api.yaml"
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": "eslint",
-    "*.{tsx,ts,css,json}": "prettier --write"
-  },
-  "dependencies": {
-    "@ovhcloud/ods-components": "^18.4.1",
-    "@ovhcloud/ods-themes": "^18.4.1",
-    "@tanstack/react-query": "^5.62.7",
-    "date-fns": "^4.1.0",
-    "openapi-fetch": "^0.13.3",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-hook-form": "^7.54.1",
-    "react-router": "^7.0.2",
-    "zustand": "^5.0.2"
-  },
-  "devDependencies": {
-    "@commitlint/cli": "^19.6.0",
-    "@commitlint/config-conventional": "^19.6.0",
-    "@eslint/js": "^9.16.0",
-    "@mockoon/cli": "^9.1.0",
-    "@tanstack/eslint-plugin-query": "^5.62.1",
-    "@tanstack/react-query": "^5.62.7",
-    "@tsconfig/strictest": "^2.0.5",
-    "@types/node": "^22.10.2",
-    "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.2",
-    "@vitejs/plugin-react-swc": "^3.7.2",
-    "@vitest/coverage-v8": "2.1.8",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^9.16.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-react-refresh": "^0.4.16",
-    "globals": "^15.13.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^15.2.11",
-    "openapi-typescript": "^7.4.4",
-    "postcss": "^8.4.49",
-    "prettier": "^3.4.2",
-    "prettier-plugin-tailwindcss": "^0.6.9",
-    "tailwindcss": "^3.4.16",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0",
-    "vite": "^6.0.3",
-    "vitest": "^2.1.8",
-    "zustand": "^5.0.2"
-  }
-}`,
+  "name": "blabla",
+  "version": "1.2.3"}`,
 			}
 			*(out.(*sdk.VCSContent)) = *b
 			return nil, 200, nil
 		}).Times(2)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSRepo{}
@@ -1384,7 +1319,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
 
-	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
@@ -1462,7 +1397,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/.version?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo/content/.version?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile:  true,
@@ -1473,7 +1408,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 		}).Times(2)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSRepo{}
@@ -1539,7 +1474,7 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
 
-	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
@@ -1617,7 +1552,7 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/pyproject.toml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo/content/pyproject.toml?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -1635,7 +1570,7 @@ readme = "README.md"`,
 		}).Times(2)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSRepo{}
@@ -1701,7 +1636,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
 
-	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
@@ -1779,7 +1714,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/content/debian%2Fchangelog?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo/content/debian%2Fchangelog?commit=123456789", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := &sdk.VCSContent{
 				IsFile: true,
@@ -1796,7 +1731,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 		}).Times(2)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/bitbucketserver/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSRepo{}
