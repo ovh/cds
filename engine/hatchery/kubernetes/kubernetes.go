@@ -253,6 +253,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	if memory == 0 {
 		memory = 1024
 	}
+	if spawnArgs.Model.Memory != 0 {
+		memory = spawnArgs.Model.Memory
+	}
+
 	for _, r := range spawnArgs.Requirements {
 		if r.Type == sdk.MemoryRequirement {
 			var err error
