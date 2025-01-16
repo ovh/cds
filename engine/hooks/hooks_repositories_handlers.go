@@ -129,7 +129,7 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		e.WorkflowHooks = nil
 		e.Analyses = nil
 		e.LastUpdate = time.Now().UnixNano()
-		e.Initiator = &sdk.V2WorkflowRunInitiator{}
+		e.Initiator = nil
 
 		if err := s.Dao.SaveRepositoryEvent(ctx, e); err != nil {
 			return err

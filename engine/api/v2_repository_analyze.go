@@ -214,6 +214,19 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
+			// analysis.Initiator and analysis.DeprecatedUserID can be nil
+			if analysis.Initiator == nil && analysis.DeprecatedUserID != "" {
+				analysis.Initiator = &sdk.V2WorkflowRunInitiator{}
+				analysis.Initiator.UserID = analysis.DeprecatedUserID
+			}
+
+			if analysis.Initiator != nil && analysis.Initiator.User == nil && analysis.Initiator.UserID != "" {
+				analysis.Initiator.User, err = user.LoadByID(ctx, api.mustDB(), analysis.Initiator.UserID)
+				if err != nil {
+					return err
+				}
+			}
+
 			if analysis.Commit == "" || analysis.Ref == "" {
 				// retrieve commit for the given ref
 				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcs.Name)
@@ -254,7 +267,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				analysis.Initiator.User = u
 				analysis.Initiator.UserID = u.ID
 				analysis.Initiator.IsAdminWithMFA = isAdminMFA
-			} else if isHooks(ctx) && analysis.Initiator.UserID != "" {
+			} else if isHooks(ctx) && analysis.Initiator != nil && analysis.Initiator.UserID != "" {
 				u, err := user.LoadByID(ctx, api.mustDB(), analysis.Initiator.UserID)
 				if err != nil {
 					return err
@@ -266,6 +279,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				}
 			}
 
+			// At this point analysis.Initiator can still be nil if the event is from a vcs webhook
 			createAnalysis := createAnalysisRequest{
 				proj:          *proj,
 				vcsProject:    *vcs,

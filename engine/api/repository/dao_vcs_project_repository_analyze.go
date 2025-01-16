@@ -27,11 +27,6 @@ func InsertAnalysis(ctx context.Context, db gorpmapper.SqlExecutorWithTx, analys
 		return err
 	}
 
-	if dbData.Data.Initiator == nil {
-		dbData.Data.Initiator = &sdk.V2WorkflowRunInitiator{
-			UserID: dbData.Data.DeprecatedCDSUserID,
-		}
-	}
 	*analysis = dbData.ProjectRepositoryAnalysis
 	return nil
 }
@@ -41,11 +36,6 @@ func UpdateAnalysis(ctx context.Context, db gorpmapper.SqlExecutorWithTx, analys
 	dbData := dbProjectRepositoryAnalysis{ProjectRepositoryAnalysis: *analysis}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &dbData); err != nil {
 		return err
-	}
-	if dbData.Data.Initiator == nil {
-		dbData.Data.Initiator = &sdk.V2WorkflowRunInitiator{
-			UserID: dbData.Data.DeprecatedCDSUserID,
-		}
 	}
 	*analysis = dbData.ProjectRepositoryAnalysis
 	return nil
