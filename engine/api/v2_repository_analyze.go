@@ -1323,16 +1323,20 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 		HookEventUUID:  analysis.Data.HookEventUUID,
 		HookEventKey:   analysis.Data.HookEventKey,
 		AnalysisCallback: &sdk.HookAnalysisCallback{
-			AnalysisStatus:     analysis.Status,
-			AnalysisID:         analysis.ID,
-			Error:              analysis.Data.Error,
-			Models:             make([]sdk.EntityFullName, 0),
-			Workflows:          make([]sdk.EntityFullName, 0),
-			DeprecatedUsername: analysis.Data.Initiator.Username(),
-			DeprecatedUserID:   analysis.Data.Initiator.UserID,
-			Initiator:          analysis.Data.Initiator,
+			AnalysisStatus: analysis.Status,
+			AnalysisID:     analysis.ID,
+			Error:          analysis.Data.Error,
+			Models:         make([]sdk.EntityFullName, 0),
+			Workflows:      make([]sdk.EntityFullName, 0),
 		},
 	}
+
+	if analysis.Data.Initiator != nil {
+		callback.AnalysisCallback.Initiator = analysis.Data.Initiator
+		callback.AnalysisCallback.DeprecatedUsername = analysis.Data.Initiator.Username()
+		callback.AnalysisCallback.DeprecatedUserID = analysis.Data.Initiator.UserID
+	}
+
 	for _, e := range entities {
 		ent := sdk.EntityFullName{
 			ProjectKey: e.ProjectKey,
