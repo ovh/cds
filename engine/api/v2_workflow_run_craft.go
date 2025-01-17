@@ -498,6 +498,14 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 	for k, v := range run.WorkflowData.Workflow.Stages {
 		tmpWorkflow.Stages[k] = v
 	}
+	if tmpWorkflow.Gates == nil {
+		tmpWorkflow.Gates = make(map[string]sdk.V2JobGate)
+	}
+	for k, v := range run.WorkflowData.Workflow.Gates {
+		tmpWorkflow.Gates[k] = v
+	}
+	tmpWorkflow.Integrations = append(tmpWorkflow.Integrations, run.WorkflowData.Workflow.Integrations...)
+	tmpWorkflow.VariableSets = append(tmpWorkflow.VariableSets, run.WorkflowData.Workflow.VariableSets...)
 
 	// Lint generated workflow
 	if errsLint := Lint(ctx, db, store, tmpWorkflow, wref.ef, nil); errsLint != nil {
