@@ -402,6 +402,8 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load analyze %s", analysis.ID))
 	}
 
+	log.Debug(ctx, "analysis initiator: %+v", analysis.Data.Initiator)
+
 	proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey)
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load project %s", analysis.ProjectKey))
@@ -482,8 +484,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			if commitInitiator == nil {
 				analysis.Status = analysisStatus
 				analysis.Data.Error = analysisError
+			} else {
+				analysis.Data.Initiator = commitInitiator
 			}
-			analysis.Data.Initiator = commitInitiator
 		}
 	}
 
