@@ -6,8 +6,10 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -47,6 +49,17 @@ func (api *API) deleteKeyInProjectV2Handler() ([]service.RbacChecker, service.Ha
 			p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithKeys)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load project %s", key)
+			}
+
+			vcsProject, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapping.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+
+			for _, v := range vcsProject {
+				if v.Auth.SSHKeyName == keyName {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "the ssh key is used by the vcs integration %s", v.Name)
+				}
 			}
 
 			tx, err := api.mustDB().Begin()
