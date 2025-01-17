@@ -58,7 +58,7 @@ func getAnalysis(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	if dbData.Data.Initiator == nil {
-		dbData.Data.Initiator = &sdk.V2WorkflowRunInitiator{
+		dbData.Data.Initiator = &sdk.V2Initiator{
 			UserID: dbData.Data.DeprecatedCDSUserID,
 		}
 	}

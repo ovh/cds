@@ -38,10 +38,11 @@ type EntityFinder struct {
 	workflowCache         map[string]sdk.V2Workflow
 	plugins               map[string]sdk.GRPCPlugin
 	libraryProject        string
-	initiator             sdk.V2WorkflowRunInitiator
+	initiator             sdk.V2Initiator
 }
 
-func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, i sdk.V2WorkflowRunInitiator, libraryProjectKey string) *EntityFinder {
+func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, i sdk.V2Initiator, libraryProjectKey string) *EntityFinder {
+	log.Debug(context.Background(), "NewEntityFinder - initiator: %+v", i)
 	return &EntityFinder{
 		currentProject:        pkey,
 		currentVCS:            vcsServer,

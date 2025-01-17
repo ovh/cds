@@ -53,7 +53,7 @@ type ProjectRepositoryData struct {
 	DeprecatedCDSAdminWithMFA bool                          `json:"cds_admin_mfa"`   // Deprecated
 	Error                     string                        `json:"error"`
 	Entities                  []ProjectRepositoryDataEntity `json:"entities"`
-	Initiator                 *V2WorkflowRunInitiator       `json:"initiator"`
+	Initiator                 *V2Initiator                  `json:"initiator"`
 }
 
 type ProjectRepositoryDataEntity struct {
@@ -81,7 +81,7 @@ func (prd *ProjectRepositoryData) Scan(src interface{}) error {
 	}
 
 	if prd.Initiator == nil {
-		prd.Initiator = &V2WorkflowRunInitiator{
+		prd.Initiator = &V2Initiator{
 			UserID:         prd.DeprecatedCDSUserID,
 			IsAdminWithMFA: prd.DeprecatedCDSAdminWithMFA,
 		}

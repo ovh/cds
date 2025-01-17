@@ -86,14 +86,14 @@ type HookEventCallback struct {
 }
 
 type HookAnalysisCallback struct {
-	AnalysisID         string                  `json:"analysis_id"`
-	AnalysisStatus     string                  `json:"analysis_status"`
-	Error              string                  `json:"error"`
-	Models             []EntityFullName        `json:"models"`
-	Workflows          []EntityFullName        `json:"workflows"`
-	DeprecatedUsername string                  `json:"username"`
-	DeprecatedUserID   string                  `json:"user_id"`
-	Initiator          *V2WorkflowRunInitiator `json:"initiator"`
+	AnalysisID         string           `json:"analysis_id"`
+	AnalysisStatus     string           `json:"analysis_status"`
+	Error              string           `json:"error"`
+	Models             []EntityFullName `json:"models"`
+	Workflows          []EntityFullName `json:"workflows"`
+	DeprecatedUsername string           `json:"username"`
+	DeprecatedUserID   string           `json:"user_id"`
+	Initiator          *V2Initiator     `json:"initiator"`
 }
 
 type HookRepository struct {
@@ -149,7 +149,7 @@ type HookRepositoryEvent struct {
 	SignKey                   string                         `json:"sign_key"`
 	SigningKeyOperation       string                         `json:"signing_key_operation"`
 	SigningKeyOperationStatus OperationStatus                `json:"signing_key_operation_status"`
-	Initiator                 *V2WorkflowRunInitiator        `json:"initiator"`
+	Initiator                 *V2Initiator                   `json:"initiator"`
 }
 
 func (h *HookRepositoryEvent) IsTerminated() bool {
@@ -264,19 +264,19 @@ func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
 }
 
 type HookRepositoryEventExtractData struct {
-	CDSEventName     WorkflowHookEventName                       `json:"cds_event_name"`
-	CDSEventType     WorkflowHookEventType                       `json:"cds_event_type"`
-	Commit           string                                      `json:"commit"`
-	CommitFrom       string                                      `json:"commit_from"`
-	CommitMessage    string                                      `json:"commit_message"`
-	Paths            []string                                    `json:"paths"`
-	Ref              string                                      `json:"ref"`
-	PullRequestID    int64                                       `json:"pullrequest_id"`
-	PullRequestRefTo string                                      `json:"pullrequest_ref_to"`
-	Manual           HookRepositoryEventExtractedDataManual      `json:"manual"`
-	AdminMFA         bool                                        `json:"admin_mfa"`
-	Scheduler        HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
-	WorkflowRun      HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
+	CDSEventName       WorkflowHookEventName                       `json:"cds_event_name"`
+	CDSEventType       WorkflowHookEventType                       `json:"cds_event_type"`
+	Commit             string                                      `json:"commit"`
+	CommitFrom         string                                      `json:"commit_from"`
+	CommitMessage      string                                      `json:"commit_message"`
+	Paths              []string                                    `json:"paths"`
+	Ref                string                                      `json:"ref"`
+	PullRequestID      int64                                       `json:"pullrequest_id"`
+	PullRequestRefTo   string                                      `json:"pullrequest_ref_to"`
+	Manual             HookRepositoryEventExtractedDataManual      `json:"manual"`
+	DeprecatedAdminMFA bool                                        `json:"admin_mfa"` // Deprecated
+	Scheduler          HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
+	WorkflowRun        HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
 }
 
 type HookRepositoryEventExtractedDataManual struct {
@@ -343,22 +343,22 @@ type HookRetrieveUserRequest struct {
 }
 
 type HookRetrieveUserResponse struct {
-	DeprecatedUserID   string                  `json:"user_id"`  // Deprecated
-	DeprecatedUsername string                  `json:"username"` // Deprecated
-	Initiator          *V2WorkflowRunInitiator `json:"initiator"`
+	DeprecatedUserID   string       `json:"user_id"`  // Deprecated
+	DeprecatedUsername string       `json:"username"` // Deprecated
+	Initiator          *V2Initiator `json:"initiator"`
 }
 
 type AnalysisRequest struct {
-	ProjectKey         string                  `json:"projectKey"`
-	VcsName            string                  `json:"vcsName"`
-	RepoName           string                  `json:"repoName"`
-	Ref                string                  `json:"ref"`
-	Commit             string                  `json:"commit"`
-	HookEventUUID      string                  `json:"hook_event_uuid"`
-	HookEventKey       string                  `json:"hook_event_key"`
-	DeprecatedUserID   string                  `json:"user_id"`
-	DeprecatedAdminMFA bool                    `json:"admin_mfa"`
-	Initiator          *V2WorkflowRunInitiator `json:"initiator"`
+	ProjectKey         string       `json:"projectKey"`
+	VcsName            string       `json:"vcsName"`
+	RepoName           string       `json:"repoName"`
+	Ref                string       `json:"ref"`
+	Commit             string       `json:"commit"`
+	HookEventUUID      string       `json:"hook_event_uuid"`
+	HookEventKey       string       `json:"hook_event_key"`
+	DeprecatedUserID   string       `json:"user_id"`
+	DeprecatedAdminMFA bool         `json:"admin_mfa"`
+	Initiator          *V2Initiator `json:"initiator"`
 }
 
 type AnalysisResponse struct {

@@ -38,7 +38,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		Initiator: &sdk.V2WorkflowRunInitiator{
+		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -60,7 +60,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -74,7 +74,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -122,7 +122,7 @@ func TestStopDeadJobs(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		Initiator: &sdk.V2WorkflowRunInitiator{
+		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -147,7 +147,7 @@ func TestStopDeadJobs(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -169,7 +169,7 @@ func TestStopDeadJobs(t *testing.T) {
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},

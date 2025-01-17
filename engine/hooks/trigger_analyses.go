@@ -227,7 +227,7 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 		HookEventUUID:      hre.UUID,
 		HookEventKey:       cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
 		DeprecatedUserID:   hre.DeprecatedUserID,
-		DeprecatedAdminMFA: hre.ExtractData.AdminMFA,
+		DeprecatedAdminMFA: hre.ExtractData.DeprecatedAdminMFA,
 		Initiator:          hre.Initiator,
 	}
 	resp, err := s.Client.ProjectRepositoryAnalysis(ctx, analyze)

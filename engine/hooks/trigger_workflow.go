@@ -124,9 +124,11 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				mods := make([]cdsclient.RequestModifier, 0, 2)
 				mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
 
+				log.Warn(ctx, "triggerWorkflows - initiator: %+v", hre.Initiator)
+
 				runRequest := sdk.V2WorkflowRunHookRequest{
 					HookEventID:        hre.UUID,
-					DeprecatedUserID:   hre.DeprecatedUserID,
+					DeprecatedUserID:   hre.Initiator.UserID,
 					Ref:                hre.ExtractData.Ref,
 					Sha:                hre.ExtractData.Commit,
 					CommitMessage:      hre.ExtractData.CommitMessage,
@@ -136,7 +138,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					SemverCurrent:      wh.SemverCurrent,
 					SemverNext:         wh.SemverNext,
 					ChangeSets:         wh.UpdatedFiles,
-					DeprecatedAdminMFA: hre.ExtractData.AdminMFA,
+					DeprecatedAdminMFA: hre.ExtractData.DeprecatedAdminMFA,
 					PullrequestID:      hre.ExtractData.PullRequestID,
 					PullrequestToRef:   hre.ExtractData.PullRequestRefTo,
 					Initiator:          hre.Initiator,

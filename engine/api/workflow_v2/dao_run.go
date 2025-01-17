@@ -32,7 +32,7 @@ func getRuns(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, 
 			continue
 		}
 		if dbWkfRun.Initiator == nil {
-			dbWkfRun.Initiator = &sdk.V2WorkflowRunInitiator{
+			dbWkfRun.Initiator = &sdk.V2Initiator{
 				UserID:         dbWkfRun.DeprecatedUserID,
 				IsAdminWithMFA: dbWkfRun.DeprecatedAdminMFA,
 			}
@@ -68,7 +68,7 @@ func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, o
 	}
 
 	if dbWkfRun.Initiator == nil {
-		dbWkfRun.Initiator = &sdk.V2WorkflowRunInitiator{
+		dbWkfRun.Initiator = &sdk.V2Initiator{
 			UserID:         dbWkfRun.DeprecatedUserID,
 			IsAdminWithMFA: dbWkfRun.DeprecatedAdminMFA,
 		}
@@ -107,7 +107,7 @@ func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	wr.RunAttempt = 1
 
 	if wr.Initiator == nil {
-		wr.Initiator = &sdk.V2WorkflowRunInitiator{
+		wr.Initiator = &sdk.V2Initiator{
 			UserID:         wr.DeprecatedUserID,
 			IsAdminWithMFA: wr.DeprecatedAdminMFA,
 		}
@@ -127,7 +127,7 @@ func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	wr.LastModified = time.Now()
 
 	if wr.Initiator == nil {
-		wr.Initiator = &sdk.V2WorkflowRunInitiator{
+		wr.Initiator = &sdk.V2Initiator{
 			UserID:         wr.DeprecatedUserID,
 			IsAdminWithMFA: wr.DeprecatedAdminMFA,
 		}

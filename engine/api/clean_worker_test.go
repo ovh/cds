@@ -66,7 +66,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -89,7 +89,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -168,7 +168,7 @@ func TestDisabledDeadWorkers(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -191,7 +191,7 @@ func TestDisabledDeadWorkers(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},

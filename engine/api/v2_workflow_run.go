@@ -253,7 +253,7 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, runJobs[i])
 			}
 
-			initiator := sdk.V2WorkflowRunInitiator{
+			initiator := sdk.V2Initiator{
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				IsAdminWithMFA: isAdmin(ctx),
 			}
@@ -802,7 +802,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				log.ErrorWithStackTrace(ctx, err)
 			}
 
-			initiator := sdk.V2WorkflowRunInitiator{
+			initiator := sdk.V2Initiator{
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				IsAdminWithMFA: isAdmin(ctx),
 			}
@@ -836,6 +836,8 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
 				return err
 			}
+
+			log.Debug(ctx, "postWorkflowRunFromHookV2Handler - Run Request initiator: %+v", runRequest.Initiator)
 
 			ctx = context.WithValue(ctx, cdslog.HookEventID, runRequest.HookEventID)
 
@@ -889,12 +891,20 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			// TODO i don't what i need to do in this case
+			if workflowEntity.UserID != nil {
+				log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s user_id: %s", workflowEntity.ID, workflowEntity.Name, *workflowEntity.UserID)
+			} else {
+				log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s user_id: %v", workflowEntity.ID, workflowEntity.Name, workflowEntity.UserID)
+			}
+			log.Debug(ctx, "postWorkflowRunFromHookV2Handler - wk.Repository: %+v", wk.Repository)
+
+			// TODO i don't know what i need to do in this case
 			if wk.Repository != nil && wk.Repository.InsecureSkipSignatureVerify {
 				// Use entity owner as user fallback
 				if workflowEntity.UserID == nil {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown workflow owner. Please analyse your repository.")
 				}
+
 				runRequest.Initiator.UserID = *workflowEntity.UserID
 			}
 
@@ -903,12 +913,15 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				hasRole           bool
 			)
 
-			if !runRequest.Initiator.IsUser() {
+			log.Debug(ctx, "theOneWhoTriggers = %+v", theOneWhoTriggers)
+
+			if !theOneWhoTriggers.IsUser() {
 				hasRole, err = rbac.HasRoleOnWorkflowAndVCSUsername(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, runRequest.Initiator.VCSUsername, proj.Key, vcsProject.Name, repo.Name, wk.Name)
 				if err != nil {
 					return err
 				}
 			} else {
+				log.Debug(ctx, "Loading initiator user %s", runRequest.Initiator.UserID)
 				u, err := user.LoadByID(ctx, api.mustDB(), runRequest.Initiator.UserID, user.LoadOptions.WithContacts)
 				if err != nil {
 					return err
@@ -917,6 +930,9 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				hasRole, err = rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, vcsProject.Name, repo.Name, wk.Name)
 				if err != nil {
 					return err
+				}
+				if !hasRole {
+					log.Debug(ctx, "user %s doesn't have role", u.ID)
 				}
 			}
 
@@ -1018,7 +1034,7 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 				log.ErrorWithStackTrace(ctx, err)
 			}
 
-			initiator := sdk.V2WorkflowRunInitiator{
+			initiator := sdk.V2Initiator{
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				IsAdminWithMFA: isAdmin(ctx),
 			}
@@ -1215,7 +1231,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 
 			runJobsContexts, _ := computeExistingRunJobContexts(ctx, runJobs, runResults)
 			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow, runJobsContexts, wr.Contexts, stages, jobToRuns[0].JobID)
-			initiator := sdk.V2WorkflowRunInitiator{
+			initiator := sdk.V2Initiator{
 				UserID:         u.AuthConsumerUser.AuthentifiedUser.ID,
 				User:           u.AuthConsumerUser.AuthentifiedUser,
 				IsAdminWithMFA: isAdmin(ctx),
@@ -1398,7 +1414,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 		}
 }
 
-func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, initiator sdk.V2WorkflowRunInitiator) (*sdk.V2WorkflowRun, error) {
+func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, initiator sdk.V2Initiator) (*sdk.V2WorkflowRun, error) {
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
 
 	runEvent := sdk.V2WorkflowRunEvent{

@@ -1795,7 +1795,7 @@ func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) bool {
 	return true
 }
 
-func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobInputs map[string]interface{}, jobDef sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext, initiator sdk.V2WorkflowRunInitiator) (bool, error) {
+func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobInputs map[string]interface{}, jobDef sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext, initiator sdk.V2Initiator) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "checkJobCondition")
 	defer next()
 
@@ -1988,7 +1988,7 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 	return nil
 }
 
-func (api *API) EnqueueWorkflowRun(ctx context.Context, runID string, initiator sdk.V2WorkflowRunInitiator, workflowName string, runNumber int64) {
+func (api *API) EnqueueWorkflowRun(ctx context.Context, runID string, initiator sdk.V2Initiator, workflowName string, runNumber int64) {
 	// Continue workflow
 	enqueueRequest := sdk.V2WorkflowRunEnqueue{
 		RunID:                    runID,

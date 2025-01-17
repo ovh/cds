@@ -101,7 +101,7 @@ hatcheries:
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -179,7 +179,7 @@ hatcheries:
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -278,7 +278,7 @@ hatcheries:
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
 		RunAttempt:    wr.RunAttempt,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -315,7 +315,7 @@ hatcheries:
 		Job: sdk.V2Job{
 			VariableSets: []string{"vs1"},
 		},
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -484,7 +484,7 @@ hatcheries:
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},

@@ -52,7 +52,7 @@ func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -171,7 +171,7 @@ hatcheries:
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -240,7 +240,7 @@ func TestUserGetJobsQueuedHandler(t *testing.T) {
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -254,7 +254,7 @@ func TestUserGetJobsQueuedHandler(t *testing.T) {
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -314,7 +314,7 @@ func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -328,7 +328,7 @@ func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 		ModelType:     "docker",
 		Region:        "default2",
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -342,7 +342,7 @@ func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 		ModelType:     "openstack",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -430,7 +430,7 @@ func TestGetJobHandler(t *testing.T) {
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},
@@ -518,7 +518,7 @@ func TestPostJobRunInfoHandler(t *testing.T) {
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
-		Initiator: sdk.V2WorkflowRunInitiator{
+		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
 			User:   admin,
 		},

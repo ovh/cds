@@ -21,54 +21,54 @@ const (
 )
 
 type V2WorkflowRunHookRequest struct {
-	HookEventID        string                  `json:"hook_event_id"`
-	DeprecatedUserID   string                  `json:"user_id"` // Deprecated
-	EventName          WorkflowHookEventName   `json:"event_name"`
-	Ref                string                  `json:"ref,omitempty"`
-	Sha                string                  `json:"sha,omitempty"`
-	PullrequestID      int64                   `json:"pr_id,omitempty"`
-	PullrequestToRef   string                  `json:"pr_to_ref,omitempty"`
-	CommitMessage      string                  `json:"commit_message,omitempty"`
-	Payload            map[string]interface{}  `json:"payload"`
-	HookType           string                  `json:"hook_type"`
-	EntityUpdated      string                  `json:"entity_updated"`
-	SemverCurrent      string                  `json:"semver_current"`
-	SemverNext         string                  `json:"semver_next"`
-	ChangeSets         []string                `json:"changesets"`
-	Cron               string                  `json:"cron"`
-	CronTimezone       string                  `json:"cron_timezone"`
-	DeprecatedAdminMFA bool                    `json:"admin_mfa"` // Deprecated
-	WorkflowRun        string                  `json:"workflow_run"`
-	WorkflowRunID      string                  `json:"workflow_run_id"`
-	Initiator          *V2WorkflowRunInitiator `json:"initiator"`
+	HookEventID        string                 `json:"hook_event_id"`
+	DeprecatedUserID   string                 `json:"user_id"` // Deprecated
+	EventName          WorkflowHookEventName  `json:"event_name"`
+	Ref                string                 `json:"ref,omitempty"`
+	Sha                string                 `json:"sha,omitempty"`
+	PullrequestID      int64                  `json:"pr_id,omitempty"`
+	PullrequestToRef   string                 `json:"pr_to_ref,omitempty"`
+	CommitMessage      string                 `json:"commit_message,omitempty"`
+	Payload            map[string]interface{} `json:"payload"`
+	HookType           string                 `json:"hook_type"`
+	EntityUpdated      string                 `json:"entity_updated"`
+	SemverCurrent      string                 `json:"semver_current"`
+	SemverNext         string                 `json:"semver_next"`
+	ChangeSets         []string               `json:"changesets"`
+	Cron               string                 `json:"cron"`
+	CronTimezone       string                 `json:"cron_timezone"`
+	DeprecatedAdminMFA bool                   `json:"admin_mfa"` // Deprecated
+	WorkflowRun        string                 `json:"workflow_run"`
+	WorkflowRunID      string                 `json:"workflow_run_id"`
+	Initiator          *V2Initiator           `json:"initiator"`
 }
 
 type V2WorkflowRun struct {
-	ID                 string                  `json:"id" db:"id" cli:"id" action_metadata:"workflow-run-id"`
-	ProjectKey         string                  `json:"project_key" cli:"project_key" db:"project_key" action_metadata:"project-key"`
-	VCSServerID        string                  `json:"vcs_server_id" db:"vcs_server_id"`
-	VCSServer          string                  `json:"vcs_server" db:"vcs_server" action_metadata:"vcs-server"`
-	RepositoryID       string                  `json:"repository_id" db:"repository_id"`
-	Repository         string                  `json:"repository" db:"repository" action_metadata:"repository-identifier"`
-	WorkflowName       string                  `json:"workflow_name" db:"workflow_name" cli:"workflow_name" action_metadata:"workflow-name"`
-	WorkflowSha        string                  `json:"workflow_sha" db:"workflow_sha"`
-	WorkflowRef        string                  `json:"workflow_ref" db:"workflow_ref"`
-	Status             V2WorkflowRunStatus     `json:"status" db:"status" cli:"status"`
-	RunNumber          int64                   `json:"run_number" db:"run_number" cli:"run_number" action_metadata:"run-number"`
-	RunAttempt         int64                   `json:"run_attempt" db:"run_attempt"`
-	Started            time.Time               `json:"started" db:"started" cli:"started"`
-	LastModified       time.Time               `json:"last_modified" db:"last_modified" cli:"last_modified"`
-	ToDelete           bool                    `json:"to_delete" db:"to_delete"`
-	WorkflowData       V2WorkflowRunData       `json:"workflow_data" db:"workflow_data"`
-	DeprecatedUserID   string                  `json:"user_id" db:"user_id"`                                             // Deprecated
-	DeprecatedUsername string                  `json:"username" db:"username" cli:"username" action_metadata:"username"` // Deprecated
-	DeprecatedAdminMFA bool                    `json:"admin_mfa" db:"admin_mfa" cli:"admin_mfa"`                         // Deprecated
-	Contexts           WorkflowRunContext      `json:"contexts" db:"contexts"`
-	RunEvent           V2WorkflowRunEvent      `json:"event" db:"event"`
-	RunJobEvent        V2WorkflowRunJobEvents  `json:"job_events" db:"job_event"`
-	RetentionDate      time.Time               `json:"retention_date,omitempty" db:"retention_date" cli:"-"`
-	Annotations        WorkflowRunAnnotations  `json:"annotations,omitempty" db:"annotations" cli:"-"`
-	Initiator          *V2WorkflowRunInitiator `json:"initiator,omitempty" db:"initiator" cli:"-"`
+	ID                 string                 `json:"id" db:"id" cli:"id" action_metadata:"workflow-run-id"`
+	ProjectKey         string                 `json:"project_key" cli:"project_key" db:"project_key" action_metadata:"project-key"`
+	VCSServerID        string                 `json:"vcs_server_id" db:"vcs_server_id"`
+	VCSServer          string                 `json:"vcs_server" db:"vcs_server" action_metadata:"vcs-server"`
+	RepositoryID       string                 `json:"repository_id" db:"repository_id"`
+	Repository         string                 `json:"repository" db:"repository" action_metadata:"repository-identifier"`
+	WorkflowName       string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name" action_metadata:"workflow-name"`
+	WorkflowSha        string                 `json:"workflow_sha" db:"workflow_sha"`
+	WorkflowRef        string                 `json:"workflow_ref" db:"workflow_ref"`
+	Status             V2WorkflowRunStatus    `json:"status" db:"status" cli:"status"`
+	RunNumber          int64                  `json:"run_number" db:"run_number" cli:"run_number" action_metadata:"run-number"`
+	RunAttempt         int64                  `json:"run_attempt" db:"run_attempt"`
+	Started            time.Time              `json:"started" db:"started" cli:"started"`
+	LastModified       time.Time              `json:"last_modified" db:"last_modified" cli:"last_modified"`
+	ToDelete           bool                   `json:"to_delete" db:"to_delete"`
+	WorkflowData       V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
+	DeprecatedUserID   string                 `json:"user_id" db:"user_id"`                                             // Deprecated
+	DeprecatedUsername string                 `json:"username" db:"username" cli:"username" action_metadata:"username"` // Deprecated
+	DeprecatedAdminMFA bool                   `json:"admin_mfa" db:"admin_mfa" cli:"admin_mfa"`                         // Deprecated
+	Contexts           WorkflowRunContext     `json:"contexts" db:"contexts"`
+	RunEvent           V2WorkflowRunEvent     `json:"event" db:"event"`
+	RunJobEvent        V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
+	RetentionDate      time.Time              `json:"retention_date,omitempty" db:"retention_date" cli:"-"`
+	Annotations        WorkflowRunAnnotations `json:"annotations,omitempty" db:"annotations" cli:"-"`
+	Initiator          *V2Initiator           `json:"initiator,omitempty" db:"initiator" cli:"-"`
 }
 
 type V2WorkflowRunStatus string
@@ -266,7 +266,7 @@ type V2WorkflowRunJob struct {
 	ModelType          string                 `json:"model_type,omitempty" db:"model_type"`
 	Matrix             JobMatrix              `json:"matrix,omitempty" db:"matrix"`
 	GateInputs         GateInputs             `json:"gate_inputs,omitempty" db:"gate_inputs"`
-	Initiator          V2WorkflowRunInitiator `json:"initiator,omitempty" db:"initiator"`
+	Initiator          V2Initiator            `json:"initiator,omitempty" db:"initiator"`
 }
 
 type V2WorkflowRunJobStatus string
@@ -438,7 +438,7 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 	return stepsContext
 }
 
-type V2WorkflowRunInitiator struct {
+type V2Initiator struct {
 	UserID         string            `json:"user_id"`
 	User           *AuthentifiedUser `json:"user"`
 	VCS            string            `json:"vcs"`
@@ -446,7 +446,7 @@ type V2WorkflowRunInitiator struct {
 	IsAdminWithMFA bool              `json:"is_admin_with_mfa"`
 }
 
-func (i *V2WorkflowRunInitiator) Username() string {
+func (i *V2Initiator) Username() string {
 	if i == nil {
 		return ""
 	}
@@ -459,17 +459,17 @@ func (i *V2WorkflowRunInitiator) Username() string {
 	return ""
 }
 
-func (i *V2WorkflowRunInitiator) IsUser() bool {
+func (i *V2Initiator) IsUser() bool {
 	return i.VCSUsername == "" && i.UserID != ""
 }
 
-func (i V2WorkflowRunInitiator) Value() (driver.Value, error) {
+func (i V2Initiator) Value() (driver.Value, error) {
 	i.User = nil // Don't store a json copy of the user
 	m, err := json.Marshal(i)
-	return m, WrapError(err, "cannot marshal V2WorkflowRunInitiator")
+	return m, WrapError(err, "cannot marshal V2Initiator")
 }
 
-func (i *V2WorkflowRunInitiator) Scan(src interface{}) error {
+func (i *V2Initiator) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
@@ -478,13 +478,13 @@ func (i *V2WorkflowRunInitiator) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal([]byte(source), i), "cannot unmarshal V2WorkflowRunInitiator")
+	return WrapError(json.Unmarshal([]byte(source), i), "cannot unmarshal V2Initiator")
 }
 
 type V2WorkflowRunEnqueue struct {
 	RunID                    string                   `json:"run_id"`
 	DeprecatedUserID         string                   `json:"user_id"` // Deprecated
-	Initiator                V2WorkflowRunInitiator   `json:"initiator"`
+	Initiator                V2Initiator              `json:"initiator"`
 	DeprecatedIsAdminWithMFA bool                     `json:"is_admin_mfa"` // Deprecated
 	Gate                     V2WorkflowRunEnqueueGate `json:"gate"`
 }
@@ -766,7 +766,7 @@ type HookWorkflowRunEventRequestWorkflowRun struct {
 	Conclusion         string                             `json:"conclusion"`
 	CreatedAt          time.Time                          `json:"created_at"`
 	Jobs               map[string]HookWorkflowRunEventJob `json:"jobs"`
-	Initiator          V2WorkflowRunInitiator             `json:"initiator"`
+	Initiator          V2Initiator                        `json:"initiator"`
 }
 
 type HookWorkflowRunEventJob struct {

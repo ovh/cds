@@ -178,7 +178,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 			Project:  runRequest.Project,
 			Workflow: runRequest.Workflow,
 		},
-		AdminMFA: runRequest.AdminMFA,
+		DeprecatedAdminMFA: runRequest.AdminMFA,
 	}
 
 	exec := &sdk.HookRepositoryEvent{
@@ -192,10 +192,11 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		Created:            time.Now().UnixNano(),
 		Status:             sdk.HookEventStatusScheduled,
 		ExtractData:        extractedData,
-		Initiator:          &sdk.V2WorkflowRunInitiator{},
+		Initiator: &sdk.V2Initiator{
+			UserID:         runRequest.UserID,
+			IsAdminWithMFA: runRequest.AdminMFA,
+		},
 	}
-
-	exec.Initiator.UserID = runRequest.UserID
 
 	// Save event
 	if err := s.Dao.SaveRepositoryEvent(ctx, exec); err != nil {

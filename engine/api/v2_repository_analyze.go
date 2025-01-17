@@ -54,7 +54,7 @@ type createAnalysisRequest struct {
 	commit        string
 	hookEventUUID string
 	hookEventKey  string
-	initiator     *sdk.V2WorkflowRunInitiator
+	initiator     *sdk.V2Initiator
 }
 
 func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration) {
@@ -216,7 +216,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 
 			// analysis.Initiator and analysis.DeprecatedUserID can be nil
 			if analysis.Initiator == nil && analysis.DeprecatedUserID != "" {
-				analysis.Initiator = &sdk.V2WorkflowRunInitiator{}
+				analysis.Initiator = &sdk.V2Initiator{}
 				analysis.Initiator.UserID = analysis.DeprecatedUserID
 			}
 
@@ -264,7 +264,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				uc := getUserConsumer(ctx)
 				u := uc.AuthConsumerUser.AuthentifiedUser
 				isAdminMFA = isAdmin(ctx)
-				analysis.Initiator = &sdk.V2WorkflowRunInitiator{}
+				analysis.Initiator = &sdk.V2Initiator{}
 				analysis.Initiator.User = u
 				analysis.Initiator.UserID = u.ID
 				analysis.Initiator.IsAdminWithMFA = isAdminMFA
@@ -435,10 +435,8 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		_ = api.Cache.Unlock(lockKeyRepo)
 	}()
 
-	var userDB sdk.AuthentifiedUser
-
 	defer func() {
-		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis, userDB)
+		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis, analysis.Data.Initiator)
 	}()
 
 	entitiesUpdated := make([]sdk.Entity, 0)
@@ -510,6 +508,8 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		}
 	}
 
+	log.Debug(ctx, "analyzeRepository - analysis.Data.Initiator = %+v", analysis.Data.Initiator)
+
 	// Retrieve files content
 	var filesContent map[string][]byte
 	switch vcsProjectWithSecret.Type {
@@ -570,6 +570,11 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, err)
 	}
 
+	log.Debug(ctx, "analyzeRepository - %d existing entities", len(existingEntities))
+	for _, e := range existingEntities {
+		log.Debug(ctx, "analyzeRepository - existing entity: %+v", e)
+	}
+
 	// Build user role map
 	for _, t := range sdk.EntityTypes {
 		if _, has := userRoles[t]; !has {
@@ -601,7 +606,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 skipEntity:
 	for i := range entities {
 		e := &entities[i]
-		e.UserID = &userDB.ID
+		e.UserID = &analysis.Data.Initiator.UserID
 
 		for entityIndex := range analysis.Data.Entities {
 			analysisEntity := &analysis.Data.Entities[entityIndex]
@@ -827,7 +832,7 @@ skipEntity:
 					continue
 				}
 				if err := DeleteEntity(ctx, tx, &e, srvs, delOpts); err != nil {
-					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to delete entity %s [%s] ", e.Name, e.Type)))
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to delete entity %s [%s] ", e.Name, e.Type))
 				}
 				eventRemovedEntities = append(eventRemovedEntities, e)
 			}
@@ -862,13 +867,13 @@ skipEntity:
 	}
 
 	for _, e := range eventInsertedEntities {
-		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityCreated, repo.Name, repo.Name, e, &userDB)
+		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityCreated, repo.Name, repo.Name, e, analysis.Data.Initiator)
 	}
 	for _, eUpdated := range eventUpdatedEntities {
-		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityUpdated, vcsProjectWithSecret.Name, repo.Name, eUpdated, &userDB)
+		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityUpdated, vcsProjectWithSecret.Name, repo.Name, eUpdated, analysis.Data.Initiator)
 	}
 	for _, eRemoved := range eventRemovedEntities {
-		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityDeleted, vcsProjectWithSecret.Name, repo.Name, eRemoved, &userDB)
+		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityDeleted, vcsProjectWithSecret.Name, repo.Name, eRemoved, analysis.Data.Initiator)
 	}
 
 	if len(schedulers) != 0 {
@@ -1361,7 +1366,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 }
 
 /*
-func findCommitterFromVCSRealm(ctx context.Context, db *gorp.DbMap, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject) (*sdk.V2WorkflowRunInitiator, string, string, error) {
+func findCommitterFromVCSRealm(ctx context.Context, db *gorp.DbMap, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject) (*sdk.V2Initiator, string, string, error) {
 	gpgKeyname := vcsProjectWithSecret.Auth.GPGKeyName
 	keys, err := project.LoadAllKeysByProjectKey(ctx, db, projKey)
 	if err != nil {
@@ -1377,7 +1382,7 @@ func findCommitterFromVCSRealm(ctx context.Context, db *gorp.DbMap, signKeyID, p
 	}
 
 	if gpgKey != nil && gpgKey.KeyID == signKeyID {
-		var res sdk.V2WorkflowRunInitiator
+		var res sdk.V2Initiator
 		res.VCS = vcsProjectWithSecret.Name
 		res.VCSUsername = vcsProjectWithSecret.Auth.Username
 		return &res, "", "", nil
@@ -1387,7 +1392,7 @@ func findCommitterFromVCSRealm(ctx context.Context, db *gorp.DbMap, signKeyID, p
 }*/
 
 // findCommitter
-func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2WorkflowRunInitiator, string, string, error) {
+func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2Initiator, string, string, error) {
 	ctx, next := telemetry.Span(ctx, "findCommitter", trace.StringAttribute(telemetry.TagProjectKey, projKey), trace.StringAttribute(telemetry.TagVCSServer, vcsProjectWithSecret.Name), trace.StringAttribute(telemetry.TagRepository, repoName))
 	defer next()
 
@@ -1429,7 +1434,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("user %s not found for gpg key %s", userGPGKey.AuthentifiedUserID, userGPGKey.KeyID), nil
 		}
 
-		return &sdk.V2WorkflowRunInitiator{
+		return &sdk.V2Initiator{
 			UserID: cdsUser.ID,
 			User:   cdsUser,
 		}, "", "", nil
@@ -1510,14 +1515,14 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	}
 
 	if vcsUsername != "" {
-		return &sdk.V2WorkflowRunInitiator{
+		return &sdk.V2Initiator{
 			VCS:         vcsProjectWithSecret.Name,
 			VCSUsername: vcsUsername,
 		}, "", "", nil
 	}
 
 	if cdsUser != nil {
-		return &sdk.V2WorkflowRunInitiator{
+		return &sdk.V2Initiator{
 			UserID: cdsUser.ID,
 			User:   cdsUser,
 		}, "", "", nil
