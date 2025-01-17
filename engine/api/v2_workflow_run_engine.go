@@ -1765,14 +1765,19 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 			if v.Default != nil {
 				currentJobContext.Gate[k] = v.Default
 			} else {
-				switch v.Type {
-				case "boolean":
-					currentJobContext.Gate[k] = false
-				case "number":
-					currentJobContext.Gate[k] = 0
-				default:
-					currentJobContext.Gate[k] = ""
+				if v.Options != nil {
+					currentJobContext.Gate[k] = make([]interface{}, 0)
+				} else {
+					switch v.Type {
+					case "boolean":
+						currentJobContext.Gate[k] = false
+					case "number":
+						currentJobContext.Gate[k] = 0
+					default:
+						currentJobContext.Gate[k] = ""
+					}
 				}
+
 			}
 		}
 
