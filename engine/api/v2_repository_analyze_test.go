@@ -279,6 +279,12 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 		LastModified:        time.Now(),
 		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
+		Data: sdk.ProjectRepositoryData{
+			Initiator: &sdk.V2Initiator{
+				VCS:         "vcs-server",
+				VCSUsername: "my-githup-username",
+			},
+		},
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
 
