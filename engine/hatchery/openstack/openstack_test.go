@@ -6,12 +6,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 )
 
 func TestHatcheryOpenstack_CanSpawn(t *testing.T) {
@@ -103,4 +102,86 @@ func TestHatcheryOpenstack_WorkerModelsEnabled(t *testing.T) {
 	assert.Equal(t, "my-model-3", ms[0].Name)
 	assert.Equal(t, "my-model-5", ms[1].Name)
 	assert.Equal(t, "my-model-2", ms[2].Name)
+}
+
+func TestHatcheryOpenstack_checkOverrideImagesUsername(t *testing.T) {
+	tests := []struct {
+		name      string
+		overrides []ImageUsernameOverride
+		wantErr   bool
+	}{
+		{
+			name:      "empty",
+			overrides: []ImageUsernameOverride{},
+		},
+		{
+			name:      "nil",
+			overrides: nil,
+		},
+		{
+			name: "valid-values",
+			overrides: []ImageUsernameOverride{
+				{
+					Image:    "foo",
+					Username: "bar",
+				},
+				{
+					Image:    "^foo-[a-z]+",
+					Username: "baz123",
+				},
+				{
+					Image:    "^baz$",
+					Username: "_foobar",
+				},
+			},
+		},
+		{
+			name: "invalid-image-regexp",
+			overrides: []ImageUsernameOverride{
+				{
+					Image:    "foo[",
+					Username: "bar",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "username-starting-with-dash",
+			overrides: []ImageUsernameOverride{
+				{
+					Image:    "^foo$",
+					Username: "-baz",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "username-starting-with-number",
+			overrides: []ImageUsernameOverride{
+				{
+					Image:    "^foo$",
+					Username: "1baz",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "username-too-long",
+			overrides: []ImageUsernameOverride{
+				{
+					Image:    "^foo$",
+					Username: "abcdefghijklmnopqrstuvwxyz0123456",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &HatcheryOpenstack{}
+			if err := h.checkOverrideImagesUsername(tt.overrides); (err != nil) != tt.wantErr {
+				t.Errorf("HatcheryOpenstack.checkOverrideImagesUsername() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

@@ -138,7 +138,7 @@ func (ac *Client) Deploy(deployRequest *DeployRequest) (*DeployResponse, error) 
 			return nil, &RequestError{fmt.Sprintf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)}
 		}
 		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
-			return nil, fmt.Errorf("deploy request failed (HTTP status %d): %s req: %+v", statusCode, rawBody, req)
+			return nil, fmt.Errorf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)
 		}
 		return nil, fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
 	}

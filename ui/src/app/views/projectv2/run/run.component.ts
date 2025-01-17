@@ -164,6 +164,16 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         } catch (e) {
             this._messageService.error(`Unable to get jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
+
+        // Reload workflow run if we received a runjob from an unknown job
+        if (this.jobs) {
+            this.jobs.forEach( j => {
+                if (!this.workflowRun.workflow_data.workflow.jobs[j.job_id]) {
+                    this.load(j.workflow_run_id)
+                }
+            })
+        }
+
         try {
             this.results = await lastValueFrom(this._workflowService.getResults(this.workflowRun, this.selectedRunAttempt));
             if (!!this.results.find(r => r.type === WorkflowRunResultType.tests)) {

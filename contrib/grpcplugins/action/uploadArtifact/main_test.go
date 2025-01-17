@@ -36,6 +36,8 @@ func Test_perform(t *testing.T) {
 		&sdk.WorkflowRunJobsContext{},
 	)
 
+	mockWorker.EXPECT().CDNHttpURL().Return("cdn-address")
+
 	mockHTTPClient.EXPECT().Do(sdk.ReqMatcher{Method: "GET", URLPath: "/v2/context"}).DoAndReturn(
 		func(req *http.Request) (*http.Response, error) {
 			h := workerruntime.V2_contextHandler(context.TODO(), mockWorker)
@@ -51,7 +53,7 @@ func Test_perform(t *testing.T) {
 
 	mockHTTPClient.EXPECT().Do(sdk.ReqMatcher{Method: "GET", URLPath: "/v2/workerConfig"}).DoAndReturn(
 		func(req *http.Request) (*http.Response, error) {
-			h := workerruntime.V2_contextHandler(context.TODO(), mockWorker)
+			h := workerruntime.V2_workerConfig(context.TODO(), mockWorker)
 			rec := httptest.NewRecorder()
 			apiReq := http.Request{
 				Method: "GET",
@@ -125,7 +127,8 @@ func Test_perform(t *testing.T) {
 			log.Debug(ctx, "V2AddRunResult")
 			require.Equal(t, "main.go", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultGenericDetail).Name)
 			return &workerruntime.V2AddResultResponse{
-				RunResult: req.RunResult,
+				RunResult:    req.RunResult,
+				CDNSignature: "mysignature",
 			}, nil
 		},
 	)

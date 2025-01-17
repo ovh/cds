@@ -557,9 +557,9 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 
 	preCmd := `#!/bin/sh
 if [ ! -z ` + "`which curl`" + ` ]; then
-	curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
+	curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o /usr/local/bin/worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
 elif [ ! -z ` + "`which wget`" + ` ]; then
-	wget "{{.API}}/download/worker/linux/$(uname -m)" -O worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
+	wget "{{.API}}/download/worker/linux/$(uname -m)" -O /usr/local/bin/worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
 else
 	echo "Missing requirements to download CDS worker binary.";
 	exit 1;
@@ -601,7 +601,7 @@ fi`
 		}
 
 		workerStarterModelWithModelv2 := sdk.WorkerStarterWorkerModel{
-			Cmd:         "PATH=$PATH ./worker",
+			Cmd:         "PATH=$PATH worker",
 			PreCmd:      preCmd,
 			PostCmd:     "sudo shutdown -h now",
 			ModelV2:     model,
@@ -619,7 +619,7 @@ fi`
 			return nil, nil, sdk.WithStack(err)
 		}
 		oldModel.ModelVirtualMachine = sdk.ModelVirtualMachine{
-			Cmd:     "./worker",
+			Cmd:     "worker",
 			PreCmd:  preCmd,
 			PostCmd: "sudo shutdown -h now",
 			Image:   openstackSpec.Image,
@@ -654,9 +654,9 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 
 	preCmd := `#!/bin/sh
     if [ ! -z ` + "`which curl`" + ` ]; then
-      curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
+      curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o /usr/local/bin/worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
     elif [ ! -z ` + "`which wget`" + ` ]; then
-      wget "{{.API}}/download/worker/linux/$(uname -m)" -O worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
+      wget "{{.API}}/download/worker/linux/$(uname -m)" -O /usr/local/bin/worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
     else
       echo "Missing requirements to download CDS worker binary.";
       exit 1;
@@ -678,7 +678,7 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 		}
 		workerStarterModel.DockerSpec = dockerSpec
 	case sdk.WorkerModelTypeVSphere:
-		workerStarterModel.Cmd = "PATH=$PATH ./worker"
+		workerStarterModel.Cmd = "PATH=$PATH worker"
 		workerStarterModel.PreCmd = preCmd
 		workerStarterModel.PostCmd = "sudo shutdown -h now"
 		var vsphereSpec sdk.V2WorkerModelVSphereSpec
@@ -687,7 +687,7 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 		}
 		workerStarterModel.VSphereSpec = vsphereSpec
 	case sdk.WorkerModelTypeOpenstack:
-		workerStarterModel.Cmd = "./worker"
+		workerStarterModel.Cmd = "worker"
 		workerStarterModel.PreCmd = preCmd
 		workerStarterModel.PostCmd = "sudo shutdown -h now"
 		var openstackSpec sdk.V2WorkerModelOpenstackSpec
