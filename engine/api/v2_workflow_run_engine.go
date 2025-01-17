@@ -1779,6 +1779,41 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 		// Override with value sent by user
 		for k, v := range jobInputs {
 			if _, has := currentJobContext.Gate[k]; has {
+
+				// Check user gate inputs
+				gateDefInput := gate.Inputs[k]
+				if gateDefInput.Options != nil {
+					if !gateDefInput.Options.Multiple {
+						valueFound := false
+						for _, possibleValue := range gateDefInput.Options.Values {
+							if possibleValue == v {
+								valueFound = true
+								break
+							}
+						}
+						if !valueFound {
+							return false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "gate input %s with value %v doesn't match %v", k, v, gateDefInput.Options.Values)
+						}
+					} else {
+						sliceValues, ok := v.([]interface{})
+						if !ok {
+							return false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "gate input %s with value %v is not an array, got %T", k, v, v)
+						}
+						for _, sv := range sliceValues {
+							valueFound := false
+							for _, inputValue := range gateDefInput.Options.Values {
+								if inputValue == sv {
+									valueFound = true
+									break
+								}
+							}
+							if !valueFound {
+								return false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "gate input %s with value %v doesn't match %v", k, v, gateDefInput.Options.Values)
+							}
+						}
+					}
+				}
+
 				currentJobContext.Gate[k] = v
 			}
 		}
@@ -1801,7 +1836,7 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 }
 
 func checkCondition(ctx context.Context, condition string, currentJobContext sdk.WorkflowRunJobsContext) (bool, error) {
-	ctx, next := telemetry.Span(ctx, "checkJobGateCondition")
+	ctx, next := telemetry.Span(ctx, "checkCondition")
 	defer next()
 
 	if condition == "" {

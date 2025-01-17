@@ -38,16 +38,21 @@ export class RunGateComponent implements OnInit {
             if (this.currentGate.inputs[k].default) {
                 this.request[k] = this.currentGate.inputs[k].default;
             } else {
-                switch (this.currentGate.inputs[k].type) {
-                    case 'boolean':
-                        this.request[k] = false;
-                        break;
-                    case 'number':
-                        this.request[k] = 0;
-                        break;
-                    default:
-                        this.request[k] = '';
+                if (this.currentGate.inputs[k]?.options?.multiple) {
+                    this.request[k] = [];
+                } else {
+                    switch (this.currentGate.inputs[k].type) {
+                        case 'boolean':
+                            this.request[k] = false;
+                            break;
+                        case 'number':
+                            this.request[k] = 0;
+                            break;
+                        default:
+                            this.request[k] = '';
+                    }
                 }
+                
             }
         });
         if (this.run.job_events) {
