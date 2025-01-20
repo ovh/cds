@@ -319,10 +319,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     async loadProjects() {
         try {
-            const projects = await lastValueFrom(this._projectService.getProjects());
-            const projectsv2 = await lastValueFrom(this._v2ProjectService.getAll());
-            this.projects = [].concat(projects)
-                .concat(projectsv2.filter(pv2 => projects.findIndex(p => p.key === pv2.key) === -1));
+            const res = await Promise.all([
+                lastValueFrom(this._projectService.getProjects()),
+                lastValueFrom(this._v2ProjectService.getAll())
+            ]);
+            this.projects = [].concat(res[0])
+                .concat(res[1].filter(pv2 => res[0].findIndex(p => p.key === pv2.key) === -1));
             this.projects.sort((a, b) => { return a.name < b.name ? -1 : 1; })
             this._cd.markForCheck();
         } catch (e: any) {

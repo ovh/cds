@@ -4,13 +4,13 @@ import { Store } from "@ngxs/store";
 import { Project, ProjectRepository } from "app/model/project.model";
 import { VCSProject } from "app/model/vcs.model";
 import { ProjectService } from "app/service/project/project.service";
-import { ProjectState } from "app/store/project.state";
 import { lastValueFrom } from "rxjs";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzDrawerRef } from "ng-zorro-antd/drawer";
 import { Analysis, AnalysisRequest, AnalysisResponse, StatusAnalyzeError, StatusAnalyzeSkipped, StatusAnalyzeSucceed } from "app/model/analysis.model";
 import { AnalysisService } from "app/service/analysis/analysis.service";
 import { Branch, Tag } from "app/model/repositories.model";
+import { ProjectV2State } from "app/store/project-v2.state";
 
 export class ProjectV2TriggerAnalysisComponentParams {
   repository: string;
@@ -47,7 +47,7 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
     private _cd: ChangeDetectorRef,
     private _analysisService: AnalysisService,
   ) {
-    this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+    this.project = this._store.selectSnapshot(ProjectV2State.current);
     this.validateForm = this._fb.group({
       repository: this._fb.control<string | null>(null, Validators.required),
       ref: this._fb.control<string | null>(null, Validators.required),
