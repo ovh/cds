@@ -1072,7 +1072,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 
 			runJobs = append(runJobs, runJob)
 		} else {
-			permJobDef := jobDef.Copy()
 			allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
 			if err != nil {
 				return nil, nil, nil, false, err
@@ -1098,14 +1097,14 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				jobID:           jobID,
 				jobToTrigger: JobToTrigger{
 					Status: jobToTrigger.Status,
-					Job:    permJobDef,
+					Job:    jobDef,
 				},
 				defaultRegion:   defaultRegion,
 				regionPermCache: regionPermCache,
 				integrations:    integrations,
 				allVariableSets: allVariableSets,
 			}
-			if permJobDef.From == "" {
+			if jobDef.From == "" {
 				jobs, runUpdated := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData)
 				runJobs = append(runJobs, jobs...)
 				if runUpdated {
@@ -1293,17 +1292,18 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	// Check permutation to trigger
 	permutations := searchPermutationToTrigger(ctx, matrixPermutation, data.existingRunJobs, data.jobID)
 	for _, m := range permutations {
+		permJobDef := data.jobToTrigger.Job.Copy()
 		runJob := sdk.V2WorkflowRunJob{
 			ID:            sdk.UUID(),
 			WorkflowRunID: run.ID,
 			Status:        data.jobToTrigger.Status,
 			JobID:         data.jobID,
-			Job:           data.jobToTrigger.Job,
+			Job:           permJobDef,
 			UserID:        data.wrEnqueue.UserID,
 			Username:      data.user.Username,
 			AdminMFA:      data.wrEnqueue.IsAdminWithMFA,
 			ProjectKey:    run.ProjectKey,
-			Region:        data.jobToTrigger.Job.Region,
+			Region:        permJobDef.Region,
 			WorkflowName:  run.WorkflowName,
 			RunNumber:     run.RunNumber,
 			RunAttempt:    run.RunAttempt,
@@ -1312,8 +1312,8 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		for k, v := range m {
 			runJob.Matrix[k] = v
 		}
-		if data.jobToTrigger.Job.RunsOn.Model != "" {
-			runJob.ModelType = run.WorkflowData.WorkerModels[data.jobToTrigger.Job.RunsOn.Model].Type
+		if permJobDef.RunsOn.Model != "" {
+			runJob.ModelType = run.WorkflowData.WorkerModels[permJobDef.RunsOn.Model].Type
 		}
 		for _, jobEvent := range run.RunJobEvent {
 			if jobEvent.RunAttempt != run.RunAttempt {
