@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent, WorkflowHookEventName } from 'app/model/project.model';
-import { ProjectState } from 'app/store/project.state';
 import { Store } from '@ngxs/store';
 import { forkJoin, lastValueFrom, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -14,6 +13,7 @@ import { ProjectV2TriggerAnalysisComponent } from './trigger-analysis/trigger-an
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzTableFilterList } from 'ng-zorro-antd/table';
 import { ErrorUtils } from 'app/shared/error.utils';
+import { ProjectV2State } from 'app/store/project-v2.state';
 
 @Component({
     selector: 'app-projectv2-explore-repository',
@@ -54,7 +54,7 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         private _drawerService: NzDrawerService,
         private _messageService: NzMessageService
     ) {
-        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.project = this._store.selectSnapshot(ProjectV2State.current);
         this._routeActivated.params.subscribe(p => {
             if (this.vcsProject?.name === p['vcsName'] && this.repository?.name === p['repoName']) {
                 return;

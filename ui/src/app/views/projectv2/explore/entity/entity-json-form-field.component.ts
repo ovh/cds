@@ -23,8 +23,8 @@ import { Store } from "@ngxs/store";
 import { ActivatedRoute } from "@angular/router";
 import { DragulaService } from "ng2-dragula";
 import { PreferencesState } from "app/store/preferences.state";
-import { ProjectState } from "app/store/project.state";
 import { LoadOptions, load } from "js-yaml";
+import { ProjectV2State } from "app/store/project-v2.state";
 
 class selectValues {
     label: string;
@@ -241,19 +241,19 @@ export class EntityJSONFormFieldComponent implements OnInit, OnChanges, OnDestro
                         entityName = entitySplit[0];
                         repoName = routeParams['repoName'];
                         vcsName = routeParams['vcsName'];
-                        projKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+                        projKey = this._store.selectSnapshot(ProjectV2State.current).key;
                         break;
                     case 3:
                         entityName = entitySplit[2];
                         repoName = entitySplit[0] + '/' + entitySplit[1];
                         vcsName = routeParams['vcsName'];
-                        projKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+                        projKey = this._store.selectSnapshot(ProjectV2State.current).key;
                         break;
                     case 4:
                         entityName = entitySplit[3];
                         repoName = entitySplit[1] + '/' + entitySplit[2];
                         vcsName = entitySplit[0];
-                        projKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+                        projKey = this._store.selectSnapshot(ProjectV2State.current).key;
                         break;
                     case 5:
                         entityName = entitySplit[4];

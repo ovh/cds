@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { ProjectState } from 'app/store/project.state';
 import { finalize } from 'rxjs/operators';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { forkJoin } from 'rxjs';
@@ -11,6 +10,7 @@ import { RepoManagerService } from 'app/service/repomanager/project.repomanager.
 import { Repository } from 'app/model/repositories.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VCSProject } from 'app/model/vcs.model';
+import { ProjectV2State } from 'app/store/project-v2.state';
 
 @Component({
     selector: 'app-projectv2-explore-repository-add',
@@ -42,7 +42,7 @@ export class ProjectV2ExploreRepositoryAddComponent implements OnDestroy {
         private _router: Router
     ) {
         // Get project and VCS, subscribe to react in case of project switch
-        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.project = this._store.selectSnapshot(ProjectV2State.current);
         this._routeActivated.params.subscribe(p => {
             forkJoin([
                 this._projectService.getVCSRepositories(this.project.key, p['vcsName']),
