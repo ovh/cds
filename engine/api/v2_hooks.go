@@ -79,6 +79,9 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 			resp.Initiator = initiator
+
+			log.Debug(ctx, "postRetrieveEventUserHandler:  vcs: %s, repo: %s, commit: %s => intiator: %+v", vcsProjectWithSecret.Name, r.RepositoryName, r.Commit, initiator)
+
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
 }
