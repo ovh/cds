@@ -11,7 +11,6 @@ import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
-import { FeatureGuard } from 'app/guard/feature.guard';
 import { NoAuthenticationGuard } from 'app/guard/no-authentication.guard';
 import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.component';
 import { AsCodeSaveFormComponent } from 'app/shared/ascode/save-form/ascode.save-form.component';
@@ -59,7 +58,6 @@ import { NgForNumber } from './pipes/ngfor.number.pipe';
 import { SafeHtmlPipe } from './pipes/safeHtml.pipe';
 import { TruncatePipe } from './pipes/truncate.pipe';
 import { ProjectBreadcrumbComponent } from './project-breadcrumb/project-breadcrumb.component';
-import { RepoManagerFormComponent } from './repomanager/from/repomanager.form.component';
 import { RequirementsFormComponent } from './requirements/form/requirements.form.component';
 import { RequirementsListComponent } from './requirements/list/requirements.list.component';
 import { ScrollviewComponent } from './scrollview/scrollview.component';
@@ -265,6 +263,7 @@ import { NzResultModule } from 'ng-zorro-antd/result';
 import { SearchableComponent } from './searchable/searchable.component';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { RepositoryRefSelectComponent } from './repository-ref-selector/repository-ref-select.component';
+import { ProjectGuard, ProjectV2Guard } from 'app/guard/project.guard';
 
 const ngZorroConfig: NzConfig = {
     notification: {
@@ -470,7 +469,6 @@ const icons: IconDefinition[] = [
         PermissionFormComponent,
         PermissionListComponent,
         ProjectBreadcrumbComponent,
-        RepoManagerFormComponent,
         RepositoryRefSelectComponent,
         RequirementsFormComponent,
         RequirementsListComponent,
@@ -527,13 +525,14 @@ const icons: IconDefinition[] = [
         WorkflowWNodePipelineComponent
     ],
     providers: [
+        APIConfigGuard,
+        AuthenticationGuard,
+        NoAuthenticationGuard,
         PermissionService,
+        ProjectGuard,
+        ProjectV2Guard,
         SharedService,
         ToastService,
-        AuthenticationGuard,
-        APIConfigGuard,
-        NoAuthenticationGuard,
-        FeatureGuard,
         {
             provide: NZ_CONFIG,
             useValue: ngZorroConfig
@@ -639,7 +638,6 @@ const icons: IconDefinition[] = [
         PermissionListComponent,
         ProjectBreadcrumbComponent,
         ReactiveFormsModule,
-        RepoManagerFormComponent,
         RepositoryRefSelectComponent,
         RequirementsFormComponent,
         RequirementsListComponent,

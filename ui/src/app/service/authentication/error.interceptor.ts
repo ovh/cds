@@ -38,7 +38,7 @@ export class ErrorInterceptor implements HttpInterceptor {
                     }
 
                     // ignore 404 errors for /v2/project routes
-                    if (e.status === 404 && req.url.indexOf('/v2/project') !== -1) {
+                    if (e.status === 404 && req.url.indexOf('/project') !== -1) {
                         return observableThrowError(e);
                     }
 

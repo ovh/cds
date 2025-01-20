@@ -3,7 +3,7 @@ import { Store } from "@ngxs/store";
 import { Project } from "app/model/project.model";
 import * as actionPreferences from 'app/store/preferences.action';
 import { PreferencesState } from "app/store/preferences.state";
-import { ProjectState } from "app/store/project.state";
+import { ProjectV2State } from "app/store/project-v2.state";
 
 @Component({
 	selector: 'app-projectv2-explore',
@@ -20,7 +20,7 @@ export class ProjectV2ExploreComponent implements OnInit {
 	constructor(
 		private _store: Store
 	) {
-		this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+		this.project = this._store.selectSnapshot(ProjectV2State.current);
 	}
 
 	ngOnInit(): void {

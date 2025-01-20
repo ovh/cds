@@ -90,13 +90,10 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 	}
 	for i := range projects {
 		if isAdmin(ctx) {
-			projects[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			projects[i].Permissions.Writable = true
 			continue
 		}
-		projects[i].Permissions = perms[projects[i].Key]
-		if isMaintainer(ctx) {
-			projects[i].Permissions.Readable = true
-		}
+		projects[i].Permissions.Writable = perms[projects[i].Key].Writable
 	}
 
 	if strings.ToUpper(withPermissions) == "W" {
@@ -179,15 +176,12 @@ func (api *API) getProjectsHandler() service.Handler {
 
 		var groupIDs []int64
 		var admin bool
-		var maintainer bool
 		if requestedUser == nil {
 			groupIDs = getUserConsumer(ctx).GetGroupIDs()
 			admin = isAdmin(ctx)
-			maintainer = isMaintainer(ctx)
 		} else {
 			groupIDs = requestedUser.GetGroupIDs()
 			admin = requestedUser.Ring == sdk.UserRingAdmin
-			maintainer = requestedUser.Ring == sdk.UserRingMaintainer
 		}
 
 		pKeys := projects.Keys()
@@ -197,13 +191,10 @@ func (api *API) getProjectsHandler() service.Handler {
 		}
 		for i := range projects {
 			if admin {
-				projects[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+				projects[i].Permissions.Writable = true
 				continue
 			}
-			projects[i].Permissions = perms[projects[i].Key]
-			if maintainer {
-				projects[i].Permissions.Readable = true
-			}
+			projects[i].Permissions.Writable = perms[projects[i].Key].Writable
 		}
 
 		if strings.ToUpper(withPermissions) == "W" {
@@ -266,7 +257,6 @@ func (api *API) updateProjectHandler() service.Handler {
 		event.PublishUpdateProject(ctx, proj, p, getUserConsumer(ctx))
 		event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectUpdated, *proj, *u.AuthConsumerUser.AuthentifiedUser)
 
-		proj.Permissions.Readable = true
 		proj.Permissions.Writable = true
 
 		return service.WriteJSON(w, proj, http.StatusOK)
@@ -349,16 +339,13 @@ func (api *API) getProjectHandler() service.Handler {
 		p.URLs.UIURL = api.Config.URL.UI + "/project/" + key
 
 		if isAdmin(ctx) {
-			p.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			p.Permissions.Writable = true
 		} else {
 			permissions, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{p.Key}, getUserConsumer(ctx).GetGroupIDs())
 			if err != nil {
 				return err
 			}
-			p.Permissions = permissions.Permissions(p.Key)
-			if isMaintainer(ctx) {
-				p.Permissions.Readable = true
-			}
+			p.Permissions.Writable = permissions.Permissions(p.Key).Writable
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -454,7 +441,6 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project updated from db")
 		}
 
-		p.Permissions.Readable = true
 		p.Permissions.Writable = true
 
 		event.PublishUpdateProject(ctx, p, proj, getUserConsumer(ctx))
@@ -657,7 +643,7 @@ func (api *API) postProjectHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", prj.Key)
 		}
-		proj.Permissions.Readable = true
+
 		proj.Permissions.Writable = true
 
 		return service.WriteJSON(w, *proj, http.StatusCreated)

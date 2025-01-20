@@ -13,7 +13,6 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { NavigationState } from "app/store/navigation.state";
-import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height-table.directive";
 import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive, V2WorkflowRunJobStatusIsFailed, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { RouterService } from "app/service/services.module";
 import { ErrorUtils } from "app/shared/error.utils";
@@ -33,7 +32,6 @@ import { Clipboard } from '@angular/cdk/clipboard';
 @AutoUnsubscribe()
 export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     @ViewChild('graph') graph: WorkflowV2StagesGraphComponent;
-    @ViewChild('autoHeightDirective') autoHeightDirective: NsAutoHeightTableDirective;
     @ViewChild('tabResultsTemplate') tabResultsTemplate: TemplateRef<any>;
     @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
     @ViewChild('shareLink') shareLink: any;
@@ -269,9 +267,6 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this._cd.detectChanges(); // force rendering to compute graph container size
         if (this.graph) {
             this.graph.resize();
-        }
-        if (this.autoHeightDirective) {
-            this.autoHeightDirective.onResize(null);
         }
     }
 

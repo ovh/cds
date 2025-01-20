@@ -94,7 +94,7 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 				}
 			}
 		} catch (e: any) {
-			this._messageService.error(`Unable to entity: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+			this._messageService.error(`Unable to load entity: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 			this._router.navigate(['/project', this.projectKey, 'explore', 'vcs', vcsName, 'repository', repoName]);
 		}
 

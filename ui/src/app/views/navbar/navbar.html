@@ -78,7 +78,7 @@
 
     <ng-container *ngIf="currentAuthSummary && apiConfig">
         <ng-container *ngIf="currentAuthSummary.isAdmin() || !apiConfig.project_creation_disabled">
-            <button nz-button nzType="default" nzGhost [routerLink]="['/project']">
+            <button nz-button nzType="default" nzGhost [routerLink]="['/project/add']">
                 <i nz-icon nzType="plus"></i>
                 {{ 'navbar_project_create' | translate }}
             </button>

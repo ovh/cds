@@ -42,7 +42,7 @@ import { ProjectAuditService } from './project/project.audit.service';
 import {
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
-    ProjectResolver, Projectv2Resolver
+    ProjectResolver
 } from './project/project.resolver';
 import { ProjectService } from './project/project.service';
 import { ProjectStore } from './project/project.store';
@@ -67,6 +67,7 @@ import { ActionAsCodeService } from "./action/actionAscode.service";
 import { PluginService } from "./plugin.service";
 import { V2WorkflowRunService } from "./workflowv2/workflow.service";
 import { CDNService } from './cdn.service';
+import { V2ProjectService } from './projectv2/project.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -121,7 +122,6 @@ export class ServicesModule {
                 ProjectResolver,
                 ProjectService,
                 ProjectStore,
-                Projectv2Resolver,
                 QueueService,
                 RepoManagerService,
                 RequirementService,
@@ -129,6 +129,7 @@ export class ServicesModule {
                 RouterService,
                 ServiceService,
                 UserService,
+                V2ProjectService,
                 V2WorkflowRunService,
                 VariableService,
                 WorkerModelService,
@@ -192,7 +193,6 @@ export {
     ProjectForWorkflowResolver,
     ProjectResolver,
     ProjectStore,
-    Projectv2Resolver,
     QueueService,
     RepoManagerService,
     RequirementStore,

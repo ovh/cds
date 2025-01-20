@@ -15,8 +15,6 @@ export class ProjectStore {
 
     // List of all project + dependencies:  List of variables, List of Env, List of App, List of Pipeline.
     private _projectCache: BehaviorSubject<Map<string, Project>> = new BehaviorSubject(Map<string, Project>());
-    // List of all project. Use by Navbar
-    private _projectNav: BehaviorSubject<List<Project>> = new BehaviorSubject(null);
 
     private _recentProjects: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
 
@@ -31,17 +29,6 @@ export class ProjectStore {
         if (arrayApp) {
             this._recentProjects.next(List.of(...arrayApp));
         }
-    }
-
-    getProjectsList(resync: boolean = false): Observable<List<Project>> {
-        // If Store not empty, get from it
-        if (resync || !this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
-            // Get from API
-            this._projectService.getProjects().subscribe(res => {
-                this._projectNav.next(List(res));
-            });
-        }
-        return new Observable<List<Project>>(fn => this._projectNav.subscribe(fn));
     }
 
     /**

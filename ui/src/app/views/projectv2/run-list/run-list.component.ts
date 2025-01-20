@@ -4,7 +4,6 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom, map, Subscription } from "rxjs";
 import { Project } from "app/model/project.model";
 import { Store } from "@ngxs/store";
-import { ProjectState } from "app/store/project.state";
 import { NzAutocompleteOptionComponent, NzAutocompleteTriggerDirective } from "ng-zorro-antd/auto-complete";
 import { ActivatedRoute, Router } from "@angular/router";
 import * as actionPreferences from 'app/store/preferences.action';
@@ -20,6 +19,7 @@ import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { EventV2Type } from "app/model/event-v2.model";
 import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 import { ErrorUtils } from "app/shared/error.utils";
+import { ProjectV2State } from "app/store/project-v2.state";
 
 export class WorkflowRunFilter {
 	key: string;
@@ -94,7 +94,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 		private _drawerService: NzDrawerService,
 		private _eventV2Service: EventV2Service
 	) {
-		this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+		this.project = this._store.selectSnapshot(ProjectV2State.current);
 	}
 
 	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT

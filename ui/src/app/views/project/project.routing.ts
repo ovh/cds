@@ -1,7 +1,5 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { FeatureGuard } from 'app/guard/feature.guard';
-import { FeatureNames } from 'app/service/feature/feature.service';
 import { ProjectModule } from 'app/views/project/project.module';
 import { ProjectAddComponent } from './add/project.add.component';
 import { ProjectListComponent } from './list/project.list.component';
@@ -10,32 +8,32 @@ import { ProjectComponent } from './project.component';
 import { ProjectV2ExploreComponent } from '../projectv2/explore/explore.component';
 import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.component';
 import { ProjectV2RunComponent } from '../projectv2/run/run.component';
-import { Projectv2Resolver } from 'app/service/services.module';
 import { ProjectSettingsComponent } from './settings/settings.component';
 import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-entity.component';
 import { ProjectV2ExploreRepositoryAddComponent } from '../projectv2/explore/explore-repository-add.component';
 import { ProjectV2ExploreRepositoryComponent } from '../projectv2/explore/explore-repository.component';
+import { ProjectGuard } from 'app/guard/project.guard';
+import { ProjectV2Guard } from 'app/guard/project.guard';
 
 const projectRoutes: Routes = [
     {
         path: '',
         children: [
-            { path: '', component: ProjectAddComponent, data: { title: 'Add • Project' } },
-            { path: 'list/all', component: ProjectListComponent, data: { title: 'List • Project' } },
+            { path: '', component: ProjectListComponent, data: { title: 'List • Project' } },
+            { path: 'add', component: ProjectAddComponent, data: { title: 'Add • Project' } },
             {
                 path: ':key',
                 component: ProjectComponent,
-                resolve: {
-                    project: Projectv2Resolver,
-                },
                 children: [
                     {
                         path: '',
+                        canActivate: [ProjectGuard],
                         component: ProjectShowComponent,
                         data: { title: '{key} • Project' },
                     },
                     {
                         path: 'settings',
+                        canActivate: [ProjectV2Guard],
                         component: ProjectSettingsComponent,
                         data: { title: '{key} • Settings' },
                     },
@@ -57,8 +55,7 @@ const projectRoutes: Routes = [
                     },
                     {
                         path: 'explore',
-                        canActivate: [FeatureGuard],
-                        data: { feature: FeatureNames.AllAsCode },
+                        canActivate: [ProjectV2Guard],
                         component: ProjectV2ExploreComponent,
                         children: [
                             {
@@ -88,8 +85,7 @@ const projectRoutes: Routes = [
                     },
                     {
                         path: 'run',
-                        canActivate: [FeatureGuard],
-                        data: { feature: FeatureNames.AllAsCode },
+                        canActivate: [ProjectV2Guard],
                         children: [
                             {
                                 path: '',

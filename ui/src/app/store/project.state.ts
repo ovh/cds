@@ -9,11 +9,10 @@ import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
-import { ProjectStore } from 'app/service/project/project.store';
 import { cloneDeep } from 'lodash-es';
-import { tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
-import { VariableSet } from 'app/model/variablesets.model';
+import { of } from 'rxjs';
 
 export class ProjectStateModel {
     public project: Project;
@@ -37,7 +36,6 @@ export class ProjectState {
     constructor(
         private _http: HttpClient,
         private _navbarService: NavbarService,
-        private _projectStore: ProjectStore,
         private _projectService: ProjectService
     ) { }
 
@@ -95,10 +93,16 @@ export class ProjectState {
         return this._projectService.getProject(action.payload.projectKey, [
             ...action.payload.opts,
             new LoadOpts('withLabels', 'labels')
-        ])
-            .pipe(tap((res: Project) => {
+        ]).pipe(
+            catchError(() => of(null)),
+            tap((res: Project) => {
+                if (!res) {
+                    ctx.dispatch(new ProjectAction.DeleteProjectFromCache());
+                    return;
+                }
                 ctx.dispatch(new ProjectAction.LoadProject(res));
-            }));
+            })
+        );
     }
 
     @Action(ProjectAction.EnrichProject)
@@ -163,6 +167,7 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: null,
+            currentProjectKey: null
         });
     }
 
@@ -183,119 +188,7 @@ export class ProjectState {
                 project,
                 loading: false,
             });
-            return this._projectStore.getProjectsList(true);
         }));
-    }
-
-    @Action(ProjectAction.UpdateProject)
-    update(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateProject) {
-        const state = ctx.getState();
-
-        ctx.setState({
-            ...state,
-            loading: true,
-        });
-        return this._http.put<Project>(
-            '/project/' + action.payload.key,
-            action.payload
-        ).pipe(tap((project: Project) => {
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, project),
-                loading: false,
-            });
-            return this._projectStore.getProjectsList(true);
-        }));
-    }
-
-    @Action(ProjectAction.DeleteProject)
-    delete(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteProject) {
-        const state = ctx.getState();
-
-        ctx.setState({
-            ...state,
-            loading: true,
-        });
-        return this._http.delete(
-            '/project/' + action.payload.projectKey
-        ).pipe(tap(() => {
-            ctx.setState({
-                ...state,
-                project: null,
-                loading: false,
-            });
-            return this._projectStore.getProjectsList(true);
-        }));
-    }
-
-    //  ------- VariableSets ------//
-    @Action(ProjectAction.FetchVariableSetsInProject)
-    fetchVariableSets(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchVariableSetsInProject) {
-        const state = ctx.getState();
-
-        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
-            state.project && state.project.variablesets) {
-            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
-        }
-        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
-            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
-        }
-
-        return ctx.dispatch(new ProjectAction.ResyncVariableSetsInProject(action.payload));
-    }
-
-    @Action(ProjectAction.ResyncVariableSetsInProject)
-    resyncVariableSets(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncVariableSetsInProject) {
-        return this._http
-            .get<VariableSet[]>(`/v2/project/${action.payload.projectKey}/variableset`)
-            .pipe(tap((variables: VariableSet[]) => {
-                ctx.dispatch(new ProjectAction.LoadVariableSetsInProject(variables));
-            }));
-    }
-    @Action(ProjectAction.LoadVariableSetsInProject)
-    loadVariableSets(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadVariableSetsInProject) {
-        const state = ctx.getState();
-        ctx.setState({
-            ...state,
-            project: Object.assign({}, state.project, <Project>{ variablesets: action.payload }),
-        });
-    }
-    @Action(ProjectAction.DeleteVariableSetInProject)
-    deleteVariableSet(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteVariableSetInProject) {
-        const state = ctx.getState();
-        return this._http
-            .delete('/v2/project/' + state.project.key + '/variableset/' + action.payload.name + '?force=true')
-            .pipe(tap(() => {
-                let variablesets = state.project.variablesets ? state.project.variablesets.concat([]) : [];
-                variablesets = variablesets.filter((variable) => variable.name !== action.payload.name);
-
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ variablesets }),
-                });
-            }));
-    }
-    @Action(ProjectAction.AddVariableSetInProject)
-    addVariableSet(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddVariableSetInProject) {
-        const state = ctx.getState();
-        return this._http.post<VariableSet>(`/v2/project/${state.project.key}/variableset`, {'name': action.name})
-            .pipe(tap((v: VariableSet) => {
-                let p = cloneDeep(state.project);
-                if (!p.variablesets) {
-                    p.variablesets = new Array<VariableSet>();
-                }
-                p.variablesets.push(v);
-                p.variablesets = p.variablesets.sort((v1, v2) => {
-                    if(v1.name < v2.name) {
-                        return -1;
-                    }
-                    return 1;
-                });
-                ctx.setState({
-                    ...state,
-                    project: p,
-                });
-            }));
     }
 
     //  ------- Variable --------- //
@@ -754,151 +647,6 @@ export class ProjectState {
             ctx.setState({
                 ...state,
                 project: Object.assign({}, state.project, <Project>{ groups: perms.concat(perm) }),
-            });
-        }));
-    }
-
-    //  ------- Key --------- //
-    @Action(ProjectAction.FetchKeysInProject)
-    fetchKeys(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchKeysInProject) {
-        const state = ctx.getState();
-
-        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
-            state.project && state.project.key && state.project.keys) {
-            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
-        }
-        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
-            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
-        }
-
-        return ctx.dispatch(new ProjectAction.ResyncKeysInProject(action.payload));
-    }
-
-    @Action(ProjectAction.LoadKeysInProject)
-    loadKeys(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadKeysInProject) {
-        const state = ctx.getState();
-        ctx.setState({
-            ...state,
-            project: Object.assign({}, state.project, <Project>{ keys: action.payload }),
-        });
-    }
-
-    @Action(ProjectAction.ResyncKeysInProject)
-    resyncKeys(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncKeysInProject) {
-        return this._http
-            .get<Key[]>(`/project/${action.payload.projectKey}/keys`)
-            .pipe(tap((keys: Key[]) => {
-                ctx.dispatch(new ProjectAction.LoadKeysInProject(keys));
-            }));
-    }
-
-    @Action(ProjectAction.AddKeyInProject)
-    addKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddKeyInProject) {
-        const state = ctx.getState();
-        return this._http.post<Key>('/project/' + action.payload.projectKey + '/keys', action.payload.key)
-            .pipe(tap((key: Key) => {
-                let keys = state.project.keys ? state.project.keys.concat([key]) : [key];
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ keys }),
-                });
-            }));
-    }
-
-    @Action(ProjectAction.DeleteKeyInProject)
-    deleteKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteKeyInProject) {
-        const state = ctx.getState();
-        return this._http.delete('/project/' + action.payload.projectKey + '/keys/' + action.payload.key.name)
-            .pipe(tap(() => {
-                let keys = state.project.keys ? state.project.keys.concat([]) : [];
-                keys = keys.filter((key) => key.name !== action.payload.key.name);
-
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ keys }),
-                });
-            }));
-    }
-
-    //  ------- Integration --------- //
-    @Action(ProjectAction.FetchIntegrationsInProject)
-    fetchIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchIntegrationsInProject) {
-        const state = ctx.getState();
-        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
-            state.project && state.project.key && state.project.integrations) {
-            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
-        }
-        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
-            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
-        }
-
-        return ctx.dispatch(new ProjectAction.ResyncIntegrationsInProject(action.payload));
-    }
-
-    @Action(ProjectAction.LoadIntegrationsInProject)
-    loadIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadIntegrationsInProject) {
-        const state = ctx.getState();
-        ctx.setState({
-            ...state,
-            project: Object.assign({}, state.project, <Project>{ integrations: action.payload }),
-        });
-    }
-
-    @Action(ProjectAction.ResyncIntegrationsInProject)
-    resyncIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncIntegrationsInProject) {
-        return this._http
-            .get<ProjectIntegration[]>(`/project/${action.payload.projectKey}/integrations`)
-            .pipe(tap((integrations: ProjectIntegration[]) => {
-                ctx.dispatch(new ProjectAction.LoadIntegrationsInProject(integrations));
-            }));
-    }
-
-    @Action(ProjectAction.AddIntegrationInProject)
-    addIntegration(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddIntegrationInProject) {
-        const state = ctx.getState();
-        return this._http.post<ProjectIntegration>('/project/' + action.payload.projectKey + '/integrations', action.payload.integration)
-            .pipe(tap((integration: ProjectIntegration) => {
-                let integrations = state.project.integrations ? state.project.integrations.concat([integration]) : [integration];
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ integrations }),
-                });
-            }));
-    }
-
-    @Action(ProjectAction.DeleteIntegrationInProject)
-    deleteIntegration(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteIntegrationInProject) {
-        const state = ctx.getState();
-        return this._http.delete('/project/' + action.payload.projectKey + '/integrations/' + action.payload.integration.name)
-            .pipe(tap(() => {
-                let integrations = state.project.integrations ? state.project.integrations.concat([]) : [];
-                integrations = integrations.filter((integration) => integration.name !== action.payload.integration.name);
-
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ integrations }),
-                });
-            }));
-    }
-
-    @Action(ProjectAction.UpdateIntegrationInProject)
-    updateIntegration(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateIntegrationInProject) {
-        const state = ctx.getState();
-        return this._http.put<ProjectIntegration>(
-            '/project/' + action.payload.projectKey + '/integrations/' + action.payload.integrationName,
-            action.payload.changes
-        ).pipe(tap((integration) => {
-            let integrations = cloneDeep(state.project.integrations ? state.project.integrations.concat([]) : []);
-            integrations = integrations.map((integ) => {
-                if (integ.name === action.payload.integrationName) {
-                    return integration;
-                }
-                return integ;
-            });
-
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, <Project>{ integrations }),
             });
         }));
     }

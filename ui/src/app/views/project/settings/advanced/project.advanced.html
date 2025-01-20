@@ -1,0 +1,64 @@
+<nz-card nzTitle="Settings" class="coloredTitle">
+    <form nz-form [formGroup]="validateForm" (ngSubmit)="onSubmitProjectUpdate()">
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6" nzFor="name" nzRequired>Name</nz-form-label>
+            <nz-form-control [nzSpan]="14"
+                nzErrorTip="Project name is mandatory and must respect the alphanumeric pattern ([a-zA-Z0-9]*)">
+                <input nz-input type="text" formControlName="name" id="name">
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6" nzFor="description">Description</nz-form-label>
+            <nz-form-control [nzSpan]="14">
+                <textarea nz-input formControlName="description" id="description"></textarea>
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6" nzFor="icon">Icon</nz-form-label>
+            <nz-form-control>
+                <img class="icon" [src]="validateForm.value.icon" alt="Project icon" *ngIf="validateForm.value.icon">
+                <app-upload-button accept=".png,.jpg,.jpeg" image="true"
+                    (event)="fileEvent($event)"></app-upload-button>
+                <input type="hidden" nz-input formControlName="icon" id="icon">
+                <div *ngIf="fileTooLarge" class="ant-form-item-explain">
+                    <div role="alert" class="ant-form-item-explain-error">
+                        Your file is too large (max 100Ko)
+                    </div>
+                </div>
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6" nzFor="retention" nzRequired>Run v2 retention (days)</nz-form-label>
+            <nz-form-control [nzSpan]="14">
+                <input nz-input type="number" formControlName="retention" id="retention">
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-control class="controls" [nzSpan]="12" [nzOffset]="6">
+                <button nz-button nzType="primary" [nzLoading]="loading">Save</button>
+                <button nz-button [nzLoading]="loading">Cancel</button>
+            </nz-form-control>
+        </nz-form-item>
+    </form>
+</nz-card>
+
+<nz-card nzTitle="Link to a repository manager" class="coloredTitle">
+    <app-project-repomanager-form *ngIf="project && apiConfig && !apiConfig.project_vcs_management_disabled"
+        [project]="project"></app-project-repomanager-form>
+    <app-project-repomanager-list *ngIf="project && project.vcs_servers && project.vcs_servers.length > 0"
+        [project]="project" [reposmanagers]="project.vcs_servers"></app-project-repomanager-list>
+</nz-card>
+
+<nz-card nzTitle="Danger zone" class="redTitle">
+    <nz-row>
+        <nz-col [nzSpan]="12">
+            <div class="title">Delete project</div>
+            <div class="description">Once you delete a project, there is no going back. Please be certain.</div>
+        </nz-col>
+        <nz-col [nzSpan]="12" class="alignRight">
+            <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm
+                nzPopconfirmTitle="Are you sure you want to delete this project ?"
+                (nzOnConfirm)="deleteProject()">Delete</button>
+        </nz-col>
+    </nz-row>
+</nz-card>

@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { NavigationEnd, Router } from "@angular/router";
 import { Store } from "@ngxs/store";
 import { Project } from "app/model/project.model";
-import { filter } from "rxjs";
+import { filter, Subscription } from "rxjs";
 import * as actionNavigation from 'app/store/navigation.action';
 import { NavigationState } from "app/store/navigation.state";
-import { FeatureNames, FeatureService } from "app/service/feature/feature.service";
+import { ProjectState } from "app/store/project.state";
+import { ProjectV2State } from "app/store/project-v2.state";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 
 @Component({
 	selector: 'app-project-activity-bar',
@@ -13,18 +15,28 @@ import { FeatureNames, FeatureService } from "app/service/feature/feature.servic
 	styleUrls: ['./activity-bar.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectActivityBarComponent implements OnInit, OnChanges {
-	@Input() project: Project;
+@AutoUnsubscribe()
+export class ProjectActivityBarComponent implements OnInit, OnDestroy {
+	projectv1: Project;
+	projectv2: Project;
+	project: Project;
 
 	homeActive: boolean;
-	v2Enabled: boolean;
+	projectV1Sub: Subscription;
+	projectV2Sub: Subscription;
 
 	constructor(
 		private _store: Store,
 		private _router: Router,
-		private _cd: ChangeDetectorRef,
-		private _featureService: FeatureService
-	) { }
+		private _cd: ChangeDetectorRef
+	) {
+		this.projectv1 = this._store.selectSnapshot(ProjectState.projectSnapshot);
+		this.project = this.projectv1;
+		this.projectv2 = this._store.selectSnapshot(ProjectV2State.current);
+		if (!this.project) { this.project = this.projectv2; }
+	}
+
+	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
 	ngOnInit(): void {
 		this._router.events.pipe(
@@ -32,18 +44,19 @@ export class ProjectActivityBarComponent implements OnInit, OnChanges {
 		).forEach((e: NavigationEnd) => {
 			this.updateRoute(e.url);
 		});
-		this.updateRoute(this._router.routerState.snapshot.url);
-		this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: this.project.key }).subscribe(f => {
-			this.v2Enabled = f.enabled;
-			this._cd.markForCheck();
-		});
-	}
 
-	ngOnChanges(changes: SimpleChanges): void {
-		this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: this.project.key }).subscribe(f => {
-			this.v2Enabled = f.enabled;
-			this._cd.markForCheck();
+		this.projectV1Sub = this._store.select(ProjectState.projectSnapshot).subscribe(p => {
+			this.projectv1 = p;
+			if (p && p.key) { this.project = p; }
 		});
+
+		this.projectV2Sub = this._store.select(ProjectV2State.current).subscribe(p => {
+			this.projectv2 = p;
+			if (!p) { return; }
+			if (!this.project || this.project.key !== this.projectv2.key) { this.project = this.projectv2; }
+		});
+
+		this.updateRoute(this._router.routerState.snapshot.url);
 	}
 
 	updateRoute(url: string): void {

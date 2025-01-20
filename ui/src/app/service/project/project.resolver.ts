@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { LoadOpts, Project } from 'app/model/project.model';
+import { LoadOpts } from 'app/model/project.model';
 import { RouterService } from 'app/service/router/router.service';
 import { FetchProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -9,25 +9,7 @@ import { Observable } from 'rxjs';
 import { flatMap, map } from 'rxjs/operators';
 
 @Injectable()
-export class Projectv2Resolver  {
-    constructor(private store: Store, private routerService: RouterService) { }
-
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
-        let params = this.routerService.getRouteSnapshotParams({}, state.root);
-        let opts = [];
-
-        return this.store.dispatch(new FetchProject({
-            projectKey: params['key'],
-            opts
-        })).pipe(
-            flatMap(() => this.store.selectOnce(ProjectState)),
-            map((projectState: ProjectStateModel) => projectState.project)
-        );
-    }
-}
-
-@Injectable()
-export class ProjectResolver  {
+export class ProjectResolver {
 
     constructor(private store: Store, private routerService: RouterService) { }
 
@@ -52,7 +34,7 @@ export class ProjectResolver  {
 }
 
 @Injectable()
-export class ProjectForWorkflowResolver  {
+export class ProjectForWorkflowResolver {
 
     constructor(private store: Store, private routerService: RouterService) { }
 
@@ -65,7 +47,6 @@ export class ProjectForWorkflowResolver  {
             new LoadOpts('withApplicationNames', 'application_names'),
             new LoadOpts('withEnvironmentNames', 'environment_names'),
             new LoadOpts('withEnvironments', 'environments'),
-            new LoadOpts('withIntegrations', 'integrations'),
             new LoadOpts('withLabels', 'labels'),
             new LoadOpts('withKeys', 'keys')
         ];
@@ -81,7 +62,7 @@ export class ProjectForWorkflowResolver  {
 }
 
 @Injectable()
-export class ProjectForApplicationResolver  {
+export class ProjectForApplicationResolver {
 
     constructor(private store: Store, private routerService: RouterService) { }
 

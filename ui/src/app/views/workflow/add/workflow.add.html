@@ -6,10 +6,11 @@
                 <nz-row>
                     <nz-col [nzSpan]="12" [nzOffset]="6">
                         <nz-steps [nzCurrent]="currentStep">
-                            <nz-step nzTitle="Workflow" nz-tooltip nzTooltipTitle="Choose your workflow options" nzTooltipPlacement="left"
-                                     (click)="goToNextStep(0)"></nz-step>
-                            <nz-step nzTitle="Pipeline" nz-tooltip nzTooltipTitle="Create or select your first pipeline for your workflow" nzTooltipPlacement="left"
-                                (click)="goToNextStep(1)"></nz-step>
+                            <nz-step nzTitle="Workflow" nz-tooltip nzTooltipTitle="Choose your workflow options"
+                                nzTooltipPlacement="left" (click)="goToNextStep(0)"></nz-step>
+                            <nz-step nzTitle="Pipeline" nz-tooltip
+                                nzTooltipTitle="Create or select your first pipeline for your workflow"
+                                nzTooltipPlacement="left" (click)="goToNextStep(1)"></nz-step>
                         </nz-steps>
                     </nz-col>
                 </nz-row>
@@ -19,56 +20,60 @@
                             <!-- ######### WORKFLOW FIRST STEP ######### -->
                             <div *ngSwitchCase="0">
                                 <nz-row>
-                                    <nz-col [nzSpan]="18" [nzOffset]="3">
+                                    <nz-col [nzSpan]="18" [nzOffset]="5">
                                         <nz-button-group>
-                                            <button nz-button (click)="creationMode = 'graphical'" [nzType]="creationMode==='graphical'?'primary':'default'">Create</button>
-                                            <button nz-button (click)="creationMode = 'text'" [nzType]="creationMode==='text'?'primary':'default'">Import</button>
-                                            <button nz-button (click)="creationMode = 'repository'" [nzType]="creationMode==='repository'?'primary':'default'">From repository</button>
-                                            <button nz-button (click)="creationMode = 'template'" [nzType]="creationMode==='template'?'primary':'default'">From template</button>
+                                            <button nz-button (click)="creationMode = 'graphical'"
+                                                [nzType]="creationMode==='graphical'?'primary':'default'">Create</button>
+                                            <button nz-button (click)="creationMode = 'text'"
+                                                [nzType]="creationMode==='text'?'primary':'default'">Import</button>
+                                            <button nz-button (click)="creationMode = 'template'"
+                                                [nzType]="creationMode==='template'?'primary':'default'">From
+                                                template</button>
                                         </nz-button-group>
                                     </nz-col>
                                 </nz-row>
-                                <nz-row  *ngIf="creationMode === 'graphical'">
+                                <nz-row *ngIf="creationMode === 'graphical'">
                                     <nz-col [nzSpan]="20" [nzOffset]="2">
                                         <nz-form-item>
                                             <nz-form-label>Workflow name</nz-form-label>
                                             <nz-form-control>
                                                 <input nz-input name="name" [(ngModel)]="workflow.name"
-                                                       pattern="^[a-zA-Z0-9._-]{1,}$"
-                                                       (ngModelChange)="duplicateWorkflowName = false"
-                                                       #name="ngModel">
+                                                    pattern="^[a-zA-Z0-9._-]{1,}$"
+                                                    (ngModelChange)="duplicateWorkflowName = false" #name="ngModel">
                                             </nz-form-control>
-                                            <nz-alert *ngIf="name.invalid" nzType="error" nzMessage="Workflow name must follow this pattern ^[a-zA-Z0-9._-]{1,}$"></nz-alert>
-                                            <nz-alert *ngIf="duplicateWorkflowName" nzType="error" nzMessage="This workflow name already exists in your project"></nz-alert>
+                                            <nz-alert *ngIf="name.invalid" nzType="error"
+                                                nzMessage="Workflow name must follow this pattern ^[a-zA-Z0-9._-]{1,}$"></nz-alert>
+                                            <nz-alert *ngIf="duplicateWorkflowName" nzType="error"
+                                                nzMessage="This workflow name already exists in your project"></nz-alert>
                                         </nz-form-item>
                                         <nz-form-item>
                                             <nz-form-label>Workflow description</nz-form-label>
                                             <nz-form-control>
                                                 <textarea nz-input name="description"
-                                                          [(ngModel)]="workflow.description"></textarea>
+                                                    [(ngModel)]="workflow.description"></textarea>
                                             </nz-form-control>
                                         </nz-form-item>
                                         <nz-form-item>
                                             <nz-form-label>Workflow icon (Optional)</nz-form-label>
                                             <nz-form-control>
                                                 <div *ngIf="!fileTooLarge && workflow.icon">
-                                                    <img width="32" class="app-icon" [src]="workflow.icon"
-                                                         alt="icon" />
+                                                    <img width="32" class="app-icon" [src]="workflow.icon" alt="icon" />
                                                 </div>
                                                 <app-upload-button accept=".png,.jpg,.jpeg" image="true"
-                                                                   (event)="fileEventIcon($event)">
+                                                    (event)="fileEventIcon($event)">
                                                 </app-upload-button>
                                             </nz-form-control>
                                         </nz-form-item>
-                                        <nz-alert nzType="error" *ngIf="fileTooLarge" nzMessage="Your file is too large (max 100Ko)"></nz-alert>
+                                        <nz-alert nzType="error" *ngIf="fileTooLarge"
+                                            nzMessage="Your file is too large (max 100Ko)"></nz-alert>
                                         <nz-form-item class="alignRight">
                                             <nz-form-control>
                                                 <button nz-button type="button" (click)="goToProject()">Cancel
                                                 </button>
                                                 <button nz-button nzType="primary" type="button"
-                                                        (click)="goToNextStep(null)"
-                                                        [disabled]="!workflow.name || name.invalid || duplicateWorkflowName"
-                                                        [nzLoading]="loading">Next
+                                                    (click)="goToNextStep(null)"
+                                                    [disabled]="!workflow.name || name.invalid || duplicateWorkflowName"
+                                                    [nzLoading]="loading">Next
                                                 </button>
                                             </nz-form-control>
 
@@ -76,146 +81,32 @@
                                     </nz-col>
                                 </nz-row>
 
-                                <nz-row  *ngIf="creationMode === 'text'">
+                                <nz-row *ngIf="creationMode === 'text'">
                                     <nz-col [nzSpan]="20" [nzOffset]="2">
                                         <nz-form-item class="alignCenter">
                                             <app-upload-button accept=".yml,.yaml" size="large"
-                                                               (event)="fileEvent($event)">
+                                                (event)="fileEvent($event)">
                                             </app-upload-button>
                                         </nz-form-item>
-                                        <hr/>
+                                        <hr />
                                         <nz-form-item>
                                             <nz-form-control>
                                                 <codemirror name="wfToImport" [(ngModel)]="wfToImport"
-                                                            (keydown)="updated = true" [config]="codeMirrorConfig"
-                                                            #codeMirror>
+                                                    (keydown)="updated = true" [config]="codeMirrorConfig" #codeMirror>
                                                 </codemirror>
                                             </nz-form-control>
                                         </nz-form-item>
                                         <nz-form-item class="alignRight">
                                             <nz-form-control>
-                                                <button nz-button  type="button"
-                                                        (click)="goToProject()">Cancel
+                                                <button nz-button type="button" (click)="goToProject()">Cancel
                                                 </button>
                                                 <button nz-button nzType="primary" type="button"
-                                                        (click)="importWorkflow()"
-                                                        *ngIf="creationMode === 'text'" [disabled]="!wfToImport"
-                                                        [nzLoading]="loading">Create
+                                                    (click)="importWorkflow()" *ngIf="creationMode === 'text'"
+                                                    [disabled]="!wfToImport" [nzLoading]="loading">Create
                                                 </button>
                                             </nz-form-control>
 
                                         </nz-form-item>
-                                    </nz-col>
-                                </nz-row>
-
-                                <nz-row *ngIf="creationMode === 'repository'">
-                                    <nz-col [nzSpan]="20" [nzOffset]="2">
-                                        <ng-container *ngIf="!asCodeResult">
-                                            <nz-row>
-                                                <nz-col [nzSpan]="10">
-                                                    <nz-form-item>
-                                                        <nz-form-label>{{ 'workflow_wizard_select_repo_man' | translate}}</nz-form-label>
-                                                        <nz-form-control>
-                                                            <nz-select nzShowSearch name="repoman"
-                                                                       [(ngModel)]="selectedRepoManager" (ngModelChange)="fetchRepos($event)">
-                                                                <nz-option
-                                                                        *ngFor="let vcs of project.vcs_servers" [nzValue]="vcs.name"
-                                                                        [nzLabel]="vcs.name">
-                                                                </nz-option>
-                                                            </nz-select>
-                                                        </nz-form-control>
-                                                    </nz-form-item>
-                                                </nz-col>
-                                                <nz-col [nzSpan]="10" [nzOffset]="2" *ngIf="apiConfig && !apiConfig.project_vcs_management_disabled">
-                                                    <nz-form-item>
-                                                        <nz-form-label>Or add a repository manager</nz-form-label>
-                                                        <nz-form-control>
-                                                            <app-repomanager-form [project]="project" [disableLabel]="true"></app-repomanager-form>
-                                                        </nz-form-control>
-                                                    </nz-form-item>
-                                                </nz-col>
-                                            </nz-row>
-                                            <nz-row *ngIf="selectedRepoManager">
-                                                <nz-col [nzSpan]="20">
-                                                    <nz-form-item>
-                                                        <nz-form-control>
-                                                            <nz-alert *ngIf="loadingRepo" nzType="info" nzMessage="Loading..."></nz-alert>
-                                                            <ng-container *ngIf="!loadingRepo">
-                                                                <nz-select class="selection" name="repo" nzShowSearch nzPlaceHolder="Select a repository"
-                                                                           [(ngModel)]="selectedRepo"
-                                                                (nzOnSearch)="filterRepo($event)">
-                                                                    <nz-option *ngFor="let r of filteredRepos; trackBy: trackRepo"
-                                                                               [nzValue]="r" [nzLabel]="r.fullname"></nz-option>
-                                                                </nz-select>
-                                                            </ng-container>
-                                                        </nz-form-control>
-                                                    </nz-form-item>
-                                                </nz-col>
-                                                <nz-col [nzSpan]="2" [nzOffset]="2">
-                                                    <nz-form-item>
-                                                        <button nz-button nzType="primary" name="resync"
-                                                                type="button" [nzLoading]="loading"
-                                                                [disabled]="loading" (click)="resyncRepos()">
-                                                            Resynchronize
-                                                        </button>
-                                                    </nz-form-item>
-
-                                                </nz-col>
-                                            </nz-row>
-                                            <nz-row *ngIf="selectedRepo">
-                                                <nz-col [nzSpan]="24">
-                                                    <app-vcs-strategy [project]="project"
-                                                                      [withoutForm]="true"
-                                                                          [(strategy)]="selectedStrategy" [createOnProject]="true"
-                                                                          (strategyChange)="createWorkflowFromRepo()"
-                                                                          [sshWarning]="true" [projectKeysOnly]="true"
-                                                                          [hideButton]="true">
-                                                    </app-vcs-strategy>
-                                                </nz-col>
-                                            </nz-row>
-                                            <nz-row  *ngIf="!pollingResponse && selectedRepo ||
-                                                            (selectedRepo && pollingResponse?.error_details?.message !== '')">
-                                                <nz-col [nzSpan]="2" [nzOffset]="22">
-                                                    <button nz-button nzType="primary" type="button"
-                                                            [nzLoading]="loading || pollingImport" [disabled]="loading"
-                                                            (click)="createWorkflowFromRepo()">Inspect repository
-                                                    </button>
-                                                </nz-col>
-                                            </nz-row>
-                                            <nz-row *ngIf="pollingResponse">
-                                                <nz-col [nzSpan]="24" *ngIf="pollingResponse.status === 3 && !loading">
-                                                    <nz-alert nzType="error" nzMessage="{{pollingResponse.error_details.message}} - {{pollingResponse.error_details.from}}"></nz-alert>
-                                                </nz-col>
-                                                <nz-col [nzSpan]="24" *ngIf="pollingResponse.load_files && pollingResponse.load_files.results">
-                                                    {{ 'wizard_repo_files' | translate}}
-                                                    <ul>
-                                                        <li
-                                                                *ngFor="let f of pollingResponse.load_files.results | keys">
-                                                            {{f}}
-                                                        </li>
-                                                    </ul>
-                                                </nz-col>
-                                                <nz-col [nzSpan]="2" [nzOffset]="22"  *ngIf="pollingResponse.status === 2">
-                                                    <button nz-button nzType="primary" type="button"
-                                                            [nzLoading]="loading" [disabled]="loading"
-                                                            (click)="perform()">Create workflow
-                                                    </button>
-                                                </nz-col>
-                                            </nz-row>
-                                        </ng-container>
-                                        <ng-container *ngIf="asCodeResult">
-                                            <nz-row>
-                                                <nz-col [nzSpan]="20">
-                                                    <ul>
-                                                        <li *ngFor="let s of asCodeResult.msgs">{{s}}</li>
-                                                    </ul>
-                                                </nz-col>
-                                                <nz-col [nzSpan]="2">
-                                                    <button nz-button nzType="primary" type="button"
-                                                            (click)="goToWorkflow()">{{ 'btn_goto_workflow' | translate}}</button>
-                                                </nz-col>
-                                            </nz-row>
-                                        </ng-container>
                                     </nz-col>
                                 </nz-row>
 
@@ -224,13 +115,13 @@
                                         <nz-row>
                                             <nz-col [nzSpan]="24">
                                                 <nz-form-item>
-                                                    <nz-form-label>{{ 'workflow_wizard_select_template' | translate}}</nz-form-label>
+                                                    <nz-form-label>{{ 'workflow_wizard_select_template' |
+                                                        translate}}</nz-form-label>
                                                     <nz-form-control>
                                                         <nz-select name="selectedTemplatePath" nzShowSearch
-                                                                    [(ngModel)]="selectedTemplatePath"
-                                                                    (ngModelChange)="showTemplateForm($event)"
-                                                                   (nzOnSearch)="filterTemplate($event)"
-                                                                    #select>
+                                                            [(ngModel)]="selectedTemplatePath"
+                                                            (ngModelChange)="showTemplateForm($event)"
+                                                            (nzOnSearch)="filterTemplate($event)" #select>
                                                             <nz-option *ngFor="let t of filteredTemplate"
                                                                 [nzLabel]="t.group.name + '/' + t.slug"
                                                                 [nzValue]="t.group.name + '/' + t.slug"></nz-option>
@@ -244,18 +135,16 @@
                                                         <nz-form-item>
                                                             <nz-form-label>Name</nz-form-label>
                                                             <nz-form-control>
-                                                                <input nz-input type="text"
-                                                                       name="name" [disabled]="true"
-                                                                       [ngModel]="selectedTemplate.name">
+                                                                <input nz-input type="text" name="name"
+                                                                    [disabled]="true" [ngModel]="selectedTemplate.name">
                                                             </nz-form-control>
                                                         </nz-form-item>
                                                     </nz-col>
                                                     <nz-col [nzSpan]="11" [nzOffset]="1">
                                                         <nz-form-label>Group</nz-form-label>
                                                         <nz-form-control>
-                                                            <input nz-input type="text"
-                                                                   name="group" [disabled]="true"
-                                                                   [ngModel]="selectedTemplate.group.name">
+                                                            <input nz-input type="text" name="group" [disabled]="true"
+                                                                [ngModel]="selectedTemplate.group.name">
                                                         </nz-form-control>
                                                     </nz-col>
                                                 </nz-row>
@@ -271,9 +160,8 @@
                                                 </nz-row>
                                                 <nz-row>
                                                     <nz-col [nzSpan]="24">
-                                                        <app-workflow-template-apply-form
-                                                                [project]="project"
-                                                                [workflowTemplate]="selectedTemplate">
+                                                        <app-workflow-template-apply-form [project]="project"
+                                                            [workflowTemplate]="selectedTemplate">
                                                         </app-workflow-template-apply-form>
                                                     </nz-col>
                                                 </nz-row>
@@ -286,7 +174,7 @@
                             <!-- ######### WORKFLOW PIPELINE SECOND STEP ######### -->
                             <ng-container *ngSwitchCase="1">
                                 <app-workflow-node-add-wizard [project]="project" [loading]="loading" [display]="true"
-                                                              (nodeCreated)="createWorkflow($event)"></app-workflow-node-add-wizard>
+                                    (nodeCreated)="createWorkflow($event)"></app-workflow-node-add-wizard>
                             </ng-container>
                         </form>
                     </nz-col>

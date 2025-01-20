@@ -23,6 +23,7 @@ import * as actionPreferences from 'app/store/preferences.action';
 import { ProjectService } from 'app/service/project/project.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ErrorUtils } from 'app/shared/error.utils';
+import { V2ProjectService } from 'app/service/projectv2/project.service';
 
 @Component({
     selector: 'app-navbar',
@@ -32,7 +33,6 @@ import { ErrorUtils } from 'app/shared/error.utils';
 })
 @AutoUnsubscribe()
 export class NavbarComponent implements OnInit, OnDestroy {
-    // List of projects in the nav bar
     listFavs: Array<NavbarProjectData> = [];
     navRecentProjects: List<Project>;
     navRecentWorkflows: List<NavbarRecentData>;
@@ -72,7 +72,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _routerService: RouterService,
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
-        private _messageService: NzMessageService
+        private _messageService: NzMessageService,
+        private _v2ProjectService: V2ProjectService
     ) {
         this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
             this.currentAuthSummary = s;
@@ -112,6 +113,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this._store.select(AuthenticationState.summary).subscribe(s => {
             if (s) {
                 this.getData();
+                this.loadProjects();
             }
         });
 
@@ -313,26 +315,25 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.loading = false;
             this._cd.markForCheck();
         });
+    }
 
+    async loadProjects() {
         try {
-            this.projects = await lastValueFrom(this._projectService.getProjects());
-        } catch (e) {
-            this._messageService.error(`Unable to list projects: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            const projects = await lastValueFrom(this._projectService.getProjects());
+            const projectsv2 = await lastValueFrom(this._v2ProjectService.getAll());
+            this.projects = [].concat(projects)
+                .concat(projectsv2.filter(pv2 => projects.findIndex(p => p.key === pv2.key) === -1));
+            this.projects.sort((a, b) => { return a.name < b.name ? -1 : 1; })
+            this._cd.markForCheck();
+        } catch (e: any) {
+            this._messageService.error(`Unable to load projects: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
     }
 
-    /**
-     * Navigate to the selected project.
-     *
-     * @param key Project unique key get by the event
-     */
     navigateToProject(key): void {
         this._router.navigate(['project/' + key]);
     }
 
-    /**
-     * Navigate to the selected workflow.
-     */
     navigateToWorkflow(key: string, workflowName: string): void {
         this._router.navigate(['project', key, 'workflow', workflowName]);
     }
