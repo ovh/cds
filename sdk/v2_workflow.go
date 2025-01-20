@@ -309,6 +309,7 @@ func (j V2Job) Copy() V2Job {
 	for k, v := range j.Env {
 		new.Env[k] = v
 	}
+	new.Integrations = make([]string, 0, len(j.Integrations))
 	new.Integrations = append(new.Integrations, j.Integrations...)
 
 	new.Parameters = make(map[string]string)
@@ -324,6 +325,7 @@ func (j V2Job) Copy() V2Job {
 		}
 		new.Services[k] = newService
 	}
+	new.VariableSets = make([]string, 0, len(j.VariableSets))
 	new.VariableSets = append(new.VariableSets, j.VariableSets...)
 
 	new.Steps = make([]ActionStep, 0, len(j.Steps))
