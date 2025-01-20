@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -263,6 +264,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, *u, wrEnqueue.IsAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
 	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
 	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
+
+	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+	if err != nil {
+		return err
+	}
+	for _, p := range plugins {
+		wref.ef.plugins[p.Name] = p
+	}
 
 	// Enqueue JOB
 	hasTemplatedMatrixedJob := false
@@ -966,6 +975,9 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				WorkflowName:  run.WorkflowName,
 				RunNumber:     run.RunNumber,
 				RunAttempt:    run.RunAttempt,
+			}
+			if jobToTrigger.Status.IsTerminated() {
+				runJob.Status = jobToTrigger.Status
 			}
 			runJobs = append(runJobs, runJob)
 			continue
