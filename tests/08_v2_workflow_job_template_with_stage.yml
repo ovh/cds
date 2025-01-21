@@ -72,7 +72,7 @@ testcases:
               stage: stage-[[.params.region]]
               runs-on: "{{.worker_model}}"
               steps:
-              - run: echo "Inside test_1"    
+              - uses: actions/checkout
             job2_[[.params.region]]:
               stage: stage-[[.params.region]]
               runs-on: "{{.worker_model}}"
