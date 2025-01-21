@@ -3,23 +3,38 @@
     <ng-container *ngFor="let k of request | keys">
         <nz-form-item>
             <nz-form-label [nzSpan]="4">{{k}}<i nz-icon nzType="info-circle" nzTheme="outline" [nz-tooltip]="currentGate.inputs[k].description"></i></nz-form-label>
-            <ng-container [ngSwitch]="currentGate.inputs[k].type">
-                <nz-form-control *ngSwitchCase="'number'">
-                    <input nz-input [(ngModel)]="request[k]" type="number" />
-                </nz-form-control>
-                <nz-form-control *ngSwitchCase="'boolean'">
-                    <label nz-checkbox [(ngModel)]="request[k]"></label>
-                </nz-form-control>
-                <nz-form-control *ngSwitchCase="'enum'">
-                    <nz-select [(ngModel)]="request[k]">
-                        <nz-option *ngFor="let o of currentGate.inputs[k].values" [nzValue]="o"
+            <ng-container *ngIf="currentGate.inputs[k].options">
+                <nz-form-control>
+                    <nz-select [(ngModel)]="request[k]" nzMode="multiple" *ngIf="currentGate.inputs[k].options.multiple">
+                        <nz-option *ngFor="let o of currentGate.inputs[k].options.values" [nzValue]="o"
                             [nzLabel]="o"></nz-option>
                     </nz-select>
-                </nz-form-control>
-                <nz-form-control *ngSwitchDefault>
-                    <input nz-input [(ngModel)]="request[k]" type="text" />
-                </nz-form-control>
+                    <nz-select [(ngModel)]="request[k]" *ngIf="!currentGate.inputs[k].options.multiple">
+                        <nz-option *ngFor="let o of currentGate.inputs[k].options.values" [nzValue]="o"
+                            [nzLabel]="o"></nz-option>
+                    </nz-select>
+            </nz-form-control>
             </ng-container>
+            <ng-container *ngIf="!currentGate.inputs[k].options">
+                <ng-container [ngSwitch]="currentGate.inputs[k].type">
+                    <nz-form-control *ngSwitchCase="'number'">
+                        <input nz-input [(ngModel)]="request[k]" type="number" />
+                    </nz-form-control>
+                    <nz-form-control *ngSwitchCase="'boolean'">
+                        <label nz-checkbox [(ngModel)]="request[k]"></label>
+                    </nz-form-control>
+                    <nz-form-control *ngSwitchCase="'enum'">
+                        <nz-select [(ngModel)]="request[k]">
+                            <nz-option *ngFor="let o of currentGate.inputs[k].values" [nzValue]="o"
+                                [nzLabel]="o"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
+                    <nz-form-control *ngSwitchDefault>
+                        <input nz-input [(ngModel)]="request[k]" type="text" />
+                    </nz-form-control>
+                </ng-container>
+            </ng-container>
+        
         </nz-form-item>
     </ng-container>
     <button nz-button nzBlock [nzLoading]="loading" nzType="primary" (click)="triggerJob()">Run</button>

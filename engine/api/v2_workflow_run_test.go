@@ -1875,3 +1875,353 @@ jobs:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 }
+
+func TestRunManualJob_GateArrayInput(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve == 'foo'}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Options: &sdk.V2JobGateOptions{
+								Values: []interface{}{"foo", "boo"},
+							},
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Gate: "preprod",
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": "foo",
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+}
+
+func TestRunManualJob_GateArrayWrongValue(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve == 'foo'}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Options: &sdk.V2JobGateOptions{
+								Values: []interface{}{"foo", "boo"},
+							},
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Gate: "preprod",
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": "toto",
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 400, w.Code)
+}
+
+func TestRunManualJob_GateArrayMultipleValues(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve[0] == 'foo' && gate.approve[1] == 'bar'}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Options: &sdk.V2JobGateOptions{
+								Multiple: true,
+								Values:   []interface{}{"foo", "bar"},
+							},
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Gate: "preprod",
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": []interface{}{"foo", "bar"},
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+}
+
+func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve[0] == 'foo' && gate.approve[1] == 'bar'}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Options: &sdk.V2JobGateOptions{
+								Multiple: true,
+								Values:   []interface{}{"foo", "bar"},
+							},
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Gate: "preprod",
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": []interface{}{"foo", "bar", "boo"},
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 400, w.Code)
+}
