@@ -90,6 +90,28 @@ func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2Workflow
 	// Manage matrix jobs
 nextjob:
 	for k := range matrixJobs {
+		// Check if all permutation have run
+		var jobDef sdk.V2Job
+		for _, rj := range runJobs {
+			if rj.JobID == k {
+				jobDef = rj.Job
+				break
+			}
+		}
+		var nbPermutations = 1
+		for _, v := range jobDef.Strategy.Matrix {
+			if vString, ok := v.([]string); ok {
+				nbPermutations *= len(vString)
+			} else if vInterface, ok := v.([]interface{}); ok {
+				nbPermutations *= len(vInterface)
+			}
+		}
+		// if there is still permutation to run, ignore this job context
+		if nbPermutations > len(matrixJobs[k]) {
+			continue
+		}
+
+		// Compute job status
 		outputs := sdk.JobResultOutput{}
 		var finalStatus sdk.V2WorkflowRunJobStatus
 		for _, rj := range matrixJobs[k] {
