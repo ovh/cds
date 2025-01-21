@@ -276,7 +276,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// Enqueue JOB
 	hasTemplatedMatrixedJob := false
 	for _, j := range jobsToQueue {
-		if j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
+		if !j.Status.IsTerminated() && j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
 			hasTemplatedMatrixedJob = true
 		}
 	}
@@ -961,7 +961,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		jobDef := jobToTrigger.Job
 
 		// If no step && no template: rj is success
-		if len(jobDef.Steps) == 0 && jobDef.From == "" {
+		if jobToTrigger.Status.IsTerminated() || (len(jobDef.Steps) == 0 && jobDef.From == "") {
 			runJob := sdk.V2WorkflowRunJob{
 				WorkflowRunID: run.ID,
 				Status:        sdk.V2WorkflowRunJobStatusSuccess,
