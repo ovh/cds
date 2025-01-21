@@ -15,6 +15,52 @@ export class ProjectGuard {
 
     constructor(
         private _store: Store,
+        private _routerService: RouterService
+    ) { }
+
+    loadProject(state: RouterStateSnapshot): Observable<boolean> {
+        const params = this._routerService.getRouteSnapshotParams({}, state.root);
+        const opts = [
+            new LoadOpts('withApplicationNames', 'application_names'),
+            new LoadOpts('withPipelineNames', 'pipeline_names'),
+            new LoadOpts('withWorkflowNames', 'workflow_names'),
+            new LoadOpts('withEnvironmentNames', 'environment_names'),
+            new LoadOpts('withLabels', 'labels')
+        ];
+
+        return this._store.dispatch(new FetchProject({
+            projectKey: params['key'],
+            opts
+        })).pipe(
+            switchMap(() => this._store.selectOnce(ProjectState.projectSnapshot)),
+            map(p => {
+                return true;
+            }),
+            filter(exists => exists),
+            first()
+        );
+    }
+
+    canActivate(
+        route: ActivatedRouteSnapshot,
+        state: RouterStateSnapshot
+    ): Observable<boolean> | Promise<boolean> | boolean {
+        return this.loadProject(state);
+    }
+
+    canActivateChild(
+        route: ActivatedRouteSnapshot,
+        state: RouterStateSnapshot
+    ): Observable<boolean> | Promise<boolean> | boolean {
+        return this.loadProject(state);
+    }
+}
+
+@Injectable()
+export class ProjectExistsGuard {
+
+    constructor(
+        private _store: Store,
         private _router: Router,
         private _routerService: RouterService
     ) { }

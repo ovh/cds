@@ -12,8 +12,7 @@ import { ProjectSettingsComponent } from './settings/settings.component';
 import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-entity.component';
 import { ProjectV2ExploreRepositoryAddComponent } from '../projectv2/explore/explore-repository-add.component';
 import { ProjectV2ExploreRepositoryComponent } from '../projectv2/explore/explore-repository.component';
-import { ProjectGuard } from 'app/guard/project.guard';
-import { ProjectV2Guard } from 'app/guard/project.guard';
+import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from 'app/views/project/project.guard';
 
 const projectRoutes: Routes = [
     {
@@ -23,11 +22,12 @@ const projectRoutes: Routes = [
             { path: 'add', component: ProjectAddComponent, data: { title: 'Add • Project' } },
             {
                 path: ':key',
+                canActivate: [ProjectGuard],
                 component: ProjectComponent,
                 children: [
                     {
                         path: '',
-                        canActivate: [ProjectGuard],
+                        canActivate: [ProjectExistsGuard],
                         component: ProjectShowComponent,
                         data: { title: '{key} • Project' },
                     },

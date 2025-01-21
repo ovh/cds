@@ -263,7 +263,6 @@ import { NzResultModule } from 'ng-zorro-antd/result';
 import { SearchableComponent } from './searchable/searchable.component';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { RepositoryRefSelectComponent } from './repository-ref-selector/repository-ref-select.component';
-import { ProjectGuard, ProjectV2Guard } from 'app/guard/project.guard';
 
 const ngZorroConfig: NzConfig = {
     notification: {
@@ -529,8 +528,6 @@ const icons: IconDefinition[] = [
         AuthenticationGuard,
         NoAuthenticationGuard,
         PermissionService,
-        ProjectGuard,
-        ProjectV2Guard,
         SharedService,
         ToastService,
         {

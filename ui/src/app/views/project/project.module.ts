@@ -24,6 +24,7 @@ import { ProjectVariableSetsComponent } from './settings/variablesets/variablese
 import { ProjectVariableSetItemsComponent } from './settings/variablesets/items/variableset.item.component';
 import { ProjectAdvancedComponent } from './settings/advanced/project.advanced.component';
 import { ProjectRepoManagerFormComponent } from './settings/advanced/repomanager/from/project.repomanager.form.component';
+import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from './project.guard';
 
 @NgModule({
     declarations: [
@@ -54,7 +55,12 @@ import { ProjectRepoManagerFormComponent } from './settings/advanced/repomanager
     imports: [
         SharedModule,
         RouterModule,
-        projectRouting,
+        projectRouting
+    ],
+    providers: [
+        ProjectExistsGuard,
+        ProjectGuard,
+        ProjectV2Guard
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
