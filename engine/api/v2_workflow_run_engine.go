@@ -84,8 +84,9 @@ func (api *API) V2WorkflowRunEngineChan(ctx context.Context) {
 			}
 			return
 		case wrEnqueue := <-api.workflowRunTriggerChan:
-			if err := api.workflowRunV2Trigger(ctx, wrEnqueue); err != nil {
-				log.ErrorWithStackTrace(ctx, err)
+			ctxTrigger := context.WithValue(ctx, cdslog.WorkflowRunID, wrEnqueue.RunID)
+			if err := api.workflowRunV2Trigger(ctxTrigger, wrEnqueue); err != nil {
+				log.ErrorWithStackTrace(ctxTrigger, err)
 			}
 		}
 	}
@@ -104,8 +105,9 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 			log.Error(ctx, "V2WorkflowRunEngine> DequeueWithContext err: %v", err)
 			continue
 		}
-		if err := api.workflowRunV2Trigger(ctx, wrEnqueue); err != nil {
-			log.ErrorWithStackTrace(ctx, err)
+		ctxTrigger := context.WithValue(ctx, cdslog.WorkflowRunID, wrEnqueue.RunID)
+		if err := api.workflowRunV2Trigger(ctxTrigger, wrEnqueue); err != nil {
+			log.ErrorWithStackTrace(ctxTrigger, err)
 		}
 	}
 }
@@ -113,7 +115,6 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	ctx, next := telemetry.Span(ctx, "api.workflowRunV2Trigger")
 	defer next()
-	ctx = context.WithValue(ctx, cdslog.WorkflowRunID, wrEnqueue.RunID)
 
 	_, next = telemetry.Span(ctx, "api.workflowRunV2Trigger.lock")
 	lockKey := cache.Key("api:workflow:engine", wrEnqueue.RunID)
@@ -202,7 +203,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	jobsToQueue, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), wrEnqueue, run, allRunJobs, allrunJobsMap, runJobsContexts, u, api.Config.Workflow.JobDefaultRegion)
-
 	if errRetrieve != nil {
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -284,6 +284,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	if err != nil {
 		return err
 	}
+
 	if errorMsg != nil {
 		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, errorMsg, allrunJobsMap, runResults, u)
 	}
@@ -1166,9 +1167,10 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 			value, err := ap.InterpolateToString(ctx, p)
 			if err != nil {
 				return []sdk.V2WorkflowRunInfo{{
-					Level:    sdk.WorkflowRunInfoLevelError,
-					IssuedAt: time.Now(),
-					Message:  fmt.Sprintf("Job %s: unable to interpolate into a string job parameter %s: %v", data.jobID, p, err),
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelError,
+					IssuedAt:      time.Now(),
+					Message:       fmt.Sprintf("Job %s: unable to interpolate into a string job parameter %s: %v", data.jobID, p, err),
 				}}
 			}
 			interpolatedParams[k] = value
