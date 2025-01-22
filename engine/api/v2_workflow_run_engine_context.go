@@ -90,7 +90,7 @@ func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2Workflow
 	// Manage matrix jobs
 nextjob:
 	for k := range matrixJobs {
-		// Check if all permutation have run
+		// Check if all permutations have run
 		var jobDef sdk.V2Job
 		for _, rj := range runJobs {
 			if rj.JobID == k {

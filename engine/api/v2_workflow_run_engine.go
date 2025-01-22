@@ -1515,11 +1515,18 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 	for jobID, jobDef := range run.WorkflowData.Workflow.Jobs {
 		// Do not enqueue jobs that have already a run
 		runJobMapItem, has := allrunJobsMap[jobID]
+
 		if !has {
 			jobsToCheck[jobID] = jobDef
 		} else {
 			// If job with matrix, check if we have to rerun a permmutation
 			if runJobMapItem.Job.Strategy != nil && len(runJobMapItem.Job.Strategy.Matrix) > 0 {
+
+				// If runjob has a status && a template, ignore it. A matrix job can be run it template has been resolved
+				if runJobMapItem.Job.From != "" {
+					continue
+				}
+
 				nbPermutations := 1
 				for _, v := range runJobMapItem.Job.Strategy.Matrix {
 					if vString, ok := v.([]string); ok {
