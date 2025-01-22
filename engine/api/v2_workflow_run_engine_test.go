@@ -1428,9 +1428,6 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunNumber:     wr.RunNumber,
 		RunAttempt:    wr.RunAttempt,
-		Matrix: map[string]string{
-			"foo": "foo1",
-		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj1))
 
