@@ -99,8 +99,37 @@ func HasRoleOnVariableSetAndUserID(ctx context.Context, db gorp.SqlExecutor, rol
 	return false, nil
 }
 
-func HasRoleOnVariableSetsAndVCSUsername(ctx context.Context, db gorp.SqlExecutor, role string, vcs, username string, projectKey string, vsNames []string) (bool, string, error) {
-	return false, "", nil
+func HasRoleOnVariableSetsAndVCSUser(ctx context.Context, db gorp.SqlExecutor, role string, user sdk.RBACVCSUser, projectKey string, vsNames []string) (bool, string, error) {
+	variableSets := sdk.StringSlice{}
+
+	rbaVSs, err := loadRBACVariableSetsByProjectAndRole(ctx, db, projectKey, role)
+	if err != nil {
+		return false, "", err
+	}
+
+	for _, rw := range rbaVSs {
+		if rw.AllUsers {
+			if rw.AllVariableSets {
+				return true, "", nil
+			}
+			variableSets = append(variableSets, rw.RBACVariableSetNames...)
+			continue
+		}
+		for _, rbacVCSUser := range rw.RBACVCSUsers {
+			if rbacVCSUser.VCSServer == user.VCSServer && rbacVCSUser.VCSUsername == user.VCSUsername {
+				variableSets = append(variableSets, rw.RBACVariableSetNames...)
+				break
+			}
+		}
+	}
+
+	for _, v := range vsNames {
+		if !variableSets.Contains(v) {
+			return false, v, nil
+		}
+	}
+
+	return true, "", nil
 }
 
 func HasRoleOnVariableSetsAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, vsNames []string) (bool, string, error) {

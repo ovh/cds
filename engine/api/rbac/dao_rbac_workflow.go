@@ -76,7 +76,26 @@ func getAllRBACWorkflows(ctx context.Context, db gorp.SqlExecutor, q gorpmapping
 	return worflowsFiltered, nil
 }
 
-func HasRoleOnWorkflowAndVCSUsername(ctx context.Context, db gorp.SqlExecutor, role string, VCSUsername string, projectKey string, vcs, repo, workflowName string) (bool, error) {
+func HasRoleOnWorkflowAndVCSUsername(ctx context.Context, db gorp.SqlExecutor, role string, VCSUser sdk.RBACVCSUser, projectKey string, vcs, repo, workflowName string) (bool, error) {
+	workflowNamePerm := fmt.Sprintf("%s/%s/%s", vcs, repo, workflowName)
+
+	workflows, allWorkflowAllowed, err := LoadAllWorkflowsAllowedForVCSUSer(ctx, db, role, projectKey, VCSUser)
+	if err != nil {
+		return false, err
+	}
+	if allWorkflowAllowed {
+		return true, nil
+	}
+	for _, item := range workflows {
+		g := glob.New(item)
+		r, err := g.MatchString(workflowNamePerm)
+		if err != nil {
+			return false, err
+		}
+		if r != nil {
+			return true, nil
+		}
+	}
 	return false, nil
 }
 
@@ -104,6 +123,33 @@ func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role s
 		}
 	}
 	return false, nil
+}
+
+func LoadAllWorkflowsAllowedForVCSUSer(ctx context.Context, db gorp.SqlExecutor, role string, projectKey string, user sdk.RBACVCSUser) (sdk.StringSlice, bool, error) {
+	workflows := sdk.StringSlice{}
+
+	rbacWorkflows, err := loadRBACWorkflowsByProjectAndRole(ctx, db, projectKey, role)
+	if err != nil {
+		return nil, false, err
+	}
+
+	for _, rw := range rbacWorkflows {
+		if rw.AllUsers {
+			if rw.AllWorkflows {
+				return nil, true, nil
+			}
+			workflows = append(workflows, rw.RBACWorkflowsNames...)
+			continue
+		}
+		for _, rbacVCSUser := range rw.RBACVCSUsers {
+			if rbacVCSUser.VCSServer == user.VCSServer && rbacVCSUser.VCSUsername == user.VCSUsername {
+				workflows = append(workflows, rw.RBACWorkflowsNames...)
+				break
+			}
+		}
+	}
+
+	return workflows, false, nil
 }
 
 func LoadAllWorkflowsAllowed(ctx context.Context, db gorp.SqlExecutor, role string, projectKey string, userID string) (sdk.StringSlice, bool, error) {

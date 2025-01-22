@@ -2,7 +2,6 @@ package entity
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -62,8 +61,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 		e.ID = sdk.UUID()
 	}
 	if e.UserID != nil && *e.UserID == "" {
-		log.Error(ctx, "unable to insert entity")
-		return errors.New("unable to insert entity with empty user id")
+		e.UserID = nil
 	}
 
 	e.LastUpdate = time.Now()
@@ -78,8 +76,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
 	e.LastUpdate = time.Now()
 	if e.UserID != nil && *e.UserID == "" {
-		log.Error(ctx, "unable to update entity")
-		return errors.New("unable to update entity with empty user id")
+		e.UserID = nil
 	}
 	dbData := &dbEntity{Entity: *e}
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {

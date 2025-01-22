@@ -561,6 +561,7 @@ type Interface interface {
 	WebsocketClient
 	V2QueueClient
 	EntityLint(ctx context.Context, entityType string, data interface{}) (*sdk.EntityCheckResponse, error)
+	VCSGPGKey(ctx context.Context, gpgKeyID string) ([]sdk.VCSUserGPGKey, error)
 }
 
 type V2WorkerInterface interface {

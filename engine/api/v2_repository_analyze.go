@@ -594,7 +594,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				userRoles[t] = analysis.Data.Initiator.IsAdminWithMFA || hasRole
 				log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, t, b)
 			} else {
-				hasRole, err := rbac.HasRoleOnProjectAndVCSUsername(ctx, api.mustDB(), roleName, analysis.Data.Initiator.VCS, analysis.Data.Initiator.VCSUsername, analysis.ProjectKey)
+				hasRole, err := rbac.HasRoleOnProjectAndVCSUser(ctx, api.mustDB(), roleName, sdk.RBACVCSUser{VCSServer: analysis.Data.Initiator.VCS, VCSUsername: analysis.Data.Initiator.VCSUsername}, analysis.ProjectKey)
 				if err != nil {
 					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check VCS User permission"))
 				}
@@ -851,7 +851,7 @@ skipEntity:
 
 	// Update analysis
 	skippedFiles.Unique()
-	analysis.Data.Error = strings.Join(skippedFiles, "\n")
+	analysis.Data.Error = strings.Join(skippedFiles, "; ")
 	if len(skippedFiles) == len(analysis.Data.Entities) {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 		if len(analysis.Data.Entities) == 0 {
@@ -1368,33 +1368,6 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 	return nil
 }
 
-/*
-func findCommitterFromVCSRealm(ctx context.Context, db *gorp.DbMap, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject) (*sdk.V2Initiator, string, string, error) {
-	gpgKeyname := vcsProjectWithSecret.Auth.GPGKeyName
-	keys, err := project.LoadAllKeysByProjectKey(ctx, db, projKey)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	var gpgKey *sdk.ProjectKey
-	for _, k := range keys {
-		if k.Type == sdk.KeyTypePGP && k.Name == gpgKeyname {
-			gpgKey = &k
-			break
-		}
-	}
-
-	if gpgKey != nil && gpgKey.KeyID == signKeyID {
-		var res sdk.V2Initiator
-		res.VCS = vcsProjectWithSecret.Name
-		res.VCSUsername = vcsProjectWithSecret.Auth.Username
-		return &res, "", "", nil
-	}
-
-	return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("gpgkey %s not found", signKeyID), nil
-}*/
-
-// findCommitter
 func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2Initiator, string, string, error) {
 	ctx, next := telemetry.Span(ctx, "findCommitter", trace.StringAttribute(telemetry.TagProjectKey, projKey), trace.StringAttribute(telemetry.TagVCSServer, vcsProjectWithSecret.Name), trace.StringAttribute(telemetry.TagRepository, repoName))
 	defer next()
@@ -1421,7 +1394,6 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", sdk.NewErrorFrom(err, "unable get gpg key: %s", signKeyID)
 			}
-			// return findCommitterFromVCSRealm(ctx, db, signKeyID, projKey, vcsProjectWithSecret) // If CDS user is not found, lets checks user from VCS realm
 		}
 	}
 
@@ -1448,6 +1420,45 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		return nil, "", "", sdk.WithStack(err)
 	}
 
+	k, _ := project.LoadKeyByLongKeyID(ctx, db, signKeyID)
+	if k == nil {
+		// The key is not known from CDS. Let's raise an error
+		return nil, "", "", sdk.NewErrorFrom(err, "unknown gpg key: %s", signKeyID)
+	}
+
+	projWhoOwnTheKey, err := project.LoadByID(db, k.ProjectID)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	allvcs, err := vcs.LoadAllVCSByProject(ctx, db, projWhoOwnTheKey.Key, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	var selectedVCS []sdk.VCSProject
+	for _, v := range allvcs {
+		v.Auth.Token = "" // we are sure we don't need this
+		v.Auth.SSHPrivateKey = ""
+
+		log.Debug(ctx, "%s = %s", v.Auth.GPGKeyName, k.Name)
+		if v.Auth.GPGKeyName == k.Name {
+			selectedVCS = append(selectedVCS, v)
+		}
+	}
+
+	var possibleVCSGPGUSers []sdk.VCSUserGPGKey
+	for _, vcs := range selectedVCS {
+		possibleVCSGPGUSers = append(possibleVCSGPGUSers, sdk.VCSUserGPGKey{
+			ProjectKey:     projWhoOwnTheKey.Key,
+			VCSProjectName: vcs.Name,
+			Username:       vcs.Auth.Username,
+			KeyName:        vcs.Auth.GPGKeyName,
+			KeyID:          k.LongKeyID,
+			PublicKey:      k.Public,
+		})
+	}
+
 	// Get commit
 	tx, err := db.Begin()
 	if err != nil {
@@ -1455,24 +1466,21 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	}
 	defer tx.Rollback() // nolint
 
-	var vcsUsername string
+	var committer string
 
 	switch vcsProjectWithSecret.Type {
+	case sdk.VCSTypeGitea:
+		commit, err := client.Commit(ctx, repoName, sha)
+		if err != nil {
+			return nil, "", "", err
+		}
+		committer = commit.Committer.DisplayName
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
 			return nil, "", "", err
 		}
-		cdsUser, err = user.LoadByUsername(ctx, db, commit.Committer.Slug)
-		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", commit.Committer.Slug))
-			}
-
-			vcsUsername = commit.Committer.Slug
-			// Commiter is not a CDS User
-			// return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
-		}
+		committer = commit.Committer.Slug
 	case sdk.VCSTypeGithub:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
@@ -1500,6 +1508,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 				return nil, "", "", err
 			}
 		}
+		committer = commit.Committer.Name
 
 		// Load user
 		cdsUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
@@ -1507,9 +1516,6 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, "", "", err
 			}
-			vcsUsername = commit.Committer.Name
-			// Commiter is not a CDS User
-			// return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Name), nil
 		}
 	}
 
@@ -1517,11 +1523,24 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		return nil, "", "", sdk.WithStack(err)
 	}
 
-	if vcsUsername != "" {
-		return &sdk.V2Initiator{
-			VCS:         vcsProjectWithSecret.Name,
-			VCSUsername: vcsUsername,
-		}, "", "", nil
+	// First search among possibleVCSGPGUSers
+	for _, VCSGPGUser := range possibleVCSGPGUSers {
+		if VCSGPGUser.Username == committer {
+			return &sdk.V2Initiator{
+				VCS:         vcsProjectWithSecret.Name,
+				VCSUsername: VCSGPGUser.Username,
+			}, "", "", nil
+		}
+	}
+
+	// Then try to load a CDS user from the committer name
+	if cdsUser == nil { // Committer can be not nil in GitHub usescases
+		cdsUser, err = user.LoadByUsername(ctx, db, committer)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", committer))
+			}
+		}
 	}
 
 	if cdsUser != nil {
@@ -1532,7 +1551,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	}
 
 	// This error should not happen
-	return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("Unknown committer"), nil
+	return nil, sdk.RepositoryAnalysisStatusSkipped, "Unknown committer", nil
 }
 
 func sortEntitiesFiles(filesContent map[string][]byte) []string {

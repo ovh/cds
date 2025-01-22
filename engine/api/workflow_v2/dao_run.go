@@ -37,11 +37,15 @@ func getRuns(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, 
 				IsAdminWithMFA: dbWkfRun.DeprecatedAdminMFA,
 			}
 		}
-
-		dbWkfRun.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRun.Initiator.UserID)
-		if err != nil {
-			return nil, err
+		if dbWkfRun.Initiator.UserID != "" {
+			dbWkfRun.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRun.Initiator.UserID)
+			if err != nil {
+				return nil, err
+			}
 		}
+
+		dbWkfRun.DeprecatedUsername = dbWkfRun.Initiator.Username()
+		dbWkfRun.DeprecatedAdminMFA = dbWkfRun.Initiator.IsAdminWithMFA
 
 		runs = append(runs, dbWkfRun.V2WorkflowRun)
 	}
@@ -74,18 +78,15 @@ func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, o
 		}
 	}
 
-	dbWkfRun.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRun.Initiator.UserID)
-	if err != nil {
-		return nil, err
+	if dbWkfRun.Initiator.UserID != "" {
+		dbWkfRun.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRun.Initiator.UserID)
+		if err != nil {
+			return nil, err
+		}
 	}
-	dbWkfRun.DeprecatedUserID = dbWkfRun.Initiator.User.ID
-	dbWkfRun.DeprecatedUsername = dbWkfRun.Initiator.User.Username
-	dbWkfRun.DeprecatedAdminMFA = dbWkfRun.Initiator.IsAdminWithMFA
 
-	dbWkfRun.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRun.Initiator.UserID)
-	if err != nil {
-		return nil, err
-	}
+	dbWkfRun.DeprecatedUsername = dbWkfRun.Initiator.Username()
+	dbWkfRun.DeprecatedAdminMFA = dbWkfRun.Initiator.IsAdminWithMFA
 
 	return &dbWkfRun.V2WorkflowRun, nil
 }

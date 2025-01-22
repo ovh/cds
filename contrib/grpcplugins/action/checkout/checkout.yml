@@ -39,4 +39,7 @@ inputs:
     type: text
     description: "The gpg-key used to sign git commits"
     default: ${{git.gpg_key}}
-
+  email:
+    type: text
+    description: "The email used to sign git commits"
+    default: ${{git.email}}

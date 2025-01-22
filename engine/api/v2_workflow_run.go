@@ -916,7 +916,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			log.Debug(ctx, "theOneWhoTriggers = %+v", theOneWhoTriggers)
 
 			if !theOneWhoTriggers.IsUser() {
-				hasRole, err = rbac.HasRoleOnWorkflowAndVCSUsername(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, runRequest.Initiator.VCSUsername, proj.Key, vcsProject.Name, repo.Name, wk.Name)
+				hasRole, err = rbac.HasRoleOnWorkflowAndVCSUsername(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, sdk.RBACVCSUser{VCSServer: runRequest.Initiator.VCS, VCSUsername: runRequest.Initiator.VCSUsername}, proj.Key, vcsProject.Name, repo.Name, wk.Name)
 				if err != nil {
 					return err
 				}

@@ -24,6 +24,7 @@ testcases:
     git_user: "{{.git.user}}"
     git_password: "{{.git.password}}"
     cds_region: "{{.cds.region}}"
+    git_emailAddress: "{{.git.email}}"
 
   - type: v2_add_git_repo
     cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"

@@ -86,6 +86,7 @@ func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) {
 					"V2WorkflowRunCraft-"+id,
 					func(ctx context.Context) {
 						if err := api.craftWorkflowRunV2(ctx, id); err != nil {
+							ctx := log.ContextWithStackTrace(ctx, err)
 							log.Error(ctx, "V2WorkflowRunCraft> error on workflow run %s: %v", id, err)
 						}
 					},
@@ -791,6 +792,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		SSHKey:               workflowVCSServer.Auth.SSHKeyName,
 		GPGKey:               workflowVCSServer.Auth.GPGKeyName,
 		Username:             workflowVCSServer.Auth.Username,
+		Email:                workflowVCSServer.Auth.EmailAddress,
 		Ref:                  ref,
 		RefName:              strings.TrimPrefix(strings.TrimPrefix(ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix),
 		RefType:              refType,

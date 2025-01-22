@@ -1642,7 +1642,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 				return false, runInfos, nil
 			}
 		} else {
-			has, vInError, err := rbac.HasRoleOnVariableSetsAndVCSUsername(ctx, db, sdk.VariableSetRoleUse, wrEnqueue.Initiator.VCS, wrEnqueue.Initiator.VCSUsername, run.ProjectKey, varsets)
+			has, vInError, err := rbac.HasRoleOnVariableSetsAndVCSUser(ctx, db, sdk.VariableSetRoleUse, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername}, run.ProjectKey, varsets)
 			if err != nil {
 				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
@@ -1758,7 +1758,7 @@ func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2Wo
 				}
 			}
 		} else {
-			allowedRegions, err := rbac.LoadRegionIDsByRoleAndVCSUSername(ctx, db, sdk.RegionRoleExecute, wrEnqueue.Initiator.VCS, wrEnqueue.Initiator.VCSUsername)
+			allowedRegions, err := rbac.LoadRegionIDsByRoleAndVCSUSer(ctx, db, sdk.RegionRoleExecute, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername})
 			if err != nil {
 				next()
 				return nil, err

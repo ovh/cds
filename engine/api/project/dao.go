@@ -190,6 +190,7 @@ func Insert(db gorpmapper.SqlExecutorWithTx, proj *sdk.Project) error {
 
 	pk := sdk.ProjectKey{}
 	pk.KeyID = k.KeyID
+	pk.LongKeyID = k.LongKeyID
 	pk.Name = BuiltinGPGKey
 	pk.Private = k.Private
 	pk.Public = k.Public
@@ -356,6 +357,7 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 		vcsProjects[i].Auth.SSHKeyName = decryptedVCSProject.Auth.SSHKeyName
 		vcsProjects[i].Auth.SSHUsername = decryptedVCSProject.Auth.SSHUsername
 		vcsProjects[i].Auth.GPGKeyName = decryptedVCSProject.Auth.GPGKeyName
+		vcsProjects[i].Auth.EmailAddress = decryptedVCSProject.Auth.EmailAddress
 	}
 
 	proj.VCSServers = vcsProjects

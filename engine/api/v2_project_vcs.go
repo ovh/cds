@@ -6,12 +6,14 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -235,8 +237,61 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			vcsProject.Auth.Username = vcsClear.Auth.Username
 			vcsProject.Auth.SSHKeyName = vcsClear.Auth.SSHKeyName
 			vcsProject.Auth.GPGKeyName = vcsClear.Auth.GPGKeyName
+			vcsProject.Auth.EmailAddress = vcsClear.Auth.EmailAddress
 			vcsProject.Auth.SSHUsername = vcsClear.Auth.SSHUsername
 			vcsProject.Auth.SSHPort = vcsClear.Auth.SSHPort
 			return service.WriteMarshal(w, r, vcsProject, http.StatusOK)
+		}
+}
+
+func (api *API) GetVCSPGKeyHandler() ([]service.RbacChecker, service.Handler) {
+	return nil,
+		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			vars := mux.Vars(r)
+			keyID := vars["gpgKeyID"]
+
+			k, err := project.LoadKeyByLongKeyID(ctx, api.mustDB(), keyID)
+			if err != nil {
+				return err
+			}
+
+			p, err := project.LoadByID(api.mustDB(), k.ProjectID)
+			if err != nil {
+				return err
+			}
+
+			allvcs, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapper.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+
+			var selectedVCS []sdk.VCSProject
+			for _, v := range allvcs {
+				v.Auth.Token = "" // we are sure we don't need this
+				v.Auth.SSHPrivateKey = ""
+
+				log.Debug(ctx, "%s = %s", v.Auth.GPGKeyName, k.Name)
+				if v.Auth.GPGKeyName == k.Name {
+					selectedVCS = append(selectedVCS, v)
+				}
+			}
+
+			if len(selectedVCS) == 0 {
+				return sdk.WithStack(sdk.ErrNotFound)
+			}
+
+			var results []sdk.VCSUserGPGKey
+			for _, vcs := range selectedVCS {
+				results = append(results, sdk.VCSUserGPGKey{
+					ProjectKey:     p.Key,
+					VCSProjectName: vcs.Name,
+					Username:       vcs.Auth.Username,
+					KeyName:        vcs.Auth.GPGKeyName,
+					KeyID:          k.LongKeyID,
+					PublicKey:      k.Public,
+				})
+			}
+
+			return service.WriteMarshal(w, r, results, http.StatusOK)
 		}
 }

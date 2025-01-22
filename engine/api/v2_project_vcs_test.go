@@ -11,6 +11,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/gorpmapper"
 
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/services"
@@ -151,6 +153,19 @@ func Test_crudVCSOnProjectAdminOk(t *testing.T) {
 	}
 	require.NoError(t, project.InsertKey(db, &k))
 
+	gpgKey, err := keys.GeneratePGPKeyPair("my-gpg-key", "my-gpg-key", "my-gpg-key@localhost.local")
+	require.NoError(t, err)
+	k2 := sdk.ProjectKey{
+		Private:   gpgKey.Private,
+		Public:    gpgKey.Public,
+		KeyID:     gpgKey.KeyID,
+		ProjectID: proj.ID,
+		Name:      gpgKey.Name,
+		Type:      sdk.KeyTypePGP,
+		LongKeyID: gpgKey.LongKeyID,
+	}
+	require.NoError(t, project.InsertKey(db, &k2))
+
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
 	// Setup a mock for all services called by the API
@@ -191,6 +206,8 @@ auth:
   username: the-username
   token: the-password
   sshKeyName: mykey
+  gpgKeyName: my-gpg-key
+  emailAddress: my-gpg-key@localhost.local
 `
 
 	// Here, we insert the vcs server as a CDS administrator
@@ -214,6 +231,9 @@ auth:
 	require.NoError(t, json.Unmarshal(w2.Body.Bytes(), &vcsProjects))
 	require.Len(t, vcsProjects, 1)
 
+	vcsProjectFromDB, err := vcs.LoadVCSByProject(context.TODO(), db, proj.Key, "my_vcs_server", gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+
 	// Then, try to get the vcs server directly
 	vars["vcsIdentifier"] = "my_vcs_server"
 	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectHandler, vars)
@@ -229,6 +249,24 @@ auth:
 	require.Equal(t, "my_vcs_server", vcsProject.Name)
 	require.Empty(t, vcsProject.Auth.SSHPrivateKey)
 	require.Empty(t, vcsProject.Auth.Token)
+
+	// Try to get key used in the VCS
+	urlGetKey := api.Router.GetRouteV2("GET", api.GetVCSPGKeyHandler, map[string]string{
+		"gpgKeyID": k2.LongKeyID,
+	})
+	reqGetKey := assets.NewAuthentifiedRequest(t, u, pass, "GET", urlGetKey, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, reqGetKey)
+	require.Equal(t, 200, rec.Code)
+	VCSUserGPGKeys := []sdk.VCSUserGPGKey{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &VCSUserGPGKeys))
+	require.Len(t, VCSUserGPGKeys, 1)
+	require.Equal(t, proj.Key, VCSUserGPGKeys[0].ProjectKey)
+	require.Equal(t, vcsProjectFromDB.Name, VCSUserGPGKeys[0].VCSProjectName)
+	require.Equal(t, vcsProjectFromDB.Auth.Username, VCSUserGPGKeys[0].Username)
+	require.Equal(t, gpgKey.LongKeyID, VCSUserGPGKeys[0].KeyID)
+	require.Equal(t, vcsProjectFromDB.Auth.GPGKeyName, VCSUserGPGKeys[0].KeyName)
+	require.Equal(t, gpgKey.Public, VCSUserGPGKeys[0].PublicKey)
 
 	// delete the vcs project
 	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteVCSProjectHandler, vars)
@@ -247,6 +285,7 @@ auth:
 	vcsProjects2 := []sdk.VCSProject{}
 	require.NoError(t, json.Unmarshal(w5.Body.Bytes(), &vcsProjects2))
 	require.Len(t, vcsProjects2, 0)
+
 }
 
 func Test_crudVCSOnPublicProject(t *testing.T) {

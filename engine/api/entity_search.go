@@ -172,7 +172,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 				return "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
 			}
 		} else {
-			can, err := rbac.HasRoleOnProjectAndVCSUsername(ctx, db, sdk.ProjectRoleRead, ef.initiator.VCS, ef.initiator.VCSUsername, projKey)
+			can, err := rbac.HasRoleOnProjectAndVCSUser(ctx, db, sdk.ProjectRoleRead, sdk.RBACVCSUser{VCSServer: ef.initiator.VCS, VCSUsername: ef.initiator.VCSUsername}, projKey)
 			if err != nil {
 				return "", "", err
 			}

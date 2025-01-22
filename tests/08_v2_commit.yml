@@ -1,8 +1,10 @@
-name: Job Service
+name: Commit
 vars:
-  cds_project: "ITV2SERVICELOG"
-  git_repo: "it_v2_service_log"
-  cds_workflow: "WorkflowServiceLog"
+  cds_project: "ITV2COMMIT"
+  git_repo: "it_v2_commit"
+  cds_workflow: "WorkflowCommit"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+
 testcases:
 - name: Prepare test
   steps:
@@ -57,43 +59,55 @@ testcases:
           type: docker
           spec:
             image: buildpack-deps:buster
-        workflows/servicelog.yaml:
+        workflows/commit.yaml:
           name: {{.cds_workflow}}
-          on: [push]
-          env:
-            foo: barWorkflow
+          on:
+            push:
+              branches:
+              - ma*
+              - test-commit-1
+              tags:
+              - v*
           jobs:
-            myjob:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              services:
-                foofoo:
-                  image: postgres
-                  env:
-                    POSTGRES_USER: myuser  
-                    POSTGRES_PASSWORD: mypassword
-                  readiness:
-                    command: echo "####### FOOFOOFOO" && env && echo "#### END FOOFOO"
-                    interval: 10s
-                    timeout: 5s
-                    retries: 5 
+            init:
+              runs-on: 
+                model: "{{.worker_model}}"
+                memory: "2048"
               steps:
-                - run: |-
+                - id: checkout
+                  uses: actions/checkout
+                - id: gpg
+                  run: |-
+                    #!/bin/bash -x
+                    gpg -k
+                - id: gitconfig
+                  run: |-
+                    #!/bin/bash -x
+                    git config --list
+                - id: commit
+                  run: |
                     #!/bin/bash
-                    set -ex
-                    echo "start" && date
-                    apt-get update
-                    apt-get install -y postgresql-client
-                    PGPASSWORD=mypassword psql -U myuser -h foofoo <<EOF
-                    \x
-                    SELECT version();
-                    EOF
+                    git checkout -b test-commit-${{cds.run_number}}
+                    echo "test-commit-${{cds.run_number}}" > test.txt
+                    git add test.txt
+                    git commit -m "test-commit-${{cds.run_number}}"
+                - id: push
+                  run: |
+                    #!/bin/bash
+                    git push -u -f origin test-commit-${{cds.run_number}}
+
+    - name: Trigger manually an analysis
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis trigger {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson.status ShouldEqual "InProgress"
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson ShouldHaveLength 3
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
       retry: 100
       delay: 1
 
@@ -102,11 +116,18 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 200
+      retry: 150
       delay: 1
       vars:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
+
+    - name: Get the GPG Key name
+      script: |-
+        {{.cdsctl}} -f {{.cdsctl.config}} project keys list {{.cds_project}} --filter type=pgp --format json
+      vars:
+        gpgKeyName:
+          from: result.systemoutjson.systemoutjson0.name
 
     - name: Download and check logs
       script: |-
@@ -115,7 +136,19 @@ testcases:
         FILE=/tmp/`uuidgen`
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
-        # Check workflowEnv log content
-        cat {{.cds_workflow}}-*-myjob* | grep "PostgreSQL 1"
+
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout completed"
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout branch master"
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Setting up git config"
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Installing GPG Key"
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "user.signingkey"
+        
+        cat {{.cds_workflow}}-1-1-init-gpg | grep "{{.gpgKeyName}}"
+
+    - name: Check commit signature
+      script: |-
+        #!/bin/bash
+        git log --show-signature --pretty=oneline -1 | cat - | grep "gpg: Signature made"
+
       retry: 60
       delay: 1

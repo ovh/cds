@@ -134,14 +134,25 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 
 			// If not key found, try to get it from a user
 			if publicKey == "" {
-				// Retrieve gpg public key
-				userKey, err := s.Client.UserGpgKeyGet(ctx, gpgKeyID)
-				if err != nil {
-					op.Setup.Checkout.Result.CommitVerified = false
-					op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", gpgKeyID, err)
-					return nil
+				// Retrieve gpg public key on users
+				userKey, _ := s.Client.UserGpgKeyGet(ctx, gpgKeyID)
+				if userKey.PublicKey != "" {
+					publicKey = userKey.PublicKey
+				} else {
+					// Retrieve gpg public key on vcs
+					vcsUsers, _ := s.Client.VCSGPGKey(ctx, gpgKeyID)
+					for _, vcsUser := range vcsUsers {
+						if vcsUser.VCSProjectName == op.VCSServer && vcsUser.KeyID == gpgKeyID {
+							publicKey = vcsUser.PublicKey
+							break
+						}
+					}
+					if publicKey == "" {
+						op.Setup.Checkout.Result.CommitVerified = false
+						op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", gpgKeyID, err)
+						return nil
+					}
 				}
-				publicKey = userKey.PublicKey
 			}
 
 			// Import gpg public key
