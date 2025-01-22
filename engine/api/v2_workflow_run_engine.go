@@ -45,7 +45,6 @@ type prepareJobData struct {
 	jobToTrigger    JobToTrigger
 	defaultRegion   string
 	regionPermCache map[string]*sdk.V2WorkflowRunJobInfo
-	integrations    map[string]sdk.ProjectIntegration
 	allVariableSets []sdk.ProjectVariableSet
 }
 
@@ -1090,18 +1089,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				return nil, nil, nil, false, err
 			}
 
-			integrations, infos, err := wref.checkIntegrations(ctx, db)
-			if err != nil {
-				log.ErrorWithStackTrace(ctx, err)
-				return nil, nil, []sdk.V2WorkflowRunInfo{{
-					WorkflowRunID: run.ID,
-					Level:         sdk.WorkflowRunInfoLevelError,
-					Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-				}}, false, err
-			}
-			if len(infos) > 0 {
-				return nil, nil, infos, false, err
-			}
 			jobData := prepareJobData{
 				wrEnqueue:       wrEnqueue,
 				user:            u,
@@ -1114,7 +1101,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				},
 				defaultRegion:   defaultRegion,
 				regionPermCache: regionPermCache,
-				integrations:    integrations,
 				allVariableSets: allVariableSets,
 			}
 			if jobDef.From == "" {
@@ -1222,10 +1208,22 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		return []sdk.V2WorkflowRunInfo{*msg}
 	}
 
+	integrations, infos, err := wref.checkIntegrations(ctx, db)
+	if err != nil {
+		return []sdk.V2WorkflowRunInfo{{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+		}}
+	}
+	if len(infos) > 0 {
+		return infos
+	}
+
 	// Analyze job dependencies
 	// Retrieve all deps
 	for jobID := range newJobs {
-		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, jobID, run.WorkflowData.Workflow.Jobs[jobID], wref, data.integrations, data.allVariableSets, data.defaultRegion)
+		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, jobID, run.WorkflowData.Workflow.Jobs[jobID], wref, integrations, data.allVariableSets, data.defaultRegion)
 		if msg != nil {
 			return []sdk.V2WorkflowRunInfo{*msg}
 		}

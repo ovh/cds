@@ -267,19 +267,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
-	if err != nil {
-		log.ErrorWithStackTrace(ctx, err)
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
-			WorkflowRunID: run.ID,
-			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-		})
-	}
-	if len(infos) > 0 {
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
-	}
-
 	// Apply all job templates
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
@@ -312,6 +299,19 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	if len(msgs) > 0 {
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, msgs...)
+	}
+
+	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+		})
+	}
+	if len(infos) > 0 {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
 	}
 
 	// Retrieve all deps

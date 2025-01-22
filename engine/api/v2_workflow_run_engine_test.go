@@ -2803,3 +2803,262 @@ spec:
 		require.Equal(t, "job1", rjj.JobID)
 	}
 }
+
+func TestCreateJobsFromTemplatedMatrix_WithIntegrationInTemplate(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "region1",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+
+	reg2 := sdk.Region{
+		Name: "region2",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg2))
+
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	model := sdk.IntegrationModel{Name: sdk.RandomString(10), Event: true, DefaultConfig: sdk.IntegrationConfig{
+		"myparam": {
+			Value: "myregion",
+			Type:  sdk.IntegrationConfigTypeRegion,
+		},
+	}}
+	require.NoError(t, integration.InsertModel(db, &model))
+	integRegion1 := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"myparam": sdk.IntegrationConfigValue{
+				Value: "region1",
+				Type:  sdk.IntegrationConfigTypeRegion,
+			},
+		},
+		Name:               "integ-region1",
+		ProjectID:          proj.ID,
+		Model:              model,
+		IntegrationModelID: model.ID,
+	}
+	require.NoError(t, integration.InsertIntegration(db, &integRegion1))
+
+	integRegion2 := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"myparam": sdk.IntegrationConfigValue{
+				Value: "region2",
+				Type:  sdk.IntegrationConfigTypeRegion,
+			},
+		},
+		Name:               "integ-region2",
+		ProjectID:          proj.ID,
+		Model:              model,
+		IntegrationModelID: model.ID,
+	}
+	require.NoError(t, integration.InsertIntegration(db, &integRegion2))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		VariableSets: []sdk.RBACVariableSet{
+			{
+				AllUsers:        true,
+				Role:            sdk.VariableSetRoleUse,
+				AllVariableSets: true,
+				ProjectKey:      proj.Key,
+			},
+		},
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				RegionID:        reg.ID,
+				RBACProjectKeys: []string{proj.Key},
+				Role:            sdk.RegionRoleExecute,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: "docker"}
+	require.NoError(t, hatchery.Insert(context.TODO(), db, &hatch))
+
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &perm))
+
+	// Create hatchery2
+	hatch2 := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: "docker"}
+	require.NoError(t, hatchery.Insert(context.TODO(), db, &hatch2))
+
+	perm2 := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg2.ID,
+				HatcheryID: hatch2.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &perm2))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	tmplRaw := `name: jobtmpl
+parameters:
+- key: region
+spec: |-
+  jobs:
+    deploy_[[.params.region]]:
+      runs-on: .cds/worker-models/mymodel.yml
+      integrations:
+      - integ-[[.params.region]]
+      steps:
+      - run: echo "Deploy"`
+	entityTmpl := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		Name:                "jobTmpl",
+		FilePath:            ".cds/workflow-templates/jobTemplate.yml",
+		Commit:              "abcdef",
+		Ref:                 "refs/heads/master",
+		Data:                tmplRaw,
+		UserID:              &admin.ID,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &entityTmpl))
+
+	modelRaw := `name: mymodel
+type: docker
+osarch: linux-amd64
+spec:
+  image: debian:12`
+	entityModel := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		Name:                "mymodel",
+		FilePath:            ".cds/worker-models/mymodel.yml",
+		Commit:              "abcdef",
+		Ref:                 "refs/heads/master",
+		Data:                modelRaw,
+		UserID:              &admin.ID,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "abcdef",
+		WorkflowRef:  "refs/heads/master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: sdk.RandomString(10),
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Steps: []sdk.ActionStep{},
+				},
+				"job2": {
+					Needs: []string{"job1"},
+					From:  ".cds/workflow-templates/jobTemplate.yml",
+					Parameters: map[string]string{
+						"region": "${{matrix.region}}",
+					},
+					Strategy: &sdk.V2JobStrategy{
+						Matrix: map[string]interface{}{
+							"region": []string{"region1", "region2"},
+						},
+					},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
+
+	now := time.Now()
+	job1RunJob := sdk.V2WorkflowRunJob{
+		JobID:         "job1",
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		WorkflowName:  wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
+		Queued:        time.Now(),
+		Scheduled:     &now,
+		Started:       &now,
+		Ended:         &now,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		UserID:        admin.ID,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
+
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID:  wr.ID,
+		UserID: admin.ID,
+	}))
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	for _, info := range runInfos {
+		t.Logf("%+v", info)
+	}
+	require.Equal(t, 0, len(runInfos))
+
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+
+	// Total of jobs
+	require.Equal(t, 3, len(wrDB.WorkflowData.Workflow.Jobs))
+
+	jRegion1, has := wrDB.WorkflowData.Workflow.Jobs["deploy_region1"]
+	require.True(t, has)
+	jRegion2, has := wrDB.WorkflowData.Workflow.Jobs["deploy_region2"]
+	require.True(t, has)
+
+	t.Logf("[%s] %v", jRegion1.Region, jRegion1.Integrations)
+	t.Logf("[%s] %v", jRegion2.Region, jRegion2.Integrations)
+
+	require.Equal(t, "region1", jRegion1.Region)
+	require.Equal(t, []string{"integ-region1"}, jRegion1.Integrations)
+
+	require.Equal(t, "region2", jRegion2.Region)
+	require.Equal(t, []string{"integ-region2"}, jRegion2.Integrations)
+
+}
