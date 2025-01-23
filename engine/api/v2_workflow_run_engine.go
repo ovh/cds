@@ -961,7 +961,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		jobDef := jobToTrigger.Job
 
 		// If no step && no template: rj is success
-		if jobToTrigger.Status.IsTerminated() || (len(jobDef.Steps) == 0 && jobDef.From == "") {
+		if (jobToTrigger.Status.IsTerminated() && jobToTrigger.Job.From != "") || (len(jobDef.Steps) == 0 && jobDef.From == "") {
 			runJob := sdk.V2WorkflowRunJob{
 				WorkflowRunID: run.ID,
 				Status:        sdk.V2WorkflowRunJobStatusSuccess,
