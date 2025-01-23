@@ -267,19 +267,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
-	if err != nil {
-		log.ErrorWithStackTrace(ctx, err)
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
-			WorkflowRunID: run.ID,
-			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-		})
-	}
-	if len(infos) > 0 {
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
-	}
-
 	// Apply all job templates
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
@@ -297,6 +284,34 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, msg...)
 			}
 		}
+	}
+
+	// Check workflow lint in case of modification through job template
+	msgs := make([]sdk.V2WorkflowRunInfo, 0)
+	errs := run.WorkflowData.Workflow.Lint()
+	for _, e := range errs {
+		msgs = append(msgs, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			IssuedAt:      time.Now(),
+			Message:       e.Error(),
+		})
+	}
+	if len(msgs) > 0 {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, msgs...)
+	}
+
+	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+		})
+	}
+	if len(infos) > 0 {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
 	}
 
 	// Retrieve all deps
@@ -521,6 +536,7 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 		}
 		return nil, msgs, nil
 	}
+
 	return &tmpWorkflow, nil, nil
 }
 
@@ -608,7 +624,9 @@ loop:
 		run.WorkflowData.Workflow.Jobs[id] = jobDef
 	}
 
-	// Add new stage on parent workflow
+	if run.WorkflowData.Workflow.Stages == nil {
+		run.WorkflowData.Workflow.Stages = make(map[string]sdk.WorkflowStage)
+	}
 	for k, v := range newStages {
 		if _, has := run.WorkflowData.Workflow.Stages[k]; !has {
 			run.WorkflowData.Workflow.Stages[k] = v

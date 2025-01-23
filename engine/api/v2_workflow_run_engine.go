@@ -45,7 +45,6 @@ type prepareJobData struct {
 	jobToTrigger    JobToTrigger
 	defaultRegion   string
 	regionPermCache map[string]*sdk.V2WorkflowRunJobInfo
-	integrations    map[string]sdk.ProjectIntegration
 	allVariableSets []sdk.ProjectVariableSet
 }
 
@@ -84,8 +83,9 @@ func (api *API) V2WorkflowRunEngineChan(ctx context.Context) {
 			}
 			return
 		case wrEnqueue := <-api.workflowRunTriggerChan:
-			if err := api.workflowRunV2Trigger(ctx, wrEnqueue); err != nil {
-				log.ErrorWithStackTrace(ctx, err)
+			ctxTrigger := context.WithValue(ctx, cdslog.WorkflowRunID, wrEnqueue.RunID)
+			if err := api.workflowRunV2Trigger(ctxTrigger, wrEnqueue); err != nil {
+				log.ErrorWithStackTrace(ctxTrigger, err)
 			}
 		}
 	}
@@ -104,8 +104,9 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 			log.Error(ctx, "V2WorkflowRunEngine> DequeueWithContext err: %v", err)
 			continue
 		}
-		if err := api.workflowRunV2Trigger(ctx, wrEnqueue); err != nil {
-			log.ErrorWithStackTrace(ctx, err)
+		ctxTrigger := context.WithValue(ctx, cdslog.WorkflowRunID, wrEnqueue.RunID)
+		if err := api.workflowRunV2Trigger(ctxTrigger, wrEnqueue); err != nil {
+			log.ErrorWithStackTrace(ctxTrigger, err)
 		}
 	}
 }
@@ -113,7 +114,6 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	ctx, next := telemetry.Span(ctx, "api.workflowRunV2Trigger")
 	defer next()
-	ctx = context.WithValue(ctx, cdslog.WorkflowRunID, wrEnqueue.RunID)
 
 	_, next = telemetry.Span(ctx, "api.workflowRunV2Trigger.lock")
 	lockKey := cache.Key("api:workflow:engine", wrEnqueue.RunID)
@@ -202,7 +202,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	jobsToQueue, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), wrEnqueue, run, allRunJobs, allrunJobsMap, runJobsContexts, u, api.Config.Workflow.JobDefaultRegion)
-
 	if errRetrieve != nil {
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -276,7 +275,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// Enqueue JOB
 	hasTemplatedMatrixedJob := false
 	for _, j := range jobsToQueue {
-		if j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
+		if !j.Status.IsTerminated() && j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
 			hasTemplatedMatrixedJob = true
 		}
 	}
@@ -284,6 +283,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	if err != nil {
 		return err
 	}
+
 	if errorMsg != nil {
 		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, errorMsg, allrunJobsMap, runResults, u)
 	}
@@ -961,7 +961,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		jobDef := jobToTrigger.Job
 
 		// If no step && no template: rj is success
-		if len(jobDef.Steps) == 0 && jobDef.From == "" {
+		if jobToTrigger.Status.IsTerminated() || (len(jobDef.Steps) == 0 && jobDef.From == "") {
 			runJob := sdk.V2WorkflowRunJob{
 				WorkflowRunID: run.ID,
 				Status:        sdk.V2WorkflowRunJobStatusSuccess,
@@ -1089,18 +1089,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				return nil, nil, nil, false, err
 			}
 
-			integrations, infos, err := wref.checkIntegrations(ctx, db)
-			if err != nil {
-				log.ErrorWithStackTrace(ctx, err)
-				return nil, nil, []sdk.V2WorkflowRunInfo{{
-					WorkflowRunID: run.ID,
-					Level:         sdk.WorkflowRunInfoLevelError,
-					Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-				}}, false, err
-			}
-			if len(infos) > 0 {
-				return nil, nil, infos, false, err
-			}
 			jobData := prepareJobData{
 				wrEnqueue:       wrEnqueue,
 				user:            u,
@@ -1113,7 +1101,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				},
 				defaultRegion:   defaultRegion,
 				regionPermCache: regionPermCache,
-				integrations:    integrations,
 				allVariableSets: allVariableSets,
 			}
 			if jobDef.From == "" {
@@ -1166,9 +1153,10 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 			value, err := ap.InterpolateToString(ctx, p)
 			if err != nil {
 				return []sdk.V2WorkflowRunInfo{{
-					Level:    sdk.WorkflowRunInfoLevelError,
-					IssuedAt: time.Now(),
-					Message:  fmt.Sprintf("Job %s: unable to interpolate into a string job parameter %s: %v", data.jobID, p, err),
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelError,
+					IssuedAt:      time.Now(),
+					Message:       fmt.Sprintf("Job %s: unable to interpolate into a string job parameter %s: %v", data.jobID, p, err),
 				}}
 			}
 			interpolatedParams[k] = value
@@ -1220,10 +1208,22 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		return []sdk.V2WorkflowRunInfo{*msg}
 	}
 
+	integrations, infos, err := wref.checkIntegrations(ctx, db)
+	if err != nil {
+		return []sdk.V2WorkflowRunInfo{{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+		}}
+	}
+	if len(infos) > 0 {
+		return infos
+	}
+
 	// Analyze job dependencies
 	// Retrieve all deps
 	for jobID := range newJobs {
-		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, jobID, run.WorkflowData.Workflow.Jobs[jobID], wref, data.integrations, data.allVariableSets, data.defaultRegion)
+		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, jobID, run.WorkflowData.Workflow.Jobs[jobID], wref, integrations, data.allVariableSets, data.defaultRegion)
 		if msg != nil {
 			return []sdk.V2WorkflowRunInfo{*msg}
 		}
@@ -1513,11 +1513,18 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 	for jobID, jobDef := range run.WorkflowData.Workflow.Jobs {
 		// Do not enqueue jobs that have already a run
 		runJobMapItem, has := allrunJobsMap[jobID]
+
 		if !has {
 			jobsToCheck[jobID] = jobDef
 		} else {
 			// If job with matrix, check if we have to rerun a permmutation
 			if runJobMapItem.Job.Strategy != nil && len(runJobMapItem.Job.Strategy.Matrix) > 0 {
+
+				// If runjob has a status && a template, ignore it. A matrix job can be run it template has been resolved
+				if runJobMapItem.Job.From != "" {
+					continue
+				}
+
 				nbPermutations := 1
 				for _, v := range runJobMapItem.Job.Strategy.Matrix {
 					if vString, ok := v.([]string); ok {
