@@ -1392,7 +1392,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		userGPGKey, err = user.LoadGPGKeyByKeyID(ctx, db, signKeyID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, "", "", sdk.NewErrorFrom(err, "unable get gpg key: %s", signKeyID)
+				return nil, sdk.RepositoryAnalysisStatusError, "", sdk.NewErrorFrom(err, "unable get gpg key: %s", signKeyID)
 			}
 		}
 	}
@@ -1417,52 +1417,54 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, cache, projKey, vcsProjectWithSecret.Name)
 	if err != nil {
-		return nil, "", "", sdk.WithStack(err)
-	}
-
-	k, _ := project.LoadKeyByLongKeyID(ctx, db, signKeyID)
-	if k == nil {
-		// The key is not known from CDS. Let's raise an error
-		return nil, "", "", sdk.NewErrorFrom(err, "unknown gpg key: %s", signKeyID)
-	}
-
-	projWhoOwnTheKey, err := project.LoadByID(db, k.ProjectID)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	allvcs, err := vcs.LoadAllVCSByProject(ctx, db, projWhoOwnTheKey.Key, gorpmapper.GetOptions.WithDecryption)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	var selectedVCS []sdk.VCSProject
-	for _, v := range allvcs {
-		v.Auth.Token = "" // we are sure we don't need this
-		v.Auth.SSHPrivateKey = ""
-
-		log.Debug(ctx, "%s = %s", v.Auth.GPGKeyName, k.Name)
-		if v.Auth.GPGKeyName == k.Name {
-			selectedVCS = append(selectedVCS, v)
-		}
+		return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(err)
 	}
 
 	var possibleVCSGPGUSers []sdk.VCSUserGPGKey
-	for _, vcs := range selectedVCS {
-		possibleVCSGPGUSers = append(possibleVCSGPGUSers, sdk.VCSUserGPGKey{
-			ProjectKey:     projWhoOwnTheKey.Key,
-			VCSProjectName: vcs.Name,
-			Username:       vcs.Auth.Username,
-			KeyName:        vcs.Auth.GPGKeyName,
-			KeyID:          k.LongKeyID,
-			PublicKey:      k.Public,
-		})
+	if !publicKeyFound {
+		k, _ := project.LoadKeyByLongKeyID(ctx, db, signKeyID)
+		if k == nil {
+			// The key is not known from CDS. Let's raise an error
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
+		}
+
+		projWhoOwnTheKey, err := project.LoadByID(db, k.ProjectID)
+		if err != nil {
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
+		}
+
+		allvcs, err := vcs.LoadAllVCSByProject(ctx, db, projWhoOwnTheKey.Key, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
+		}
+
+		var selectedVCS []sdk.VCSProject
+		for _, v := range allvcs {
+			v.Auth.Token = "" // we are sure we don't need this
+			v.Auth.SSHPrivateKey = ""
+
+			log.Debug(ctx, "%s = %s", v.Auth.GPGKeyName, k.Name)
+			if v.Auth.GPGKeyName == k.Name {
+				selectedVCS = append(selectedVCS, v)
+			}
+		}
+
+		for _, vcs := range selectedVCS {
+			possibleVCSGPGUSers = append(possibleVCSGPGUSers, sdk.VCSUserGPGKey{
+				ProjectKey:     projWhoOwnTheKey.Key,
+				VCSProjectName: vcs.Name,
+				Username:       vcs.Auth.Username,
+				KeyName:        vcs.Auth.GPGKeyName,
+				KeyID:          k.LongKeyID,
+				PublicKey:      k.Public,
+			})
+		}
 	}
 
 	// Get commit
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, "", "", sdk.WithStack(err)
+		return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(err)
 	}
 	defer tx.Rollback() // nolint
 
@@ -1472,19 +1474,19 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	case sdk.VCSTypeGitea:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
-			return nil, "", "", err
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 		committer = commit.Committer.DisplayName
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
-			return nil, "", "", err
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 		committer = commit.Committer.Slug
 	case sdk.VCSTypeGithub:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
-			return nil, "", "", err
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 
 		if commit.Committer.ID == "" {
@@ -1514,13 +1516,13 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		cdsUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
-				return nil, "", "", err
+				return nil, sdk.RepositoryAnalysisStatusError, "", err
 			}
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, "", "", sdk.WithStack(err)
+		return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(err)
 	}
 
 	// First search among possibleVCSGPGUSers
@@ -1538,7 +1540,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		cdsUser, err = user.LoadByUsername(ctx, db, committer)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", committer))
+				return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", committer))
 			}
 		}
 	}

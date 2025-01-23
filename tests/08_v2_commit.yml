@@ -152,3 +152,25 @@ testcases:
 
       retry: 60
       delay: 1
+
+    - name: Check CDS that analyses status are now Up tp 5. We should find a new one on branch refs/heads/test-commit-1 and refs/heads/test-commit-2
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 5
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson3.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson3.ref ShouldEqual "refs/heads/test-commit-1"
+        - result.systemoutjson.systemoutjson4.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson4.ref ShouldEqual "refs/heads/test-commit-2"
+      retry: 150
+      delay: 1
+
+    - name: Check that the CDS workflow has a new execution and is successful
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 10
+      delay: 1
