@@ -250,7 +250,7 @@ func TestStopWaitingJobs(t *testing.T) {
 	require.Equal(t, len(jobs), 1)
 	require.Equal(t, wrj.ID, jobs[0].ID)
 
-	require.NoError(t, failRunJob(ctx, api.Cache, api.mustDB(), jobs[0].ID))
+	require.NoError(t, api.failOldWaitingRunJob(ctx, api.Cache, api.mustDB(), jobs[0].ID))
 
 	rjDB, err := workflow_v2.LoadRunJobByID(ctx, db, jobs[0].ID)
 	require.NoError(t, err)
