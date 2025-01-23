@@ -152,6 +152,18 @@ func LoadOldScheduledRunJob(ctx context.Context, db gorp.SqlExecutor, timeout in
 	return getAllRunJobs(ctx, db, query)
 }
 
+func LoadOldWaitingRunJob(ctx context.Context, db gorp.SqlExecutor, timeout int64) ([]sdk.V2WorkflowRunJob, error) {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadOldWaitingRunJob")
+	defer next()
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM v2_workflow_run_job
+    WHERE status = $1 AND now() - queued > $2 * INTERVAL '1' SECOND
+    LIMIT 100
+    `).Args(sdk.StatusWaiting, timeout)
+	return getAllRunJobs(ctx, db, query)
+}
+
 func LoadDeadJobs(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRunJob, error) {
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run_job.*

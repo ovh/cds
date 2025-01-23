@@ -556,6 +556,17 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 
 			if nbHatcheryStopWarning >= 5 {
 				jobRun.Status = sdk.V2WorkflowRunJobStatusFail
+
+				info := sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    jobRun.WorkflowRunID,
+					IssuedAt:         time.Now(),
+					Level:            sdk.WorkflowRunInfoLevelError,
+					WorkflowRunJobID: jobRun.ID,
+					Message:          "unable to start job: too many hatchery failed attempts",
+				}
+				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
+					return err
+				}
 			}
 
 			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
