@@ -164,7 +164,7 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		Title:              title,
 		Description:        description,
 		URLCDS:             fmt.Sprintf("%s/project/%s/run/%s", cdsUIURL, event.ProjectKey, event.WorkflowRunID),
-		Context:            fmt.Sprintf("%s-%s #%d", event.ProjectKey, run.WorkflowName, run.RunNumber),
+		Context:            fmt.Sprintf("%s-%s", event.ProjectKey, run.WorkflowName),
 		Status:             event.Status,
 		RepositoryFullname: event.Repository,
 		GitHash:            run.Contexts.Git.Sha,
