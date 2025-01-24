@@ -1994,7 +1994,7 @@ func TestRunManualJob_GateArrayInput(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusSuccess,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -2082,7 +2082,7 @@ func TestRunManualJob_GateArrayWrongValue(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusSuccess,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -2170,7 +2170,7 @@ func TestRunManualJob_GateArrayMultipleValues(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusSuccess,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -2259,7 +2259,7 @@ func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusSuccess,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -2291,7 +2291,7 @@ func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		Initiator:     sdk.V2WorkflowRunInitiator{UserID: admin.ID, User: admin},
+		Initiator:     sdk.V2Initiator{UserID: admin.ID, User: admin},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
