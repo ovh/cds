@@ -2025,6 +2025,7 @@ func TestRunManualJob_GateArrayInput(t *testing.T) {
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -2113,6 +2114,7 @@ func TestRunManualJob_GateArrayWrongValue(t *testing.T) {
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -2202,6 +2204,7 @@ func TestRunManualJob_GateArrayMultipleValues(t *testing.T) {
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 

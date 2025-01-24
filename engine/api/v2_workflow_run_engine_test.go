@@ -1954,6 +1954,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -1997,6 +1998,7 @@ spec:
 		Ended:            &now,
 		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
@@ -2190,6 +2192,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -2237,6 +2240,7 @@ spec:
 		Ended:            &now,
 		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
@@ -2444,6 +2448,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -2470,6 +2475,7 @@ spec:
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:            wr.ID,
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -2636,6 +2642,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -2679,6 +2686,7 @@ spec:
 		Ended:            &now,
 		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
@@ -2837,6 +2845,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -2876,12 +2885,14 @@ spec:
 		Matrix: sdk.JobMatrix{
 			"region": "region1",
 		},
+		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:            wr.ID,
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -3082,6 +3093,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -3121,6 +3133,7 @@ spec:
 		Ended:            &now,
 		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
 
