@@ -898,7 +898,6 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			}
 			log.Debug(ctx, "postWorkflowRunFromHookV2Handler - wk.Repository: %+v", wk.Repository)
 
-			// TODO i don't know what i need to do in this case
 			if wk.Repository != nil && wk.Repository.InsecureSkipSignatureVerify {
 				// Use entity owner as user fallback
 				if workflowEntity.UserID == nil {
