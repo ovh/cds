@@ -1849,6 +1849,9 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 		if !gateConditionResult {
 			return false, nil
 		}
+		if jobDef.If == "" {
+			return true, nil
+		}
 	}
 
 	// Check Job IF
