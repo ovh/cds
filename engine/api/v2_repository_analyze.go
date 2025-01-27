@@ -851,7 +851,7 @@ skipEntity:
 
 	// Update analysis
 	skippedFiles.Unique()
-	analysis.Data.Error = strings.Join(skippedFiles, "; ")
+	analysis.Data.Error = strings.Join(skippedFiles, "\n")
 	if len(skippedFiles) == len(analysis.Data.Entities) {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 		if len(analysis.Data.Entities) == 0 {

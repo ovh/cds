@@ -44,8 +44,11 @@ type WorkflowRunEntityFinder struct {
 	project sdk.Project
 }
 
-func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, libraryProjectKey string) *WorkflowRunEntityFinder {
-	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, *run.Initiator, libraryProjectKey)
+func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, libraryProjectKey string, initiator *sdk.V2Initiator) *WorkflowRunEntityFinder {
+	if initiator == nil {
+		initiator = run.Initiator
+	}
+	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, *initiator, libraryProjectKey)
 	return &WorkflowRunEntityFinder{
 		ef:      ef,
 		run:     run,
@@ -163,7 +166,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	run.Contexts = *runContext
 
-	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, api.Config.WorkflowV2.LibraryProjectKey)
+	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, api.Config.WorkflowV2.LibraryProjectKey, nil)
 
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
 	if err != nil {

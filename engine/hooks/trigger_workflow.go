@@ -124,7 +124,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				mods := make([]cdsclient.RequestModifier, 0, 2)
 				mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
 
-				log.Warn(ctx, "triggerWorkflows - initiator: %+v", hre.Initiator)
+				log.Debug(ctx, "triggerWorkflows - initiator: %+v", hre.Initiator)
 
 				runRequest := sdk.V2WorkflowRunHookRequest{
 					HookEventID:        hre.UUID,
