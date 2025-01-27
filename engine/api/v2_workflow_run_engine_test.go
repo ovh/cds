@@ -3062,3 +3062,231 @@ spec:
 	require.Equal(t, []string{"integ-region2"}, jRegion2.Integrations)
 
 }
+
+func TestGateWIthNoJobIf(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		VariableSets: []sdk.RBACVariableSet{
+			{
+				AllUsers:        true,
+				Role:            sdk.VariableSetRoleUse,
+				AllVariableSets: true,
+				ProjectKey:      proj.Key,
+			},
+		},
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				RegionID:        reg.ID,
+				RBACProjectKeys: []string{proj.Key},
+				Role:            sdk.RegionRoleExecute,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: "docker"}
+	require.NoError(t, hatchery.Insert(context.TODO(), db, &hatch))
+
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &perm))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	modelRaw := `name: mymodel
+type: docker
+osarch: linux-amd64
+spec:
+  image: debian:12`
+	entityModel := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		Name:                "mymodel",
+		FilePath:            ".cds/worker-models/mymodel.yml",
+		Commit:              "abcdef",
+		Ref:                 "refs/heads/master",
+		Data:                modelRaw,
+		UserID:              &admin.ID,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "abcdef",
+		WorkflowRef:  "refs/heads/master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: sdk.RandomString(10),
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{!failure()}}",
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Steps: []sdk.ActionStep{
+						{
+							Run: "echo toto",
+						},
+					},
+					Strategy: &sdk.V2JobStrategy{
+						Matrix: map[string]interface{}{
+							"region": []string{"region1", "region2"},
+						},
+					},
+				},
+				"job2": {
+					Needs: []string{},
+					Steps: []sdk.ActionStep{
+						{
+							Run: "echo toto",
+						},
+					},
+				},
+				"job3": {
+					Gate:  "preprod",
+					Needs: []string{"job1", "job2"},
+					Steps: []sdk.ActionStep{
+						{
+							Run: "echo toto",
+						},
+					},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
+
+	now := time.Now()
+	job1RunJob := sdk.V2WorkflowRunJob{
+		JobID:         "job1",
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		WorkflowName:  wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
+		Queued:        time.Now(),
+		Scheduled:     &now,
+		Started:       &now,
+		Ended:         &now,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		UserID:        admin.ID,
+		Matrix: sdk.JobMatrix{
+			"region": "region1",
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job1RunJob))
+
+	job2RunJob := sdk.V2WorkflowRunJob{
+		JobID:         "job1",
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		WorkflowName:  wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
+		Queued:        time.Now(),
+		Scheduled:     &now,
+		Started:       &now,
+		Ended:         &now,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		UserID:        admin.ID,
+		Matrix: sdk.JobMatrix{
+			"region": "region2",
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job2RunJob))
+
+	job3RunJob := sdk.V2WorkflowRunJob{
+		JobID:         "job2",
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		WorkflowName:  wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		Queued:        time.Now(),
+		Scheduled:     &now,
+		Started:       &now,
+		Ended:         &now,
+		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
+		UserID:        admin.ID,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job3RunJob))
+
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID:  wr.ID,
+		UserID: admin.ID,
+	}))
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Len(t, runInfos, 0)
+
+	rjs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
+	require.NoError(t, err)
+	require.Len(t, rjs, 4)
+	job3Found := false
+	for _, rj := range rjs {
+		if rj.JobID != "job3" {
+			continue
+		}
+		require.Equal(t, rj.Status, sdk.V2WorkflowRunJobStatusWaiting)
+		job3Found = true
+		break
+	}
+	require.True(t, job3Found)
+
+}
