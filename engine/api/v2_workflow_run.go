@@ -811,7 +811,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, jobMaps, runResults)
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, jobMaps, runResults, &initiator)
 
 			return nil
 		}
@@ -1042,7 +1042,7 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults)
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults, &initiator)
 
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, initiator, wr.WorkflowName, wr.RunNumber)
@@ -1287,7 +1287,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults)
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults, &initiator)
 			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRuns[0].JobID, inputs)
 
 			// Then continue the workflow
@@ -1531,7 +1531,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, sdk.WithStack(err)
 	}
 
-	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr, nil, nil)
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr, nil, nil, &initiator)
 
 	select {
 	case api.workflowRunCraftChan <- wr.ID:

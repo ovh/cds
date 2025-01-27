@@ -101,11 +101,15 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.Ev
 	event.PublishEventJobSummary(ctx, ev, nil)
 }
 
-func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobs map[string]sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) {
+func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobs map[string]sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult, initiator *sdk.V2Initiator) {
 	eventPayload, err := sdk.NewEventWorkflowRunPayload(wr, jobs, runResults)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return
+	}
+
+	if initiator == nil {
+		initiator = wr.Initiator
 	}
 
 	bts, _ := json.Marshal(eventPayload)
@@ -126,12 +130,12 @@ func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.Event
 		RunAttempt:    wr.RunAttempt,
 		Status:        wr.Status,
 		WorkflowRunID: wr.ID,
-		UserID:        wr.Initiator.UserID,
-		Username:      wr.Initiator.Username(),
+		UserID:        initiator.UserID,
+		Username:      initiator.Username(),
 	}
 
-	if wr.Initiator.User != nil {
-		e.UserEmail = wr.Initiator.User.GetEmail()
+	if initiator.User != nil {
+		e.UserEmail = initiator.User.GetEmail()
 	}
 
 	publish(ctx, store, e)

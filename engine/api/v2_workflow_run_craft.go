@@ -155,7 +155,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	runContext, mustSaveVersion, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, api.Config.URL.UI)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
-		return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
 			Message:       fmt.Sprintf("%v", err),
@@ -180,12 +180,12 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			return err
 		}
 		if msg != nil {
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *msg)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, *msg)
 		}
 
 		if _, err := e.Template.Resolve(ctx, &run.WorkflowData.Workflow); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("Unable to resolve workflow template %s: %s", run.WorkflowData.Workflow.From, err),
@@ -207,14 +207,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 					Message:       e.Error(),
 				})
 			}
-			return stopRun(ctx, api.mustDB(), api.Cache, run, msgs...)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, msgs...)
 		}
 
 		// Build context for workflow
 		repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), e.Entity.ProjectRepositoryID)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("Unable to resolve workflow template repository: %s", err),
@@ -224,7 +224,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		vcsProj, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), repo.ProjectKey, repo.VCSProjectID)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("Unable to resolve workflow template vcs: %s", err),
@@ -271,14 +271,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			msg, err := api.computeJobFromTemplate(ctx, wref, jobID, j, run)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
-				return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
+				return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
 					Message:       fmt.Sprintf("unable to compute job[%s] with template %s: %v", jobID, j.From, err),
 				})
 			}
 			if msg != nil {
-				return stopRun(ctx, api.mustDB(), api.Cache, run, msg...)
+				return stopRun(ctx, api.mustDB(), api.Cache, run, nil, msg...)
 			}
 		}
 	}
@@ -295,27 +295,27 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		})
 	}
 	if len(msgs) > 0 {
-		return stopRun(ctx, api.mustDB(), api.Cache, run, msgs...)
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, msgs...)
 	}
 
 	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
-		return stopRun(ctx, api.mustDB(), api.Cache, run, sdk.V2WorkflowRunInfo{
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
 			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
 		})
 	}
 	if len(infos) > 0 {
-		return stopRun(ctx, api.mustDB(), api.Cache, run, infos...)
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, infos...)
 	}
 
 	// Retrieve all deps
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		msg := retrieveAndUpdateAllJobDependencies(ctx, api.mustDB(), api.Cache, run, jobID, run.WorkflowData.Workflow.Jobs[jobID], wref, integrations, allVariableSets, api.Config.Workflow.JobDefaultRegion)
 		if msg != nil {
-			return stopRun(ctx, api.mustDB(), api.Cache, run, *msg)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, *msg)
 		}
 	}
 
@@ -375,7 +375,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return sdk.WithStack(tx.Commit())
 	}
 
-	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, nil, nil)
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, nil, nil, nil)
 
 	api.EnqueueWorkflowRun(ctx, run.ID, *run.Initiator, run.WorkflowName, run.RunNumber)
 	return nil
@@ -681,7 +681,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 	return nil, nil
 }
 
-func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, messages ...sdk.V2WorkflowRunInfo) error {
+func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, initiator *sdk.V2Initiator, messages ...sdk.V2WorkflowRunInfo) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -709,7 +709,7 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 		return sdk.WithStack(err)
 	}
 
-	event_v2.PublishRunEvent(ctx, store, sdk.EventRunEnded, *run, nil, nil)
+	event_v2.PublishRunEvent(ctx, store, sdk.EventRunEnded, *run, nil, nil, initiator)
 
 	return nil
 }
