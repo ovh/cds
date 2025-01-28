@@ -292,6 +292,8 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				initiator:     analysis.Initiator,
 			}
 
+			log.Warn(ctx, "createAnalysis initiator=%+v", createAnalysis.initiator)
+
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
@@ -329,13 +331,16 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		Ref:                 analysisRequest.ref,
 		Commit:              analysisRequest.commit,
 		Data: sdk.ProjectRepositoryData{
-			HookEventUUID:             analysisRequest.hookEventUUID,
-			HookEventKey:              analysisRequest.hookEventKey,
-			Initiator:                 analysisRequest.initiator,
-			DeprecatedCDSUserID:       analysisRequest.initiator.UserID,
-			DeprecatedCDSUserName:     analysisRequest.initiator.Username(),
-			DeprecatedCDSAdminWithMFA: analysisRequest.initiator.IsAdminWithMFA,
+			HookEventUUID: analysisRequest.hookEventUUID,
+			HookEventKey:  analysisRequest.hookEventKey,
+			Initiator:     analysisRequest.initiator,
 		},
+	}
+
+	if analysisRequest.initiator != nil {
+		repoAnalysis.Data.DeprecatedCDSUserID = analysisRequest.initiator.UserID
+		repoAnalysis.Data.DeprecatedCDSUserName = analysisRequest.initiator.Username()
+		repoAnalysis.Data.DeprecatedCDSAdminWithMFA = analysisRequest.initiator.IsAdminWithMFA
 	}
 
 	if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {

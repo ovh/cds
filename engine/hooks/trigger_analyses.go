@@ -167,9 +167,15 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 						return err
 					}
 					hre.SignKey = apiAnalysis.Data.SignKeyID
-					hre.DeprecatedUsername = apiAnalysis.Data.Initiator.Username()
-					hre.DeprecatedUserID = apiAnalysis.Data.Initiator.UserID
-					hre.Initiator = apiAnalysis.Data.Initiator
+					if apiAnalysis.Data.Initiator != nil {
+						if hre.DeprecatedUsername == "" {
+							hre.DeprecatedUsername = apiAnalysis.Data.Initiator.Username()
+						}
+						if hre.DeprecatedUserID == "" {
+							hre.DeprecatedUserID = apiAnalysis.Data.Initiator.UserID
+						}
+						hre.Initiator = apiAnalysis.Data.Initiator
+					}
 				}
 			}
 		}
