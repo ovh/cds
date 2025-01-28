@@ -329,9 +329,12 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		Ref:                 analysisRequest.ref,
 		Commit:              analysisRequest.commit,
 		Data: sdk.ProjectRepositoryData{
-			HookEventUUID: analysisRequest.hookEventUUID,
-			HookEventKey:  analysisRequest.hookEventKey,
-			Initiator:     analysisRequest.initiator,
+			HookEventUUID:             analysisRequest.hookEventUUID,
+			HookEventKey:              analysisRequest.hookEventKey,
+			Initiator:                 analysisRequest.initiator,
+			DeprecatedCDSUserID:       analysisRequest.initiator.UserID,
+			DeprecatedCDSUserName:     analysisRequest.initiator.Username(),
+			DeprecatedCDSAdminWithMFA: analysisRequest.initiator.IsAdminWithMFA,
 		},
 	}
 
@@ -509,6 +512,10 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		if err != nil {
 			return api.stopAnalysis(ctx, analysis, err)
 		}
+		// Compatibility code
+		analysis.Data.DeprecatedCDSUserID = analysis.Data.Initiator.UserID
+		analysis.Data.DeprecatedCDSUserName = analysis.Data.Initiator.Username()
+		analysis.Data.DeprecatedCDSAdminWithMFA = analysis.Data.Initiator.IsAdminWithMFA
 	}
 
 	log.Debug(ctx, "analyzeRepository - analysis.Data.Initiator = %+v", analysis.Data.Initiator)
