@@ -33,19 +33,22 @@ import { SharedModule } from './shared/shared.module';
 import { ToastService } from './shared/toast/ToastService';
 import { FetchCurrentAuth } from './store/authentication.action';
 import { NgxsStoreModule } from './store/store.module';
-import { NavbarModule } from './views/navbar/navbar.module';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { ConfigService } from 'app/service/services.module';
 import { AnalysisService } from "./service/analysis/analysis.service";
 import { EventV2Service } from './event-v2.service';
 import { FeatureService } from './service/feature/feature.service';
+import { NavbarComponent } from './views/navbar/navbar.component';
+import { SearchComponent } from './views/search/search.component';
 
 describe('App: CDS', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [
-                AppComponent
+                AppComponent,
+                SearchComponent,
+                NavbarComponent
             ],
             providers: [
                 AnalysisService,
@@ -76,7 +79,6 @@ describe('App: CDS', () => {
             imports: [
                 NgxsStoreModule,
                 SharedModule,
-                NavbarModule,
                 NzNotificationModule,
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule,

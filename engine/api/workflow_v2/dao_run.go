@@ -229,7 +229,7 @@ const runQueryFilters = `
 	AND (array_length(:annotation_values::text[], 1) IS NULL OR annotation_values @> :annotation_values)
 `
 
-func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters) (int64, error) {
+func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
 
@@ -262,7 +262,7 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 	return count, sdk.WithStack(err)
 }
 
-func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters) (int64, error) {
+func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
 
@@ -297,7 +297,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	return count, sdk.WithStack(err)
 }
 
-type SearchsRunsFilters struct {
+type SearchRunsFilters struct {
 	Workflows            []string
 	Actors               []string
 	Status               []string
@@ -311,7 +311,7 @@ type SearchsRunsFilters struct {
 	AnnotationValues     []string
 }
 
-func (s SearchsRunsFilters) Lower() {
+func (s SearchRunsFilters) Lower() {
 	for i := range s.Repositories {
 		s.Repositories[i] = strings.ToLower(s.Repositories[i])
 	}
@@ -328,7 +328,7 @@ func parseSortFilter(sort string) (string, error) {
 	return sort, nil
 }
 
-func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 
@@ -344,14 +344,14 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run.*
     FROM v2_workflow_run
-	LEFT JOIN (
-		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
-		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
-		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations 
-	ON  
-		v2_workflow_run.id = v2_workflow_run_annotations.id 
-	WHERE ` + runQueryFilters + `			
+		LEFT JOIN (
+			SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
+			GROUP BY v2_workflow_run.id
+		) v2_workflow_run_annotations 
+		ON  
+			v2_workflow_run.id = v2_workflow_run_annotations.id 
+		WHERE ` + runQueryFilters + `			
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
@@ -379,7 +379,7 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 	return getRuns(ctx, db, query, opts...)
 }
 
-func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 
@@ -395,14 +395,14 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run.*
     FROM v2_workflow_run
-	LEFT JOIN (
-		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
-		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
-		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations 
-	ON  
-		v2_workflow_run.id = v2_workflow_run_annotations.id 
-	WHERE project_key = :projKey AND ` + runQueryFilters + `
+		LEFT JOIN (
+			SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
+			GROUP BY v2_workflow_run.id
+		) v2_workflow_run_annotations 
+		ON  
+			v2_workflow_run.id = v2_workflow_run_annotations.id 
+		WHERE project_key = :projKey AND ` + runQueryFilters + `
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
