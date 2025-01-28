@@ -394,7 +394,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 					Conclusion:         string(run.Status),
 					CreatedAt:          run.Started,
 					Jobs:               make(map[string]sdk.HookWorkflowRunEventJob),
-					Initiator:          *run.Initiator,
+					Initiator:          wrEnqueue.Initiator,
 				},
 			},
 		}
