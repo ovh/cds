@@ -1060,28 +1060,39 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				RunNumber:     run.RunNumber,
 				RunAttempt:    run.RunAttempt,
 			}
-			if jobDef.RunsOn.Model != "" {
-				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
-			}
-			for _, jobEvent := range run.RunJobEvent {
-				if jobEvent.RunAttempt != run.RunAttempt {
-					continue
+			// If the current job was a matrix, skip it
+			if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
+				runJob.Status = sdk.V2WorkflowRunJobStatusSkipped
+				runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    runJob.WorkflowRunID,
+					WorkflowRunJobID: runJob.ID,
+					IssuedAt:         time.Now(),
+					Level:            sdk.WorkflowRunInfoLevelWarning,
+					Message:          "found an empty matrix, skipping the job",
 				}
-				if jobEvent.JobID != runJob.JobID {
-					continue
+			} else {
+				if jobDef.RunsOn.Model != "" {
+					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
 				}
-				runJob.GateInputs = jobEvent.Inputs
-			}
-			runJobContext.Gate = runJob.GateInputs
-			runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue, u)
-			if runJobInfo != nil {
-				runJobsInfo[runJob.ID] = *runJobInfo
-			}
+				for _, jobEvent := range run.RunJobEvent {
+					if jobEvent.RunAttempt != run.RunAttempt {
+						continue
+					}
+					if jobEvent.JobID != runJob.JobID {
+						continue
+					}
+					runJob.GateInputs = jobEvent.Inputs
+				}
+				runJobContext.Gate = runJob.GateInputs
+				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue, u)
+				if runJobInfo != nil {
+					runJobsInfo[runJob.ID] = *runJobInfo
+				}
 
-			if runUpdated {
-				hasToUpdateRun = runUpdated
+				if runUpdated {
+					hasToUpdateRun = runUpdated
+				}
 			}
-
 			runJobs = append(runJobs, runJob)
 		} else {
 			allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
