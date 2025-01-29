@@ -29,10 +29,6 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-const (
-	defaultLimit = 10
-)
-
 func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int
@@ -57,7 +53,10 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 		offset = 0
 	}
 	if limit == 0 {
-		limit = defaultLimit
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
 	}
 
 	//Parse all form values

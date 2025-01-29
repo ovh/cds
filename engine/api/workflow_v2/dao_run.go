@@ -335,6 +335,9 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 	if limit == 0 {
 		limit = 10
 	}
+	if limit > 100 {
+		limit = 100
+	}
 
 	sort, err := parseSortFilter(sort)
 	if err != nil {
@@ -385,6 +388,9 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 
 	if limit == 0 {
 		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
 	}
 
 	sort, err := parseSortFilter(sort)

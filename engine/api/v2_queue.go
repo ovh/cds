@@ -161,8 +161,14 @@ func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) 
 			statuses := req.URL.Query()["status"]
 			offset := service.FormInt(req, "offset")
 			limit := service.FormInt(req, "limit")
+			if offset < 0 {
+				offset = 0
+			}
 			if limit == 0 {
 				limit = 10
+			}
+			if limit > 100 {
+				limit = 100
 			}
 
 			// Check status filter

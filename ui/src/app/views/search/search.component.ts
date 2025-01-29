@@ -35,8 +35,6 @@ export class SearchComponent implements OnInit {
 			this.pageIndex = values['page'] ?? 1;
 			this.search();
 		});
-
-		this.search();
 	}
 
 	@Debounce(200)

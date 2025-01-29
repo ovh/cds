@@ -37,6 +37,9 @@ func (c *client) WorkflowV2RunSearchAllProjects(ctx context.Context, offset, lim
 	if limit == 0 {
 		limit = 50
 	}
+	if limit > 100 {
+		limit = 100
+	}
 
 	mods = append(mods, WithQueryParameter("offset", strconv.FormatInt(offset, 10)))
 	mods = append(mods, WithQueryParameter("limit", strconv.FormatInt(limit, 10)))
