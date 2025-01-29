@@ -207,7 +207,7 @@ testcases:
     delay: 1
 
   - name: Check that the CDS workflow has at least one execution and is Success
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
     assertions:
       - and: 
         - result.systemoutjson ShouldHaveLength 1

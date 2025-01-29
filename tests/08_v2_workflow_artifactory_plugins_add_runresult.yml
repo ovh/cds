@@ -121,7 +121,7 @@ testcases:
         type: docker
         spec:
           image: buildpack-deps:buster
-      workflows/workflowA.yaml:
+      workflows/workflowResult.yaml:
         name: {{.cds_workflow}}
         on: [push]
         integrations: [artifactory-{{.rt_project}}]
@@ -160,7 +160,7 @@ testcases:
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
-    - result.systemoutjson ShouldHaveLength 3
+    - result.systemoutjson ShouldHaveLength 2
     retry: 100
     delay: 1
     vars:
@@ -191,7 +191,7 @@ testcases:
     delay: 1
 
   - name: Check that the CDS workflow has at least one execution and is Success
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
     assertions:
       - and: 
         - result.systemoutjson ShouldHaveLength 1
