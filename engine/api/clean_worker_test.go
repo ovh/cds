@@ -149,7 +149,11 @@ func TestDisabledDeadWorkers(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		RunEvent:           sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
