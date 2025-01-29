@@ -293,8 +293,6 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				initiator:     analysis.Initiator,
 			}
 
-			log.Warn(ctx, "createAnalysis initiator=%+v", createAnalysis.initiator)
-
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
