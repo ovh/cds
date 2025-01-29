@@ -118,6 +118,13 @@ func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 
 	wr.DeprecatedAdminMFA = wr.Initiator.IsAdminWithMFA
 	wr.DeprecatedUserID = wr.Initiator.UserID
+	if wr.Initiator.UserID != "" && wr.Initiator.User == nil { // Compat code
+		u, err := user.LoadByID(ctx, db, wr.Initiator.UserID, user.LoadOptions.WithContacts)
+		if err != nil {
+			return err
+		}
+		wr.Initiator.User = u.Initiator()
+	}
 	wr.DeprecatedUsername = wr.Initiator.Username()
 
 	dbWkfRun := &dbWorkflowRun{V2WorkflowRun: *wr}
@@ -142,6 +149,13 @@ func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 
 	wr.DeprecatedAdminMFA = wr.Initiator.IsAdminWithMFA
 	wr.DeprecatedUserID = wr.Initiator.UserID
+	if wr.Initiator.UserID != "" && wr.Initiator.User == nil { // Compat code
+		u, err := user.LoadByID(ctx, db, wr.Initiator.UserID, user.LoadOptions.WithContacts)
+		if err != nil {
+			return err
+		}
+		wr.Initiator.User = u.Initiator()
+	}
 	wr.DeprecatedUsername = wr.Initiator.Username()
 
 	dbWkfRun := &dbWorkflowRun{V2WorkflowRun: *wr}
