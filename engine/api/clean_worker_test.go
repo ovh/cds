@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
@@ -23,6 +24,9 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 	db.Exec("DELETE FROM v2_workflow_run_job")
 
 	admin, _ := assets.InsertAdminUser(t, db)
+
+	admin, _ = user.LoadByID(ctx, db, admin.ID, user.LoadOptions.WithContacts)
+
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
@@ -42,6 +46,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 		Status:             sdk.StatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{

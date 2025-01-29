@@ -53,10 +53,14 @@ func (u *AuthentifiedUser) Initiator() *V2InitiatorUser {
 	if u == nil {
 		return nil
 	}
+	var email string
+	if u.Contacts.Primary() != nil {
+		email = u.Contacts.Primary().Value
+	}
 	return &V2InitiatorUser{
 		Username: u.Username,
 		Ring:     u.Ring,
-		Email:    u.Contacts.Primary().Value,
+		Email:    email,
 	}
 }
 
