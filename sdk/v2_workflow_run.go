@@ -439,11 +439,17 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 }
 
 type V2Initiator struct {
-	UserID         string            `json:"user_id"`
-	User           *AuthentifiedUser `json:"user"`
-	VCS            string            `json:"vcs"`
-	VCSUsername    string            `json:"vcs_username"`
-	IsAdminWithMFA bool              `json:"is_admin_with_mfa"`
+	UserID         string           `json:"user_id"`
+	User           *V2InitiatorUser `json:"user"`
+	VCS            string           `json:"vcs"`
+	VCSUsername    string           `json:"vcs_username"`
+	IsAdminWithMFA bool             `json:"is_admin_with_mfa"`
+}
+
+type V2InitiatorUser struct {
+	Username string `json:"username"`
+	Ring     string `json:"-"` // Ring is only used by postWorkflowRunFromHookV2Handler, it's loaded just before so we don't need to store it
+	Email    string `json:"email"`
 }
 
 func (i *V2Initiator) Username() string {

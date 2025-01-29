@@ -68,7 +68,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
@@ -91,7 +91,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
@@ -170,7 +170,7 @@ func TestDisabledDeadWorkers(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
@@ -193,7 +193,7 @@ func TestDisabledDeadWorkers(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))

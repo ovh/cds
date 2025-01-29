@@ -135,7 +135,7 @@ func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.Event
 	}
 
 	if initiator.User != nil {
-		e.UserEmail = initiator.User.GetEmail()
+		e.UserEmail = initiator.User.Email
 	}
 
 	publish(ctx, store, e)

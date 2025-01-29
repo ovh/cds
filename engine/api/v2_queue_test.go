@@ -54,7 +54,7 @@ func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
@@ -173,7 +173,7 @@ hatcheries:
 		HatcheryName:  hatch.Name,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
@@ -242,7 +242,7 @@ func TestUserGetJobsQueuedHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
@@ -256,7 +256,7 @@ func TestUserGetJobsQueuedHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun2))
@@ -316,7 +316,7 @@ func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
@@ -330,7 +330,7 @@ func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun2))
@@ -344,7 +344,7 @@ func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun3))
@@ -432,7 +432,7 @@ func TestGetJobHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
@@ -520,7 +520,7 @@ func TestPostJobRunInfoHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))

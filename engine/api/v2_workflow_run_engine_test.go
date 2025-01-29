@@ -94,7 +94,7 @@ func TestJobConditionSuccess(t *testing.T) {
 			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow, jobsContext, sdk.WorkflowRunContext{}, nil, "job4")
 			initiator := sdk.V2Initiator{
 				UserID:         admin.ID,
-				User:           admin,
+				User:           admin.Initiator(),
 				IsAdminWithMFA: true,
 			}
 			b, err := checkCanRunJob(context.TODO(), db, run, nil, jobDef, currentJobContext, initiator)
@@ -163,7 +163,7 @@ func TestJobConditionReviewers(t *testing.T) {
 			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow, jobsContext, sdk.WorkflowRunContext{}, nil, "job1")
 			initiator := sdk.V2Initiator{
 				UserID:         tt.u.ID,
-				User:           &tt.u,
+				User:           tt.u.Initiator(),
 				IsAdminWithMFA: tt.isAdminWithMFA,
 			}
 			b, err := checkCanRunJob(context.TODO(), db, run, nil, jobDef, currentJobContext, initiator)
@@ -435,7 +435,7 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
@@ -444,7 +444,7 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID:         admin.ID,
-			User:           admin,
+			User:           admin.Initiator(),
 			IsAdminWithMFA: true,
 		},
 	}))
@@ -542,7 +542,7 @@ func TestWorkflowTrigger1JobAdminNoMFA(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
@@ -551,7 +551,7 @@ func TestWorkflowTrigger1JobAdminNoMFA(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -631,7 +631,7 @@ func TestWorkflowTriggerWithCondition(t *testing.T) {
 		},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
@@ -640,7 +640,7 @@ func TestWorkflowTriggerWithCondition(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID:         admin.ID,
-			User:           admin,
+			User:           admin.Initiator(),
 			IsAdminWithMFA: true,
 		},
 	}))
@@ -716,7 +716,7 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
@@ -725,7 +725,7 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID:         admin.ID,
-			User:           admin,
+			User:           admin.Initiator(),
 			IsAdminWithMFA: true,
 		},
 	}))
@@ -775,7 +775,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
@@ -789,7 +789,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
@@ -803,7 +803,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj11))
@@ -830,7 +830,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr2))
@@ -844,7 +844,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
@@ -858,7 +858,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj3))
@@ -962,7 +962,7 @@ func TestWorkflowTriggerStage(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
@@ -971,7 +971,7 @@ func TestWorkflowTriggerStage(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1074,7 +1074,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
@@ -1095,7 +1095,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1184,7 +1184,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
@@ -1225,7 +1225,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1247,7 +1247,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1332,7 +1332,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
@@ -1371,7 +1371,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1393,7 +1393,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1493,7 +1493,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
@@ -1514,7 +1514,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1540,7 +1540,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1614,7 +1614,7 @@ func TestWorkflowTrigger1JobNoPermissionOnVarset(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: lambdaUser.ID,
-			User:   lambdaUser,
+			User:   lambdaUser.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1645,7 +1645,7 @@ func TestWorkflowTrigger1JobNoPermissionOnVarset(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: lambdaUser.ID,
-			User:   lambdaUser,
+			User:   lambdaUser.Initiator(),
 		},
 	}))
 
@@ -1792,7 +1792,7 @@ func TestWorkflowIntegrationInterpoloated(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
@@ -1801,7 +1801,7 @@ func TestWorkflowIntegrationInterpoloated(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}))
 
@@ -1954,7 +1954,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -2192,7 +2192,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -2448,7 +2448,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -2642,7 +2642,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -2845,7 +2845,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),
@@ -3093,7 +3093,7 @@ spec:
 		Status:             sdk.V2WorkflowRunStatusBuilding,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name: sdk.RandomString(10),

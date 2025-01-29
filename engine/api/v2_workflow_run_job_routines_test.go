@@ -40,7 +40,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -62,7 +62,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		Scheduled:  &nowMinus20Min,
@@ -76,7 +76,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		Scheduled:  &now,
@@ -124,7 +124,7 @@ func TestStopDeadJobs(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -149,7 +149,7 @@ func TestStopDeadJobs(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		JobID:      sdk.RandomString(10),
@@ -171,7 +171,7 @@ func TestStopDeadJobs(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		JobID:      sdk.RandomString(10),

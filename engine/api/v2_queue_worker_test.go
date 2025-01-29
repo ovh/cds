@@ -103,7 +103,7 @@ hatcheries:
 		HatcheryName:  hatch.Name,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
@@ -181,7 +181,7 @@ hatcheries:
 		HatcheryName:  hatch.Name,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
@@ -280,7 +280,7 @@ hatcheries:
 		RunAttempt:    wr.RunAttempt,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRunSuccess))
@@ -317,7 +317,7 @@ hatcheries:
 		},
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
@@ -486,7 +486,7 @@ hatcheries:
 		HatcheryName:  hatch.Name,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))

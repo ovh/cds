@@ -221,10 +221,11 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 			}
 
 			if analysis.Initiator != nil && analysis.Initiator.User == nil && analysis.Initiator.UserID != "" {
-				analysis.Initiator.User, err = user.LoadByID(ctx, api.mustDB(), analysis.Initiator.UserID)
+				u, err := user.LoadByID(ctx, api.mustDB(), analysis.Initiator.UserID, user.LoadOptions.WithContacts)
 				if err != nil {
 					return err
 				}
+				analysis.Initiator.User = u.Initiator()
 			}
 
 			if analysis.Commit == "" || analysis.Ref == "" {
@@ -265,7 +266,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				u := uc.AuthConsumerUser.AuthentifiedUser
 				isAdminMFA = isAdmin(ctx)
 				analysis.Initiator = &sdk.V2Initiator{}
-				analysis.Initiator.User = u
+				analysis.Initiator.User = u.Initiator()
 				analysis.Initiator.UserID = u.ID
 				analysis.Initiator.IsAdminWithMFA = isAdminMFA
 			} else if isHooks(ctx) && analysis.Initiator != nil && analysis.Initiator.UserID != "" {
@@ -273,7 +274,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				if err != nil {
 					return err
 				}
-				analysis.Initiator.User = u
+				analysis.Initiator.User = u.Initiator()
 				isAdminMFA = analysis.Initiator.IsAdminWithMFA
 				if isAdminMFA && u.Ring != sdk.UserRingAdmin {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s is not admin", u.Username)
@@ -513,10 +514,11 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	// Load committer / user that trigger the analysis
 	if analysis.Data.Initiator.UserID != "" && analysis.Data.Initiator.User == nil { // Should not happen
-		analysis.Data.Initiator.User, err = user.LoadByID(ctx, api.mustDB(), analysis.Data.Initiator.UserID)
+		usr, err := user.LoadByID(ctx, api.mustDB(), analysis.Data.Initiator.UserID, user.LoadOptions.WithContacts)
 		if err != nil {
 			return api.stopAnalysis(ctx, analysis, err)
 		}
+		analysis.Data.Initiator.User = usr.Initiator()
 		// Compatibility code
 		analysis.Data.DeprecatedCDSUserID = analysis.Data.Initiator.UserID
 		analysis.Data.DeprecatedCDSUserName = analysis.Data.Initiator.Username()
@@ -1413,7 +1415,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	var cdsUser *sdk.AuthentifiedUser
 	if userGPGKey != nil {
 		var err error
-		cdsUser, err = user.LoadByID(ctx, db, userGPGKey.AuthentifiedUserID)
+		cdsUser, err = user.LoadByID(ctx, db, userGPGKey.AuthentifiedUserID, user.LoadOptions.WithContacts)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to load user %s", userGPGKey.AuthentifiedUserID))
@@ -1423,7 +1425,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 
 		return &sdk.V2Initiator{
 			UserID: cdsUser.ID,
-			User:   cdsUser,
+			User:   cdsUser.Initiator(),
 		}, "", "", nil
 	}
 
@@ -1549,7 +1551,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 
 	// Then try to load a CDS user from the committer name
 	if cdsUser == nil { // Committer can be not nil in GitHub usescases
-		cdsUser, err = user.LoadByUsername(ctx, db, committer)
+		cdsUser, err = user.LoadByUsername(ctx, db, committer, user.LoadOptions.WithContacts)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", committer))
@@ -1560,7 +1562,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	if cdsUser != nil {
 		return &sdk.V2Initiator{
 			UserID: cdsUser.ID,
-			User:   cdsUser,
+			User:   cdsUser.Initiator(),
 		}, "", "", nil
 	}
 

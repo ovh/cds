@@ -257,10 +257,11 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				IsAdminWithMFA: isAdmin(ctx),
 			}
-			initiator.User, err = user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID)
+			usr, err := user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID, user.LoadOptions.WithContacts)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
+			initiator.User = usr.Initiator()
 
 			api.EnqueueWorkflowRun(ctx, wr.ID, initiator, wr.WorkflowName, wr.RunNumber)
 
@@ -806,10 +807,11 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				IsAdminWithMFA: isAdmin(ctx),
 			}
-			initiator.User, err = user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID)
+			usr, err := user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID, user.LoadOptions.WithContacts)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
+			initiator.User = usr.Initiator()
 
 			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, jobMaps, runResults, &initiator)
 
@@ -925,7 +927,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				if err != nil {
 					return err
 				}
-				theOneWhoTriggers.User = u
+				theOneWhoTriggers.User = u.Initiator()
 				hasRole, err = rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, vcsProject.Name, repo.Name, wk.Name)
 				if err != nil {
 					return err
@@ -1037,10 +1039,11 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				IsAdminWithMFA: isAdmin(ctx),
 			}
-			initiator.User, err = user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID)
+			usr, err := user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID, user.LoadOptions.WithContacts)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
+			initiator.User = usr.Initiator()
 
 			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults, &initiator)
 
@@ -1232,7 +1235,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow, runJobsContexts, wr.Contexts, stages, jobToRuns[0].JobID)
 			initiator := sdk.V2Initiator{
 				UserID:         u.AuthConsumerUser.AuthentifiedUser.ID,
-				User:           u.AuthConsumerUser.AuthentifiedUser,
+				User:           u.AuthConsumerUser.AuthentifiedUser.Initiator(),
 				IsAdminWithMFA: isAdmin(ctx),
 			}
 			booleanResult, err := checkCanRunJob(ctx, api.mustDBWithCtx(ctx), *wr, inputs, jobToRuns[0].Job, jobContext, initiator)

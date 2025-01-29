@@ -284,7 +284,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				hookEventUUID: "",
 				initiator: &sdk.V2Initiator{
 					UserID:         u.AuthConsumerUser.AuthentifiedUser.ID,
-					User:           u.AuthConsumerUser.AuthentifiedUser,
+					User:           u.AuthConsumerUser.AuthentifiedUser.Initiator(),
 					IsAdminWithMFA: isAdmin(ctx),
 				},
 			}

@@ -34,11 +34,12 @@ func getAllRunJobs(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Q
 		if rj.Initiator.UserID == "" {
 			rj.Initiator.UserID = rj.DeprecatedUserID
 		}
-		if rj.Initiator.UserID != "" {
-			rj.Initiator.User, err = user.LoadByID(ctx, db, rj.Initiator.UserID)
+		if rj.Initiator.UserID != "" && rj.Initiator.User == nil {
+			u, err := user.LoadByID(ctx, db, rj.Initiator.UserID, user.LoadOptions.WithContacts)
 			if err != nil {
 				return nil, err
 			}
+			rj.Initiator.User = u.Initiator()
 		}
 		jobRuns = append(jobRuns, rj.V2WorkflowRunJob)
 	}
@@ -65,11 +66,12 @@ func getRunJob(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 	if dbWkfRunJob.Initiator.UserID == "" {
 		dbWkfRunJob.Initiator.UserID = dbWkfRunJob.DeprecatedUserID
 	}
-	if dbWkfRunJob.Initiator.UserID != "" {
-		dbWkfRunJob.Initiator.User, err = user.LoadByID(ctx, db, dbWkfRunJob.Initiator.UserID)
+	if dbWkfRunJob.Initiator.UserID != "" && dbWkfRunJob.Initiator.User == nil {
+		u, err := user.LoadByID(ctx, db, dbWkfRunJob.Initiator.UserID, user.LoadOptions.WithContacts)
 		if err != nil {
 			return nil, err
 		}
+		dbWkfRunJob.Initiator.User = u.Initiator()
 	}
 	return &dbWkfRunJob.V2WorkflowRunJob, nil
 }
@@ -87,6 +89,9 @@ func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 
 	// Compat code
 	dbWkfRunJob.DeprecatedUserID = dbWkfRunJob.Initiator.UserID
+	dbWkfRunJob.DeprecatedAdminMFA = dbWkfRunJob.Initiator.IsAdminWithMFA
+	dbWkfRunJob.DeprecatedUsername = dbWkfRunJob.Initiator.Username()
+
 	if dbWkfRunJob.Initiator.UserID == "" && dbWkfRunJob.Initiator.VCSUsername == "" {
 		return sdk.NewErrorFrom(sdk.ErrUnknownError, "V2WorkflowRunJob initiator should not be nil")
 	}
@@ -102,6 +107,9 @@ func UpdateJobRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 	ctx, next := telemetry.Span(ctx, "workflow_v2.UpdateJobRun")
 	defer next()
 	dbWkfRunJob := &dbWorkflowRunJob{V2WorkflowRunJob: *wrj}
+	dbWkfRunJob.DeprecatedUserID = dbWkfRunJob.Initiator.UserID
+	dbWkfRunJob.DeprecatedAdminMFA = dbWkfRunJob.Initiator.IsAdminWithMFA
+	dbWkfRunJob.DeprecatedUsername = dbWkfRunJob.Initiator.Username()
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbWkfRunJob); err != nil {
 		return err
 	}

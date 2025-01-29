@@ -70,7 +70,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		Status:       sdk.StatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		Contexts: sdk.WorkflowRunContext{
@@ -102,7 +102,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		Status:       sdk.StatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		Contexts: sdk.WorkflowRunContext{
@@ -153,7 +153,7 @@ func TestSearchAllWorkflow(t *testing.T) {
 		Status:       sdk.StatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		Contexts: sdk.WorkflowRunContext{
@@ -206,7 +206,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: lambda.ID,
-			User:   lambda,
+			User:   lambda.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -374,7 +374,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -545,7 +545,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -694,7 +694,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID:         admin.ID,
-			User:           admin,
+			User:           admin.Initiator(),
 			IsAdminWithMFA: true,
 		},
 	}))
@@ -764,7 +764,7 @@ func TestRunManualSuccessJob(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -819,7 +819,7 @@ func TestRunManualSuccessJob(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID:         admin.ID,
-			User:           admin,
+			User:           admin.Initiator(),
 			IsAdminWithMFA: true,
 		},
 	}))
@@ -873,7 +873,7 @@ func TestRunManualFailedJob(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -928,7 +928,7 @@ func TestRunManualFailedJob(t *testing.T) {
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID:         admin.ID,
-			User:           admin,
+			User:           admin.Initiator(),
 			IsAdminWithMFA: true,
 		},
 	}))
@@ -988,7 +988,7 @@ func TestRunManualSkippedJobWithoutGate(t *testing.T) {
 		}},
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
@@ -1057,7 +1057,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusFail,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1230,7 +1230,7 @@ func TestPostRestartWorkflowRun_BuildingRun(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1279,7 +1279,7 @@ func TestPostRestartWorkflowRun_NoFailingJob(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusSuccess,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1328,7 +1328,7 @@ func TestGetWorkflowRunInfoV2Handler(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1392,7 +1392,7 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1411,7 +1411,7 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		RunAttempt: wr.RunAttempt,
@@ -1460,7 +1460,7 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1479,7 +1479,7 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		RunAttempt: wr.RunAttempt,
@@ -1543,7 +1543,7 @@ func TestPostJobRunStepHandler(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1587,7 +1587,7 @@ hatcheries:
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey:   wr.ProjectKey,
 		JobID:        sdk.RandomString(10),
@@ -1650,7 +1650,7 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1669,7 +1669,7 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		RunAttempt: wr.RunAttempt,
@@ -1723,7 +1723,7 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1742,7 +1742,7 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		RunAttempt: wr.RunAttempt,
@@ -1789,7 +1789,7 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1808,7 +1808,7 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		RunNumber:  wr.RunNumber,
@@ -1860,7 +1860,7 @@ func TestPostStopJobHandler(t *testing.T) {
 		Status:       sdk.V2WorkflowRunStatusBuilding,
 		Initiator: &sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -1880,7 +1880,7 @@ func TestPostStopJobHandler(t *testing.T) {
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID: admin.ID,
-			User:   admin,
+			User:   admin.Initiator(),
 		},
 		ProjectKey: wr.ProjectKey,
 		Status:     sdk.V2WorkflowRunJobStatusBuilding,
@@ -1994,7 +1994,7 @@ func TestRunManualJob_GateArrayInput(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusSuccess,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -2083,7 +2083,7 @@ func TestRunManualJob_GateArrayWrongValue(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusSuccess,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -2172,7 +2172,7 @@ func TestRunManualJob_GateArrayMultipleValues(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusSuccess,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -2262,7 +2262,7 @@ func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
 		Status:             sdk.V2WorkflowRunStatusSuccess,
 		DeprecatedUserID:   admin.ID,
 		DeprecatedUsername: admin.Username,
-		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -2294,7 +2294,7 @@ func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		Initiator:     sdk.V2Initiator{UserID: admin.ID, User: admin},
+		Initiator:     sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 

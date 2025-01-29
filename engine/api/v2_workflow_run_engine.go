@@ -1806,7 +1806,7 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 		// Check reviewers
 		reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
 		if len(gate.Reviewers.Users) > 0 {
-			reviewersChecked = sdk.IsInArray(initiator.User.GetUsername(), gate.Reviewers.Users)
+			reviewersChecked = sdk.IsInArray(initiator.Username(), gate.Reviewers.Users)
 		}
 		if !reviewersChecked {
 			for _, g := range gate.Reviewers.Groups {
