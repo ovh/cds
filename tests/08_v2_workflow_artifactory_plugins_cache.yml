@@ -135,7 +135,7 @@ testcases:
                 uses: actions/cache
                 with:
                   key: ${{ steps.generateKey.outputs.ts }}
-                  path: myfile
+                  content: myfile
               - id: cacheCheck
                 run: echo ${{ steps.cacheGet.outputs.cache-hit }}    
               - run: date > myfile
