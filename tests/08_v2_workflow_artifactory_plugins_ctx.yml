@@ -1,6 +1,6 @@
 name: Artifactory Integration Ctx
 vars:
-  cds_project: "ITV2ARTIFACTORYPLUGINSCtx"
+  cds_project: "ITV2ARTIFACTORYPLUGINSCTX"
   cds_workflow: "WorkflowCtx"
   git_repo: "it_v2_rt_plugins_ctx"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"

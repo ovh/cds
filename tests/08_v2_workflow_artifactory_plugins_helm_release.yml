@@ -161,7 +161,7 @@ testcases:
               - uses: actions/checkout
               - uses: actions/helmPush  
           Release:
-            needs: [Python-Job]
+            needs: [Helm-Job]
             runs-on: "{{.worker_model}}"
             steps:
               - uses: actions/artifactoryRelease
