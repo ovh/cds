@@ -21,14 +21,29 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 
 	// Check if we know the user that trigger the event
 	if hre.UserID == "" && hre.SignKey != "" {
-		r, err := s.Client.RetrieveHookEventUser(ctx, sdk.HookRetrieveUserRequest{
-			ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
-			VCSServerName:  hre.VCSServerName,
-			RepositoryName: hre.RepositoryName,
-			Commit:         hre.ExtractData.Commit,
-			SignKey:        hre.SignKey,
-			HookEventUUID:  hre.UUID,
-		})
+		var req sdk.HookRetrieveUserRequest
+		switch {
+		case hre.ExtractData.WorkflowRun.OutgoingHookEventUUID != "":
+			req = sdk.HookRetrieveUserRequest{
+				ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
+				VCSServerName:  hre.ExtractData.WorkflowRun.TargetVCS,
+				RepositoryName: hre.ExtractData.WorkflowRun.TargetRepository,
+				Commit:         hre.WorkflowHooks[0].TargetCommit,
+				SignKey:        hre.SignKey,
+				HookEventUUID:  hre.UUID,
+			}
+		default:
+			req = sdk.HookRetrieveUserRequest{
+				ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
+				VCSServerName:  hre.VCSServerName,
+				RepositoryName: hre.RepositoryName,
+				Commit:         hre.ExtractData.Commit,
+				SignKey:        hre.SignKey,
+				HookEventUUID:  hre.UUID,
+			}
+		}
+
+		r, err := s.Client.RetrieveHookEventUser(ctx, req)
 		if err != nil {
 			return err
 		}
