@@ -597,7 +597,7 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 
 func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchRunsFilters, uint, uint, string) {
 	var filters workflow_v2.SearchRunsFilters
-	var offset, limit uint
+	var offset, limit uint = 0, 10
 	var sort string
 
 	for k, v := range query {
@@ -635,6 +635,10 @@ func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchRunsFil
 	}
 
 	filters.Lower()
+
+	if limit > 100 {
+		limit = 100
+	}
 
 	return filters, offset, limit, sort
 }

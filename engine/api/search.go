@@ -16,7 +16,7 @@ import (
 
 func parseSearchQuery(values url.Values) (string, uint, uint) {
 	var query string
-	var offset, limit uint
+	var offset, limit uint = 0, 10
 
 	for k, v := range values {
 		switch k {
@@ -31,6 +31,10 @@ func parseSearchQuery(values url.Values) (string, uint, uint) {
 		}
 	}
 
+	if limit > 100 {
+		limit = 100
+	}
+
 	return query, offset, limit
 }
 
@@ -43,6 +47,10 @@ func (api *API) getSearchHandler() ([]service.RbacChecker, service.Handler) {
 			}
 
 			query, offset, limit := parseSearchQuery(r.URL.Query())
+
+			if !isAdmin(ctx) {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			var pKeys []string
 			if isAdmin(ctx) {
@@ -66,7 +74,7 @@ func (api *API) getSearchHandler() ([]service.RbacChecker, service.Handler) {
 			count, err := search.CountAll(ctx, api.mustDB(), search.SearchFilters{
 				Projects: pKeys,
 				Query:    query,
-			}, offset, limit)
+			})
 			if err != nil {
 				return err
 			}

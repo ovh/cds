@@ -16,7 +16,7 @@ type SearchFilters struct {
 	Query    string
 }
 
-func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, offset, limit uint) (int64, error) {
+func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountAll")
 	defer next()
 
@@ -53,8 +53,6 @@ func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, o
 	count, err := db.SelectInt(query, map[string]interface{}{
 		"projects": pq.StringArray(filters.Projects),
 		"query":    "%" + strings.ToLower(filters.Query) + "%",
-		"limit":    limit,
-		"offset":   offset,
 	})
 	return count, sdk.WithStack(err)
 }
@@ -62,6 +60,13 @@ func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, o
 func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, offset, limit uint) (sdk.SearchResults, error) {
 	_, next := telemetry.Span(ctx, "SearchAll")
 	defer next()
+
+	if limit == 0 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
 
 	query := `
 		WITH 
@@ -94,7 +99,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 			END AS priority
 		FROM results
 		WHERE LOWER(label) LIKE :query OR LOWER(id) LIKE :query
-		ORDER BY priority ASC
+		ORDER BY priority ASC, CHAR_LENGTH(label) DESC
 		LIMIT :limit OFFSET :offset
 	`
 
