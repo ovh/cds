@@ -159,7 +159,14 @@ testcases:
             runs-on: "{{.worker_model}}"
             steps:
               - uses: actions/checkout
-              - uses: actions/helmPush   
+              - uses: actions/helmPush  
+          Release:
+            needs: [Python-Job]
+            runs-on: "{{.worker_model}}"
+            steps:
+              - uses: actions/artifactoryRelease
+                with:
+                  artifacts: helm:*    
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
@@ -233,3 +240,7 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=helm --format json"  
     assertions:
       - result.systemoutjson ShouldHaveLength 1
+  - name: Check that we have 1 run result of type release
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=release --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1       

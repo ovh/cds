@@ -1,8 +1,8 @@
-name: Artifactory Python Release
+name: Artifactory Integration Ctx
 vars:
-  cds_project: "ITV2ARTIFACTORYPLUGINSPYTHON"
-  cds_workflow: "WorkflowPython"
-  git_repo: "it_v2_rt_plugins_python"
+  cds_project: "ITV2ARTIFACTORYPLUGINSCtx"
+  cds_workflow: "WorkflowCtx"
+  git_repo: "it_v2_rt_plugins_ctx"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
   rt_url: "rt_url"
   rt_token: "rt_token"
@@ -106,33 +106,6 @@ testcases:
 
 - name: Push workflow file
   steps:
-  - type: v2_push_non_cds_files_on_repo
-    git_repo: "{{.git_repo}}"
-    git_host: "{{.git.host}}"
-    git_user: "{{.git.user}}"
-    git_email: "{{.Prepare-test.emailaddress}}"
-    git_password: "{{.git.password}}"
-    gpg_key_id: "{{.gpg.key_id}}"
-    files:
-      quicksample/src/quicksample.py: |
-        def quicktext():\n  print('Hello, welcome to QuickSample package.')
-      README.md: |
-        Hello
-      setup.py: |
-        import setuptools
-        setuptools.setup(
-          name=\"quicksample\",
-          version=\"0.0.1\",
-          author=\"sgu\",
-          description=\"Quicksample Test Package\",
-          long_description=\"coucou\",
-          long_description_content_type=\"text/markdown\",
-          packages=setuptools.find_packages(),
-          python_requires=\">=3.6\",
-          py_modules=[\"quicksample\"],
-          package_dir={\"\":\"quicksample/src\"},
-          install_requires=[]
-        )
   - type: v2_push_cds_files_on_repo
     git_repo: "{{.git_repo}}"
     git_host: "{{.git.host}}"
@@ -162,7 +135,6 @@ testcases:
             runs-on: "{{.worker_model}}"
             steps:
               - uses: actions/checkout
-              - run: apt-get update -y && apt-get install -y python3-pip python3-setuptools
               - id: packagePython
                 run: |
                   pkgVersion=0.0.$(date +%s)
@@ -184,13 +156,13 @@ testcases:
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
-    - result.systemoutjson ShouldHaveLength 3
+    - result.systemoutjson ShouldHaveLength 2
     retry: 100
     delay: 1
     vars:
       analysisID:
         from:
-          result.systemoutjson.systemoutjson2.id
+          result.systemoutjson.systemoutjson1.id
 
   - name: Get CDS project analysis
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
@@ -250,13 +222,5 @@ testcases:
     assertions:
     - result.systemout ShouldEqual Success
 
-  - name: Check that we have 2 run results of type python
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
-    assertions:
-      - result.systemoutjson ShouldHaveLength 2    
-  - name: Check that we have 1 run result of type release
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=release --format json"  
-    assertions:
-      - result.systemoutjson ShouldHaveLength 1    
   - name: Check integration context
     script: "cat {{.cds_workflow}}-1-1-ctx-ctxstep && cat {{.cds_workflow}}-1-1-ctx-ctxstep | grep \"{{.rt_project}}/{{.rt_component}}\""
