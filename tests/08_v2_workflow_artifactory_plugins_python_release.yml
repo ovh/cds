@@ -178,9 +178,6 @@ testcases:
             needs: [Python-Job]
             runs-on: "{{.worker_model}}"
             steps:
-              - uses: actions/artifactoryPromote
-                with:
-                  artifacts: python:* helm:* debian:* terraformProvider:*
               - uses: actions/artifactoryRelease
                 with:
                   artifacts: python:*
