@@ -67,7 +67,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.2.2 // indirect
-	github.com/jfrog/archiver/v3 v3.6.0 // indirect
 	github.com/jfrog/gofrog v1.6.0 // indirect
 	github.com/jfrog/jfrog-cli-core v1.10.0 // indirect
 	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
