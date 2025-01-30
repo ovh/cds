@@ -399,7 +399,6 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForGroupHandler))
 
 	// Workflows
-
 	r.Handle("/workflow/search", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getSearchWorkflowHandler))
 	r.Handle("/workflow/hook", Scope(sdk.AuthConsumerScopeHooks), r.GET(api.getWorkflowHooksHandler))
 	r.Handle("/workflow/hook/executions", Scope(sdk.AuthConsumerScopeHooks), r.GET(api.getWorkflowHookExecutionsHandler))
@@ -411,6 +410,9 @@ func (api *API) InitRouter() {
 	// Engine µServices
 	r.Handle("/services/heartbeat", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceHearbeatHandler))
 	r.Handle("/services/{type}", Scope(sdk.AuthConsumerScopeService), r.GET(api.getServiceHandler))
+
+	// Search
+	r.Handle("/search", nil, r.GETv2(api.getSearchHandler))
 
 	// Templates
 	r.Handle("/template", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))

@@ -68,6 +68,7 @@ import { PluginService } from "./plugin.service";
 import { V2WorkflowRunService } from "./workflowv2/workflow.service";
 import { CDNService } from './cdn.service';
 import { V2ProjectService } from './projectv2/project.service';
+import { SearchService } from './search.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -127,6 +128,7 @@ export class ServicesModule {
                 RequirementService,
                 RequirementStore,
                 RouterService,
+                SearchService,
                 ServiceService,
                 UserService,
                 V2ProjectService,

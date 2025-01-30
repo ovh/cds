@@ -3,6 +3,7 @@ import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { AppModule } from 'app/app.module';
 import { APIConfigGuard } from './guard/api-config.guard';
 import { AuthenticationGuard } from './guard/authentication.guard';
+import { SearchComponent } from './views/search/search.component';
 
 const routes: Routes = [
     {
@@ -27,6 +28,11 @@ const routes: Routes = [
             {
                 path: 'admin', loadChildren: () => import('app/views/admin/admin.module')
                     .then(m => m.AdminModule), data: { title: 'Admin' }
+            },
+            {
+                path: 'search',
+                component: SearchComponent,
+                data: { title: 'Search' }
             }
         ]
     },

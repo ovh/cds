@@ -12,10 +12,11 @@ import { routing } from './app.routing';
 import { AppService } from './app.service';
 import { ServicesModule } from './service/services.module';
 import { SharedModule } from './shared/shared.module';
-import { NavbarModule } from './views/navbar/navbar.module';
 import { NgxsStoragePluginModule, StorageEngine, STORAGE_ENGINE } from '@ngxs/storage-plugin';
 import { PreferencesState } from './store/preferences.state';
 import { EventV2Service } from './event-v2.service';
+import { SearchComponent } from './views/search/search.component';
+import { NavbarComponent } from './views/navbar/navbar.component';
 
 export let errorFactory = () => {
     if ((<any>window).cds_sentry_url) {
@@ -52,13 +53,14 @@ export class CDSStorageEngine implements StorageEngine {
 
 @NgModule({
     declarations: [
-        AppComponent
+        AppComponent,
+        SearchComponent,
+        NavbarComponent
     ],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
         HttpClientModule,
-        NavbarModule,
         NgxsStoreModule,
         NgxsStoragePluginModule.forRoot({ key: [PreferencesState], }),
         SharedModule,

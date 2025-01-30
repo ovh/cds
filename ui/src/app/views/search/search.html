@@ -1,0 +1,44 @@
+<div class="content">
+	<div class="header">
+		<nz-input-group>
+			<input type="text" nz-input placeholder="Search..." [ngModel]="query" (ngModelChange)="queryChange($event)"
+				ngDefaultControl [ngModelOptions]="{standalone: true}" />
+		</nz-input-group>
+	</div>
+
+	<nz-list class="list" nzSize="small" nzNoResult="test">
+		<nz-list-item *ngFor="let item of results">
+			<nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
+				<ng-template #runAvatar>
+					<div class="type" [ngSwitch]="item.type">
+						<nz-tag *ngSwitchCase="'project'" nzColor="blue">{{item.type}}</nz-tag>
+						<nz-tag *ngSwitchCase="'workflow-v2'" nzColor="green">{{item.type}}</nz-tag>
+						<nz-tag *ngSwitchCase="'workflow'" nzColor="red">{{item.type}}</nz-tag>
+						<nz-tag *ngSwitchDefault>{{item.type}}</nz-tag>
+					</div>
+				</ng-template>
+				<ng-template #runTitle>
+					<div class="title">
+						<a [routerLink]="generateResultLink(item)">{{item.label}}</a>
+						<span class="id">{{item.id}}</span>
+					</div>
+				</ng-template>
+				<ng-template #runDescription>
+					<div class="variants" *ngIf="item.variants">
+						<a *ngFor="let v of item.variants" [routerLink]="generateResultLink(item)"
+							[queryParams]="{ref: v}">{{v}}</a>
+					</div>
+				</ng-template>
+			</nz-list-item-meta>
+		</nz-list-item>
+	</nz-list>
+	<ng-template #emptyList>
+		<nz-empty nzNotFoundContent="No result found"></nz-empty>
+	</ng-template>
+
+	<div *ngIf="totalCount > 0" class="footer">
+		{{totalCount}} results
+		<nz-pagination [nzPageIndex]="pageIndex" [nzPageSize]="20" [nzTotal]="totalCount" nzSize="small"
+			(nzPageIndexChange)="pageIndexChange($event)"></nz-pagination>
+	</div>
+</div>

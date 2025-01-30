@@ -595,8 +595,8 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 		}
 }
 
-func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchsRunsFilters, uint, uint, string) {
-	var filters workflow_v2.SearchsRunsFilters
+func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchRunsFilters, uint, uint, string) {
+	var filters workflow_v2.SearchRunsFilters
 	var offset, limit uint
 	var sort string
 
