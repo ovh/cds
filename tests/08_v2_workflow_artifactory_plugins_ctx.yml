@@ -121,7 +121,7 @@ testcases:
         type: docker
         spec:
           image: buildpack-deps:buster
-      workflows/python.yaml:
+      workflows/ctx.yaml:
         name: {{.cds_workflow}}
         on: [push]
         integrations: [artifactory-{{.rt_project}}]
@@ -131,28 +131,6 @@ testcases:
             steps:
               - id: ctxstep
                 run: echo "${{ integrations.artifact_manager.config.build.info.prefix }}"
-          Python-Job:
-            runs-on: "{{.worker_model}}"
-            steps:
-              - uses: actions/checkout
-              - id: packagePython
-                run: |
-                  pkgVersion=0.0.$(date +%s)
-                  worker export pkgVersion ${pkgVersion}
-                  python3 -m pip install --user --upgrade setuptools wheel && sed -i "s/0.0.1/${pkgVersion}/g" setup.py
-              - uses: actions/pythonPush
-                with:
-                  pythonBinary: python3
-                  package: quicksample
-                  version: ${{ steps.packagePython.outputs.pkgVersion }}
-                  wheel: "true"
-          Release:
-            needs: [Python-Job]
-            runs-on: "{{.worker_model}}"
-            steps:
-              - uses: actions/artifactoryRelease
-                with:
-                  artifacts: python:*
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
