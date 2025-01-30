@@ -10,12 +10,10 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
-import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
-import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 
 @Component({
     selector: 'app-project-show',
@@ -52,12 +50,12 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
         private _routerService: RouterService,
         private _router: Router
     ) {
-        this.projectSubscriber = this._store.select(ProjectState)
-            .pipe(filter((projState: ProjectStateModel) => projState && projState.project &&
-                projState.project.key !== null && !projState.project.externalChange &&
-                this._activatedRoute.snapshot.parent.params['key'] === projState.project.key))
-            .subscribe((projState: ProjectStateModel) => {
-                let proj = cloneDeep(projState.project); // TODO: to delete when all will be in store, here it is usefull to skip readonly
+        this.projectSubscriber = this._store.select(ProjectState.projectSnapshot)
+            .pipe(filter((p: Project) => p &&
+                p.key !== null && !p.externalChange &&
+                this._activatedRoute.snapshot.parent.params['key'] === p.key))
+            .subscribe((p: Project) => {
+                let proj = cloneDeep(p); // TODO: to delete when all will be in store, here it is usefull to skip readonly
                 if (proj.labels) {
                     proj.labels = proj.labels.map((lbl) => {
                         lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
@@ -67,7 +65,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.project = proj;
                 this._projectStore.updateRecentProject(this.project);
                 this.initTabs();
-               
+
                 if (!!this.project.organization) {
                     this.groupsOutsideOrganization = this.project.groups.filter(gp =>
                         gp.group.organization && gp.group.organization !== this.project.organization);

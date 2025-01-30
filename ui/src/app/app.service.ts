@@ -136,9 +136,9 @@ export class AppService {
         if (!event || !event.type_event) {
             return;
         }
-        let projState = this._store.selectSnapshot(ProjectState);
-        if (projState && projState.project && projState.project.key === event.project_key) {
-            let projectInCache = projState.project;
+        let p = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        if (p && p.key === event.project_key) {
+            let projectInCache = p;
             // If working on project or sub resources
             if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
                 // if modification from another user, display a notification
@@ -189,7 +189,7 @@ export class AppService {
         }
         const payload = { projectKey: event.project_key, applicationName: event.application_name };
 
-        let appState = this._store.selectSnapshot(ApplicationsState);
+        let appState = this._store.selectSnapshot(ApplicationsState.current);
         if (!appState.application ||
             !(appState.application.name === event.application_name &&
                 appState.currentProjectKey === event.project_key)) {
@@ -236,7 +236,7 @@ export class AppService {
             return;
         }
 
-        let pips = this._store.selectSnapshot(PipelinesState);
+        let pips = this._store.selectSnapshot(PipelinesState.current);
         if (!pips || !pips.pipeline || pips.pipeline.name !== event.pipeline_name || pips.currentProjectKey !== event.project_key) {
             return;
         }
@@ -279,7 +279,7 @@ export class AppService {
         if (!event || !event.type_event) {
             return;
         }
-        let wf = this._store.selectSnapshot(WorkflowState);
+        let wf = this._store.selectSnapshot(WorkflowState.current);
         if (wf != null && wf.workflow && (wf.projectKey !== event.project_key || wf.workflow.name !== event.workflow_name)) {
             if (event.type_event === EventType.WORKFLOW_DELETE) {
                 await this._store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name })).toPromise();

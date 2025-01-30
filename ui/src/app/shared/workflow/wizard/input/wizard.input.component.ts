@@ -77,13 +77,13 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
         private _pipelineService: PipelineService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        this.editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.noderun = this._store.selectSnapshot(WorkflowState).workflowNodeRun;
+        this.noderun = this._store.selectSnapshot(WorkflowState.current).workflowNodeRun;
         this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
             this.editableNode = cloneDeep(n);
             if (this.editableNode) {

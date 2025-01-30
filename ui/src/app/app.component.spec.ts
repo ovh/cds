@@ -1,5 +1,5 @@
-import { HttpClient, HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClient, HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -74,21 +74,22 @@ describe('App: CDS', () => {
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService },
                 { provide: PipelineService, useClass: MockPipelineService },
-                { provide: ActivatedRoute, useClass: MockActivatedRoutes }
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes },
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 NgxsStoreModule,
                 SharedModule,
                 NzNotificationModule,
                 RouterTestingModule.withRoutes([]),
-                HttpClientTestingModule,
                 TranslateModule.forRoot({
                     loader: {
                         provide: TranslateLoader,
                         useFactory: createTranslateLoader,
                         deps: [HttpClient]
                     }
-                }),
+                })
             ]
         }).compileComponents();
     });

@@ -1,7 +1,7 @@
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Parameter } from 'app/model/parameter.model';
@@ -14,22 +14,22 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 describe('CDS: Parameter List Component', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 ParameterService,
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
                 RepoManagerService,
-                { provide: APP_BASE_HREF, useValue: '/' }
+                { provide: APP_BASE_HREF, useValue: '/' },
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 BrowserAnimationsModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule
+                TranslateModule.forRoot()
             ]
         }).compileComponents();
     });

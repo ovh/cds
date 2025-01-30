@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
@@ -29,6 +29,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineAddComponent } from './pipeline.add.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CDS: Pipeline Add Component', () => {
 
@@ -37,8 +38,7 @@ describe('CDS: Pipeline Add Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 ApplicationService,
                 EnvironmentService,
@@ -60,15 +60,16 @@ describe('CDS: Pipeline Add Component', () => {
                 UserService,
                 RouterService,
                 AuthenticationService,
-                ConfigService
+                ConfigService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 PipelineModule,
                 NgxsStoreModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule
+                TranslateModule.forRoot()
             ]
         }).compileComponents();
 

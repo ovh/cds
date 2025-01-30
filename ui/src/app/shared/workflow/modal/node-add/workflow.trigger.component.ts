@@ -2,10 +2,8 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
     inject,
     Input, OnInit,
-    Output,
     ViewChild
 } from '@angular/core';
 import { Store } from '@ngxs/store';
@@ -33,7 +31,7 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { finalize } from 'rxjs/operators';
 import { ToastService } from 'app/shared/toast/ToastService';
-import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 
 
 interface IModalData {
@@ -69,8 +67,15 @@ export class WorkflowTriggerComponent implements OnInit {
 
     readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
-    constructor(private _pipService: PipelineService, private _store: Store, private _toast: ToastService, private _modal: NzModalRef,
-                private _envService: EnvironmentService, private _appService: ApplicationService, private _cd: ChangeDetectorRef) { }
+    constructor(
+        private _pipService: PipelineService,
+        private _store: Store,
+        private _toast: ToastService,
+        private _modal: NzModalRef,
+        private _envService: EnvironmentService,
+        private _appService: ApplicationService,
+        private _cd: ChangeDetectorRef
+    ) { }
 
     ngOnInit() {
         if (this.nzModalData) {
@@ -107,16 +112,15 @@ export class WorkflowTriggerComponent implements OnInit {
         c.variable = 'cds.status';
         c.value = PipelineStatus.SUCCESS;
         c.operator = 'eq';
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        let editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
         this.destNode.context.conditions.plain.push(c);
         if (editMode) {
             let allNodes = Workflow.getAllNodes(this.workflow);
             this.destNode.ref = new Date().getTime().toString();
 
             if (this.destNode.type === WNodeType.PIPELINE) {
-                    this.destNode.name =
-                        this.project.pipeline_names.find(p => p.id === this.destNode.context.pipeline_id)
-                            .name;
+                this.destNode.name = this.project.pipeline_names.find(p => p.id === this.destNode.context.pipeline_id)
+                    .name;
             }
             let nodeBaseName = this.destNode.name;
             let hasNodeToRename = true;
@@ -245,7 +249,7 @@ export class WorkflowTriggerComponent implements OnInit {
 
     updateWorkflow(w: Workflow): void {
         this.loading = true;
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        let editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,

@@ -1,5 +1,5 @@
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -15,21 +15,21 @@ describe('CDS: Permission From Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 GroupService,
                 PermissionService,
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 SharedModule,
                 BrowserAnimationsModule,
                 TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([]),
-                HttpClientTestingModule
+                RouterTestingModule.withRoutes([])
             ]
         }).compileComponents();
 

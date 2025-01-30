@@ -8,7 +8,7 @@ import { SetCurrentProjectV2 } from 'app/store/project-v2.action';
 import { FetchProject } from 'app/store/project.action';
 import { ProjectState } from 'app/store/project.state';
 import { Observable, switchMap } from 'rxjs';
-import { map, filter, first } from 'rxjs/operators';
+import { map, filter, first, tap } from 'rxjs/operators';
 
 @Injectable()
 export class ProjectGuard {
@@ -122,7 +122,7 @@ export class ProjectV2Guard {
 
         return this._v2ProjectService.get(params['key'])
             .pipe(
-                switchMap((p) => this._store.dispatch(new SetCurrentProjectV2(p))),
+                tap((p) => this._store.dispatch(new SetCurrentProjectV2(p))),
                 map(p => {
                     if (!p) {
                         this._router.navigate([`/project/${params['key']}`]);

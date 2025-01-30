@@ -1,6 +1,6 @@
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, Injector, NO_ERRORS_SCHEMA } from '@angular/core';
 import { fakeAsync, flush, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -70,7 +70,9 @@ describe('CDS: Application Repo Component', () => {
                 WorkflowService,
                 UserService,
                 AuthenticationService,
-                ConfigService
+                ConfigService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 RouterTestingModule.withRoutes([
@@ -81,8 +83,7 @@ describe('CDS: Application Repo Component', () => {
                 ApplicationModule,
                 SharedModule,
                 NgxsStoreModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule
+                TranslateModule.forRoot()
             ],
             schemas: [NO_ERRORS_SCHEMA]
         }).compileComponents();

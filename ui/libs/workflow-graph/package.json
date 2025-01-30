@@ -2,10 +2,10 @@
   "name": "workflow-graph",
   "version": "1.0.0",
   "peerDependencies": {
-    "@angular/common": "17.3.12",
-    "@angular/core": "17.3.12",
+    "@angular/common": "18.2.13",
+    "@angular/core": "18.2.13",
     "@icholy/duration": "5.0.0",
-    "ng-zorro-antd": "17.4.1"
+    "ng-zorro-antd": "18.2.1"
   },
   "dependencies": {
     "tslib": "2.3.0"
