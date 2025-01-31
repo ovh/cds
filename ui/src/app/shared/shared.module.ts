@@ -263,6 +263,7 @@ import { NzResultModule } from 'ng-zorro-antd/result';
 import { SearchableComponent } from './searchable/searchable.component';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { RepositoryRefSelectComponent } from './repository-ref-selector/repository-ref-select.component';
+import { InputFilterComponent } from './input/input-filter.component';
 
 const ngZorroConfig: NzConfig = {
     notification: {
@@ -455,6 +456,7 @@ const icons: IconDefinition[] = [
         FavoriteButtonComponent,
         FavoriteCardsComponent,
         ForMapPipe,
+        InputFilterComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,
@@ -576,6 +578,7 @@ const icons: IconDefinition[] = [
         ForMapPipe,
         FormsModule,
         InfiniteScrollModule,
+        InputFilterComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,

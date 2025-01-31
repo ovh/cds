@@ -1,19 +1,17 @@
 <div class="content">
 	<div class="header">
 		<nz-input-group>
-			<input type="text" nz-input placeholder="Search..." [ngModel]="query" (ngModelChange)="queryChange($event)"
-				ngDefaultControl [ngModelOptions]="{standalone: true}" />
+			<app-input-filter placeholder="Search..." [initialFilterText]="filterText" [filters]="filters"
+				(changeFilter)="filterChange($event)" (submit)="submitForm()"></app-input-filter>
 		</nz-input-group>
 	</div>
-
 	<nz-list class="list" nzSize="small" nzNoResult="test">
 		<nz-list-item *ngFor="let item of results">
 			<nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
 				<ng-template #runAvatar>
 					<div class="type" [ngSwitch]="item.type">
 						<nz-tag *ngSwitchCase="'project'" nzColor="blue">{{item.type}}</nz-tag>
-						<nz-tag *ngSwitchCase="'workflow-v2'" nzColor="green">{{item.type}}</nz-tag>
-						<nz-tag *ngSwitchCase="'workflow'" nzColor="red">{{item.type}}</nz-tag>
+						<nz-tag *ngSwitchCase="'workflow'" nzColor="green">{{item.type}}</nz-tag>
 						<nz-tag *ngSwitchDefault>{{item.type}}</nz-tag>
 					</div>
 				</ng-template>

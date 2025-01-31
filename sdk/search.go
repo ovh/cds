@@ -9,28 +9,12 @@ import (
 type SearchResultType string
 
 const (
-	ProjectSearchResultType SearchResultType = "project"
+	ProjectSearchResultType        SearchResultType = "project"
+	WorkflowSearchResultType       SearchResultType = "workflow"
+	WorkflowLegacySearchResultType SearchResultType = "workflow-legacy"
 )
 
 type SearchResults []SearchResult
-
-func (s *SearchResults) AppendProjects(ps ...Project) {
-	for i := range ps {
-		var found bool
-		for _, r := range *s {
-			if r.Type == ProjectSearchResultType && ps[i].Key == r.ID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			*s = append(*s, SearchResult{
-				Type: ProjectSearchResultType,
-				ID:   ps[i].Key,
-			})
-		}
-	}
-}
 
 type SearchResult struct {
 	Type     SearchResultType     `json:"type"`
@@ -55,4 +39,10 @@ func (v *SearchResultVariants) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(JSONUnmarshal(source, v), "cannot unmarshal SearchResultVariants")
+}
+
+type SearchFilter struct {
+	Key     string   `json:"key"`
+	Options []string `json:"options"`
+	Example string   `json:"example"`
 }

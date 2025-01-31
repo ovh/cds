@@ -669,12 +669,6 @@ func (x *V2WorkflowRunResultArtifactManagerMetadata) Scan(src interface{}) error
 	return WrapError(JSONUnmarshal([]byte(source), x), "cannot unmarshal V2WorkflowRunResultArtifactManagerMetadata")
 }
 
-type V2WorkflowRunSearchFilter struct {
-	Key     string   `json:"key"`
-	Options []string `json:"options"`
-	Example string   `json:"example"`
-}
-
 type V2QueueJobInfo struct {
 	RunJob V2WorkflowRunJob `json:"runjob"`
 	Model  V2WorkerModel    `json:"model"`

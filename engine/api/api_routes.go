@@ -413,6 +413,7 @@ func (api *API) InitRouter() {
 
 	// Search
 	r.Handle("/search", nil, r.GETv2(api.getSearchHandler))
+	r.Handle("/search/filter", nil, r.GETv2(api.getSearchFiltersHandler))
 
 	// Templates
 	r.Handle("/template", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))
