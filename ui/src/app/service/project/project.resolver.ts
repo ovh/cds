@@ -4,14 +4,17 @@ import { Store } from '@ngxs/store';
 import { LoadOpts } from 'app/model/project.model';
 import { RouterService } from 'app/service/router/router.service';
 import { FetchProject } from 'app/store/project.action';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import { Observable } from 'rxjs';
-import { flatMap, map } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 @Injectable()
 export class ProjectResolver {
 
-    constructor(private store: Store, private routerService: RouterService) { }
+    constructor(
+        private store: Store,
+        private routerService: RouterService
+    ) { }
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
@@ -27,8 +30,7 @@ export class ProjectResolver {
             projectKey: params['key'],
             opts
         })).pipe(
-            flatMap(() => this.store.selectOnce(ProjectState)),
-            map((projectState: ProjectStateModel) => projectState.project)
+            switchMap(() => this.store.selectOnce(ProjectState.projectSnapshot)),
         );
     }
 }
@@ -56,8 +58,7 @@ export class ProjectForWorkflowResolver {
             projectKey: params['key'],
             opts
         })).pipe(
-            flatMap(() => this.store.selectOnce(ProjectState)),
-            map((projectState: ProjectStateModel) => projectState.project)
+            switchMap(() => this.store.selectOnce(ProjectState.projectSnapshot))
         );
     }
 }
@@ -80,8 +81,7 @@ export class ProjectForApplicationResolver {
             projectKey: params['key'],
             opts
         })).pipe(
-            flatMap(() => this.store.selectOnce(ProjectState)),
-            map((projectState: ProjectStateModel) => projectState.project)
+            switchMap(() => this.store.selectOnce(ProjectState.projectSnapshot))
         );
     }
 }

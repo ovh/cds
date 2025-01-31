@@ -12,7 +12,7 @@ import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { CleanEnvironmentState } from 'app/store/environment.action';
 import * as envActions from 'app/store/environment.action';
 import { EnvironmentState, EnvironmentStateModel } from 'app/store/environment.state';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -72,8 +72,8 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
         private _routerService: RouterService
     ) {
         this.project = this._activatedRoute.snapshot.data['project'];
-        this.projectSubscription = this._store.select(ProjectState)// Update data if route change
-            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
+        this.projectSubscription = this._store.select(ProjectState.projectSnapshot) // Update data if route change
+            .subscribe((p: Project) => this.project = p);
         this._routeDataSub = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -105,7 +105,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                         this.environmentSubscription.unsubscribe();
                     }
 
-                    this.environmentSubscription = this._store.select(EnvironmentState.currentState())
+                    this.environmentSubscription = this._store.select(EnvironmentState.current)
                         .subscribe((s: EnvironmentStateModel) => {
                             if (!s.environment) {
                                 return;

@@ -94,7 +94,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
             this.project = datas['project'];
         });
 
-        this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+        this.workflowSubscription = this._store.select(WorkflowState.current).subscribe((s: WorkflowStateModel) => {
             this._cd.markForCheck();
             this.editMode = s.editMode;
             if (s.editMode) {

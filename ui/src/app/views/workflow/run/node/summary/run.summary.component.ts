@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -52,7 +52,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
         private _store: Store
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.workflow = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow;
+        this.workflow = this._store.selectSnapshot(WorkflowState.current).workflowRun.workflow;
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -80,7 +80,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
                 }
                 this._cd.markForCheck();
             }
-            this.readOnlyRun = this._store.selectSnapshot(WorkflowState)?.workflowRun?.read_only;
+            this.readOnlyRun = this._store.selectSnapshot(WorkflowState.current)?.workflowRun?.read_only;
         });
 
     }

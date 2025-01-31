@@ -1,7 +1,7 @@
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -60,20 +60,21 @@ describe('CDS: Pipeline Show', () => {
                 UserService,
                 RouterService,
                 AuthenticationService,
-                ConfigService
+                ConfigService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 PipelineModule,
                 NgxsStoreModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
-                SharedModule,
-                HttpClientTestingModule
+                SharedModule
             ]
         }).compileComponents();
         const injector = getTestBed();
         routerService = injector.get(RouterService);
-        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({key: 'key1', pipName: 'pip1'}));
+        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({ key: 'key1', pipName: 'pip1' }));
     });
 
     it('should load component', fakeAsync(() => {
@@ -131,7 +132,7 @@ describe('CDS: Pipeline Show', () => {
 
         let event: ParameterEvent = new ParameterEvent('add', param);
         let store: Store = TestBed.get(Store);
-        spyOn(store, 'dispatch').and.callFake(() => of(new Pipeline()));
+        spyOn(store, 'dispatch').and.callFake(() => of());
         fixture.componentInstance.parameterEvent(event);
         expect(store.dispatch).toHaveBeenCalledWith(new AddPipelineParameter({
             projectKey: 'key1',

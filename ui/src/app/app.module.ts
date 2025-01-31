@@ -1,4 +1,4 @@
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -60,9 +60,8 @@ export class CDSStorageEngine implements StorageEngine {
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
-        HttpClientModule,
         NgxsStoreModule,
-        NgxsStoragePluginModule.forRoot({ key: [PreferencesState], }),
+        NgxsStoragePluginModule.forRoot({ keys: [PreferencesState] }),
         SharedModule,
         ServicesModule.forRoot(),
         routing,
@@ -83,7 +82,8 @@ export class CDSStorageEngine implements StorageEngine {
         EventV2Service,
         { provide: ErrorHandler, useFactory: errorFactory },
         { provide: LOCALE_ID, useValue: 'en' },
-        { provide: STORAGE_ENGINE, useClass: CDSStorageEngine }
+        { provide: STORAGE_ENGINE, useClass: CDSStorageEngine },
+        provideHttpClient(withInterceptorsFromDi())
     ],
     bootstrap: [AppComponent]
 })

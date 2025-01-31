@@ -2,11 +2,10 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { Application } from 'app/model/application.model';
 import { FetchApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
 import { Observable, of as observableOf } from 'rxjs';
-import { catchError, flatMap } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 
 
 
@@ -20,7 +19,7 @@ export class ApplicationResolver  {
             projectKey: route.params['key'],
             applicationName: route.queryParams['application']
         })).pipe(
-            flatMap(() => this.store.selectOnce(ApplicationsState.currentState()))
+            switchMap(() => this.store.selectOnce(ApplicationsState.current))
         );
     }
 }
@@ -36,7 +35,7 @@ export class ApplicationQueryParamResolver  {
                 projectKey: route.params['key'],
                 applicationName: route.queryParams['application']
             })).pipe(
-                flatMap(() => this.store.selectOnce(ApplicationsState.currentState())),
+                switchMap(() => this.store.selectOnce(ApplicationsState.current)),
                 catchError(() => observableOf(null))
             );
         } else {

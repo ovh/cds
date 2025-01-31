@@ -1,5 +1,4 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, Input, Output, OnChanges, SimpleChanges } from "@angular/core";
-import { EventEmitter } from "events";
+import { EventEmitter, Component, ChangeDetectionStrategy, ChangeDetectorRef, Input, Output, OnChanges, SimpleChanges } from "@angular/core";
 
 @Component({
     selector: 'app-favorite-button',

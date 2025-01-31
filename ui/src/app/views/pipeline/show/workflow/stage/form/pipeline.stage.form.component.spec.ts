@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -12,6 +12,7 @@ import { EnvironmentService } from 'app/service/environment/environment.service'
 import { SharedModule } from '../../../../../../shared/shared.module';
 import { PipelineModule } from '../../../../pipeline.module';
 import { of } from 'rxjs';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 
 describe('CDS: Stage From component', () => {
@@ -28,15 +29,16 @@ describe('CDS: Stage From component', () => {
                 WorkflowService,
                 ApplicationService,
                 EnvironmentService,
-                WorkflowRunService
+                WorkflowRunService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 PipelineModule,
                 NgxsStoreModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
-                SharedModule,
-                HttpClientTestingModule
+                SharedModule
             ]
         }).compileComponents();
     });

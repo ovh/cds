@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
@@ -39,13 +39,14 @@ export function getInitialApplicationsState(): ApplicationStateModel {
 @Injectable()
 export class ApplicationsState {
 
-    constructor(private _http: HttpClient, private _appService: ApplicationService) { }
+    constructor(
+        private _http: HttpClient,
+        private _appService: ApplicationService
+    ) { }
 
-    static currentState() {
-        return createSelector(
-            [ApplicationsState],
-            (state: ApplicationStateModel) => state
-        );
+    @Selector()
+    static current(state: ApplicationStateModel) {
+        return state;
     }
 
     static selectOverview() {
@@ -263,10 +264,10 @@ export class ApplicationsState {
                 const state = ctx.getState();
                 let applicationUpdated = cloneDeep(state.application);
                 applicationUpdated.variables = applicationUpdated.variables.map(v => {
-                   if (v.name !== action.payload.variableName) {
-                       return v;
-                   }
-                   return updatedVar;
+                    if (v.name !== action.payload.variableName) {
+                        return v;
+                    }
+                    return updatedVar;
                 });
                 ctx.setState({
                     ...state,
@@ -530,11 +531,11 @@ export class ApplicationsState {
     resync(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.ResyncApplication) {
         return this._appService.getApplication(action.payload.projectKey, action.payload.applicationName)
             .pipe(tap((app) => {
-            if (app.vcs_strategy) {
-                app.vcs_strategy.password = '**********';
-            }
-            ctx.dispatch(new ActionApplication.LoadApplication(app));
-        }));
+                if (app.vcs_strategy) {
+                    app.vcs_strategy.password = '**********';
+                }
+                ctx.dispatch(new ActionApplication.LoadApplication(app));
+            }));
     }
 
     @Action(ActionApplication.ClearCacheApplication)

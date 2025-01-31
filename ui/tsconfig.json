@@ -4,6 +4,7 @@
     "module": "es2020",
     "outDir": "./dist/out-tsc",
     "baseUrl": "src",
+    "esModuleInterop": true,
     "paths": {
       "@cds/*": [
         ".src/app/*"

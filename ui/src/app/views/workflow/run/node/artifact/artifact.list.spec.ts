@@ -1,8 +1,8 @@
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, waitForAsync } from '@angular/core/testing';
-import {RouterTestingModule} from '@angular/router/testing';
-import {TranslateLoader, TranslateModule, TranslateParser, TranslateService} from '@ngx-translate/core';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { ApplicationService } from 'app/service/application/application.service';
@@ -14,22 +14,22 @@ import { ProjectStore } from 'app/service/project/project.store';
 import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
-import {SharedModule} from 'app/shared/shared.module';
+import { SharedModule } from 'app/shared/shared.module';
 import { ApplicationsState } from 'app/store/applications.state';
 import { EnvironmentState } from 'app/store/environment.state';
 import { PipelinesState } from 'app/store/pipelines.state';
 import * as ProjectAction from 'app/store/project.action';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
-import {WorkflowModule} from 'app/views/workflow/workflow.module';
-import {WorkflowRunArtifactListComponent} from './artifact.list.component';
+import { WorkflowModule } from 'app/views/workflow/workflow.module';
+import { WorkflowRunArtifactListComponent } from './artifact.list.component';
 
 describe('CDS: Artifact List', () => {
 
     let store: Store;
     let http: HttpTestingController;
 
-    beforeEach(waitForAsync( () => {
+    beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
@@ -37,10 +37,11 @@ describe('CDS: Artifact List', () => {
                 TranslateLoader,
                 TranslateParser,
                 ProjectService, PipelineService, EnvironmentService, ApplicationService, EnvironmentService,
-                NavbarService, WorkflowService, WorkflowRunService, ProjectStore, RouterService
+                NavbarService, WorkflowService, WorkflowRunService, ProjectStore, RouterService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
-                HttpClientTestingModule,
                 WorkflowModule,
                 NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState, EnvironmentState]),
                 TranslateModule.forRoot(),

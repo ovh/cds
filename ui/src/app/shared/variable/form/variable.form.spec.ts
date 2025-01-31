@@ -1,45 +1,46 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {TestBed, tick, fakeAsync, flush} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
+import { TranslateService, TranslateLoader, TranslateParser, TranslateModule } from '@ngx-translate/core';
+import { RouterTestingModule } from '@angular/router/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Observable, of } from 'rxjs';
-import {GroupService} from '../../../service/group/group.service';
-import {Variable} from '../../../model/variable.model';
-import {VariableEvent} from '../variable.event.model';
-import {SharedModule} from '../../shared.module';
-import {SharedService} from '../../shared.service';
-import {VariableService} from '../../../service/variable/variable.service';
-import {VariableFormComponent} from './variable.form';
+import { GroupService } from '../../../service/group/group.service';
+import { Variable } from '../../../model/variable.model';
+import { VariableEvent } from '../variable.event.model';
+import { SharedModule } from '../../shared.module';
+import { SharedService } from '../../shared.service';
+import { VariableService } from '../../../service/variable/variable.service';
+import { VariableFormComponent } from './variable.form';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CDS: Variable From Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 { provide: VariableService, useClass: MockApplicationService },
                 GroupService,
                 SharedService,
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
-            imports : [
+            imports: [
                 BrowserAnimationsModule,
                 SharedModule,
                 TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([]),
-                HttpClientTestingModule
+                RouterTestingModule.withRoutes([])
             ]
         }).compileComponents();
     });
 
 
-    it('Create new variable', fakeAsync( () => {
+    it('Create new variable', fakeAsync(() => {
 
         // Create component
         let fixture = TestBed.createComponent(VariableFormComponent);

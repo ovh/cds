@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { Key } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
@@ -36,13 +36,14 @@ export function getInitialEnvironmentState(): EnvironmentStateModel {
 @Injectable()
 export class EnvironmentState {
 
-    constructor(private _http: HttpClient, private _envService: EnvironmentService) { }
+    constructor(
+        private _http: HttpClient,
+        private _envService: EnvironmentService
+    ) { }
 
-    static currentState() {
-        return createSelector(
-            [EnvironmentState],
-            (state: EnvironmentStateModel) => state
-        );
+    @Selector()
+    static current(state: EnvironmentStateModel) {
+        return state;
     }
 
     @Action(ActionEnvironment.AddEnvironment)
@@ -121,7 +122,7 @@ export class EnvironmentState {
         const state = ctx.getState();
         if (state.environment && state.environment.name === action.payload.envName
             && state.currentProjectKey === action.payload.projectKey) {
-            return ctx.dispatch(new ActionEnvironment.LoadEnvironment({projectKey: action.payload.projectKey, env: state.environment}));
+            return ctx.dispatch(new ActionEnvironment.LoadEnvironment({ projectKey: action.payload.projectKey, env: state.environment }));
         }
         return ctx.dispatch(new ActionEnvironment.ResyncEnvironment({ ...action.payload }));
     }
@@ -146,7 +147,7 @@ export class EnvironmentState {
     @Action(ActionEnvironment.ResyncEnvironment)
     resync(ctx: StateContext<EnvironmentStateModel>, action: ActionEnvironment.ResyncEnvironment) {
         return this._envService.getEnvironment(action.payload.projectKey, action.payload.envName)
-            .pipe(tap((environment: Environment) => ctx.dispatch(new ActionEnvironment.LoadEnvironment({projectKey: action.payload.projectKey, env: environment}))));
+            .pipe(tap((environment: Environment) => ctx.dispatch(new ActionEnvironment.LoadEnvironment({ projectKey: action.payload.projectKey, env: environment }))));
     }
 
     // VARIABLES
@@ -218,7 +219,7 @@ export class EnvironmentState {
             delete action.payload.changes.updating;
             delete action.payload.changes.hasChanged;
             let envToUpdate = cloneDeep(stateEditMode.editEnvironment);
-            envToUpdate.variables = envToUpdate.variables.map( v => {
+            envToUpdate.variables = envToUpdate.variables.map(v => {
                 if (v.name === action.payload.variableName) {
                     return action.payload.changes;
                 }
@@ -307,7 +308,7 @@ export class EnvironmentState {
 
     @Action(ActionEnvironment.CleanEnvironmentState)
     cleanEnvironmentState(ctx: StateContext<EnvironmentStateModel>, _: ActionEnvironment.DeleteEnvironmentKey) {
-        ctx.setState(getInitialEnvironmentState())  ;
+        ctx.setState(getInitialEnvironmentState());
     }
 
 }

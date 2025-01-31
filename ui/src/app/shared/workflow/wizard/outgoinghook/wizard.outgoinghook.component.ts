@@ -79,7 +79,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
             readOnly: this.mode === 'ro'
         };
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        this.editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
