@@ -144,6 +144,9 @@ func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	if offset < 0 {
+		offset = 0
+	}
 	if limit == 0 {
 		limit = 1
 	}

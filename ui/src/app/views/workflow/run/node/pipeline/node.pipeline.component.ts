@@ -9,7 +9,7 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { delay, retryWhen } from 'rxjs/operators';
@@ -65,8 +65,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         private _workflowService: WorkflowService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.workflowName = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow.name;
-        this.workflowRunNum = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.num;
+        this.workflowName = this._store.selectSnapshot(WorkflowState.current).workflowRun.workflow.name;
+        this.workflowRunNum = this._store.selectSnapshot(WorkflowState.current).workflowRun.num;
     }
 
     ngOnInit() {
@@ -191,7 +191,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     refreshNodeRun(data: WorkflowNodeRun): boolean {
         let refresh = false;
-        let currentNodeJobRun = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeJobRun;
+        let currentNodeJobRun = this._store.selectSnapshot(WorkflowState.current).workflowNodeJobRun;
 
         if (this.currentNodeRunStatus !== data.status) {
             this.currentNodeRunStatus = data.status;

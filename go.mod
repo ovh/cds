@@ -44,7 +44,6 @@ require (
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/iancoleman/orderedmap v0.3.0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
-	github.com/jfrog/archiver/v3 v3.6.0
 	github.com/jfrog/build-info-go v1.9.23
 	github.com/jfrog/jfrog-client-go v1.37.1
 	github.com/jordan-wright/email v4.0.1-0.20200917010138-e1c00e156980+incompatible
@@ -129,6 +128,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
+	github.com/jfrog/archiver/v3 v3.6.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/nats-io/nats.go v1.31.0 // indirect

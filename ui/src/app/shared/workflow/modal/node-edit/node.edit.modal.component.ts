@@ -7,11 +7,11 @@ import { WNode, Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import { CloseEditModal, UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -45,25 +45,25 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
     storeSub: Subscription;
     readonly = true;
 
-    openModal : boolean = false;
+    openModal: boolean = false;
 
     constructor(private _store: Store, private _cd: ChangeDetectorRef,
         private _translate: TranslateService, private _toast: ToastService) {
-        this.projectSubscriber = this._store.select(ProjectState)
-            .subscribe((projState: ProjectStateModel) => {
-                this.project = projState.project;
+        this.projectSubscriber = this._store.select(ProjectState.projectSnapshot)
+            .subscribe((p: Project) => {
+                this.project = p;
                 this._cd.markForCheck();
             });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
         this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
             if (!n) {
                 return;
             }
-            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState.current);
             if (stateSnap.editMode) {
                 this.workflow = stateSnap.editWorkflow;
             } else {
@@ -73,7 +73,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
             this._cd.markForCheck();
         });
         this.editModalSub = this._store.select(WorkflowState.getEditModal()).subscribe(b => {
-            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState.current);
             if (!b) {
                 this.currentNodeName = '';
                 delete this.currentNodeType;
@@ -136,7 +136,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
     }
 
     groupManagement(event: PermissionEvent): void {
-        let snapNode = cloneDeep(this._store.selectSnapshot(WorkflowState).node);
+        let snapNode = cloneDeep(this._store.selectSnapshot(WorkflowState.current).node);
         this.loading = true;
         switch (event.type) {
             case 'add':
@@ -166,7 +166,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
             changes: workflow
         })).pipe(finalize(() => {
             this.loading = false;
-            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState.current);
             this.groups = cloneDeep(stateSnap.node.groups);
             this._cd.markForCheck();
         })).subscribe(() => {
@@ -192,7 +192,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
             return;
         }
         if (newView === 'permissions') {
-            let snapNode = cloneDeep(this._store.selectSnapshot(WorkflowState).node);
+            let snapNode = cloneDeep(this._store.selectSnapshot(WorkflowState.current).node);
             this.groups = cloneDeep(snapNode.groups);
         }
         this.hasModification = false;

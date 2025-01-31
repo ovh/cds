@@ -15,7 +15,7 @@ import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -47,24 +47,24 @@ export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
     constructor(
         private _store: Store,
         private _cd: ChangeDetectorRef
-    ) {}
+    ) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 
-        let state: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+        let state: WorkflowStateModel = this._store.selectSnapshot(WorkflowState.current);
         this.workflow = state.workflow;
         this.node = state.node;
 
 
         this.workflowRunSub = this._store.select(WorkflowState.getSelectedWorkflowRun()).subscribe(wr => {
             if (!wr) {
-               return;
+                return;
             }
             if (this.workflow.id !== wr.workflow_id) {
-               return;
+                return;
             }
             this.workflowrun = wr;
             this.runnable = this.getCanBeRun();
@@ -72,7 +72,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
         });
 
         this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID)
-            .pipe(map(filterFn => filterFn(this.node.id))).subscribe( nodeRun => {
+            .pipe(map(filterFn => filterFn(this.node.id))).subscribe(nodeRun => {
                 if (!nodeRun) {
                     return;
                 }
@@ -112,12 +112,12 @@ export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
                 }
                 break;
             case 'hook':
-                if(!this.workflow.workflow_data || this.workflow.workflow_data.node.id !== this.node.id || this.readonly) {
+                if (!this.workflow.workflow_data || this.workflow.workflow_data.node.id !== this.node.id || this.readonly) {
                     return;
                 }
                 break;
             case 'delete':
-                if(this.readonly || this.node.id === this.workflow.workflow_data.node.id) {
+                if (this.readonly || this.node.id === this.workflow.workflow_data.node.id) {
                     return;
                 }
 

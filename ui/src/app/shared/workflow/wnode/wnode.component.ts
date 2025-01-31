@@ -275,7 +275,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     }
 
     createFork(): void {
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        let editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
         let n: WNode;
         if (editMode) {
             n = Workflow.getNodeByRef(this.node.ref, this.workflow);

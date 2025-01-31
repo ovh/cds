@@ -84,7 +84,7 @@ export class ApplicationAddComponent implements OnInit, OnDestroy {
         this.store.dispatch(new FetchApplication({
             projectKey: this.project.key,
             applicationName: appName
-        })).pipe(flatMap(() => this.store.selectOnce(ApplicationsState.currentState())))
+        })).pipe(flatMap(() => this.store.selectOnce(ApplicationsState.current)))
             .subscribe((s: ApplicationStateModel) => {
                 this.selectedApplication = s.application;
                 this.variables = cloneDeep(s.application.variables);

@@ -1,5 +1,5 @@
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
@@ -52,8 +52,7 @@ describe('CDS: Application', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 ApplicationStore,
                 ApplicationService,
@@ -77,7 +76,9 @@ describe('CDS: Application', () => {
                 UserService,
                 RouterService,
                 AuthenticationService,
-                ConfigService
+                ConfigService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 ApplicationModule,
@@ -85,8 +86,7 @@ describe('CDS: Application', () => {
                 ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule
+                TranslateModule.forRoot()
             ]
         }).compileComponents();
 
@@ -113,12 +113,10 @@ describe('CDS: Application', () => {
         spyOn(store, 'select').and.callFake(() => {
             if (callOrder === 0) {
                 callOrder++;
-                let state = new ProjectStateModel();
                 let p = new Project();
                 p.permissions = new Permission();
                 p.permissions.writable = true;
-                state.project = p;
-                return of(state);
+                return of(p) as any;
             }
             let state = new ApplicationStateModel();
             let app: Application = new Application();
@@ -126,7 +124,7 @@ describe('CDS: Application', () => {
             app.usage = new Usage();
             state.application = app;
             state.editMode = false;
-            return of(state);
+            return of(state) as any;
         });
 
         // Create component
@@ -159,25 +157,21 @@ describe('CDS: Application', () => {
     }));
 
     it('should run add variable', fakeAsync(() => {
-        let call = 0;
-
         let callOrder = 0;
         spyOn(store, 'select').and.callFake(() => {
             if (callOrder === 0) {
                 callOrder++;
-                let state = new ProjectStateModel();
                 let p = new Project();
                 p.permissions = new Permission();
                 p.permissions.writable = true;
-                state.project = p;
-                return of(state);
+                return of(p) as any;
             }
             let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
             state.application = app;
-            return of(state);
+            return of(state) as any;
         });
 
         // Create component
@@ -208,19 +202,17 @@ describe('CDS: Application', () => {
         spyOn(store, 'select').and.callFake(() => {
             if (callOrder === 0) {
                 callOrder++;
-                let state = new ProjectStateModel();
                 let p = new Project();
                 p.permissions = new Permission();
                 p.permissions.writable = true;
-                state.project = p;
-                return of(state);
+                return of(p) as any;
             }
             let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
             state.application = app;
-            return of(state);
+            return of(state) as any;
         });
 
         // Create component
@@ -252,19 +244,17 @@ describe('CDS: Application', () => {
         spyOn(store, 'select').and.callFake(() => {
             if (callOrder === 0) {
                 callOrder++;
-                let state = new ProjectStateModel();
                 let p = new Project();
                 p.permissions = new Permission();
                 p.permissions.writable = true;
-                state.project = p;
-                return of(state);
+                return of(p) as any;
             }
             let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
             state.application = app;
-            return of(state);
+            return of(state) as any;
         });
         // Create component
         let fixture = TestBed.createComponent(ApplicationShowComponent);

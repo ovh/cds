@@ -16,7 +16,7 @@ import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.sa
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
     CleanWorkflowState,
@@ -83,8 +83,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.projectSubscription = this._store.select(ProjectState).subscribe((projectState: ProjectStateModel) => {
-            this.project = projectState.project;
+        this.projectSubscription = this._store.select(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            this.project = p;
             if (this.project && this.workflow && this.project.key !== this.workflow.project_key) {
                 delete this.workflow;
             }

@@ -75,9 +75,14 @@ export function getInitialWorkflowState(): WorkflowStateModel {
 @Injectable()
 export class WorkflowState {
 
-    constructor(private _http: HttpClient, private _navbarService: NavbarService, private _routerService: RouterService,
-        private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService, private _router: Router) {
-    }
+    constructor(
+        private _http: HttpClient,
+        private _navbarService: NavbarService,
+        private _routerService: RouterService,
+        private _workflowService: WorkflowService,
+        private _workflowRunService: WorkflowRunService,
+        private _router: Router
+    ) { }
 
     static getEditModal() {
         return createSelector(
@@ -91,12 +96,9 @@ export class WorkflowState {
         return state.workflow;
     }
 
-    /** @deprecated */
-    static getCurrent() {
-        return createSelector(
-            [WorkflowState],
-            (state: WorkflowStateModel): WorkflowStateModel => state
-        );
+    @Selector()
+    static current(state: WorkflowStateModel) {
+        return state;
     }
 
     static getWorkflow() {
@@ -287,7 +289,7 @@ export class WorkflowState {
         return this._http.post<Workflow>(
             `/project/${action.payload.projectKey}/workflows`,
             action.payload.workflow
-        ).pipe(tap((wf) => {
+        ).pipe(tap((wf: Workflow) => {
             ctx.setState({
                 ...state,
                 projectKey: action.payload.projectKey,
@@ -370,7 +372,7 @@ export class WorkflowState {
         return this._http.put<Workflow>(
             `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}`,
             action.payload.changes
-        ).pipe(tap((wf) => {
+        ).pipe(tap((wf: Workflow) => {
             const state = ctx.getState();
             let oldWorkflow = cloneDeep(state.workflow);
             if (action.payload.workflowName !== wf.name) {

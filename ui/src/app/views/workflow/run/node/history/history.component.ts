@@ -28,10 +28,10 @@ export class WorkflowNodeRunHistoryComponent implements OnInit {
 
     constructor(private _router: Router, private _store: Store) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.run = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
-        this.currentBuild = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun;
+        this.run = this._store.selectSnapshot(WorkflowState.current).workflowRun;
+        this.currentBuild = this._store.selectSnapshot(WorkflowState.current).workflowNodeRun;
         this.workflowName = this.run.workflow.name;
-        let nodeRun = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun;
+        let nodeRun = this._store.selectSnapshot(WorkflowState.current).workflowNodeRun;
         this.history = this.run.nodes[nodeRun.workflow_node_id];
     }
 

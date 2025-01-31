@@ -4,6 +4,7 @@ VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 
 clean:
 	@rm -rf dist
+	@rm -f ui.tar.gz
 	@rm -rf node_modules
 	@find semantic -name "*" -not -path "*/site/globals/site.variables" -delete
 	@rm -rf semantic\\
@@ -19,21 +20,23 @@ ngbuild: $(NG)
 	@node --max-old-space-size=3048 node_modules/@angular/cli/bin/ng build ui-ng2 --configuration production
 	@node --max-old-space-size=3048 node_modules/@angular/cli/bin/ng build workflow-graph --configuration production
 
-INDEX = dist/index.tmpl
+INDEX = dist/browser/index.tmpl
 $(INDEX):
 	$(MAKE) ngbuild
-	@cd dist && mv index.html index.tmpl
+	@cd dist/browser && mv index.html index.tmpl
 
-FILES_UI = dist/FILES_UI
+FILES_UI = dist/browser/FILES_UI
 $(FILES_UI): $(INDEX)
 	$(info sha512 = ${SHA512})
 	touch $(FILES_UI)
-	cd dist/ && for i in `ls -p | grep -v /|grep -v FILES_UI`; do echo "$$i;`${SHA512} $$i|cut -d ' ' -f1`" >> FILES_UI; done;
+	cd dist/browser/ && for i in `ls -p | grep -v /|grep -v FILES_UI`; do echo "$$i;`${SHA512} $$i|cut -d ' ' -f1`" >> FILES_UI; done;
 
 build: $(FILES_UI) $(INDEX) ui.tar.gz
 
 ui.tar.gz:
-	tar cfz ui.tar.gz dist
+	rm -rf dist/dist
+	cp -R dist/browser dist/dist
+	tar cfz ui.tar.gz -C dist dist
 
 lintfix:
 	./node_modules/.bin/ng lint --fix

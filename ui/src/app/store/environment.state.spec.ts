@@ -1,5 +1,5 @@
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
@@ -36,12 +36,24 @@ describe('Environment', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            providers: [NavbarService, WorkflowService, WorkflowRunService, ProjectStore, RouterService,
-                ProjectService, PipelineService, EnvironmentService, ApplicationService, EnvironmentService],
             imports: [
-                HttpClientTestingModule, RouterTestingModule.withRoutes([]),
+                RouterTestingModule.withRoutes([]),
                 NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState, EnvironmentState])
             ],
+            providers: [
+                NavbarService,
+                WorkflowService,
+                WorkflowRunService,
+                ProjectStore,
+                RouterService,
+                ProjectService,
+                PipelineService,
+                EnvironmentService,
+                ApplicationService,
+                EnvironmentService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
+            ]
         }).compileComponents();
 
         store = TestBed.inject(Store);
@@ -67,7 +79,7 @@ describe('Environment', () => {
             environments: [env]
         });
 
-        store.selectOnce(EnvironmentState).subscribe((state: EnvironmentStateModel) => {
+        store.selectOnce(EnvironmentState.current).subscribe((state: EnvironmentStateModel) => {
             expect(state.currentProjectKey).toEqual('test1');
             expect(state.environment).toBeTruthy();
             expect(state.environment.name).toEqual('prod');
@@ -90,7 +102,7 @@ describe('Environment', () => {
         store.dispatch(new FetchEnvironment({ projectKey: project.key, envName: env.name }));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/environment/prod')).flush(env);
 
-        store.selectOnce(EnvironmentState).subscribe((state: EnvironmentStateModel) => {
+        store.selectOnce(EnvironmentState.current).subscribe((state: EnvironmentStateModel) => {
             expect(state.currentProjectKey).toEqual('test1');
             expect(state.environment).toBeTruthy();
             expect(state.environment.name).toEqual('prod');
@@ -111,7 +123,7 @@ describe('Environment', () => {
             environments: [env]
         });
 
-        store.dispatch(new LoadEnvironment({projectKey: project.key, env}));
+        store.dispatch(new LoadEnvironment({ projectKey: project.key, env }));
 
         env.name = 'dev';
         store.dispatch(new UpdateEnvironment({
@@ -124,7 +136,7 @@ describe('Environment', () => {
             environments: [env]
         });
 
-        store.selectOnce(EnvironmentState).subscribe((state: EnvironmentStateModel) => {
+        store.selectOnce(EnvironmentState.current).subscribe((state: EnvironmentStateModel) => {
             expect(state.currentProjectKey).toEqual('test1');
             expect(state.environment).toBeTruthy();
             expect(state.environment.name).toEqual('dev');
@@ -145,7 +157,7 @@ describe('Environment', () => {
         let env = new Environment();
         env.name = 'prod';
 
-        store.dispatch(new LoadEnvironment({projectKey: project.key, env: cloneDeep(env)}));
+        store.dispatch(new LoadEnvironment({ projectKey: project.key, env: cloneDeep(env) }));
 
         let variable = new Variable();
         variable.name = 'testvar';
@@ -158,7 +170,7 @@ describe('Environment', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/environment/prod/variable/testvar')).flush(variable);
 
-        store.selectOnce(EnvironmentState).subscribe((state: EnvironmentStateModel) => {
+        store.selectOnce(EnvironmentState.current).subscribe((state: EnvironmentStateModel) => {
             expect(state.currentProjectKey).toEqual('test1');
             expect(state.environment).toBeTruthy();
             expect(state.environment.name).toEqual('prod');
@@ -187,7 +199,7 @@ describe('Environment', () => {
             environments: [env]
         });
 
-        store.dispatch(new LoadEnvironment({projectKey: project.key, env}));
+        store.dispatch(new LoadEnvironment({ projectKey: project.key, env }));
 
         variable.name = 'testvarbis';
         store.dispatch(new UpdateEnvironmentVariable({
@@ -201,7 +213,7 @@ describe('Environment', () => {
             environments: [Object.assign({}, env, { variables: [variable] })]
         });
 
-        store.selectOnce(EnvironmentState).subscribe((state: EnvironmentStateModel) => {
+        store.selectOnce(EnvironmentState.current).subscribe((state: EnvironmentStateModel) => {
             expect(state.currentProjectKey).toEqual('test1');
             expect(state.environment).toBeTruthy();
             expect(state.environment.variables).toBeTruthy();
@@ -229,7 +241,7 @@ describe('Environment', () => {
             environments: [env]
         });
 
-        store.dispatch(new LoadEnvironment({projectKey: project.key, env}));
+        store.dispatch(new LoadEnvironment({ projectKey: project.key, env }));
 
         store.dispatch(new DeleteEnvironmentVariable({
             projectKey: project.key,
@@ -241,7 +253,7 @@ describe('Environment', () => {
             environments: [Object.assign({}, env, { variables: [] })]
         });
 
-        store.selectOnce(EnvironmentState).subscribe((state: EnvironmentStateModel) => {
+        store.selectOnce(EnvironmentState.current).subscribe((state: EnvironmentStateModel) => {
             expect(state.currentProjectKey).toEqual('test1');
             expect(state.environment).toBeTruthy();
             expect(state.environment.variables).toBeTruthy();

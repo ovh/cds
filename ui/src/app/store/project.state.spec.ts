@@ -1,5 +1,5 @@
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
@@ -33,15 +33,26 @@ describe('Project', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            providers: [NavbarService, WorkflowService, WorkflowRunService, ProjectStore, RouterService,
-                ProjectService, PipelineService, EnvironmentService, ApplicationService],
-            imports: [
-                HttpClientTestingModule, RouterTestingModule.withRoutes([]),
-                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState], {developmentMode: true})
+            providers: [
+                NavbarService,
+                WorkflowService,
+                WorkflowRunService,
+                ProjectStore,
+                RouterService,
+                ProjectService,
+                PipelineService,
+                EnvironmentService,
+                ApplicationService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
+            imports: [
+                RouterTestingModule.withRoutes([]),
+                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState], { developmentMode: true })
+            ]
         }).compileComponents();
         store = TestBed.inject(Store);
-        http =  TestBed.inject(HttpTestingController);
+        http = TestBed.inject(HttpTestingController);
     }));
 
     it('fetch project', waitForAsync(() => {
@@ -53,10 +64,10 @@ describe('Project', () => {
             name: 'test1',
             key: 'test1'
         });
-        store.selectOnce(ProjectState).subscribe((proj: ProjectStateModel) => {
-            expect(proj).toBeTruthy();
-            expect(proj.project.name).toEqual('test1');
-            expect(proj.project.key).toEqual('test1');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('test1');
+            expect(p.key).toEqual('test1');
         });
     }));
 
@@ -69,11 +80,11 @@ describe('Project', () => {
             name: 'test1',
             key: 'test1'
         });
-        store.selectOnce(ProjectState).subscribe((proj: ProjectStateModel) => {
-            expect(proj).toBeTruthy();
-            expect(proj.project.name).toEqual('test1');
-            expect(proj.project.key).toEqual('test1');
-            expect(proj.project.workflow_names).toBeFalsy();
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('test1');
+            expect(p.key).toEqual('test1');
+            expect(p.workflow_names).toBeFalsy();
         });
 
         store.dispatch(new ProjectAction.FetchProject({
@@ -85,13 +96,13 @@ describe('Project', () => {
             key: 'test1',
             workflow_names: [{ id: 0, name: 'testworkflow', mute: false }]
         });
-        store.selectOnce(ProjectState).subscribe((proj: ProjectStateModel) => {
-            expect(proj).toBeTruthy();
-            expect(proj.project.name).toEqual('test1');
-            expect(proj.project.key).toEqual('test1');
-            expect(proj.project.workflow_names).toBeTruthy();
-            expect(proj.project.workflow_names.length).toEqual(1);
-            expect(proj.project.workflow_names[0].name).toEqual('testworkflow');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('test1');
+            expect(p.key).toEqual('test1');
+            expect(p.workflow_names).toBeTruthy();
+            expect(p.workflow_names.length).toEqual(1);
+            expect(p.workflow_names[0].name).toEqual('testworkflow');
         });
 
         // Fetch from cache
@@ -99,13 +110,13 @@ describe('Project', () => {
             projectKey: 'test1',
             opts: [new LoadOpts('withWorkflowNames', 'workflow_names')]
         }));
-        store.selectOnce(ProjectState).subscribe((proj: ProjectStateModel) => {
-            expect(proj).toBeTruthy();
-            expect(proj.project.name).toEqual('test1');
-            expect(proj.project.key).toEqual('test1');
-            expect(proj.project.workflow_names).toBeTruthy();
-            expect(proj.project.workflow_names.length).toEqual(1);
-            expect(proj.project.workflow_names[0].name).toEqual('testworkflow');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('test1');
+            expect(p.key).toEqual('test1');
+            expect(p.workflow_names).toBeTruthy();
+            expect(p.workflow_names.length).toEqual(1);
+            expect(p.workflow_names[0].name).toEqual('testworkflow');
         });
     }));
 
@@ -118,10 +129,10 @@ describe('Project', () => {
             name: 'proj1',
             key: 'test1',
         });
-        store.selectOnce(ProjectState).subscribe(state => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe(p => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
         });
     }));
 
@@ -142,13 +153,13 @@ describe('Project', () => {
         application.project_key = 'test1';
         store.dispatch(new ProjectAction.AddApplicationInProject(application));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.application_names).toBeTruthy();
-            expect(state.project.application_names.length).toEqual(1);
-            expect(state.project.application_names[0].name).toEqual('myApp');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.application_names).toBeTruthy();
+            expect(p.application_names.length).toEqual(1);
+            expect(p.application_names[0].name).toEqual('myApp');
         });
     }));
 
@@ -167,27 +178,27 @@ describe('Project', () => {
         application.project_key = 'test1';
         store.dispatch(new ProjectAction.AddApplicationInProject(application));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.application_names).toBeTruthy();
-            expect(state.project.application_names.length).toEqual(1);
-            expect(state.project.application_names[0].name).toEqual('myApp');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.application_names).toBeTruthy();
+            expect(p.application_names.length).toEqual(1);
+            expect(p.application_names[0].name).toEqual('myApp');
         });
 
         let appUpdated = new Application();
         appUpdated.name = 'myAppRenamed';
         appUpdated.description = 'my desc';
         store.dispatch(new ProjectAction.UpdateApplicationInProject({ previousAppName: 'myApp', changes: appUpdated }));
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.application_names).toBeTruthy();
-            expect(state.project.application_names.length).toEqual(1);
-            expect(state.project.application_names[0].name).toEqual('myAppRenamed');
-            expect(state.project.application_names[0].description).toEqual('my desc');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.application_names).toBeTruthy();
+            expect(p.application_names.length).toEqual(1);
+            expect(p.application_names[0].name).toEqual('myAppRenamed');
+            expect(p.application_names[0].description).toEqual('my desc');
         });
     }));
 
@@ -204,12 +215,12 @@ describe('Project', () => {
 
         store.dispatch(new ProjectAction.DeleteApplicationInProject({ applicationName: 'myApp' }));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.application_names).toBeTruthy();
-            expect(state.project.application_names.length).toEqual(0);
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.application_names).toBeTruthy();
+            expect(p.application_names.length).toEqual(0);
         });
     }));
 
@@ -230,13 +241,13 @@ describe('Project', () => {
         workflow.project_key = 'test1';
         store.dispatch(new ProjectAction.AddWorkflowInProject(workflow));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.workflow_names).toBeTruthy();
-            expect(state.project.workflow_names.length).toEqual(1);
-            expect(state.project.workflow_names[0].name).toEqual('myWorkflow');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.workflow_names).toBeTruthy();
+            expect(p.workflow_names.length).toEqual(1);
+            expect(p.workflow_names[0].name).toEqual('myWorkflow');
         });
     }));
 
@@ -260,14 +271,14 @@ describe('Project', () => {
             changes: workflow
         }));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.workflow_names).toBeTruthy();
-            expect(state.project.workflow_names.length).toEqual(1);
-            expect(state.project.workflow_names[0].name).toEqual('myNewName');
-            expect(state.project.workflow_names[0].description).toEqual('myDesc');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.workflow_names).toBeTruthy();
+            expect(p.workflow_names.length).toEqual(1);
+            expect(p.workflow_names[0].name).toEqual('myNewName');
+            expect(p.workflow_names[0].description).toEqual('myDesc');
         });
     }));
 
@@ -284,12 +295,12 @@ describe('Project', () => {
 
         store.dispatch(new ProjectAction.DeleteWorkflowInProject({ workflowName: 'myWorkflow' }));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.workflow_names).toBeTruthy();
-            expect(state.project.workflow_names.length).toEqual(0);
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.workflow_names).toBeTruthy();
+            expect(p.workflow_names.length).toEqual(0);
         });
     }));
 
@@ -309,13 +320,13 @@ describe('Project', () => {
         pipeline.name = 'myPipeline';
         store.dispatch(new ProjectAction.AddPipelineInProject(pipeline));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.pipeline_names).toBeTruthy();
-            expect(state.project.pipeline_names.length).toEqual(1);
-            expect(state.project.pipeline_names[0].name).toEqual('myPipeline');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.pipeline_names).toBeTruthy();
+            expect(p.pipeline_names.length).toEqual(1);
+            expect(p.pipeline_names[0].name).toEqual('myPipeline');
         });
     }));
 
@@ -339,14 +350,14 @@ describe('Project', () => {
             changes: pip
         }));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.pipeline_names).toBeTruthy();
-            expect(state.project.pipeline_names.length).toEqual(1);
-            expect(state.project.pipeline_names[0].name).toEqual('otherName');
-            expect(state.project.pipeline_names[0].description).toEqual('my description');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.pipeline_names).toBeTruthy();
+            expect(p.pipeline_names.length).toEqual(1);
+            expect(p.pipeline_names[0].name).toEqual('otherName');
+            expect(p.pipeline_names[0].description).toEqual('my description');
         });
     }));
 
@@ -363,12 +374,12 @@ describe('Project', () => {
 
         store.dispatch(new ProjectAction.DeletePipelineInProject({ pipelineName: 'myPipeline' }));
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.pipeline_names).toBeTruthy();
-            expect(state.project.pipeline_names.length).toEqual(0);
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.pipeline_names).toBeTruthy();
+            expect(p.pipeline_names.length).toEqual(0);
         });
     }));
 
@@ -411,16 +422,16 @@ describe('Project', () => {
             ]
         });
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.workflow_names).toBeTruthy();
-            expect(state.project.workflow_names.length).toEqual(1);
-            expect(state.project.workflow_names[0].name).toEqual('myWorkflow');
-            expect(state.project.workflow_names[0].labels).toBeTruthy();
-            expect(state.project.workflow_names[0].labels.length).toEqual(1);
-            expect(state.project.workflow_names[0].labels[0].name).toEqual('testLabel');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.workflow_names).toBeTruthy();
+            expect(p.workflow_names.length).toEqual(1);
+            expect(p.workflow_names[0].name).toEqual('myWorkflow');
+            expect(p.workflow_names[0].labels).toBeTruthy();
+            expect(p.workflow_names[0].labels.length).toEqual(1);
+            expect(p.workflow_names[0].labels[0].name).toEqual('testLabel');
         });
     }));
 
@@ -448,14 +459,14 @@ describe('Project', () => {
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/workflows/myWorkflow/label/25')).flush(<any>{
         });
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.workflow_names).toBeTruthy();
-            expect(state.project.workflow_names.length).toEqual(1);
-            expect(state.project.workflow_names[0].name).toEqual('myWorkflow');
-            expect(state.project.workflow_names[0].labels.length).toEqual(0);
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.workflow_names).toBeTruthy();
+            expect(p.workflow_names.length).toEqual(1);
+            expect(p.workflow_names[0].name).toEqual('myWorkflow');
+            expect(p.workflow_names[0].labels.length).toEqual(0);
         });
     }));
 
@@ -476,14 +487,14 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.AddVariableInProject(variable));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable/myVar')).flush(variable);
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.variables).toBeTruthy();
-            expect(state.project.variables.length).toEqual(1);
-            expect(state.project.variables[0].name).toEqual('myVar');
-            expect(state.project.variables[0].value).toEqual('myValue');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.variables).toBeTruthy();
+            expect(p.variables.length).toEqual(1);
+            expect(p.variables[0].name).toEqual('myVar');
+            expect(p.variables[0].value).toEqual('myValue');
         });
     }));
 
@@ -511,14 +522,14 @@ describe('Project', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable/myVar')).flush(variableUpdated);
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.variables).toBeTruthy();
-            expect(state.project.variables.length).toEqual(1);
-            expect(state.project.variables[0].name).toEqual('myTestVar');
-            expect(state.project.variables[0].value).toEqual('myTestValue');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.variables).toBeTruthy();
+            expect(p.variables.length).toEqual(1);
+            expect(p.variables[0].name).toEqual('myTestVar');
+            expect(p.variables[0].value).toEqual('myTestValue');
         });
     }));
 
@@ -540,12 +551,12 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.DeleteVariableInProject(variable));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable/myVar')).flush(null);
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.variables).toBeTruthy();
-            expect(state.project.variables.length).toEqual(0);
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.variables).toBeTruthy();
+            expect(p.variables.length).toEqual(0);
         });
     }));
 
@@ -566,14 +577,14 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.FetchVariablesInProject({ projectKey: project.key }));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable')).flush([variable]);
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.variables).toBeTruthy();
-            expect(state.project.variables.length).toEqual(1);
-            expect(state.project.variables[0].name).toEqual('myVar');
-            expect(state.project.variables[0].value).toEqual('myValue');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.variables).toBeTruthy();
+            expect(p.variables.length).toEqual(1);
+            expect(p.variables[0].name).toEqual('myVar');
+            expect(p.variables[0].value).toEqual('myValue');
         });
     }));
 
@@ -596,15 +607,15 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.AddGroupInProject({ projectKey: project.key, group }));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/group')).flush([group]);
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.groups).toBeTruthy();
-            expect(state.project.groups.length).toEqual(1);
-            expect(state.project.groups[0].permission).toEqual(7);
-            expect(state.project.groups[0].group.id).toEqual(1);
-            expect(state.project.groups[0].group.name).toEqual('admin');
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.groups).toBeTruthy();
+            expect(p.groups.length).toEqual(1);
+            expect(p.groups[0].permission).toEqual(7);
+            expect(p.groups[0].group.id).toEqual(1);
+            expect(p.groups[0].group.name).toEqual('admin');
         });
     }));
 
@@ -628,12 +639,12 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.DeleteGroupInProject({ projectKey: project.key, group }));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/group/admin')).flush(null);
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.groups).toBeTruthy();
-            expect(state.project.groups.length).toEqual(0);
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.groups).toBeTruthy();
+            expect(p.groups.length).toEqual(0);
         });
     }));
 
@@ -660,14 +671,14 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.UpdateGroupInProject({ projectKey: project.key, group: groupUpdated }));
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/group/admin')).flush(groupUpdated);
 
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.groups).toBeTruthy();
-            expect(state.project.groups.length).toEqual(1);
-            expect(state.project.groups[0].group.name).toEqual('admin');
-            expect(state.project.groups[0].permission).toEqual(4);
+        store.selectOnce(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            expect(p).toBeTruthy();
+            expect(p.name).toEqual('proj1');
+            expect(p.key).toEqual('test1');
+            expect(p.groups).toBeTruthy();
+            expect(p.groups.length).toEqual(1);
+            expect(p.groups[0].group.name).toEqual('admin');
+            expect(p.groups[0].permission).toEqual(4);
         });
     }));
 });

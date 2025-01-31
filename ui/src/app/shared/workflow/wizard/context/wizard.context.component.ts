@@ -22,8 +22,8 @@ import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, Subscription } from 'rxjs';
-import { filter, finalize, first, flatMap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { filter, finalize, first, switchMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-context',
@@ -53,7 +53,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
     constructor(private _store: Store, private _appService: ApplicationService, private _translate: TranslateService,
         private _toast: ToastService, private _cd: ChangeDetectorRef) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        this.editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
     }
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
@@ -107,7 +107,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
         }
         this._store.dispatch(new FetchApplication({ projectKey: this.project.key, applicationName: this.applications[i].name }))
             .pipe(
-                flatMap(() => this._store.selectOnce(ApplicationsState.currentState())),
+                switchMap(() => this._store.selectOnce(ApplicationsState.current)),
                 filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.applications[i].name),
                 first())
             .subscribe(app => {
