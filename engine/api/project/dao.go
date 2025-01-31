@@ -103,6 +103,20 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts .
 	return loadprojects(ctx, db, opts, query)
 }
 
+// LoadAllProjectKeys returns all project keys
+func LoadAllProjectKeys(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) ([]string, error) {
+	_, end := telemetry.Span(ctx, "project.LoadAllProjectKeys")
+	defer end()
+	var keys []string
+	if _, err := db.Select(&keys, "SELECT projectkey FROM project"); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrNoProject)
+		}
+		return nil, sdk.WithStack(err)
+	}
+	return keys, nil
+}
+
 // LoadPermissions loads all projects where group has access
 func LoadPermissions(ctx context.Context, db gorp.SqlExecutor, groupID int64) ([]sdk.ProjectGroup, error) {
 	rows, err := db.Query(`

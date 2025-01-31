@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -99,7 +100,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 			END AS priority
 		FROM results
 		WHERE LOWER(label) LIKE :query OR LOWER(id) LIKE :query
-		ORDER BY priority ASC, CHAR_LENGTH(label) DESC
+		ORDER BY priority ASC, CHAR_LENGTH(label) ASC
 		LIMIT :limit OFFSET :offset
 	`
 
@@ -111,6 +112,9 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 		"limit":    limit,
 		"offset":   offset,
 	}); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
 		return nil, sdk.WithStack(err)
 	}
 
