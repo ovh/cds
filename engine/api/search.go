@@ -53,18 +53,15 @@ func (api *API) getSearchHandler() ([]service.RbacChecker, service.Handler) {
 			}
 
 			var pKeys []string
+			var err error
 			if isAdmin(ctx) {
 				// For admin
-				ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache)
+				pKeys, err = project.LoadAllProjectKeys(ctx, api.mustDB(), api.Cache)
 				if err != nil {
 					return err
 				}
-				for i := range ps {
-					pKeys = append(pKeys, ps[i].Key)
-				}
 			} else {
 				// Normal user
-				var err error
 				pKeys, err = rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
 				if err != nil {
 					return err
