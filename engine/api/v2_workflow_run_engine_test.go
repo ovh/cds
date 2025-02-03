@@ -3331,6 +3331,7 @@ spec:
 		Ended:            &now,
 		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 		Matrix: sdk.JobMatrix{
 			"region": "region1",
 		},
@@ -3351,6 +3352,7 @@ spec:
 		Ended:            &now,
 		Job:              wr.WorkflowData.Workflow.Jobs["job1"],
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 		Matrix: sdk.JobMatrix{
 			"region": "region2",
 		},
@@ -3371,12 +3373,14 @@ spec:
 		Ended:            &now,
 		Job:              wr.WorkflowData.Workflow.Jobs["job2"],
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &job3RunJob))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:            wr.ID,
 		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
