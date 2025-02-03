@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { SearchResponse, SearchResult } from "app/model/search.model";
+import { Filter } from "app/shared/input/input-filter.component";
 import { map, Observable } from "rxjs";
 
 @Injectable()
@@ -10,9 +11,9 @@ export class SearchService {
 		private _http: HttpClient
 	) { }
 
-	search(query: string, offset: number, limit: number): Observable<SearchResponse> {
+	search(filters: any, offset: number, limit: number): Observable<SearchResponse> {
 		const params = new HttpParams().appendAll({
-			query,
+			...filters,
 			offset,
 			limit
 		});
@@ -23,5 +24,9 @@ export class SearchService {
 				results: res.body as Array<SearchResult>
 			};
 		}));
+	}
+
+	getFilters(): Observable<Array<Filter>> {
+		return this._http.get<Array<Filter>>(`/search/filter`);
 	}
 }

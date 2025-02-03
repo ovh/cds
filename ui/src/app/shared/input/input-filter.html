@@ -1,0 +1,20 @@
+<input [placeholder]="placeholder" nz-input [nzAutocomplete]="filterAutoComplete" [ngModel]="filterText"
+	(ngModelChange)="onFilterTextChange($event)" #filterInput #filterInputDirective=nzAutocompleteTrigger
+	(click)="onClickInput()" ngDefaultControl [ngModelOptions]="{standalone: true}" />
+<nz-autocomplete nzBackfill #filterAutoComplete>
+	<nz-auto-option *ngIf="!filterText || filterText.length > 0 && filterText[filterText.length-1] !== ':'"
+		[nzLabel]="filterText" [nzValue]="filterText">
+		{{filterText ? filterText + ' - ' : ''}}submit
+	</nz-auto-option>
+	<nz-auto-optgroup *ngIf="availableFilters.length > 0" nzLabel="Narrow your search">
+		<nz-auto-option *ngFor="let filter of availableFilters" [nzLabel]="computeFilterValue(filter)"
+			[nzValue]="computeFilterValue(filter)"><b>{{filter.key}}:</b>
+			{{filter.example}}
+		</nz-auto-option>
+	</nz-auto-optgroup>
+	<nz-auto-optgroup *ngIf="selectedFilter && selectedFilter.options?.length > 0" nzLabel="Narrow your search">
+		<nz-auto-option *ngFor="let option of selectedFilter.options" [nzLabel]="computeFilterValue(selectedFilter, option)"
+			[nzValue]="computeFilterValue(selectedFilter, option)">{{selectedFilter.key}}:{{option}}
+		</nz-auto-option>
+	</nz-auto-optgroup>
+</nz-autocomplete>

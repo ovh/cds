@@ -540,7 +540,7 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
-			filters := []sdk.V2WorkflowRunSearchFilter{
+			filters := []sdk.SearchFilter{
 				{
 					Key:     "actor",
 					Options: actors,
@@ -584,7 +584,7 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 			}
 
 			for _, x := range annotations {
-				filters = append(filters, sdk.V2WorkflowRunSearchFilter{
+				filters = append(filters, sdk.SearchFilter{
 					Key:     x.Key,
 					Options: sdk.Unique(x.Values),
 					Example: "Annotation value.",

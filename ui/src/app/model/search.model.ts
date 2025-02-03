@@ -1,7 +1,7 @@
 export enum SearchResultType {
 	Project = "project",
-	WorkflowV2 = "workflow-v2",
-	Workflow = "workflow"
+	Workflow = "workflow",
+	WorkflowLegacy = "workflow-legacy"
 }
 
 export class SearchResult {
