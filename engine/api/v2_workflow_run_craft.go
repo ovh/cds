@@ -244,23 +244,23 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		if err != nil {
 			return err
 		}
-	}
 
-	// Lint workflow. Create tmp workflow without FROM to check workflow structure
-	tmpWkf := run.WorkflowData.Workflow
-	tmpWkf.From = ""
-	if errsLint := Lint(ctx, api.mustDB(), api.Cache, tmpWkf, wref.ef, api.WorkerModelDockerImageWhiteList); errsLint != nil {
-		//run.Status = sdk.V2WorkflowRunStatusFail
-		msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
-		for _, e := range errsLint {
-			msgs = append(msgs, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				IssuedAt:      time.Now(),
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       e.Error(),
-			})
+		// Lint workflow. Create tmp workflow without FROM to check workflow structure
+		tmpWkf := run.WorkflowData.Workflow
+		tmpWkf.From = ""
+		if errsLint := Lint(ctx, api.mustDB(), api.Cache, tmpWkf, wref.ef, api.WorkerModelDockerImageWhiteList); errsLint != nil {
+			//run.Status = sdk.V2WorkflowRunStatusFail
+			msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
+			for _, e := range errsLint {
+				msgs = append(msgs, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       e.Error(),
+				})
+			}
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, msgs...)
 		}
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, msgs...)
 	}
 
 	allVariableSets, err := project.LoadVariableSetsByProject(ctx, api.mustDB(), p.Key)
@@ -303,7 +303,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// Reload integration regarding jobs
-	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
+	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB(), run.WorkflowData.Workflow.Jobs)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
@@ -662,7 +662,7 @@ loop:
 	if err != nil {
 		return nil, err
 	}
-	integrations, msgs, err := wrefTemplate.checkIntegrations(ctx, db)
+	integrations, msgs, err := wrefTemplate.checkIntegrations(ctx, db, newJobs)
 	if err != nil {
 		return nil, err
 	}
@@ -672,6 +672,7 @@ loop:
 
 	// Set job on workflow
 	for k, v := range newJobs {
+		run.WorkflowData.Workflow.Jobs[k] = v
 		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, k, v, wrefTemplate, integrations, allVariableSets, defaultRegion)
 		if msg != nil {
 			return []sdk.V2WorkflowRunInfo{*msg}, nil
@@ -1246,7 +1247,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 	}, nil
 }
 
-func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *gorp.DbMap) (map[string]sdk.ProjectIntegration, []sdk.V2WorkflowRunInfo, error) {
+func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *gorp.DbMap, jobs map[string]sdk.V2Job) (map[string]sdk.ProjectIntegration, []sdk.V2WorkflowRunInfo, error) {
 	availableIntegrations, err := integration.LoadIntegrationsByProjectID(ctx, db, wref.project.ID)
 	if err != nil {
 		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
@@ -1284,7 +1285,7 @@ func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *
 		}
 	}
 
-	for jobID, job := range wref.run.WorkflowData.Workflow.Jobs {
+	for jobID, job := range jobs {
 		for _, integ := range job.Integrations {
 			if !strings.Contains(integ, "${{") {
 				var found bool

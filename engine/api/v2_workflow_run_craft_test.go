@@ -1872,7 +1872,7 @@ spec: |-
 				*(out.(*sdk.VCSRepo)) = *b
 				return nil, 200, nil
 			},
-		).Times(1)
+		).Times(2)
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
