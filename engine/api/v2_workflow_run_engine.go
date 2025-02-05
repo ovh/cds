@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -260,17 +259,12 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	// Compute worker model / region on runJobs if needed
-	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, *u, wrEnqueue.IsAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
-	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
-	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
-
-	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+	wref, err := NewWorkflowRunEntityFinder(ctx, api.mustDB(), *proj, *run, *repo, *vcsServer, run.WorkflowRef, run.WorkflowSha, *u, wrEnqueue.IsAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
 	if err != nil {
 		return err
 	}
-	for _, p := range plugins {
-		wref.ef.plugins[p.Name] = p
-	}
+	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
+	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
 
 	// Enqueue JOB
 	hasTemplatedMatrixedJob := false
@@ -1140,6 +1134,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 	newStages := make(map[string]sdk.WorkflowStage)
 	newGates := make(map[string]sdk.V2JobGate)
 	newAnnotations := make(map[string]string)
+	var entityTemplateWithObj *sdk.EntityWithObject
 	for _, m := range matrixPermutation {
 		data.runJobContext.Matrix = make(map[string]string)
 		for k, v := range m {
@@ -1173,7 +1168,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 			interpolatedParams[k] = value
 		}
 
-		tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, data.jobID, data.jobToTrigger.Job, run, interpolatedParams)
+		entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, data.jobToTrigger.Job, run, interpolatedParams, data.user, data.wrEnqueue.IsAdminWithMFA)
 		if err != nil {
 			return []sdk.V2WorkflowRunInfo{{
 				WorkflowRunID: run.ID,
@@ -1185,6 +1180,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		if len(msgs) > 0 {
 			return msgs
 		}
+		entityTemplateWithObj = entityTemplate
 
 		for k, v := range tmpWorkflow.Jobs {
 			if _, has := newJobs[k]; has {
@@ -1214,61 +1210,12 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		}
 	}
 
-	msg := handleTemplatedJobInWorkflow(run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job)
-	if msg != nil {
-		return []sdk.V2WorkflowRunInfo{*msg}
-	}
-
-	integrations, infos, err := wref.checkIntegrations(ctx, db)
+	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job, data.user, data.allVariableSets, data.defaultRegion)
 	if err != nil {
-		return []sdk.V2WorkflowRunInfo{{
-			WorkflowRunID: run.ID,
-			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-		}}
-	}
-	if len(infos) > 0 {
-		return infos
-	}
 
-	// Analyze job dependencies
-	// Retrieve all deps
-	for jobID := range newJobs {
-		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, jobID, run.WorkflowData.Workflow.Jobs[jobID], wref, integrations, data.allVariableSets, data.defaultRegion)
-		if msg != nil {
-			return []sdk.V2WorkflowRunInfo{*msg}
-		}
 	}
-	if run.WorkflowData.Actions == nil {
-		run.WorkflowData.Actions = make(map[string]sdk.V2Action)
-	}
-
-	for k, v := range wref.ef.actionsCache {
-		if _, has := run.WorkflowData.Actions[k]; !has {
-			run.WorkflowData.Actions[k] = v
-		}
-	}
-	for _, v := range wref.ef.localActionsCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Name, wref.run.WorkflowRef)
-		if _, has := run.WorkflowData.Actions[completeName]; !has {
-			run.WorkflowData.Actions[completeName] = v
-		}
-	}
-
-	if run.WorkflowData.WorkerModels == nil {
-		run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
-	}
-
-	for k, v := range wref.ef.workerModelCache {
-		if _, has := run.WorkflowData.WorkerModels[k]; !has {
-			run.WorkflowData.WorkerModels[k] = v.Model
-		}
-	}
-	for _, v := range wref.ef.localWorkerModelCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Model.Name, wref.run.WorkflowRef)
-		if _, has := run.WorkflowData.WorkerModels[completeName]; !has {
-			run.WorkflowData.WorkerModels[completeName] = v.Model
-		}
+	if len(msgs) > 0 {
+		return msgs
 	}
 
 	// Remove templated job
@@ -1294,10 +1241,10 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		}
 	}
 
-	msgs := make([]sdk.V2WorkflowRunInfo, 0)
+	msgsLint := make([]sdk.V2WorkflowRunInfo, 0)
 	errs := run.WorkflowData.Workflow.Lint()
 	for _, e := range errs {
-		msgs = append(msgs, sdk.V2WorkflowRunInfo{
+		msgsLint = append(msgsLint, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
 			IssuedAt:      time.Now(),
@@ -1305,7 +1252,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		})
 	}
 
-	return msgs
+	return msgsLint
 }
 
 func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, runJobsInfo map[string]sdk.V2WorkflowRunJobInfo, run *sdk.V2WorkflowRun, data prepareJobData) ([]sdk.V2WorkflowRunJob, bool) {
