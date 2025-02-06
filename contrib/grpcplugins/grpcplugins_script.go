@@ -127,7 +127,7 @@ func prepareScriptContent(scriptContent string, workingDir string) *script {
 	return &script
 }
 
-func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(), error) {
+func writeScriptContent(_ context.Context, script *script, fs afero.Fs) (func(), error) {
 	workDir, err := fs.Open(script.dir)
 	if err != nil {
 		return nil, errors.Errorf("unable to open working directory %s [%s]: %v", script.dir, filepath.Base(script.dir), err)

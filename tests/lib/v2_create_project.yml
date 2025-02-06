@@ -6,6 +6,7 @@ input:
   git_host: ""
   git_user: ""
   git_password: ""
+  git_emailAddress: ""
 
 steps:
   - script: "{{.input.cdsctl_command}} user me --format json"
@@ -27,7 +28,14 @@ steps:
         from: result.systemoutjson.systemoutjson0.publickey
       sshKeyName:
         from: result.systemoutjson.systemoutjson0.name
-
+  # Get GPG Key info from project
+  - script: >
+     {{.input.cdsctl_command}} project keys list {{.input.cds_project}} --filter type=pgp --format json
+    vars:
+      gpgKeyPub:
+        from: result.systemoutjson.systemoutjson0.publickey
+      gpgKeyName:
+        from: result.systemoutjson.systemoutjson0.name
   # Prepare VCS Server configuration for the project
   - script: |-
       /bin/bash -c cat <<- EOF > /tmp/project_vcs_{{.input.cds_project}}.yml
@@ -40,6 +48,8 @@ steps:
         username: "{{.input.git_user}}"
         token: "{{.input.git_password}}"
         sshKeyName: "{{.sshKeyName}}"
+        gpgKeyName: "{{.gpgKeyName}}"
+        emailAddress: "{{.input.git_emailAddress}}"
       EOF
   # Import VCS Server configuration on the project
   - script: >
@@ -62,36 +72,63 @@ steps:
         - role: read
           projects: [{{.input.cds_project}}]
           users: [ {{.cds_user.username}} ]
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}
         - role: manage
           projects: [{{.input.cds_project}}]
           users: [{{.cds_user.username}}]
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}
         - role: manage-worker-model
           projects: [{{.input.cds_project}}]
           users: [{{.cds_user.username}}]
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}
         - role: manage-action
           projects: [{{.input.cds_project}}]
           users: [{{.cds_user.username}}]
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}
         - role: manage-workflow
           projects: [{{.input.cds_project}}]
           users: [{{.cds_user.username}}]
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}
         - role: manage-workflow-template
           projects: [{{.input.cds_project}}]
           users: [{{.cds_user.username}}]
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}
       workflows:
         - role: trigger
           all_users: true
           all_workflows: true
           project: {{.input.cds_project}}
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}
       variablesets:
         - role: use
           all_users: true
           all_variablesets: true
-          project: {{.input.cds_project}}   
+          project: {{.input.cds_project}}
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}   
       regions:
         - role: execute
           all_users: true
           organizations: [default]
           region: {{.input.cds_region}}
+          vcs_users:
+          - server: my_vcs_server
+            username: {{.input.git_user}}
       region_projects:
         - role: execute
           region: {{.input.cds_region}}

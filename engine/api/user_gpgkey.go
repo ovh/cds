@@ -44,7 +44,6 @@ func (api *API) getUserGPGKeyHandler() ([]service.RbacChecker, service.Handler) 
 				return err
 			}
 			return service.WriteJSON(w, gpgKey, http.StatusOK)
-
 		}
 }
 

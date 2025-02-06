@@ -21,9 +21,6 @@ import (
 
 type EntityFinder struct {
 	currentProject        string
-	currentUserID         string
-	currentUserName       string
-	isAdminWithMFA        bool
 	currentVCS            sdk.VCSProject
 	currentRepo           sdk.ProjectRepository
 	currentRef            string
@@ -41,14 +38,13 @@ type EntityFinder struct {
 	workflowCache         map[string]sdk.V2Workflow
 	plugins               map[string]sdk.GRPCPlugin
 	libraryProject        string
+	initiator             sdk.V2Initiator
 }
 
-func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser, isAdminWithMFA bool, libraryProjectKey string) *EntityFinder {
+func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, i sdk.V2Initiator, libraryProjectKey string) *EntityFinder {
+	log.Debug(context.Background(), "NewEntityFinder - initiator: %+v", i)
 	return &EntityFinder{
 		currentProject:        pkey,
-		currentUserID:         u.ID,
-		currentUserName:       u.Username,
-		isAdminWithMFA:        isAdminWithMFA,
 		currentVCS:            vcsServer,
 		currentRepo:           repo,
 		currentRef:            currentRef,
@@ -66,6 +62,7 @@ func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectReposi
 		repoDefaultRefCache:   make(map[string]string),
 		plugins:               make(map[string]sdk.GRPCPlugin),
 		libraryProject:        libraryProjectKey,
+		initiator:             i,
 	}
 }
 
@@ -164,14 +161,24 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 	// If no project key in path, get it from workflow run
 	if projKey == "" || projKey == ef.currentProject {
 		projKey = ef.currentProject
-	} else if !ef.isAdminWithMFA {
+	} else if !ef.initiator.IsAdminWithMFA {
 		// Verify project read permission
-		can, err := rbac.HasRoleOnProjectAndUserID(ctx, db, sdk.ProjectRoleRead, ef.currentUserID, projKey)
-		if err != nil {
-			return "", "", err
-		}
-		if !can {
-			return "", fmt.Sprintf("user %s do not have the permission to access %s", ef.currentUserName, name), nil
+		if ef.initiator.IsUser() {
+			can, err := rbac.HasRoleOnProjectAndUserID(ctx, db, sdk.ProjectRoleRead, ef.initiator.UserID, projKey)
+			if err != nil {
+				return "", "", err
+			}
+			if !can {
+				return "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+			}
+		} else {
+			can, err := rbac.HasRoleOnProjectAndVCSUser(ctx, db, sdk.ProjectRoleRead, sdk.RBACVCSUser{VCSServer: ef.initiator.VCS, VCSUsername: ef.initiator.VCSUsername}, projKey)
+			if err != nil {
+				return "", "", err
+			}
+			if !can {
+				return "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+			}
 		}
 	}
 

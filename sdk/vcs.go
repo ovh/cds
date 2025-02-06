@@ -210,14 +210,25 @@ type VCSProject struct {
 
 type VCSAuthProject struct {
 	// VCS Authentication
-	Username   string `json:"username,omitempty" db:"-"`
-	Token      string `json:"token,omitempty" db:"-"`
-	SSHKeyName string `json:"sshKeyName,omitempty" db:"-"`
+	Username     string `json:"username,omitempty" db:"-"`
+	Token        string `json:"token,omitempty" db:"-"`
+	SSHKeyName   string `json:"sshKeyName,omitempty" db:"-"`
+	GPGKeyName   string `json:"gpgKeyName,omitempty" db:"-"`
+	EmailAddress string `json:"emailAddress,omitempty" db:"-"`
 
 	// Used by gerrit
 	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
 	SSHPort       int    `json:"sshPort,omitempty" db:"-"`
 	SSHPrivateKey string `json:"sshPrivateKey,omitempty" db:"-"`
+}
+
+type VCSUserGPGKey struct {
+	ProjectKey     string `json:"project_key"`
+	VCSProjectName string `json:"vcs_project_name"`
+	Username       string `json:"username"`
+	KeyName        string `json:"gpg_key_name"`
+	KeyID          string `json:"key_id"`
+	PublicKey      string `json:"public_key"`
 }
 
 type VCSOptionsProject struct {

@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
@@ -23,26 +24,30 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 	db.Exec("DELETE FROM v2_workflow_run_job")
 
 	admin, _ := assets.InsertAdminUser(t, db)
+
+	admin, _ = user.LoadByID(ctx, db, admin.ID, user.LoadOptions.WithContacts)
+
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   0,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.StatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -63,11 +68,13 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -84,11 +91,13 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 
@@ -125,22 +134,26 @@ func TestDisabledDeadWorkers(t *testing.T) {
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   0,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -161,11 +174,13 @@ func TestDisabledDeadWorkers(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -182,11 +197,13 @@ func TestDisabledDeadWorkers(t *testing.T) {
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
 		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 

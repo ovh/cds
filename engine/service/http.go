@@ -264,8 +264,6 @@ func CheckRequestSignatureMiddleware(pubKey *rsa.PublicKey) Middleware {
 		if err := verifier.Verify(req); err != nil {
 			return ctx, sdk.NewError(sdk.ErrUnauthorized, err)
 		}
-
-		log.Debug(ctx, "Request has been successfully verified")
 		return ctx, nil
 	}
 }

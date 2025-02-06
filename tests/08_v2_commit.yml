@@ -1,8 +1,8 @@
-name: Checkout plugin
+name: Commit
 vars:
-  cds_project: "ITV2CHECKOUT"
-  git_repo: "it_v2_checkout"
-  cds_workflow: "WorkflowCheckout"
+  cds_project: "ITV2COMMIT"
+  git_repo: "it_v2_commit"
+  cds_workflow: "WorkflowCommit"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
 
 testcases:
@@ -60,12 +60,13 @@ testcases:
           type: docker
           spec:
             image: buildpack-deps:buster
-        workflows/checkout.yaml:
+        workflows/commit.yaml:
           name: {{.cds_workflow}}
           on:
             push:
               branches:
               - ma*
+              - test-commit-1
               tags:
               - v*
           jobs:
@@ -76,10 +77,25 @@ testcases:
               steps:
                 - id: checkout
                   uses: actions/checkout
-                - id: gitvariables
+                - id: gpg
                   run: |-
                     #!/bin/bash -x
-                    env | grep GIT
+                    gpg -k
+                - id: gitconfig
+                  run: |-
+                    #!/bin/bash -x
+                    git config --list
+                - id: commit
+                  run: |
+                    #!/bin/bash
+                    git checkout -b test-commit-${{cds.run_number}}
+                    echo "test-commit-${{cds.run_number}}" > test.txt
+                    git add test.txt
+                    git commit -m "test-commit-${{cds.run_number}}"
+                - id: push
+                  run: |
+                    #!/bin/bash
+                    git push -u -f origin test-commit-${{cds.run_number}}
 
     - name: Trigger manually an analysis
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis trigger {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -107,6 +123,13 @@ testcases:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
+    - name: Get the GPG Key name
+      script: |-
+        {{.cdsctl}} -f {{.cdsctl.config}} project keys list {{.cds_project}} --filter type=pgp --format json
+      vars:
+        gpgKeyName:
+          from: result.systemoutjson.systemoutjson0.name
+
     - name: Download and check logs
       script: |-
         #!/bin/bash
@@ -114,48 +137,41 @@ testcases:
         FILE=/tmp/`uuidgen`
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
-        # Check checkout log content
-        cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout completed"
-        # Check checkout log content 2
-        cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout branch master"
-        # Check gitvariables log content to check SEMVER variables are available
-        cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep SEMVER
+
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout completed"
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout branch master"
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Setting up git config"
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Installing GPG Key"
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "user.signingkey"
+        
+        cat {{.cds_workflow}}-1-1-init-gpg | grep "{{.gpgKeyName}}"
+
+    - name: Check commit signature
+      script: |-
+        #!/bin/bash
+        git log --show-signature --pretty=oneline -1 | cat - | grep "gpg: Signature made"
+
       retry: 60
       delay: 1
 
-    - name: Create and push a tag
-      script: cd /tmp/repos/{{.git_repo}} && git tag -s -u {{.gpg.key_id}} v0.1.0 -m "Creating tag v.0.1.0" && git push --tags
-
-    - name: Check CDS project analyses status for tag
+    - name: Check CDS that analyses status are now Up tp 5. We should find a new one on branch refs/heads/test-commit-1 and refs/heads/test-commit-2
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 4
+        - result.systemoutjson ShouldHaveLength 5
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson3.status ShouldEqual "Success"
-      retry: 300
+        - result.systemoutjson.systemoutjson3.ref ShouldEqual "refs/heads/test-commit-1"
+        - result.systemoutjson.systemoutjson4.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson4.ref ShouldEqual "refs/heads/test-commit-2"
+      retry: 150
       delay: 1
 
-    - name: Check that the CDS workflow has 2 executions and are Success
+    - name: Check that the CDS workflow has a new execution and is successful
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 2
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 150
-      delay: 1
-      vars:
-        workflowRunID:
-          from: result.systemoutjson.systemoutjson0.id
-
-    - name: Download and check logs
-      script: |-
-        #!/bin/bash
-        set -e
-        FILE=/tmp/`uuidgen`
-        mkdir -p $FILE && cd $FILE
-        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
-        # Check checkout tag log content
-        cat {{.cds_workflow}}-2-1-init-checkout && cat {{.cds_workflow}}-2-1-init-checkout | grep "Checkout completed"
-        # Check checkout tag log content 2
-        cat {{.cds_workflow}}-2-1-init-checkout && cat {{.cds_workflow}}-2-1-init-checkout | grep "Checkout tag v0.1.0"
-      retry: 60
+      retry: 10
       delay: 1

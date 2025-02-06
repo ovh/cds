@@ -74,14 +74,14 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 			}
 
 			resp := sdk.HookRetrieveUserResponse{}
-			u, _, _, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
+			initiator, _, _, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
 			if err != nil {
 				return err
 			}
-			if u != nil {
-				resp.UserID = u.ID
-				resp.Username = u.Username
-			}
+			resp.Initiator = initiator
+
+			log.Debug(ctx, "postRetrieveEventUserHandler:  vcs: %s, repo: %s, commit: %s => intiator: %+v", vcsProjectWithSecret.Name, r.RepositoryName, r.Commit, initiator)
+
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
 }

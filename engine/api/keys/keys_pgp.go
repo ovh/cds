@@ -98,6 +98,7 @@ func GeneratePGPKeyPair(name, comment, email string) (sdk.Key, error) {
 		return k, err
 	}
 	k.KeyID = key.PrimaryKey.KeyIdShortString()
+	k.LongKeyID = key.PrimaryKey.KeyIdString()
 
 	bufPrivate, err := generatePGPPrivateKey(key)
 	if err != nil {
