@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk/telemetry"
 	"time"
+
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -55,6 +56,11 @@ func getAnalysis(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 	if !isValid {
 		log.Error(ctx, "project_repository_analysis %d data corrupted", dbData.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	if dbData.Data.Initiator == nil {
+		dbData.Data.Initiator = &sdk.V2Initiator{
+			UserID: dbData.Data.DeprecatedCDSUserID,
+		}
 	}
 	return &dbData.ProjectRepositoryAnalysis, nil
 }

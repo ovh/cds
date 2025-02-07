@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -26,23 +27,30 @@ func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters) (
 				(
 					SELECT 'project' AS type, projectkey AS id, name AS label, null AS variants
 					FROM project
-					WHERE projectkey = ANY(:projects)
+					WHERE
+						projectkey = ANY(:projects)
+						AND (array_length(:types::text[], 1) IS NULL OR 'project' = ANY(:types))
 				)
 				UNION
 				(
-					SELECT 'workflow-v2' AS type, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, jsonb_agg(entity.ref) AS variants
+					SELECT 'workflow' AS type, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, jsonb_agg(entity.ref) AS variants
 					FROM entity
 					JOIN project_repository ON entity.project_repository_id = project_repository.id
 					JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
-					WHERE entity.type = 'Workflow' AND entity.project_key = ANY(:projects)
+					WHERE
+						entity.type = 'Workflow'
+						AND entity.project_key = ANY(:projects)
+						AND (array_length(:types::text[], 1) IS NULL OR 'workflow' = ANY(:types))
 					GROUP BY entity.project_key, vcs_project.name, project_repository.name, entity.type, entity.name
 				)
 				UNION
 				(
-					SELECT 'workflow' AS type, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
+					SELECT 'workflow-legacy' AS type, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
 					FROM workflow
 					JOIN project ON project.id = workflow.project_id
-					WHERE project.projectkey = ANY(:projects)
+					WHERE
+						project.projectkey = ANY(:projects)
+						AND (array_length(:types::text[], 1) IS NULL OR 'workflow-legacy' = ANY(:types))
 				)
 			)
 		SELECT COUNT(1)
@@ -52,6 +60,7 @@ func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters) (
 
 	count, err := db.SelectInt(query, map[string]interface{}{
 		"projects": pq.StringArray(filters.Projects),
+		"types":    pq.StringArray(filters.Types),
 		"query":    "%" + strings.ToLower(filters.Query) + "%",
 	})
 	return count, sdk.WithStack(err)
@@ -74,23 +83,30 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 				(
 					SELECT 'project' AS type, projectkey AS id, name AS label, null AS variants
 					FROM project
-					WHERE projectkey = ANY(:projects)
-				)	
+					WHERE
+						projectkey = ANY(:projects)
+						AND (array_length(:types::text[], 1) IS NULL OR 'project' = ANY(:types))
+				)
 				UNION
 				(
-					SELECT 'workflow-v2' AS type, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, jsonb_agg(entity.ref) AS variants
+					SELECT 'workflow' AS type, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, jsonb_agg(entity.ref) AS variants
 					FROM entity
 					JOIN project_repository ON entity.project_repository_id = project_repository.id
 					JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
-					WHERE entity.type = 'Workflow' AND entity.project_key = ANY(:projects)
+					WHERE
+						entity.type = 'Workflow'
+						AND entity.project_key = ANY(:projects)
+						AND (array_length(:types::text[], 1) IS NULL OR 'workflow' = ANY(:types))
 					GROUP BY entity.project_key, vcs_project.name, project_repository.name, entity.type, entity.name
 				)
 				UNION
 				(
-					SELECT 'workflow' AS type, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
+					SELECT 'workflow-legacy' AS type, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
 					FROM workflow
 					JOIN project ON project.id = workflow.project_id
-					WHERE project.projectkey = ANY(:projects)
+					WHERE
+						project.projectkey = ANY(:projects)
+						AND (array_length(:types::text[], 1) IS NULL OR 'workflow-legacy' = ANY(:types))
 				)
 			)
 		SELECT type, id, label, variants, CASE
@@ -99,7 +115,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 			END AS priority
 		FROM results
 		WHERE LOWER(label) LIKE :query OR LOWER(id) LIKE :query
-		ORDER BY priority ASC, CHAR_LENGTH(label) DESC
+		ORDER BY priority ASC, CHAR_LENGTH(label) ASC
 		LIMIT :limit OFFSET :offset
 	`
 
@@ -107,10 +123,14 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 
 	if _, err := db.Select(&res, query, map[string]interface{}{
 		"projects": pq.StringArray(filters.Projects),
+		"types":    pq.StringArray(filters.Types),
 		"query":    "%" + strings.ToLower(filters.Query) + "%",
 		"limit":    limit,
 		"offset":   offset,
 	}); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
 		return nil, sdk.WithStack(err)
 	}
 

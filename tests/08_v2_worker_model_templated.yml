@@ -15,23 +15,6 @@ testcases:
   - name: "Display username"
     info: "Connected CDS user is {{.cdsUser}}"
   
-  - type: v2_create_project
-    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-    cds_project: "{{.cds_project}}"
-    git_host: "{{.git.host}}"
-    git_user: "{{.git.user}}"
-    git_password: "{{.git.password}}"
-    cds_region: "{{.cds.region}}"
-
-  - type: v2_add_git_repo
-    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-    cds_project: "{{.cds_project}}"
-    cds_hook_url: "{{.gitea.hook.url}}"
-    git_host: "{{.git.host}}"
-    git_user: "{{.git.user}}"
-    git_password: "{{.git.password}}"
-    git_repo: "{{.git_repo}}"
-
   - type: v2_install_gpg_key
     cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
     gpg_key_id: "{{.gpg.key_id}}"
@@ -41,6 +24,24 @@ testcases:
     vars:
       emailaddress:
         from: result.emailaddress
+
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+    git_emailAddress: "{{.emailaddress}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo}}"
 
 - name: Push workflow files
   steps:

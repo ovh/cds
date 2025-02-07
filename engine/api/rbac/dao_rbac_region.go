@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -57,6 +58,12 @@ func getAllRBACRegions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 	return regionsFiltered, nil
 }
 
+func LoadRegionIDsByRoleAndVCSUSer(ctx context.Context, db gorp.SqlExecutor, role string, user sdk.RBACVCSUser) ([]sdk.RBACRegion, error) {
+	btes, _ := json.Marshal([]sdk.RBACVCSUser{user})
+	q := gorpmapping.NewQuery(`SELECT * from rbac_region WHERE role = $1 AND vcs_users::JSONB @> $2`).Args(role, string(btes))
+	return getAllRBACRegions(ctx, db, q)
+}
+
 func LoadRegionIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]sdk.RBACRegion, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRegionIDsByRoleAndUserID")
 	defer next()
@@ -93,9 +100,8 @@ func LoadRegionIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role
 	if err != nil {
 		return nil, err
 	}
-	for _, rrau := range rbacRegionsAllUsers {
-		rbacRegions = append(rbacRegions, rrau)
-	}
+	rbacRegions = append(rbacRegions, rbacRegionsAllUsers...)
+
 	return rbacRegions, nil
 }
 

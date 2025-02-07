@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishEntityEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, vcsName, repoName string, ent sdk.Entity, u *sdk.AuthentifiedUser) {
+func PublishEntityEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, vcsName, repoName string, ent sdk.Entity, u *sdk.V2Initiator) {
 	bts, _ := json.Marshal(ent)
 	e := sdk.EntityEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
@@ -27,8 +27,8 @@ func PublishEntityEvent(ctx context.Context, store cache.Store, eventType sdk.Ev
 	}
 	// User is nil for deletion (entity deletion is initiated by CDS itself)
 	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
+		e.UserID = u.UserID
+		e.Username = u.Username()
 	}
 	publish(ctx, store, e)
 }

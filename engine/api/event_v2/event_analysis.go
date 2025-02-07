@@ -28,7 +28,7 @@ func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoN
 	publish(ctx, store, e)
 }
 
-func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u sdk.AuthentifiedUser) {
+func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u *sdk.V2Initiator) {
 	bts, _ := json.Marshal(a)
 	e := sdk.AnalysisEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
@@ -43,8 +43,8 @@ func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoNa
 		VCSName:    vcsName,
 		Repository: repoName,
 		Status:     a.Status,
-		UserID:     u.ID,
-		Username:   u.Username,
+		UserID:     u.UserID,
+		Username:   u.Username(),
 	}
 	publish(ctx, store, e)
 }
