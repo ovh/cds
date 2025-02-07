@@ -25,7 +25,6 @@ import (
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
@@ -37,7 +36,6 @@ import (
 
 type prepareJobData struct {
 	wrEnqueue       sdk.V2WorkflowRunEnqueue
-	user            sdk.AuthentifiedUser
 	runJobContext   sdk.WorkflowRunJobsContext
 	existingRunJobs []sdk.V2WorkflowRunJob
 	jobID           string
@@ -102,6 +100,10 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 		if err := api.Cache.DequeueWithContext(ctx, workflow_v2.WorkflowEngineKey, 250*time.Millisecond, &wrEnqueue); err != nil {
 			log.Error(ctx, "V2WorkflowRunEngine> DequeueWithContext err: %v", err)
 			continue
+		}
+		// Compatibility code
+		if wrEnqueue.DeprecatedUserID != "" && wrEnqueue.Initiator.UserID == "" {
+			wrEnqueue.Initiator.UserID = wrEnqueue.DeprecatedUserID
 		}
 		ctxTrigger := context.WithValue(ctx, cdslog.WorkflowRunID, wrEnqueue.RunID)
 		if err := api.workflowRunV2Trigger(ctxTrigger, wrEnqueue); err != nil {
@@ -170,11 +172,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return nil
 	}
 
-	u, err := user.LoadByID(ctx, api.mustDB(), wrEnqueue.UserID, user.LoadOptions.WithContacts)
-	if err != nil {
-		return err
-	}
-
 	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), run.ID, run.RunAttempt)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load workflow run results for run %s", wrEnqueue.RunID)
@@ -200,7 +197,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	jobsToQueue, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), wrEnqueue, run, allRunJobs, allrunJobsMap, runJobsContexts, u, api.Config.Workflow.JobDefaultRegion)
+	jobsToQueue, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), wrEnqueue, run, allRunJobs, allrunJobsMap, runJobsContexts, api.Config.Workflow.JobDefaultRegion)
 	if errRetrieve != nil {
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -219,7 +216,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
-		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, *u)
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 		return errRetrieve
 	}
 
@@ -238,7 +235,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 					Level:         sdk.WorkflowRunInfoLevelError,
 					Message:       fmt.Sprintf("variable set %s not found on project", vs),
 				},
-			}, allrunJobsMap, runResults, u)
+			}, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 		}
 		vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID)
 		if err != nil {
@@ -255,11 +252,11 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("unable to compute variableset into job context: %v", err),
 			},
-		}, allrunJobsMap, runResults, u)
+		}, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 	}
 
 	// Compute worker model / region on runJobs if needed
-	wref, err := NewWorkflowRunEntityFinder(ctx, api.mustDB(), *proj, *run, *repo, *vcsServer, run.WorkflowRef, run.WorkflowSha, *u, wrEnqueue.IsAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
+	wref, err := NewWorkflowRunEntityFinder(ctx, api.mustDB(), *proj, *run, *repo, *vcsServer, run.WorkflowRef, run.WorkflowSha, api.Config.WorkflowV2.LibraryProjectKey, &wrEnqueue.Initiator)
 	if err != nil {
 		return err
 	}
@@ -273,13 +270,13 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			hasTemplatedMatrixedJob = true
 		}
 	}
-	runJobs, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, proj, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, *u, api.Config.Workflow.JobDefaultRegion)
+	runJobs, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, proj, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, api.Config.Workflow.JobDefaultRegion)
 	if err != nil {
 		return err
 	}
 
 	if errorMsg != nil {
-		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, errorMsg, allrunJobsMap, runResults, u)
+		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, errorMsg, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 	}
 
 	tx, errTx := api.mustDB().Begin()
@@ -313,7 +310,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 				Level:            sdk.WorkflowRunInfoLevelInfo,
 				IssuedAt:         time.Now(),
 				WorkflowRunJobID: rj.ID,
-				Message:          u.GetFullname() + " triggers manually this job",
+				Message:          wrEnqueue.Initiator.Username() + " triggers manually this job",
 			}
 			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &jobInfo); err != nil {
 				return err
@@ -364,7 +361,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	if run.Status.IsTerminated() {
 		// Send event
-		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, *u)
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 
 		// Send event to hook uservice
 		hookServices, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
@@ -384,13 +381,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			WorkflowRef:        run.Contexts.Git.Ref,
 			Request: sdk.HookWorkflowRunEventRequest{
 				WorkflowRun: sdk.HookWorkflowRunEventRequestWorkflowRun{
-					CDS:        run.Contexts.CDS,
-					Git:        run.Contexts.Git,
-					UserID:     run.UserID,
-					UserName:   run.Username,
-					Conclusion: string(run.Status),
-					CreatedAt:  run.Started,
-					Jobs:       make(map[string]sdk.HookWorkflowRunEventJob),
+					CDS:                run.Contexts.CDS,
+					Git:                run.Contexts.Git,
+					DeprecatedUserID:   run.Initiator.UserID,
+					DeprecatedUserName: run.Initiator.Username(),
+					Conclusion:         string(run.Status),
+					CreatedAt:          run.Started,
+					Jobs:               make(map[string]sdk.HookWorkflowRunEventJob),
+					Initiator:          wrEnqueue.Initiator,
 				},
 			},
 		}
@@ -407,7 +405,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	if hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedMatrixedJob {
 		// Re enqueue workflow to trigger job after
-		api.EnqueueWorkflowRun(ctx, run.ID, wrEnqueue.UserID, run.WorkflowName, run.RunNumber, wrEnqueue.IsAdminWithMFA)
+		api.EnqueueWorkflowRun(ctx, run.ID, wrEnqueue.Initiator, run.WorkflowName, run.RunNumber)
 	}
 
 	// Send to websocket
@@ -422,7 +420,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	return nil
 }
 
-func failRunWithMessage(ctx context.Context, db *gorp.DbMap, cache cache.Store, run *sdk.V2WorkflowRun, msgs []sdk.V2WorkflowRunInfo, jobRunMap map[string]sdk.V2WorkflowRunJob, runResult []sdk.V2WorkflowRunResult, u *sdk.AuthentifiedUser) error {
+func failRunWithMessage(ctx context.Context, db *gorp.DbMap, cache cache.Store, run *sdk.V2WorkflowRun, msgs []sdk.V2WorkflowRunInfo, jobRunMap map[string]sdk.V2WorkflowRunJob, runResult []sdk.V2WorkflowRunResult, initiator *sdk.V2Initiator) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -440,7 +438,7 @@ func failRunWithMessage(ctx context.Context, db *gorp.DbMap, cache cache.Store, 
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(err)
 	}
-	event_v2.PublishRunEvent(ctx, cache, sdk.EventRunEnded, *run, jobRunMap, runResult, *u)
+	event_v2.PublishRunEvent(ctx, cache, sdk.EventRunEnded, *run, jobRunMap, runResult, initiator)
 	return err
 }
 
@@ -737,7 +735,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	return nil
 }
 
-func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, rj *sdk.V2WorkflowRunJob, defaultRegion string, regionPermCache map[string]*sdk.V2WorkflowRunJobInfo, jobContext sdk.WorkflowRunJobsContext, wrEnqueue sdk.V2WorkflowRunEnqueue, u sdk.AuthentifiedUser) (*sdk.V2WorkflowRunJobInfo, bool) {
+func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, rj *sdk.V2WorkflowRunJob, defaultRegion string, regionPermCache map[string]*sdk.V2WorkflowRunJobInfo, jobContext sdk.WorkflowRunJobsContext, wrEnqueue sdk.V2WorkflowRunEnqueue) (*sdk.V2WorkflowRunJobInfo, bool) {
 	runUpdated := false
 	if rj.Status.IsTerminated() {
 		return nil, false
@@ -838,7 +836,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 	jobInfoMsg, has := regionPermCache[rj.Region]
 	if !has {
 		var err error
-		jobInfoMsg, err = checkUserRegionRight(ctx, db, rj, wrEnqueue, rj.Region, u)
+		jobInfoMsg, err = checkUserRegionRight(ctx, db, rj, wrEnqueue, rj.Region)
 		if err != nil {
 			rj.Status = sdk.V2WorkflowRunJobStatusFail
 			return &sdk.V2WorkflowRunJobInfo{
@@ -846,7 +844,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 				Level:            sdk.WorkflowRunInfoLevelError,
 				WorkflowRunJobID: rj.ID,
 				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("job %s: unable to check right for user %s: %v", rj.JobID, u.Username, err),
+				Message:          fmt.Sprintf("job %s: unable to check right for user %s: %v", rj.JobID, rj.Initiator.Username(), err),
 			}, false
 		}
 		regionPermCache[rj.Region] = jobInfoMsg
@@ -943,7 +941,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 	return nil, runUpdated
 }
 
-func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, existingRunJobs []sdk.V2WorkflowRunJob, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]JobToTrigger, runJobsContexts sdk.JobsResultContext, u sdk.AuthentifiedUser, defaultRegion string) ([]sdk.V2WorkflowRunJob, map[string]sdk.V2WorkflowRunJobInfo, []sdk.V2WorkflowRunInfo, bool, error) {
+func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, existingRunJobs []sdk.V2WorkflowRunJob, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]JobToTrigger, runJobsContexts sdk.JobsResultContext, defaultRegion string) ([]sdk.V2WorkflowRunJob, map[string]sdk.V2WorkflowRunJobInfo, []sdk.V2WorkflowRunInfo, bool, error) {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	runJobsInfo := make(map[string]sdk.V2WorkflowRunJobInfo)
 	hasToUpdateRun := false
@@ -957,18 +955,19 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		// If no step && no template: rj is success
 		if (jobToTrigger.Status.IsTerminated() && jobToTrigger.Job.From != "") || (len(jobDef.Steps) == 0 && jobDef.From == "") {
 			runJob := sdk.V2WorkflowRunJob{
-				WorkflowRunID: run.ID,
-				Status:        sdk.V2WorkflowRunJobStatusSuccess,
-				JobID:         jobID,
-				Job:           jobDef,
-				UserID:        wrEnqueue.UserID,
-				Username:      u.Username,
-				AdminMFA:      wrEnqueue.IsAdminWithMFA,
-				ProjectKey:    run.ProjectKey,
-				Region:        jobDef.Region,
-				WorkflowName:  run.WorkflowName,
-				RunNumber:     run.RunNumber,
-				RunAttempt:    run.RunAttempt,
+				WorkflowRunID:      run.ID,
+				Status:             sdk.V2WorkflowRunJobStatusSuccess,
+				JobID:              jobID,
+				Job:                jobDef,
+				DeprecatedUserID:   wrEnqueue.Initiator.UserID,
+				DeprecatedUsername: wrEnqueue.Initiator.Username(),
+				DeprecatedAdminMFA: wrEnqueue.Initiator.IsAdminWithMFA,
+				ProjectKey:         run.ProjectKey,
+				Region:             jobDef.Region,
+				WorkflowName:       run.WorkflowName,
+				RunNumber:          run.RunNumber,
+				RunAttempt:         run.RunAttempt,
+				Initiator:          wrEnqueue.Initiator,
 			}
 			if jobToTrigger.Status.IsTerminated() {
 				runJob.Status = jobToTrigger.Status
@@ -1040,19 +1039,20 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 
 		if len(matrixPermutation) == 0 {
 			runJob := sdk.V2WorkflowRunJob{
-				ID:            sdk.UUID(),
-				WorkflowRunID: run.ID,
-				Status:        jobToTrigger.Status,
-				JobID:         jobID,
-				Job:           jobDef,
-				UserID:        wrEnqueue.UserID,
-				Username:      u.Username,
-				AdminMFA:      wrEnqueue.IsAdminWithMFA,
-				ProjectKey:    run.ProjectKey,
-				Region:        jobDef.Region,
-				WorkflowName:  run.WorkflowName,
-				RunNumber:     run.RunNumber,
-				RunAttempt:    run.RunAttempt,
+				ID:                 sdk.UUID(),
+				WorkflowRunID:      run.ID,
+				Status:             jobToTrigger.Status,
+				JobID:              jobID,
+				Job:                jobDef,
+				DeprecatedUserID:   wrEnqueue.Initiator.UserID,
+				DeprecatedUsername: wrEnqueue.Initiator.Username(),
+				DeprecatedAdminMFA: wrEnqueue.Initiator.IsAdminWithMFA,
+				ProjectKey:         run.ProjectKey,
+				Region:             jobDef.Region,
+				WorkflowName:       run.WorkflowName,
+				RunNumber:          run.RunNumber,
+				RunAttempt:         run.RunAttempt,
+				Initiator:          wrEnqueue.Initiator,
 			}
 			// If the current job was a matrix, skip it
 			if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
@@ -1078,7 +1078,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					runJob.GateInputs = jobEvent.Inputs
 				}
 				runJobContext.Gate = runJob.GateInputs
-				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue, u)
+				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue)
 				if runJobInfo != nil {
 					runJobsInfo[runJob.ID] = *runJobInfo
 				}
@@ -1096,7 +1096,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 
 			jobData := prepareJobData{
 				wrEnqueue:       wrEnqueue,
-				user:            u,
 				runJobContext:   runJobContext,
 				existingRunJobs: existingRunJobs,
 				jobID:           jobID,
@@ -1168,7 +1167,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 			interpolatedParams[k] = value
 		}
 
-		entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, data.jobToTrigger.Job, run, interpolatedParams, data.user, data.wrEnqueue.IsAdminWithMFA)
+		entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, data.jobToTrigger.Job, run, interpolatedParams)
 		if err != nil {
 			return []sdk.V2WorkflowRunInfo{{
 				WorkflowRunID: run.ID,
@@ -1210,7 +1209,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		}
 	}
 
-	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job, data.user, data.allVariableSets, data.defaultRegion)
+	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job, data.allVariableSets, data.defaultRegion)
 	if err != nil {
 
 	}
@@ -1264,20 +1263,21 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	for _, m := range permutations {
 		permJobDef := data.jobToTrigger.Job.Copy()
 		runJob := sdk.V2WorkflowRunJob{
-			ID:            sdk.UUID(),
-			WorkflowRunID: run.ID,
-			Status:        data.jobToTrigger.Status,
-			JobID:         data.jobID,
-			Job:           permJobDef,
-			UserID:        data.wrEnqueue.UserID,
-			Username:      data.user.Username,
-			AdminMFA:      data.wrEnqueue.IsAdminWithMFA,
-			ProjectKey:    run.ProjectKey,
-			Region:        permJobDef.Region,
-			WorkflowName:  run.WorkflowName,
-			RunNumber:     run.RunNumber,
-			RunAttempt:    run.RunAttempt,
-			Matrix:        sdk.JobMatrix{},
+			ID:                 sdk.UUID(),
+			WorkflowRunID:      run.ID,
+			Status:             data.jobToTrigger.Status,
+			JobID:              data.jobID,
+			Job:                permJobDef,
+			DeprecatedUserID:   data.wrEnqueue.Initiator.UserID,
+			DeprecatedUsername: data.wrEnqueue.Initiator.Username(),
+			DeprecatedAdminMFA: data.wrEnqueue.Initiator.IsAdminWithMFA,
+			ProjectKey:         run.ProjectKey,
+			Region:             permJobDef.Region,
+			WorkflowName:       run.WorkflowName,
+			RunNumber:          run.RunNumber,
+			RunAttempt:         run.RunAttempt,
+			Matrix:             sdk.JobMatrix{},
+			Initiator:          data.wrEnqueue.Initiator,
 		}
 		for k, v := range m {
 			runJob.Matrix[k] = v
@@ -1296,7 +1296,7 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		}
 		data.runJobContext.Gate = runJob.GateInputs
 		data.runJobContext.Matrix = runJob.Matrix
-		runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, data.defaultRegion, data.regionPermCache, data.runJobContext, data.wrEnqueue, data.user)
+		runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, data.defaultRegion, data.regionPermCache, data.runJobContext, data.wrEnqueue)
 		if runJobInfo != nil {
 			runJobsInfo[runJob.ID] = *runJobInfo
 		}
@@ -1459,7 +1459,7 @@ type JobToTrigger struct {
 }
 
 // Return jobToQueue, skippedJob, runInfos, error
-func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2WorkflowRunEnqueue, run *sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob, allrunJobsMap map[string]sdk.V2WorkflowRunJob, runJobsContexts sdk.JobsResultContext, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]JobToTrigger, []sdk.V2WorkflowRunInfo, error) {
+func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2WorkflowRunEnqueue, run *sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob, allrunJobsMap map[string]sdk.V2WorkflowRunJob, runJobsContexts sdk.JobsResultContext, defaultRegion string) (map[string]JobToTrigger, []sdk.V2WorkflowRunInfo, error) {
 	ctx, next := telemetry.Span(ctx, "retrieveJobToQueue")
 	defer next()
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
@@ -1533,7 +1533,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 		// Build job context
 		jobContext := buildContextForJob(ctx, run.WorkflowData.Workflow, runJobsContexts, run.Contexts, stages, jobID)
 
-		canBeQueued, infos, err := checkJob(ctx, db, wrEnqueue, *u, *run, jobID, &jobDef, jobContext)
+		canBeQueued, infos, err := checkJob(ctx, db, wrEnqueue, *run, jobID, &jobDef, jobContext)
 		runInfos = append(runInfos, infos...)
 		if err != nil {
 			jobToQueue[jobID] = JobToTrigger{
@@ -1560,31 +1560,52 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 	return jobToQueue, runInfos, nil
 }
 
-func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2WorkflowRunEnqueue, u sdk.AuthentifiedUser, run sdk.V2WorkflowRun, jobID string, jobDef *sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext) (bool, []sdk.V2WorkflowRunInfo, error) {
+func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2WorkflowRunEnqueue, run sdk.V2WorkflowRun, jobID string, jobDef *sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext) (bool, []sdk.V2WorkflowRunInfo, error) {
 	ctx, next := telemetry.Span(ctx, "checkJob", trace.StringAttribute(telemetry.TagJob, jobID))
 	defer next()
 
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 
 	// check varset right
-	if !wrEnqueue.IsAdminWithMFA {
+	if !wrEnqueue.Initiator.IsAdminWithMFA && !wrEnqueue.DeprecatedIsAdminWithMFA {
 		varsets := append(run.WorkflowData.Workflow.VariableSets, jobDef.VariableSets...)
-		has, vInError, err := rbac.HasRoleOnVariableSetsAndUserID(ctx, db, sdk.VariableSetRoleUse, u.ID, run.ProjectKey, varsets)
-		if err != nil {
-			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("job %s: unable to check right for user %s on varset %v: %v", jobID, u.Username, varsets, err),
-			})
-			return false, runInfos, nil
-		}
-		if !has {
-			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelWarning,
-				Message:       fmt.Sprintf("job %s: user %s does not have enough right on varset %s", jobID, u.Username, vInError),
-			})
-			return false, runInfos, nil
+
+		if wrEnqueue.Initiator.IsUser() {
+			has, vInError, err := rbac.HasRoleOnVariableSetsAndUserID(ctx, db, sdk.VariableSetRoleUse, wrEnqueue.Initiator.UserID, run.ProjectKey, varsets)
+			if err != nil {
+				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       fmt.Sprintf("job %s: unable to check right for user %s on varset %v: %v", jobID, wrEnqueue.Initiator.Username(), varsets, err),
+				})
+				return false, runInfos, nil
+			}
+			if !has {
+				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelWarning,
+					Message:       fmt.Sprintf("job %s: user %s does not have enough right on varset %s", jobID, wrEnqueue.Initiator.Username(), vInError),
+				})
+				return false, runInfos, nil
+			}
+		} else {
+			has, vInError, err := rbac.HasRoleOnVariableSetsAndVCSUser(ctx, db, sdk.VariableSetRoleUse, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername}, run.ProjectKey, varsets)
+			if err != nil {
+				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       fmt.Sprintf("job %s: unable to check right for user %s on varset %v: %v", jobID, wrEnqueue.Initiator.Username(), varsets, err),
+				})
+				return false, runInfos, nil
+			}
+			if !has {
+				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelWarning,
+					Message:       fmt.Sprintf("job %s: user %s does not have enough right on varset %s", jobID, wrEnqueue.Initiator.Username(), vInError),
+				})
+				return false, runInfos, nil
+			}
 		}
 	}
 
@@ -1598,7 +1619,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 	}
 
 	// check job condition
-	canRun, err := checkCanRunJob(ctx, db, run, inputs, *jobDef, currentJobContext, u, wrEnqueue.IsAdminWithMFA)
+	canRun, err := checkCanRunJob(ctx, db, run, inputs, *jobDef, currentJobContext, wrEnqueue.Initiator)
 	if err != nil {
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -1646,7 +1667,7 @@ func computeRunStatusFromJobsStatus(ctx context.Context, db gorp.SqlExecutor, ru
 }
 
 // Check and set default region on job
-func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2WorkflowRunJob, wrEnqueue sdk.V2WorkflowRunEnqueue, regionName string, u sdk.AuthentifiedUser) (*sdk.V2WorkflowRunJobInfo, error) {
+func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2WorkflowRunJob, wrEnqueue sdk.V2WorkflowRunEnqueue, regionName string) (*sdk.V2WorkflowRunJobInfo, error) {
 	ctx, next := telemetry.Span(ctx, "checkUserRegionRight")
 	defer next()
 
@@ -1670,16 +1691,30 @@ func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2Wo
 		}, nil
 	}
 
-	if !wrEnqueue.IsAdminWithMFA {
-		allowedRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, u.ID)
-		if err != nil {
+	if !wrEnqueue.Initiator.IsAdminWithMFA {
+		if wrEnqueue.Initiator.IsUser() {
+			allowedRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, wrEnqueue.Initiator.UserID)
+			if err != nil {
+				next()
+				return nil, err
+			}
 			next()
-			return nil, err
-		}
-		next()
-		for _, r := range allowedRegions {
-			if r.RegionID == wantedRegion.ID {
-				return nil, nil
+			for _, r := range allowedRegions {
+				if r.RegionID == wantedRegion.ID {
+					return nil, nil
+				}
+			}
+		} else {
+			allowedRegions, err := rbac.LoadRegionIDsByRoleAndVCSUSer(ctx, db, sdk.RegionRoleExecute, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername})
+			if err != nil {
+				next()
+				return nil, err
+			}
+			next()
+			for _, r := range allowedRegions {
+				if r.RegionID == wantedRegion.ID {
+					return nil, nil
+				}
 			}
 		}
 	} else {
@@ -1691,7 +1726,7 @@ func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2Wo
 		Level:            sdk.WorkflowRunInfoLevelError,
 		WorkflowRunJobID: rj.ID,
 		IssuedAt:         time.Now(),
-		Message:          fmt.Sprintf("job %s: user %s does not have enough right on region %q", rj.JobID, u.Username, rj.Region),
+		Message:          fmt.Sprintf("job %s: user %s does not have enough right on region %q", rj.JobID, wrEnqueue.Initiator.Username(), rj.Region),
 	}, nil
 }
 
@@ -1707,7 +1742,7 @@ func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) bool {
 	return true
 }
 
-func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobInputs map[string]interface{}, jobDef sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext, u sdk.AuthentifiedUser, isAdminWithMFA bool) (bool, error) {
+func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobInputs map[string]interface{}, jobDef sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext, initiator sdk.V2Initiator) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "checkJobCondition")
 	defer next()
 
@@ -1718,7 +1753,7 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 		// Check reviewers
 		reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
 		if len(gate.Reviewers.Users) > 0 {
-			reviewersChecked = sdk.IsInArray(u.GetUsername(), gate.Reviewers.Users)
+			reviewersChecked = sdk.IsInArray(initiator.Username(), gate.Reviewers.Users)
 		}
 		if !reviewersChecked {
 			for _, g := range gate.Reviewers.Groups {
@@ -1726,13 +1761,13 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 				if err != nil {
 					return false, err
 				}
-				reviewersChecked = sdk.IsInArray(u.ID, grp.Members.UserIDs())
+				reviewersChecked = sdk.IsInArray(initiator.UserID, grp.Members.UserIDs())
 				if reviewersChecked {
 					break
 				}
 			}
 		}
-		if !reviewersChecked && !isAdminWithMFA {
+		if !reviewersChecked && !initiator.IsAdminWithMFA {
 			return false, nil
 		}
 
@@ -1880,34 +1915,33 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 	if err != nil {
 		return err
 	}
-	var lastJobs sdk.V2WorkflowRunJob
+	var lastJob sdk.V2WorkflowRunJob
 	for _, rj := range runJobs {
 		if !rj.Status.IsTerminated() {
 			return nil
 		}
-		if sdk.TimeSafe(rj.Started).After(sdk.TimeSafe(lastJobs.Started)) {
-			lastJobs = rj
+		if sdk.TimeSafe(rj.Started).After(sdk.TimeSafe(lastJob.Started)) {
+			lastJob = rj
 		}
 	}
 
-	userID := lastJobs.UserID
-	adminMFA := lastJobs.AdminMFA
+	initiator := &lastJob.Initiator
 	// No job have been triggered
-	if userID == "" {
-		userID = wr.UserID
-		adminMFA = wr.AdminMFA
+	if initiator.Username() == "" {
+		initiator = wr.Initiator
 	}
 
-	api.EnqueueWorkflowRun(ctx, wr.ID, userID, wr.WorkflowName, wr.RunNumber, adminMFA)
+	api.EnqueueWorkflowRun(ctx, wr.ID, *initiator, wr.WorkflowName, wr.RunNumber)
 	return nil
 }
 
-func (api *API) EnqueueWorkflowRun(ctx context.Context, runID string, userID string, workflowName string, runNumber int64, adminMFA bool) {
+func (api *API) EnqueueWorkflowRun(ctx context.Context, runID string, initiator sdk.V2Initiator, workflowName string, runNumber int64) {
 	// Continue workflow
 	enqueueRequest := sdk.V2WorkflowRunEnqueue{
-		RunID:          runID,
-		UserID:         userID,
-		IsAdminWithMFA: adminMFA,
+		RunID:                    runID,
+		Initiator:                initiator,
+		DeprecatedUserID:         initiator.UserID,
+		DeprecatedIsAdminWithMFA: initiator.IsAdminWithMFA,
 	}
 	select {
 	case api.workflowRunTriggerChan <- enqueueRequest:

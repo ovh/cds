@@ -34,7 +34,6 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 
 	// If no hooks, we can end the process
 	if len(hre.WorkflowHooks) == 0 {
-		log.Info(ctx, "found 0 hook to trigger")
 		hre.Status = sdk.HookEventStatusDone
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err

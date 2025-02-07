@@ -26,12 +26,13 @@ func GenerateProjectDefaultKeyName(projectKey string, t KeyType) string {
 
 // Key represent a key of type SSH or GPG.
 type Key struct {
-	ID      int64   `json:"id" db:"id" cli:"-"`
-	Name    string  `json:"name" db:"name" cli:"name"`
-	Public  string  `json:"public" db:"public" cli:"publickey"`
-	Private string  `json:"private" db:"private" cli:"-"`
-	KeyID   string  `json:"keyID" db:"key_id" cli:"-"`
-	Type    KeyType `json:"type" db:"type" cli:"type"`
+	ID        int64   `json:"id" db:"id" cli:"-"`
+	Name      string  `json:"name" db:"name" cli:"name"`
+	Public    string  `json:"public" db:"public" cli:"publickey"`
+	Private   string  `json:"private" db:"private" cli:"-"`
+	KeyID     string  `json:"keyID" db:"key_id" cli:"-"`
+	Type      KeyType `json:"type" db:"type" cli:"type"`
+	LongKeyID string  `json:"long_key_id" db:"long_key_id" cli:"-"`
 }
 
 // ProjectKey represent a key attach to a project
@@ -45,6 +46,7 @@ type ProjectKey struct {
 	ProjectID int64   `json:"project_id" db:"project_id" cli:"-"`
 	Builtin   bool    `json:"-" db:"builtin" cli:"-"`
 	Disabled  bool    `json:"disabled" db:"disabled" cli:"disabled"`
+	LongKeyID string  `json:"long_key_id" db:"long_key_id" cli:"-"`
 }
 
 // ApplicationKey represent a key attach to an application
