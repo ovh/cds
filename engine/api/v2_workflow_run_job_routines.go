@@ -349,6 +349,6 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 
 	// Trigger workflow
 	event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *run, *runJob)
-	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber, runJob.AdminMFA)
+	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.Initiator, runJob.WorkflowName, runJob.RunNumber)
 	return nil
 }

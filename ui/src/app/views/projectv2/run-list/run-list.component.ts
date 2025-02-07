@@ -1,10 +1,9 @@
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
-import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom, map, Subscription } from "rxjs";
 import { Project } from "app/model/project.model";
 import { Store } from "@ngxs/store";
-import { NzAutocompleteOptionComponent, NzAutocompleteTriggerDirective } from "ng-zorro-antd/auto-complete";
 import { ActivatedRoute, Router } from "@angular/router";
 import * as actionPreferences from 'app/store/preferences.action';
 import { PreferencesState } from "app/store/preferences.state";
@@ -20,17 +19,7 @@ import { EventV2Type } from "app/model/event-v2.model";
 import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 import { ErrorUtils } from "app/shared/error.utils";
 import { ProjectV2State } from "app/store/project-v2.state";
-
-export class WorkflowRunFilter {
-	key: string;
-	options: Array<string>;
-	example: string;
-}
-
-export class WorkflowRunFilterValue {
-	key: string;
-	value: string;
-}
+import { Filter } from "../../../shared/input/input-filter.component";
 
 @Component({
 	selector: 'app-projectv2-run-list',
@@ -55,28 +44,20 @@ export class WorkflowRunFilterValue {
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestroy, AfterViewChecked {
+export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 	static PANEL_KEY = 'project-v2-run-list-sidebar';
 	static DEFAULT_SORT = 'started:desc';
 	static DEFAULT_PAGESIZE = 20;
 
-	@ViewChild('filterInput') filterInput: ElementRef;
-	@ViewChild('filterInputDirective') filterInputDirective: NzAutocompleteTriggerDirective;
 	@ViewChild('saveSearchButton') saveSearchButton: NzPopconfirmDirective;
-	@ViewChildren(NzAutocompleteOptionComponent) fromDataSourceOptions: QueryList<NzAutocompleteOptionComponent>;
 
 	loading = false;
 	totalCount: number = 0;
 	runs: Array<V2WorkflowRun> = [];
 	project: Project;
-	filtersValue: Array<WorkflowRunFilterValue> = [];
-	filters: Array<WorkflowRunFilter> = [];
-	availableFilters: Array<WorkflowRunFilter> = [];
+	filters: Array<Filter> = [];
 	filterText: string = '';
 	previousFilterText: string = null;
-	selectedFilter: WorkflowRunFilter = null;
-	textFilters = [];
-	cursorTextFilterPosition: number = 0;
 	pageIndex: number = 1;
 	panelSize: number | string;
 	searchName: string = '';
@@ -130,56 +111,12 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 		});
 	}
 
-	ngAfterViewInit(): void {
-		const callback = this.filterInputDirective.handleKeydown.bind(this.filterInputDirective);
-		this.filterInputDirective.handleKeydown = (event: KeyboardEvent): void => {
-			if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-				this.computeAvailableFilters(this.filterText);
-			}
-			if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowDown') && !this.filterInputDirective.panelOpen) {
-				this.filterInputDirective.openPanel();
-				return;
-			}
-			if (event.key === 'Enter') {
-				if (this.filterInputDirective.activeOption && this.filterInputDirective.activeOption.nzValue !== this.filterText) {
-					if (this.filterInputDirective.activeOption.nzValue.endsWith(':')) {
-						event.preventDefault();
-					}
-					this.onFilterTextChange(this.filterInputDirective.activeOption.nzValue);
-					return;
-				} else if (this.filterInputDirective.activeOption) {
-					this.submitForm();
-				}
-			}
-			if (event.key === 'Escape') {
-				this.filterInputDirective.closePanel();
-				return;
-			}
-			callback(event);
-		};
-	}
-
-	ngAfterViewChecked(): void {
-		this.fromDataSourceOptions.forEach(o => {
-			o.selectViaInteraction = () => {
-				this.onFilterTextChange(o.nzValue);
-				if (!o.nzValue.endsWith(':')) {
-					this.submitForm();
-					this.filterInputDirective.closePanel();
-				}
-			}
-		});
+	changeFilter(v: string): void {
+		this.filterText = v;
 	}
 
 	submitForm(): void {
 		this.saveSearchInQueryParams();
-	}
-
-	onClickInput(): void {
-		this.computeAvailableFilters(this.filterText);
-		if (!this.filterInputDirective.panelOpen) {
-			this.filterInputDirective.openPanel();
-		}
 	}
 
 	async loadFilters() {
@@ -187,8 +124,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 		this._cd.markForCheck();
 
 		try {
-			this.filters = await lastValueFrom(this._http.get<Array<WorkflowRunFilter>>(`/v2/project/${this.project.key}/run/filter`));
-			this.computeAvailableFilters(this.filterText);
+			this.filters = await lastValueFrom(this._http.get<Array<Filter>>(`/v2/project/${this.project.key}/run/filter`));
 		} catch (e) {
 			this._messageService.error(`Unable to list workflow runs filters: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 		}
@@ -213,7 +149,6 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 				mFilters[s[0]].push(decodeURI(s[1]));
 			}
 		});
-
 
 		let params = new HttpParams();
 		params = params.appendAll({
@@ -285,47 +220,6 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 		this.pageIndex = index;
 		this._cd.markForCheck();
 		this.saveSearchInQueryParams();
-	}
-
-	onFilterTextChange(originalText: string): void {
-		this.computeAvailableFilters(originalText);
-		this.filterText = originalText;
-		this._cd.markForCheck();
-	}
-
-	computeAvailableFilters(originalText: string): void {
-		// Get and adjust cursor position
-		const originalCursorPosition = this.filterInput.nativeElement.selectionStart;
-		this.textFilters = originalText.split(' ');
-		// Retrieve the active filter in the text
-		this.cursorTextFilterPosition = 0;
-		let count = 0;
-		this.textFilters.forEach((filter, idx) => {
-			if (idx > 0) { count++ }; // Add +1 that match the space
-			if (count <= originalCursorPosition && originalCursorPosition <= count + filter.length) {
-				this.cursorTextFilterPosition = idx;
-			}
-			count += filter.length;
-		});
-
-		const splitted = this.textFilters[this.cursorTextFilterPosition].split(':');
-		if (splitted.length === 2) {
-			// Search for existing filter key to show options
-			this.selectedFilter = Object.assign({}, this.filters.find(f => f.key === splitted[0]));
-			if (this.selectedFilter) {
-				this.selectedFilter.options = (this.selectedFilter.options ?? []).filter(o => splitted[1] === '' || o.toLowerCase().indexOf(splitted[1].toLowerCase()) !== -1);
-			}
-			this.availableFilters = [];
-		} else {
-			this.availableFilters = [].concat(this.filters);
-			this.selectedFilter = null;
-		}
-	}
-
-	computeFilterValue(filter: WorkflowRunFilter, option?: string): string {
-		const textFilters = [].concat(this.textFilters);
-		textFilters[this.cursorTextFilterPosition] = filter.key + ':' + (option ? encodeURI(option) : '');
-		return textFilters.join(' ');
 	}
 
 	panelStartResize(): void {

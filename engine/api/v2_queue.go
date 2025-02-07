@@ -162,8 +162,14 @@ func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) 
 			statuses := req.URL.Query()["status"]
 			offset := service.FormInt(req, "offset")
 			limit := service.FormInt(req, "limit")
+			if offset < 0 {
+				offset = 0
+			}
 			if limit == 0 {
 				limit = 10
+			}
+			if limit > 100 {
+				limit = 100
 			}
 
 			// Check status filter
@@ -301,8 +307,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			if err := sdk.WithStack(tx.Commit()); err != nil {
 				return err
 			}
-
-			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.UserID, jobRun.WorkflowName, jobRun.RunNumber, jobRun.AdminMFA)
+			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
 
 			api.GoRoutines.Exec(ctx, "postJobResultHandler.event", func(ctx context.Context) {
 				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)

@@ -1,8 +1,8 @@
-name: Python / Debian / Helm push
+name: Artifactory Run Result
 vars:
-  cds_project: "ITV2ARTIFACTORYPLUGINS"
-  cds_workflow: "WorkflowA"
-  git_repo: "it_v2_rt_plugins"
+  cds_project: "ITV2ARTIFACTORYPLUGINSRUNRESULT"
+  cds_workflow: "WorkflowRunResult"
+  git_repo: "it_v2_rt_plugins_run_result"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
   rt_url: "rt_url"
   rt_token: "rt_token"
@@ -24,23 +24,6 @@ testcases:
   - name: "Display username"
     info: "Connected CDS user is {{.cdsUser}}"
 
-  - type: v2_create_project
-    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-    cds_project: "{{.cds_project}}"
-    git_host: "{{.git.host}}"
-    git_user: "{{.git.user}}"
-    git_password: "{{.git.password}}"
-    cds_region: "{{.cds.region}}"
-
-  - type: v2_add_git_repo
-    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-    cds_project: "{{.cds_project}}"
-    cds_hook_url: "{{.gitea.hook.url}}"
-    git_host: "{{.git.host}}"
-    git_user: "{{.git.user}}"
-    git_password: "{{.git.password}}"
-    git_repo: "{{.git_repo}}"
-
   - type: v2_install_gpg_key
     cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
     gpg_key_id: "{{.gpg.key_id}}"
@@ -50,6 +33,24 @@ testcases:
     vars:
       emailaddress:
         from: result.emailaddress
+
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+    git_emailAddress: "{{.emailaddress}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo}}"
 
   - name: Prepare integration for project
     script: |-
@@ -106,54 +107,6 @@ testcases:
 
 - name: Push workflow file
   steps:
-  - type: v2_push_non_cds_files_on_repo
-    git_repo: "{{.git_repo}}"
-    git_host: "{{.git.host}}"
-    git_user: "{{.git.user}}"
-    git_email: "{{.Prepare-test.emailaddress}}"
-    git_password: "{{.git.password}}"
-    gpg_key_id: "{{.gpg.key_id}}"
-    files:
-      quicksample/src/quicksample.py: |
-        def quicktext():\n  print('Hello, welcome to QuickSample package.')
-      README.md: |
-        Hello
-      setup.py: |
-        import setuptools
-        setuptools.setup(
-          name=\"quicksample\",
-          version=\"0.0.1\",
-          author=\"sgu\",
-          description=\"Quicksample Test Package\",
-          long_description=\"coucou\",
-          long_description_content_type=\"text/markdown\",
-          packages=setuptools.find_packages(),
-          python_requires=\">=3.6\",
-          py_modules=[\"quicksample\"],
-          package_dir={\"\":\"quicksample/src\"},
-          install_requires=[]
-        )
-      chart/Chart.yaml:
-        apiVersion: v2
-        name: mychart
-        description: A Helm chart for Kubernetes
-        type: application
-        version: "0.1.0"
-        appVersion: "1.16.0"
-      chart/templates/deployment.yaml:
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: coucou
-        spec:
-          selector:
-            matchLabels:
-              helm.sh/chart: toto
-      chart/values.yaml:
-        replicaCount: 1
-        image:
-          repository: nginx
-          pullPolicy: IfNotPresent
   - type: v2_push_cds_files_on_repo
     git_repo: "{{.git_repo}}"
     git_host: "{{.git.host}}"
@@ -169,87 +122,11 @@ testcases:
         type: docker
         spec:
           image: buildpack-deps:buster
-      workflows/workflowA.yaml:
+      workflows/workflowResult.yaml:
         name: {{.cds_workflow}}
         on: [push]
         integrations: [artifactory-{{.rt_project}}]
         jobs:
-          pluginCache:
-            runs-on: "{{.worker_model}}"
-            steps:
-              - id: generateKey
-                run: worker export ts $(date +%s)
-              - id: cacheGet
-                uses: actions/cache
-                with:
-                  key: ${{ steps.generateKey.outputs.ts }}
-                  path: myfile
-              - id: cacheCheck
-                run: echo ${{ steps.cacheGet.outputs.cache-hit }}    
-              - run: date > myfile
-            outputs:
-              cacheKey:
-                value: ${{ steps.generateKey.outputs.ts }}
-          getCache:
-            runs-on: "{{.worker_model}}"
-            needs: [pluginCache]
-            steps:
-              - uses: actions/cacheRestore
-                id: restore
-                with:
-                  key: ${{ jobs.pluginCache.outputs.cacheKey }}
-                  path: myfile 
-              - id: checkHit
-                run: echo ${{ steps.restore.outputs.cache-hit }} 
-          ctx:
-            runs-on: "{{.worker_model}}"
-            steps:
-              - id: ctxstep
-                run: echo "${{ integrations.artifact_manager.config.build.info.prefix }}"
-          Debian-Job:
-            runs-on: "{{.worker_model}}"
-            steps:
-              - uses: actions/checkout
-              - run: apt-get update -y && apt-get install -y python3-pip python3-stdeb fakeroot python3-setuptools
-              - run: |
-                  pip3 install stem stdeb
-                  pkgVersion=0.0.$(date +%s)
-                  sed -i "s/0.0.1/${pkgVersion}/g" setup.py
-              - run: python3 setup.py --command-packages=stdeb.command bdist_deb
-              - uses: actions/debianPush
-                with:
-                  files: deb_dist/*.deb
-          Helm-Job:
-            runs-on: "{{.worker_model}}"
-            steps:
-              - uses: actions/checkout
-              - uses: actions/helmPush
-          Python-Job:
-            runs-on: "{{.worker_model}}"
-            steps:
-              - uses: actions/checkout
-              - run: apt-get update -y && apt-get install -y python3-pip python3-setuptools
-              - id: packagePython
-                run: |
-                  pkgVersion=0.0.$(date +%s)
-                  worker export pkgVersion ${pkgVersion}
-                  python3 -m pip install --user --upgrade setuptools wheel && sed -i "s/0.0.1/${pkgVersion}/g" setup.py
-              - uses: actions/pythonPush
-                with:
-                  pythonBinary: python3
-                  package: quicksample
-                  version: ${{ steps.packagePython.outputs.pkgVersion }}
-                  wheel: "true"
-          PromoteAndRelease:
-            needs: [Debian-Job, Python-Job, Helm-Job, PushFiles]
-            runs-on: "{{.worker_model}}"
-            steps:
-              - uses: actions/artifactoryPromote
-                with:
-                  artifacts: python:* helm:* debian:* terraformProvider:*
-              - uses: actions/artifactoryRelease
-                with:
-                  artifacts: python:* helm:* debian:* terraformProvider:*
           PushFiles:
             runs-on: "{{.worker_model}}"     
             steps:
@@ -284,13 +161,13 @@ testcases:
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
-    - result.systemoutjson ShouldHaveLength 3
+    - result.systemoutjson ShouldHaveLength 2
     retry: 100
     delay: 1
     vars:
       analysisID:
         from:
-          result.systemoutjson.systemoutjson2.id
+          result.systemoutjson.systemoutjson1.id
 
   - name: Get CDS project analysis
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
@@ -315,7 +192,7 @@ testcases:
     delay: 1
 
   - name: Check that the CDS workflow has at least one execution and is Success
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
     assertions:
       - and: 
         - result.systemoutjson ShouldHaveLength 1
@@ -350,35 +227,15 @@ testcases:
     assertions:
     - result.systemout ShouldEqual Success
 
-  - name: Check that we have 3 run results of type python
+  - name: Check that we have 1 run results of type python
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 3
-  - name: Check that we have 2 run result of type debian
+      - result.systemoutjson ShouldHaveLength 1
+  - name: Check that we have 1 run result of type debian
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=debian --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 2
+      - result.systemoutjson ShouldHaveLength 1
   - name: Check that we have 1 run result of type terraformProvider
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=terraformProvider --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 1      
-  - name: Check that we have 1 run result of type helm
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=helm --format json"  
-    assertions:
       - result.systemoutjson ShouldHaveLength 1
-  - name: Check that we have 1 run result of type release
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=release --format json"  
-    assertions:
-      - result.systemoutjson ShouldHaveLength 1    
-  - name: Check integration context
-    script: "cat {{.cds_workflow}}-1-1-ctx-ctxstep && cat {{.cds_workflow}}-1-1-ctx-ctxstep | grep \"{{.rt_project}}/{{.rt_component}}\""  
-
-  - name: Check pluginCache log - cacheCheck
-    script: "cat {{.cds_workflow}}-1-1-pluginCache-cacheCheck && cat {{.cds_workflow}}-1-1-pluginCache-cacheCheck | grep \"false\""
-  - name: Check pluginCache log - cacheCheck
-    script: "cat {{.cds_workflow}}-1-1-pluginCache-Post-cacheGet | grep \"Cache uploaded\""
-
-  - name: Check pluginCache log - cache restore
-    script: "cat {{.cds_workflow}}-1-1-getCache-restore | grep \"Cache was downloaded\""  
-  - name: Check pluginCache log - retore-hit
-    script: "cat {{.cds_workflow}}-1-1-getCache-checkHit | grep \"true\""

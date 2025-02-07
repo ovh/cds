@@ -4,14 +4,17 @@ import { Store } from '@ngxs/store';
 import { LoadOpts } from 'app/model/project.model';
 import { RouterService } from 'app/service/router/router.service';
 import { FetchProject } from 'app/store/project.action';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import { Observable } from 'rxjs';
-import { flatMap, map } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 @Injectable()
 export class ProjectResolver {
 
-    constructor(private store: Store, private routerService: RouterService) { }
+    constructor(
+        private store: Store,
+        private routerService: RouterService
+    ) { }
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
@@ -27,8 +30,7 @@ export class ProjectResolver {
             projectKey: params['key'],
             opts
         })).pipe(
-            flatMap(() => this.store.selectOnce(ProjectState)),
-            map((projectState: ProjectStateModel) => projectState.project)
+            switchMap(() => this.store.selectOnce(ProjectState.projectSnapshot)),
         );
     }
 }
@@ -48,15 +50,15 @@ export class ProjectForWorkflowResolver {
             new LoadOpts('withEnvironmentNames', 'environment_names'),
             new LoadOpts('withEnvironments', 'environments'),
             new LoadOpts('withLabels', 'labels'),
-            new LoadOpts('withKeys', 'keys')
+            new LoadOpts('withKeys', 'keys'),
+            new LoadOpts('withIntegrations', 'integrations')
         ];
 
         return this.store.dispatch(new FetchProject({
             projectKey: params['key'],
             opts
         })).pipe(
-            flatMap(() => this.store.selectOnce(ProjectState)),
-            map((projectState: ProjectStateModel) => projectState.project)
+            switchMap(() => this.store.selectOnce(ProjectState.projectSnapshot))
         );
     }
 }
@@ -72,15 +74,14 @@ export class ProjectForApplicationResolver {
             new LoadOpts('withWorkflowNames', 'workflow_names'),
             new LoadOpts('withPipelineNames', 'pipeline_names'),
             new LoadOpts('withApplicationNames', 'application_names'),
-            new LoadOpts('withEnvironmentNames', 'environment_names'),
+            new LoadOpts('withEnvironmentNames', 'environment_names')
         ];
 
         return this.store.dispatch(new FetchProject({
             projectKey: params['key'],
             opts
         })).pipe(
-            flatMap(() => this.store.selectOnce(ProjectState)),
-            map((projectState: ProjectStateModel) => projectState.project)
+            switchMap(() => this.store.selectOnce(ProjectState.projectSnapshot))
         );
     }
 }

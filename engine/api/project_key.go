@@ -164,6 +164,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 		newKey.Private = k.Private
 		newKey.Public = k.Public
 		newKey.KeyID = k.KeyID
+		newKey.LongKeyID = k.LongKeyID
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {

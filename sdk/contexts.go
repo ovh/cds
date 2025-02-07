@@ -119,6 +119,8 @@ type GitContext struct {
 	PullRequestID        int64    `json:"pullrequest_id,omitempty"`
 	PullRequestToRef     string   `json:"pullrequest_to_ref,omitempty"`
 	PullRequestToRefName string   `json:"pullrequest_to_ref_name,omitempty"`
+	GPGKey               string   `json:"gpg_key,omitempty"`
+	Email                string   `json:"email,omitempty"`
 }
 
 type JobContext struct {

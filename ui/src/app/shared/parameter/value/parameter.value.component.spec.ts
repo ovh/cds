@@ -1,24 +1,28 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NgxsModule } from '@ngxs/store';
 import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
 import { SharedModule } from '../../shared.module';
 import { SharedService } from '../../shared.service';
 import { ParameterValueComponent } from './parameter.value.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { PreferencesState } from 'app/store/preferences.state';
 
 describe('CDS: Parameter Value Component', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 SharedService,
-                RepoManagerService
+                RepoManagerService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
-                NgxsModule.forRoot(),
-                SharedModule,
-                HttpClientTestingModule
+                NgxsModule.forRoot([
+                    PreferencesState
+                ]),
+                SharedModule
             ]
         }).compileComponents();
     });

@@ -12,9 +12,10 @@ type dbWorkflowRun struct {
 }
 
 func (r dbWorkflowRun) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{r.ID, r.ProjectKey, r.VCSServerID, r.VCSServer, r.RepositoryID, r.Repository, r.WorkflowData, r.UserID}
+	var _ = []interface{}{r.ID, r.ProjectKey, r.VCSServerID, r.VCSServer, r.RepositoryID, r.Repository, r.WorkflowData, r.DeprecatedUserID}
 	return gorpmapper.CanonicalForms{
-		"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.VCSServer}}{{.RepositoryID}}{{.Repository}}{{md5sum .WorkflowData}}{{.UserID}}",
+		//"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.VCSServer}}{{.RepositoryID}}{{.Repository}}{{md5sum .WorkflowData}}{{md5sum .Initiator}}",
+		"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.VCSServer}}{{.RepositoryID}}{{.Repository}}{{md5sum .WorkflowData}}{{.DeprecatedUserID}}",
 		// TODO add context
 	}
 }
@@ -25,10 +26,10 @@ type dbWorkflowRunJob struct {
 }
 
 func (r dbWorkflowRunJob) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{r.ID, r.WorkflowRunID, r.ProjectKey, r.JobID, r.Job, r.UserID, r.Region, r.HatcheryName, r.Matrix}
+	var _ = []interface{}{r.ID, r.WorkflowRunID, r.ProjectKey, r.JobID, r.Job, r.DeprecatedUserID, r.Region, r.HatcheryName, r.Matrix}
 	return gorpmapper.CanonicalForms{
-		"{{.ID}}{{.WorkflowRunID}}{{.ProjectKey}}{{.JobID}}{{md5sum .Job}}{{.UserID}}{{.Region}}{{.HatcheryName}}{{md5sum .Matrix}}",
-		"{{.ID}}{{.WorkflowRunID}}{{.ProjectKey}}{{.JobID}}{{hash .Job}}{{.UserID}}{{.Region}}{{.HatcheryName}}{{hash .Matrix}}",
+		"{{.ID}}{{.WorkflowRunID}}{{.ProjectKey}}{{.JobID}}{{md5sum .Job}}{{.DeprecatedUserID}}{{.Region}}{{.HatcheryName}}{{md5sum .Matrix}}",
+		"{{.ID}}{{.WorkflowRunID}}{{.ProjectKey}}{{.JobID}}{{hash .Job}}{{.DeprecatedUserID}}{{.Region}}{{.HatcheryName}}{{hash .Matrix}}",
 	}
 }
 

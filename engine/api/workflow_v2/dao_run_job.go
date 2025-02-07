@@ -10,6 +10,7 @@ import (
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -29,6 +30,16 @@ func getAllRunJobs(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Q
 		if !isValid {
 			log.Error(ctx, "run job %s on run %s: data corrupted", rj.ID, rj.WorkflowRunID)
 			continue
+		}
+		if rj.Initiator.UserID == "" {
+			rj.Initiator.UserID = rj.DeprecatedUserID
+		}
+		if rj.Initiator.UserID != "" && rj.Initiator.User == nil {
+			u, err := user.LoadByID(ctx, db, rj.Initiator.UserID, user.LoadOptions.WithContacts)
+			if err != nil {
+				return nil, err
+			}
+			rj.Initiator.User = u.Initiator()
 		}
 		jobRuns = append(jobRuns, rj.V2WorkflowRunJob)
 	}
@@ -52,6 +63,16 @@ func getRunJob(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 		log.Error(ctx, "run job %s on run %s: data corrupted", dbWkfRunJob.ID, dbWkfRunJob.WorkflowRunID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
+	if dbWkfRunJob.Initiator.UserID == "" {
+		dbWkfRunJob.Initiator.UserID = dbWkfRunJob.DeprecatedUserID
+	}
+	if dbWkfRunJob.Initiator.UserID != "" && dbWkfRunJob.Initiator.User == nil {
+		u, err := user.LoadByID(ctx, db, dbWkfRunJob.Initiator.UserID, user.LoadOptions.WithContacts)
+		if err != nil {
+			return nil, err
+		}
+		dbWkfRunJob.Initiator.User = u.Initiator()
+	}
 	return &dbWkfRunJob.V2WorkflowRunJob, nil
 }
 
@@ -66,6 +87,15 @@ func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 	}
 	dbWkfRunJob := &dbWorkflowRunJob{V2WorkflowRunJob: *wrj}
 
+	// Compat code
+	dbWkfRunJob.DeprecatedUserID = dbWkfRunJob.Initiator.UserID
+	dbWkfRunJob.DeprecatedAdminMFA = dbWkfRunJob.Initiator.IsAdminWithMFA
+	dbWkfRunJob.DeprecatedUsername = dbWkfRunJob.Initiator.Username()
+
+	if dbWkfRunJob.Initiator.UserID == "" && dbWkfRunJob.Initiator.VCSUsername == "" {
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "V2WorkflowRunJob initiator should not be nil")
+	}
+
 	if err := gorpmapping.InsertAndSign(ctx, db, dbWkfRunJob); err != nil {
 		return err
 	}
@@ -77,6 +107,9 @@ func UpdateJobRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 	ctx, next := telemetry.Span(ctx, "workflow_v2.UpdateJobRun")
 	defer next()
 	dbWkfRunJob := &dbWorkflowRunJob{V2WorkflowRunJob: *wrj}
+	dbWkfRunJob.DeprecatedUserID = dbWkfRunJob.Initiator.UserID
+	dbWkfRunJob.DeprecatedAdminMFA = dbWkfRunJob.Initiator.IsAdminWithMFA
+	dbWkfRunJob.DeprecatedUsername = dbWkfRunJob.Initiator.Username()
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbWkfRunJob); err != nil {
 		return err
 	}

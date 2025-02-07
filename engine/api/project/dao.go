@@ -103,6 +103,20 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts .
 	return loadprojects(ctx, db, opts, query)
 }
 
+// LoadAllProjectKeys returns all project keys
+func LoadAllProjectKeys(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) ([]string, error) {
+	_, end := telemetry.Span(ctx, "project.LoadAllProjectKeys")
+	defer end()
+	var keys []string
+	if _, err := db.Select(&keys, "SELECT projectkey FROM project"); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrNoProject)
+		}
+		return nil, sdk.WithStack(err)
+	}
+	return keys, nil
+}
+
 // LoadPermissions loads all projects where group has access
 func LoadPermissions(ctx context.Context, db gorp.SqlExecutor, groupID int64) ([]sdk.ProjectGroup, error) {
 	rows, err := db.Query(`
@@ -176,6 +190,7 @@ func Insert(db gorpmapper.SqlExecutorWithTx, proj *sdk.Project) error {
 
 	pk := sdk.ProjectKey{}
 	pk.KeyID = k.KeyID
+	pk.LongKeyID = k.LongKeyID
 	pk.Name = BuiltinGPGKey
 	pk.Private = k.Private
 	pk.Public = k.Public
@@ -341,6 +356,8 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 		vcsProjects[i].Auth.Username = decryptedVCSProject.Auth.Username
 		vcsProjects[i].Auth.SSHKeyName = decryptedVCSProject.Auth.SSHKeyName
 		vcsProjects[i].Auth.SSHUsername = decryptedVCSProject.Auth.SSHUsername
+		vcsProjects[i].Auth.GPGKeyName = decryptedVCSProject.Auth.GPGKeyName
+		vcsProjects[i].Auth.EmailAddress = decryptedVCSProject.Auth.EmailAddress
 	}
 
 	proj.VCSServers = vcsProjects

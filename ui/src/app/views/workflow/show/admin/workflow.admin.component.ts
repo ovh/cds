@@ -254,7 +254,9 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy, AfterViewInit 
     }
 
     ngAfterViewInit() {
-       this.codemirror.instance.refresh();
+        if (this.codemirror && this.codemirror.instance) {
+            this.codemirror.instance.refresh();
+        }
     }
 
     initExistingtags(): void {
@@ -307,8 +309,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy, AfterViewInit 
             this._cd.markForCheck();
         });
         this.dryRunWarningsSub = this._store.select(WorkflowState.getRetentionDryRunWarnings()).subscribe(ws => {
-           this.dryRunWarnings = ws;
-           this._cd.markForCheck();
+            this.dryRunWarnings = ws;
+            this._cd.markForCheck();
         });
 
     }

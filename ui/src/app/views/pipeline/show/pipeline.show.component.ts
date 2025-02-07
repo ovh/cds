@@ -22,7 +22,7 @@ import {
     UpdatePipelineParameter
 } from 'app/store/pipelines.action';
 import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
@@ -100,9 +100,9 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         this.branch = this.getQueryParam('branch');
         this.remote = this.getQueryParam('remote');
 
-        this.projectSubscription = this._store.select(ProjectState)
-            .subscribe((projectState: ProjectStateModel) => {
-                this.project = projectState.project;
+        this.projectSubscription = this._store.select(ProjectState.projectSnapshot)
+            .subscribe((p: Project) => {
+                this.project = p;
                 this._cd.markForCheck();
             });
 
@@ -179,7 +179,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             this.pipelineSubscriber.unsubscribe();
         }
 
-        this.pipelineSubscriber = this._store.select(PipelinesState.getCurrent())
+        this.pipelineSubscriber = this._store.select(PipelinesState.current)
             .pipe(
                 filter((pip) => pip != null),
             )

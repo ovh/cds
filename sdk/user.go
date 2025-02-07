@@ -49,6 +49,21 @@ type AuthentifiedUser struct {
 	Organization string       `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization" db:"-"`
 }
 
+func (u *AuthentifiedUser) Initiator() *V2InitiatorUser {
+	if u == nil {
+		return nil
+	}
+	var email string
+	if u.Contacts.Primary() != nil {
+		email = u.Contacts.Primary().Value
+	}
+	return &V2InitiatorUser{
+		Username: u.Username,
+		Ring:     u.Ring,
+		Email:    email,
+	}
+}
+
 func IsValidUsername(username string) error {
 	if username == "" || username == "me" || !usernameRegex.MatchString(username) {
 		return NewErrorFrom(ErrInvalidUsername, "invalid given username: %q", username)

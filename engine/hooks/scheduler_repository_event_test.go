@@ -59,6 +59,7 @@ func TestManageAnalysisCallback(t *testing.T) {
 		AnalysisCallback: &sdk.HookAnalysisCallback{
 			AnalysisID:     hr.Analyses[0].AnalyzeID,
 			AnalysisStatus: sdk.RepositoryAnalysisStatusSucceed,
+			Initiator:      &sdk.V2Initiator{},
 		},
 	}
 

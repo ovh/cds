@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -42,6 +43,8 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	authUsername := q.GetOptions()["username"]
 	authToken := q.GetOptions()["token"]
 	submodules := q.GetOptions()["submodules"]
+	gpgKey := q.GetOptions()["gpg-key"]
+	email := q.GetOptions()["email"]
 
 	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
@@ -66,6 +69,86 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
 			return err
+		}
+	}
+	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
+	if err != nil {
+		err := fmt.Errorf("unable to get working directory: %v", err)
+		res.Status = sdk.StatusFail
+		res.Details = err.Error()
+		return stream.Send(res)
+	}
+
+	if key != nil {
+		grpcplugins.Logf(&p.Common, "Setting up SSH Key\n")
+
+		// Install key
+		u, err := user.Current()
+		if err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to get current user: %v", err)
+			return stream.Send(res)
+		}
+		// Install id_rsa priv key
+		if u != nil && u.HomeDir != "" {
+			sshFilePath := u.HomeDir + "/.ssh/id_rsa"
+			if _, err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, sshFilePath, key.Private); err != nil {
+				err := fmt.Errorf("unable to install sshkey on worker: %v", err)
+				res.Status = sdk.StatusFail
+				res.Details = err.Error()
+				return stream.Send(res)
+			}
+
+			urlParsed, err := url.Parse(gitURL)
+			if err != nil {
+				return fmt.Errorf("unable to parse git url: %s", gitURL)
+			}
+			host, port, _ := net.SplitHostPort(urlParsed.Host)
+			if port == "" {
+				port = "22"
+			}
+
+			scriptContent := fmt.Sprintf("ssh-keyscan -t rsa -p %s %s >> %s/.ssh/known_hosts", port, host, u.HomeDir)
+			if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
+				res.Status = sdk.StatusFail
+				res.Details = err.Error()
+				return stream.Send(res)
+			}
+		}
+	}
+
+	if email != "" {
+		grpcplugins.Logf(&p.Common, "Setting up git config (user.name=%s, user.email=%s)\n", email, authUsername)
+		scriptContent := fmt.Sprintf(`git config --global user.email "%s" && git config --global user.name "%s"`, email, authUsername)
+		if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = err.Error()
+			return stream.Send(res)
+		}
+	}
+
+	// Install and import GPG Key
+	if gpgKey != "" {
+		k, err := grpcplugins.GetProjectKey(ctx, &p.Common, gpgKey)
+		if err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to get GPG key %q: %v", gpgKey, err)
+			return stream.Send(res)
+		}
+		grpcplugins.Logf(&p.Common, "Installing GPG Key %s\n", gpgKey)
+
+		if _, _, err := sdk.ImportGPGKey(workDirs.BaseDir, k.Name, k.Private); err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to install GPG key %q: %v", gpgKey, err)
+			return stream.Send(res)
+		}
+
+		grpcplugins.Logf(&p.Common, "Setting up git config (user.signingkey=%s)...\n", k.KeyID)
+		scriptContent := fmt.Sprintf(`git config --global user.signingkey "%s" && git config --global commit.gpgsign true`, k.KeyID)
+		if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = err.Error()
+			return stream.Send(res)
 		}
 	}
 
@@ -114,7 +197,6 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 				}
 			}
 		}
-
 	}
 
 	if submodules == "true" || submodules == "recursive" {
@@ -133,65 +215,32 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	}
 	grpcplugins.Logf(&p.Common, "Checkout completed\n")
 
-	if key != nil {
-		// Install key
-		workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
-		if err != nil {
-			err := fmt.Errorf("unable to get working directory: %v", err)
-			res.Status = sdk.StatusFail
-			res.Details = err.Error()
-			return stream.Send(res)
+	return stream.Send(res)
+}
+
+func (p *checkoutPlugin) Exec(ctx context.Context, workDirs *sdk.WorkerDirectories, scriptContent string) error {
+	goRoutines := sdk.NewGoRoutines(ctx)
+
+	chanRes := make(chan *actionplugin.ActionResult)
+	goRoutines.Exec(ctx, "checkoutPlugin-exec", func(ctx context.Context) {
+		if err := grpcplugins.RunScript(ctx, &p.Common, chanRes, workDirs.WorkingDir, scriptContent); err != nil {
+			chanRes <- &actionplugin.ActionResult{
+				Status:  sdk.StatusFail,
+				Details: err.Error(),
+			}
 		}
-		u, err := user.Current()
-		if err != nil {
-			res.Status = sdk.StatusFail
-			res.Details = fmt.Sprintf("unable to get current user: %v", err)
-			return stream.Send(res)
-		}
-		if u != nil && u.HomeDir != "" {
-			sshFilePath := u.HomeDir + "/.ssh/id_rsa"
-			if _, err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, sshFilePath, key.Private); err != nil {
-				err := fmt.Errorf("unable to install sshkey on worker: %v", err)
-				res.Status = sdk.StatusFail
-				res.Details = err.Error()
-				return stream.Send(res)
-			}
+	})
 
-			urlParsed, err := url.Parse(gitURL)
-			if err != nil {
-				return fmt.Errorf("unable to parse git url: %s", gitURL)
-			}
-			host, port, _ := net.SplitHostPort(urlParsed.Host)
-			if port == "" {
-				port = "22"
-			}
-
-			goRoutines := sdk.NewGoRoutines(ctx)
-			workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
-			if err != nil {
-				return fmt.Errorf("unable to get working directory: %v", err)
-			}
-
-			scriptContent := fmt.Sprintf("ssh-keyscan -t rsa -p %s %s >> %s/.ssh/known_hosts", port, host, u.HomeDir)
-
-			chanRes := make(chan *actionplugin.ActionResult)
-			goRoutines.Exec(ctx, "InstallSSHKey-runScript", func(ctx context.Context) {
-				grpcplugins.RunScript(ctx, &p.Common, chanRes, workDirs.WorkingDir, scriptContent)
-			})
-
-			select {
-			case <-ctx.Done():
-				return fmt.Errorf("CDS Worker execution canceled: " + ctx.Err().Error())
-			case result := <-chanRes:
-				if result.Status == sdk.StatusFail {
-					return stream.Send(res)
-				}
-			}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case result := <-chanRes:
+		if result.Status == sdk.StatusFail {
+			return errors.New(result.Details)
 		}
 	}
 
-	return stream.Send(res)
-
+	return nil
 }
 
 func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
@@ -203,5 +252,4 @@ func main() {
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
-	return
 }

@@ -18,7 +18,7 @@ import { SharedService } from 'app/shared/shared.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { EventState } from 'app/store/event.state';
 import { PreferencesState } from 'app/store/preferences.state';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first, map } from 'rxjs/operators';
@@ -121,9 +121,13 @@ workflow:
                 }
             });
 
-        this.projectSubscription = this._store.select(ProjectState)
-            .pipe(filter((projState) => projState.project && projState.project.key), finalize(() => this._cd.markForCheck()))
-            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
+        this.projectSubscription = this._store.select(ProjectState.projectSnapshot)
+            .subscribe((p: Project) => {
+                if (p && p.key) {
+                    this.project = p;
+                    this._cd.markForCheck();
+                }
+            });
 
         this.fetchTemplates();
     }

@@ -1,6 +1,7 @@
 package grpcplugins
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jfrog/archiver/v3"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
@@ -55,7 +55,7 @@ func performFromArtifactory(ctx context.Context, c *actionplugin.Common, jobCtx 
 		Warn(c, "no cache found")
 		return false, nil
 	}
-	if err := archiver.Unarchive(destinationTarFile, absPath); err != nil {
+	if err := Untar(absPath, destinationTarFile); err != nil {
 		return false, err
 	}
 	if err := afero.NewOsFs().Remove(destinationTarFile); err != nil {
@@ -88,7 +88,8 @@ func performFromCDN(ctx context.Context, c *actionplugin.Common, cacheKey string
 	if err != nil {
 		return false, err
 	}
-	if err := archiver.Unarchive(destinationTarFile, absPath); err != nil {
+
+	if err := Untar(absPath, destinationTarFile); err != nil {
 		return false, err
 	}
 	if err := afero.NewOsFs().Remove(destinationTarFile); err != nil {
@@ -96,4 +97,12 @@ func performFromCDN(ctx context.Context, c *actionplugin.Common, cacheKey string
 	}
 	Successf(c, "Cache was downloaded to %s (%d bytes downloaded in %.3f seconds).", absPath, n, time.Since(t0).Seconds())
 	return true, nil
+}
+
+func Untar(dst string, filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	return sdk.UntarGz(afero.NewOsFs(), dst, bufio.NewReader(file))
 }

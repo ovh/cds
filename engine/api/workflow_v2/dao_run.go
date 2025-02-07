@@ -9,6 +9,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -30,6 +31,23 @@ func getRuns(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, 
 			log.Error(ctx, "run %s: data corrupted", dbWkfRun.ID)
 			continue
 		}
+		if dbWkfRun.Initiator == nil {
+			dbWkfRun.Initiator = &sdk.V2Initiator{
+				UserID:         dbWkfRun.DeprecatedUserID,
+				IsAdminWithMFA: dbWkfRun.DeprecatedAdminMFA,
+			}
+		}
+		if dbWkfRun.Initiator.UserID != "" && dbWkfRun.Initiator.User == nil { // Compatibility code
+			u, err := user.LoadByID(ctx, db, dbWkfRun.Initiator.UserID, user.LoadOptions.WithContacts)
+			if err != nil {
+				return nil, err
+			}
+			dbWkfRun.Initiator.User = u.Initiator()
+		}
+
+		dbWkfRun.DeprecatedUsername = dbWkfRun.Initiator.Username()
+		dbWkfRun.DeprecatedAdminMFA = dbWkfRun.Initiator.IsAdminWithMFA
+
 		runs = append(runs, dbWkfRun.V2WorkflowRun)
 	}
 
@@ -53,6 +71,25 @@ func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, o
 		log.Error(ctx, "run %s: data corrupted", dbWkfRun.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
+
+	if dbWkfRun.Initiator == nil {
+		dbWkfRun.Initiator = &sdk.V2Initiator{
+			UserID:         dbWkfRun.DeprecatedUserID,
+			IsAdminWithMFA: dbWkfRun.DeprecatedAdminMFA,
+		}
+	}
+
+	if dbWkfRun.Initiator.UserID != "" && dbWkfRun.Initiator.User == nil { // Compatibility code
+		u, err := user.LoadByID(ctx, db, dbWkfRun.Initiator.UserID, user.LoadOptions.WithContacts)
+		if err != nil {
+			return nil, err
+		}
+		dbWkfRun.Initiator.User = u.Initiator()
+	}
+
+	dbWkfRun.DeprecatedUsername = dbWkfRun.Initiator.Username()
+	dbWkfRun.DeprecatedAdminMFA = dbWkfRun.Initiator.IsAdminWithMFA
+
 	return &dbWkfRun.V2WorkflowRun, nil
 }
 
@@ -72,6 +109,24 @@ func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	wr.LastModified = time.Now()
 	wr.RunAttempt = 1
 
+	if wr.Initiator == nil {
+		wr.Initiator = &sdk.V2Initiator{
+			UserID:         wr.DeprecatedUserID,
+			IsAdminWithMFA: wr.DeprecatedAdminMFA,
+		}
+	}
+
+	wr.DeprecatedAdminMFA = wr.Initiator.IsAdminWithMFA
+	wr.DeprecatedUserID = wr.Initiator.UserID
+	if wr.Initiator.UserID != "" && wr.Initiator.User == nil { // Compat code
+		u, err := user.LoadByID(ctx, db, wr.Initiator.UserID, user.LoadOptions.WithContacts)
+		if err != nil {
+			return err
+		}
+		wr.Initiator.User = u.Initiator()
+	}
+	wr.DeprecatedUsername = wr.Initiator.Username()
+
 	dbWkfRun := &dbWorkflowRun{V2WorkflowRun: *wr}
 	if err := gorpmapping.InsertAndSign(ctx, db, dbWkfRun); err != nil {
 		return err
@@ -84,6 +139,25 @@ func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	ctx, next := telemetry.Span(ctx, "workflow_v2.UpdateRun")
 	defer next()
 	wr.LastModified = time.Now()
+
+	if wr.Initiator == nil {
+		wr.Initiator = &sdk.V2Initiator{
+			UserID:         wr.DeprecatedUserID,
+			IsAdminWithMFA: wr.DeprecatedAdminMFA,
+		}
+	}
+
+	wr.DeprecatedAdminMFA = wr.Initiator.IsAdminWithMFA
+	wr.DeprecatedUserID = wr.Initiator.UserID
+	if wr.Initiator.UserID != "" && wr.Initiator.User == nil { // Compat code
+		u, err := user.LoadByID(ctx, db, wr.Initiator.UserID, user.LoadOptions.WithContacts)
+		if err != nil {
+			return err
+		}
+		wr.Initiator.User = u.Initiator()
+	}
+	wr.DeprecatedUsername = wr.Initiator.Username()
+
 	dbWkfRun := &dbWorkflowRun{V2WorkflowRun: *wr}
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbWkfRun); err != nil {
 		return err
@@ -229,7 +303,7 @@ const runQueryFilters = `
 	AND (array_length(:annotation_values::text[], 1) IS NULL OR annotation_values @> :annotation_values)
 `
 
-func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters) (int64, error) {
+func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
 
@@ -262,7 +336,7 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 	return count, sdk.WithStack(err)
 }
 
-func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters) (int64, error) {
+func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
 
@@ -297,7 +371,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	return count, sdk.WithStack(err)
 }
 
-type SearchsRunsFilters struct {
+type SearchRunsFilters struct {
 	Workflows            []string
 	Actors               []string
 	Status               []string
@@ -311,7 +385,7 @@ type SearchsRunsFilters struct {
 	AnnotationValues     []string
 }
 
-func (s SearchsRunsFilters) Lower() {
+func (s SearchRunsFilters) Lower() {
 	for i := range s.Repositories {
 		s.Repositories[i] = strings.ToLower(s.Repositories[i])
 	}
@@ -328,12 +402,15 @@ func parseSortFilter(sort string) (string, error) {
 	return sort, nil
 }
 
-func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 
 	if limit == 0 {
 		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
 	}
 
 	sort, err := parseSortFilter(sort)
@@ -344,14 +421,14 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run.*
     FROM v2_workflow_run
-	LEFT JOIN (
-		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
-		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
-		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations 
-	ON  
-		v2_workflow_run.id = v2_workflow_run_annotations.id 
-	WHERE ` + runQueryFilters + `			
+		LEFT JOIN (
+			SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
+			GROUP BY v2_workflow_run.id
+		) v2_workflow_run_annotations 
+		ON  
+			v2_workflow_run.id = v2_workflow_run_annotations.id 
+		WHERE ` + runQueryFilters + `			
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
@@ -379,12 +456,15 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 	return getRuns(ctx, db, query, opts...)
 }
 
-func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 
 	if limit == 0 {
 		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
 	}
 
 	sort, err := parseSortFilter(sort)
@@ -395,14 +475,14 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run.*
     FROM v2_workflow_run
-	LEFT JOIN (
-		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
-		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
-		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations 
-	ON  
-		v2_workflow_run.id = v2_workflow_run_annotations.id 
-	WHERE project_key = :projKey AND ` + runQueryFilters + `
+		LEFT JOIN (
+			SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
+			GROUP BY v2_workflow_run.id
+		) v2_workflow_run_annotations 
+		ON  
+			v2_workflow_run.id = v2_workflow_run_annotations.id 
+		WHERE project_key = :projKey AND ` + runQueryFilters + `
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,

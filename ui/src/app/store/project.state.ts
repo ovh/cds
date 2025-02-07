@@ -182,7 +182,7 @@ export class ProjectState {
         return this._http.post<Project>(
             '/project',
             action.payload
-        ).pipe(tap((project) => {
+        ).pipe(tap((project: Project) => {
             ctx.setState({
                 ...state,
                 project,

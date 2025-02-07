@@ -1,0 +1,78 @@
+:host {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: row;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 15px 20px;
+  overflow: hidden;
+  height: 100%;
+
+  .list {
+    margin: 20px 0;
+    flex: 1;
+    overflow-y: auto;
+
+    .type {
+      width: 120px;
+    }
+
+    .title {
+      display: flex;
+      flex-direction: row;
+
+      a {
+        color: inherit;
+
+        &:hover {
+          color: #177ddc;
+        }
+      }
+
+      .id {
+        margin-left: 5px;
+        color: rgba(0, 0, 0, .45);
+
+        :host-context(.night) & {
+          color: rgba(255, 255, 255, 0.45);
+        }
+      }
+    }
+
+    .variants {
+      display: flex;
+      flex-direction: column;
+      font-size: 11px;
+
+      a {
+        color: inherit;
+        text-decoration: underline dotted;
+
+        &:hover {
+          color: #177ddc;
+        }
+      }
+    }
+  }
+
+  .footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    nz-pagination {
+      margin-left: auto;
+    }
+  }
+}

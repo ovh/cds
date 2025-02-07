@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -696,10 +697,39 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 }
 
 func WorkflowJobParents(w V2Workflow, jobID string) []string {
+	needsParents := WorkflowJobParentsNeeds(w, jobID)
+	if len(w.Stages) == 0 {
+		return needsParents
+	}
+
+	currentStage := w.Jobs[jobID].Stage
+	parentStages := WorkflowStageParentsNeeds(w, currentStage)
+
+	for jobID, j := range w.Jobs {
+		if slices.Contains(parentStages, j.Stage) {
+			needsParents = append(needsParents, jobID)
+		}
+	}
+
+	return needsParents
+}
+
+func WorkflowStageParentsNeeds(w V2Workflow, currentStage string) []string {
+	parents := make([]string, 0)
+	stage := w.Stages[currentStage]
+	for _, n := range stage.Needs {
+		needParents := WorkflowStageParentsNeeds(w, n)
+		parents = append(parents, needParents...)
+		parents = append(parents, n)
+	}
+	return parents
+}
+
+func WorkflowJobParentsNeeds(w V2Workflow, jobID string) []string {
 	parents := make([]string, 0)
 	currentJob := w.Jobs[jobID]
 	for _, n := range currentJob.Needs {
-		needParents := WorkflowJobParents(w, n)
+		needParents := WorkflowJobParentsNeeds(w, n)
 		parents = append(parents, needParents...)
 		parents = append(parents, n)
 	}

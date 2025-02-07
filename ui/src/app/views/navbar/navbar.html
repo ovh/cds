@@ -3,16 +3,14 @@
         <img src="assets/images/cds.png" class="item" alt="CDS logo" title="{{'navbar_home' | translate}}" />
     </a>
     <ng-container *ngIf="currentAuthSummary">
-        <a *ngIf="!selectedProjectKey" nz-button nzType="link" class="item link" href="#"
-            [routerLink]="['project', 'list', 'all']">
-            {{ 'navbar_projects' | translate }}
-        </a>
-        <nz-select *ngIf="selectedProjectKey" nzShowSearch [ngModel]="selectedProjectKey"
+        <!-- PROJECTS -->
+        <nz-select nzShowSearch nzPlaceHolder="Select a project..." [ngModel]="selectedProjectKey"
             (ngModelChange)="navigateToProject($event)" [class.not-dark]="!darkActive"
             [nzDropdownMatchSelectWidth]="false">
-            <nz-option *ngFor="let p of projects" [nzLabel]="p.name" [nzValue]="p.key"></nz-option>
+            <nz-option *ngFor="let p of projects" [nzLabel]="p.name + ' - ' + p.key" [nzValue]="p.key"></nz-option>
         </nz-select>
 
+        <!-- BOOKMARKS -->
         <button nz-dropdown [nzDropdownMenu]="bookmarks" nz-button nzType="text" [nzClickHide]="true"
             class="dropdown title">
             Bookmarks <i nz-icon nzType="caret-down" nzTheme="fill"></i>
@@ -42,7 +40,7 @@
                                     [routerLink]="['project', prj.key, 'application', prj.application_name]">
                                     <div class="details">
                                         <div class="title">
-                                            {{prj.application_name}}}
+                                            {{prj.application_name}}&#125;
                                         </div>
                                         <div class="info mt">
                                             {{'navbar_application_in' | translate}} {{prj.key}}
@@ -76,6 +74,7 @@
         </nz-dropdown-menu>
     </ng-container>
 
+    <!-- PROJECT CREATE -->
     <ng-container *ngIf="currentAuthSummary && apiConfig">
         <ng-container *ngIf="currentAuthSummary.isAdmin() || !apiConfig.project_creation_disabled">
             <button nz-button nzType="default" nzGhost [routerLink]="['/project/add']">

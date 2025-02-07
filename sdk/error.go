@@ -10,6 +10,7 @@ import (
 
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 )
 
 // Existing CDS errors
@@ -505,6 +506,14 @@ func ContextWithStacktrace(ctx context.Context, err error) context.Context {
 		return context.WithValue(ctx, cdslog.Stacktrace, fmt.Sprintf("%+v", err))
 	}
 	return ctx
+}
+
+func (e errorWithStack) StackTrace() errors.StackTrace {
+	errWithStracktrace, ok := e.root.(log.StackTracer)
+	if ok {
+		return errWithStracktrace.StackTrace()
+	}
+	return nil
 }
 
 // IsErrorWithStack returns true if given error is an errorWithStack.

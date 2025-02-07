@@ -16,7 +16,9 @@ func TestTriggerWorkflow(t *testing.T) {
 
 	ctx := context.TODO()
 	hre := sdk.HookRepositoryEvent{
-		UserID: "1234567890",
+		Initiator: &sdk.V2Initiator{
+			UserID: "1234567890",
+		},
 		ExtractData: sdk.HookRepositoryEventExtractData{
 			Paths: []string{"src/main/main.test", "src/resources/readme.md"},
 		},
