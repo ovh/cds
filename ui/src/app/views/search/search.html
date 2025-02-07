@@ -1,7 +1,7 @@
 <div class="content">
 	<div class="header">
 		<nz-input-group>
-			<app-input-filter placeholder="Search..." [initialFilterText]="filterText" [filters]="filters"
+			<app-input-filter placeholder="Search..." [filterText]="filterText" [filters]="filters"
 				(changeFilter)="filterChange($event)" (submit)="submitForm()"></app-input-filter>
 		</nz-input-group>
 	</div>
@@ -17,14 +17,20 @@
 				</ng-template>
 				<ng-template #runTitle>
 					<div class="title">
-						<a [routerLink]="generateResultLink(item)">{{item.label}}</a>
-						<span class="id">{{item.id}}</span>
+						<a [routerLink]="generateResultLink(item)" [queryParams]="generateResulQueryParams(item)">{{item.label}}</a>
+						<ng-container [ngSwitch]="item.type">
+							<app-searchable *ngSwitchCase="'project'" class="id" [link]="['/search']" [params]="{project: item.id}"
+								paramsHandling="merge">
+								{{item.id}}
+							</app-searchable>
+							<span *ngSwitchDefault class="id">{{item.id}}</span>
+						</ng-container>
 					</div>
 				</ng-template>
 				<ng-template #runDescription>
 					<div class="variants" *ngIf="item.variants">
 						<a *ngFor="let v of item.variants" [routerLink]="generateResultLink(item)"
-							[queryParams]="{ref: v}">{{v}}</a>
+							[queryParams]="generateResulQueryParams(item, v)">{{v}}</a>
 					</div>
 				</ng-template>
 			</nz-list-item-meta>

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { APIConfig } from 'app/model/config.service';
 import { Help } from 'app/model/help.model';
@@ -24,6 +24,10 @@ import { ProjectService } from 'app/service/project/project.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ErrorUtils } from 'app/shared/error.utils';
 import { V2ProjectService } from 'app/service/projectv2/project.service';
+import { Filter, Suggestion } from 'app/shared/input/input-filter.component';
+import { SearchService } from 'app/service/search.service';
+import Debounce from 'app/shared/decorator/debounce';
+import { SearchResult, SearchResultType } from 'app/model/search.model';
 
 @Component({
     selector: 'app-navbar',
@@ -49,12 +53,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     currentAuthSummary: AuthSummary;
     themeSubscription: Subscription;
     darkActive: boolean;
-    searchValue: string;
-    searchProjects: Array<NavbarSearchItem>;
-    searchApplications: Array<NavbarSearchItem>;
-    searchWorkflows: Array<NavbarSearchItem>;
-    isSearch = false;
-    containsResult = false;
     projectsSubscription: Subscription;
     workflowsSubscription: Subscription;
     showNotif = false;
@@ -73,7 +71,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
         private _messageService: NzMessageService,
-        private _v2ProjectService: V2ProjectService
+        private _v2ProjectService: V2ProjectService,
+        private _searchService: SearchService,
+        private _activatedRoute: ActivatedRoute
     ) {
         this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
             this.currentAuthSummary = s;
@@ -158,119 +158,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.selectedProjectKey = params['key'] ?? null;
             this._cd.markForCheck();
         });
-    }
 
-    search() {
-        this.searchProjects = new Array<NavbarSearchItem>();
-        this.searchApplications = new Array<NavbarSearchItem>();
-        this.searchWorkflows = new Array<NavbarSearchItem>();
-
-        if (this.searchValue && this.searchValue !== '') {
-            this.isSearch = true;
-            this.processSearch(this.searchItems);
-            return;
-        }
-
-        // no search, display recentItems
-        this.isSearch = false;
-        this.processSearch(this.recentItems);
-    }
-
-    processSearch(items: Array<NavbarSearchItem>) {
-        let searchPrjFull = false;
-        let searchAppFull = false;
-        let searchWfFull = false;
-
-        let projectKey = '';
-        let isProjectOnly = false;
-        let containsProject = false;
-        let firstPart = '';
-        let secondPart = '';
-        this.containsResult = false;
-
-        if (this.searchValue && this.searchValue !== '') {
-            isProjectOnly = this.searchValue.endsWith('/');
-            containsProject = this.searchValue.includes('/');
-            if (containsProject) {
-                // FIRSTPART/SECONDPART
-                firstPart = this.searchValue.substring(0, this.searchValue.indexOf('/')).toLowerCase();
-                secondPart = this.searchValue.substring(this.searchValue.indexOf('/') + 1, this.searchValue.length).toLowerCase();
-            }
-
-            // if the search contains a project, get the current projectKey
-            if (containsProject) {
-                for (let index = 0; index < items.length; index++) {
-                    const element = items[index];
-                    if (element.type !== 'project') {
-                        continue;
-                    }
-                    if (isProjectOnly) { // search end with '/'
-                        if (element.title.toLowerCase() + '/' === this.searchValue.toLowerCase() ||
-                            element.projectKey.toLowerCase() + '/' === this.searchValue.toLowerCase()) {
-                            projectKey = element.projectKey;
-                            break;
-                        }
-                    } else if ((element.title.toLowerCase() === firstPart) ||
-                        (element.projectKey.toLowerCase() === firstPart)) {
-                        projectKey = element.projectKey;
-                        break;
-                    }
-                }
-            }
-        }
-
-        for (let index = 0; index < items.length; index++) {
-            const element = items[index];
-            let toadd = false;
-            if (!this.searchValue || this.searchValue === '') { // recent view
-                toadd = true;
-            } else if (isProjectOnly) {
-                if (element.projectKey === projectKey) {
-                    toadd = true;
-                }
-            } else if (containsProject) {
-                // add project of firstpart/secondpart
-                if (element.projectKey === projectKey && element.type === 'project') {
-                    toadd = true;
-                }
-
-                if ((element.projectKey === projectKey) &&
-                    element.title.toLowerCase().includes(secondPart)) {
-                    toadd = true;
-                }
-            } else {
-                // if search is not in projectKey and not in title, skip this item
-                if (element.projectKey.toLowerCase().includes(this.searchValue.toLowerCase()) ||
-                    element.title.toLowerCase().includes(this.searchValue.toLowerCase())) {
-                    toadd = true;
-                }
-            }
-
-            if (!toadd) {
-                continue;
-            }
-            switch (element.type) {
-                case 'project':
-                    if (this.searchProjects.length < 10) {
-                        this.searchProjects.push(element);
-                        this.containsResult = true;
-                    } else {
-                        searchPrjFull = true;
-                    }
-                    break;
-                case 'workflow':
-                    if (this.searchWorkflows.length < 10) {
-                        this.searchWorkflows.push(element);
-                        this.containsResult = true;
-                    } else {
-                        searchWfFull = true;
-                    }
-                    break;
-            }
-            if (searchPrjFull && searchWfFull && searchAppFull) {
-                break;
-            }
-        }
+        this.loadFilters();
     }
 
     async getData() {
@@ -360,5 +249,134 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 });
             }
         );
+    }
+
+    searchFilterText: string = '';
+    searchFilters: Array<Filter> = [];
+    searchSuggestions: Array<Suggestion<SearchResult>> = [];
+
+    selectSuggestion(value: SearchResult): void {
+        const splitted = value.id.split('/');
+        switch (value.type) {
+            case SearchResultType.Workflow:
+                const project = splitted.shift();
+                const workflow_path = splitted.join('/');
+                this._router.navigate(['/project', project, 'run'], {
+                    queryParams: {
+                        workflow: workflow_path
+                    }
+                });
+                return;
+            case SearchResultType.WorkflowLegacy:
+                this._router.navigate(['/project', splitted[0], 'workflow', splitted[1]]);
+                return;
+            case SearchResultType.Project:
+                this._router.navigate(['/project', value.id]);
+                return;
+            default:
+                return;
+        }
+    }
+
+	generateResultLink(res: SearchResult): Array<string> {
+		const splitted = res.id.split('/');
+		switch (res.type) {
+			case SearchResultType.Workflow:
+				const project = splitted.shift();
+				return ['/project', project, 'run'];
+			case SearchResultType.WorkflowLegacy:
+				return ['/project', splitted[0], 'workflow', splitted[1]];
+			case SearchResultType.Project:
+				return ['/project', res.id];
+			default:
+				return [];
+		}
+	}
+
+	generateResulQueryParams(res: SearchResult, variant?: string): any {
+		const splitted = res.id.split('/');
+		switch (res.type) {
+			case SearchResultType.Workflow:
+				splitted.shift();
+				const workflow_path = splitted.join('/');
+				let params = { workflow: workflow_path };
+				if (variant) {
+					params['ref'] = variant;
+				}
+				return params;
+			default:
+				return {};
+		}
+	}
+
+    submitSearch(): void {
+        let mFilters = {};
+        this.searchFilterText.split(' ').forEach(f => {
+            const s = f.split(':');
+            if (s.length === 2 && s[1] !== '') {
+                if (!mFilters[s[0]]) {
+                    mFilters[s[0]] = [];
+                }
+                mFilters[s[0]].push(s[1]);
+            } else if (s.length === 1) {
+                mFilters['query'] = f;
+            }
+        });
+
+        this._router.navigate(['/search'], {
+            queryParams: { ...mFilters },
+            replaceUrl: true
+        });
+    }
+
+    searchChange(v: string) {
+        this.searchFilterText = v;
+        this.search();
+    }
+
+    @Debounce(300)
+    async search() {
+        this.loading = true;
+        this._cd.markForCheck();
+
+        let mFilters = {};
+        this.searchFilterText.split(' ').forEach(f => {
+            const s = f.split(':');
+            if (s.length === 2) {
+                if (!mFilters[s[0]]) {
+                    mFilters[s[0]] = [];
+                }
+                mFilters[s[0]].push(decodeURI(s[1]));
+            } else if (s.length === 1) {
+                mFilters['query'] = f;
+            }
+        });
+
+        try {
+            const res = await lastValueFrom(this._searchService.search(mFilters, 0, 10));
+            this.searchSuggestions = res.results.map(r => ({
+                key: r.id,
+                label: `${r.label} - ${r.id}`,
+                data: r,
+            }));
+        } catch (e: any) {
+            this._messageService.error(`Unable to search: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+        this.loading = false;
+        this._cd.markForCheck();
+    }
+
+    async loadFilters() {
+        this.loading = true;
+        this._cd.markForCheck();
+
+        try {
+            this.searchFilters = await lastValueFrom(this._searchService.getFilters());
+        } catch (e) {
+            this._messageService.error(`Unable to list search filters: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+
+        this.loading = false;
+        this._cd.markForCheck();
     }
 }

@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, QueryList, TemplateRef, ViewChild, ViewChildren, ViewEncapsulation } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { NzAutocompleteOptionComponent, NzAutocompleteTriggerDirective } from "ng-zorro-antd/auto-complete";
 
@@ -13,25 +13,33 @@ export class FilterValue {
 	value: string;
 }
 
+export class Suggestion<T> {
+	key: string;
+	label: string
+	data: T;
+}
+
 @Component({
 	selector: 'app-input-filter',
 	templateUrl: './input-filter.html',
-	styleUrls: ['./input-filter.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	encapsulation: ViewEncapsulation.None
 })
 @AutoUnsubscribe()
-export class InputFilterComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
+export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked, OnDestroy {
 	@ViewChild('filterInput') filterInput: ElementRef;
 	@ViewChild('filterInputDirective') filterInputDirective: NzAutocompleteTriggerDirective;
 	@ViewChildren(NzAutocompleteOptionComponent) fromDataSourceOptions: QueryList<NzAutocompleteOptionComponent>;
 
 	@Input() placeholder: string = '';
-	@Input() initialFilterText: string = '';
+	@Input() filterText: string = '';
 	@Input() filters: Array<Filter> = [];
+	@Input() suggestions: Array<Suggestion<T>> = [];
+	@Input() suggestionTemplate: TemplateRef<unknown> | undefined; cds
 	@Output() changeFilter: EventEmitter<string> = new EventEmitter();
+	@Output() selectSuggestion: EventEmitter<T> = new EventEmitter();
 	@Output() submit: EventEmitter<void> = new EventEmitter();
 
-	filterText: string = '';
 	textFilters = [];
 	cursorTextFilterPosition: number = 0;
 	selectedFilter: Filter = null;
@@ -42,10 +50,6 @@ export class InputFilterComponent implements OnInit, AfterViewInit, AfterViewChe
 	) { }
 
 	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
-
-	ngOnInit(): void {
-		this.filterText = this.initialFilterText;
-	}
 
 	ngOnChange(): void {
 		this.computeAvailableFilters(this.filterText);
@@ -62,6 +66,10 @@ export class InputFilterComponent implements OnInit, AfterViewInit, AfterViewChe
 				return;
 			}
 			if (event.key === 'Enter') {
+				if (this.filterInputDirective.activeOption && this.filterInputDirective.activeOption.getLabel().indexOf('jump:') === 0) {
+					this.selectSuggestion.emit(this.filterInputDirective.activeOption.nzValue);
+					return;
+				}
 				if (this.filterInputDirective.activeOption && this.filterInputDirective.activeOption.nzValue !== this.filterText) {
 					if (this.filterInputDirective.activeOption.nzValue.endsWith(':')) {
 						event.preventDefault();
@@ -78,6 +86,14 @@ export class InputFilterComponent implements OnInit, AfterViewInit, AfterViewChe
 			}
 			callback(event);
 		};
+
+		const doBackfill = (this.filterInputDirective as any).doBackfill.bind(this.filterInputDirective);
+		(this.filterInputDirective as any).doBackfill = (): void => {
+			if (this.filterInputDirective.nzAutocomplete.activeItem.getLabel().indexOf('jump:') === 0) {
+				return;
+			}
+			doBackfill();
+		}
 	}
 
 	ngAfterViewChecked(): void {

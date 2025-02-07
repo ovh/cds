@@ -110,87 +110,25 @@
 
         <!-- SEARCH AREA -->
         <div class="search" *ngIf="currentAuthSummary">
-            <nz-input-group [nzSuffix]="suffixIconSearch" nz-popover [nzPopoverContent]="popupSearchTemplate"
-                nzPopoverPlacement="bottom" nzPopoverTrigger="click">
-                <input type="text" nz-input placeholder="Search..." [(ngModel)]="searchValue" (blur)="search()"
-                    (click)="search()" (keyup)="search()" />
-            </nz-input-group>
-            <ng-template #suffixIconSearch>
-                <i nz-icon nzType="search"></i>
-            </ng-template>
-        </div>
-        <ng-template #popupSearchTemplate>
-            <div class="content searchpopup">
-                <div nz-row class="header">
-                    <div nz-col nzSpan="12">
-                        <div *ngIf="containsResult && isSearch">
-                            <i nz-icon nzType="search"></i> {{'navbar_results' | translate}}
-                        </div>
-                        <div *ngIf="containsResult && !isSearch">
-                            <i nz-icon nzType="history" nzTheme="outline"></i>Seen recently
-                        </div>
-                        <div *ngIf="!containsResult">
-                            <i nz-icon nzType="search"></i>{{'navbar_no_result' | translate}}
-                        </div>
-                    </div>
-                    <div nz-col nzSpan="12">
-                        <div nz-tooltip nzTooltipPlacement="left" class="right"
-                            [nzTooltipTitle]="'navbar_search_help_details' | translate">
-                            <i nz-icon nzType="question-circle" nzTheme="outline"></i>
-                            {{ 'navbar_search_help' | translate }}
-                        </div>
-                    </div>
-                </div>
-
-                <div nz-row *ngIf="containsResult">
-                    <div nz-col nzSpan="12" class="borderRight">
+            <app-input-filter placeholder="Search..." [filters]="searchFilters" (changeFilter)="searchChange($event)"
+                [suggestions]="searchSuggestions" [suggestionTemplate]="suggestionTemplate"
+                (selectSuggestion)="selectSuggestion($event)" (submit)="submitSearch()">
+                <ng-template #suggestionTemplate let-option="option">
+                    <a [routerLink]="generateResultLink(option.data)"
+                        [queryParams]="generateResulQueryParams(option.data)" class="navbar-suggestion">
                         <div class="title">
-                            <div class="content">Projects</div>
+                            <span class="label">{{option.data.label}}</span>
+                            <span class="id">{{option.data.id}}</span>
                         </div>
-                        <div class="item" *ngIf="!searchProjects || searchProjects.length <= 0">
-                            <div class="content">No project</div>
+                        <div [ngSwitch]="option.data.type">
+                            <nz-tag *ngSwitchCase="'project'" nzColor="blue">{{option.data.type}}</nz-tag>
+                            <nz-tag *ngSwitchCase="'workflow'" nzColor="green">{{option.data.type}}</nz-tag>
+                            <nz-tag *ngSwitchDefault>{{option.data.type}}</nz-tag>
                         </div>
-                        <div class="item" *ngFor="let el of searchProjects">
-                            <i nz-icon nzType="star" nzTheme="outline" *ngIf="el.favorite"></i>
-                            <div class="content">
-                                <a class="header" (click)="$event.stopPropagation()"
-                                    [routerLink]="['/project', el.projectKey]"
-                                    title="{{ 'common_project_title' | translate }}{{el.title}}">
-                                    {{el.title}}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div nz-col nzSpan="12">
-                        <div nz-col nzSpan="12">
-                            <div class="title">
-                                <div class="content">Workflows</div>
-                            </div>
-                        </div>
-                        <div class="item" *ngIf="!searchWorkflows || searchWorkflows.length <= 0">
-                            <div class="content">No workflow</div>
-                        </div>
-                        <div class="item" *ngFor="let el of searchWorkflows">
-                            <i nz-icon nzType="star" nzTheme="outline" *ngIf="el.favorite"></i>
-                            <div class="content">
-                                <a class="header" (click)="$event.stopPropagation()"
-                                    [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
-                                    title="{{ 'common_workflow_title' | translate }}{{el.title}}">
-                                    {{el.title}}
-                                </a>
-                                <div class="description">{{'navbar_in_project' | translate}}
-                                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', el.projectKey]"
-                                        title="{{ 'common_project_title' | translate }}{{el.title}}">
-                                        {{el.projectKey}}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </ng-template>
+                    </a>
+                </ng-template>
+            </app-input-filter>
+        </div>
 
         <!-- HELP -->
         <ng-container *ngIf="help?.content?.length > 0">
