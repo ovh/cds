@@ -215,7 +215,7 @@ func (api *API) failOldWaitingRunJob(ctx context.Context, store cache.Store, db 
 	}
 
 	// Trigger workflow
-	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber, runJob.AdminMFA)
+	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.Initiator, runJob.WorkflowName, runJob.RunNumber)
 
 	return nil
 }
