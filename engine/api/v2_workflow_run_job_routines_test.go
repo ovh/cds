@@ -216,9 +216,15 @@ func TestStopWaitingJobs(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User: &sdk.V2InitiatorUser{
+				Username: admin.Username,
+				Ring:     sdk.UserRingAdmin,
+				Email:    admin.GetEmail(),
+			},
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -236,24 +242,36 @@ func TestStopWaitingJobs(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		Queued:        nowMinus20Min,
-		JobID:         sdk.RandomString(10),
-		Status:        sdk.V2WorkflowRunJobStatusWaiting,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User: &sdk.V2InitiatorUser{
+				Username: admin.Username,
+				Ring:     sdk.UserRingAdmin,
+				Email:    admin.GetEmail(),
+			},
+		},
+		ProjectKey: wr.ProjectKey,
+		Queued:     nowMinus20Min,
+		JobID:      sdk.RandomString(10),
+		Status:     sdk.V2WorkflowRunJobStatusWaiting,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		Queued:        now,
-		JobID:         sdk.RandomString(10),
-		Status:        sdk.V2WorkflowRunJobStatusWaiting,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User: &sdk.V2InitiatorUser{
+				Username: admin.Username,
+				Ring:     sdk.UserRingAdmin,
+				Email:    admin.GetEmail(),
+			},
+		},
+		ProjectKey: wr.ProjectKey,
+		Queued:     now,
+		JobID:      sdk.RandomString(10),
+		Status:     sdk.V2WorkflowRunJobStatusWaiting,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 
