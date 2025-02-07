@@ -11050,6 +11050,21 @@ func (mr *MockInterfaceMockRecorder) V2WorkerList(ctx interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerList", reflect.TypeOf((*MockInterface)(nil).V2WorkerList), ctx)
 }
 
+// VCSGPGKey mocks base method.
+func (m *MockInterface) VCSGPGKey(ctx context.Context, gpgKeyID string) ([]sdk.VCSUserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VCSGPGKey", ctx, gpgKeyID)
+	ret0, _ := ret[0].([]sdk.VCSUserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VCSGPGKey indicates an expected call of VCSGPGKey.
+func (mr *MockInterfaceMockRecorder) VCSGPGKey(ctx, gpgKeyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSGPGKey", reflect.TypeOf((*MockInterface)(nil).VCSGPGKey), ctx, gpgKeyID)
+}
+
 // VCSGerritConfiguration mocks base method.
 func (m *MockInterface) VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error) {
 	m.ctrl.T.Helper()

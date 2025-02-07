@@ -178,20 +178,24 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 			Project:  runRequest.Project,
 			Workflow: runRequest.Workflow,
 		},
-		AdminMFA: runRequest.AdminMFA,
+		DeprecatedAdminMFA: runRequest.AdminMFA,
 	}
 
 	exec := &sdk.HookRepositoryEvent{
-		UUID:           sdk.UUID(),
-		UserID:         runRequest.UserID,
-		Username:       runRequest.Username,
-		EventName:      sdk.WorkflowHookEventNameManual,
-		VCSServerName:  runRequest.VCSServer,
-		RepositoryName: runRequest.Repository,
-		Body:           request,
-		Created:        time.Now().UnixNano(),
-		Status:         sdk.HookEventStatusScheduled,
-		ExtractData:    extractedData,
+		UUID:               sdk.UUID(),
+		DeprecatedUserID:   runRequest.UserID,
+		DeprecatedUsername: runRequest.Username,
+		EventName:          sdk.WorkflowHookEventNameManual,
+		VCSServerName:      runRequest.VCSServer,
+		RepositoryName:     runRequest.Repository,
+		Body:               request,
+		Created:            time.Now().UnixNano(),
+		Status:             sdk.HookEventStatusScheduled,
+		ExtractData:        extractedData,
+		Initiator: &sdk.V2Initiator{
+			UserID:         runRequest.UserID,
+			IsAdminWithMFA: runRequest.AdminMFA,
+		},
 	}
 
 	// Save event

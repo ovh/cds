@@ -71,6 +71,11 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 	if !find {
 		return nil
 	}
+
+	if hre.Initiator == nil && hre.DeprecatedUserID != "" {
+		hre.Initiator = &sdk.V2Initiator{UserID: hre.DeprecatedUserID}
+	}
+
 	ctx = context.WithValue(ctx, cdslog.HookEventID, hre.UUID)
 	ctx = context.WithValue(ctx, cdslog.VCSServer, hre.VCSServerName)
 	ctx = context.WithValue(ctx, cdslog.Repository, hre.RepositoryName)

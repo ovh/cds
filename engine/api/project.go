@@ -599,6 +599,7 @@ func (api *API) postProjectHandler() service.Handler {
 			k.Private = newKey.Private
 			k.Public = newKey.Public
 			k.KeyID = newKey.KeyID
+			k.LongKeyID = newKey.LongKeyID
 
 			if err := project.InsertKey(tx, k); err != nil {
 				return sdk.WrapError(err, "cannot add key %s in project %s", k.Name, prj.Name)

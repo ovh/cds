@@ -12,6 +12,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func UpdateKey(db gorpmapper.SqlExecutorWithTx, key *sdk.ProjectKey) error {
+	var dbProjKey = dbProjectKey{ProjectKey: *key}
+	if err := gorpmapping.UpdateAndSign(context.Background(), db, &dbProjKey); err != nil {
+		return err
+	}
+	*key = dbProjKey.ProjectKey
+	return nil
+}
+
 // InsertKey a new project key in database
 func InsertKey(db gorpmapper.SqlExecutorWithTx, key *sdk.ProjectKey) error {
 	var dbProjKey = dbProjectKey{ProjectKey: *key}
@@ -56,6 +65,18 @@ func LoadAllKeys(ctx context.Context, db gorp.SqlExecutor, projectID int64) ([]s
 	return getAllKeys(ctx, db, query)
 }
 
+func LoadAllKeysByProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectKey, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_key
+		JOIN project ON project.id = project_key.project_id
+		WHERE project.projectKey = $1
+		AND project_key.builtin = false
+	`).Args(projectKey)
+
+	return getAllKeys(ctx, db, query)
+}
+
 // LoadAllKeysWithPrivateContent load all keys for the given project
 func LoadAllKeysWithPrivateContent(ctx context.Context, db gorp.SqlExecutor, projID int64) ([]sdk.ProjectKey, error) {
 	keys, err := LoadAllKeys(ctx, db, projID)
@@ -73,6 +94,32 @@ func LoadAllKeysWithPrivateContent(ctx context.Context, db gorp.SqlExecutor, pro
 	}
 
 	return res, nil
+}
+
+func LoadKeyByLongKeyID(ctx context.Context, db gorp.SqlExecutor, longKeyId string) (*sdk.ProjectKey, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT *
+	FROM project_key
+	WHERE long_key_id = $1
+	AND builtin = false
+	`).Args(longKeyId)
+	var k dbProjectKey
+	found, err := gorpmapping.Get(ctx, db, query, &k)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(k, k.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(ctx, "project.LoadKey> project key %d data corrupted", k.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &k.ProjectKey, nil
 }
 
 func LoadKey(ctx context.Context, db gorp.SqlExecutor, id int64, keyName string) (*sdk.ProjectKey, error) {

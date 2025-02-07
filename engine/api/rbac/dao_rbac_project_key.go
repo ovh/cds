@@ -2,6 +2,8 @@ package rbac
 
 import (
 	"context"
+	"encoding/json"
+
 	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/lib/pq"
@@ -51,6 +53,14 @@ func loadAllRBACProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacProjec
 	return getAllRBACProjectKeys(ctx, db, query)
 }
 
+func HasRoleOnProjectAndVCSUser(ctx context.Context, db gorp.SqlExecutor, role string, user sdk.RBACVCSUser, projectKey string) (bool, error) {
+	projectKeys, err := LoadAllProjectKeysAllowedForVCSUser(ctx, db, role, user)
+	if err != nil {
+		return false, err
+	}
+	return sdk.IsInArray(projectKey, projectKeys), nil
+}
+
 func HasRoleOnProjectAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnProjectAndUserID")
 	defer next()
@@ -82,6 +92,28 @@ func loadPublicProjectKeysByRole(ctx context.Context, db gorp.SqlExecutor, role 
 		projectKeys = append(projectKeys, rpi.ProjectKey)
 	}
 	projectKeys.Unique()
+	return projectKeys, nil
+}
+
+func LoadAllProjectKeysAllowedForVCSUser(ctx context.Context, db gorp.SqlExecutor, role string, user sdk.RBACVCSUser) (sdk.StringSlice, error) {
+	btes, _ := json.Marshal([]sdk.RBACVCSUser{user})
+	var ids []int64
+	_, err := db.Select(&ids, "select id from rbac_project where role = $1 and vcs_users::JSONB @> $2", role, string(btes))
+	if err != nil {
+		return nil, err
+	}
+	keys, err := loadAllRBACProjectKeys(ctx, db, ids)
+	if err != nil {
+		return nil, err
+	}
+	projectKeys := make(sdk.StringSlice, 0, len(keys))
+	for _, rpi := range keys {
+		projectKeys = append(projectKeys, rpi.ProjectKey)
+	}
+	projectKeys.Unique()
+
+	log.Debug(ctx, "LoadAllProjectKeysAllowedForVCSUser> %s has role %q on %+v", string(btes), role, projectKeys)
+
 	return projectKeys, nil
 }
 

@@ -1,3 +1,4 @@
+import { User } from "./user.model";
 
 export const StatusAnalyzeInProgress = "InProgress"
 export const StatusAnalyzeSucceed = "Success"
@@ -26,6 +27,15 @@ export class AnalysisData {
     cds_username_id: string;
     error: string;
     entities: DataEntity[];
+    initiator: Initiator; 
+}
+
+export class Initiator {
+    user_id: string;
+    user: User;
+    vcs: string;
+    vcs_username: string;
+    is_admin_with_mfa: string;
 }
 
 export class DataEntity {
