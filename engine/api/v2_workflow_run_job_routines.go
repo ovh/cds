@@ -84,7 +84,7 @@ func (api *API) StopUnstartedJobs(ctx context.Context) {
 		case <-tickUnstartedJob.C:
 			jobWaitingTimeout := api.Config.WorkflowV2.JobWaitingTimeout
 			if jobWaitingTimeout == 0 {
-				jobWaitingTimeout = 1800
+				jobWaitingTimeout = 3600
 			}
 			jobs, err := workflow_v2.LoadOldWaitingRunJob(ctx, api.mustDB(), jobWaitingTimeout)
 			if err != nil {
