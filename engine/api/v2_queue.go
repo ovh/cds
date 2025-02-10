@@ -534,7 +534,7 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 			if err != nil {
 				return err
 			}
-			nbHatcheryStopWarning := 0
+			nbHatcheryStopWarning := int64(0)
 			for _, ri := range runInfos {
 				if strings.Contains(ri.Message, "stops working on the job") {
 					nbHatcheryStopWarning++
@@ -559,7 +559,7 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return err
 			}
 
-			if nbHatcheryStopWarning >= 5 {
+			if nbHatcheryStopWarning >= api.Config.WorkflowV2.JobSchedulingMaxErrors {
 				jobRun.Status = sdk.V2WorkflowRunJobStatusFail
 
 				info := sdk.V2WorkflowRunJobInfo{
