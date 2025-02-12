@@ -20,7 +20,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	log.Info(ctx, "triggering workflow for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// Check if we know the user that trigger the event
-	if hre.Initiator == nil || (hre.Initiator.UserID == "" && hre.SignKey != "") {
+	if hre.SignKey != "" && (hre.Initiator == nil || (hre.Initiator.UserID == "" && hre.Initiator.VCSUsername == "")) {
 		var req sdk.HookRetrieveUserRequest
 		switch {
 		case hre.ExtractData.WorkflowRun.OutgoingHookEventUUID != "":
@@ -128,7 +128,6 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 
 				runRequest := sdk.V2WorkflowRunHookRequest{
 					HookEventID:        hre.UUID,
-					DeprecatedUserID:   hre.Initiator.UserID,
 					Ref:                hre.ExtractData.Ref,
 					Sha:                hre.ExtractData.Commit,
 					CommitMessage:      hre.ExtractData.CommitMessage,
@@ -142,6 +141,9 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					PullrequestID:      hre.ExtractData.PullRequestID,
 					PullrequestToRef:   hre.ExtractData.PullRequestRefTo,
 					Initiator:          hre.Initiator,
+				}
+				if hre.Initiator != nil {
+					runRequest.DeprecatedUserID = hre.Initiator.UserID
 				}
 
 				// Override repository ref to clone in the workflow

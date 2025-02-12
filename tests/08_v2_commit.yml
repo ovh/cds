@@ -149,6 +149,7 @@ testcases:
     - name: Check commit signature
       script: |-
         #!/bin/bash
+        cd /tmp/repos/{{.git_repo}}
         git log --show-signature --pretty=oneline -1 | cat - | grep "gpg: Signature made"
 
       retry: 60
@@ -172,6 +173,6 @@ testcases:
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 2
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
       retry: 10
       delay: 1
