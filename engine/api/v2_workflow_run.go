@@ -905,8 +905,9 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				if workflowEntity.UserID == nil {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown workflow owner. Please analyse your repository.")
 				}
-
-				runRequest.Initiator.UserID = *workflowEntity.UserID
+				runRequest.Initiator = &sdk.V2Initiator{
+					UserID: *workflowEntity.UserID,
+				}
 			}
 
 			var (
