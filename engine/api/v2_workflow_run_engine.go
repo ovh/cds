@@ -896,8 +896,10 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		}
 		if strings.HasPrefix(model, ".cds/worker-models/") {
 			rj.ModelType = wref.ef.localWorkerModelCache[model].Model.Type
+			rj.ModelOSArch = wref.ef.localWorkerModelCache[model].Model.OSArch
 		} else {
 			rj.ModelType = wref.ef.workerModelCache[completeName].Model.Type
+			rj.ModelOSArch = wref.ef.workerModelCache[completeName].Model.OSArch
 		}
 		rj.Job.RunsOn.Model = completeName
 	}
@@ -1073,6 +1075,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			} else {
 				if jobDef.RunsOn.Model != "" {
 					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
+					runJob.ModelOSArch = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].OSArch
 				}
 				for _, jobEvent := range run.RunJobEvent {
 					if jobEvent.RunAttempt != run.RunAttempt {
@@ -1337,6 +1340,7 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		}
 		if permJobDef.RunsOn.Model != "" {
 			runJob.ModelType = run.WorkflowData.WorkerModels[permJobDef.RunsOn.Model].Type
+			runJob.ModelOSArch = run.WorkflowData.WorkerModels[permJobDef.RunsOn.Model].OSArch
 		}
 		for _, jobEvent := range run.RunJobEvent {
 			if jobEvent.RunAttempt != run.RunAttempt {

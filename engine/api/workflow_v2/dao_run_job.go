@@ -158,11 +158,11 @@ func LoadRunJobsByName(ctx context.Context, db gorp.SqlExecutor, wrID string, jo
 	return getAllRunJobs(ctx, db, query)
 }
 
-func LoadQueuedRunJobByModelTypeAndRegion(ctx context.Context, db gorp.SqlExecutor, regionName string, modelType string) ([]sdk.V2WorkflowRunJob, error) {
+func LoadQueuedRunJobByModelTypeAndRegionAndModelOSArch(ctx context.Context, db gorp.SqlExecutor, regionName string, modelType string, modelOSArch string) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadQueuedRunJobByModelTypeAndRegion")
 	defer next()
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE status = $1 AND model_type = $2 and region = $3 ORDER BY queued").
-		Args(sdk.StatusWaiting, modelType, regionName)
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE status = $1 AND model_type = $2 and region = $3 and model_osarch = $4 ORDER BY queued").
+		Args(sdk.StatusWaiting, modelType, regionName, modelOSArch)
 	return getAllRunJobs(ctx, db, query)
 }
 

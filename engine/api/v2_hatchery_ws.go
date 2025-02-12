@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -33,6 +34,12 @@ func (api *API) getHatcheryWebsocketHandler() ([]service.RbacChecker, service.Ha
 			if err != nil {
 				return err
 			}
+
+			osarch, has := hatch.Config["osArch"]
+			if !has || osarch == "" {
+				osarch = "linux/amd64"
+			}
+
 			permission, err := rbac.LoadRBACByHatcheryID(ctx, api.mustDB(), hatchConsumer.AuthConsumerHatchery.HatcheryID)
 			if err != nil {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "no permission found for this hatchery")
@@ -45,6 +52,7 @@ func (api *API) getHatcheryWebsocketHandler() ([]service.RbacChecker, service.Ha
 					if err != nil {
 						return err
 					}
+					filter.OSArch = fmt.Sprintf("%v", osarch)
 					filter.ModelType = hatch.ModelType
 					filter.Region = reg.Name
 					break
@@ -119,6 +127,7 @@ func (api *API) initHatcheryWebsocket(pubSubKey string) error {
 func (a *API) websocketHatcheryOnMessage(e sdk.FullEventV2) {
 	currentRegion := e.Region
 	currentModel := e.ModelType
+	currentModelOSArch := e.ModelOSArch
 
 	// Randomize the order of client to prevent the old client to always received new events in priority
 	clientIDs := a.WSHatcheryServer.server.ClientIDs()
@@ -133,6 +142,7 @@ func (a *API) websocketHatcheryOnMessage(e sdk.FullEventV2) {
 		RunNumber:    e.RunNumber,
 		JobRunID:     e.RunJobID,
 		ModelType:    e.ModelType,
+		ModelOSArch:  e.ModelOSArch,
 	}
 
 	for _, id := range clientIDs {
@@ -147,7 +157,7 @@ func (a *API) websocketHatcheryOnMessage(e sdk.FullEventV2) {
 			}
 
 			c.mutex.Lock()
-			canHandleJob := c.filter.Region == currentRegion && c.filter.ModelType == currentModel
+			canHandleJob := c.filter.Region == currentRegion && c.filter.ModelType == currentModel && c.filter.OSArch == currentModelOSArch
 			c.mutex.Unlock()
 			if !canHandleJob {
 				return

@@ -50,6 +50,7 @@ func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 		ProjectKey:    proj.Key,
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		ModelType:     "docker",
+		ModelOSArch:   "linux/amd64",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
@@ -168,6 +169,7 @@ hatcheries:
 		ProjectKey:    proj.Key,
 		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 		ModelType:     "docker",
+		ModelOSArch:   "linux/amd64",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
@@ -238,6 +240,7 @@ func TestUserGetJobsQueuedHandler(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
+		ModelOSArch:   "linux/amd64",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
@@ -312,6 +315,7 @@ func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
+		ModelOSArch:   "linux/amd64",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
@@ -428,6 +432,7 @@ func TestGetJobHandler(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
+		ModelOSArch:   "linux/amd64",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
@@ -516,6 +521,7 @@ func TestPostJobRunInfoHandler(t *testing.T) {
 		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
+		ModelOSArch:   "linux/amd64",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		Initiator: sdk.V2Initiator{
