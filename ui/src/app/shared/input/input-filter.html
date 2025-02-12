@@ -17,4 +17,13 @@
 			[nzValue]="computeFilterValue(selectedFilter, option)">{{selectedFilter.key}}:{{option}}
 		</nz-auto-option>
 	</nz-auto-optgroup>
+	<nz-auto-optgroup *ngIf="suggestions && suggestions.length > 0" nzLabel="Suggestions">
+		<nz-auto-option *ngFor="let option of suggestions" [nzLabel]="'jump:' + option.key" [nzValue]="option.data">
+			<ng-container *ngIf="suggestionTemplate" [ngTemplateOutlet]="suggestionTemplate"
+				[ngTemplateOutletContext]="{option: option}" />
+			<ng-container *ngIf="!suggestionTemplate">
+				{{option.label}}
+			</ng-container>
+		</nz-auto-option>
+	</nz-auto-optgroup>
 </nz-autocomplete>

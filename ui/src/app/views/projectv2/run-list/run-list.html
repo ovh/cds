@@ -22,7 +22,7 @@
 		<form nz-form (ngSubmit)="submitForm()">
 			<nz-form-item>
 				<nz-form-control>
-					<app-input-filter placeholder="Filter workflow runs" [initialFilterText]="filterText" [filters]="filters"
+					<app-input-filter placeholder="Filter workflow runs" [filterText]="filterText" [filters]="filters"
 						(changeFilter)="changeFilter($event)" (submit)="submitForm()"></app-input-filter>
 				</nz-form-control>
 			</nz-form-item>

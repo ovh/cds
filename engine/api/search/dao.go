@@ -81,7 +81,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 		WITH 
 			results AS (
 				(
-					SELECT 'project' AS type, projectkey AS id, name AS label, null AS variants
+					SELECT 0 AS type_int, projectkey AS id, name AS label, null AS variants
 					FROM project
 					WHERE
 						projectkey = ANY(:projects)
@@ -89,7 +89,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 				)
 				UNION
 				(
-					SELECT 'workflow' AS type, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, jsonb_agg(entity.ref) AS variants
+					SELECT 1 AS type_int, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, jsonb_agg(entity.ref) AS variants
 					FROM entity
 					JOIN project_repository ON entity.project_repository_id = project_repository.id
 					JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
@@ -101,7 +101,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 				)
 				UNION
 				(
-					SELECT 'workflow-legacy' AS type, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
+					SELECT 2 AS type_int, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
 					FROM workflow
 					JOIN project ON project.id = workflow.project_id
 					WHERE
@@ -109,13 +109,17 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 						AND (array_length(:types::text[], 1) IS NULL OR 'workflow-legacy' = ANY(:types))
 				)
 			)
-		SELECT type, id, label, variants, CASE
+		SELECT id, label, variants, CASE
 				WHEN LOWER(label) LIKE :query THEN 1
 				WHEN LOWER(id) LIKE :query THEN 2
-			END AS priority
+			END AS priority, CASE
+				WHEN type_int = 0 THEN 'project'
+				WHEN type_int = 1 THEN 'workflow'
+				WHEN type_int = 2 THEN 'workflow-legacy'
+			END AS type
 		FROM results
 		WHERE LOWER(label) LIKE :query OR LOWER(id) LIKE :query
-		ORDER BY priority ASC, CHAR_LENGTH(label) ASC
+		ORDER BY priority ASC, CHAR_LENGTH(label) ASC, type_int ASC
 		LIMIT :limit OFFSET :offset
 	`
 

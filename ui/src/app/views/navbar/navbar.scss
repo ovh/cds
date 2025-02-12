@@ -71,7 +71,7 @@
     }
 
     .search {
-        width: 200px;
+        width: 300px;
         margin-right: 15px;
     }
 
@@ -141,46 +141,6 @@ nz-switch {
 
 .mt5 {
     margin-top: 5px;
-}
-
-.searchpopup {
-    width: 550px;
-
-    .header {
-        height: 30px;
-    }
-
-    .right {
-        float: right;
-    }
-
-    .title {
-        padding-left: 20px;
-        padding-bottom: 20px;
-    }
-
-    .item {
-        padding-left: 20px;
-        height: 65px;
-        display: flex;
-        align-items: center;
-        border-top: 1px solid grey;
-
-        .content {
-            .description {
-                padding-top: 2px;
-                padding-bottom: 5px;
-
-                a {
-                    color: #1890ff !important;
-                }
-            }
-        }
-    }
-
-    i {
-        margin-right: 5px;
-    }
 }
 
 .helppopup {

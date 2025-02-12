@@ -135,16 +135,29 @@ export class SearchComponent implements OnInit {
 		switch (res.type) {
 			case SearchResultType.Workflow:
 				const project = splitted.shift();
-				const vcs = splitted.shift();
-				const workflow = splitted.pop();
-				const repository = splitted.join('/');
-				return ['/project', project, 'explore', 'vcs', vcs, 'repository', repository, 'workflow', workflow];
+				return ['/project', project, 'run'];
 			case SearchResultType.WorkflowLegacy:
 				return ['/project', splitted[0], 'workflow', splitted[1]];
 			case SearchResultType.Project:
 				return ['/project', res.id];
 			default:
 				return [];
+		}
+	}
+
+	generateResulQueryParams(res: SearchResult, variant?: string): any {
+		const splitted = res.id.split('/');
+		switch (res.type) {
+			case SearchResultType.Workflow:
+				splitted.shift();
+				const workflow_path = splitted.join('/');
+				let params = { workflow: workflow_path };
+				if (variant) {
+					params['ref'] = variant;
+				}
+				return params;
+			default:
+				return {};
 		}
 	}
 }

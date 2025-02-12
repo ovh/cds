@@ -52,20 +52,14 @@ func (api *API) getSearchHandler() ([]service.RbacChecker, service.Handler) {
 
 			filters, offset, limit := parseSearchQuery(r.URL.Query())
 
-			if !isAdmin(ctx) {
-				return sdk.WithStack(sdk.ErrForbidden)
-			}
-
 			var pKeys []string
 			var err error
-			if isAdmin(ctx) {
-				// For admin
+			if isMaintainer(ctx) {
 				pKeys, err = project.LoadAllProjectKeys(ctx, api.mustDB(), api.Cache)
 				if err != nil {
 					return err
 				}
 			} else {
-				// Normal user
 				pKeys, err = rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
 				if err != nil {
 					return err
@@ -122,20 +116,14 @@ func (api *API) getSearchFiltersHandler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
-			if !isAdmin(ctx) {
-				return sdk.WithStack(sdk.ErrForbidden)
-			}
-
 			var pKeys []string
 			var err error
-			if isAdmin(ctx) {
-				// For admin
+			if isMaintainer(ctx) {
 				pKeys, err = project.LoadAllProjectKeys(ctx, api.mustDB(), api.Cache)
 				if err != nil {
 					return err
 				}
 			} else {
-				// Normal user
 				pKeys, err = rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
 				if err != nil {
 					return err
