@@ -102,13 +102,14 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 		Status:              event.Status,
 		Error:               event.LastError,
 		NbErrors:            event.NbErrors,
-		UserID:              event.Initiator.UserID,
-		Username:            event.Initiator.Username(),
 		Analyses:            event.Analyses,
 		SignKey:             event.SignKey,
 		SigningKeyOperation: event.SigningKeyOperation,
 	}
-
+	if event.Initiator != nil {
+		cli.UserID = event.Initiator.UserID
+		cli.Username = event.Initiator.Username()
+	}
 	return cli, nil
 }
 
