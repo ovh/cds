@@ -573,17 +573,6 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	skippedEntities := make([]sdk.EntityWithObject, 0)
 	skippedFiles := make(sdk.StringSlice, 0)
 
-	// Load existing entity on the current branch
-	existingEntities, err := entity.LoadByRepositoryAndRefAndCommit(ctx, api.mustDB(), analysis.ProjectRepositoryID, analysis.Ref, "HEAD")
-	if err != nil {
-		return api.stopAnalysis(ctx, analysis, err)
-	}
-
-	log.Debug(ctx, "analyzeRepository - %d existing entities", len(existingEntities))
-	for _, e := range existingEntities {
-		log.Debug(ctx, "analyzeRepository - existing entity: %+v", e)
-	}
-
 	// Build user role map
 	for _, t := range sdk.EntityTypes {
 		if _, has := userRoles[t]; !has {
@@ -831,6 +820,13 @@ skipEntity:
 		if currentAnalysisBranch != nil && currentAnalysisBranch.Default && currentAnalysisBranch.LatestCommit == analysis.Commit {
 			delOpts.WithHooks = true
 		}
+
+		// Load existing entity on the current branch
+		existingEntities, err := entity.LoadByRepositoryAndRefAndCommit(ctx, api.mustDB(), analysis.ProjectRepositoryID, analysis.Ref, "HEAD")
+		if err != nil {
+			return api.stopAnalysis(ctx, analysis, err)
+		}
+
 		for _, e := range existingEntities {
 			// If an existing entities has not been found in the current head commit (deleted or renamed)
 			// => remove the entity
@@ -840,6 +836,7 @@ skipEntity:
 					log.Warn(ctx, "user %s removed the entity %s [%s] but has not the right to do it", analysis.Data.Initiator.Username(), e.Name, e.Type)
 					continue
 				}
+				log.Info(ctx, "deleting entity %s of type %s: file doesn't exist anymore", e.Name, e.Type)
 				if err := DeleteEntity(ctx, tx, &e, srvs, delOpts); err != nil {
 					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to delete entity %s [%s] ", e.Name, e.Type))
 				}
@@ -1636,6 +1633,14 @@ func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, files
 		if err != nil {
 			return nil, err
 		}
+		for _, newEntity := range es {
+			for _, alreadyExistEntity := range entities {
+				if newEntity.Name == alreadyExistEntity.Name && newEntity.Type == alreadyExistEntity.Type {
+					return nil, []error{sdk.NewErrorFrom(sdk.ErrInvalidData, "there is at least 2 %s with the name %s", newEntity.Type, newEntity.Name)}
+				}
+			}
+		}
+
 		entities = append(entities, es...)
 		analysis.Data.Entities = append(analysis.Data.Entities, sdk.ProjectRepositoryDataEntity{
 			FileName: fileName,
