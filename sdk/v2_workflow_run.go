@@ -264,6 +264,7 @@ type V2WorkflowRunJob struct {
 	DeprecatedAdminMFA bool                   `json:"admin_mfa" db:"admin_mfa"`                          // Deprecated
 	Region             string                 `json:"region,omitempty" db:"region"`
 	ModelType          string                 `json:"model_type,omitempty" db:"model_type"`
+	ModelOSArch        string                 `json:"model_osarch,omitempty" db:"model_osarch"`
 	Matrix             JobMatrix              `json:"matrix,omitempty" db:"matrix"`
 	GateInputs         GateInputs             `json:"gate_inputs,omitempty" db:"gate_inputs"`
 	Initiator          V2Initiator            `json:"initiator,omitempty" db:"initiator"`

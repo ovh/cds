@@ -136,13 +136,18 @@ func (api *API) getJobsQueuedRegionalizedHandler() ([]service.RbacChecker, servi
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			regionName := vars["regionName"]
+
+			osarch := FormString(req, "osarch")
+			if osarch == "" {
+				osarch = "linux/amd64"
+			}
 			hatchConsumer := getHatcheryConsumer(ctx)
 
 			hatch, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), hatchConsumer.AuthConsumerHatchery.HatcheryID)
 			if err != nil {
 				return err
 			}
-			jobs, err := workflow_v2.LoadQueuedRunJobByModelTypeAndRegion(ctx, api.mustDB(), regionName, hatch.ModelType)
+			jobs, err := workflow_v2.LoadQueuedRunJobByModelTypeAndRegionAndModelOSArch(ctx, api.mustDB(), regionName, hatch.ModelType, osarch)
 			if err != nil {
 				return err
 			}

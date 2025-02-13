@@ -56,6 +56,7 @@ type WebsocketFilter struct {
 type WebsocketHatcheryFilter struct {
 	Region    string `json:"region"`
 	ModelType string `json:"model_type"`
+	OSArch    string `json:"osarch"`
 }
 
 // Key generates the unique key associated to given filter.
@@ -138,6 +139,7 @@ type WebsocketJobQueueEvent struct {
 	JobRunID     string `json:"job_run_id"`
 	Region       string `json:"region"`
 	ModelType    string `json:"model_type"`
+	ModelOSArch  string `json:"model_osarch"`
 	ProjectKey   string `json:"project_key"`
 	WorkflowName string `json:"workflow_name"`
 	JobID        string `json:"job_id"`

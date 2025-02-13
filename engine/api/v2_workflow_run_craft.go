@@ -638,12 +638,18 @@ loop:
 		run.WorkflowData.Workflow.Jobs[k] = v
 	}
 	// Set gate on workflow
+	if run.WorkflowData.Workflow.Gates == nil {
+		run.WorkflowData.Workflow.Gates = make(map[string]sdk.V2JobGate)
+	}
 	for k, v := range newGates {
 		if _, has := run.WorkflowData.Workflow.Gates[k]; !has {
 			run.WorkflowData.Workflow.Gates[k] = v
 		}
 	}
 	// Set annotations on workflow
+	if run.WorkflowData.Workflow.Annotations == nil {
+		run.WorkflowData.Workflow.Annotations = make(map[string]string)
+	}
 	for k, v := range newAnnotations {
 		if _, has := run.WorkflowData.Workflow.Annotations[k]; !has {
 			run.WorkflowData.Workflow.Annotations[k] = v

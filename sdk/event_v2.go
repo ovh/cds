@@ -99,6 +99,7 @@ type FullEventV2 struct {
 	Region           string          `json:"region,omitempty"`
 	Hatchery         string          `json:"hatchery,omitempty"`
 	ModelType        string          `json:"model_type,omitempty"`
+	ModelOSArch      string          `json:"model_osarch,omitempty"`
 	JobID            string          `json:"job_id,omitempty"`
 	Status           string          `json:"status,omitempty"`
 	UserID           string          `json:"user_id,omitempty"`
@@ -303,6 +304,7 @@ type WorkflowRunJobEvent struct {
 	Region        string                 `json:"region"`
 	Hatchery      string                 `json:"hatchery"`
 	ModelType     string                 `json:"model_type"`
+	ModelOSArch   string                 `json:"model_osarch"`
 	JobID         string                 `json:"job_id"`
 	Status        V2WorkflowRunJobStatus `json:"status"`
 	UserID        string                 `json:"user_id"`

@@ -90,6 +90,7 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.Ev
 		Region:        rj.Region,
 		Hatchery:      rj.HatcheryName,
 		ModelType:     rj.ModelType,
+		ModelOSArch:   rj.ModelOSArch,
 		JobID:         rj.JobID,
 		Status:        rj.Status,
 		UserID:        rj.Initiator.UserID,

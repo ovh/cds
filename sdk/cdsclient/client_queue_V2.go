@@ -123,7 +123,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -174,7 +174,8 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
 			var queue []sdk.V2WorkflowRunJob
-			if _, err := c.GetJSON(ctxt, "/v2/queue/"+regionName, &queue); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
+			path := fmt.Sprintf("/v2/queue/%s?osarch=%s", regionName, osarch)
+			if _, err := c.GetJSON(ctxt, path, &queue); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
 				errs <- newError(fmt.Errorf("unable to load jobs: %v", err))
 				cancel()
 				continue
