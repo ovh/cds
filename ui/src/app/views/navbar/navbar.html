@@ -112,10 +112,11 @@
         <div class="search" *ngIf="currentAuthSummary">
             <app-input-filter placeholder="Search..." [filters]="searchFilters" (changeFilter)="searchChange($event)"
                 [suggestions]="searchSuggestions" [suggestionTemplate]="suggestionTemplate"
-                (selectSuggestion)="selectSuggestion($event)" (submit)="submitSearch()">
+                (selectSuggestion)="selectSuggestion($event)" (submit)="submitSearch()" #searchBar>
                 <ng-template #suggestionTemplate let-option="option">
                     <a [routerLink]="generateResultLink(option.data)"
-                        [queryParams]="generateResulQueryParams(option.data)" class="navbar-suggestion">
+                        [queryParams]="generateResulQueryParams(option.data)" class="navbar-suggestion"
+                        (click)="clickSuggestion()">
                         <div class="title">
                             <span class="label">{{option.data.label}}</span>
                             <span class="id">{{option.data.id}}</span>
