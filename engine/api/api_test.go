@@ -48,6 +48,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.LinkDrivers = make(map[sdk.AuthConsumerType]link.LinkDriver)
 	api.LinkDrivers[sdk.ConsumerGithub] = authdrivertest.NewDriver(t)
 	api.GoRoutines = sdk.NewGoRoutines(context.TODO())
+	api.Config.WorkflowV2.JobSchedulingMaxErrors = 5
 
 	// Reset organization
 	_, err := db.Exec("DELETE FROM organization")

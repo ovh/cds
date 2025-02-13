@@ -241,7 +241,9 @@ type Configuration struct {
 		WorkerModelDockerImageWhiteList []string         `toml:"workerModelDockerImageWhiteList" comment:"White list for docker image worker model " json:"workerModelDockerImageWhiteList" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	WorkflowV2 struct {
+		JobWaitingTimeout          int64  `toml:"jobWaitingTimeout" comment:"Timeout delay for waiting job (in seconds)" json:"jobWaitingTimeout" default:"3600"`
 		JobSchedulingTimeout       int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
+		JobSchedulingMaxErrors     int64  `toml:"jobSchedulingMaxErrors" comment:"Number of scheduling error before failing the job" json:"jobSchedulingMaxErrors" default:"5"`
 		RunRetentionScheduling     int64  `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"15"`
 		WorkflowRunRetention       int64  `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
 		LibraryProjectKey          string `toml:"libraryProjectKey" comment:"Library project key" json:"libraryProjectKey" commented:"true"`
@@ -504,6 +506,9 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.StartupTime = time.Now()
 
+	if a.Config.WorkflowV2.JobSchedulingMaxErrors <= 0 {
+		a.Config.WorkflowV2.JobSchedulingMaxErrors = 5
+	}
 	if a.Config.Entity.RoutineDelay == 0 {
 		a.Config.Entity.RoutineDelay = 15
 	}
@@ -949,6 +954,9 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.StopDeadJobs", func(ctx context.Context) {
 		a.StopDeadJobs(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.StopUnStartedJobs", func(ctx context.Context) {
+		a.StopUnstartedJobs(ctx)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.TriggerBlockedWorkflowRuns", func(ctx context.Context) {
 		a.TriggerBlockedWorkflowRuns(ctx)

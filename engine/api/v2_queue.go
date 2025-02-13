@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -529,16 +530,24 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 			jobRun.Status = sdk.V2WorkflowRunJobStatusWaiting
 			jobRun.HatcheryName = ""
 
+			runInfos, err := workflow_v2.LoadRunJobInfosByRunJobID(ctx, api.mustDB(), jobRun.ID)
+			if err != nil {
+				return err
+			}
+			nbHatcheryStopWarning := int64(0)
+			for _, ri := range runInfos {
+				if strings.Contains(ri.Message, "stops working on the job") {
+					nbHatcheryStopWarning++
+				}
+			}
+
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
 			}
 			defer tx.Rollback() // nolint
 
-			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
-				return err
-			}
-
+			nbHatcheryStopWarning++
 			info := sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    jobRun.WorkflowRunID,
 				IssuedAt:         time.Now(),
@@ -550,11 +559,32 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return err
 			}
 
+			if nbHatcheryStopWarning >= api.Config.WorkflowV2.JobSchedulingMaxErrors {
+				jobRun.Status = sdk.V2WorkflowRunJobStatusFail
+
+				info := sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    jobRun.WorkflowRunID,
+					IssuedAt:         time.Now(),
+					Level:            sdk.WorkflowRunInfoLevelError,
+					WorkflowRunJobID: jobRun.ID,
+					Message:          "unable to start job: too many hatchery failed attempts",
+				}
+				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
+					return err
+				}
+			}
+
+			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
+				return err
+			}
+
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
 
-			// Enqueue the job
+			if nbHatcheryStopWarning >= 0 {
+				api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
+			}
 			api.GoRoutines.Exec(ctx, "deleteHatcheryReleaseJobRunHandler.event", func(ctx context.Context) {
 				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
 				if err != nil {

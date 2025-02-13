@@ -190,3 +190,99 @@ func TestStopDeadJobs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, sdk.V2WorkflowRunJobStatusStopped, rjDB.Status)
 }
+
+func TestStopWaitingJobs(t *testing.T) {
+	ctx := context.TODO()
+	api, db, _ := newTestAPI(t)
+
+	db.Exec("DELETE FROM v2_worker")
+	db.Exec("DELETE FROM v2_workflow_run_job")
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User: &sdk.V2InitiatorUser{
+				Username: admin.Username,
+				Ring:     sdk.UserRingAdmin,
+				Email:    admin.GetEmail(),
+			},
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Needs: []string{"job1"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	now := time.Now()
+	nowMinus20Min := now.Add(-35 * time.Minute)
+
+	wrj := sdk.V2WorkflowRunJob{
+		Job:           sdk.V2Job{},
+		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User: &sdk.V2InitiatorUser{
+				Username: admin.Username,
+				Ring:     sdk.UserRingAdmin,
+				Email:    admin.GetEmail(),
+			},
+		},
+		ProjectKey: wr.ProjectKey,
+		Queued:     nowMinus20Min,
+		JobID:      sdk.RandomString(10),
+		Status:     sdk.V2WorkflowRunJobStatusWaiting,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
+
+	wrj2 := sdk.V2WorkflowRunJob{
+		Job:           sdk.V2Job{},
+		WorkflowRunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User: &sdk.V2InitiatorUser{
+				Username: admin.Username,
+				Ring:     sdk.UserRingAdmin,
+				Email:    admin.GetEmail(),
+			},
+		},
+		ProjectKey: wr.ProjectKey,
+		Queued:     now,
+		JobID:      sdk.RandomString(10),
+		Status:     sdk.V2WorkflowRunJobStatusWaiting,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
+
+	jobs, err := workflow_v2.LoadOldWaitingRunJob(ctx, api.mustDB(), 600)
+	require.NoError(t, err)
+	require.Equal(t, len(jobs), 1)
+	require.Equal(t, wrj.ID, jobs[0].ID)
+
+	require.NoError(t, api.failOldWaitingRunJob(ctx, api.Cache, api.mustDB(), jobs[0].ID))
+
+	rjDB, err := workflow_v2.LoadRunJobByID(ctx, db, jobs[0].ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, rjDB.Status)
+}
