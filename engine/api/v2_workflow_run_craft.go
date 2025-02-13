@@ -23,7 +23,6 @@ import (
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/integration"
-	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -44,16 +43,19 @@ type WorkflowRunEntityFinder struct {
 	project sdk.Project
 }
 
-func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, libraryProjectKey string, initiator *sdk.V2Initiator) *WorkflowRunEntityFinder {
+func NewWorkflowRunEntityFinder(ctx context.Context, db *gorp.DbMap, proj sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, ref, sha string, libraryProjectKey string, initiator *sdk.V2Initiator) (*WorkflowRunEntityFinder, error) {
 	if initiator == nil {
 		initiator = run.Initiator
 	}
-	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, *initiator, libraryProjectKey)
+	ef, err := NewEntityFinder(ctx, db, proj.Key, ref, sha, repo, vcsServer, *initiator, libraryProjectKey)
+	if err != nil {
+		return nil, err
+	}
 	return &WorkflowRunEntityFinder{
 		ef:      ef,
 		run:     run,
-		project: p,
-	}
+		project: proj,
+	}, nil
 }
 
 func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) {
@@ -166,14 +168,9 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	run.Contexts = *runContext
 
-	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, api.Config.WorkflowV2.LibraryProjectKey, nil)
-
-	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+	wref, err := NewWorkflowRunEntityFinder(ctx, api.mustDB(), *p, *run, *repo, *vcsServer, run.WorkflowRef, run.WorkflowSha, api.Config.WorkflowV2.LibraryProjectKey, nil)
 	if err != nil {
 		return err
-	}
-	for _, p := range plugins {
-		wref.ef.plugins[p.Name] = p
 	}
 
 	// Resolve workflow template if applicable
@@ -193,24 +190,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("Unable to resolve workflow template %s: %s", run.WorkflowData.Workflow.From, err),
 			})
-		}
-
-		// Lint generated workflow
-		// Create tmp workflow without FROM to check workflow structure
-		tmpWkf := run.WorkflowData.Workflow
-		tmpWkf.From = ""
-		if errsLint := Lint(ctx, api.mustDB(), api.Cache, tmpWkf, wref.ef, api.WorkerModelDockerImageWhiteList); errsLint != nil {
-			//run.Status = sdk.V2WorkflowRunStatusFail
-			msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
-			for _, e := range errsLint {
-				msgs = append(msgs, sdk.V2WorkflowRunInfo{
-					WorkflowRunID: run.ID,
-					IssuedAt:      time.Now(),
-					Level:         sdk.WorkflowRunInfoLevelError,
-					Message:       e.Error(),
-				})
-			}
-			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, msgs...)
 		}
 
 		// Build context for workflow
@@ -258,8 +237,28 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			run.Contexts.CDS.WorkflowTemplateRefWebURL = fmt.Sprintf(vcsRepo.URLBranchFormat, strings.TrimPrefix(e.Entity.Ref, sdk.GitRefBranchPrefix))
 		}
 
-		// Update after applying template
-		wref.run = *run
+		// Recreate wref with vcs/repo = template's repo and not workflow's repo
+		wref, err = NewWorkflowRunEntityFinder(ctx, api.mustDB(), *p, *run, *repo, *vcsProj, e.Ref, e.Commit, api.Config.WorkflowV2.LibraryProjectKey, &wref.ef.initiator)
+		if err != nil {
+			return err
+		}
+
+		// Lint workflow. Create tmp workflow without FROM to check workflow structure
+		tmpWkf := run.WorkflowData.Workflow
+		tmpWkf.From = ""
+		if errsLint := Lint(ctx, api.mustDB(), api.Cache, tmpWkf, wref.ef, api.WorkerModelDockerImageWhiteList); errsLint != nil {
+			//run.Status = sdk.V2WorkflowRunStatusFail
+			msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
+			for _, e := range errsLint {
+				msgs = append(msgs, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       e.Error(),
+				})
+			}
+			return stopRun(ctx, api.mustDB(), api.Cache, run, &wref.ef.initiator, msgs...)
+		}
 	}
 
 	allVariableSets, err := project.LoadVariableSetsByProject(ctx, api.mustDB(), p.Key)
@@ -271,7 +270,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
 		if j.From != "" {
-			msg, err := api.computeJobFromTemplate(ctx, wref, jobID, j, run)
+			msgs, err := api.computeJobFromTemplate(ctx, api.mustDB(), api.Cache, wref, jobID, j, run, allVariableSets, api.Config.Workflow.JobDefaultRegion)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
@@ -280,8 +279,8 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 					Message:       fmt.Sprintf("unable to compute job[%s] with template %s: %v", jobID, j.From, err),
 				})
 			}
-			if msg != nil {
-				return stopRun(ctx, api.mustDB(), api.Cache, run, nil, msg...)
+			if len(msgs) > 0 {
+				return stopRun(ctx, api.mustDB(), api.Cache, run, nil, msgs...)
 			}
 		}
 	}
@@ -301,7 +300,8 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, msgs...)
 	}
 
-	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
+	// Reload integration regarding jobs
+	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB(), run.WorkflowData.Workflow.Jobs)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
@@ -485,14 +485,14 @@ func checkWorkflowVariableSets(run sdk.V2WorkflowRun, currentJob sdk.V2Job, proj
 	return nil
 }
 
-func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, jobID string, j sdk.V2Job, run *sdk.V2WorkflowRun, params map[string]string) (*sdk.V2Workflow, []sdk.V2WorkflowRunInfo, error) {
+func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, j sdk.V2Job, run *sdk.V2WorkflowRun, params map[string]string) (*sdk.EntityWithObject, *sdk.V2Workflow, []sdk.V2WorkflowRunInfo, error) {
 	// Check is template exist
 	e, msg, err := wref.checkWorkflowTemplate(ctx, db, store, j.From)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	if msg != nil {
-		return nil, []sdk.V2WorkflowRunInfo{*msg}, nil
+		return &e, nil, []sdk.V2WorkflowRunInfo{*msg}, nil
 	}
 
 	tmpWorkflow := sdk.V2Workflow{
@@ -502,7 +502,7 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 
 	if _, err := e.Template.Resolve(ctx, &tmpWorkflow); err != nil {
 		log.ErrorWithStackTrace(ctx, err)
-		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to resolve workflow template %s: %s", j.From, err)
+		return &e, nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to resolve workflow template %s: %s", j.From, err)
 	}
 	tmpWorkflow.Name = e.Name
 
@@ -522,8 +522,21 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 	tmpWorkflow.Integrations = append(tmpWorkflow.Integrations, run.WorkflowData.Workflow.Integrations...)
 	tmpWorkflow.VariableSets = append(tmpWorkflow.VariableSets, run.WorkflowData.Workflow.VariableSets...)
 
+	repoTemplate, err := repository.LoadRepositoryByID(ctx, db, e.ProjectRepositoryID)
+	if err != nil {
+		return &e, nil, nil, err
+	}
+	vcsTemplate, err := vcs.LoadVCSByIDAndProjectKey(ctx, db, e.ProjectKey, repoTemplate.VCSProjectID)
+	if err != nil {
+		return &e, nil, nil, err
+	}
+	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, wref.project, *run, *repoTemplate, *vcsTemplate, e.Ref, e.Commit, wref.ef.libraryProject, &wref.ef.initiator)
+	if err != nil {
+		return &e, nil, nil, err
+	}
+
 	// Lint generated workflow
-	if errsLint := Lint(ctx, db, store, tmpWorkflow, wref.ef, nil); errsLint != nil {
+	if errsLint := Lint(ctx, db, store, tmpWorkflow, wrefTemplate.ef, nil); errsLint != nil {
 		//run.Status = sdk.V2WorkflowRunStatusFail
 		msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
 		for _, e := range errsLint {
@@ -534,18 +547,18 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 				Message:       e.Error(),
 			})
 		}
-		return nil, msgs, nil
+		return &e, nil, msgs, nil
 	}
 
-	return &tmpWorkflow, nil, nil
+	return &e, &tmpWorkflow, nil, nil
 }
 
-func (a *API) computeJobFromTemplate(ctx context.Context, wref *WorkflowRunEntityFinder, jobID string, j sdk.V2Job, run *sdk.V2WorkflowRun) ([]sdk.V2WorkflowRunInfo, error) {
+func (a *API) computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, jobID string, j sdk.V2Job, run *sdk.V2WorkflowRun, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
 	ctx, end := telemetry.Span(ctx, "computeJobFromTemplate")
 	defer end()
 
-	// Retrive Template and Lint
-	tmpWorkflow, msgs, err := checkJobTemplate(ctx, a.mustDB(), a.Cache, wref, jobID, j, run, j.Parameters)
+	// Retrieve Template and Lint
+	entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, a.mustDB(), a.Cache, wref, j, run, j.Parameters)
 	if err != nil {
 		return nil, err
 	}
@@ -555,10 +568,12 @@ func (a *API) computeJobFromTemplate(ctx context.Context, wref *WorkflowRunEntit
 
 	// If there is no matrix, compute the final workflow now. Else it will be done at runtime
 	if j.Strategy == nil || len(j.Strategy.Matrix) == 0 {
-
-		msg := handleTemplatedJobInWorkflow(run, tmpWorkflow.Jobs, tmpWorkflow.Stages, tmpWorkflow.Gates, tmpWorkflow.Annotations, jobID, j)
-		if msg != nil {
-			return []sdk.V2WorkflowRunInfo{*msg}, nil
+		msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplate, run, tmpWorkflow.Jobs, tmpWorkflow.Stages, tmpWorkflow.Gates, tmpWorkflow.Annotations, jobID, j, allVariableSets, defaultRegion)
+		if err != nil {
+			return nil, err
+		}
+		if len(msgs) > 0 {
+			return msgs, nil
 		}
 
 		// Remove templated job
@@ -567,19 +582,19 @@ func (a *API) computeJobFromTemplate(ctx context.Context, wref *WorkflowRunEntit
 	return nil, nil
 }
 
-func handleTemplatedJobInWorkflow(run *sdk.V2WorkflowRun, newJobs map[string]sdk.V2Job, newStages map[string]sdk.WorkflowStage, newGates map[string]sdk.V2JobGate, newAnnotations map[string]string, jobID string, j sdk.V2Job) *sdk.V2WorkflowRunInfo {
+func handleTemplatedJobInWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, templateEntity *sdk.EntityWithObject, run *sdk.V2WorkflowRun, newJobs map[string]sdk.V2Job, newStages map[string]sdk.WorkflowStage, newGates map[string]sdk.V2JobGate, newAnnotations map[string]string, jobID string, j sdk.V2Job, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
 	// Check duplication of jobID
 	// Retrieve root job
 	rootJobs := make([]string, 0)
 	for subJobID, subJob := range newJobs {
 		if _, exist := run.WorkflowData.Workflow.Jobs[subJobID]; exist {
-			msg := &sdk.V2WorkflowRunInfo{
+			msgs := []sdk.V2WorkflowRunInfo{{
 				WorkflowRunID: run.ID,
 				IssuedAt:      time.Now(),
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("job %s: job %s defined in template %s already exist in the parent workflow", jobID, subJobID, j.From),
-			}
-			return msg
+			}}
+			return msgs, nil
 		}
 		if len(subJob.Needs) == 0 {
 			rootJobs = append(rootJobs, subJobID)
@@ -633,9 +648,33 @@ loop:
 		}
 	}
 
+	repoTemplate, err := repository.LoadRepositoryByID(ctx, db, templateEntity.ProjectRepositoryID)
+	if err != nil {
+		return nil, err
+	}
+	vcsTemplate, err := vcs.LoadVCSByIDAndProjectKey(ctx, db, templateEntity.ProjectKey, repoTemplate.VCSProjectID)
+	if err != nil {
+		return nil, err
+	}
+	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, wref.project, *run, *repoTemplate, *vcsTemplate, templateEntity.Ref, templateEntity.Commit, wref.ef.libraryProject, &wref.ef.initiator)
+	if err != nil {
+		return nil, err
+	}
+	integrations, msgs, err := wrefTemplate.checkIntegrations(ctx, db, newJobs)
+	if err != nil {
+		return nil, err
+	}
+	if len(msgs) > 0 {
+		return msgs, nil
+	}
+
 	// Set job on workflow
 	for k, v := range newJobs {
 		run.WorkflowData.Workflow.Jobs[k] = v
+		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, k, v, wrefTemplate, integrations, allVariableSets, defaultRegion)
+		if msg != nil {
+			return []sdk.V2WorkflowRunInfo{*msg}, nil
+		}
 	}
 	// Set gate on workflow
 	if run.WorkflowData.Workflow.Gates == nil {
@@ -655,7 +694,43 @@ loop:
 			run.WorkflowData.Workflow.Annotations[k] = v
 		}
 	}
-	return nil
+
+	if run.WorkflowData.Actions == nil {
+		run.WorkflowData.Actions = make(map[string]sdk.V2Action)
+	}
+
+	for k, v := range wrefTemplate.ef.actionsCache {
+		if _, has := run.WorkflowData.Actions[k]; !has {
+			run.WorkflowData.Actions[k] = v
+		}
+		wref.ef.actionsCache[k] = v
+	}
+	for _, v := range wrefTemplate.ef.localActionsCache {
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wrefTemplate.run.ProjectKey, wrefTemplate.ef.currentVCS.Name, wrefTemplate.ef.currentRepo.Name, v.Name, templateEntity.Ref)
+		if _, has := run.WorkflowData.Actions[completeName]; !has {
+			run.WorkflowData.Actions[completeName] = v
+		}
+		wref.ef.actionsCache[completeName] = v
+	}
+
+	if run.WorkflowData.WorkerModels == nil {
+		run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
+	}
+
+	for k, v := range wrefTemplate.ef.workerModelCache {
+		if _, has := run.WorkflowData.WorkerModels[k]; !has {
+			run.WorkflowData.WorkerModels[k] = v.Model
+		}
+		wref.ef.workerModelCache[k] = v
+	}
+	for _, v := range wrefTemplate.ef.localWorkerModelCache {
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wrefTemplate.run.ProjectKey, wrefTemplate.ef.currentVCS.Name, wrefTemplate.ef.currentRepo.Name, v.Model.Name, templateEntity.Ref)
+		if _, has := run.WorkflowData.WorkerModels[completeName]; !has {
+			run.WorkflowData.WorkerModels[completeName] = v.Model
+		}
+		wref.ef.workerModelCache[completeName] = v
+	}
+	return nil, nil
 }
 
 func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, steps []sdk.ActionStep) (*sdk.V2WorkflowRunInfo, error) {
@@ -1178,7 +1253,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 	}, nil
 }
 
-func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *gorp.DbMap) (map[string]sdk.ProjectIntegration, []sdk.V2WorkflowRunInfo, error) {
+func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *gorp.DbMap, jobs map[string]sdk.V2Job) (map[string]sdk.ProjectIntegration, []sdk.V2WorkflowRunInfo, error) {
 	availableIntegrations, err := integration.LoadIntegrationsByProjectID(ctx, db, wref.project.ID)
 	if err != nil {
 		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
@@ -1216,7 +1291,7 @@ func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *
 		}
 	}
 
-	for jobID, job := range wref.run.WorkflowData.Workflow.Jobs {
+	for jobID, job := range jobs {
 		for _, integ := range job.Integrations {
 			if !strings.Contains(integ, "${{") {
 				var found bool

@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
@@ -41,9 +42,9 @@ type EntityFinder struct {
 	initiator             sdk.V2Initiator
 }
 
-func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, i sdk.V2Initiator, libraryProjectKey string) *EntityFinder {
+func NewEntityFinder(ctx context.Context, db *gorp.DbMap, pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, i sdk.V2Initiator, libraryProjectKey string) (*EntityFinder, error) {
 	log.Debug(context.Background(), "NewEntityFinder - initiator: %+v", i)
-	return &EntityFinder{
+	ef := &EntityFinder{
 		currentProject:        pkey,
 		currentVCS:            vcsServer,
 		currentRepo:           repo,
@@ -64,6 +65,15 @@ func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectReposi
 		libraryProject:        libraryProjectKey,
 		initiator:             i,
 	}
+
+	plugins, err := plugin.LoadAllByType(ctx, db, sdk.GRPCPluginAction)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range plugins {
+		ef.plugins[p.Name] = p
+	}
+	return ef, nil
 }
 
 func (ef *EntityFinder) unsafeSearchEntityFromLibrary(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string, entityType string) (*sdk.EntityFullName, error) {
@@ -390,7 +400,7 @@ func (ef *EntityFinder) searchWorkerModel(ctx context.Context, db gorp.SqlExecut
 		if !has {
 			wmEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
 			if err != nil {
-				return nil, "", fmt.Sprintf("Unable to find worker model %s", name), nil
+				return nil, "", fmt.Sprintf("Unable to find worker model %s in repository %s", name, ef.currentRepo.Name), nil
 			}
 			var wm sdk.V2WorkerModel
 			if err := yaml.Unmarshal([]byte(wmEntity.Data), &wm); err != nil {

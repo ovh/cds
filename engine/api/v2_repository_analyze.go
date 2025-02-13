@@ -28,7 +28,6 @@ import (
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/operation"
-	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -559,14 +558,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return sdk.WithStack(tx.Commit())
 	}
 
-	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, *repo, *vcsProjectWithSecret, *analysis.Data.Initiator, api.Config.WorkflowV2.LibraryProjectKey)
-
-	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+	ef, err := NewEntityFinder(ctx, api.mustDB(), proj.Key, analysis.Ref, analysis.Commit, *repo, *vcsProjectWithSecret, *analysis.Data.Initiator, api.Config.WorkflowV2.LibraryProjectKey)
 	if err != nil {
 		return err
-	}
-	for _, p := range plugins {
-		ef.plugins[p.Name] = p
 	}
 
 	// Transform file content into entities

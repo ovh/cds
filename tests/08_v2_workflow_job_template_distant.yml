@@ -1,0 +1,235 @@
+name: Workflow With distant templates Template
+vars:
+  cds_project: "ITV2WFDISTANTTMPL"
+  git_repo_workflow_template: "it_v2_workflow_distant_template"
+  git_repo_workflow_normal_job_template: "it_v2_workflow_distant_normal_job_template"
+  git_repo_workflow_matrix_job_template: "it_v2_workflow_distant_matrix_job_template"
+  git_repo_workflow: "it_v2_workflow_distant_template_repo"
+  cds_workflow: "WorkflowWithDistantTemplates"
+testcases:
+- name: Prepare test
+  steps:
+  - name: "Verify cdsctl configuration"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+    vars:
+      cdsUser:
+        from: result.systemoutjson.username
+  - name: "Display username"
+    info: "Connected CDS user is {{.cdsUser}}"
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo_workflow_template}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo_workflow_normal_job_template}}"  
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo_workflow_matrix_job_template}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo_workflow}}"      
+
+  - type: v2_install_gpg_key
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    vars:
+      emailaddress:
+        from: result.emailaddress
+
+- name: Push matrix job template
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo_workflow_matrix_job_template}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/debianJobMatrix.yml:
+        name: docker-debian
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:buster
+      workflow-templates/jobMatrix.yaml:
+        name: "matrixTemplate"
+        parameters:
+        - key: os
+        spec: |-
+          jobs:
+            mymatrixJobjob-[[.params.os]]:
+              runs-on: .cds/worker-models/debianJobMatrix.yml
+              steps:
+              - run: echo "jobMatrix [[.params.os]]"  
+
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_workflow_matrix_job_template}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+
+- name: Push normal job template
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo_workflow_normal_job_template}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/debianJob.yml:
+        name: docker-debian
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:buster
+      workflow-templates/jobtmpl.yaml:
+        name: "normalJobTemplate"
+        parameters: []
+        spec: |-
+          jobs:
+            templatedJob:
+              runs-on: .cds/worker-models/debianJob.yml
+              steps:
+              - run: echo "jobTemplate"  
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_workflow_normal_job_template}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 100
+    delay: 1          
+
+- name: Push workflow template
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo_workflow_template}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/globalModel.yml:
+        name: docker-debian
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:buster
+      workflow-templates/wkftmpl.yaml:
+        name: "workflowTmpl"
+        parameters: []
+        spec: |-
+          jobs:
+            normal:
+              runs-on: .cds/worker-models/globalModel.yml
+              steps:
+              - run: echo toto
+            jobtmpl:
+              from: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_workflow_normal_job_template}}/normalJobTemplate
+            jobmatrix:
+              from: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_workflow_matrix_job_template}}/matrixTemplate
+              strategy:
+                matrix:
+                  os: ["debian", "ubuntu"]
+              parameters:
+                os: ${{matrix.os}}             
+
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_workflow_template}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+
+- name: Push workflow
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo_workflow}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      workflows/myworkflow.yaml:
+        name: {{.cds_workflow}}
+        from: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_workflow_template}}/workflowTmpl
+        parameters: {}  
+        on: [push]   
+
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_workflow}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_workflow}} {{.cds_workflow}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 1
+    - or:
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Fail"
+    retry: 200
+    delay: 1
+    vars:
+      workflowFromLocalRunID:
+        from: result.systemoutjson.systemoutjson0.id
+      workflowRunStatus:  
+        from: result.systemoutjson.systemoutjson0.status
+
+  - name: Get job info
+    script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowFromLocalRunID}} --format json" 
+    assertions:
+    - result.systemoutjson ShouldHaveLength 4
+  
+  - name: Check status
+    script: echo {{.workflowRunStatus}}
+    assertions:
+    - result.systemout ShouldEqual Success
