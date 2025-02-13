@@ -354,7 +354,7 @@ func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbM
 				if err := DeleteEntity(ctx, tx, &e, hookServices, DeleteEntityOps{WithHooks: false}); err != nil {
 					return err
 				}
-				log.Info(ctx, "entity %s of type %s deleted", e.Name, e.Type)
+				log.Info(ctx, "entity %s of type %s deleted on branch %s for commit %s", e.Name, e.Type, e.Ref, e.Commit)
 				deletedEntities = append(deletedEntities, e)
 			}
 		}
@@ -385,7 +385,7 @@ func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gor
 			if err := DeleteEntity(ctx, tx, &e, hookServices, DeleteEntityOps{WithHooks: false}); err != nil {
 				return err
 			}
-			log.Info(ctx, "entity %s of type %s deleted", e.Name, e.Type)
+			log.Info(ctx, "entity %s of type %s deleted on branch %s for commit %s", e.Name, e.Type, e.Ref, e.Commit)
 			deletedEntities = append(deletedEntities, e)
 		}
 

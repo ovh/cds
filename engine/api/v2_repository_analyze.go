@@ -999,6 +999,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 					if e.Workflow.Repository != nil {
 						existingHook.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
 					}
+					existingHook.EntityID = e.ID
 					existingHook.Ref = e.Ref
 					if err := workflow_v2.UpdateWorkflowHook(ctx, db, existingHook); err != nil {
 						return nil, err
@@ -1082,6 +1083,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 					if e.Workflow.Repository != nil {
 						existingHook.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
 					}
+					existingHook.EntityID = e.ID
 					existingHook.Ref = e.Ref
 					if err := workflow_v2.UpdateWorkflowHook(ctx, db, existingHook); err != nil {
 						return nil, err
