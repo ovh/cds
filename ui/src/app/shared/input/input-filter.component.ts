@@ -68,6 +68,7 @@ export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked,
 			if (event.key === 'Enter') {
 				if (this.filterInputDirective.activeOption && this.filterInputDirective.activeOption.getLabel().indexOf('jump:') === 0) {
 					this.selectSuggestion.emit(this.filterInputDirective.activeOption.nzValue);
+					this.filterInputDirective.closePanel();
 					return;
 				}
 				if (this.filterInputDirective.activeOption && this.filterInputDirective.activeOption.nzValue !== this.filterText) {

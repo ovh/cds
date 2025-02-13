@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { APIConfig } from 'app/model/config.service';
@@ -24,7 +24,7 @@ import { ProjectService } from 'app/service/project/project.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ErrorUtils } from 'app/shared/error.utils';
 import { V2ProjectService } from 'app/service/projectv2/project.service';
-import { Filter, Suggestion } from 'app/shared/input/input-filter.component';
+import { Filter, InputFilterComponent, Suggestion } from 'app/shared/input/input-filter.component';
 import { SearchService } from 'app/service/search.service';
 import Debounce from 'app/shared/decorator/debounce';
 import { SearchResult, SearchResultType } from 'app/model/search.model';
@@ -37,6 +37,8 @@ import { SearchResult, SearchResultType } from 'app/model/search.model';
 })
 @AutoUnsubscribe()
 export class NavbarComponent implements OnInit, OnDestroy {
+    @ViewChild('searchBar') searchBar: InputFilterComponent<NavbarSearchItem>;
+
     listFavs: Array<NavbarProjectData> = [];
     navRecentProjects: List<Project>;
     navRecentWorkflows: List<NavbarRecentData>;
@@ -114,6 +116,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             if (s) {
                 this.getData();
                 this.loadProjects();
+                this.loadFilters();
             }
         });
 
@@ -158,8 +161,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.selectedProjectKey = params['key'] ?? null;
             this._cd.markForCheck();
         });
-
-        this.loadFilters();
     }
 
     async getData() {
@@ -278,36 +279,36 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
     }
 
-	generateResultLink(res: SearchResult): Array<string> {
-		const splitted = res.id.split('/');
-		switch (res.type) {
-			case SearchResultType.Workflow:
-				const project = splitted.shift();
-				return ['/project', project, 'run'];
-			case SearchResultType.WorkflowLegacy:
-				return ['/project', splitted[0], 'workflow', splitted[1]];
-			case SearchResultType.Project:
-				return ['/project', res.id];
-			default:
-				return [];
-		}
-	}
+    generateResultLink(res: SearchResult): Array<string> {
+        const splitted = res.id.split('/');
+        switch (res.type) {
+            case SearchResultType.Workflow:
+                const project = splitted.shift();
+                return ['/project', project, 'run'];
+            case SearchResultType.WorkflowLegacy:
+                return ['/project', splitted[0], 'workflow', splitted[1]];
+            case SearchResultType.Project:
+                return ['/project', res.id];
+            default:
+                return [];
+        }
+    }
 
-	generateResulQueryParams(res: SearchResult, variant?: string): any {
-		const splitted = res.id.split('/');
-		switch (res.type) {
-			case SearchResultType.Workflow:
-				splitted.shift();
-				const workflow_path = splitted.join('/');
-				let params = { workflow: workflow_path };
-				if (variant) {
-					params['ref'] = variant;
-				}
-				return params;
-			default:
-				return {};
-		}
-	}
+    generateResulQueryParams(res: SearchResult, variant?: string): any {
+        const splitted = res.id.split('/');
+        switch (res.type) {
+            case SearchResultType.Workflow:
+                splitted.shift();
+                const workflow_path = splitted.join('/');
+                let params = { workflow: workflow_path };
+                if (variant) {
+                    params['ref'] = variant;
+                }
+                return params;
+            default:
+                return {};
+        }
+    }
 
     submitSearch(): void {
         let mFilters = {};
@@ -378,5 +379,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         this.loading = false;
         this._cd.markForCheck();
+    }
+
+    clickSuggestion(): void {
+        this.searchBar.filterInputDirective.closePanel();
     }
 }
