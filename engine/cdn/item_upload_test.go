@@ -15,12 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-	"github.com/ovh/symmecrypt/keyloader"
-
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
+	"github.com/ovh/symmecrypt/keyloader"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/api/test/assets"

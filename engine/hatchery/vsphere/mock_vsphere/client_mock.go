@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 	guest "github.com/vmware/govmomi/guest"
 	object "github.com/vmware/govmomi/object"
 	mo "github.com/vmware/govmomi/vim25/mo"

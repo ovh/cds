@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
+	"go.uber.org/mock/gomock"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/test"

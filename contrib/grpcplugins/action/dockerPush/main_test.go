@@ -10,7 +10,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/moby/moby/client"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime/mock_workerruntime"
@@ -19,6 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func Test_dockerPushPlugin_perform(t *testing.T) {

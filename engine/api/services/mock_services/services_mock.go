@@ -10,7 +10,7 @@ import (
 	http "net/http"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 	services "github.com/ovh/cds/engine/api/services"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 )

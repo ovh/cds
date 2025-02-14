@@ -14,13 +14,13 @@ import (
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/gorpmapper"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func Test_crudVCSOnProjectLambdaUserForbidden(t *testing.T) {

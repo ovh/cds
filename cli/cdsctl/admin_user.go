@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var adminUsersCmd = cli.Command{
@@ -19,7 +20,41 @@ func adminUsers() *cobra.Command {
 	return cli.NewCommand(adminUsersCmd, nil, []*cobra.Command{
 		cli.NewCommand(adminUserSetOrganizationCmd, adminUserSetOrganizationRun, nil),
 		cli.NewCommand(adminUserRenameCmd, adminUserRenameRun, nil),
+		cli.NewCommand(adminUserCreateCmd, adminUserCreateRun, nil),
 	})
+}
+
+var adminUserCreateCmd = cli.Command{
+	Name:  "create",
+	Short: "Create a user",
+	Args: []cli.Arg{
+		{
+			Name: "username",
+		},
+		{
+			Name: "fullname",
+		},
+		{
+			Name: "email",
+		},
+	},
+}
+
+func adminUserCreateRun(v cli.Values) error {
+	ctx := context.Background()
+
+	user := sdk.AuthConsumerSigninRequest{
+		"username": v.GetString("username"),
+		"fullname": v.GetString("fullname"),
+		"email":    v.GetString("email"),
+	}
+	err := client.AdminUserCreate(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("User has been created")
+	return nil
 }
 
 var adminUserRenameCmd = cli.Command{

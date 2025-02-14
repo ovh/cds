@@ -8,13 +8,39 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/engine/api/organization"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestAPI_postUserHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, jwtRaw := assets.InsertAdminUser(t, db)
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postUserHandler, nil)
+	require.NotEmpty(t, uri)
+
+	username := "lambda-" + sdk.RandomString(10)
+	fullname := "lambda-" + sdk.RandomString(10)
+
+	reqData := sdk.AuthConsumerSigninRequest{
+		"username": username,
+		"fullname": fullname,
+		"email":    username + "." + fullname + "@localhost.local",
+	}
+
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, reqData)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusCreated, rec.Code)
+
+	var authUser sdk.AuthentifiedUser
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &authUser))
+	t.Logf("authUser: %v", authUser)
+	require.Equal(t, username, authUser.Username)
+}
 
 func Test_getUsersHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
