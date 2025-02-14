@@ -193,6 +193,7 @@ testcases:
     git_email: "{{.Prepare-test.emailaddress}}"
     git_password: "{{.git.password}}"
     gpg_key_id: "{{.gpg.key_id}}"
+    branch: my/branch
     files:
       workflows/myworkflow.yaml:
         name: {{.cds_workflow}}

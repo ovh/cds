@@ -327,7 +327,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.WorkflowData.Actions[k] = v
 	}
 	for _, v := range wref.ef.localActionsCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Name, wref.run.WorkflowRef)
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Name, wref.ef.currentRef)
 		run.WorkflowData.Actions[completeName] = v
 	}
 	run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
@@ -335,7 +335,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.WorkflowData.WorkerModels[k] = v.Model
 	}
 	for _, v := range wref.ef.localWorkerModelCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Model.Name, wref.run.WorkflowRef)
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Model.Name, wref.ef.currentRef)
 		run.WorkflowData.WorkerModels[completeName] = v.Model
 	}
 
