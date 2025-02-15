@@ -2,4 +2,4 @@ name: Admin User Commands TestSuite
 testcases:
 - name: Add an user
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin users create foo.bar FOO-Bar foo.bar@localhost.local
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin users create foo.bar FOO-Bar foo.bar@localhost.local default

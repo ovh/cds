@@ -25,10 +25,11 @@ func TestAPI_postUserHandler(t *testing.T) {
 	username := "lambda-" + sdk.RandomString(10)
 	fullname := "lambda-" + sdk.RandomString(10)
 
-	reqData := sdk.AuthConsumerSigninRequest{
-		"username": username,
-		"fullname": fullname,
-		"email":    username + "." + fullname + "@localhost.local",
+	reqData := sdk.CreateUser{
+		Username:     username,
+		Fullname:     fullname,
+		Email:        username + "." + fullname + "@localhost.local",
+		Organization: "default",
 	}
 
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, reqData)
@@ -38,8 +39,8 @@ func TestAPI_postUserHandler(t *testing.T) {
 
 	var authUser sdk.AuthentifiedUser
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &authUser))
-	t.Logf("authUser: %v", authUser)
 	require.Equal(t, username, authUser.Username)
+	require.Equal(t, "default", authUser.Organization)
 }
 
 func Test_getUsersHandler(t *testing.T) {

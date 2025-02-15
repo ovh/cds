@@ -26,21 +26,8 @@ type LocalDriver struct {
 	allowedDomains []string
 }
 
-// CheckSignupRequest checks that given driver request is valid for a signup with auth local.
+// CheckSignupRequest checks that given driver request is valid for a signup with auth local
 func (d LocalDriver) CheckSignupRequest(req sdk.AuthConsumerSigninRequest) error {
-	if err := d.CheckSignupWithoutPasswordRequest(req); err != nil {
-		return err
-	}
-	if password, err := req.StringE("password"); err != nil || password == "" {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for local signup")
-	} else if err := isPasswordValid(password); err != nil {
-		return err
-	}
-	return nil
-}
-
-// CheckSignupRequest checks that given driver request is valid for a signup with auth local - admin only (no password required)
-func (d LocalDriver) CheckSignupWithoutPasswordRequest(req sdk.AuthConsumerSigninRequest) error {
 	if fullname, err := req.StringE("fullname"); err != nil || fullname == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing fullname for local signup")
 	}
@@ -49,6 +36,11 @@ func (d LocalDriver) CheckSignupWithoutPasswordRequest(req sdk.AuthConsumerSigni
 	}
 	if email, err := req.StringE("email"); err != nil || !sdk.IsValidEmail(email) || !d.isAllowedDomain(email) {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for local signup")
+	}
+	if password, err := req.StringE("password"); err != nil || password == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for local signup")
+	} else if err := isPasswordValid(password); err != nil {
+		return err
 	}
 	return nil
 }

@@ -57,7 +57,7 @@ type Admin interface {
 	AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error)
 	AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error
 	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
-	AdminUserCreate(ctx context.Context, user sdk.AuthConsumerSigninRequest) error
+	AdminUserCreate(ctx context.Context, user sdk.CreateUser) error
 	HasProjectRole(ctx context.Context, projectKey, sessionID string, role string) error
 	Features() ([]sdk.Feature, error)
 	FeatureCreate(f sdk.Feature) error

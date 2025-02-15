@@ -496,7 +496,7 @@ func (mr *MockAdminMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifie
 }
 
 // AdminUserCreate mocks base method.
-func (m *MockAdmin) AdminUserCreate(ctx context.Context, user sdk.AuthConsumerSigninRequest) error {
+func (m *MockAdmin) AdminUserCreate(ctx context.Context, user sdk.CreateUser) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AdminUserCreate", ctx, user)
 	ret0, _ := ret[0].(error)
@@ -7137,7 +7137,7 @@ func (mr *MockInterfaceMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdent
 }
 
 // AdminUserCreate mocks base method.
-func (m *MockInterface) AdminUserCreate(ctx context.Context, user sdk.AuthConsumerSigninRequest) error {
+func (m *MockInterface) AdminUserCreate(ctx context.Context, user sdk.CreateUser) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AdminUserCreate", ctx, user)
 	ret0, _ := ret[0].(error)

@@ -37,16 +37,20 @@ var adminUserCreateCmd = cli.Command{
 		{
 			Name: "email",
 		},
+		{
+			Name: "organization",
+		},
 	},
 }
 
 func adminUserCreateRun(v cli.Values) error {
 	ctx := context.Background()
 
-	user := sdk.AuthConsumerSigninRequest{
-		"username": v.GetString("username"),
-		"fullname": v.GetString("fullname"),
-		"email":    v.GetString("email"),
+	user := sdk.CreateUser{
+		Username:     v.GetString("username"),
+		Fullname:     v.GetString("fullname"),
+		Email:        v.GetString("email"),
+		Organization: v.GetString("organization"),
 	}
 	err := client.AdminUserCreate(ctx, user)
 	if err != nil {

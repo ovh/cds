@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) AdminUserCreate(ctx context.Context, user sdk.AuthConsumerSigninRequest) error {
+func (c *client) AdminUserCreate(ctx context.Context, user sdk.CreateUser) error {
 	if _, err := c.PostJSON(ctx, "/admin/user", &user, nil); err != nil {
 		return err
 	}
