@@ -13,6 +13,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_replace(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	a := ActionParser{}
+
+	r, err := replace(context.TODO(), &a, "my/repo", "/", "-")
+	require.NoError(t, err)
+	require.NotNil(t, r)
+
+	s, ok := r.(string)
+	require.True(t, ok)
+	require.Equal(t, "my-repo", s)
+
+	r, err = replace(context.TODO(), &a, "my/super/repo", "/", "-", 1)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+
+	s, ok = r.(string)
+	require.True(t, ok)
+	require.Equal(t, "my-super/repo", s)
+
+}
+
 func Test_match(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	a := ActionParser{}

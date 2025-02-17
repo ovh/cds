@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/ovh/cds/sdk/glob"
@@ -50,12 +51,41 @@ var (
 		"trimSuffix":   newStringStringActionFunc("trimSuffix", strings.TrimSuffix),
 		"toArray":      toArray,
 		"match":        match,
+		"replace":      replace,
 		"contextValue": contextValue,
 	}
 )
 
 type ActionFunc func(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error)
 
+func replace(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) != 3 && len(inputs) != 4 {
+		return nil, NewErrorFrom(ErrInvalidData, "replace: wrong number of arguments")
+	}
+	input, ok := inputs[0].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "replace: input must be a string")
+	}
+	old, ok := inputs[1].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "replace: old must be a string")
+	}
+	new, ok := inputs[2].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "replace: new must be a string")
+	}
+
+	nbOfReplacements := -1
+	if len(inputs) == 4 {
+		value, err := strconv.Atoi(fmt.Sprintf("%v", inputs[3]))
+		if err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "replace: nbOfReplacements must be an int")
+		}
+		nbOfReplacements = value
+	}
+
+	return strings.Replace(input, old, new, nbOfReplacements), nil
+}
 func contextValue(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) == 0 {
 		return nil, NewErrorFrom(ErrInvalidData, "contextValue: wrong number of arguments")
