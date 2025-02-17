@@ -18,6 +18,94 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// postUserHandler creates a users, available from admin cdsctl only.
+func (api *API) postUserHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var reqUser sdk.CreateUser
+		if err := service.UnmarshalBody(r, &reqUser); err != nil {
+			return err
+		}
+
+		trackSudo(ctx, w)
+
+		if reqUser.Fullname == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing fullname")
+		}
+		if reqUser.Username == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid username")
+		}
+		if reqUser.Email == "" || !sdk.IsValidEmail(reqUser.Email) {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email")
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		// Check that user don't already exists in database
+		existingUser, err := user.LoadByUsername(ctx, tx, reqUser.Username)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
+			return err
+		}
+		if existingUser != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a user with given username")
+		}
+
+		// Check that user contact don't already exists in database for given email
+		existingEmail, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, reqUser.Email)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if existingEmail != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a user with given email")
+		}
+
+		// check organization
+		orgAllowed := api.Config.Auth.AllowedOrganizations.Contains(reqUser.Organization)
+		if !orgAllowed {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "user organization %q is not allowed", reqUser.Organization)
+		}
+
+		// Prepare new user
+		newUser := sdk.AuthentifiedUser{
+			Ring:         sdk.UserRingUser,
+			Username:     reqUser.Username,
+			Fullname:     reqUser.Fullname,
+			Organization: reqUser.Organization,
+		}
+
+		// Insert the new user in database
+		if err := user.Insert(ctx, tx, &newUser); err != nil {
+			return err
+		}
+
+		userContact := sdk.UserContact{
+			Primary:  true,
+			Type:     sdk.UserContactTypeEmail,
+			UserID:   newUser.ID,
+			Value:    reqUser.Email,
+			Verified: true,
+		}
+
+		// Insert the primary contact for the new user in database
+		if err := user.InsertContact(ctx, tx, &userContact); err != nil {
+			return err
+		}
+
+		if err := api.userSetOrganization(ctx, tx, &newUser, reqUser.Organization); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return service.WriteJSON(w, newUser, http.StatusCreated)
+	}
+}
+
 // GetUsers fetches all users from databases
 func (api *API) getUsersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

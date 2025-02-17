@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/elasticsearch/mock_elasticsearch"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/engine/test/config"
 	"github.com/rockbears/log"
+	"go.uber.org/mock/gomock"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/event"

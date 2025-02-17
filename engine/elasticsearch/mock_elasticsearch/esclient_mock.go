@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	osquery "github.com/defensestation/osquery"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 	opensearchapi "github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 )
 

@@ -40,7 +40,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 		Cache:               store,
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "default", "default")
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "localhost.local", "default")
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.AuthenticationDrivers[sdk.ConsumerTest] = authdrivertest.NewDriver(t)
 	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
@@ -50,10 +50,12 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.GoRoutines = sdk.NewGoRoutines(context.TODO())
 	api.Config.WorkflowV2.JobSchedulingMaxErrors = 5
 
+	api.Config.Auth.AllowedOrganizations = []string{"default"}
+
 	// Reset organization
 	_, err := db.Exec("DELETE FROM organization")
 	require.NoError(t, err)
-	require.NoError(t, organization.CreateDefaultOrganization(context.TODO(), db.DbMap, []string{"default"}))
+	require.NoError(t, organization.CreateDefaultOrganization(context.TODO(), db.DbMap, api.Config.Auth.AllowedOrganizations))
 	api.InitRouter()
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -10,7 +10,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime/mock_workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -18,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func Test_helmPushPlugin(t *testing.T) {

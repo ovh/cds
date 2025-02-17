@@ -2,9 +2,10 @@ package local
 
 import (
 	"context"
+	"strings"
+
 	"github.com/nbutton23/zxcvbn-go"
 	"github.com/ovh/cds/sdk"
-	"strings"
 )
 
 var _ sdk.Driver = new(LocalDriver)
@@ -25,7 +26,7 @@ type LocalDriver struct {
 	allowedDomains []string
 }
 
-// CheckSignupRequest checks that given driver request is valid for a signup with auth local.
+// CheckSignupRequest checks that given driver request is valid for a signup with auth local
 func (d LocalDriver) CheckSignupRequest(req sdk.AuthConsumerSigninRequest) error {
 	if fullname, err := req.StringE("fullname"); err != nil || fullname == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing fullname for local signup")

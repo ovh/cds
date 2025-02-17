@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +12,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	"go.uber.org/mock/gomock"
 )
 
 func TestHatcheryVSphere_getAllServers(t *testing.T) {

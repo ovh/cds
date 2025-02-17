@@ -14,6 +14,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) AdminUserCreate(ctx context.Context, user sdk.CreateUser) error {
+	if _, err := c.PostJSON(ctx, "/admin/user", &user, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error {
 	if _, err := c.PostJSON(ctx, fmt.Sprintf("/admin/organization/%s/migrate-user", orgaIdentifier), nil, nil); err != nil {
 		return err

@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// CheckUserInDefaultGroup insert user in default group
+// CheckUserInDefaultGroup inserts user in default group
 func CheckUserInDefaultGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string) error {
 	if DefaultGroup == nil || DefaultGroup.ID == 0 || userID == "" {
 		return nil

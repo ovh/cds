@@ -35,6 +35,14 @@ type UserRegistration struct {
 
 var usernameRegex = regexp.MustCompile("[a-z0-9._-]{3,32}")
 
+// CreateUser is used by cdsctl admin user create command
+type CreateUser struct {
+	Username     string `json:"username"`
+	Fullname     string `json:"fullname"`
+	Organization string `json:"organization"`
+	Email        string `json:"email"`
+}
+
 // AuthentifiedUser struct contains all information about a cds user.
 type AuthentifiedUser struct {
 	ID       string    `json:"id" yaml:"id" cli:"id" db:"id"`
