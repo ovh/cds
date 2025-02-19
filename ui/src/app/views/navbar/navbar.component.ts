@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { APIConfig } from 'app/model/config.service';
 import { Help } from 'app/model/help.model';
@@ -24,10 +24,6 @@ import { ProjectService } from 'app/service/project/project.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ErrorUtils } from 'app/shared/error.utils';
 import { V2ProjectService } from 'app/service/projectv2/project.service';
-import { Filter, InputFilterComponent, Suggestion } from 'app/shared/input/input-filter.component';
-import { SearchService } from 'app/service/search.service';
-import Debounce from 'app/shared/decorator/debounce';
-import { SearchResult, SearchResultType } from 'app/model/search.model';
 
 @Component({
     selector: 'app-navbar',
@@ -37,7 +33,6 @@ import { SearchResult, SearchResultType } from 'app/model/search.model';
 })
 @AutoUnsubscribe()
 export class NavbarComponent implements OnInit, OnDestroy {
-    @ViewChild('searchBar') searchBar: InputFilterComponent<NavbarSearchItem>;
 
     listFavs: Array<NavbarProjectData> = [];
     navRecentProjects: List<Project>;
@@ -73,9 +68,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
         private _messageService: NzMessageService,
-        private _v2ProjectService: V2ProjectService,
-        private _searchService: SearchService,
-        private _activatedRoute: ActivatedRoute
+        private _v2ProjectService: V2ProjectService
     ) {
         this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
             this.currentAuthSummary = s;
@@ -116,41 +109,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             if (s) {
                 this.getData();
                 this.loadProjects();
-                this.loadFilters();
-            }
-        });
-
-        // Listen change on recent projects viewed
-        this.projectsSubscription = this._projectStore.getRecentProjects().subscribe(projects => {
-            if (projects) {
-                this.recentItems = projects.toArray().map((prj) => ({
-                    type: 'project',
-                    value: prj.project_key,
-                    title: prj.name,
-                    projectKey: prj.project_key
-                })).concat(
-                    this.recentItems.filter((i) => i.type !== 'project')
-                );
-                this.items = this.recentItems;
-                this._cd.markForCheck();
-            }
-        });
-
-        // Listen change on recent workflows viewed
-        this.workflowsSubscription = this._workflowStore.getRecentWorkflows().subscribe(workflows => {
-            if (workflows) {
-                this.navRecentWorkflows = workflows;
-                this.listWorkflows = workflows;
-                this.recentItems = workflows.toArray().map((wf) => ({
-                    type: 'workflow',
-                    value: wf.project_key + '/' + wf.name,
-                    title: wf.name,
-                    projectKey: wf.project_key
-                })).concat(
-                    this.recentItems.filter((i) => i.type !== 'workflow')
-                );
-                this.items = this.recentItems;
-                this._cd.markForCheck();
             }
         });
 
@@ -250,138 +208,5 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 });
             }
         );
-    }
-
-    searchFilterText: string = '';
-    searchFilters: Array<Filter> = [];
-    searchSuggestions: Array<Suggestion<SearchResult>> = [];
-
-    selectSuggestion(value: SearchResult): void {
-        const splitted = value.id.split('/');
-        switch (value.type) {
-            case SearchResultType.Workflow:
-                const project = splitted.shift();
-                const workflow_path = splitted.join('/');
-                this._router.navigate(['/project', project, 'run'], {
-                    queryParams: {
-                        workflow: workflow_path
-                    }
-                });
-                return;
-            case SearchResultType.WorkflowLegacy:
-                this._router.navigate(['/project', splitted[0], 'workflow', splitted[1]]);
-                return;
-            case SearchResultType.Project:
-                this._router.navigate(['/project', value.id]);
-                return;
-            default:
-                return;
-        }
-    }
-
-    generateResultLink(res: SearchResult): Array<string> {
-        const splitted = res.id.split('/');
-        switch (res.type) {
-            case SearchResultType.Workflow:
-                const project = splitted.shift();
-                return ['/project', project, 'run'];
-            case SearchResultType.WorkflowLegacy:
-                return ['/project', splitted[0], 'workflow', splitted[1]];
-            case SearchResultType.Project:
-                return ['/project', res.id];
-            default:
-                return [];
-        }
-    }
-
-    generateResulQueryParams(res: SearchResult, variant?: string): any {
-        const splitted = res.id.split('/');
-        switch (res.type) {
-            case SearchResultType.Workflow:
-                splitted.shift();
-                const workflow_path = splitted.join('/');
-                let params = { workflow: workflow_path };
-                if (variant) {
-                    params['ref'] = variant;
-                }
-                return params;
-            default:
-                return {};
-        }
-    }
-
-    submitSearch(): void {
-        let mFilters = {};
-        this.searchFilterText.split(' ').forEach(f => {
-            const s = f.split(':');
-            if (s.length === 2 && s[1] !== '') {
-                if (!mFilters[s[0]]) {
-                    mFilters[s[0]] = [];
-                }
-                mFilters[s[0]].push(s[1]);
-            } else if (s.length === 1) {
-                mFilters['query'] = f;
-            }
-        });
-
-        this._router.navigate(['/search'], {
-            queryParams: { ...mFilters },
-            replaceUrl: true
-        });
-    }
-
-    searchChange(v: string) {
-        this.searchFilterText = v;
-        this.search();
-    }
-
-    @Debounce(300)
-    async search() {
-        this.loading = true;
-        this._cd.markForCheck();
-
-        let mFilters = {};
-        this.searchFilterText.split(' ').forEach(f => {
-            const s = f.split(':');
-            if (s.length === 2) {
-                if (!mFilters[s[0]]) {
-                    mFilters[s[0]] = [];
-                }
-                mFilters[s[0]].push(decodeURI(s[1]));
-            } else if (s.length === 1) {
-                mFilters['query'] = f;
-            }
-        });
-
-        try {
-            const res = await lastValueFrom(this._searchService.search(mFilters, 0, 10));
-            this.searchSuggestions = res.results.map(r => ({
-                key: r.id,
-                label: `${r.label} - ${r.id}`,
-                data: r,
-            }));
-        } catch (e: any) {
-            this._messageService.error(`Unable to search: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-        }
-        this.loading = false;
-        this._cd.markForCheck();
-    }
-
-    async loadFilters() {
-        this.loading = true;
-        this._cd.markForCheck();
-
-        try {
-            this.searchFilters = await lastValueFrom(this._searchService.getFilters());
-        } catch (e) {
-            this._messageService.error(`Unable to list search filters: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-        }
-
-        this.loading = false;
-        this._cd.markForCheck();
-    }
-
-    clickSuggestion(): void {
-        this.searchBar.filterInputDirective.closePanel();
     }
 }

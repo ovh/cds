@@ -136,6 +136,7 @@
             a {
                 color: inherit;
                 text-decoration: underline dotted;
+                white-space: nowrap;
 
                 &:hover {
                     color: #177ddc;

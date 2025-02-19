@@ -17,6 +17,7 @@ import { PreferencesState } from './store/preferences.state';
 import { EventV2Service } from './event-v2.service';
 import { SearchComponent } from './views/search/search.component';
 import { NavbarComponent } from './views/navbar/navbar.component';
+import { SearchBarComponent } from './views/search/search-bar.component';
 
 export let errorFactory = () => {
     if ((<any>window).cds_sentry_url) {
@@ -54,8 +55,9 @@ export class CDSStorageEngine implements StorageEngine {
 @NgModule({
     declarations: [
         AppComponent,
-        SearchComponent,
-        NavbarComponent
+        NavbarComponent,
+        SearchBarComponent,
+        SearchComponent
     ],
     imports: [
         BrowserModule,

@@ -47,8 +47,7 @@
                 <nz-page-header-content>
                     <span nz-typography nzType="secondary">
                         <span *ngIf="workflowRun.contexts.cds.workflow_template">
-                            <b>Template:</b>&nbsp;
-                            <a
+                            <b>Template:</b>&nbsp;<a
                                 [routerLink]="['/project', workflowRun.contexts.cds.workflow_template_project_key, 'explore', 'vcs', workflowRun.contexts.cds.workflow_template_vcs_server, 'repository', workflowRun.contexts.cds.workflow_template_repository, 'workflowtemplate', workflowRun.contexts.cds.workflow_template]">
                                 {{workflowRun.contexts.cds.workflow_template_vcs_server}}/{{workflowRun.contexts.cds.workflow_template_repository}}/{{workflowRun.contexts.cds.workflow_template}}</a>
                             <span class="templateDetails" nz-icon nzType="eye" nzTheme="outline" nz-tooltip
@@ -67,51 +66,36 @@
                             <br />
                         </span>
                         <span style="margin-right: 10px;">
-                            <b>Repository:</b>&nbsp;
-                            <a href="{{workflowRun.contexts.git.repository_web_url}}" target="_blank"
+                            <b>Repository:</b>&nbsp;<a href="{{workflowRun.contexts.git.repository_web_url}}"
+                                target="_blank"
                                 rel="noopener noreferrer">{{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}</a>
                         </span>
-                        <br />
                         <span style="margin-right: 10px;">
-                            <b>Ref:</b>&nbsp;
-                            <a href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
+                            <b>Ref:</b>&nbsp;<a href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
                                 rel="noopener noreferrer">{{workflowRun.contexts.git.ref}}</a>
                         </span>
                         <span style="margin-right: 10px;">
-                            <b>Commit:</b>&nbsp;
-                            <a href="{{workflowRun.contexts.git.commit_web_url}}" target="_blank"
+                            <b>Commit:</b>&nbsp;<a href="{{workflowRun.contexts.git.commit_web_url}}" target="_blank"
                                 rel="noopener noreferrer">{{workflowRun.contexts.git.sha?.substring(0,8)}}</a>
-                        </span>
-                        <span style="margin-right: 10px;">
-                            <b>By:</b>&nbsp;{{workflowRun.contexts.git.username}}
                         </span>
                         <br />
                         <span style="margin-right: 10px;">
-                            <b>Version:</b>&nbsp;
-                            <span nz-typography nzCopyable nzContent="{{workflowRun.contexts.cds.version}}"
-                                [nzCopyTooltips]="null"></span>
+                            <b>Version:</b>&nbsp;<span nz-typography nzCopyable
+                                nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
                         </span>
                     </span>
                     <div *ngIf="workflowRun.annotations" class="annotations">
                         <ng-container *ngFor="let annotation of workflowRun.annotations | keyvalue">
                             <app-searchable [link]="['/project', projectKey, 'run']"
                                 [params]="generateAnnotationQueryParams(annotation)">
-                                <nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
-                                    title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
-                                    nzPopoverPlacement="bottom" [nzPopoverContent]="contentAnnotationWithValue">
+                                <nz-tag *ngIf="annotation.value !== 'true'" nzColor="default" style="cursor: copy;"
+                                    title="key: {{annotation.key}} - value: {{annotation.value}}"
+                                    (click)="confirmCopyAnnotationValue($event, annotation.value)">
                                     <b>{{annotation.key}}:</b> {{annotation.value}}
-                                    <ng-template #contentAnnotationWithValue>
-                                        key: {{annotation.key}} - value: <span nz-typography nzCopyable
-                                            nzContent="{{annotation.value}}" [nzCopyTooltips]="null"></span>
-                                    </ng-template>
                                 </nz-tag>
                                 <span *ngIf="annotation.value === 'true'" nzColor="default"
-                                    title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
-                                    nzPopoverPlacement="bottom" [nzPopoverContent]="contentAnnotation">
+                                    title="key: {{annotation.key}} - value: {{annotation.value}}">
                                     {{annotation.key}}
-                                    <ng-template #contentAnnotation>
-                                        key: {{annotation.key}} - value: {{annotation.value}}
-                                    </ng-template>
                                 </span>
                             </app-searchable>
                         </ng-container>
@@ -119,12 +103,12 @@
                 </nz-page-header-content>
             </nz-page-header>
             <div class="controls">
-                <button *ngIf="!hasJobsNotTerminated" nz-button nzType="secondary" nzSize="large" title="Start new run"
-                    (click)="openRunStartDrawer()">Start new run</button>
-                <button *ngIf="hasJobsFailed && !hasJobsNotTerminated" nz-button nzType="secondary" nzSize="large"
+                <button *ngIf="workflowRunIsTerminated" nz-button nzType="secondary" nzSize="large"
+                    title="Start new run" (click)="openRunStartDrawer()">Start new run</button>
+                <button *ngIf="workflowRunIsTerminated && hasJobsFailed" nz-button nzType="secondary" nzSize="large"
                     title="Restart failed jobs" (click)="clickRestartJobs()">Restart
                     failed jobs</button>
-                <button *ngIf="hasJobsNotTerminated" nz-button nzType="primary" nzSize="large" nzDanger
+                <button *ngIf="workflowRunIsActive" nz-button nzType="primary" nzSize="large" nzDanger
                     title="Stop workflow run" (click)="clickStopRun()">Stop workflow run</button>
             </div>
             <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"

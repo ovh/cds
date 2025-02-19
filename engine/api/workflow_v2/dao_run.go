@@ -185,9 +185,22 @@ func LoadRunsActors(ctx context.Context, db gorp.SqlExecutor, projKey string) ([
 	_, next := telemetry.Span(ctx, "LoadRunsActors")
 	defer next()
 	if _, err := db.Select(&actors, `
-		SELECT DISTINCT username
-		FROM v2_workflow_run
-		WHERE project_key = $1
+		WITH results AS (
+			(
+				SELECT initiator -> 'user' ->> 'username' AS actor
+				FROM v2_workflow_run
+				WHERE project_key = $1 AND initiator -> 'user' IS NOT NULL
+			)
+			UNION
+			(
+				SELECT initiator ->> 'vcs_username' AS actor
+				FROM v2_workflow_run
+				WHERE project_key = $1
+			)
+		)
+		SELECT DISTINCT actor
+		FROM results
+		WHERE actor != ''
 	`, projKey); err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -291,7 +304,7 @@ func LoadRunsAnnotations(ctx context.Context, db gorp.SqlExecutor, projKey strin
 
 const runQueryFilters = `
 	(array_length(:workflows::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY(:workflows))
-	AND (array_length(:actors::text[], 1) IS NULL OR username = ANY(:actors))
+	AND (array_length(:actors::text[], 1) IS NULL OR initiator -> 'user' ->> 'username' = ANY(:actors) OR initiator ->> 'vcs_username' = ANY(:actors))
 	AND (array_length(:status::text[], 1) IS NULL OR status = ANY(:status))
 	AND (array_length(:refs::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY(:refs))
 	AND (array_length(:workflow_refs::text[], 1) IS NULL OR workflow_ref = ANY(:workflow_refs))
@@ -425,8 +438,8 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 			SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
 			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 			GROUP BY v2_workflow_run.id
-		) v2_workflow_run_annotations 
-		ON  
+		) v2_workflow_run_annotations
+		ON
 			v2_workflow_run.id = v2_workflow_run_annotations.id 
 		WHERE ` + runQueryFilters + `			
 		ORDER BY 

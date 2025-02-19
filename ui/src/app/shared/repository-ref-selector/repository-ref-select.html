@@ -7,7 +7,7 @@
 	<nz-option *ngFor="let opt of tags" [nzValue]="'refs/tags/' + opt.tag" [nzLabel]="opt.tag"></nz-option>
 
 	<ng-template #selectTemplate>
-		<div class="container" [class.night]="darkActive">
+		<div *ngIf="branches?.length > 0 || tags?.length > 0" class="container" [class.night]="darkActive">
 			<nz-input-group [nzSuffix]="suffixIconSearch">
 				<input type="text" nz-input placeholder="Search for ref" (input)="onFilterRefChange($event)" />
 			</nz-input-group>
@@ -15,7 +15,8 @@
 				<span nz-icon nzType="search"></span>
 			</ng-template>
 
-			<nz-tabset nzSize="small" [nzSelectedIndex]="selectedRef.startsWith('refs/tags/') ? 1 : 0" nzType="card">
+			<nz-tabset *ngIf="selectedRef" nzSize="small" [nzSelectedIndex]="selectedRef.startsWith('refs/tags/') ? 1 : 0"
+				nzType="card">
 				<nz-tab [nzTitle]="branchesTitle">
 					<ng-template #branchesTitle>
 						<span nz-icon nzType="branches" nzTheme="outline"></span>
@@ -43,7 +44,6 @@
 			</nz-tabset>
 		</div>
 	</ng-template>
-
 
 	<ng-template #selectLabelTmpl let-selected>
 		<span nz-icon [nzType]="selected.nzValue.startsWith('refs/tags/') ? 'tags' : 'branches'" nzTheme="outline"></span>

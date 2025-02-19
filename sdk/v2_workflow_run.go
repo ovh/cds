@@ -471,7 +471,6 @@ func (i *V2Initiator) IsUser() bool {
 }
 
 func (i V2Initiator) Value() (driver.Value, error) {
-	i.User = nil // Don't store a json copy of the user
 	m, err := json.Marshal(i)
 	return m, WrapError(err, "cannot marshal V2Initiator")
 }
