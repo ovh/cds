@@ -97,6 +97,7 @@
     .dotted {
       color: inherit;
       text-decoration: underline dotted;
+      white-space: nowrap;
 
       &:hover {
         color: #177ddc;
@@ -138,20 +139,6 @@
 
       &>* {
         margin: 4px;
-      }
-    }
-
-    .ref {
-      margin: 0 10px;
-      overflow: hidden;
-      max-width: 250px;
-
-      a {
-        direction: rtl;
-        text-align: left;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        margin: 0;
       }
     }
 

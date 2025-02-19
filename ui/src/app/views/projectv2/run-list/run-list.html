@@ -74,8 +74,8 @@
 				<ng-template #runDescription>
 					<ng-container *ngIf="run.contexts.git">
 						<span style="margin-right: 10px;">
-							<b>Repository:</b>&nbsp;
-							<app-searchable [style]="{display:'unset'}" [link]="['/project', project.key, 'run']"
+							<b>Repository:</b>&nbsp;<app-searchable [style]="{display:'unset'}"
+								[link]="['/project', project.key, 'run']"
 								[params]="{workflow_repository: run.contexts.git.server+'/'+run.contexts.git.repository}"
 								paramsHandling="merge">
 								<a class="dotted" href="{{run.contexts.git.repository_web_url}}" target="_blank"
@@ -83,16 +83,20 @@
 							</app-searchable>
 						</span>
 						<span style="margin-right: 10px;">
-							<b>Commit:</b>&nbsp;
-							<a class="dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
-								rel="noopener noreferrer">{{run.contexts.git.sha?.substring(0,8)}}</a>
+							<b>Ref:</b>&nbsp;<app-searchable [style]="{display:'unset'}" [link]="['/project', project.key, 'run']"
+								[params]="{ref:run.contexts.git.ref}" paramsHandling="merge">
+								<a class="dotted" href="{{run.contexts.git.ref_web_url}}" target="_blank" rel="noopener noreferrer"
+									[title]="run.contexts.git.ref">{{run.contexts.git.ref}}</a>
+							</app-searchable>
 						</span>
 						<span style="margin-right: 10px;">
-							<b>By:</b>&nbsp;{{run.contexts.git.username}}
+							<b>Commit:</b>&nbsp;<a class="dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
+								rel="noopener noreferrer">{{run.contexts.git.sha?.substring(0,8)}}</a>
 						</span>
+						<br />
 						<span>
-							<b>Version:</b>&nbsp;
-							<span nz-typography nzCopyable nzContent="{{run.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
+							<b>Version:</b>&nbsp;<span nz-typography nzCopyable nzContent="{{run.contexts.cds.version}}"
+								[nzCopyTooltips]="null"></span>
 						</span>
 					</ng-container>
 				</ng-template>
@@ -100,32 +104,17 @@
 					<ng-container *ngFor="let annotation of run.annotations | keyvalue">
 						<app-searchable [link]="['/project', project.key, 'run']"
 							[params]="generateAnnotationQueryParams(annotation)" paramsHandling="merge">
-							<nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
-								title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
-								[nzPopoverContent]="contentAnnotationWithValue">
+							<nz-tag *ngIf="annotation.value !== 'true'" nzColor="default" style="cursor: copy;"
+								title="key: {{annotation.key}} - value: {{annotation.value}}"
+								(click)="confirmCopyAnnotationValue($event, annotation.value)">
 								<b>{{annotation.key}}:</b> {{annotation.value}}
-								<ng-template #contentAnnotationWithValue>
-									key: {{annotation.key}} - value: <span nz-typography nzCopyable nzContent="{{annotation.value}}"
-										[nzCopyTooltips]="null"></span>
-								</ng-template>
 							</nz-tag>
 							<span *ngIf="annotation.value === 'true'" nzColor="default"
-								title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
-								[nzPopoverContent]="contentAnnotation">
+								title="key: {{annotation.key}} - value: {{annotation.value}}">
 								{{annotation.key}}
-								<ng-template #contentAnnotation>
-									key: {{annotation.key}} - value: {{annotation.value}}
-								</ng-template>
 							</span>
 						</app-searchable>
 					</ng-container>
-				</div>
-				<div *ngIf="run.contexts.git" class="ref">
-					<app-searchable [link]="['/project', project.key, 'run']" [params]="{ref:run.contexts.git.ref}"
-						paramsHandling="merge">
-						<a class="ref" href="{{run.contexts.git.ref_web_url}}" target="_blank" rel="noopener noreferrer"
-							[title]="run.contexts.git.ref">{{run.contexts.git.ref}}</a>
-					</app-searchable>
 				</div>
 				<ul nz-list-item-actions>
 					<nz-list-item-action>

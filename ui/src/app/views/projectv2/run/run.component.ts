@@ -13,7 +13,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { NavigationState } from "app/store/navigation.state";
-import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive, V2WorkflowRunJobStatusIsFailed, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { RouterService } from "app/service/services.module";
 import { ErrorUtils } from "app/shared/error.utils";
 import moment from "moment";
@@ -51,7 +51,8 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     results: Array<WorkflowRunResult>;
     tests: Tests;
     projectKey: string;
-    hasJobsNotTerminated: boolean = false;
+    workflowRunIsTerminated: boolean = false;
+    workflowRunIsActive: boolean = false;
     hasJobsFailed: boolean = false;
 
     // Subs
@@ -136,7 +137,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
-    async load(workflowRunID: string) {
+    async load(workflowRunID: string, runAttempt?: number) {
         this.clearPanel();
         delete this.workflowGraph;
         if (this.pollSubs) {
@@ -144,18 +145,24 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             delete this.pollSubs;
         }
 
-        try {
-            this.workflowRun = await lastValueFrom(this._workflowService.getRun(this.projectKey, workflowRunID));
-            this.selectedRunAttempt = this.workflowRun.run_attempt;
-        } catch (e) {
-            this._messageService.error(`Unable to get workflow run: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-        }
+        await this.loadRun(workflowRunID);
+        this.selectedRunAttempt = runAttempt ?? this.workflowRun.run_attempt;
 
         this.workflowGraph = dump(this.workflowRun.workflow_data.workflow, { lineWidth: -1 });
 
         this._cd.markForCheck();
 
         await this.loadJobsAndResults();
+    }
+
+    async loadRun(workflowRunID: string) {
+        try {
+            this.workflowRun = await lastValueFrom(this._workflowService.getRun(this.projectKey, workflowRunID));
+            this.workflowRunIsTerminated = V2WorkflowRunStatusIsTerminated(this.workflowRun.status);
+            this.workflowRunIsActive = !this.workflowRunIsTerminated;
+        } catch (e) {
+            this._messageService.error(`Unable to get workflow run: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
     }
 
     async loadJobsAndResults() {
@@ -167,11 +174,12 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         // Reload workflow run if we received a runjob from an unknown job
         if (this.jobs) {
-            this.jobs.forEach( j => {
-                if (!this.workflowRun.workflow_data.workflow.jobs[j.job_id]) {
-                    this.load(j.workflow_run_id)
+            for (let i = 0; i < this.jobs.length; i++) {
+                if (!this.workflowRun.workflow_data.workflow.jobs[this.jobs[i].job_id]) {
+                    await this.load(this.jobs[i].workflow_run_id, this.selectedRunAttempt);
+                    return;
                 }
-            })
+            }
         }
 
         try {
@@ -191,21 +199,25 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         await this.refreshPanel();
 
-        this.hasJobsNotTerminated = this.jobs.filter(j => V2WorkflowRunJobStatusIsActive(j.status)).length > 0;
         this.hasJobsFailed = this.jobs.filter(j => V2WorkflowRunJobStatusIsFailed(j.status)).length > 0;
 
-        if (this.hasJobsNotTerminated && !this.pollSubs) {
+        if (this.workflowRunIsActive && !this.pollSubs) {
             this.pollSubs = interval(5000)
-                .pipe(concatMap(_ => from(this.loadJobsAndResults())))
+                .pipe(concatMap(_ => from(this.pollReload())))
                 .subscribe();
         }
 
-        if (!this.hasJobsNotTerminated && this.pollSubs) {
+        if (this.workflowRunIsTerminated && this.pollSubs) {
             this.pollSubs.unsubscribe();
             delete this.pollSubs;
         }
 
         this._cd.detectChanges();
+    }
+
+    async pollReload() {
+        this.loadRun(this.workflowRun.id);
+        await this.loadJobsAndResults();
     }
 
     computeTestsReport(): void {
@@ -310,7 +322,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         switch (this.selectedItemType) {
             case 'job':
-                const jobToSelect = this.jobs.find(j => j.job_id === this.selectedJobRun.job_id);
+                const jobToSelect = this.jobs.find(j => j.id === this.selectedJobRun.id);
                 if (jobToSelect) {
                     this.openPanel('job', jobToSelect.id);
                 } else {
@@ -344,7 +356,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     async changeRunAttempt(value: number) {
         this.selectedRunAttempt = value;
         this._cd.markForCheck();
-        await this.loadJobsAndResults();
+        await this.load(this.workflowRun.id, this.selectedRunAttempt);
     }
 
     async clickRestartJobs() {
@@ -449,4 +461,11 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this._clipboard.copy(this.shareLink.nativeElement.href);
         this._toast.success('', 'Share link copied!');
     }
+
+	confirmCopyAnnotationValue(event: any, value: string) {
+		event.stopPropagation();
+		event.preventDefault();
+		this._clipboard.copy(value);
+		this._toast.success('', 'Annotation value copied!');
+	}
 }

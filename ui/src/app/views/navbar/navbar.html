@@ -110,25 +110,7 @@
 
         <!-- SEARCH AREA -->
         <div class="search" *ngIf="currentAuthSummary">
-            <app-input-filter placeholder="Search..." [filters]="searchFilters" (changeFilter)="searchChange($event)"
-                [suggestions]="searchSuggestions" [suggestionTemplate]="suggestionTemplate"
-                (selectSuggestion)="selectSuggestion($event)" (submit)="submitSearch()" #searchBar>
-                <ng-template #suggestionTemplate let-option="option">
-                    <a [routerLink]="generateResultLink(option.data)"
-                        [queryParams]="generateResulQueryParams(option.data)" class="navbar-suggestion"
-                        (click)="clickSuggestion()">
-                        <div class="title">
-                            <span class="label">{{option.data.label}}</span>
-                            <span class="id">{{option.data.id}}</span>
-                        </div>
-                        <div [ngSwitch]="option.data.type">
-                            <nz-tag *ngSwitchCase="'project'" nzColor="blue">{{option.data.type}}</nz-tag>
-                            <nz-tag *ngSwitchCase="'workflow'" nzColor="green">{{option.data.type}}</nz-tag>
-                            <nz-tag *ngSwitchDefault>{{option.data.type}}</nz-tag>
-                        </div>
-                    </a>
-                </ng-template>
-            </app-input-filter>
+            <app-search-bar></app-search-bar>
         </div>
 
         <!-- HELP -->

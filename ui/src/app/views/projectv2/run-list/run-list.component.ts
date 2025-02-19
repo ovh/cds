@@ -20,6 +20,8 @@ import { animate, keyframes, state, style, transition, trigger } from "@angular/
 import { ErrorUtils } from "app/shared/error.utils";
 import { ProjectV2State } from "app/store/project-v2.state";
 import { Filter } from "../../../shared/input/input-filter.component";
+import { Clipboard } from '@angular/cdk/clipboard';
+import { ToastService } from "app/shared/toast/ToastService";
 
 @Component({
 	selector: 'app-projectv2-run-list',
@@ -73,7 +75,9 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		private _router: Router,
 		private _activatedRoute: ActivatedRoute,
 		private _drawerService: NzDrawerService,
-		private _eventV2Service: EventV2Service
+		private _eventV2Service: EventV2Service,
+		private _clipboard: Clipboard,
+		private _toast: ToastService
 	) {
 		this.project = this._store.selectSnapshot(ProjectV2State.current);
 	}
@@ -317,5 +321,12 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 	onMouseEnterRun(id: string): void {
 		delete this.animatedRuns[id];
 		this._cd.markForCheck();
+	}
+
+	confirmCopyAnnotationValue(event: any, value: string) {
+		event.stopPropagation();
+		event.preventDefault();
+		this._clipboard.copy(value);
+		this._toast.success('', 'Annotation value copied!');
 	}
 }

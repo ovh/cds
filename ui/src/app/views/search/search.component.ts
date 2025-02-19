@@ -1,23 +1,27 @@
-import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SearchResult, SearchResultType } from "app/model/search.model";
 import { SearchService } from "app/service/search.service";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { ErrorUtils } from "app/shared/error.utils";
 import { Filter } from "app/shared/input/input-filter.component";
 import { NzMessageService } from "ng-zorro-antd/message";
-import { lastValueFrom } from "rxjs";
+import { lastValueFrom, Subscription } from "rxjs";
 
 @Component({
 	selector: 'app-search',
 	templateUrl: './search.html',
-	styleUrls: ['./search.scss']
+	styleUrls: ['./search.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SearchComponent implements OnInit {
+@AutoUnsubscribe()
+export class SearchComponent implements OnInit, OnDestroy {
 	static DEFAULT_PAGESIZE = 20;
 
+	queryParamsSub: Subscription;
 	filters: Array<Filter> = [];
 	results: Array<SearchResult> = [];
-	loading = false;
+	loading: boolean;
 	filterText: string = '';
 	totalCount: number = 0;
 	pageIndex: number = 1;
@@ -30,9 +34,11 @@ export class SearchComponent implements OnInit {
 		private _activatedRoute: ActivatedRoute
 	) { }
 
+	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+
 	ngOnInit(): void {
 		this.loadFilters();
-		this._activatedRoute.queryParams.subscribe(values => {
+		this.queryParamsSub = this._activatedRoute.queryParams.subscribe(values => {
 			this.filterText = Object.keys(values).filter(key => key !== 'page').map(key => {
 				return (!Array.isArray(values[key]) ? [values[key]] : values[key]).map(f => {
 					return key === 'query' ? f : `${key}:${f}`;

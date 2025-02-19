@@ -8,7 +8,7 @@ export class V2WorkflowRun {
     workflow_name: string;
     workflow_sha: string;
     workflow_ref: string;
-    status: string;
+    status: V2WorkflowRunStatus;
     run_number: number;
     run_attempt: number;
     started: string;
@@ -30,6 +30,17 @@ export enum V2WorkflowRunStatus {
     Stopped = "Stopped",
     Success = "Success",
     Skipped = "Skipped"
+}
+
+export function V2WorkflowRunStatusIsTerminated(s: V2WorkflowRunStatus): boolean {
+    switch (s) {
+        case V2WorkflowRunStatus.Fail:
+        case V2WorkflowRunStatus.Stopped:
+        case V2WorkflowRunStatus.Success:
+        case V2WorkflowRunStatus.Skipped:
+            return true;
+    }
+    return false;
 }
 
 export class WorkflowRunData {
@@ -168,32 +179,33 @@ export enum V2WorkflowRunJobStatus {
 
 export function V2WorkflowRunJobStatusIsTerminated(s: V2WorkflowRunJobStatus): boolean {
     switch (s) {
-        case V2WorkflowRunJobStatus.Unknown:
-        case V2WorkflowRunJobStatus.Building:
-        case V2WorkflowRunJobStatus.Waiting:
-        case V2WorkflowRunJobStatus.Scheduling:
-            return false
+        case V2WorkflowRunJobStatus.Fail:
+        case V2WorkflowRunJobStatus.Stopped:
+        case V2WorkflowRunJobStatus.Success:
+        case V2WorkflowRunJobStatus.Skipped:
+            return true;
     }
-    return true
+    return false;
 }
 
 export function V2WorkflowRunJobStatusIsActive(s: V2WorkflowRunJobStatus): boolean {
     switch (s) {
+        case V2WorkflowRunJobStatus.Unknown:
         case V2WorkflowRunJobStatus.Waiting:
         case V2WorkflowRunJobStatus.Building:
         case V2WorkflowRunJobStatus.Scheduling:
-            return true
+            return true;
     }
-    return false
+    return false;
 }
 
 export function V2WorkflowRunJobStatusIsFailed(s: V2WorkflowRunJobStatus): boolean {
     switch (s) {
         case V2WorkflowRunJobStatus.Stopped:
         case V2WorkflowRunJobStatus.Fail:
-            return true
+            return true;
     }
-    return false
+    return false;
 }
 
 export class V2Job {
