@@ -122,6 +122,7 @@ const (
 	StatusUnknown           = "Unknown"
 	StatusSkipped           = "Skipped"
 	StatusStopped           = "Stopped"
+	StatusBlocked           = "Blocked"
 	StatusWorkerPending     = "Pending"
 	StatusWorkerRegistering = "Registering"
 

@@ -1090,6 +1090,15 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					hasToUpdateRun = runUpdated
 				}
 			}
+			// Manage concurrency
+			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, runJob.Job)
+			if err != nil {
+				return nil, nil, nil, hasToUpdateRun, err
+			}
+			if runJobInfo != nil {
+				runJobsInfo[jobID] = *runJobInfo
+				runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
+			}
 			runJobs = append(runJobs, runJob)
 		} else {
 			allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
@@ -1111,6 +1120,9 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				allVariableSets: allVariableSets,
 			}
 			if jobDef.From == "" {
+				// ///////
+				// TODO - manage concurrency on matrixed job
+				// ///////
 				jobs, runUpdated := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData)
 				runJobs = append(runJobs, jobs...)
 				if runUpdated {
@@ -1458,8 +1470,9 @@ func generateMatrix(matrix map[string][]string, keys []string, keyIndex int, cur
 }
 
 type JobToTrigger struct {
-	Status sdk.V2WorkflowRunJobStatus
-	Job    sdk.V2Job
+	Status      sdk.V2WorkflowRunJobStatus
+	Job         sdk.V2Job
+	Concurrency *sdk.V2RunJobConcurrency
 }
 
 // Return jobToQueue, skippedJob, runInfos, error
@@ -1546,18 +1559,17 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 			}
 			return nil, runInfos, err
 		}
-
-		if canBeQueued {
-			jobToQueue[jobID] = JobToTrigger{
-				Status: sdk.V2WorkflowRunJobStatusWaiting,
-				Job:    jobDef,
-			}
-		} else {
+		if !canBeQueued {
 			jobToQueue[jobID] = JobToTrigger{
 				Status: sdk.V2WorkflowRunJobStatusSkipped,
 				Job:    jobDef,
 			}
+			continue
+		}
 
+		jobToQueue[jobID] = JobToTrigger{
+			Status: sdk.V2WorkflowRunJobStatusWaiting,
+			Job:    jobDef,
 		}
 	}
 

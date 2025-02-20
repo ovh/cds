@@ -2467,6 +2467,7 @@ parameters:
 	require.Equal(t, sdk.RepositoryAnalysisStatusError, anal.Status)
 	require.Equal(t, "workflow myworkflow: unable to find workflow dependency: mytemplate", anal.Data.Error)
 }
+
 func TestAnalyzeGithubUpdateWorkflowNoRight(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
