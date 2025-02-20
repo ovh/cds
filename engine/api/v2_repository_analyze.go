@@ -1430,7 +1430,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		k, _ := project.LoadKeyByLongKeyID(ctx, db, signKeyID)
 		if k == nil {
 			// The key is not known from CDS. Let's raise an error
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("gpg key %s not found in CDS", signKeyID), nil
 		}
 
 		projWhoOwnTheKey, err := project.LoadByID(db, k.ProjectID)
