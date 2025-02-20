@@ -251,8 +251,8 @@ type V2WorkflowRunJob struct {
 	JobID              string                 `json:"job_id" db:"job_id" cli:"job_id"`
 	WorkflowRunID      string                 `json:"workflow_run_id" db:"workflow_run_id" action_metadata:"workflow-run-id"`
 	ProjectKey         string                 `json:"project_key" db:"project_key" action_metadata:"project-key"`
-	VCSName            string                 `json:"vcs_name" db:"vcs_name" action_metadata:"vcs-name"`
-	RepositoryName     string                 `json:"repository_name" db:"repository_name" action_metadata:"repository-name"`
+	VCSServer          string                 `json:"vcs_server" db:"vcs_server" action_metadata:"vcs-server"`
+	Repository         string                 `json:"repository" db:"repository" action_metadata:"repository-name"`
 	WorkflowName       string                 `json:"workflow_name" db:"workflow_name" action_metadata:"workflow-name"`
 	RunNumber          int64                  `json:"run_number" db:"run_number" action_metadata:"run-number"`
 	RunAttempt         int64                  `json:"run_attempt" db:"run_attempt"`
@@ -275,7 +275,7 @@ type V2WorkflowRunJob struct {
 	Matrix             JobMatrix              `json:"matrix,omitempty" db:"matrix"`
 	GateInputs         GateInputs             `json:"gate_inputs,omitempty" db:"gate_inputs"`
 	Initiator          V2Initiator            `json:"initiator,omitempty" db:"initiator"`
-	Concurrency        V2RunJobConcurrency    `json:"concurrency,omitempty" db:"concurrency"`
+	Concurrency        *V2RunJobConcurrency   `json:"concurrency,omitempty" db:"concurrency"`
 }
 
 type V2RunJobConcurrency struct {
@@ -505,11 +505,10 @@ func (i *V2Initiator) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID                    string                   `json:"run_id"`
-	DeprecatedUserID         string                   `json:"user_id"` // Deprecated
-	Initiator                V2Initiator              `json:"initiator"`
-	DeprecatedIsAdminWithMFA bool                     `json:"is_admin_mfa"` // Deprecated
-	Gate                     V2WorkflowRunEnqueueGate `json:"gate"`
+	RunID                    string      `json:"run_id"`
+	DeprecatedUserID         string      `json:"user_id"` // Deprecated
+	Initiator                V2Initiator `json:"initiator"`
+	DeprecatedIsAdminWithMFA bool        `json:"is_admin_mfa"` // Deprecated
 }
 
 type V2WorkflowRunEnqueueGate struct {

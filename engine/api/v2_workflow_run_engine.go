@@ -295,9 +295,16 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			now := time.Now()
 			rj.Ended = &now
 		}
-		if err := workflow_v2.InsertRunJob(ctx, tx, rj); err != nil {
-			return err
+		if rj.ID == "" {
+			if err := workflow_v2.InsertRunJob(ctx, tx, rj); err != nil {
+				return err
+			}
+		} else {
+			if err := workflow_v2.UpdateJobRun(ctx, tx, rj); err != nil {
+				return err
+			}
 		}
+
 		if info, has := runJobsInfos[rj.ID]; has {
 			info.WorkflowRunJobID = rj.ID
 			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
@@ -965,6 +972,8 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				DeprecatedUsername: wrEnqueue.Initiator.Username(),
 				DeprecatedAdminMFA: wrEnqueue.Initiator.IsAdminWithMFA,
 				ProjectKey:         run.ProjectKey,
+				VCSServer:          run.VCSServer,
+				Repository:         run.Repository,
 				Region:             jobDef.Region,
 				WorkflowName:       run.WorkflowName,
 				RunNumber:          run.RunNumber,
@@ -1050,6 +1059,8 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				DeprecatedUsername: wrEnqueue.Initiator.Username(),
 				DeprecatedAdminMFA: wrEnqueue.Initiator.IsAdminWithMFA,
 				ProjectKey:         run.ProjectKey,
+				VCSServer:          run.VCSServer,
+				Repository:         run.Repository,
 				Region:             jobDef.Region,
 				WorkflowName:       run.WorkflowName,
 				RunNumber:          run.RunNumber,
@@ -1140,6 +1151,22 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			}
 		}
 	}
+
+	// Browse blocked job release then if we can
+	for _, rj := range existingRunJobs {
+		if rj.Status != sdk.StatusBlocked {
+			continue
+		}
+		rjToUnblocked, err := retrieveRunJobToUnblocked(ctx, db, rj)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+		if rjToUnblocked.ID == rj.ID {
+			rj.Status = sdk.V2WorkflowRunJobStatusWaiting
+			runJobs = append(runJobs, rj)
+		}
+	}
+
 	return runJobs, runJobsInfo, nil, hasToUpdateRun, nil
 }
 
@@ -1287,6 +1314,8 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 			DeprecatedUsername: data.wrEnqueue.Initiator.Username(),
 			DeprecatedAdminMFA: data.wrEnqueue.Initiator.IsAdminWithMFA,
 			ProjectKey:         run.ProjectKey,
+			VCSServer:          run.VCSServer,
+			Repository:         run.Repository,
 			Region:             permJobDef.Region,
 			WorkflowName:       run.WorkflowName,
 			RunNumber:          run.RunNumber,

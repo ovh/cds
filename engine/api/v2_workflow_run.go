@@ -249,8 +249,10 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(err)
 			}
 
-			for i := range runJobs {
+			for i, rj := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, runJobs[i])
+
+				api.manageEndJobConcurrency(rj)
 			}
 
 			initiator := sdk.V2Initiator{
@@ -264,7 +266,6 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			initiator.User = usr.Initiator()
 
 			api.EnqueueWorkflowRun(ctx, wr.ID, initiator, wr.WorkflowName, wr.RunNumber)
-
 			return nil
 		}
 }
@@ -792,6 +793,8 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 
 			for _, rj := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, rj)
+
+				api.manageEndJobConcurrency(rj)
 			}
 
 			jobMaps := make(map[string]sdk.V2WorkflowRunJob)
