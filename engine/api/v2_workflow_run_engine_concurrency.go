@@ -35,7 +35,7 @@ func (api *API) manageEndJobConcurrency(jobRun sdk.V2WorkflowRunJob) {
 	})
 }
 
-// Retrieve the next rj to unblocked
+// Retrieve the next rj to unblocked.
 func retrieveRunJobToUnblocked(ctx context.Context, db *gorp.DbMap, jobRun sdk.V2WorkflowRunJob) (*sdk.V2WorkflowRunJob, error) {
 	var ruleToApply *sdk.Concurrency
 	var err error

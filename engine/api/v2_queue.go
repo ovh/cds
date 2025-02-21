@@ -593,7 +593,7 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return sdk.WithStack(err)
 			}
 
-			api.manageEndJobConcurrency(jobRun)
+			api.manageEndJobConcurrency(*jobRun)
 
 			if nbHatcheryStopWarning >= 0 {
 				api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
