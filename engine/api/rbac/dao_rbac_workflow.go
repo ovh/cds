@@ -147,7 +147,7 @@ func LoadAllWorkflowsAllowedForVCSUSer(ctx context.Context, db gorp.SqlExecutor,
 			log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> checking %s/%s against %s/%s", user.VCSServer, user.VCSUsername, rbacVCSUser.VCSServer, rbacVCSUser.VCSUsername)
 			if rbacVCSUser.VCSServer == user.VCSServer && rbacVCSUser.VCSUsername == user.VCSUsername {
 				if rw.AllWorkflows {
-					log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on all workflows of project %s", projectKey)
+					log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on all workflows of project %s", rbacVCSUser.VCSServer, rbacVCSUser.VCSUsername, projectKey)
 					return nil, true, nil
 				}
 				log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on workflows %+v of project %s", rbacVCSUser.VCSServer, rbacVCSUser.VCSUsername, rw.RBACWorkflowsNames, projectKey)
