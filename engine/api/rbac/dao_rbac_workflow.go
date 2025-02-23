@@ -83,6 +83,8 @@ func HasRoleOnWorkflowAndVCSUsername(ctx context.Context, db gorp.SqlExecutor, r
 	if err != nil {
 		return false, err
 	}
+	log.Info(ctx, "HasRoleOnWorkflowAndVCSUsername> granted workflows for %s/%s: %+v , allWorkflowAllowed=%v", VCSUser.VCSServer, VCSUser.VCSUsername, workflows, allWorkflowAllowed)
+
 	if allWorkflowAllowed {
 		return true, nil
 	}
@@ -142,7 +144,13 @@ func LoadAllWorkflowsAllowedForVCSUSer(ctx context.Context, db gorp.SqlExecutor,
 			continue
 		}
 		for _, rbacVCSUser := range rw.RBACVCSUsers {
+			log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> checking %s/%s against %s/%s", user.VCSServer, user.VCSUsername, rbacVCSUser.VCSServer, rbacVCSUser.VCSUsername)
 			if rbacVCSUser.VCSServer == user.VCSServer && rbacVCSUser.VCSUsername == user.VCSUsername {
+				if rw.AllWorkflows {
+					log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on all workflows of project %s", projectKey)
+					return nil, true, nil
+				}
+				log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on workflows %+v of project %s", rw.RBACWorkflowsNames, projectKey)
 				workflows = append(workflows, rw.RBACWorkflowsNames...)
 				break
 			}
