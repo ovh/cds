@@ -150,7 +150,7 @@ func LoadAllWorkflowsAllowedForVCSUSer(ctx context.Context, db gorp.SqlExecutor,
 					log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on all workflows of project %s", projectKey)
 					return nil, true, nil
 				}
-				log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on workflows %+v of project %s", rw.RBACWorkflowsNames, projectKey)
+				log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on workflows %+v of project %s", rbacVCSUser.VCSServer, rbacVCSUser.VCSUsername, rw.RBACWorkflowsNames, projectKey)
 				workflows = append(workflows, rw.RBACWorkflowsNames...)
 				break
 			}
