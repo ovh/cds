@@ -164,6 +164,12 @@ func (h *HookRepositoryEvent) ToInsightReport(uiURL string) VCSInsight {
 	}
 	if h.Status != HookEventStatusDone {
 		report.Detail += "\n\n" + h.LastError
+	} else {
+		for _, a := range h.Analyses {
+			if a.Error != "" {
+				report.Detail += fmt.Sprintf("\n\nOn project %s: %s", a.ProjectKey, a.Error)
+			}
+		}
 	}
 
 	// Check if there is max 5 analysis to display all of them

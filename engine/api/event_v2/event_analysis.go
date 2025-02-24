@@ -33,7 +33,7 @@ func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoNa
 	e := sdk.AnalysisEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
 			ID:        sdk.UUID(),
-			Type:      sdk.EventAnalysisStart,
+			Type:      sdk.EventAnalysisDone,
 			Payload:   bts,
 			Timestamp: time.Now(),
 		},

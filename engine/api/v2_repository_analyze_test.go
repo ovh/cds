@@ -325,7 +325,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "unable to find commiter for commit abcdef", analysisUpdated.Data.Error)
+	require.Equal(t, "gpg key F344BDDCE15F17D7 not found in CDS", analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubUserNotEnoughPerm(t *testing.T) {

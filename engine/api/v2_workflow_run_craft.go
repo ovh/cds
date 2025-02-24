@@ -424,7 +424,7 @@ func retrieveAndUpdateAllJobDependencies(ctx context.Context, db *gorp.DbMap, st
 	}
 
 	// Check worker model
-	if !strings.Contains(j.RunsOn.Model, "${{") && j.From == "" {
+	if !strings.Contains(j.RunsOn.Model, "${{") && j.From == "" && !strings.Contains(j.Region, "${{") {
 		completeName, msg, err := wref.checkWorkerModel(ctx, db, store, jobID, j.RunsOn.Model, j.Region, defaultRegion)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
