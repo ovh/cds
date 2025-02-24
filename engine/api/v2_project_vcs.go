@@ -113,7 +113,7 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
 
-			vcsOld, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			vcsOld, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
 				return err
 			}
@@ -133,6 +133,11 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			vcsProject.Created = vcsOld.Created
 			vcsProject.CreatedBy = vcsOld.CreatedBy
 			vcsProject.ProjectID = vcsOld.ProjectID
+			// If it's the same username and if the new VCS is imported without the token, keep the old one
+			if vcsProject.Auth.Username == vcsOld.Auth.Username &&
+				vcsProject.Auth.Token == "" && vcsOld.Auth.Token != "" {
+				vcsProject.Auth.Token = vcsOld.Auth.Token
+			}
 
 			if err := vcsProject.Lint(*proj); err != nil {
 				return err
@@ -145,6 +150,9 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			// Reset the token to avoid leak
+			vcsProject.Auth.Token = ""
 
 			event_v2.PublishVCSEvent(ctx, api.Cache, sdk.EventVCSUpdated, proj.Key, vcsProject, *u.AuthConsumerUser.AuthentifiedUser)
 
