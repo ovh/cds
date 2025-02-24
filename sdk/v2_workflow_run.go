@@ -423,6 +423,22 @@ func (jm *JobMatrix) Scan(src interface{}) error {
 	return WrapError(yaml.Unmarshal([]byte(source), jm), "cannot unmarshal JobMatrix")
 }
 
+func (vjc V2RunJobConcurrency) Value() (driver.Value, error) {
+	j, err := json.Marshal(vjc)
+	return j, WrapError(err, "cannot marshal V2RunJobConcurrency")
+}
+
+func (sc *V2RunJobConcurrency) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, sc), "cannot unmarshal V2RunJobConcurrency")
+}
+
 func (sc JobStepsStatus) Value() (driver.Value, error) {
 	j, err := json.Marshal(sc)
 	return j, WrapError(err, "cannot marshal JobStepsStatus")

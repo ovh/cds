@@ -322,6 +322,42 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		}
 	}
 
+	// Interpolate workflow.concurrencies
+	bts, err := json.Marshal(run.Contexts)
+	if err != nil {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       "unable to read run context. Please contact an administrator",
+		})
+	}
+	var mapContexts map[string]interface{}
+	if err := json.Unmarshal(bts, &mapContexts); err != nil {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       "unable to read run context. Please contact an administrator",
+		})
+	}
+	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+	for i := range run.WorkflowData.Workflow.Concurrencies {
+		c := &run.WorkflowData.Workflow.Concurrencies[i]
+		if strings.Contains(c.Name, "${{") {
+			interpolatedString, err := ap.InterpolateToString(ctx, c.Name)
+			if err != nil {
+				return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       "unable to read run context. Please contact an administrator",
+				})
+			}
+			c.Name = interpolatedString
+		}
+	}
+
 	run.WorkflowData.Actions = make(map[string]sdk.V2Action)
 	for k, v := range wref.ef.actionsCache {
 		run.WorkflowData.Actions[k] = v
@@ -455,6 +491,43 @@ func retrieveAndUpdateAllJobDependencies(ctx context.Context, db *gorp.DbMap, st
 	vss = append(vss, j.VariableSets...)
 	vss.Unique()
 	j.VariableSets = vss
+
+	// Check concurrency
+	if strings.Contains(j.Concurrency, "${{") {
+		bts, err := json.Marshal(run.Contexts)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return &sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       "unable to read run context. Please contact an administrator",
+			}
+		}
+		var mapContexts map[string]interface{}
+		if err := json.Unmarshal(bts, &mapContexts); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return &sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       "unable to rean run context. Please contact an administrator",
+			}
+		}
+		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+		interpolatedString, err := ap.InterpolateToString(ctx, j.Concurrency)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return &sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       err.Error(),
+			}
+		}
+		j.Concurrency = interpolatedString
+	}
+
 	run.WorkflowData.Workflow.Jobs[jobID] = j
 	return nil
 }

@@ -182,7 +182,9 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
 	}
 	allrunJobsMap := make(map[string]sdk.V2WorkflowRunJob)
+	allreadyExistRunJobs := make(map[string]struct{})
 	for _, rj := range allRunJobs {
+		allreadyExistRunJobs[rj.ID] = struct{}{}
 		// addition check for matrix job, only keep not terminated one if present
 		runjob, has := allrunJobsMap[rj.JobID]
 		if !has || runjob.Status.IsTerminated() {
@@ -295,7 +297,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			now := time.Now()
 			rj.Ended = &now
 		}
-		if rj.ID == "" {
+		if _, has := allreadyExistRunJobs[rj.ID]; !has {
 			if err := workflow_v2.InsertRunJob(ctx, tx, rj); err != nil {
 				return err
 			}
@@ -1102,12 +1104,12 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				}
 			}
 			// Manage concurrency
-			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, runJob.Job)
+			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob)
 			if err != nil {
 				return nil, nil, nil, hasToUpdateRun, err
 			}
 			if runJobInfo != nil {
-				runJobsInfo[jobID] = *runJobInfo
+				runJobsInfo[runJob.ID] = *runJobInfo
 				runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
 			}
 			runJobs = append(runJobs, runJob)
@@ -1161,7 +1163,17 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		if err != nil {
 			return nil, nil, nil, false, err
 		}
-		if rjToUnblocked.ID == rj.ID {
+		if rjToUnblocked != nil && rjToUnblocked.ID == rj.ID {
+
+			runJobsInfo[rj.ID] = sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    rj.WorkflowRunID,
+				WorkflowRunJobID: rj.ID,
+				IssuedAt:         time.Now(),
+				Level:            sdk.WorkflowRunInfoLevelInfo,
+				Message:          "Job has been unlocked",
+			}
+
+			rj.Queued = time.Now()
 			rj.Status = sdk.V2WorkflowRunJobStatusWaiting
 			runJobs = append(runJobs, rj)
 		}
@@ -1961,13 +1973,24 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 		return err
 	}
 	var lastJob sdk.V2WorkflowRunJob
+	runningWorkflow := false
+	hasBlockedRunJob := false
 	for _, rj := range runJobs {
-		if !rj.Status.IsTerminated() {
-			return nil
+		if !rj.Status.IsTerminated() && rj.Status != sdk.V2WorkflowRunJobStatusBlocked {
+			runningWorkflow = true
+			continue
+		}
+		if rj.Status == sdk.V2WorkflowRunJobStatusBlocked {
+			hasBlockedRunJob = true
+			continue
 		}
 		if sdk.TimeSafe(rj.Started).After(sdk.TimeSafe(lastJob.Started)) {
 			lastJob = rj
 		}
+	}
+
+	if runningWorkflow && !hasBlockedRunJob {
+		return nil
 	}
 
 	initiator := &lastJob.Initiator

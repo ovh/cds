@@ -21,10 +21,10 @@ func CountRunningRunJobWithWorkflowConcurrency(ctx context.Context, db gorp.SqlE
 	FROM v2_workflow_run_job 
 	WHERE 
 		project_key = $1 AND 
-		vcs_name = $2 AND 
-		repository_name = $3 AND 
+		vcs_server = $2 AND 
+		repository = $3 AND 
 		workflow_name = $4 AND 
-		concurrency->>'name' == $5 AND
+		concurrency->>'name' = $5 AND
 		concurrency->>'scope' = $6 AND
 		status = ANY($7)`
 	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)})
@@ -42,7 +42,7 @@ func CountBlockedRunJobWithWorkflowConcurrency(ctx context.Context, db gorp.SqlE
 		vcs_server = $2 AND 
 		repository = $3 AND 
 		workflow_name = $4 AND 
-		concurrency->>'name' == $5 AND
+		concurrency->>'name' = $5 AND
 		concurrency->>'scope' = $6 AND
 		status = $7`
 	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, sdk.V2WorkflowRunJobStatusBlocked)
@@ -60,7 +60,7 @@ func LoadConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj string,
 		vcs_server = $2 AND 
 		repository = $3 AND 
 		workflow_name = $4 AND 
-		concurrency->>'name' == $5 AND
+		concurrency->>'name' = $5 AND
 		concurrency->>'scope' = $6
 		status = ANY($7)
 	GROUP BY concurrency->>'order'`
@@ -86,10 +86,11 @@ func LoadOldestRunJobWithSameConcurrencyOnSameWorkflow(ctx context.Context, db g
 			vcs_server = $2 AND 
 			repository = $3 AND 
 			workflow_name = $4 AND 
-			concurrency->>'name' == $5 AND
-			concurrency->>'scope' = $6
+			concurrency->>'name' = $5 AND
+			concurrency->>'scope' = $6 AND
+			status = $7
 	ORDER BY queued ASC LIMIT 1`
-	query := gorpmapping.NewQuery(q).Args(proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow)
+	query := gorpmapping.NewQuery(q).Args(proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, sdk.V2WorkflowRunJobStatusBlocked)
 	return getRunJob(ctx, db, query)
 }
 
@@ -98,10 +99,12 @@ func LoadNewestRunJobWithSameConcurrencyOnSameWorkflow(ctx context.Context, db g
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			vcs_server = $2 AND 
-			repository = $3 AND workflow_name = $4 AND 
-			concurrency->>'name' == $5 AND
-			concurrency->>'scope' = $6
+			repository = $3 AND 
+			workflow_name = $4 AND 
+			concurrency->>'name' = $5 AND
+			concurrency->>'scope' = $6 AND 
+			status = $7
 	ORDER BY queued DESC LIMIT 1`
-	query := gorpmapping.NewQuery(q).Args(proj, vcs, repo, workflow, concurrencyName)
+	query := gorpmapping.NewQuery(q).Args(proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, sdk.V2WorkflowRunJobStatusBlocked)
 	return getRunJob(ctx, db, query)
 }
