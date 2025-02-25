@@ -24,6 +24,7 @@ const (
 )
 
 type WorkflowSemverType string
+type ConcurrencyOrder string
 
 var AvailableSemverType = []WorkflowSemverType{SemverTypeGit, SemverTypeHelm, SemverTypeCargo, SemverTypeNpm, SemverTypeYarn, SemverTypeFile, SemverTypePoetry, SemverTypeDebian}
 
@@ -38,23 +39,27 @@ const (
 	SemverTypeDebian WorkflowSemverType = "debian"
 
 	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}.sha.${{git.sha_short}}"
+
+	ConcurrencyOrderOldestFirst ConcurrencyOrder = "oldest_first"
+	ConcurrencyOrderNewestFirst ConcurrencyOrder = "newest_first"
 )
 
 type V2Workflow struct {
-	Name         string                   `json:"name"`
-	Repository   *WorkflowRepository      `json:"repository,omitempty"`
-	OnRaw        json.RawMessage          `json:"on,omitempty"`
-	CommitStatus *CommitStatus            `json:"commit-status,omitempty"`
-	On           *WorkflowOn              `json:"-" yaml:"-"`
-	Stages       map[string]WorkflowStage `json:"stages,omitempty"`
-	Gates        map[string]V2JobGate     `json:"gates,omitempty"`
-	Jobs         map[string]V2Job         `json:"jobs,omitempty" jsonschema:"oneof_required=jobs"`
-	Env          map[string]string        `json:"env,omitempty"`
-	Integrations []string                 `json:"integrations,omitempty"`
-	VariableSets []string                 `json:"vars,omitempty"`
-	Retention    int64                    `json:"retention,omitempty"`
-	Annotations  map[string]string        `json:"annotations,omitempty"`
-	Semver       *WorkflowSemver          `json:"semver,omitempty"`
+	Name          string                   `json:"name"`
+	Repository    *WorkflowRepository      `json:"repository,omitempty"`
+	OnRaw         json.RawMessage          `json:"on,omitempty"`
+	CommitStatus  *CommitStatus            `json:"commit-status,omitempty"`
+	On            *WorkflowOn              `json:"-" yaml:"-"`
+	Stages        map[string]WorkflowStage `json:"stages,omitempty"`
+	Gates         map[string]V2JobGate     `json:"gates,omitempty"`
+	Jobs          map[string]V2Job         `json:"jobs,omitempty" jsonschema:"oneof_required=jobs"`
+	Env           map[string]string        `json:"env,omitempty"`
+	Integrations  []string                 `json:"integrations,omitempty"`
+	VariableSets  []string                 `json:"vars,omitempty"`
+	Retention     int64                    `json:"retention,omitempty"`
+	Annotations   map[string]string        `json:"annotations,omitempty"`
+	Semver        *WorkflowSemver          `json:"semver,omitempty"`
+	Concurrencies []Concurrency            `json:"concurrencies,omitempty"`
 
 	// Template fields
 	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from"`
@@ -280,6 +285,13 @@ type WorkflowStage struct {
 	Needs []string `json:"needs,omitempty" jsonschema_description:"Stage dependencies"`
 }
 
+type Concurrency struct {
+	Name             string           `json:"name"`
+	Order            ConcurrencyOrder `json:"order,omitempty"`
+	Pool             int64            `json:"pool,omitempty"`
+	CancelInProgress bool             `json:"cancel_in_progress"`
+}
+
 type V2Job struct {
 	Name            string                  `json:"name,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Name of the job"`
 	If              string                  `json:"if,omitempty" jsonschema_extras:"order=5,textarea=true" jsonschema_description:"Condition to execute the job"`
@@ -299,9 +311,7 @@ type V2Job struct {
 	Outputs         map[string]ActionOutput `json:"outputs,omitempty"`
 	From            string                  `json:"from,omitempty" jsonschema:"oneof=from"`
 	Parameters      map[string]string       `json:"parameters,omitempty" jsonschema:"oneof=from"`
-
-	// TODO
-	Concurrency V2JobConcurrency `json:"-"`
+	Concurrency     string                  `json:"concurrency,omitempty"`
 }
 
 func (j V2Job) Copy() V2Job {

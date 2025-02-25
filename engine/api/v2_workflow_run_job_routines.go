@@ -217,6 +217,9 @@ func (api *API) failOldWaitingRunJob(ctx context.Context, store cache.Store, db 
 	// Trigger workflow
 	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.Initiator, runJob.WorkflowName, runJob.RunNumber)
 
+	// Trigger other workflow regarding concurrency
+	api.manageEndJobConcurrency(*runJob)
+
 	return nil
 }
 
@@ -324,6 +327,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 
 	log.Info(ctx, fmt.Sprintf("stopDeadJob: stopping job %s/%s on workflow %s run %d", runJob.JobID, runJob.ID, runJob.WorkflowName, runJob.RunNumber))
 	runJob.Status = sdk.V2WorkflowRunJobStatusStopped
+
 	now := time.Now()
 	runJob.Ended = &now
 
@@ -350,5 +354,8 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	// Trigger workflow
 	event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *run, *runJob)
 	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.Initiator, runJob.WorkflowName, runJob.RunNumber)
+
+	// Trigger other workflow regarding concurrency
+	api.manageEndJobConcurrency(*runJob)
 	return nil
 }

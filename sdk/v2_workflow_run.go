@@ -14,10 +14,15 @@ import (
 	"github.com/rockbears/yaml"
 )
 
+type V2RunJobConcurrencyScope string
+
 const (
 	GitBranchManualPayload = "git.branch"
 	GitCommitManualPayload = "git.commit"
 	GitTagManualPayload    = "git.tag"
+
+	V2RunJobConcurrencyScopeProject  V2RunJobConcurrencyScope = "project"
+	V2RunJobConcurrencyScopeWorkflow V2RunJobConcurrencyScope = "workflow"
 )
 
 type V2WorkflowRunHookRequest struct {
@@ -246,6 +251,8 @@ type V2WorkflowRunJob struct {
 	JobID              string                 `json:"job_id" db:"job_id" cli:"job_id"`
 	WorkflowRunID      string                 `json:"workflow_run_id" db:"workflow_run_id" action_metadata:"workflow-run-id"`
 	ProjectKey         string                 `json:"project_key" db:"project_key" action_metadata:"project-key"`
+	VCSServer          string                 `json:"vcs_server" db:"vcs_server" action_metadata:"vcs-server"`
+	Repository         string                 `json:"repository" db:"repository" action_metadata:"repository-name"`
 	WorkflowName       string                 `json:"workflow_name" db:"workflow_name" action_metadata:"workflow-name"`
 	RunNumber          int64                  `json:"run_number" db:"run_number" action_metadata:"run-number"`
 	RunAttempt         int64                  `json:"run_attempt" db:"run_attempt"`
@@ -268,12 +275,19 @@ type V2WorkflowRunJob struct {
 	Matrix             JobMatrix              `json:"matrix,omitempty" db:"matrix"`
 	GateInputs         GateInputs             `json:"gate_inputs,omitempty" db:"gate_inputs"`
 	Initiator          V2Initiator            `json:"initiator,omitempty" db:"initiator"`
+	Concurrency        *V2RunJobConcurrency   `json:"concurrency,omitempty" db:"concurrency"`
+}
+
+type V2RunJobConcurrency struct {
+	Concurrency
+	Scope V2RunJobConcurrencyScope `json:"scope"`
 }
 
 type V2WorkflowRunJobStatus string
 
 const (
 	V2WorkflowRunJobStatusUnknown    V2WorkflowRunJobStatus = ""
+	V2WorkflowRunJobStatusBlocked    V2WorkflowRunJobStatus = "Blocked"
 	V2WorkflowRunJobStatusWaiting    V2WorkflowRunJobStatus = "Waiting"
 	V2WorkflowRunJobStatusBuilding   V2WorkflowRunJobStatus = "Building"
 	V2WorkflowRunJobStatusFail       V2WorkflowRunJobStatus = "Fail"
@@ -299,13 +313,15 @@ func NewV2WorkflowRunJobStatusFromString(s string) (V2WorkflowRunJobStatus, erro
 		return V2WorkflowRunJobStatusStopped, nil
 	case StatusBuilding:
 		return V2WorkflowRunJobStatusBuilding, nil
+	case StatusBlocked:
+		return V2WorkflowRunJobStatusBlocked, nil
 	}
 	return V2WorkflowRunJobStatusUnknown, errors.Errorf("cannot convert given status value %q to workflow run job v2 status", s)
 }
 
 func (s V2WorkflowRunJobStatus) IsTerminated() bool {
 	switch s {
-	case V2WorkflowRunJobStatusUnknown, V2WorkflowRunJobStatusBuilding, V2WorkflowRunJobStatusWaiting, V2WorkflowRunJobStatusScheduling:
+	case V2WorkflowRunJobStatusUnknown, V2WorkflowRunJobStatusBlocked, V2WorkflowRunJobStatusBuilding, V2WorkflowRunJobStatusWaiting, V2WorkflowRunJobStatusScheduling:
 		return false
 	}
 	return true
@@ -407,6 +423,22 @@ func (jm *JobMatrix) Scan(src interface{}) error {
 	return WrapError(yaml.Unmarshal([]byte(source), jm), "cannot unmarshal JobMatrix")
 }
 
+func (vjc V2RunJobConcurrency) Value() (driver.Value, error) {
+	j, err := json.Marshal(vjc)
+	return j, WrapError(err, "cannot marshal V2RunJobConcurrency")
+}
+
+func (sc *V2RunJobConcurrency) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, sc), "cannot unmarshal V2RunJobConcurrency")
+}
+
 func (sc JobStepsStatus) Value() (driver.Value, error) {
 	j, err := json.Marshal(sc)
 	return j, WrapError(err, "cannot marshal JobStepsStatus")
@@ -488,11 +520,10 @@ func (i *V2Initiator) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID                    string                   `json:"run_id"`
-	DeprecatedUserID         string                   `json:"user_id"` // Deprecated
-	Initiator                V2Initiator              `json:"initiator"`
-	DeprecatedIsAdminWithMFA bool                     `json:"is_admin_mfa"` // Deprecated
-	Gate                     V2WorkflowRunEnqueueGate `json:"gate"`
+	RunID                    string      `json:"run_id"`
+	DeprecatedUserID         string      `json:"user_id"` // Deprecated
+	Initiator                V2Initiator `json:"initiator"`
+	DeprecatedIsAdminWithMFA bool        `json:"is_admin_mfa"` // Deprecated
 }
 
 type V2WorkflowRunEnqueueGate struct {
