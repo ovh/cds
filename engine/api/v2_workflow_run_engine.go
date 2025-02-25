@@ -959,6 +959,8 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 
 	regionPermCache := make(map[string]*sdk.V2WorkflowRunJobInfo)
 
+	concurrencyUnlockedCount := make(map[string]int64)
+
 	// Browse job to queue and compute data ( matrix / region / model etc..... )
 	for jobID, jobToTrigger := range jobsToQueue {
 		jobDef := jobToTrigger.Job
@@ -1104,7 +1106,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				}
 			}
 			// Manage concurrency
-			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob)
+			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrencyUnlockedCount)
 			if err != nil {
 				return nil, nil, nil, hasToUpdateRun, err
 			}
@@ -1159,7 +1161,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		if rj.Status != sdk.StatusBlocked {
 			continue
 		}
-		rjToUnblocked, err := retrieveRunJobToUnblocked(ctx, db, rj)
+		rjToUnblocked, err := retrieveRunJobToUnLocked(ctx, db, rj)
 		if err != nil {
 			return nil, nil, nil, false, err
 		}

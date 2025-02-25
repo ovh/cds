@@ -356,6 +356,12 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			}
 			c.Name = interpolatedString
 		}
+		if c.Order == "" {
+			c.Order = sdk.ConcurrencyOrderOldestFirst
+		}
+		if c.Pool == 0 {
+			c.Pool = 1
+		}
 	}
 
 	run.WorkflowData.Actions = make(map[string]sdk.V2Action)

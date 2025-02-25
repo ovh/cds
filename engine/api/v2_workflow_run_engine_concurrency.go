@@ -23,7 +23,7 @@ func (api *API) manageEndJobConcurrency(jobRun sdk.V2WorkflowRunJob) {
 		ctx = context.WithValue(ctx, cdslog.WorkflowRunID, jobRun.WorkflowRunID)
 		log.Info(ctx, "job %s: unblock job for concurrency %s scope %s", jobRun.Concurrency.Name, jobRun.Concurrency.Scope)
 
-		rj, err := retrieveRunJobToUnblocked(ctx, api.mustDB(), jobRun)
+		rj, err := retrieveRunJobToUnLocked(ctx, api.mustDB(), jobRun)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
@@ -60,14 +60,14 @@ func (api *API) manageEndJobConcurrency(jobRun sdk.V2WorkflowRunJob) {
 }
 
 // Retrieve the next rj to unblocked.
-func retrieveRunJobToUnblocked(ctx context.Context, db *gorp.DbMap, jobRun sdk.V2WorkflowRunJob) (*sdk.V2WorkflowRunJob, error) {
+func retrieveRunJobToUnLocked(ctx context.Context, db *gorp.DbMap, jobRun sdk.V2WorkflowRunJob) (*sdk.V2WorkflowRunJob, error) {
 	var ruleToApply *sdk.Concurrency
 	var nbBuilding int64
 	var err error
 	switch jobRun.Concurrency.Scope {
 	case sdk.V2RunJobConcurrencyScopeWorkflow:
 
-		ruleToApply, nbBuilding, _, err = checkJobWorkflowConcurrency(ctx, db, jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.Job, jobRun.Concurrency.Concurrency)
+		ruleToApply, nbBuilding, _, err = checkJobWorkflowConcurrency(ctx, db, jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.Concurrency.Concurrency)
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +117,8 @@ func retrieveRunJobToUnblocked(ctx context.Context, db *gorp.DbMap, jobRun sdk.V
 	return rj, nil
 }
 
-func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2WorkflowRun, jobID string, runJob *sdk.V2WorkflowRunJob) (*sdk.V2WorkflowRunJobInfo, error) {
+// Update new run job with concurrency data, check if we have to lock it
+func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2WorkflowRun, jobID string, runJob *sdk.V2WorkflowRunJob, concurrencyUnlockedCount map[string]int64) (*sdk.V2WorkflowRunJobInfo, error) {
 	if runJob.Job.Concurrency != "" {
 		scope := sdk.V2RunJobConcurrencyScopeWorkflow
 
@@ -157,13 +158,13 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 		if scope == sdk.V2RunJobConcurrencyScopeProject {
 			// TODO Manage Concurrency at project level
 		} else {
-			ruleToApply, nbRunJobBuilding, nbRunJobBlocked, err := checkJobWorkflowConcurrency(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, runJob.Job, *jobConcurrencyDef)
+			ruleToApply, nbRunJobBuilding, nbRunJobBlocked, err := checkJobWorkflowConcurrency(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, *jobConcurrencyDef)
 			if err != nil {
 				return nil, err
 			}
 			if !ruleToApply.CancelInProgress {
 				// Pool is full
-				if nbRunJobBlocked+nbRunJobBuilding >= ruleToApply.Pool {
+				if nbRunJobBlocked+nbRunJobBuilding+concurrencyUnlockedCount[runJob.Job.Concurrency] >= ruleToApply.Pool {
 					return &sdk.V2WorkflowRunJobInfo{
 						WorkflowRunID:    run.ID,
 						WorkflowRunJobID: runJob.ID,
@@ -172,7 +173,7 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 						Message:          fmt.Sprintf("Locked by concurrency '%s'", runJob.Job.Concurrency),
 					}, nil
 				}
-				// Pool not found, but there are older runjobs
+				// Pool not full, but there are older runjobs
 				if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst && nbRunJobBlocked > 0 {
 					return &sdk.V2WorkflowRunJobInfo{
 						WorkflowRunID:    run.ID,
@@ -186,20 +187,21 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 				// TODO cancel in progress
 			}
 		}
-
+		concurrencyUnlockedCount[runJob.Job.Concurrency]++
 	}
 	return nil, nil
 }
 
-func checkJobWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, projKey, vcsName, repo, workflowName string, jobDef sdk.V2Job, currentConcurrencyDef sdk.Concurrency) (*sdk.Concurrency, int64, int64, error) {
-	nbRunJobBuilding, err := workflow_v2.CountRunningRunJobWithWorkflowConcurrency(ctx, db, projKey, vcsName, repo, workflowName, jobDef.Concurrency)
+// Retrieve concurrency rule for a workflow
+func checkJobWorkflowConcurrency(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repo, workflowName string, currentConcurrencyDef sdk.Concurrency) (*sdk.Concurrency, int64, int64, error) {
+	nbRunJobBuilding, err := workflow_v2.CountRunningRunJobWithWorkflowConcurrency(ctx, db, projKey, vcsName, repo, workflowName, currentConcurrencyDef.Name)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	ruleToApply := currentConcurrencyDef
 
 	// Check if rules are differents between ongoing job run
-	ongoingRules, err := workflow_v2.LoadConcurrencyRules(ctx, db, projKey, vcsName, repo, workflowName, jobDef.Concurrency)
+	ongoingRules, err := workflow_v2.LoadConcurrencyRules(ctx, db, projKey, vcsName, repo, workflowName, currentConcurrencyDef.Name)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -218,7 +220,7 @@ func checkJobWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, projKey, v
 		}
 	}
 
-	nbBlockedRunJobs, err := workflow_v2.CountBlockedRunJobWithWorkflowConcurrency(ctx, db, projKey, vcsName, repo, workflowName, jobDef.Concurrency)
+	nbBlockedRunJobs, err := workflow_v2.CountBlockedRunJobWithWorkflowConcurrency(ctx, db, projKey, vcsName, repo, workflowName, currentConcurrencyDef.Name)
 	if err != nil {
 		return nil, 0, 0, err
 	}
