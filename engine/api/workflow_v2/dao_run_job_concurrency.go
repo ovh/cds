@@ -78,7 +78,6 @@ func LoadConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj string,
 	return rules, nil
 }
 
-////////////
 
 func LoadOldestRunJobWithSameConcurrencyOnSameWorkflow(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string) (*sdk.V2WorkflowRunJob, error) {
 	q := `SELECT * 
