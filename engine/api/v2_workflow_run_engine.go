@@ -1513,9 +1513,8 @@ func generateMatrix(matrix map[string][]string, keys []string, keyIndex int, cur
 }
 
 type JobToTrigger struct {
-	Status      sdk.V2WorkflowRunJobStatus
-	Job         sdk.V2Job
-	Concurrency *sdk.V2RunJobConcurrency
+	Status sdk.V2WorkflowRunJobStatus
+	Job    sdk.V2Job
 }
 
 // Return jobToQueue, skippedJob, runInfos, error

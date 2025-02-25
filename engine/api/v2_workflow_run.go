@@ -249,10 +249,10 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(err)
 			}
 
-			for i, rj := range runJobs {
+			for i := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, runJobs[i])
 
-				api.manageEndJobConcurrency(rj)
+				api.manageEndJobConcurrency(runJobs[i])
 			}
 
 			initiator := sdk.V2Initiator{
