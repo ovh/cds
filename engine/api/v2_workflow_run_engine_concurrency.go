@@ -127,6 +127,7 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 		for i := range run.WorkflowData.Workflow.Concurrencies {
 			if run.WorkflowData.Workflow.Concurrencies[i].Name == runJob.Job.Concurrency {
 				jobConcurrencyDef = &run.WorkflowData.Workflow.Concurrencies[i]
+				break
 			}
 		}
 		// If not found on workflow, check on project
