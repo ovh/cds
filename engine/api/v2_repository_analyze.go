@@ -1711,7 +1711,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 			if sameVCS && sameRepo && x.Repository != nil && x.Repository.InsecureSkipSignatureVerify {
 				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workfow.repository.name`. ", x.Name))
 			}
-			for _, j := range x.Jobs {
+			for jobID, j := range x.Jobs {
 				// Check if worker model exists
 				if !strings.Contains(j.RunsOn.Model, "${{") && len(j.Steps) > 0 {
 					_, _, msg, errSearch := ef.searchWorkerModel(ctx, db, store, j.RunsOn.Model)
@@ -1737,6 +1737,22 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 					}
 				}
 
+				// Check concurrency
+				if j.Concurrency != "" {
+					found := false
+					for _, c := range x.Concurrencies {
+						if j.Concurrency == c.Name {
+							found = true
+							break
+						}
+					}
+					if !found {
+						// /////
+						// TODO - Manage concurrency on project
+						// /////
+						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s job %s: concurrency %s doesn't exist", x.Name, jobID, j.Concurrency))
+					}
+				}
 			}
 		}
 	}

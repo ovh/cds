@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -262,6 +263,8 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			}
 			service.TrackActionMetadataFromFields(w, jobRun)
 
+			ctx = context.WithValue(ctx, cdslog.WorkflowRunID, jobRun.WorkflowRunID)
+
 			if jobRun.Region != regionName {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
@@ -273,6 +276,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
 				trace.StringAttribute(telemetry.TagWorkflow, jobRun.WorkflowName),
 				trace.StringAttribute(telemetry.TagProjectKey, jobRun.ProjectKey),
+				trace.StringAttribute(telemetry.TagWorkflowRun, jobRun.WorkflowRunID),
 				trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(jobRun.RunNumber, 10)))
 
 			hatchConsumer := getHatcheryConsumer(ctx)
@@ -313,6 +317,8 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 				return err
 			}
 			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
+
+			api.manageEndJobConcurrency(*jobRun)
 
 			api.GoRoutines.Exec(ctx, "postJobResultHandler.event", func(ctx context.Context) {
 				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
@@ -586,6 +592,8 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			api.manageEndJobConcurrency(*jobRun)
 
 			if nbHatcheryStopWarning >= 0 {
 				api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
