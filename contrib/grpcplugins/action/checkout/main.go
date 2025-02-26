@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/user"
 	"strings"
 
@@ -127,8 +128,17 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 		}
 	}
 
-	// Install and import GPG Key
-	if gpgKey != "" {
+	// Install and import GPG Key if gpg is installed
+	var gpgFound bool
+	if _, err := exec.LookPath("gpg2"); err == nil {
+		gpgFound = true
+	}
+	if !gpgFound {
+		if _, err := exec.LookPath("gpg"); err == nil {
+			gpgFound = true
+		}
+	}
+	if gpgFound && gpgKey != "" {
 		k, err := grpcplugins.GetProjectKey(ctx, &p.Common, gpgKey)
 		if err != nil {
 			res.Status = sdk.StatusFail
@@ -150,6 +160,8 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 			res.Details = err.Error()
 			return stream.Send(res)
 		}
+	} else if gpgKey != "" {
+		grpcplugins.Logf(&p.Common, "Can't install GPG Key %q, gpg/gpg2 is not available\n", gpgKey)
 	}
 
 	grpcplugins.Logf(&p.Common, "Start cloning %s\n", gitURL)
