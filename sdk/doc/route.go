@@ -155,6 +155,8 @@ func CleanURLParameter(u string) string {
 		u = "hook-id"
 	case "keyID":
 		u = "key-id"
+	case "concurrencyName":
+		u = "concurrency-name"
 	}
 	return u
 }

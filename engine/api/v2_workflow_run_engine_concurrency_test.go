@@ -55,7 +55,7 @@ func TestRetrieveRunJobToUnlocked_OldestFirst(t *testing.T) {
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
 		Concurrency: &sdk.V2RunJobConcurrency{
-			Concurrency: sdk.Concurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             1,
@@ -79,7 +79,7 @@ func TestRetrieveRunJobToUnlocked_OldestFirst(t *testing.T) {
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
 		Concurrency: &sdk.V2RunJobConcurrency{
-			Concurrency: sdk.Concurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             1,
@@ -141,7 +141,7 @@ func TestRetrieveRunJobToUnlocked_NewestFirst(t *testing.T) {
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
 		Concurrency: &sdk.V2RunJobConcurrency{
-			Concurrency: sdk.Concurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             1,
@@ -165,7 +165,7 @@ func TestRetrieveRunJobToUnlocked_NewestFirst(t *testing.T) {
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
 		Concurrency: &sdk.V2RunJobConcurrency{
-			Concurrency: sdk.Concurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             1,
@@ -227,7 +227,7 @@ func TestCheckJobWorkflowConcurrency_DefaultRules(t *testing.T) {
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
 		Concurrency: &sdk.V2RunJobConcurrency{
-			Concurrency: sdk.Concurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             3,
@@ -251,7 +251,7 @@ func TestCheckJobWorkflowConcurrency_DefaultRules(t *testing.T) {
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
 		Concurrency: &sdk.V2RunJobConcurrency{
-			Concurrency: sdk.Concurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             10,
@@ -264,7 +264,7 @@ func TestCheckJobWorkflowConcurrency_DefaultRules(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunNew))
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld))
 
-	rule, nbBuilding, nbBlocking, err := checkJobWorkflowConcurrency(context.TODO(), db, wr.ProjectKey, wr.VCSServer, wr.Repository, wr.WorkflowName, jobRunNew.Concurrency.Concurrency)
+	rule, nbBuilding, nbBlocking, err := checkJobWorkflowConcurrency(context.TODO(), db, wr.ProjectKey, wr.VCSServer, wr.Repository, wr.WorkflowName, jobRunNew.Concurrency.WorkflowConcurrency)
 	require.NoError(t, err)
 
 	require.Equal(t, int64(0), nbBuilding)
