@@ -119,7 +119,7 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	}
 
 	if email != "" {
-		grpcplugins.Logf(&p.Common, "Setting up git config (user.name=%s, user.email=%s)\n", email, authUsername)
+		grpcplugins.Logf(&p.Common, "Setting up git config (user.name=%s, user.email=%s)\n", authUsername, email)
 		scriptContent := fmt.Sprintf(`git config --global user.email "%s" && git config --global user.name "%s"`, email, authUsername)
 		if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
 			res.Status = sdk.StatusFail
