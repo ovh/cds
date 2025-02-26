@@ -78,7 +78,7 @@ func retrieveRunJobToUnLocked(ctx context.Context, db *gorp.DbMap, jobRun sdk.V2
 	}
 
 	if ruleToApply == nil {
-		log.Error(ctx, "unable to retrieve concurreny rule for workflow % on job %", jobRun.WorkflowName, jobRun.JobID)
+		log.Error(ctx, "unable to retrieve concurreny rule for workflow % on job %v", jobRun.WorkflowName, jobRun.JobID)
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to retrieve concurreny rule for workflow %s on job %s", jobRun.WorkflowName, jobRun.JobID)
 	}
 
