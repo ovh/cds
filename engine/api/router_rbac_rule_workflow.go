@@ -4,42 +4,25 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/workflow_v2"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
-func hasRoleOnWorkflow(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, projectKey string, vcs, repo, workflowName string, role string) error {
+func (api *API) hasRoleOnWorkflow(ctx context.Context, vars map[string]string, role string) error {
+	auth := getUserConsumer(ctx)
 	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser.ID, projectKey, vcs, repo, workflowName)
-	if err != nil {
-		return err
-	}
-
-	ctx = context.WithValue(ctx, cdslog.RbacRole, role)
-	if !hasRole {
-		return sdk.WithStack(sdk.ErrForbidden)
-	}
-
-	return nil
-}
-
-// workflowTrigger return nil if the current AuthUserConsumer have the WorkflowRoleTrigger on current workflow
-func (api *API) workflowTrigger(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]
 	workflowName := vars["workflowName"]
 	workflowRunID := vars["workflowRunID"]
 
 	var vcsName, repoName string
 	if workflowRunID != "" {
-		run, err := workflow_v2.LoadRunByID(ctx, db, workflowRunID)
+		run, err := workflow_v2.LoadRunByID(ctx, api.mustDBWithCtx(ctx), workflowRunID)
 		if err != nil {
 			return err
 		}
@@ -72,5 +55,21 @@ func (api *API) workflowTrigger(ctx context.Context, auth *sdk.AuthUserConsumer,
 			repoName = repositoryIdentifier
 		}
 	}
-	return hasRoleOnWorkflow(ctx, auth, store, db, projectKey, vcsName, repoName, workflowName, sdk.WorkflowRoleTrigger)
+
+	hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDBWithCtx(ctx), role, auth.AuthConsumerUser.AuthentifiedUser.ID, projectKey, vcsName, repoName, workflowName)
+	if err != nil {
+		return err
+	}
+
+	ctx = context.WithValue(ctx, cdslog.RbacRole, role)
+	if !hasRole {
+		return sdk.WithStack(sdk.ErrForbidden)
+	}
+
+	return nil
+}
+
+// workflowTrigger return nil if the current AuthUserConsumer have the WorkflowRoleTrigger on current workflow
+func (api *API) workflowTrigger(ctx context.Context, vars map[string]string) error {
+	return api.hasRoleOnWorkflow(ctx, vars, sdk.WorkflowRoleTrigger)
 }

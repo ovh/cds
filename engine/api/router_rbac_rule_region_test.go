@@ -3,8 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/rockbears/yaml"
 	"testing"
+
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -47,5 +48,6 @@ regions:
 			AuthentifiedUser:   user1,
 		},
 	}
-	require.NoError(t, api.regionRead(context.TODO(), &c, api.Cache, db, map[string]string{"regionIdentifier": reg.Name}))
+	require.NoError(t, api.regionRead(context.WithValue(context.TODO(), contextUserConsumer, &c),
+		map[string]string{"regionIdentifier": reg.Name}))
 }
