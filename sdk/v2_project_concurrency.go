@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"regexp"
 	"time"
 )
 
@@ -42,5 +43,15 @@ func (pc *ProjectConcurrency) Check() error {
 	if !pc.Order.IsValid() {
 		return NewErrorFrom(ErrInvalidData, "invalid order, got %q want %s | %s", pc.Order, ConcurrencyOrderOldestFirst, ConcurrencyOrderNewestFirst)
 	}
+
+	namePattern, err := regexp.Compile(EntityNamePattern)
+	if err != nil {
+		return WrapError(err, "unable to compile regexp %s", namePattern)
+	}
+
+	if !namePattern.MatchString(pc.Name) {
+		return NewErrorFrom(ErrInvalidData, "name %s doesn't match %s", pc.Name, EntityNamePattern)
+	}
+
 	return nil
 }
