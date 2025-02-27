@@ -11,6 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -112,7 +113,13 @@ func (c *websocketV2ClientData) updateEventFilters(ctx context.Context, db gorp.
 			if isMaintainer {
 				continue
 			}
-			return hasRoleOnProject(ctx, &c.AuthConsumer, cache, db, f.ProjectKey, sdk.ProjectRoleRead)
+			hasRole, err := rbac.HasRoleOnProjectAndUserID(ctx, db, sdk.ProjectRoleRead, c.AuthConsumer.AuthConsumerUser.AuthentifiedUser.ID, f.ProjectKey)
+			if err != nil {
+				return err
+			}
+			if !hasRole {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 		}
 	}
 

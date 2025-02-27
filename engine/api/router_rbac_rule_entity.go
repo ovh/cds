@@ -3,14 +3,10 @@ package api
 import (
 	"context"
 
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) entityRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
-	projectKey := vars["projectKey"]
+func (api *API) entityRead(ctx context.Context, vars map[string]string) error {
 	entityType := vars["entityType"]
 	hatch := getHatcheryConsumer(ctx)
 
@@ -22,5 +18,5 @@ func (api *API) entityRead(ctx context.Context, auth *sdk.AuthUserConsumer, stor
 	if isHooks(ctx) {
 		return nil
 	}
-	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.ProjectRoleRead)
+	return api.hasRoleOnProject(ctx, vars, sdk.ProjectRoleRead)
 }

@@ -42,7 +42,8 @@ projects:
 			AuthentifiedUser:   user1,
 		},
 	}
-	require.NoError(t, api.projectManageNotification(context.TODO(), &c, api.Cache, db, map[string]string{"projectKey": p.Key}))
+	require.NoError(t, api.projectManageNotification(context.WithValue(context.TODO(), contextUserConsumer, &c),
+		map[string]string{"projectKey": p.Key}))
 
 	cNo := sdk.AuthUserConsumer{
 		AuthConsumerUser: sdk.AuthUserConsumerData{
@@ -53,7 +54,8 @@ projects:
 			},
 		},
 	}
-	err = api.projectManageNotification(context.TODO(), &cNo, api.Cache, db, map[string]string{"projectKey": p.Key})
+	err = api.projectManageNotification(context.WithValue(context.TODO(), contextUserConsumer, &cNo),
+		map[string]string{"projectKey": p.Key})
 	require.True(t, sdk.ErrorIs(err, sdk.ErrForbidden))
 }
 
@@ -86,7 +88,8 @@ projects:
 			AuthentifiedUser:   user1,
 		},
 	}
-	require.NoError(t, api.projectManage(context.TODO(), &c, api.Cache, db, map[string]string{"projectKey": p.Key}))
+	require.NoError(t, api.projectManage(context.WithValue(context.TODO(), contextUserConsumer, &c),
+		map[string]string{"projectKey": p.Key}))
 
 	cNo := sdk.AuthUserConsumer{
 		AuthConsumerUser: sdk.AuthUserConsumerData{
@@ -97,7 +100,8 @@ projects:
 			},
 		},
 	}
-	err = api.projectManage(context.TODO(), &cNo, api.Cache, db, map[string]string{"projectKey": p.Key})
+	err = api.projectManage(context.WithValue(context.TODO(), contextUserConsumer, &cNo),
+		map[string]string{"projectKey": p.Key})
 	require.True(t, sdk.ErrorIs(err, sdk.ErrForbidden))
 }
 
@@ -130,7 +134,8 @@ projects:
 			AuthentifiedUser:   user1,
 		},
 	}
-	require.NoError(t, api.projectRead(context.TODO(), &c, api.Cache, db, map[string]string{"projectKey": p.Key}))
+	require.NoError(t, api.projectRead(context.WithValue(context.TODO(), contextUserConsumer, &c),
+		map[string]string{"projectKey": p.Key}))
 
 	cNo := sdk.AuthUserConsumer{
 		AuthConsumerUser: sdk.AuthUserConsumerData{
@@ -141,6 +146,7 @@ projects:
 			},
 		},
 	}
-	err = api.projectRead(context.TODO(), &cNo, api.Cache, db, map[string]string{"projectKey": p.Key})
+	err = api.projectRead(context.WithValue(context.TODO(), contextUserConsumer, &cNo),
+		map[string]string{"projectKey": p.Key})
 	require.True(t, sdk.ErrorIs(err, sdk.ErrForbidden))
 }

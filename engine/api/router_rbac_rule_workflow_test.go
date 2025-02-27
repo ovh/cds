@@ -117,7 +117,7 @@ workflows:
 			require.NoError(t, rbacLoader.FillRBACWithIDs(context.TODO(), &r))
 			require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
-			err = api.workflowTrigger(context.TODO(), &auth, api.Cache, api.mustDB(), map[string]string{
+			err = api.workflowTrigger(context.WithValue(context.TODO(), contextUserConsumer, &auth), map[string]string{
 				"projectKey":           proj.Key,
 				"vcsIdentifier":        vcs.Name,
 				"repositoryIdentifier": repo.Name,

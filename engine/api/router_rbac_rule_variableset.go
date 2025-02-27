@@ -3,20 +3,21 @@ package api
 import (
 	"context"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/rbac"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
-func hasRoleOnVariableSet(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, projectKey string, variableset string, role string) error {
+func (api *API) hasRoleOnVariableSet(ctx context.Context, vars map[string]string, role string) error {
+	projectKey := vars["projectKey"]
+	variableSetName := vars["variableSetName"]
+
+	auth := getUserConsumer(ctx)
 	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := rbac.HasRoleOnVariableSetAndUserID(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser.ID, projectKey, variableset)
+	hasRole, err := rbac.HasRoleOnVariableSetAndUserID(ctx, api.mustDBWithCtx(ctx), role, auth.AuthConsumerUser.AuthentifiedUser.ID, projectKey, variableSetName)
 	if err != nil {
 		return err
 	}
@@ -30,16 +31,10 @@ func hasRoleOnVariableSet(ctx context.Context, auth *sdk.AuthUserConsumer, store
 }
 
 // workflowTrigger return nil if the current AuthUserConsumer have the WorkflowRoleTrigger on current workflow
-func (api *API) variableSetItemManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
-	projectKey := vars["projectKey"]
-	vsName := vars["variableSetName"]
-
-	return hasRoleOnVariableSet(ctx, auth, store, db, projectKey, vsName, sdk.VariableSetRoleManageItem)
+func (api *API) variableSetItemManage(ctx context.Context, vars map[string]string) error {
+	return api.hasRoleOnVariableSet(ctx, vars, sdk.VariableSetRoleManageItem)
 }
 
-func (api *API) variableSetItemRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
-	projectKey := vars["projectKey"]
-	vsName := vars["variableSetName"]
-
-	return hasRoleOnVariableSet(ctx, auth, store, db, projectKey, vsName, sdk.VariableSetRoleUse)
+func (api *API) variableSetItemRead(ctx context.Context, vars map[string]string) error {
+	return api.hasRoleOnVariableSet(ctx, vars, sdk.VariableSetRoleUse)
 }

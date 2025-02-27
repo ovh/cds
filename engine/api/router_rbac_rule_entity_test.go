@@ -42,7 +42,8 @@ projects:
 			AuthentifiedUser:   user1,
 		},
 	}
-	require.NoError(t, api.entityRead(context.TODO(), &c, api.Cache, db, map[string]string{"projectKey": p.Key}))
+	require.NoError(t, api.entityRead(context.WithValue(context.TODO(), contextUserConsumer, &c),
+		map[string]string{"projectKey": p.Key}))
 
 	cNo := sdk.AuthUserConsumer{
 		AuthConsumerUser: sdk.AuthUserConsumerData{
@@ -53,6 +54,7 @@ projects:
 			},
 		},
 	}
-	err = api.entityRead(context.TODO(), &cNo, api.Cache, db, map[string]string{"projectKey": p.Key})
+	err = api.entityRead(context.WithValue(context.TODO(), contextUserConsumer, &cNo),
+		map[string]string{"projectKey": p.Key})
 	require.True(t, sdk.ErrorIs(err, sdk.ErrForbidden))
 }

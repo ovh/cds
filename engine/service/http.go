@@ -13,12 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -26,7 +24,7 @@ import (
 
 // Handler defines the HTTP handler used in CDS engine
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
-type RbacChecker func(ctx context.Context, auth *sdk.AuthUserConsumer, cache cache.Store, db gorp.SqlExecutor, vars map[string]string) error
+type RbacChecker func(ctx context.Context, vars map[string]string) error
 type RbacCheckers []RbacChecker
 
 func RBAC(checkers ...RbacChecker) []RbacChecker {
