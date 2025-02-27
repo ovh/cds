@@ -43,7 +43,7 @@ $(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES)
 	perl -pi -e s,%os%,$$OS,g $@ ; \
 	perl -pi -e s,%arch%,$$ARCH,g $@ ; \
 	EXTENSION=""; \
-	if test "$(OS)" = "windows" ; then EXTENSION=".exe"; fi; \
+	if test "$$OS" = "windows" ; then EXTENSION=".exe"; fi; \
 	FILENAME=$(TARGET_NAME)-$$OS-$$ARCH$$EXTENSION; \
 	perl -pi -e s,%filename%,$$FILENAME,g $@
 
