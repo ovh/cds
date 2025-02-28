@@ -25,6 +25,8 @@ import { ProjectVariableSetItemsComponent } from './settings/variablesets/items/
 import { ProjectAdvancedComponent } from './settings/advanced/project.advanced.component';
 import { ProjectRepoManagerFormComponent } from './settings/advanced/repomanager/from/project.repomanager.form.component';
 import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from './project.guard';
+import { ProjectConcurrenciesComponent } from './settings/concurrency/concurrencies.components';
+import { ProjectConcurrencyFormComponent } from './settings/concurrency/concurrency.form.component';
 
 @NgModule({
     declarations: [
@@ -33,6 +35,8 @@ import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from './project.guar
         ProjectAdvancedComponent,
         ProjectApplicationListComponent,
         ProjectComponent,
+        ProjectConcurrenciesComponent,
+        ProjectConcurrencyFormComponent,
         ProjectEnvironmentListComponent,
         ProjectEnvironmentListComponent,
         ProjectIntegrationsComponent,

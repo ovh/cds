@@ -81,6 +81,10 @@ const (
 	EventVariableSetItemCreated EventType = "VariableSetItemCreated"
 	EventVariableSetItemUpdated EventType = "VariableSetItemUpdated"
 	EventVariableSetItemDeleted EventType = "VariableSetItemDeleted"
+
+	EventConcurrencyCreated EventType = "ConcurrencyCreated"
+	EventConcurrencyUpdated EventType = "ConcurrencyUpdated"
+	EventConcurrencyDeleted EventType = "ConcurrencyDeleted"
 )
 
 // FullEventV2 uses to process event
@@ -119,6 +123,7 @@ type FullEventV2 struct {
 	Notification     string          `json:"notification,omitempty"`
 	VariableSet      string          `json:"variable_set,omitempty"`
 	Item             string          `json:"item,omitempty"`
+	Concurrency      string          `json:"concurrency"`
 	Timestamp        time.Time       `json:"timestamp"`
 }
 
@@ -195,6 +200,14 @@ type RepositoryEvent struct {
 	Repository string `json:"repository"`
 	UserID     string `json:"user_id"`
 	Username   string `json:"username"`
+}
+
+type ConcurrencyEvent struct {
+	GlobalEventV2
+	ProjectEventV2
+	Concurrency string `json:"concurrency"`
+	UserID      string `json:"user_id"`
+	Username    string `json:"username"`
 }
 
 type VCSEvent struct {

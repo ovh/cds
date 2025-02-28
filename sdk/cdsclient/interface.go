@@ -263,6 +263,12 @@ type ProjectClientV2 interface {
 	ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...RequestModifier) error
 	ProjectVariableSetItemFromApplicationIntegrationVariable(ctx context.Context, pKey string, req sdk.CopyApplicationIntegrationVariableToVariableSet, mods ...RequestModifier) error
 
+	ProjectConcurrencyCreate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error
+	ProjectConcurrencyGet(ctx context.Context, pKey string, name string)(*sdk.ProjectConcurrency, error)
+	ProjectConcurrencyList(ctx context.Context, pKey string) ([]sdk.ProjectConcurrency, error)
+	ProjectConcurrencyUpdate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error
+	ProjectConcurrencyDelete(ctx context.Context, pKey string, name string) error
+
 	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 }
 

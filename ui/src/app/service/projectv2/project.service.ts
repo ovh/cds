@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
+import { Concurrency } from 'app/model/project.concurrency.model';
 import { Project } from 'app/model/project.model';
 import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 import { Observable } from 'rxjs';
@@ -32,6 +33,25 @@ export class V2ProjectService {
     delete(key: string): Observable<any> {
         return this._http.delete(`/v2/project/${key}`);
     }
+
+    getConcurrencies(key: string): Observable<Array<Concurrency>> {
+        return this._http.get<Array<Concurrency>>(`/v2/project/${key}/concurrency`)
+    }
+
+    createConcurrency(key: string, concurrency: Concurrency): Observable<Concurrency> {
+        return this._http.post<Concurrency>(`/v2/project/${key}/concurrency`, concurrency);
+    }
+
+    updateConcurrency(key: string, concurrency: Concurrency): Observable<Concurrency> {
+        return this._http.put<Concurrency>(`/v2/project/${key}/concurrency/${concurrency.name}`, concurrency);
+    }
+
+    deleteConcurrency(key: string, vsName: string): Observable<any> {
+        let params = new HttpParams();
+        params.set('force', 'true');
+        return this._http.delete(`/v2/project/${key}/concurrency/${vsName}`, { params });
+    }
+
 
     getVariableSets(key: string): Observable<Array<VariableSet>> {
         return this._http.get<Array<VariableSet>>(`/v2/project/${key}/variableset`)

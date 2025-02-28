@@ -1747,10 +1747,17 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 						}
 					}
 					if !found {
-						// /////
-						// TODO - Manage concurrency on project
-						// /////
-						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s job %s: concurrency %s doesn't exist", x.Name, jobID, j.Concurrency))
+						// Check if there is interpolation
+						if !strings.Contains(j.Concurrency, "${{") {
+							if _, errC := project.LoadConcurrencyByNameAndProjectKey(ctx, db, ef.currentProject, j.Concurrency); errC != nil {
+								if sdk.ErrorIs(errC, sdk.ErrNotFound) {
+									err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s job %s: concurrency %s doesn't exist", x.Name, jobID, j.Concurrency))
+								} else {
+									log.ErrorWithStackTrace(ctx, errC)
+									err = append(err, sdk.NewErrorFrom(sdk.ErrUnknownError, "workflow %s job %s: unable to check if concurrency %s exists", x.Name, jobID, j.Concurrency))
+								}
+							}
+						}
 					}
 				}
 			}
