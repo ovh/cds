@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -266,7 +265,7 @@ func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2Work
 		return errors.Errorf("unable to upload chart package: HTTP %d", resp.StatusCode)
 	}
 
-	fi, err := grpcplugins.GetArtifactoryFileInfo(context.TODO(), &p.Common, rtConfig, repository, path.Join(chart.Metadata.Name, filepath.Base(chartPackagePath)))
+	fi, err := grpcplugins.GetArtifactoryFileInfo(context.TODO(), &p.Common, rtConfig, repository, filepath.Join(chart.Metadata.Name, filepath.Base(chartPackagePath)))
 	if err != nil {
 		return errors.Errorf("unable to get Artifactory file info %s: %v", chartPackagePath, err)
 	}
@@ -290,7 +289,7 @@ func (p *helmPushPlugin) UploadChartPackageToArtifactory(ctx context.Context, re
 		return nil, err
 	}
 
-	u.Path = path.Join(u.Path, repository, chartName, filepath.Base(chartPackagePath))
+	u.Path = filepath.Join(u.Path, repository, chartName, filepath.Base(chartPackagePath))
 	req, err := buildRequest(ctx, u.String(), f)
 	if err != nil {
 		return nil, err
