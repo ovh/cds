@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"path"
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
@@ -245,7 +244,7 @@ fi
 			rtConfig.URL = rtConfig.URL + "/"
 		}
 
-		folderInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository, path.Join(opts.packageName, opts.version))
+		folderInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository, filepath.Join(opts.packageName, opts.version))
 		if err != nil {
 			return err
 		}
@@ -253,7 +252,7 @@ fi
 			if c.Folder {
 				continue
 			}
-			fi, err := grpcplugins.GetArtifactoryFileInfo(context.TODO(), &actPlugin.Common, rtConfig, repository, path.Join(opts.packageName, opts.version, strings.TrimPrefix(c.URI, "/")))
+			fi, err := grpcplugins.GetArtifactoryFileInfo(context.TODO(), &actPlugin.Common, rtConfig, repository, filepath.Join(opts.packageName, opts.version, strings.TrimPrefix(c.URI, "/")))
 			if err != nil {
 				return fmt.Errorf("unable to get Artifactory file info %s: %v", c.URI, err)
 			}
