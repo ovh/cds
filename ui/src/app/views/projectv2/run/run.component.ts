@@ -54,6 +54,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     workflowRunIsTerminated: boolean = false;
     workflowRunIsActive: boolean = false;
     hasJobsFailed: boolean = false;
+    loading: { restart: boolean, stop: boolean } = {
+        restart: false,
+        stop: false
+    };
 
     // Subs
     paramsSub: Subscription;
@@ -360,15 +364,31 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     }
 
     async clickRestartJobs() {
-        await lastValueFrom(this._workflowService.restart(this.projectKey, this.workflowRun.id));
-        this._messageService.success('Workflow run jobs restarted', { nzDuration: 2000 });
-        await this.load(this.workflowRun.id);
+        this.loading.restart = true;
+        this._cd.markForCheck();
+        try {
+            await lastValueFrom(this._workflowService.restart(this.projectKey, this.workflowRun.id));
+            this._messageService.success('Workflow run jobs restarted', { nzDuration: 2000 });
+            await this.load(this.workflowRun.id);
+        } catch (e) {
+            this._messageService.error(`Unable to restart jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+        this.loading.restart = false;
+        this._cd.markForCheck();
     }
 
     async clickStopRun() {
-        await lastValueFrom(this._workflowService.stop(this.projectKey, this.workflowRun.id));
-        this._messageService.success('Workflow run stopped', { nzDuration: 2000 });
-        await this.load(this.workflowRun.id);
+        this.loading.stop = true;
+        this._cd.markForCheck();
+        try {
+            await lastValueFrom(this._workflowService.stop(this.projectKey, this.workflowRun.id));
+            this._messageService.success('Workflow run stopped', { nzDuration: 2000 });
+            await this.load(this.workflowRun.id);
+        } catch (e) {
+            this._messageService.error(`Unable to stop run: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+        this.loading.stop = false;
+        this._cd.markForCheck();
     }
 
     clickClosePanel(): void {
@@ -462,10 +482,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this._toast.success('', 'Share link copied!');
     }
 
-	confirmCopyAnnotationValue(event: any, value: string) {
-		event.stopPropagation();
-		event.preventDefault();
-		this._clipboard.copy(value);
-		this._toast.success('', 'Annotation value copied!');
-	}
+    confirmCopyAnnotationValue(event: any, value: string) {
+        event.stopPropagation();
+        event.preventDefault();
+        this._clipboard.copy(value);
+        this._toast.success('', 'Annotation value copied!');
+    }
 }
