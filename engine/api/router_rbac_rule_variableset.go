@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -11,6 +13,15 @@ import (
 func (api *API) hasRoleOnVariableSet(ctx context.Context, vars map[string]string, role string) error {
 	projectKey := vars["projectKey"]
 	variableSetName := vars["variableSetName"]
+
+	if supportMFA(ctx) && !isMFA(ctx) {
+		_, requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDBWithCtx(ctx), sdk.FeatureMFARequired, map[string]string{
+			"project_key": projectKey,
+		})
+		if requireMFA {
+			return sdk.WithStack(sdk.ErrMFARequired)
+		}
+	}
 
 	auth := getUserConsumer(ctx)
 	if auth == nil {

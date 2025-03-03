@@ -4,8 +4,10 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/workflow_v2"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -19,6 +21,15 @@ func (api *API) hasRoleOnWorkflow(ctx context.Context, vars map[string]string, r
 	projectKey := vars["projectKey"]
 	workflowName := vars["workflowName"]
 	workflowRunID := vars["workflowRunID"]
+
+	if supportMFA(ctx) && !isMFA(ctx) {
+		_, requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDBWithCtx(ctx), sdk.FeatureMFARequired, map[string]string{
+			"project_key": projectKey,
+		})
+		if requireMFA {
+			return sdk.WithStack(sdk.ErrMFARequired)
+		}
+	}
 
 	var vcsName, repoName string
 	if workflowRunID != "" {
