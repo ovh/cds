@@ -111,8 +111,10 @@ func retrieveRunJobToUnLocked(ctx context.Context, db *gorp.DbMap, jobRun sdk.V2
 		return rjsUnlocked, rjsCancelled, nil
 	}
 
+	// No cancel in progress
+
 	// Test if pool is full
-	if ruleToApply.Pool <= nbBuilding && !ruleToApply.CancelInProgress {
+	if ruleToApply.Pool <= nbBuilding {
 		return nil, nil, nil
 	}
 

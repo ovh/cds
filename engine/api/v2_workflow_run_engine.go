@@ -273,7 +273,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
-	// Retrieve all concurrency definition for job to enqueue
+	// Retrieve all concurrency definitions for jobs to enqueue
 
 	concurrenciesDef := make(map[string]sdk.V2RunJobConcurrency)
 	for jobID, jToTrigger := range jobsToQueue {
