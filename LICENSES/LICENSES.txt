@@ -3,11 +3,11 @@ Apache-2.0
 BSD-2-Clause
 BSD-3-Clause
 ISC
-LGPL-3.0
 MIT
 MPL-2.0
 Unknown
 Unlicense
+Zlib
 
 Packages:
 cloud.google.com/go/compute/metadata; Apache-2.0
@@ -20,35 +20,31 @@ contrib.go.opencensus.io/exporter/jaeger; Apache-2.0
 contrib.go.opencensus.io/exporter/prometheus; Apache-2.0
 dario.cat/mergo; BSD-3-Clause
 github.com/Alkorin/crypto; BSD-3-Clause
-github.com/Azure/go-autorest/autorest/adal; Apache-2.0
-github.com/Azure/go-autorest/autorest/date; Apache-2.0
-github.com/Azure/go-autorest/autorest; Apache-2.0
-github.com/Azure/go-autorest/logger; Apache-2.0
-github.com/Azure/go-autorest/tracing; Apache-2.0
 github.com/CycloneDX/cyclonedx-go; Apache-2.0
+github.com/Masterminds/semver/v3; MIT
 github.com/Microsoft/go-winio; MIT
 github.com/ProtonMail/go-crypto; BSD-3-Clause
-github.com/PuerkitoBio/purell; BSD-3-Clause
-github.com/PuerkitoBio/urlesc; BSD-3-Clause
 github.com/SSSaaS/sssa-golang; MIT
 github.com/Shopify/sarama; MIT
 github.com/andybalholm/brotli; MIT
 github.com/andygrunwald/go-gerrit; MIT
-github.com/antlr/antlr4/runtime/Go/antlr/v4; Unknown. See go/github.com/antlr/antlr4/runtime/Go/antlr/v4/LICENSE file
+github.com/antlr/antlr4/runtime/Go/antlr/v4; BSD-3-Clause
 github.com/aokoli/goutils; Apache-2.0
 github.com/armon/go-metrics; MIT
 github.com/aws/aws-sdk-go; Apache-2.0
 github.com/beorn7/perks; MIT
 github.com/blang/semver; MIT
 github.com/buger/goterm; MIT
-github.com/buger/jsonparser; MIT
+github.com/bugsnag/osext; Zlib
 github.com/cespare/xxhash/v2; MIT
 github.com/chzyer/readline; MIT
 github.com/cloudflare/circl; BSD-3-Clause
-github.com/codegangsta/cli; MIT
 github.com/coreos/go-oidc; Apache-2.0
 github.com/coreos/go-semver; Apache-2.0
+github.com/coreos/go-systemd/v22; Apache-2.0
+github.com/cyphar/filepath-securejoin; BSD-3-Clause
 github.com/davecgh/go-spew; ISC
+github.com/distribution/reference; Apache-2.0
 github.com/docker/distribution; Apache-2.0
 github.com/docker/docker; Apache-2.0
 github.com/docker/go-connections; Apache-2.0
@@ -57,12 +53,11 @@ github.com/dsnet/compress; BSD-3-Clause
 github.com/eapache/go-resiliency; MIT
 github.com/eapache/go-xerial-snappy; MIT
 github.com/eapache/queue; MIT
-github.com/emicklei/go-restful; MIT
+github.com/emicklei/go-restful/v3; MIT
 github.com/emirpasic/gods; BSD-2-Clause
 github.com/fatih/color; MIT
 github.com/felixge/httpsnoop; MIT
-github.com/forPelevin/gomoji; Unknown. See go/github.com/forPelevin/gomoji/LICENSE file
-github.com/form3tech-oss/jwt-go; MIT
+github.com/forPelevin/gomoji; MIT
 github.com/fsamin/go-dump; Apache-2.0
 github.com/fsamin/go-repo; Apache-2.0
 github.com/fsamin/go-shredder; Apache-2.0
@@ -72,10 +67,12 @@ github.com/ghodss/yaml; BSD-3-Clause
 github.com/go-git/gcfg; BSD-3-Clause
 github.com/go-git/go-billy/v5; Apache-2.0
 github.com/go-git/go-git/v5; Apache-2.0
+github.com/go-gorp/gorp/v3; MIT
 github.com/go-gorp/gorp; MIT
 github.com/go-kit/log; MIT
 github.com/go-logfmt/logfmt; MIT
 github.com/go-logr/logr; Apache-2.0
+github.com/go-logr/stdr; Apache-2.0
 github.com/go-openapi/jsonpointer; Apache-2.0
 github.com/go-openapi/jsonreference; Apache-2.0
 github.com/go-openapi/swag; Apache-2.0
@@ -88,10 +85,10 @@ github.com/golang/groupcache; Apache-2.0
 github.com/golang/mock; Apache-2.0
 github.com/golang/protobuf; BSD-3-Clause
 github.com/golang/snappy; BSD-3-Clause
-github.com/google/gnostic; Apache-2.0
-github.com/google/go-cmp; BSD-3-Clause
+github.com/google/gnostic-models; Apache-2.0
 github.com/google/go-querystring; BSD-3-Clause
 github.com/google/gofuzz; Apache-2.0
+github.com/google/s2a-go; Apache-2.0
 github.com/google/uuid; BSD-3-Clause
 github.com/googleapis/enterprise-certificate-proxy; Apache-2.0
 github.com/googleapis/gax-go/v2; BSD-3-Clause
@@ -111,7 +108,7 @@ github.com/hashicorp/go-retryablehttp; MPL-2.0
 github.com/hashicorp/go-rootcerts; MPL-2.0
 github.com/hashicorp/go-secure-stdlib/parseutil; MPL-2.0
 github.com/hashicorp/go-secure-stdlib/strutil; MPL-2.0
-github.com/hashicorp/go-sockaddr; BSD-3-Clause
+github.com/hashicorp/go-sockaddr; MPL-2.0
 github.com/hashicorp/go-uuid; MPL-2.0
 github.com/hashicorp/go-version; MPL-2.0
 github.com/hashicorp/golang-lru; MPL-2.0
@@ -119,29 +116,24 @@ github.com/hashicorp/hcl; MPL-2.0
 github.com/hashicorp/serf; MPL-2.0
 github.com/hashicorp/vault/api; MPL-2.0
 github.com/hashicorp/vault/sdk; MPL-2.0
-github.com/huandu/xstrings; Unknown. See go/github.com/huandu/xstrings/LICENSE file
+github.com/huandu/xstrings; MIT
 github.com/iancoleman/orderedmap; MIT
 github.com/imdario/mergo; BSD-3-Clause
 github.com/inconshreveable/go-update; Apache-2.0
 github.com/inconshreveable/mousetrap; Apache-2.0
-github.com/invopop/jsonschema; MIT
 github.com/jbenet/go-context; MIT
 github.com/jcmturner/aescts/v2; Apache-2.0
 github.com/jcmturner/dnsutils/v2; Apache-2.0
 github.com/jcmturner/gofork; BSD-3-Clause
 github.com/jcmturner/gokrb5/v8; Apache-2.0
 github.com/jcmturner/rpc/v2; Apache-2.0
-github.com/jedib0t/go-pretty/v6; MIT
+github.com/jfrog/archiver/v3; MIT
 github.com/jfrog/build-info-go; Apache-2.0
 github.com/jfrog/gofrog; Apache-2.0
-github.com/jfrog/jfrog-cli-core/v2; Apache-2.0
-github.com/jfrog/jfrog-cli-core; Apache-2.0
-github.com/jfrog/jfrog-cli; Apache-2.0
 github.com/jfrog/jfrog-client-go; Apache-2.0
 github.com/jmespath/go-jmespath; Apache-2.0
 github.com/josharian/intern; MIT
 github.com/json-iterator/go; MIT
-github.com/juju/ansiterm; LGPL-3.0
 github.com/kardianos/osext; BSD-3-Clause
 github.com/kballard/go-shellquote; MIT
 github.com/kevinburke/ssh_config; MIT
@@ -150,21 +142,17 @@ github.com/klauspost/compress; Apache-2.0
 github.com/klauspost/cpuid/v2; MIT
 github.com/klauspost/pgzip; BSD-3-Clause
 github.com/lib/pq; MIT
-github.com/lunixbochs/vtclean; MIT
 github.com/magiconair/properties; BSD-2-Clause
 github.com/mailru/easyjson; MIT
-github.com/manifoldco/promptui; BSD-3-Clause
 github.com/maruel/panicparse/v2; Apache-2.0
 github.com/mattn/go-colorable; MIT
 github.com/mattn/go-isatty; MIT
 github.com/mattn/go-runewidth; MIT
-github.com/mattn/go-shellwords; MIT
 github.com/mattn/go-zglob; MIT
 github.com/matttproud/golang_protobuf_extensions; Apache-2.0
 github.com/mcuadros/go-defaults; MIT
 github.com/mgutz/ansi; MIT
 github.com/mholt/archiver/v3; MIT
-github.com/mholt/archiver; MIT
 github.com/minio/sha256-simd; Apache-2.0
 github.com/miscreant/miscreant.go; MIT
 github.com/mitchellh/go-homedir; MIT
@@ -175,6 +163,9 @@ github.com/modern-go/concurrent; Apache-2.0
 github.com/modern-go/reflect2; Apache-2.0
 github.com/mum4k/termdash; Apache-2.0
 github.com/munnerz/goautoneg; BSD-3-Clause
+github.com/nats-io/nats.go; Apache-2.0
+github.com/nats-io/nkeys; Apache-2.0
+github.com/nats-io/nuid; Apache-2.0
 github.com/nbutton23/zxcvbn-go; MIT
 github.com/ncw/swift; MIT
 github.com/nsf/termbox-go; MIT
@@ -188,6 +179,7 @@ github.com/ovh/configstore; BSD-3-Clause
 github.com/ovh/symmecrypt; BSD-3-Clause
 github.com/patrickmn/go-cache; MIT
 github.com/pborman/uuid; BSD-3-Clause
+github.com/pelletier/go-toml/v2; MIT
 github.com/pelletier/go-toml; Apache-2.0
 github.com/pierrec/lz4/v4; BSD-3-Clause
 github.com/pierrec/lz4; BSD-3-Clause
@@ -205,10 +197,11 @@ github.com/rasky/go-xdr; ISC
 github.com/rcrowley/go-metrics; BSD-2-Clause
 github.com/rivo/uniseg; MIT
 github.com/rockbears/log; Apache-2.0
-github.com/rockbears/yaml; Unknown. See go/github.com/rockbears/yaml/LICENSE file
+github.com/rockbears/yaml; BSD-3-Clause
 github.com/rubenv/sql-migrate; MIT
 github.com/ryanuber/go-glob; MIT
 github.com/sagikazarmark/crypt; MIT
+github.com/sagikazarmark/slog-shim; BSD-3-Clause
 github.com/sergi/go-diff; Apache-2.0
 github.com/sguiheux/go-coverage; BSD-3-Clause
 github.com/sguiheux/go-nfs-client; BSD-2-Clause
@@ -218,9 +211,9 @@ github.com/skeema/knownhosts; Apache-2.0
 github.com/spf13/afero; Apache-2.0
 github.com/spf13/cast; MIT
 github.com/spf13/cobra; Apache-2.0
-github.com/spf13/jwalterweatherman; MIT
 github.com/spf13/pflag; BSD-3-Clause
 github.com/spf13/viper; MIT
+github.com/srerickson/checksum; Apache-2.0
 github.com/streadway/amqp; BSD-2-Clause
 github.com/stretchr/testify; MIT
 github.com/subosito/gotenv; MIT
@@ -228,9 +221,8 @@ github.com/tevino/abool; MIT
 github.com/uber/jaeger-client-go; Apache-2.0
 github.com/ulikunitz/xz; BSD-3-Clause
 github.com/vmware/govmomi; Apache-2.0
-github.com/whilp/git-urls; MIT
 github.com/xanzy/go-gitlab; Apache-2.0
-github.com/xanzy/ssh-agent; Unknown. See go/github.com/xanzy/ssh-agent/LICENSE file
+github.com/xanzy/ssh-agent; Apache-2.0
 github.com/xeipuuv/gojsonpointer; Apache-2.0
 github.com/xeipuuv/gojsonreference; Apache-2.0
 github.com/xeipuuv/gojsonschema; Apache-2.0
@@ -245,8 +237,12 @@ github.com/yuin/gopher-lua; MIT
 go.etcd.io/etcd/api/v3; Apache-2.0
 go.etcd.io/etcd/client/pkg/v3; Apache-2.0
 go.etcd.io/etcd/client/v2; Apache-2.0
+go.etcd.io/etcd/client/v3; Apache-2.0
 go.opencensus.io; Apache-2.0
-go.uber.org/atomic; MIT
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp; Apache-2.0
+go.opentelemetry.io/otel/metric; Apache-2.0
+go.opentelemetry.io/otel/trace; Apache-2.0
+go.opentelemetry.io/otel; Apache-2.0
 go.uber.org/multierr; MIT
 go.uber.org/zap; MIT
 golang.org/x/crypto; BSD-3-Clause
@@ -260,13 +256,13 @@ golang.org/x/text; BSD-3-Clause
 golang.org/x/time; BSD-3-Clause
 golang.org/x/xerrors; BSD-3-Clause
 google.golang.org/api; BSD-3-Clause
+google.golang.org/genproto/googleapis/api; Apache-2.0
 google.golang.org/genproto/googleapis/rpc; Apache-2.0
 google.golang.org/genproto; Apache-2.0
 google.golang.org/grpc; Apache-2.0
 google.golang.org/protobuf; BSD-3-Clause
 gopkg.in/AlecAivazis/survey.v1; MIT
 gopkg.in/asn1-ber.v1; MIT
-gopkg.in/gorp.v1; MIT
 gopkg.in/inf.v0; BSD-3-Clause
 gopkg.in/ini.v1; Apache-2.0
 gopkg.in/ldap.v2; MIT
@@ -287,3 +283,4 @@ layeh.com/gopher-json; Unlicense
 sigs.k8s.io/json; Apache-2.0
 sigs.k8s.io/structured-merge-diff/v4; Apache-2.0
 sigs.k8s.io/yaml; BSD-3-Clause
+workflow-graph; Unknown. See npm/workflow-graph/LICENSE file

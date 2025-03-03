@@ -1,6 +1,190 @@
 == github.com/ovh/cds/sdk/interpolate ==
 
+Copyright (c) 2013-2024, OVH SAS
+Copyright (c) 2020 The Go Authors. All rights reserved.
+Copyright [yyyy] [name of copyright owner]
+Copyright (c) 2016 The Gitea Authors
+Copyright (c) 2014 The Gogs Authors
+Copyright (c) 2013 Dario Castañé. All rights reserved.
+Copyright (c) 2012 The Go Authors. All rights reserved.
+Copyright (c) 2009 The Go Authors. All rights reserved.
+Copyright (c) OWASP Foundation
+Copyright (c) 2015 Microsoft
+Copyright (c) 2012-2022, The Go Authors
+Copyright (c) 2012-2022, Martin Angers, Yuki Okushi & Contributors
+Copyright (c) 2015 Alexander Scheel, Joel May, Matthew Burket
+Copyright (c) 2013 Shopify
+Copyright (c) 2023 IBM Corporation
+Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
+Copyright (c) 2015 Andy Grunwald
+Copyright (c) 2012-2023 The ANTLR Project. All rights reserved.
+Copyright (c) 2013 HashiCorp, Inc.
+Copyright 2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2014-2015 Stripe, Inc.
+Copyright (C) 2013 Blake Mizerany
+Copyright (c) 2014 Benedikt Lang <github at benediktlang.de>
+Copyright (c) 2016 Leonid Bugaev
+Copyright (c) 2016 Caleb Spare
+Copyright (c) 2015 Chzyer
+Copyright (c) 2019 Cloudflare. All rights reserved.
+Copyright (c) 2018, Brendan McMillion. All rights reserved.
+Copyright (c) 2023 urfave/cli maintainers
+Copyright 2014 CoreOS, Inc
+Copyright 2018 CoreOS, Inc
+Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
+Copyright 2012-2017 Docker, Inc.
+Copyright (c) 2015 John Howard (Microsoft)
+Copyright © 2015 Docker, Inc.
+Copyright © 2015, Joe Tsai and The Go Authors. All rights reserved.
+Copyright (c) 2014 Evan Huus
+Copyright (c) 2016 Evan Huus
+Copyright (c) 2012,2013 Ernest Micklei
+Copyright (c) 2015, Emir Pasic
+Copyright (c) 2017 Benjamin Scher Purcell <benjapurcell@gmail.com>
+Copyright (c) 2013 Fatih Arslan
+Copyright (c) 2016 Felix Geisendörfer (felix@debuggable.com)
+Copyright (c) 2021 Vladislav Gukasov
+Copyright (c) 2012 Dave Grijalva
+Copyright © 2012 The Go Authors. All rights reserved.
+Copyright © fsnotify Authors. All rights reserved.
+Copyright (c) 2016 FUJIWARA Shunichiro
+Copyright (c) 2014 Sam Ghods
+Copyright (c) 2012 Péter Surányi. Portions Copyright (c) 2009 The Go
+Copyright (c) 2012 James Cooper <james@bitmechanic.com>
+Copyright (c) 2021 Go kit
+Copyright (c) 2014 Simon Eskildsen
+Copyright (c) 2015 go-logfmt
+Copyright (c) 2013 The github.com/redis/go-redis Authors.
+Copyright (c) 2013, The GoGo Authors. All rights reserved.
+Copyright 2010 The Go Authors.  All rights reserved.
+Copyright 2010 The Go Authors.
+Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
+Copyright (c) 2021 golang-jwt maintainers
+Copyright 2017-2020, Google LLC.
+Copyright (c) 2017 The Go Authors. All rights reserved.
+Copyright (c) 2013 Google. All rights reserved.
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+Copyright 2016, Google Inc.
+Copyright (c) 2016 inhere
+Copyright 2012-2013 Rackspace, Inc.
+Copyright Gophercloud authors
+Copyright (c) 2023 The Gorilla Authors. All rights reserved.
+Copyright © 2014-2018 HashiCorp, Inc.
+Copyright (c) 2020 HashiCorp, Inc.
+Copyright (c) 2015 Toru Nagashima
+Copyright (c) 2016 Ciena Corporation.
+Copyright (c) 2014 HashiCorp, Inc.
+Copyright (c) 2015 HashiCorp, Inc.
+Copyright (c) 2017 HashiCorp, Inc.
+Copyright (c) 2016 HashiCorp, Inc.
+Copyright (c) 2015 Andrew Smith
+Copyright (c) 2021 Taishi Kasuga
+Copyright (c) 2015 Huan Du
+Copyright (c) 2017 Ian Coleman
+Copyright 2015 Alan Shreve
+Copyright 2012 Keith Rarick
+Copyright (c) 2014 Juan Batiz-Benet
+Copyright 2016, Jonathan Turner <jt@jtnet.co.uk>
+Copyright (c) 2018 jedib0t
+Copyright 2015 James Saryerwinnie
+Copyright (c) 2012-2018 Mat Ryer and Tyler Bunnell
+Copyright (c) 2019 Josh Bleecher Snyder
+Copyright (c) 2016 json-iterator
+Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+Copyright (C) 2014 Kevin Ballard
+Copyright (c) 2017 Kevin Burke.
+Copyright (c) 2013 - 2017 Thomas Pelletier, Eric Anderton
+Copyright (c) 2013, Georg Reinke (<guelfey at gmail dot com>), Google
+Copyright (c) 2019 Klaus Post. All rights reserved.
+Copyright (c) 2015 Klaus Post
+Copyright 2016 The filepathx Authors
+Copyright (c) 2015, Pierre Curto
+Copyright (c) 2023 Klaus Post
+Copyright (c) 2014 Klaus Post
+Copyright (c) 2011-2013, 'pq' Contributors
+Copyright (c) 2015 Ryan Hileman
+Copyright (c) 2013-2020, Frank Schroeder
+Copyright (c) 2016 Mail.Ru Group
+Copyright (c) 2017, Arigato Machine Inc.
+Copyright (c) 2016 Yasuhiro Matsumoto
+Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
+Copyright (c) 2017 Yasuhiro Matsumoto
+Copyright 2012 Matt T. Proud (matt.proud@gmail.com)
+Copyright (c) 2014 Máximo Cuadros
+Copyright (c) 2013 Mario L. Gutierrez
+Copyright (c) 2013 Mario Gutierrez mario@mgutz.com
+Copyright (c) 2016 Matthew Holt
+Copyright (c) 2017-2019 The Miscreant Developers. The canonical list of project
+Copyright (c) 2017-2019 [The Miscreant Developers][AUTHORS].
+Copyright (c) 2013 Mitchell Hashimoto
+Copyright (c) 2016 Mitchell Hashimoto
+Copyright (c) 2011, Open Knowledge Foundation Ltd.
+Copyright (c) Nathan Button
+Copyright (C) 2012 termbox-go authors
+Copyright (c) 2015, Nicholas Waples
+Copyright (C) 2014 by Oleku Konko
+Copyright © 2012-2015 Oliver Eilhard
+Copyright (c) 2013 Joshua Tacoma
+Copyright © 2019, 2020 OCI Contributors
+Copyright © 2016 Docker, Inc.
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
 Copyright (c) 2013-2022, OVH SAS
+Copyright (c) 2018, OVH SAS.
+Copyright (c) 2012-2019 Patrick Mylund Nielsen and the go-cache contributors
+Copyright (c) 2021 - 2023 Thomas Pelletier
+Copyright 2017 Marc Stevens <marc@marc-stevens.nl>
+Copyright (c) 2014, Dave Cheney <dave@cheney.net>
+Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+Copyright (c) 2013, Patrick Mezard
+Copyright 2012-2015 The Prometheus Authors
+Copyright 2013-2015 Blake Mizerany, Björn Rabenstein
+Copyright 2010 The Go Authors
+Copyright 2013 Matt T. Proud
+Copyright 2015 The Prometheus Authors
+Copyright 2014-2015 The Prometheus Authors
+Copyright 2013-2015 The Prometheus Authors
+Copyright (c) 2012-2014 Dave Collins <dave@davec.name>
+Copyright 2012 Richard Crowley. All rights reserved.
+Copyright (c) 2019 Oliver Kuederle
+Copyright (C) 2014-2021 by Ruben Vermeersch <ruben@rocketeer.be>
+Copyright (C) 2014-2017 by Ruben Vermeersch <ruben@rocketeer.be>
+Copyright (C) 2012-2014 by Liam Staskawicz
+Copyright (c) 2014 Ryan Uber
+Copyright (c) 2014 XOR Data Exchange, Inc.
+Copyright (c) 2012-2016 The go-diff Authors. All rights reserved.
+Copyright (c) 2018-2023, Steven Guiheux
+Copyright (c) 2017 VMware, Inc. All Rights Reserved. 
+Copyright 2023 Skeema LLC and the Skeema Knownhosts authors
+Copyright (c) 2014 Steve Francia
+Copyright (c) 2012 Alex Ogier. All rights reserved.
+Copyright (c) 2012-2019, Sean Treadway, SoundCloud Ltd.
+Copyright (c) 2012-2020 Mat Ryer, Tyler Bunnell and contributors.
+Copyright (c) 2013 Alif Rachmawadi
+Copyright (c) 2016 Tevin Zhang
+Copyright (c) 2014-2022  Ulrich Kunitz
+Copyright (c) 2020 Will Maier
+Copyright (c) 2016 Anmol Sethi
+Copyright (c) 2013 Jordan Wright
+Copyright (c) 2015 Keybase
+Copyright (c) 2017 Yusuke Inuzuka
+Copyright (c) 2015 Yusuke Inuzuka
+Copyright (c) 2016 Uber Technologies, Inc.
+Copyright (c) 2017-2021 Uber Technologies, Inc.
+Copyright (c) 2016-2017 Uber Technologies, Inc.
+Copyright (c) 2011 Google Inc. All rights reserved.
+Copyright (c) 2013 Joshua Tacoma. All rights reserved.
+Copyright 2014 gRPC authors.
+Copyright (c) 2018 The Go Authors. All rights reserved.
+Copyright (c) 2018 Alec Aivazis
+Copyright (c) 2014 Takashi Kokubun
+Copyright (c) 2011-2015 Michael Mitton (mmitton@gmail.com)
+Copyright (C) 2017 Space Monkey, Inc.
+Copyright (c) 2016 Péter Surányi.
+Copyright (c) 2006-2010 Kirill Simonov
+Copyright (c) 2006-2011 Kirill Simonov
+Copyright (c) 2011-2019 Canonical Ltd
+Copyright 2011-2016 Canonical Ltd.
+Copyright (c) 2013-2019, OVH SAS
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
