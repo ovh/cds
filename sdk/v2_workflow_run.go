@@ -279,7 +279,7 @@ type V2WorkflowRunJob struct {
 }
 
 type V2RunJobConcurrency struct {
-	Concurrency
+	WorkflowConcurrency
 	Scope V2RunJobConcurrencyScope `json:"scope"`
 }
 

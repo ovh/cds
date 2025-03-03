@@ -12,6 +12,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type dbProjectConcurrency struct {
+	sdk.ProjectConcurrency
+}
+
 type dbProjectVariableSet struct {
 	gorpmapper.SignedEntity
 	sdk.ProjectVariableSet
@@ -180,6 +184,7 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableSet{}, "project_variable_set", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableSetItemText{}, "project_variable_set_text", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableSetItemSecret{}, "project_variable_set_secret", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectConcurrency{}, "project_concurrency", false, "id"))
 }
 
 // PostGet is a db hook

@@ -1,0 +1,101 @@
+<form nz-form (ngSubmit)="createConcurrency()" *ngIf="!verticalOrientation">
+    <nz-row>
+        <nz-col [nzSpan]="10">
+            <nz-form-item>
+                <nz-form-label>
+                    Name
+                </nz-form-label>
+                <nz-form-control>
+                    <input nz-input name="name" id="name" [(ngModel)]="concurrency.name">
+                    <nz-alert *ngIf="errorName" nzType="warning" nzMessage="Name cannot be empty and must match pattern `^[a-zA-Z0-9_-]{1,}$`"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="13" [nzOffset]="1">
+            <nz-form-item>
+                <nz-form-label>
+                    Description
+                </nz-form-label>
+                <nz-form-control>
+                    <input nz-input name="description" id="description" [(ngModel)]="concurrency.description">
+                    <nz-alert *ngIf="errorDescription" nzType="warning" nzMessage="Description cannot be empty"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="10">
+            <nz-row>
+                <nz-col [nzSpan]="10">
+                    <nz-form-item>
+                        <nz-form-label>Order</nz-form-label>
+                        <nz-form-control>
+                            <nz-select [(ngModel)]="concurrency.order" name="order">
+                                <nz-option *ngFor="let o of orders" [nzLabel]="o" [nzValue]="o"></nz-option>
+                            </nz-select>
+                            <nz-alert *ngIf="errorOrder" nzType="warning" nzMessage="Order must be equal to oldest_first or newest_first"></nz-alert>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="10" [nzOffset]="4">
+                    <nz-form-item>
+                        <nz-form-label [nzSpan]="6">Pool</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input type="number" name="pool" id="pool" [(ngModel)]="concurrency.pool">
+                            <nz-alert *ngIf="errorPool" nzType="warning" nzMessage="Pool must be greater than 0"></nz-alert>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+            </nz-row> 
+        </nz-col>
+        <nz-col [nzSpan]="13" [nzOffset]="1">
+            <nz-row>
+                <nz-col [nzSpan]="12">
+                    <nz-form-item>
+                        <nz-form-label>Cancel-in-progress</nz-form-label>
+                        <nz-form-control>
+                            <label nz-checkbox [(ngModel)]="concurrency.cancel_in_progress" name="cancel"></label>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="12" class="alignEnd">
+                    <button nz-button nzType="primary" [nzLoading]="loading">Create</button>
+                </nz-col>
+            </nz-row>
+            
+        </nz-col>
+    </nz-row>
+</form>
+
+<form nz-form (ngSubmit)="createConcurrency()" *ngIf="verticalOrientation">
+    <nz-form-item>
+        <nz-form-label [nzSpan]="4">Description</nz-form-label>
+        <nz-form-control>
+            <input nz-input name="description" id="description" [(ngModel)]="concurrency.description">
+            <nz-alert *ngIf="errorDescription" nzType="warning" nzMessage="Description cannot be empty"></nz-alert>
+        </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+        <nz-form-label [nzSpan]="4">Order</nz-form-label>
+        <nz-form-control>
+            <nz-select [(ngModel)]="concurrency.order" name="order">
+                <nz-option *ngFor="let o of orders" [nzLabel]="o" [nzValue]="o"></nz-option>
+            </nz-select>
+            <nz-alert *ngIf="errorOrder" nzType="warning" nzMessage="Order must be equal to oldest_first or newest_first"></nz-alert>
+        </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+        <nz-form-label [nzSpan]="4">Pool</nz-form-label>
+        <nz-form-control>
+            <input nz-input type="number" name="pool" id="pool" [(ngModel)]="concurrency.pool">
+            <nz-alert *ngIf="errorPool" nzType="warning" nzMessage="Pool must be greater than 0"></nz-alert>
+        </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+        <nz-form-label [nzSpan]="4">Cancel-in-progress</nz-form-label>
+        <nz-form-control>
+            <label nz-checkbox [(ngModel)]="concurrency.cancel_in_progress" name="cancel"></label>
+        </nz-form-control>
+    </nz-form-item>
+    <button nz-button nzType="primary" nzBlock [nzLoading]="loading">Update</button>
+</form>

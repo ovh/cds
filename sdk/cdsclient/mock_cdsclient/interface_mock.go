@@ -3044,6 +3044,78 @@ func (m *MockProjectClientV2) EXPECT() *MockProjectClientV2MockRecorder {
 	return m.recorder
 }
 
+// ProjectConcurrencyCreate mocks base method.
+func (m *MockProjectClientV2) ProjectConcurrencyCreate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyCreate", ctx, pKey, c)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectConcurrencyCreate indicates an expected call of ProjectConcurrencyCreate.
+func (mr *MockProjectClientV2MockRecorder) ProjectConcurrencyCreate(ctx, pKey, c any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyCreate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectConcurrencyCreate), ctx, pKey, c)
+}
+
+// ProjectConcurrencyDelete mocks base method.
+func (m *MockProjectClientV2) ProjectConcurrencyDelete(ctx context.Context, pKey, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyDelete", ctx, pKey, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectConcurrencyDelete indicates an expected call of ProjectConcurrencyDelete.
+func (mr *MockProjectClientV2MockRecorder) ProjectConcurrencyDelete(ctx, pKey, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectConcurrencyDelete), ctx, pKey, name)
+}
+
+// ProjectConcurrencyGet mocks base method.
+func (m *MockProjectClientV2) ProjectConcurrencyGet(ctx context.Context, pKey, name string) (*sdk.ProjectConcurrency, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyGet", ctx, pKey, name)
+	ret0, _ := ret[0].(*sdk.ProjectConcurrency)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectConcurrencyGet indicates an expected call of ProjectConcurrencyGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectConcurrencyGet(ctx, pKey, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectConcurrencyGet), ctx, pKey, name)
+}
+
+// ProjectConcurrencyList mocks base method.
+func (m *MockProjectClientV2) ProjectConcurrencyList(ctx context.Context, pKey string) ([]sdk.ProjectConcurrency, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyList", ctx, pKey)
+	ret0, _ := ret[0].([]sdk.ProjectConcurrency)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectConcurrencyList indicates an expected call of ProjectConcurrencyList.
+func (mr *MockProjectClientV2MockRecorder) ProjectConcurrencyList(ctx, pKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyList", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectConcurrencyList), ctx, pKey)
+}
+
+// ProjectConcurrencyUpdate mocks base method.
+func (m *MockProjectClientV2) ProjectConcurrencyUpdate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyUpdate", ctx, pKey, c)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectConcurrencyUpdate indicates an expected call of ProjectConcurrencyUpdate.
+func (mr *MockProjectClientV2MockRecorder) ProjectConcurrencyUpdate(ctx, pKey, c any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectConcurrencyUpdate), ctx, pKey, c)
+}
+
 // ProjectNotificationCreate mocks base method.
 func (m *MockProjectClientV2) ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
 	m.ctrl.T.Helper()
@@ -8971,6 +9043,78 @@ func (m *MockInterface) ProjectAccess(ctx context.Context, projectKey, sessionID
 func (mr *MockInterfaceMockRecorder) ProjectAccess(ctx, projectKey, sessionID, itemType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectAccess", reflect.TypeOf((*MockInterface)(nil).ProjectAccess), ctx, projectKey, sessionID, itemType)
+}
+
+// ProjectConcurrencyCreate mocks base method.
+func (m *MockInterface) ProjectConcurrencyCreate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyCreate", ctx, pKey, c)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectConcurrencyCreate indicates an expected call of ProjectConcurrencyCreate.
+func (mr *MockInterfaceMockRecorder) ProjectConcurrencyCreate(ctx, pKey, c any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyCreate", reflect.TypeOf((*MockInterface)(nil).ProjectConcurrencyCreate), ctx, pKey, c)
+}
+
+// ProjectConcurrencyDelete mocks base method.
+func (m *MockInterface) ProjectConcurrencyDelete(ctx context.Context, pKey, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyDelete", ctx, pKey, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectConcurrencyDelete indicates an expected call of ProjectConcurrencyDelete.
+func (mr *MockInterfaceMockRecorder) ProjectConcurrencyDelete(ctx, pKey, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyDelete", reflect.TypeOf((*MockInterface)(nil).ProjectConcurrencyDelete), ctx, pKey, name)
+}
+
+// ProjectConcurrencyGet mocks base method.
+func (m *MockInterface) ProjectConcurrencyGet(ctx context.Context, pKey, name string) (*sdk.ProjectConcurrency, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyGet", ctx, pKey, name)
+	ret0, _ := ret[0].(*sdk.ProjectConcurrency)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectConcurrencyGet indicates an expected call of ProjectConcurrencyGet.
+func (mr *MockInterfaceMockRecorder) ProjectConcurrencyGet(ctx, pKey, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyGet", reflect.TypeOf((*MockInterface)(nil).ProjectConcurrencyGet), ctx, pKey, name)
+}
+
+// ProjectConcurrencyList mocks base method.
+func (m *MockInterface) ProjectConcurrencyList(ctx context.Context, pKey string) ([]sdk.ProjectConcurrency, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyList", ctx, pKey)
+	ret0, _ := ret[0].([]sdk.ProjectConcurrency)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectConcurrencyList indicates an expected call of ProjectConcurrencyList.
+func (mr *MockInterfaceMockRecorder) ProjectConcurrencyList(ctx, pKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyList", reflect.TypeOf((*MockInterface)(nil).ProjectConcurrencyList), ctx, pKey)
+}
+
+// ProjectConcurrencyUpdate mocks base method.
+func (m *MockInterface) ProjectConcurrencyUpdate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyUpdate", ctx, pKey, c)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectConcurrencyUpdate indicates an expected call of ProjectConcurrencyUpdate.
+func (mr *MockInterfaceMockRecorder) ProjectConcurrencyUpdate(ctx, pKey, c any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyUpdate", reflect.TypeOf((*MockInterface)(nil).ProjectConcurrencyUpdate), ctx, pKey, c)
 }
 
 // ProjectCreate mocks base method.

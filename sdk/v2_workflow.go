@@ -24,7 +24,6 @@ const (
 )
 
 type WorkflowSemverType string
-type ConcurrencyOrder string
 
 var AvailableSemverType = []WorkflowSemverType{SemverTypeGit, SemverTypeHelm, SemverTypeCargo, SemverTypeNpm, SemverTypeYarn, SemverTypeFile, SemverTypePoetry, SemverTypeDebian}
 
@@ -39,9 +38,6 @@ const (
 	SemverTypeDebian WorkflowSemverType = "debian"
 
 	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}.sha.${{git.sha_short}}"
-
-	ConcurrencyOrderOldestFirst ConcurrencyOrder = "oldest_first"
-	ConcurrencyOrderNewestFirst ConcurrencyOrder = "newest_first"
 )
 
 type V2Workflow struct {
@@ -59,7 +55,7 @@ type V2Workflow struct {
 	Retention     int64                    `json:"retention,omitempty"`
 	Annotations   map[string]string        `json:"annotations,omitempty"`
 	Semver        *WorkflowSemver          `json:"semver,omitempty"`
-	Concurrencies []Concurrency            `json:"concurrencies,omitempty"`
+	Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty"`
 
 	// Template fields
 	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from"`
@@ -285,7 +281,7 @@ type WorkflowStage struct {
 	Needs []string `json:"needs,omitempty" jsonschema_description:"Stage dependencies"`
 }
 
-type Concurrency struct {
+type WorkflowConcurrency struct {
 	Name             string           `json:"name"`
 	Order            ConcurrencyOrder `json:"order,omitempty"`
 	Pool             int64            `json:"pool,omitempty"`

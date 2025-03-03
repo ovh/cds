@@ -1157,10 +1157,10 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				allVariableSets: allVariableSets,
 			}
 			if jobDef.From == "" {
-				// ///////
-				// TODO - manage concurrency on matrixed job
-				// ///////
-				jobs, runUpdated := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData)
+				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrencyUnlockedCount)
+				if err != nil {
+					return nil, nil, nil, false, err
+				}
 				runJobs = append(runJobs, jobs...)
 				if runUpdated {
 					hasToUpdateRun = true
@@ -1332,7 +1332,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 	return msgsLint
 }
 
-func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, runJobsInfo map[string]sdk.V2WorkflowRunJobInfo, run *sdk.V2WorkflowRun, data prepareJobData) ([]sdk.V2WorkflowRunJob, bool) {
+func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, runJobsInfo map[string]sdk.V2WorkflowRunJobInfo, run *sdk.V2WorkflowRun, data prepareJobData, concurrencyUnlockedCount map[string]int64) ([]sdk.V2WorkflowRunJob, bool, error) {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	hasToUpdateRun := false
 
@@ -1384,9 +1384,20 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		if runUpdated {
 			hasToUpdateRun = runUpdated
 		}
+
+		// Manage concurrency
+		runJobInfo, err := manageJobConcurrency(ctx, db, *run, data.jobID, &runJob, concurrencyUnlockedCount)
+		if err != nil {
+			return runJobs, hasToUpdateRun, err
+		}
+		if runJobInfo != nil {
+			runJobsInfo[runJob.ID] = *runJobInfo
+			runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
+		}
+
 		runJobs = append(runJobs, runJob)
 	}
-	return runJobs, hasToUpdateRun
+	return runJobs, hasToUpdateRun, nil
 }
 
 func searchPermutationToTrigger(ctx context.Context, permutations []map[string]string, runJobs []sdk.V2WorkflowRunJob, jobID string) []map[string]string {
