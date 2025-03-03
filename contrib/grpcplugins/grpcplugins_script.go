@@ -9,7 +9,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -151,7 +150,7 @@ func writeScriptContent(_ context.Context, script *script, fs afero.Fs) (func(),
 		tmpFileName += ".PS1"
 	}
 
-	scriptPath := filepath.Join(path.Dir(script.dir), tmpFileName)
+	scriptPath := filepath.Join(filepath.Dir(script.dir), tmpFileName)
 
 	tmpscript, err := fs.OpenFile(scriptPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
@@ -195,7 +194,7 @@ func writeScriptContent(_ context.Context, script *script, fs afero.Fs) (func(),
 	}
 
 	deferFunc := func() {
-		filename := filepath.Join(path.Dir(script.dir), tmpFileName)
+		filename := filepath.Join(filepath.Dir(script.dir), tmpFileName)
 		_ = fs.Remove(filename)
 	}
 
