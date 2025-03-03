@@ -1,0 +1,155 @@
+name: Workflow Job Concurrency Cancel
+vars:
+  cds_project: "ITV2JOBCONCURRENCYCANCEL"
+  git_repo: "it_v2_job_woncurrency_cancel"
+  cds_workflow: "WorkflowJobConcurrencyCancel"
+testcases:
+- name: Prepare test
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+    - name: "Display username"
+      info: "Connected CDS user is {{.cdsUser}}"
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+      git_emailAddress: "{{.emailaddress}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+
+- name: Push workflow file
+  steps:
+    - type: v2_push_cds_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        worker-models/debian.yml:
+          name: docker-debian
+          osarch: linux/amd64
+          type: docker
+          spec:
+            image: buildpack-deps:buster
+        workflows/servicelog.yaml:
+          name: {{.cds_workflow}}
+          on: [push]
+          concurrencies:
+          - name: ${{git.ref_name}}
+            cancel-in-progress: true
+            pool: 1
+          jobs:
+            job1:
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              concurrency: ${{git.ref_name}}
+              steps:
+                - run: sleep 20
+            job2:   
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              concurrency: ${{git.ref_name}}
+              steps:
+                - run: sleep 20
+    - name: Check CDS project analyses status
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 100
+      delay: 1
+
+    - name: Check that the CDS workflow has at least one execution and is Building
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
+      retry: 100
+      delay: 1
+      vars:
+        workflowRunID:
+          from: result.systemoutjson.systemoutjson0.id
+    
+    - name: Retrieve job status and check if one is blocked
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldNotEqual result.systemoutjson.systemoutjson1.status
+        - or:
+          - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
+          - result.systemoutjson.systemoutjson0.status ShouldEqual "Cancelled"
+        - or:
+          - result.systemoutjson.systemoutjson1.status ShouldEqual "Building"
+          - result.systemoutjson.systemoutjson1.status ShouldEqual "Cancelled"
+      retry: 100
+      delay: 1
+    
+    - name: Run Manually a second run
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}}"
+
+    - name: Check that the CDS workflow has 2 executions and the last one is building, the first one is cancelled
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Cancelled"
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
+      vars:
+        workflowRunID2:
+          from: result.systemoutjson.systemoutjson0.id
+      retry: 50
+      delay: 1    
+
+    - name: Check job in run 2, one must be cancelled
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID2}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldNotEqual result.systemoutjson.systemoutjson1.status
+        - or:
+          - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
+          - result.systemoutjson.systemoutjson0.status ShouldEqual "Cancelled"
+        - or:
+          - result.systemoutjson.systemoutjson1.status ShouldEqual "Building"
+          - result.systemoutjson.systemoutjson1.status ShouldEqual "Cancelled"
+      retry: 100
+      delay: 1
+
+    - name: Check that job in run1 are all cancelled
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Cancelled"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Cancelled"
+      
+    - name: Check that the CDS workflow is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Cancelled"
+      retry: 200
+      delay: 1

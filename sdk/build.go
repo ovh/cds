@@ -123,6 +123,7 @@ const (
 	StatusSkipped           = "Skipped"
 	StatusStopped           = "Stopped"
 	StatusBlocked           = "Blocked"
+	StatusCancelled         = "Cancelled"
 	StatusWorkerPending     = "Pending"
 	StatusWorkerRegistering = "Registering"
 

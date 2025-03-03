@@ -1,6 +1,6 @@
 <div class="node pointing" [class.highlight]="highlight && !selected" [class.active]="selected" (click)="onMouseClick()"
     (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()" [class.success]="node?.run?.status === statusEnum.Success"
-    [class.inactive]="node?.run?.status === statusEnum.Skipped"
+    [class.inactive]="node?.run?.status === statusEnum.Skipped || node?.run?.status === statusEnum.Cancelled"
     [class.fail]="node?.run?.status === statusEnum.Fail || node?.run?.status === statusEnum.Stopped"
     [class.building]="node?.run?.status === statusEnum.Building || node?.run?.status === statusEnum.Waiting || node?.run?.status === statusEnum.Scheduling">
     <div class="commands">

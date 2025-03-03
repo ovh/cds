@@ -272,7 +272,56 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			hasTemplatedMatrixedJob = true
 		}
 	}
-	runJobs, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, proj, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, api.Config.Workflow.JobDefaultRegion)
+
+	// Retrieve all concurrency definition for job to enqueue
+
+	concurrenciesDef := make(map[string]sdk.V2RunJobConcurrency)
+	for jobID, jToTrigger := range jobsToQueue {
+		if jToTrigger.Job.Concurrency == "" {
+			continue
+		}
+		jobConcurrencyDef, err := retrieveConcurrencyDefinition(ctx, api.mustDB(), *run, jToTrigger.Job.Concurrency)
+		if err != nil {
+			return err
+		}
+		if jobConcurrencyDef == nil {
+			runInfo := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("Job %s: concurrency %q not found on workflow nor on project", jobID, jToTrigger.Job.Concurrency),
+			}
+			return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{runInfo}, allrunJobsMap, runResults, &wrEnqueue.Initiator)
+		}
+		concurrenciesDef[jobID] = *jobConcurrencyDef
+	}
+
+	// Try to Lock concurrency
+	concurrencyLocked := make(map[string]struct{})
+	for _, concu := range concurrenciesDef {
+		concurrencyKey := fmt.Sprintf("%s-%s-%s", concu.Scope, run.ProjectKey, concu.Name)
+		if concu.Scope == sdk.V2RunJobConcurrencyScopeWorkflow {
+			concurrencyKey = fmt.Sprintf("%s-%s-%s-%s-%s-%s", concu.Scope, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, concu.Name)
+		}
+		if _, has := concurrencyLocked[concurrencyKey]; has {
+			continue
+		}
+		concurrencyLocked[concurrencyKey] = struct{}{}
+		lockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)
+		b, err := api.Cache.Lock(lockKey, 1*time.Minute, 0, 1)
+		if err != nil {
+			return err
+		}
+		if !b {
+			log.Info(ctx, "concurrency %q already locked", concurrencyKey)
+			time.Sleep(2 * time.Second)
+			api.EnqueueWorkflowRun(ctx, wrEnqueue.RunID, wrEnqueue.Initiator, run.WorkflowName, run.RunNumber)
+			return nil
+		}
+		defer api.Cache.Unlock(lockKey)
+	}
+
+	runJobs, runJobsToCancelled, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, proj, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, concurrenciesDef, api.Config.Workflow.JobDefaultRegion)
 	if err != nil {
 		return err
 	}
@@ -342,7 +391,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
-	// End workflow if there is no more job to handle,  no running jobs and current status is not terminated
+	// End workflow if there is no more job to handle, no running jobs and current status is not terminated
 	if runUpdated || (len(jobsToQueue) == 0 && !hasSkippedOrFailedJob && !run.Status.IsTerminated()) {
 		finalStatus, err := computeRunStatusFromJobsStatus(ctx, tx, run.ID, run.RunAttempt, len(run.WorkflowData.Workflow.Jobs))
 		if err != nil {
@@ -355,6 +404,32 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
+	}
+
+	runJobsCancelled := make([]sdk.V2WorkflowRunJob, 0, len(runJobsToCancelled))
+	for id := range runJobsToCancelled {
+		rj, err := workflow_v2.LoadRunJobByID(ctx, tx, id)
+		if err != nil {
+			return err
+		}
+		rj.Status = sdk.V2WorkflowRunJobStatusCancelled
+		now := time.Now()
+		rj.Ended = &now
+		if err := workflow_v2.UpdateJobRun(ctx, tx, rj); err != nil {
+			return err
+		}
+		jobInfo := sdk.V2WorkflowRunJobInfo{
+			WorkflowRunID:    rj.WorkflowRunID,
+			WorkflowRunJobID: rj.ID,
+			IssuedAt:         time.Now(),
+			Level:            sdk.WorkflowRunInfoLevelWarning,
+			Message:          fmt.Sprintf("Job cancelled due to concurrency %q", rj.Concurrency.Name),
+		}
+		if err := workflow_v2.InsertRunJobInfo(ctx, tx, &jobInfo); err != nil {
+			return err
+		}
+
+		runJobsCancelled = append(runJobsCancelled, *rj)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -425,6 +500,15 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		default:
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, *run, rj)
 		}
+	}
+
+	for _, rj := range runJobsCancelled {
+		api.EnqueueWorkflowRun(ctx, rj.WorkflowRunID, rj.Initiator, rj.WorkflowName, rj.RunNumber)
+		runToTrigger, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), rj.WorkflowRunID)
+		if err != nil {
+			return err
+		}
+		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *runToTrigger, rj)
 	}
 	return nil
 }
@@ -974,7 +1058,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 	return nil, runUpdated
 }
 
-func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, existingRunJobs []sdk.V2WorkflowRunJob, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]JobToTrigger, runJobsContexts sdk.JobsResultContext, defaultRegion string) ([]sdk.V2WorkflowRunJob, map[string]sdk.V2WorkflowRunJobInfo, []sdk.V2WorkflowRunInfo, bool, error) {
+func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, existingRunJobs []sdk.V2WorkflowRunJob, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]JobToTrigger, runJobsContexts sdk.JobsResultContext, concurrenciesDef map[string]sdk.V2RunJobConcurrency, defaultRegion string) ([]sdk.V2WorkflowRunJob, map[string]struct{}, map[string]sdk.V2WorkflowRunJobInfo, []sdk.V2WorkflowRunInfo, bool, error) {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	runJobsInfo := make(map[string]sdk.V2WorkflowRunJobInfo)
 	hasToUpdateRun := false
@@ -982,6 +1066,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 	regionPermCache := make(map[string]*sdk.V2WorkflowRunJobInfo)
 
 	concurrencyUnlockedCount := make(map[string]int64)
+	runJobsToCancelled := make(map[string]struct{})
 
 	// Browse job to queue and compute data ( matrix / region / model etc..... )
 	for jobID, jobToTrigger := range jobsToQueue {
@@ -1030,7 +1115,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			if _, has := runVarsetCtx[vs]; !has {
 				vsDB, err := project.LoadVariableSetByName(ctx, db, run.ProjectKey, vs)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return nil, nil, nil, hasToUpdateRun, err
+					return nil, nil, nil, nil, hasToUpdateRun, err
 				}
 				// If not found stop the run
 				if err != nil {
@@ -1040,18 +1125,18 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 						Level:         sdk.WorkflowRunInfoLevelError,
 						Message:       fmt.Sprintf("variable set %s not found on project", vs),
 					}
-					return nil, nil, []sdk.V2WorkflowRunInfo{msg}, hasToUpdateRun, nil
+					return nil, nil, nil, []sdk.V2WorkflowRunInfo{msg}, hasToUpdateRun, nil
 				}
 				vsDB.Items, err = project.LoadVariableSetAllItem(ctx, db, vsDB.ID)
 				if err != nil {
-					return nil, nil, nil, hasToUpdateRun, err
+					return nil, nil, nil, nil, hasToUpdateRun, err
 				}
 				vss = append(vss, *vsDB)
 			}
 		}
 		jobVarsCtx, _, err := buildVarsContext(ctx, vss)
 		if err != nil {
-			return nil, nil, nil, false, err
+			return nil, nil, nil, nil, false, err
 		}
 		for k, v := range runVarsetCtx {
 			jobVarsCtx[k] = v
@@ -1071,7 +1156,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		// Compute job matrix strategy
 		matrixPermutation, msInfo := generateMatrixPermutation(ctx, runJobContext, run, jobDef)
 		if msInfo != nil {
-			return nil, nil, []sdk.V2WorkflowRunInfo{*msInfo}, false, err
+			return nil, nil, nil, []sdk.V2WorkflowRunInfo{*msInfo}, false, err
 		}
 
 		if len(matrixPermutation) == 0 {
@@ -1128,19 +1213,30 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				}
 			}
 			// Manage concurrency
-			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrencyUnlockedCount)
+			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runJobsToCancelled)
 			if err != nil {
-				return nil, nil, nil, hasToUpdateRun, err
+				return nil, nil, nil, nil, hasToUpdateRun, err
 			}
 			if runJobInfo != nil {
 				runJobsInfo[runJob.ID] = *runJobInfo
 				runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
 			}
+			if _, has := runJobsToCancelled[runJob.ID]; has {
+				runJob.Status = sdk.V2WorkflowRunJobStatusCancelled
+				runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    runJob.WorkflowRunID,
+					WorkflowRunJobID: runJob.ID,
+					Level:            sdk.WorkflowRunInfoLevelInfo,
+					IssuedAt:         time.Now(),
+					Message:          fmt.Sprintf("Job cancelled due to concurrency %q", runJob.Concurrency.Name),
+				}
+				delete(runJobsToCancelled, runJob.ID)
+			}
 			runJobs = append(runJobs, runJob)
 		} else {
 			allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
 			if err != nil {
-				return nil, nil, nil, false, err
+				return nil, nil, nil, nil, false, err
 			}
 
 			jobData := prepareJobData{
@@ -1157,9 +1253,9 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				allVariableSets: allVariableSets,
 			}
 			if jobDef.From == "" {
-				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrencyUnlockedCount)
+				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrenciesDef, concurrencyUnlockedCount, runJobsToCancelled)
 				if err != nil {
-					return nil, nil, nil, false, err
+					return nil, nil, nil, nil, false, err
 				}
 				runJobs = append(runJobs, jobs...)
 				if runUpdated {
@@ -1172,7 +1268,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				msgInfo := createTemplatedMatrixedJobs(ctx, db, store, wref, matrixPermutation, run, jobData)
 				hasToUpdateRun = true
 				if len(msgInfo) > 0 {
-					return nil, nil, msgInfo, false, nil
+					return nil, nil, nil, msgInfo, false, nil
 				}
 			}
 		}
@@ -1183,27 +1279,32 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		if rj.Status != sdk.StatusBlocked {
 			continue
 		}
-		rjToUnblocked, err := retrieveRunJobToUnLocked(ctx, db, rj)
+		rjsToUnlocked, rjIDsToCancelled, err := retrieveRunJobToUnLocked(ctx, db, rj)
 		if err != nil {
-			return nil, nil, nil, false, err
+			return nil, nil, nil, nil, false, err
 		}
-		if rjToUnblocked != nil && rjToUnblocked.ID == rj.ID {
+		for _, rjUnlocked := range rjsToUnlocked {
+			if rj.ID == rjUnlocked.ID {
 
-			runJobsInfo[rj.ID] = sdk.V2WorkflowRunJobInfo{
-				WorkflowRunID:    rj.WorkflowRunID,
-				WorkflowRunJobID: rj.ID,
-				IssuedAt:         time.Now(),
-				Level:            sdk.WorkflowRunInfoLevelInfo,
-				Message:          "Job has been unlocked",
+				runJobsInfo[rj.ID] = sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    rj.WorkflowRunID,
+					WorkflowRunJobID: rj.ID,
+					IssuedAt:         time.Now(),
+					Level:            sdk.WorkflowRunInfoLevelInfo,
+					Message:          "Job has been unlocked",
+				}
+				rj.Queued = time.Now()
+				rj.Status = sdk.V2WorkflowRunJobStatusWaiting
+				runJobs = append(runJobs, rj)
 			}
-
-			rj.Queued = time.Now()
-			rj.Status = sdk.V2WorkflowRunJobStatusWaiting
-			runJobs = append(runJobs, rj)
 		}
+		for _, id := range rjIDsToCancelled {
+			runJobsToCancelled[id] = struct{}{}
+		}
+
 	}
 
-	return runJobs, runJobsInfo, nil, hasToUpdateRun, nil
+	return runJobs, runJobsToCancelled, runJobsInfo, nil, hasToUpdateRun, nil
 }
 
 func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, run *sdk.V2WorkflowRun, data prepareJobData) []sdk.V2WorkflowRunInfo {
@@ -1332,7 +1433,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 	return msgsLint
 }
 
-func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, runJobsInfo map[string]sdk.V2WorkflowRunJobInfo, run *sdk.V2WorkflowRun, data prepareJobData, concurrencyUnlockedCount map[string]int64) ([]sdk.V2WorkflowRunJob, bool, error) {
+func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, runJobsInfo map[string]sdk.V2WorkflowRunJobInfo, run *sdk.V2WorkflowRun, data prepareJobData, concurrenciesDef map[string]sdk.V2RunJobConcurrency, concurrencyUnlockedCount map[string]int64, rjToCancelled map[string]struct{}) ([]sdk.V2WorkflowRunJob, bool, error) {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	hasToUpdateRun := false
 
@@ -1386,7 +1487,7 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		}
 
 		// Manage concurrency
-		runJobInfo, err := manageJobConcurrency(ctx, db, *run, data.jobID, &runJob, concurrencyUnlockedCount)
+		runJobInfo, err := manageJobConcurrency(ctx, db, *run, data.jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, rjToCancelled)
 		if err != nil {
 			return runJobs, hasToUpdateRun, err
 		}
@@ -1394,7 +1495,17 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 			runJobsInfo[runJob.ID] = *runJobInfo
 			runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
 		}
-
+		if _, has := rjToCancelled[runJob.ID]; has {
+			runJob.Status = sdk.V2WorkflowRunJobStatusCancelled
+			runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    runJob.WorkflowRunID,
+				WorkflowRunJobID: runJob.ID,
+				Level:            sdk.WorkflowRunInfoLevelInfo,
+				IssuedAt:         time.Now(),
+				Message:          fmt.Sprintf("Job cancelled due to concurrency %q", runJob.Concurrency.Name),
+			}
+			delete(rjToCancelled, runJob.ID)
+		}
 		runJobs = append(runJobs, runJob)
 	}
 	return runJobs, hasToUpdateRun, nil
@@ -1739,6 +1850,9 @@ func computeRunStatusFromJobsStatus(ctx context.Context, db gorp.SqlExecutor, ru
 	allJobID := make(map[string]struct{})
 
 	for _, rj := range runJobs {
+		if rj.Status == sdk.V2WorkflowRunJobStatusCancelled && finalStatus != sdk.V2WorkflowRunStatusStopped && finalStatus != sdk.V2WorkflowRunStatusFail && finalStatus.IsTerminated() {
+			finalStatus = sdk.V2WorkflowRunStatusCancelled
+		}
 		if rj.Status == sdk.V2WorkflowRunJobStatusFail && finalStatus != sdk.V2WorkflowRunStatusStopped && finalStatus.IsTerminated() && !rj.Job.ContinueOnError {
 			finalStatus = sdk.V2WorkflowRunStatusFail
 		}

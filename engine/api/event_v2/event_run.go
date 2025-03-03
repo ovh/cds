@@ -80,8 +80,8 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.Ev
 		ProjectEventV2: sdk.ProjectEventV2{
 			ProjectKey: rj.ProjectKey,
 		},
-		VCSName:       wr.Contexts.Git.Server,
-		Repository:    wr.Contexts.Git.Repository,
+		VCSName:       rj.VCSServer,
+		Repository:    rj.Repository,
 		Workflow:      rj.WorkflowName,
 		WorkflowRunID: rj.WorkflowRunID,
 		RunJobID:      rj.ID,
@@ -145,15 +145,15 @@ func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.Event
 func NewEventJobSummaryV2(wr sdk.V2WorkflowRun, jobrun sdk.V2WorkflowRunJob) sdk.EventJobSummary {
 	var ejs = sdk.EventJobSummary{
 		JobRunID:             jobrun.ID,
-		ProjectKey:           wr.ProjectKey,
-		Workflow:             wr.WorkflowName,
+		ProjectKey:           jobrun.ProjectKey,
+		Workflow:             jobrun.WorkflowName,
 		WorkflowRunNumber:    int(jobrun.RunNumber),
 		WorkflowRunSubNumber: int(jobrun.RunAttempt),
 		Created:              &jobrun.Queued,
 		CreatedHour:          jobrun.Queued.Hour(),
 		Job:                  jobrun.JobID,
-		GitVCS:               wr.Contexts.Git.Server,
-		GitRepo:              wr.Contexts.Git.Repository,
+		GitVCS:               jobrun.VCSServer,
+		GitRepo:              jobrun.Repository,
 		GitCommit:            wr.Contexts.Git.Sha,
 	}
 

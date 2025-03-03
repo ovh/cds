@@ -79,17 +79,19 @@ type V2WorkflowRun struct {
 type V2WorkflowRunStatus string
 
 const (
-	V2WorkflowRunStatusSkipped  V2WorkflowRunStatus = "Skipped"
-	V2WorkflowRunStatusFail     V2WorkflowRunStatus = "Fail"
-	V2WorkflowRunStatusSuccess  V2WorkflowRunStatus = "Success"
-	V2WorkflowRunStatusStopped  V2WorkflowRunStatus = "Stopped"
-	V2WorkflowRunStatusBuilding V2WorkflowRunStatus = "Building"
-	V2WorkflowRunStatusCrafting V2WorkflowRunStatus = "Crafting"
+	V2WorkflowRunStatusSkipped   V2WorkflowRunStatus = "Skipped"
+	V2WorkflowRunStatusFail      V2WorkflowRunStatus = "Fail"
+	V2WorkflowRunStatusSuccess   V2WorkflowRunStatus = "Success"
+	V2WorkflowRunStatusStopped   V2WorkflowRunStatus = "Stopped"
+	V2WorkflowRunStatusBuilding  V2WorkflowRunStatus = "Building"
+	V2WorkflowRunStatusCrafting  V2WorkflowRunStatus = "Crafting"
+	V2WorkflowRunStatusBlocked   V2WorkflowRunStatus = "Blocked"
+	V2WorkflowRunStatusCancelled V2WorkflowRunStatus = "Cancelled"
 )
 
 func (s V2WorkflowRunStatus) IsTerminated() bool {
 	switch s {
-	case V2WorkflowRunStatusBuilding, V2WorkflowRunStatusCrafting:
+	case V2WorkflowRunStatusBuilding, V2WorkflowRunStatusCrafting, V2WorkflowRunStatusBlocked:
 		return false
 	}
 	return true
@@ -293,6 +295,7 @@ const (
 	V2WorkflowRunJobStatusFail       V2WorkflowRunJobStatus = "Fail"
 	V2WorkflowRunJobStatusStopped    V2WorkflowRunJobStatus = "Stopped"
 	V2WorkflowRunJobStatusSuccess    V2WorkflowRunJobStatus = "Success"
+	V2WorkflowRunJobStatusCancelled  V2WorkflowRunJobStatus = "Cancelled"
 	V2WorkflowRunJobStatusScheduling V2WorkflowRunJobStatus = "Scheduling"
 	V2WorkflowRunJobStatusSkipped    V2WorkflowRunJobStatus = "Skipped"
 )
@@ -315,6 +318,8 @@ func NewV2WorkflowRunJobStatusFromString(s string) (V2WorkflowRunJobStatus, erro
 		return V2WorkflowRunJobStatusBuilding, nil
 	case StatusBlocked:
 		return V2WorkflowRunJobStatusBlocked, nil
+	case StatusCancelled:
+		return V2WorkflowRunJobStatusCancelled, nil
 	}
 	return V2WorkflowRunJobStatusUnknown, errors.Errorf("cannot convert given status value %q to workflow run job v2 status", s)
 }
@@ -721,7 +726,7 @@ const (
 	V2WorkflowRunResultStatusCompleted = "COMPLETED"
 	V2WorkflowRunResultStatusPromoted  = "PROMOTED"
 	V2WorkflowRunResultStatusReleased  = "RELEASED"
-	V2WorkflowRunResultStatusCanceled  = "CANCELED"
+	V2WorkflowRunResultStatusCancelled = "CANCELLED"
 )
 
 type V2WorkflowRunResultArtifactManagerMetadata map[string]string
