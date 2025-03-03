@@ -106,10 +106,11 @@
                 <button *ngIf="workflowRunIsTerminated" nz-button nzType="secondary" nzSize="large"
                     title="Start new run" (click)="openRunStartDrawer()">Start new run</button>
                 <button *ngIf="workflowRunIsTerminated && hasJobsFailed" nz-button nzType="secondary" nzSize="large"
-                    title="Restart failed jobs" (click)="clickRestartJobs()">Restart
+                    title="Restart failed jobs" [nzLoading]="loading.restart" (click)="clickRestartJobs()">Restart
                     failed jobs</button>
                 <button *ngIf="workflowRunIsActive" nz-button nzType="primary" nzSize="large" nzDanger
-                    title="Stop workflow run" (click)="clickStopRun()">Stop workflow run</button>
+                    title="Stop workflow run" [nzLoading]="loading.stop" (click)="clickStopRun()">Stop workflow
+                    run</button>
             </div>
             <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
                 [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
