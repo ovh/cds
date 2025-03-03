@@ -105,7 +105,7 @@ variablesets:
 			require.NoError(t, rbacLoader.FillRBACWithIDs(context.TODO(), &r))
 			require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
-			err = api.variableSetItemManage(context.TODO(), &auth, api.Cache, api.mustDB(), map[string]string{
+			err = api.variableSetItemManage(context.WithValue(context.TODO(), contextUserConsumer, &auth), map[string]string{
 				"projectKey":      proj.Key,
 				"variableSetName": targetVariableSet,
 			})

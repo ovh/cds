@@ -8,18 +8,20 @@ import (
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func hasRoleOnRegion(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, regionIdentifier string, role string) error {
+func (api *API) hasRoleOnRegion(ctx context.Context, vars map[string]string, role string) error {
+	regionIdentifier := vars["regionIdentifier"]
+
+	auth := getUserConsumer(ctx)
 	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := hasRoleOnRegionAndUserID(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser, regionIdentifier)
+	hasRole, err := hasRoleOnRegionAndUserID(ctx, api.mustDBWithCtx(ctx), role, auth.AuthConsumerUser.AuthentifiedUser, regionIdentifier)
 	if err != nil {
 		return err
 	}
@@ -75,7 +77,6 @@ func hasRoleOnRegionAndUserID(ctx context.Context, db gorp.SqlExecutor, role str
 }
 
 // RegionRead return nil if the current AuthConsumer have the ProjectRoleRead on current project KEY
-func (api *API) regionRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
-	regionIdentifier := vars["regionIdentifier"]
-	return hasRoleOnRegion(ctx, auth, store, db, regionIdentifier, sdk.RegionRoleList)
+func (api *API) regionRead(ctx context.Context, vars map[string]string) error {
+	return api.hasRoleOnRegion(ctx, vars, sdk.RegionRoleList)
 }
