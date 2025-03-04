@@ -38,18 +38,6 @@ func hasRoleOnRegionAndUserID(ctx context.Context, db gorp.SqlExecutor, role str
 	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnRegionAndUserID")
 	defer next()
 
-	// Get all region permissions with the given user
-	rRegion, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, role, authentifiedUser.ID)
-	if err != nil {
-		return false, err
-	}
-
-	// Load user organization to get its ID
-	org, err := organization.LoadOrganizationByName(ctx, db, authentifiedUser.Organization)
-	if err != nil {
-		return false, err
-	}
-
 	// Load region ID if needed
 	regionID := regionIdentifier
 	if !sdk.IsValidUUID(regionID) {
@@ -60,20 +48,17 @@ func hasRoleOnRegionAndUserID(ctx context.Context, db gorp.SqlExecutor, role str
 		regionID = reg.ID
 	}
 
-	// Check region and organization
-	for _, rr := range rRegion {
-		if rr.RegionID == regionID {
-			if err := rbac.LoadRBACRegionOrganizations(ctx, db, &rr); err != nil {
-				return false, err
-			}
-			for _, rbacOrga := range rr.RBACOrganizationIDs {
-				if rbacOrga == org.ID {
-					return true, nil
-				}
-			}
-		}
+	// Load user organization to get its ID
+	org, err := organization.LoadOrganizationByName(ctx, db, authentifiedUser.Organization)
+	if err != nil {
+		return false, err
 	}
-	return false, nil
+
+	canExecute, err := rbac.HasRoleOnRegion(ctx, db, role, regionID, authentifiedUser.ID, org.ID)
+	if err != nil {
+		return false, err
+	}
+	return canExecute, nil
 }
 
 // RegionRead return nil if the current AuthConsumer have the ProjectRoleRead on current project KEY

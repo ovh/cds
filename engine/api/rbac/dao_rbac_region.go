@@ -135,3 +135,26 @@ func LoadRBACByRegionID(ctx context.Context, db gorp.SqlExecutor, regionID strin
 	return LoadRBACByIDs(ctx, db, rbacIDs, LoadOptions.All)
 
 }
+
+func HasRoleOnRegion(ctx context.Context, db gorp.SqlExecutor, role string, regionID string, userID string, userOrgID string) (bool, error) {
+	// Get all region that can match user id
+	rRegion, err := LoadRegionIDsByRoleAndUserID(ctx, db, role, userID)
+	if err != nil {
+		return false, err
+	}
+
+	// Check region and user organization
+	for _, rr := range rRegion {
+		if rr.RegionID == regionID {
+			if err := LoadRBACRegionOrganizations(ctx, db, &rr); err != nil {
+				return false, err
+			}
+			for _, rbacOrga := range rr.RBACOrganizationIDs {
+				if rbacOrga == userOrgID {
+					return true, nil
+				}
+			}
+		}
+	}
+	return false, nil
+}
