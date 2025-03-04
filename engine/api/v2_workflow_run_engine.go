@@ -1786,7 +1786,7 @@ func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2Wo
 
 	if !wrEnqueue.Initiator.IsAdminWithMFA {
 		if wrEnqueue.Initiator.IsUser() {
-			u, err := user.LoadByID(ctx, db, wrEnqueue.Initiator.UserID)
+			u, err := user.LoadByID(ctx, db, wrEnqueue.Initiator.UserID, user.LoadOptions.WithOrganization)
 			if err != nil {
 				return nil, err
 			}
