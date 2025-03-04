@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
@@ -99,22 +97,7 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 				res.Details = err.Error()
 				return stream.Send(res)
 			}
-
-			urlParsed, err := url.Parse(gitURL)
-			if err != nil {
-				return fmt.Errorf("unable to parse git url: %s", gitURL)
-			}
-			host, port, _ := net.SplitHostPort(urlParsed.Host)
-			if port == "" {
-				port = "22"
-			}
-
-			scriptContent := fmt.Sprintf("ssh-keyscan -t rsa -p %s %s >> %s/.ssh/known_hosts", port, host, u.HomeDir)
-			if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
-				res.Status = sdk.StatusFail
-				res.Details = err.Error()
-				return stream.Send(res)
-			}
+			os.Setenv("GIT_SSH_COMMAND", fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no", sshFilePath))
 		}
 	}
 

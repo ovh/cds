@@ -20,11 +20,13 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
@@ -1898,16 +1900,20 @@ func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2Wo
 
 	if !wrEnqueue.Initiator.IsAdminWithMFA {
 		if wrEnqueue.Initiator.IsUser() {
-			allowedRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, wrEnqueue.Initiator.UserID)
+			u, err := user.LoadByID(ctx, db, wrEnqueue.Initiator.UserID, user.LoadOptions.WithOrganization)
 			if err != nil {
-				next()
 				return nil, err
 			}
-			next()
-			for _, r := range allowedRegions {
-				if r.RegionID == wantedRegion.ID {
-					return nil, nil
-				}
+			org, err := organization.LoadOrganizationByName(ctx, db, u.Organization)
+			if err != nil {
+				return nil, err
+			}
+			canExecute, err := rbac.HasRoleOnRegion(ctx, db, sdk.RegionRoleExecute, wantedRegion.ID, wrEnqueue.Initiator.UserID, org.ID)
+			if err != nil {
+				return nil, err
+			}
+			if canExecute {
+				return nil, nil
 			}
 		} else {
 			allowedRegions, err := rbac.LoadRegionIDsByRoleAndVCSUSer(ctx, db, sdk.RegionRoleExecute, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername})
