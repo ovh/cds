@@ -25,6 +25,7 @@ func (client *bitbucketClient) SetStatus(ctx context.Context, buildStatus sdk.VC
 		State:       state,
 		URL:         buildStatus.URLCDS,
 		Description: buildStatus.Description,
+		Parent:      buildStatus.Context,
 	}
 
 	values, err := json.Marshal(status)
