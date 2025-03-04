@@ -122,6 +122,10 @@
           color: $cds_color_red;
         }
 
+        &.cancel {
+          color: $polar_grey_2;
+        }
+
         &.building {
           color: $cds_color_teal;
         }

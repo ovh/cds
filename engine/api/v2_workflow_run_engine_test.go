@@ -13,10 +13,13 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestJobConditionSuccess(t *testing.T) {
@@ -3589,4 +3592,543 @@ spec:
 	require.Equal(t, 2, len(jobs))
 	require.True(t, blocked)
 	require.True(t, waiting)
+}
+
+func TestConcurrencyCancelInProgress(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	pc := sdk.ProjectConcurrency{
+		ProjectKey:       proj.Key,
+		Name:             "mycc",
+		Pool:             1,
+		Order:            sdk.ConcurrencyOrderOldestFirst,
+		CancelInProgress: true,
+	}
+	require.NoError(t, project.InsertConcurrency(context.TODO(), db, &pc))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		VariableSets: []sdk.RBACVariableSet{
+			{
+				AllUsers:        true,
+				Role:            sdk.VariableSetRoleUse,
+				AllVariableSets: true,
+				ProjectKey:      proj.Key,
+			},
+		},
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				RegionID:        reg.ID,
+				RBACProjectKeys: []string{proj.Key},
+				Role:            sdk.RegionRoleExecute,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: "docker"}
+	require.NoError(t, hatchery.Insert(context.TODO(), db, &hatch))
+
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &perm))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	modelRaw := `name: mymodel
+type: docker
+osarch: linux-amd64
+spec:
+  image: debian:12`
+	entityModel := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		Name:                "mymodel",
+		FilePath:            ".cds/worker-models/mymodel.yml",
+		Commit:              "abcdef",
+		Ref:                 "refs/heads/master",
+		Data:                modelRaw,
+		UserID:              &admin.ID,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
+
+	vs := sdk.ProjectVariableSet{
+		Name:       "region",
+		ProjectKey: proj.Key,
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+
+	items := sdk.ProjectVariableSetItem{
+		ProjectVariableSetID: vs.ID,
+		Name:                 "regions",
+		Type:                 "string",
+		Value:                "[\"region1\",\"region2\"]",
+	}
+	require.NoError(t, project.InsertVariableSetItemText(context.TODO(), db, &items))
+
+	wr1 := sdk.V2WorkflowRun{
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "abcdef",
+		WorkflowRef:        "refs/heads/master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: sdk.RandomString(10),
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Concurrency: pc.Name,
+					Strategy: &sdk.V2JobStrategy{
+						Matrix: map[string]interface{}{
+							"region": []string{"region1", "region2"},
+						},
+					},
+					Steps: []sdk.ActionStep{
+						{
+							Run: "echo toto",
+						},
+					},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr1))
+
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID:            wr1.ID,
+		DeprecatedUserID: admin.ID,
+		Initiator:        *wr1.Initiator,
+	}))
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr1.ID)
+	require.NoError(t, err)
+	for _, info := range runInfos {
+		t.Logf("%+v", info)
+	}
+	require.Equal(t, 0, len(runInfos))
+
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr1.ID)
+	require.NoError(t, err)
+
+	// Total of jobs
+	require.Equal(t, 1, len(wrDB.WorkflowData.Workflow.Jobs))
+
+	jobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wrDB.ID, wrDB.RunAttempt)
+	require.NoError(t, err)
+
+	waiting := false
+	cancelled := false
+	for _, j := range jobs {
+		if j.Status == sdk.V2WorkflowRunJobStatusCancelled {
+			cancelled = true
+		}
+		if j.Status == sdk.V2WorkflowRunJobStatusWaiting {
+			waiting = true
+		}
+
+	}
+	require.Equal(t, 2, len(jobs))
+	require.True(t, cancelled)
+	require.True(t, waiting)
+
+	// Running a 2 workflow and check cancelled
+	wr2 := wr1
+	wr2.ID = ""
+	wr2.RunNumber += 1
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr2))
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID:            wr2.ID,
+		DeprecatedUserID: admin.ID,
+		Initiator:        *wr2.Initiator,
+	}))
+
+	runInfos2, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr2.ID)
+	require.NoError(t, err)
+	for _, info := range runInfos2 {
+		t.Logf("%+v", info)
+	}
+	require.Equal(t, 0, len(runInfos))
+
+	wrDB2, err := workflow_v2.LoadRunByID(context.TODO(), db, wr2.ID)
+	require.NoError(t, err)
+
+	jobs2, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wrDB2.ID, wrDB2.RunAttempt)
+	require.NoError(t, err)
+
+	waiting2 := false
+	cancelled2 := false
+	for _, j := range jobs2 {
+		if j.Status == sdk.V2WorkflowRunJobStatusCancelled {
+			cancelled2 = true
+		}
+		if j.Status == sdk.V2WorkflowRunJobStatusWaiting {
+			waiting2 = true
+		}
+
+	}
+	require.Equal(t, 2, len(jobs2))
+	require.True(t, cancelled2)
+	require.True(t, waiting2)
+
+	// Reload wr1 jobs
+	jobs1Reloaded, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wrDB.ID, wrDB.RunAttempt)
+	require.NoError(t, err)
+	for _, j := range jobs1Reloaded {
+		require.Equal(t, sdk.V2WorkflowRunJobStatusCancelled, j.Status)
+	}
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/outgoing", gomock.Any(), gomock.Any())
+
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID:            wr1.ID,
+		DeprecatedUserID: admin.ID,
+		Initiator:        *wr1.Initiator,
+	}))
+	// reload wr1 to check cancelled status
+	wr1DBUpdated, err := workflow_v2.LoadRunByID(context.TODO(), db, wrDB.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunStatusCancelled, wr1DBUpdated.Status)
+}
+
+func TestConcurrencyCancelInProgress_BlockedJobs(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	pc := sdk.ProjectConcurrency{
+		ProjectKey:       proj.Key,
+		Name:             "mycc",
+		Pool:             2,
+		Order:            sdk.ConcurrencyOrderOldestFirst,
+		CancelInProgress: true,
+	}
+	require.NoError(t, project.InsertConcurrency(context.TODO(), db, &pc))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		VariableSets: []sdk.RBACVariableSet{
+			{
+				AllUsers:        true,
+				Role:            sdk.VariableSetRoleUse,
+				AllVariableSets: true,
+				ProjectKey:      proj.Key,
+			},
+		},
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				RegionID:        reg.ID,
+				RBACProjectKeys: []string{proj.Key},
+				Role:            sdk.RegionRoleExecute,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: "docker"}
+	require.NoError(t, hatchery.Insert(context.TODO(), db, &hatch))
+
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &perm))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	modelRaw := `name: mymodel
+type: docker
+osarch: linux-amd64
+spec:
+  image: debian:12`
+	entityModel := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		Name:                "mymodel",
+		FilePath:            ".cds/worker-models/mymodel.yml",
+		Commit:              "abcdef",
+		Ref:                 "refs/heads/master",
+		Data:                modelRaw,
+		UserID:              &admin.ID,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
+
+	vs := sdk.ProjectVariableSet{
+		Name:       "region",
+		ProjectKey: proj.Key,
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+
+	items := sdk.ProjectVariableSetItem{
+		ProjectVariableSetID: vs.ID,
+		Name:                 "regions",
+		Type:                 "string",
+		Value:                "[\"region1\",\"region2\"]",
+	}
+	require.NoError(t, project.InsertVariableSetItemText(context.TODO(), db, &items))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "abcdef",
+		WorkflowRef:        "refs/heads/master",
+		RunAttempt:         1,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusBuilding,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: sdk.RandomString(10),
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Concurrency: pc.Name,
+					Steps: []sdk.ActionStep{
+						{
+							Run: "echo toto",
+						},
+					},
+				},
+				"job2": {
+					Concurrency: pc.Name,
+					Steps: []sdk.ActionStep{
+						{
+							Run: "echo toto",
+						},
+					},
+				},
+				"job3": {
+					Concurrency: pc.Name,
+					Steps: []sdk.ActionStep{
+						{
+							Run: "echo toto",
+						},
+					},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
+
+	jobRun1 := sdk.V2WorkflowRunJob{
+		ID:            sdk.UUID(),
+		JobID:         "job1",
+		WorkflowRunID: wr.ID,
+		ProjectKey:    wr.ProjectKey,
+		VCSServer:     wr.VCSServer,
+		Repository:    wr.Repository,
+		WorkflowName:  wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Status:        sdk.StatusBlocked,
+		Queued:        time.Now(),
+		Job:           sdk.V2Job{},
+		Concurrency: &sdk.V2RunJobConcurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
+				Name:             "main",
+				Order:            sdk.ConcurrencyOrderOldestFirst,
+				Pool:             2,
+				CancelInProgress: true,
+			},
+			Scope: sdk.V2RunJobConcurrencyScopeProject,
+		},
+		Initiator: *wr.Initiator,
+	}
+	jobRun2 := sdk.V2WorkflowRunJob{
+		ID:            sdk.UUID(),
+		JobID:         "job2",
+		WorkflowRunID: wr.ID,
+		ProjectKey:    wr.ProjectKey,
+		VCSServer:     wr.VCSServer,
+		Repository:    wr.Repository,
+		WorkflowName:  wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Status:        sdk.StatusBlocked,
+		Queued:        time.Now().Add(1 * time.Minute),
+		Job:           sdk.V2Job{},
+		Concurrency: &sdk.V2RunJobConcurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
+				Name:             "main",
+				Order:            sdk.ConcurrencyOrderOldestFirst,
+				Pool:             2,
+				CancelInProgress: true,
+			},
+			Scope: sdk.V2RunJobConcurrencyScopeProject,
+		},
+		Initiator: *wr.Initiator,
+	}
+	jobRun3 := sdk.V2WorkflowRunJob{
+		ID:            sdk.UUID(),
+		JobID:         "job3",
+		WorkflowRunID: wr.ID,
+		ProjectKey:    wr.ProjectKey,
+		VCSServer:     wr.VCSServer,
+		Repository:    wr.Repository,
+		WorkflowName:  wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Status:        sdk.StatusBlocked,
+		Queued:        time.Now().Add(2 * time.Minute),
+		Job:           sdk.V2Job{},
+		Concurrency: &sdk.V2RunJobConcurrency{
+			WorkflowConcurrency: sdk.WorkflowConcurrency{
+				Name:             "main",
+				Order:            sdk.ConcurrencyOrderOldestFirst,
+				Pool:             2,
+				CancelInProgress: true,
+			},
+			Scope: sdk.V2RunJobConcurrencyScopeProject,
+		},
+		Initiator: *wr.Initiator,
+	}
+
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRun1))
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRun2))
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRun3))
+
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID:            wr.ID,
+		DeprecatedUserID: admin.ID,
+		Initiator:        *wr.Initiator,
+	}))
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	for _, info := range runInfos {
+		t.Logf("%+v", info)
+	}
+	require.Equal(t, 0, len(runInfos))
+
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+
+	jobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wrDB.ID, wrDB.RunAttempt)
+	require.NoError(t, err)
+
+	var job1, job2, job3 bool
+
+	for _, j := range jobs {
+		t.Logf("%s >>> %s", j.JobID, j.Status)
+		if j.ID == jobRun1.ID {
+			if j.Status == sdk.V2WorkflowRunJobStatusCancelled {
+				job1 = true
+			}
+		}
+
+		if j.ID == jobRun2.ID {
+			if j.Status == sdk.V2WorkflowRunJobStatusWaiting {
+				job2 = true
+			}
+		}
+
+		if j.ID == jobRun3.ID {
+			if j.Status == sdk.V2WorkflowRunJobStatusWaiting {
+				job3 = true
+			}
+		}
+
+	}
+	require.True(t, job1)
+	require.True(t, job2)
+	require.True(t, job3)
 }

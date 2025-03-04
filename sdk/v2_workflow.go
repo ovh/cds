@@ -285,7 +285,7 @@ type WorkflowConcurrency struct {
 	Name             string           `json:"name"`
 	Order            ConcurrencyOrder `json:"order,omitempty"`
 	Pool             int64            `json:"pool,omitempty"`
-	CancelInProgress bool             `json:"cancel_in_progress"`
+	CancelInProgress bool             `json:"cancel-in-progress"`
 }
 
 type V2Job struct {

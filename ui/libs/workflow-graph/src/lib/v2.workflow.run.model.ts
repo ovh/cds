@@ -167,6 +167,8 @@ export class V2WorkflowRunJob {
 }
 
 export enum V2WorkflowRunJobStatus {
+    Blocked = 'Blocked',
+    Cancelled = 'Cancelled',
     Waiting = 'Waiting',
     Building = 'Building',
     Fail = 'Fail',
@@ -179,6 +181,7 @@ export enum V2WorkflowRunJobStatus {
 
 export function V2WorkflowRunJobStatusIsTerminated(s: V2WorkflowRunJobStatus): boolean {
     switch (s) {
+        case V2WorkflowRunJobStatus.Cancelled:
         case V2WorkflowRunJobStatus.Fail:
         case V2WorkflowRunJobStatus.Stopped:
         case V2WorkflowRunJobStatus.Success:
@@ -194,6 +197,7 @@ export function V2WorkflowRunJobStatusIsActive(s: V2WorkflowRunJobStatus): boole
         case V2WorkflowRunJobStatus.Waiting:
         case V2WorkflowRunJobStatus.Building:
         case V2WorkflowRunJobStatus.Scheduling:
+        case V2WorkflowRunJobStatus.Blocked:
             return true;
     }
     return false;

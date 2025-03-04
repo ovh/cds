@@ -63,7 +63,7 @@ func (api *API) cancelAbandonnedRunResult(ctx context.Context, db *gorp.DbMap, i
 
 	log.Debug(ctx, "cancelAbandonnedRunResult: %s", id)
 
-	runResult.Status = sdk.V2WorkflowRunResultStatusCanceled
+	runResult.Status = sdk.V2WorkflowRunResultStatusCancelled
 	if err := workflow_v2.UpdateRunResult(ctx, tx, runResult); err != nil {
 		return err
 	}
