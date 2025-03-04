@@ -92,6 +92,7 @@ type Status struct {
 	State       string `json:"state"`
 	URL         string `json:"url"`
 	Timestamp   int64  `json:"dateAdded"`
+	Parent      string `json:"parent"`
 }
 
 type Lines struct {
