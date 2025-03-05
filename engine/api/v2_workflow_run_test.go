@@ -190,13 +190,16 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
+	wName := sdk.RandomString(10)
+	assets.InsertRBAcWorkflow(t, db, sdk.WorkflowRoleTrigger, proj.Key, "github/"+repo.Name+"/"+wName, *lambda)
+
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
 		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
 		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
+		WorkflowName: wName,
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
 		RunAttempt:   0,
@@ -207,6 +210,12 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		Initiator: &sdk.V2Initiator{
 			UserID: lambda.ID,
 			User:   lambda.Initiator(),
+		},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     vcsServer.Name,
+				Repository: repo.Name,
+			},
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -348,6 +357,9 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 403, w.Code)
+
+	body := w.Body.String()
+	require.Contains(t, body, "gate conditions are not satisfied")
 }
 
 func TestRunManualJob_WrongGateCondition(t *testing.T) {
@@ -524,10 +536,14 @@ func TestRunManualSkippedJob(t *testing.T) {
 	reg := sdk.Region{Name: "build-test"}
 	require.NoError(t, region.Insert(context.TODO(), db, &reg))
 
-	admin, pwd := assets.InsertAdminUser(t, db)
+	// admin, pwd := assets.InsertAdminUser(t, db)
+	lambda, pwd := assets.InsertLambdaUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wName := sdk.RandomString(10)
+	assets.InsertRBAcWorkflow(t, db, sdk.WorkflowRoleTrigger, proj.Key, "github/"+repo.Name+"/"+wName, *lambda)
 
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
@@ -535,7 +551,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
 		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
+		WorkflowName: wName,
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
 		RunAttempt:   0,
@@ -544,8 +560,14 @@ func TestRunManualSkippedJob(t *testing.T) {
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
 		Initiator: &sdk.V2Initiator{
-			UserID: admin.ID,
-			User:   admin.Initiator(),
+			UserID: lambda.ID,
+			User:   lambda.Initiator(),
+		},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     vcsServer.Name,
+				Repository: repo.Name,
+			},
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
@@ -682,7 +704,7 @@ func TestRunManualSkippedJob(t *testing.T) {
 		"jobIdentifier": "job2",
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, lambda, pwd, http.MethodPost, uri, map[string]interface{}{
 		"approve": true,
 	})
 	w := httptest.NewRecorder()
@@ -693,8 +715,8 @@ func TestRunManualSkippedJob(t *testing.T) {
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
-			UserID:         admin.ID,
-			User:           admin.Initiator(),
+			UserID:         lambda.ID,
+			User:           lambda.Initiator(),
 			IsAdminWithMFA: true,
 		},
 	}))

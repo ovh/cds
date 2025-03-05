@@ -13,13 +13,14 @@ import (
 )
 
 func (api *API) hasRoleOnWorkflow(ctx context.Context, vars map[string]string, role string) error {
+	ctx = context.WithValue(ctx, cdslog.RbacRole, role)
 	auth := getUserConsumer(ctx)
 	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
 	projectKey := vars["projectKey"]
-	workflowName := vars["workflowName"]
+	workflowName := vars["workflow"]
 	workflowRunID := vars["workflowRunID"]
 
 	if supportMFA(ctx) && !isMFA(ctx) {
@@ -39,6 +40,7 @@ func (api *API) hasRoleOnWorkflow(ctx context.Context, vars map[string]string, r
 		}
 		vcsName = run.Contexts.Git.Server
 		repoName = run.Contexts.Git.Repository
+		workflowName = run.WorkflowName
 	} else {
 		// Retrieve VCSName
 		vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
@@ -72,7 +74,6 @@ func (api *API) hasRoleOnWorkflow(ctx context.Context, vars map[string]string, r
 		return err
 	}
 
-	ctx = context.WithValue(ctx, cdslog.RbacRole, role)
 	if !hasRole {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}

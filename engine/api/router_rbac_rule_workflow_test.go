@@ -121,7 +121,7 @@ workflows:
 				"projectKey":           proj.Key,
 				"vcsIdentifier":        vcs.Name,
 				"repositoryIdentifier": repo.Name,
-				"workflowName":         targetWorkflow,
+				"workflow":             targetWorkflow,
 			})
 			if tt.result {
 				require.NoError(t, err)

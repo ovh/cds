@@ -117,6 +117,21 @@ projects:
 	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
 }
 
+func InsertRBAcWorkflow(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey, workflow string, user sdk.AuthentifiedUser) {
+	perm := fmt.Sprintf(`name: perm-%s-workflow-%s
+workflows:
+  - role: %s
+    project: %s
+    workflows: [%s]
+    users: [%s]
+`, role, projKey, role, projKey, workflow, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.Workflows[0].RBACUsersIDs = []string{user.ID}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
 func InsertWorker(t *testing.T, ctx context.Context, db gorpmapper.SqlExecutorWithTx, hatcheryConsumer *sdk.AuthHatcheryConsumer, hatch sdk.Hatchery, workerName string, jobRun sdk.V2WorkflowRunJob) (*sdk.V2Worker, string) {
 	workerConsumer, err := authentication.NewConsumerWorkerV2(ctx, db, workerName, hatcheryConsumer)
 	require.NoError(t, err)
