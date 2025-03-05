@@ -946,7 +946,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				trackSudo(ctx, w)
 			}
 			if !hasRole {
-				return sdk.WithStack(sdk.ErrForbidden)
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger a workflow", theOneWhoTriggers.Username())
 			}
 
 			// Check runrequest git information regarding workflow
