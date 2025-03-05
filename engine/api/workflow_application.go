@@ -120,7 +120,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 				break
 			}
 			if lastErr != nil {
-				return err
+				return lastErr
 			}
 		}
 		return nil
