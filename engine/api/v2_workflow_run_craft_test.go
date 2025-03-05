@@ -183,6 +183,10 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 				},
 			},
 		},
+		Initiator: &sdk.V2Initiator{
+			UserID:         admin.ID,
+			IsAdminWithMFA: true,
+		},
 		RunEvent: sdk.V2WorkflowRunEvent{
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
@@ -324,6 +328,10 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 				},
 			},
 		},
+		Initiator: &sdk.V2Initiator{
+			UserID:         admin.ID,
+			IsAdminWithMFA: true,
+		},
 		RunEvent: sdk.V2WorkflowRunEvent{
 			HookType:  sdk.WorkflowHookTypeRepository,
 			Payload:   nil,
@@ -413,6 +421,8 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 
 	repoAction1 := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repoAction1")
 	repoAction2 := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repoAction2")
+
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -579,6 +589,7 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -747,6 +758,7 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -906,6 +918,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -1034,6 +1047,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnTag(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -1163,6 +1177,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -1321,6 +1336,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -1476,6 +1492,7 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -1638,6 +1655,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "bitbucketserver", "bitbucketserver")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -1802,6 +1820,7 @@ func TestCraftWorkflowFromTemplateFail(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -1977,6 +1996,7 @@ func TestComputeJobFromTemplate(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -2158,6 +2178,7 @@ func TestComputeJobFromMultiTemplate(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -2372,6 +2393,7 @@ func TestComputeJobFromTemplate_DuplicateJob(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -2563,6 +2585,7 @@ func TestComputeJobFromTemplate_AddingStageOnNonStagedWorkflow(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")

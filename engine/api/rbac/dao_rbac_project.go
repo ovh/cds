@@ -98,3 +98,8 @@ func loadRBACProjectByRoleAndPublic(ctx context.Context, db gorp.SqlExecutor, ro
 	q := gorpmapping.NewQuery(`SELECT * from rbac_project WHERE role = $1 AND all_users = true`).Args(role)
 	return getAllRBACProjects(ctx, db, q)
 }
+
+func loadRBACProjectByRoleAndVCSUserPublic(ctx context.Context, db gorp.SqlExecutor, role string) ([]rbacProject, error) {
+	q := gorpmapping.NewQuery(`SELECT * from rbac_project WHERE role = $1 AND all_vcs_users = true`).Args(role)
+	return getAllRBACProjects(ctx, db, q)
+}

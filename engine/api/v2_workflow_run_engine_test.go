@@ -1847,6 +1847,7 @@ func TestCreateJobsFromTemplatedMatrix(t *testing.T) {
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
@@ -2008,6 +2009,7 @@ spec:
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:            wr.ID,
 		DeprecatedUserID: admin.ID,
+		Initiator:        sdk.V2Initiator{UserID: admin.ID},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -2078,6 +2080,7 @@ func TestCreateJobsFromTemplatedMatrix_WithStage(t *testing.T) {
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
@@ -2250,6 +2253,7 @@ spec:
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:            wr.ID,
 		DeprecatedUserID: admin.ID,
+		Initiator:        sdk.V2Initiator{UserID: admin.ID},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -2535,7 +2539,7 @@ func TestRestartMatrixJob(t *testing.T) {
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
 		VariableSets: []sdk.RBACVariableSet{
@@ -2695,6 +2699,7 @@ spec:
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:            wr.ID,
+		Initiator:        sdk.V2Initiator{UserID: admin.ID},
 		DeprecatedUserID: admin.ID,
 	}))
 
@@ -2939,6 +2944,7 @@ func TestCreateJobsFromTemplatedMatrix_WithIntegrationInTemplate(t *testing.T) {
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
 
 	model := sdk.IntegrationModel{Name: sdk.RandomString(10), Event: true, DefaultConfig: sdk.IntegrationConfig{
 		"myparam": {
@@ -3143,6 +3149,7 @@ spec:
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:            wr.ID,
 		DeprecatedUserID: admin.ID,
+		Initiator:        sdk.V2Initiator{UserID: admin.ID},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
