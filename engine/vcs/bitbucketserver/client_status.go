@@ -35,7 +35,10 @@ func (client *bitbucketClient) SetStatus(ctx context.Context, buildStatus sdk.VC
 
 	log.Info(ctx, "sending build status for %s : %s %s - %s", buildStatus.GitHash, status.Key, status.Name, state)
 
-	if err := client.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", buildStatus.GitHash), nil, values, nil, Options{}); err != nil {
+	projectSlug := strings.Split(buildStatus.RepositoryFullname, "/")[0]
+	repo := strings.TrimPrefix(buildStatus.RepositoryFullname, projectSlug+"/")
+
+	if err := client.do(ctx, "POST", "core", fmt.Sprintf("/projects/%s/repos/%s/commits/%s/builds", projectSlug, repo, buildStatus.GitHash), nil, values, nil, Options{}); err != nil {
 		return sdk.WrapError(err, "Unable to post build-status name:%s status:%s", status.Name, state)
 	}
 	return nil
