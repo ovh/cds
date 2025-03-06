@@ -7,7 +7,6 @@ import { Environment } from 'app/model/environment.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { ApplicationStore } from 'app/service/application/application.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -68,7 +67,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     storeSub: Subscription;
 
     constructor(
-        private _applicationStore: ApplicationStore,
         private _routeActivated: ActivatedRoute,
         private _router: Router,
         private _toast: ToastService,
@@ -127,7 +125,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.application = cloneDeep(s.application);
                 }
 
-
                 if (this.application.usage) {
                     this.workflows = this.application.usage.workflows || [];
                     this.environments = this.application.usage.environments || [];
@@ -136,8 +133,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 }
                 this.initTabs();
 
-                // Update recent application viewed
-                this._applicationStore.updateRecentApplication(s.currentProjectKey, this.application);
                 this._cd.markForCheck();
             }, () => {
                 this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });

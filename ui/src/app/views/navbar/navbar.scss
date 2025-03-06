@@ -4,6 +4,14 @@
     background-color: #24292e !important;
 }
 
+:host {
+    ::ng-deep {
+        app-search-bar:has(>app-input-filter>input:focus) {
+            flex: 1;
+        }
+    }
+}
+
 .navbar {
     width: 100%;
     padding-left: 0;
@@ -18,61 +26,31 @@
         box-shadow: none;
     }
 
-    img {
-        height: 50px;
-        padding: 5px 10px;
+    .menu-right {
+        margin-left: 20px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        flex-direction: row-reverse;
+    }
+
+    .logo {
         margin-right: 30px;
-    }
 
-    .right.menu {
-        display: flex;
-        align-items: center;
-        margin-left: auto !important;
-    }
-
-    .icon.dropdown {
-        width: 55px;
-        display: flex;
-        height: 50px;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .ml12 {
-        margin-left: 12px;
-
-        svg {
-            width: 12px;
-            height: 12px;
+        img {
+            height: 50px;
+            padding: 5px 16px;
         }
-    }
-
-    .item {
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-
-    .item.link {
-        color: white;
-    }
-
-    .icon.popover {
-        width: 55px;
-        display: flex;
-        justify-content: center;
-    }
-
-    .dropdown.title {
-        color: white;
     }
 
     nz-tag {
         font-weight: bold;
+        margin-right: 20px;
     }
 
-    .search {
-        width: 300px;
-        margin-right: 15px;
+    app-search-bar {
+        width: 350px;
+        margin-right: 20px;
     }
 
     .details {
@@ -102,51 +80,35 @@
             }
         }
     }
-}
 
-i {
-    color: rgba(255, 255, 255, 0.85);
-}
+    [nz-dropdown] {
+        color: white;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 64px;
 
-li {
-    a {
-        width: 100%;
-    }
-}
-
-.bookmark {
-    .details {
-        .title {
-            font-size: 1.1em;
-
-            &.bold {
-                font-weight: bold;
-            }
+        div {
+            width: 20px;
+            display: flex;
+            margin-right: 6px;
+            align-items: center;
         }
     }
 
-    .info {
-        font-size: 0.8em;
+    [nz-popover] {
+        width: 60px;
+        height: 64px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
 
-        &.mt {
-            margin-top: 4px;
-            color: $polar_grey_3;
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.03);
         }
     }
 }
 
 nz-switch {
     margin-right: 10px;
-}
-
-.mt5 {
-    margin-top: 5px;
-}
-
-.helppopup {
-    width: 400px;
-}
-
-.borderRight {
-    border-right: 1px solid dimgrey;
 }

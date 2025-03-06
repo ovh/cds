@@ -134,7 +134,6 @@ var (
 	ErrInvalidKeyName                                = Error{ID: 125, Status: http.StatusBadRequest}
 	ErrRepoOperationTimeout                          = Error{ID: 126, Status: http.StatusRequestTimeout}
 	ErrInvalidGitBranch                              = Error{ID: 127, Status: http.StatusBadRequest}
-	ErrInvalidFavoriteType                           = Error{ID: 128, Status: http.StatusBadRequest}
 	ErrUnsupportedOSArchPlugin                       = Error{ID: 129, Status: http.StatusNotFound}
 	ErrInvalidPatternModel                           = Error{ID: 132, Status: http.StatusBadRequest}
 	ErrWorkerModelNoAdmin                            = Error{ID: 133, Status: http.StatusForbidden}
@@ -323,7 +322,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidKeyName.ID:                                "Invalid key name. Application key must have prefix 'app-'; environment key must have prefix 'env-'",
 	ErrRepoOperationTimeout.ID:                          "Analyzing repository took too much time",
 	ErrInvalidGitBranch.ID:                              "Invalid git.branch value, you cannot have an empty git.branch value in your default payload",
-	ErrInvalidFavoriteType.ID:                           "Invalid favorite type: must be 'project' or 'workflow'",
 	ErrUnsupportedOSArchPlugin.ID:                       "Unsupported os/architecture for this plugin",
 	ErrInvalidPatternModel.ID:                           "Invalid worker model pattern: name, type and main command are mandatory",
 	ErrWorkerModelNoAdmin.ID:                            "Forbidden: you are neither a CDS administrator or the administrator for the group in which you want to create the worker model",

@@ -45,8 +45,6 @@ func (api *API) getWorkflowsHandler() service.Handler {
 			dao.Filters.ApplicationRepository = filterByRepo
 		}
 
-		dao.Loaders.WithFavoritesForUserID = getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID
-
 		groupIDS := getUserConsumer(ctx).GetGroupIDs()
 		dao.Filters.GroupIDs = groupIDS
 		if isMaintainer(ctx) {
@@ -234,14 +232,13 @@ func (api *API) getWorkflowHandler() service.Handler {
 		}
 
 		opts := workflow.LoadOptions{
-			Minimal:                minimal, // if true, load only data from table workflow, not pipelines, app, env...
-			DeepPipeline:           withDeepPipelines,
-			WithIcon:               !withoutIcons,
-			WithLabels:             withLabels,
-			WithAsCodeUpdateEvent:  withAsCodeEvents,
-			WithIntegrations:       true,
-			WithTemplate:           withTemplate,
-			WithFavoritesForUserID: getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID,
+			Minimal:               minimal, // if true, load only data from table workflow, not pipelines, app, env...
+			DeepPipeline:          withDeepPipelines,
+			WithIcon:              !withoutIcons,
+			WithLabels:            withLabels,
+			WithAsCodeUpdateEvent: withAsCodeEvents,
+			WithIntegrations:      true,
+			WithTemplate:          withTemplate,
 		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, opts)
 		if err != nil {
@@ -922,7 +919,6 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 		dao.Filters.ApplicationRepository = FormString(r, "repository")
 		dao.Filters.AsCode = service.FormBool(r, "ascode")
 		dao.Loaders.WithRuns = service.FormInt(r, "runs")
-		dao.Loaders.WithFavoritesForUserID = getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID
 
 		groupIDS := getUserConsumer(ctx).GetGroupIDs()
 		dao.Filters.GroupIDs = groupIDS

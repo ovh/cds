@@ -139,4 +139,22 @@
             margin-bottom: 5px;
         }
     }
+
+    &:hover {
+        app-favorite-button {
+            visibility: visible;
+        }
+    }
+
+    app-favorite-button {
+        visibility: hidden;
+        font-size: 14px;
+        margin-right: 5px;
+    }
+
+    ::ng-deep {
+        app-favorite-button:has(>.content>[nz-icon].active) {
+            visibility: visible;
+        }
+    }
 }

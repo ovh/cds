@@ -5,7 +5,6 @@ import { NgxsModule, Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -27,7 +26,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import * as ProjectAction from './project.action';
-import { ProjectState, ProjectStateModel } from './project.state';
+import { ProjectState } from './project.state';
 import { WorkflowState } from './workflow.state';
 
 describe('Environment', () => {
@@ -41,7 +40,6 @@ describe('Environment', () => {
                 NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState, EnvironmentState])
             ],
             providers: [
-                NavbarService,
                 WorkflowService,
                 WorkflowRunService,
                 ProjectStore,

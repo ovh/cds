@@ -8,6 +8,78 @@ import { Filter } from "app/shared/input/input-filter.component";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom, Subscription } from "rxjs";
 
+export class Link {
+	path: Array<string>;
+	params: { [key: string]: string };
+}
+
+export class DisplaySearchResult {
+	result: SearchResult;
+	unfold: boolean;
+	defaultLink: Link;
+	exploreLink: Link;
+	runLink: Link;
+
+	constructor(r: SearchResult) {
+		this.result = r;
+		this.generateLinks();
+	}
+
+	generateLinks(): void {
+		const splitted = this.result.id.split('/');
+		switch (this.result.type) {
+			case SearchResultType.Workflow:
+				const project = splitted.shift();
+				const workflow_path = splitted.join('/');
+				const vcs = splitted.shift();
+				const name = splitted.pop();
+				const repository = splitted.join('/');
+				this.exploreLink = {
+					path: ['/project', project, 'explore', 'vcs', vcs, 'repository', repository, 'workflow', name],
+					params: {}
+				}
+				this.runLink = {
+					path: ['/project', project, 'run'],
+					params: { workflow: workflow_path }
+				};
+				this.defaultLink = this.runLink;
+				break;
+			case SearchResultType.WorkflowLegacy:
+				this.defaultLink = {
+					path: ['/project', splitted[0], 'workflow', splitted[1]],
+					params: {}
+				};
+				break;
+			case SearchResultType.Project:
+				this.exploreLink = {
+					path: ['/project', this.result.id, 'explore'],
+					params: {}
+				}
+				this.runLink = {
+					path: ['/project', this.result.id, 'run'],
+					params: {}
+				};
+				this.defaultLink = {
+					path: ['/project', this.result.id],
+					params: {}
+				}
+				break;
+		}
+	}
+
+	generateVariantRunLink(variant?: string): Link {
+		switch (this.result.type) {
+			case SearchResultType.Workflow:
+				return {
+					path: this.runLink.path,
+					params: { ...this.runLink.params, ref: variant }
+				};
+			default:
+				return null;
+		}
+	}
+}
+
 @Component({
 	selector: 'app-search',
 	templateUrl: './search.html',
@@ -20,7 +92,7 @@ export class SearchComponent implements OnInit, OnDestroy {
 
 	queryParamsSub: Subscription;
 	filters: Array<Filter> = [];
-	results: Array<SearchResult> = [];
+	results: Array<DisplaySearchResult> = [];
 	loading: boolean;
 	filterText: string = '';
 	totalCount: number = 0;
@@ -93,10 +165,7 @@ export class SearchComponent implements OnInit, OnDestroy {
 				this.pageIndex ? (this.pageIndex - 1) * SearchComponent.DEFAULT_PAGESIZE : 0,
 				SearchComponent.DEFAULT_PAGESIZE));
 			this.totalCount = res.totalCount;
-			this.results = res.results.map(r => ({
-				...r,
-				variants: r.variants ? r.variants.filter((v, i) => r.variants.indexOf(v) === i) : null
-			}));
+			this.results = res.results.map(r => new DisplaySearchResult(r));
 		} catch (e: any) {
 			this._messageService.error(`Unable to search: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 		}
@@ -125,8 +194,7 @@ export class SearchComponent implements OnInit, OnDestroy {
 
 		this._router.navigate([], {
 			relativeTo: this._activatedRoute,
-			queryParams,
-			replaceUrl: true
+			queryParams
 		});
 	}
 
@@ -136,34 +204,13 @@ export class SearchComponent implements OnInit, OnDestroy {
 		this.saveSearchInQueryParams();
 	}
 
-	generateResultLink(res: SearchResult): Array<string> {
-		const splitted = res.id.split('/');
-		switch (res.type) {
-			case SearchResultType.Workflow:
-				const project = splitted.shift();
-				return ['/project', project, 'run'];
-			case SearchResultType.WorkflowLegacy:
-				return ['/project', splitted[0], 'workflow', splitted[1]];
-			case SearchResultType.Project:
-				return ['/project', res.id];
-			default:
-				return [];
+	unfoldItem(id: string): void {
+		for (let i = 0; i < this.results.length; i++) {
+			if (this.results[i].result.id === id) {
+				this.results[i].unfold = true;
+				break;
+			}
 		}
-	}
-
-	generateResulQueryParams(res: SearchResult, variant?: string): any {
-		const splitted = res.id.split('/');
-		switch (res.type) {
-			case SearchResultType.Workflow:
-				splitted.shift();
-				const workflow_path = splitted.join('/');
-				let params = { workflow: workflow_path };
-				if (variant) {
-					params['ref'] = variant;
-				}
-				return params;
-			default:
-				return {};
-		}
+		this._cd.markForCheck();
 	}
 }

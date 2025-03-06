@@ -28,14 +28,13 @@ import (
 
 // LoadOptions custom option for loading workflow
 type LoadOptions struct {
-	Minimal                bool
-	DeepPipeline           bool
-	WithLabels             bool
-	WithIcon               bool
-	WithAsCodeUpdateEvent  bool
-	WithIntegrations       bool
-	WithTemplate           bool
-	WithFavoritesForUserID string
+	Minimal               bool
+	DeepPipeline          bool
+	WithLabels            bool
+	WithIcon              bool
+	WithAsCodeUpdateEvent bool
+	WithIntegrations      bool
+	WithTemplate          bool
 }
 
 type asCodeLoader struct {
@@ -53,7 +52,6 @@ func (loadOpts LoadOptions) GetWorkflowDAO() WorkflowDAO {
 		dao.Loaders.WithApplications = true
 		dao.Loaders.WithEnvironments = true
 		dao.Loaders.WithIntegrations = true
-		dao.Loaders.WithFavoritesForUserID = loadOpts.WithFavoritesForUserID
 
 		if loadOpts.WithIcon {
 			dao.Loaders.WithIcon = true
@@ -97,7 +95,6 @@ type LoadAllWorkflowsOptionsLoaders struct {
 	WithTemplate           bool
 	WithLabels             bool
 	WithAudits             bool
-	WithFavoritesForUserID string
 	WithRuns               int
 }
 
@@ -291,13 +288,6 @@ func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
 		loaders = append(loaders, func(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withLabels(ctx, db, ws)
-		})
-	}
-
-	if dao.Loaders.WithFavoritesForUserID != "" {
-		loaders = append(loaders, func(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
-			ws := i.(*[]Workflow)
-			return dao.withFavorites(ctx, db, ws, dao.Loaders.WithFavoritesForUserID)
 		})
 	}
 
@@ -802,22 +792,6 @@ func (dao WorkflowDAO) withRuns(ctx context.Context, db gorp.SqlExecutor, ws *[]
 				w.Runs = append(w.Runs, run)
 			}
 		}
-	}
-
-	return nil
-}
-
-func (dao WorkflowDAO) withFavorites(ctx context.Context, db gorp.SqlExecutor, ws *[]Workflow, userID string) error {
-	_, end := telemetry.Span(ctx, "workflowDAO.withFavorites")
-	defer end()
-	workflowIDs, err := UserFavoriteWorkflowIDs(db, userID)
-	if err != nil {
-		return err
-	}
-
-	for x := range *ws {
-		w := &(*ws)[x]
-		w.Favorite = sdk.IsInInt64Array(w.ID, workflowIDs)
 	}
 
 	return nil

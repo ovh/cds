@@ -3,16 +3,14 @@ import { Injectable } from '@angular/core';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
-import { ProjectIntegration } from 'app/model/integration.model';
-import { Key } from 'app/model/keys.model';
 import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { cloneDeep } from 'lodash-es';
 import { catchError, tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
 import { of } from 'rxjs';
+import { Bookmark, BookmarkType } from 'app/model/bookmark.model';
 
 export class ProjectStateModel {
     public project: Project;
@@ -35,7 +33,6 @@ export class ProjectState {
 
     constructor(
         private _http: HttpClient,
-        private _navbarService: NavbarService,
         private _projectService: ProjectService
     ) { }
 
@@ -363,28 +360,6 @@ export class ProjectState {
                 ...state,
                 project: Object.assign({}, state.project, <Project>{ workflow_names }),
             });
-        }));
-    }
-
-
-    //  ------- Misc --------- //
-    @Action(ProjectAction.UpdateFavoriteProject)
-    updateFavorite(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateFavoriteProject) {
-        const state = ctx.getState();
-
-        return this._http.post('/user/favorite', {
-            type: 'project',
-            project_key: action.payload.projectKey
-        }).pipe(tap(() => {
-            this._navbarService.refreshData();
-            if (state.project && state.project.key) {
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
-                });
-            }
-            // TODO: dispatch action on global state to update project in list and user state
-            // TODO: move this one on user state and just update state here, not XHR
         }));
     }
 

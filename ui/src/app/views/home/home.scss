@@ -1,0 +1,101 @@
+:host {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+
+  ::ng-deep {
+    app-search-bar>app-input-filter>input {
+      border-radius: 10px;
+      padding-left: 20px;
+      padding-right: 20px;
+      font-size: 18px;
+      height: 50px;
+    }
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 40px 20px;
+  max-height: 100%;
+  overflow-y: auto;
+
+  .logo {
+    flex: 1;
+    display: flex;
+    max-height: 250px;
+    flex-direction: column-reverse;
+    margin-bottom: 60px;
+
+    img {
+      height: 100px;
+      margin-top: 100px;
+    }
+  }
+
+  app-search-bar {
+    width: 100%;
+    max-width: 650px;
+  }
+
+  h4 {
+    margin-top: 80px;
+  }
+
+  nz-list {
+    width: 100%;
+    max-width: 550px;
+    overflow-y: auto;
+    margin-bottom: 80px;
+
+    .bookmark {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      overflow: hidden;
+      color: inherit;
+      align-items: center;
+
+      nz-tag {
+        margin: 0;
+      }
+
+      &:hover {
+        color: #177ddc;
+      }
+
+      .title {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+
+        .label {
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+
+        .id {
+          flex: 1;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          margin-left: 5px;
+          margin-right: 5px;
+          overflow: hidden;
+          color: rgba(0, 0, 0, .45);
+
+          :host-context(.night) & {
+            color: rgba(255, 255, 255, 0.45);
+          }
+        }
+      }
+
+      button {
+        margin-left: 15px;
+      }
+    }
+  }
+}

@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { Router } from "@angular/router";
-import { NavbarSearchItem } from "app/model/navbar.model";
 import { SearchResult, SearchResultType } from "app/model/search.model";
 import { SearchService } from "app/service/search.service";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
@@ -9,6 +8,7 @@ import { ErrorUtils } from "app/shared/error.utils";
 import { Filter, InputFilterComponent, Suggestion } from "app/shared/input/input-filter.component";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom } from "rxjs";
+import { DisplaySearchResult } from "./search.component";
 
 @Component({
 	selector: 'app-search-bar',
@@ -18,11 +18,11 @@ import { lastValueFrom } from "rxjs";
 })
 @AutoUnsubscribe()
 export class SearchBarComponent implements OnInit, OnDestroy {
-	@ViewChild('searchBar') searchBar: InputFilterComponent<NavbarSearchItem>;
+	@ViewChild('searchBar') searchBar: InputFilterComponent<Suggestion<SearchResult>>;
 
 	searchFilterText: string = '';
 	searchFilters: Array<Filter> = [];
-	searchSuggestions: Array<Suggestion<SearchResult>> = [];
+	searchSuggestions: Array<Suggestion<DisplaySearchResult>> = [];
 	loading: boolean;
 
 	constructor(
@@ -38,58 +38,8 @@ export class SearchBarComponent implements OnInit, OnDestroy {
 		this.loadFilters();
 	}
 
-	selectSuggestion(value: SearchResult): void {
-		const splitted = value.id.split('/');
-		switch (value.type) {
-			case SearchResultType.Workflow:
-				const project = splitted.shift();
-				const workflow_path = splitted.join('/');
-				this._router.navigate(['/project', project, 'run'], {
-					queryParams: {
-						workflow: workflow_path
-					}
-				});
-				return;
-			case SearchResultType.WorkflowLegacy:
-				this._router.navigate(['/project', splitted[0], 'workflow', splitted[1]]);
-				return;
-			case SearchResultType.Project:
-				this._router.navigate(['/project', value.id]);
-				return;
-			default:
-				return;
-		}
-	}
-
-	generateResultLink(res: SearchResult): Array<string> {
-		const splitted = res.id.split('/');
-		switch (res.type) {
-			case SearchResultType.Workflow:
-				const project = splitted.shift();
-				return ['/project', project, 'run'];
-			case SearchResultType.WorkflowLegacy:
-				return ['/project', splitted[0], 'workflow', splitted[1]];
-			case SearchResultType.Project:
-				return ['/project', res.id];
-			default:
-				return [];
-		}
-	}
-
-	generateResulQueryParams(res: SearchResult, variant?: string): any {
-		const splitted = res.id.split('/');
-		switch (res.type) {
-			case SearchResultType.Workflow:
-				splitted.shift();
-				const workflow_path = splitted.join('/');
-				let params = { workflow: workflow_path };
-				if (variant) {
-					params['ref'] = variant;
-				}
-				return params;
-			default:
-				return {};
-		}
+	selectSuggestion(value: DisplaySearchResult): void {
+		this._router.navigate(value.defaultLink.path, value.defaultLink.params);
 	}
 
 	submitSearch(): void {
@@ -107,8 +57,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
 		});
 
 		this._router.navigate(['/search'], {
-			queryParams: { ...mFilters },
-			replaceUrl: true
+			queryParams: { ...mFilters }
 		});
 	}
 
@@ -140,7 +89,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
 			this.searchSuggestions = res.results.map(r => ({
 				key: r.id,
 				label: `${r.label} - ${r.id}`,
-				data: r,
+				data: new DisplaySearchResult(r),
 			}));
 		} catch (e: any) {
 			this._messageService.error(`Unable to search: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });

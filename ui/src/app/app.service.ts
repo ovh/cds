@@ -9,7 +9,6 @@ import { UpdateMaintenance } from 'app/store/cds.action';
 import { concatMap, first } from 'rxjs/operators';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
-import { NavbarService } from './service/navbar/navbar.service';
 import { RouterService } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
@@ -53,7 +52,6 @@ export class AppService {
         private _toast: ToastService,
         private _workflowRunService: WorkflowRunService,
         private _store: Store,
-        private _navbarService: NavbarService,
         private _analysisService: AnalysisService
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
@@ -111,15 +109,6 @@ export class AppService {
             event.type_event === EventType.WORKFLOW_ADD || event.type_event === EventType.WORKFLOW_UPDATE ||
             event.type_event === EventType.WORKFLOW_DELETE) {
             await this.updateProjectCache(event);
-
-            switch (event.type_event) {
-                case EventType.APPLICATION_UPDATE:
-                case EventType.WORKFLOW_UPDATE:
-                    this._navbarService.refreshData();
-                    break;
-                case EventType.PROJECT_REPOSITORY_REMOVE:
-                    break;
-            }
         }
         if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
             await this.updateApplicationCache(event);

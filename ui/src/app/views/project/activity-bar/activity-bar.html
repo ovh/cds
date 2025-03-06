@@ -20,3 +20,5 @@
 		<span nz-icon nzType="setting" nzTheme="outline"></span>
 	</button>
 </a>
+
+<app-favorite-button *ngIf="project" type="project" [id]="project.key"></app-favorite-button>

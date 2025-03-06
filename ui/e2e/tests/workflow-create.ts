@@ -1,6 +1,6 @@
 import config from '../config';
 import LoginPage from '../pages/login'
-import NavbarPage from '../pages/navabar';
+import NavbarPage from '../pages/navbar';
 import ProjectCreatePage from '../pages/project-create';
 import ProjectPage from '../pages/project';
 import WorkflowCreatePage from '../pages/workflow-create';

@@ -120,8 +120,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
                 // If a node is selected, update it
                 this.direction = this._workflowStore.getDirection(s.projectKey, this.detailedWorkflow.name);
-                this._workflowStore.updateRecentWorkflow(s.projectKey, this.detailedWorkflow);
-
+                
                 if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
                     return;
                 }

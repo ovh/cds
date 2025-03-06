@@ -230,11 +230,6 @@ export class ExternalChangeWorkflow {
     constructor(public payload: { projectKey: string, workflowName: string }) { }
 }
 
-export class UpdateFavoriteWorkflow {
-    static readonly type = '[Workflow] Update Workflow Favorite';
-    constructor(public payload: { projectKey: string, workflowName: string }) { }
-}
-
 export class CleanWorkflowState {
     static readonly type = '[Workflow] Clean Workflow State';
     constructor() { }

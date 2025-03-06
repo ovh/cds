@@ -41,30 +41,6 @@ func (c *client) UserGetGroups(ctx context.Context, username string) (map[string
 	return res, nil
 }
 
-// UpdateFavorite Update favorites (add or delete) return updated workflow or project
-func (c *client) UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error) {
-	switch params.Type {
-	case "workflow":
-		var wf sdk.Workflow
-		if _, err := c.PostJSON(ctx, "/user/favorite", params, &wf); err != nil {
-			return wf, err
-		}
-		return wf, nil
-	case "project":
-		var proj sdk.Project
-		if _, err := c.PostJSON(ctx, "/user/favorite", params, &proj); err != nil {
-			return proj, err
-		}
-		return proj, nil
-	}
-
-	var res interface{}
-	if _, err := c.PostJSON(ctx, "/user/favorite", params, &res); err != nil {
-		return res, err
-	}
-	return res, nil
-}
-
 func (c *client) UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error) {
 	var res sdk.SchemaResponse
 	if _, err := c.GetJSON(ctx, "/user/schema", &res); err != nil {

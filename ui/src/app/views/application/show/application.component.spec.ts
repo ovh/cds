@@ -13,17 +13,14 @@ import { UserService } from 'app/service/user/user.service';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { AddApplicationVariable, DeleteApplicationVariable, UpdateApplicationVariable } from 'app/store/applications.action';
 import { ApplicationStateModel } from 'app/store/applications.state';
-import { ProjectStateModel } from 'app/store/project.state';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
 import { ApplicationService } from 'app/service/application/application.service';
-import { ApplicationStore } from 'app/service/application/application.store';
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
@@ -45,7 +42,6 @@ import { ApplicationShowComponent } from './application.component';
 describe('CDS: Application', () => {
 
     let injector: Injector;
-    let appStore: ApplicationStore;
     let store: Store;
     let router: Router;
     let routerService: RouterService;
@@ -54,7 +50,6 @@ describe('CDS: Application', () => {
         await TestBed.configureTestingModule({
             declarations: [],
             providers: [
-                ApplicationStore,
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
@@ -62,7 +57,6 @@ describe('CDS: Application', () => {
                 VariableService,
                 EnvironmentService,
                 MonitoringService,
-                NavbarService,
                 ApplicationWorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ToastService, useClass: MockToast },
@@ -91,7 +85,6 @@ describe('CDS: Application', () => {
         }).compileComponents();
 
         injector = getTestBed();
-        appStore = injector.get(ApplicationStore);
         store = injector.get(Store);
         router = injector.get(Router);
         routerService = injector.get(RouterService);
@@ -100,15 +93,11 @@ describe('CDS: Application', () => {
 
     afterEach(() => {
         injector = undefined;
-        appStore = undefined;
         store = undefined;
         router = undefined;
     });
 
     it('Load component + load application', fakeAsync(() => {
-
-        spyOn(appStore, 'updateRecentApplication');
-
         let callOrder = 0;
         spyOn(store, 'select').and.callFake(() => {
             if (callOrder === 0) {
@@ -133,14 +122,11 @@ describe('CDS: Application', () => {
         expect(component).toBeTruthy();
 
         expect(fixture.componentInstance.application.name).toBe('app1');
-        expect(appStore.updateRecentApplication).toHaveBeenCalled();
-
     }));
 
     it('Load component + load application with error', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
 
-        spyOn(appStore, 'updateRecentApplication');
         spyOn(router, 'navigate');
 
         // Create component
@@ -152,7 +138,6 @@ describe('CDS: Application', () => {
 
         tick(250);
 
-        expect(appStore.updateRecentApplication).not.toHaveBeenCalled();
         expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1'], { queryParams: { tab: 'applications' } });
     }));
 

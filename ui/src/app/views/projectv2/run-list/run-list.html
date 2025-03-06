@@ -58,7 +58,8 @@
 					<div class="run-avatar">
 						<span *ngIf="run.status === 'Success'" class="success" nz-icon nzType="check-circle"
 							nzTheme="outline"></span>
-						<span *ngIf="run.status === 'Cancelled'" class="cancel" nz-icon nzType="close-circle" nzTheme="outline"></span>
+						<span *ngIf="run.status === 'Cancelled'" class="cancel" nz-icon nzType="close-circle"
+							nzTheme="outline"></span>
 						<span *ngIf="run.status === 'Fail'" class="fail" nz-icon nzType="close-circle" nzTheme="outline"></span>
 						<span *ngIf="run.status === 'Stopped'" class="fail" nz-icon nzType="pause-circle" nzTheme="outline"></span>
 						<span *ngIf="run.status === 'Building'" class="building" nz-icon nzType="play-circle"
@@ -140,10 +141,10 @@
 			</ng-container>
 		</nz-list-item>
 		<nz-list-empty *ngIf="!loading && totalCount === 0" [nzNoResult]="emptyList"></nz-list-empty>
+		<ng-template #emptyList>
+			<nz-empty nzNotFoundContent="No result found"></nz-empty>
+		</ng-template>
 	</nz-list>
-	<ng-template #emptyList>
-		<nz-empty nzNotFoundContent="No result found"></nz-empty>
-	</ng-template>
 	<div *ngIf="totalCount > 0" class="footer">
 		{{totalCount}} results - sorted by
 		<nz-select [ngModel]="sort" (ngModelChange)="onSortChange($event)" nzBorderless>

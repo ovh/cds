@@ -4,6 +4,7 @@ import { AppModule } from 'app/app.module';
 import { APIConfigGuard } from './guard/api-config.guard';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { SearchComponent } from './views/search/search.component';
+import { HomeComponent } from './views/home/home.component';
 
 const routes: Routes = [
     {
@@ -11,11 +12,14 @@ const routes: Routes = [
         canActivateChild: [AuthenticationGuard, APIConfigGuard],
         children: [
             {
-                path: '', redirectTo: 'project', pathMatch: 'full'
+                path: '',
+                component: HomeComponent,
+                data: { title: 'Home' }
             },
             {
-                path: 'favorite', loadChildren: () => import('app/views/favorite/favorite.module')
-                    .then(m => m.FavoriteModule), data: { title: 'Bookmarks' }
+                path: 'search',
+                component: SearchComponent,
+                data: { title: 'Search' }
             },
             {
                 path: 'project', loadChildren: () => import('app/views/project/project.module')
@@ -28,11 +32,6 @@ const routes: Routes = [
             {
                 path: 'admin', loadChildren: () => import('app/views/admin/admin.module')
                     .then(m => m.AdminModule), data: { title: 'Admin' }
-            },
-            {
-                path: 'search',
-                component: SearchComponent,
-                data: { title: 'Search' }
             }
         ]
     },

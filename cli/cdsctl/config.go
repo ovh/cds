@@ -290,7 +290,7 @@ func discoverConf(ctxArg []cli.Arg) ([]string, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot get name from current repository")
 			}
-			ps, err := client.ProjectList(true, true, false, cdsclient.Filter{Name: "repo", Value: name})
+			ps, err := client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
 			if err != nil {
 				return nil, err
 			}
@@ -303,7 +303,7 @@ func discoverConf(ctxArg []cli.Arg) ([]string, error) {
 		}
 
 		if projects == nil {
-			ps, err := client.ProjectList(false, false, false)
+			ps, err := client.ProjectList(false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -337,7 +337,7 @@ func discoverConf(ctxArg []cli.Arg) ([]string, error) {
 			if project == nil {
 				// if the project found for current repo was not selected load all projects list
 				if repoExists && len(projects) == 1 {
-					ps, err := client.ProjectList(false, false, false)
+					ps, err := client.ProjectList(false, false)
 					if err != nil {
 						return nil, err
 					}

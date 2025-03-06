@@ -5,7 +5,6 @@ import { NgxsModule, Store } from '@ngxs/store';
 import { AuditWorkflow } from 'app/model/audit.model';
 import { Label, Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -30,7 +29,6 @@ describe('Workflows', () => {
         TestBed.configureTestingModule({
             providers: [
                 RouterService,
-                NavbarService,
                 WorkflowService,
                 WorkflowRunService,
                 ProjectStore,
@@ -422,49 +420,6 @@ description: some description`;
             expect(wfs.workflow.project_key).toEqual(testProjectKey);
             expect(wfs.workflow.labels).toBeTruthy();
             expect(wfs.workflow.preview.name).toEqual('wf1preview');
-        });
-    }));
-
-    it('update favorite', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
-        let workflow = new Workflow();
-        workflow.name = 'wf1';
-        workflow.project_key = testProjectKey;
-        let label = new Label();
-        label.name = 'my label';
-        label.id = 2;
-        workflow.labels = [label];
-        store.dispatch(new workflowsActions.CreateWorkflow({
-            projectKey: testProjectKey,
-            workflow
-        }));
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/workflows')).flush(workflow);
-        store.selectOnce(WorkflowState.current).subscribe((wfs: WorkflowStateModel) => {
-            expect(wfs.workflow).toBeTruthy();
-            expect(wfs.workflow.name).toEqual('wf1');
-            expect(wfs.workflow.project_key).toEqual(testProjectKey);
-        });
-        store.dispatch(new workflowsActions.UpdateFavoriteWorkflow({
-            projectKey: testProjectKey,
-            workflowName: 'wf1'
-        }));
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/user/favorite')).flush(null);
-        store.selectOnce(WorkflowState.current).subscribe((wfs: WorkflowStateModel) => {
-            expect(wfs.workflow).toBeTruthy();
-            expect(wfs.workflow.name).toEqual('wf1');
-            expect(wfs.workflow.project_key).toEqual(testProjectKey);
-            expect(wfs.workflow.favorite).toEqual(true);
-        });
-        store.dispatch(new workflowsActions.UpdateFavoriteWorkflow({
-            projectKey: testProjectKey,
-            workflowName: 'wf1'
-        }));
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/user/favorite')).flush(null);
-        store.selectOnce(WorkflowState.current).subscribe((wfs: WorkflowStateModel) => {
-            expect(wfs.workflow).toBeTruthy();
-            expect(wfs.workflow.name).toEqual('wf1');
-            expect(wfs.workflow.project_key).toEqual(testProjectKey);
-            expect(wfs.workflow.favorite).toEqual(false);
         });
     }));
 });

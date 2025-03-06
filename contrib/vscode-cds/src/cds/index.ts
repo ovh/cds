@@ -100,7 +100,6 @@ export class CDS {
                     key: projectKey,
                     name: projectKey,
                     description: '',
-                    favorite: 'false',
                     found: false,
                 };
             }

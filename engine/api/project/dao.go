@@ -364,16 +364,3 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 
 	return &proj, nil
 }
-
-// UpdateFavorite add or delete project from user favorites
-func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID string, add bool) error {
-	var query string
-	if add {
-		query = "INSERT INTO project_favorite (authentified_user_id, project_id) VALUES ($1, $2)"
-	} else {
-		query = "DELETE FROM project_favorite WHERE authentified_user_id = $1 AND project_id = $2"
-	}
-
-	_, err := db.Exec(query, userID, projectID)
-	return sdk.WithStack(err)
-}

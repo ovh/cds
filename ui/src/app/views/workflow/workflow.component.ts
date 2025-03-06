@@ -21,8 +21,7 @@ import {
     CleanWorkflowRun,
     CleanWorkflowState,
     GetWorkflow,
-    SelectHook,
-    UpdateFavoriteWorkflow
+    SelectHook
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
@@ -55,7 +54,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     eventsRouteSubscription: Subscription;
 
     loading = true;
-    loadingFav = false;
 
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
@@ -188,22 +186,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                 }
             }
         });
-    }
-
-    updateFav() {
-        if (this.loading || !this.workflow) {
-            return;
-        }
-        this.loadingFav = true;
-        this._cd.markForCheck();
-        this._store.dispatch(new UpdateFavoriteWorkflow({
-            projectKey: this.project.key,
-            workflowName: this.workflow.name
-        })).pipe(finalize(() => {
-            this.loadingFav = false;
-            this._cd.markForCheck()
-        }))
-            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')));
     }
 
     showTemplateFrom(): void {
