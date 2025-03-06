@@ -2342,6 +2342,7 @@ GDFkaTe3nUJdYV4=
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
 
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkflow, proj1.Key, *u)
 
 	// Create VCS
@@ -3060,6 +3061,7 @@ GDFkaTe3nUJdYV4=
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkflow, proj1.Key, *u)
 

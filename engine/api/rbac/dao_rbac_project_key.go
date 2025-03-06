@@ -95,6 +95,30 @@ func loadPublicProjectKeysByRole(ctx context.Context, db gorp.SqlExecutor, role 
 	return projectKeys, nil
 }
 
+func loadVCSUserPublicProjectKeysByRole(ctx context.Context, db gorp.SqlExecutor, role string) (sdk.StringSlice, error) {
+	rbacProjects, err := loadRBACProjectByRoleAndVCSUserPublic(ctx, db, role)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make(sdk.Int64Slice, 0, len(rbacProjects))
+	for _, rp := range rbacProjects {
+		ids = append(ids, rp.ID)
+	}
+	ids.Unique()
+
+	rbacProjectKeys, err := loadAllRBACProjectKeys(ctx, db, ids)
+	if err != nil {
+		return nil, err
+	}
+	projectKeys := make(sdk.StringSlice, 0, len(rbacProjectKeys))
+	for _, rpi := range rbacProjectKeys {
+		projectKeys = append(projectKeys, rpi.ProjectKey)
+	}
+	projectKeys.Unique()
+	return projectKeys, nil
+}
+
 func LoadAllProjectKeysAllowedForVCSUser(ctx context.Context, db gorp.SqlExecutor, role string, user sdk.RBACVCSUser) (sdk.StringSlice, error) {
 	btes, _ := json.Marshal([]sdk.RBACVCSUser{user})
 	var ids []int64
@@ -110,6 +134,13 @@ func LoadAllProjectKeysAllowedForVCSUser(ctx context.Context, db gorp.SqlExecuto
 	for _, rpi := range keys {
 		projectKeys = append(projectKeys, rpi.ProjectKey)
 	}
+
+	keysPublic, err := loadVCSUserPublicProjectKeysByRole(ctx, db, role)
+	if err != nil {
+		return nil, err
+	}
+	projectKeys = append(projectKeys, keysPublic...)
+
 	projectKeys.Unique()
 
 	log.Debug(ctx, "LoadAllProjectKeysAllowedForVCSUser> %s has role %q on %+v", string(btes), role, projectKeys)

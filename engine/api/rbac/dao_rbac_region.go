@@ -115,6 +115,11 @@ func loadRBACRegionOnAllUsers(ctx context.Context, db gorp.SqlExecutor, role str
 	return getAllRBACRegions(ctx, db, q)
 }
 
+func loadRBACRegionOnAllVCSUsers(ctx context.Context, db gorp.SqlExecutor, role string) ([]sdk.RBACRegion, error) {
+	q := gorpmapping.NewQuery("SELECT * from rbac_region WHERE role = $1 AND all_vcs_users = true").Args(role)
+	return getAllRBACRegions(ctx, db, q)
+}
+
 func LoadRBACByRegionID(ctx context.Context, db gorp.SqlExecutor, regionID string) ([]sdk.RBAC, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM rbac_region WHERE region_id = $1`).Args(regionID)
 	rbRegions, err := getAllRBACRegions(ctx, db, query)
@@ -157,4 +162,29 @@ func HasRoleOnRegion(ctx context.Context, db gorp.SqlExecutor, role string, regi
 		}
 	}
 	return false, nil
+}
+
+func HasVCSUserRoleOnRegion(ctx context.Context, db gorp.SqlExecutor, role string, regionID string, vcsuser sdk.RBACVCSUser) (bool, error) {
+	// Load also rbac_region with all users allowed
+	rbacRegionsAllVCSUsers, err := loadRBACRegionOnAllVCSUsers(ctx, db, role)
+	if err != nil {
+		return false, err
+	}
+	for _, rr := range rbacRegionsAllVCSUsers {
+		if rr.RegionID == regionID {
+			return true, nil
+		}
+	}
+
+	rbacRegions, err := LoadRegionIDsByRoleAndVCSUSer(ctx, db, role, vcsuser)
+	if err != nil {
+		return false, err
+	}
+	for _, rr := range rbacRegions {
+		if rr.RegionID == regionID {
+			return true, nil
+		}
+	}
+	return false, nil
+
 }

@@ -171,24 +171,15 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 	// If no project key in path, get it from workflow run
 	if projKey == "" || projKey == ef.currentProject {
 		projKey = ef.currentProject
-	} else if !ef.initiator.IsAdminWithMFA {
-		// Verify project read permission
-		if ef.initiator.IsUser() {
-			can, err := rbac.HasRoleOnProjectAndUserID(ctx, db, sdk.ProjectRoleRead, ef.initiator.UserID, projKey)
-			if err != nil {
-				return "", "", err
-			}
-			if !can {
-				return "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
-			}
-		} else {
-			can, err := rbac.HasRoleOnProjectAndVCSUser(ctx, db, sdk.ProjectRoleRead, sdk.RBACVCSUser{VCSServer: ef.initiator.VCS, VCSUsername: ef.initiator.VCSUsername}, projKey)
-			if err != nil {
-				return "", "", err
-			}
-			if !can {
-				return "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
-			}
+	}
+
+	if !ef.initiator.IsAdminWithMFA {
+		can, err := ef.checkEntityReadPermission(ctx, db, projKey)
+		if err != nil {
+			return "", "", err
+		}
+		if !can {
+			return "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
 		}
 	}
 
@@ -365,6 +356,16 @@ func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, s
 			if err := yaml.Unmarshal([]byte(actionEntity.Data), &localAct); err != nil {
 				return nil, "", "", err
 			}
+			if !ef.initiator.IsAdminWithMFA {
+				can, err := ef.checkEntityReadPermission(ctx, db, actionEntity.ProjectKey)
+				if err != nil {
+					return nil, "", "", err
+				}
+				if !can {
+					return nil, "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+				}
+			}
+
 			ef.localActionsCache[name] = localAct
 		}
 		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localAct.Name, ef.currentRef)
@@ -406,6 +407,17 @@ func (ef *EntityFinder) searchWorkerModel(ctx context.Context, db gorp.SqlExecut
 			if err := yaml.Unmarshal([]byte(wmEntity.Data), &wm); err != nil {
 				return nil, "", "", err
 			}
+
+			if !ef.initiator.IsAdminWithMFA {
+				can, err := ef.checkEntityReadPermission(ctx, db, wmEntity.ProjectKey)
+				if err != nil {
+					return nil, "", "", err
+				}
+				if !can {
+					return nil, "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+				}
+			}
+
 			localWM = sdk.EntityWithObject{Entity: *wmEntity, Model: wm}
 			ef.localWorkerModelCache[name] = localWM
 		}
@@ -437,6 +449,16 @@ func (ef *EntityFinder) searchWorkflowTemplate(ctx context.Context, db gorp.SqlE
 			if err := yaml.Unmarshal([]byte(wtEntity.Data), &localEntity.Template); err != nil {
 				return nil, "", "", sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read workflow template %s: %v", name, err)
 			}
+			if !ef.initiator.IsAdminWithMFA {
+				can, err := ef.checkEntityReadPermission(ctx, db, wtEntity.ProjectKey)
+				if err != nil {
+					return nil, "", "", err
+				}
+				if !can {
+					return nil, "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+				}
+			}
+
 			localEntity.Entity = *wtEntity
 			ef.localTemplatesCache[name] = localEntity
 		}
@@ -452,5 +474,22 @@ func (ef *EntityFinder) searchWorkflowTemplate(ctx context.Context, db gorp.SqlE
 	}
 	e := ef.templatesCache[completeName]
 	return &e, completeName, "", nil
+
+}
+
+func (ef *EntityFinder) checkEntityReadPermission(ctx context.Context, db gorp.SqlExecutor, projKey string) (bool, error) {
+	// Verify project read permission
+	if ef.initiator.IsUser() {
+		can, err := rbac.HasRoleOnProjectAndUserID(ctx, db, sdk.ProjectRoleRead, ef.initiator.UserID, projKey)
+		if err != nil {
+			return false, err
+		}
+		return can, nil
+	}
+	can, err := rbac.HasRoleOnProjectAndVCSUser(ctx, db, sdk.ProjectRoleRead, sdk.RBACVCSUser{VCSServer: ef.initiator.VCS, VCSUsername: ef.initiator.VCSUsername}, projKey)
+	if err != nil {
+		return false, err
+	}
+	return can, nil
 
 }

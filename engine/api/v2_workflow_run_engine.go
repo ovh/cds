@@ -1916,16 +1916,12 @@ func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2Wo
 				return nil, nil
 			}
 		} else {
-			allowedRegions, err := rbac.LoadRegionIDsByRoleAndVCSUSer(ctx, db, sdk.RegionRoleExecute, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername})
+			canExecute, err := rbac.HasVCSUserRoleOnRegion(ctx, db, sdk.RegionRoleExecute, wantedRegion.ID, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername})
 			if err != nil {
-				next()
 				return nil, err
 			}
-			next()
-			for _, r := range allowedRegions {
-				if r.RegionID == wantedRegion.ID {
-					return nil, nil
-				}
+			if canExecute {
+				return nil, nil
 			}
 		}
 	} else {
