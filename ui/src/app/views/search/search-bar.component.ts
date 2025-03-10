@@ -39,7 +39,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
 	}
 
 	selectSuggestion(value: DisplaySearchResult): void {
-		this._router.navigate(value.defaultLink.path, value.defaultLink.params);
+		this._router.navigate(value.defaultLink.path, { queryParams: value.defaultLink.params });
 	}
 
 	submitSearch(): void {
