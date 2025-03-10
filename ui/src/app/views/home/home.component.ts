@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { Bookmark, BookmarkType } from "app/model/bookmark.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { BookmarkDelete, BookmarkLoad, BookmarkState } from "app/store/bookmark.state";
 import { Subscription } from "rxjs";
+import { SearchBarComponent } from "../search/search-bar.component";
+import { Router } from "@angular/router";
 
 @Component({
 	selector: 'app-home',
@@ -13,7 +15,8 @@ import { Subscription } from "rxjs";
 })
 @AutoUnsubscribe()
 export class HomeComponent implements OnInit, OnDestroy {
-	
+	@ViewChild('searchBar') searchBar: SearchBarComponent;
+
 	bookmarks: Array<Bookmark> = [];
 	bookmarksSubscription: Subscription;
 	recentItems: Array<any> = [];
@@ -21,7 +24,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private _cd: ChangeDetectorRef,
-		private _store: Store
+		private _store: Store,
+		private _router: Router
 	) { }
 
 	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -70,6 +74,14 @@ export class HomeComponent implements OnInit, OnDestroy {
 		e.preventDefault();
 		e.stopPropagation();
 		this._store.dispatch(new BookmarkDelete(b));
+	}
+
+	clickSearch(): void {
+		this.searchBar.submitSearch();
+	}
+
+	clickShowProjects(): void {
+		this._router.navigate(['/project']);
 	}
 
 }

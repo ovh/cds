@@ -41,6 +41,14 @@
     max-width: 650px;
   }
 
+  .controls {
+    margin-top: 20px;
+
+    button:not(:first-child) {
+      margin-left: 10px;
+    }
+  }
+
   h4 {
     margin-top: 80px;
   }

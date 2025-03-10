@@ -3,7 +3,16 @@
 		<img src="assets/images/cds.png" alt="CDS logo" title="{{'navbar_home' | translate}}" />
 	</div>
 
-	<app-search-bar></app-search-bar>
+	<app-search-bar #searchBar></app-search-bar>
+
+	<div class="controls">
+		<button nz-button nzSize="large" title="Search in CDS" (click)="clickSearch()">
+			Search
+		</button>
+		<button nz-button nzSize="large" title="Show my Projects" (click)="clickShowProjects()">
+			Show my Projects
+		</button>
+	</div>
 
 	<ng-container *ngIf="bookmarks.length > 0">
 		<h4 nz-typography>Bookmarks</h4>
