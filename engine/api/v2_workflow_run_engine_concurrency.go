@@ -416,7 +416,7 @@ func checkWorkflowScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, pr
 	}
 	ruleToApply := mergeConcurrencyRules(ongoingRules, currentConcurrencyDef)
 
-	return &sdk.V2RunConcurrency{WorkflowConcurrency: ruleToApply, Scope: sdk.V2RunJobConcurrencyScopeWorkflow}, nbRunJobBuilding, nbBlockedRunJobs, nil
+	return &sdk.V2RunConcurrency{WorkflowConcurrency: ruleToApply, Scope: sdk.V2RunConcurrencyScopeWorkflow}, nbRunJobBuilding, nbBlockedRunJobs, nil
 }
 
 // Merge concurrency rule between all running jobs
@@ -442,7 +442,7 @@ func mergeConcurrencyRules(rulesInDB []workflow_v2.ConcurrencyRule, refRule sdk.
 
 func retrieveConcurrencyDefinition(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, concurrencyName string) (*sdk.V2RunConcurrency, error) {
 	// Search concurrency rule on workflow
-	scope := sdk.V2RunJobConcurrencyScopeWorkflow
+	scope := sdk.V2RunConcurrencyScopeWorkflow
 	var jobConcurrencyDef *sdk.WorkflowConcurrency
 	for i := range run.WorkflowData.Workflow.Concurrencies {
 		if run.WorkflowData.Workflow.Concurrencies[i].Name == concurrencyName {

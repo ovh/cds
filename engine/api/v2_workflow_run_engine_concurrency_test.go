@@ -118,7 +118,7 @@ func TestRetrieveRunJobToUnlocked_WorkflowScoped_OldestFirst(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld))
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld2))
 
-	rjs, _, err := retrieveRunJobToUnLocked(context.TODO(), db.DbMap, jobRunNew)
+	rjs, _, err := retrieveRunObjectsToUnLocked(context.TODO(), db.DbMap, jobRunNew.ProjectKey, jobRunNew.VCSServer, jobRunNew.Repository, jobRunNew.WorkflowName, *jobRunNew.Concurrency)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(rjs))
 	require.Equal(t, jobRunOld.ID, rjs[0].ID)
@@ -231,7 +231,7 @@ func TestRetrieveRunJobToUnlocked_WorkflowScoped_NewestFirst(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld))
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld2))
 
-	rjs, _, err := retrieveRunJobToUnLocked(context.TODO(), db.DbMap, jobRunNew)
+	rjs, _, err := retrieveRunObjectsToUnLocked(context.TODO(), db.DbMap, jobRunNew.ProjectKey, jobRunNew.VCSServer, jobRunNew.Repository, jobRunNew.WorkflowName, *jobRunNew.Concurrency)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(rjs))
 	require.Equal(t, jobRunNew.ID, rjs[0].ID)
@@ -435,7 +435,7 @@ func TestRetrieveRunJobToUnlocked_ProjectScoped_OldestFirst(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld))
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld2))
 
-	rjs, _, err := retrieveRunJobToUnLocked(context.TODO(), db.DbMap, jobRunNew)
+	rjs, _, err := retrieveRunObjectsToUnLocked(context.TODO(), db.DbMap, jobRunNew.ProjectKey, jobRunNew.VCSServer, jobRunNew.Repository, jobRunNew.WorkflowName, *jobRunNew.Concurrency)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(rjs))
 	require.Equal(t, jobRunOld.ID, rjs[0].ID)
@@ -548,7 +548,7 @@ func TestRetrieveRunJobToUnlocked_ProjectScoped_NewestFirst(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld))
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld2))
 
-	rjs, _, err := retrieveRunJobToUnLocked(context.TODO(), db.DbMap, jobRunNew)
+	rjs, _, err := retrieveRunObjectsToUnLocked(context.TODO(), db.DbMap, jobRunNew.ProjectKey, jobRunNew.VCSServer, jobRunNew.Repository, jobRunNew.WorkflowName, *jobRunNew.Concurrency)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(rjs))
 	require.Equal(t, jobRunNew.ID, rjs[0].ID)
@@ -752,7 +752,7 @@ func TestRetrieveRunJobToUnlocked_CancelInProgress(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRun2))
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRun3))
 
-	rjs, toCancel, err := retrieveRunJobToUnLocked(context.TODO(), db.DbMap, jobRun1)
+	rjs, toCancel, err := retrieveRunObjectsToUnLocked(context.TODO(), db.DbMap, jobRun1.ProjectKey, jobRun1.VCSServer, jobRun1.Repository, jobRun1.WorkflowName, *jobRun1.Concurrency)
 	require.NoError(t, err)
 
 	// Check job to unlock

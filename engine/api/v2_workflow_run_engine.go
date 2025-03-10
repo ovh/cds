@@ -294,7 +294,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	concurrencyLocked := make(map[string]struct{})
 	for _, concu := range concurrenciesDef {
 		concurrencyKey := fmt.Sprintf("%s-%s-%s", concu.Scope, run.ProjectKey, concu.Name)
-		if concu.Scope == sdk.V2RunJobConcurrencyScopeWorkflow {
+		if concu.Scope == sdk.V2RunConcurrencyScopeWorkflow {
 			concurrencyKey = fmt.Sprintf("%s-%s-%s-%s-%s-%s", concu.Scope, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, concu.Name)
 		}
 		if _, has := concurrencyLocked[concurrencyKey]; has {

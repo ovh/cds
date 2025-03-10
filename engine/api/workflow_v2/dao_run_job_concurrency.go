@@ -78,7 +78,7 @@ func CountRunningWithWorkflowConcurrency(ctx context.Context, db gorp.SqlExecuto
 			concurrency->>'scope' = $6 AND
 			status = ANY($7)
 	) SELECT jobs.nb + runs.nb FROM jobs, runs`
-	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)})
+	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)})
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
@@ -134,7 +134,7 @@ func CountBlockedWithWorkflowConcurrency(ctx context.Context, db gorp.SqlExecuto
 			concurrency->>'scope' = $6 AND
 			status = $7
 	) SELECT jobs.nb + runs.nb FROM jobs, runs`
-	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, sdk.V2WorkflowRunJobStatusBlocked)
+	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, sdk.V2WorkflowRunJobStatusBlocked)
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
@@ -201,7 +201,7 @@ func LoadWorkflowConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj
 	`
 
 	var rules []ConcurrencyRule
-	if _, err := db.Select(&rules, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}); err != nil {
+	if _, err := db.Select(&rules, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -243,7 +243,7 @@ func LoadOldestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 	) tmpl
 	ORDER BY last_modified ASC LIMIT $9`
 	var cos []ConcurrencyObject
-	if _, err := db.Select(&cos, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
+	if _, err := db.Select(&cos, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return cos, nil
@@ -283,7 +283,7 @@ func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 	LIMIT $9`
 
 	var cos []ConcurrencyObject
-	if _, err := db.Select(&cos, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
+	if _, err := db.Select(&cos, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return cos, nil

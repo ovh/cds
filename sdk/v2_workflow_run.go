@@ -21,8 +21,8 @@ const (
 	GitCommitManualPayload = "git.commit"
 	GitTagManualPayload    = "git.tag"
 
-	V2RunConcurrencyScopeProject     V2RunJobConcurrencyScope = "project"
-	V2RunJobConcurrencyScopeWorkflow V2RunJobConcurrencyScope = "workflow"
+	V2RunConcurrencyScopeProject  V2RunJobConcurrencyScope = "project"
+	V2RunConcurrencyScopeWorkflow V2RunJobConcurrencyScope = "workflow"
 )
 
 type V2WorkflowRunHookRequest struct {
