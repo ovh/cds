@@ -10,6 +10,8 @@
             <nz-option *ngFor="let p of projects" [nzLabel]="p.name + ' - ' + p.key" [nzValue]="p.key"></nz-option>
         </nz-select>
 
+        <app-favorite-button *ngIf="selectedProjectKey" type="project" [id]="selectedProjectKey"></app-favorite-button>
+
         <!-- BOOKMARKS -->
         <button nz-dropdown [nzDropdownMenu]="bookmarksMenu" nz-button nzType="text" style="margin-right: 20px;">
             Bookmarks

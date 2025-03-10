@@ -161,8 +161,6 @@
   "environment_delete_label": "Delete environment",
   "environment_delete_description": "Once you delete an environment, there is no going back. Please be certain.",
   "filter": "Filter",
-  "favorite_add": "Add a bookmark",
-  "favorite_add_btn": "Add to my bookmarks",
   "graph_unittest_title": "Unit Tests",
   "graph_unittest_x": "N° workflow",
   "graph_unittest_y": "Total",

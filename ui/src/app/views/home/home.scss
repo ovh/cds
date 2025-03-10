@@ -1,3 +1,5 @@
+@import '../../../common';
+
 :host {
   display: flex;
   flex-direction: row;
@@ -28,11 +30,18 @@
     display: flex;
     max-height: 250px;
     flex-direction: column-reverse;
-    margin-bottom: 60px;
+    margin-bottom: 40px;
 
     img {
-      height: 100px;
+      height: 140px;
       margin-top: 100px;
+      background-color: #24292e;
+      padding: 20px;
+      border-radius: 40px;
+
+      :host-context(.night) & {
+        background-color: unset;
+      }
     }
   }
 

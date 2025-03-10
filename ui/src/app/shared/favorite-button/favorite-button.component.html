@@ -1,5 +1,5 @@
 <div class="content">
     <span *ngIf="loading" nz-icon nzType="loading"></span>
     <span *ngIf="!loading" nz-icon nzType="star" nzTheme="fill" [class.active]="!!bookmark" (click)="click()"
-        [title]="'favorite_add_btn' | translate"></span>
+        [title]="(!!bookmark ? 'Remove' : 'Add') + ' ' + type + ' ' + (!!bookmark ? 'from' : 'to') + ' bookmarks'"></span>
 </div>
