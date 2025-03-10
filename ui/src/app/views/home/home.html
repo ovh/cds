@@ -28,8 +28,8 @@
 						<nz-tag *ngSwitchCase="'workflow'" nzColor="green">{{b.type}}</nz-tag>
 						<nz-tag *ngSwitchDefault>{{b.type}}</nz-tag>
 					</div>
-					<button nz-button nzType="text" nzDanger (click)="deleteBookmark($event, b)"><i nz-icon nzType="delete"
-							nzTheme="outline"></i></button>
+					<button nz-button nzType="text" nzDanger (click)="deleteBookmark($event, b)"
+						title="Remove {{b.type}} from bookmarks"><i nz-icon nzType="delete" nzTheme="outline"></i></button>
 				</a>
 			</nz-list-item>
 		</nz-list>

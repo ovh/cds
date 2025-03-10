@@ -88,7 +88,7 @@ export class DisplaySearchResult {
 })
 @AutoUnsubscribe()
 export class SearchComponent implements OnInit, OnDestroy {
-	static DEFAULT_PAGESIZE = 20;
+	static DEFAULT_PAGESIZE = 30;
 
 	queryParamsSub: Subscription;
 	filters: Array<Filter> = [];

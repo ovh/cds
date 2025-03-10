@@ -1,6 +1,7 @@
 <input [placeholder]="placeholder" nz-input [nzAutocomplete]="filterAutoComplete" [ngModel]="filterText"
-	(ngModelChange)="onFilterTextChange($event)" #filterInput #filterInputDirective=nzAutocompleteTrigger
-	(click)="onClickInput()" ngDefaultControl [ngModelOptions]="{standalone: true}" />
+	[title]="filterText ? 'Search for ' + filterText : placeholder" (ngModelChange)="onFilterTextChange($event)"
+	#filterInput #filterInputDirective=nzAutocompleteTrigger (click)="onClickInput()" ngDefaultControl
+	[ngModelOptions]="{standalone: true}" />
 <nz-autocomplete nzBackfill #filterAutoComplete>
 	<nz-auto-option *ngIf="!filterText || filterText.length > 0 && filterText[filterText.length-1] !== ':'"
 		[nzLabel]="filterText" [nzValue]="filterText">

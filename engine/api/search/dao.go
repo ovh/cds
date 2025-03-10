@@ -82,7 +82,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 		WITH 
 			results AS (
 				(
-					SELECT 0 AS type_int, projectkey AS id, name AS label, null AS variants
+					SELECT 0 AS type_int, projectkey AS id, name AS label, description, null AS variants
 					FROM project
 					WHERE
 						projectkey = ANY(:projects)
@@ -103,13 +103,13 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 								AND (array_length(:types::text[], 1) IS NULL OR 'workflow' = ANY(:types))
 							ORDER BY last_update DESC
 						)
-					SELECT 1 AS type_int, id, label, jsonb_agg(ref) AS variants
+					SELECT 1 AS type_int, id, label, '' AS description, jsonb_agg(ref) AS variants
 					FROM entities
 					GROUP BY id, label
 				)
 				UNION
 				(
-					SELECT 2 AS type_int, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
+					SELECT 2 AS type_int, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, workflow.description AS description, null AS variants
 					FROM workflow
 					JOIN project ON project.id = workflow.project_id
 					WHERE
@@ -117,7 +117,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 						AND (array_length(:types::text[], 1) IS NULL OR 'workflow-legacy' = ANY(:types))
 				)
 			)
-		SELECT id, label, variants, CASE
+		SELECT id, label, description, variants, CASE
 				WHEN LOWER(label) LIKE :query THEN 1
 				WHEN LOWER(id) LIKE :query THEN 2
 			END AS priority, CASE
