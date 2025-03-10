@@ -260,7 +260,7 @@ func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 			concurrency->>'name' = $5 AND
 			concurrency->>'scope' = $6 AND 
 			status = ANY($7)
-		ORDER BY run_number DESC, queued DESC
+		ORDER BY run_number DESC, last_modified DESC
 		LIMIT $9
 	), runs as (
 		SELECT id, last_modified, 'WORKFLOW' as type
@@ -272,14 +272,14 @@ func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 			concurrency->>'name' = $5 AND
 			concurrency->>'scope' = $6 AND 
 			status = $8
-		ORDER BY run_number DESC, queued DESC
+		ORDER BY run_number DESC, last_modified DESC
 		LIMIT $9
 	) SELECT id, type FROM (
 	 	SELECT * FROM jobs
 		UNION
 		SELECT * FROM runs
 	) tmp 
-	 ORDER BY queued DESC
+	ORDER BY last_modified DESC
 	LIMIT $9`
 
 	var cos []ConcurrencyObject
@@ -306,7 +306,7 @@ func LoadOldestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.S
 		WHERE project_key = $1 AND 
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND
-			status = $6
+			status = $5
 		ORDER BY last_modified ASC LIMIT $6
 	) SELECT id, type FROM (
 	 	SELECT * FROM jobs

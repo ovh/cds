@@ -771,5 +771,6 @@ func TestRetrieveRunJobToUnlocked_CancelInProgress(t *testing.T) {
 
 	// Check job to cancel
 	require.Equal(t, 1, len(toCancel))
-	require.Equal(t, jobRun1.ID, toCancel[0])
+	require.Equal(t, jobRun1.ID, toCancel[0].ID)
+	require.Equal(t, workflow_v2.ConcurrencyObjectTypeJob, toCancel[0].Type)
 }
