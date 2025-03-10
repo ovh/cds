@@ -724,7 +724,7 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
-	require.Error(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
 		RunID: wr.ID,
 		Initiator: sdk.V2Initiator{
 			UserID:         admin.ID,
@@ -737,12 +737,17 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 	require.NoError(t, err)
 	t.Logf("%+v", runInfos)
 	require.Equal(t, 1, len(runInfos))
-	t.Logf(runInfos[0].Message)
+	require.Contains(t, runInfos[0].Message, "mismatched input")
+	require.Contains(t, runInfos[0].Message, "into a boolean")
 
 	runjobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
 	require.NoError(t, err)
 
 	require.Equal(t, 0, len(runjobs))
+
+	runDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunStatusFail, runDB.Status)
 }
 
 func TestTriggerBlockedWorkflowRuns(t *testing.T) {

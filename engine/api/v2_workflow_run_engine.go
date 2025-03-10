@@ -505,6 +505,8 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobCancelled, *run, rj)
 		case sdk.V2WorkflowRunJobStatusSkipped:
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobSkipped, *run, rj)
+		case sdk.V2WorkflowRunJobStatusStopped:
+			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobStopped, *run, rj)
 		default:
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, *run, rj)
 		}
@@ -553,6 +555,7 @@ func terminateWorkflowRun(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workfl
 		}
 	}
 
+	run.Status = wrEnqueue.Status
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return nil, err
 	}
