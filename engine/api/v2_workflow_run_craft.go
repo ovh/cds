@@ -381,15 +381,53 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.WorkflowData.WorkerModels[completeName] = v.Model
 	}
 
+	// check concurrency
+	runObjectToCancel := make(map[string]workflow_v2.ConcurrencyObject)
+	runInfo, err := manageWorkflowConcurrency(ctx, api.mustDB(), run, map[string]int64{}, runObjectToCancel)
+	if err != nil {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf(""),
+		})
+	}
+	// If runInfo != nil. Level info: run blocked.  Level error => failed the run
+	if runInfo != nil {
+		if runInfo.Level == sdk.WorkflowRunInfoLevelInfo {
+			run.Status = sdk.V2WorkflowRunStatusBlocked
+		} else {
+			run.Status = sdk.V2WorkflowRunStatusFail
+		}
+	} else {
+		run.Status = sdk.V2WorkflowRunStatusBuilding
+	}
+
+	if _, has := runObjectToCancel[run.ID]; has {
+		run.Status = sdk.V2WorkflowRunStatusCancelled
+		runInfo = &sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelInfo,
+			IssuedAt:      time.Now(),
+			Message:       fmt.Sprintf("Job cancelled due to concurrency %q", run.Concurrency.Name),
+		}
+		delete(runObjectToCancel, run.ID)
+	}
+
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback() // nolint
 
-	run.Status = sdk.V2WorkflowRunStatusBuilding
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
+	}
+
+	if runInfo != nil {
+		if err := workflow_v2.InsertRunInfo(ctx, tx, runInfo); err != nil {
+			return err
+		}
 	}
 
 	if mustSaveVersion {

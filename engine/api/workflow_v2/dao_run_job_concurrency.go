@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -16,32 +15,69 @@ type ConcurrencyRule struct {
 	Cancel  bool   `db:"cancel"`
 }
 
-func CountRunningRunJobWithProjectConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string) (int64, error) {
-	q := `SELECT count(id)
-	FROM v2_workflow_run_job 
-	WHERE 
-		project_key = $1 AND 
-		concurrency->>'name' = $2 AND
-		concurrency->>'scope' = $3 AND
-		status = ANY($4)`
-	nb, err := db.SelectInt(q, proj, concurrencyName, sdk.V2RunJobConcurrencyScopeProject, pq.StringArray{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)})
+const (
+	ConcurrencyObjectTypeWorkflow ConcurrencyObjectType = "WORKFLOW"
+	ConcurrencyObjectTypeJob      ConcurrencyObjectType = "JOB"
+)
+
+type ConcurrencyObjectType string
+type ConcurrencyObject struct {
+	Type ConcurrencyObjectType `db:"type"`
+	ID   string                `db:"id"`
+}
+
+func CountRunningWithProjectConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string) (int64, error) {
+	q := `WITH jobs AS 
+	(
+		SELECT count(id) as nb
+		FROM v2_workflow_run_job 
+		WHERE 
+			project_key = $1 AND 
+			concurrency->>'name' = $2 AND
+			concurrency->>'scope' = $3 AND
+			status = ANY($4)
+	), runs AS (
+		SELECT count(id) as nb
+		FROM v2_workflow_run
+		WHERE 
+			project_key = $1 AND 
+			concurrency->>'name' = $2 AND
+			concurrency->>'scope' = $3 AND
+			status = ANY($4)
+	) 
+	SELECT jobs.nb + runs.nb
+	FROM jobs, runs`
+	nb, err := db.SelectInt(q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)})
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
 	return nb, nil
 }
 
-func CountRunningRunJobWithWorkflowConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string) (int64, error) {
-	q := `SELECT count(id)
-	FROM v2_workflow_run_job 
-	WHERE 
-		project_key = $1 AND 
-		vcs_server = $2 AND 
-		repository = $3 AND 
-		workflow_name = $4 AND 
-		concurrency->>'name' = $5 AND
-		concurrency->>'scope' = $6 AND
-		status = ANY($7)`
+func CountRunningWithWorkflowConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string) (int64, error) {
+	q := `WITH jobs as (
+		SELECT count(id) as nb
+		FROM v2_workflow_run_job 
+		WHERE 
+			project_key = $1 AND 
+			vcs_server = $2 AND 
+			repository = $3 AND 
+			workflow_name = $4 AND 
+			concurrency->>'name' = $5 AND
+			concurrency->>'scope' = $6 AND
+			status = ANY($7)
+	), runs as (
+		SELECT count(id) as nb
+		FROM v2_workflow_run 
+		WHERE 
+			project_key = $1 AND 
+			vcs_server = $2 AND 
+			repository = $3 AND 
+			workflow_name = $4 AND 
+			concurrency->>'name' = $5 AND
+			concurrency->>'scope' = $6 AND
+			status = ANY($7)
+	) SELECT jobs.nb + runs.nb FROM jobs, runs`
 	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)})
 	if err != nil {
 		return 0, sdk.WithStack(err)
@@ -49,32 +85,55 @@ func CountRunningRunJobWithWorkflowConcurrency(ctx context.Context, db gorp.SqlE
 	return nb, nil
 }
 
-func CountBlockedRunJobWithProjectConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string) (int64, error) {
-	q := `SELECT count(id)
-	FROM v2_workflow_run_job 
-	WHERE 
-		project_key = $1 AND 
-		concurrency->>'name' = $2 AND
-		concurrency->>'scope' = $3 AND
-		status = $4`
-	nb, err := db.SelectInt(q, proj, concurrencyName, sdk.V2RunJobConcurrencyScopeProject, sdk.V2WorkflowRunJobStatusBlocked)
+func CountBlockedRunWithProjectConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string) (int64, error) {
+	q := `WITH jobs as (
+		SELECT count(id) as nb
+		FROM v2_workflow_run_job 
+		WHERE 
+			project_key = $1 AND 
+			concurrency->>'name' = $2 AND
+			concurrency->>'scope' = $3 AND
+			status = $4
+	), runs as (
+		SELECT count(id) as nb
+		FROM v2_workflow_run
+		WHERE 
+			project_key = $1 AND 
+			concurrency->>'name' = $2 AND
+			concurrency->>'scope' = $3 AND
+			status = $4
+	) SELECT jobs.nb + runs.nb FROM jobs, runs`
+	nb, err := db.SelectInt(q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, sdk.V2WorkflowRunJobStatusBlocked)
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
 	return nb, nil
 }
 
-func CountBlockedRunJobWithWorkflowConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string) (int64, error) {
-	q := `SELECT count(id)
-	FROM v2_workflow_run_job 
-	WHERE 
-		project_key = $1 AND 
-		vcs_server = $2 AND 
-		repository = $3 AND 
-		workflow_name = $4 AND 
-		concurrency->>'name' = $5 AND
-		concurrency->>'scope' = $6 AND
-		status = $7`
+func CountBlockedWithWorkflowConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string) (int64, error) {
+	q := `WITH jobs as (
+		SELECT count(id) as nb
+		FROM v2_workflow_run_job 
+		WHERE 
+			project_key = $1 AND 
+			vcs_server = $2 AND 
+			repository = $3 AND 
+			workflow_name = $4 AND 
+			concurrency->>'name' = $5 AND
+			concurrency->>'scope' = $6 AND
+			status = $7
+	), runs as (
+		SELECT count(id) as nb
+		FROM v2_workflow_run 
+		WHERE 
+			project_key = $1 AND 
+			vcs_server = $2 AND 
+			repository = $3 AND 
+			workflow_name = $4 AND 
+			concurrency->>'name' = $5 AND
+			concurrency->>'scope' = $6 AND
+			status = $7
+	) SELECT jobs.nb + runs.nb FROM jobs, runs`
 	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, sdk.V2WorkflowRunJobStatusBlocked)
 	if err != nil {
 		return 0, sdk.WithStack(err)
@@ -90,10 +149,20 @@ func LoadProjectConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj 
 		concurrency->>'name' = $2 AND
 		concurrency->>'scope' = $3 AND
 		status = ANY($4)
-	GROUP BY concurrency->>'order', concurrency->>'cancel-in-progress'`
+	GROUP BY concurrency->>'order', concurrency->>'cancel-in-progress'
+	UNION
+	SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min(concurrency->>'pool') as pool
+	FROM v2_workflow_run
+	WHERE 
+		project_key = $1 AND 
+		concurrency->>'name' = $2 AND
+		concurrency->>'scope' = $3 AND
+		status = ANY($4)
+	GROUP BY concurrency->>'order', concurrency->>'cancel-in-progress'
+	`
 
 	var rules []ConcurrencyRule
-	if _, err := db.Select(&rules, q, proj, concurrencyName, sdk.V2RunJobConcurrencyScopeProject, pq.StringArray{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}); err != nil {
+	if _, err := db.Select(&rules, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -116,7 +185,20 @@ func LoadWorkflowConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj
 		concurrency->>'name' = $5 AND
 		concurrency->>'scope' = $6 AND
 		status = ANY($7)
-	GROUP BY concurrency->>'order', concurrency->>'cancel-in-progress'`
+	GROUP BY concurrency->>'order', concurrency->>'cancel-in-progress'
+	UNION
+	SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min(concurrency->>'pool') as pool
+	FROM v2_workflow_run 
+	WHERE 
+		project_key = $1 AND 
+		vcs_server = $2 AND 
+		repository = $3 AND 
+		workflow_name = $4 AND 
+		concurrency->>'name' = $5 AND
+		concurrency->>'scope' = $6 AND
+		status = ANY($7)
+	GROUP BY concurrency->>'order', concurrency->>'cancel-in-progress'
+	`
 
 	var rules []ConcurrencyRule
 	if _, err := db.Select(&rules, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}); err != nil {
@@ -131,8 +213,9 @@ func LoadWorkflowConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj
 	return rules, nil
 }
 
-func LoadOldestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string, status []string, limit int64) ([]sdk.V2WorkflowRunJob, error) {
-	q := `SELECT * 
+func LoadOldestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string, rjStatus []string, workflowRunStatus sdk.V2WorkflowRunStatus, limit int64) ([]ConcurrencyObject, error) {
+	q := `WITH jobs as (
+		SELECT id, queued as last_modified, 'JOB' as type 
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			vcs_server = $2 AND 
@@ -141,13 +224,34 @@ func LoadOldestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 			concurrency->>'name' = $5 AND
 			concurrency->>'scope' = $6 AND
 			status = ANY($7)
-	ORDER BY run_number ASC, queued ASC LIMIT $8`
-	query := gorpmapping.NewQuery(q).Args(proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray(status), limit)
-	return getAllRunJobs(ctx, db, query)
+		ORDER BY run_number ASC, last_modified ASC LIMIT $9
+	), runs as (
+		SELECT id, last_modified, 'WORKFLOW' as type 
+		FROM v2_workflow_run 
+		WHERE project_key = $1 AND 
+			vcs_server = $2 AND 
+			repository = $3 AND 
+			workflow_name = $4 AND 
+			concurrency->>'name' = $5 AND
+			concurrency->>'scope' = $6 AND
+			status = $8
+		ORDER BY run_number ASC, last_modified ASC LIMIT $9
+	) SELECT id, type FROM (
+	 	SELECT * FROM jobs
+		UNION
+		SELECT * FROM runs
+	) tmpl
+	ORDER BY last_modified ASC LIMIT $9`
+	var cos []ConcurrencyObject
+	if _, err := db.Select(&cos, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return cos, nil
 }
 
-func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string, status []string, limit int64) ([]sdk.V2WorkflowRunJob, error) {
-	q := `SELECT * 
+func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string, rjStatus []string, workflowRunStatus sdk.V2WorkflowRunStatus, limit interface{}) ([]ConcurrencyObject, error) {
+	q := `WITH jobs as (
+		SELECT id, queued as last_modified, 'JOB' as type
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			vcs_server = $2 AND 
@@ -156,44 +260,94 @@ func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 			concurrency->>'name' = $5 AND
 			concurrency->>'scope' = $6 AND 
 			status = ANY($7)
-	ORDER BY run_number DESC, queued DESC`
-	args := []interface{}{proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray(status)}
-	if limit > 0 {
-		q += ` LIMIT $8`
-		args = append(args, limit)
-	}
+		ORDER BY run_number DESC, queued DESC
+		LIMIT $9
+	), runs as (
+		SELECT id, last_modified, 'WORKFLOW' as type
+		FROM v2_workflow_run
+		WHERE project_key = $1 AND 
+			vcs_server = $2 AND 
+			repository = $3 AND 
+			workflow_name = $4 AND 
+			concurrency->>'name' = $5 AND
+			concurrency->>'scope' = $6 AND 
+			status = $8
+		ORDER BY run_number DESC, queued DESC
+		LIMIT $9
+	) SELECT id, type FROM (
+	 	SELECT * FROM jobs
+		UNION
+		SELECT * FROM runs
+	) tmp 
+	 ORDER BY queued DESC
+	LIMIT $9`
 
-	query := gorpmapping.NewQuery(q).Args(args...)
-	return getAllRunJobs(ctx, db, query)
+	var cos []ConcurrencyObject
+	if _, err := db.Select(&cos, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunJobConcurrencyScopeWorkflow, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return cos, nil
 }
 
-func LoadOldestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string, status []string, limit int64) ([]sdk.V2WorkflowRunJob, error) {
-
-	q := `SELECT * 
+func LoadOldestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string, rjStatus []string, workflowStatus sdk.V2WorkflowRunStatus, limit int64) ([]ConcurrencyObject, error) {
+	q := `WITH jobs as (
+		-- GET THE n OLDEST RUN JOBS
+		SELECT id as id, queued as last_modified, 'JOB' as type 
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND
 			status = ANY($4)
-	ORDER BY queued ASC LIMIT $5`
-	query := gorpmapping.NewQuery(q).Args(proj, concurrencyName, sdk.V2RunJobConcurrencyScopeProject, pq.StringArray(status), limit)
-	return getAllRunJobs(ctx, db, query)
+		ORDER BY last_modified ASC LIMIT $6
+	), runs as (
+	    -- GET THE n OLDEST WORKFLOW RUN 
+	    SELECT id as id, last_modified as last_modified, 'WORKFLOW' as type 
+		FROM v2_workflow_run
+		WHERE project_key = $1 AND 
+			concurrency->>'name' = $2 AND
+			concurrency->>'scope' = $3 AND
+			status = $6
+		ORDER BY last_modified ASC LIMIT $6
+	) SELECT id, type FROM (
+	 	SELECT * FROM jobs
+		UNION
+		SELECT * FROM runs
+	) tmp ORDER BY last_modified ASC LIMIT $6`
+	var cos []ConcurrencyObject
+	if _, err := db.Select(&cos, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray(rjStatus), workflowStatus, limit); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return cos, nil
 }
 
-func LoadNewestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string, status []string, limit int64) ([]sdk.V2WorkflowRunJob, error) {
-	q := `SELECT * 
+func LoadNewestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string, rjStatus []string, workflowRunStatus sdk.V2WorkflowRunStatus, limit interface{}) ([]ConcurrencyObject, error) {
+	q := `WITH jobs as (
+		SELECT id,  queued as last_modified, 'JOB' as type
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND 
 			status = ANY($4)
-	ORDER BY queued DESC`
-	args := []interface{}{proj, concurrencyName, sdk.V2RunJobConcurrencyScopeProject, pq.StringArray(status)}
-	if limit > 0 {
-		q += ` LIMIT $5`
-		args = append(args, limit)
+			ORDER BY last_modified DESC
+			LIMIT $6
+	), runs as (
+		SELECT id, last_modified, 'WORKFLOW' as type
+		FROM v2_workflow_run 
+		WHERE project_key = $1 AND 
+			concurrency->>'name' = $2 AND
+			concurrency->>'scope' = $3 AND 
+			status = $5
+			ORDER BY last_modified DESC
+			LIMIT $6
+	) SELECT id, type FROM (
+		SELECT * from jobs
+		UNION
+		SELECT * from runs 
+	) tmp ORDER BY last_modified DESC
+	LIMIT $6`
+	var cos []ConcurrencyObject
+	if _, err := db.Select(&cos, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
+		return nil, sdk.WithStack(err)
 	}
-
-	query := gorpmapping.NewQuery(q).Args().Args(args...)
-	return getAllRunJobs(ctx, db, query)
+	return cos, nil
 }

@@ -54,14 +54,14 @@ func TestRetrieveRunJobToUnlocked_WorkflowScoped_OldestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeWorkflow,
+			Scope: sdk.V2RunConcurrencyScopeWorkflow,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -78,14 +78,14 @@ func TestRetrieveRunJobToUnlocked_WorkflowScoped_OldestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Second),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeWorkflow,
+			Scope: sdk.V2RunConcurrencyScopeWorkflow,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -102,14 +102,14 @@ func TestRetrieveRunJobToUnlocked_WorkflowScoped_OldestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeWorkflow,
+			Scope: sdk.V2RunConcurrencyScopeWorkflow,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -167,14 +167,14 @@ func TestRetrieveRunJobToUnlocked_WorkflowScoped_NewestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeWorkflow,
+			Scope: sdk.V2RunConcurrencyScopeWorkflow,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -191,14 +191,14 @@ func TestRetrieveRunJobToUnlocked_WorkflowScoped_NewestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(30 * time.Second),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeWorkflow,
+			Scope: sdk.V2RunConcurrencyScopeWorkflow,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -215,14 +215,14 @@ func TestRetrieveRunJobToUnlocked_WorkflowScoped_NewestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeWorkflow,
+			Scope: sdk.V2RunConcurrencyScopeWorkflow,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -280,14 +280,14 @@ func TestCheckJobWorkflowConcurrency_DefaultRules(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             3,
 				CancelInProgress: true,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeWorkflow,
+			Scope: sdk.V2RunConcurrencyScopeWorkflow,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -304,21 +304,21 @@ func TestCheckJobWorkflowConcurrency_DefaultRules(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             10,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeWorkflow,
+			Scope: sdk.V2RunConcurrencyScopeWorkflow,
 		},
 		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunNew))
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld))
 
-	rule, nbBuilding, nbBlocking, err := checkJobWorkflowConcurrency(context.TODO(), db, wr.ProjectKey, wr.VCSServer, wr.Repository, wr.WorkflowName, jobRunNew.Concurrency.WorkflowConcurrency)
+	rule, nbBuilding, nbBlocking, err := checkWorkflowScopedConcurrency(context.TODO(), db, wr.ProjectKey, wr.VCSServer, wr.Repository, wr.WorkflowName, jobRunNew.Concurrency.WorkflowConcurrency)
 	require.NoError(t, err)
 
 	require.Equal(t, int64(0), nbBuilding)
@@ -371,14 +371,14 @@ func TestRetrieveRunJobToUnlocked_ProjectScoped_OldestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -395,14 +395,14 @@ func TestRetrieveRunJobToUnlocked_ProjectScoped_OldestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(30 * time.Second),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -419,14 +419,14 @@ func TestRetrieveRunJobToUnlocked_ProjectScoped_OldestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -484,14 +484,14 @@ func TestRetrieveRunJobToUnlocked_ProjectScoped_NewestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -508,14 +508,14 @@ func TestRetrieveRunJobToUnlocked_ProjectScoped_NewestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(30 * time.Second),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -532,14 +532,14 @@ func TestRetrieveRunJobToUnlocked_ProjectScoped_NewestFirst(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             2,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -597,14 +597,14 @@ func TestCheckJobProjectConcurrency_DefaultRules(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             3,
 				CancelInProgress: true,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -621,21 +621,21 @@ func TestCheckJobProjectConcurrency_DefaultRules(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderNewestFirst,
 				Pool:             10,
 				CancelInProgress: false,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunNew))
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &jobRunOld))
 
-	rule, nbBuilding, nbBlocking, err := checkJobProjectConcurrency(context.TODO(), db, wr.ProjectKey, jobRunNew.Concurrency.WorkflowConcurrency)
+	rule, nbBuilding, nbBlocking, err := checkProjectScopedConcurrency(context.TODO(), db, wr.ProjectKey, jobRunNew.Concurrency.WorkflowConcurrency)
 	require.NoError(t, err)
 
 	require.Equal(t, int64(0), nbBuilding)
@@ -688,14 +688,14 @@ func TestRetrieveRunJobToUnlocked_CancelInProgress(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: true,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -712,14 +712,14 @@ func TestRetrieveRunJobToUnlocked_CancelInProgress(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: true,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -736,14 +736,14 @@ func TestRetrieveRunJobToUnlocked_CancelInProgress(t *testing.T) {
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(2 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: true,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}

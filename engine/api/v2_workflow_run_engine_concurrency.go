@@ -8,30 +8,64 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow_v2"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
-// Call when a run job ends
-func (api *API) manageEndJobConcurrency(jobRun sdk.V2WorkflowRunJob) {
-	if jobRun.Concurrency == nil {
+// Call when a workflow run or run job ends
+func (api *API) manageEndConcurrency(projectKey, vcsServer, repository, workflowName, parentRunID, currentObjectID string, concurrencyDef *sdk.V2RunConcurrency) {
+	if concurrencyDef == nil {
 		return
 	}
 
-	api.GoRoutines.Exec(context.Background(), "manageEndJobConcurrency."+jobRun.ID, func(ctx context.Context) {
-		ctx = context.WithValue(ctx, cdslog.WorkflowRunID, jobRun.WorkflowRunID)
-		log.Info(ctx, "job %s: unblock job for concurrency %s scope %s", jobRun.Concurrency.Name, jobRun.Concurrency.Scope)
+	api.GoRoutines.Exec(context.Background(), "manageEndJobConcurrency."+currentObjectID, func(ctx context.Context) {
+		ctx = context.WithValue(ctx, cdslog.WorkflowRunID, parentRunID)
+		ctx = context.WithValue(ctx, cdslog.ConcurrencyName, concurrencyDef.Name)
+		ctx = context.WithValue(ctx, cdslog.ConcurrencyScope, concurrencyDef.Scope)
 
-		rjs, _, err := retrieveRunJobToUnLocked(ctx, api.mustDB(), jobRun)
+		log.Info(ctx, "checking concurrency unlock for %s %s", concurrencyDef.Name, concurrencyDef.Scope)
+
+		runConcurrentObjs, _, err := retrieveRunObjectsToUnLocked(ctx, api.mustDB(), projectKey, vcsServer, repository, workflowName, *concurrencyDef)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
+			return
 		}
 
 		// Enqueue workflow
-		for _, rj := range rjs {
-			api.EnqueueWorkflowRun(ctx, rj.WorkflowRunID, rj.Initiator, rj.WorkflowName, rj.RunNumber)
+		for _, rco := range runConcurrentObjs {
+			var runID, workflowName string
+			var runNumber int64
+			var initiator sdk.V2Initiator
+			var rj *sdk.V2WorkflowRunJob
+			var run *sdk.V2WorkflowRun
+			switch rco.Type {
+			case workflow_v2.ConcurrencyObjectTypeWorkflow:
+				run, err = workflow_v2.LoadRunByID(ctx, api.mustDBWithCtx(ctx), rco.ID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					continue
+				}
+				runID = run.ID
+				workflowName = run.WorkflowName
+				runNumber = run.RunNumber
+				initiator = *run.Initiator
+			default:
+				rj, err = workflow_v2.LoadRunJobByID(ctx, api.mustDBWithCtx(ctx), rco.ID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					continue
+				}
+				runID = rj.WorkflowRunID
+				workflowName = rj.WorkflowName
+				runNumber = rj.RunNumber
+				initiator = rj.Initiator
+			}
+
+			api.EnqueueWorkflowRun(ctx, runID, initiator, workflowName, runNumber)
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -40,16 +74,30 @@ func (api *API) manageEndJobConcurrency(jobRun sdk.V2WorkflowRunJob) {
 			}
 			defer tx.Rollback()
 
-			msg := sdk.V2WorkflowRunJobInfo{
-				WorkflowRunID:    jobRun.WorkflowRunID,
-				WorkflowRunJobID: jobRun.ID,
-				IssuedAt:         time.Now(),
-				Level:            sdk.WorkflowRunInfoLevelInfo,
-				Message:          fmt.Sprintf("Unlocking job %s on workflow %s/%s/%s on run %d for concurrency '%s'", rj.JobID, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.RunNumber, rj.Concurrency.Name),
-			}
-			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &msg); err != nil {
-				log.ErrorWithStackTrace(ctx, err)
-				return
+			switch rco.Type {
+			case workflow_v2.ConcurrencyObjectTypeWorkflow:
+				msg := sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelInfo,
+					Message:       fmt.Sprintf("Unlocking workflow %s/%s/%s on run %d for concurrency '%s'", run.VCSServer, run.Repository, run.WorkflowName, run.RunNumber, run.Concurrency.Name),
+				}
+				if err := workflow_v2.InsertRunInfo(ctx, tx, &msg); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+			default:
+				msg := sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    runID,
+					WorkflowRunJobID: rco.ID,
+					IssuedAt:         time.Now(),
+					Level:            sdk.WorkflowRunInfoLevelInfo,
+					Message:          fmt.Sprintf("Unlocking job %s on workflow %s/%s/%s on run %d for concurrency '%s'", rj.JobID, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.RunNumber, rj.Concurrency.Name),
+				}
+				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &msg); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
 			}
 
 			if err := tx.Commit(); err != nil {
@@ -60,106 +108,23 @@ func (api *API) manageEndJobConcurrency(jobRun sdk.V2WorkflowRunJob) {
 	})
 }
 
-// Retrieve the next rj to unblocked.
-func retrieveRunJobToUnLocked(ctx context.Context, db *gorp.DbMap, jobRun sdk.V2WorkflowRunJob) ([]sdk.V2WorkflowRunJob, []string, error) {
-	var ruleToApply *sdk.V2RunJobConcurrency
-	var nbBuilding int64
-	var err error
-	switch jobRun.Concurrency.Scope {
-	case sdk.V2RunJobConcurrencyScopeProject:
-		ruleToApply, nbBuilding, _, err = checkJobProjectConcurrency(ctx, db, jobRun.ProjectKey, jobRun.Concurrency.WorkflowConcurrency)
+func (api *API) enqueueCancelledRunObjects(ctx context.Context, runs []sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob) {
+	for _, run := range runs {
+		api.EnqueueWorkflowRunWithStatus(ctx, run.ID, *run.Initiator, run.WorkflowName, run.RunNumber, sdk.V2WorkflowRunStatusCancelled)
+	}
+	for _, rj := range runJobs {
+		api.EnqueueWorkflowRun(ctx, rj.WorkflowRunID, rj.Initiator, rj.WorkflowName, rj.RunNumber)
+		runToTrigger, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), rj.WorkflowRunID)
 		if err != nil {
-			return nil, nil, err
+			log.ErrorWithStackTrace(ctx, err)
+			continue
 		}
-	default:
-		ruleToApply, nbBuilding, _, err = checkJobWorkflowConcurrency(ctx, db, jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.Concurrency.WorkflowConcurrency)
-		if err != nil {
-			return nil, nil, err
-		}
+		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobCancelled, *runToTrigger, rj)
 	}
-
-	if ruleToApply == nil {
-		log.Error(ctx, "unable to retrieve concurreny rule for workflow % on job %v", jobRun.WorkflowName, jobRun.JobID)
-		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to retrieve concurreny rule for workflow %s on job %s", jobRun.WorkflowName, jobRun.JobID)
-	}
-
-	// If cancel in progress, just retrieve the newest rjs to start
-	if ruleToApply.CancelInProgress {
-		var rjs []sdk.V2WorkflowRunJob
-		switch jobRun.Concurrency.Scope {
-		case sdk.V2RunJobConcurrencyScopeProject:
-			rjs, err = workflow_v2.LoadNewestRunJobWithProjectScopedConcurrency(ctx, db, jobRun.ProjectKey, jobRun.Concurrency.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, -1)
-		default:
-			rjs, err = workflow_v2.LoadNewestRunJobWithWorkflowScopedConcurrency(ctx, db, jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.Concurrency.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, -1)
-		}
-		if err != nil {
-			return nil, nil, err
-		}
-		rjsUnlocked := make([]sdk.V2WorkflowRunJob, 0)
-		rjsCancelled := make([]string, 0)
-		nbToUnlocked := ruleToApply.Pool - nbBuilding
-
-		// All can be unlocked
-		if nbToUnlocked >= int64(len(rjs)) {
-			rjsUnlocked = append(rjsUnlocked, rjs...)
-		} else {
-			rjsUnlocked = append(rjsUnlocked, rjs[:nbToUnlocked]...)
-			for i := nbToUnlocked; i < int64(len(rjs)); i++ {
-				rjsCancelled = append(rjsCancelled, rjs[i].ID)
-			}
-		}
-		return rjsUnlocked, rjsCancelled, nil
-	}
-
-	// No cancel in progress
-
-	// Test if pool is full
-	if ruleToApply.Pool <= nbBuilding {
-		return nil, nil, nil
-	}
-
-	nbToUnlocked := ruleToApply.Pool - nbBuilding
-	rjToUnlocked := make([]sdk.V2WorkflowRunJob, 0)
-	switch jobRun.Concurrency.Scope {
-	case sdk.V2RunJobConcurrencyScopeProject:
-		if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst {
-			// Load oldest
-			rjs, err := workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, jobRun.ProjectKey, jobRun.Concurrency.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, nbToUnlocked)
-			if err != nil {
-				return nil, nil, err
-			}
-			rjToUnlocked = append(rjToUnlocked, rjs...)
-		} else {
-			// Load newest
-			rjs, err := workflow_v2.LoadNewestRunJobWithProjectScopedConcurrency(ctx, db, jobRun.ProjectKey, jobRun.Concurrency.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, nbToUnlocked)
-			if err != nil {
-				return nil, nil, err
-			}
-			rjToUnlocked = append(rjToUnlocked, rjs...)
-		}
-	default:
-		if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst {
-			// Load oldest
-			rjs, err := workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.Concurrency.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, nbToUnlocked)
-			if err != nil {
-				return nil, nil, err
-			}
-			rjToUnlocked = append(rjToUnlocked, rjs...)
-		} else {
-			// Load newest
-			var err error
-			rjs, err := workflow_v2.LoadNewestRunJobWithWorkflowScopedConcurrency(ctx, db, jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.Concurrency.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, nbToUnlocked)
-			if err != nil {
-				return nil, nil, err
-			}
-			rjToUnlocked = append(rjToUnlocked, rjs...)
-		}
-	}
-	return rjToUnlocked, nil, nil
 }
 
 // Update new run job with concurrency data, check if we have to lock it
-func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2WorkflowRun, jobID string, runJob *sdk.V2WorkflowRunJob, concurrenciesDef map[string]sdk.V2RunJobConcurrency, concurrencyUnlockedCount map[string]int64, rjToCancelled map[string]struct{}) (*sdk.V2WorkflowRunJobInfo, error) {
+func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2WorkflowRun, jobID string, runJob *sdk.V2WorkflowRunJob, concurrenciesDef map[string]sdk.V2RunConcurrency, concurrencyUnlockedCount map[string]int64, toCancelled map[string]workflow_v2.ConcurrencyObject) (*sdk.V2WorkflowRunJobInfo, error) {
 	if runJob.Job.Concurrency != "" {
 		concurrencyDef, has := concurrenciesDef[jobID]
 		if !has {
@@ -176,128 +141,270 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 		runJob.Concurrency = &concurrencyDef
 
 		// Retrieve current building and blocked job to check if we can enqueue this one
-		var ruleToApply *sdk.V2RunJobConcurrency
-		var nbRunJobBuilding, nbRunJobBlocked int64
-		var err error
-		if concurrencyDef.Scope == sdk.V2RunJobConcurrencyScopeProject {
-			ruleToApply, nbRunJobBuilding, nbRunJobBlocked, err = checkJobProjectConcurrency(ctx, db, run.ProjectKey, concurrencyDef.WorkflowConcurrency)
-		} else {
-			ruleToApply, nbRunJobBuilding, nbRunJobBlocked, err = checkJobWorkflowConcurrency(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, concurrencyDef.WorkflowConcurrency)
-		}
+		canRun, err := canRunWithConcurrency(ctx, concurrencyDef, db, run, workflow_v2.ConcurrencyObject{ID: runJob.ID, Type: workflow_v2.ConcurrencyObjectTypeJob}, concurrencyUnlockedCount, toCancelled)
 		if err != nil {
 			return nil, err
 		}
-
-		poolIsFull := nbRunJobBlocked+nbRunJobBuilding+concurrencyUnlockedCount[runJob.Job.Concurrency] >= ruleToApply.Pool
-
-		if !ruleToApply.CancelInProgress {
-			if poolIsFull {
-				return &sdk.V2WorkflowRunJobInfo{
-					WorkflowRunID:    run.ID,
-					WorkflowRunJobID: runJob.ID,
-					IssuedAt:         time.Now(),
-					Level:            sdk.WorkflowRunInfoLevelError,
-					Message:          fmt.Sprintf("Locked by concurrency '%s'", runJob.Job.Concurrency),
-				}, nil
-			} else {
-				if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst && nbRunJobBlocked > 0 {
-					return &sdk.V2WorkflowRunJobInfo{
-						WorkflowRunID:    run.ID,
-						WorkflowRunJobID: runJob.ID,
-						IssuedAt:         time.Now(),
-						Level:            sdk.WorkflowRunInfoLevelError,
-						Message:          fmt.Sprintf("Locked by concurrency '%s'", runJob.Job.Concurrency),
-					}, nil
-				}
-			}
-		} else {
-			// Manage cancel-in-progress
-			idsToCancelled, err := retrieveRunJobToCancelled(ctx, db, runJob, ruleToApply, nbRunJobBuilding, concurrencyUnlockedCount[runJob.Job.Concurrency])
-			if err != nil {
-				return nil, err
-			}
-			for _, id := range idsToCancelled {
-				rjToCancelled[id] = struct{}{}
-			}
-		}
-
-		if _, has := rjToCancelled[runJob.ID]; !has {
-			concurrencyUnlockedCount[runJob.Job.Concurrency]++
+		if !canRun {
+			return &sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    runJob.WorkflowRunID,
+				WorkflowRunJobID: runJob.ID,
+				IssuedAt:         time.Now(),
+				Level:            sdk.WorkflowRunInfoLevelInfo,
+				Message:          fmt.Sprintf("Job locked due to concurrency %q", concurrencyDef.Name),
+			}, nil
 		}
 	}
 	return nil, nil
 }
 
-func retrieveRunJobToCancelled(ctx context.Context, db gorp.SqlExecutor, runJob *sdk.V2WorkflowRunJob, ruleToApply *sdk.V2RunJobConcurrency, nbBuilding, currentOnSameRule int64) ([]string, error) {
+// Update new workflow run check if we have to lock it
+func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, concurrencyUnlockedCount map[string]int64, rjToCancelled map[string]workflow_v2.ConcurrencyObject) (*sdk.V2WorkflowRunInfo, error) {
+	if run.WorkflowData.Workflow.Concurrency != "" {
+		concurrencyDef, err := retrieveConcurrencyDefinition(ctx, db, *run, run.WorkflowData.Workflow.Concurrency)
+		if err != nil {
+			return nil, err
+		}
+		if concurrencyDef == nil {
+			runInfo := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("concurrency %q not found on workflow nor on project", run.WorkflowData.Workflow.Concurrency),
+			}
+			return &runInfo, nil
+		}
+		run.Concurrency = concurrencyDef
+
+		// Retrieve current building and blocked job to check if we can enqueue this one
+		canRun, err := canRunWithConcurrency(ctx, *concurrencyDef, db, *run, workflow_v2.ConcurrencyObject{ID: run.ID, Type: workflow_v2.ConcurrencyObjectTypeWorkflow}, concurrencyUnlockedCount, rjToCancelled)
+		if err != nil {
+			return nil, err
+		}
+		if !canRun {
+			return &sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelInfo,
+				Message:       fmt.Sprintf("Locked due concurrency %q", concurrencyDef.Name),
+			}, nil
+		}
+	}
+	return nil, nil
+}
+
+func canRunWithConcurrency(ctx context.Context, concurrencyDef sdk.V2RunConcurrency, db *gorp.DbMap, run sdk.V2WorkflowRun, currentConcurrencyObject workflow_v2.ConcurrencyObject, concurrencyUnlockedCount map[string]int64, toCancelled map[string]workflow_v2.ConcurrencyObject) (bool, error) {
+	var ruleToApply *sdk.V2RunConcurrency
+	var nbRunJobBuilding, nbRunJobBlocked int64
+	var err error
+	if concurrencyDef.Scope == sdk.V2RunConcurrencyScopeProject {
+		ruleToApply, nbRunJobBuilding, nbRunJobBlocked, err = checkProjectScopedConcurrency(ctx, db, run.ProjectKey, concurrencyDef.WorkflowConcurrency)
+	} else {
+		ruleToApply, nbRunJobBuilding, nbRunJobBlocked, err = checkWorkflowScopedConcurrency(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, concurrencyDef.WorkflowConcurrency)
+	}
+	if err != nil {
+		return false, err
+	}
+
+	poolIsFull := nbRunJobBlocked+nbRunJobBuilding+concurrencyUnlockedCount[concurrencyDef.Name] >= ruleToApply.Pool
+
+	if !ruleToApply.CancelInProgress {
+		if poolIsFull {
+			return false, nil
+		} else {
+			if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst && nbRunJobBlocked > 0 {
+				return false, nil
+			}
+		}
+	} else {
+		// Manage cancel-in-progress
+		objectsToCancelled, err := retrieveConcurrencyObjectToCancelled(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, currentConcurrencyObject, ruleToApply, nbRunJobBuilding, concurrencyUnlockedCount[concurrencyDef.Name])
+		if err != nil {
+			return false, err
+		}
+		for _, obj := range objectsToCancelled {
+			toCancelled[obj.ID] = obj
+		}
+	}
+
+	_, has := toCancelled[currentConcurrencyObject.ID]
+	if has {
+		return false, nil
+	}
+	concurrencyUnlockedCount[concurrencyDef.Name]++
+	return true, nil
+}
+
+// Retrieve the next rj to unblocked.
+func retrieveRunObjectsToUnLocked(ctx context.Context, db *gorp.DbMap, projKey, vcsServer, repository, workflowName string, concurrencyDef sdk.V2RunConcurrency) ([]workflow_v2.ConcurrencyObject, []workflow_v2.ConcurrencyObject, error) {
+	var ruleToApply *sdk.V2RunConcurrency
+	var nbBuilding int64
+	var err error
+	switch concurrencyDef.Scope {
+	case sdk.V2RunConcurrencyScopeProject:
+		ruleToApply, nbBuilding, _, err = checkProjectScopedConcurrency(ctx, db, projKey, concurrencyDef.WorkflowConcurrency)
+		if err != nil {
+			return nil, nil, err
+		}
+	default:
+		ruleToApply, nbBuilding, _, err = checkWorkflowScopedConcurrency(ctx, db, projKey, vcsServer, repository, workflowName, concurrencyDef.WorkflowConcurrency)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if ruleToApply == nil {
+		msg := fmt.Sprintf("unable to retrieve concurreny rule %s scope %s for workflow % ", concurrencyDef.Name, concurrencyDef.Scope, workflowName)
+		log.Error(ctx, msg)
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, msg)
+	}
+
+	// If cancel in progress, just retrieve the newest rjs to start
+	if ruleToApply.CancelInProgress {
+		var concurrencyRunObjects []workflow_v2.ConcurrencyObject
+		switch concurrencyDef.Scope {
+		case sdk.V2RunConcurrencyScopeProject:
+			concurrencyRunObjects, err = workflow_v2.LoadNewestRunJobWithProjectScopedConcurrency(ctx, db, projKey, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nil)
+		default:
+			concurrencyRunObjects, err = workflow_v2.LoadNewestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcsServer, repository, workflowName, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nil)
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+		runObjectsToUnlock := make([]workflow_v2.ConcurrencyObject, 0)
+		runObjectsToCancel := make([]workflow_v2.ConcurrencyObject, 0)
+		nbToUnlocked := ruleToApply.Pool - nbBuilding
+
+		// All can be unlocked
+		if nbToUnlocked >= int64(len(concurrencyRunObjects)) {
+			runObjectsToUnlock = append(runObjectsToUnlock, concurrencyRunObjects...)
+		} else {
+			runObjectsToUnlock = append(runObjectsToUnlock, concurrencyRunObjects[:nbToUnlocked]...)
+			for i := nbToUnlocked; i < int64(len(concurrencyRunObjects)); i++ {
+				runObjectsToCancel = append(runObjectsToCancel, concurrencyRunObjects[i])
+			}
+		}
+		return runObjectsToUnlock, runObjectsToCancel, nil
+	}
+
+	// No cancel in progress
+
+	// Test if pool is full
+	if ruleToApply.Pool <= nbBuilding {
+		return nil, nil, nil
+	}
+
+	nbToUnlocked := ruleToApply.Pool - nbBuilding
+	rjToUnlocked := make([]workflow_v2.ConcurrencyObject, 0)
+	switch concurrencyDef.Scope {
+	case sdk.V2RunConcurrencyScopeProject:
+		if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst {
+			// Load oldest
+			runObjToCancel, err := workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
+			if err != nil {
+				return nil, nil, err
+			}
+			rjToUnlocked = append(rjToUnlocked, runObjToCancel...)
+		} else {
+			// Load newest
+			rjs, err := workflow_v2.LoadNewestRunJobWithProjectScopedConcurrency(ctx, db, projKey, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
+			if err != nil {
+				return nil, nil, err
+			}
+			rjToUnlocked = append(rjToUnlocked, rjs...)
+		}
+	default:
+		if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst {
+			// Load oldest
+			runObjToCancel, err := workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcsServer, repository, workflowName, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
+			if err != nil {
+				return nil, nil, err
+			}
+			rjToUnlocked = append(rjToUnlocked, runObjToCancel...)
+		} else {
+			// Load newest
+			var err error
+			rjs, err := workflow_v2.LoadNewestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcsServer, repository, workflowName, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
+			if err != nil {
+				return nil, nil, err
+			}
+			rjToUnlocked = append(rjToUnlocked, rjs...)
+		}
+	}
+	return rjToUnlocked, nil, nil
+}
+
+func retrieveConcurrencyObjectToCancelled(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow string, currentRunObject workflow_v2.ConcurrencyObject, ruleToApply *sdk.V2RunConcurrency, nbBuilding, currentOnSameRule int64) ([]workflow_v2.ConcurrencyObject, error) {
 	nbToCancelled := nbBuilding + currentOnSameRule - ruleToApply.Pool + 1
-	rjsToCancelled := make([]string, 0)
+	toCancel := make([]workflow_v2.ConcurrencyObject, 0)
 
 	// First cancel building jobs
 	var err error
-	var buildingJobs []sdk.V2WorkflowRunJob
+	var buildingObjects []workflow_v2.ConcurrencyObject
 	switch ruleToApply.Scope {
-	case sdk.V2RunJobConcurrencyScopeProject:
-		buildingJobs, err = workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, runJob.ProjectKey, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}, nbToCancelled)
+	case sdk.V2RunConcurrencyScopeProject:
+		buildingObjects, err = workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}, sdk.V2WorkflowRunStatusBuilding, nbToCancelled)
 	default:
-		buildingJobs, err = workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, runJob.ProjectKey, runJob.VCSServer, runJob.Repository, runJob.WorkflowName, runJob.Concurrency.Name, []string{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}, nbToCancelled)
+		buildingObjects, err = workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcs, repo, workflow, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}, sdk.V2WorkflowRunStatusBuilding, nbToCancelled)
 	}
 	if err != nil {
 		return nil, err
 	}
-	for _, brj := range buildingJobs {
-		rjsToCancelled = append(rjsToCancelled, brj.ID)
+	for _, brj := range buildingObjects {
+		toCancel = append(toCancel, brj)
 	}
-	nbToCancelled -= int64(len(buildingJobs))
+	nbToCancelled -= int64(len(toCancel))
 
 	// Then cancel blocked jobs
-	var blockedJobs []sdk.V2WorkflowRunJob
+	var blockedObjects []workflow_v2.ConcurrencyObject
 	switch ruleToApply.Scope {
-	case sdk.V2RunJobConcurrencyScopeProject:
-		blockedJobs, err = workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, runJob.ProjectKey, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, nbToCancelled)
+	case sdk.V2RunConcurrencyScopeProject:
+		blockedObjects, err = workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToCancelled)
 	default:
-		blockedJobs, err = workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, runJob.ProjectKey, runJob.VCSServer, runJob.Repository, runJob.WorkflowName, runJob.Concurrency.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, nbToCancelled)
+		blockedObjects, err = workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcs, repo, workflow, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToCancelled)
 	}
 	if err != nil {
 		return nil, err
 	}
-	for _, brj := range blockedJobs {
-		rjsToCancelled = append(rjsToCancelled, brj.ID)
+	for _, brj := range blockedObjects {
+		toCancel = append(toCancel, brj)
 	}
-	nbToCancelled -= int64(len(blockedJobs))
+	nbToCancelled -= int64(len(blockedObjects))
 
 	// Then cancel the current job
 	if nbToCancelled > 0 {
-		rjsToCancelled = append(rjsToCancelled, runJob.ID)
+		toCancel = append(toCancel, currentRunObject)
 	}
-	return rjsToCancelled, nil
+	return toCancel, nil
 }
 
 // Retrieve rule for a project scoped concurrency
-func checkJobProjectConcurrency(ctx context.Context, db gorp.SqlExecutor, projKey string, currentConcurrencyDef sdk.WorkflowConcurrency) (*sdk.V2RunJobConcurrency, int64, int64, error) {
-	nbRunJobBuilding, err := workflow_v2.CountRunningRunJobWithProjectConcurrency(ctx, db, projKey, currentConcurrencyDef.Name)
+func checkProjectScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, projKey string, currentConcurrencyDef sdk.WorkflowConcurrency) (*sdk.V2RunConcurrency, int64, int64, error) {
+	nbRunJobBuilding, err := workflow_v2.CountRunningWithProjectConcurrency(ctx, db, projKey, currentConcurrencyDef.Name)
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	nbBlockedRunJobs, err := workflow_v2.CountBlockedRunJobWithProjectConcurrency(ctx, db, projKey, currentConcurrencyDef.Name)
+	nbBlockedRunJobs, err := workflow_v2.CountBlockedRunWithProjectConcurrency(ctx, db, projKey, currentConcurrencyDef.Name)
 	if err != nil {
 		return nil, 0, 0, err
 	}
+
 	// Check if rules are differents between ongoing job run
 	ongoingRules, err := workflow_v2.LoadProjectConcurrencyRules(ctx, db, projKey, currentConcurrencyDef.Name)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	ruleToApply := mergeConcurrencyRules(ongoingRules, currentConcurrencyDef)
-	return &sdk.V2RunJobConcurrency{WorkflowConcurrency: ruleToApply, Scope: sdk.V2RunJobConcurrencyScopeProject}, nbRunJobBuilding, nbBlockedRunJobs, nil
+	return &sdk.V2RunConcurrency{WorkflowConcurrency: ruleToApply, Scope: sdk.V2RunConcurrencyScopeProject}, nbRunJobBuilding, nbBlockedRunJobs, nil
 }
 
 // Retrieve rule for a workflow scoped concurrency
-func checkJobWorkflowConcurrency(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repo, workflowName string, currentConcurrencyDef sdk.WorkflowConcurrency) (*sdk.V2RunJobConcurrency, int64, int64, error) {
-	nbRunJobBuilding, err := workflow_v2.CountRunningRunJobWithWorkflowConcurrency(ctx, db, projKey, vcsName, repo, workflowName, currentConcurrencyDef.Name)
+func checkWorkflowScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repo, workflowName string, currentConcurrencyDef sdk.WorkflowConcurrency) (*sdk.V2RunConcurrency, int64, int64, error) {
+	nbRunJobBuilding, err := workflow_v2.CountRunningWithWorkflowConcurrency(ctx, db, projKey, vcsName, repo, workflowName, currentConcurrencyDef.Name)
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	nbBlockedRunJobs, err := workflow_v2.CountBlockedRunJobWithWorkflowConcurrency(ctx, db, projKey, vcsName, repo, workflowName, currentConcurrencyDef.Name)
+	nbBlockedRunJobs, err := workflow_v2.CountBlockedWithWorkflowConcurrency(ctx, db, projKey, vcsName, repo, workflowName, currentConcurrencyDef.Name)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -309,7 +416,7 @@ func checkJobWorkflowConcurrency(ctx context.Context, db gorp.SqlExecutor, projK
 	}
 	ruleToApply := mergeConcurrencyRules(ongoingRules, currentConcurrencyDef)
 
-	return &sdk.V2RunJobConcurrency{WorkflowConcurrency: ruleToApply, Scope: sdk.V2RunJobConcurrencyScopeWorkflow}, nbRunJobBuilding, nbBlockedRunJobs, nil
+	return &sdk.V2RunConcurrency{WorkflowConcurrency: ruleToApply, Scope: sdk.V2RunJobConcurrencyScopeWorkflow}, nbRunJobBuilding, nbBlockedRunJobs, nil
 }
 
 // Merge concurrency rule between all running jobs
@@ -333,7 +440,7 @@ func mergeConcurrencyRules(rulesInDB []workflow_v2.ConcurrencyRule, refRule sdk.
 	return mergedRule
 }
 
-func retrieveConcurrencyDefinition(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, concurrencyName string) (*sdk.V2RunJobConcurrency, error) {
+func retrieveConcurrencyDefinition(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, concurrencyName string) (*sdk.V2RunConcurrency, error) {
 	// Search concurrency rule on workflow
 	scope := sdk.V2RunJobConcurrencyScopeWorkflow
 	var jobConcurrencyDef *sdk.WorkflowConcurrency
@@ -352,7 +459,7 @@ func retrieveConcurrencyDefinition(ctx context.Context, db gorp.SqlExecutor, run
 			}
 		}
 		if projectConcurrency != nil {
-			scope = sdk.V2RunJobConcurrencyScopeProject
+			scope = sdk.V2RunConcurrencyScopeProject
 			pwc := projectConcurrency.ToWorkflowConcurrency()
 			jobConcurrencyDef = &pwc
 		}
@@ -363,8 +470,47 @@ func retrieveConcurrencyDefinition(ctx context.Context, db gorp.SqlExecutor, run
 		return nil, nil
 	}
 
-	return &sdk.V2RunJobConcurrency{
+	return &sdk.V2RunConcurrency{
 		Scope:               scope,
 		WorkflowConcurrency: *jobConcurrencyDef,
 	}, nil
+}
+
+func cancelRunObjects(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, runObjectsToCancel map[string]workflow_v2.ConcurrencyObject) ([]sdk.V2WorkflowRun, []sdk.V2WorkflowRunJob, error) {
+	runCancelled := make([]sdk.V2WorkflowRun, 0)
+	runJobCancelled := make([]sdk.V2WorkflowRunJob, 0)
+	for _, runObject := range runObjectsToCancel {
+		switch runObject.Type {
+		case workflow_v2.ConcurrencyObjectTypeWorkflow:
+			run, err := workflow_v2.LoadRunByID(ctx, tx, runObject.ID)
+			if err != nil {
+				return nil, nil, err
+			}
+			// Do nothing, we will enqueue the workflow with a dedicated status
+			runCancelled = append(runCancelled, *run)
+		default:
+			rj, err := workflow_v2.LoadRunJobByID(ctx, tx, runObject.ID)
+			if err != nil {
+				return nil, nil, err
+			}
+			rj.Status = sdk.V2WorkflowRunJobStatusCancelled
+			now := time.Now()
+			rj.Ended = &now
+			if err := workflow_v2.UpdateJobRun(ctx, tx, rj); err != nil {
+				return nil, nil, err
+			}
+			jobInfo := sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    rj.WorkflowRunID,
+				WorkflowRunJobID: rj.ID,
+				IssuedAt:         time.Now(),
+				Level:            sdk.WorkflowRunInfoLevelWarning,
+				Message:          fmt.Sprintf("Job cancelled due to concurrency %q", rj.Concurrency.Name),
+			}
+			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &jobInfo); err != nil {
+				return nil, nil, err
+			}
+			runJobCancelled = append(runJobCancelled, *rj)
+		}
+	}
+	return runCancelled, runJobCancelled, nil
 }

@@ -218,7 +218,7 @@ func (api *API) failOldWaitingRunJob(ctx context.Context, store cache.Store, db 
 	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.Initiator, runJob.WorkflowName, runJob.RunNumber)
 
 	// Trigger other workflow regarding concurrency
-	api.manageEndJobConcurrency(*runJob)
+	api.manageEndConcurrency(runJob.ProjectKey, runJob.VCSServer, runJob.Repository, runJob.WorkflowName, runJob.WorkflowRunID, runJob.ID, runJob.Concurrency)
 
 	return nil
 }
@@ -356,6 +356,6 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.Initiator, runJob.WorkflowName, runJob.RunNumber)
 
 	// Trigger other workflow regarding concurrency
-	api.manageEndJobConcurrency(*runJob)
+	api.manageEndConcurrency(runJob.ProjectKey, runJob.VCSServer, runJob.Repository, runJob.WorkflowName, runJob.WorkflowRunID, runJob.ID, runJob.Concurrency)
 	return nil
 }

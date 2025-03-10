@@ -4029,14 +4029,14 @@ spec:
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now(),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: true,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -4053,14 +4053,14 @@ spec:
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(1 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: true,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
@@ -4077,14 +4077,14 @@ spec:
 		Status:        sdk.StatusBlocked,
 		Queued:        time.Now().Add(2 * time.Minute),
 		Job:           sdk.V2Job{},
-		Concurrency: &sdk.V2RunJobConcurrency{
+		Concurrency: &sdk.V2RunConcurrency{
 			WorkflowConcurrency: sdk.WorkflowConcurrency{
 				Name:             "main",
 				Order:            sdk.ConcurrencyOrderOldestFirst,
 				Pool:             2,
 				CancelInProgress: true,
 			},
-			Scope: sdk.V2RunJobConcurrencyScopeProject,
+			Scope: sdk.V2RunConcurrencyScopeProject,
 		},
 		Initiator: *wr.Initiator,
 	}
