@@ -74,27 +74,34 @@ func (api *API) manageEndConcurrency(projectKey, vcsServer, repository, workflow
 			}
 			defer tx.Rollback()
 
+			var msg string
 			switch rco.Type {
 			case workflow_v2.ConcurrencyObjectTypeWorkflow:
-				msg := sdk.V2WorkflowRunInfo{
+				msg = fmt.Sprintf("Unlocking workflow %s/%s/%s on run %d for concurrency '%s'", run.VCSServer, run.Repository, run.WorkflowName, run.RunNumber, run.Concurrency.Name)
+			default:
+				msg = fmt.Sprintf("Unlocking job %s on workflow %s/%s/%s on run %d for concurrency '%s'", rj.JobID, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.RunNumber, rj.Concurrency.Name)
+			}
+
+			if parentRunID == currentObjectID {
+				runInfo := sdk.V2WorkflowRunInfo{
 					WorkflowRunID: parentRunID,
 					IssuedAt:      time.Now(),
 					Level:         sdk.WorkflowRunInfoLevelInfo,
-					Message:       fmt.Sprintf("Unlocking workflow %s/%s/%s on run %d for concurrency '%s'", run.VCSServer, run.Repository, run.WorkflowName, run.RunNumber, run.Concurrency.Name),
+					Message:       msg,
 				}
-				if err := workflow_v2.InsertRunInfo(ctx, tx, &msg); err != nil {
+				if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-			default:
-				msg := sdk.V2WorkflowRunJobInfo{
+			} else {
+				runJobInfo := sdk.V2WorkflowRunJobInfo{
 					WorkflowRunID:    parentRunID,
 					WorkflowRunJobID: currentObjectID,
 					IssuedAt:         time.Now(),
 					Level:            sdk.WorkflowRunInfoLevelInfo,
-					Message:          fmt.Sprintf("Unlocking job %s on workflow %s/%s/%s on run %d for concurrency '%s'", rj.JobID, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.RunNumber, rj.Concurrency.Name),
+					Message:          msg,
 				}
-				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &msg); err != nil {
+				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &runJobInfo); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
