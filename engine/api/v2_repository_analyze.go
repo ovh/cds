@@ -643,12 +643,12 @@ skipEntity:
 		if strings.HasPrefix(analysis.Ref, sdk.GitRefTagPrefix) {
 			currentAnalysisTag, err = vcsAuthClient.Tag(ctx, repo.Name, strings.TrimPrefix(analysis.Ref, sdk.GitRefTagPrefix))
 			if err != nil {
-				return err
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve tag %v on repository %s", strings.TrimPrefix(analysis.Ref, sdk.GitRefTagPrefix), repo.Name))
 			}
 		} else {
 			currentAnalysisBranch, err = vcsAuthClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(analysis.Ref, sdk.GitRefBranchPrefix), NoCache: true})
 			if err != nil {
-				return err
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve branch %v on repository %s", strings.TrimPrefix(analysis.Ref, sdk.GitRefBranchPrefix), repo.Name))
 			}
 		}
 	}

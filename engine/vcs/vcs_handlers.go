@@ -170,7 +170,12 @@ func (s *Service) getTagHandler() service.Handler {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
-		tag := muxVar(r, "tagName")
+		stag := muxVar(r, "tagName")
+
+		tag, err := url.PathUnescape(stag)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unescape tag: %v", err)
+		}
 
 		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
