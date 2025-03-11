@@ -71,7 +71,28 @@ type EnvironmentKey struct {
 	EnvironmentID int64   `json:"environment_id" db:"environment_id"`
 }
 
-func ImportGPGKey(dir string, keyName string, publicKey string) (string, []byte, error) {
+func IsGPGKeyAlreadyInstalled(longKeyID string) bool {
+	gpg2Found := false
+	if _, err := exec.LookPath("gpg2"); err == nil {
+		gpg2Found = true
+	}
+	if !gpg2Found {
+		if _, err := exec.LookPath("gpg"); err != nil {
+			return false
+		}
+	}
+	gpgBin := "gpg"
+	if gpg2Found {
+		gpgBin = "gpg2"
+	}
+	cmd := exec.Command(gpgBin, "--list-secret-keys", longKeyID)
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
+}
+
+func ImportGPGKey(dir string, keyName string, content []byte) (string, []byte, error) {
 	gpg2Found := false
 
 	if _, err := exec.LookPath("gpg2"); err == nil {
@@ -83,7 +104,6 @@ func ImportGPGKey(dir string, keyName string, publicKey string) (string, []byte,
 			return "", nil, NewErrorFrom(ErrNotFound, "command gpg/gpg2 not found")
 		}
 	}
-	content := []byte(publicKey)
 	tmpfile, errTmpFile := os.CreateTemp(dir, keyName)
 	if errTmpFile != nil {
 		return "", content, NewError(ErrUnknownError, fmt.Errorf("cannot setup pgp key %s : %v", keyName, errTmpFile))

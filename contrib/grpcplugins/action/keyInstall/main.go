@@ -82,7 +82,7 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 		grpcplugins.Successf(&actPlugin.Common, "export GIT_SSH_COMMAND=\"ssh -i %s -o StrictHostKeyChecking=no\"", filePath)
 		return nil
 	case sdk.KeyTypePGP:
-		if _, _, err := sdk.ImportGPGKey("", key.Name, key.Private); err != nil {
+		if _, _, err := sdk.ImportGPGKey("", key.Name, []byte(key.Private)); err != nil {
 			return fmt.Errorf("unable to install pgp key %s: %v", keyName, err)
 		}
 		grpcplugins.Logf(&actPlugin.Common, "pgpkey %s has been imported", key.Name)

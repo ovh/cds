@@ -156,7 +156,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 			}
 
 			// Import gpg public key
-			fileName, _, err := sdk.ImportGPGKey(os.TempDir(), gpgKeyID, publicKey)
+			fileName, _, err := sdk.ImportGPGKey(os.TempDir(), gpgKeyID, []byte(publicKey))
 			if err != nil {
 				return err
 			}
