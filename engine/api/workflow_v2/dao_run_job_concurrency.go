@@ -337,7 +337,7 @@ func LoadNewestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.S
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND 
 			status = $5
-			ORDER BY last_modified DESC
+			ORDER BY run_number DESC, last_modified DESC
 			LIMIT $6
 	) SELECT id, type FROM (
 		SELECT * from jobs

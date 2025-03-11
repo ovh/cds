@@ -476,6 +476,17 @@ func getAllSensitiveDataFromJson(ctx context.Context, secretJsonValue map[string
 func (api *API) postV2RefreshWorkerHandler() ([]service.RbacChecker, service.Handler) {
 	return []service.RbacChecker{api.jobRunUpdate, api.isWorker}, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		wk := getWorker(ctx)
+		vars := mux.Vars(r)
+		jobRunID := vars["runJobID"]
+
+		jobRun, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
+		if err != nil {
+			return err
+		}
+		if jobRun.Status.IsTerminated() {
+			return sdk.NewErrorFrom(sdk.ErrAlreadyEnded, "job ended: %s", jobRun.Status)
+		}
+
 		wk.LastBeat = time.Now()
 		tx, err := api.mustDB().Begin()
 		if err != nil {

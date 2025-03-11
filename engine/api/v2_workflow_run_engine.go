@@ -293,10 +293,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// Try to Lock concurrency
 	concurrencyLocked := make(map[string]struct{})
 	for _, concu := range concurrenciesDef {
-		concurrencyKey := fmt.Sprintf("%s-%s-%s", concu.Scope, run.ProjectKey, concu.Name)
-		if concu.Scope == sdk.V2RunConcurrencyScopeWorkflow {
-			concurrencyKey = fmt.Sprintf("%s-%s-%s-%s-%s-%s", concu.Scope, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, concu.Name)
-		}
+		concurrencyKey := getConcurrencyUniqueKey(concu, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
 		if _, has := concurrencyLocked[concurrencyKey]; has {
 			continue
 		}
@@ -400,8 +397,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	runsCancelled, runJobsCancelled, err := cancelRunObjects(ctx, tx, runObjectToCancel)
-	if err != nil {
+	if err := api.cancelRunObjects(ctx, tx, runObjectToCancel); err != nil {
 		return err
 	}
 
@@ -411,9 +407,16 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	needReEnqueue := hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedMatrixedJob
 	api.endWorkflowV2Trigger(ctx, run, allrunJobsMap, runJobs, runResults, wrEnqueue, needReEnqueue)
-	api.enqueueCancelledRunObjects(ctx, runsCancelled, runJobsCancelled)
 
 	return nil
+}
+
+func getConcurrencyUniqueKey(concu sdk.V2RunConcurrency, projKey, vcs, repo, workflow string) string {
+	concurrencyKey := fmt.Sprintf("%s-%s-%s", concu.Scope, projKey, concu.Name)
+	if concu.Scope == sdk.V2RunConcurrencyScopeWorkflow {
+		concurrencyKey = fmt.Sprintf("%s-%s-%s-%s-%s-%s", concu.Scope, projKey, vcs, repo, workflow, concu.Name)
+	}
+	return concurrencyKey
 }
 
 func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun, allrunJobsMap map[string]sdk.V2WorkflowRunJob, updatedRunJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult, wrEnqueue sdk.V2WorkflowRunEnqueue, reEnqueue bool) {
@@ -425,7 +428,13 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 		}
 	})
 
+	conccurencyTriggered := make(map[string]struct{})
+
 	for _, rj := range updatedRunJobs {
+		concurrencyKey := getConcurrencyUniqueKey(*rj.Concurrency, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName)
+		if _, has := conccurencyTriggered[concurrencyKey]; has {
+			continue
+		}
 		if rj.Status.IsTerminated() {
 			api.manageEndConcurrency(rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.WorkflowRunID, rj.ID, rj.Concurrency)
 		}
@@ -440,7 +449,10 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 
 		// Try to unlocked workflow or jobs
-		api.manageEndConcurrency(run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, run.ID, run.ID, run.Concurrency)
+		concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
+		if _, has := conccurencyTriggered[concurrencyKey]; !has {
+			api.manageEndConcurrency(run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, run.ID, run.ID, run.Concurrency)
+		}
 
 		// Send event to hook uservice
 		hookServices, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
@@ -1505,7 +1517,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 	return msgsLint
 }
 
-func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, runJobsInfo map[string]sdk.V2WorkflowRunJobInfo, run *sdk.V2WorkflowRun, data prepareJobData, concurrenciesDef map[string]sdk.V2RunConcurrency, concurrencyUnlockedCount map[string]int64, rjToCancelled map[string]workflow_v2.ConcurrencyObject) ([]sdk.V2WorkflowRunJob, bool, error) {
+func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, runJobsInfo map[string]sdk.V2WorkflowRunJobInfo, run *sdk.V2WorkflowRun, data prepareJobData, concurrenciesDef map[string]sdk.V2RunConcurrency, concurrencyUnlockedCount map[string]int64, runObjToCancelled map[string]workflow_v2.ConcurrencyObject) ([]sdk.V2WorkflowRunJob, bool, error) {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	hasToUpdateRun := false
 
@@ -1559,7 +1571,7 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		}
 
 		// Manage concurrency
-		runJobInfo, err := manageJobConcurrency(ctx, db, *run, data.jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, rjToCancelled)
+		runJobInfo, err := manageJobConcurrency(ctx, db, *run, data.jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjToCancelled)
 		if err != nil {
 			return runJobs, hasToUpdateRun, err
 		}
@@ -1571,7 +1583,7 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 				runJob.Status = sdk.V2WorkflowRunJobStatusFail
 			}
 		}
-		if _, has := rjToCancelled[runJob.ID]; has {
+		if _, has := runObjToCancelled[runJob.ID]; has {
 			runJob.Status = sdk.V2WorkflowRunJobStatusCancelled
 			runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    runJob.WorkflowRunID,
@@ -1580,7 +1592,20 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 				IssuedAt:         time.Now(),
 				Message:          fmt.Sprintf("Job cancelled due to concurrency %q", runJob.Concurrency.Name),
 			}
-			delete(rjToCancelled, runJob.ID)
+			delete(runObjToCancelled, runJob.ID)
+		}
+		for _, runObj := range runObjToCancelled {
+			if runObj.Type == workflow_v2.ConcurrencyObjectTypeWorkflow {
+				runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
+				runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    runJob.WorkflowRunID,
+					WorkflowRunJobID: runJob.ID,
+					Level:            sdk.WorkflowRunInfoLevelInfo,
+					IssuedAt:         time.Now(),
+					Message:          "Job blocked, waiting for workfow cancellation before staring",
+				}
+				break
+			}
 		}
 		runJobs = append(runJobs, runJob)
 	}

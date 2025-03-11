@@ -363,6 +363,20 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			c.Pool = 1
 		}
 	}
+	// Compute workflow concurrency
+	if strings.Contains(run.WorkflowData.Workflow.Concurrency, "${{") {
+		interpolatedString, err := ap.InterpolateToString(ctx, run.WorkflowData.Workflow.Concurrency)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       err.Error(),
+			})
+		}
+		run.WorkflowData.Workflow.Concurrency = interpolatedString
+	}
 
 	run.WorkflowData.Actions = make(map[string]sdk.V2Action)
 	for k, v := range wref.ef.actionsCache {
@@ -382,14 +396,30 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// check concurrency
+	if run.Concurrency != nil {
+		concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
+		concurrencyLockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)
+		locked, err := api.Cache.Lock(concurrencyLockKey, 1*time.Minute, 0, 1)
+		if err != nil {
+			return err
+		}
+		if !locked {
+			log.Info(ctx, "concurrency %q already locked", concurrencyKey)
+			time.Sleep(1 * time.Second)
+			return nil
+		}
+		defer api.Cache.Unlock(concurrencyLockKey)
+	}
+
 	runObjectToCancel := make(map[string]workflow_v2.ConcurrencyObject)
 	runInfo, err := manageWorkflowConcurrency(ctx, api.mustDB(), run, map[string]int64{}, runObjectToCancel)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			IssuedAt:      time.Now(),
 			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf(""),
+			Message:       "unable to start the workflow. Please contact an administrator",
 		})
 	}
 	// If runInfo != nil. Level info: run blocked.  Level error => failed the run
@@ -419,6 +449,22 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 	defer tx.Rollback() // nolint
+
+	// Check if there is workflow to cancel
+	if len(runObjectToCancel) > 0 {
+		for _, cancelObj := range runObjectToCancel {
+			if cancelObj.Type == workflow_v2.ConcurrencyObjectTypeWorkflow {
+				run.Status = sdk.V2WorkflowRunStatusBlocked
+				runInfo = &sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelInfo,
+					IssuedAt:      time.Now(),
+					Message:       "Workflow blocked, waiting for workfow cancellation before staring",
+				}
+				break
+			}
+		}
+	}
 
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
@@ -454,12 +500,15 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		}
 	}
 
+	if err := api.cancelRunObjects(ctx, tx, runObjectToCancel); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(tx.Commit())
 	}
 
 	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, nil, nil, nil)
-
 	api.EnqueueWorkflowRun(ctx, run.ID, *run.Initiator, run.WorkflowName, run.RunNumber)
 	return nil
 }
