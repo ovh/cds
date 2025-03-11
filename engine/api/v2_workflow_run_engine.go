@@ -431,12 +431,14 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 	conccurencyTriggered := make(map[string]struct{})
 
 	for _, rj := range updatedRunJobs {
-		concurrencyKey := getConcurrencyUniqueKey(*rj.Concurrency, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName)
-		if _, has := conccurencyTriggered[concurrencyKey]; has {
-			continue
-		}
-		if rj.Status.IsTerminated() {
-			api.manageEndConcurrency(rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.WorkflowRunID, rj.ID, rj.Concurrency)
+		if rj.Concurrency != nil {
+			concurrencyKey := getConcurrencyUniqueKey(*rj.Concurrency, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName)
+			if _, has := conccurencyTriggered[concurrencyKey]; has {
+				continue
+			}
+			if rj.Status.IsTerminated() {
+				api.manageEndConcurrency(rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.WorkflowRunID, rj.ID, rj.Concurrency)
+			}
 		}
 	}
 
@@ -449,9 +451,11 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 
 		// Try to unlocked workflow or jobs
-		concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
-		if _, has := conccurencyTriggered[concurrencyKey]; !has {
-			api.manageEndConcurrency(run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, run.ID, run.ID, run.Concurrency)
+		if run.Concurrency != nil {
+			concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
+			if _, has := conccurencyTriggered[concurrencyKey]; !has {
+				api.manageEndConcurrency(run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, run.ID, run.ID, run.Concurrency)
+			}
 		}
 
 		// Send event to hook uservice
