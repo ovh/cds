@@ -17,8 +17,6 @@
     <ng-template #projectPart>
         <app-project-breadcrumb [project]="project" [workflow]="workflowName" [workflowRun]="workflowNum"
             [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
-            <app-favorite-button *ngIf="project" [active]="project?.favorite" (click)="updateFav()"
-                [loading]="loadingFav"></app-favorite-button>
         </app-project-breadcrumb>
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <div class="scrollingContent">

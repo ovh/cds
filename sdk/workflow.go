@@ -59,7 +59,6 @@ type Workflow struct {
 	Labels                   []Label                      `json:"labels,omitempty" db:"-" cli:"labels"`
 	ToDelete                 bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	ToDeleteWithDependencies *bool                        `json:"to_delete_with_dependencies" db:"to_delete_with_dependencies" cli:"-"`
-	Favorite                 bool                         `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData             WorkflowData                 `json:"workflow_data" db:"workflow_data" cli:"-"`
 	Integrations             []WorkflowProjectIntegration `json:"integrations,omitempty" db:"-" cli:"-"`
 	AsCodeEvent              []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`

@@ -4,14 +4,10 @@ import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Group, GroupPermission } from 'app/model/group.model';
-import { ProjectIntegration } from 'app/model/integration.model';
-import { Key } from 'app/model/keys.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Label, LoadOpts, Project } from 'app/model/project.model';
-import { RepositoriesManager } from 'app/model/repositories.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -24,7 +20,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import * as ProjectAction from './project.action';
-import { ProjectState, ProjectStateModel } from './project.state';
+import { ProjectState } from './project.state';
 import { WorkflowState } from './workflow.state';
 
 describe('Project', () => {
@@ -34,7 +30,6 @@ describe('Project', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             providers: [
-                NavbarService,
                 WorkflowService,
                 WorkflowRunService,
                 ProjectStore,

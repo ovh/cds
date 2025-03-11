@@ -3,20 +3,15 @@ import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { APIConfig } from 'app/model/config.service';
 import { Help } from 'app/model/help.model';
-import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
 import { Project } from 'app/model/project.model';
 import { AuthSummary } from 'app/model/user.model';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
-import { ProjectStore } from 'app/service/services.module';
-import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { ConfigState } from 'app/store/config.state';
 import { HelpState } from 'app/store/help.state';
 import { PreferencesState } from 'app/store/preferences.state';
-import { List } from 'immutable';
 import { Subscription, lastValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import * as actionPreferences from 'app/store/preferences.action';
@@ -24,6 +19,8 @@ import { ProjectService } from 'app/service/project/project.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ErrorUtils } from 'app/shared/error.utils';
 import { V2ProjectService } from 'app/service/projectv2/project.service';
+import { Bookmark, BookmarkType } from 'app/model/bookmark.model';
+import { BookmarkLoad, BookmarkState } from 'app/store/bookmark.state';
 
 @Component({
     selector: 'app-navbar',
@@ -33,16 +30,8 @@ import { V2ProjectService } from 'app/service/projectv2/project.service';
 })
 @AutoUnsubscribe()
 export class NavbarComponent implements OnInit, OnDestroy {
-
-    listFavs: Array<NavbarProjectData> = [];
-    navRecentProjects: List<Project>;
-    navRecentWorkflows: List<NavbarRecentData>;
-    searchItems: Array<NavbarSearchItem> = [];
-    recentItems: Array<NavbarSearchItem> = [];
-    items: Array<NavbarSearchItem> = [];
     help: Help = new Help();
     loading = true;
-    listWorkflows: List<NavbarRecentData>;
     navbarSubscription: Subscription;
     authSubscription: Subscription;
     configSubscription: Subscription;
@@ -57,22 +46,37 @@ export class NavbarComponent implements OnInit, OnDestroy {
     selectedProjectKey: string;
     projectSubscription: Subscription;
     projects: Array<Project> = [];
+    bookmarks: Array<Bookmark> = [];
+    homeActive: boolean;
+    bookmarksSubscription: Subscription;
 
     constructor(
-        private _navbarService: NavbarService,
         private _store: Store,
-        private _projectStore: ProjectStore,
-        private _workflowStore: WorkflowStore,
         private _router: Router,
         private _routerService: RouterService,
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
         private _messageService: NzMessageService,
         private _v2ProjectService: V2ProjectService
-    ) {
+    ) { }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+
+    changeTheme() {
+        this.darkActive = !this.darkActive;
+        this._cd.markForCheck();
+        this._store.dispatch(new actionPreferences.SetTheme({ theme: this.darkActive ? 'night' : 'light' }));
+    }
+
+    ngOnInit() {
         this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
             this.currentAuthSummary = s;
             this._cd.markForCheck();
+
+            if (s) {
+                this.loadProjects();
+                this._store.dispatch(new BookmarkLoad());
+            }
         });
 
         this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
@@ -85,6 +89,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
+        this.bookmarksSubscription = this._store.select(BookmarkState.state).subscribe(s => {
+            this.bookmarks = s.all;
+            this._cd.markForCheck();
+        });
+
         this._store.select(HelpState.last)
             .pipe(
                 filter((help) => help != null),
@@ -93,76 +102,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.help = help;
                 this._cd.markForCheck();
             });
-    }
-
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
-
-    changeTheme() {
-        this.darkActive = !this.darkActive;
-        this._cd.markForCheck();
-        this._store.dispatch(new actionPreferences.SetTheme({ theme: this.darkActive ? 'night' : 'light' }));
-    }
-
-    ngOnInit() {
-        // Listen list of nav project
-        this._store.select(AuthenticationState.summary).subscribe(s => {
-            if (s) {
-                this.getData();
-                this.loadProjects();
-            }
-        });
 
         this._router.events.pipe(
             filter(e => e instanceof NavigationEnd),
-        ).forEach(() => {
+        ).forEach((e: NavigationEnd) => {
             const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
             this.selectedProjectKey = params['key'] ?? null;
+            this.homeActive = e.url === '/';
             this._cd.markForCheck();
         });
-    }
 
-    async getData() {
-        this._navbarService.refreshData();
-        this.navbarSubscription = this._navbarService.getObservable().subscribe(data => {
-            if (Array.isArray(data) && data.length > 0) {
-                this.searchItems = new Array<NavbarSearchItem>();
-                let favProj = [];
-                this.listFavs = data.filter((p) => {
-                    if (p.favorite && p.type !== 'workflow') {
-                        if (p.type === 'project' && favProj.indexOf(p.key) === -1) {
-                            favProj.push(p.key);
-                            return true;
-                        }
-                        return false;
-                    }
-                    return p.favorite;
-                }).slice(0, 7);
-
-                data.forEach(p => {
-                    switch (p.type) {
-                        case 'workflow':
-                            this.searchItems.push({
-                                value: p.key + '/' + p.workflow_name,
-                                title: p.workflow_name,
-                                type: 'workflow',
-                                projectKey: p.key,
-                                favorite: p.favorite
-                            });
-                            break;
-                        default:
-                            this.searchItems.push({
-                                value: p.key,
-                                title: p.name,
-                                type: 'project',
-                                projectKey: p.key,
-                                favorite: p.favorite
-                            });
-                    }
-                });
-            }
-            this.loading = false;
-            this._cd.markForCheck();
-        });
+        this.homeActive = this._router.routerState.snapshot.url === '/';
+        this._cd.markForCheck();
     }
 
     async loadProjects() {
@@ -208,5 +159,36 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 });
             }
         );
+    }
+
+    generateBookmarkLink(b: Bookmark): Array<string> {
+        const splitted = b.id.split('/');
+        switch (b.type) {
+            case BookmarkType.Workflow:
+                const project = splitted.shift();
+                return ['/project', project, 'run'];
+            case BookmarkType.WorkflowLegacy:
+                return ['/project', splitted[0], 'workflow', splitted[1]];
+            case BookmarkType.Project:
+                return ['/project', b.id];
+            default:
+                return [];
+        }
+    }
+
+    generateBookmarkQueryParams(b: Bookmark, variant?: string): any {
+        const splitted = b.id.split('/');
+        switch (b.type) {
+            case BookmarkType.Workflow:
+                splitted.shift();
+                const workflow_path = splitted.join('/');
+                let params = { workflow: workflow_path };
+                if (variant) {
+                    params['ref'] = variant;
+                }
+                return params;
+            default:
+                return {};
+        }
     }
 }

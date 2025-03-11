@@ -22,7 +22,6 @@ import { Project } from './model/project.model';
 import { AuthSummary } from './model/user.model';
 import { ApplicationService } from './service/application/application.service';
 import { AuthenticationService } from './service/authentication/authentication.service';
-import { NavbarService } from './service/navbar/navbar.service';
 import { NotificationService } from './service/notification/notification.service';
 import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
@@ -61,7 +60,6 @@ describe('App: CDS', () => {
                 FeatureService,
                 HelpService,
                 MonitoringService,
-                NavbarService,
                 NotificationService,
                 ProjectStore,
                 RouterService,

@@ -89,8 +89,10 @@ export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked,
 		};
 
 		const doBackfill = (this.filterInputDirective as any).doBackfill.bind(this.filterInputDirective);
+		const setTriggerValue = (this.filterInputDirective as any).setTriggerValue.bind(this.filterInputDirective);
 		(this.filterInputDirective as any).doBackfill = (): void => {
 			if (this.filterInputDirective.nzAutocomplete.activeItem.getLabel().indexOf('jump:') === 0) {
+				setTriggerValue(this.filterText);
 				return;
 			}
 			doBackfill();
@@ -119,7 +121,7 @@ export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked,
 	computeAvailableFilters(originalText: string): void {
 		// Get and adjust cursor position
 		const originalCursorPosition = this.filterInput.nativeElement.selectionStart;
-		this.textFilters = originalText.split(' ');
+		this.textFilters = (originalText ?? '').split(' ');
 		// Retrieve the active filter in the text
 		this.cursorTextFilterPosition = 0;
 		let count = 0;

@@ -2,7 +2,6 @@ import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ProjectModule } from 'app/views/project/project.module';
 import { ProjectAddComponent } from './add/project.add.component';
-import { ProjectListComponent } from './list/project.list.component';
 import { ProjectShowComponent } from './show/project.component';
 import { ProjectComponent } from './project.component';
 import { ProjectV2ExploreComponent } from '../projectv2/explore/explore.component';
@@ -18,7 +17,9 @@ const projectRoutes: Routes = [
     {
         path: '',
         children: [
-            { path: '', component: ProjectListComponent, data: { title: 'List • Project' } },
+            {
+                path: '', redirectTo: '/search?type=project', pathMatch: 'full'
+            },
             { path: 'add', component: ProjectAddComponent, data: { title: 'Add • Project' } },
             {
                 path: ':key',

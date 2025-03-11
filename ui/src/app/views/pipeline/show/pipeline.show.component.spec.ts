@@ -21,7 +21,6 @@ import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { KeyService } from 'app/service/keys/keys.service';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
@@ -48,7 +47,6 @@ describe('CDS: Pipeline Show', () => {
                 PipelineService,
                 ProjectService,
                 ProjectStore,
-                NavbarService,
                 MonitoringService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ToastService, useClass: MockToast },

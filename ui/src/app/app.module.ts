@@ -17,6 +17,7 @@ import { PreferencesState } from './store/preferences.state';
 import { EventV2Service } from './event-v2.service';
 import { SearchComponent } from './views/search/search.component';
 import { NavbarComponent } from './views/navbar/navbar.component';
+import { HomeComponent } from './views/home/home.component';
 import { SearchBarComponent } from './views/search/search-bar.component';
 
 export let errorFactory = () => {
@@ -55,6 +56,7 @@ export class CDSStorageEngine implements StorageEngine {
 @NgModule({
     declarations: [
         AppComponent,
+        HomeComponent,
         NavbarComponent,
         SearchBarComponent,
         SearchComponent

@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
@@ -38,7 +36,6 @@ func main() {
 		pipeline(),
 		project(),
 		queue(),
-		shell(),
 		template(),
 		tools(),
 		update(),
@@ -54,7 +51,7 @@ func main() {
 }
 
 func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
-	root := cli.NewCommand(mainCmd, mainRun, cmds)
+	root := cli.NewCommand(mainCmd, nil, cmds)
 
 	root.PersistentFlags().StringP("context", "c", "", "cdsctl context name")
 	root.PersistentFlags().StringP("file", "f", "", "set configuration file")
@@ -135,47 +132,4 @@ Advanced usages:
   CDS_API_URL="https://instance.cds.api" CDS_TOKEN="yourtoken" CDS_CDN_URL="https://instance.cds.cdn" cdsctl [command]
 
 `,
-}
-
-func mainRun(vals cli.Values) error {
-	fmt.Println("Welcome to CDS")
-
-	config, err := client.ConfigUser()
-	if err != nil {
-		return nil
-	}
-
-	if config.URLUI != "" {
-		fmt.Printf("UI: %s\n", config.URLUI)
-	}
-
-	navbarInfos, err := client.Navbar()
-	if err != nil {
-		return nil
-	}
-
-	projFavs := []sdk.NavbarProjectData{}
-	wfFavs := []sdk.NavbarProjectData{}
-	for _, elt := range navbarInfos {
-		if elt.Favorite {
-			switch elt.Type {
-			case "workflow":
-				wfFavs = append(wfFavs, elt)
-			case "project":
-				projFavs = append(projFavs, elt)
-			}
-		}
-	}
-
-	fmt.Println("\n -=-=-=-=- Projects bookmarked -=-=-=-=-")
-	for _, prj := range projFavs {
-		fmt.Printf("- %s %s\n", prj.Name, config.URLUI+"/project/"+prj.Key)
-	}
-
-	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
-	for _, wf := range wfFavs {
-		fmt.Printf("- %s %s\n", wf.WorkflowName, config.URLUI+"/project/"+wf.Key+"/workflow/"+wf.WorkflowName)
-	}
-
-	return nil
 }

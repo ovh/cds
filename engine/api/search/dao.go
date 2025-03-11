@@ -25,7 +25,7 @@ func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters) (
 		WITH 
 			results AS (
 				(
-					SELECT 'project' AS type, projectkey AS id, name AS label, null AS variants
+					SELECT 'project' AS type, projectkey AS id, name AS label
 					FROM project
 					WHERE
 						projectkey = ANY(:projects)
@@ -33,19 +33,20 @@ func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters) (
 				)
 				UNION
 				(
-					SELECT 'workflow' AS type, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, jsonb_agg(entity.ref) AS variants
+					SELECT 'workflow' AS type, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label
 					FROM entity
 					JOIN project_repository ON entity.project_repository_id = project_repository.id
 					JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
 					WHERE
 						entity.type = 'Workflow'
+						AND entity.commit = 'HEAD'
 						AND entity.project_key = ANY(:projects)
 						AND (array_length(:types::text[], 1) IS NULL OR 'workflow' = ANY(:types))
 					GROUP BY entity.project_key, vcs_project.name, project_repository.name, entity.type, entity.name
 				)
 				UNION
 				(
-					SELECT 'workflow-legacy' AS type, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
+					SELECT 'workflow-legacy' AS type, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label
 					FROM workflow
 					JOIN project ON project.id = workflow.project_id
 					WHERE
@@ -81,7 +82,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 		WITH 
 			results AS (
 				(
-					SELECT 0 AS type_int, projectkey AS id, name AS label, null AS variants
+					SELECT 0 AS type_int, projectkey AS id, name AS label, description, null AS variants
 					FROM project
 					WHERE
 						projectkey = ANY(:projects)
@@ -89,19 +90,26 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 				)
 				UNION
 				(
-					SELECT 1 AS type_int, CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, jsonb_agg(entity.ref) AS variants
-					FROM entity
-					JOIN project_repository ON entity.project_repository_id = project_repository.id
-					JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
-					WHERE
-						entity.type = 'Workflow'
-						AND entity.project_key = ANY(:projects)
-						AND (array_length(:types::text[], 1) IS NULL OR 'workflow' = ANY(:types))
-					GROUP BY entity.project_key, vcs_project.name, project_repository.name, entity.type, entity.name
+					WITH 
+						entities AS (
+							SELECT CONCAT(entity.project_key, '/', vcs_project.name, '/', project_repository.name, '/', entity.name) AS id, entity.name AS label, entity.ref AS ref, entity.last_update AS last_update
+							FROM entity
+							JOIN project_repository ON entity.project_repository_id = project_repository.id
+							JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
+							WHERE
+								entity.type = 'Workflow'
+								AND entity.commit = 'HEAD'
+								AND entity.project_key = ANY(:projects)
+								AND (array_length(:types::text[], 1) IS NULL OR 'workflow' = ANY(:types))
+							ORDER BY last_update DESC
+						)
+					SELECT 1 AS type_int, id, label, '' AS description, jsonb_agg(ref) AS variants
+					FROM entities
+					GROUP BY id, label
 				)
 				UNION
 				(
-					SELECT 2 AS type_int, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, null AS variants
+					SELECT 2 AS type_int, CONCAT(project.projectkey, '/', workflow.name) AS id, workflow.name AS label, workflow.description AS description, null AS variants
 					FROM workflow
 					JOIN project ON project.id = workflow.project_id
 					WHERE
@@ -109,7 +117,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 						AND (array_length(:types::text[], 1) IS NULL OR 'workflow-legacy' = ANY(:types))
 				)
 			)
-		SELECT id, label, variants, CASE
+		SELECT id, label, description, variants, CASE
 				WHEN LOWER(label) LIKE :query THEN 1
 				WHEN LOWER(id) LIKE :query THEN 2
 			END AS priority, CASE

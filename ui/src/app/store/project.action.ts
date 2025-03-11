@@ -40,12 +40,6 @@ export class DeleteProjectFromCache {
     constructor() { }
 }
 
-//  ------- Misc --------- //
-export class UpdateFavoriteProject {
-    static readonly type = '[Project] Update Project Favorite';
-    constructor(public payload: { projectKey: string }) { }
-}
-
 //  ------- Variable --------- //
 export class ResyncVariablesInProject {
     static readonly type = '[Project] Resync Variables in Project';

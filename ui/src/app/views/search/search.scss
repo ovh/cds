@@ -64,6 +64,12 @@
         }
       }
     }
+
+    .action {
+      &:not(:first-child) {
+        margin-left: 5px;
+      }
+    }
   }
 
   .footer {

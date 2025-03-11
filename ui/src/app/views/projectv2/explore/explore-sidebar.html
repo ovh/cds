@@ -61,6 +61,8 @@
                                         routerLinkActive="active" [title]="v.name">
                                         <span nz-icon nzType="file"></span>{{v.name}}
                                     </a>
+                                    <app-favorite-button *ngIf="v.type === 'Workflow'" type="workflow"
+                                        [id]="project.key+'/'+vcs.name+'/'+repo.name+'/'+v.name"></app-favorite-button>
                                     <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
                                         (click)="openRunStartDrawer(vcs.name+'/'+repo.name+'/'+v.name, refSelectState[vcs.name+'/'+repo.name])"
                                         title="Start workflow">

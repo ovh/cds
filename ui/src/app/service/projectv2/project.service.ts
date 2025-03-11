@@ -16,14 +16,11 @@ export class V2ProjectService {
     ) { }
 
     getAll(): Observable<Array<Project>> {
-        let params = new HttpParams();
-        params = params.append('withIcon', 'true');
-        return this._http.get<Array<Project>>('/v2/project', { params });
+        return this._http.get<Array<Project>>('/v2/project');
     }
 
     get(key: string): Observable<Project> {
-        let params = new HttpParams();
-        return this._http.get<Project>(`/v2/project/${key}`, { params });
+        return this._http.get<Project>(`/v2/project/${key}`);
     }
 
     put(p: Project): Observable<Project> {

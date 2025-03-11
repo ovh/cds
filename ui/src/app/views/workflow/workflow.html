@@ -57,8 +57,8 @@
                 </ng-container>
             </div>
         </ng-template>
-        <app-favorite-button *ngIf="workflow" [active]="workflow?.favorite" (click)="updateFav()"
-            [loading]="loadingFav"></app-favorite-button>
+        <app-favorite-button *ngIf="workflow" type="workflow-legacy"
+            [id]="project.key + '/' + workflow.name"></app-favorite-button>
     </app-workflow-breadcrumb>
     <div class="workflow-wrapper">
         <div class="sidebar expanded" *ngIf="project && workflow">

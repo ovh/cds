@@ -10,11 +10,9 @@ import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
 import { RepositoriesManager, RepositoriesManagerAuth } from 'app/model/repositories.model';
 import { ApplicationService } from 'app/service/application/application.service';
-import { ApplicationStore } from 'app/service/application/application.store';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { KeyService } from 'app/service/keys/keys.service';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
@@ -48,11 +46,9 @@ describe('CDS: Application Repo Component', () => {
                 DummyComponent
             ],
             providers: [
-                { provide: ApplicationStore, useClass: MockStore },
                 ApplicationService,
                 KeyService,
                 ProjectStore,
-                NavbarService,
                 ProjectService,
                 MonitoringService,
                 PipelineService,

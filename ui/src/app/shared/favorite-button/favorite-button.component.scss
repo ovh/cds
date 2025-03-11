@@ -1,19 +1,31 @@
 @import '../../../common';
 
 :host {
-    display: block;
-    cursor: pointer;
+    display: flex;
+    width: 20px;
     height: 20px;
+    flex-direction: row;
+    align-items: center;
+    font-size: 20px;
 }
 
-[nz-icon] {
-    font-size: 20px;
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    font-size: inherit;
 
-    &.active {
-        color: $cds_favorite_color;
-    }
+    [nz-icon] {
+        cursor: pointer;
+        font-size: inherit;
 
-    &:hover {
-        opacity: 0.4;
+        &.active {
+            color: $cds_favorite_color;
+        }
+
+        &:hover {
+            opacity: 0.4;
+        }
     }
 }

@@ -25,7 +25,6 @@ func projectCommands() []*cobra.Command {
 		cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectCreateCmd, projectCreateRun, nil),
 		cli.NewDeleteCommand(projectDeleteCmd, projectDeleteRun, nil, withAllCommandModifiers()...),
-		cli.NewCommand(projectFavoriteCmd, projectFavoriteRun, nil, withAllCommandModifiers()...),
 		projectKey(),
 		projectVariable(),
 		projectVCS(),
@@ -49,7 +48,7 @@ var projectListCmd = cli.Command{
 }
 
 func projectListRun(v cli.Values) (cli.ListResult, error) {
-	projs, err := client.ProjectList(false, false, true)
+	projs, err := client.ProjectList(false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +81,6 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 		Key          string `cli:"key,key"`
 		Name         string `cli:"name"`
 		Description  string `cli:"description"`
-		Favorite     bool   `cli:"favorite"`
 		URL          string `cli:"url"`
 		API          string `cli:"api"`
 		Workflows    string `cli:"workflows"`
@@ -93,7 +91,6 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 		Key:         proj.Key,
 		Name:        proj.Name,
 		Description: proj.Description,
-		Favorite:    proj.Favorite,
 		NbWorkflows: len(proj.WorkflowNames),
 		Workflows:   cli.Ellipsis(strings.Join(proj.WorkflowNames.Names(), ","), 70),
 		URL:         proj.URLs.UIURL,

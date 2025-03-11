@@ -49,7 +49,6 @@ type Project struct {
 	VCSServers        []VCSProject         `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
 	Integrations      []ProjectIntegration `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
 	Features          map[string]bool      `json:"features" yaml:"features" db:"-" cli:"-"`
-	Favorite          bool                 `json:"favorite,omitempty" yaml:"favorite" db:"-" cli:"favorite"`
 	URLs              URL                  `json:"urls" yaml:"-" db:"-" cli:"-"`
 	Organization      string               `json:"organization" yaml:"-" db:"-" cli:"-"`
 	WorkflowRetention int64                `json:"workflow_retention" yaml:"-" db:"workflow_retention" cli:"-"`

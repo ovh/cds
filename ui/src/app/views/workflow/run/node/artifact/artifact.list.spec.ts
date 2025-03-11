@@ -7,7 +7,6 @@ import { NgxsModule, Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { ApplicationService } from 'app/service/application/application.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
@@ -37,7 +36,7 @@ describe('CDS: Artifact List', () => {
                 TranslateLoader,
                 TranslateParser,
                 ProjectService, PipelineService, EnvironmentService, ApplicationService, EnvironmentService,
-                NavbarService, WorkflowService, WorkflowRunService, ProjectStore, RouterService,
+                WorkflowService, WorkflowRunService, ProjectStore, RouterService,
                 provideHttpClient(withInterceptorsFromDi()),
                 provideHttpClientTesting()
             ],

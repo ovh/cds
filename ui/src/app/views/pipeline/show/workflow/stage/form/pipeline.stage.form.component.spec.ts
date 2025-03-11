@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { NgxsStoreModule } from 'app/store/store.module';
@@ -22,7 +21,6 @@ describe('CDS: Stage From component', () => {
             declarations: [],
             providers: [
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
-                NavbarService,
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,

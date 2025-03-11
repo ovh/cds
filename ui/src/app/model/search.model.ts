@@ -8,6 +8,7 @@ export class SearchResult {
 	type: SearchResultType;
 	id: string;
 	label: string;
+	description: string;
 	variants: Array<string>;
 }
 
