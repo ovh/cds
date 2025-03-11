@@ -77,7 +77,7 @@ func (api *API) manageEndConcurrency(projectKey, vcsServer, repository, workflow
 			switch rco.Type {
 			case workflow_v2.ConcurrencyObjectTypeWorkflow:
 				msg := sdk.V2WorkflowRunInfo{
-					WorkflowRunID: run.ID,
+					WorkflowRunID: parentRunID,
 					IssuedAt:      time.Now(),
 					Level:         sdk.WorkflowRunInfoLevelInfo,
 					Message:       fmt.Sprintf("Unlocking workflow %s/%s/%s on run %d for concurrency '%s'", run.VCSServer, run.Repository, run.WorkflowName, run.RunNumber, run.Concurrency.Name),
@@ -88,8 +88,8 @@ func (api *API) manageEndConcurrency(projectKey, vcsServer, repository, workflow
 				}
 			default:
 				msg := sdk.V2WorkflowRunJobInfo{
-					WorkflowRunID:    runID,
-					WorkflowRunJobID: rco.ID,
+					WorkflowRunID:    parentRunID,
+					WorkflowRunJobID: currentObjectID,
 					IssuedAt:         time.Now(),
 					Level:            sdk.WorkflowRunInfoLevelInfo,
 					Message:          fmt.Sprintf("Unlocking job %s on workflow %s/%s/%s on run %d for concurrency '%s'", rj.JobID, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.RunNumber, rj.Concurrency.Name),
@@ -295,43 +295,43 @@ func retrieveRunObjectsToUnLocked(ctx context.Context, db *gorp.DbMap, projKey, 
 	}
 
 	nbToUnlocked := ruleToApply.Pool - nbBuilding
-	rjToUnlocked := make([]workflow_v2.ConcurrencyObject, 0)
+	toUnlocked := make([]workflow_v2.ConcurrencyObject, 0)
 	switch concurrencyDef.Scope {
 	case sdk.V2RunConcurrencyScopeProject:
 		if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst {
 			// Load oldest
-			runObjToCancel, err := workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
+			runObjToUnlock, err := workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
 			if err != nil {
 				return nil, nil, err
 			}
-			rjToUnlocked = append(rjToUnlocked, runObjToCancel...)
+			toUnlocked = append(toUnlocked, runObjToUnlock...)
 		} else {
 			// Load newest
 			rjs, err := workflow_v2.LoadNewestRunJobWithProjectScopedConcurrency(ctx, db, projKey, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
 			if err != nil {
 				return nil, nil, err
 			}
-			rjToUnlocked = append(rjToUnlocked, rjs...)
+			toUnlocked = append(toUnlocked, rjs...)
 		}
 	default:
 		if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst {
 			// Load oldest
-			runObjToCancel, err := workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcsServer, repository, workflowName, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
+			runObjToUnlock, err := workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcsServer, repository, workflowName, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
 			if err != nil {
 				return nil, nil, err
 			}
-			rjToUnlocked = append(rjToUnlocked, runObjToCancel...)
+			toUnlocked = append(toUnlocked, runObjToUnlock...)
 		} else {
 			// Load newest
 			var err error
-			rjs, err := workflow_v2.LoadNewestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcsServer, repository, workflowName, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
+			runObjToUnlock, err := workflow_v2.LoadNewestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcsServer, repository, workflowName, concurrencyDef.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToUnlocked)
 			if err != nil {
 				return nil, nil, err
 			}
-			rjToUnlocked = append(rjToUnlocked, rjs...)
+			toUnlocked = append(toUnlocked, runObjToUnlock...)
 		}
 	}
-	return rjToUnlocked, nil, nil
+	return toUnlocked, nil, nil
 }
 
 func retrieveConcurrencyObjectToCancelled(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow string, currentRunObject workflow_v2.ConcurrencyObject, ruleToApply *sdk.V2RunConcurrency, nbBuilding, currentOnSameRule int64) ([]workflow_v2.ConcurrencyObject, error) {

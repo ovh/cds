@@ -195,6 +195,11 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
+	// Manage workflow blocked
+	if wrEnqueue.Status == "" && run.Status == sdk.V2WorkflowRunStatusBlocked && run.Concurrency != nil {
+		return api.workflowRunV2TriggerUnlocking(ctx, run, wrEnqueue)
+	}
+
 	// Force terminate a workflow
 	if wrEnqueue.Status != "" && wrEnqueue.Status.IsTerminated() {
 		updatedRunJobs, err := terminateWorkflowRun(ctx, api.mustDB(), run, wrEnqueue)
@@ -1367,7 +1372,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		if rj.Concurrency == nil || rj.Status != sdk.StatusBlocked {
 			continue
 		}
-		rjsToUnlocked, rjIDsToCancelled, err := retrieveRunObjectsToUnLocked(ctx, db, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkerName, *rj.Concurrency)
+		rjsToUnlocked, rjIDsToCancelled, err := retrieveRunObjectsToUnLocked(ctx, db, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, *rj.Concurrency)
 		if err != nil {
 			return nil, nil, nil, nil, false, err
 		}
@@ -2287,4 +2292,61 @@ func (api *API) enqueueWorkflowRun(ctx context.Context, request sdk.V2WorkflowRu
 			log.ErrorWithStackTrace(ctx, err)
 		}
 	}
+}
+
+func (api *API) workflowRunV2TriggerUnlocking(ctx context.Context, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
+	concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
+	lockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)
+	b, err := api.Cache.Lock(lockKey, 1*time.Minute, 0, 1)
+	if err != nil {
+		return err
+	}
+	if !b {
+		log.Info(ctx, "concurrency %q already locked", concurrencyKey)
+		time.Sleep(2 * time.Second)
+		api.EnqueueWorkflowRun(ctx, wrEnqueue.RunID, wrEnqueue.Initiator, run.WorkflowName, run.RunNumber)
+		return nil
+	}
+	defer api.Cache.Unlock(lockKey)
+
+	toUnlock, toCancel, err := retrieveRunObjectsToUnLocked(ctx, api.mustDB(), run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, *run.Concurrency)
+	if err != nil {
+		return err
+	}
+
+	for _, c := range toCancel {
+		if c.ID == run.ID {
+			// update enqueue to force cancellation
+			wrEnqueue.Status = sdk.V2WorkflowRunStatusCancelled
+			break
+		}
+	}
+
+	found := false
+	for _, u := range toUnlock {
+		if u.ID == run.ID {
+			found = true
+			run.Status = sdk.V2WorkflowRunStatusBuilding
+			break
+		}
+	}
+	if !found {
+		log.Info(ctx, "workflow %s/%s/%s/%s %d still blocked", run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, run.RunNumber)
+		return nil
+	}
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback()
+
+	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+	api.EnqueueWorkflowRun(ctx, wrEnqueue.RunID, wrEnqueue.Initiator, run.WorkflowName, run.RunNumber)
+	return nil
 }
