@@ -1438,19 +1438,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	return allMsg, wf, oldWf, &allSecrets, nil
 }
 
-// UpdateFavorite add or delete workflow from user favorites
-func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u string, add bool) error {
-	var query string
-	if add {
-		query = "INSERT INTO workflow_favorite (authentified_user_id, workflow_id) VALUES ($1, $2)"
-	} else {
-		query = "DELETE FROM workflow_favorite WHERE authentified_user_id = $1 AND workflow_id = $2"
-	}
-
-	_, err := db.Exec(query, u, workflowID)
-	return sdk.WithStack(err)
-}
-
 // IsDeploymentIntegrationUsed checks if a deployment integration is used on any workflow
 func IsDeploymentIntegrationUsed(db gorp.SqlExecutor, projectID int64, appID int64, pfName string) (bool, error) {
 	query := `

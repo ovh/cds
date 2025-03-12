@@ -147,7 +147,6 @@ func (api *API) InitRouter() {
 
 	r.Handle("/help", ScopeNone(), r.GET(api.getHelpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
-	r.Handle("/ui/navbar", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getNavbarHandler))
 	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationOverviewHandler))
 
 	// Import As Code
@@ -155,7 +154,8 @@ func (api *API) InitRouter() {
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postPerformImportAsCodeHandler))
 
 	// Bookmarks
-	r.Handle("/bookmarks", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getBookmarksHandler))
+	r.Handle("/bookmark", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getBookmarksHandler), r.POSTv2(api.postBookmarkHandler))
+	r.Handle("/bookmark/{type}/{id}", Scope(sdk.AuthConsumerScopeUser), r.DELETEv2(api.deleteBookmarkHandler))
 
 	// Project
 	r.Handle("/project", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectsHandler), r.POST(api.postProjectHandler))
@@ -345,11 +345,11 @@ func (api *API) InitRouter() {
 	// Suggest
 	r.Handle("/suggest/variable/{permProjectKey}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariablesHandler))
 
-	//Requirements
+	// Requirements
 	r.Handle("/requirement/types", ScopeNone(), r.GET(api.getRequirementTypesHandler))
 	r.Handle("/requirement/types/{type}", ScopeNone(), r.GET(api.getRequirementTypeValuesHandler))
 
-	// config
+	// Config
 	r.Handle("/config/user", ScopeNone(), r.GET(api.configUserHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/config/vcsgerrit", ScopeNone(), r.GET(api.configVCSGerritHandler))
 	r.Handle("/config/cdn", ScopeNone(), r.GET(api.configCDNHandler))
@@ -358,9 +358,9 @@ func (api *API) InitRouter() {
 	r.Handle("/link/driver", ScopeNone(), r.GET(api.getLinkDriversHandler))
 	r.Handle("/link/{consumerType}/ask", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postAskLinkExternalUserWithCDSHandler))
 	r.Handle("/link/{consumerType}", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postLinkExternalUserWithCDSHandler))
+
 	// Users
 	r.Handle("/user", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUsersHandler))
-	r.Handle("/user/favorite", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/schema", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserJSONSchema))
 	r.Handle("/user/timeline", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))

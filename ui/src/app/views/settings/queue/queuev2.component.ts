@@ -102,8 +102,7 @@ export class QueueV2Component implements OnDestroy {
         }
         this._router.navigate([], {
             relativeTo: this._activatedRoute,
-            queryParams,
-            replaceUrl: true
+            queryParams
         });
     }
 }

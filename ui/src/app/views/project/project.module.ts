@@ -2,7 +2,6 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from 'app/shared/shared.module';
 import { ProjectAddComponent } from './add/project.add.component';
-import { ProjectListComponent } from './list/project.list.component';
 import { projectRouting } from './project.routing';
 import { ProjectRepoManagerListComponent } from './settings/advanced/repomanager/list/project.repomanager.list.component';
 import { ProjectApplicationListComponent } from './show/application/application.list.component';
@@ -41,7 +40,6 @@ import { ProjectConcurrencyFormComponent } from './settings/concurrency/concurre
         ProjectEnvironmentListComponent,
         ProjectIntegrationsComponent,
         ProjectKeysComponent,
-        ProjectListComponent,
         ProjectPermissionsComponent,
         ProjectPipelinesComponent,
         ProjectRepoManagerFormComponent,

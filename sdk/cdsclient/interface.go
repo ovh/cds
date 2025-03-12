@@ -264,7 +264,7 @@ type ProjectClientV2 interface {
 	ProjectVariableSetItemFromApplicationIntegrationVariable(ctx context.Context, pKey string, req sdk.CopyApplicationIntegrationVariableToVariableSet, mods ...RequestModifier) error
 
 	ProjectConcurrencyCreate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error
-	ProjectConcurrencyGet(ctx context.Context, pKey string, name string)(*sdk.ProjectConcurrency, error)
+	ProjectConcurrencyGet(ctx context.Context, pKey string, name string) (*sdk.ProjectConcurrency, error)
 	ProjectConcurrencyList(ctx context.Context, pKey string) ([]sdk.ProjectConcurrency, error)
 	ProjectConcurrencyUpdate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error
 	ProjectConcurrencyDelete(ctx context.Context, pKey string, name string) error
@@ -280,7 +280,7 @@ type ProjectClient interface {
 	ProjectGroupDelete(projectKey, groupName string) error
 	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
 	ProjectUpdate(key string, project *sdk.Project) error
-	ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...Filter) ([]sdk.Project, error)
+	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error)
@@ -379,7 +379,6 @@ type UserClient interface {
 	UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error)
 	UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error)
 	UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error)
-	UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error)
 	UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error)
 	UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error)
 	UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error)
@@ -551,7 +550,6 @@ type Interface interface {
 	OrganizationClient
 	RegionClient
 	QueueClient
-	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
 	ServiceClient

@@ -34,7 +34,6 @@ export class Project {
   features: {};
   labels: Label[];
   metadata: {};
-  favorite: boolean;
   workflow_retention: number;
   // true if someone has updated the project ( used for warnings )
   externalChange: boolean;

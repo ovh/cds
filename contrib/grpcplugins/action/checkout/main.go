@@ -128,21 +128,23 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 			res.Details = fmt.Sprintf("unable to get GPG key %q: %v", gpgKey, err)
 			return stream.Send(res)
 		}
-		grpcplugins.Logf(&p.Common, "Installing GPG Key %s\n", gpgKey)
 
-		if _, _, err := sdk.ImportGPGKey(workDirs.BaseDir, k.Name, k.Private); err != nil {
-			res.Status = sdk.StatusFail
-			res.Details = fmt.Sprintf("unable to install GPG key %q: %v", gpgKey, err)
-			return stream.Send(res)
+		if !sdk.IsGPGKeyAlreadyInstalled(k.LongKeyID) {
+			grpcplugins.Logf(&p.Common, "Installing GPG Key %s\n", gpgKey)
+			if _, _, err := sdk.ImportGPGKey(workDirs.BaseDir, k.Name, []byte(k.Private)); err != nil {
+				res.Status = sdk.StatusFail
+				res.Details = fmt.Sprintf("unable to install GPG key %q: %v", gpgKey, err)
+				return stream.Send(res)
+			}
+			grpcplugins.Logf(&p.Common, "Setting up git config (user.signingkey=%s)...\n", k.KeyID)
+			scriptContent := fmt.Sprintf(`git config --global user.signingkey "%s" && git config --global commit.gpgsign true`, k.KeyID)
+			if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
+				res.Status = sdk.StatusFail
+				res.Details = err.Error()
+				return stream.Send(res)
+			}
 		}
 
-		grpcplugins.Logf(&p.Common, "Setting up git config (user.signingkey=%s)...\n", k.KeyID)
-		scriptContent := fmt.Sprintf(`git config --global user.signingkey "%s" && git config --global commit.gpgsign true`, k.KeyID)
-		if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
-			res.Status = sdk.StatusFail
-			res.Details = err.Error()
-			return stream.Send(res)
-		}
 	} else if gpgKey != "" {
 		grpcplugins.Logf(&p.Common, "Can't install GPG Key %q, gpg/gpg2 is not available\n", gpgKey)
 	}

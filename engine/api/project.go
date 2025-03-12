@@ -119,8 +119,6 @@ func (api *API) getProjectsHandler() service.Handler {
 
 		withApplications := service.FormBool(r, "application")
 		withWorkflows := service.FormBool(r, "workflow")
-		withIcon := service.FormBool(r, "withIcon")
-		withFavorites := service.FormBool(r, "withFavorites")
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
 		var requestedUser *sdk.AuthentifiedUser
@@ -136,22 +134,11 @@ func (api *API) getProjectsHandler() service.Handler {
 		}
 
 		var opts []project.LoadOptionFunc
-		if withIcon {
-			opts = append(opts, project.LoadOptions.WithIcon)
-		}
 		if withApplications {
 			opts = append(opts, project.LoadOptions.WithApplications)
 		}
 		if withWorkflows {
 			opts = append(opts, project.LoadOptions.WithIntegrations, project.LoadOptions.WithWorkflows)
-		}
-
-		if withFavorites {
-			if requestedUser == nil {
-				opts = append(opts, project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID))
-			} else {
-				opts = append(opts, project.LoadOptions.WithFavorites(requestedUser.ID))
-			}
 		}
 
 		var projects sdk.Projects
@@ -241,7 +228,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		}
 
 		// Check is project exist
-		p, errProj := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIcon)
+		p, errProj := project.Load(ctx, api.mustDB(), key)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 		}
@@ -281,12 +268,9 @@ func (api *API) getProjectHandler() service.Handler {
 		withWorkflows := service.FormBool(r, "withWorkflows")
 		withWorkflowNames := service.FormBool(r, "withWorkflowNames")
 		withIntegrations := service.FormBool(r, "withIntegrations")
-		withIcon := service.FormBool(r, "withIcon")
 		withLabels := service.FormBool(r, "withLabels")
 
-		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
-		}
+		var opts []project.LoadOptionFunc
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
 		}
@@ -322,9 +306,6 @@ func (api *API) getProjectHandler() service.Handler {
 		}
 		if withIntegrations {
 			opts = append(opts, project.LoadOptions.WithIntegrations)
-		}
-		if withIcon {
-			opts = append(opts, project.LoadOptions.WithIcon)
 		}
 		if withLabels {
 			opts = append(opts, project.LoadOptions.WithLabels)
@@ -433,7 +414,6 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
 			project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithIntegrations,
 		)
@@ -636,7 +616,6 @@ func (api *API) postProjectHandler() service.Handler {
 		proj, err := project.Load(ctx, api.mustDB(), prj.Key,
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites(consumer.AuthConsumerUser.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithVariables,

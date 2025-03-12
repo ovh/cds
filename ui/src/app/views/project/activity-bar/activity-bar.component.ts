@@ -20,7 +20,6 @@ export class ProjectActivityBarComponent implements OnInit, OnDestroy {
 	projectv1: Project;
 	projectv2: Project;
 	project: Project;
-
 	homeActive: boolean;
 	projectV1Sub: Subscription;
 	projectV2Sub: Subscription;

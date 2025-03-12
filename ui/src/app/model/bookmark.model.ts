@@ -1,9 +1,11 @@
+export enum BookmarkType {
+    Project = "project",
+    Workflow = "workflow",
+    WorkflowLegacy = "workflow-legacy"
+}
+
 export class Bookmark {
-    key: string;
-    name: string;
-    description: string;
-    workflow_name: string;
-    type: string;
-    favorite: boolean;
-    icon: string;
+    type: BookmarkType;
+    id: string;
+    label: string;
 }

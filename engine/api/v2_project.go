@@ -124,7 +124,7 @@ func (api *API) updateProjectV2Handler() ([]service.RbacChecker, service.Handler
 			}
 
 			// Check is project exist
-			p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIcon)
+			p, err := project.Load(ctx, api.mustDB(), key)
 			if err != nil {
 				return err
 			}

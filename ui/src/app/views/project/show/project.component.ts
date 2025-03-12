@@ -5,15 +5,15 @@ import { Store } from '@ngxs/store';
 import { GroupPermission } from 'app/model/group.model';
 import { LoadOpts, Project } from 'app/model/project.model';
 import { HelpersService } from 'app/service/helpers/helpers.service';
-import { ProjectStore, RouterService } from 'app/service/services.module';
+import { RouterService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
+import { FetchProject } from 'app/store/project.action';
 import { ProjectState } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { filter, finalize } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-show',
@@ -46,7 +46,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
         private _helpersService: HelpersService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
-        private _projectStore: ProjectStore,
         private _routerService: RouterService,
         private _router: Router
     ) {
@@ -63,7 +62,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                     });
                 }
                 this.project = proj;
-                this._projectStore.updateRecentProject(this.project);
                 this.initTabs();
 
                 if (!!this.project.organization) {
@@ -162,15 +160,5 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     refreshDatas(key: string): void {
         let opts = [new LoadOpts('withLabels', 'labels')];
         this._store.dispatch(new FetchProject({ projectKey: key, opts }));
-    }
-
-    updateFav() {
-        this.loadingFav = true;
-        this._store.dispatch(new UpdateFavoriteProject({ projectKey: this.project.key }))
-            .pipe(finalize(() => {
-                this.loadingFav = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')));
     }
 }

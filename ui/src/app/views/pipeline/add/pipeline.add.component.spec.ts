@@ -20,7 +20,6 @@ import { Application } from '../../../model/application.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
 import { EnvironmentService } from '../../../service/environment/environment.service';
-import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../service/project/project.service';
 import { ProjectStore } from '../../../service/project/project.store';
@@ -51,7 +50,6 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                NavbarService,
                 PipelineService,
                 EnvironmentService,
                 VariableService,

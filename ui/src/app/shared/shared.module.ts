@@ -38,7 +38,6 @@ import { ChartComponentComponent } from './chart/chart.component';
 import { CommitListComponent } from './commit/commit.list.component';
 import { DiffItemComponent } from './diff/item/diff.item.component';
 import { DiffListComponent } from './diff/list/diff.list.component';
-import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.component';
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
@@ -454,7 +453,6 @@ const icons: IconDefinition[] = [
         DurationMsPipe,
         EditorInputComponent,
         FavoriteButtonComponent,
-        FavoriteCardsComponent,
         ForMapPipe,
         InputFilterComponent,
         KeysFormComponent,
@@ -574,7 +572,6 @@ const icons: IconDefinition[] = [
         DurationMsPipe,
         EditorInputComponent,
         FavoriteButtonComponent,
-        FavoriteCardsComponent,
         ForMapPipe,
         FormsModule,
         InfiniteScrollModule,

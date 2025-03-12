@@ -17,10 +17,11 @@ const (
 type SearchResults []SearchResult
 
 type SearchResult struct {
-	Type     SearchResultType     `json:"type"`
-	ID       string               `json:"id"`
-	Label    string               `json:"label"`
-	Variants SearchResultVariants `json:"variants,omitempty"`
+	Type        SearchResultType     `json:"type"`
+	ID          string               `json:"id"`
+	Label       string               `json:"label"`
+	Description string               `json:"description,omitempty"`
+	Variants    SearchResultVariants `json:"variants,omitempty"`
 }
 
 type SearchResultVariants []string

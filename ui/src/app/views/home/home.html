@@ -1,0 +1,37 @@
+<div class="content">
+	<div class="logo">
+		<img src="assets/images/cds.png" alt="CDS logo" title="{{'navbar_home' | translate}}" />
+	</div>
+
+	<app-search-bar #searchBar></app-search-bar>
+
+	<div class="controls">
+		<button nz-button nzSize="large" title="Search in CDS" (click)="clickSearch()">
+			Search
+		</button>
+		<button nz-button nzSize="large" title="Show my Projects" (click)="clickShowProjects()">
+			Show my Projects
+		</button>
+	</div>
+
+	<ng-container *ngIf="bookmarks.length > 0">
+		<h4 nz-typography>Bookmarks</h4>
+		<nz-list nzBordered nzSize="small" [nzLoading]="loading">
+			<nz-list-item *ngFor="let b of bookmarks">
+				<a [routerLink]="generateBookmarkLink(b)" [queryParams]="generateBookmarkQueryParams(b)" class="bookmark">
+					<div class="title">
+						<span class="label">{{b.label}}</span>
+						<span class="id">{{b.id}}</span>
+					</div>
+					<div [ngSwitch]="b.type">
+						<nz-tag *ngSwitchCase="'project'" nzColor="blue">{{b.type}}</nz-tag>
+						<nz-tag *ngSwitchCase="'workflow'" nzColor="green">{{b.type}}</nz-tag>
+						<nz-tag *ngSwitchDefault>{{b.type}}</nz-tag>
+					</div>
+					<button nz-button nzType="text" nzDanger (click)="deleteBookmark($event, b)"
+						title="Remove {{b.type}} from bookmarks"><i nz-icon nzType="delete" nzTheme="outline"></i></button>
+				</a>
+			</nz-list-item>
+		</nz-list>
+	</ng-container>
+</div>

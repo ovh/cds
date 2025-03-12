@@ -3686,9 +3686,9 @@ func (mr *MockProjectClientMockRecorder) ProjectKeysList(projectKey any) *gomock
 }
 
 // ProjectList mocks base method.
-func (m *MockProjectClient) ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
+func (m *MockProjectClient) ProjectList(withApplications, withWorkflow bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{withApplications, withWorkflow, withFavorites}
+	varargs := []any{withApplications, withWorkflow}
 	for _, a := range filters {
 		varargs = append(varargs, a)
 	}
@@ -3699,9 +3699,9 @@ func (m *MockProjectClient) ProjectList(withApplications, withWorkflow, withFavo
 }
 
 // ProjectList indicates an expected call of ProjectList.
-func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkflow, withFavorites any, filters ...any) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkflow any, filters ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{withApplications, withWorkflow, withFavorites}, filters...)
+	varargs := append([]any{withApplications, withWorkflow}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockProjectClient)(nil).ProjectList), varargs...)
 }
 
@@ -4885,21 +4885,6 @@ func NewMockUserClient(ctrl *gomock.Controller) *MockUserClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockUserClient) EXPECT() *MockUserClientMockRecorder {
 	return m.recorder
-}
-
-// UpdateFavorite mocks base method.
-func (m *MockUserClient) UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (any, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFavorite", ctx, params)
-	ret0, _ := ret[0].(any)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateFavorite indicates an expected call of UpdateFavorite.
-func (mr *MockUserClientMockRecorder) UpdateFavorite(ctx, params any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockUserClient)(nil).UpdateFavorite), ctx, params)
 }
 
 // UserContacts mocks base method.
@@ -8671,21 +8656,6 @@ func (mr *MockInterfaceMockRecorder) MonVersion() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonVersion", reflect.TypeOf((*MockInterface)(nil).MonVersion))
 }
 
-// Navbar mocks base method.
-func (m *MockInterface) Navbar() ([]sdk.NavbarProjectData, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Navbar")
-	ret0, _ := ret[0].([]sdk.NavbarProjectData)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Navbar indicates an expected call of Navbar.
-func (mr *MockInterfaceMockRecorder) Navbar() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Navbar", reflect.TypeOf((*MockInterface)(nil).Navbar))
-}
-
 // OrganizationAdd mocks base method.
 func (m *MockInterface) OrganizationAdd(ctx context.Context, organization sdk.Organization) error {
 	m.ctrl.T.Helper()
@@ -9358,9 +9328,9 @@ func (mr *MockInterfaceMockRecorder) ProjectKeysList(projectKey any) *gomock.Cal
 }
 
 // ProjectList mocks base method.
-func (m *MockInterface) ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
+func (m *MockInterface) ProjectList(withApplications, withWorkflow bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{withApplications, withWorkflow, withFavorites}
+	varargs := []any{withApplications, withWorkflow}
 	for _, a := range filters {
 		varargs = append(varargs, a)
 	}
@@ -9371,9 +9341,9 @@ func (m *MockInterface) ProjectList(withApplications, withWorkflow, withFavorite
 }
 
 // ProjectList indicates an expected call of ProjectList.
-func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow, withFavorites any, filters ...any) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow any, filters ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{withApplications, withWorkflow, withFavorites}, filters...)
+	varargs := append([]any{withApplications, withWorkflow}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockInterface)(nil).ProjectList), varargs...)
 }
 
@@ -10845,21 +10815,6 @@ func (m *MockInterface) TemplatePush(tarContent io.Reader) ([]string, *tar.Reade
 func (mr *MockInterfaceMockRecorder) TemplatePush(tarContent any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplatePush", reflect.TypeOf((*MockInterface)(nil).TemplatePush), tarContent)
-}
-
-// UpdateFavorite mocks base method.
-func (m *MockInterface) UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (any, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFavorite", ctx, params)
-	ret0, _ := ret[0].(any)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateFavorite indicates an expected call of UpdateFavorite.
-func (mr *MockInterfaceMockRecorder) UpdateFavorite(ctx, params any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockInterface)(nil).UpdateFavorite), ctx, params)
 }
 
 // UserContacts mocks base method.

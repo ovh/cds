@@ -20,7 +20,6 @@ import { Group, GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { GroupService } from 'app/service/group/group.service';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
@@ -47,7 +46,6 @@ describe('CDS: Project Show Component', () => {
                 WorkflowRunService,
                 AuthenticationService,
                 ConfigService,
-                NavbarService,
                 ProjectService,
                 PipelineService,
                 MonitoringService,

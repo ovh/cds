@@ -13,7 +13,6 @@ import {
     ApplicationResolver
 } from './application/application.resolver';
 import { ApplicationService } from './application/application.service';
-import { ApplicationStore } from './application/application.store';
 import { ApplicationWorkflowService } from './application/application.workflow.service';
 import { AuthenticationService } from './authentication/authentication.service';
 import { ErrorInterceptor } from './authentication/error.interceptor';
@@ -33,7 +32,6 @@ import { ImportAsCodeService } from './import-as-code/import.service';
 import { IntegrationService } from './integration/integration.service';
 import { KeyService } from './keys/keys.service';
 import { MonitoringService } from './monitoring/monitoring.service';
-import { NavbarService } from './navbar/navbar.service';
 import { NotificationService } from './notification/notification.service';
 import { ParameterService } from './parameter/parameter.service';
 import { PipelineCoreService } from './pipeline/pipeline.core.service';
@@ -91,7 +89,6 @@ export class ServicesModule {
                 ApplicationQueryParamResolver,
                 ApplicationResolver,
                 ApplicationService,
-                ApplicationStore,
                 ApplicationWorkflowService,
                 AscodeService,
                 AuthenticationService,
@@ -111,7 +108,6 @@ export class ServicesModule {
                 KeyService,
                 LinkService,
                 MonitoringService,
-                NavbarService,
                 NotificationService,
                 ParameterService,
                 PipelineCoreService,
@@ -136,9 +132,9 @@ export class ServicesModule {
                 VariableService,
                 WorkerModelService,
                 WorkflowCoreService,
-                WorkflowRunService, 
+                WorkflowRunService,
                 WorkflowService,
-                WorkflowStore, 
+                WorkflowStore,
                 WorkflowTemplateService,
                 {
                     provide: HTTP_INTERCEPTORS,
@@ -169,7 +165,6 @@ export {
     ActionAsCodeService,
     ApplicationAuditService,
     ApplicationResolver,
-    ApplicationStore,
     ApplicationWorkflowService,
     AscodeService,
     AuthenticationService,

@@ -544,7 +544,8 @@ foreignObject {
     cursor: pointer;
 }
 
-.navbar-suggestion {
+.navbar-suggestion,
+.navbar-bookmark {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -571,6 +572,7 @@ foreignObject {
             white-space: nowrap;
             text-overflow: ellipsis;
             margin-left: 5px;
+            margin-right: 5px;
             overflow: hidden;
             color: rgba(0, 0, 0, .45);
 
@@ -578,5 +580,13 @@ foreignObject {
                 color: rgba(255, 255, 255, 0.45);
             }
         }
+    }
+}
+
+.navbar-bookmark {
+    width: 250px !important;
+
+    nz-tag {
+        margin: 0;
     }
 }

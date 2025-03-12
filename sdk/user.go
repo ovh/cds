@@ -52,7 +52,6 @@ type AuthentifiedUser struct {
 	Ring     string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
 	// aggregates
 	Contacts     UserContacts `json:"-" yaml:"-" db:"-"`
-	Favorites    []Favorite   `json:"favorites" yaml:"favorites" db:"-"`
 	Groups       Groups       `json:"groups" yaml:"groups" db:"-"`
 	Organization string       `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization" db:"-"`
 }
@@ -209,12 +208,6 @@ func (u UserContacts) Primary() *UserContact {
 		}
 	}
 	return nil
-}
-
-// Favorite represent the favorites workflow or project of the user
-type Favorite struct {
-	ProjectIDs  []int64 `json:"project_ids" yaml:"project_ids"`
-	WorkflowIDs []int64 `json:"workflow_ids" yaml:"workflow_ids"`
 }
 
 type UserResponse struct {

@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
-	"github.com/ovh/cds/sdk"
 )
 
 var userCmd = cli.Command{
@@ -21,7 +19,6 @@ func usr() *cobra.Command {
 		cli.NewGetCommand(userMeCmd, userMeRun, nil),
 		cli.NewListCommand(userListCmd, userListRun, nil),
 		cli.NewGetCommand(userShowCmd, userShowRun, nil),
-		cli.NewCommand(userFavoriteCmd, userFavoriteRun, nil),
 		userGpg(),
 	})
 }
@@ -68,46 +65,4 @@ func userShowRun(v cli.Values) (interface{}, error) {
 		return nil, err
 	}
 	return *u, nil
-}
-
-var userFavoriteCmd = cli.Command{
-	Name:  "favorite",
-	Short: "Display all the user favorites",
-}
-
-func userFavoriteRun(v cli.Values) error {
-	config, err := client.ConfigUser()
-	if err != nil {
-		return nil
-	}
-
-	navbarInfos, err := client.Navbar()
-	if err != nil {
-		return err
-	}
-
-	projFavs := []sdk.NavbarProjectData{}
-	wfFavs := []sdk.NavbarProjectData{}
-	for _, elt := range navbarInfos {
-		if elt.Favorite {
-			switch elt.Type {
-			case "workflow":
-				wfFavs = append(wfFavs, elt)
-			case "project":
-				projFavs = append(projFavs, elt)
-			}
-		}
-	}
-
-	fmt.Println(" -=-=-=-=- Projects bookmarked -=-=-=-=-")
-	for _, prj := range projFavs {
-		fmt.Printf("- %s %s\n", prj.Name, config.URLUI+"/project/"+prj.Key)
-	}
-
-	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
-	for _, wf := range wfFavs {
-		fmt.Printf("- %s %s\n", wf.WorkflowName, config.URLUI+"/project/"+wf.Key+"/workflow/"+wf.WorkflowName)
-	}
-
-	return nil
 }

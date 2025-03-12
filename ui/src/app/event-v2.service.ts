@@ -6,7 +6,6 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { WebsocketV2Event, WebsocketV2Filter, WebsocketV2FilterType } from './model/websocket-v2';
 import { Store } from '@ngxs/store';
 import { AddEventV2 } from './store/event-v2.action';
-import { FeatureNames, FeatureService } from './service/feature/feature.service';
 
 @Injectable()
 export class EventV2Service {
@@ -18,8 +17,7 @@ export class EventV2Service {
     constructor(
         private _router: Router,
         private _toastService: ToastService,
-        private _store: Store,
-        private _featureService: FeatureService
+        private _store: Store
     ) { }
 
     stopWebsocket() {
