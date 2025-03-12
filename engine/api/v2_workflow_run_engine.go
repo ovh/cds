@@ -2301,6 +2301,15 @@ func (api *API) workflowRunV2TriggerUnlocking(ctx context.Context, run *sdk.V2Wo
 		return err
 	}
 
+	if err := workflow_v2.InsertRunInfo(ctx, tx, &sdk.V2WorkflowRunInfo{
+		WorkflowRunID: run.ID,
+		IssuedAt:      time.Now(),
+		Level:         sdk.WorkflowRunInfoLevelInfo,
+		Message:       "Workflow has been unlocked",
+	}); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(err)
 	}
