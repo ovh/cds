@@ -135,6 +135,7 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 	if runJob.Job.Concurrency != "" {
 		concurrencyDef, has := concurrenciesDef[jobID]
 		if !has {
+			runJob.Status = sdk.V2WorkflowRunJobStatusFail
 			return &sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    run.ID,
 				WorkflowRunJobID: runJob.ID,
@@ -152,21 +153,49 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 		if err != nil {
 			return nil, err
 		}
-		if !canRun {
+
+		// If job has to be cancelled
+		if _, has := toCancelled[runJob.ID]; has {
+			runJob.Status = sdk.V2WorkflowRunJobStatusCancelled
+			delete(toCancelled, runJob.ID)
 			return &sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    runJob.WorkflowRunID,
 				WorkflowRunJobID: runJob.ID,
-				IssuedAt:         time.Now(),
 				Level:            sdk.WorkflowRunInfoLevelInfo,
-				Message:          fmt.Sprintf("Job locked due to concurrency %q", concurrencyDef.Name),
+				IssuedAt:         time.Now(),
+				Message:          fmt.Sprintf("Job cancelled due to concurrency %q", runJob.Concurrency.Name),
 			}, nil
+		}
+
+		if !canRun {
+			runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
+			return &sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    runJob.WorkflowRunID,
+				WorkflowRunJobID: runJob.ID,
+				Level:            sdk.WorkflowRunInfoLevelInfo,
+				IssuedAt:         time.Now(),
+				Message:          fmt.Sprintf("Job locked due to concurrency %q", runJob.Concurrency.Name),
+			}, nil
+		}
+
+		for _, runObj := range toCancelled {
+			if runObj.Type == workflow_v2.ConcurrencyObjectTypeWorkflow {
+				runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
+				return &sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    runJob.WorkflowRunID,
+					WorkflowRunJobID: runJob.ID,
+					Level:            sdk.WorkflowRunInfoLevelInfo,
+					IssuedAt:         time.Now(),
+					Message:          "Job blocked, waiting for workfow cancellation before starting",
+				}, nil
+			}
 		}
 	}
 	return nil, nil
 }
 
 // Update new workflow run check if we have to lock it
-func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, concurrencyUnlockedCount map[string]int64, rjToCancelled map[string]workflow_v2.ConcurrencyObject) (*sdk.V2WorkflowRunInfo, error) {
+func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, concurrencyUnlockedCount map[string]int64, toCancel map[string]workflow_v2.ConcurrencyObject) (*sdk.V2WorkflowRunInfo, error) {
 	if run.WorkflowData.Workflow.Concurrency != "" {
 		concurrencyDef, err := retrieveConcurrencyDefinition(ctx, db, *run, run.WorkflowData.Workflow.Concurrency)
 		if err != nil {
@@ -184,17 +213,42 @@ func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2W
 		run.Concurrency = concurrencyDef
 
 		// Retrieve current building and blocked job to check if we can enqueue this one
-		canRun, err := canRunWithConcurrency(ctx, *concurrencyDef, db, *run, workflow_v2.ConcurrencyObject{ID: run.ID, Type: workflow_v2.ConcurrencyObjectTypeWorkflow}, concurrencyUnlockedCount, rjToCancelled)
+		canRun, err := canRunWithConcurrency(ctx, *concurrencyDef, db, *run, workflow_v2.ConcurrencyObject{ID: run.ID, Type: workflow_v2.ConcurrencyObjectTypeWorkflow}, concurrencyUnlockedCount, toCancel)
 		if err != nil {
 			return nil, err
 		}
-		if !canRun {
+
+		if _, has := toCancel[run.ID]; has {
+			run.Status = sdk.V2WorkflowRunStatusCancelled
+			delete(toCancel, run.ID)
 			return &sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
-				IssuedAt:      time.Now(),
 				Level:         sdk.WorkflowRunInfoLevelInfo,
-				Message:       fmt.Sprintf("Locked due concurrency %q", concurrencyDef.Name),
+				IssuedAt:      time.Now(),
+				Message:       fmt.Sprintf("Workflow cancelled due to concurrency %q", run.Concurrency.Name),
 			}, nil
+		}
+
+		if !canRun {
+			run.Status = sdk.V2WorkflowRunStatusBlocked
+			return &sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelInfo,
+				IssuedAt:      time.Now(),
+				Message:       fmt.Sprintf("Workflow locked due to concurrency %q", run.Concurrency.Name),
+			}, nil
+		}
+
+		for _, runObj := range toCancel {
+			if runObj.Type == workflow_v2.ConcurrencyObjectTypeWorkflow {
+				run.Status = sdk.V2WorkflowRunStatusBlocked
+				return &sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelInfo,
+					IssuedAt:      time.Now(),
+					Message:       "Job blocked, waiting for workfow cancellation before starting",
+				}, nil
+			}
 		}
 	}
 	return nil, nil
@@ -239,7 +293,6 @@ func canRunWithConcurrency(ctx context.Context, concurrencyDef sdk.V2RunConcurre
 		return false, nil
 	}
 	concurrencyUnlockedCount[concurrencyDef.Name]++
-
 	return true, nil
 }
 

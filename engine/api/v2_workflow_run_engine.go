@@ -1310,22 +1310,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			}
 			if runJobInfo != nil {
 				runJobsInfo[runJob.ID] = *runJobInfo
-				if runJobInfo.Level == sdk.WorkflowRunInfoLevelInfo {
-					runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
-				} else {
-					runJob.Status = sdk.V2WorkflowRunJobStatusFail
-				}
-			}
-			if _, has := runJobsToCancelled[runJob.ID]; has {
-				runJob.Status = sdk.V2WorkflowRunJobStatusCancelled
-				runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
-					WorkflowRunID:    runJob.WorkflowRunID,
-					WorkflowRunJobID: runJob.ID,
-					Level:            sdk.WorkflowRunInfoLevelInfo,
-					IssuedAt:         time.Now(),
-					Message:          fmt.Sprintf("Job cancelled due to concurrency %q", runJob.Concurrency.Name),
-				}
-				delete(runJobsToCancelled, runJob.ID)
 			}
 			runJobs = append(runJobs, runJob)
 		} else {
@@ -1588,35 +1572,6 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		}
 		if runJobInfo != nil {
 			runJobsInfo[runJob.ID] = *runJobInfo
-			if runJobInfo.Level == sdk.WorkflowRunInfoLevelInfo {
-				runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
-			} else {
-				runJob.Status = sdk.V2WorkflowRunJobStatusFail
-			}
-		}
-		if _, has := runObjToCancelled[runJob.ID]; has {
-			runJob.Status = sdk.V2WorkflowRunJobStatusCancelled
-			runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
-				WorkflowRunID:    runJob.WorkflowRunID,
-				WorkflowRunJobID: runJob.ID,
-				Level:            sdk.WorkflowRunInfoLevelInfo,
-				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("Job cancelled due to concurrency %q", runJob.Concurrency.Name),
-			}
-			delete(runObjToCancelled, runJob.ID)
-		}
-		for _, runObj := range runObjToCancelled {
-			if runObj.Type == workflow_v2.ConcurrencyObjectTypeWorkflow {
-				runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
-				runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
-					WorkflowRunID:    runJob.WorkflowRunID,
-					WorkflowRunJobID: runJob.ID,
-					Level:            sdk.WorkflowRunInfoLevelInfo,
-					IssuedAt:         time.Now(),
-					Message:          "Job blocked, waiting for workfow cancellation before staring",
-				}
-				break
-			}
 		}
 		runJobs = append(runJobs, runJob)
 	}
