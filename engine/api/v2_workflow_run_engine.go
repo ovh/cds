@@ -210,6 +210,8 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return nil
 	}
 
+	// Running Workflow
+
 	runJobsContexts, runGatesContexts := computeExistingRunJobContexts(ctx, allRunJobs, runResults)
 
 	// Compute annotations
@@ -553,7 +555,7 @@ func terminateWorkflowRun(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workfl
 			switch wrEnqueue.Status {
 			case sdk.V2WorkflowRunStatusCancelled:
 				rj.Status = sdk.V2WorkflowRunJobStatusCancelled
-				msg = fmt.Sprintf("Job cancelled due to workflow concurrency %q", run.Concurrency.Name)
+				msg = "Job cancelled because of workflow cancellation"
 			default:
 				rj.Status = sdk.V2WorkflowRunJobStatusStopped
 				msg = fmt.Sprintf("Job stopped by user %q", wrEnqueue.Initiator.Username())
@@ -1621,7 +1623,7 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	return runJobs, hasToUpdateRun, nil
 }
 
-func searchPermutationToTrigger(ctx context.Context, permutations []map[string]string, runJobs []sdk.V2WorkflowRunJob, jobID string) []map[string]string {
+func searchPermutationToTrigger(_ context.Context, permutations []map[string]string, runJobs []sdk.V2WorkflowRunJob, jobID string) []map[string]string {
 	runJobsForJobID := make([]sdk.V2WorkflowRunJob, 0)
 
 	for _, rj := range runJobs {

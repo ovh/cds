@@ -239,6 +239,7 @@ func canRunWithConcurrency(ctx context.Context, concurrencyDef sdk.V2RunConcurre
 		return false, nil
 	}
 	concurrencyUnlockedCount[concurrencyDef.Name]++
+
 	return true, nil
 }
 
@@ -345,6 +346,10 @@ func retrieveConcurrencyObjectToCancelled(ctx context.Context, db gorp.SqlExecut
 	nbToCancelled := nbBuilding + currentOnSameRule - ruleToApply.Pool + 1
 	toCancel := make([]workflow_v2.ConcurrencyObject, 0)
 
+	if nbToCancelled <= 0 {
+		return nil, nil
+	}
+
 	// First cancel building jobs
 	var err error
 	var buildingObjects []workflow_v2.ConcurrencyObject
@@ -357,31 +362,31 @@ func retrieveConcurrencyObjectToCancelled(ctx context.Context, db gorp.SqlExecut
 	if err != nil {
 		return nil, err
 	}
-	for _, brj := range buildingObjects {
-		toCancel = append(toCancel, brj)
-	}
+	toCancel = append(toCancel, buildingObjects...)
+
 	nbToCancelled -= int64(len(toCancel))
 
-	// Then cancel blocked jobs
-	var blockedObjects []workflow_v2.ConcurrencyObject
-	switch ruleToApply.Scope {
-	case sdk.V2RunConcurrencyScopeProject:
-		blockedObjects, err = workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToCancelled)
-	default:
-		blockedObjects, err = workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcs, repo, workflow, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToCancelled)
-	}
-	if err != nil {
-		return nil, err
-	}
-	for _, brj := range blockedObjects {
-		toCancel = append(toCancel, brj)
-	}
-	nbToCancelled -= int64(len(blockedObjects))
-
-	// Then cancel the current job
 	if nbToCancelled > 0 {
-		toCancel = append(toCancel, currentRunObject)
+		// Then cancel blocked jobs
+		var blockedObjects []workflow_v2.ConcurrencyObject
+		switch ruleToApply.Scope {
+		case sdk.V2RunConcurrencyScopeProject:
+			blockedObjects, err = workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToCancelled)
+		default:
+			blockedObjects, err = workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcs, repo, workflow, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.V2WorkflowRunStatusBlocked, nbToCancelled)
+		}
+		if err != nil {
+			return nil, err
+		}
+		toCancel = append(toCancel, blockedObjects...)
+		nbToCancelled -= int64(len(blockedObjects))
+
+		// Then cancel the current job
+		if nbToCancelled > 0 {
+			toCancel = append(toCancel, currentRunObject)
+		}
 	}
+
 	return toCancel, nil
 }
 
