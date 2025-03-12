@@ -422,7 +422,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			Message:       "unable to start the workflow. Please contact an administrator",
 		})
 	}
-	// If runInfo != nil. Level info: run blocked.  Level error => failed the run
 	if runInfo == nil {
 		run.Status = sdk.V2WorkflowRunStatusBuilding
 	}
@@ -432,22 +431,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 	defer tx.Rollback() // nolint
-
-	// Check if there is workflow to cancel
-	if len(runObjectToCancel) > 0 {
-		for _, cancelObj := range runObjectToCancel {
-			if cancelObj.Type == workflow_v2.ConcurrencyObjectTypeWorkflow {
-				run.Status = sdk.V2WorkflowRunStatusBlocked
-				runInfo = &sdk.V2WorkflowRunInfo{
-					WorkflowRunID: run.ID,
-					Level:         sdk.WorkflowRunInfoLevelInfo,
-					IssuedAt:      time.Now(),
-					Message:       "Workflow blocked, waiting for workfow cancellation before staring",
-				}
-				break
-			}
-		}
-	}
 
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err

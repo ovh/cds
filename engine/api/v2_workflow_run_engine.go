@@ -1157,7 +1157,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 	regionPermCache := make(map[string]*sdk.V2WorkflowRunJobInfo)
 
 	concurrencyUnlockedCount := make(map[string]int64)
-	runJobsToCancelled := make(map[string]workflow_v2.ConcurrencyObject)
+	runObjectsToCancelled := make(map[string]workflow_v2.ConcurrencyObject)
 
 	// Browse job to queue and compute data ( matrix / region / model etc..... )
 	for jobID, jobToTrigger := range jobsToQueue {
@@ -1304,7 +1304,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				}
 			}
 			// Manage concurrency
-			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runJobsToCancelled)
+			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 			if err != nil {
 				return nil, nil, nil, nil, hasToUpdateRun, err
 			}
@@ -1332,7 +1332,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				allVariableSets: allVariableSets,
 			}
 			if jobDef.From == "" {
-				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrenciesDef, concurrencyUnlockedCount, runJobsToCancelled)
+				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 				if err != nil {
 					return nil, nil, nil, nil, false, err
 				}
@@ -1358,11 +1358,11 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		if rj.Concurrency == nil || rj.Status != sdk.StatusBlocked {
 			continue
 		}
-		rjsToUnlocked, rjIDsToCancelled, err := retrieveRunObjectsToUnLocked(ctx, db, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, *rj.Concurrency)
+		objsToUnlocked, objsToCancelled, err := retrieveRunObjectsToUnLocked(ctx, db, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, *rj.Concurrency)
 		if err != nil {
 			return nil, nil, nil, nil, false, err
 		}
-		for _, rjUnlocked := range rjsToUnlocked {
+		for _, rjUnlocked := range objsToUnlocked {
 			if rj.ID == rjUnlocked.ID {
 
 				runJobsInfo[rj.ID] = sdk.V2WorkflowRunJobInfo{
@@ -1377,13 +1377,13 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				runJobs = append(runJobs, rj)
 			}
 		}
-		for _, runObject := range rjIDsToCancelled {
-			runJobsToCancelled[runObject.ID] = runObject
+		for _, runObject := range objsToCancelled {
+			runObjectsToCancelled[runObject.ID] = runObject
 		}
 
 	}
 
-	return runJobs, runJobsToCancelled, runJobsInfo, nil, hasToUpdateRun, nil
+	return runJobs, runObjectsToCancelled, runJobsInfo, nil, hasToUpdateRun, nil
 }
 
 func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, run *sdk.V2WorkflowRun, data prepareJobData) []sdk.V2WorkflowRunInfo {
@@ -2251,6 +2251,7 @@ func (api *API) enqueueWorkflowRun(ctx context.Context, request sdk.V2WorkflowRu
 	}
 }
 
+// Call to unlock a workflow run
 func (api *API) workflowRunV2TriggerUnlocking(ctx context.Context, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
 	lockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)

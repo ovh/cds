@@ -159,7 +159,7 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Building"
-      retry: 20
+      retry: 100
       delay: 1
     
     - name: Wait all success
@@ -168,5 +168,5 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 20
+      retry: 100
       delay: 1

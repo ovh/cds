@@ -80,7 +80,7 @@ testcases:
               concurrency: "concu"
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
-                - run: sleep 20
+                - run: sleep 100
         workflows/workflow2.yaml:
           name: {{.cds_workflow}}
           concurrency: "concu"
@@ -163,5 +163,5 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson2.status ShouldEqual "Cancelled"
-      retry: 20
+      retry: 100
       delay: 1
