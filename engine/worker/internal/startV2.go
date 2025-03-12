@@ -76,6 +76,11 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 				return
 			case <-refreshTick.C:
 				if err := w.ClientV2().V2WorkerRefresh(ctx, region, runJobID); err != nil {
+					if sdk.ErrorIs(err, sdk.ErrAlreadyEnded) || strings.Contains(err.Error(), "job ended") {
+						errsChan <- err
+						continue
+					}
+
 					log.Error(ctx, "Heartbeat failed: %v", err)
 					nbErrors++
 					if nbErrors == 5 {

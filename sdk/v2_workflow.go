@@ -56,6 +56,7 @@ type V2Workflow struct {
 	Annotations   map[string]string        `json:"annotations,omitempty"`
 	Semver        *WorkflowSemver          `json:"semver,omitempty"`
 	Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty"`
+	Concurrency   string                   `json:"concurrency,omitempty"`
 
 	// Template fields
 	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from"`

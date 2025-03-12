@@ -129,6 +129,17 @@
         &.building {
           color: $cds_color_teal;
         }
+
+        &.blocked {
+          color: $cds_color_teal;
+        }
+        
+        &.stopped {
+          font-size: 21px;
+          border: 2px solid $cds_color_red; 
+          border-radius: 12px;
+          color: $cds_color_red;
+        }
       }
     }
 

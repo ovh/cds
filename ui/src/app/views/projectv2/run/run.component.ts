@@ -382,7 +382,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this._cd.markForCheck();
         try {
             await lastValueFrom(this._workflowService.stop(this.projectKey, this.workflowRun.id));
-            this._messageService.success('Workflow run stopped', { nzDuration: 2000 });
+            this._messageService.success('Workflow run will be stopped', { nzDuration: 2000 });
             await this.load(this.workflowRun.id);
         } catch (e) {
             this._messageService.error(`Unable to stop run: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });

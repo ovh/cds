@@ -363,6 +363,20 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			c.Pool = 1
 		}
 	}
+	// Compute workflow concurrency
+	if strings.Contains(run.WorkflowData.Workflow.Concurrency, "${{") {
+		interpolatedString, err := ap.InterpolateToString(ctx, run.WorkflowData.Workflow.Concurrency)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       err.Error(),
+			})
+		}
+		run.WorkflowData.Workflow.Concurrency = interpolatedString
+	}
 
 	run.WorkflowData.Actions = make(map[string]sdk.V2Action)
 	for k, v := range wref.ef.actionsCache {
@@ -381,15 +395,72 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.WorkflowData.WorkerModels[completeName] = v.Model
 	}
 
+	// check concurrency
+	if run.WorkflowData.Workflow.Concurrency != "" {
+		concurrencyDef, err := retrieveConcurrencyDefinition(ctx, api.mustDB(), *run, run.WorkflowData.Workflow.Concurrency)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("unable to retrieve concurrency %q: %v", run.WorkflowData.Workflow.Concurrency, err),
+			})
+		}
+		if concurrencyDef == nil {
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("concurrency %q not found on workflow nor on project", run.WorkflowData.Workflow.Concurrency),
+			})
+		}
+		run.Concurrency = concurrencyDef
+
+		// Lock concurrency
+		concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
+		concurrencyLockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)
+		locked, err := api.Cache.Lock(concurrencyLockKey, 1*time.Minute, 0, 1)
+		if err != nil {
+			return err
+		}
+		if !locked {
+			log.Info(ctx, "concurrency %q already locked", concurrencyKey)
+			time.Sleep(1 * time.Second)
+			return nil
+		}
+		defer api.Cache.Unlock(concurrencyLockKey)
+	}
+
+	runObjectToCancel := make(map[string]workflow_v2.ConcurrencyObject)
+	runInfo, err := manageWorkflowConcurrency(ctx, api.mustDB(), run, map[string]int64{}, runObjectToCancel)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       "unable to start the workflow. Please contact an administrator",
+		})
+	}
+	if runInfo == nil {
+		run.Status = sdk.V2WorkflowRunStatusBuilding
+	}
+
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback() // nolint
 
-	run.Status = sdk.V2WorkflowRunStatusBuilding
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
+	}
+
+	if runInfo != nil {
+		if err := workflow_v2.InsertRunInfo(ctx, tx, runInfo); err != nil {
+			return err
+		}
 	}
 
 	if mustSaveVersion {
@@ -416,12 +487,15 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		}
 	}
 
+	if err := api.cancelRunObjects(ctx, tx, runObjectToCancel); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(tx.Commit())
 	}
 
 	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, nil, nil, nil)
-
 	api.EnqueueWorkflowRun(ctx, run.ID, *run.Initiator, run.WorkflowName, run.RunNumber)
 	return nil
 }
