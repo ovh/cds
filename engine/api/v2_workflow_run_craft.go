@@ -396,7 +396,28 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// check concurrency
-	if run.Concurrency != nil {
+	if run.WorkflowData.Workflow.Concurrency != "" {
+		concurrencyDef, err := retrieveConcurrencyDefinition(ctx, api.mustDB(), *run, run.WorkflowData.Workflow.Concurrency)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("unable to retrieve concurrency %q: %v", run.WorkflowData.Workflow.Concurrency, err),
+			})
+		}
+		if concurrencyDef == nil {
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("concurrency %q not found on workflow nor on project", run.WorkflowData.Workflow.Concurrency),
+			})
+		}
+		run.Concurrency = concurrencyDef
+
+		// Lock concurrency
 		concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
 		concurrencyLockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)
 		locked, err := api.Cache.Lock(concurrencyLockKey, 1*time.Minute, 0, 1)

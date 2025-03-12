@@ -196,24 +196,10 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 
 // Update new workflow run check if we have to lock it
 func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, concurrencyUnlockedCount map[string]int64, toCancel map[string]workflow_v2.ConcurrencyObject) (*sdk.V2WorkflowRunInfo, error) {
-	if run.WorkflowData.Workflow.Concurrency != "" {
-		concurrencyDef, err := retrieveConcurrencyDefinition(ctx, db, *run, run.WorkflowData.Workflow.Concurrency)
-		if err != nil {
-			return nil, err
-		}
-		if concurrencyDef == nil {
-			runInfo := sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				IssuedAt:      time.Now(),
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("concurrency %q not found on workflow nor on project", run.WorkflowData.Workflow.Concurrency),
-			}
-			return &runInfo, nil
-		}
-		run.Concurrency = concurrencyDef
+	if run.Concurrency != nil {
 
 		// Retrieve current building and blocked job to check if we can enqueue this one
-		canRun, err := canRunWithConcurrency(ctx, *concurrencyDef, db, *run, workflow_v2.ConcurrencyObject{ID: run.ID, Type: workflow_v2.ConcurrencyObjectTypeWorkflow}, concurrencyUnlockedCount, toCancel)
+		canRun, err := canRunWithConcurrency(ctx, *run.Concurrency, db, *run, workflow_v2.ConcurrencyObject{ID: run.ID, Type: workflow_v2.ConcurrencyObjectTypeWorkflow}, concurrencyUnlockedCount, toCancel)
 		if err != nil {
 			return nil, err
 		}
