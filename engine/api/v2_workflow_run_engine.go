@@ -875,6 +875,10 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 					if v.Type == sdk.IntegrationConfigTypeRegion {
 						rj.Job.Region = v.Value
 						rj.Region = v.Value
+						jobDef := run.WorkflowData.Workflow.Jobs[rj.JobID]
+						jobDef.Region = v.Value
+						run.WorkflowData.Workflow.Jobs[rj.JobID] = jobDef
+						runUpdated = true
 						break integLoop
 					}
 				}

@@ -350,8 +350,11 @@ func GetProjectKey(ctx context.Context, c *actionplugin.Common, keyName string) 
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to read response")
 	}
-
 	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("%s", string(btes))
+	}
 
 	var context sdk.ProjectKey
 	if err := sdk.JSONUnmarshal(btes, &context); err != nil {
