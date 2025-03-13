@@ -34,7 +34,7 @@
     "@angular/platform-browser": "18.2.13",
     "@angular/platform-browser-dynamic": "18.2.13",
     "@angular/router": "18.2.13",
-    "@babel/runtime": "7.23.9",
+    "@babel/runtime": "7.26.10",
     "@fontsource/lato": "5.0.23",
     "@icholy/duration": "5.0.0",
     "@ngx-translate/core": "15.0.0",
