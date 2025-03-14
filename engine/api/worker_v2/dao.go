@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func getWorkers(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.V2Worker, error) {
+func getWorkers(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.V2Worker, error) {
 	var dbWs []dbWorker
 	if err := gorpmapping.GetAll(ctx, db, query, &dbWs, opts...); err != nil {
 		return nil, err

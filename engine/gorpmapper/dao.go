@@ -180,8 +180,16 @@ var GetOptions = struct {
 	WithDecryption: getEncryptedData,
 }
 
+type GetAllOptionFunc func(context.Context, *Mapper, gorp.SqlExecutor, interface{}) error
+
+var GetAllOptions = struct {
+	WithDecryption GetAllOptionFunc
+}{
+	WithDecryption: getEncryptedSliceData,
+}
+
 // GetAll values from database.
-func (m *Mapper) GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) error {
+func (m *Mapper) GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetAllOptionFunc) error {
 	if err := checkDatabase(db); err != nil {
 		return err
 	}

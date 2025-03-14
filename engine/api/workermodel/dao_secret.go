@@ -22,7 +22,7 @@ func LoadSecretsByModelID(ctx context.Context, db gorp.SqlExecutor, workerModelI
     WHERE worker_model_id = $1
   `).Args(workerModelID)
 
-	if err := gorpmapping.GetAll(ctx, db, q, &dbSecrets, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, q, &dbSecrets, gorpmapping.GetAllOptions.WithDecryption); err != nil {
 		return nil, sdk.WrapError(err, "cannot load secrets for worker model with id %d", workerModelID)
 	}
 

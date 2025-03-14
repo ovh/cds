@@ -51,12 +51,14 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/admin/database/migration/unlock/{id}", nil, r.POST(s.postDatabaseMigrationUnlockedHandler))
 	r.Handle("/admin/database/migration", nil, r.GET(s.getDatabaseMigrationHandler))
 
+	r.Handle("/admin/database/tuples/{entity}", nil, r.GET(s.getAdminDatabaseTuplesByEntity))
 	r.Handle("/admin/database/signature", nil, r.GET(s.getAdminDatabaseSignatureResume))
 	r.Handle("/admin/database/signature/{entity}/roll/{pk}", nil, r.POST(s.postAdminDatabaseSignatureRollEntityByPrimaryKey))
+	r.Handle("/admin/database/signature/{entity}/info/{pk}", nil, r.GET(s.getAdminDatabaseSignatureInfoEntityByPrimaryKey))
 	r.Handle("/admin/database/signature/{entity}/{signer}", nil, r.GET(s.getAdminDatabaseSignatureTuplesBySigner))
 	r.Handle("/admin/database/encryption", nil, r.GET(s.getAdminDatabaseEncryptedEntities))
-	r.Handle("/admin/database/encryption/{entity}", nil, r.GET(s.getAdminDatabaseEncryptedTuplesByEntity))
 	r.Handle("/admin/database/encryption/{entity}/roll/{pk}", nil, r.POST(s.postAdminDatabaseRollEncryptedEntityByPrimaryKey))
+	r.Handle("/admin/database/encryption/{entity}/info/{pk}", nil, r.GET(s.getAdminDatabaseInfoEncryptedEntityByPrimaryKey))
 
 	r.Handle("/admin/backend/{id}/resync/{type}", nil, r.POST(s.postAdminResyncBackendWithDatabaseHandler))
 

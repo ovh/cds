@@ -308,7 +308,7 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, event sdk.FullEventV
 	if event.ProjectKey == "" {
 		return nil
 	}
-	notifications, err := notification_v2.LoadAll(ctx, db, event.ProjectKey, gorpmapper.GetOptions.WithDecryption)
+	notifications, err := notification_v2.LoadAll(ctx, db, event.ProjectKey, gorpmapper.GetAllOptions.WithDecryption)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load project %s notifications", event.ProjectKey)
 	}

@@ -20,7 +20,7 @@ func init() {
 }
 
 func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
-	unitItems, err := LoadAllItemUnitsToDeleteByUnit(ctx, x.m, x.db, s.ID(), x.config.PurgeNbElements, gorpmapper.GetOptions.WithDecryption)
+	unitItems, err := LoadAllItemUnitsToDeleteByUnit(ctx, x.m, x.db, s.ID(), x.config.PurgeNbElements, gorpmapper.GetAllOptions.WithDecryption)
 	if err != nil {
 		return err
 	}
