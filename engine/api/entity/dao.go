@@ -36,7 +36,7 @@ func getEntity(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 	return &res.Entity, nil
 }
 
-func getEntities(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.Entity, error) {
+func getEntities(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	var res []dbEntity
 	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) e
 }
 
 // LoadByRepositoryAndRef loads an entity by his repository, ref
-func LoadByRepositoryAndRefAndCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, commit string, opts ...gorpmapping.GetOptionFunc) ([]sdk.Entity, error) {
+func LoadByRepositoryAndRefAndCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, commit string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND ref = $2 AND commit = $3
@@ -101,7 +101,7 @@ func LoadByRepositoryAndRefAndCommit(ctx context.Context, db gorp.SqlExecutor, p
 }
 
 // LoadByRepository loads all an entities in the given repository,
-func LoadByRepository(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, opts ...gorpmapping.GetOptionFunc) ([]sdk.Entity, error) {
+func LoadByRepository(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1`).Args(projectRepositoryID)
@@ -109,7 +109,7 @@ func LoadByRepository(ctx context.Context, db gorp.SqlExecutor, projectRepositor
 }
 
 // LoadByTypeAndRef loads an entity by his repository, type and ref
-func LoadByTypeAndRefCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, t string, ref string, commit string, opts ...gorpmapping.GetOptionFunc) ([]sdk.Entity, error) {
+func LoadByTypeAndRefCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, t string, ref string, commit string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND type = $2 AND ref = $3 AND commit = $4`).Args(projectRepositoryID, t, ref, commit)

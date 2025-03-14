@@ -132,7 +132,7 @@ func TestEncryption_Multiple(t *testing.T) {
 	// Test that GetAll replaces encrypted values with clearValue if WithDecryption options is used
 	query = gorpmapper.NewQuery("SELECT * FROM test_encrypted_data WHERE id IN ($1, $2) ORDER BY id").Args(d1.ID, d2.ID)
 	dslice = []gorpmapper.TestEncryptedData{}
-	require.NoError(t, m.GetAll(context.TODO(), db, query, &dslice, gorpmapping.GetOptions.WithDecryption))
+	require.NoError(t, m.GetAll(context.TODO(), db, query, &dslice, gorpmapping.GetAllOptions.WithDecryption))
 	require.Len(t, dslice, 2)
 
 	isValid, err := m.CheckSignature(dslice[0], dslice[0].Signature)

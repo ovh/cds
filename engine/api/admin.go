@@ -297,16 +297,24 @@ func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handl
 	return database.AdminDatabaseSignatureRollEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
 }
 
+func (api *API) getAdminDatabaseSignatureInfoEntityByPrimaryKey() service.Handler {
+	return database.AdminDatabaseSignatureInfoEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
+}
+
 func (api *API) getAdminDatabaseEncryptedEntities() service.Handler {
 	return database.AdminDatabaseEncryptedEntities(api.mustDB, gorpmapping.Mapper)
 }
 
-func (api *API) getAdminDatabaseEncryptedTuplesByEntity() service.Handler {
-	return database.AdminDatabaseEncryptedTuplesByEntity(api.mustDB, gorpmapping.Mapper)
+func (api *API) getAdminDatabaseTuplesByEntity() service.Handler {
+	return database.AdminDatabaseTuplesByEntity(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handler {
 	return database.AdminDatabaseRollEncryptedEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
+}
+
+func (api *API) getAdminDatabaseInfoEncryptedEntityByPrimaryKey() service.Handler {
+	return database.AdminDatabaseInfoEncryptedEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminFeatureFlipping() service.Handler {

@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -22,9 +26,12 @@ func adminDatabase() *cobra.Command {
 		cli.NewCommand(adminDatabaseDeleteMigrationCmd, adminDatabaseDeleteFunc, nil),
 		cli.NewListCommand(adminDatabaseMigrationsList, adminDatabaseMigrationsListFunc, nil),
 		cli.NewGetCommand(adminDatabaseSignatureResume, adminDatabaseSignatureResumeFunc, nil),
+		cli.NewCommand(adminDatabaseSignatureRollSigner, adminDatabaseSignatureRollSignerFunc, nil),
 		cli.NewCommand(adminDatabaseSignatureRoll, adminDatabaseSignatureRollFunc, nil),
+		cli.NewCommand(adminDatabaseSignatureInfo, adminDatabaseSignatureInfoFunc, nil),
 		cli.NewCommand(adminDatabaseEncryptionResume, adminDatabaseEncryptionResumeFunc, nil),
 		cli.NewCommand(adminDatabaseEncryptionRoll, adminDatabaseEncryptionRollFunc, nil),
+		cli.NewCommand(adminDatabaseEncryptionInfo, adminDatabaseEncryptionInfoFunc, nil),
 	})
 }
 
@@ -116,9 +123,133 @@ func adminDatabaseSignatureResumeFunc(args cli.Values) (interface{}, error) {
 	return client.AdminDatabaseSignaturesResume(args.GetString(argServiceName))
 }
 
+var adminDatabaseSignatureRollSigner = cli.Command{
+	Name:  "roll-signed-data-signer",
+	Short: "Roll signed data in database that are not using the latest signer",
+	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
+	},
+	VariadicArgs: cli.Arg{
+		Name:       "entity",
+		AllowEmpty: true,
+	},
+}
+
+func adminDatabaseSignatureRollSignerFunc(args cli.Values) error {
+	service := args.GetString(argServiceName)
+
+	resume, err := client.AdminDatabaseSignaturesResume(service)
+	if err != nil {
+		return err
+	}
+
+	entities := args.GetStringSlice("entity")
+	if len(entities) == 0 {
+		for e := range resume {
+			entities = append(entities, e)
+		}
+	}
+
+	sort.Strings(entities)
+	for _, e := range entities {
+		for _, signer := range resume[e] {
+			if signer.Latest {
+				continue
+			}
+			pks, err := client.AdminDatabaseSignaturesTuplesBySigner(service, e, signer.Signer)
+			if err != nil {
+				return err
+			}
+			if err := client.AdminDatabaseSignaturesRollEntity(service, e, pks); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 var adminDatabaseSignatureRoll = cli.Command{
 	Name:  "roll-signed-data",
-	Short: "Roll a signed data in database",
+	Short: "Roll signed data in database that are using specific signature key by timestamp",
+	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
+		{
+			Name: "timestamp",
+			IsValid: func(s string) bool {
+				_, err := strconv.Atoi(s)
+				return err == nil
+			},
+		},
+	},
+	VariadicArgs: cli.Arg{
+		Name:       "entity",
+		AllowEmpty: true,
+	},
+	Flags: []cli.Flag{
+		{
+			Name:    "report-dir",
+			Usage:   "Path to load report for entities",
+			Default: "./report",
+		},
+	},
+}
+
+func adminDatabaseSignatureRollFunc(args cli.Values) error {
+	service := args.GetString(argServiceName)
+	timestamp, _ := args.GetInt64("timestamp")
+
+	dir := strings.TrimSpace(args.GetString("report-dir"))
+	if dir == "" {
+		dir = "."
+	}
+
+	entities := args.GetStringSlice("entity")
+	if len(entities) == 0 {
+		resume, err := client.AdminDatabaseSignaturesResume(service)
+		if err != nil {
+			return err
+		}
+		for e := range resume {
+			entities = append(entities, e)
+		}
+	}
+
+	sort.Strings(entities)
+	for _, e := range entities {
+		reportPath := path.Join(dir, service+"."+e+".signature.json")
+		buf, err := os.ReadFile(reportPath)
+		if err != nil {
+			return err
+		}
+		var report map[int64][]string
+		if err := json.Unmarshal(buf, &report); err != nil {
+			return err
+		}
+		if _, ok := report[timestamp]; !ok {
+			continue
+		}
+		if err := client.AdminDatabaseSignaturesRollEntity(service, e, report[timestamp]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+var adminDatabaseSignatureInfo = cli.Command{
+	Name:  "info-signed-data",
+	Short: "Get info for signed data in database",
 	Args: []cli.Arg{
 		{
 			Name: argServiceName,
@@ -133,33 +264,54 @@ var adminDatabaseSignatureRoll = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Name:  "index",
-			Usage: "Resume from a specific index (only available for one entity)",
-			IsValid: func(s string) bool {
-				if s == "" {
-					return true
-				}
-				_, err := strconv.Atoi(s)
-				return err == nil
-			},
+			Name:    "report-dir",
+			Usage:   "Path to save report for entities",
+			Default: "./report",
 		},
 	},
 }
 
-func adminDatabaseSignatureRollFunc(args cli.Values) error {
+func adminDatabaseSignatureInfoFunc(args cli.Values) error {
+	service := args.GetString(argServiceName)
+
+	dir := strings.TrimSpace(args.GetString("report-dir"))
+	if dir == "" {
+		dir = "."
+	}
+	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
+		return cli.WrapError(err, "Unable to create directory %s", args.GetString("output-dir"))
+	}
+
 	entities := args.GetStringSlice("entity")
 	if len(entities) == 0 {
-		return client.AdminDatabaseSignaturesRollAllEntities(args.GetString(argServiceName))
-	}
-	idx, _ := args.GetInt64("index")
-	if len(entities) > 1 && idx > 0 {
-		return fmt.Errorf("--index can only be used with one entity")
-	}
-	sort.Strings(entities)
-	for _, e := range entities {
-		if err := client.AdminDatabaseSignaturesRollEntity(args.GetString(argServiceName), e, &idx); err != nil {
+		resume, err := client.AdminDatabaseSignaturesResume(service)
+		if err != nil {
 			return err
 		}
+		for e := range resume {
+			entities = append(entities, e)
+		}
+	}
+
+	sort.Strings(entities)
+	for _, e := range entities {
+		report, err := client.AdminDatabaseSignaturesInfoEntity(service, e)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Entity %s: found %d signature keys used\n", e, len(report))
+		for ts, pks := range report {
+			fmt.Printf("	%d: %d tuple(s)\n", ts, len(pks))
+		}
+		buf, err := json.Marshal(report)
+		if err != nil {
+			return err
+		}
+		reportPath := path.Join(dir, service+"."+e+".signature.json")
+		if err := os.WriteFile(reportPath, buf, 0644); err != nil {
+			return err
+		}
+		fmt.Printf("Report file created at %s\n", reportPath)
 	}
 
 	return nil
@@ -188,7 +340,78 @@ func adminDatabaseEncryptionResumeFunc(args cli.Values) error {
 
 var adminDatabaseEncryptionRoll = cli.Command{
 	Name:  "roll-encrypted-data",
-	Short: "Roll a encrypted data in database",
+	Short: "Roll encrypted data in database that are using specific encryption key by timestamp",
+	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
+		{
+			Name: "timestamp",
+			IsValid: func(s string) bool {
+				_, err := strconv.Atoi(s)
+				return err == nil
+			},
+		},
+	},
+	VariadicArgs: cli.Arg{
+		Name:       "entity",
+		AllowEmpty: true,
+	},
+	Flags: []cli.Flag{
+		{
+			Name:    "report-dir",
+			Usage:   "Path to load report for entities",
+			Default: "./report",
+		},
+	},
+}
+
+func adminDatabaseEncryptionRollFunc(args cli.Values) error {
+	service := args.GetString(argServiceName)
+	timestamp, _ := args.GetInt64("timestamp")
+
+	dir := strings.TrimSpace(args.GetString("report-dir"))
+	if dir == "" {
+		dir = "."
+	}
+
+	entities := args.GetStringSlice("entity")
+	if len(entities) == 0 {
+		var err error
+		entities, err = client.AdminDatabaseListEncryptedEntities(service)
+		if err != nil {
+			return err
+		}
+	}
+
+	sort.Strings(entities)
+	for _, e := range entities {
+		reportPath := path.Join(dir, service+"."+e+".encryption.json")
+		buf, err := os.ReadFile(reportPath)
+		if err != nil {
+			return err
+		}
+		var report map[int64][]string
+		if err := json.Unmarshal(buf, &report); err != nil {
+			return err
+		}
+		if _, ok := report[timestamp]; !ok {
+			continue
+		}
+		if err := client.AdminDatabaseRollEncryptedEntity(service, e, report[timestamp]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+var adminDatabaseEncryptionInfo = cli.Command{
+	Name:  "info-encrypted-data",
+	Short: "Get info for encrypted data in database",
 	Args: []cli.Arg{
 		{
 			Name: argServiceName,
@@ -203,33 +426,53 @@ var adminDatabaseEncryptionRoll = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Name:  "index",
-			Usage: "Resume from a specific index (only available for one entity)",
-			IsValid: func(s string) bool {
-				if s == "" {
-					return true
-				}
-				_, err := strconv.Atoi(s)
-				return err == nil
-			},
+			Name:    "report-dir",
+			Usage:   "Path to save report for entities",
+			Default: "./report",
 		},
 	},
 }
 
-func adminDatabaseEncryptionRollFunc(args cli.Values) error {
+func adminDatabaseEncryptionInfoFunc(args cli.Values) error {
+	service := args.GetString(argServiceName)
+
+	dir := strings.TrimSpace(args.GetString("report-dir"))
+	if dir == "" {
+		dir = "."
+	}
+	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
+		return cli.WrapError(err, "Unable to create directory %s", args.GetString("output-dir"))
+	}
+
 	entities := args.GetStringSlice("entity")
 	if len(entities) == 0 {
-		return client.AdminDatabaseRollAllEncryptedEntities(args.GetString(argServiceName))
-	}
-	idx, _ := args.GetInt64("index")
-	if len(entities) > 1 && idx > 0 {
-		return fmt.Errorf("--index can only be used with one entity")
-	}
-	sort.Strings(entities)
-	for _, e := range entities {
-		if err := client.AdminDatabaseRollEncryptedEntity(args.GetString(argServiceName), e, &idx); err != nil {
+		var err error
+		entities, err = client.AdminDatabaseListEncryptedEntities(service)
+		if err != nil {
 			return err
 		}
 	}
+
+	sort.Strings(entities)
+	for _, e := range entities {
+		report, err := client.AdminDatabaseInfoEncryptedEntity(service, e)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Entity %s: found %d encryption keys used\n", e, len(report))
+		for ts, pks := range report {
+			fmt.Printf("	%d: %d tuple(s)\n", ts, len(pks))
+		}
+		buf, err := json.Marshal(report)
+		if err != nil {
+			return err
+		}
+		reportPath := path.Join(dir, service+"."+e+".encryption.json")
+		if err := os.WriteFile(reportPath, buf, 0644); err != nil {
+			return err
+		}
+		fmt.Printf("Report file created at %s\n", reportPath)
+	}
+
 	return nil
 }

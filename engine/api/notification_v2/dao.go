@@ -31,7 +31,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	return &dbNotif.ProjectNotification, nil
 }
 
-func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectNotification, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.ProjectNotification, error) {
 	var dbNotifs []dbProjectNotification
 	if err := gorpmapping.GetAll(ctx, db, q, &dbNotifs, opts...); err != nil {
 		return nil, err
@@ -89,8 +89,7 @@ func LoadByName(ctx context.Context, db gorp.SqlExecutor, projectKey string, nam
 
 }
 
-func LoadAll(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapper.GetOptionFunc) ([]sdk.ProjectNotification, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.ProjectNotification, error) {
 	q := gorpmapping.NewQuery("SELECT * FROM project_notification WHERE project_key=$1").Args(projectKey)
 	return getAll(ctx, db, q, opts...)
-
 }

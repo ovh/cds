@@ -636,9 +636,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info(ctx, "Setting up database keys...")
-	encryptionKeyConfig := a.Config.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
+	encryptionKeyConfig := a.Config.Database.EncryptionKey.GetKeys(gorpmapper.KeyEncryptionIdentifier)
 	signatureKeyConfig := a.Config.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
-	if err := gorpmapping.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
+	if err := gorpmapping.ConfigureKeys(signatureKeyConfig, encryptionKeyConfig); err != nil {
 		return fmt.Errorf("cannot setup database keys: %v", err)
 	}
 

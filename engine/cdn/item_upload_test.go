@@ -192,7 +192,7 @@ func TestPostUploadHandler(t *testing.T) {
 	require.Equal(t, 202, rec.Code)
 	require.True(t, gock.IsDone())
 
-	its, err := item.LoadAll(ctx, s.Mapper, db, 1, gorpmapper.GetOptions.WithDecryption)
+	its, err := item.LoadAll(ctx, s.Mapper, db, 1, gorpmapper.GetAllOptions.WithDecryption)
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(its))

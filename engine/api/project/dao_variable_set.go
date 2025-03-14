@@ -131,7 +131,7 @@ func LoadVariableSetItemWithType(ctx context.Context, db gorp.SqlExecutor, varia
 	}
 }
 
-func LoadVariableSetAllItem(ctx context.Context, db gorp.SqlExecutor, variableSetID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.ProjectVariableSetItem, error) {
+func LoadVariableSetAllItem(ctx context.Context, db gorp.SqlExecutor, variableSetID string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.ProjectVariableSetItem, error) {
 	items := make([]sdk.ProjectVariableSetItem, 0)
 	query := gorpmapping.NewQuery("SELECT * FROM project_variable_set_text WHERE project_variable_set_id = $1 ORDER BY name").Args(variableSetID)
 	itemsText, err := getAllVariableSetItemsText(ctx, db, query)

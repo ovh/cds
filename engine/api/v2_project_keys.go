@@ -51,7 +51,7 @@ func (api *API) deleteKeyInProjectV2Handler() ([]service.RbacChecker, service.Ha
 				return sdk.WrapError(err, "cannot load project %s", key)
 			}
 
-			vcsProject, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapping.GetOptions.WithDecryption)
+			vcsProject, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapping.GetAllOptions.WithDecryption)
 			if err != nil {
 				return err
 			}

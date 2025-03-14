@@ -34,6 +34,7 @@ func (m *Mapper) RollEncryptedTupleByPrimaryKey(ctx context.Context, db gorp.Sql
 	}
 
 	if tuple == nil {
+		// Ignore missing tuple cause the data may be deleted while rolling is in progress
 		return nil
 	}
 
@@ -42,4 +43,31 @@ func (m *Mapper) RollEncryptedTupleByPrimaryKey(ctx context.Context, db gorp.Sql
 	}
 
 	return nil
+}
+
+func (m *Mapper) InfoEncryptedTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor, entity string, pk interface{}) (int64, error) {
+	e, ok := m.Mapping[entity]
+	if !ok {
+		return 0, sdk.WithStack(errors.New("unknown entity"))
+	}
+	if !e.EncryptedEntity {
+		return 0, sdk.WithStack(errors.New("entity is not encrypted"))
+	}
+
+	tuple, err := m.LoadTupleByPrimaryKey(ctx, db, entity, pk)
+	if err != nil {
+		return 0, err
+	}
+	if tuple == nil {
+		// Ignore missing tuple cause the data may be deleted while rolling is in progress
+		return 0, nil
+	}
+	keyIdx, err := getEncryptedDataUncap(ctx, m, db, tuple)
+	if err != nil {
+		return 0, err
+	}
+
+	keyTimestamp := m.encryptionKeyTimestamp[keyIdx]
+
+	return keyTimestamp, nil
 }

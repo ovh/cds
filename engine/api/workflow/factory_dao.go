@@ -222,9 +222,9 @@ func (dao WorkflowDAO) Query() gorpmapping.Query {
 	return q
 }
 
-func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
+func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetAllOptionFunc {
 
-	var loaders = make([]gorpmapping.GetOptionFunc, 0)
+	var loaders = make([]gorpmapping.GetAllOptionFunc, 0)
 
 	if dao.Loaders.WithApplications {
 		loaders = append(loaders, func(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {

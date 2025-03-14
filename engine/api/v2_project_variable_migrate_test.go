@@ -50,7 +50,7 @@ func TestPostMigrateFromAsCode(t *testing.T) {
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)
 
-	items, err := project.LoadVariableSetAllItem(ctx, db, vs.ID, gorpmapper.GetOptions.WithDecryption)
+	items, err := project.LoadVariableSetAllItem(ctx, db, vs.ID, gorpmapper.GetAllOptions.WithDecryption)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(items))
 

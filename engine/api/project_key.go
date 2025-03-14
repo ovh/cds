@@ -53,7 +53,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
 		}
 
-		vcsProject, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapping.GetOptions.WithDecryption)
+		vcsProject, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapping.GetAllOptions.WithDecryption)
 		if err != nil {
 			return err
 		}

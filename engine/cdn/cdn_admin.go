@@ -29,14 +29,22 @@ func (s *Service) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Han
 	return database.AdminDatabaseSignatureRollEntityByPrimaryKey(s.mustDB, s.Mapper)
 }
 
+func (s *Service) getAdminDatabaseSignatureInfoEntityByPrimaryKey() service.Handler {
+	return database.AdminDatabaseSignatureInfoEntityByPrimaryKey(s.mustDB, s.Mapper)
+}
+
 func (s *Service) getAdminDatabaseEncryptedEntities() service.Handler {
 	return database.AdminDatabaseEncryptedEntities(s.mustDB, s.Mapper)
 }
 
-func (s *Service) getAdminDatabaseEncryptedTuplesByEntity() service.Handler {
-	return database.AdminDatabaseEncryptedTuplesByEntity(s.mustDB, s.Mapper)
+func (s *Service) getAdminDatabaseTuplesByEntity() service.Handler {
+	return database.AdminDatabaseTuplesByEntity(s.mustDB, s.Mapper)
 }
 
 func (s *Service) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handler {
 	return database.AdminDatabaseRollEncryptedEntityByPrimaryKey(s.mustDB, s.Mapper)
+}
+
+func (s *Service) getAdminDatabaseInfoEncryptedEntityByPrimaryKey() service.Handler {
+	return database.AdminDatabaseInfoEncryptedEntityByPrimaryKey(s.mustDB, s.Mapper)
 }

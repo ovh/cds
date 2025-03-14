@@ -183,7 +183,7 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 			return err
 		}
 
-		itemsUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID, gorpmapper.GetOptions.WithDecryption)
+		itemsUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID, gorpmapper.GetAllOptions.WithDecryption)
 		if err != nil {
 			return err
 		}
