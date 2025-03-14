@@ -132,11 +132,11 @@ func Test_getAdminDatabaseEncryptedEntities(t *testing.T) {
 	t.Logf("%s", w.Body.String())
 }
 
-func Test_getAdminDatabaseEncryptedTuplesByEntity(t *testing.T) {
+func Test_getAdminDatabaseTuplesByEntity(t *testing.T) {
 	s, _ := newTestService(t)
 	s.Mapper.Register(s.Mapper.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	uri := s.Router.GetRoute("GET", s.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
+	uri := s.Router.GetRoute("GET", s.getAdminDatabaseTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
 	req := newRequest(t, "GET", uri, nil)
 
 	// Do the request
@@ -152,7 +152,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKey(t *testing.T) {
 	s, _ := newTestService(t)
 	s.Mapper.Register(s.Mapper.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	uri := s.Router.GetRoute("GET", s.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
+	uri := s.Router.GetRoute("GET", s.getAdminDatabaseTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
 	req := newRequest(t, "GET", uri, nil)
 
 	// Do the request
