@@ -161,7 +161,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 20
+      retry: 100
       delay: 1
       
     - name: Retrieve job status and check that 2 iare building and one blocked

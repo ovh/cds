@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
-import { Concurrency } from "app/model/project.concurrency.model";
+import { Router } from "@angular/router";
+import { Concurrency, ProjectConcurrencyRuns } from "app/model/project.concurrency.model";
 import { Project } from "app/model/project.model";
 import { V2ProjectService } from "app/service/projectv2/project.service";
 import { ErrorUtils } from "app/shared/error.utils";
@@ -18,11 +19,13 @@ export class ProjectConcurrenciesComponent implements OnInit {
     loading = { list: false, action: false };
     selectedConcurrency: Concurrency;
     concurrencies: Array<Concurrency> = [];
+    concurrencyRuns: Array<ProjectConcurrencyRuns> = [];
 
     constructor(
         private _cd: ChangeDetectorRef,
         private _messageService: NzMessageService,
-        private _v2ProjectService: V2ProjectService
+        private _v2ProjectService: V2ProjectService,
+        private _router: Router
     ) { }
 
     ngOnInit(): void {
@@ -55,12 +58,22 @@ export class ProjectConcurrenciesComponent implements OnInit {
         this._cd.markForCheck();
     }
 
-    selectConcurrency(c: Concurrency): void {
+    async selectConcurrency(c: Concurrency) {
         this.selectedConcurrency = c;
+       
+        try {
+            this.concurrencyRuns = await lastValueFrom(this._v2ProjectService.getConcurrencyRuns(this.project.key, this.selectedConcurrency.name))
+        } catch (e) {
+            this._messageService.error(`Unable to delete concurrency: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
         this._cd.markForCheck;
     }
 
     unselectConcurrency(): void {
         delete this.selectedConcurrency;
+    }
+
+    sortByDate(a: ProjectConcurrencyRuns, b: ProjectConcurrencyRuns): number {
+        return a.last_modified < b.last_modified ? -1 : 1;
     }
 }

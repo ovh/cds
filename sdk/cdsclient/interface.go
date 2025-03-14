@@ -268,6 +268,7 @@ type ProjectClientV2 interface {
 	ProjectConcurrencyList(ctx context.Context, pKey string) ([]sdk.ProjectConcurrency, error)
 	ProjectConcurrencyUpdate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error
 	ProjectConcurrencyDelete(ctx context.Context, pKey string, name string) error
+	ProjectConcurrencyListRuns(ctx context.Context, pKey string, name string) ([]sdk.ProjectConcurrencyRunObject, error)
 
 	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 }

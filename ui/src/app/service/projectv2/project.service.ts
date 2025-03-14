@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
-import { Concurrency } from 'app/model/project.concurrency.model';
+import { Concurrency, ProjectConcurrencyRuns } from 'app/model/project.concurrency.model';
 import { Project } from 'app/model/project.model';
 import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 import { Observable } from 'rxjs';
@@ -29,6 +29,10 @@ export class V2ProjectService {
 
     delete(key: string): Observable<any> {
         return this._http.delete(`/v2/project/${key}`);
+    }
+
+    getConcurrencyRuns(key: string, name: string): Observable<Array<ProjectConcurrencyRuns>> {
+        return this._http.get<Array<ProjectConcurrencyRuns>>(`/v2/project/${key}/concurrency/${name}/runs`)
     }
 
     getConcurrencies(key: string): Observable<Array<Concurrency>> {

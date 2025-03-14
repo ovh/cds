@@ -3102,6 +3102,21 @@ func (mr *MockProjectClientV2MockRecorder) ProjectConcurrencyList(ctx, pKey any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyList", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectConcurrencyList), ctx, pKey)
 }
 
+// ProjectConcurrencyListRuns mocks base method.
+func (m *MockProjectClientV2) ProjectConcurrencyListRuns(ctx context.Context, pKey, name string) ([]sdk.ProjectConcurrencyRunObject, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyListRuns", ctx, pKey, name)
+	ret0, _ := ret[0].([]sdk.ProjectConcurrencyRunObject)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectConcurrencyListRuns indicates an expected call of ProjectConcurrencyListRuns.
+func (mr *MockProjectClientV2MockRecorder) ProjectConcurrencyListRuns(ctx, pKey, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyListRuns", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectConcurrencyListRuns), ctx, pKey, name)
+}
+
 // ProjectConcurrencyUpdate mocks base method.
 func (m *MockProjectClientV2) ProjectConcurrencyUpdate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error {
 	m.ctrl.T.Helper()
@@ -9071,6 +9086,21 @@ func (m *MockInterface) ProjectConcurrencyList(ctx context.Context, pKey string)
 func (mr *MockInterfaceMockRecorder) ProjectConcurrencyList(ctx, pKey any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyList", reflect.TypeOf((*MockInterface)(nil).ProjectConcurrencyList), ctx, pKey)
+}
+
+// ProjectConcurrencyListRuns mocks base method.
+func (m *MockInterface) ProjectConcurrencyListRuns(ctx context.Context, pKey, name string) ([]sdk.ProjectConcurrencyRunObject, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectConcurrencyListRuns", ctx, pKey, name)
+	ret0, _ := ret[0].([]sdk.ProjectConcurrencyRunObject)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectConcurrencyListRuns indicates an expected call of ProjectConcurrencyListRuns.
+func (mr *MockInterfaceMockRecorder) ProjectConcurrencyListRuns(ctx, pKey, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectConcurrencyListRuns", reflect.TypeOf((*MockInterface)(nil).ProjectConcurrencyListRuns), ctx, pKey, name)
 }
 
 // ProjectConcurrencyUpdate mocks base method.

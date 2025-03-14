@@ -351,3 +351,35 @@ func LoadNewestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.S
 	}
 	return cos, nil
 }
+
+func LoadProjectConccurencyRunObjects(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string) ([]sdk.ProjectConcurrencyRunObject, error) {
+	q := `WITH jobs as (
+		SELECT workflow_run_id as workflow_run_id, queued as last_modified, 'JOB' as type, workflow_name, run_number, job_id as job_name, status
+		FROM v2_workflow_run_job 
+		WHERE project_key = $1 AND 
+			concurrency->>'name' = $2 AND
+			concurrency->>'scope' = $3 AND
+			status = ANY($4)
+		ORDER BY last_modified ASC
+	), runs as (
+	    SELECT id as workflow_run_id, last_modified as last_modified, 'WORKFLOW' as type, workflow_name, run_number, '' as job_name, status
+		FROM v2_workflow_run
+		WHERE project_key = $1 AND 
+			concurrency->>'name' = $2 AND
+			concurrency->>'scope' = $3 AND
+			status = ANY($5)
+		ORDER BY run_number ASC, last_modified ASC
+	) SELECT * FROM (
+	 	SELECT * FROM jobs
+		UNION
+		SELECT * FROM runs
+	) tmp ORDER BY last_modified ASC`
+
+	jobStatus := []string{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}
+	runStatus := []string{string(sdk.V2WorkflowRunStatusBlocked), string(sdk.V2WorkflowRunStatusBuilding)}
+	var pcr []sdk.ProjectConcurrencyRunObject
+	if _, err := db.Select(&pcr, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray(jobStatus), pq.StringArray(runStatus)); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return pcr, nil
+}

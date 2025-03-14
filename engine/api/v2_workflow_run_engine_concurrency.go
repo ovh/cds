@@ -133,15 +133,15 @@ func (api *API) enqueueCancelledRunObjects(ctx context.Context, runs []sdk.V2Wor
 // Update new run job with concurrency data, check if we have to lock it
 func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2WorkflowRun, jobID string, runJob *sdk.V2WorkflowRunJob, concurrenciesDef map[string]sdk.V2RunConcurrency, concurrencyUnlockedCount map[string]int64, toCancelled map[string]workflow_v2.ConcurrencyObject) (*sdk.V2WorkflowRunJobInfo, error) {
 	if runJob.Job.Concurrency != "" {
+		// If no concurrency, it means condition not satisfied
 		concurrencyDef, has := concurrenciesDef[jobID]
 		if !has {
-			runJob.Status = sdk.V2WorkflowRunJobStatusFail
 			return &sdk.V2WorkflowRunJobInfo{
-				WorkflowRunID:    run.ID,
+				WorkflowRunID:    runJob.WorkflowRunID,
 				WorkflowRunJobID: runJob.ID,
 				IssuedAt:         time.Now(),
-				Level:            sdk.WorkflowRunInfoLevelError,
-				Message:          fmt.Sprintf("job %s: concurrency %s not found on workflow or on project", jobID, runJob.Job.Concurrency),
+				Level:            sdk.WorkflowRunInfoLevelInfo,
+				Message:          fmt.Sprintf("Concurrency %q skipped", runJob.Job.Concurrency),
 			}, nil
 		}
 
@@ -237,6 +237,7 @@ func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2W
 			}
 		}
 	}
+	run.Status = sdk.V2WorkflowRunStatusBuilding
 	return nil, nil
 }
 
