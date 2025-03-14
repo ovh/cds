@@ -130,18 +130,19 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 	// This loop consists of 6 retries (+ the first try), separated by 10 sec
 	var retry int
 	var deploymentResult *arsenal.DeployResponse
+	var deployErrror error
 	for retry < 7 {
 		if retry > 0 {
 			time.Sleep(time.Duration(10) * time.Second)
 		}
 		grpcplugins.Logf(&p.Common, "Deploying (%s) on Arsenal at %s...\n", deployReq, host)
-		deploymentResult, err = arsenalClient.Deploy(deployReq)
-		if err != nil {
-			if _, ok := err.(*arsenal.RequestError); ok {
+		deploymentResult, deployErrror = arsenalClient.Deploy(deployReq)
+		if deployErrror != nil {
+			if _, ok := deployErrror.(*arsenal.RequestError); ok {
 				grpcplugins.Error(&p.Common, "Deployment has failed, retrying...")
 				retry++
 			} else {
-				return fail(p, fmt.Sprintf("deploy failed: %v", err))
+				return fail(p, fmt.Sprintf("deploy failed: %v", deployErrror))
 			}
 		}
 
@@ -149,8 +150,8 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 			break
 		}
 	}
-	if deploymentResult == nil {
-		return fail(p, "deployment failed")
+	if deploymentResult == nil || deployErrror != nil {
+		return fail(p, fmt.Sprintf("deploy failed: %v", deployErrror))
 	}
 
 	// Create run result at status "pending"
