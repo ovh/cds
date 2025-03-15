@@ -117,7 +117,7 @@ func LoadProjectIntegrationByIDWithClearPassword(ctx context.Context, db gorp.Sq
 
 func loadAllWithClearPassword(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
 	var pp []dbProjectIntegration
-	if err := gorpmapping.GetAll(ctx, db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &pp, gorpmapping.GetAllOptions.WithDecryption); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +144,7 @@ func loadAllWithClearPassword(ctx context.Context, db gorp.SqlExecutor, query go
 
 func loadAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
 	var pp []dbProjectIntegration
-	if err := gorpmapping.GetAll(ctx, db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &pp, gorpmapping.GetAllOptions.WithDecryption); err != nil {
 		return nil, err
 	}
 	var integrations = make([]sdk.ProjectIntegration, len(pp))
@@ -232,10 +232,10 @@ func UpdateIntegration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, pp 
 
 // LoadAllIntegrationsForProjectsWithDecryption load all integrations for all given project, with decryption
 func LoadAllIntegrationsForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectIntegration, error) {
-	return loadAllIntegrationsForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)
+	return loadAllIntegrationsForProjects(ctx, db, projIDs, gorpmapping.GetAllOptions.WithDecryption)
 }
 
-func loadAllIntegrationsForProjects(ctx context.Context, db gorp.SqlExecutor, projIDs []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ProjectIntegration, error) {
+func loadAllIntegrationsForProjects(ctx context.Context, db gorp.SqlExecutor, projIDs []int64, opts ...gorpmapping.GetAllOptionFunc) (map[int64][]sdk.ProjectIntegration, error) {
 	var res []dbProjectIntegration
 	query := gorpmapping.NewQuery(`
 		SELECT *

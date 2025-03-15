@@ -105,7 +105,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			if err != nil {
 				return err
 			}
-			vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID, gorpmapper.GetOptions.WithDecryption)
+			vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID, gorpmapper.GetAllOptions.WithDecryption)
 			if err != nil {
 				return err
 			}

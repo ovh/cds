@@ -31,7 +31,7 @@ func getVariableSetItemSecret(ctx context.Context, db gorp.SqlExecutor, query go
 	return dbVarSetSecret.Item(), nil
 }
 
-func getAllVariableSetItemsSecret(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectVariableSetItem, error) {
+func getAllVariableSetItemsSecret(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.ProjectVariableSetItem, error) {
 	var dbVarSetsSecrets []dbProjectVariableSetItemSecret
 	if err := gorpmapping.GetAll(ctx, db, query, &dbVarSetsSecrets, opts...); err != nil {
 		return nil, sdk.WithStack(err)

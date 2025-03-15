@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/organization"
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/organization"
+
+	"net/http/httptest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http/httptest"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -198,14 +200,14 @@ func Test_getAdminDatabaseEncryptedEntities(t *testing.T) {
 	t.Logf("%s", w.Body.String())
 }
 
-func Test_getAdminDatabaseEncryptedTuplesByEntity(t *testing.T) {
+func Test_getAdminDatabaseTuplesByEntity(t *testing.T) {
 	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
 	api, db, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
+	uri := api.Router.GetRoute("GET", api.getAdminDatabaseTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	// Do the request
@@ -223,7 +225,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKey(t *testing.T) {
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
+	uri := api.Router.GetRoute("GET", api.getAdminDatabaseTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	// Do the request
@@ -804,7 +806,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.env-sshkey.id"))
 
 	// Rollover
-	uri = api.Router.GetRoute("GET", api.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "workflow.dbWorkflowRunSecret"})
+	uri = api.Router.GetRoute("GET", api.getAdminDatabaseTuplesByEntity, map[string]string{"entity": "workflow.dbWorkflowRunSecret"})
 	req = assets.NewJWTAuthentifiedRequest(t, pass, "GET", uri, nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)

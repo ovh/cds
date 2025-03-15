@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.EnvironmentVariable, error) {
+func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.EnvironmentVariable, error) {
 	var ctx = context.Background()
 	var res []dbEnvironmentVariable
 	vars := make([]sdk.EnvironmentVariable, 0, len(res))
@@ -38,10 +38,10 @@ func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorp
 
 // LoadAllVariablesForEnvsWithDecryption load all variables for all given environments
 func LoadAllVariablesForEnvsWithDecryption(ctx context.Context, db gorp.SqlExecutor, envIDS []int64) (map[int64][]sdk.EnvironmentVariable, error) {
-	return loadAllVariablesForEnvs(ctx, db, envIDS, gorpmapping.GetOptions.WithDecryption)
+	return loadAllVariablesForEnvs(ctx, db, envIDS, gorpmapping.GetAllOptions.WithDecryption)
 }
 
-func loadAllVariablesForEnvs(ctx context.Context, db gorp.SqlExecutor, envIDS []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.EnvironmentVariable, error) {
+func loadAllVariablesForEnvs(ctx context.Context, db gorp.SqlExecutor, envIDS []int64, opts ...gorpmapping.GetAllOptionFunc) (map[int64][]sdk.EnvironmentVariable, error) {
 	var res []dbEnvironmentVariable
 	query := gorpmapping.NewQuery(`
 		SELECT *
@@ -92,7 +92,7 @@ func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, envID int64) ([]sdk.Envi
 		WHERE environment_id = $1
 		ORDER BY name
 			  `).Args(envID)
-	return loadAllVariables(db, query, gorpmapping.GetOptions.WithDecryption)
+	return loadAllVariables(db, query, gorpmapping.GetAllOptions.WithDecryption)
 }
 
 func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.EnvironmentVariable, error) {

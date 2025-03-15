@@ -28,7 +28,7 @@ func Delete(db gorp.SqlExecutor, i interface{}) error {
 }
 
 // GetAll values from database.
-func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) error {
+func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetAllOptionFunc) error {
 	return Mapper.GetAll(ctx, db, q.Query, i, opts...)
 }
 
@@ -43,5 +43,7 @@ func GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
 }
 
 type GetOptionFunc = gorpmapper.GetOptionFunc
+type GetAllOptionFunc = gorpmapper.GetAllOptionFunc
 
 var GetOptions = gorpmapper.GetOptions
+var GetAllOptions = gorpmapper.GetAllOptions

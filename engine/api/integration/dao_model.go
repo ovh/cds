@@ -17,7 +17,7 @@ func LoadModels(db gorp.SqlExecutor) ([]sdk.IntegrationModel, error) {
 	var pms integrationModelSlice
 
 	query := gorpmapping.NewQuery(`SELECT * FROM integration_model`)
-	if err := gorpmapping.GetAll(context.Background(), db, query, &pms, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(context.Background(), db, query, &pms, gorpmapping.GetAllOptions.WithDecryption); err != nil {
 		return nil, err
 	}
 

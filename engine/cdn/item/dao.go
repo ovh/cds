@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getItems(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q gorpmapper.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
+func getItems(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q gorpmapper.Query, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItem, error) {
 	var res []cdnItemDB
 	if err := m.GetAll(ctx, db, q, &res, opts...); err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func DeleteByID(db gorp.SqlExecutor, ids ...string) error {
 	return sdk.WithStack(err)
 }
 
-func LoadAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, size int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
+func LoadAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, size int, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItem, error) {
 	var query = gorpmapper.NewQuery("SELECT * FROM item WHERE to_delete = false ORDER BY created")
 	if size > 0 {
 		query = gorpmapper.NewQuery("SELECT * FROM item WHERE to_delete = false ORDER BY created LIMIT $1").Args(size)
@@ -101,7 +101,7 @@ func LoadByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id
 }
 
 // LoadByIDs returns items from database for given ids.
-func LoadByIDs(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, ids []string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
+func LoadByIDs(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, ids []string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM item WHERE id = ANY($1)").Args(pq.StringArray(ids))
 	return getItems(ctx, m, db, query, opts...)
 }
@@ -180,7 +180,7 @@ func LoadWorkerCacheItemsByProjectAndCacheTag(ctx context.Context, m *gorpmapper
 
 // LoadByJobRunID load an item by his job id and type
 // DEPRECATED
-func LoadByJobRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, jobRunId int64, itemTypes []string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
+func LoadByJobRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, jobRunId int64, itemTypes []string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
 		SELECT *
 		FROM item
@@ -193,7 +193,7 @@ func LoadByJobRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecut
 }
 
 // LoadByRunJobID load an item by his job id and type
-func LoadByRunJobID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, runJobID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
+func LoadByRunJobID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, runJobID string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
 		SELECT *
 		FROM item
@@ -348,7 +348,7 @@ func CountItemSizePercentil(db gorp.SqlExecutor) ([]StatItemPercentil, error) {
 	return res, sdk.WithStack(err)
 }
 
-func LoadOldItemByStatusAndDuration(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, status string, duration int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
+func LoadOldItemByStatusAndDuration(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, status string, duration int, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
 		SELECT item.*
 		FROM item
