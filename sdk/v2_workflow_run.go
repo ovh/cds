@@ -21,8 +21,8 @@ const (
 	GitCommitManualPayload = "git.commit"
 	GitTagManualPayload    = "git.tag"
 
-	V2RunJobConcurrencyScopeProject  V2RunJobConcurrencyScope = "project"
-	V2RunJobConcurrencyScopeWorkflow V2RunJobConcurrencyScope = "workflow"
+	V2RunConcurrencyScopeProject  V2RunJobConcurrencyScope = "project"
+	V2RunConcurrencyScopeWorkflow V2RunJobConcurrencyScope = "workflow"
 )
 
 type V2WorkflowRunHookRequest struct {
@@ -74,6 +74,7 @@ type V2WorkflowRun struct {
 	RetentionDate      time.Time              `json:"retention_date,omitempty" db:"retention_date" cli:"-"`
 	Annotations        WorkflowRunAnnotations `json:"annotations,omitempty" db:"annotations" cli:"-"`
 	Initiator          *V2Initiator           `json:"initiator,omitempty" db:"initiator" cli:"-"`
+	Concurrency        *V2RunConcurrency      `json:"concurrency,omitempty" db:"concurrency" cli:"-"`
 }
 
 type V2WorkflowRunStatus string
@@ -277,10 +278,10 @@ type V2WorkflowRunJob struct {
 	Matrix             JobMatrix              `json:"matrix,omitempty" db:"matrix"`
 	GateInputs         GateInputs             `json:"gate_inputs,omitempty" db:"gate_inputs"`
 	Initiator          V2Initiator            `json:"initiator,omitempty" db:"initiator"`
-	Concurrency        *V2RunJobConcurrency   `json:"concurrency,omitempty" db:"concurrency"`
+	Concurrency        *V2RunConcurrency      `json:"concurrency,omitempty" db:"concurrency"`
 }
 
-type V2RunJobConcurrency struct {
+type V2RunConcurrency struct {
 	WorkflowConcurrency
 	Scope V2RunJobConcurrencyScope `json:"scope"`
 }
@@ -428,12 +429,12 @@ func (jm *JobMatrix) Scan(src interface{}) error {
 	return WrapError(yaml.Unmarshal([]byte(source), jm), "cannot unmarshal JobMatrix")
 }
 
-func (vjc V2RunJobConcurrency) Value() (driver.Value, error) {
+func (vjc V2RunConcurrency) Value() (driver.Value, error) {
 	j, err := json.Marshal(vjc)
-	return j, WrapError(err, "cannot marshal V2RunJobConcurrency")
+	return j, WrapError(err, "cannot marshal V2RunConcurrency")
 }
 
-func (sc *V2RunJobConcurrency) Scan(src interface{}) error {
+func (sc *V2RunConcurrency) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
@@ -441,7 +442,7 @@ func (sc *V2RunJobConcurrency) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(JSONUnmarshal(source, sc), "cannot unmarshal V2RunJobConcurrency")
+	return WrapError(JSONUnmarshal(source, sc), "cannot unmarshal V2RunConcurrency")
 }
 
 func (sc JobStepsStatus) Value() (driver.Value, error) {
@@ -525,10 +526,11 @@ func (i *V2Initiator) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID                    string      `json:"run_id"`
-	DeprecatedUserID         string      `json:"user_id"` // Deprecated
-	Initiator                V2Initiator `json:"initiator"`
-	DeprecatedIsAdminWithMFA bool        `json:"is_admin_mfa"` // Deprecated
+	RunID                    string              `json:"run_id"`
+	DeprecatedUserID         string              `json:"user_id"` // Deprecated
+	Initiator                V2Initiator         `json:"initiator"`
+	DeprecatedIsAdminWithMFA bool                `json:"is_admin_mfa"` // Deprecated
+	Status                   V2WorkflowRunStatus `json:"status"`
 }
 
 type V2WorkflowRunEnqueueGate struct {

@@ -99,6 +99,7 @@ var (
 	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusForbidden}
 	ErrPipelineBuildNotFound                         = Error{ID: 90, Status: http.StatusNotFound}
 	ErrAlreadyTaken                                  = Error{ID: 91, Status: http.StatusGone}
+	ErrAlreadyEnded                                  = Error{ID: 92, Status: http.StatusGone}
 	ErrWorkflowNodeNotFound                          = Error{ID: 93, Status: http.StatusNotFound}
 	ErrWorkflowInvalidRoot                           = Error{ID: 94, Status: http.StatusBadRequest}
 	ErrWorkflowNodeRef                               = Error{ID: 95, Status: http.StatusBadRequest}
@@ -288,6 +289,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrJobAlreadyBooked.ID:                              "Job already booked",
 	ErrPipelineBuildNotFound.ID:                         "Pipeline build not found",
 	ErrAlreadyTaken.ID:                                  "This job is already taken by another worker",
+	ErrAlreadyEnded.ID:                                  "This job is already finished",
 	ErrWorkflowNodeNotFound.ID:                          "Workflow node not found",
 	ErrWorkflowInvalidRoot.ID:                           "Invalid workflow root",
 	ErrWorkflowNodeRef.ID:                               "Invalid workflow node reference",

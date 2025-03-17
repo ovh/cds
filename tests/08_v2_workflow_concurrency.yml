@@ -1,9 +1,9 @@
-name: Workflow Job Concurrency
+name: Workflow Concurrency
 vars:
-  cds_project: "ITV2JOBCONCURRENCY"
-  git_repo: "it_v2_job_concurrency"
-  cds_workflow: "WorkflowJobConcurrency"
-  cds_workflow_blocked: "WorkflowJobConcurrencyBlocked"
+  cds_project: "ITV2WORKFLOWCONCURRENCY"
+  git_repo: "it_v2_workflow_concurrency"
+  cds_workflow: "WorkflowConcurrency"
+  cds_workflow_blocked: "WorkflowConcurrencyBlocked"
 testcases:
 - name: Prepare test
   steps:
@@ -46,7 +46,7 @@ testcases:
 - name: Create concurrency on project
   steps:
     - name: Create concurrency
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency add {{.cds_project}} concu \"This is a concurrency rule\" --pool 2"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency add {{.cds_project}} concu \"This is a concurrency rule\" --pool 1 --order newest_first"
     - name: List concurrency rule
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency list {{.cds_project}} --format json"
       assertions:
@@ -75,30 +75,20 @@ testcases:
             image: buildpack-deps:buster
         workflows/workflow1.yaml:
           name: {{.cds_workflow}}
-          concurrency: "concu"
           jobs:
             job1:
+              concurrency: "concu"
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
                 - run: sleep 20
         workflows/workflow2.yaml:
           name: {{.cds_workflow_blocked}}
+          concurrency: "concu"
           jobs:
             job1:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              concurrency: concu
               steps:
-                - run: sleep 20
-            job2:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              concurrency: concu
-              steps:
-                - run: sleep 20
-            job3:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              concurrency: concu
-              steps:
-                - run: sleep 20    
+                - run: sleep 10
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
       assertions:
@@ -129,33 +119,23 @@ testcases:
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
-      delay: 1
-      vars:
-        workflow2RunID:
-          from: result.systemoutjson.systemoutjson0.id
-    
-    - name: Retrieve job status and check that one is building and the others are blocked
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflow2RunID}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 3
-        - or:
-          - and:
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Blocked'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Blocked'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'  
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Blocked"
       retry: 20
       delay: 1
 
+    - name: Run the second workflow again
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}}"
+    
+
+    - name: Check that the 2nd workflow again
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Blocked"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Blocked"
+      retry: 20
+      delay: 1
+    
     - name: Check the end of workflow  1
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
@@ -164,50 +144,29 @@ testcases:
       retry: 20
       delay: 1
       
-    - name: Retrieve job status and check that 2 iare building and one blocked
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflow2RunID}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 3
-        - or:
-          - and:
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Blocked'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'  
-      retry: 50
-      delay: 1
-    
-    - name: Wait and check that the last jobis unlocked
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflow2RunID}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 3
-        - or:
-          - and:
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Success'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Success'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Success'  
-      retry: 100
-      delay: 1
-
-    - name: Workflow 2 - wait workflow end
+    - name: Check that the 2nd workflow again
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Blocked"
+      retry: 20
+      delay: 1
+
+    - name: Wait for the first to start
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Building"
+      retry: 100
+      delay: 1
+    
+    - name: Wait all success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
       retry: 100
       delay: 1

@@ -1839,6 +1839,23 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/outgoing", gomock.Any(), gomock.Any())
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	go api.V2WorkflowRunEngineDequeue(ctx)
+
 	uri := api.Router.GetRouteV2("POST", api.postStopWorkflowRunHandler, map[string]string{
 		"projectKey":    proj.Key,
 		"workflowRunID": wr.ID,
@@ -1849,11 +1866,29 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 204, w.Code)
 
-	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
-	require.NoError(t, err)
-	require.Equal(t, sdk.V2WorkflowRunStatusStopped, wrDB.Status)
+	enqueueRequest := sdk.V2WorkflowRunEnqueue{
+		RunID:     wr.ID,
+		Initiator: *wr.Initiator,
+		Status:    sdk.V2WorkflowRunStatusStopped,
+	}
+	require.NoError(t, api.workflowRunV2Trigger(context.Background(), enqueueRequest))
 
-	rjDB, err := workflow_v2.LoadRunJobByRunIDAndID(context.TODO(), db, wrDB.ID, wrj.ID)
+	nbRetry := 10
+	for i := 0; i < nbRetry; i++ {
+		wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+		require.NoError(t, err)
+		if wrDB.Status != sdk.V2WorkflowRunStatusStopped {
+			if i == nbRetry-1 {
+				t.Fail()
+			}
+			time.Sleep(1 * time.Second)
+		} else {
+			break
+		}
+	}
+	cancel()
+
+	rjDB, err := workflow_v2.LoadRunJobByRunIDAndID(context.TODO(), db, wr.ID, wrj.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.V2WorkflowRunJobStatusStopped, rjDB.Status)
 }

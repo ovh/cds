@@ -12,6 +12,10 @@ const (
 	EventAnalysisDone  EventType = "AnalysisDone"
 
 	EventRunJobEnqueued         EventType = "RunJobEnqueued"
+	EventRunJobBlocked          EventType = "RunJobBlocked"
+	EventRunJobCancelled        EventType = "RunJobCancelled"
+	EventRunJobSkipped          EventType = "RunJobSkipped"
+	EventRunJobStopped          EventType = "RunJobStopped"
 	EventRunJobScheduled        EventType = "RunJobScheduled"
 	EventRunJobBuilding         EventType = "RunJobBuilding"
 	EventRunJobManualTriggered  EventType = "RunJobManualTriggered"

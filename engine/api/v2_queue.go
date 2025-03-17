@@ -318,7 +318,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			}
 			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
 
-			api.manageEndJobConcurrency(*jobRun)
+			api.manageEndConcurrency(jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.WorkflowRunID, jobRun.ID, jobRun.Concurrency)
 
 			api.GoRoutines.Exec(ctx, "postJobResultHandler.event", func(ctx context.Context) {
 				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
@@ -593,7 +593,7 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return sdk.WithStack(err)
 			}
 
-			api.manageEndJobConcurrency(*jobRun)
+			api.manageEndConcurrency(jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.WorkflowRunID, jobRun.ID, jobRun.Concurrency)
 
 			if nbHatcheryStopWarning >= 0 {
 				api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)

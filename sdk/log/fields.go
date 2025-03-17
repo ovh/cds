@@ -53,6 +53,8 @@ const (
 	WorkflowRunID      = log.Field("workflow_run_id")
 	Component          = log.Field("component")
 	Project            = log.Field("project")
+	ConcurrencyName    = log.Field("concurrency_name")
+	ConcurrencyScope   = log.Field("concurrency_scope")
 )
 
 func init() {
@@ -70,6 +72,8 @@ func init() {
 		AuthSessionTokenID,
 		Commit,
 		Component,
+		ConcurrencyName,
+		ConcurrencyScope,
 		Deprecated,
 		Duration,
 		Goroutine,

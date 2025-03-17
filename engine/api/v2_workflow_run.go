@@ -250,9 +250,9 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 
 			for i := range runJobs {
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, runJobs[i])
-
-				api.manageEndJobConcurrency(runJobs[i])
+				rj := runJobs[i]
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, rj)
+				api.manageEndConcurrency(rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.WorkflowRunID, rj.ID, rj.Concurrency)
 			}
 
 			initiator := sdk.V2Initiator{
@@ -729,95 +729,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			if err != nil {
 				return err
 			}
-
-			runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, api.mustDB(), wr.ID, []string{sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusScheduling}, wr.RunAttempt)
-			if err != nil {
-				return err
-			}
-
-			for _, rj := range runJobs {
-				rj.Status = sdk.V2WorkflowRunJobStatusStopped
-				now := time.Now()
-				rj.Ended = &now
-
-				tx, err := api.mustDB().Begin()
-				if err != nil {
-					return err
-				}
-
-				if err := workflow_v2.UpdateJobRun(ctx, tx, &rj); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-
-				runJobInfo := sdk.V2WorkflowRunJobInfo{
-					WorkflowRunID:    rj.WorkflowRunID,
-					WorkflowRunJobID: rj.ID,
-					IssuedAt:         time.Now(),
-					Level:            sdk.WorkflowRunInfoLevelInfo,
-					Message:          fmt.Sprintf("User %s stopped the job", u.GetUsername()),
-				}
-				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &runJobInfo); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-
-				if err := tx.Commit(); err != nil {
-					return sdk.WithStack(err)
-				}
-			}
-			wr.Status = sdk.V2WorkflowRunStatusStopped
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return err
-			}
-			defer tx.Rollback() // nolint
-
-			if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
-				return err
-			}
-
-			runInfo := sdk.V2WorkflowRunInfo{
-				WorkflowRunID: wr.ID,
-				IssuedAt:      time.Now(),
-				Level:         sdk.WorkflowRunInfoLevelInfo,
-				Message:       fmt.Sprintf("User %s stopped the workflow", u.GetUsername()),
-			}
-			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
-				return err
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
-			}
-
-			for _, rj := range runJobs {
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, rj)
-
-				api.manageEndJobConcurrency(rj)
-			}
-
-			jobMaps := make(map[string]sdk.V2WorkflowRunJob)
-			for _, rj := range runJobs {
-				jobMaps[rj.JobID] = rj
-			}
-			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
-			if err != nil {
-				log.ErrorWithStackTrace(ctx, err)
-			}
-
-			initiator := sdk.V2Initiator{
-				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
-				IsAdminWithMFA: isAdmin(ctx),
-			}
-			usr, err := user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID, user.LoadOptions.WithContacts)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			initiator.User = usr.Initiator()
-
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, jobMaps, runResults, &initiator)
-
+			api.EnqueueWorkflowRunWithStatus(ctx, wr.ID, sdk.V2Initiator{UserID: u.AuthConsumerUser.AuthentifiedUserID, User: u.AuthConsumerUser.AuthentifiedUser.Initiator()}, wr.WorkflowName, wr.RunNumber, sdk.V2WorkflowRunStatusStopped)
 			return nil
 		}
 }
