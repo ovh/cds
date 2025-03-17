@@ -18,5 +18,6 @@ func experimentalProject() *cobra.Command {
 		projectNotification(),
 		projectVariableSet(),
 		projectConcurrency(),
+		projectWebHooks(),
 	})
 }

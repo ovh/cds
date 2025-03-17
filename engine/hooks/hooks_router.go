@@ -117,7 +117,7 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 		}
 
 		// Check uuid
-		if _, err := s.Client.ProjectRepositoryHookGet(ctx, projectKey, uuid); err != nil {
+		if _, err := s.Client.ProjectWebHookGet(ctx, projectKey, uuid); err != nil {
 			log.Error(ctx, "unable to retrieve hook %s/%s: %v", projectKey, uuid, err)
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "hook expired")
 		}

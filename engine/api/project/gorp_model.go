@@ -13,7 +13,7 @@ import (
 )
 
 type dbProjectRepositoryHook struct {
-	sdk.ProjectRepositoryHook
+	sdk.ProjectWebHook
 }
 
 type dbProjectConcurrency struct {

@@ -59,7 +59,7 @@ func Test_crudRepositoryHookOnProjectLambdaUserOK(t *testing.T) {
 	}).MaxTimes(1)
 
 	// Creation request
-	hook := sdk.PostProjectRepositoryHook{
+	hook := sdk.PostProjectWebHook{
 		VCSServer:  vcsProj.Name,
 		Repository: "ovh/cds",
 	}

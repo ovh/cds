@@ -272,10 +272,10 @@ type ProjectClientV2 interface {
 
 	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 
-	ProjectRepositoryHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectRepositoryHook) (*sdk.HookAccessData, error)
-	ProjectRepositoryHookList(ctx context.Context, projectKey string) ([]sdk.ProjectRepositoryHook, error)
-	ProjectRepositoryHookGet(ctx context.Context, projectKey string, uuid string) (*sdk.ProjectRepositoryHook, error)
-	ProjectRepositoryHookDelete(ctx context.Context, projectKey string, uuid string) error
+	ProjectWebHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectWebHook) (*sdk.HookAccessData, error)
+	ProjectWebHookList(ctx context.Context, projectKey string) ([]sdk.ProjectWebHook, error)
+	ProjectWebHookGet(ctx context.Context, projectKey string, uuid string) (*sdk.ProjectWebHook, error)
+	ProjectWebHookDelete(ctx context.Context, projectKey string, uuid string) error
 }
 
 // ProjectClient exposes project related functions

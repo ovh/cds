@@ -20,7 +20,6 @@ func projectRepository() *cobra.Command {
 		cli.NewListCommand(projectRepositoryListCmd, projectRepositoryListFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(projectRepositoryDeleteCmd, projectRepositoryDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectRepositoryAddCmd, projectRepositoryAddFunc, nil, withAllCommandModifiers()...),
-		projectRepositoryHooks(),
 	})
 }
 

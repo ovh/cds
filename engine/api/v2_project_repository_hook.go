@@ -81,8 +81,12 @@ func (api *API) postRepositoryHookHandler() ([]service.RbacChecker, service.Hand
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
-			var r sdk.PostProjectRepositoryHook
+			var r sdk.PostProjectWebHook
 			if err := service.UnmarshalBody(req, &r); err != nil {
+				return err
+			}
+
+			if err := r.Valid(); err != nil {
 				return err
 			}
 
@@ -121,7 +125,7 @@ func (api *API) postRepositoryHookHandler() ([]service.RbacChecker, service.Hand
 			}
 			defer tx.Rollback()
 
-			h := sdk.ProjectRepositoryHook{
+			h := sdk.ProjectWebHook{
 				ID:         keyResp.UUID,
 				ProjectKey: pKey,
 				VCSServer:  r.VCSServer,

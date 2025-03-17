@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) ProjectRepositoryHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectRepositoryHook) (*sdk.HookAccessData, error) {
+func (c *client) ProjectWebHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectWebHook) (*sdk.HookAccessData, error) {
 	path := fmt.Sprintf("/v2/project/%s/hook", projectKey)
 	var hookData sdk.HookAccessData
 	_, err := c.PostJSON(ctx, path, &r, &hookData)
@@ -17,9 +17,9 @@ func (c *client) ProjectRepositoryHookAdd(ctx context.Context, projectKey string
 	return &hookData, nil
 }
 
-func (c *client) ProjectRepositoryHookList(ctx context.Context, projectKey string) ([]sdk.ProjectRepositoryHook, error) {
+func (c *client) ProjectWebHookList(ctx context.Context, projectKey string) ([]sdk.ProjectWebHook, error) {
 	path := fmt.Sprintf("/v2/project/%s/hook", projectKey)
-	var datas []sdk.ProjectRepositoryHook
+	var datas []sdk.ProjectWebHook
 	_, err := c.GetJSON(ctx, path, &datas)
 	if err != nil {
 		return nil, err
@@ -27,9 +27,9 @@ func (c *client) ProjectRepositoryHookList(ctx context.Context, projectKey strin
 	return datas, nil
 }
 
-func (c *client) ProjectRepositoryHookGet(ctx context.Context, projectKey string, uuid string) (*sdk.ProjectRepositoryHook, error) {
+func (c *client) ProjectWebHookGet(ctx context.Context, projectKey string, uuid string) (*sdk.ProjectWebHook, error) {
 	path := fmt.Sprintf("/v2/project/%s/hook/%s", projectKey, uuid)
-	var data sdk.ProjectRepositoryHook
+	var data sdk.ProjectWebHook
 	_, err := c.GetJSON(ctx, path, &data)
 	if err != nil {
 		return nil, err
@@ -37,9 +37,9 @@ func (c *client) ProjectRepositoryHookGet(ctx context.Context, projectKey string
 	return &data, nil
 }
 
-func (c *client) ProjectRepositoryHookDelete(ctx context.Context, projectKey string, uuid string) error {
+func (c *client) ProjectWebHookDelete(ctx context.Context, projectKey string, uuid string) error {
 	path := fmt.Sprintf("/v2/project/%s/hook/%s", projectKey, uuid)
-	var data sdk.ProjectRepositoryHook
+	var data sdk.ProjectWebHook
 	_, err := c.DeleteJSON(ctx, path, &data)
 	return err
 }
