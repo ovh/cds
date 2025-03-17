@@ -38,3 +38,10 @@ func (c *client) ProjectConcurrencyUpdate(ctx context.Context, pKey string, conc
 	_, err := c.PutJSON(ctx, path, concu, concu)
 	return err
 }
+
+func (c *client) ProjectConcurrencyListRuns(ctx context.Context, pKey string, name string) ([]sdk.ProjectConcurrencyRunObject, error) {
+	var pcrs []sdk.ProjectConcurrencyRunObject
+	path := fmt.Sprintf("/v2/project/%s/concurrency/%s/runs", pKey, name)
+	_, err := c.GetJSON(ctx, path, &pcrs)
+	return pcrs, err
+}

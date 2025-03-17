@@ -211,7 +211,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	// Running Workflow
-
 	runJobsContexts, runGatesContexts := computeExistingRunJobContexts(ctx, allRunJobs, runResults)
 
 	// Compute annotations
@@ -277,6 +276,25 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	// Retrieve all concurrency definitions for jobs to enqueue
 	concurrenciesDef := make(map[string]sdk.V2RunConcurrency)
+	bts, err := json.Marshal(run.Contexts)
+	if err != nil {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       "unable to read run context. Please contact an administrator",
+		})
+	}
+	var mapContexts map[string]interface{}
+	if err := json.Unmarshal(bts, &mapContexts); err != nil {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       "unable to read run context. Please contact an administrator",
+		})
+	}
+	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 	for jobID, jToTrigger := range jobsToQueue {
 		if jToTrigger.Job.Concurrency == "" {
 			continue
@@ -294,7 +312,26 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			}
 			return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{runInfo}, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 		}
-		concurrenciesDef[jobID] = *jobConcurrencyDef
+
+		var useConcurrency = true
+		if jobConcurrencyDef.If != "" {
+			if !strings.HasPrefix(jobConcurrencyDef.If, "${{") {
+				jobConcurrencyDef.If = fmt.Sprintf("${{ %s }}", jobConcurrencyDef.If)
+			}
+			useConcurrency, err = ap.InterpolateToBool(ctx, jobConcurrencyDef.If)
+			if err != nil {
+				runInfo := sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       fmt.Sprintf("unable to interpolate concurrency %q condition %q: %v", jobConcurrencyDef.Name, jobConcurrencyDef.If, err),
+				}
+				return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{runInfo}, allrunJobsMap, runResults, &wrEnqueue.Initiator)
+			}
+		}
+		if useConcurrency {
+			concurrenciesDef[jobID] = *jobConcurrencyDef
+		}
 	}
 
 	// Try to Lock concurrency

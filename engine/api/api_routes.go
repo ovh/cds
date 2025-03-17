@@ -477,6 +477,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/project/{projectKey}/concurrency", nil, r.GETv2(api.getProjectConcurrenciesHandler), r.POSTv2(api.postProjectConcurrencyHandler))
 	r.Handle("/v2/project/{projectKey}/concurrency/{concurrencyName}", nil, r.GETv2(api.getProjectConcurrencyHandler), r.PUTv2(api.putProjectConcurrencyHandler), r.DELETEv2(api.deleteProjectConcurrencyHandler))
+	r.Handle("/v2/project/{projectKey}/concurrency/{concurrencyName}/runs", nil, r.GETv2(api.getProjectConcurrencyRunsHandler))
 
 	r.Handle("/v2/project/{projectKey}/integrations", nil, r.GETv2(api.getProjectV2IntegrationsHandler), r.POSTv2(api.postProjectV2IntegrationHandler))
 	r.Handle("/v2/project/{projectKey}/integrations/{integrationName}", nil, r.GETv2(api.getProjectV2IntegrationHandler), r.PUTv2(api.putProjectV2IntegrationHandler), r.DELETEv2(api.deleteProjectV2IntegrationHandler))

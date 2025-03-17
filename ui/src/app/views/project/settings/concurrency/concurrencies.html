@@ -28,6 +28,30 @@
         [nzVisible]="selectedConcurrency" (nzOnClose)="unselectConcurrency()">
         <ng-container *nzDrawerContent>
             <app-project-concurrency-form [project]="project" [concurrency]="selectedConcurrency" [verticalOrientation]="true" (refresh)="load()"></app-project-concurrency-form>
+            <div class="runs">
+                <h3>Workflow/Job running with this concurrency:</h3>
+                <nz-table [nzData]="concurrencyRuns"
+                    [nzFrontPagination]="false" nzSize="small" #runsTable>
+                    <thead>
+                        <tr>
+                            <th [nzSortFn]="sortByDate" nzSortOrder="descend">Last Modified</th>
+                            <th>Workflow Name</th>
+                            <th>Job Name</th>
+                            <th>Run number</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let h of runsTable.data" class="pointing" [routerLink]="['/project', this.project.key, 'run', h.workflow_run_id]">
+                            <td><app-date-from-now [value]="h.last_modified"></app-date-from-now></td>
+                            <td>{{h.workflow_name}}</td>
+                            <td>{{h.job_name}}</td>
+                            <td>{{h.run_number}}</td>
+                            <td>{{h.status}}</td>
+                        </tr>
+                    </tbody>
+                </nz-table>
+            </div>
         </ng-container>
     </nz-drawer>
 </div>

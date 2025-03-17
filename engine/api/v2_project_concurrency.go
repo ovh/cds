@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -116,6 +117,21 @@ func (api *API) getProjectConcurrencyHandler() ([]service.RbacChecker, service.H
 			}
 
 			return service.WriteJSON(w, concurrency, http.StatusOK)
+		}
+}
+
+func (api *API) getProjectConcurrencyRunsHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			vars := mux.Vars(r)
+			key := vars["projectKey"]
+			concurrencyName := vars["concurrencyName"]
+
+			pcrs, err := workflow_v2.LoadProjectConccurencyRunObjects(ctx, api.mustDB(), key, concurrencyName)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, pcrs, http.StatusOK)
 		}
 }
 
