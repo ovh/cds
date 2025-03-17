@@ -6,7 +6,19 @@ Hook secret: {{createdHook.hook_sign_key}}
 </ng-template>
 <form nz-form (ngSubmit)="createHook()">
     <nz-row>
-        <nz-col [nzSpan]="8">
+        <nz-col [nzSpan]="4">
+            <nz-form-item>
+                <nz-form-label>
+                    Hook Type
+                </nz-form-label>
+                <nz-form-control>
+                    <nz-select name="type" id="type" [(ngModel)]="newWebhook.type">
+                        <nz-option *ngFor="let n of hookTypes" [nzLabel]="n" [nzValue]="n"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="6" [nzOffset]="2">
             <nz-form-item>
                 <nz-form-label>
                     Vcs server
@@ -18,7 +30,7 @@ Hook secret: {{createdHook.hook_sign_key}}
                 </nz-form-control>
             </nz-form-item>
         </nz-col>
-        <nz-col [nzSpan]="10" [nzOffset]="2">
+        <nz-col [nzSpan]="6" [nzOffset]="2">
             <nz-form-item>
                 <nz-form-label>
                     Repository
@@ -42,8 +54,8 @@ Hook secret: {{createdHook.hook_sign_key}}
         <thead>
             <tr>
                 <th>ID</th>
-                <th>VCS</th>
-                <th>Repository</th>
+                <th>Type</th>
+                <th>Target</th>
                 <th>Created</th>
                 <th>Username</th>
                 <th>Action</th>
@@ -52,8 +64,8 @@ Hook secret: {{createdHook.hook_sign_key}}
         <tbody>
             <tr *ngFor="let data of table.data">
                 <td>{{data.id}}</td>
-                <td>{{data.vcs_server}}</td>
-                <td>{{data.repository}}</td>
+                <td>{{data.type}}</td>
+                <td>{{data.vcs_server}}/{{data.repository}}</td>
                 <td>{{data.created}}</td>
                 <td>{{data.username}}</td>
                 <td class="alignEnd"><button nz-button nzDanger [nzLoading]="loading.action" nz-popconfirm="Are you sure you want to revoke this webhook?" (nzOnConfirm)="deleteWebhook(data)">Delete</button></td>

@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
 import { Project } from "app/model/project.model";
-import { PostProjectRepositoryHook, PostResponseCreateHook, ProjectWebHook } from "app/model/project.webhook.model";
+import { HookType, PostProjectWebHook, PostResponseCreateHook, ProjectWebHook } from "app/model/project.webhook.model";
 import { VCSProject } from "app/model/vcs.model";
 import { ProjectService } from "app/service/project/project.service";
 import { V2ProjectService } from "app/service/projectv2/project.service";
 import { ErrorUtils } from "app/shared/error.utils";
-import { NzMessageService } from "ng-zorro-antd/message";
+import { NzMessageService } from "ng-zorro-antd/message"; 
 import { lastValueFrom } from "rxjs";
 
 @Component({
@@ -20,9 +20,10 @@ export class ProjectWebhooksComponent implements OnInit {
     loading = { list: false, action: false };
     vcss: Array<VCSProject>;
     webhooks: Array<ProjectWebHook> = [];
-    newWebhook: PostProjectRepositoryHook = new PostProjectRepositoryHook();
+    newWebhook: PostProjectWebHook = new PostProjectWebHook();
     createdHook: PostResponseCreateHook;
     errorRepository: boolean;
+    hookTypes: Array<string> = [HookType.Repository, /*HookType.Workflow*/];
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -76,7 +77,7 @@ export class ProjectWebhooksComponent implements OnInit {
         try {
             this.createdHook = await lastValueFrom(this._v2ProjectService.createWebhook(this.project.key, this.newWebhook))
             this.load();
-            this.newWebhook = new PostProjectRepositoryHook();
+            this.newWebhook = new PostProjectWebHook();
         } catch (e) {
             this._messageService.error(`Unable to create webhook: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }

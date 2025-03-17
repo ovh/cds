@@ -21,7 +21,7 @@ func (api *API) getRepositoryHooksHandler() ([]service.RbacChecker, service.Hand
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 
-			hooks, err := project.LoadAllRepositoryHooks(ctx, api.mustDB(), pKey)
+			hooks, err := project.LoadAllWebHooks(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
 			}
@@ -42,7 +42,7 @@ func (api *API) deleteRepositoryHookHandler() ([]service.RbacChecker, service.Ha
 			}
 			defer tx.Rollback()
 
-			if err := project.DeleteRepsitoryHook(tx, pKey, uuid); err != nil {
+			if err := project.DeleteWebHook(tx, pKey, uuid); err != nil {
 				return err
 			}
 
@@ -61,7 +61,7 @@ func (api *API) getRepositoryHookHandler() ([]service.RbacChecker, service.Handl
 			pKey := vars["projectKey"]
 			uuid := vars["uuid"]
 
-			hooks, err := project.LoadRepositoryHookByID(ctx, api.mustDB(), pKey, uuid)
+			hooks, err := project.LoadWebHookByID(ctx, api.mustDB(), pKey, uuid)
 			if err != nil {
 				return err
 			}
@@ -130,9 +130,11 @@ func (api *API) postRepositoryHookHandler() ([]service.RbacChecker, service.Hand
 				ProjectKey: pKey,
 				VCSServer:  r.VCSServer,
 				Repository: r.Repository,
+				Workflow:   r.Workflow,
 				Username:   u.GetUsername(),
+				Type:       r.Type,
 			}
-			if err := project.InsertRepositoryHook(ctx, tx, &h); err != nil {
+			if err := project.InsertWebHook(ctx, tx, &h); err != nil {
 				return err
 			}
 

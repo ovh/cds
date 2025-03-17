@@ -5,7 +5,7 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { Concurrency, ProjectConcurrencyRuns } from 'app/model/project.concurrency.model';
 import { Project } from 'app/model/project.model';
-import { PostProjectRepositoryHook, PostResponseCreateHook, ProjectWebHook } from 'app/model/project.webhook.model';
+import { PostProjectWebHook, PostResponseCreateHook, ProjectWebHook } from 'app/model/project.webhook.model';
 import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 import { Observable } from 'rxjs';
 
@@ -36,7 +36,7 @@ export class V2ProjectService {
         return this._http.get<Array<ProjectWebHook>>(`/v2/project/${key}/hook`)
     }
 
-    createWebhook(key: string, r: PostProjectRepositoryHook): Observable<PostResponseCreateHook> {
+    createWebhook(key: string, r: PostProjectWebHook): Observable<PostResponseCreateHook> {
         return this._http.post<PostResponseCreateHook>(`/v2/project/${key}/hook`, r)
     }
 
