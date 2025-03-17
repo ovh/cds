@@ -23,6 +23,7 @@ type ProjectConcurrency struct {
 	Description      string           `json:"description" db:"description" cli:"description"`
 	Order            ConcurrencyOrder `json:"order" db:"order" cli:"order"`
 	Pool             int64            `json:"pool" db:"pool" cli:"pool"`
+	If               string           `json:"if" db:"if" cli:"if"`
 	CancelInProgress bool             `json:"cancel_in_progress" db:"cancel_in_progress" cli:"cancel_in_progress"`
 	LastModified     time.Time        `json:"last_modified" db:"last_modified" cli:"last_modified"`
 }
@@ -33,6 +34,7 @@ func (pc *ProjectConcurrency) ToWorkflowConcurrency() WorkflowConcurrency {
 		Order:            pc.Order,
 		Pool:             pc.Pool,
 		CancelInProgress: pc.CancelInProgress,
+		If:               pc.If,
 	}
 }
 
@@ -54,4 +56,14 @@ func (pc *ProjectConcurrency) Check() error {
 	}
 
 	return nil
+}
+
+type ProjectConcurrencyRunObject struct {
+	WorkflowRunID string    `json:"workflow_run_id" db:"workflow_run_id" cli:"workflow_run_id"`
+	LastModified  time.Time `json:"last_modified" db:"last_modified" cli:"last_modified"`
+	Type          string    `json:"type" db:"type" cli:"type"`
+	WorkflowName  string    `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
+	JobName       string    `json:"job_name" db:"job_name" cli:"job_name"`
+	Status        string    `json:"status" db:"status" cli:"status"`
+	RunNumber     int64     `json:"run_number" db:"run_number" cli:"run_number"`
 }

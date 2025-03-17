@@ -396,6 +396,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// check concurrency
+	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	if run.WorkflowData.Workflow.Concurrency != "" {
 		concurrencyDef, err := retrieveConcurrencyDefinition(ctx, api.mustDB(), *run, run.WorkflowData.Workflow.Concurrency)
 		if err != nil {
@@ -417,19 +418,49 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		}
 		run.Concurrency = concurrencyDef
 
-		// Lock concurrency
-		concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
-		concurrencyLockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)
-		locked, err := api.Cache.Lock(concurrencyLockKey, 1*time.Minute, 0, 1)
-		if err != nil {
-			return err
+		// Check concurrency condition
+		if run.Concurrency.If != "" {
+			if !strings.HasPrefix(run.Concurrency.If, "${{") {
+				run.Concurrency.If = fmt.Sprintf("${{ %s }}", run.Concurrency.If)
+			}
+			useConcurrency, err := ap.InterpolateToBool(ctx, run.Concurrency.If)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       fmt.Sprintf("unable to interpolate concurrency %q condition %q: %v", run.Concurrency.Name, run.Concurrency.If, err),
+				})
+			}
+			// If we don't have to use the concurrency, remove it from the workflow run
+			if !useConcurrency {
+				run.Concurrency = nil
+				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelInfo,
+					Message:       fmt.Sprintf("Concurrency %q skipped", run.WorkflowData.Workflow.Concurrency),
+				})
+			}
 		}
-		if !locked {
-			log.Info(ctx, "concurrency %q already locked", concurrencyKey)
-			time.Sleep(1 * time.Second)
-			return nil
+
+		// Lock concurrency if needed
+		if run.Concurrency != nil {
+			concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
+			concurrencyLockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)
+			locked, err := api.Cache.Lock(concurrencyLockKey, 1*time.Minute, 0, 1)
+			if err != nil {
+				return err
+			}
+			if !locked {
+				log.Info(ctx, "concurrency %q already locked", concurrencyKey)
+				time.Sleep(1 * time.Second)
+				return nil
+			}
+			defer api.Cache.Unlock(concurrencyLockKey)
 		}
-		defer api.Cache.Unlock(concurrencyLockKey)
+
 	}
 
 	runObjectToCancel := make(map[string]workflow_v2.ConcurrencyObject)
@@ -443,8 +474,8 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			Message:       "unable to start the workflow. Please contact an administrator",
 		})
 	}
-	if runInfo == nil {
-		run.Status = sdk.V2WorkflowRunStatusBuilding
+	if runInfo != nil {
+		runInfos = append(runInfos, *runInfo)
 	}
 
 	tx, err := api.mustDB().Begin()
@@ -457,12 +488,11 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	if runInfo != nil {
-		if err := workflow_v2.InsertRunInfo(ctx, tx, runInfo); err != nil {
+	for _, runInfo := range runInfos {
+		if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
 			return err
 		}
 	}
-
 	if mustSaveVersion {
 		wkfVersion := sdk.V2WorkflowVersion{
 			Version:            run.Contexts.CDS.Version,

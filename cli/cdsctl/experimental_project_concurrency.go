@@ -23,7 +23,26 @@ func projectConcurrency() *cobra.Command {
 		cli.NewCommand(projectConcurrencyCreateCmd, projectConcurrencyCreateFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectConcurrencyUpdateCmd, projectConcurrencyUpdateFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectConcurrencyShowCmd, projectConcurrencyShowFunc, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(projectConcurrencyShowRunsCmd, projectConcurrencyShowRunsFunc, nil, withAllCommandModifiers()...),
 	})
+}
+
+var projectConcurrencyShowRunsCmd = cli.Command{
+	Name:    "run",
+	Aliases: []string{"runs"},
+
+	Short: "List all running workflow run / job that are using the concurrency",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "name"},
+	},
+}
+
+func projectConcurrencyShowRunsFunc(v cli.Values) (cli.ListResult, error) {
+	pcrs, err := client.ProjectConcurrencyListRuns(context.Background(), v.GetString(_ProjectKey), v.GetString("name"))
+	return cli.AsListResult(pcrs), err
 }
 
 var projectConcurrencyShowCmd = cli.Command{
@@ -78,7 +97,7 @@ var projectConcurrencyCreateCmd = cli.Command{
 	Name:    "add",
 	Aliases: []string{"create"},
 	Short:   "Create a new concurrency inside the given project",
-	Example: "cdsctl X project concurrency add MY-PROJECT MY-CONCURRENCY-NAME MY_DESCRIPTIOn --pool 1 --order oldest_first --cancel-in-progress",
+	Example: "cdsctl X project concurrency add MY-PROJECT MY-CONCURRENCY-NAME MY_DESCRIPTIOn --pool 1 --order oldest_first --if \"git.ref_name == 'master'\" --cancel-in-progress",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -90,6 +109,7 @@ var projectConcurrencyCreateCmd = cli.Command{
 		{Name: "pool", Type: cli.FlagString, Default: "1"},
 		{Name: "order", Type: cli.FlagString, Default: string(sdk.ConcurrencyOrderOldestFirst)},
 		{Name: "cancel-in-progress", Type: cli.FlagBool, Default: "false"},
+		{Name: "if", Type: cli.FlagString},
 	},
 }
 
@@ -100,6 +120,7 @@ func projectConcurrencyCreateFunc(v cli.Values) error {
 		ProjectKey:       v.GetString(_ProjectKey),
 		Order:            sdk.ConcurrencyOrder(v.GetString("order")),
 		CancelInProgress: v.GetBool("cancel-in-progress"),
+		If:               v.GetString("if"),
 	}
 	if v.GetString("pool") != "" {
 		pool, err := strconv.ParseInt(v.GetString("pool"), 10, 64)
