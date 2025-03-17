@@ -283,6 +283,7 @@ type HookRepositoryEventExtractData struct {
 	DeprecatedAdminMFA bool                                        `json:"admin_mfa"` // Deprecated
 	Scheduler          HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
 	WorkflowRun        HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
+	HookProjectKey     string                                      `json:"hook_project_key"` // force the hook to only trigger from the given CDS project
 }
 
 type HookRepositoryEventExtractedDataManual struct {

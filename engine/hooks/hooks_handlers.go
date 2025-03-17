@@ -325,6 +325,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 func (s *Service) repositoryWebHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
+		projKey := vars["projectKey"]
 		vcsServerType := vars["vcsServerType"]
 		vcsServerName := vars["vcsServer"]
 
@@ -343,6 +344,7 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+		extractedData.HookProjectKey = projKey
 
 		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, repoName, extractedData, body)
 		if err != nil {
