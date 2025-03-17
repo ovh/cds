@@ -52,13 +52,6 @@ func (c *client) ProjectRepositoryAnalysisGet(ctx context.Context, projectKey st
 	return analysis, err
 }
 
-func (c *client) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
-	path := fmt.Sprintf("/v2/hooks/%s/vcs/%s/%s/repository/%s/secret", projectKey, vcsType, url.PathEscape(vcsName), url.PathEscape(repoName))
-	var hookData sdk.HookAccessData
-	_, err := c.GetJSON(ctx, path, &hookData)
-	return hookData, err
-}
-
 func (c *client) ProjectRepositoryEvents(ctx context.Context, projectKey, vcsName, repoName string) ([]sdk.HookRepositoryEvent, error) {
 	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/events", projectKey, url.PathEscape(vcsName), url.PathEscape(repoName))
 	var events []sdk.HookRepositoryEvent

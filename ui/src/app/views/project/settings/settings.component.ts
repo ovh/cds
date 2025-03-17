@@ -54,9 +54,14 @@ export class ProjectSettingsComponent implements OnInit, OnDestroy {
 			key: 'variables',
 		}, <Tab>{
 			title: 'Concurrencies',
-			icon: 'font-colors',
+			icon: 'safety',
 			iconTheme: 'outline',
 			key: 'concurrencies',
+		}, <Tab>{
+			title: 'WebHooks',
+			icon: 'share-alt',
+			iconTheme: 'outline',
+			key: 'webhooks',
 		}];
 		if (this.project?.permissions?.writable) {
 			tabs.push(<Tab>{

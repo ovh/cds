@@ -46,12 +46,12 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Handle("/v2/webhook/repository", nil, r.POST(s.repositoryHooksHandler, service.OverrideAuth(CheckWebhookRequestSignatureMiddleware(s.WebHooksParsedPublicKey))))
-	r.Handle("/v2/webhook/repository/{vcsServerType}/{vcsServer}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature-256"))))
+	r.Handle("/v2/webhook/repository/{projectKey}/{vcsServerType}/{vcsServer}/{uuid}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature-256"))))
 	r.Handle("/v2/repository", nil, r.GET(s.listRepositoriesHandler))
 	r.Handle("/v2/repository/event/callback", nil, r.POST(s.postRepositoryEventAnalysisCallbackHandler))
 	r.Handle("/v2/repository/event/{vcsServer}/{repoName}", nil, r.GET(s.listRepositoryEventHandler), r.DELETE(s.deleteRepositoryEventHandler))
 	r.Handle("/v2/repository/event/{vcsServer}/{repoName}/{uuid}", nil, r.GET(s.getRepositoryEventHandler))
-	r.Handle("/v2/repository/key/{vcsServer}/{repoName}", nil, r.GET(s.getGenerateRepositoryWebHookSecretHandler))
+	r.Handle("/v2/repository/key/{projectKey}/{vcsServer}/{repoName}", nil, r.POST(s.postGenerateRepositoryWebHookSecretHandler))
 	r.Handle("/v2/workflow/manual", nil, r.POST(s.workflowManualHandler))
 	r.Handle("/v2/workflow/outgoing", nil, r.POST(s.workflowRunOutgoingEventHandler))
 
@@ -79,8 +79,10 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check signature")
 		}
 		vars := mux.Vars(req)
+		projectKey := vars["projectKey"]
 		vcsType := vars["vcsServerType"]
 		vcsName := vars["vcsServer"]
+		uuid := vars["uuid"]
 
 		defer req.Body.Close() // nolint
 		body, err := io.ReadAll(req.Body)
@@ -105,15 +107,21 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 		req.Body = newRequestBody
 
 		// Create a new HMAC by defining the hash type and the key (as byte array)
-		hookKey := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsName, repoName)
+		hookKey := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, projectKey, vcsName, repoName, uuid)
 		h := hmac.New(sha256.New, []byte(hookKey))
 		h.Write(body)
 		sha := hex.EncodeToString(h.Sum(nil))
-
 		if strings.TrimPrefix(signHeaderValue, "sha256=") != sha {
 			log.Error(ctx, "signature mismatch: got %s, compute %s", signHeaderValue, sha)
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "wrong signature")
 		}
+
+		// Check uuid
+		if _, err := s.Client.ProjectRepositoryHookGet(ctx, projectKey, uuid); err != nil {
+			log.Error(ctx, "unable to retrieve hook %s/%s: %v", projectKey, uuid, err)
+			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "hook expired")
+		}
+
 		return ctx, nil
 	}
 }

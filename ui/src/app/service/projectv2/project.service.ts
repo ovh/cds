@@ -5,6 +5,7 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { Concurrency, ProjectConcurrencyRuns } from 'app/model/project.concurrency.model';
 import { Project } from 'app/model/project.model';
+import { PostProjectRepositoryHook, PostResponseCreateHook, ProjectWebHook } from 'app/model/project.webhook.model';
 import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 import { Observable } from 'rxjs';
 
@@ -30,6 +31,21 @@ export class V2ProjectService {
     delete(key: string): Observable<any> {
         return this._http.delete(`/v2/project/${key}`);
     }
+
+    getWebhooks(key: string): Observable<Array<ProjectWebHook>> {
+        return this._http.get<Array<ProjectWebHook>>(`/v2/project/${key}/hook`)
+    }
+
+    createWebhook(key: string, r: PostProjectRepositoryHook): Observable<PostResponseCreateHook> {
+        return this._http.post<PostResponseCreateHook>(`/v2/project/${key}/hook`, r)
+    }
+
+    deleteWebhook(key: string, uuid: string): Observable<any> {
+        let params = new HttpParams();
+        params.set('force', 'true');
+        return this._http.delete(`/v2/project/${key}/hook/${uuid}`, { params });
+    }
+
 
     getConcurrencyRuns(key: string, name: string): Observable<Array<ProjectConcurrencyRuns>> {
         return this._http.get<Array<ProjectConcurrencyRuns>>(`/v2/project/${key}/concurrency/${name}/runs`)

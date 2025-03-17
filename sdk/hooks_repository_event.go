@@ -309,7 +309,8 @@ type HookRepositoryEventExtractedDataScheduler struct {
 }
 
 type GenerateRepositoryWebhook struct {
-	Key string `json:"key"`
+	Key  string `json:"key"`
+	UUID string `json:"uuid`
 }
 
 func (h *HookRepositoryEvent) GetFullName() string {
@@ -372,8 +373,8 @@ type AnalysisResponse struct {
 	Status     string `json:"status" cli:"status"`
 }
 
-func GenerateRepositoryWebHookSecret(hookSecretKey, vcsName, repoName string) string {
-	pass := fmt.Sprintf("%s-%s", vcsName, repoName)
+func GenerateRepositoryWebHookSecret(hookSecretKey, pkey, vcsName, repoName, uuid string) string {
+	pass := fmt.Sprintf("%s-%s-%s-%s", pkey, vcsName, repoName, uuid)
 	keyBytes := pbkdf2.Key([]byte(pass), []byte(hookSecretKey), 4096, 128, sha512.New)
 	key64 := base64.StdEncoding.EncodeToString(keyBytes)
 	return key64

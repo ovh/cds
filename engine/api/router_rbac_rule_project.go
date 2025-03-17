@@ -74,10 +74,3 @@ func (api *API) analysisRead(ctx context.Context, vars map[string]string) error 
 	}
 	return api.projectRead(ctx, vars)
 }
-
-func (api *API) triggerAnalysis(ctx context.Context, vars map[string]string) error {
-	if isHooks(ctx) {
-		return nil
-	}
-	return api.projectManage(ctx, vars)
-}

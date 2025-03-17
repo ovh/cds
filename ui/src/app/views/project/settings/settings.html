@@ -3,6 +3,7 @@
 <div class="content" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
 	<app-project-variable-sets *ngSwitchCase="'variables'" [project]="project"></app-project-variable-sets>
 	<app-project-concurrencies *ngSwitchCase="'concurrencies'" [project]="project"></app-project-concurrencies>
+	<app-project-webhooks *ngSwitchCase="'webhooks'" [project]="project"></app-project-webhooks>
 	<app-project-keys *ngSwitchCase="'keys'" [project]="project"></app-project-keys>
 	<app-project-integrations *ngSwitchCase="'integrations'" [project]="project"></app-project-integrations>
 	<app-project-advanced *ngSwitchCase="'advanced'" [project]="project"></app-project-advanced>

@@ -50,10 +50,12 @@ steps:
           - result.systemoutjson.systemoutjson0.repoName ShouldEqual "{{.input.git_user}}/{{.input.git_repo}}"
 
   # Add webhook
-  - script: {{.input.cdsctl_command}} experimental project repository hook-key {{.input.cds_project}} gitea my_vcs_server {{.input.git_user}}/{{.input.git_repo}} --format json
+  - script: {{.input.cdsctl_command}} experimental project repository hook add {{.input.cds_project}} my_vcs_server {{.input.git_user}}/{{.input.git_repo}} --format json
     vars:
       hookSecret:
         from: result.systemoutjson.hook_sign_key
+      hookURL: 
+        from: result.systemoutjson.url
 
   - type: http
     method: POST
@@ -69,7 +71,7 @@ steps:
         "config": {
             "secret": "{{.hookSecret}}",
             "content_type": "json",
-            "url": "{{.input.cds_hook_url}}/v2/webhook/repository/gitea/my_vcs_server"
+            "url": "{{.hookURL}}"
         },
         "events": [
           "push",

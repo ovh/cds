@@ -22,17 +22,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (s *Service) getGenerateRepositoryWebHookSecretHandler() service.Handler {
+func (s *Service) postGenerateRepositoryWebHookSecretHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
+		pKey := vars["projectKey"]
 		vcsServerName := vars["vcsServer"]
 		repoName, err := url.PathUnescape(vars["repoName"])
 		if err != nil {
 			return sdk.WithStack(err)
 		}
+		uuid := sdk.UUID()
 
-		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsServerName, repoName)
-		return service.WriteJSON(w, sdk.GenerateRepositoryWebhook{Key: key}, http.StatusOK)
+		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, pKey, vcsServerName, repoName, uuid)
+		return service.WriteJSON(w, sdk.GenerateRepositoryWebhook{Key: key, UUID: uuid}, http.StatusOK)
 	}
 }
 

@@ -3203,6 +3203,65 @@ func (mr *MockProjectClientV2MockRecorder) ProjectNotificationUpdate(ctx, pKey, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationUpdate), ctx, pKey, notif)
 }
 
+// ProjectRepositoryHookAdd mocks base method.
+func (m *MockProjectClientV2) ProjectRepositoryHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectRepositoryHook) (*sdk.HookAccessData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookAdd", ctx, projectKey, r)
+	ret0, _ := ret[0].(*sdk.HookAccessData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryHookAdd indicates an expected call of ProjectRepositoryHookAdd.
+func (mr *MockProjectClientV2MockRecorder) ProjectRepositoryHookAdd(ctx, projectKey, r any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookAdd", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRepositoryHookAdd), ctx, projectKey, r)
+}
+
+// ProjectRepositoryHookDelete mocks base method.
+func (m *MockProjectClientV2) ProjectRepositoryHookDelete(ctx context.Context, projectKey, uuid string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookDelete", ctx, projectKey, uuid)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRepositoryHookDelete indicates an expected call of ProjectRepositoryHookDelete.
+func (mr *MockProjectClientV2MockRecorder) ProjectRepositoryHookDelete(ctx, projectKey, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRepositoryHookDelete), ctx, projectKey, uuid)
+}
+
+// ProjectRepositoryHookGet mocks base method.
+func (m *MockProjectClientV2) ProjectRepositoryHookGet(ctx context.Context, projectKey, uuid string) (*sdk.ProjectRepositoryHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookGet", ctx, projectKey, uuid)
+	ret0, _ := ret[0].(*sdk.ProjectRepositoryHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryHookGet indicates an expected call of ProjectRepositoryHookGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectRepositoryHookGet(ctx, projectKey, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRepositoryHookGet), ctx, projectKey, uuid)
+}
+
+// ProjectRepositoryHookList mocks base method.
+func (m *MockProjectClientV2) ProjectRepositoryHookList(ctx context.Context, projectKey string) ([]sdk.ProjectRepositoryHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookList", ctx, projectKey)
+	ret0, _ := ret[0].([]sdk.ProjectRepositoryHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryHookList indicates an expected call of ProjectRepositoryHookList.
+func (mr *MockProjectClientV2MockRecorder) ProjectRepositoryHookList(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookList", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRepositoryHookList), ctx, projectKey)
+}
+
 // ProjectV2Access mocks base method.
 func (m *MockProjectClientV2) ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
 	m.ctrl.T.Helper()
@@ -3807,21 +3866,6 @@ func (m *MockProjectClient) ProjectRepositoryEvents(ctx context.Context, project
 func (mr *MockProjectClientMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vcsName, repoName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
-}
-
-// ProjectRepositoryHookSecret mocks base method.
-func (m *MockProjectClient) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryHookSecret", ctx, projectKey, vcsType, vcsName, repoName)
-	ret0, _ := ret[0].(sdk.HookAccessData)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectRepositoryHookSecret indicates an expected call of ProjectRepositoryHookSecret.
-func (mr *MockProjectClientMockRecorder) ProjectRepositoryHookSecret(ctx, projectKey, vcsType, vcsName, repoName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookSecret", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryHookSecret), ctx, projectKey, vcsType, vcsName, repoName)
 }
 
 // ProjectUpdate mocks base method.
@@ -9538,19 +9582,63 @@ func (mr *MockInterfaceMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
 }
 
-// ProjectRepositoryHookSecret mocks base method.
-func (m *MockInterface) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
+// ProjectRepositoryHookAdd mocks base method.
+func (m *MockInterface) ProjectRepositoryHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectRepositoryHook) (*sdk.HookAccessData, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryHookSecret", ctx, projectKey, vcsType, vcsName, repoName)
-	ret0, _ := ret[0].(sdk.HookAccessData)
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookAdd", ctx, projectKey, r)
+	ret0, _ := ret[0].(*sdk.HookAccessData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ProjectRepositoryHookSecret indicates an expected call of ProjectRepositoryHookSecret.
-func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookSecret(ctx, projectKey, vcsType, vcsName, repoName any) *gomock.Call {
+// ProjectRepositoryHookAdd indicates an expected call of ProjectRepositoryHookAdd.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookAdd(ctx, projectKey, r any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookSecret", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookSecret), ctx, projectKey, vcsType, vcsName, repoName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookAdd", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookAdd), ctx, projectKey, r)
+}
+
+// ProjectRepositoryHookDelete mocks base method.
+func (m *MockInterface) ProjectRepositoryHookDelete(ctx context.Context, projectKey, uuid string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookDelete", ctx, projectKey, uuid)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRepositoryHookDelete indicates an expected call of ProjectRepositoryHookDelete.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookDelete(ctx, projectKey, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookDelete", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookDelete), ctx, projectKey, uuid)
+}
+
+// ProjectRepositoryHookGet mocks base method.
+func (m *MockInterface) ProjectRepositoryHookGet(ctx context.Context, projectKey, uuid string) (*sdk.ProjectRepositoryHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookGet", ctx, projectKey, uuid)
+	ret0, _ := ret[0].(*sdk.ProjectRepositoryHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryHookGet indicates an expected call of ProjectRepositoryHookGet.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookGet(ctx, projectKey, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookGet", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookGet), ctx, projectKey, uuid)
+}
+
+// ProjectRepositoryHookList mocks base method.
+func (m *MockInterface) ProjectRepositoryHookList(ctx context.Context, projectKey string) ([]sdk.ProjectRepositoryHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryHookList", ctx, projectKey)
+	ret0, _ := ret[0].([]sdk.ProjectRepositoryHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryHookList indicates an expected call of ProjectRepositoryHookList.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookList(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookList", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookList), ctx, projectKey)
 }
 
 // ProjectUpdate mocks base method.

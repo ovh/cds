@@ -1,0 +1,63 @@
+<h3>Create a Webhook</h3>
+<nz-alert nzType="info" nzCloseable [nzMessage]="hookCreation" *ngIf="createdHook" (nzOnClose)="closeAlert()"></nz-alert>
+<ng-template #hookCreation>
+Hook URL: {{createdHook.url}}<br/>
+Hook secret: {{createdHook.hook_sign_key}}
+</ng-template>
+<form nz-form (ngSubmit)="createHook()">
+    <nz-row>
+        <nz-col [nzSpan]="8">
+            <nz-form-item>
+                <nz-form-label>
+                    Vcs server
+                </nz-form-label>
+                <nz-form-control>
+                    <nz-select name="vcs" id="vcs" [(ngModel)]="newWebhook.vcs_server">
+                        <nz-option *ngFor="let n of vcss" [nzLabel]="n.name" [nzValue]="n.name"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="10" [nzOffset]="2">
+            <nz-form-item>
+                <nz-form-label>
+                    Repository
+                </nz-form-label>
+                <nz-form-control>
+                    <input nz-input name="repository" id="repository" [(ngModel)]="newWebhook.repository">
+                    <nz-alert *ngIf="errorRepository" nzType="warning" nzMessage="Repository cannot be empty"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>   
+        <nz-col [nzSpan]="4" class="alignEnd">
+            <button nz-button nzType="primary" [nzLoading]="loading.action">Create</button>
+        </nz-col>
+    </nz-row>
+</form>
+
+<h3>Webhooks :</h3>
+<div class="list">
+    <nz-table #table [nzData]="webhooks" [nsAutoHeightTable]="39" [nzFrontPagination]="false" nzSize="small"
+        [nzLoading]="loading.list">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>VCS</th>
+                <th>Repository</th>
+                <th>Created</th>
+                <th>Username</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let data of table.data">
+                <td>{{data.id}}</td>
+                <td>{{data.vcs_server}}</td>
+                <td>{{data.repository}}</td>
+                <td>{{data.created}}</td>
+                <td>{{data.username}}</td>
+                <td class="alignEnd"><button nz-button nzDanger [nzLoading]="loading.action" nz-popconfirm="Are you sure you want to revoke this webhook?" (nzOnConfirm)="deleteWebhook(data)">Delete</button></td>
+            </tr>
+        </tbody>
+    </nz-table>
+</div>
