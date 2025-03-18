@@ -144,7 +144,7 @@ func (api *API) postRepositoryHookHandler() ([]service.RbacChecker, service.Hand
 
 			hookData := sdk.HookAccessData{
 				HookSignKey: keyResp.Key,
-				URL:         fmt.Sprintf("%s/v2/webhook/repository/%s/%s/%s/%s", srvs[0].HTTPURL, pKey, vcs.Type, vcs.Name, keyResp.UUID),
+				URL:         fmt.Sprintf("%s/v2/webhook/repository/%s/%s/%s/%s", keyResp.HookPublicURL, pKey, vcs.Type, vcs.Name, keyResp.UUID),
 			}
 			return service.WriteJSON(w, hookData, http.StatusOK)
 		}

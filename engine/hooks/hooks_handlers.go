@@ -34,7 +34,7 @@ func (s *Service) postGenerateRepositoryWebHookSecretHandler() service.Handler {
 		uuid := sdk.UUID()
 
 		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, pKey, vcsServerName, repoName, uuid)
-		return service.WriteJSON(w, sdk.GenerateRepositoryWebhook{Key: key, UUID: uuid}, http.StatusOK)
+		return service.WriteJSON(w, sdk.GenerateRepositoryWebhook{Key: key, UUID: uuid, HookPublicURL: s.Cfg.URLPublic}, http.StatusOK)
 	}
 }
 

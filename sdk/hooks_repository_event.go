@@ -310,8 +310,9 @@ type HookRepositoryEventExtractedDataScheduler struct {
 }
 
 type GenerateRepositoryWebhook struct {
-	Key  string `json:"key"`
-	UUID string `json:"uuid`
+	Key           string `json:"key"`
+	UUID          string `json:"uuid"`
+	HookPublicURL string `json:"url"`
 }
 
 func (h *HookRepositoryEvent) GetFullName() string {
