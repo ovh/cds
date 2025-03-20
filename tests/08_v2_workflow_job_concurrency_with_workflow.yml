@@ -1,7 +1,7 @@
 name: Workflow Job locked by workflow
 vars:
   cds_project: "ITV2JOBCONCURRENCY"
-  git_repo: "it_v2_job_concurrency"
+  git_repo: "it_v2_job_concurrency_with_workflow"
   cds_workflow: "WorkflowJobConcurrency"
   cds_workflow_blocked: "WorkflowJobConcurrencyBlocked"
 testcases:
