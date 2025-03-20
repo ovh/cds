@@ -1438,7 +1438,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 
-		allvcs, err := vcs.LoadAllVCSByProject(ctx, db, projWhoOwnTheKey.Key, gorpmapper.GetOptions.WithDecryption)
+		allvcs, err := vcs.LoadAllVCSByProject(ctx, db, projWhoOwnTheKey.Key, gorpmapper.GetAllOptions.WithDecryption)
 		if err != nil {
 			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}

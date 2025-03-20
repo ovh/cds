@@ -66,7 +66,7 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 	}
 
 	// Find a storage unit where the item is complete
-	itemUnits, err := LoadAllItemUnitsByItemIDs(ctx, r.m, r.db, i.ID, gorpmapper.GetOptions.WithDecryption)
+	itemUnits, err := LoadAllItemUnitsByItemIDs(ctx, r.m, r.db, i.ID, gorpmapper.GetAllOptions.WithDecryption)
 	if err != nil {
 		return nil, err
 	}

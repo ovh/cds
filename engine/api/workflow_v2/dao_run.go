@@ -16,7 +16,7 @@ import (
 	"github.com/rockbears/log"
 )
 
-func getRuns(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func getRuns(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	var dbWkfRuns []dbWorkflowRun
 	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRuns, opts...); err != nil {
 		return nil, err
@@ -415,7 +415,7 @@ func parseSortFilter(sort string) (string, error) {
 	return sort, nil
 }
 
-func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 
@@ -469,7 +469,7 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 	return getRuns(ctx, db, query, opts...)
 }
 
-func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 
@@ -523,7 +523,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 	return getRuns(ctx, db, query, opts...)
 }
 
-func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, repoID, workflowName string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, repoID, workflowName string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 	query := gorpmapping.NewQuery(`
@@ -572,7 +572,7 @@ func LoadCratingWorkflowRunIDs(db gorp.SqlExecutor) ([]string, error) {
 	return ids, nil
 }
 
-func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	query := gorpmapping.NewQuery(`
   SELECT v2_workflow_run.*
   FROM v2_workflow_run

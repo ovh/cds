@@ -268,7 +268,7 @@ func (api *API) GetVCSPGKeyHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 
-			allvcs, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapper.GetOptions.WithDecryption)
+			allvcs, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), p.Key, gorpmapper.GetAllOptions.WithDecryption)
 			if err != nil {
 				return err
 			}

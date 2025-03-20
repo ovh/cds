@@ -339,7 +339,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Timestamp: key.Timestamp,
 		})
 
-		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEcnryptionIdentifier, false, time.Now())
+		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEncryptionIdentifier, false, time.Now())
 		conf.API.Database.EncryptionKey = &database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
 		conf.API.Database.EncryptionKey.Keys = append(conf.API.Database.EncryptionKey.Keys, database.KeyConfig{
 			Key:       key.Key,
@@ -355,7 +355,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Timestamp: key.Timestamp,
 		})
 
-		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEcnryptionIdentifier, false, time.Now())
+		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEncryptionIdentifier, false, time.Now())
 		conf.CDN.Database.EncryptionKey = &database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
 		conf.CDN.Database.EncryptionKey.Keys = append(conf.CDN.Database.EncryptionKey.Keys, database.KeyConfig{
 			Key:       key.Key,

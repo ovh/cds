@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadAllVariables(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectVariable, error) {
+func loadAllVariables(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.ProjectVariable, error) {
 	var res []dbProjectVariable
 	vars := make([]sdk.ProjectVariable, 0, len(res))
 
@@ -55,7 +55,7 @@ func LoadAllVariablesWithDecrytion(ctx context.Context, db gorp.SqlExecutor, pro
 		WHERE project_id = $1
 		ORDER BY var_name
 			  `).Args(projID)
-	return loadAllVariables(ctx, db, query, gorpmapping.GetOptions.WithDecryption)
+	return loadAllVariables(ctx, db, query, gorpmapping.GetAllOptions.WithDecryption)
 }
 
 func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectVariable, error) {
@@ -208,10 +208,10 @@ func DeleteVariable(db gorp.SqlExecutor, projID int64, variable *sdk.ProjectVari
 
 // LoadAllVariablesForProjectsWithDecryption loads all variables for all givent projects
 func LoadAllVariablesForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectVariable, error) {
-	return loadAllVariablesForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)
+	return loadAllVariablesForProjects(ctx, db, projIDs, gorpmapping.GetAllOptions.WithDecryption)
 }
 
-func loadAllVariablesForProjects(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ProjectVariable, error) {
+func loadAllVariablesForProjects(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetAllOptionFunc) (map[int64][]sdk.ProjectVariable, error) {
 	var res []dbProjectVariable
 	query := gorpmapping.NewQuery(`
 		SELECT *

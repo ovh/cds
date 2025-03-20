@@ -195,10 +195,10 @@ func loadBuiltinKey(ctx context.Context, db gorp.SqlExecutor, projectID int64) (
 }
 
 func LoadAllKeysForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectKey, error) {
-	return loadAllKeysForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)
+	return loadAllKeysForProjects(ctx, db, projIDs, gorpmapping.GetAllOptions.WithDecryption)
 }
 
-func loadAllKeysForProjects(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ProjectKey, error) {
+func loadAllKeysForProjects(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetAllOptionFunc) (map[int64][]sdk.ProjectKey, error) {
 	var res []dbProjectKey
 	query := gorpmapping.NewQuery(`
 		SELECT *

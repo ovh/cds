@@ -129,9 +129,9 @@ func (s *Service) Start(ctx context.Context) error {
 
 	log.Info(ctx, "Setting up database keys...")
 	s.Mapper = gorpmapper.New()
-	encryptionKeyConfig := s.Cfg.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
+	encryptionKeyConfig := s.Cfg.Database.EncryptionKey.GetKeys(gorpmapper.KeyEncryptionIdentifier)
 	signatureKeyConfig := s.Cfg.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
-	if err := s.Mapper.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
+	if err := s.Mapper.ConfigureKeys(signatureKeyConfig, encryptionKeyConfig); err != nil {
 		return sdk.WrapError(err, "cannot setup database keys")
 	}
 

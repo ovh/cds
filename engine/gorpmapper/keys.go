@@ -2,6 +2,7 @@ package gorpmapper
 
 import (
 	"encoding/json"
+	"sort"
 
 	// Import all symmecrypt ciphers
 	_ "github.com/ovh/symmecrypt/ciphers/aesgcm"
@@ -15,12 +16,16 @@ import (
 	"github.com/ovh/configstore"
 )
 
-func (m *Mapper) ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
+func (m *Mapper) ConfigureKeys(signatureKeys, encryptionKeys []keyloader.KeyConfig) error {
 	var globalErr error
 	m.once.Do(func() {
 		// Marshal the keys
 		var marshalledKeys [][]byte
-		for _, k := range *signatureKeys {
+
+		sort.Slice(signatureKeys, func(i, j int) bool { return signatureKeys[i].Timestamp > signatureKeys[j].Timestamp })
+		m.signatureKeyTimestamp = make([]int64, len(signatureKeys))
+		for i, k := range signatureKeys {
+			m.signatureKeyTimestamp[i] = k.Timestamp
 			btes, err := json.Marshal(k)
 			if err != nil {
 				globalErr = sdk.WithStack(err)
@@ -28,7 +33,11 @@ func (m *Mapper) ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyCon
 			}
 			marshalledKeys = append(marshalledKeys, btes)
 		}
-		for _, k := range *encryptionKeys {
+
+		sort.Slice(encryptionKeys, func(i, j int) bool { return encryptionKeys[i].Timestamp > encryptionKeys[j].Timestamp })
+		m.encryptionKeyTimestamp = make([]int64, len(encryptionKeys))
+		for i, k := range encryptionKeys {
+			m.encryptionKeyTimestamp[i] = k.Timestamp
 			btes, err := json.Marshal(k)
 			if err != nil {
 				globalErr = sdk.WithStack(err)
@@ -38,8 +47,7 @@ func (m *Mapper) ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyCon
 
 		store := configstore.NewStore()
 
-		var provider configstore.Provider
-		provider = func() (configstore.ItemList, error) {
+		provider := func() (configstore.ItemList, error) {
 			list := configstore.ItemList{}
 			for _, btes := range marshalledKeys {
 				list.Items = append(list.Items, configstore.NewItem(keyloader.EncryptionKeyConfigName, string(btes), 99))
@@ -49,12 +57,12 @@ func (m *Mapper) ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyCon
 		store.RegisterProvider("fakeConfigstoreProvider", provider)
 
 		var err error
-		m.signatureKey, err = keyloader.WatchKeyFromStore(KeySignIdentifier, store)
+		m.signatureKey, err = keyloader.LoadKeyFromStore(KeySignIdentifier, store)
 		if err != nil {
 			globalErr = sdk.WithStack(err)
 		}
 
-		m.encryptionKey, err = keyloader.WatchKeyFromStore(KeyEcnryptionIdentifier, store)
+		m.encryptionKey, err = keyloader.LoadKeyFromStore(KeyEncryptionIdentifier, store)
 		if err != nil {
 			globalErr = sdk.WithStack(err)
 		}

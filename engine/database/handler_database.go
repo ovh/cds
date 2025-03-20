@@ -107,13 +107,28 @@ func AdminDatabaseSignatureRollEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.
 	}
 }
 
+func AdminDatabaseSignatureInfoEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		entity := vars["entity"]
+		pk := vars["pk"]
+
+		ts, err := mapper.InfoSignedTupleByPrimaryKey(ctx, db(), entity, pk)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, ts, http.StatusOK)
+	}
+}
+
 func AdminDatabaseEncryptedEntities(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return service.WriteJSON(w, mapper.ListEncryptedEntities(), http.StatusOK)
 	}
 }
 
-func AdminDatabaseEncryptedTuplesByEntity(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
+func AdminDatabaseTuplesByEntity(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		entity := vars["entity"]
@@ -149,5 +164,20 @@ func AdminDatabaseRollEncryptedEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.
 		}
 
 		return nil
+	}
+}
+
+func AdminDatabaseInfoEncryptedEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		entity := vars["entity"]
+		pk := vars["pk"]
+
+		ts, err := mapper.InfoEncryptedTupleByPrimaryKey(ctx, db(), entity, pk)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, ts, http.StatusOK)
 	}
 }
