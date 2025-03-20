@@ -57,7 +57,7 @@ func projectWebHookAddFunc(v cli.Values) (interface{}, error) {
 
 var projectWebHookListCmd = cli.Command{
 	Name:  "list",
-	Short: "List availablehooks on project",
+	Short: "List available hooks on project",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -73,7 +73,7 @@ func projectWebHookListFunc(v cli.Values) (cli.ListResult, error) {
 
 var projectWebHookDeleteCmd = cli.Command{
 	Name:    "delete",
-	Short:   "Remove a  webhook from on a project",
+	Short:   "Remove a webhook from on a project",
 	Aliases: []string{"remove", "rm"},
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
