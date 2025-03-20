@@ -1,4 +1,4 @@
-name: Workflow Job Concurrency
+name: Workflow Job locked by workflow
 vars:
   cds_project: "ITV2JOBCONCURRENCY"
   git_repo: "it_v2_job_concurrency"
@@ -46,7 +46,7 @@ testcases:
 - name: Create concurrency on project
   steps:
     - name: Create concurrency
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency add {{.cds_project}} concu \"This is a concurrency rule\" --pool 2"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency add {{.cds_project}} concu \"This is a concurrency rule\" --pool 1"
     - name: List concurrency rule
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency list {{.cds_project}} --format json"
       assertions:
@@ -88,17 +88,7 @@ testcases:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               concurrency: concu
               steps:
-                - run: sleep 20
-            job2:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              concurrency: concu
-              steps:
-                - run: sleep 20
-            job3:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              concurrency: concu
-              steps:
-                - run: sleep 20    
+                - run: echo Done
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
       assertions:
@@ -139,20 +129,8 @@ testcases:
     - name: Retrieve job status and check that one is building and the others are blocked
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflow2RunID}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 3
-        - or:
-          - and:
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Blocked'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Blocked'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'  
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual 'Blocked'
       retry: 20
       delay: 1
 
@@ -164,44 +142,15 @@ testcases:
       retry: 100
       delay: 1
       
-    - name: Retrieve job status and check that 2 iare building and one blocked
+    - name: Retrieve job status and check that 2 are building or Waiting
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflow2RunID}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 3
+        - result.systemoutjson ShouldHaveLength 1
         - or:
-          - and:
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Blocked'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Blocked'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'  
+          - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
+          - result.systemoutjson.systemoutjson0.status ShouldEqual 'Waiting'
+          - result.systemoutjson.systemoutjson0.status ShouldEqual 'Scheduling'
       retry: 50
-      delay: 1
-    
-    - name: Wait and check that the last jobis unlocked
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflow2RunID}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 3
-        - or:
-          - and:
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Success'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Success'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Building'
-          - and: 
-            - result.systemoutjson.systemoutjson0.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson1.status ShouldEqual 'Building'
-            - result.systemoutjson.systemoutjson2.status ShouldEqual 'Success'  
-      retry: 100
       delay: 1
 
     - name: Workflow 2 - wait workflow end

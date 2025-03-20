@@ -1,6 +1,6 @@
-name: Workflow Concurrency
+name: Workflow locked by job
 vars:
-  cds_project: "ITV2WORKFLOWCONCURRENCY"
+  cds_project: "ITV2WORKFLOWCONCURRENCYWITHJOBS"
   git_repo: "it_v2_workflow_concurrency"
   cds_workflow: "WorkflowConcurrency"
   cds_workflow_blocked: "WorkflowConcurrencyBlocked"
@@ -77,8 +77,8 @@ testcases:
           name: {{.cds_workflow}}
           jobs:
             job1:
-              concurrency: "concu"
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              concurrency: "concu"
               steps:
                 - run: sleep 20
         workflows/workflow2.yaml:
@@ -88,7 +88,9 @@ testcases:
             job1:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
-                - run: sleep 10
+                - run: echo Done        
+
+
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
       assertions:
@@ -98,6 +100,8 @@ testcases:
       retry: 100
       delay: 1
 
+- name: Start workflow and check
+  steps:
     - name: Run the first workflow
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}}"
 
@@ -108,14 +112,11 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
       retry: 20
       delay: 1
-      vars:
-        workflowRunID:
-          from: result.systemoutjson.systemoutjson0.id
     
-    - name: Run the second workflow
+    - name: Run the 2nd workflow
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}}"
     
-    - name: Check that the 2nd workflow has at least one execution and is Building
+    - name: Check that the CDS workflow is blocked
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
@@ -123,50 +124,26 @@ testcases:
       retry: 20
       delay: 1
 
-    - name: Run the second workflow again
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}}"
-    
-
-    - name: Check that the 2nd workflow again
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 2
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Blocked"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Blocked"
-      retry: 20
-      delay: 1
-    
-    - name: Check the end of workflow  1
+    - name: Check the end of workflow 1
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 100
-      delay: 1
-      
-    - name: Check that the 2nd workflow again
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 2
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Blocked"
       retry: 20
       delay: 1
 
-    - name: Wait for the first to start
+    - name: Check that workflow 2 is building
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 2
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Building"
-      retry: 100
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
+      retry: 20
       delay: 1
-    
+
     - name: Wait all success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_blocked}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
       retry: 100
-      delay: 1
+      delay: 1 
