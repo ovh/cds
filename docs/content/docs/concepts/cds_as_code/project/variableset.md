@@ -31,7 +31,7 @@ cdsctl experimental project variableset add <PROJECT-KEY> <VARIABLESET-NAME>
 # Add a variable in a variableset using CLI
 
 ```
-cdsctl experimental project variableset add <PROJECT-KEY> <VARIABLESET-NAME> <NAME> <VALUE> <TYPE> 
+cdsctl experimental project variableset item add <PROJECT-KEY> <VARIABLESET-NAME> <NAME> <VALUE> <TYPE> 
 ```
 * `PROJECT-KEY`: The project key
 * `VARIABLESET-NAME`: The name of the variableset
