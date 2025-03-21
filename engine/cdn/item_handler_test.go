@@ -283,7 +283,7 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 
 	assert.Equal(t, string(fileContent), string(rec.Body.Bytes()))
 
-	its, err := item.LoadAll(ctx, s.Mapper, db, 1, gorpmapper.GetOptions.WithDecryption)
+	its, err := item.LoadAll(ctx, s.Mapper, db, 1, gorpmapper.GetAllOptions.WithDecryption)
 	require.NoError(t, err)
 
 	// Sync inbackend

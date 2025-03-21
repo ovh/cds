@@ -98,12 +98,14 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, service.OverrideAuth(api.authMaintainerMiddleware)), r.POST(api.postAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Admin database
+	r.Handle("/admin/database/tuples/{entity}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseTuplesByEntity, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/signature", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureResume, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/signature/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseSignatureRollEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/signature/{entity}/info/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureInfoEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/signature/{entity}/{signer}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureTuplesBySigner, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/encryption", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEncryptedEntities, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/encryption/{entity}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEncryptedTuplesByEntity, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/encryption/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/encryption/{entity}/info/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseInfoEncryptedEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Organization
 	r.Handle("/admin/organization", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminOrganizationHandler, service.OverrideAuth(api.authAdminMiddleware)))

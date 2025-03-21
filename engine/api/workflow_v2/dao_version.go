@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func getAllWorkflowVersions(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowVersion, error) {
+func getAllWorkflowVersions(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowVersion, error) {
 	var dbWkfVersion []dbV2WorkflowVersion
 	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfVersion, opts...); err != nil {
 		return nil, sdk.WithStack(err)

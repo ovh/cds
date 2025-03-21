@@ -62,7 +62,7 @@ func getVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query
 	return &res.VCSProject, nil
 }
 
-func getAllVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
+func getAllVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.VCSProject, error) {
 	var res []dbVCSProject
 	if err := gorpmapping.GetAll(ctx, db, q, &res, opts...); err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func getAllVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Qu
 	return vcProjects, nil
 }
 
-func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
+func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.VCSProject, error) {
 	var res []dbVCSProject
 
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1`).Args(projectKey)
@@ -121,7 +121,7 @@ func LoadVCSByIDAndProjectKey(ctx context.Context, db gorp.SqlExecutor, projectK
 	return getVCSProject(ctx, db, query, opts...)
 }
 
-func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
+func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.VCSProject, error) {
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.type = 'gerrit'`)
 	return getAllVCSProject(ctx, db, query, opts...)
 }

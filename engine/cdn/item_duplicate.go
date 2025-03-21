@@ -19,7 +19,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			return err
 		}
 
-		items, err := item.LoadByRunJobID(ctx, s.Mapper, s.mustDBWithCtx(ctx), duplicateRequest.FromJob, gorpmapping.GetOptions.WithDecryption)
+		items, err := item.LoadByRunJobID(ctx, s.Mapper, s.mustDBWithCtx(ctx), duplicateRequest.FromJob, gorpmapping.GetAllOptions.WithDecryption)
 		if err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			}
 
 			// Load storage unit item
-			storageUnitItems, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, tx, i.ID, gorpmapping.GetOptions.WithDecryption)
+			storageUnitItems, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, tx, i.ID, gorpmapping.GetAllOptions.WithDecryption)
 			if err != nil {
 				return err
 			}

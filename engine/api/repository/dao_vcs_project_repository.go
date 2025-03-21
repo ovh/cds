@@ -61,7 +61,7 @@ func getRepository(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Q
 	return &res.ProjectRepository, nil
 }
 
-func getRepositories(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectRepository, error) {
+func getRepositories(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.ProjectRepository, error) {
 	var res []dbProjectRepository
 	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
 		return nil, err

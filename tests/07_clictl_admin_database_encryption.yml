@@ -1,22 +1,48 @@
 name: Database Encryption Commands TestSuite
 
 testcases:
-- name: API_signature_key_rollover
+- name: API_signature_signer_rollover
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-signed-data api
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data api
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data-signer api
+
+- name: CDN_signature_signer_rollover
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-signed-data cdn
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data-signer cdn
+
+- name: API_signature_key_rollover
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database info-signed-data api user.authentifiedUser --report-dir ./report
+  - script: jq 'keys | map(. | tonumber) | sort | reverse | .[0]' ./report/api.user.authentifiedUser.signature.json
+    vars:
+      timestamp:
+        from: result.systemout
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data api {{.timestamp}} user.authentifiedUser --report-dir ./report
 
 - name: API_encryption_key_rollover
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-encrypted-data api
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-encrypted-data api
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database info-encrypted-data api project.dbProjectKey --report-dir ./report
+  - script: jq 'keys | map(. | tonumber) | sort | reverse | .[0]' ./report/api.project.dbProjectKey.encryption.json
+    vars:
+      timestamp:
+        from: result.systemout
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-encrypted-data api {{.timestamp}} project.dbProjectKey --report-dir ./report
 
 - name: CDN_signature_key_rollover
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-signed-data cdn
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data cdn
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database info-signed-data cdn item.cdnItemDB --report-dir ./report
+  - script: jq 'keys | map(. | tonumber) | sort | reverse | .[0]' ./report/cdn.item.cdnItemDB.signature.json
+    vars:
+      timestamp:
+        from: result.systemout
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data cdn {{.timestamp | default "0"}} item.cdnItemDB --report-dir ./report
 
 - name: CDN_encryption_key_rollover
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-encrypted-data cdn
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-encrypted-data cdn
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database info-encrypted-data cdn item.cdnItemDB --report-dir ./report
+  - script: jq 'keys | map(. | tonumber) | sort | reverse | .[0]' ./report/cdn.item.cdnItemDB.encryption.json
+    vars:
+      timestamp:
+        from: result.systemout
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-encrypted-data cdn {{.timestamp | default "0"}} item.cdnItemDB --report-dir ./report

@@ -111,7 +111,7 @@ func Test_CrudProjectNotification(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, notifDB.Auth.Headers["Authorization"], "Bearer aaaaa")
 
-	notifDBs, err := notification_v2.LoadAll(context.TODO(), db, proj.Key, gorpmapping.GetOptions.WithDecryption)
+	notifDBs, err := notification_v2.LoadAll(context.TODO(), db, proj.Key, gorpmapping.GetAllOptions.WithDecryption)
 	require.NoError(t, err)
 	require.Equal(t, notifDBs[0].Auth.Headers["Authorization"], "Bearer aaaaa")
 

@@ -60,7 +60,7 @@ func GetBulksPending(ctx context.Context, db gorp.SqlExecutor) ([]sdk.WorkflowTe
 	return getBulks(ctx, db, query)
 }
 
-func getBulks(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.WorkflowTemplateBulk, error) {
+func getBulks(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.WorkflowTemplateBulk, error) {
 	bs := []sdk.WorkflowTemplateBulk{}
 	if err := gorpmapping.GetAll(ctx, db, q, &bs, opts...); err != nil {
 		return nil, sdk.WrapError(err, "cannot get template bulks")

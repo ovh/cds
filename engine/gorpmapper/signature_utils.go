@@ -104,3 +104,34 @@ func (m *Mapper) RollSignedTupleByPrimaryKey(ctx context.Context, db SqlExecutor
 
 	return nil
 }
+
+func (m *Mapper) InfoSignedTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor, entity string, pk interface{}) (int64, error) {
+	e, ok := m.Mapping[entity]
+	if !ok {
+		return 0, sdk.WithStack(errors.New("unknown entity"))
+	}
+	if !e.SignedEntity {
+		return 0, sdk.WithStack(errors.New("entity is not encrypted"))
+	}
+
+	tuple, err := m.LoadTupleByPrimaryKey(ctx, db, entity, pk)
+	if err != nil {
+		return 0, err
+	}
+	if tuple == nil {
+		// Ignore missing tuple cause the data may be deleted while rolling is in progress
+		return 0, nil
+	}
+	s, ok := tuple.(Signed)
+	if !ok {
+		return 0, sdk.WithStack(errors.New("invalid signed entity"))
+	}
+	_, keyIdx, err := m.CheckSignatureUncap(tuple.(Canonicaller), s.GetSignature())
+	if err != nil {
+		return 0, err
+	}
+
+	keyTimestamp := m.signatureKeyTimestamp[keyIdx]
+
+	return keyTimestamp, nil
+}

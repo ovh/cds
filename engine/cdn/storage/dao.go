@@ -185,7 +185,7 @@ func LoadItemUnitByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlEx
 	return getItemUnit(ctx, m, db, query, opts...)
 }
 
-func LoadItemUnitsByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, size *int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+func LoadItemUnitsByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, size *int, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 AND to_delete = false ORDER BY last_modified ASC LIMIT $2").Args(unitID, size)
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
@@ -248,7 +248,7 @@ func CountItemUnitsToDeleteByItemID(db gorp.SqlExecutor, itemID string) (int64, 
 	return nb, sdk.WithStack(err)
 }
 
-func LoadAllItemUnitsToDeleteByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, limit int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+func LoadAllItemUnitsToDeleteByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, limit int, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 AND to_delete = true ORDER BY last_modified ASC LIMIT $2").Args(unitID, limit)
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
@@ -280,13 +280,13 @@ func LoadAllItemUnitsIDsByUnitID(db gorp.SqlExecutor, unitID string, offset, lim
 	return IDs, nil
 }
 
-func LoadAllItemUnitsByItemIDs(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+func LoadAllItemUnitsByItemIDs(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = $1 AND to_delete = false").Args(itemID)
 	allItemUnits, err := getAllItemUnits(ctx, m, db, query, opts...)
 	return allItemUnits, sdk.WithStack(err)
 }
 
-func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, query gorpmapper.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, query gorpmapper.Query, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItemUnit, error) {
 	var res []itemUnitDB
 	if err := m.GetAll(ctx, db, query, &res, opts...); err != nil {
 		return nil, err

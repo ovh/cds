@@ -114,8 +114,8 @@ func SetupPGToCancel(t require.TestingT, m *gorpmapper.Mapper, serviceType strin
 	}
 
 	signatureKeyConfig := sigKeys.GetKeys(gorpmapper.KeySignIdentifier)
-	encryptionKeyConfig := encryptKeys.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
-	require.NoError(t, m.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig), "cannot setup database keys")
+	encryptionKeyConfig := encryptKeys.GetKeys(gorpmapper.KeyEncryptionIdentifier)
+	require.NoError(t, m.ConfigureKeys(signatureKeyConfig, encryptionKeyConfig), "cannot setup database keys")
 
 	dbConnectionConfigKey := dbUser + dbRole + dbPassword + dbName + dbSchema + dbHost + fmt.Sprintf("%d", dbPort)
 	mDBConnectionFactoriesMutex.RLock()
