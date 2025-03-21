@@ -1,8 +1,7 @@
-name: Workflow Concurrency
+name: Workflow cancelled from workflow
 vars:
-  cds_project: "ITV2WORKFLOWCONCURRENCYCANCEL"
-  git_repo: "it_v2_workflow_concurrency_cancel"
-  cds_workflow_job_cancelled: "WorkflowConcurrencyJobCancelled"
+  cds_project: "ITV2WORKFLOWCONCURRENCYCANCELWITHWORKFLOW"
+  git_repo: "it_v2_workflow_concurrency_cancel_with_workflow"
   cds_workflow: "WorkflowConcurrency"
 testcases:
 - name: Prepare test
@@ -46,7 +45,7 @@ testcases:
 - name: Create concurrency on project
   steps:
     - name: Create concurrency
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency add {{.cds_project}} concu \"This is a concurrency rule\" --pool 2 --cancel-in-progress"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency add {{.cds_project}} concu \"This is a concurrency rule\" --pool 1 --cancel-in-progress"
     - name: List concurrency rule
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project concurrency list {{.cds_project}} --format json"
       assertions:
@@ -74,21 +73,13 @@ testcases:
           spec:
             image: buildpack-deps:buster
         workflows/workflow1.yaml:
-          name: {{.cds_workflow_job_cancelled}}
-          jobs:
-            job1:
-              concurrency: "concu"
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              steps:
-                - run: sleep 100
-        workflows/workflow2.yaml:
           name: {{.cds_workflow}}
           concurrency: "concu"
           jobs:
             job1:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
-                - run: sleep 20
+                - run: sleep 30
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
       assertions:
@@ -99,10 +90,10 @@ testcases:
       delay: 1
 
     - name: Run the first workflow
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_job_cancelled}}"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}}"
 
     - name: Check that the CDS workflow has at least one execution and is Building
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_job_cancelled}} --format json"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
@@ -112,56 +103,23 @@ testcases:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
     
-    - name: Run the second workflow
+    - name: Run a 2nd time the workflow
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}}"
     
-    - name: Check that the 2nd workflow has at least one execution and is Building
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 1
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
-      delay: 1
-
-    - name: Run the second workflow again
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}}"
-    
-    - name: Check that the 2nd run of the 2nd workflow is Building
+    - name: Check that the first one is cancelled
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Cancelled"
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Building"
-      retry: 20
-      delay: 1
-    
-    - name: Check that the job of the first workflow has been cancelled 
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 1
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Cancelled"
       retry: 20
       delay: 1
 
-    - name: Run the second workflow for the 3rd time
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}}"
-    
-    - name: Check that the 1st run of the 2nd workflow has been cancelled
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 3
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Building"
-        - result.systemoutjson.systemoutjson2.status ShouldEqual "Cancelled"
-      retry: 20
-      delay: 1
- 
     - name: Wait all success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 3
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Cancelled"
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-        - result.systemoutjson.systemoutjson2.status ShouldEqual "Cancelled"
       retry: 100
       delay: 1
