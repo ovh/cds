@@ -45,6 +45,7 @@ type V2WorkflowRunHookRequest struct {
 	DeprecatedAdminMFA bool                   `json:"admin_mfa"` // Deprecated
 	WorkflowRun        string                 `json:"workflow_run"`
 	WorkflowRunID      string                 `json:"workflow_run_id"`
+	WebhookID          string                 `json:"webhook_id"`
 	Initiator          *V2Initiator           `json:"initiator"`
 }
 
@@ -231,6 +232,7 @@ type V2WorkflowRunEvent struct {
 	CronTimezone     string                 `json:"timezone,omitempty"`
 	WorkflowRun      string                 `json:"workflow_run"`
 	WorkflowRunID    string                 `json:"workflow_run_id"`
+	WebHookID        string                 `json:"webhook_id"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {

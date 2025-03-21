@@ -148,6 +148,9 @@ export class AppComponent implements OnInit, OnDestroy {
         const config: CodeEditorConfig = this._configService.getConfigForComponent('codeEditor');
         this._configService.set('codeEditor', {
             ...config,
+            extraConfig: {
+                paths: { vs: window.location.origin + '/assets/vs' } // https://github.com/microsoft/monaco-editor/issues/4778
+            },
             onLoad: () => { monaco.languages.registerCompletionItemProvider("yaml", Editor.completionProvider(monaco)) }
         });
     }

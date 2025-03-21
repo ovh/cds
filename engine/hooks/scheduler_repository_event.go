@@ -148,6 +148,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 	}
 
 	if err := s.executeEvent(ctx, &hre); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		log.Warn(ctx, "dequeueRepositoryEvent> %s failed err[%d]: %v", hre.GetFullName(), hre.NbErrors, err)
 		hre.LastError = err.Error()
 		hre.NbErrors++
@@ -226,7 +227,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		// Compute git info ( semver )
 	case sdk.HookEventStatusGitInfo:
 		if err := s.triggerGetGitInfo(ctx, hre); err != nil {
-			return sdk.WrapError(err, "unable to get signing key")
+			return sdk.WrapError(err, "unable to get get info")
 		}
 		// Trigger workflows
 	case sdk.HookEventStatusWorkflow:

@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -20,6 +19,10 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 	switch hre.EventName {
 	case sdk.WorkflowHookEventNameManual:
 		if err := s.handleManualHook(ctx, hre); err != nil {
+			return err
+		}
+	case sdk.WorkflowHookEventNameWebHook:
+		if err := s.handleWebhookHook(ctx, hre); err != nil {
 			return err
 		}
 	case sdk.WorkflowHookEventNameScheduler:
@@ -44,7 +47,13 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 		return nil
 	}
 
-	hre.Status = sdk.HookEventStatusSignKey
+	switch hre.EventName {
+	case sdk.WorkflowHookEventNameWebHook:
+		hre.Status = sdk.HookEventStatusGitInfo
+	default:
+		hre.Status = sdk.HookEventStatusSignKey
+	}
+
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 		return err
 	}
@@ -131,12 +140,49 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 	return nil
 }
 
-func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
-	var userRequest sdk.V2WorkflowRunManualRequest
-	if err := json.Unmarshal(hre.Body, &userRequest); err != nil {
+func (s *Service) handleWebhookHook(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
+	// Get workflow definition
+	e, err := s.Client.EntityGet(ctx, hre.ExtractData.WebHook.Project, hre.ExtractData.WebHook.VCS, hre.ExtractData.WebHook.Repository, sdk.EntityTypeWorkflow, hre.ExtractData.WebHook.Workflow)
+	if err != nil {
 		return err
 	}
+	var wk sdk.V2Workflow
+	if err := yaml.Unmarshal([]byte(e.Data), &wk); err != nil {
+		return err
+	}
+	workflowVCS := hre.ExtractData.WebHook.VCS
+	workflowRepo := hre.ExtractData.WebHook.Repository
+	if wk.Repository != nil && wk.Repository.VCSServer != "" {
+		workflowVCS = wk.Repository.VCSServer
+		workflowRepo = wk.Repository.Name
+	}
 
+	wh := sdk.HookRepositoryEventWorkflow{
+		ProjectKey:           hre.ExtractData.WebHook.Project,
+		VCSIdentifier:        hre.ExtractData.WebHook.VCS,        // vcs workflow definition
+		RepositoryIdentifier: hre.ExtractData.WebHook.Repository, // repo workflow definition
+		WorkflowName:         hre.ExtractData.WebHook.Workflow,
+		Type:                 sdk.WorkflowHookTypeWebhook,
+		Status:               sdk.HookEventWorkflowStatusScheduled,
+		Ref:                  e.Ref,
+		Commit:               e.Commit,
+		Data: sdk.V2WorkflowHookData{
+			VCSServer:      workflowVCS,  // vcs used by the workflow in the git context
+			RepositoryName: workflowRepo, // repo used by the workflow in the git context
+
+		},
+	}
+	if e.UserID != nil {
+		hre.Initiator = &sdk.V2Initiator{
+			UserID: *e.UserID,
+		}
+	}
+
+	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
+	return nil
+}
+
+func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
 	// Get workflow definition
 	e, err := s.Client.EntityGet(ctx, hre.ExtractData.Manual.Project, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.Manual.Workflow,
 		cdsclient.WithQueryParameter("ref", hre.ExtractData.Ref), cdsclient.WithQueryParameter("commit", hre.ExtractData.Commit))
@@ -163,12 +209,12 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 		Status:               sdk.HookEventWorkflowStatusScheduled,
 		Ref:                  hre.ExtractData.Ref,
 		Commit:               hre.ExtractData.Commit,
-		TargetCommit:         userRequest.Sha,
+		TargetCommit:         hre.ExtractData.Manual.TargetCommit,
 		Data: sdk.V2WorkflowHookData{
 			VCSServer:      workflowVCS,
 			RepositoryName: workflowRepo,
-			TargetBranch:   userRequest.Branch,
-			TargetTag:      userRequest.Tag,
+			TargetBranch:   hre.ExtractData.Manual.TargetBranch,
+			TargetTag:      hre.ExtractData.Manual.TargetTag,
 		},
 	}
 	// Create Manual Hook
