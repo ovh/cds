@@ -23,6 +23,10 @@ func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookReposit
 		log.Info(ctx, "found %d repositories to check analyze", len(repos))
 		hre.Analyses = make([]sdk.HookRepositoryEventAnalysis, 0, len(repos))
 		for _, r := range repos {
+			if hre.ExtractData.HookProjectKey != "" && r.ProjectKey != hre.ExtractData.HookProjectKey {
+				log.Info(ctx, "skip repository %s analysis, not on the right project got %s want %s", r.Name, r.ProjectKey)
+				continue
+			}
 			hre.Analyses = append(hre.Analyses, sdk.HookRepositoryEventAnalysis{
 				ProjectKey: r.ProjectKey,
 			})

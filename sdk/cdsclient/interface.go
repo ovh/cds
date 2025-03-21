@@ -272,6 +272,11 @@ type ProjectClientV2 interface {
 	ProjectConcurrencyListRuns(ctx context.Context, pKey string, name string) ([]sdk.ProjectConcurrencyRunObject, error)
 
 	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
+
+	ProjectWebHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectWebHook) (*sdk.HookAccessData, error)
+	ProjectWebHookList(ctx context.Context, projectKey string) ([]sdk.ProjectWebHook, error)
+	ProjectWebHookGet(ctx context.Context, projectKey string, uuid string) (*sdk.ProjectWebHook, error)
+	ProjectWebHookDelete(ctx context.Context, projectKey string, uuid string) error
 }
 
 // ProjectClient exposes project related functions
@@ -298,7 +303,6 @@ type ProjectClient interface {
 	ProjectVCSDelete(ctx context.Context, projectKey string, vcsName string) error
 	ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repo sdk.ProjectRepository) error
 	ProjectVCSRepositoryList(ctx context.Context, projectKey string, vcsName string) ([]sdk.ProjectRepository, error)
-	ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error)
 	ProjectRepositoryDelete(ctx context.Context, projectKey string, vcsName string, repositoryName string) error
 	ProjectRepositoryAnalysis(ctx context.Context, analysis sdk.AnalysisRequest) (sdk.AnalysisResponse, error)
 	ProjectRepositoryAnalysisList(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string) ([]sdk.ProjectRepositoryAnalysis, error)

@@ -3439,6 +3439,65 @@ func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetShow(ctx, pKey, vsN
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetShow", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetShow), ctx, pKey, vsName)
 }
 
+// ProjectWebHookAdd mocks base method.
+func (m *MockProjectClientV2) ProjectWebHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectWebHook) (*sdk.HookAccessData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectWebHookAdd", ctx, projectKey, r)
+	ret0, _ := ret[0].(*sdk.HookAccessData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectWebHookAdd indicates an expected call of ProjectWebHookAdd.
+func (mr *MockProjectClientV2MockRecorder) ProjectWebHookAdd(ctx, projectKey, r any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectWebHookAdd", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectWebHookAdd), ctx, projectKey, r)
+}
+
+// ProjectWebHookDelete mocks base method.
+func (m *MockProjectClientV2) ProjectWebHookDelete(ctx context.Context, projectKey, uuid string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectWebHookDelete", ctx, projectKey, uuid)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectWebHookDelete indicates an expected call of ProjectWebHookDelete.
+func (mr *MockProjectClientV2MockRecorder) ProjectWebHookDelete(ctx, projectKey, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectWebHookDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectWebHookDelete), ctx, projectKey, uuid)
+}
+
+// ProjectWebHookGet mocks base method.
+func (m *MockProjectClientV2) ProjectWebHookGet(ctx context.Context, projectKey, uuid string) (*sdk.ProjectWebHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectWebHookGet", ctx, projectKey, uuid)
+	ret0, _ := ret[0].(*sdk.ProjectWebHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectWebHookGet indicates an expected call of ProjectWebHookGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectWebHookGet(ctx, projectKey, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectWebHookGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectWebHookGet), ctx, projectKey, uuid)
+}
+
+// ProjectWebHookList mocks base method.
+func (m *MockProjectClientV2) ProjectWebHookList(ctx context.Context, projectKey string) ([]sdk.ProjectWebHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectWebHookList", ctx, projectKey)
+	ret0, _ := ret[0].([]sdk.ProjectWebHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectWebHookList indicates an expected call of ProjectWebHookList.
+func (mr *MockProjectClientV2MockRecorder) ProjectWebHookList(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectWebHookList", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectWebHookList), ctx, projectKey)
+}
+
 // MockProjectClient is a mock of ProjectClient interface.
 type MockProjectClient struct {
 	ctrl     *gomock.Controller
@@ -3824,21 +3883,6 @@ func (m *MockProjectClient) ProjectRepositoryEvents(ctx context.Context, project
 func (mr *MockProjectClientMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vcsName, repoName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
-}
-
-// ProjectRepositoryHookSecret mocks base method.
-func (m *MockProjectClient) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryHookSecret", ctx, projectKey, vcsType, vcsName, repoName)
-	ret0, _ := ret[0].(sdk.HookAccessData)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectRepositoryHookSecret indicates an expected call of ProjectRepositoryHookSecret.
-func (mr *MockProjectClientMockRecorder) ProjectRepositoryHookSecret(ctx, projectKey, vcsType, vcsName, repoName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookSecret", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryHookSecret), ctx, projectKey, vcsType, vcsName, repoName)
 }
 
 // ProjectUpdate mocks base method.
@@ -9572,21 +9616,6 @@ func (mr *MockInterfaceMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
 }
 
-// ProjectRepositoryHookSecret mocks base method.
-func (m *MockInterface) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryHookSecret", ctx, projectKey, vcsType, vcsName, repoName)
-	ret0, _ := ret[0].(sdk.HookAccessData)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectRepositoryHookSecret indicates an expected call of ProjectRepositoryHookSecret.
-func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookSecret(ctx, projectKey, vcsType, vcsName, repoName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookSecret", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookSecret), ctx, projectKey, vcsType, vcsName, repoName)
-}
-
 // ProjectUpdate mocks base method.
 func (m *MockInterface) ProjectUpdate(key string, project *sdk.Project) error {
 	m.ctrl.T.Helper()
@@ -9983,6 +10012,65 @@ func (m *MockInterface) ProjectVariablesList(key string) ([]sdk.Variable, error)
 func (mr *MockInterfaceMockRecorder) ProjectVariablesList(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariablesList", reflect.TypeOf((*MockInterface)(nil).ProjectVariablesList), key)
+}
+
+// ProjectWebHookAdd mocks base method.
+func (m *MockInterface) ProjectWebHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectWebHook) (*sdk.HookAccessData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectWebHookAdd", ctx, projectKey, r)
+	ret0, _ := ret[0].(*sdk.HookAccessData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectWebHookAdd indicates an expected call of ProjectWebHookAdd.
+func (mr *MockInterfaceMockRecorder) ProjectWebHookAdd(ctx, projectKey, r any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectWebHookAdd", reflect.TypeOf((*MockInterface)(nil).ProjectWebHookAdd), ctx, projectKey, r)
+}
+
+// ProjectWebHookDelete mocks base method.
+func (m *MockInterface) ProjectWebHookDelete(ctx context.Context, projectKey, uuid string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectWebHookDelete", ctx, projectKey, uuid)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectWebHookDelete indicates an expected call of ProjectWebHookDelete.
+func (mr *MockInterfaceMockRecorder) ProjectWebHookDelete(ctx, projectKey, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectWebHookDelete", reflect.TypeOf((*MockInterface)(nil).ProjectWebHookDelete), ctx, projectKey, uuid)
+}
+
+// ProjectWebHookGet mocks base method.
+func (m *MockInterface) ProjectWebHookGet(ctx context.Context, projectKey, uuid string) (*sdk.ProjectWebHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectWebHookGet", ctx, projectKey, uuid)
+	ret0, _ := ret[0].(*sdk.ProjectWebHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectWebHookGet indicates an expected call of ProjectWebHookGet.
+func (mr *MockInterfaceMockRecorder) ProjectWebHookGet(ctx, projectKey, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectWebHookGet", reflect.TypeOf((*MockInterface)(nil).ProjectWebHookGet), ctx, projectKey, uuid)
+}
+
+// ProjectWebHookList mocks base method.
+func (m *MockInterface) ProjectWebHookList(ctx context.Context, projectKey string) ([]sdk.ProjectWebHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectWebHookList", ctx, projectKey)
+	ret0, _ := ret[0].([]sdk.ProjectWebHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectWebHookList indicates an expected call of ProjectWebHookList.
+func (mr *MockInterfaceMockRecorder) ProjectWebHookList(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectWebHookList", reflect.TypeOf((*MockInterface)(nil).ProjectWebHookList), ctx, projectKey)
 }
 
 // PutJSON mocks base method.

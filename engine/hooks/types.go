@@ -69,6 +69,7 @@ type Configuration struct {
 		TTL   int           `toml:"ttl" default:"60" json:"ttl"`
 		Redis sdk.RedisConf `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Hooks Cache Settings \n######################" json:"cache"`
-	WebhooksPublicKeySign string `toml:"webhooksPublicKeySign" comment:"Public key to check call signature on handler /v2/webhook/repository"`
-	RepositoryWebHookKey  string `toml:"repositoryWebHookKey" comment:"Secret key used to generate repository webhook secret"`
+	WebhooksPublicKeySign          string `toml:"webhooksPublicKeySign" comment:"Public key to check call signature on handler /v2/webhook/repository"`
+	RepositoryWebHookKey           string `toml:"repositoryWebHookKey" comment:"Secret key used to generate repository webhook secret"`
+	RepositoryWebHookKeyExpiration int64  `toml:repositoryWebHookKeyExpiration, comment:"Expiration date of the webhook key"`
 }

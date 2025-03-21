@@ -26,6 +26,7 @@ import { ProjectRepoManagerFormComponent } from './settings/advanced/repomanager
 import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from './project.guard';
 import { ProjectConcurrenciesComponent } from './settings/concurrency/concurrencies.components';
 import { ProjectConcurrencyFormComponent } from './settings/concurrency/concurrency.form.component';
+import { ProjectWebhooksComponent } from './settings/webhooks/webhooks.component';
 
 @NgModule({
     declarations: [
@@ -49,6 +50,7 @@ import { ProjectConcurrencyFormComponent } from './settings/concurrency/concurre
         ProjectVariablesComponent,
         ProjectVariableSetItemsComponent,
         ProjectVariableSetsComponent,
+        ProjectWebhooksComponent,
         ProjectWorkflowListBlocsComponent,
         ProjectWorkflowListComponent,
         ProjectWorkflowListLabelsComponent,

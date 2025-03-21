@@ -283,6 +283,7 @@ type HookRepositoryEventExtractData struct {
 	DeprecatedAdminMFA bool                                        `json:"admin_mfa"` // Deprecated
 	Scheduler          HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
 	WorkflowRun        HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
+	HookProjectKey     string                                      `json:"hook_project_key"` // force the hook to only trigger from the given CDS project
 }
 
 type HookRepositoryEventExtractedDataManual struct {
@@ -309,7 +310,9 @@ type HookRepositoryEventExtractedDataScheduler struct {
 }
 
 type GenerateRepositoryWebhook struct {
-	Key string `json:"key"`
+	Key           string `json:"key"`
+	UUID          string `json:"uuid"`
+	HookPublicURL string `json:"url"`
 }
 
 func (h *HookRepositoryEvent) GetFullName() string {
@@ -372,8 +375,8 @@ type AnalysisResponse struct {
 	Status     string `json:"status" cli:"status"`
 }
 
-func GenerateRepositoryWebHookSecret(hookSecretKey, vcsName, repoName string) string {
-	pass := fmt.Sprintf("%s-%s", vcsName, repoName)
+func GenerateRepositoryWebHookSecret(hookSecretKey, pkey, vcsName, repoName, uuid string) string {
+	pass := fmt.Sprintf("%s-%s-%s-%s", pkey, vcsName, repoName, uuid)
 	keyBytes := pbkdf2.Key([]byte(pass), []byte(hookSecretKey), 4096, 128, sha512.New)
 	key64 := base64.StdEncoding.EncodeToString(keyBytes)
 	return key64

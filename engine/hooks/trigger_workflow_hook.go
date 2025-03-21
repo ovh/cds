@@ -108,6 +108,10 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 
 	hre.WorkflowHooks = make([]sdk.HookRepositoryEventWorkflow, 0, len(workflowHooks))
 	for _, wh := range workflowHooks {
+		if hre.ExtractData.HookProjectKey != "" && hre.ExtractData.HookProjectKey != wh.ProjectKey {
+			log.Info(ctx, "Workflow hook %s not on the right project, got %s want %s", wh.Data.RepositoryEvent, wh.ProjectKey, hre.ExtractData.HookProjectKey)
+			continue
+		}
 		w := sdk.HookRepositoryEventWorkflow{
 			ProjectKey:           wh.ProjectKey,
 			VCSIdentifier:        wh.VCSName,
