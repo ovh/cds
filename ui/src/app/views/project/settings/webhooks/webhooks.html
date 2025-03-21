@@ -65,7 +65,7 @@ Hook secret: {{createdHook.hook_sign_key}}
             <tr *ngFor="let data of table.data">
                 <td>{{data.id}}</td>
                 <td>{{data.type}}</td>
-                <td>{{data.vcs_server}}/{{data.repository}}</td>
+                <td>{{data.vcs_server}}/{{data.repository}}<span *ngIf="data.workflow !== ''">/{{data.workflow}}</span></td>
                 <td>{{data.created}}</td>
                 <td>{{data.username}}</td>
                 <td class="alignEnd"><button nz-button nzDanger [nzLoading]="loading.action" nz-popconfirm="Are you sure you want to revoke this webhook?" (nzOnConfirm)="deleteWebhook(data)">Delete</button></td>

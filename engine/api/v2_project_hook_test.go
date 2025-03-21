@@ -48,13 +48,13 @@ func Test_crudRepositoryHookOnProjectLambdaUserOK(t *testing.T) {
 		services.NewClient = services.NewDefaultClient
 	}()
 
-	generatedHook := &sdk.GenerateRepositoryWebhook{
+	generatedHook := &sdk.GeneratedWebhook{
 		UUID: sdk.UUID(),
 	}
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/ovh/cds", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 	url := "/v2/repository/key/" + proj.Key + "/" + vcsProj.Name + "/ovh%2Fcds"
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", url, gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
-		*(out.(*sdk.GenerateRepositoryWebhook)) = *generatedHook
+		*(out.(*sdk.GeneratedWebhook)) = *generatedHook
 		return nil, 200, nil
 	}).MaxTimes(1)
 
@@ -62,12 +62,13 @@ func Test_crudRepositoryHookOnProjectLambdaUserOK(t *testing.T) {
 	hook := sdk.PostProjectWebHook{
 		VCSServer:  vcsProj.Name,
 		Repository: "ovh/cds",
+		Type:       sdk.ProjectWebHookTypeRepository,
 	}
 
 	vars := map[string]string{
 		"projectKey": proj.Key,
 	}
-	uri := api.Router.GetRouteV2("POST", api.postRepositoryHookHandler, vars)
+	uri := api.Router.GetRouteV2("POST", api.postProjectHookHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, user1, pass, "POST", uri, nil)
 
@@ -87,7 +88,7 @@ func Test_crudRepositoryHookOnProjectLambdaUserOK(t *testing.T) {
 	vars["uuid"] = urlsplit[len(urlsplit)-1]
 
 	// Then, get the hook
-	uriGet := api.Router.GetRouteV2("GET", api.getRepositoryHookHandler, vars)
+	uriGet := api.Router.GetRouteV2("GET", api.getProjectHookHandler, vars)
 	test.NotEmpty(t, uriGet)
 	reqGet := assets.NewAuthentifiedRequest(t, user1, pass, "GET", uriGet, nil)
 	w2 := httptest.NewRecorder()
@@ -96,7 +97,7 @@ func Test_crudRepositoryHookOnProjectLambdaUserOK(t *testing.T) {
 
 	// Then Delete repository
 	varsDelete := vars
-	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteRepositoryHookHandler, varsDelete)
+	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteProjectHookHandler, varsDelete)
 	test.NotEmpty(t, uriDelete)
 	reqDelete := assets.NewAuthentifiedRequest(t, user1, pass, "DELETE", uriDelete, nil)
 	w3 := httptest.NewRecorder()

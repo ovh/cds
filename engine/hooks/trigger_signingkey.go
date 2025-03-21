@@ -43,15 +43,11 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		if strings.HasPrefix(hre.ExtractData.Ref, sdk.GitRefTagPrefix) {
 			changesets = false
 		}
+
 		vcs := hre.VCSServerName
 		repo := hre.RepositoryName
-
-		// For scheduler we need to take target repository information
-		if hre.EventName == sdk.WorkflowHookEventNameScheduler {
-			vcs = hre.ExtractData.Scheduler.TargetVCS
-			repo = hre.ExtractData.Scheduler.TargetRepo
-		}
-		if hre.EventName == sdk.WorkflowHookEventNameWorkflowRun {
+		switch hre.EventName {
+		case sdk.WorkflowHookEventNameWorkflowRun:
 			vcs = hre.ExtractData.WorkflowRun.TargetVCS
 			repo = hre.ExtractData.WorkflowRun.TargetRepository
 		}
@@ -79,10 +75,10 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		hre.SigningKeyOperationStatus = ope.Status
 		hre.SigningKeyOperation = ope.UUID
 
-		// For repository webhook and scheduler, signin operation == gitinfo operation
+		// For repository webhook  OR (workflow non distant)
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
-			if wh.Type == sdk.WorkflowHookTypeRepository || wh.Type == sdk.WorkflowHookTypeScheduler {
+			if wh.Type == sdk.WorkflowHookTypeRepository || (wh.Data.VCSServer == vcs && wh.Data.RepositoryName == repo) {
 				wh.OperationUUID = ope.UUID
 				wh.OperationStatus = ope.Status
 			}
