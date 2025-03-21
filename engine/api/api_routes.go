@@ -480,8 +480,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/concurrency/{concurrencyName}", nil, r.GETv2(api.getProjectConcurrencyHandler), r.PUTv2(api.putProjectConcurrencyHandler), r.DELETEv2(api.deleteProjectConcurrencyHandler))
 	r.Handle("/v2/project/{projectKey}/concurrency/{concurrencyName}/runs", nil, r.GETv2(api.getProjectConcurrencyRunsHandler))
 
-	r.Handle("/v2/project/{projectKey}/hook", nil, r.GETv2(api.getRepositoryHooksHandler), r.POSTv2(api.postRepositoryHookHandler))
-	r.Handle("/v2/project/{projectKey}/hook/{uuid}", nil, r.GETv2(api.getRepositoryHookHandler), r.DELETEv2(api.deleteRepositoryHookHandler))
+	r.Handle("/v2/project/{projectKey}/hook", nil, r.GETv2(api.getProjectHooksHandler), r.POSTv2(api.postProjectHookHandler))
+	r.Handle("/v2/project/{projectKey}/hook/{uuid}", nil, r.GETv2(api.getProjectHookHandler), r.DELETEv2(api.deleteProjectHookHandler))
 
 	r.Handle("/v2/project/{projectKey}/integrations", nil, r.GETv2(api.getProjectV2IntegrationsHandler), r.POSTv2(api.postProjectV2IntegrationHandler))
 	r.Handle("/v2/project/{projectKey}/integrations/{integrationName}", nil, r.GETv2(api.getProjectV2IntegrationHandler), r.PUTv2(api.putProjectV2IntegrationHandler), r.DELETEv2(api.deleteProjectV2IntegrationHandler))
