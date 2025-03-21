@@ -54,9 +54,10 @@ type WebsocketFilter struct {
 }
 
 type WebsocketHatcheryFilter struct {
-	Region    string `json:"region"`
-	ModelType string `json:"model_type"`
-	OSArch    string `json:"osarch"`
+	Region           string   `json:"region"`
+	ModelType        string   `json:"model_type"`
+	DeprecatedOSArch string   `json:"osarch"`
+	OSArchSlice      []string `json:"osarch_slice"`
 }
 
 // Key generates the unique key associated to given filter.

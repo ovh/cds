@@ -2,13 +2,14 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
 	"github.com/rockbears/log"
+	"github.com/spf13/cast"
 
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -35,9 +36,19 @@ func (api *API) getHatcheryWebsocketHandler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 
-			osarch, has := hatch.Config["osArch"]
-			if !has || osarch == "" {
-				osarch = "linux/amd64"
+			iosarch, has := hatch.Config["osArch"]
+			if !has {
+				iosarch = []string{"linux/amd64"}
+			}
+
+			osarch, err := cast.ToStringSliceE(iosarch)
+			if err != nil {
+				s := cast.ToString(iosarch)
+				osarch = []string{s}
+			}
+
+			if len(osarch) == 0 {
+				osarch = []string{"linux/amd64"}
 			}
 
 			permission, err := rbac.LoadRBACByHatcheryID(ctx, api.mustDB(), hatchConsumer.AuthConsumerHatchery.HatcheryID)
@@ -52,7 +63,7 @@ func (api *API) getHatcheryWebsocketHandler() ([]service.RbacChecker, service.Ha
 					if err != nil {
 						return err
 					}
-					filter.OSArch = fmt.Sprintf("%v", osarch)
+					filter.OSArchSlice = osarch
 					filter.ModelType = hatch.ModelType
 					filter.Region = reg.Name
 					break
@@ -157,7 +168,7 @@ func (a *API) websocketHatcheryOnMessage(e sdk.FullEventV2) {
 			}
 
 			c.mutex.Lock()
-			canHandleJob := c.filter.Region == currentRegion && c.filter.ModelType == currentModel && c.filter.OSArch == currentModelOSArch
+			canHandleJob := c.filter.Region == currentRegion && c.filter.ModelType == currentModel && (c.filter.DeprecatedOSArch == currentModelOSArch || slices.Contains(c.filter.OSArchSlice, currentModelOSArch))
 			c.mutex.Unlock()
 			if !canHandleJob {
 				return

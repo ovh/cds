@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -56,8 +57,8 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		return err
 	}
 
-	if h.Config.OSArch == "" {
-		h.Config.OSArch = "linux/amd64"
+	if len(h.Config.OSArch) == 0 {
+		h.Config.OSArch = []string{"linux/amd64"}
 	}
 
 	h.dockerClients = map[string]*dockerClient{}
@@ -571,7 +572,7 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 	// For workflow v2, check os/arch of worker model
 	if model.ModelV2 != nil {
 		modelOSArch := model.ModelV2.OSArch
-		if h.Config.OSArch != modelOSArch {
+		if !slices.Contains(h.Config.OSArch, modelOSArch) {
 			log.Debug(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, modelOSArch, h.Config.OSArch)
 			return false
 		}
