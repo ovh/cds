@@ -162,7 +162,7 @@ func LoadQueuedRunJobByModelTypeAndRegionAndModelOSArch(ctx context.Context, db 
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadQueuedRunJobByModelTypeAndRegion")
 	defer next()
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE status = $1 AND model_type = $2 and region = $3 and model_osarch = ANY($4) ORDER BY queued").
-		Args(sdk.StatusWaiting, modelType, regionName, modelOSArch)
+		Args(sdk.StatusWaiting, modelType, regionName, pq.StringArray(modelOSArch))
 	return getAllRunJobs(ctx, db, query)
 }
 
