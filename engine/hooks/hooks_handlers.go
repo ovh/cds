@@ -356,6 +356,7 @@ func (s *Service) workflowWebHookHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
+		repoName = strings.ToLower(repoName)
 		wkfName := vars["workflowName"]
 		webhookID := vars["uuid"]
 		defer r.Body.Close()
