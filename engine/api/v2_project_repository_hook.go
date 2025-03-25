@@ -55,7 +55,7 @@ func (api *API) deleteRepositoryHookHandler() ([]service.RbacChecker, service.Ha
 }
 
 func (api *API) getRepositoryHookHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.retrieveProjectHook),
+	return service.RBAC(api.projectHookRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
