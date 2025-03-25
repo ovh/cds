@@ -695,14 +695,18 @@ func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi Artifac
 
 type UploadRunResultOutput struct {
 	FileName          string
-	Logs              []string
+	Logs              []UploadRunResultLogLevel
 	Error             string
 	RunResultResponse *workerruntime.V2UpdateResultResponse
+}
+type UploadRunResultLogLevel struct {
+	Level string
+	Log   string
 }
 
 func UploadRunResults(ctx context.Context, actplugin *actionplugin.Common, jobContext sdk.WorkflowRunJobsContext, runResultRequests map[string]*workerruntime.V2RunResultRequest, fileResults glob.Results, files map[string]fs.File, sizes map[string]int64, checksums map[string]ChecksumResult) ([]workerruntime.V2UpdateResultResponse, bool) {
 	chanUploadResult := make(chan *UploadRunResultOutput, len(fileResults))
-	chanFileToUpload := make(chan string, len(fileResults))
+	chanFileToUpload := make(chan glob.Result, len(fileResults))
 	maxWorker := 15
 	goRoutines := sdk.NewGoRoutines(ctx)
 
@@ -714,7 +718,7 @@ func UploadRunResults(ctx context.Context, actplugin *actionplugin.Common, jobCo
 	}
 	// Send run result to upload to worker
 	for i := range fileResults {
-		chanFileToUpload <- fileResults[i].Path
+		chanFileToUpload <- fileResults[i]
 	}
 	close(chanFileToUpload)
 
@@ -723,9 +727,12 @@ func UploadRunResults(ctx context.Context, actplugin *actionplugin.Common, jobCo
 	results := make([]workerruntime.V2UpdateResultResponse, 0, len(fileResults))
 	for i := 0; i < len(fileResults); i++ {
 		result := <-chanUploadResult
-		Logf(actplugin, "File: "+result.FileName)
 		for _, l := range result.Logs {
-			Success(actplugin, l)
+			if l.Level == "success" {
+				Success(actplugin, l.Log)
+			} else {
+				Log(actplugin, l.Log)
+			}
 		}
 		if result.Error != "" {
 			hasError = true
@@ -736,17 +743,17 @@ func UploadRunResults(ctx context.Context, actplugin *actionplugin.Common, jobCo
 	return results, hasError
 }
 
-func UploadRunResultWorker(ctx context.Context, actplugin *actionplugin.Common, chanFileToUpload <-chan string, chanUploadResult chan<- *UploadRunResultOutput, jobContext sdk.WorkflowRunJobsContext, runResultRequests map[string]*workerruntime.V2RunResultRequest, fileResults glob.Results, files map[string]fs.File, sizes map[string]int64, checksums map[string]ChecksumResult) {
-	for f := range chanFileToUpload {
-		result := &UploadRunResultOutput{FileName: f}
-		if err := UploadRunResult(ctx, actplugin, result, jobContext, runResultRequests[f], f, files[f], sizes[f], checksums[f]); err != nil {
+func UploadRunResultWorker(ctx context.Context, actplugin *actionplugin.Common, chanFileToUpload <-chan glob.Result, chanUploadResult chan<- *UploadRunResultOutput, jobContext sdk.WorkflowRunJobsContext, runResultRequests map[string]*workerruntime.V2RunResultRequest, fileResults glob.Results, files map[string]fs.File, sizes map[string]int64, checksums map[string]ChecksumResult) {
+	for globResult := range chanFileToUpload {
+		result := &UploadRunResultOutput{FileName: globResult.Path}
+		if err := UploadRunResult(ctx, actplugin, result, jobContext, runResultRequests[globResult.Path], globResult.Path, globResult.Result, files[globResult.Path], sizes[globResult.Path], checksums[globResult.Path]); err != nil {
 			result.Error = err.Error()
 		}
 		chanUploadResult <- result
 	}
 }
 
-func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output *UploadRunResultOutput, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, fileName string, f fs.File, size int64, fileChecksum ChecksumResult) error {
+func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output *UploadRunResultOutput, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, fileName string, result string, f fs.File, size int64, fileChecksum ChecksumResult) error {
 	workerConfig, err := GetWorkerConfig(ctx, actplugin)
 	if err != nil {
 		return err
@@ -756,6 +763,9 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output
 	if err != nil {
 		return err
 	}
+
+	message := fmt.Sprintf("\nUpload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s", fileName, result, size, fileChecksum.Md5, fileChecksum.Sha1, fileChecksum.Sha256)
+	output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: message, Level: "success"})
 
 	// Upload the file to an artifactory or CDN
 	var d time.Duration
@@ -784,8 +794,8 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output
 			"cdn_api_ref_hash":  i.Item.APIRefHash,
 			"cdn_download_path": fmt.Sprintf("/item/%s/%s/download", string(i.Item.Type), i.Item.APIRefHash),
 		}
-		output.Logs = append(output.Logs, "  CDN API Ref Hash: "+i.Item.APIRefHash)
-		output.Logs = append(output.Logs, "  CDN HTTP URL "+i.CDNHttpURL)
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  CDN API Ref Hash: " + i.Item.APIRefHash, Level: "info"})
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  CDN HTTP URL " + i.CDNHttpURL, Level: "info"})
 
 	case response.RunResult.ArtifactManagerIntegrationName != nil:
 		// Get integration from the local cache, or from the worker
@@ -820,8 +830,8 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output
 			// unable to cast the file
 			return fmt.Errorf("unable to cast reader")
 		}
-		output.Logs = append(output.Logs, "  Artifactory URL: "+integ.Get(sdk.ArtifactoryConfigURL))
-		output.Logs = append(output.Logs, "  Artifactory repository: "+repository)
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  Artifactory URL: " + integ.Get(sdk.ArtifactoryConfigURL), Level: "info"})
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  Artifactory repository: " + repository, Level: "info"})
 
 		var res *ArtifactoryUploadResult
 		res, d, err = ArtifactoryItemUploadRunResult(ctx, actplugin, response.RunResult, integ, reader)
@@ -839,7 +849,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output
 
 		runResultRequest = workerruntime.V2RunResultRequest{RunResult: response.RunResult}
 
-		output.Logs = append(output.Logs, "  Artifactory download URI: "+res.DownloadURI)
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  Artifactory download URI: " + res.DownloadURI, Level: "info"})
 
 	default:
 		err := errors.Errorf("unsupported run result %s", response.RunResult.ID)
@@ -853,12 +863,12 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output
 		return err
 	}
 
-	Successf(actplugin, "  %d bytes uploaded in %.3fs", size, d.Seconds())
+	output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: fmt.Sprintf("  %d bytes uploaded in %.3fs", size, d.Seconds()), Level: "info"})
 
 	if _, err := updateResponse.RunResult.GetDetail(); err != nil {
 		return err
 	}
-	output.Logs = append(output.Logs, fmt.Sprintf("  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID))
+	output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: fmt.Sprintf("  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID), Level: "success"})
 
 	output.RunResultResponse = updateResponse
 	return nil

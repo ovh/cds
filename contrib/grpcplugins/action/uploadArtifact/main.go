@@ -85,9 +85,6 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, cwd
 
 	runResults := make(map[string]*workerruntime.V2RunResultRequest)
 	for _, r := range fileResults.Results {
-		message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s, Mode: %v", r.Path, r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256, permissions[r.Path])
-		grpcplugins.Log(&actPlugin.Common, message)
-
 		// Create run result at status "pending"
 		var runResultRequest = workerruntime.V2RunResultRequest{
 			RunResult: &sdk.V2WorkflowRunResult{
