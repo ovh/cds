@@ -81,3 +81,10 @@ func (api *API) triggerAnalysis(ctx context.Context, vars map[string]string) err
 	}
 	return api.projectRead(ctx, vars)
 }
+
+func (api *API) retrieveProjectHook(ctx context.Context, vars map[string]string) error {
+	if isHooks(ctx) {
+		return nil
+	}
+	return api.projectRead(ctx, vars)
+}
