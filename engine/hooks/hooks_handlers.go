@@ -312,7 +312,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			return err
 		}
 
-		exec, err := s.handleRepositoryEvent(ctx, vcsType, vcsName, repoName, extractData, body)
+		exec, err := s.handleRepositoryEvent(ctx, vcsType, vcsName, strings.ToLower(repoName), extractData, body)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return err
@@ -346,7 +346,7 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 		}
 		extractedData.HookProjectKey = projKey
 
-		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, repoName, extractedData, body)
+		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, strings.ToLower(repoName), extractedData, body)
 		if err != nil {
 			return err
 		}
