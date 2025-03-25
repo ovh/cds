@@ -83,6 +83,7 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, cwd
 		return err
 	}
 
+	runResults := make(map[string]*workerruntime.V2RunResultRequest)
 	for _, r := range fileResults.Results {
 		message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s, Mode: %v", r.Path, r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256, permissions[r.Path])
 		grpcplugins.Log(&actPlugin.Common, message)
@@ -105,13 +106,15 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, cwd
 				},
 			},
 		}
-
-		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, *jobContext, &runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
-			_ = openFiles[r.Path].Close()
-			return err
-		}
-		_ = openFiles[r.Path].Close()
+		runResults[r.Path] = &runResultRequest
 	}
 
+	_, hasError := grpcplugins.UploadRunResults(ctx, &actPlugin.Common, *jobContext, runResults, fileResults.Results, openFiles, sizes, checksums)
+	for _, r := range fileResults.Results {
+		_ = openFiles[r.Path].Close()
+	}
+	if hasError {
+		return fmt.Errorf("error while uploading files. Please check the logs")
+	}
 	return nil
 }
