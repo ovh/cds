@@ -161,8 +161,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             } else {
                 this.hooks = Object.keys(this.hooksOn);
             }
-            this.selectedHook = this._workflowRun?.event?.event_name;
         }
+        this.selectedHook = this._workflowRun?.event?.event_name;
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT

@@ -40,6 +40,13 @@
         placeHolder="Select a ref" id="sourceRef"></app-repository-ref-select>
     </nz-form-control>
   </nz-form-item>
+  <nz-form-item>
+    <nz-form-label [nzSpan]="6" nzFor="sourceRef">Payload</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-code-editor #editor formControlName="payload" id="payload" [nzEditorOption]="editorOption"></nz-code-editor>
+      <nz-alert nzType="error" nzMessage="Invalid JSON" *ngIf="invalidJson"></nz-alert>
+    </nz-form-control>
+  </nz-form-item>
   <nz-form-item *ngIf="!event">
     <nz-form-control [nzSpan]="12" [nzOffset]="6">
       <button nz-button nzType="primary" [nzLoading]="isLoading()">Start</button>

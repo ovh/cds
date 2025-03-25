@@ -63,9 +63,11 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		}
 	}
 
-	var event map[string]interface{}
-	if err := json.Unmarshal(hre.Body, &event); err != nil {
-		return err
+	event := make(map[string]interface{})
+	if len(hre.Body) > 0 {
+		if err := json.Unmarshal(hre.Body, &event); err != nil {
+			return sdk.WithStack(err)
+		}
 	}
 
 	for i := range hre.WorkflowHooks {
@@ -168,6 +170,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				case sdk.WorkflowHookTypeScheduler:
 					runRequest.Cron = hre.ExtractData.Scheduler.Cron
 					runRequest.CronTimezone = hre.ExtractData.Scheduler.Timezone
+					runRequest.Sha = wh.TargetCommit
 				case sdk.WorkflowHookTypeWorkflowRun:
 					runRequest.WorkflowRun = hre.ExtractData.WorkflowRun.Workflow
 					runRequest.WorkflowRunID = hre.ExtractData.WorkflowRun.WorkflowRunID
@@ -176,6 +179,10 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					// Let CDS API choose the git context for the workflow execution
 					runRequest.Ref = ""
 					runRequest.Sha = ""
+				case sdk.WorkflowHookTypeWebhook:
+					runRequest.WebhookID = hre.ExtractData.WebHook.ID
+					mods = make([]cdsclient.RequestModifier, 0) // Do not send query param. Let the CDS api get default branch
+					runRequest.Sha = wh.TargetCommit
 				}
 
 				wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,
