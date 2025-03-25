@@ -171,6 +171,17 @@ func (api *API) putUserHandler() service.Handler {
 			return err
 		}
 
+		if oldUser.Ring == sdk.UserRingAdmin {
+			// Specific audit log for admin: don't change it
+			log.Info(ctx, "Administrator %s is updated (username: %q -> %q, fullname: %q -> %q, ring: %q -> %q, organization: %q -> %q)",
+				oldUser.Username, consumer.AuthConsumerUser.AuthentifiedUserID,
+				oldUser.Username, data.Username,
+				oldUser.Fullname, data.Fullname,
+				oldUser.Ring, data.Ring,
+				oldUser.Organization, data.Organization,
+			)
+		}
+
 		newUser := *oldUser
 
 		if oldUser.Username != data.Username {
@@ -217,6 +228,7 @@ func (api *API) putUserHandler() service.Handler {
 			}
 
 			newUser.Ring = data.Ring
+			// Specific audit log for admin: don't change it
 			log.Info(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
 		}
 
