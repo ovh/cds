@@ -106,16 +106,22 @@ const (
 	inProgress = "INPROGRESS"
 	successful = "SUCCESSFUL"
 	failed     = "FAILED"
+	unknown    = "UNKNOWN"
+	cancelled  = "CANCELLED"
 )
 
 func getBitbucketStateFromStatus(status string) string {
 	switch status {
-	case sdk.StatusSuccess, sdk.StatusSkipped, sdk.StatusDisabled:
+	case sdk.StatusSuccess, sdk.StatusDisabled:
 		return successful
 	case sdk.StatusWaiting, sdk.StatusBuilding:
 		return inProgress
 	case sdk.StatusFail:
 		return failed
+	case sdk.StatusCancelled:
+		return cancelled
+	case sdk.StatusSkipped:
+		return unknown
 	default:
 		return failed
 	}

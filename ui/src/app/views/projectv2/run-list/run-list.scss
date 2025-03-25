@@ -133,6 +133,10 @@
         &.blocked {
           color: $cds_color_teal;
         }
+
+        &.skipped {
+          color: $polar_grey_2;
+        }
         
         &.stopped {
           font-size: 21px;
