@@ -46,11 +46,12 @@ type Admin interface {
 	AdminDatabaseMigrationsList(service string) ([]sdk.DatabaseMigrationStatus, error)
 	AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error)
 	AdminDatabaseSignaturesTuplesBySigner(service string, e string, s string) ([]string, error)
-	AdminDatabaseSignaturesRollEntity(service string, e string, pks []string) error
-	AdminDatabaseSignaturesInfoEntity(service string, e string) (map[int64][]string, error)
+	AdminDatabaseRollSignedEntity(service string, e string, pks []string) error
+	AdminDatabaseInfoSignedEntity(service string, e string, pk string) (int64, error)
 	AdminDatabaseListEncryptedEntities(service string) ([]string, error)
 	AdminDatabaseRollEncryptedEntity(service string, e string, pks []string) error
-	AdminDatabaseInfoEncryptedEntity(service string, e string) (map[int64][]string, error)
+	AdminDatabaseInfoEncryptedEntity(service string, e string, pk string) (int64, error)
+	AdminDatabaseListTuples(service string, e string) ([]string, error)
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
