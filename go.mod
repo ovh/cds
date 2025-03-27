@@ -73,7 +73,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.9.1
-	github.com/redis/go-redis/v9 v9.5.4
+	github.com/redis/go-redis/v9 v9.5.5
 	github.com/rockbears/log v0.11.2
 	github.com/rockbears/yaml v0.4.0
 	github.com/rubenv/sql-migrate v1.5.2
