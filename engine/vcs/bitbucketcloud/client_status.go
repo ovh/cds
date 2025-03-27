@@ -38,10 +38,14 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, buildStatus s
 	switch buildStatus.Status {
 	case sdk.StatusFail:
 		state = "FAILED"
-	case sdk.StatusSuccess, sdk.StatusSkipped:
+	case sdk.StatusSuccess:
 		state = "SUCCESSFUL"
 	case sdk.StatusStopped:
 		state = "STOPPED"
+	case sdk.StatusSkipped:
+		state = "UNKNOWN"
+	case sdk.StatusCancelled:
+		state = "CANCELLED"
 	default:
 		state = "INPROGRESS"
 	}

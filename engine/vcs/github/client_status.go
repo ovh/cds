@@ -51,6 +51,10 @@ func (g *githubClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildSt
 		ghStatus.State = "failure"
 	case sdk.StatusBuilding:
 		ghStatus.State = "pending"
+	case sdk.StatusSkipped:
+		ghStatus.State = "skipped"
+	case sdk.StatusCancelled:
+		ghStatus.State = "cancelled"
 	default:
 		log.Debug(ctx, "SetStatus> github setStatus not managed for %s", buildStatus.Status)
 		return nil
