@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -692,18 +693,79 @@ func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi Artifac
 	runResult.ArtifactManagerMetadata.Set("downloadURI", downloadURI)
 }
 
-func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, fileName string, f fs.File, size int64, fileChecksum ChecksumResult) (*workerruntime.V2UpdateResultResponse, error) {
+type UploadRunResultOutput struct {
+	FileName          string
+	Logs              []UploadRunResultLogLevel
+	Error             string
+	RunResultResponse *workerruntime.V2UpdateResultResponse
+}
+type UploadRunResultLogLevel struct {
+	Level string
+	Log   string
+}
+
+func UploadRunResults(ctx context.Context, actplugin *actionplugin.Common, jobContext sdk.WorkflowRunJobsContext, runResultRequests map[string]*workerruntime.V2RunResultRequest, fileResults glob.Results, files map[string]fs.File, sizes map[string]int64, checksums map[string]ChecksumResult) ([]workerruntime.V2UpdateResultResponse, bool) {
+	chanUploadResult := make(chan *UploadRunResultOutput, len(fileResults))
+	chanFileToUpload := make(chan glob.Result, len(fileResults))
+	maxWorker := 15
+	goRoutines := sdk.NewGoRoutines(ctx)
+
+	// Worker that upload run result
+	for i := 0; i < maxWorker; i++ {
+		goRoutines.Exec(ctx, "worker-upload-"+strconv.Itoa(i), func(ctx context.Context) {
+			UploadRunResultWorker(ctx, actplugin, chanFileToUpload, chanUploadResult, jobContext, runResultRequests, fileResults, files, sizes, checksums)
+		})
+	}
+	// Send run result to upload to worker
+	for i := range fileResults {
+		chanFileToUpload <- fileResults[i]
+	}
+	close(chanFileToUpload)
+
+	// Retrieve results
+	hasError := false
+	results := make([]workerruntime.V2UpdateResultResponse, 0, len(fileResults))
+	for i := 0; i < len(fileResults); i++ {
+		result := <-chanUploadResult
+		for _, l := range result.Logs {
+			if l.Level == "success" {
+				Success(actplugin, l.Log)
+			} else {
+				Log(actplugin, l.Log)
+			}
+		}
+		if result.Error != "" {
+			hasError = true
+			Error(actplugin, result.Error)
+		}
+		results = append(results, *result.RunResultResponse)
+	}
+	return results, hasError
+}
+
+func UploadRunResultWorker(ctx context.Context, actplugin *actionplugin.Common, chanFileToUpload <-chan glob.Result, chanUploadResult chan<- *UploadRunResultOutput, jobContext sdk.WorkflowRunJobsContext, runResultRequests map[string]*workerruntime.V2RunResultRequest, fileResults glob.Results, files map[string]fs.File, sizes map[string]int64, checksums map[string]ChecksumResult) {
+	for globResult := range chanFileToUpload {
+		result := &UploadRunResultOutput{FileName: globResult.Path}
+		if err := UploadRunResult(ctx, actplugin, result, jobContext, runResultRequests[globResult.Path], globResult.Path, globResult.Result, files[globResult.Path], sizes[globResult.Path], checksums[globResult.Path]); err != nil {
+			result.Error = err.Error()
+		}
+		chanUploadResult <- result
+	}
+}
+
+func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output *UploadRunResultOutput, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, fileName string, result string, f fs.File, size int64, fileChecksum ChecksumResult) error {
 	workerConfig, err := GetWorkerConfig(ctx, actplugin)
 	if err != nil {
-		Error(actplugin, err.Error())
-		return nil, err
+		return err
 	}
 
 	response, err := CreateRunResult(ctx, actplugin, runresultReq)
 	if err != nil {
-		Error(actplugin, err.Error())
-		return nil, err
+		return err
 	}
+
+	message := fmt.Sprintf("\nUpload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s", fileName, result, size, fileChecksum.Md5, fileChecksum.Sha1, fileChecksum.Sha256)
+	output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: message, Level: "success"})
 
 	// Upload the file to an artifactory or CDN
 	var d time.Duration
@@ -716,12 +778,11 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 		if ok {
 			item, d, err = CDNItemUpload(ctx, actplugin, workerConfig.CDNEndpoint, response.CDNSignature, reader)
 			if err != nil {
-				Error(actplugin, "An error occurred during file upload upload: "+err.Error())
-				return nil, err
+				return err
 			}
 		} else {
 			// unable to cast the file
-			return nil, fmt.Errorf("unable to cast reader")
+			return fmt.Errorf("unable to cast reader")
 		}
 
 		// Update the run result status
@@ -733,15 +794,14 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 			"cdn_api_ref_hash":  i.Item.APIRefHash,
 			"cdn_download_path": fmt.Sprintf("/item/%s/%s/download", string(i.Item.Type), i.Item.APIRefHash),
 		}
-		Logf(actplugin, "  CDN API Ref Hash: %s", i.Item.APIRefHash)
-		Logf(actplugin, "  CDN HTTP URL: %s", i.CDNHttpURL)
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  CDN API Ref Hash: " + i.Item.APIRefHash, Level: "info"})
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  CDN HTTP URL " + i.CDNHttpURL, Level: "info"})
 
 	case response.RunResult.ArtifactManagerIntegrationName != nil:
 		// Get integration from the local cache, or from the worker
 		if jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager.Name == "" {
 			err := errors.New("unable to find artifactory integration")
-			Errorf(actplugin, err.Error())
-			return nil, err
+			return err
 		}
 
 		integ := jobContext.Integrations.ArtifactManager
@@ -768,17 +828,15 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 		reader, ok := f.(io.ReadSeeker)
 		if !ok {
 			// unable to cast the file
-			return nil, fmt.Errorf("unable to cast reader")
+			return fmt.Errorf("unable to cast reader")
 		}
-
-		Logf(actplugin, "  Artifactory URL: %s", integ.Get(sdk.ArtifactoryConfigURL))
-		Logf(actplugin, "  Artifactory repository: %s", repository)
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  Artifactory URL: " + integ.Get(sdk.ArtifactoryConfigURL), Level: "info"})
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  Artifactory repository: " + repository, Level: "info"})
 
 		var res *ArtifactoryUploadResult
 		res, d, err = ArtifactoryItemUploadRunResult(ctx, actplugin, response.RunResult, integ, reader)
 		if err != nil {
-			Error(actplugin, err.Error())
-			return nil, err
+			return err
 		}
 
 		response.RunResult.ArtifactManagerMetadata.Set("uri", res.URI)
@@ -791,30 +849,29 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 
 		runResultRequest = workerruntime.V2RunResultRequest{RunResult: response.RunResult}
 
-		Logf(actplugin, "  Artifactory download URI: %s", res.DownloadURI)
+		output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: "  Artifactory download URI: " + res.DownloadURI, Level: "info"})
 
 	default:
 		err := errors.Errorf("unsupported run result %s", response.RunResult.ID)
-		Error(actplugin, err.Error())
-		return nil, err
+		return err
 	}
 
 	// Update run result
 	runResultRequest.RunResult.Status = sdk.V2WorkflowRunResultStatusCompleted
 	updateResponse, err := UpdateRunResult(ctx, actplugin, &runResultRequest)
 	if err != nil {
-		Error(actplugin, err.Error())
-		return nil, err
+		return err
 	}
 
-	Successf(actplugin, "  %d bytes uploaded in %.3fs", size, d.Seconds())
+	output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: fmt.Sprintf("  %d bytes uploaded in %.3fs", size, d.Seconds()), Level: "info"})
 
 	if _, err := updateResponse.RunResult.GetDetail(); err != nil {
-		Error(actplugin, err.Error())
-		return nil, err
+		return err
 	}
-	Logf(actplugin, "  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID)
-	return updateResponse, nil
+	output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: fmt.Sprintf("  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID), Level: "success"})
+
+	output.RunResultResponse = updateResponse
+	return nil
 }
 
 type ArtifactoryUploadResult struct {

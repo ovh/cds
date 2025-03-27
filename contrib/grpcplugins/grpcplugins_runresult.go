@@ -70,9 +70,6 @@ func ComputeRunResultTestsDetail(c *actionplugin.Common, filePath string, fileCo
 	_, fileName := filepath.Split(filePath)
 	perm := os.FileMode(0755)
 
-	message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s, Mode: %v", filePath, fileName, size, md5, sha1, sha256, perm)
-	Log(c, message)
-
 	// Create run result at status "pending"
 	return &sdk.V2WorkflowRunResultDetail{
 		Data: sdk.V2WorkflowRunResultTestDetail{
