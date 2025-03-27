@@ -1912,7 +1912,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelWarning,
-					Message:       fmt.Sprintf("job %s: user %s does not have enough right on varset %s", jobID, wrEnqueue.Initiator.Username(), vInError),
+					Message:       fmt.Sprintf("job %s: vcs user %s does not have enough right on varset %s", jobID, wrEnqueue.Initiator.Username(), vInError),
 				})
 				return false, runInfos, nil
 			}

@@ -108,15 +108,11 @@ func HasRoleOnVariableSetsAndVCSUser(ctx context.Context, db gorp.SqlExecutor, r
 	}
 
 	for _, rw := range rbaVSs {
-		if rw.AllUsers {
-			if rw.AllVariableSets {
-				return true, "", nil
-			}
-			variableSets = append(variableSets, rw.RBACVariableSetNames...)
-			continue
-		}
 		for _, rbacVCSUser := range rw.RBACVCSUsers {
 			if rbacVCSUser.VCSServer == user.VCSServer && rbacVCSUser.VCSUsername == user.VCSUsername {
+				if rw.AllVariableSets {
+					return true, "", nil
+				}
 				variableSets = append(variableSets, rw.RBACVariableSetNames...)
 				break
 			}
