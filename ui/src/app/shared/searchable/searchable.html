@@ -1,5 +1,5 @@
 <ng-content></ng-content>
 <a class="search" [class.fixed]="fixed" [routerLink]="link" [queryParams]="params"
-	[queryParamsHandling]="paramsHandling" [title]="title">
+	[queryParamsHandling]="paramsHandling" [title]="title ?? ''">
 	<span nz-icon nzType="search"></span>
 </a>
