@@ -55,8 +55,8 @@ func getAllHooks(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 	return hooks, nil
 }
 
-func DeleteWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, entityID string) error {
-	_, err := db.Exec("DELETE FROM v2_workflow_hook WHERE entity_id = $1", entityID)
+func DeleteWorkflowHookByID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, hookID string) error {
+	_, err := db.Exec("DELETE FROM v2_workflow_hook WHERE id = $1", hookID)
 	return sdk.WithStack(err)
 }
 
@@ -109,14 +109,14 @@ func LoadHooksByRepositoryEvent(ctx context.Context, db gorp.SqlExecutor, vcsNam
 	return getAllHooks(ctx, db, q)
 }
 
-func LoadHooksWorkflowRunByWorkflow(ctx context.Context, db gorp.SqlExecutor, workflowName string) ([]sdk.V2WorkflowHook, error) {
+func LoadHooksWorkflowRunByListeningWorkflow(ctx context.Context, db gorp.SqlExecutor, workflowName string) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
     type = $1 AND
     data->>'workflow_run_name'::text = $2`).Args(sdk.WorkflowHookTypeWorkflowRun, workflowName)
 	return getAllHooks(ctx, db, q)
 }
 
-func LoadHookSchedulerByWorkflow(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName string) ([]sdk.V2WorkflowHook, error) {
+func LoadHookByWorkflowAndType(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName string, hookType string) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`
 		SELECT *
 		FROM v2_workflow_hook
@@ -126,7 +126,7 @@ func LoadHookSchedulerByWorkflow(ctx context.Context, db gorp.SqlExecutor, projK
     	vcs_name = $3 AND
     	repository_name = $4 AND
     	workflow_name = $5
-	`).Args(sdk.WorkflowHookTypeScheduler, projKey, vcsName, repoName, workflowName)
+	`).Args(hookType, projKey, vcsName, repoName, workflowName)
 	return getAllHooks(ctx, db, q)
 }
 

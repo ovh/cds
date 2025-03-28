@@ -88,6 +88,8 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 		VCSName:             hre.VCSServerName,
 		RepositoryName:      hre.RepositoryName,
 		AnalyzedProjectKeys: sdk.StringSlice{},
+		SkippedWorkflows:    hre.SkippedWorkflows,
+		SkippedHooks:        hre.SkippedHooks,
 	}
 	for _, a := range hre.Analyses {
 		// Only retrieve hooks from project where analysis is OK

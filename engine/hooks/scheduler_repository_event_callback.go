@@ -93,6 +93,8 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 						hre.DeprecatedUserID = callback.AnalysisCallback.Initiator.UserID
 						hre.DeprecatedUsername = callback.AnalysisCallback.Initiator.Username()
 						hre.Initiator = callback.AnalysisCallback.Initiator
+						hre.SkippedWorkflows = append(hre.SkippedWorkflows, callback.AnalysisCallback.SkippedWorkflows...)
+						hre.SkippedHooks = append(hre.SkippedHooks, callback.AnalysisCallback.SkippedHooks...)
 						if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 							return err
 						}

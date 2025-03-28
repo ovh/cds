@@ -1538,7 +1538,7 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 	require.Equal(t, 0, len(hooks))
 
 	// Check scheduler config
-	scheds, err := workflow_v2.LoadHookSchedulerByWorkflow(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name)
+	scheds, err := workflow_v2.LoadHookByWorkflowAndType(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name, sdk.WorkflowHookTypeScheduler)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(scheds))
 	require.Equal(t, "sgu/mydefrepo", scheds[0].Data.RepositoryName)
@@ -1620,7 +1620,7 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(hooks))
 
-	scheds, err := workflow_v2.LoadHookSchedulerByWorkflow(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name)
+	scheds, err := workflow_v2.LoadHookByWorkflowAndType(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name, sdk.WorkflowHookTypeScheduler)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(scheds))
 	require.Equal(t, "sgu/myapp", scheds[0].Data.RepositoryName)

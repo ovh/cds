@@ -91,9 +91,21 @@ type HookAnalysisCallback struct {
 	Error              string           `json:"error"`
 	Models             []EntityFullName `json:"models"`
 	Workflows          []EntityFullName `json:"workflows"`
+	SkippedWorkflows   []EntityFullName `json:"skipped_workflows"`
+	SkippedHooks       []V2WorkflowHook `json:"skipped_hooks"`
 	DeprecatedUsername string           `json:"username"`
 	DeprecatedUserID   string           `json:"user_id"`
 	Initiator          *V2Initiator     `json:"initiator"`
+}
+
+type HookAnalysisCallbackSkippedHook struct {
+	WorkflowVCS    string
+	WorkflowRepo   string
+	WorkflowName   string
+	WorkflowRef    string
+	WorkflowCommit string
+	HookData       V2WorkflowHookData
+	Type           string
 }
 
 type HookRepository struct {
@@ -143,6 +155,8 @@ type HookRepositoryEvent struct {
 	Analyses                  []HookRepositoryEventAnalysis  `json:"analyses"`
 	ModelUpdated              []EntityFullName               `json:"model_updated"`
 	WorkflowUpdated           []EntityFullName               `json:"workflow_updated"`
+	SkippedWorkflows          []EntityFullName               `json:"skipped_workflows"`
+	SkippedHooks              []V2WorkflowHook               `json:"skipped_hooks"`
 	WorkflowHooks             []HookRepositoryEventWorkflow  `json:"workflows"`
 	DeprecatedUserID          string                         `json:"user_id"`  // Deprecated
 	DeprecatedUsername        string                         `json:"username"` // Deprecated
