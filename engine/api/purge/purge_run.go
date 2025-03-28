@@ -125,7 +125,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			var forkBranches map[string]struct{}
 			isFork := false
 			if gitRepo, has := payload["git.repository"]; has {
-				if gitRepo != app.RepositoryFullname {
+				if gitRepo != app.RepositoryFullname && gitRepo != "" {
 					isFork = true
 					if vcsClient != nil {
 						forkBranches, err = getBranches(ctx, gitRepo, vcsClient)
