@@ -174,7 +174,7 @@ func (api *API) putUserHandler() service.Handler {
 		if oldUser.Ring == sdk.UserRingAdmin {
 			// Specific audit log for admin: don't change it
 			log.Info(ctx, "Administrator has been updated (id=%s) (username: %q -> %q, fullname: %q -> %q, ring: %q -> %q, organization: %q -> %q)",
-				consumer.AuthConsumerUser.AuthentifiedUserID,
+				oldUser.ID,
 				oldUser.Username, data.Username,
 				oldUser.Fullname, data.Fullname,
 				oldUser.Ring, data.Ring,
