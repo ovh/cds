@@ -753,7 +753,6 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
 				return err
 			}
-
 			log.Debug(ctx, "postWorkflowRunFromHookV2Handler - Run Request initiator: %+v", runRequest.Initiator)
 
 			ctx = context.WithValue(ctx, cdslog.HookEventID, runRequest.HookEventID)
@@ -859,14 +858,6 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			}
 			if !hasRole {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger a workflow", theOneWhoTriggers.Username())
-			}
-
-			// Check runrequest git information regarding workflow
-			if wk.Repository == nil || (wk.Repository.VCSServer == vcsProject.Name && wk.Repository.Name == repo.Name) {
-				// git info must match between workflow def and target repository
-				if (ref != runRequest.Ref && runRequest.Ref != "") || (commit != runRequest.Sha && runRequest.Sha != "") {
-					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to use a different commit")
-				}
 			}
 
 			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, *theOneWhoTriggers)

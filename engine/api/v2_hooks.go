@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -406,14 +407,14 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 	filteredWorkflowHooks := make([]sdk.V2WorkflowHook, 0)
 
 	for _, w := range workflowHooks {
-		if validateRepositoryWebHook(ctx, hookRequest, w) {
+		if validateRepositoryWebHook(ctx, hookRequest, w, false) {
 			filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 		}
 	}
 
 	// Check if we skipped a hook that should trigger something
 	for _, w := range hookRequest.SkippedHooks {
-		if !validateRepositoryWebHook(ctx, hookRequest, w) {
+		if !validateRepositoryWebHook(ctx, hookRequest, w, false) {
 			continue
 		}
 		// If we skipped a hook that should match, fallback on the same REF but commit HEAD
@@ -439,24 +440,33 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 				continue
 			}
 		}
-		if hook != nil && validateRepositoryWebHook(ctx, hookRequest, *hook) {
-			filteredWorkflowHooks = append(filteredWorkflowHooks, w)
+		if hook != nil && validateRepositoryWebHook(ctx, hookRequest, *hook, true) {
+			// Load entity to get the right commit instead of HEAD
+			e, err := entity.LoadByID(ctx, db, hook.EntityID)
+			if err != nil {
+				return nil, err
+			}
+			hook.Commit = e.Commit
+			filteredWorkflowHooks = append(filteredWorkflowHooks, *hook)
 		}
 	}
 
 	return filteredWorkflowHooks, nil
 }
 
-func validateRepositoryWebHook(ctx context.Context, hookRequest sdk.HookListWorkflowRequest, w sdk.V2WorkflowHook) bool {
-	// If event && workflow declaration are on the same repo
-	if w.VCSName == hookRequest.VCSName && w.RepositoryName == hookRequest.RepositoryName {
-		// Only get workflow configuration from current branch/commit
-		if w.Ref != hookRequest.Ref || w.Commit != hookRequest.Sha {
+func validateRepositoryWebHook(ctx context.Context, hookRequest sdk.HookListWorkflowRequest, w sdk.V2WorkflowHook, fallback bool) bool {
+	// Skip branch/commit validation for fallback
+	if !fallback {
+		// If event && workflow declaration are on the same repo
+		if w.VCSName == hookRequest.VCSName && w.RepositoryName == hookRequest.RepositoryName {
+			// Only get workflow configuration from current branch/commit
+			if w.Ref != hookRequest.Ref || w.Commit != hookRequest.Sha {
+				return false
+			}
+		} else if w.Commit != "HEAD" {
+			// for distant workflow, only keep hook on default branch
 			return false
 		}
-	} else if w.Commit != "HEAD" {
-		// for distant workflow, only keep hook on default branch
-		return false
 	}
 
 	// Check configuration : branch filter + path filter

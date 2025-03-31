@@ -90,6 +90,12 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) e
 	return gorpmapping.Delete(db, &dbEntity{Entity: *e})
 }
 
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, entityID string) (*sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT * from entity WHERE ID = $1`).Args(entityID)
+	return getEntity(ctx, db, query)
+}
+
 // LoadByRepositoryAndRef loads an entity by his repository, ref
 func LoadByRepositoryAndRefAndCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, commit string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`

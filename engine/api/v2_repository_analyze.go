@@ -1322,7 +1322,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 		}
 		switch e.Type {
 		case sdk.EntityTypeWorkflow:
-			callback.AnalysisCallback.SkippedWorkflows = append(callback.AnalysisCallback.Workflows, ent)
+			callback.AnalysisCallback.SkippedWorkflows = append(callback.AnalysisCallback.SkippedWorkflows, ent)
 		}
 	}
 	callback.AnalysisCallback.SkippedHooks = append(callback.AnalysisCallback.SkippedHooks, skippedHooks...)

@@ -477,3 +477,130 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkflowRun(t *testing.T) {
 	require.Equal(t, 1, len(hs))
 	require.Equal(t, wh1.ID, hs[0].ID)
 }
+
+func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHook_SkippedWorkflow(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM v2_workflow_hook")
+	require.NoError(t, err)
+
+	_, pwd := assets.InsertAdminUser(t, db)
+
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", sdk.VCSTypeGithub)
+	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, sdk.RandomString(10))
+	e := sdk.Entity{
+		Name:                "MyWorkflow",
+		Type:                sdk.EntityTypeWorkflow,
+		ProjectKey:          p.Key,
+		ProjectRepositoryID: repo.ID,
+		Commit:              "123456",
+		Ref:                 "refs/heads/master",
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &e))
+
+	wh1 := sdk.V2WorkflowHook{
+		ProjectKey:     p.Key,
+		VCSName:        vcs.Name,
+		RepositoryName: repo.Name,
+		EntityID:       e.ID,
+		WorkflowName:   e.Name,
+		Commit:         "123456",
+		Ref:            "refs/heads/master",
+		Type:           sdk.WorkflowHookTypeRepository,
+		Data: sdk.V2WorkflowHookData{
+			RepositoryName:  repo.Name,
+			VCSServer:       vcs.Name,
+			RepositoryEvent: sdk.WorkflowHookEventNamePush,
+		},
+	}
+	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &wh1))
+
+	whHead := sdk.V2WorkflowHook{
+		ProjectKey:     p.Key,
+		VCSName:        vcs.Name,
+		RepositoryName: repo.Name,
+		EntityID:       e.ID,
+		WorkflowName:   e.Name,
+		Commit:         "HEAD",
+		Ref:            "refs/heads/master",
+		Type:           sdk.WorkflowHookTypeRepository,
+		Data: sdk.V2WorkflowHookData{
+			RepositoryName:  repo.Name,
+			VCSServer:       vcs.Name,
+			RepositoryEvent: sdk.WorkflowHookEventNamePush,
+		},
+	}
+	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &whHead))
+
+	r := sdk.HookListWorkflowRequest{
+		RepositoryName:      repo.Name,
+		VCSName:             vcs.Name,
+		RepositoryEventName: sdk.WorkflowHookEventNamePush,
+		AnalyzedProjectKeys: []string{p.Key},
+		Ref:                 "refs/heads/noright",
+		Sha:                 "654321",
+		SkippedWorkflows: []sdk.EntityFullName{
+			{
+				Name:       wh1.WorkflowName,
+				Ref:        "refs/heads/noright",
+				VCSName:    vcs.Name,
+				RepoName:   repo.Name,
+				ProjectKey: p.Key,
+			},
+		},
+		SkippedHooks: []sdk.V2WorkflowHook{
+			{
+				ProjectKey:     p.Key,
+				VCSName:        vcs.Name,
+				RepositoryName: repo.Name,
+				EntityID:       e.ID,
+				WorkflowName:   "MyWorkflow",
+				Commit:         "654321",
+				Ref:            "refs/heads/noright",
+				Type:           sdk.WorkflowHookTypeRepository,
+				Data: sdk.V2WorkflowHookData{
+					RepositoryName:  repo.Name,
+					VCSServer:       vcs.Name,
+					RepositoryEvent: sdk.WorkflowHookEventNamePush,
+				},
+			},
+		},
+	}
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/"+repo.Name+"/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			b := &sdk.VCSBranch{
+				ID:           "refs/heads/master",
+				DisplayID:    "master",
+				LatestCommit: "123456",
+			}
+			*(out.(*sdk.VCSBranch)) = *b
+			return nil, 200, nil
+		}).AnyTimes()
+
+	uri := api.Router.GetRouteV2("POST", api.postRetrieveWorkflowToTriggerHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, nil, pwd, "POST", uri, &r)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	var hs []sdk.V2WorkflowHook
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hs))
+
+	require.Equal(t, 1, len(hs))
+	require.Equal(t, whHead.ID, hs[0].ID)
+}
