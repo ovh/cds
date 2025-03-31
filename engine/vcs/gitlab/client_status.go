@@ -31,6 +31,8 @@ func getGitlabStateFromStatus(s string) gitlab.BuildStateValue {
 		return gitlab.Failed
 	case sdk.StatusDisabled:
 		return gitlab.Canceled
+	case sdk.StatusCancelled:
+		return gitlab.Canceled
 	case sdk.StatusNeverBuilt:
 		return gitlab.Canceled
 	case sdk.StatusUnknown:

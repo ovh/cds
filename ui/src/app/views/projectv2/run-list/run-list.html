@@ -70,6 +70,8 @@
 							nzTheme="outline"></span>
 						<span *ngIf="run.status === 'Blocked'" class="blocked" nz-icon nzType="pause-circle"
 							nzTheme="outline"></span>
+						<span *ngIf="run.status === 'Skipped'" class="skipped" nz-icon nzType="stop"
+							nzTheme="outline"></span>	
 					</div>
 				</ng-template>
 				<ng-template #runTitle>

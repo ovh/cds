@@ -1912,7 +1912,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelWarning,
-					Message:       fmt.Sprintf("job %s: user %s does not have enough right on varset %s", jobID, wrEnqueue.Initiator.Username(), vInError),
+					Message:       fmt.Sprintf("job %s: vcs user %s does not have enough right on varset %s", jobID, wrEnqueue.Initiator.Username(), vInError),
 				})
 				return false, runInfos, nil
 			}
@@ -1956,25 +1956,37 @@ func computeRunStatusFromJobsStatus(ctx context.Context, db gorp.SqlExecutor, ru
 
 	finalStatus := sdk.V2WorkflowRunStatusSuccess
 	allJobID := make(map[string]struct{})
+	allSkipped := true
 
 	for _, rj := range runJobs {
-		if rj.Status == sdk.V2WorkflowRunJobStatusCancelled && finalStatus != sdk.V2WorkflowRunStatusStopped && finalStatus != sdk.V2WorkflowRunStatusFail && finalStatus.IsTerminated() {
-			finalStatus = sdk.V2WorkflowRunStatusCancelled
+		if rj.Status != sdk.V2WorkflowRunJobStatusSkipped {
+			allSkipped = false
 		}
-		if rj.Status == sdk.V2WorkflowRunJobStatusFail && finalStatus != sdk.V2WorkflowRunStatusStopped && finalStatus.IsTerminated() && !rj.Job.ContinueOnError {
-			finalStatus = sdk.V2WorkflowRunStatusFail
-		}
-		if rj.Status == sdk.V2WorkflowRunJobStatusStopped && finalStatus.IsTerminated() {
-			finalStatus = sdk.V2WorkflowRunStatusStopped
-		}
-		if !rj.Status.IsTerminated() {
-			finalStatus = sdk.V2WorkflowRunStatusBuilding
+		switch rj.Status {
+		case sdk.V2WorkflowRunJobStatusCancelled:
+			if finalStatus != sdk.V2WorkflowRunStatusStopped && finalStatus != sdk.V2WorkflowRunStatusFail && finalStatus.IsTerminated() {
+				finalStatus = sdk.V2WorkflowRunStatusCancelled
+			}
+		case sdk.V2WorkflowRunJobStatusFail:
+			if finalStatus != sdk.V2WorkflowRunStatusStopped && finalStatus.IsTerminated() && !rj.Job.ContinueOnError {
+				finalStatus = sdk.V2WorkflowRunStatusFail
+			}
+		case sdk.V2WorkflowRunJobStatusStopped:
+			if finalStatus.IsTerminated() {
+				finalStatus = sdk.V2WorkflowRunStatusStopped
+			}
+		default:
+			if !rj.Status.IsTerminated() {
+				finalStatus = sdk.V2WorkflowRunStatusBuilding
+			}
 		}
 		allJobID[rj.JobID] = struct{}{}
 	}
 
 	if len(allJobID) < nbJob && finalStatus == sdk.V2WorkflowRunStatusSuccess {
 		finalStatus = sdk.V2WorkflowRunStatusBuilding
+	} else if len(allJobID) == nbJob && allSkipped {
+		finalStatus = sdk.V2WorkflowRunStatusSkipped
 	}
 	return finalStatus, nil
 }

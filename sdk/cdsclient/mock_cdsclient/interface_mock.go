@@ -310,18 +310,33 @@ func (mr *MockAdminMockRecorder) AdminCDSMigrationReset(id any) *gomock.Call {
 }
 
 // AdminDatabaseInfoEncryptedEntity mocks base method.
-func (m *MockAdmin) AdminDatabaseInfoEncryptedEntity(service, e string) (map[int64][]string, error) {
+func (m *MockAdmin) AdminDatabaseInfoEncryptedEntity(service, e, pk string) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseInfoEncryptedEntity", service, e)
-	ret0, _ := ret[0].(map[int64][]string)
+	ret := m.ctrl.Call(m, "AdminDatabaseInfoEncryptedEntity", service, e, pk)
+	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AdminDatabaseInfoEncryptedEntity indicates an expected call of AdminDatabaseInfoEncryptedEntity.
-func (mr *MockAdminMockRecorder) AdminDatabaseInfoEncryptedEntity(service, e any) *gomock.Call {
+func (mr *MockAdminMockRecorder) AdminDatabaseInfoEncryptedEntity(service, e, pk any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseInfoEncryptedEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseInfoEncryptedEntity), service, e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseInfoEncryptedEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseInfoEncryptedEntity), service, e, pk)
+}
+
+// AdminDatabaseInfoSignedEntity mocks base method.
+func (m *MockAdmin) AdminDatabaseInfoSignedEntity(service, e, pk string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminDatabaseInfoSignedEntity", service, e, pk)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminDatabaseInfoSignedEntity indicates an expected call of AdminDatabaseInfoSignedEntity.
+func (mr *MockAdminMockRecorder) AdminDatabaseInfoSignedEntity(service, e, pk any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseInfoSignedEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseInfoSignedEntity), service, e, pk)
 }
 
 // AdminDatabaseListEncryptedEntities mocks base method.
@@ -337,6 +352,21 @@ func (m *MockAdmin) AdminDatabaseListEncryptedEntities(service string) ([]string
 func (mr *MockAdminMockRecorder) AdminDatabaseListEncryptedEntities(service any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseListEncryptedEntities", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseListEncryptedEntities), service)
+}
+
+// AdminDatabaseListTuples mocks base method.
+func (m *MockAdmin) AdminDatabaseListTuples(service, e string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminDatabaseListTuples", service, e)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminDatabaseListTuples indicates an expected call of AdminDatabaseListTuples.
+func (mr *MockAdminMockRecorder) AdminDatabaseListTuples(service, e any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseListTuples", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseListTuples), service, e)
 }
 
 // AdminDatabaseMigrationDelete mocks base method.
@@ -396,19 +426,18 @@ func (mr *MockAdminMockRecorder) AdminDatabaseRollEncryptedEntity(service, e, pk
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollEncryptedEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseRollEncryptedEntity), service, e, pks)
 }
 
-// AdminDatabaseSignaturesInfoEntity mocks base method.
-func (m *MockAdmin) AdminDatabaseSignaturesInfoEntity(service, e string) (map[int64][]string, error) {
+// AdminDatabaseRollSignedEntity mocks base method.
+func (m *MockAdmin) AdminDatabaseRollSignedEntity(service, e string, pks []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesInfoEntity", service, e)
-	ret0, _ := ret[0].(map[int64][]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "AdminDatabaseRollSignedEntity", service, e, pks)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// AdminDatabaseSignaturesInfoEntity indicates an expected call of AdminDatabaseSignaturesInfoEntity.
-func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesInfoEntity(service, e any) *gomock.Call {
+// AdminDatabaseRollSignedEntity indicates an expected call of AdminDatabaseRollSignedEntity.
+func (mr *MockAdminMockRecorder) AdminDatabaseRollSignedEntity(service, e, pks any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesInfoEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesInfoEntity), service, e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollSignedEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseRollSignedEntity), service, e, pks)
 }
 
 // AdminDatabaseSignaturesResume mocks base method.
@@ -424,20 +453,6 @@ func (m *MockAdmin) AdminDatabaseSignaturesResume(service string) (sdk.Canonical
 func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesResume(service any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesResume", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesResume), service)
-}
-
-// AdminDatabaseSignaturesRollEntity mocks base method.
-func (m *MockAdmin) AdminDatabaseSignaturesRollEntity(service, e string, pks []string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollEntity", service, e, pks)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AdminDatabaseSignaturesRollEntity indicates an expected call of AdminDatabaseSignaturesRollEntity.
-func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesRollEntity(service, e, pks any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesRollEntity), service, e, pks)
 }
 
 // AdminDatabaseSignaturesTuplesBySigner mocks base method.
@@ -2961,7 +2976,7 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobStepUpdate(ctx, regio
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region, osarch string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -4586,7 +4601,7 @@ func (mr *MockV2QueueClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, i
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region, osarch string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -7084,18 +7099,33 @@ func (mr *MockInterfaceMockRecorder) AdminCDSMigrationReset(id any) *gomock.Call
 }
 
 // AdminDatabaseInfoEncryptedEntity mocks base method.
-func (m *MockInterface) AdminDatabaseInfoEncryptedEntity(service, e string) (map[int64][]string, error) {
+func (m *MockInterface) AdminDatabaseInfoEncryptedEntity(service, e, pk string) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseInfoEncryptedEntity", service, e)
-	ret0, _ := ret[0].(map[int64][]string)
+	ret := m.ctrl.Call(m, "AdminDatabaseInfoEncryptedEntity", service, e, pk)
+	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AdminDatabaseInfoEncryptedEntity indicates an expected call of AdminDatabaseInfoEncryptedEntity.
-func (mr *MockInterfaceMockRecorder) AdminDatabaseInfoEncryptedEntity(service, e any) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AdminDatabaseInfoEncryptedEntity(service, e, pk any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseInfoEncryptedEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseInfoEncryptedEntity), service, e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseInfoEncryptedEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseInfoEncryptedEntity), service, e, pk)
+}
+
+// AdminDatabaseInfoSignedEntity mocks base method.
+func (m *MockInterface) AdminDatabaseInfoSignedEntity(service, e, pk string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminDatabaseInfoSignedEntity", service, e, pk)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminDatabaseInfoSignedEntity indicates an expected call of AdminDatabaseInfoSignedEntity.
+func (mr *MockInterfaceMockRecorder) AdminDatabaseInfoSignedEntity(service, e, pk any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseInfoSignedEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseInfoSignedEntity), service, e, pk)
 }
 
 // AdminDatabaseListEncryptedEntities mocks base method.
@@ -7111,6 +7141,21 @@ func (m *MockInterface) AdminDatabaseListEncryptedEntities(service string) ([]st
 func (mr *MockInterfaceMockRecorder) AdminDatabaseListEncryptedEntities(service any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseListEncryptedEntities", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseListEncryptedEntities), service)
+}
+
+// AdminDatabaseListTuples mocks base method.
+func (m *MockInterface) AdminDatabaseListTuples(service, e string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminDatabaseListTuples", service, e)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminDatabaseListTuples indicates an expected call of AdminDatabaseListTuples.
+func (mr *MockInterfaceMockRecorder) AdminDatabaseListTuples(service, e any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseListTuples", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseListTuples), service, e)
 }
 
 // AdminDatabaseMigrationDelete mocks base method.
@@ -7170,19 +7215,18 @@ func (mr *MockInterfaceMockRecorder) AdminDatabaseRollEncryptedEntity(service, e
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollEncryptedEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseRollEncryptedEntity), service, e, pks)
 }
 
-// AdminDatabaseSignaturesInfoEntity mocks base method.
-func (m *MockInterface) AdminDatabaseSignaturesInfoEntity(service, e string) (map[int64][]string, error) {
+// AdminDatabaseRollSignedEntity mocks base method.
+func (m *MockInterface) AdminDatabaseRollSignedEntity(service, e string, pks []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesInfoEntity", service, e)
-	ret0, _ := ret[0].(map[int64][]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "AdminDatabaseRollSignedEntity", service, e, pks)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// AdminDatabaseSignaturesInfoEntity indicates an expected call of AdminDatabaseSignaturesInfoEntity.
-func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesInfoEntity(service, e any) *gomock.Call {
+// AdminDatabaseRollSignedEntity indicates an expected call of AdminDatabaseRollSignedEntity.
+func (mr *MockInterfaceMockRecorder) AdminDatabaseRollSignedEntity(service, e, pks any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesInfoEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesInfoEntity), service, e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollSignedEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseRollSignedEntity), service, e, pks)
 }
 
 // AdminDatabaseSignaturesResume mocks base method.
@@ -7198,20 +7242,6 @@ func (m *MockInterface) AdminDatabaseSignaturesResume(service string) (sdk.Canon
 func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesResume(service any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesResume", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesResume), service)
-}
-
-// AdminDatabaseSignaturesRollEntity mocks base method.
-func (m *MockInterface) AdminDatabaseSignaturesRollEntity(service, e string, pks []string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollEntity", service, e, pks)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AdminDatabaseSignaturesRollEntity indicates an expected call of AdminDatabaseSignaturesRollEntity.
-func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesRollEntity(service, e, pks any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesRollEntity), service, e, pks)
 }
 
 // AdminDatabaseSignaturesTuplesBySigner mocks base method.
@@ -11278,7 +11308,7 @@ func (mr *MockInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, s
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockInterface) V2QueuePolling(ctx context.Context, region, osarch string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -12989,7 +13019,7 @@ func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionNam
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region, osarch string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {

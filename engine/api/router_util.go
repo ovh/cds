@@ -82,6 +82,15 @@ func FormString(r *http.Request, s string) string {
 	return r.FormValue(s)
 }
 
+// FormStringSlice return a stringSlice
+func FormStringSlice(r *http.Request, s string) []string {
+	err := r.ParseForm()
+	if err != nil {
+		return nil
+	}
+	return r.Form[s]
+}
+
 // QueryString return a string from a query parameter
 func QueryString(r *http.Request, s string) string {
 	return r.FormValue(s)

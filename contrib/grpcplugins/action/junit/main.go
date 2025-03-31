@@ -74,6 +74,7 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, workingDir, filePath 
 	}
 
 	testFailed := 0
+	runResultRequests := make(map[string]*workerruntime.V2RunResultRequest)
 	for _, r := range fileResult.Results {
 
 		bts, err := os.ReadFile(filepath.Join(fmt.Sprintf("%s", fileResult.DirFS), r.Path))
@@ -88,18 +89,21 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, workingDir, filePath 
 			return err
 		}
 		testFailed += nbFailed
+		runResultRequests[r.Path] = runResultRequest
+	}
 
-		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, *jobCtx, runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
-			_ = openFiles[r.Path].Close()
-			return err
-		}
-		_ = openFiles[r.Path].Close()
+	_, hasError := grpcplugins.UploadRunResults(ctx, &actPlugin.Common, *jobCtx, runResultRequests, fileResult.Results, openFiles, sizes, checksums)
+	for _, f := range openFiles {
+		_ = f.Close()
 	}
 
 	if testFailed == 1 {
 		return fmt.Errorf("there is 1 test failed")
 	} else if testFailed > 1 {
 		return fmt.Errorf("there are %d tests failed", testFailed)
+	}
+	if hasError {
+		return fmt.Errorf("error while uploading files. Please check the logs")
 	}
 	return nil
 }

@@ -281,11 +281,10 @@ func (c *client) AdminDatabaseSignaturesTuplesBySigner(service string, e string,
 	return pks, nil
 }
 
-func (c *client) AdminDatabaseSignaturesRollEntity(service string, e string, pks []string) error {
+func (c *client) AdminDatabaseRollSignedEntity(service string, e string, pks []string) error {
 	for i, pk := range pks {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-
 		var display = new(cli.Display)
 		display.Printf("Rolling %v...", e)
 		display.Do(ctx)
@@ -303,41 +302,14 @@ func (c *client) AdminDatabaseSignaturesRollEntity(service string, e string, pks
 	return nil
 }
 
-func (c *client) AdminDatabaseSignaturesInfoEntity(service string, e string) (map[int64][]string, error) {
-	var pks []string
-	url := fmt.Sprintf("/admin/database/tuples/%s", e)
-	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &pks)
+func (c *client) AdminDatabaseInfoSignedEntity(service string, e string, pk string) (int64, error) {
+	var keyTimestamp int64
+	url := fmt.Sprintf("/admin/database/signature/%s/info/%s", e, pk)
+	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &keyTimestamp)
 	if _, err := f(); err != nil {
-		return nil, err
+		return 0, err
 	}
-
-	res := make(map[int64][]string)
-	for i, pk := range pks {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		var display = new(cli.Display)
-		display.Printf("Getting info %v...", e)
-		display.Do(ctx)
-
-		var keyTimestamp int64
-		display.Printf("Getting info %v (%d/%d)...", e, i+1, len(pks))
-		url := fmt.Sprintf("/admin/database/signature/%s/info/%s", e, pk)
-		var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &keyTimestamp)
-		if _, err := f(); err != nil {
-			return nil, err
-		}
-		if _, ok := res[keyTimestamp]; !ok {
-			res[keyTimestamp] = nil
-		}
-		res[keyTimestamp] = append(res[keyTimestamp], pk)
-		if i == len(pks)-1 {
-			display.Printf("Getting info %v (%d/%d) - DONE\n", e, i+1, len(pks))
-			time.Sleep(time.Second)
-		}
-	}
-
-	return res, nil
+	return keyTimestamp, nil
 }
 
 func (c *client) AdminDatabaseListEncryptedEntities(service string) ([]string, error) {
@@ -351,7 +323,6 @@ func (c *client) AdminDatabaseRollEncryptedEntity(service string, e string, pks 
 	for i, pk := range pks {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-
 		var display = new(cli.Display)
 		display.Printf("Rolling %v...", e)
 		display.Do(ctx)
@@ -369,41 +340,14 @@ func (c *client) AdminDatabaseRollEncryptedEntity(service string, e string, pks 
 	return nil
 }
 
-func (c *client) AdminDatabaseInfoEncryptedEntity(service string, e string) (map[int64][]string, error) {
-	var pks []string
-	url := fmt.Sprintf("/admin/database/tuples/%s", e)
-	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &pks)
+func (c *client) AdminDatabaseInfoEncryptedEntity(service string, e string, pk string) (int64, error) {
+	var keyTimestamp int64
+	url := fmt.Sprintf("/admin/database/encryption/%s/info/%s", e, pk)
+	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &keyTimestamp)
 	if _, err := f(); err != nil {
-		return nil, err
+		return 0, err
 	}
-
-	res := make(map[int64][]string)
-	for i, pk := range pks {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		var display = new(cli.Display)
-		display.Printf("Getting info %v...", e)
-		display.Do(ctx)
-
-		var keyTimestamp int64
-		display.Printf("Getting info %v (%d/%d)...", e, i+1, len(pks))
-		url := fmt.Sprintf("/admin/database/encryption/%s/info/%s", e, pk)
-		var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &keyTimestamp)
-		if _, err := f(); err != nil {
-			return nil, err
-		}
-		if _, ok := res[keyTimestamp]; !ok {
-			res[keyTimestamp] = nil
-		}
-		res[keyTimestamp] = append(res[keyTimestamp], pk)
-		if i == len(pks)-1 {
-			display.Printf("Getting info %v (%d/%d) - DONE\n", e, i+1, len(pks))
-			time.Sleep(time.Second)
-		}
-	}
-
-	return res, nil
+	return keyTimestamp, nil
 }
 
 func (c *client) AdminWorkflowUpdateMaxRuns(projectKey string, workflowName string, maxRuns int64) error {
@@ -413,4 +357,14 @@ func (c *client) AdminWorkflowUpdateMaxRuns(projectKey string, workflowName stri
 		return err
 	}
 	return nil
+}
+
+func (c *client) AdminDatabaseListTuples(service string, e string) ([]string, error) {
+	var pks []string
+	url := fmt.Sprintf("/admin/database/tuples/%s", e)
+	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &pks)
+	if _, err := f(); err != nil {
+		return nil, err
+	}
+	return pks, nil
 }

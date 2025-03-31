@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -165,7 +166,7 @@ func adminDatabaseSignatureRollSignerFunc(args cli.Values) error {
 			if err != nil {
 				return err
 			}
-			if err := client.AdminDatabaseSignaturesRollEntity(service, e, pks); err != nil {
+			if err := client.AdminDatabaseRollSignedEntity(service, e, pks); err != nil {
 				return err
 			}
 		}
@@ -239,7 +240,7 @@ func adminDatabaseSignatureRollFunc(args cli.Values) error {
 		if _, ok := report[timestamp]; !ok {
 			continue
 		}
-		if err := client.AdminDatabaseSignaturesRollEntity(service, e, report[timestamp]); err != nil {
+		if err := client.AdminDatabaseRollSignedEntity(service, e, report[timestamp]); err != nil {
 			return err
 		}
 	}
@@ -295,10 +296,54 @@ func adminDatabaseSignatureInfoFunc(args cli.Values) error {
 
 	sort.Strings(entities)
 	for _, e := range entities {
-		report, err := client.AdminDatabaseSignaturesInfoEntity(service, e)
+		pks, err := client.AdminDatabaseListTuples(service, e)
 		if err != nil {
 			return err
 		}
+		reportPath := path.Join(dir, service+"."+e+".signature.json")
+		existingReport := make(map[string]int64)
+		if _, err := os.Stat(reportPath); err == nil {
+			bs, err := os.ReadFile(reportPath)
+			if err != nil {
+				return err
+			}
+			var report map[int64][]string
+			if err := json.Unmarshal(bs, &report); err != nil {
+				return err
+			}
+			for t, ks := range report {
+				for _, k := range ks {
+					existingReport[k] = t
+				}
+			}
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		var display = new(cli.Display)
+		display.Printf("Getting info %v...", e)
+		display.Do(ctx)
+
+		report := make(map[int64][]string)
+		for i, pk := range pks {
+			display.Printf("Getting info %v (%d/%d)...", e, i+1, len(pks))
+			var keyTimestamp int64
+			if t, ok := existingReport[pk]; ok {
+				keyTimestamp = t
+			} else {
+				keyTimestamp, err = client.AdminDatabaseInfoSignedEntity(service, e, pk)
+				if err != nil {
+					cancel()
+					return err
+				}
+			}
+			if _, ok := report[keyTimestamp]; !ok {
+				report[keyTimestamp] = nil
+			}
+			report[keyTimestamp] = append(report[keyTimestamp], pk)
+		}
+		display.Printf("Getting info %v (%d/%d) - DONE\n", e, len(pks), len(pks))
+		cancel()
+
 		fmt.Printf("Entity %s: found %d signature keys used\n", e, len(report))
 		for ts, pks := range report {
 			fmt.Printf("	%d: %d tuple(s)\n", ts, len(pks))
@@ -307,7 +352,6 @@ func adminDatabaseSignatureInfoFunc(args cli.Values) error {
 		if err != nil {
 			return err
 		}
-		reportPath := path.Join(dir, service+"."+e+".signature.json")
 		if err := os.WriteFile(reportPath, buf, 0644); err != nil {
 			return err
 		}
@@ -332,6 +376,10 @@ var adminDatabaseEncryptionResume = cli.Command{
 
 func adminDatabaseEncryptionResumeFunc(args cli.Values) error {
 	entities, err := client.AdminDatabaseListEncryptedEntities(args.GetString(argServiceName))
+	if err != nil {
+		return err
+	}
+	sort.Strings(entities)
 	for _, e := range entities {
 		fmt.Println(e)
 	}
@@ -455,10 +503,54 @@ func adminDatabaseEncryptionInfoFunc(args cli.Values) error {
 
 	sort.Strings(entities)
 	for _, e := range entities {
-		report, err := client.AdminDatabaseInfoEncryptedEntity(service, e)
+		pks, err := client.AdminDatabaseListTuples(service, e)
 		if err != nil {
 			return err
 		}
+		reportPath := path.Join(dir, service+"."+e+".encryption.json")
+		existingReport := make(map[string]int64)
+		if _, err := os.Stat(reportPath); err == nil {
+			bs, err := os.ReadFile(reportPath)
+			if err != nil {
+				return err
+			}
+			var report map[int64][]string
+			if err := json.Unmarshal(bs, &report); err != nil {
+				return err
+			}
+			for t, ks := range report {
+				for _, k := range ks {
+					existingReport[k] = t
+				}
+			}
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		var display = new(cli.Display)
+		display.Printf("Getting info %v...", e)
+		display.Do(ctx)
+
+		report := make(map[int64][]string)
+		for i, pk := range pks {
+			display.Printf("Getting info %v (%d/%d)...", e, i+1, len(pks))
+			var keyTimestamp int64
+			if t, ok := existingReport[pk]; ok {
+				keyTimestamp = t
+			} else {
+				keyTimestamp, err = client.AdminDatabaseInfoEncryptedEntity(service, e, pk)
+				if err != nil {
+					cancel()
+					return err
+				}
+			}
+			if _, ok := report[keyTimestamp]; !ok {
+				report[keyTimestamp] = nil
+			}
+			report[keyTimestamp] = append(report[keyTimestamp], pk)
+		}
+		display.Printf("Getting info %v (%d/%d) - DONE\n", e, len(pks), len(pks))
+		cancel()
+
 		fmt.Printf("Entity %s: found %d encryption keys used\n", e, len(report))
 		for ts, pks := range report {
 			fmt.Printf("	%d: %d tuple(s)\n", ts, len(pks))
@@ -467,7 +559,6 @@ func adminDatabaseEncryptionInfoFunc(args cli.Values) error {
 		if err != nil {
 			return err
 		}
-		reportPath := path.Join(dir, service+"."+e+".encryption.json")
 		if err := os.WriteFile(reportPath, buf, 0644); err != nil {
 			return err
 		}

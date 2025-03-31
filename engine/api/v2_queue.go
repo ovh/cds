@@ -138,9 +138,9 @@ func (api *API) getJobsQueuedRegionalizedHandler() ([]service.RbacChecker, servi
 			vars := mux.Vars(req)
 			regionName := vars["regionName"]
 
-			osarch := FormString(req, "osarch")
-			if osarch == "" {
-				osarch = "linux/amd64"
+			osarch := FormStringSlice(req, "osarch")
+			if len(osarch) == 0 {
+				osarch = []string{"linux/amd64"}
 			}
 			hatchConsumer := getHatcheryConsumer(ctx)
 

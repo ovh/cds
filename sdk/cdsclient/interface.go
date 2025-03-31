@@ -1,3 +1,4 @@
+//go:generate mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface
 package cdsclient
 
 import (
@@ -45,11 +46,12 @@ type Admin interface {
 	AdminDatabaseMigrationsList(service string) ([]sdk.DatabaseMigrationStatus, error)
 	AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error)
 	AdminDatabaseSignaturesTuplesBySigner(service string, e string, s string) ([]string, error)
-	AdminDatabaseSignaturesRollEntity(service string, e string, pks []string) error
-	AdminDatabaseSignaturesInfoEntity(service string, e string) (map[int64][]string, error)
+	AdminDatabaseRollSignedEntity(service string, e string, pks []string) error
+	AdminDatabaseInfoSignedEntity(service string, e string, pk string) (int64, error)
 	AdminDatabaseListEncryptedEntities(service string) ([]string, error)
 	AdminDatabaseRollEncryptedEntity(service string, e string, pks []string) error
-	AdminDatabaseInfoEncryptedEntity(service string, e string) (map[int64][]string, error)
+	AdminDatabaseInfoEncryptedEntity(service string, e string, pk string) (int64, error)
+	AdminDatabaseListTuples(service string, e string) ([]string, error)
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
@@ -341,7 +343,7 @@ type ProjectVariablesClient interface {
 
 type V2QueueClient interface {
 	V2QueueGetJobRun(ctx context.Context, regionName string, id string) (*sdk.V2QueueJobInfo, error)
-	V2QueuePolling(ctx context.Context, region string, osarch string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
+	V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
 	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
 	V2QueueJobRunResultGet(ctx context.Context, regionName string, jobRunID string, runResultID string) (*sdk.V2WorkflowRunResult, error)
 	V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string) ([]sdk.V2WorkflowRunResult, error)
