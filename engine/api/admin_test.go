@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
-
-	"github.com/ovh/cds/engine/api/organization"
-
-	"net/http/httptest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
@@ -28,7 +27,9 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/gorpmapper"
+	engine_test "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func Test_getAdminOrganizationCRUD(t *testing.T) {
@@ -68,183 +69,107 @@ func Test_getAdminOrganizationCRUD(t *testing.T) {
 	orgsDb, err := organization.LoadOrganizations(context.TODO(), db)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(orgsDb))
-
 }
 
-func Test_getAdminDatabaseSignatureResume(t *testing.T) {
+func Test_getAdminDatabaseEntityList(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-
 	_, jwt := assets.InsertAdminUser(t, db)
+	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseSignatureResume, nil)
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
-
-	// Do the request
-	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	t.Logf("%s", w.Body.String())
-}
-
-func Test_getAdminDatabaseSignatureTuplesByPrimaryKey(t *testing.T) {
-	api, db, _ := newTestAPI(t)
-
-	_, jwt := assets.InsertAdminUser(t, db)
-
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseSignatureResume, nil)
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
-
-	// Do the request
-	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	var resume = sdk.CanonicalFormUsageResume{}
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resume))
-
-	for entity, data := range resume {
-
-		for i := range data {
-
-			vars := map[string]string{
-				"entity": entity,
-				"signer": data[i].Signer,
-			}
-
-			uri := api.Router.GetRoute("GET", api.getAdminDatabaseSignatureTuplesBySigner, vars)
-			req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
-
-			// Do the request
-			w := httptest.NewRecorder()
-			api.Router.Mux.ServeHTTP(w, req)
-			assert.Equal(t, 200, w.Code)
-
-			var pks []string
-			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &pks))
-
-			assert.Len(t, pks, int(data[i].Number))
-		}
+	var d1 = gorpmapper.TestEncryptedData{
+		Data:                 "data-1",
+		SensitiveData:        "sensitive-data-1",
+		AnotherSensitiveData: "another-sensitive-data-1",
+		SensitiveJsonData:    gorpmapper.SensitiveJsonData{Data: "json-sentitive-data-1"},
 	}
-}
+	require.NoError(t, gorpmapping.InsertAndSign(context.TODO(), &engine_test.FakeTransaction{
+		DbMap: api.mustDB(),
+	}, &d1))
 
-func Test_postAdminDatabaseSignatureRollEntityByPrimaryKey(t *testing.T) {
-	api, db, _ := newTestAPI(t)
-
-	_, jwt := assets.InsertAdminUser(t, db)
-
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseSignatureResume, nil)
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
-
-	// Do the request
+	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEntityList, nil)
 	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	var resume = sdk.CanonicalFormUsageResume{}
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resume))
-
-	for entity, data := range resume {
-
-		for i := range data {
-
-			vars := map[string]string{
-				"entity": entity,
-				"signer": data[i].Signer,
-			}
-
-			uri := api.Router.GetRoute("GET", api.getAdminDatabaseSignatureTuplesBySigner, vars)
-			req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
-
-			// Do the request
-			w := httptest.NewRecorder()
-			api.Router.Mux.ServeHTTP(w, req)
-			assert.Equal(t, 200, w.Code)
-
-			var pks []string
-			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &pks))
-
-			for _, pk := range pks {
-				vars := map[string]string{
-					"entity": entity,
-					"pk":     pk,
-				}
-
-				uri := api.Router.GetRoute("POST", api.postAdminDatabaseSignatureRollEntityByPrimaryKey, vars)
-				req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
-
-				// Do the request
-				w := httptest.NewRecorder()
-				api.Router.Mux.ServeHTTP(w, req)
-				assert.Equal(t, 204, w.Code)
-			}
-		}
-	}
-}
-
-func Test_getAdminDatabaseEncryptedEntities(t *testing.T) {
-	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
-
-	api, db, _ := newTestAPI(t)
-
-	_, jwt := assets.InsertAdminUser(t, db)
-
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEncryptedEntities, nil)
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
-
-	// Do the request
-	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	t.Logf("%s", w.Body.String())
-}
-
-func Test_getAdminDatabaseTuplesByEntity(t *testing.T) {
-	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
-
-	api, db, _ := newTestAPI(t)
-
-	_, jwt := assets.InsertAdminUser(t, db)
-
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
-
-	// Do the request
-	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	t.Logf("%s", w.Body.String())
-}
-
-func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKey(t *testing.T) {
-	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
-
-	api, db, _ := newTestAPI(t)
-
-	_, jwt := assets.InsertAdminUser(t, db)
-
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
-
-	// Do the request
-	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil))
 	require.Equal(t, 200, w.Code)
 
-	var res []string
+	var res []sdk.DatabaseEntity
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &res))
 
-	for _, s := range res {
-		uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "gorpmapper.TestEncryptedData", "pk": s})
-		req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
-
-		// Do the request
-		w := httptest.NewRecorder()
-		api.Router.Mux.ServeHTTP(w, req)
-		assert.Equal(t, 204, w.Code)
+	var found bool
+	for _, entity := range res {
+		if entity.Name == "gorpmapper.TestEncryptedData" {
+			found = true
+			require.True(t, entity.Encrypted, "gorpmapper.TestEncryptedData entity should be encrypted")
+			require.True(t, entity.Signed, "gorpmapper.TestEncryptedData entity should be signed")
+			require.True(t, len(entity.CanonicalForms) > 1)
+			break
+		}
 	}
+	require.True(t, found, "gorpmapper.TestEncryptedData entity should be listed")
+}
+
+func Test_getAdminDatabaseEntity(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	_, jwt := assets.InsertAdminUser(t, db)
+	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
+
+	var d1 = gorpmapper.TestEncryptedData{
+		Data:                 "data-1",
+		SensitiveData:        "sensitive-data-1",
+		AnotherSensitiveData: "another-sensitive-data-1",
+		SensitiveJsonData:    gorpmapper.SensitiveJsonData{Data: "json-sentitive-data-1"},
+	}
+	require.NoError(t, gorpmapping.InsertAndSign(context.TODO(), &engine_test.FakeTransaction{
+		DbMap: api.mustDB(),
+	}, &d1))
+
+	var d2 = gorpmapper.TestEncryptedData{
+		Data:                 "canonical-variant-data-2",
+		SensitiveData:        "sensitive-data-2",
+		AnotherSensitiveData: "another-sensitive-data-2",
+		SensitiveJsonData:    gorpmapper.SensitiveJsonData{Data: "json-sentitive-data-2"},
+	}
+	require.NoError(t, gorpmapping.InsertAndSign(context.TODO(), &engine_test.FakeTransaction{
+		DbMap: api.mustDB(),
+	}, &d2))
+
+	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil))
+	require.Equal(t, 200, w.Code)
+	var pks []string
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &pks))
+
+	var d1Found, d2Found bool
+	for _, pk := range pks {
+		if pk == strconv.FormatInt(d1.ID, 10) {
+			d1Found = true
+		}
+		if pk == strconv.FormatInt(d2.ID, 10) {
+			d2Found = true
+		}
+	}
+	require.True(t, d1Found, "gorpmapper.TestEncryptedData d1 entity pk should be listed")
+	require.True(t, d2Found, "gorpmapper.TestEncryptedData d2 entity pk should be listed")
+
+	lastestCanonicalForm, _ := d2.Canonical().Latest()
+	sha := gorpmapper.GetSigner(lastestCanonicalForm)
+	uri = api.Router.GetRoute("GET", api.getAdminDatabaseEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil, cdsclient.Signer(sha)))
+	require.Equal(t, 200, w.Code)
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &pks))
+
+	d1Found, d2Found = false, false
+	for _, pk := range pks {
+		if pk == strconv.FormatInt(d1.ID, 10) {
+			d1Found = true
+		}
+		if pk == strconv.FormatInt(d2.ID, 10) {
+			d2Found = true
+		}
+	}
+	require.False(t, d1Found, "gorpmapper.TestEncryptedData d1 entity pk should not be listed")
+	require.True(t, d2Found, "gorpmapper.TestEncryptedData d2 entity pk should be listed")
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *testing.T) {
@@ -319,12 +244,12 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 
 	t.Logf("deployment strategies before rollover: %+v", app.DeploymentStrategies)
 
-	uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "application.dbApplicationDeploymentStrategy", "pk": fmt.Sprintf("%d", adsID)})
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	uri := api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "application.dbApplicationDeploymentStrategy"})
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", adsID)})
 	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 204, w.Code)
+	require.Equal(t, 200, w.Code)
 
 	app2, err := application.LoadByName(context.Background(), db, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
 	require.NoError(t, err)
@@ -408,19 +333,18 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkerModelSecret(t
 	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
 	assert.Equal(t, "pwtest", secrets[0].Value)
 
-	uri = api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "workermodel.workerModelSecret", "pk": secrets[0].ID})
-	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "workermodel.workerModelSecret"})
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{secrets[0].ID})
 	// Do the request
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 204, w.Code)
+	require.Equal(t, 200, w.Code)
 
 	secrets, err = workermodel.LoadSecretsByModelID(context.TODO(), api.mustDB(), newModel.ID)
 	require.NoError(t, err)
 	require.Len(t, secrets, 1)
 	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
 	assert.Equal(t, "pwtest", secrets[0].Value)
-
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectIntegration(t *testing.T) {
@@ -467,12 +391,12 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectIntegration(
 	t.Logf("%+v", integ[0].Config)
 	require.NoError(t, err)
 
-	uri = api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "integration.dbProjectIntegration", "pk": fmt.Sprintf("%d", integ[0].ID)})
-	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "integration.dbProjectIntegration"})
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", integ[0].ID)})
 	// Do the request
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 204, w.Code)
+	require.Equal(t, 200, w.Code)
 
 	integ2, err := integration.LoadIntegrationsByProjectIDWithClearPassword(context.TODO(), db, proj.ID)
 	require.NoError(t, err)
@@ -806,7 +730,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.env-sshkey.id"))
 
 	// Rollover
-	uri = api.Router.GetRoute("GET", api.getAdminDatabaseTuplesByEntity, map[string]string{"entity": "workflow.dbWorkflowRunSecret"})
+	uri = api.Router.GetRoute("GET", api.getAdminDatabaseEntity, map[string]string{"entity": "workflow.dbWorkflowRunSecret"})
 	req = assets.NewJWTAuthentifiedRequest(t, pass, "GET", uri, nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
@@ -816,11 +740,11 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &res))
 
 	for _, s := range res {
-		uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "workflow.dbWorkflowRunSecret", "pk": s})
-		req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", uri, nil)
+		uri := api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "workflow.dbWorkflowRunSecret"})
+		req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", uri, []string{s})
 		w := httptest.NewRecorder()
 		api.Router.Mux.ServeHTTP(w, req)
-		assert.Equal(t, 204, w.Code)
+		require.Equal(t, 200, w.Code)
 	}
 
 	// Rerun
@@ -925,7 +849,6 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 
 	require.Equal(t, sshkeypriv, sdk.VariableFind(secrets, "cds.key.proj-sshkey.priv"))
 	require.Equal(t, projvar, sdk.VariableFind(secrets, "cds.proj.projvar"))
-
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testing.T) {
@@ -952,12 +875,12 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testi
 	vcsProject, err := vcs.LoadVCSByIDAndProjectKey(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "vcs.dbVCSProject", "pk": fmt.Sprintf("%s", vcsProject.ID)})
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	uri := api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "vcs.dbVCSProject"})
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{vcsProject.ID})
 	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 204, w.Code)
+	require.Equal(t, 200, w.Code)
 
 	vcsProject2, err := vcs.LoadVCSByIDAndProjectKey(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)

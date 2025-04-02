@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-// DatabaseMigrationStatus represents on migration script status
 type DatabaseMigrationStatus struct {
 	ID        string     `json:"id" db:"id" cli:"id,key"`
 	Migrated  bool       `json:"migrated" db:"-" cli:"migrated"`
@@ -13,10 +12,23 @@ type DatabaseMigrationStatus struct {
 	Database string `json:"database" db:"-" cli:"database"`
 }
 
-type CanonicalFormUsage struct {
-	Signer string `json:"signer" db:"signer"`
-	Number int64  `json:"number" db:"number"`
-	Latest bool   `json:"latest"`
+type DatabaseEntity struct {
+	Name           string                  `json:"name"`
+	Encrypted      bool                    `json:"encrypted,omitempty"`
+	Signed         bool                    `json:"signed,omitempty"`
+	CanonicalForms []DatabaseCanonicalForm `json:"canonical_forms,omitempty"`
 }
 
-type CanonicalFormUsageResume map[string][]CanonicalFormUsage
+type DatabaseCanonicalForm struct {
+	Signer string `json:"signer" db:"signer"`
+	Number int64  `json:"number" db:"number"`
+	Latest bool   `json:"latest,omitempty"`
+}
+
+type DatabaseEntityInfo struct {
+	PK           string `json:"pk"`
+	Encrypted    bool   `json:"encrypted,omitempty"`
+	EncryptionTS int64  `json:"encryption_ts,omitempty"`
+	Signed       bool   `json:"signed,omitempty"`
+	SignatureTS  int64  `json:"signature_ts,omitempty"`
+}
