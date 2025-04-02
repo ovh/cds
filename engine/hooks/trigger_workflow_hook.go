@@ -143,7 +143,22 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 	e, err := s.Client.EntityGet(ctx, hre.ExtractData.Manual.Project, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.Manual.Workflow,
 		cdsclient.WithQueryParameter("ref", hre.ExtractData.Ref), cdsclient.WithQueryParameter("commit", hre.ExtractData.Commit))
 	if err != nil {
-		return err
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		// Fallback on HEAD commit
+		e, err = s.Client.EntityGet(ctx, hre.ExtractData.Manual.Project, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.Manual.Workflow,
+			cdsclient.WithQueryParameter("ref", hre.ExtractData.Ref), cdsclient.WithQueryParameter("commit", "HEAD"))
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			// Fallback on default branch, head commit
+			e, err = s.Client.EntityGet(ctx, hre.ExtractData.Manual.Project, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.Manual.Workflow)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	var wk sdk.V2Workflow
 	if err := yaml.Unmarshal([]byte(e.Data), &wk); err != nil {
@@ -164,7 +179,7 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 		Type:                 sdk.WorkflowHookTypeManual,
 		Status:               sdk.HookEventWorkflowStatusScheduled,
 		Ref:                  hre.ExtractData.Ref,
-		Commit:               hre.ExtractData.Commit,
+		Commit:               e.Commit,
 		TargetCommit:         userRequest.Sha,
 		Data: sdk.V2WorkflowHookData{
 			VCSServer:      workflowVCS,

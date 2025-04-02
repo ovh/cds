@@ -776,30 +776,33 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			if err != nil {
 				return err
 			}
-			if commit == "HEAD" {
+			if commit == "HEAD" && strings.HasPrefix(ref, sdk.GitRefTagPrefix) {
 				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, vcsProject.Name)
 				if err != nil {
 					return err
 				}
-				switch {
-				case strings.HasPrefix(ref, sdk.GitRefTagPrefix):
+				if strings.HasPrefix(ref, sdk.GitRefTagPrefix) {
 					tag, err := client.Tag(ctx, repo.Name, strings.TrimPrefix(ref, sdk.GitRefTagPrefix))
 					if err != nil {
 						return err
 					}
 					commit = tag.Hash
-				default:
-					branch, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(ref, sdk.GitRefBranchPrefix)})
-					if err != nil {
-						return err
-					}
-					commit = branch.LatestCommit
 				}
 			}
 
-			workflowEntity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
-			if err != nil {
-				return sdk.WrapError(err, "unable to get workflow %s for ref %s and commit %s", workflowName, ref, commit)
+			var workflowEntity *sdk.Entity
+			if commit == "HEAD" {
+				// Keep the log to identify non migrated workflow entities
+				log.Info(ctx, "entity %s loaded with commit HEAD from repository %s", workflowName, repo.ID)
+				workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName)
+				if err != nil {
+					return sdk.WrapError(err, "unable to get workflow %s for ref %s and commit %s", workflowName, ref, commit)
+				}
+			} else {
+				workflowEntity, err = entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
+				if err != nil {
+					return sdk.WrapError(err, "unable to get workflow %s for ref %s and commit %s", workflowName, ref, commit)
+				}
 			}
 
 			var wk sdk.V2Workflow

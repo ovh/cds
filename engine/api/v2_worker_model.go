@@ -56,9 +56,17 @@ func (api *API) getWorkerModelV2Handler() ([]service.RbacChecker, service.Handle
 			}
 
 			var workerModel sdk.V2WorkerModel
-			ent, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkerModel, workerModelName, commit)
-			if err != nil {
-				return err
+			var ent *sdk.Entity
+			if commit == "HEAD" {
+				ent, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkerModel, workerModelName)
+				if err != nil {
+					return err
+				}
+			} else {
+				ent, err = entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkerModel, workerModelName, commit)
+				if err != nil {
+					return err
+				}
 			}
 			if err := yaml.Unmarshal([]byte(ent.Data), &workerModel); err != nil {
 				return sdk.WrapError(err, "unable to read %s / %s @ %s", repo.ID, workerModelName, ref)
@@ -119,10 +127,18 @@ func (api *API) getWorkerModelsV2Handler() ([]service.RbacChecker, service.Handl
 			} else {
 				ref = sdk.GitRefBranchPrefix + branch
 			}
-			entities, err = entity.LoadByTypeAndRefCommit(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel, ref, commit)
-			if err != nil {
-				return err
+			if commit == "HEAD" {
+				entities, err = entity.LoadHeadByTypeAndRef(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel, ref)
+				if err != nil {
+					return err
+				}
+			} else {
+				entities, err = entity.LoadByTypeAndRefCommit(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel, ref, commit)
+				if err != nil {
+					return err
+				}
 			}
+
 			modelTemplates := make([]sdk.V2WorkerModel, 0, len(entities))
 			for _, e := range entities {
 				var mt sdk.V2WorkerModel

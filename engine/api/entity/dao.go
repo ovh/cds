@@ -97,6 +97,16 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, entityID string) (*sdk.E
 }
 
 // LoadByRepositoryAndRef loads an entity by his repository, ref
+func LoadHeadEntitiesByRepositoryAndRef(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT * from entity
+		WHERE project_repository_id = $1 AND ref = $2 AND head = true
+		ORDER BY name ASC
+	`).Args(projectRepositoryID, ref)
+	return getEntities(ctx, db, query, opts...)
+}
+
+// LoadByRepositoryAndRef loads an entity by his repository, ref
 func LoadByRepositoryAndRefAndCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, commit string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
@@ -114,12 +124,30 @@ func LoadByRepository(ctx context.Context, db gorp.SqlExecutor, projectRepositor
 	return getEntities(ctx, db, query, opts...)
 }
 
+// LoadHeadByTypeAndRef loads an entity by his repository, type and ref
+func LoadHeadByTypeAndRef(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, t string, ref string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT * from entity
+		WHERE project_repository_id = $1 AND type = $2 AND ref = $3 AND head = true`).Args(projectRepositoryID, t, ref)
+	return getEntities(ctx, db, query, opts...)
+}
+
 // LoadByTypeAndRef loads an entity by his repository, type and ref
 func LoadByTypeAndRefCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, t string, ref string, commit string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND type = $2 AND ref = $3 AND commit = $4`).Args(projectRepositoryID, t, ref, commit)
 	return getEntities(ctx, db, query, opts...)
+}
+
+func LoadHeadEntityByRefTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, entityType string, name string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
+	ctx, next := telemetry.Span(ctx, "entity.LoadByRefTypeNameCommit")
+	defer next()
+	query := gorpmapping.NewQuery(`
+		SELECT * from entity
+		WHERE project_repository_id = $1 AND ref = $2 AND type = $3 AND name = $4 AND head = true
+		ORDER BY last_update DESC LIMIT 1`).Args(projectRepositoryID, ref, entityType, name)
+	return getEntity(ctx, db, query, opts...)
 }
 
 // LoadByRefTypeNameCommit loads an entity by its repository, ref, type, name and commit
@@ -134,9 +162,18 @@ func LoadByRefTypeNameCommit(ctx context.Context, db gorp.SqlExecutor, projectRe
 
 // LoadAndUnmarshalByRefTypeName loads an entity by his repository, ref, type, name and unmarshal it
 func LoadAndUnmarshalByRefTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, commit string, t string, name string, out interface{}, opts ...gorpmapping.GetOptionFunc) error {
-	ent, err := LoadByRefTypeNameCommit(ctx, db, projectRepositoryID, ref, t, name, commit, opts...)
-	if err != nil {
-		return err
+	var ent *sdk.Entity
+	var err error
+	if commit == "HEAD" {
+		ent, err = LoadHeadEntityByRefTypeName(ctx, db, projectRepositoryID, ref, t, name, opts...)
+		if err != nil {
+			return err
+		}
+	} else {
+		ent, err = LoadByRefTypeNameCommit(ctx, db, projectRepositoryID, ref, t, name, commit, opts...)
+		if err != nil {
+			return err
+		}
 	}
 	if err := yaml.Unmarshal([]byte(ent.Data), out); err != nil {
 		return sdk.WrapError(err, "unable to read %s / %s @ %s", projectRepositoryID, name, ref)
@@ -154,7 +191,7 @@ func UnsafeLoadAllByType(_ context.Context, db gorp.SqlExecutor, t string) ([]sd
     FROM entity
     JOIN project_repository ON entity.project_repository_id = project_repository.id
     JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
-    WHERE entity.type = $1 AND commit = 'HEAD'
+    WHERE entity.type = $1 AND head = true
     ORDER BY entity.project_key, vcs_project.name, project_repository.name, entity.name, entity.ref
   `
 	var entities []sdk.EntityFullName
@@ -174,7 +211,7 @@ func UnsafeLoadAllByTypeAndProjectKeys(_ context.Context, db gorp.SqlExecutor, t
     FROM entity
     JOIN project_repository ON entity.project_repository_id = project_repository.id
     JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
-    WHERE entity.type = $1 AND entity.project_key = ANY($2) AND commit = 'HEAD'
+    WHERE entity.type = $1 AND entity.project_key = ANY($2) AND head = true
     ORDER BY entity.project_key, vcs_project.name, project_repository.name, entity.name, entity.ref
   `
 	var entities []sdk.EntityFullName
@@ -203,4 +240,11 @@ func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, erro
 		entities = append(entities, r.Entity)
 	}
 	return entities, nil
+}
+
+func LoadUnmigratedHeadEntities(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT * from entity
+		WHERE commit = 'HEAD' and head = false`)
+	return getEntities(ctx, db, query)
 }

@@ -1928,11 +1928,11 @@ GDFkaTe3nUJdYV4=
 	require.Equal(t, model, e.Data)
 
 	// Check workflow deletion
-	_, err = entity.LoadByRefTypeNameCommit(ctx, db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkflow, "workflow1", "HEAD")
+	_, err = entity.LoadHeadEntityByRefTypeName(ctx, db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkflow, "workflow1")
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
 	// Check action
-	_, err = entity.LoadByRefTypeNameCommit(ctx, db, repo.ID, "refs/heads/master", sdk.EntityTypeAction, "action1", "HEAD")
+	_, err = entity.LoadHeadEntityByRefTypeName(ctx, db, repo.ID, "refs/heads/master", sdk.EntityTypeAction, "action1")
 	require.NoError(t, err)
 }
 

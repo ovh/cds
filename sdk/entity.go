@@ -45,6 +45,7 @@ type Entity struct {
 	LastUpdate          time.Time `json:"last_update" db:"last_update"`
 	Data                string    `json:"data" db:"data"`
 	UserID              *string   `json:"user_id" db:"user_id"`
+	Head                bool      `json:"head" db:"head"`
 }
 
 type EntityWithObject struct {
