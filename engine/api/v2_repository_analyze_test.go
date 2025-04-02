@@ -1462,6 +1462,7 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
 			Name:                sdk.RandomString(10),
+			Head:                true,
 		},
 		Workflow: sdk.V2Workflow{
 			Repository: &sdk.WorkflowRepository{
@@ -1492,28 +1493,19 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
-	require.Equal(t, 2, len(repoWebHooks))
+	require.Equal(t, 1, len(repoWebHooks))
 
-	hookWithCommit := false
-	hookWithHead := false
-	for _, wh := range repoWebHooks {
-		if wh.Commit == "123456" {
-			hookWithCommit = true
-		} else if wh.Commit == "HEAD" {
-			hookWithHead = true
-		}
-	}
-	require.True(t, hookWithCommit)
-	require.True(t, hookWithHead)
+	require.Equal(t, "123456", repoWebHooks[0].Commit)
+	require.True(t, repoWebHooks[0].Head)
 
 	// Distant workflow so worklow update hook must be saved
-	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, e.Ref)
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
 
 	// Distant workflow so model update hook must be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, e.Ref, []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(hooks))
 
@@ -1542,6 +1534,7 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 			Ref:                 "refs/heads/main",
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
+			Head:                true,
 			Name:                sdk.RandomString(10),
 		},
 		Workflow: sdk.V2Workflow{
@@ -1567,13 +1560,13 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 	require.Equal(t, 1, len(repoWebHooks))
 
 	// Distant workflow so worklow update hook must be saved
-	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, e.Ref)
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
 
 	// Distant workflow so model update hook must be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, e.Ref, []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(hooks))
 }
@@ -1597,6 +1590,7 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
 			Name:                sdk.RandomString(10),
+			Head:                true,
 		},
 		Workflow: sdk.V2Workflow{
 			Repository: &sdk.WorkflowRepository{
@@ -1621,13 +1615,13 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 	require.Equal(t, 1, len(repoWebHooks))
 
 	// Distant workflow so worklow update hook must be saved
-	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, e.Ref)
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
 
 	// Model and workflow on different repo,  hook must not be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, e.Ref, []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(hooks))
 }
@@ -1650,6 +1644,7 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 			Ref:                 "refs/heads/test",
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
+			Head:                true,
 			Name:                sdk.RandomString(10),
 		},
 		Workflow: sdk.V2Workflow{
@@ -1680,12 +1675,12 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 	require.Equal(t, 0, len(repoWebHooks))
 
 	// Non default branch, hook must not be saved
-	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, e.Ref)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
 	// Non default branch, hook must not be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, e.Ref, []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(hooks))
 }
@@ -1783,9 +1778,10 @@ GDFkaTe3nUJdYV4=
 		ProjectKey:          proj1.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkflow,
-		Commit:              "HEAD",
+		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Name:                "workflow1",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &workflowEntity))
 
@@ -1793,9 +1789,10 @@ GDFkaTe3nUJdYV4=
 		ProjectKey:          proj1.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeAction,
-		Commit:              "HEAD",
+		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Name:                "action1",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &actionEntity))
 
@@ -3013,10 +3010,11 @@ GDFkaTe3nUJdYV4=
 		Type:                sdk.EntityTypeWorkerModel,
 		FilePath:            ".cds/worker-models/mymodel.yml",
 		Name:                "mymodel",
-		Commit:              "HEAD",
+		Commit:              "abcdef",
 		Ref:                 "refs/heads/main",
 		UserID:              &u.ID,
 		Data:                "name: mymodel",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &entityWM))
 
@@ -3257,10 +3255,11 @@ GDFkaTe3nUJdYV4=
 		Type:                sdk.EntityTypeWorkerModel,
 		FilePath:            ".cds/worker-models/mymodel.yml",
 		Name:                "mymodel",
-		Commit:              "HEAD",
+		Commit:              "abcdef",
 		Ref:                 "refs/heads/main",
 		UserID:              &u.ID,
 		Data:                "name: mymodel",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &entityWM))
 

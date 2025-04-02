@@ -482,8 +482,9 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		FilePath:            ".cds/actions/myaction.yml",
 		Name:                "myaction1",
 		Ref:                 "refs/heads/master",
-		Commit:              "HEAD",
+		Commit:              "123456789",
 		LastUpdate:          time.Time{},
+		Head:                true,
 		Data:                "name: myaction",
 	}
 	require.NoError(t, entity.Insert(ctx, db, &myactionEnt))
@@ -495,7 +496,8 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		FilePath:            ".cds/actions/myaction2.yml",
 		Name:                "myaction2",
 		Ref:                 "refs/heads/main",
-		Commit:              "HEAD",
+		Commit:              "987654321",
+		Head:                true,
 		LastUpdate:          time.Time{},
 		Data:                "name: myaction2",
 	}
@@ -511,6 +513,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		Commit:              "123456789",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &myWMEnt))
 
@@ -534,9 +537,10 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSBranch{
-					Default:   true,
-					DisplayID: "main",
-					ID:        "refs/heads/main",
+					Default:      true,
+					DisplayID:    "main",
+					ID:           "refs/heads/main",
+					LatestCommit: "987654321",
 				}
 				*(out.(*sdk.VCSBranch)) = *b
 				return nil, 200, nil

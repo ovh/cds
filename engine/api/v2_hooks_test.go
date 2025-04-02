@@ -269,13 +269,14 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequestFilte
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
 	wh1 := sdk.V2WorkflowHook{
-		ProjectKey:   p.Key,
-		VCSName:      vcs.Name,
-		EntityID:     e.ID,
-		WorkflowName: sdk.RandomString(10),
-		Commit:       "123456",
-		Ref:          "refs/heads/master",
-		Type:         sdk.WorkflowHookTypeRepository,
+		ProjectKey:     p.Key,
+		VCSName:        vcs.Name,
+		RepositoryName: repo.Name,
+		EntityID:       e.ID,
+		WorkflowName:   sdk.RandomString(10),
+		Commit:         "123456",
+		Ref:            "refs/heads/master",
+		Type:           sdk.WorkflowHookTypeRepository,
 		Data: sdk.V2WorkflowHookData{
 			RepositoryName:  repo.Name,
 			VCSServer:       vcs.Name,
@@ -284,6 +285,29 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequestFilte
 		},
 	}
 	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &wh1))
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/"+repo.Name+"/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			b := &sdk.VCSBranch{
+				ID:           "refs/heads/master",
+				DisplayID:    "master",
+				LatestCommit: "123456",
+			}
+			*(out.(*sdk.VCSBranch)) = *b
+			return nil, 200, nil
+		}).AnyTimes()
 
 	r := sdk.HookListWorkflowRequest{
 		RepositoryName:      repo.Name,
@@ -324,6 +348,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 		ProjectRepositoryID: repo.ID,
 		Commit:              "123456",
 		Ref:                 "refs/heads/master",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
@@ -335,6 +360,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 		Commit:       "123456",
 		Ref:          "refs/heads/master",
 		Type:         sdk.WorkflowHookTypeWorkerModel,
+		Head:         true,
 		Data: sdk.V2WorkflowHookData{
 			Model: fmt.Sprintf("%s/%s/%s/%s", p.Key, vcs.Name, repo.Name, "MyModel"),
 		},
@@ -405,6 +431,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkflowRun(t *testing.T) {
 		ProjectRepositoryID: repo.ID,
 		Commit:              "123456",
 		Ref:                 "refs/heads/master",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
@@ -417,6 +444,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkflowRun(t *testing.T) {
 		Commit:         "123456",
 		Ref:            "refs/heads/master",
 		Type:           sdk.WorkflowHookTypeWorkflowRun,
+		Head:           true,
 		Data: sdk.V2WorkflowHookData{
 			RepositoryName:  repo.Name,
 			VCSServer:       vcs.Name,
@@ -496,6 +524,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHook_SkippedWorkflow(
 		ProjectRepositoryID: repo.ID,
 		Commit:              "123456",
 		Ref:                 "refs/heads/master",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
@@ -513,25 +542,9 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHook_SkippedWorkflow(
 			VCSServer:       vcs.Name,
 			RepositoryEvent: sdk.WorkflowHookEventNamePush,
 		},
+		Head: true,
 	}
 	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &wh1))
-
-	whHead := sdk.V2WorkflowHook{
-		ProjectKey:     p.Key,
-		VCSName:        vcs.Name,
-		RepositoryName: repo.Name,
-		EntityID:       e.ID,
-		WorkflowName:   e.Name,
-		Commit:         "HEAD",
-		Ref:            "refs/heads/master",
-		Type:           sdk.WorkflowHookTypeRepository,
-		Data: sdk.V2WorkflowHookData{
-			RepositoryName:  repo.Name,
-			VCSServer:       vcs.Name,
-			RepositoryEvent: sdk.WorkflowHookEventNamePush,
-		},
-	}
-	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &whHead))
 
 	r := sdk.HookListWorkflowRequest{
 		RepositoryName:      repo.Name,
@@ -602,5 +615,5 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHook_SkippedWorkflow(
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hs))
 
 	require.Equal(t, 1, len(hs))
-	require.Equal(t, whHead.ID, hs[0].ID)
+	require.Equal(t, wh1.ID, hs[0].ID)
 }
