@@ -601,6 +601,29 @@ func (d *DatabaseEntityStorage) Load(reportDir string) error {
 		}
 		fmt.Printf("%s: load: encryption report files loaded from %s\n", d.entity, encryptionReportPath)
 	}
+	corruptedReportPath := path.Join(reportDir, d.service+"."+d.entity+".corrupted.json")
+	if _, err := os.Stat(corruptedReportPath); err == nil {
+		bs, err := os.ReadFile(corruptedReportPath)
+		if err != nil {
+			return err
+		}
+		var report []string
+		if err := json.Unmarshal(bs, &report); err != nil {
+			return err
+		}
+		for _, k := range report {
+			if i, ok := d.MInfo[k]; !ok {
+				d.MInfo[k] = sdk.DatabaseEntityInfo{
+					PK:        k,
+					Corrupted: true,
+				}
+			} else {
+				i.Corrupted = true
+				d.MInfo[k] = i
+			}
+		}
+		fmt.Printf("%s: load: corrupted report files loaded from %s\n", d.entity, corruptedReportPath)
+	}
 	return nil
 }
 
@@ -629,13 +652,25 @@ func (d *DatabaseEntityStorage) Save(reportDir string, silent bool) error {
 	if !silent {
 		fmt.Printf("%s: save: encryption report files created at %s\n", d.entity, encryptionReportPath)
 	}
+	corruptedReportPath := path.Join(reportDir, d.service+"."+d.entity+".corrupted.json")
+	corruptedReport := d.ComputeCorruptedReport()
+	bufCor, err := json.Marshal(corruptedReport)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(corruptedReportPath, bufCor, 0644); err != nil {
+		return err
+	}
+	if !silent {
+		fmt.Printf("%s: save: corrupted report files created at %s\n", d.entity, corruptedReportPath)
+	}
 	return nil
 }
 
 func (d *DatabaseEntityStorage) ComputeSignatureReport() map[int64][]string {
 	report := make(map[int64][]string)
 	for _, e := range d.MInfo {
-		if e.Signed {
+		if e.Signed && !e.Corrupted {
 			if _, ok := report[e.SignatureTS]; !ok {
 				report[e.SignatureTS] = nil
 			}
@@ -648,7 +683,7 @@ func (d *DatabaseEntityStorage) ComputeSignatureReport() map[int64][]string {
 func (d *DatabaseEntityStorage) ComputeEncryptionReport() map[int64][]string {
 	report := make(map[int64][]string)
 	for _, e := range d.MInfo {
-		if e.Encrypted {
+		if e.Encrypted && !e.Corrupted {
 			if _, ok := report[e.EncryptionTS]; !ok {
 				report[e.EncryptionTS] = nil
 			}
@@ -658,10 +693,20 @@ func (d *DatabaseEntityStorage) ComputeEncryptionReport() map[int64][]string {
 	return report
 }
 
+func (d *DatabaseEntityStorage) ComputeCorruptedReport() []string {
+	var report []string
+	for _, e := range d.MInfo {
+		if e.Corrupted {
+			report = append(report, e.PK)
+		}
+	}
+	return report
+}
+
 func (d *DatabaseEntityStorage) ComputePKsFromKeyTimestamp(ts int64) []string {
 	var res []string
 	for _, e := range d.MInfo {
-		if e.Encrypted && e.EncryptionTS == ts || e.Signed && e.SignatureTS == ts {
+		if (e.Encrypted && e.EncryptionTS == ts || e.Signed && e.SignatureTS == ts) && !e.Corrupted {
 			res = append(res, e.PK)
 		}
 	}
@@ -672,16 +717,23 @@ func (d *DatabaseEntityStorage) PrintReport() {
 	fmt.Printf("%s: report: found %d tuple(s)\n", d.entity, len(d.MInfo))
 	signatureReport := d.ComputeSignatureReport()
 	if len(signatureReport) > 0 {
-		fmt.Printf("	%d signature key(s) found:\n", len(signatureReport))
+		fmt.Printf("	- %d signature key(s) found:\n", len(signatureReport))
 		for ts, pks := range signatureReport {
-			fmt.Printf("		%d: %d tuple(s)\n", ts, len(pks))
+			fmt.Printf("		- %d: %d tuple(s)\n", ts, len(pks))
 		}
 	}
 	encryptionReport := d.ComputeEncryptionReport()
 	if len(encryptionReport) > 0 {
-		fmt.Printf("	%d encryption key(s) found:\n", len(encryptionReport))
+		fmt.Printf("	- %d encryption key(s) found:\n", len(encryptionReport))
 		for ts, pks := range encryptionReport {
-			fmt.Printf("		%d: %d tuple(s)\n", ts, len(pks))
+			fmt.Printf("		- %d: %d tuple(s)\n", ts, len(pks))
+		}
+	}
+	corruptedReport := d.ComputeCorruptedReport()
+	if len(corruptedReport) > 0 {
+		fmt.Printf("	- %d corrupted tuple(s) found:\n", len(corruptedReport))
+		for _, pk := range corruptedReport {
+			fmt.Printf("		- %s\n", pk)
 		}
 	}
 }

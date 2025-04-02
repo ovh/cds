@@ -31,4 +31,5 @@ type DatabaseEntityInfo struct {
 	EncryptionTS int64  `json:"encryption_ts,omitempty"`
 	Signed       bool   `json:"signed,omitempty"`
 	SignatureTS  int64  `json:"signature_ts,omitempty"`
+	Corrupted    bool   `json:"corrupted,omitempty"`
 }

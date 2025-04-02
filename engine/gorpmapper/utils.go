@@ -81,17 +81,21 @@ func (m *Mapper) InfoTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor,
 		return nil, errors.New("entity is not signed or encrypted")
 	}
 
+	res := sdk.DatabaseEntityInfo{
+		PK: pk,
+	}
+
 	tuple, err := m.LoadTupleByPrimaryKey(ctx, db, entity, pk)
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrCorruptedData) {
+			res.Corrupted = true
+			return &res, nil
+		}
 		return nil, err
 	}
 	if tuple == nil {
 		// Ignore missing tuple cause the data may be deleted while rolling is in progress
 		return nil, nil
-	}
-
-	res := sdk.DatabaseEntityInfo{
-		PK: pk,
 	}
 
 	if e.SignedEntity {
