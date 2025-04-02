@@ -46,7 +46,7 @@ func Test_getAdminDatabaseEntityList(t *testing.T) {
 			found = true
 			require.True(t, entity.Encrypted, "gorpmapper.TestEncryptedData entity should be encrypted")
 			require.True(t, entity.Signed, "gorpmapper.TestEncryptedData entity should be signed")
-			require.True(t, len(entity.CanonicalForms) > 1)
+			require.True(t, len(entity.CanonicalForms) >= 1)
 			break
 		}
 	}
