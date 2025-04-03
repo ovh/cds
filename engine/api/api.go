@@ -251,8 +251,9 @@ type Configuration struct {
 		VersionRetention           int64  `toml:"versionRetention" comment:"Number of Workflow version CDS keep" json:"versionRetention" commented:"true"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Entity struct {
-		RoutineDelay int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
-		Retention    string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+		RoutineDelay      int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
+		Retention         string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+		AnalysisRetention int64  `toml:"analysisRetention" comment:"Number of analysis to keep" json:"analysisRetention" commented:"true" default:"250"`
 	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
 	Project struct {
 		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
@@ -514,6 +515,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	if a.Config.Entity.Retention == "" {
 		a.Config.Entity.Retention = "24h"
+	}
+	if a.Config.Entity.AnalysisRetention <= 0 {
+		a.Config.Entity.AnalysisRetention = 250
 	}
 	if a.Config.WorkflowV2.VersionRetentionScheduling == 0 {
 		a.Config.WorkflowV2.VersionRetentionScheduling = 60

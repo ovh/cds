@@ -60,6 +60,7 @@ func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 
+	maxAnalysis := api.Config.Entity.AnalysisRetention
 	for {
 		select {
 		case <-ctx.Done():
@@ -79,8 +80,8 @@ func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration
 					log.ErrorWithStackTrace(ctx, err)
 					break
 				}
-				if nb > 50 {
-					toDelete := int(nb - 50)
+				if nb > maxAnalysis {
+					toDelete := int(nb - maxAnalysis)
 					tx, err := api.mustDB().Begin()
 					if err != nil {
 						log.ErrorWithStackTrace(ctx, err)
