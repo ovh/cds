@@ -67,13 +67,13 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		hre.SigningKeyOperationStatus = ope.Status
 		hre.SigningKeyOperation = ope.UUID
 
-		// For repository webhook and scheduler, signin operation == gitinfo operation
+		// For repository webhook signin operation == gitinfo operation
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
 			if wh.Type == sdk.WorkflowHookTypeRepository {
 				wh.OperationUUID = ope.UUID
 				wh.OperationStatus = ope.Status
-			} else if wh.Data.VCSServer == hre.VCSServerName && wh.Data.RepositoryName == hre.RepositoryName {
+			} else if wh.Data.VCSServer == hre.VCSServerName && wh.Data.RepositoryName == hre.RepositoryName && wh.TargetCommit == hre.ExtractData.Commit {
 				wh.OperationUUID = ope.UUID
 				wh.OperationStatus = ope.Status
 			}

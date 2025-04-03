@@ -128,6 +128,9 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 			Commit:               wh.Commit,
 			Data:                 wh.Data,
 		}
+		if wh.Type == sdk.WorkflowHookTypeRepository {
+			w.TargetCommit = hre.ExtractData.Commit
+		}
 		hre.WorkflowHooks = append(hre.WorkflowHooks, w)
 	}
 	return nil
