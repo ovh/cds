@@ -1,6 +1,8 @@
 package gorpmapper
 
 import (
+	"strings"
+
 	"github.com/go-gorp/gorp"
 )
 
@@ -49,8 +51,15 @@ type SensitiveJsonData struct {
 }
 
 func (e TestEncryptedData) Canonical() CanonicalForms {
+	if strings.HasPrefix(e.Data, "canonical-variant") {
+		return CanonicalForms{
+			"{{.ID}} {{.Data}} variant",
+			"{{.ID}} {{.Data}}",
+		}
+	}
 	return CanonicalForms{
 		"{{.ID}} {{.Data}}",
+		"{{.ID}} {{.Data}} variant",
 	}
 }
 

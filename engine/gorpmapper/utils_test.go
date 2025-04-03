@@ -2,9 +2,9 @@ package gorpmapper_test
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -12,6 +12,90 @@ import (
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
+
+type testAuthentifiedUser struct {
+	sdk.AuthentifiedUser
+	gorpmapper.SignedEntity
+}
+
+func (u testAuthentifiedUser) Canonical() gorpmapper.CanonicalForms {
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.Username}}{{.Fullname}}{{.Ring}}{{printDate .Created}}",
+	}
+}
+
+func Test_ListCanonicalFormsByEntity(t *testing.T) {
+	m := gorpmapper.New()
+	m.Register(m.NewTableMapping(testAuthentifiedUser{}, "authentified_user", false, "id"))
+
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
+
+	res, err := m.ListCanonicalFormsByEntity(db, "gorpmapper_test.testAuthentifiedUser")
+	require.NoError(t, err)
+	t.Logf("%+v", res)
+}
+
+func Test_ListTupleByCanonicalForm(t *testing.T) {
+	m := gorpmapper.New()
+	m.Register(m.NewTableMapping(testAuthentifiedUser{}, "authentified_user", false, "id"))
+
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
+
+	res, err := m.ListCanonicalFormsByEntity(db, "gorpmapper_test.testAuthentifiedUser")
+	require.NoError(t, err)
+
+	if len(res) == 0 {
+		t.SkipNow()
+	}
+
+	ids, err := m.ListTuplesByCanonicalForm(db, "gorpmapper_test.testAuthentifiedUser", res[0].Signer)
+	require.NoError(t, err)
+	t.Logf("%+v", ids)
+
+	require.Equal(t, int(res[0].Number), len(ids))
+}
+
+func Test_LoadTupleByPrimaryKey(t *testing.T) {
+	m := gorpmapper.New()
+	m.Register(m.NewTableMapping(testAuthentifiedUser{}, "authentified_user", false, "id"))
+
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
+
+	res, err := m.ListCanonicalFormsByEntity(db, "gorpmapper_test.testAuthentifiedUser")
+	require.NoError(t, err)
+
+	if len(res) == 0 {
+		t.SkipNow()
+	}
+
+	ids, err := m.ListTuplesByCanonicalForm(db, "gorpmapper_test.testAuthentifiedUser", res[0].Signer)
+	require.NoError(t, err)
+
+	u, err := m.LoadTupleByPrimaryKey(context.TODO(), db, "gorpmapper_test.testAuthentifiedUser", ids[0])
+	require.NoError(t, err)
+
+	t.Logf("loaded %T : %+v", u, u)
+}
+
+func Test_RollSignedTupleByPrimaryKey(t *testing.T) {
+	m := gorpmapper.New()
+	m.Register(m.NewTableMapping(testAuthentifiedUser{}, "authentified_user", false, "id"))
+
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
+
+	res, err := m.ListCanonicalFormsByEntity(db, "gorpmapper_test.testAuthentifiedUser")
+	require.NoError(t, err)
+
+	if len(res) == 0 {
+		t.SkipNow()
+	}
+
+	ids, err := m.ListTuplesByCanonicalForm(db, "gorpmapper_test.testAuthentifiedUser", res[0].Signer)
+	require.NoError(t, err)
+
+	_, err = m.RollTupleByPrimaryKey(context.TODO(), db, "gorpmapper_test.testAuthentifiedUser", ids[0])
+	require.NoError(t, err)
+}
 
 func TestEncryption(t *testing.T) {
 	m := gorpmapper.New()
@@ -29,9 +113,9 @@ func TestEncryption(t *testing.T) {
 	}
 
 	require.NoError(t, m.InsertAndSign(context.TODO(), db, &d))
-	assert.Equal(t, sdk.PasswordPlaceholder, d.SensitiveData)
-	assert.Equal(t, sdk.PasswordPlaceholder, d.AnotherSensitiveData)
-	assert.Zero(t, d.SensitiveJsonData)
+	require.Equal(t, sdk.PasswordPlaceholder, d.SensitiveData)
+	require.Equal(t, sdk.PasswordPlaceholder, d.AnotherSensitiveData)
+	require.Zero(t, d.SensitiveJsonData)
 
 	// UpdateAndSign should not save place holders
 	require.NoError(t, m.UpdateAndSign(context.TODO(), db, &d))
@@ -55,8 +139,8 @@ func TestEncryption(t *testing.T) {
 	d.AnotherSensitiveData = "another-sensitive-data"
 
 	require.NoError(t, m.UpdateAndSign(context.TODO(), db, &d))
-	assert.Equal(t, sdk.PasswordPlaceholder, d.SensitiveData)
-	assert.Equal(t, sdk.PasswordPlaceholder, d.AnotherSensitiveData)
+	require.Equal(t, sdk.PasswordPlaceholder, d.SensitiveData)
+	require.Equal(t, sdk.PasswordPlaceholder, d.AnotherSensitiveData)
 
 	query = gorpmapper.NewQuery("select * from test_encrypted_data where id = $1").Args(d.ID)
 
@@ -86,7 +170,7 @@ func TestEncryption(t *testing.T) {
 	require.Equal(t, d.Data, d2.Data)
 	require.Equal(t, "sensitive--data", d2.SensitiveData)
 	require.Equal(t, "another-sensitive-data", d2.AnotherSensitiveData)
-	assert.Equal(t, "some-data", d2.SensitiveJsonData.Data)
+	require.Equal(t, "some-data", d2.SensitiveJsonData.Data)
 }
 
 func TestEncryption_Multiple(t *testing.T) {
@@ -171,11 +255,12 @@ func TestRollEncryptedTupleByPrimaryKey(t *testing.T) {
 	require.NoError(t, m.InsertAndSign(context.TODO(), db, &d1))
 	require.NoError(t, m.UpdateAndSign(context.TODO(), db, &d1))
 
-	require.NoError(t, m.RollEncryptedTupleByPrimaryKey(context.Background(), db, "gorpmapper.TestEncryptedData", d1.ID))
+	_, err := m.RollTupleByPrimaryKey(context.Background(), db, "gorpmapper.TestEncryptedData", strconv.FormatInt(d1.ID, 10))
+	require.NoError(t, err)
 
 	var query = gorpmapper.NewQuery("select * from test_encrypted_data where id = $1").Args(d1.ID)
 	var d2 gorpmapper.TestEncryptedData
-	_, err := m.Get(context.TODO(), db, query, &d2, gorpmapping.GetOptions.WithDecryption)
+	_, err = m.Get(context.TODO(), db, query, &d2, gorpmapping.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
 	isValid, err := m.CheckSignature(d2, d2.Signature)
@@ -186,5 +271,5 @@ func TestRollEncryptedTupleByPrimaryKey(t *testing.T) {
 	require.Equal(t, d1.Data, d2.Data)
 	require.Equal(t, "sensitive-data-1", d2.SensitiveData)
 	require.Equal(t, "another-sensitive-data-1", d2.AnotherSensitiveData)
-	assert.Equal(t, "json-sentitive-data-1", d2.SensitiveJsonData.Data)
+	require.Equal(t, "json-sentitive-data-1", d2.SensitiveJsonData.Data)
 }

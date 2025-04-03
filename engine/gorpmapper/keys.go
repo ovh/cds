@@ -46,15 +46,13 @@ func (m *Mapper) ConfigureKeys(signatureKeys, encryptionKeys []keyloader.KeyConf
 		}
 
 		store := configstore.NewStore()
-
-		provider := func() (configstore.ItemList, error) {
+		store.RegisterProvider("fakeConfigstoreProvider", func() (configstore.ItemList, error) {
 			list := configstore.ItemList{}
 			for _, btes := range marshalledKeys {
 				list.Items = append(list.Items, configstore.NewItem(keyloader.EncryptionKeyConfigName, string(btes), 99))
 			}
 			return list, nil
-		}
-		store.RegisterProvider("fakeConfigstoreProvider", provider)
+		})
 
 		var err error
 		m.signatureKey, err = keyloader.LoadKeyFromStore(KeySignIdentifier, store)
