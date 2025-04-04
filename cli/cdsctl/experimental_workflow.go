@@ -302,6 +302,9 @@ var workflowRunCmd = cli.Command{
 		{
 			Name: "workflow-tag",
 		},
+		{
+			Name: "data",
+		},
 	},
 }
 
@@ -330,6 +333,13 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		Sha:            destCommit,
 		WorkflowBranch: workflowBranch,
 		WorkflowTag:    workflowTag,
+	}
+	if strings.TrimSpace(v.GetString("data")) != "" {
+		data := map[string]interface{}{}
+		if err := sdk.JSONUnmarshal([]byte(v.GetString("data")), &data); err != nil {
+			return nil, cli.NewError("error data isn't a valid json")
+		}
+		payload.Payload = data
 	}
 
 	runResp, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload)

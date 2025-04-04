@@ -26,5 +26,5 @@ export class PostResponseCreateHook {
 
 export enum HookType {
     Repository = "repository",
-    //Workflow = "workflow"
+    Workflow = "workflow"
 }

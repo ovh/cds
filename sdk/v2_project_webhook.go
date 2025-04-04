@@ -41,5 +41,8 @@ func (p PostProjectWebHook) Valid() error {
 			return NewErrorFrom(ErrInvalidData, "missing workflow")
 		}
 	}
+	if p.Type == "" {
+		return NewErrorFrom(ErrInvalidData, "missing hook type")
+	}
 	return nil
 }
