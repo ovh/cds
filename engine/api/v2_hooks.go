@@ -365,7 +365,6 @@ func LoadWorkflowHooksWithWorkflowRun(ctx context.Context, db gorp.SqlExecutor, 
 	filteredHooks := make([]sdk.V2WorkflowHook, 0)
 	// Only get hook from default branch + latest commit
 	for _, h := range hooks {
-		// Retrieve default branch + latest commit - retrocompat.
 		repoCacheKey := fmt.Sprintf("%s/%s", h.VCSName, h.RepositoryName)
 		repoData, has := repoCache[repoCacheKey]
 		if !has {
