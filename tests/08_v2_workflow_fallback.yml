@@ -108,7 +108,7 @@ testcases:
         projects:
           - role: read
             projects: [{{.cds_project}}]
-            users: [ {{.cdsUser}} ]
+            all_users: true
             vcs_users:
             - server: my_vcs_server
               username: {{.git.user}}
