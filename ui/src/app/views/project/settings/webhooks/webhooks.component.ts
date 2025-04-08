@@ -23,7 +23,8 @@ export class ProjectWebhooksComponent implements OnInit {
     newWebhook: PostProjectWebHook = new PostProjectWebHook();
     createdHook: PostResponseCreateHook;
     errorRepository: boolean;
-    hookTypes: Array<string> = [HookType.Repository, /*HookType.Workflow*/];
+    errorWorkflow: boolean;
+    hookTypes: Array<string> = [HookType.Repository, HookType.Workflow];
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -67,8 +68,15 @@ export class ProjectWebhooksComponent implements OnInit {
     }
 
     async createHook() {
-        if (this.newWebhook.repository === '') {
+        this.errorRepository = false;
+        this.errorWorkflow = false;
+        if (this.newWebhook.repository === '' || !this.newWebhook.repository) {
             this.errorRepository = true;
+            this._cd.markForCheck();
+            return;
+        }
+        if (this.newWebhook.type === HookType.Workflow && (this.newWebhook.workflow === '' || !this.newWebhook.workflow)) {
+            this.errorWorkflow = true;
             this._cd.markForCheck();
             return;
         }

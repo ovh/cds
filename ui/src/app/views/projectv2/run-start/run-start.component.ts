@@ -7,6 +7,7 @@ import { VCSProject } from "app/model/vcs.model";
 import { ProjectService } from "app/service/project/project.service";
 import { V2WorkflowRunService } from "app/service/services.module";
 import { lastValueFrom } from "rxjs";
+import { EditorOptions } from "ng-zorro-antd/code-editor/typings";
 import { V2Workflow, V2WorkflowRunManualRequest } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzDrawerRef } from "ng-zorro-antd/drawer";
@@ -40,12 +41,14 @@ export class ProjectV2RunStartComponent implements OnInit {
   sourceBranches: Array<Branch> = [];
   sourceTags: Array<Tag> = [];
   workflows: Array<string> = [];
+  editorOption: EditorOptions;
   validateForm: FormGroup<{
     repository: FormControl<string | null>;
     ref: FormControl<string | null>;
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
+    payload: FormControl<string | null>;
   }>;
   event: RepositoryHookEvent;
   loaders: {
@@ -59,6 +62,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     ref: false,
     workflow: false
   };
+  invalidJson = false;
 
   constructor(
     private _drawerRef: NzDrawerRef<string>,
@@ -76,11 +80,16 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
+      payload: this._fb.control<string | null>(null),
     });
   }
 
   ngOnInit(): void {
     this.load();
+    this.editorOption = {
+      language: 'json',
+      minimap: { enabled: false }
+  };
   }
 
   async load() {
@@ -224,6 +233,8 @@ export class ProjectV2RunStartComponent implements OnInit {
   }
 
   async submitForm() {
+    let data;
+    this.invalidJson = false;
     if (!this.validateForm.valid) {
       Object.values(this.validateForm.controls).forEach(control => {
         if (control.invalid) {
@@ -232,6 +243,16 @@ export class ProjectV2RunStartComponent implements OnInit {
         }
       });
       return;
+    }
+    if (this.validateForm.value.payload) {
+      const payload = this.validateForm.value.payload;
+      try {
+        data = JSON.parse(payload);
+      } catch (e) {
+        this.invalidJson = true;
+        this._cd.markForCheck();
+        return;
+      }
     }
     this.validateForm.disable();
     this._cd.markForCheck();
@@ -252,8 +273,10 @@ export class ProjectV2RunStartComponent implements OnInit {
         req.workflow_branch = ref.replace('refs/heads/', '');
       }
     }
-
+    
+    req.payload = data;
     let hookEventUUID: string;
+    
     try {
       const resp = await lastValueFrom(this._workflowRunService.start(this.project.key, splitted.vcs, splitted.repo, this.validateForm.value.workflow, req));
       this._messageService.success('Workflow run started', { nzDuration: 2000 });
