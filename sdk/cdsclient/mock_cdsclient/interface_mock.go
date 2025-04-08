@@ -360,18 +360,23 @@ func (mr *MockAdminMockRecorder) AdminDatabaseEntityList(service any) *gomock.Ca
 }
 
 // AdminDatabaseEntityRoll mocks base method.
-func (m *MockAdmin) AdminDatabaseEntityRoll(service, e string, pks []string) ([]sdk.DatabaseEntityInfo, error) {
+func (m *MockAdmin) AdminDatabaseEntityRoll(service, e string, pks []string, mods ...cdsclient.RequestModifier) ([]sdk.DatabaseEntityInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseEntityRoll", service, e, pks)
+	varargs := []any{service, e, pks}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AdminDatabaseEntityRoll", varargs...)
 	ret0, _ := ret[0].([]sdk.DatabaseEntityInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AdminDatabaseEntityRoll indicates an expected call of AdminDatabaseEntityRoll.
-func (mr *MockAdminMockRecorder) AdminDatabaseEntityRoll(service, e, pks any) *gomock.Call {
+func (mr *MockAdminMockRecorder) AdminDatabaseEntityRoll(service, e, pks any, mods ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseEntityRoll", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseEntityRoll), service, e, pks)
+	varargs := append([]any{service, e, pks}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseEntityRoll", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseEntityRoll), varargs...)
 }
 
 // AdminDatabaseMigrationDelete mocks base method.
@@ -7096,18 +7101,23 @@ func (mr *MockInterfaceMockRecorder) AdminDatabaseEntityList(service any) *gomoc
 }
 
 // AdminDatabaseEntityRoll mocks base method.
-func (m *MockInterface) AdminDatabaseEntityRoll(service, e string, pks []string) ([]sdk.DatabaseEntityInfo, error) {
+func (m *MockInterface) AdminDatabaseEntityRoll(service, e string, pks []string, mods ...cdsclient.RequestModifier) ([]sdk.DatabaseEntityInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseEntityRoll", service, e, pks)
+	varargs := []any{service, e, pks}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AdminDatabaseEntityRoll", varargs...)
 	ret0, _ := ret[0].([]sdk.DatabaseEntityInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AdminDatabaseEntityRoll indicates an expected call of AdminDatabaseEntityRoll.
-func (mr *MockInterfaceMockRecorder) AdminDatabaseEntityRoll(service, e, pks any) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AdminDatabaseEntityRoll(service, e, pks any, mods ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseEntityRoll", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseEntityRoll), service, e, pks)
+	varargs := append([]any{service, e, pks}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseEntityRoll", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseEntityRoll), varargs...)
 }
 
 // AdminDatabaseMigrationDelete mocks base method.

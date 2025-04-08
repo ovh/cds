@@ -86,7 +86,6 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, notif *sdk.Proje
 func LoadByName(ctx context.Context, db gorp.SqlExecutor, projectKey string, name string, opts ...gorpmapper.GetOptionFunc) (*sdk.ProjectNotification, error) {
 	q := gorpmapping.NewQuery("SELECT * FROM project_notification WHERE project_key=$1 AND name=$2").Args(projectKey, name)
 	return get(ctx, db, q, opts...)
-
 }
 
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.ProjectNotification, error) {

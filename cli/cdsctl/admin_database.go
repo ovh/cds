@@ -518,7 +518,7 @@ func adminDatabaseRollEntity(client cdsclient.Interface, service string, entity 
 		if j >= len(pks) {
 			j = len(pks)
 		}
-		is, err := client.AdminDatabaseEntityRoll(service, entity, pks[i:j])
+		is, err := client.AdminDatabaseEntityRoll(service, entity, pks[i:j], cdsclient.IgnoreMissing())
 		if err != nil {
 			return err
 		}

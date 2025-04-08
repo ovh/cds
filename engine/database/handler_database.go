@@ -129,9 +129,14 @@ func AdminPostDatabaseEntityRoll(db DBFunc, mapper MapperFunc) service.Handler {
 		vars := mux.Vars(r)
 		entity := vars["entity"]
 
+		ignoreMissing := r.FormValue("ignoreMissing") == sdk.TrueString
+
 		var pks []string
 		if err := service.UnmarshalBody(r, &pks); err != nil {
 			return err
+		}
+		if len(pks) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "no primary key was given")
 		}
 
 		var res []sdk.DatabaseEntityInfo
@@ -148,7 +153,10 @@ func AdminPostDatabaseEntityRoll(db DBFunc, mapper MapperFunc) service.Handler {
 			}
 			if i == nil {
 				tx.Rollback() //nolint
-				continue
+				if ignoreMissing {
+					continue
+				}
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "no tuple found for primary key %s", pk)
 			}
 
 			res = append(res, *i)

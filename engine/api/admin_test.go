@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -17,11 +16,12 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/notification_v2"
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workermodel"
@@ -34,27 +34,21 @@ import (
 
 func Test_getAdminOrganizationCRUD(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-
 	_, jwt := assets.InsertAdminUser(t, db)
 
-	orga := sdk.Organization{
-		Name: sdk.RandomString(10),
-	}
+	orga := sdk.Organization{Name: sdk.RandomString(10)}
 	uri := api.Router.GetRoute("POST", api.postAdminOrganizationHandler, nil)
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, &orga)
 
-	// Do the request
 	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, &orga))
+	require.Equal(t, 201, w.Code)
 
 	uriList := api.Router.GetRoute("GET", api.getAdminOrganizationsHandler, nil)
-	reqList := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uriList, nil)
 	wList := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(wList, reqList)
+	api.Router.Mux.ServeHTTP(wList, assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uriList, nil))
 
 	var orgs []sdk.Organization
-	assert.Equal(t, 200, wList.Code)
+	require.Equal(t, 200, wList.Code)
 	body := wList.Body.Bytes()
 	require.NoError(t, json.Unmarshal(body, &orgs))
 
@@ -172,9 +166,9 @@ func Test_getAdminDatabaseEntity(t *testing.T) {
 	require.True(t, d2Found, "gorpmapper.TestEncryptedData d2 entity pk should be listed")
 }
 
-func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *testing.T) {
+func Test_postAdminDatabaseRollEncryptedEntityForApplication(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-	_, jwt := assets.InsertAdminUser(t, db)
+	admin, jwt := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(6), sdk.RandomString(6))
 
@@ -191,7 +185,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 		},
 	}
 	require.NoError(t, integration.InsertModel(db, &pf))
-	defer func() { _ = integration.DeleteModel(context.TODO(), db, pf.ID) }()
+	t.Cleanup(func() { _ = integration.DeleteModel(context.TODO(), db, pf.ID) })
 
 	pp := sdk.ProjectIntegration{
 		Model:              pf,
@@ -212,6 +206,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 		}
 	}
 
+	// application.dbApplication
 	app := &sdk.Application{
 		Name:               "my-amm",
 		RepositoryFullname: "ovh/cds",
@@ -223,6 +218,16 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 	}
 	require.NoError(t, application.Insert(db, *proj, app))
 
+	uri := api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "application.dbApplication"})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", app.ID)}))
+	require.Equal(t, 200, w.Code)
+
+	app, err = application.LoadByNameWithClearVCSStrategyPassword(context.Background(), db, proj.Key, app.Name)
+	require.NoError(t, err)
+	require.Equal(t, "bar", app.RepositoryStrategy.Password)
+
+	// application.dbApplicationDeploymentStrategy
 	var pfConfig = sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{
 			Type:  sdk.IntegrationConfigTypePassword,
@@ -233,8 +238,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 			Value: "my-url",
 		},
 	}
-	err = application.SetDeploymentStrategy(db, proj.ID, app.ID, pp.Model.ID, pp.Name, pfConfig)
-	require.NoError(t, err)
+	require.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pp.Model.ID, pp.Name, pfConfig))
 
 	app, err = application.LoadByName(context.Background(), db, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
 	require.NoError(t, err)
@@ -244,11 +248,9 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 
 	t.Logf("deployment strategies before rollover: %+v", app.DeploymentStrategies)
 
-	uri := api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "application.dbApplicationDeploymentStrategy"})
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", adsID)})
-	// Do the request
-	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "application.dbApplicationDeploymentStrategy"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", adsID)}))
 	require.Equal(t, 200, w.Code)
 
 	app2, err := application.LoadByName(context.Background(), db, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
@@ -256,33 +258,69 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 	t.Logf("deployment strategies after rollover: %+v", app2.DeploymentStrategies)
 
 	require.Equal(t, app.DeploymentStrategies, app2.DeploymentStrategies)
+	tBefore, err := app.DeploymentStrategies["token"].Value()
+	require.NoError(t, err)
+	tAfter, err := app2.DeploymentStrategies["token"].Value()
+	require.NoError(t, err)
+	require.Equal(t, tBefore, tAfter)
+
+	// application.dbApplicationVariable
+	vari := sdk.ApplicationVariable{
+		Name:  "secret",
+		Type:  "string",
+		Value: "bar",
+	}
+	require.NoError(t, application.InsertVariable(db, app.ID, &vari, admin))
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "application.dbApplicationVariable"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", vari.ID)}))
+	require.Equal(t, 200, w.Code)
+
+	vari2, err := application.LoadVariableWithDecryption(context.TODO(), db, app.ID, vari.ID, "secret")
+	require.NoError(t, err)
+	require.Equal(t, "bar", vari2.Value)
+
+	// application.dbApplicationKey
+	k := &sdk.ApplicationKey{
+		Name:          "mykey",
+		Type:          "pgp",
+		ApplicationID: app.ID,
+	}
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
+	if err != nil {
+		t.Fatal(err)
+	}
+	k.Public = pgpK.Public
+	k.Private = pgpK.Private
+	k.KeyID = pgpK.KeyID
+	if err := application.InsertKey(db, k); err != nil {
+		t.Fatal(err)
+	}
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "application.dbApplicationKey"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", k.ID)}))
+	require.Equal(t, 200, w.Code)
+
+	keys, err := application.LoadAllKeysWithPrivateContent(context.TODO(), db, app.ID)
+	require.NoError(t, err)
+	require.Len(t, keys, 1)
+	require.Equal(t, pgpK.Private, keys[0].Private)
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkerModelSecret(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-
-	//Loading all models
-	models, errlw := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
-	if errlw != nil {
-		t.Fatalf("Error getting models : %s", errlw)
-	}
-
-	//Delete all of them
-	for _, m := range models {
-		if err := workermodel.DeleteByID(api.mustDB(), m.ID); err != nil {
-			t.Fatalf("Error deleting model : %s", err)
-		}
-	}
-
-	//Create admin user
 	u, jwt := assets.InsertAdminUser(t, db)
-	assert.NotZero(t, u)
-	assert.NotZero(t, jwt)
+
+	models, err := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
+	require.NoError(t, err)
+	for _, m := range models {
+		require.NoError(t, workermodel.DeleteByID(api.mustDB(), m.ID))
+	}
 
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
-	if err != nil {
-		t.Fatalf("Error getting group : %s", err)
-	}
+	require.NoError(t, err)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -308,20 +346,13 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkerModelSecret(t
 		},
 	}
 
-	//Prepare request
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
-	test.NotEmpty(t, uri)
-
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
-
-	//Do the request
 	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model))
+	require.Equal(t, 200, w.Code)
 
 	var newModel sdk.Model
-	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
 
 	require.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
 	require.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
@@ -330,21 +361,19 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkerModelSecret(t
 	secrets, err := workermodel.LoadSecretsByModelID(context.TODO(), api.mustDB(), newModel.ID)
 	require.NoError(t, err)
 	require.Len(t, secrets, 1)
-	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
-	assert.Equal(t, "pwtest", secrets[0].Value)
+	require.Equal(t, "secrets.registry_password", secrets[0].Name)
+	require.Equal(t, "pwtest", secrets[0].Value)
 
 	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "workermodel.workerModelSecret"})
-	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{secrets[0].ID})
-	// Do the request
 	w = httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{secrets[0].ID}))
 	require.Equal(t, 200, w.Code)
 
 	secrets, err = workermodel.LoadSecretsByModelID(context.TODO(), api.mustDB(), newModel.ID)
 	require.NoError(t, err)
 	require.Len(t, secrets, 1)
-	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
-	assert.Equal(t, "pwtest", secrets[0].Value)
+	require.Equal(t, "secrets.registry_password", secrets[0].Name)
+	require.Equal(t, "pwtest", secrets[0].Value)
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectIntegration(t *testing.T) {
@@ -355,13 +384,13 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectIntegration(
 
 	integrationModel, err := integration.LoadModelByName(context.TODO(), db, sdk.KafkaIntegration.Name)
 	if err != nil {
-		assert.NoError(t, integration.CreateBuiltinModels(context.TODO(), api.mustDB()))
+		require.NoError(t, integration.CreateBuiltinModels(context.TODO(), api.mustDB()))
 		models, _ := integration.LoadModels(db)
-		assert.True(t, len(models) > 0)
+		require.True(t, len(models) > 0)
 	}
 
 	integrationModel, err = integration.LoadModelByName(context.TODO(), db, sdk.AWSIntegration.Name)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	pp := sdk.ProjectIntegration{
 		Name:               "test",
@@ -376,43 +405,34 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectIntegration(
 
 	t.Logf("%+v", pp.Config)
 
-	// ADD integration
-	vars := map[string]string{}
-	vars[permProjectKey] = proj.Key
-	uri := router.GetRoute("POST", api.postProjectIntegrationHandler, vars)
-	req := assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, pp)
+	uri := router.GetRoute("POST", api.postProjectIntegrationHandler, map[string]string{permProjectKey: proj.Key})
 	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	require.NoError(t, err)
+	router.Mux.ServeHTTP(w, assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, pp))
+	require.Equal(t, 200, w.Code)
 
 	integ, err := integration.LoadIntegrationsByProjectIDWithClearPassword(context.TODO(), db, proj.ID)
-	t.Logf("%+v", integ[0].Config)
 	require.NoError(t, err)
+	t.Logf("%+v", integ[0].Config)
 
 	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "integration.dbProjectIntegration"})
-	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", integ[0].ID)})
-	// Do the request
 	w = httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", integ[0].ID)}))
 	require.Equal(t, 200, w.Code)
 
 	integ2, err := integration.LoadIntegrationsByProjectIDWithClearPassword(context.TODO(), db, proj.ID)
 	require.NoError(t, err)
-
 	t.Logf("%+v", integ2[0].Config)
 
 	require.Len(t, integ2[0].Config, len(pp.Config))
 	for k, v := range pp.Config {
-		assert.Equal(t, integ2[0].Config[k], v)
+		require.Equal(t, integ2[0].Config[k], v)
 	}
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(t *testing.T) {
 	api, db, router := newTestAPI(t)
-
 	u, pass := assets.InsertAdminUser(t, db)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
@@ -434,7 +454,6 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	}
 	require.NoError(t, project.InsertVariable(db, proj.ID, &pwdProject, u))
 
-	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -457,7 +476,6 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 
 	pip.Stages = append(pip.Stages, *s)
 
-	//Second pipeline
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -520,7 +538,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	}
 
 	require.NoError(t, plugin.Insert(db, &p))
-	assert.NotEqual(t, 0, p.ID)
+	require.NotEqual(t, 0, p.ID)
 
 	app := sdk.Application{
 		ProjectKey: proj.Key,
@@ -644,13 +662,11 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj2, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	//Prepare request
-	vars := map[string]string{
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
 		"key":                      proj.Key,
 		"permWorkflowNameAdvanced": w1.Name,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
-	test.NotEmpty(t, uri)
+	})
+	require.NotEmpty(t, uri)
 
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
@@ -659,24 +675,21 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 			},
 		},
 	}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
 	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
+	router.Mux.ServeHTTP(rec, assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts))
+	require.Equal(t, 202, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
-	assert.Equal(t, int64(1), wr.Number)
+	require.Equal(t, int64(1), wr.Number)
 	require.Equal(t, int64(0), wr.LastSubNumber)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
+	require.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 
 	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
-	test.NoError(t, err)
-	assert.NotNil(t, lastRun.RootRun())
+	require.NoError(t, err)
+	require.NotNil(t, lastRun.RootRun())
 	payloadCount := 0
 	testFound := false
 	for _, param := range lastRun.RootRun().BuildParameters {
@@ -686,8 +699,8 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 			testFound = true
 		}
 	}
-	assert.Equal(t, 1, payloadCount)
-	assert.True(t, testFound, "should find 'test' in build parameters")
+	require.Equal(t, 1, payloadCount)
+	require.True(t, testFound, "should find 'test' in build parameters")
 
 	secretsRaw, err := workflow.LoadDecryptSecrets(context.TODO(), db, lastRun, lastRun.RootRun())
 	require.NoError(t, err)
@@ -731,9 +744,8 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 
 	// Rollover
 	uri = api.Router.GetRoute("GET", api.getAdminDatabaseEntity, map[string]string{"entity": "workflow.dbWorkflowRunSecret"})
-	req = assets.NewJWTAuthentifiedRequest(t, pass, "GET", uri, nil)
 	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, pass, "GET", uri, nil))
 	require.Equal(t, 200, w.Code)
 
 	var res []string
@@ -748,14 +760,10 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	}
 
 	// Rerun
-	//Prepare request
-	vars = map[string]string{
+	uri = router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
 		"key":                      proj.Key,
 		"permWorkflowNameAdvanced": w1.Name,
-	}
-	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
-	test.NotEmpty(t, uri)
-
+	})
 	opts = &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Payload: map[string]string{
@@ -765,25 +773,22 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 		Number:      &lastRun.Number,
 		FromNodeIDs: []int64{lastRun.RootRun().WorkflowNodeID},
 	}
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
 	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
+	router.Mux.ServeHTTP(rec, assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts))
+	require.Equal(t, 202, rec.Code)
 
 	wr = &sdk.WorkflowRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	require.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
+	require.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 
 	lastRun, err = workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 	require.Equal(t, int64(1), lastRun.LastSubNumber)
 
-	assert.NotNil(t, lastRun.RootRun())
+	require.NotNil(t, lastRun.RootRun())
 	payloadCount = 0
 	testFound = false
 	for _, param := range lastRun.RootRun().BuildParameters {
@@ -793,8 +798,8 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 			testFound = true
 		}
 	}
-	assert.Equal(t, 1, payloadCount)
-	assert.True(t, testFound, "should find 'test' in build parameters")
+	require.Equal(t, 1, payloadCount)
+	require.True(t, testFound, "should find 'test' in build parameters")
 
 	secretsRaw, err = workflow.LoadDecryptSecrets(context.TODO(), db, lastRun, lastRun.RootRun())
 	require.NoError(t, err)
@@ -851,12 +856,13 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	require.Equal(t, projvar, sdk.VariableFind(secrets, "cds.proj.projvar"))
 }
 
-func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testing.T) {
+func Test_postAdminDatabaseRollEncryptedEntityForProject(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-	_, jwt := assets.InsertAdminUser(t, db)
+	admin, jwt := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(6), sdk.RandomString(6))
 
+	// vcs.dbVCSProject
 	vcsProject := &sdk.VCSProject{
 		Name:      "myserver",
 		Created:   time.Now(),
@@ -876,10 +882,8 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testi
 	require.NoError(t, err)
 
 	uri := api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "vcs.dbVCSProject"})
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{vcsProject.ID})
-	// Do the request
 	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{vcsProject.ID}))
 	require.Equal(t, 200, w.Code)
 
 	vcsProject2, err := vcs.LoadVCSByIDAndProjectKey(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
@@ -888,13 +892,97 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testi
 	require.Equal(t, vcsProject.Auth.SSHPrivateKey, vcsProject2.Auth.SSHPrivateKey)
 	require.Equal(t, vcsProject.Auth.Token, vcsProject2.Auth.Token)
 	require.Equal(t, vcsProject.Auth.Username, vcsProject2.Auth.Username)
+
+	// project.dbProjectVariable
+	v := &sdk.ProjectVariable{
+		Name:  "secret",
+		Type:  sdk.StringVariable,
+		Value: "myvalue",
+	}
+	require.NoError(t, project.InsertVariable(db, proj.ID, v, admin))
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "project.dbProjectVariable"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", v.ID)}))
+	require.Equal(t, 200, w.Code)
+
+	vAfter, err := project.LoadVariableWithDecryption(db, proj.ID, v.ID, "secret")
+	require.NoError(t, err)
+	require.Equal(t, "myvalue", vAfter.Value)
+
+	// project.dbProjectKey
+	k := &sdk.ProjectKey{
+		Name:      "mykey",
+		Type:      "pgp",
+		ProjectID: proj.ID,
+	}
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
+	require.NoError(t, err)
+	k.Public = pgpK.Public
+	k.Private = pgpK.Private
+	k.KeyID = pgpK.KeyID
+	require.NoError(t, project.InsertKey(db, k))
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "project.dbProjectKey"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", k.ID)}))
+	require.Equal(t, 200, w.Code)
+
+	keys, err := project.LoadAllKeysWithPrivateContent(context.TODO(), db, proj.ID)
+	require.NoError(t, err)
+	require.Len(t, keys, 1)
+	require.Equal(t, pgpK.Private, keys[0].Private)
+
+	// notification_v2.dbProjectNotification
+	n := &sdk.ProjectNotification{
+		Name:       "mynotif",
+		ProjectKey: proj.Key,
+		Auth: sdk.ProjectNotificationAuth{
+			Headers: map[string]string{
+				"secret": "value",
+			},
+		},
+	}
+	require.NoError(t, notification_v2.Insert(context.TODO(), db, n))
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "notification_v2.dbProjectNotification"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{n.ID}))
+	require.Equal(t, 200, w.Code)
+
+	n, err = notification_v2.LoadByName(context.TODO(), db, proj.Key, "mynotif", gorpmapping.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	require.Equal(t, "value", n.Auth.Headers["secret"])
+
+	// project.dbProjectVariableSetItemSecret
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+
+	its := &sdk.ProjectVariableSetItem{
+		ProjectVariableSetID: vs.ID,
+		Name:                 sdk.RandomString(10),
+		Type:                 sdk.ProjectVariableTypeSecret,
+		Value:                "mySecretValue",
+	}
+	require.NoError(t, project.InsertVariableSetItemSecret(context.TODO(), db, its))
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "project.dbProjectVariableSetItemSecret"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{its.ID}))
+	require.Equal(t, 200, w.Code)
+
+	its, err = project.LoadVariableSetItem(context.TODO(), db, vs.ID, its.Name, gorpmapping.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	require.Equal(t, "mySecretValue", its.Value)
 }
 
 func Test_postWorkflowMaxRunHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-	workflow.SetMaxRuns(15)
-
 	_, jwt := assets.InsertAdminUser(t, db)
+	workflow.SetMaxRuns(15)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	w := assets.InsertTestWorkflow(t, db, api.Cache, p, sdk.RandomString(10))
@@ -907,7 +995,7 @@ func Test_postWorkflowMaxRunHandler(t *testing.T) {
 	// Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 204, rec.Code)
+	require.Equal(t, 204, rec.Code)
 
 	wfDb, err := workflow.Load(context.TODO(), db, api.Cache, *p, w.Name, workflow.LoadOptions{})
 	require.NoError(t, err)
@@ -920,4 +1008,58 @@ func Test_postWorkflowMaxRunHandler(t *testing.T) {
 	wfDb2, err := workflow.Load(context.TODO(), db, api.Cache, *p, w.Name, workflow.LoadOptions{})
 	require.NoError(t, err)
 	require.Equal(t, int64(5), wfDb2.MaxRuns)
+}
+
+func Test_postAdminDatabaseRollEncryptedEntityForEnvironment(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	admin, jwt := assets.InsertAdminUser(t, db)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(6), sdk.RandomString(6))
+
+	//3. Create env
+	env := sdk.Environment{
+		ProjectID: proj.ID,
+		Name:      "my-env",
+	}
+	require.NoError(t, environment.InsertEnvironment(api.mustDB(), &env))
+
+	// environment.dbEnvironmentVariable
+	v := &sdk.EnvironmentVariable{
+		Name:  "secret",
+		Type:  sdk.StringVariable,
+		Value: "myvalue",
+	}
+	require.NoError(t, environment.InsertVariable(db, env.ID, v, admin))
+
+	uri := api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "environment.dbEnvironmentVariable"})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", v.ID)}))
+	require.Equal(t, 200, w.Code)
+
+	vAfter, err := environment.LoadVariableWithDecryption(db, env.ID, v.ID, "secret")
+	require.NoError(t, err)
+	require.Equal(t, "myvalue", vAfter.Value)
+
+	// environment.dbEnvironmentKey
+	k := &sdk.EnvironmentKey{
+		Name:          "mykey",
+		Type:          "pgp",
+		EnvironmentID: env.ID,
+	}
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
+	require.NoError(t, err)
+	k.Public = pgpK.Public
+	k.Private = pgpK.Private
+	k.KeyID = pgpK.KeyID
+	require.NoError(t, environment.InsertKey(db, k))
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseEntityRoll, map[string]string{"entity": "environment.dbEnvironmentKey"})
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, []string{fmt.Sprintf("%d", k.ID)}))
+	require.Equal(t, 200, w.Code)
+
+	keys, err := environment.LoadAllKeysWithPrivateContent(db, env.ID)
+	require.NoError(t, err)
+	require.Len(t, keys, 1)
+	require.Equal(t, pgpK.Private, keys[0].Private)
 }

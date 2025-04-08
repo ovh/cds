@@ -58,10 +58,16 @@ func (c *client) AdminDatabaseEntityInfo(service string, e string, pks []string)
 	return res, err
 }
 
-func (c *client) AdminDatabaseEntityRoll(service string, e string, pks []string) ([]sdk.DatabaseEntityInfo, error) {
+func (c *client) AdminDatabaseEntityRoll(service string, e string, pks []string, mods ...RequestModifier) ([]sdk.DatabaseEntityInfo, error) {
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/admin/database/entity/%s/roll", e), nil)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	for _, m := range mods {
+		m(req)
+	}
 	var res []sdk.DatabaseEntityInfo
-	url := fmt.Sprintf("/admin/database/entity/%s/roll", e)
-	var f = c.switchServiceCallFunc(service, http.MethodPost, url, pks, &res)
-	_, err := f()
+	var f = c.switchServiceCallFunc(service, http.MethodPost, req.URL.String(), pks, &res)
+	_, err = f()
 	return res, err
 }

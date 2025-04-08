@@ -11,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
@@ -134,9 +136,8 @@ func Test_postAdminDatabaseEntityInfoAndRoll(t *testing.T) {
 	pk := strconv.FormatInt(d1.ID, 10)
 
 	uri := s.Router.GetRoute(http.MethodPost, s.postAdminDatabaseEntityInfo, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
-	req := newRequest(t, http.MethodPost, uri, []string{pk})
 	w := httptest.NewRecorder()
-	s.Router.Mux.ServeHTTP(w, req)
+	s.Router.Mux.ServeHTTP(w, newRequest(t, http.MethodPost, uri, []string{pk}))
 	require.Equal(t, 200, w.Code)
 
 	var res []sdk.DatabaseEntityInfo
@@ -170,9 +171,8 @@ func Test_postAdminDatabaseEntityInfoAndRoll(t *testing.T) {
 	require.NoError(t, s.Mapper.ConfigureKeys(signatureKeyConfig, encryptionKeyConfig), "cannot setup database keys")
 
 	uri = s.Router.GetRoute(http.MethodPost, s.postAdminDatabaseEntityRoll, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
-	req = newRequest(t, http.MethodPost, uri, []string{pk})
 	w = httptest.NewRecorder()
-	s.Router.Mux.ServeHTTP(w, req)
+	s.Router.Mux.ServeHTTP(w, newRequest(t, http.MethodPost, uri, []string{pk}))
 	require.Equal(t, 200, w.Code)
 
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &res))
@@ -184,9 +184,8 @@ func Test_postAdminDatabaseEntityInfoAndRoll(t *testing.T) {
 	require.Equal(t, now, res[0].SignatureTS)
 
 	uri = s.Router.GetRoute(http.MethodPost, s.postAdminDatabaseEntityInfo, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
-	req = newRequest(t, http.MethodPost, uri, []string{pk})
 	w = httptest.NewRecorder()
-	s.Router.Mux.ServeHTTP(w, req)
+	s.Router.Mux.ServeHTTP(w, newRequest(t, http.MethodPost, uri, []string{pk}))
 	require.Equal(t, 200, w.Code)
 
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &res))
@@ -196,4 +195,52 @@ func Test_postAdminDatabaseEntityInfoAndRoll(t *testing.T) {
 	require.Equal(t, now, res[0].EncryptionTS)
 	require.True(t, res[0].Signed)
 	require.Equal(t, now, res[0].SignatureTS)
+}
+
+func Test_postAdminDatabaseRollEncryptedEntityForItem(t *testing.T) {
+	s, db := newTestService(t)
+
+	// item.cdnItemDB
+	item1 := sdk.CDNItem{
+		ID:   sdk.UUID(),
+		Type: sdk.CDNTypeItemStepLog,
+		APIRef: &sdk.CDNLogAPIRef{
+			RunID:      1,
+			WorkflowID: 1,
+		},
+		APIRefHash: sdk.RandomString(10),
+		Hash:       "myhash",
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item1))
+
+	uri := s.Router.GetRoute("POST", s.postAdminDatabaseEntityRoll, map[string]string{"entity": "item.cdnItemDB"})
+	w := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(w, newRequest(t, http.MethodPost, uri, []string{item1.ID}))
+	require.Equal(t, 200, w.Code)
+
+	item2, err := item.LoadByID(context.TODO(), s.Mapper, db, item1.ID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	require.Equal(t, "myhash", item2.Hash)
+
+	// storage.itemUnitDB
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, s.Mapper, s.mustDB(), ctx, s.Cache)
+
+	iu1 := sdk.CDNItemUnit{
+		ItemID:  item2.ID,
+		UnitID:  s.Units.LogsBuffer().ID(),
+		Type:    item2.Type,
+		Locator: "mylocator",
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu1))
+
+	uri = s.Router.GetRoute("POST", s.postAdminDatabaseEntityRoll, map[string]string{"entity": "storage.itemUnitDB"})
+	w = httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(w, newRequest(t, http.MethodPost, uri, []string{iu1.ID}))
+	require.Equal(t, 200, w.Code)
+
+	iu2, err := storage.LoadItemUnitByID(context.TODO(), s.Mapper, db, iu1.ID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	require.Equal(t, "mylocator", iu2.Locator)
 }

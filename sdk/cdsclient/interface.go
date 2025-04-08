@@ -47,7 +47,7 @@ type Admin interface {
 	AdminDatabaseEntityList(service string) ([]sdk.DatabaseEntity, error)
 	AdminDatabaseEntity(service string, e string, mods ...RequestModifier) ([]string, error)
 	AdminDatabaseEntityInfo(service string, e string, pks []string) ([]sdk.DatabaseEntityInfo, error)
-	AdminDatabaseEntityRoll(service string, e string, pks []string) ([]sdk.DatabaseEntityInfo, error)
+	AdminDatabaseEntityRoll(service string, e string, pks []string, mods ...RequestModifier) ([]sdk.DatabaseEntityInfo, error)
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
@@ -806,6 +806,14 @@ func Signer(signer string) RequestModifier {
 	return func(r *http.Request) {
 		q := r.URL.Query()
 		q.Set("signer", signer)
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func IgnoreMissing() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("ignoreMissing", sdk.TrueString)
 		r.URL.RawQuery = q.Encode()
 	}
 }
