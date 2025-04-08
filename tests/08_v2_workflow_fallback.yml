@@ -58,7 +58,7 @@ testcases:
           type: docker
           spec:
             image: buildpack-deps:buster
-        workflows/servicelog.yaml:
+        workflows/myworkflow.yaml:
           name: {{.cds_workflow}}
           on: [push]
           env:
@@ -133,7 +133,7 @@ testcases:
             region: {{.cds.region}}
             projects: [{{.cds_project}}]
         EOF
-    - script: "{{.cdsctl}} experimental rbac import /tmp/project_rbac_{{.cds_project}}.yml --force"  
+    - script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import /tmp/project_rbac_{{.cds_project}}.yml --force"  
     - name: push readme
       script: cd /tmp/repos/{{.git_repo}} && git add README.MD && git commit . -m "add readme" && git push origin devbranch
     - name: Check CDS project analyses status
