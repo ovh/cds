@@ -54,7 +54,7 @@ func TestSortEntitiesFiles(t *testing.T) {
 }
 func TestCleanAnalysis(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-
+	api.Config.Entity.AnalysisRetention = 50
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	t.Cleanup(cancel)
 
