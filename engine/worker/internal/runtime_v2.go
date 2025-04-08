@@ -248,6 +248,9 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 					log.ErrorWithStackTrace(ctx, errGetDetail)
 				}
 				res, err = pattern.MatchString(x.Name)
+				if err == nil && res == nil {
+					res, err = pattern.MatchString(r.Name())
+				}
 			} else {
 				res, err = pattern.MatchString(r.Name())
 			}
