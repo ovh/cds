@@ -203,3 +203,9 @@ func LoadAllHooksUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2Workf
 
 	return runs, nil
 }
+
+// Deprecated
+func LoadHeadHookToMigrate(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowHook, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE type != 'RepositoryWebHook'`)
+	return getAllHooks(ctx, db, query)
+}
