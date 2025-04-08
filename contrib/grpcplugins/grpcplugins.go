@@ -257,13 +257,32 @@ func RunResultsSynchronize(ctx context.Context, c *actionplugin.Common) error {
 		return err
 	}
 
-	resp, err := c.DoRequest(req)
-	if err != nil {
-		return errors.Wrap(err, "unable to synchronize run results")
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		return errors.Wrapf(err, "unable to synchronize run result (status code %d)", resp.StatusCode)
+	retry := 1
+	for {
+		resp, err := c.DoRequest(req)
+		if err != nil {
+			return errors.Wrap(err, "unable to synchronize run results")
+		}
+		if resp.StatusCode >= 300 {
+			bts, err := io.ReadAll(resp.Body)
+			if err != nil {
+				_ = resp.Body.Close()
+				return errors.Wrap(err, "unable to read run results synchronization response")
+			}
+			if strings.Contains(string(bts), "Resource locked") {
+				_ = resp.Body.Close()
+				if retry >= 3 {
+					return sdk.NewErrorFrom(sdk.ErrLocked, "unable to synchronize run result (status code %d), run resuls are being synchronized", resp.StatusCode)
+				}
+				Errorf(c, "failed to synchronize run results, retrying %d/3", retry)
+				retry++
+				time.Sleep(1 * time.Second)
+				continue
+			}
+			_ = resp.Body.Close()
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to synchronize run result (status code %d): %s", resp.StatusCode, string(bts))
+		}
+		break
 	}
 
 	return nil

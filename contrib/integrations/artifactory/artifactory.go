@@ -392,12 +392,13 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 		}
 
 		var (
-			repoName = r.ArtifactManagerMetadata.Get("repository")
-			name     = r.ArtifactManagerMetadata.Get("name")
-			path     = r.ArtifactManagerMetadata.Get("path")
-			repoType = r.ArtifactManagerMetadata.Get("type")
-			md5      = r.ArtifactManagerMetadata.Get("md5")
-			dir      = r.ArtifactManagerMetadata.Get("dir")
+			repoName      = r.ArtifactManagerMetadata.Get("repository")
+			localRepoName = r.ArtifactManagerMetadata.Get("localRepository")
+			name          = r.ArtifactManagerMetadata.Get("name")
+			path          = r.ArtifactManagerMetadata.Get("path")
+			repoType      = r.ArtifactManagerMetadata.Get("type")
+			md5           = r.ArtifactManagerMetadata.Get("md5")
+			dir           = r.ArtifactManagerMetadata.Get("dir")
 		)
 
 		mod := buildinfo.Module{
@@ -413,7 +414,8 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 				currentMaturity = latestPromotion.ToMaturity
 			}
 		}
-		if currentMaturity == "" {
+		// No need to set maturity if repository == localRepository
+		if currentMaturity == "" && repoName != localRepoName {
 			currentMaturity = execContext.defaultLowMaturitySuffix
 		}
 
@@ -480,7 +482,9 @@ func SetPropertiesRecursive(ctx context.Context, client artifact_manager.Artifac
 		repoParts := strings.Split(repoName, "-")
 		repoSrc = strings.Join(repoParts[:len(repoParts)-1], "-")
 	}
-	repoSrc += "-" + maturity
+	if maturity != "" {
+		repoSrc += "-" + maturity
+	}
 
 	log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, path)
 	_, endc := telemetry.Span(ctx, "artifactory.SetProperties", telemetry.Tag("repoSrc", repoSrc))
