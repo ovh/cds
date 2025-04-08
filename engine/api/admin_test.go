@@ -311,7 +311,7 @@ func Test_postAdminDatabaseRollEncryptedEntityForApplication(t *testing.T) {
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkerModelSecret(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-	u, jwt := assets.InsertAdminUser(t, db)
+	_, jwt := assets.InsertAdminUser(t, db)
 
 	models, err := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
 	require.NoError(t, err)
