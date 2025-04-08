@@ -274,7 +274,7 @@ func RunResultsSynchronize(ctx context.Context, c *actionplugin.Common) error {
 				if retry >= 3 {
 					return sdk.NewErrorFrom(sdk.ErrLocked, "unable to synchronize run result (status code %d), run resuls are being synchronized", resp.StatusCode)
 				}
-				Errorf(c, "failed to synchronize run results, retrying %d/3", retry)
+				Errorf(c, "failed to synchronize run results, retrying %d/2", retry)
 				retry++
 				time.Sleep(1 * time.Second)
 				continue
