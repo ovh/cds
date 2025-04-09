@@ -61,19 +61,19 @@ func (a V2Action) Lint() []error {
 	actionSchema := GetActionJsonSchema(nil)
 	actionSchemaS, err := actionSchema.MarshalJSON()
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to load action schema")}
+		return []error{NewErrorFrom(err, "action %s: unable to load action schema", a.Name)}
 	}
 	schemaLoader := gojsonschema.NewStringLoader(string(actionSchemaS))
 
 	modelJson, err := json.Marshal(a)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to marshal action")}
+		return []error{NewErrorFrom(err, "action: %s: unable to marshal action", a.Name)}
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(ErrInvalidData, "unable to validate action:"+err.Error())}
+		return []error{NewErrorFrom(ErrInvalidData, "action %s: unable to validate action: %v", a.Name, err.Error())}
 	}
 	if result.Valid() {
 		return nil
@@ -81,7 +81,7 @@ func (a V2Action) Lint() []error {
 
 	errors := make([]error, 0, len(result.Errors()))
 	for _, e := range result.Errors() {
-		errors = append(errors, NewErrorFrom(ErrInvalidData, e.String()))
+		errors = append(errors, NewErrorFrom(ErrInvalidData, "action %s: yaml validation failed: %s", a.Name, e.String()))
 	}
 	return errors
 }
