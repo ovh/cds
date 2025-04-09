@@ -43,25 +43,13 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		if strings.HasPrefix(hre.ExtractData.Ref, sdk.GitRefTagPrefix) {
 			changesets = false
 		}
-		vcs := hre.VCSServerName
-		repo := hre.RepositoryName
-
-		// For scheduler we need to take target repository information
-		if hre.EventName == sdk.WorkflowHookEventNameScheduler {
-			vcs = hre.ExtractData.Scheduler.TargetVCS
-			repo = hre.ExtractData.Scheduler.TargetRepo
-		}
-		if hre.EventName == sdk.WorkflowHookEventNameWorkflowRun {
-			vcs = hre.ExtractData.WorkflowRun.TargetVCS
-			repo = hre.ExtractData.WorkflowRun.TargetRepository
-		}
 
 		req := sdk.HookRetrieveSignKeyRequest{
 			HookEventUUID:    hre.UUID,
 			HookEventKey:     cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
 			ProjectKey:       hre.WorkflowHooks[0].ProjectKey,
-			VCSServerName:    vcs,
-			RepositoryName:   repo,
+			VCSServerName:    hre.VCSServerName,
+			RepositoryName:   hre.RepositoryName,
 			Commit:           hre.ExtractData.Commit,
 			Ref:              hre.ExtractData.Ref,
 			GetSigninKey:     signinkey,
@@ -79,10 +67,13 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		hre.SigningKeyOperationStatus = ope.Status
 		hre.SigningKeyOperation = ope.UUID
 
-		// For repository webhook and scheduler, signin operation == gitinfo operation
+		// For repository webhook signin operation == gitinfo operation
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
-			if wh.Type == sdk.WorkflowHookTypeRepository || wh.Type == sdk.WorkflowHookTypeScheduler {
+			if wh.Type == sdk.WorkflowHookTypeRepository {
+				wh.OperationUUID = ope.UUID
+				wh.OperationStatus = ope.Status
+			} else if wh.Data.VCSServer == hre.VCSServerName && wh.Data.RepositoryName == hre.RepositoryName && wh.TargetCommit == hre.ExtractData.Commit {
 				wh.OperationUUID = ope.UUID
 				wh.OperationStatus = ope.Status
 			}

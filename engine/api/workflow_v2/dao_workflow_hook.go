@@ -55,8 +55,8 @@ func getAllHooks(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 	return hooks, nil
 }
 
-func DeleteWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, entityID string) error {
-	_, err := db.Exec("DELETE FROM v2_workflow_hook WHERE entity_id = $1", entityID)
+func DeleteWorkflowHookByID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, hookID string) error {
+	_, err := db.Exec("DELETE FROM v2_workflow_hook WHERE id = $1", hookID)
 	return sdk.WithStack(err)
 }
 
@@ -96,6 +96,21 @@ func LoadHooksByEntityID(ctx context.Context, db gorp.SqlExecutor, entityID stri
 	return getAllHooks(ctx, db, q)
 }
 
+// Deprecated
+func LoadOldHeadHooksByVCSAndRepoAndRefAndWorkflow(ctx context.Context, db gorp.SqlExecutor, projectKey, vcsName, repoName, ref, workflowName string) ([]sdk.V2WorkflowHook, error) {
+	q := gorpmapping.NewQuery(`
+		SELECT *
+		FROM v2_workflow_hook
+		WHERE
+    	project_key = $1 AND
+    	vcs_name = $2 AND
+    	repository_name = $3 AND
+    	workflow_name = $4 AND
+		ref = $5 AND commit = 'HEAD'
+	`).Args(projectKey, vcsName, repoName, workflowName, ref)
+	return getAllHooks(ctx, db, q)
+}
+
 func LoadHooksByRepositoryEvent(ctx context.Context, db gorp.SqlExecutor, vcsName, repoName string, eventName sdk.WorkflowHookEventName) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`
 		SELECT *
@@ -109,14 +124,14 @@ func LoadHooksByRepositoryEvent(ctx context.Context, db gorp.SqlExecutor, vcsNam
 	return getAllHooks(ctx, db, q)
 }
 
-func LoadHooksWorkflowRunByWorkflow(ctx context.Context, db gorp.SqlExecutor, workflowName string) ([]sdk.V2WorkflowHook, error) {
+func LoadHooksWorkflowRunByListeningWorkflow(ctx context.Context, db gorp.SqlExecutor, workflowName string) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
     type = $1 AND
     data->>'workflow_run_name'::text = $2`).Args(sdk.WorkflowHookTypeWorkflowRun, workflowName)
 	return getAllHooks(ctx, db, q)
 }
 
-func LoadHookSchedulerByWorkflow(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName string) ([]sdk.V2WorkflowHook, error) {
+func LoadHookByWorkflowAndType(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName string, hookType string) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`
 		SELECT *
 		FROM v2_workflow_hook
@@ -126,11 +141,11 @@ func LoadHookSchedulerByWorkflow(ctx context.Context, db gorp.SqlExecutor, projK
     	vcs_name = $3 AND
     	repository_name = $4 AND
     	workflow_name = $5
-	`).Args(sdk.WorkflowHookTypeScheduler, projKey, vcsName, repoName, workflowName)
+	`).Args(hookType, projKey, vcsName, repoName, workflowName)
 	return getAllHooks(ctx, db, q)
 }
 
-func LoadHooksByWorkflowUpdated(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName, commit string) (*sdk.V2WorkflowHook, error) {
+func LoadHooksByWorkflowUpdated(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName, ref string) (*sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`
 		SELECT *
 		FROM v2_workflow_hook
@@ -140,8 +155,8 @@ func LoadHooksByWorkflowUpdated(ctx context.Context, db gorp.SqlExecutor, projKe
     	vcs_name = $3 AND
     	repository_name = $4 AND
     	workflow_name = $5 AND
-			commit = $6
-	`).Args(sdk.WorkflowHookTypeWorkflow, projKey, vcsName, repoName, workflowName, commit)
+		ref = $6 AND head = true
+	`).Args(sdk.WorkflowHookTypeWorkflow, projKey, vcsName, repoName, workflowName, ref)
 	return getHook(ctx, db, q)
 }
 
@@ -155,22 +170,23 @@ func LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx context.Context, db gor
     	vcs_name = $3 AND
     	repository_name = $4 AND
     	workflow_name = $5 AND
-			ref = $6 AND
-			commit = 'HEAD' AND
-			data ->> 'repository_event'::text = $7
+		ref = $6 AND
+		head = true AND
+		data ->> 'repository_event'::text = $7
 	`).Args(sdk.WorkflowHookTypeRepository, projKey, vcsName, repoName, workflowName, ref, eventName)
 	return getHook(ctx, db, q)
 }
 
-func LoadHooksByModelUpdated(ctx context.Context, db gorp.SqlExecutor, commit string, models []string) ([]sdk.V2WorkflowHook, error) {
+func LoadHooksByModelUpdated(ctx context.Context, db gorp.SqlExecutor, ref string, models []string) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`
 		SELECT *
 		FROM v2_workflow_hook
 		WHERE
     	type = $1 AND
-			commit = $2 AND 
+		ref = $2 AND 
+		head = true AND
     	data->>'model'::text = ANY($3)
-	`).Args(sdk.WorkflowHookTypeWorkerModel, commit, pq.StringArray(models))
+	`).Args(sdk.WorkflowHookTypeWorkerModel, ref, pq.StringArray(models))
 	return getAllHooks(ctx, db, q)
 }
 
@@ -186,4 +202,10 @@ func LoadAllHooksUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2Workf
 	}
 
 	return runs, nil
+}
+
+// Deprecated
+func LoadHeadHookToMigrate(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowHook, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE type != 'RepositoryWebHook'`)
+	return getAllHooks(ctx, db, query)
 }

@@ -39,7 +39,7 @@ func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters) (
 					JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
 					WHERE
 						entity.type = 'Workflow'
-						AND entity.commit = 'HEAD'
+						AND entity.head = true
 						AND entity.project_key = ANY(:projects)
 						AND (array_length(:types::text[], 1) IS NULL OR 'workflow' = ANY(:types))
 					GROUP BY entity.project_key, vcs_project.name, project_repository.name, entity.type, entity.name
@@ -98,7 +98,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 							JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
 							WHERE
 								entity.type = 'Workflow'
-								AND entity.commit = 'HEAD'
+								AND entity.head = true
 								AND entity.project_key = ANY(:projects)
 								AND (array_length(:types::text[], 1) IS NULL OR 'workflow' = ANY(:types))
 							ORDER BY last_update DESC

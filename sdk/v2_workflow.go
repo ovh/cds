@@ -470,6 +470,7 @@ type V2WorkflowHook struct {
 	Commit         string             `json:"commit" db:"commit"`
 	Type           string             `json:"type" db:"type"`
 	Data           V2WorkflowHookData `json:"data" db:"data"`
+	Head           bool               `json:"head" db:"head"`
 }
 
 type V2WorkflowHookShort struct {

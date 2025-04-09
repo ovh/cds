@@ -307,7 +307,7 @@ func processNodeJobRunRequirementsGetModelV2(ctx context.Context, store cache.St
 		}
 	}
 	// Only manage entities on branch
-	workerModelEntity, err := entity.LoadByRefTypeNameCommit(ctx, db, repo.ID, sdk.GitRefBranchPrefix+branch, sdk.EntityTypeWorkerModel, workerModelName, "HEAD")
+	workerModelEntity, err := entity.LoadHeadEntityByRefTypeName(ctx, db, repo.ID, sdk.GitRefBranchPrefix+branch, sdk.EntityTypeWorkerModel, workerModelName)
 	if err != nil {
 		return nil, "", err
 	}

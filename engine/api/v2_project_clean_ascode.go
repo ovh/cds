@@ -148,7 +148,7 @@ func cleanWorkflowVersion(ctx context.Context, db *gorp.DbMap, store cache.Store
 			if err != nil {
 				return err
 			}
-			_, err = entity.LoadByRefTypeNameCommit(ctx, db, repository.ID, defaultBranch.ID, sdk.EntityTypeWorkflow, w.WorkflowName, "HEAD")
+			_, err = entity.LoadHeadEntityByRefTypeName(ctx, db, repository.ID, defaultBranch.ID, sdk.EntityTypeWorkflow, w.WorkflowName)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
@@ -289,18 +289,19 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				refs:      make(map[string]string),
 				retention: entityRetention,
 			}
+			// Retrieve branches and tags and store the latest commit for each
 			if err := cleaner.getBranches(ctx, db, store); err != nil {
 				return err
 			}
 
 			for branchName, branchEntities := range entitiesByRef {
-				// Clean entities that exists on deleted branches
 				if currentHEAD, has := cleaner.refs[branchName]; has {
 					// Clean non head commits on existing branch
 					if err := cleaner.cleanNonHeadEntities(ctx, db, store, branchName, currentHEAD, branchEntities, hookServices); err != nil {
 						return err
 					}
 				} else {
+					// Clean entities that exists on deleted branches
 					if err := cleaner.cleanEntitiesByDeletedRef(ctx, db, store, branchName, branchEntities, hookServices); err != nil {
 						return err
 					}
@@ -350,7 +351,7 @@ func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbM
 
 		log.Info(ctx, "Deleting non head entities on %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
 		for _, e := range entitiesByBranch {
-			if e.Commit != "HEAD" && e.Commit != refHeadCommit && time.Since(e.LastUpdate) > c.retention {
+			if !e.Head && e.Commit != refHeadCommit && time.Since(e.LastUpdate) > c.retention {
 				if err := DeleteEntity(ctx, tx, &e, hookServices, DeleteEntityOps{WithHooks: false}); err != nil {
 					return err
 				}

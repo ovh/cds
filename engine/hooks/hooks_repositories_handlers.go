@@ -127,6 +127,8 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		e.ModelUpdated = nil
 		e.WorkflowUpdated = nil
 		e.WorkflowHooks = nil
+		e.SkippedHooks = nil
+		e.SkippedWorkflows = nil
 		e.Analyses = nil
 		e.LastUpdate = time.Now().UnixNano()
 		e.Initiator = nil

@@ -95,7 +95,8 @@ func TestGetEntitiesHandler(t *testing.T) {
 
 	e := sdk.Entity{
 		Name:                "model1",
-		Commit:              "HEAD",
+		Commit:              "123456",
+		Head:                true,
 		Ref:                 "refs/heads/master",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,

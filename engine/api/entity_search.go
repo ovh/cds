@@ -294,7 +294,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 	var entityDB *sdk.Entity
 	var err error
 	if projKey != ef.currentProject || entityVCS.Name != ef.currentVCS.Name || entityRepo.Name != ef.currentRepo.Name || ref != ef.currentRef {
-		entityDB, err = entity.LoadByRefTypeNameCommit(ctx, db, entityRepo.ID, ref, entityType, entityName, "HEAD")
+		entityDB, err = entity.LoadHeadEntityByRefTypeName(ctx, db, entityRepo.ID, ref, entityType, entityName)
 	} else {
 		entityDB, err = entity.LoadByRefTypeNameCommit(ctx, db, entityRepo.ID, ef.currentRef, entityType, entityName, ef.currentSha)
 	}

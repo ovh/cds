@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -249,9 +250,10 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 			default:
 				uniqueWorkflowMap := make(map[string]struct{})
 				filteredWorkflowHooks := make([]sdk.V2WorkflowHook, 0)
+				repoCache := make(map[string]string)
 
 				// Get repository web hooks
-				workflowHooks, err := LoadWorkflowHooksWithRepositoryWebHooks(ctx, db, hookRequest)
+				workflowHooks, err := LoadWorkflowHooksWithRepositoryWebHooks(ctx, db, api.Cache, hookRequest, repoCache)
 				if err != nil {
 					return err
 				}
@@ -319,7 +321,7 @@ func LoadWorkflowHooksWithModelUpdate(ctx context.Context, db gorp.SqlExecutor, 
 	for _, m := range hookRequest.Models {
 		models = append(models, fmt.Sprintf("%s/%s/%s/%s", m.ProjectKey, m.VCSName, m.RepoName, m.Name))
 	}
-	entitiesHooks, err := workflow_v2.LoadHooksByModelUpdated(ctx, db, hookRequest.Sha, models)
+	entitiesHooks, err := workflow_v2.LoadHooksByModelUpdated(ctx, db, hookRequest.Ref, models)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +335,7 @@ func LoadWorkflowHooksWithWorkflowUpdate(ctx context.Context, db gorp.SqlExecuto
 	filteredWorkflowHooks := make([]sdk.V2WorkflowHook, 0)
 
 	for _, w := range hookRequest.Workflows {
-		h, err := workflow_v2.LoadHooksByWorkflowUpdated(ctx, db, w.ProjectKey, w.VCSName, w.RepoName, w.Name, hookRequest.Sha)
+		h, err := workflow_v2.LoadHooksByWorkflowUpdated(ctx, db, w.ProjectKey, w.VCSName, w.RepoName, w.Name, hookRequest.Ref)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
 				continue
@@ -347,7 +349,7 @@ func LoadWorkflowHooksWithWorkflowUpdate(ctx context.Context, db gorp.SqlExecuto
 
 func LoadWorkflowHooksWithWorkflowRun(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, hookRequest sdk.HookListWorkflowRequest) ([]sdk.V2WorkflowHook, error) {
 	wkfName := fmt.Sprintf("%s/%s/%s/%s", hookRequest.Workflows[0].ProjectKey, hookRequest.Workflows[0].VCSName, hookRequest.Workflows[0].RepoName, hookRequest.Workflows[0].Name)
-	hooks, err := workflow_v2.LoadHooksWorkflowRunByWorkflow(ctx, db, wkfName)
+	hooks, err := workflow_v2.LoadHooksWorkflowRunByListeningWorkflow(ctx, db, wkfName)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +384,7 @@ func LoadWorkflowHooksWithWorkflowRun(ctx context.Context, db gorp.SqlExecutor, 
 			repoData = branchCache{Branch: defaultBranch.ID, Commit: defaultBranch.LatestCommit}
 			repoCache[repoCacheKey] = repoData
 		}
-		if repoData.Branch != h.Ref || repoData.Commit != h.Commit {
+		if repoData.Branch != h.Ref || !h.Head {
 			continue
 		}
 		if h.Data.ValidateRef(ctx, hookRequest.Ref) {
@@ -395,7 +397,7 @@ func LoadWorkflowHooksWithWorkflowRun(ctx context.Context, db gorp.SqlExecutor, 
 // LoadWorkflowHooksWithRepositoryWebHooks
 // If event && workflow declaration are on the same repo : get only the hook defined on the current branch
 // Else get all ( analyse process insert only 1 hook for the default branch
-func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExecutor, hookRequest sdk.HookListWorkflowRequest) ([]sdk.V2WorkflowHook, error) {
+func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hookRequest sdk.HookListWorkflowRequest, repoCache map[string]string) ([]sdk.V2WorkflowHook, error) {
 	// Repositories hooks
 	workflowHooks, err := workflow_v2.LoadHooksByRepositoryEvent(ctx, db, hookRequest.VCSName, hookRequest.RepositoryName, hookRequest.RepositoryEventName)
 	if err != nil {
@@ -405,36 +407,124 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 	filteredWorkflowHooks := make([]sdk.V2WorkflowHook, 0)
 
 	for _, w := range workflowHooks {
+		ok, err := validateRepositoryWebHook(ctx, db, store, hookRequest, w, repoCache, false)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			filteredWorkflowHooks = append(filteredWorkflowHooks, w)
+		}
+	}
+
+	// Check if we skipped a hook that should trigger something
+	for _, w := range hookRequest.SkippedHooks {
+		if w.Type != sdk.WorkflowHookTypeRepository || w.Data.RepositoryEvent != hookRequest.RepositoryEventName {
+			continue
+		}
+		if w.Data.VCSServer != hookRequest.VCSName || w.Data.RepositoryName != hookRequest.RepositoryName {
+			continue
+		}
+		ok, err := validateRepositoryWebHook(ctx, db, store, hookRequest, w, repoCache, false)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			continue
+		}
+		// If we skipped a hook that should match, fallback on the same REF but on HEAD
+		hook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, w.ProjectKey, w.VCSName, w.RepositoryName, w.WorkflowName, w.Data.RepositoryEvent, w.Ref)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, err
+			}
+
+			// If we found nothing, fallback on default branch
+			defaultBranch, has := repoCache[w.VCSName+"/"+w.RepositoryName]
+			if !has {
+				// Fallback on default branch
+				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, w.ProjectKey, w.VCSName)
+				if err != nil {
+					return nil, err
+				}
+				b, err := vcsClient.Branch(ctx, w.RepositoryName, sdk.VCSBranchFilters{Default: true})
+				if err != nil {
+					return nil, err
+				}
+				defaultBranch = b.ID
+				repoCache[w.VCSName+"/"+w.RepositoryName] = b.ID
+			}
+
+			hook, err = workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, w.ProjectKey, w.VCSName, w.RepositoryName, w.WorkflowName, w.Data.RepositoryEvent, defaultBranch)
+			if err != nil {
+				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return nil, err
+				}
+				continue
+			}
+		}
+		if hook == nil {
+			continue
+		}
+		ok, err = validateRepositoryWebHook(ctx, db, store, hookRequest, *hook, repoCache, true)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			// Load entity to get the right commit instead of HEAD
+			e, err := entity.LoadByID(ctx, db, hook.EntityID)
+			if err != nil {
+				return nil, err
+			}
+			hook.Commit = e.Commit
+			filteredWorkflowHooks = append(filteredWorkflowHooks, *hook)
+		}
+	}
+
+	return filteredWorkflowHooks, nil
+}
+
+func validateRepositoryWebHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hookRequest sdk.HookListWorkflowRequest, w sdk.V2WorkflowHook, repoCache map[string]string, fallback bool) (bool, error) {
+	// Skip branch/commit validation for fallback
+	if !fallback {
 		// If event && workflow declaration are on the same repo
 		if w.VCSName == hookRequest.VCSName && w.RepositoryName == hookRequest.RepositoryName {
 			// Only get workflow configuration from current branch/commit
 			if w.Ref != hookRequest.Ref || w.Commit != hookRequest.Sha {
-				continue
+				return false, nil
 			}
-		} else if w.Commit != "HEAD" {
-			// for distant workflow, only keep hook on default branch
-			continue
-		}
-
-		// Check configuration : branch filter + path filter
-		switch hookRequest.RepositoryEventName {
-		case sdk.WorkflowHookEventNamePush:
-			if w.Data.ValidateRef(ctx, hookRequest.Ref) {
-				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
+		} else {
+			// For distant workflow, only allow default branch hook with head = true
+			defaultBranch, has := repoCache[w.VCSName+"/"+w.RepositoryName]
+			if !has {
+				vcsAuth, err := repositoriesmanager.AuthorizedClient(ctx, db, store, w.ProjectKey, w.VCSName)
+				if err != nil {
+					return false, err
+				}
+				b, err := vcsAuth.Branch(ctx, w.RepositoryName, sdk.VCSBranchFilters{Default: true})
+				if err != nil {
+					return false, err
+				}
+				repoCache[w.VCSName+"/"+w.RepositoryName] = b.ID
+				defaultBranch = b.ID
 			}
-			continue
-		case sdk.WorkflowHookEventNamePullRequest, sdk.WorkflowHookEventNamePullRequestComment:
-			validType := true
-			if len(w.Data.TypesFilter) > 0 {
-				validType = sdk.IsInArray(hookRequest.RepositoryEventType, w.Data.TypesFilter)
+			if w.Ref != defaultBranch || !w.Head {
+				return false, nil
 			}
-			if w.Data.ValidateRef(ctx, hookRequest.PullRequestRefTo) && validType {
-				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
-			}
-			continue
 		}
 	}
-	return filteredWorkflowHooks, nil
+
+	// Check configuration : branch filter + path filter
+	switch hookRequest.RepositoryEventName {
+	case sdk.WorkflowHookEventNamePush:
+		return w.Data.ValidateRef(ctx, hookRequest.Ref), nil
+	case sdk.WorkflowHookEventNamePullRequest, sdk.WorkflowHookEventNamePullRequestComment:
+		validType := true
+		if len(w.Data.TypesFilter) > 0 {
+			validType = sdk.IsInArray(hookRequest.RepositoryEventType, w.Data.TypesFilter)
+		}
+		return w.Data.ValidateRef(ctx, hookRequest.PullRequestRefTo) && validType, nil
+	}
+	return false, nil
 }
 
 func (api *API) getHooksRepositoriesHandler() ([]service.RbacChecker, service.Handler) {

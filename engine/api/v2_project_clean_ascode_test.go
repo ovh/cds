@@ -73,7 +73,8 @@ func TestCleanWorkflowVersion(t *testing.T) {
 		Type:                sdk.EntityTypeWorkflow,
 		Name:                "name",
 		Ref:                 "refs/heads/master",
-		Commit:              "HEAD",
+		Commit:              "123456",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
@@ -117,8 +118,9 @@ func TestCleanWorkflowVersion(t *testing.T) {
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				branch := sdk.VCSBranch{
-					ID:        "refs/heads/master",
-					DisplayID: "master",
+					ID:           "refs/heads/master",
+					DisplayID:    "master",
+					LatestCommit: "123456",
 				}
 				*(out.(*sdk.VCSBranch)) = branch
 				return nil, 200, nil
