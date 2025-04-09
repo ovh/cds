@@ -98,16 +98,6 @@ type HookAnalysisCallback struct {
 	Initiator          *V2Initiator     `json:"initiator"`
 }
 
-type HookAnalysisCallbackSkippedHook struct {
-	WorkflowVCS    string
-	WorkflowRepo   string
-	WorkflowName   string
-	WorkflowRef    string
-	WorkflowCommit string
-	HookData       V2WorkflowHookData
-	Type           string
-}
-
 type HookRepository struct {
 	VCSServerType  string `json:"vcs_server_type"`
 	VCSServerName  string `json:"vcs_server_name" cli:"vcs_server_name"`

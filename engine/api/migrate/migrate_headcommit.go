@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 func MigrateHeadCommit(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
@@ -51,7 +52,8 @@ func MigrateHeadCommit(ctx context.Context, db *gorp.DbMap, store cache.Store) e
 			}
 			defaultBranch, err = vcsClient.Branch(ctx, h.RepositoryName, sdk.VCSBranchFilters{Default: true})
 			if err != nil {
-				return err
+				log.Error(ctx, "unable to retrieve default branch on repo %s for project %s: %v", h.RepositoryName, h.ProjectKey, err)
+				continue
 			}
 			repoCache[repoCacheKey] = defaultBranch
 		}
