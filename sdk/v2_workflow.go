@@ -570,13 +570,13 @@ func (w V2Workflow) Lint() []error {
 	workflowSchema := GetWorkflowJsonSchema(nil, nil, nil)
 	workflowSchemaS, err := workflowSchema.MarshalJSON()
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to load workflow schema")}
+		return []error{NewErrorFrom(err, "workfow %s: unable to load workflow schema", w.Name)}
 	}
 	schemaLoader := gojsonschema.NewStringLoader(string(workflowSchemaS))
 
 	modelJson, err := json.Marshal(w)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to marshal workflow")}
+		return []error{NewErrorFrom(err, "workfow %s: unable to marshal workflow", w.Name)}
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
 
@@ -590,7 +590,7 @@ func (w V2Workflow) Lint() []error {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(ErrInvalidData, "unable to validate workflow %s: %v", w.Name, err.Error())}
+		return []error{NewErrorFrom(ErrInvalidData, "workflow %s: unable to validate file: %v", w.Name, err.Error())}
 	}
 
 	for _, e := range result.Errors() {

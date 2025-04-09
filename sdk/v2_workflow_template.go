@@ -49,23 +49,23 @@ func (wt V2WorkflowTemplate) Lint() (errs []error) {
 	schema := GetWorkflowTemplateJsonSchema()
 	rawSchema, err := schema.MarshalJSON()
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to load workflow schema")}
+		return []error{NewErrorFrom(err, "template %s: unable to load workflow schema", wt.Name)}
 	}
 	schemaLoader := gojsonschema.NewStringLoader(string(rawSchema))
 
 	rawModel, err := json.Marshal(wt)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to marshal workflow")}
+		return []error{NewErrorFrom(err, "template %s: unable to marshal workflow", wt.Name)}
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(rawModel))
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(ErrInvalidData, "unable to validate workflow template: "+err.Error())}
+		return []error{NewErrorFrom(ErrInvalidData, "template %s: unable to validate workflow template: %v", wt.Name, err.Error())}
 	}
 
 	for _, e := range result.Errors() {
-		errs = append(errs, NewErrorFrom(ErrInvalidData, "yaml validation failed: "+e.String()))
+		errs = append(errs, NewErrorFrom(ErrInvalidData, "template %s: yaml validation failed: %s", wt.Name, e.String()))
 	}
 
 	if len(errs) > 0 {
