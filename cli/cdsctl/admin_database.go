@@ -339,7 +339,7 @@ func adminDatabaseEntityInfoFunc(args cli.Values) error {
 			return err
 		}
 
-		var filteredPks []string
+		filteredPks := make([]string, 0, len(pks))
 		for _, pk := range pks {
 			if i, ok := report.MInfo[pk]; ok && i.Signed == mEntites[e].Signed && i.Encrypted == mEntites[e].Encrypted {
 				continue
@@ -694,7 +694,7 @@ func (d *DatabaseEntityStorage) ComputeEncryptionReport() map[int64][]string {
 }
 
 func (d *DatabaseEntityStorage) ComputeCorruptedReport() []string {
-	var report []string
+	report := make([]string, 0, len(d.MInfo))
 	for _, e := range d.MInfo {
 		if e.Corrupted {
 			report = append(report, e.PK)
@@ -704,7 +704,7 @@ func (d *DatabaseEntityStorage) ComputeCorruptedReport() []string {
 }
 
 func (d *DatabaseEntityStorage) ComputePKsFromKeyTimestamp(ts int64) []string {
-	var res []string
+	res := make([]string, 0, len(d.MInfo))
 	for _, e := range d.MInfo {
 		if (e.Encrypted && e.EncryptionTS == ts || e.Signed && e.SignatureTS == ts) && !e.Corrupted {
 			res = append(res, e.PK)
