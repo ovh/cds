@@ -62,7 +62,7 @@ func Test_CheckSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create and check a non MFA session, it should be valid and no activity should be stored
-	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Second)
+	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Second*3)
 	require.NoError(t, err)
 	r, err := authentication.CheckSession(context.TODO(), db, store, s.ID)
 	require.NoError(t, err)
@@ -73,7 +73,7 @@ func Test_CheckSession(t *testing.T) {
 	require.True(t, lastActivity.IsZero())
 
 	// Create and check a MFA session
-	s, err = authentication.NewSessionWithMFACustomDuration(context.TODO(), db, store, c, 5*time.Second, time.Second)
+	s, err = authentication.NewSessionWithMFACustomDuration(context.TODO(), db, store, c, 2*time.Second, time.Second*3)
 	require.NoError(t, err)
 	a, lastActivity, err = authentication.GetSessionActivity(store, s.ID)
 	require.NoError(t, err)
@@ -82,12 +82,12 @@ func Test_CheckSession(t *testing.T) {
 	require.True(t, lastActivity.After(s.Created), "%v not after %v", s.Created, lastActivity)
 	require.True(t, lastActivity.Before(time.Now()))
 
-	r, err = authentication.CheckSessionWithCustomMFADuration(context.TODO(), db, store, s.ID, time.Second)
+	r, err = authentication.CheckSessionWithCustomMFADuration(context.TODO(), db, store, s.ID, time.Second*2)
 	require.NoError(t, err)
 	require.Equal(t, s.ID, r.ID, "check session should be valid for 1 second")
 	require.True(t, r.MFA)
-	time.Sleep(time.Second)
-	r, err = authentication.CheckSessionWithCustomMFADuration(context.TODO(), db, store, s.ID, time.Second)
+	time.Sleep(time.Second * 3)
+	r, err = authentication.CheckSessionWithCustomMFADuration(context.TODO(), db, store, s.ID, time.Second*2)
 	require.NoError(t, err)
 	require.False(t, r.MFA, "MFA session is expired, flag should be set to false")
 	a, lastActivity, err = authentication.GetSessionActivity(store, s.ID)

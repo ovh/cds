@@ -115,7 +115,7 @@ func (m *Mapper) loadTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor,
 			return nil, err
 		}
 		if !isValid {
-			return nil, sdk.WithStack(errors.New("corrupted signed entity"))
+			return nil, sdk.WithStack(sdk.ErrCorruptedData)
 		}
 	}
 

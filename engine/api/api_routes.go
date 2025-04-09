@@ -74,9 +74,6 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/cds/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminMigrationsHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/cds/migration/{id}/cancel", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminMigrationCancelHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/cds/migration/{id}/todo", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminMigrationTodoHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/migration/delete/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/migration/unlock/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postDatabaseMigrationUnlockedHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	r.Handle("/admin/debug/profiles", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDebugProfilesHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 	r.Handle("/admin/debug/goroutines", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDebugGoroutinesHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
@@ -98,14 +95,13 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, service.OverrideAuth(api.authMaintainerMiddleware)), r.POST(api.postAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Admin database
-	r.Handle("/admin/database/tuples/{entity}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseTuplesByEntity, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/signature", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureResume, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/signature/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseSignatureRollEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/signature/{entity}/info/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureInfoEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/signature/{entity}/{signer}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureTuplesBySigner, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/encryption", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEncryptedEntities, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/encryption/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/encryption/{entity}/info/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseInfoEncryptedEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/migration/delete/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteAdminDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/migration/unlock/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseMigrationUnlockHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/entity", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEntityList, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/entity/{entity}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEntity, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/entity/{entity}/info", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseEntityInfo, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/entity/{entity}/roll", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseEntityRoll, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Organization
 	r.Handle("/admin/organization", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminOrganizationHandler, service.OverrideAuth(api.authAdminMiddleware)))

@@ -29,7 +29,7 @@ type Canonicaller interface {
 }
 
 // InsertAndSign a data in database, given data should implement canonicaller interface.
-func (m *Mapper) InsertAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
+func (m *Mapper) InsertAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller) error {
 	if err := m.Insert(db, i); err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (m *Mapper) InsertAndSign(ctx context.Context, db gorp.SqlExecutor, i Canon
 }
 
 // UpdateAndSign a data in database, given data should implement canonicaller interface.
-func (m *Mapper) UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
+func (m *Mapper) UpdateAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller) error {
 	if err := m.Update(db, i); err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (m *Mapper) UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canon
 }
 
 // UpdateColumnsAndSign a data in database, given data should implement canonicaller interface.
-func (m *Mapper) UpdateColumnsAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller, colFilter gorp.ColumnFilter) error {
+func (m *Mapper) UpdateColumnsAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller, colFilter gorp.ColumnFilter) error {
 	if err := m.UpdateColumns(db, i, colFilter); err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (m *Mapper) checkSignature(i Canonicaller, f *CanonicalForm, sig []byte) (b
 }
 
 func (m *Mapper) getCanonicalTemplate(f *CanonicalForm) (*template.Template, error) {
-	sha := getSigner(f)
+	sha := GetSigner(f)
 
 	m.CanonicalFormTemplates.L.RLock()
 	t, has := m.CanonicalFormTemplates.M[sha]
@@ -124,7 +124,7 @@ func (m *Mapper) getCanonicalTemplate(f *CanonicalForm) (*template.Template, err
 	return t, nil
 }
 
-func getSigner(f *CanonicalForm) string {
+func GetSigner(f *CanonicalForm) string {
 	h := sha1.New()
 	_, _ = h.Write(f.Bytes())
 	bs := h.Sum(nil)
@@ -138,7 +138,7 @@ func (m *Mapper) canonicalTemplate(data Canonicaller) (string, *template.Templat
 		return "", nil, sdk.WithStack(fmt.Errorf("no canonical function available for %T", data))
 	}
 
-	sha := getSigner(f)
+	sha := GetSigner(f)
 
 	m.CanonicalFormTemplates.L.RLock()
 	t, has := m.CanonicalFormTemplates.M[sha]

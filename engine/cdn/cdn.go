@@ -216,6 +216,10 @@ func (s *Service) mustDB() *gorp.DbMap {
 	return db
 }
 
+func (s *Service) mustMapper() *gorpmapper.Mapper {
+	return s.Mapper
+}
+
 func (s *Service) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	db := s.DBConnectionFactory.GetDBMap(s.Mapper)()
 	db = db.WithContext(ctx).(*gorp.DbMap)

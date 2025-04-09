@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
-	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -47,27 +45,6 @@ func (c *client) AdminOrganizationDelete(ctx context.Context, orgaIdentifier str
 		return err
 	}
 	return nil
-}
-
-func (c *client) AdminDatabaseMigrationDelete(service string, id string) error {
-	path := fmt.Sprintf("/admin/database/migration/delete/%s", url.QueryEscape(id))
-	var f = c.switchServiceCallFunc(service, http.MethodDelete, path, nil, nil)
-	_, err := f()
-	return err
-}
-
-func (c *client) AdminDatabaseMigrationsList(service string) ([]sdk.DatabaseMigrationStatus, error) {
-	dlist := []sdk.DatabaseMigrationStatus{}
-	var f = c.switchServiceCallFunc(service, http.MethodGet, "/admin/database/migration", nil, &dlist)
-	_, err := f()
-	return dlist, err
-}
-
-func (c *client) AdminDatabaseMigrationUnlock(service string, id string) error {
-	path := fmt.Sprintf("/admin/database/migration/unlock/%s", url.QueryEscape(id))
-	var f = c.switchServiceCallFunc(service, http.MethodPost, path, nil, nil)
-	_, err := f()
-	return err
 }
 
 func (c *client) AdminCDSMigrationCancel(id int64) error {
@@ -264,92 +241,6 @@ func (c *client) switchServiceCallFunc(service string, method, path string, in, 
 	return nil
 }
 
-func (c *client) AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error) {
-	var res = sdk.CanonicalFormUsageResume{}
-	var f = c.switchServiceCallFunc(service, http.MethodGet, "/admin/database/signature", nil, &res)
-	_, err := f()
-	return res, err
-}
-
-func (c *client) AdminDatabaseSignaturesTuplesBySigner(service string, e string, sig string) ([]string, error) {
-	var pks []string
-	url := fmt.Sprintf("/admin/database/signature/%s/%s", e, sig)
-	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &pks)
-	if _, err := f(); err != nil {
-		return nil, err
-	}
-	return pks, nil
-}
-
-func (c *client) AdminDatabaseRollSignedEntity(service string, e string, pks []string) error {
-	for i, pk := range pks {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		var display = new(cli.Display)
-		display.Printf("Rolling %v...", e)
-		display.Do(ctx)
-		display.Printf("Rolling %v (%d/%d)...", e, i+1, len(pks))
-		url := fmt.Sprintf("/admin/database/signature/%s/roll/%s", e, pk)
-		var f = c.switchServiceCallFunc(service, http.MethodPost, url, nil, nil)
-		if _, err := f(); err != nil {
-			return err
-		}
-		if i == len(pks)-1 {
-			display.Printf("Rolling %v (%d/%d) - DONE\n", e, i+1, len(pks))
-			time.Sleep(time.Second)
-		}
-	}
-	return nil
-}
-
-func (c *client) AdminDatabaseInfoSignedEntity(service string, e string, pk string) (int64, error) {
-	var keyTimestamp int64
-	url := fmt.Sprintf("/admin/database/signature/%s/info/%s", e, pk)
-	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &keyTimestamp)
-	if _, err := f(); err != nil {
-		return 0, err
-	}
-	return keyTimestamp, nil
-}
-
-func (c *client) AdminDatabaseListEncryptedEntities(service string) ([]string, error) {
-	var res []string
-	var f = c.switchServiceCallFunc(service, http.MethodGet, "/admin/database/encryption", nil, &res)
-	_, err := f()
-	return res, err
-}
-
-func (c *client) AdminDatabaseRollEncryptedEntity(service string, e string, pks []string) error {
-	for i, pk := range pks {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		var display = new(cli.Display)
-		display.Printf("Rolling %v...", e)
-		display.Do(ctx)
-		display.Printf("Rolling %v (%d/%d)...", e, i+1, len(pks))
-		url := fmt.Sprintf("/admin/database/encryption/%s/roll/%s", e, pk)
-		var f = c.switchServiceCallFunc(service, http.MethodPost, url, nil, nil)
-		if _, err := f(); err != nil {
-			return err
-		}
-		if i == len(pks)-1 {
-			display.Printf("Rolling %v (%d/%d) - DONE\n", e, i+1, len(pks))
-			time.Sleep(time.Second)
-		}
-	}
-	return nil
-}
-
-func (c *client) AdminDatabaseInfoEncryptedEntity(service string, e string, pk string) (int64, error) {
-	var keyTimestamp int64
-	url := fmt.Sprintf("/admin/database/encryption/%s/info/%s", e, pk)
-	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &keyTimestamp)
-	if _, err := f(); err != nil {
-		return 0, err
-	}
-	return keyTimestamp, nil
-}
-
 func (c *client) AdminWorkflowUpdateMaxRuns(projectKey string, workflowName string, maxRuns int64) error {
 	request := sdk.UpdateMaxRunRequest{MaxRuns: maxRuns}
 	url := fmt.Sprintf("/project/%s/workflows/%s/retention/maxruns", projectKey, workflowName)
@@ -357,14 +248,4 @@ func (c *client) AdminWorkflowUpdateMaxRuns(projectKey string, workflowName stri
 		return err
 	}
 	return nil
-}
-
-func (c *client) AdminDatabaseListTuples(service string, e string) ([]string, error) {
-	var pks []string
-	url := fmt.Sprintf("/admin/database/tuples/%s", e)
-	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &pks)
-	if _, err := f(); err != nil {
-		return nil, err
-	}
-	return pks, nil
 }
