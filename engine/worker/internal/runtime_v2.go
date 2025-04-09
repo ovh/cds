@@ -210,13 +210,25 @@ func (wk *CurrentWorker) V2RunResultsSynchronize(ctx context.Context) error {
 
 	log.Info(ctx, "synchronizing run results")
 
-	// Update the run result on API side
-	if err := wk.clientV2.V2QueueJobRunResultsSynchronize(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID); err != nil {
-		ctx := log.ContextWithStackTrace(ctx, err)
-		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to synchronize run results"))
-		return sdk.NewError(sdk.ErrUnknownError, err)
+	retry := 0
+	for {
+		// Update the run result on API side
+		err := wk.clientV2.V2QueueJobRunResultsSynchronize(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrLocked) {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to synchronize run results"))
+			return sdk.NewError(sdk.ErrUnknownError, err)
+		}
+		if sdk.ErrorIs(err, sdk.ErrLocked) {
+			if retry >= 5 {
+				return sdk.NewErrorFrom(sdk.ErrLocked, "run result are being synchronized")
+			}
+			retry++
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		break
 	}
-
 	return nil
 }
 
