@@ -1404,8 +1404,15 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	if proj.WorkflowRetention <= 0 {
 		proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
 	}
+	if proj.WorkflowRetention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
+		proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
+	}
+
 	retention := time.Duration(proj.WorkflowRetention*24) * time.Hour
 	if wk.Retention > 0 {
+		if wk.Retention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
+			wk.Retention = api.Config.WorkflowV2.WorkflowRunMaxRetention
+		}
 		retention = time.Duration(wk.Retention*24) * time.Hour
 	}
 	wr.RetentionDate = time.Now().Add(retention)
