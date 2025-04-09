@@ -226,6 +226,9 @@ func (api *API) updateProjectHandler() service.Handler {
 		if proj.WorkflowRetention <= 0 {
 			proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
 		}
+		if proj.WorkflowRetention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
+			proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
+		}
 
 		// Check is project exist
 		p, errProj := project.Load(ctx, api.mustDB(), key)
@@ -457,6 +460,9 @@ func (api *API) postProjectHandler() service.Handler {
 
 		if prj.WorkflowRetention <= 0 {
 			prj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
+		}
+		if prj.WorkflowRetention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
+			prj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
 		}
 
 		// Create a project within a transaction
