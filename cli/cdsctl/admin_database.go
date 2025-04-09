@@ -348,8 +348,8 @@ func adminDatabaseEntityInfoFunc(args cli.Values) error {
 		}
 
 		if err := adminDatabaseInfoEntity(client, service, e, filteredPks, int(batchSize), func(is []sdk.DatabaseEntityInfo) error {
-			for _, i := range is {
-				report.MInfo[i.PK] = i
+			for i := range is {
+				report.MInfo[is[i].PK] = is[i]
 			}
 			return report.Save(dir, true)
 		}); err != nil {
@@ -669,12 +669,12 @@ func (d *DatabaseEntityStorage) Save(reportDir string, silent bool) error {
 
 func (d *DatabaseEntityStorage) ComputeSignatureReport() map[int64][]string {
 	report := make(map[int64][]string)
-	for _, e := range d.MInfo {
-		if e.Signed && !e.Corrupted {
-			if _, ok := report[e.SignatureTS]; !ok {
-				report[e.SignatureTS] = nil
+	for key := range d.MInfo {
+		if d.MInfo[key].Signed && !d.MInfo[key].Corrupted {
+			if _, ok := report[d.MInfo[key].SignatureTS]; !ok {
+				report[d.MInfo[key].SignatureTS] = make([]string, 0, len(d.MInfo))
 			}
-			report[e.SignatureTS] = append(report[e.SignatureTS], e.PK)
+			report[d.MInfo[key].SignatureTS] = append(report[d.MInfo[key].SignatureTS], d.MInfo[key].PK)
 		}
 	}
 	return report
@@ -682,12 +682,12 @@ func (d *DatabaseEntityStorage) ComputeSignatureReport() map[int64][]string {
 
 func (d *DatabaseEntityStorage) ComputeEncryptionReport() map[int64][]string {
 	report := make(map[int64][]string)
-	for _, e := range d.MInfo {
-		if e.Encrypted && !e.Corrupted {
-			if _, ok := report[e.EncryptionTS]; !ok {
-				report[e.EncryptionTS] = nil
+	for key := range d.MInfo {
+		if d.MInfo[key].Encrypted && !d.MInfo[key].Corrupted {
+			if _, ok := report[d.MInfo[key].EncryptionTS]; !ok {
+				report[d.MInfo[key].EncryptionTS] = make([]string, 0, len(d.MInfo))
 			}
-			report[e.EncryptionTS] = append(report[e.EncryptionTS], e.PK)
+			report[d.MInfo[key].EncryptionTS] = append(report[d.MInfo[key].EncryptionTS], d.MInfo[key].PK)
 		}
 	}
 	return report
@@ -695,9 +695,9 @@ func (d *DatabaseEntityStorage) ComputeEncryptionReport() map[int64][]string {
 
 func (d *DatabaseEntityStorage) ComputeCorruptedReport() []string {
 	report := make([]string, 0, len(d.MInfo))
-	for _, e := range d.MInfo {
-		if e.Corrupted {
-			report = append(report, e.PK)
+	for key := range d.MInfo {
+		if d.MInfo[key].Corrupted {
+			report = append(report, d.MInfo[key].PK)
 		}
 	}
 	return report
@@ -705,9 +705,9 @@ func (d *DatabaseEntityStorage) ComputeCorruptedReport() []string {
 
 func (d *DatabaseEntityStorage) ComputePKsFromKeyTimestamp(ts int64) []string {
 	res := make([]string, 0, len(d.MInfo))
-	for _, e := range d.MInfo {
-		if (e.Encrypted && e.EncryptionTS == ts || e.Signed && e.SignatureTS == ts) && !e.Corrupted {
-			res = append(res, e.PK)
+	for key := range d.MInfo {
+		if (d.MInfo[key].Encrypted && d.MInfo[key].EncryptionTS == ts || d.MInfo[key].Signed && d.MInfo[key].SignatureTS == ts) && !d.MInfo[key].Corrupted {
+			res = append(res, d.MInfo[key].PK)
 		}
 	}
 	return res
