@@ -3268,7 +3268,7 @@ func TestConcurrencyCancelWorkflow(t *testing.T) {
 	require.Equal(t, sdk.V2WorkflowRunStatusBlocked, wrDB.Status)
 
 	require.Equal(t, 1, len(infos))
-	require.Contains(t, infos[0].Message, "waiting for workfow cancellation")
+	require.Contains(t, infos[0].Message, "waiting for workflow cancellation")
 }
 
 func TestConcurrencyLockWorkflowWithCondition(t *testing.T) {

@@ -1610,7 +1610,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 			sameVCS := x.Repository == nil || x.Repository.VCSServer == ef.currentVCS.Name || x.Repository.VCSServer == ""
 			sameRepo := x.Repository == nil || x.Repository.Name == ef.currentRepo.Name || x.Repository.Name == ""
 			if sameVCS && sameRepo && x.Repository != nil && x.Repository.InsecureSkipSignatureVerify {
-				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workfow.repository.name`. ", x.Name))
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workflow.repository.name`. ", x.Name))
 			}
 			for jobID, j := range x.Jobs {
 				// Check if worker model exists

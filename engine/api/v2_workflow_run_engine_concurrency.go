@@ -186,7 +186,7 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 					WorkflowRunJobID: runJob.ID,
 					Level:            sdk.WorkflowRunInfoLevelInfo,
 					IssuedAt:         time.Now(),
-					Message:          "Job blocked, waiting for workfow cancellation before starting",
+					Message:          "Job blocked, waiting for workflow cancellation before starting",
 				}, nil
 			}
 		}
@@ -232,7 +232,7 @@ func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2W
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelInfo,
 					IssuedAt:      time.Now(),
-					Message:       "Workflow blocked, waiting for workfow cancellation before starting",
+					Message:       "Workflow blocked, waiting for workflow cancellation before starting",
 				}, nil
 			}
 		}
