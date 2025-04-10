@@ -339,6 +339,8 @@ func adminDatabaseEntityInfoFunc(args cli.Values) error {
 			return err
 		}
 
+		fmt.Printf("%s: info: found %d tuples\n", e, len(pks))
+
 		filteredPks := make([]string, 0, len(pks))
 		for _, pk := range pks {
 			if i, ok := report.MInfo[pk]; ok && i.Signed == mEntites[e].Signed && i.Encrypted == mEntites[e].Encrypted {
@@ -630,11 +632,11 @@ func (d *DatabaseEntityStorage) Load(reportDir string) error {
 func (d *DatabaseEntityStorage) Save(reportDir string, silent bool) error {
 	signatureReportPath := path.Join(reportDir, d.service+"."+d.entity+".signature.json")
 	signatureReport := d.ComputeSignatureReport()
-	bufSig, err := json.Marshal(signatureReport)
+	buf, err := json.Marshal(signatureReport)
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(signatureReportPath, bufSig, 0644); err != nil {
+	if err := os.WriteFile(signatureReportPath, buf, 0644); err != nil {
 		return err
 	}
 	if !silent {
@@ -642,11 +644,11 @@ func (d *DatabaseEntityStorage) Save(reportDir string, silent bool) error {
 	}
 	encryptionReportPath := path.Join(reportDir, d.service+"."+d.entity+".encryption.json")
 	encryptionReport := d.ComputeEncryptionReport()
-	bufEnc, err := json.Marshal(encryptionReport)
+	buf, err = json.Marshal(encryptionReport)
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(encryptionReportPath, bufEnc, 0644); err != nil {
+	if err := os.WriteFile(encryptionReportPath, buf, 0644); err != nil {
 		return err
 	}
 	if !silent {
@@ -654,11 +656,11 @@ func (d *DatabaseEntityStorage) Save(reportDir string, silent bool) error {
 	}
 	corruptedReportPath := path.Join(reportDir, d.service+"."+d.entity+".corrupted.json")
 	corruptedReport := d.ComputeCorruptedReport()
-	bufCor, err := json.Marshal(corruptedReport)
+	buf, err = json.Marshal(corruptedReport)
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(corruptedReportPath, bufCor, 0644); err != nil {
+	if err := os.WriteFile(corruptedReportPath, buf, 0644); err != nil {
 		return err
 	}
 	if !silent {
