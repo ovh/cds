@@ -334,6 +334,8 @@ func adminDatabaseEntityInfoFunc(args cli.Values) error {
 			}
 		}
 
+		fmt.Printf("%s: info: loading pks\n", e)
+
 		pks, err := client.AdminDatabaseEntity(service, e)
 		if err != nil {
 			return err
@@ -496,7 +498,7 @@ func adminDatabaseInfoEntity(client cdsclient.Interface, service string, entity 
 		if err != nil {
 			return err
 		}
-		display.Printf("%s: getting info (%d/%d)...\n", entity, j, len(pks))
+		display.Printf("%s: getting info (%d/%d)... %d\n", entity, j, len(pks), len(is))
 		if batchCallback != nil {
 			if err := batchCallback(is); err != nil {
 				return err
@@ -559,8 +561,8 @@ func (d *DatabaseEntityStorage) Load(reportDir string) error {
 		if err := json.Unmarshal(bs, &report); err != nil {
 			return err
 		}
-		for t, ks := range report {
-			for _, k := range ks {
+		for t := range report {
+			for _, k := range report[t] {
 				if i, ok := d.MInfo[k]; !ok {
 					d.MInfo[k] = sdk.DatabaseEntityInfo{
 						PK:          k,
@@ -586,8 +588,8 @@ func (d *DatabaseEntityStorage) Load(reportDir string) error {
 		if err := json.Unmarshal(bs, &report); err != nil {
 			return err
 		}
-		for t, ks := range report {
-			for _, k := range ks {
+		for t := range report {
+			for _, k := range report[t] {
 				if i, ok := d.MInfo[k]; !ok {
 					d.MInfo[k] = sdk.DatabaseEntityInfo{
 						PK:           k,
