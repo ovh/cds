@@ -26,14 +26,17 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 	tabs: Array<Tab>;
 	selectedTab: Tab;
 	testRaw: string;
+	outputError: string = "";
+	systemout: string = "";
 
 	constructor(
 		private _cd: ChangeDetectorRef,
 		private _store: Store
 	) {
-		this.tabs = [<Tab>{
-			title: 'Output',
-			key: 'output',
+		this.tabs = [
+		<Tab>{
+			title: 'Raw',
+			key: 'raw',
 			default: true
 		}];
 	}
@@ -56,6 +59,14 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	ngOnChanges(): void {
+		this.outputError = "";
+		this.systemout = "";
+		this.tabs = [
+			<Tab>{
+				title: 'Raw',
+				key: 'raw',
+				default: true
+			}];
 		let t: TestCase;
 		for (let i = 0; i < this.tests.test_suites.length; i++) {
 			for (let j = 0; j < this.tests.test_suites[i].tests.length; j++) {
@@ -66,6 +77,41 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 				}
 			}
 		}
+		if (t.failures) {
+			t.failures.forEach(f => {
+				if (f.message) {
+					this.outputError += "Failure message: " + f.message + "\n";
+				}
+				this.outputError += f.value + "\n";
+			})
+		}
+		if (t.errors) {
+			t.errors.forEach(e => {
+				if (e.message) {
+					this.outputError += "Error message: " + e.message + "\n";
+				}
+				this.outputError += e.value + "\n";
+			})
+		}
+		if (t?.systemout?.value) {
+			this.systemout = t?.systemout?.value
+		}
+
+		if (this.systemout != "") {
+			this.tabs.unshift(<Tab>{
+				title: 'SystemOut',
+				key: 'systemout',
+				default: true
+			});
+		}
+		if (this.outputError != "") {
+			this.tabs.unshift(<Tab>{
+				title: 'Errors',
+				key: 'error',
+				default: true
+			});
+		}
+		
 		this.testRaw = JSON.stringify(t, null, 2);
 		this._cd.markForCheck();
 	}
