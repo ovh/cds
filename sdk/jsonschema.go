@@ -63,10 +63,15 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	stepUses := propStepUses.(*jsonschema.Schema)
 	// Enum on step uses
 	if len(publicActionNames) > 0 {
-
+		stepUses.AnyOf = make([]*jsonschema.Schema, 0)
+		anyOfEnum := &jsonschema.Schema{}
 		for _, actName := range publicActionNames {
-			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
+			anyOfEnum.Enum = append(anyOfEnum.Enum, "actions/"+actName)
 		}
+		stepUses.AnyOf = append(stepUses.AnyOf, anyOfEnum)
+		stepUses.AnyOf = append(stepUses.AnyOf, &jsonschema.Schema{
+			Pattern: "^.cds/actions/.*.(yaml|yml)",
+		})
 	}
 	return actionSchema
 }
@@ -77,11 +82,18 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 
 	propStepUses, _ := jobSchema.Definitions["ActionStep"].Properties.Get("uses")
 	stepUses := propStepUses.(*jsonschema.Schema)
+
 	// Enum on step uses
 	if len(publicActionNames) > 0 {
+		stepUses.AnyOf = make([]*jsonschema.Schema, 0)
+		anyOfEnum := &jsonschema.Schema{}
 		for _, actName := range publicActionNames {
-			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
+			anyOfEnum.Enum = append(anyOfEnum.Enum, "actions/"+actName)
 		}
+		stepUses.AnyOf = append(stepUses.AnyOf, anyOfEnum)
+		stepUses.AnyOf = append(stepUses.AnyOf, &jsonschema.Schema{
+			Pattern: "^.cds/actions/.*.(yaml|yml)",
+		})
 	}
 
 	// Enum on region
@@ -96,9 +108,15 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 	propWM, _ := jobSchema.Definitions["V2Job"].Properties.Get("runs-on")
 	wmSchema := propWM.(*jsonschema.Schema)
 	if len(workerModels) > 0 {
+		wmSchema.AnyOf = make([]*jsonschema.Schema, 0)
+		enumSchema := &jsonschema.Schema{}
 		for _, wmName := range workerModels {
-			wmSchema.Enum = append(wmSchema.Enum, wmName)
+			enumSchema.Enum = append(enumSchema.Enum, wmName)
 		}
+		wmSchema.AnyOf = append(wmSchema.AnyOf, enumSchema)
+		wmSchema.AnyOf = append(wmSchema.AnyOf, &jsonschema.Schema{
+			Pattern: "^.cds/worker-models/.*.(yaml|yml)",
+		})
 	}
 
 	return jobSchema
