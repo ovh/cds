@@ -61,9 +61,9 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 
 	propStepUses, _ := actionSchema.Definitions["ActionStep"].Properties.Get("uses")
 	stepUses := propStepUses.(*jsonschema.Schema)
-	stepUses.AnyOf = make([]*jsonschema.Schema, 0)
 	// Enum on step uses
 	if len(publicActionNames) > 0 {
+		stepUses.AnyOf = make([]*jsonschema.Schema, 0)
 		anyOfEnum := &jsonschema.Schema{}
 		for _, actName := range publicActionNames {
 			anyOfEnum.Enum = append(anyOfEnum.Enum, "actions/"+actName)
@@ -82,10 +82,10 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 
 	propStepUses, _ := jobSchema.Definitions["ActionStep"].Properties.Get("uses")
 	stepUses := propStepUses.(*jsonschema.Schema)
-	stepUses.AnyOf = make([]*jsonschema.Schema, 0)
 
 	// Enum on step uses
 	if len(publicActionNames) > 0 {
+		stepUses.AnyOf = make([]*jsonschema.Schema, 0)
 		anyOfEnum := &jsonschema.Schema{}
 		for _, actName := range publicActionNames {
 			anyOfEnum.Enum = append(anyOfEnum.Enum, "actions/"+actName)
@@ -107,8 +107,8 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 
 	propWM, _ := jobSchema.Definitions["V2Job"].Properties.Get("runs-on")
 	wmSchema := propWM.(*jsonschema.Schema)
-	wmSchema.AnyOf = make([]*jsonschema.Schema, 0)
 	if len(workerModels) > 0 {
+		wmSchema.AnyOf = make([]*jsonschema.Schema, 0)
 		enumSchema := &jsonschema.Schema{}
 		for _, wmName := range workerModels {
 			enumSchema.Enum = append(enumSchema.Enum, wmName)
