@@ -743,7 +743,7 @@ version = "0.85.0"`,
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "0.85.0-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "0.85.0-1.sha.g"+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
@@ -903,7 +903,7 @@ description: A single-sentence description of this project`,
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "1.11.0-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "1.11.0-1.sha.g"+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
@@ -1320,7 +1320,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "1.2.3-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "1.2.3-1.sha.g"+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 
 }
 
@@ -1477,7 +1477,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "6.6.6-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "6.6.6-1.sha.g"+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
@@ -1640,7 +1640,7 @@ readme = "README.md"`,
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "2.0.0-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "2.0.0-1.sha.g"+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
@@ -1802,7 +1802,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 	versions, err := workflow_v2.LoadAllVerionsByWorkflow(ctx, db, wrDB.Contexts.CDS.ProjectKey, wrDB.Contexts.CDS.WorkflowVCSServer, wrDB.Contexts.CDS.WorkflowRepository, wrDB.Contexts.CDS.Workflow)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(versions))
-	require.Equal(t, "0.9.12-1-1.sha."+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
+	require.Equal(t, "0.9.12-1-1.sha.g"+wrDB.Contexts.Git.ShaShort, wrDB.Contexts.CDS.Version)
 }
 
 func TestCraftWorkflowFromTemplateFail(t *testing.T) {
