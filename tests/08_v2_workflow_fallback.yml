@@ -1,0 +1,175 @@
+name: Workflow Fallback
+vars:
+  cds_project: "ITV2FALLBACK"
+  git_repo: "it_v2_fallback"
+  cds_workflow: "WorkflowFalback"
+testcases:
+- name: Prepare test
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+    - name: "Display username"
+      info: "Connected CDS user is {{.cdsUser}}"
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+      git_emailAddress: "{{.emailaddress}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+
+- name: Push workflow file
+  steps:
+    - type: v2_push_cds_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        worker-models/debian.yml:
+          name: docker-debian
+          osarch: linux/amd64
+          type: docker
+          spec:
+            image: buildpack-deps:buster
+        workflows/myworkflow.yaml:
+          name: {{.cds_workflow}}
+          on: [push]
+          env:
+            foo: barWorkflow
+          jobs:
+            myjob:
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              steps:
+                - id: root
+                  run: |-
+                    #!/bin/bash
+                    set -ex
+                    echo "GIT_REF: ${{git.ref}}"
+                    echo "WORKFLOW_REF: ${{cds.workflow_ref}}"
+
+    - name: Check CDS project analyses status
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 100
+      delay: 1
+
+    - name: Check that the CDS workflow has at least one execution and is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      retry: 200
+      delay: 1
+
+- name: Push update on a dev branch
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+    - name: Create new file
+      script: cd /tmp/repos/{{.git_repo}} && git checkout -b devbranch && echo "It's a readme" > README.MD
+    # Setup RBAC on project
+    - name: Update permission
+      script: |-
+        /bin/bash -c cat <<- EOF > /tmp/project_rbac_{{.cds_project}}.yml
+        name: perm-{{.cds_project}}
+        projects:
+          - role: read
+            projects: [{{.cds_project}}]
+            all_users: true
+            vcs_users:
+            - server: my_vcs_server
+              username: {{.git.user}}
+        workflows:
+          - role: trigger
+            all_users: true
+            all_workflows: true
+            project: {{.cds_project}}
+            vcs_users:
+            - server: my_vcs_server
+              username: {{.git.user}}  
+        regions:
+          - role: execute
+            all_users: true
+            organizations: [default]
+            region: {{.cds.region}}
+            vcs_users:
+            - server: my_vcs_server
+              username: {{.git.user}}
+        region_projects:
+          - role: execute
+            region: {{.cds.region}}
+            projects: [{{.cds_project}}]
+        EOF
+    - script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import /tmp/project_rbac_{{.cds_project}}.yml --force"  
+    - name: push readme
+      script: cd /tmp/repos/{{.git_repo}} && git add README.MD && git commit --gpg-sign={{.gpg.key_id}} . -m "add readme" && git push origin devbranch
+    - name: Check CDS project analyses status
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 3
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Skipped"
+      retry: 100
+      delay: 1
+      vars:
+        analysisID:
+          from: result.systemoutjson.systemoutjson2.id
+    - name: Display analysis
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis get {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
+    - name: Check that the CDS workflow has at least one execution and is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 200
+      delay: 1
+      vars:
+        workflowRunID:
+          from: result.systemoutjson.systemoutjson0.id
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        cat {{.cds_workflow}}-*-myjob*
+        cat {{.cds_workflow}}-*-myjob* | grep "GIT_REF: refs/heads/devbranch"
+        cat {{.cds_workflow}}-*-myjob* | grep "WORKFLOW_REF: refs/heads/master"
+      retry: 60
+      delay: 1

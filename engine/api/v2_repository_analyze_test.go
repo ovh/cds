@@ -1443,109 +1443,6 @@ GDFkaTe3nUJdYV4=
 	require.Equal(t, model, e.Data)
 }
 
-func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
-	api, db, _ := newTestAPI(t)
-
-	_, err := db.Exec("DELETE from v2_workflow_hook")
-	require.NoError(t, err)
-
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repoDef := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "sgu/myDefRepo")
-
-	//
-	e := sdk.EntityWithObject{
-		Entity: sdk.Entity{
-			ProjectKey:          proj.Key,
-			ProjectRepositoryID: repoDef.ID,
-			Ref:                 "refs/heads/master",
-			Type:                sdk.EntityTypeWorkflow,
-			Commit:              "123456",
-			Name:                sdk.RandomString(10),
-		},
-		Workflow: sdk.V2Workflow{
-			Repository: &sdk.WorkflowRepository{
-				VCSServer: vcsServer.Name,
-				Name:      repoDef.Name,
-			},
-			CommitStatus: &sdk.CommitStatus{
-				Title:       "foo",
-				Description: "bar",
-			},
-			On: &sdk.WorkflowOn{
-				Push:           &sdk.WorkflowOnPush{},
-				WorkflowUpdate: &sdk.WorkflowOnWorkflowUpdate{},
-				ModelUpdate: &sdk.WorkflowOnModelUpdate{
-					Models: []string{"MyModel"},
-				},
-				Schedule: []sdk.WorkflowOnSchedule{
-					{
-						Cron: "* * * * *",
-					},
-				},
-			},
-		},
-	}
-	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-
-	// INSERT OLD SCHEDULER DEFINITION
-	oldSche := sdk.V2WorkflowHook{
-		ProjectKey:     proj.Key,
-		VCSName:        "github",
-		RepositoryName: "sgu/mydefrepo",
-		EntityID:       e.ID,
-		WorkflowName:   e.Name,
-		Ref:            "refs/heads/master",
-		Commit:         "123456",
-		Type:           sdk.WorkflowHookTypeScheduler,
-		Data: sdk.V2WorkflowHookData{
-			Cron: "1 1 1 1 1",
-		},
-	}
-	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &oldSche))
-
-	srvs, err := services.LoadAllByType(context.TODO(), api.mustDB(), sdk.TypeHooks)
-	require.NoError(t, err)
-
-	s, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
-	// Setup a mock for all services called by the API
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ []sdk.Service) services.Client {
-		return servicesClients
-	}
-	defer t.Cleanup(func() {
-		_ = services.Delete(db, s)
-		services.NewClient = services.NewDefaultClient
-	})
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/v2/workflow/scheduler/github/sgu%2Fmydefrepo/"+e.Name, gomock.Any(), gomock.Any()).Times(1)
-
-	_, err = manageWorkflowHooks(context.TODO(), db, api.Cache, nil, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/master", LatestCommit: "123456"}, srvs)
-	require.NoError(t, err)
-
-	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, repoDef.Name, "push")
-	require.NoError(t, err)
-	require.Equal(t, 2, len(repoWebHooks)) // commit + HEAD
-
-	// Local workflow so worklow update hook must not be saved
-	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
-	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
-
-	// Local workflow so model update hook must not be saved
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{"MyModel"})
-	require.NoError(t, err)
-	require.Equal(t, 0, len(hooks))
-
-	// Check scheduler config
-	scheds, err := workflow_v2.LoadHookSchedulerByWorkflow(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(scheds))
-	require.Equal(t, "sgu/mydefrepo", scheds[0].Data.RepositoryName)
-	require.Equal(t, "sgu/mydefrepo", scheds[0].RepositoryName)
-	require.Equal(t, "* * * * *", scheds[0].Data.Cron)
-}
-
 func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
@@ -1565,6 +1462,7 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
 			Name:                sdk.RandomString(10),
+			Head:                true,
 		},
 		Workflow: sdk.V2Workflow{
 			Repository: &sdk.WorkflowRepository{
@@ -1595,32 +1493,23 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
-	require.Equal(t, 2, len(repoWebHooks))
+	require.Equal(t, 1, len(repoWebHooks))
 
-	hookWithCommit := false
-	hookWithHead := false
-	for _, wh := range repoWebHooks {
-		if wh.Commit == "123456" {
-			hookWithCommit = true
-		} else if wh.Commit == "HEAD" {
-			hookWithHead = true
-		}
-	}
-	require.True(t, hookWithCommit)
-	require.True(t, hookWithHead)
+	require.Equal(t, "123456", repoWebHooks[0].Commit)
+	require.True(t, repoWebHooks[0].Head)
 
 	// Distant workflow so worklow update hook must be saved
-	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, e.Ref)
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
 
 	// Distant workflow so model update hook must be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, e.Ref, []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(hooks))
 
-	scheds, err := workflow_v2.LoadHookSchedulerByWorkflow(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name)
+	scheds, err := workflow_v2.LoadHookByWorkflowAndType(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name, sdk.WorkflowHookTypeScheduler)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(scheds))
 	require.Equal(t, "sgu/myapp", scheds[0].Data.RepositoryName)
@@ -1645,6 +1534,7 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 			Ref:                 "refs/heads/main",
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
+			Head:                true,
 			Name:                sdk.RandomString(10),
 		},
 		Workflow: sdk.V2Workflow{
@@ -1670,13 +1560,13 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 	require.Equal(t, 1, len(repoWebHooks))
 
 	// Distant workflow so worklow update hook must be saved
-	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, e.Ref)
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
 
 	// Distant workflow so model update hook must be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, e.Ref, []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(hooks))
 }
@@ -1700,6 +1590,7 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
 			Name:                sdk.RandomString(10),
+			Head:                true,
 		},
 		Workflow: sdk.V2Workflow{
 			Repository: &sdk.WorkflowRepository{
@@ -1724,13 +1615,13 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 	require.Equal(t, 1, len(repoWebHooks))
 
 	// Distant workflow so worklow update hook must be saved
-	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, e.Ref)
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
 
 	// Model and workflow on different repo,  hook must not be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, e.Ref, []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(hooks))
 }
@@ -1753,6 +1644,7 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 			Ref:                 "refs/heads/test",
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
+			Head:                true,
 			Name:                sdk.RandomString(10),
 		},
 		Workflow: sdk.V2Workflow{
@@ -1783,12 +1675,12 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 	require.Equal(t, 0, len(repoWebHooks))
 
 	// Non default branch, hook must not be saved
-	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, e.Ref)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
 	// Non default branch, hook must not be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, e.Ref, []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(hooks))
 }
@@ -1886,9 +1778,10 @@ GDFkaTe3nUJdYV4=
 		ProjectKey:          proj1.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkflow,
-		Commit:              "HEAD",
+		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Name:                "workflow1",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &workflowEntity))
 
@@ -1896,9 +1789,10 @@ GDFkaTe3nUJdYV4=
 		ProjectKey:          proj1.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeAction,
-		Commit:              "HEAD",
+		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Name:                "action1",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &actionEntity))
 
@@ -2031,11 +1925,11 @@ GDFkaTe3nUJdYV4=
 	require.Equal(t, model, e.Data)
 
 	// Check workflow deletion
-	_, err = entity.LoadByRefTypeNameCommit(ctx, db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkflow, "workflow1", "HEAD")
+	_, err = entity.LoadHeadEntityByRefTypeName(ctx, db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkflow, "workflow1")
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
 	// Check action
-	_, err = entity.LoadByRefTypeNameCommit(ctx, db, repo.ID, "refs/heads/master", sdk.EntityTypeAction, "action1", "HEAD")
+	_, err = entity.LoadHeadEntityByRefTypeName(ctx, db, repo.ID, "refs/heads/master", sdk.EntityTypeAction, "action1")
 	require.NoError(t, err)
 }
 
@@ -2754,9 +2648,8 @@ spec:
 	entitiesHEad, err := entity.LoadByTypeAndRefCommit(context.TODO(), db, repo.ID, sdk.EntityTypeWorkflow, "refs/heads/devBranch", "HEAD")
 	require.NoError(t, err)
 
-	require.Equal(t, 1, len(entitiesNonHEad))
-	require.Equal(t, 1, len(entitiesHEad))
-	require.Equal(t, entitiesNonHEad[0].Data, entitiesHEad[0].Data)
+	require.Equal(t, 0, len(entitiesNonHEad))
+	require.Equal(t, 0, len(entitiesHEad))
 }
 
 func TestAnalyzeWrongWorkflow(t *testing.T) {
@@ -3117,10 +3010,11 @@ GDFkaTe3nUJdYV4=
 		Type:                sdk.EntityTypeWorkerModel,
 		FilePath:            ".cds/worker-models/mymodel.yml",
 		Name:                "mymodel",
-		Commit:              "HEAD",
+		Commit:              "abcdef",
 		Ref:                 "refs/heads/main",
 		UserID:              &u.ID,
 		Data:                "name: mymodel",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &entityWM))
 
@@ -3361,10 +3255,11 @@ GDFkaTe3nUJdYV4=
 		Type:                sdk.EntityTypeWorkerModel,
 		FilePath:            ".cds/worker-models/mymodel.yml",
 		Name:                "mymodel",
-		Commit:              "HEAD",
+		Commit:              "abcdef",
 		Ref:                 "refs/heads/main",
 		UserID:              &u.ID,
 		Data:                "name: mymodel",
+		Head:                true,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &entityWM))
 
@@ -3695,4 +3590,238 @@ jobs:
 
 	require.Contains(t, analysisUpdated.Data.Error, "myworkflow: concurrency toto doesn't exist")
 	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
+}
+
+func TestAnalyzeGithubNonUpdateWorkerModel(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	// Create project
+	key1 := sdk.RandomString(10)
+	proj1 := assets.InsertTestProject(t, db, api.Cache, key1, key1)
+
+	uk, err := user.LoadGPGKeyByKeyID(ctx, db, "F344BDDCE15F17D7")
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		require.NoError(t, err)
+	}
+	if uk != nil {
+		require.NoError(t, user.DeleteGPGKey(db, *uk))
+	}
+
+	u, _ := assets.InsertLambdaUser(t, db)
+	userKey := &sdk.UserGPGKey{
+		KeyID: "F344BDDCE15F17D7",
+		PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+GDFkaTe3nUJdYV4=
+=SNcy
+-----END PGP PUBLIC KEY BLOCK-----`,
+		AuthentifiedUserID: u.ID,
+	}
+	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
+
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
+
+	// Create VCS
+	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
+
+	repo := sdk.ProjectRepository{
+		Name:         "myrepo",
+		Created:      time.Now(),
+		VCSProjectID: vcsProject.ID,
+		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
+	}
+	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
+
+	analysis := sdk.ProjectRepositoryAnalysis{
+		ID:                  "",
+		Status:              sdk.RepositoryAnalysisStatusInProgress,
+		Commit:              "abcdef",
+		ProjectKey:          proj1.Key,
+		ProjectRepositoryID: repo.ID,
+		Created:             time.Now(),
+		LastModified:        time.Now(),
+		Ref:                 "refs/heads/master",
+		VCSProjectID:        vcsProject.ID,
+	}
+	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
+
+	// Mock VCS
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
+
+	model := `
+    name: docker-debian
+    description: my debian worker model
+    osarch: linux/amd64
+    type: docker
+    spec:
+      image: myimage:1.1
+      envs:
+        MYVAR: toto
+  `
+	encodedModel := base64.StdEncoding.EncodeToString([]byte(model))
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				commit := &sdk.VCSCommit{
+					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Verified:  true,
+					Hash:      "abcdef",
+				}
+				*(out.(*sdk.VCSCommit)) = *commit
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds?commit=abcdef&offset=0&limit=100", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := []sdk.VCSContent{
+					{
+						IsDirectory: true,
+						Name:        "worker-models",
+					},
+				}
+				*(out.(*[]sdk.VCSContent)) = contents
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds%2Fworker-models?commit=abcdef&offset=0&limit=100", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := []sdk.VCSContent{
+					{
+						IsDirectory: false,
+						IsFile:      true,
+						Name:        "mymodels.yml",
+					},
+				}
+				*(out.(*[]sdk.VCSContent)) = contents
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/content/.cds%2Fworker-models%2Fmymodels.yml?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+
+				content := sdk.VCSContent{
+					IsDirectory: false,
+					IsFile:      true,
+					Name:        "mymodels.yml",
+					Content:     encodedModel,
+				}
+				*(out.(*sdk.VCSContent)) = content
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := sdk.VCSBranch{
+					ID: "refs/heads/master",
+				}
+				*(out.(*sdk.VCSBranch)) = contents
+				return nil, 200, nil
+			},
+		)
+
+	// Create previous entity
+	previousEnt := sdk.Entity{
+		ProjectKey:          proj1.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		FilePath:            "",
+		Commit:              analysis.Commit,
+		Ref:                 analysis.Ref,
+		Name:                "docker-debian",
+		Data:                "MyModel",
+		UserID:              &u.ID,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &previousEnt))
+
+	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
+
+	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
+	t.Logf("%+v", analysisUpdated)
+	require.NoError(t, err)
+	require.Equal(t, sdk.RepositoryAnalysisStatusSucceed, analysisUpdated.Status)
+
+	es, err := entity.LoadByTypeAndRefCommit(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel, "refs/heads/master", "abcdef")
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(es))
+	// Check worker model not updated
+	require.Equal(t, "MyModel", es[0].Data)
+	t.Logf("%+v", es[0])
+
+	e, err := entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian", "abcdef")
+	require.NoError(t, err)
+	require.Equal(t, "MyModel", e.Data)
 }

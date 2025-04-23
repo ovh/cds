@@ -730,6 +730,9 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(ctx, sdk.Migration{Name: "MigrateAllProjectGPGKeys", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateAllProjectGPGKeys(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
 	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateHeadCommit", Release: "0.55.1", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateHeadCommit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
+	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
 	if err != nil {

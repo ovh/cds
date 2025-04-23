@@ -209,6 +209,8 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 					WorkflowRunID:         outgoingEvent.Event.WorkflowRunID,
 					OutgoingHookEventUUID: outgoingEvent.UUID,
 				},
+				Commit: wh.Commit,
+				Ref:    wh.Ref,
 			},
 			WorkflowHooks: []sdk.HookRepositoryEventWorkflow{
 				{

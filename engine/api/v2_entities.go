@@ -179,9 +179,17 @@ func (api *API) getProjectEntitiesHandler() ([]service.RbacChecker, service.Hand
 				return err
 			}
 
-			entities, err := entity.LoadByRepositoryAndRefAndCommit(ctx, api.mustDB(), repo.ID, ref, commit)
-			if err != nil {
-				return err
+			var entities []sdk.Entity
+			if commit == "HEAD" {
+				entities, err = entity.LoadHeadEntitiesByRepositoryAndRef(ctx, api.mustDB(), repo.ID, ref)
+				if err != nil {
+					return err
+				}
+			} else {
+				entities, err = entity.LoadByRepositoryAndRefAndCommit(ctx, api.mustDB(), repo.ID, ref, commit)
+				if err != nil {
+					return err
+				}
 			}
 			result := make([]sdk.ShortEntity, 0, len(entities))
 			for _, e := range entities {
@@ -227,10 +235,18 @@ func (api *API) getProjectEntityHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			entity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, entityType, entityName, commit)
-			if err != nil {
-				return err
+			var ent *sdk.Entity
+			if commit == "HEAD" {
+				ent, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, ref, entityType, entityName)
+				if err != nil {
+					return err
+				}
+			} else {
+				ent, err = entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, entityType, entityName, commit)
+				if err != nil {
+					return err
+				}
 			}
-			return service.WriteJSON(w, entity, http.StatusOK)
+			return service.WriteJSON(w, ent, http.StatusOK)
 		}
 }
