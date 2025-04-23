@@ -8,25 +8,22 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import { GraphNode, GraphNodeType } from './graph.model';
-import { GraphDirection, NodeMouseEvent, WorkflowV2Graph } from './graph.lib';
-import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
-import { GraphJobNodeComponent } from './node/job-node.component';
-import { GraphMatrixNodeComponent } from './node/matrix-node.component';
-import { GraphNodeAction } from './node/model';
+import { GraphNode, GraphNodeType } from '../graph.model';
+import { GraphDirection, NodeMouseEvent, WorkflowV2Graph } from '../graph.lib';
+import { GraphForkJoinNodeComponent } from './fork-join-node.components';
+import { GraphJobNodeComponent } from './job-node.component';
+import { GraphMatrixNodeComponent } from './matrix-node.component';
+import { GraphNodeAction } from './model';
 
 export type WorkflowV2JobsNodeOrMatrixComponent = GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphMatrixNodeComponent;
 
 @Component({
-    selector: 'app-jobs-graph',
-    templateUrl: './jobs-graph.html',
-    styleUrls: ['./jobs-graph.scss'],
+    selector: 'app-stage-node',
+    templateUrl: './stage-node.html',
+    styleUrls: ['./stage-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowV2JobsGraphComponent implements AfterViewInit {
-    static maxScale = 2;
-    static minScale = 0.1;
-
+export class GraphStageNodeComponent implements AfterViewInit {
     node: GraphNode;
     nodes: Array<GraphNode> = [];
 
@@ -98,8 +95,7 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
             this.graph.clean();
         }
         if (!this.graph || this.graph.direction !== this.direction) {
-            this.graph = new WorkflowV2Graph(this.createForkJoinNodeComponent.bind(this), this.direction,
-                WorkflowV2JobsGraphComponent.minScale, WorkflowV2JobsGraphComponent.maxScale);
+            this.graph = new WorkflowV2Graph(this.createForkJoinNodeComponent.bind(this), this.direction);
         }
 
         this.nodes.forEach(n => {
@@ -129,7 +125,8 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
 
         const element = this.svgContainer.element.nativeElement;
         this.graph.draw(element, false);
-        this.graph.center(300, 169);
+        this.graph.resize(this.graph.graph.graph().width + 2 * WorkflowV2Graph.marginSubGraph, this.graph.graph.graph().height + 2 * WorkflowV2Graph.marginSubGraph);
+        this.graph.center(this.graph.graph.graph().width + 2 * WorkflowV2Graph.marginSubGraph, this.graph.graph.graph().height + 2 * WorkflowV2Graph.marginSubGraph);
         this._cd.markForCheck();
     }
 

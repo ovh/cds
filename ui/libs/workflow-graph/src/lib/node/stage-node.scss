@@ -1,4 +1,4 @@
-@import "../../../../src/common.scss";
+@import "../../../../../src/common.scss";
 
 :host {
     display: flex;
@@ -14,7 +14,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    border: dashed 2px $polar_grey_3;
+    border: dashed 4px $polar_grey_3;
     border-radius: 3px;
 
     :host-context(.night) & {

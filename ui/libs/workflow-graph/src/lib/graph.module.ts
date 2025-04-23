@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
-import { WorkflowV2StagesGraphComponent } from './stages-graph.component';
-import { WorkflowV2JobsGraphComponent } from './jobs-graph.component';
+import { GraphComponent } from './graph.component';
+import { GraphStageNodeComponent } from './node/stage-node.component';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -17,12 +17,12 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
 
 @NgModule({
   declarations: [
+    GraphComponent,
     GraphForkJoinNodeComponent,
     GraphJobNodeComponent,
     GraphMatrixNodeComponent,
-    IsJobTerminatedPipe,
-    WorkflowV2JobsGraphComponent,
-    WorkflowV2StagesGraphComponent
+    GraphStageNodeComponent,
+    IsJobTerminatedPipe
   ],
   imports: [
     CommonModule,
@@ -32,12 +32,12 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
     NzToolTipModule
   ],
   exports: [
+    GraphComponent,
     GraphForkJoinNodeComponent,
     GraphJobNodeComponent,
     GraphMatrixNodeComponent,
-    IsJobTerminatedPipe,
-    WorkflowV2JobsGraphComponent,
-    WorkflowV2StagesGraphComponent
+    GraphStageNodeComponent,
+    IsJobTerminatedPipe
   ]
 })
-export class WorkflowGraphModule { }
+export class GraphModule { }

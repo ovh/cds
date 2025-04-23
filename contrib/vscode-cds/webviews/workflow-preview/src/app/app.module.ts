@@ -6,11 +6,11 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { WorkflowGraphModule } from 'workflow-graph';
 import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { CaretRightOutline, CaretDownOutline, UserOutline } from '@ant-design/icons-angular/icons';
 import { IconDefinition } from '@ant-design/icons-angular';
+import { WorkflowGraphModule } from 'workflow-graph';
 
 const icons: IconDefinition[] = [CaretRightOutline, CaretDownOutline, UserOutline];
 

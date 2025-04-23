@@ -11,7 +11,6 @@ import { Tests } from "../../../model/pipeline.model";
 import { concatMap } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
-import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { NavigationState } from "app/store/navigation.state";
 import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { RouterService } from "app/service/services.module";
@@ -22,6 +21,7 @@ import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "..
 import { HttpParams } from "@angular/common/http";
 import { ToastService } from "app/shared/toast/ToastService";
 import { Clipboard } from '@angular/cdk/clipboard';
+import { GraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 
 @Component({
     selector: 'app-projectv2-run',
@@ -31,7 +31,7 @@ import { Clipboard } from '@angular/cdk/clipboard';
 })
 @AutoUnsubscribe()
 export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
-    @ViewChild('graph') graph: WorkflowV2StagesGraphComponent;
+    @ViewChild('graph') graph: GraphComponent;
     @ViewChild('tabResultsTemplate') tabResultsTemplate: TemplateRef<any>;
     @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
     @ViewChild('shareLink') shareLink: any;

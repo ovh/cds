@@ -112,11 +112,10 @@
                     title="Stop workflow run" [nzLoading]="loading.stop" (click)="clickStopRun()">Stop workflow
                     run</button>
             </div>
-            <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
+            <app-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
                 [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
                 (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
-                (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)"
-                #graph></app-stages-graph>
+                (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)" #graph></app-graph>
         </div>
 
         <!--  BOTTOM PANELS -->

@@ -1,7 +1,6 @@
 <ng-container *ngIf="workflowFlatSchema && jobFlatSchema && data">
     <div class="leftPanel">
-        <app-stages-graph [navigationDisabled]="true" [workflow]="dataGraph"
-            (onSelectJob)="selectJob($event)"></app-stages-graph>
+        <app-graph [navigationDisabled]="true" [workflow]="dataGraph" (onSelectJob)="selectJob($event)"></app-graph>
         <div class="jobForm" *ngIf="selectedJob">
             <div (click)="selectedJob = undefined">
                 <button nz-button nzType="default">Return to workflow</button>
