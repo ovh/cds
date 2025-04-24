@@ -101,6 +101,14 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 
 			msg := fmt.Sprintf("Hatchery %v - error on exit container: %s logs: %v", h.Name(), errmsg, strings.ReplaceAll(logs, "\u0000", ""))
 			log.Error(ctx, "job info err: %v", msg)
+			if strings.Contains(msg, "curl: not found") {
+				if err := h.CDSClientV2().V2QueueJobResult(ctx, h.GetRegion(), ct.Config.Labels[LabelJobID], sdk.V2WorkflowRunJobResult{
+					Status: sdk.V2WorkflowRunJobStatusFail,
+					Error:  "worker model must have curl binary",
+				}); err != nil {
+					return err
+				}
+			}
 		}
 	}
 

@@ -14,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var adminDatabaseCmd = cli.Command{
@@ -28,13 +29,14 @@ func adminDatabase() *cobra.Command {
 		cli.NewListCommand(adminDatabaseMigrationsList, adminDatabaseMigrationsListFunc, nil),
 		cli.NewGetCommand(adminDatabaseSignatureResume, adminDatabaseSignatureResumeFunc, nil),
 		cli.NewCommand(adminDatabaseSignatureRollSigner, adminDatabaseSignatureRollSignerFunc, nil),
-		cli.NewCommand(adminDatabaseSignatureRoll, adminDatabaseSignatureRollFunc, nil),
-		cli.NewCommand(adminDatabaseSignatureInfo, adminDatabaseSignatureInfoFunc, nil),
-		cli.NewCommand(adminDatabaseEncryptionResume, adminDatabaseEncryptionResumeFunc, nil),
-		cli.NewCommand(adminDatabaseEncryptionRoll, adminDatabaseEncryptionRollFunc, nil),
-		cli.NewCommand(adminDatabaseEncryptionInfo, adminDatabaseEncryptionInfoFunc, nil),
+		cli.NewListCommand(adminDatabaseEntityList, adminDatabaseEntityListFunc, nil),
+		cli.NewCommand(adminDatabaseEntityInfo, adminDatabaseEntityInfoFunc, nil),
+		cli.NewCommand(adminDatabaseEntityRoll, adminDatabaseEntityRollFunc, nil),
 	})
 }
+
+const argServiceName = "service"
+const flagBatchSize = "batch-size"
 
 var adminDatabaseUnlockCmd = cli.Command{
 	Name:  "unlock",
@@ -98,14 +100,12 @@ $ cdsctl admin database list cdn
 }
 
 func adminDatabaseMigrationsListFunc(args cli.Values) (cli.ListResult, error) {
-	migrations, err := client.AdminDatabaseMigrationsList(args.GetString(argServiceName))
+	migrations, err := client.AdminDatabaseMigrationList(args.GetString(argServiceName))
 	if err != nil {
 		return nil, err
 	}
 	return cli.AsListResult(migrations), nil
 }
-
-const argServiceName = "service"
 
 var adminDatabaseSignatureResume = cli.Command{
 	Name:  "list-signed-data",
@@ -121,7 +121,17 @@ var adminDatabaseSignatureResume = cli.Command{
 }
 
 func adminDatabaseSignatureResumeFunc(args cli.Values) (interface{}, error) {
-	return client.AdminDatabaseSignaturesResume(args.GetString(argServiceName))
+	res := make(map[string][]sdk.DatabaseCanonicalForm)
+
+	es, err := client.AdminDatabaseEntityList(args.GetString(argServiceName))
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range es {
+		res[r.Name] = r.CanonicalForms
+	}
+
+	return res, nil
 }
 
 var adminDatabaseSignatureRollSigner = cli.Command{
@@ -135,6 +145,16 @@ var adminDatabaseSignatureRollSigner = cli.Command{
 			},
 		},
 	},
+	Flags: []cli.Flag{
+		{
+			Name:    flagBatchSize,
+			Default: "1",
+			IsValid: func(value string) bool {
+				v, err := strconv.Atoi(value)
+				return err == nil && v >= 0
+			},
+		},
+	},
 	VariadicArgs: cli.Arg{
 		Name:       "entity",
 		AllowEmpty: true,
@@ -143,41 +163,60 @@ var adminDatabaseSignatureRollSigner = cli.Command{
 
 func adminDatabaseSignatureRollSignerFunc(args cli.Values) error {
 	service := args.GetString(argServiceName)
+	batchSize, _ := args.GetInt64(flagBatchSize)
+	noInteractive := args.GetBool("no-interactive")
 
-	resume, err := client.AdminDatabaseSignaturesResume(service)
+	es, err := client.AdminDatabaseEntityList(service)
 	if err != nil {
 		return err
 	}
 
-	entities := args.GetStringSlice("entity")
-	if len(entities) == 0 {
-		for e := range resume {
-			entities = append(entities, e)
-		}
+	mEs := make(map[string]sdk.DatabaseEntity)
+	for _, e := range es {
+		mEs[e.Name] = e
 	}
 
-	sort.Strings(entities)
-	for _, e := range entities {
-		for _, signer := range resume[e] {
-			if signer.Latest {
+	entities := args.GetStringSlice("entity")
+	if len(entities) == 0 {
+		for _, e := range es {
+			if !e.Signed {
 				continue
 			}
-			pks, err := client.AdminDatabaseSignaturesTuplesBySigner(service, e, signer.Signer)
+			entities = append(entities, e.Name)
+		}
+	}
+
+	sort.Strings(entities)
+	for _, e := range entities {
+		for _, c := range mEs[e].CanonicalForms {
+			if c.Latest {
+				continue
+			}
+			pks, err := client.AdminDatabaseEntity(service, e, cdsclient.Signer(c.Signer))
 			if err != nil {
 				return err
 			}
-			if err := client.AdminDatabaseRollSignedEntity(service, e, pks); err != nil {
+			fmt.Printf("%s: roll signer: found %d tuple(s) to roll for signer %q\n", e, len(pks), c.Signer)
+			if len(pks) == 0 {
+				continue
+			}
+
+			if !noInteractive && !cli.AskConfirm(fmt.Sprintf("%s: roll signer: confirm rolling for %d tuple(s)", e, len(pks))) {
+				return cli.NewError("operation aborted")
+			}
+			if err := adminDatabaseRollEntity(client, service, e, pks, int(batchSize), nil); err != nil {
 				return err
 			}
+			fmt.Printf("%s: roll signer: (%d/%d)\n", e, len(pks), len(pks))
 		}
 	}
 
 	return nil
 }
 
-var adminDatabaseSignatureRoll = cli.Command{
-	Name:  "roll-signed-data",
-	Short: "Roll signed data in database that are using specific signature key by timestamp",
+var adminDatabaseEntityList = cli.Command{
+	Name:  "list-entities",
+	Short: "List all entitites in database",
 	Args: []cli.Arg{
 		{
 			Name: argServiceName,
@@ -185,72 +224,36 @@ var adminDatabaseSignatureRoll = cli.Command{
 				return s == sdk.TypeCDN || s == sdk.TypeAPI
 			},
 		},
-		{
-			Name: "timestamp",
-			IsValid: func(s string) bool {
-				_, err := strconv.Atoi(s)
-				return err == nil
-			},
-		},
-	},
-	VariadicArgs: cli.Arg{
-		Name:       "entity",
-		AllowEmpty: true,
-	},
-	Flags: []cli.Flag{
-		{
-			Name:    "report-dir",
-			Usage:   "Path to load report for entities",
-			Default: "./report",
-		},
 	},
 }
 
-func adminDatabaseSignatureRollFunc(args cli.Values) error {
-	service := args.GetString(argServiceName)
-	timestamp, _ := args.GetInt64("timestamp")
-
-	dir := strings.TrimSpace(args.GetString("report-dir"))
-	if dir == "" {
-		dir = "."
+func adminDatabaseEntityListFunc(args cli.Values) (cli.ListResult, error) {
+	res, err := client.AdminDatabaseEntityList(args.GetString(argServiceName))
+	if err != nil {
+		return nil, err
 	}
 
-	entities := args.GetStringSlice("entity")
-	if len(entities) == 0 {
-		resume, err := client.AdminDatabaseSignaturesResume(service)
-		if err != nil {
-			return err
-		}
-		for e := range resume {
-			entities = append(entities, e)
-		}
+	type DatabaseEntityCLI struct {
+		Name      string `json:"name" cli:"name,key"`
+		Encrypted bool   `json:"encrypted,omitempty" cli:"encrypted"`
+		Signed    bool   `json:"signed,omitempty" cli:"signed"`
 	}
 
-	sort.Strings(entities)
-	for _, e := range entities {
-		reportPath := path.Join(dir, service+"."+e+".signature.json")
-		buf, err := os.ReadFile(reportPath)
-		if err != nil {
-			return err
-		}
-		var report map[int64][]string
-		if err := json.Unmarshal(buf, &report); err != nil {
-			return err
-		}
-		if _, ok := report[timestamp]; !ok {
-			continue
-		}
-		if err := client.AdminDatabaseRollSignedEntity(service, e, report[timestamp]); err != nil {
-			return err
-		}
+	var es []DatabaseEntityCLI
+	for _, i := range res {
+		es = append(es, DatabaseEntityCLI{
+			Name:      i.Name,
+			Encrypted: i.Encrypted,
+			Signed:    i.Signed,
+		})
 	}
 
-	return nil
+	return cli.AsListResult(es), nil
 }
 
-var adminDatabaseSignatureInfo = cli.Command{
-	Name:  "info-signed-data",
-	Short: "Get info for signed data in database",
+var adminDatabaseEntityInfo = cli.Command{
+	Name:  "info-entity",
+	Short: "Get info for entity in database",
 	Args: []cli.Arg{
 		{
 			Name: argServiceName,
@@ -269,126 +272,104 @@ var adminDatabaseSignatureInfo = cli.Command{
 			Usage:   "Path to save report for entities",
 			Default: "./report",
 		},
+		{
+			Name:    flagBatchSize,
+			Default: "1",
+			IsValid: func(value string) bool {
+				v, err := strconv.Atoi(value)
+				return err == nil && v >= 0
+			},
+		},
+		{
+			Name:    "no-cache",
+			Default: "false",
+			Type:    cli.FlagBool,
+		},
 	},
 }
 
-func adminDatabaseSignatureInfoFunc(args cli.Values) error {
+func adminDatabaseEntityInfoFunc(args cli.Values) error {
 	service := args.GetString(argServiceName)
+
+	batchSize, _ := args.GetInt64(flagBatchSize)
+	noCache := args.GetBool("no-cache")
 
 	dir := strings.TrimSpace(args.GetString("report-dir"))
 	if dir == "" {
 		dir = "."
 	}
 	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
-		return cli.WrapError(err, "Unable to create directory %s", args.GetString("output-dir"))
+		return cli.WrapError(err, "unable to create directory: %s", args.GetString("output-dir"))
 	}
 
-	entities := args.GetStringSlice("entity")
-	if len(entities) == 0 {
-		resume, err := client.AdminDatabaseSignaturesResume(service)
-		if err != nil {
-			return err
-		}
-		for e := range resume {
-			entities = append(entities, e)
-		}
-	}
-
-	sort.Strings(entities)
-	for _, e := range entities {
-		pks, err := client.AdminDatabaseListTuples(service, e)
-		if err != nil {
-			return err
-		}
-		reportPath := path.Join(dir, service+"."+e+".signature.json")
-		existingReport := make(map[string]int64)
-		if _, err := os.Stat(reportPath); err == nil {
-			bs, err := os.ReadFile(reportPath)
-			if err != nil {
-				return err
-			}
-			var report map[int64][]string
-			if err := json.Unmarshal(bs, &report); err != nil {
-				return err
-			}
-			for t, ks := range report {
-				for _, k := range ks {
-					existingReport[k] = t
-				}
-			}
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		var display = new(cli.Display)
-		display.Printf("Getting info %v...", e)
-		display.Do(ctx)
-
-		report := make(map[int64][]string)
-		for i, pk := range pks {
-			display.Printf("Getting info %v (%d/%d)...", e, i+1, len(pks))
-			var keyTimestamp int64
-			if t, ok := existingReport[pk]; ok {
-				keyTimestamp = t
-			} else {
-				keyTimestamp, err = client.AdminDatabaseInfoSignedEntity(service, e, pk)
-				if err != nil {
-					cancel()
-					return err
-				}
-			}
-			if _, ok := report[keyTimestamp]; !ok {
-				report[keyTimestamp] = nil
-			}
-			report[keyTimestamp] = append(report[keyTimestamp], pk)
-		}
-		display.Printf("Getting info %v (%d/%d) - DONE\n", e, len(pks), len(pks))
-		cancel()
-
-		fmt.Printf("Entity %s: found %d signature keys used\n", e, len(report))
-		for ts, pks := range report {
-			fmt.Printf("	%d: %d tuple(s)\n", ts, len(pks))
-		}
-		buf, err := json.Marshal(report)
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(reportPath, buf, 0644); err != nil {
-			return err
-		}
-		fmt.Printf("Report file created at %s\n", reportPath)
-	}
-
-	return nil
-}
-
-var adminDatabaseEncryptionResume = cli.Command{
-	Name:  "list-encrypted-data",
-	Short: "List all encrypted data in database",
-	Args: []cli.Arg{
-		{
-			Name: argServiceName,
-			IsValid: func(s string) bool {
-				return s == sdk.TypeCDN || s == sdk.TypeAPI
-			},
-		},
-	},
-}
-
-func adminDatabaseEncryptionResumeFunc(args cli.Values) error {
-	entities, err := client.AdminDatabaseListEncryptedEntities(args.GetString(argServiceName))
+	es, err := client.AdminDatabaseEntityList(service)
 	if err != nil {
 		return err
 	}
-	sort.Strings(entities)
-	for _, e := range entities {
-		fmt.Println(e)
+	mEntites := make(map[string]sdk.DatabaseEntity)
+	for _, e := range es {
+		mEntites[e.Name] = e
 	}
-	return err
+
+	entities := args.GetStringSlice("entity")
+	if len(entities) == 0 {
+		for e := range mEntites {
+			entities = append(entities, e)
+		}
+	} else {
+		for _, e := range entities {
+			if _, ok := mEntites[e]; !ok {
+				return cli.WrapError(err, "invalid given entity name: %s", e)
+			}
+		}
+	}
+	sort.Strings(entities)
+
+	for _, e := range entities {
+		report := NewDatabaseEntityStorage(service, e)
+
+		if !noCache {
+			if err := report.Load(dir); err != nil {
+				return err
+			}
+		}
+
+		pks, err := client.AdminDatabaseEntity(service, e)
+		if err != nil {
+			return err
+		}
+
+		var filteredPks []string
+		for _, pk := range pks {
+			if i, ok := report.MInfo[pk]; ok && i.Signed == mEntites[e].Signed && i.Encrypted == mEntites[e].Encrypted {
+				continue
+			}
+			filteredPks = append(filteredPks, pk)
+		}
+
+		if err := adminDatabaseInfoEntity(client, service, e, filteredPks, int(batchSize), func(is []sdk.DatabaseEntityInfo) error {
+			for _, i := range is {
+				report.MInfo[i.PK] = i
+			}
+			return report.Save(dir, true)
+		}); err != nil {
+			return err
+		}
+
+		fmt.Printf("%s: info: (%d/%d)\n", e, len(pks), len(pks))
+
+		if err := report.Save(dir, false); err != nil {
+			return err
+		}
+		report.PrintReport()
+	}
+
+	return nil
 }
 
-var adminDatabaseEncryptionRoll = cli.Command{
-	Name:  "roll-encrypted-data",
-	Short: "Roll encrypted data in database that are using specific encryption key by timestamp",
+var adminDatabaseEntityRoll = cli.Command{
+	Name:  "roll-entity",
+	Short: "Roll signed and encrypted data for given entity in database that are using specific signature or encryption key by timestamp",
 	Args: []cli.Arg{
 		{
 			Name: argServiceName,
@@ -414,156 +395,345 @@ var adminDatabaseEncryptionRoll = cli.Command{
 			Usage:   "Path to load report for entities",
 			Default: "./report",
 		},
+		{
+			Name:    flagBatchSize,
+			Default: "1",
+			IsValid: func(value string) bool {
+				v, err := strconv.Atoi(value)
+				return err == nil && v >= 0
+			},
+		},
 	},
 }
 
-func adminDatabaseEncryptionRollFunc(args cli.Values) error {
+func adminDatabaseEntityRollFunc(args cli.Values) error {
 	service := args.GetString(argServiceName)
 	timestamp, _ := args.GetInt64("timestamp")
+	batchSize, _ := args.GetInt64(flagBatchSize)
+	noInteractive := args.GetBool("no-interactive")
 
 	dir := strings.TrimSpace(args.GetString("report-dir"))
 	if dir == "" {
 		dir = "."
 	}
 
+	es, err := client.AdminDatabaseEntityList(service)
+	if err != nil {
+		return err
+	}
+	mEntites := make(map[string]sdk.DatabaseEntity)
+	for _, e := range es {
+		mEntites[e.Name] = e
+	}
+
 	entities := args.GetStringSlice("entity")
 	if len(entities) == 0 {
-		var err error
-		entities, err = client.AdminDatabaseListEncryptedEntities(service)
+		for e := range mEntites {
+			entities = append(entities, e)
+		}
+	} else {
+		for _, e := range entities {
+			if _, ok := mEntites[e]; !ok {
+				return cli.WrapError(err, "invalid given entity name: %s", e)
+			}
+		}
+	}
+	sort.Strings(entities)
+
+	for _, e := range entities {
+		report := NewDatabaseEntityStorage(service, e)
+		if err := report.Load(dir); err != nil {
+			return err
+		}
+
+		pks := report.ComputePKsFromKeyTimestamp(timestamp)
+		fmt.Printf("%s: roll: found %d tuple(s) to roll for given key timestamp\n", e, len(pks))
+		if len(pks) == 0 {
+			continue
+		}
+
+		if !noInteractive && !cli.AskConfirm(fmt.Sprintf("%s: roll: confirm rolling for %d tuple(s)", e, len(pks))) {
+			return cli.NewError("operation aborted")
+		}
+
+		if err := adminDatabaseRollEntity(client, service, e, pks, int(batchSize), func(is []sdk.DatabaseEntityInfo) error {
+			for _, i := range is {
+				report.MInfo[i.PK] = i
+			}
+			return report.Save(dir, true)
+		}); err != nil {
+			return err
+		}
+
+		fmt.Printf("%s: roll: (%d/%d)\n", e, len(pks), len(pks))
+
+		if err := report.Save(dir, false); err != nil {
+			return err
+		}
+		report.PrintReport()
+	}
+
+	return nil
+}
+
+func adminDatabaseInfoEntity(client cdsclient.Interface, service string, entity string, pks []string, batchSize int, batchCallback func([]sdk.DatabaseEntityInfo) error) error {
+	if batchSize <= 0 {
+		batchSize = 1
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var display = new(cli.Display)
+	display.Printf("%s: getting info...\n", entity)
+	display.Do(ctx)
+	for i := 0; i < len(pks); i += batchSize {
+		j := i + batchSize
+		if j >= len(pks) {
+			j = len(pks)
+		}
+		is, err := client.AdminDatabaseEntityInfo(service, entity, pks[i:j])
 		if err != nil {
 			return err
 		}
+		display.Printf("%s: getting info (%d/%d)...\n", entity, j, len(pks))
+		if batchCallback != nil {
+			if err := batchCallback(is); err != nil {
+				return err
+			}
+		}
 	}
+	return nil
+}
 
-	sort.Strings(entities)
-	for _, e := range entities {
-		reportPath := path.Join(dir, service+"."+e+".encryption.json")
-		buf, err := os.ReadFile(reportPath)
+func adminDatabaseRollEntity(client cdsclient.Interface, service string, entity string, pks []string, batchSize int, batchCallback func([]sdk.DatabaseEntityInfo) error) error {
+	if batchSize <= 0 {
+		batchSize = 1
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var display = new(cli.Display)
+	display.Printf("%s: rolling...\n", entity)
+	display.Do(ctx)
+	for i := 0; i < len(pks); i += batchSize {
+		j := i + batchSize
+		if j >= len(pks) {
+			j = len(pks)
+		}
+		is, err := client.AdminDatabaseEntityRoll(service, entity, pks[i:j], cdsclient.IgnoreMissing())
+		if err != nil {
+			return err
+		}
+		display.Printf("%s: rolling (%d/%d)...\n", entity, j, len(pks))
+		if batchCallback != nil {
+			if err := batchCallback(is); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func NewDatabaseEntityStorage(service, entity string) *DatabaseEntityStorage {
+	return &DatabaseEntityStorage{
+		service: service,
+		entity:  entity,
+		MInfo:   make(map[string]sdk.DatabaseEntityInfo),
+	}
+}
+
+type DatabaseEntityStorage struct {
+	service string
+	entity  string
+	MInfo   map[string]sdk.DatabaseEntityInfo
+}
+
+func (d *DatabaseEntityStorage) Load(reportDir string) error {
+	signatureReportPath := path.Join(reportDir, d.service+"."+d.entity+".signature.json")
+	if _, err := os.Stat(signatureReportPath); err == nil {
+		bs, err := os.ReadFile(signatureReportPath)
 		if err != nil {
 			return err
 		}
 		var report map[int64][]string
-		if err := json.Unmarshal(buf, &report); err != nil {
+		if err := json.Unmarshal(bs, &report); err != nil {
 			return err
 		}
-		if _, ok := report[timestamp]; !ok {
-			continue
-		}
-		if err := client.AdminDatabaseRollEncryptedEntity(service, e, report[timestamp]); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-var adminDatabaseEncryptionInfo = cli.Command{
-	Name:  "info-encrypted-data",
-	Short: "Get info for encrypted data in database",
-	Args: []cli.Arg{
-		{
-			Name: argServiceName,
-			IsValid: func(s string) bool {
-				return s == sdk.TypeCDN || s == sdk.TypeAPI
-			},
-		},
-	},
-	VariadicArgs: cli.Arg{
-		Name:       "entity",
-		AllowEmpty: true,
-	},
-	Flags: []cli.Flag{
-		{
-			Name:    "report-dir",
-			Usage:   "Path to save report for entities",
-			Default: "./report",
-		},
-	},
-}
-
-func adminDatabaseEncryptionInfoFunc(args cli.Values) error {
-	service := args.GetString(argServiceName)
-
-	dir := strings.TrimSpace(args.GetString("report-dir"))
-	if dir == "" {
-		dir = "."
-	}
-	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
-		return cli.WrapError(err, "Unable to create directory %s", args.GetString("output-dir"))
-	}
-
-	entities := args.GetStringSlice("entity")
-	if len(entities) == 0 {
-		var err error
-		entities, err = client.AdminDatabaseListEncryptedEntities(service)
-		if err != nil {
-			return err
-		}
-	}
-
-	sort.Strings(entities)
-	for _, e := range entities {
-		pks, err := client.AdminDatabaseListTuples(service, e)
-		if err != nil {
-			return err
-		}
-		reportPath := path.Join(dir, service+"."+e+".encryption.json")
-		existingReport := make(map[string]int64)
-		if _, err := os.Stat(reportPath); err == nil {
-			bs, err := os.ReadFile(reportPath)
-			if err != nil {
-				return err
-			}
-			var report map[int64][]string
-			if err := json.Unmarshal(bs, &report); err != nil {
-				return err
-			}
-			for t, ks := range report {
-				for _, k := range ks {
-					existingReport[k] = t
+		for t, ks := range report {
+			for _, k := range ks {
+				if i, ok := d.MInfo[k]; !ok {
+					d.MInfo[k] = sdk.DatabaseEntityInfo{
+						PK:          k,
+						Signed:      true,
+						SignatureTS: t,
+					}
+				} else {
+					i.Signed = true
+					i.SignatureTS = t
+					d.MInfo[k] = i
 				}
 			}
 		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		var display = new(cli.Display)
-		display.Printf("Getting info %v...", e)
-		display.Do(ctx)
-
-		report := make(map[int64][]string)
-		for i, pk := range pks {
-			display.Printf("Getting info %v (%d/%d)...", e, i+1, len(pks))
-			var keyTimestamp int64
-			if t, ok := existingReport[pk]; ok {
-				keyTimestamp = t
+		fmt.Printf("%s: load: signature report files loaded from %s\n", d.entity, signatureReportPath)
+	}
+	encryptionReportPath := path.Join(reportDir, d.service+"."+d.entity+".encryption.json")
+	if _, err := os.Stat(encryptionReportPath); err == nil {
+		bs, err := os.ReadFile(encryptionReportPath)
+		if err != nil {
+			return err
+		}
+		var report map[int64][]string
+		if err := json.Unmarshal(bs, &report); err != nil {
+			return err
+		}
+		for t, ks := range report {
+			for _, k := range ks {
+				if i, ok := d.MInfo[k]; !ok {
+					d.MInfo[k] = sdk.DatabaseEntityInfo{
+						PK:           k,
+						Encrypted:    true,
+						EncryptionTS: t,
+					}
+				} else {
+					i.Encrypted = true
+					i.EncryptionTS = t
+					d.MInfo[k] = i
+				}
+			}
+		}
+		fmt.Printf("%s: load: encryption report files loaded from %s\n", d.entity, encryptionReportPath)
+	}
+	corruptedReportPath := path.Join(reportDir, d.service+"."+d.entity+".corrupted.json")
+	if _, err := os.Stat(corruptedReportPath); err == nil {
+		bs, err := os.ReadFile(corruptedReportPath)
+		if err != nil {
+			return err
+		}
+		var report []string
+		if err := json.Unmarshal(bs, &report); err != nil {
+			return err
+		}
+		for _, k := range report {
+			if i, ok := d.MInfo[k]; !ok {
+				d.MInfo[k] = sdk.DatabaseEntityInfo{
+					PK:        k,
+					Corrupted: true,
+				}
 			} else {
-				keyTimestamp, err = client.AdminDatabaseInfoEncryptedEntity(service, e, pk)
-				if err != nil {
-					cancel()
-					return err
-				}
+				i.Corrupted = true
+				d.MInfo[k] = i
 			}
-			if _, ok := report[keyTimestamp]; !ok {
-				report[keyTimestamp] = nil
-			}
-			report[keyTimestamp] = append(report[keyTimestamp], pk)
 		}
-		display.Printf("Getting info %v (%d/%d) - DONE\n", e, len(pks), len(pks))
-		cancel()
-
-		fmt.Printf("Entity %s: found %d encryption keys used\n", e, len(report))
-		for ts, pks := range report {
-			fmt.Printf("	%d: %d tuple(s)\n", ts, len(pks))
-		}
-		buf, err := json.Marshal(report)
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(reportPath, buf, 0644); err != nil {
-			return err
-		}
-		fmt.Printf("Report file created at %s\n", reportPath)
+		fmt.Printf("%s: load: corrupted report files loaded from %s\n", d.entity, corruptedReportPath)
 	}
-
 	return nil
+}
+
+func (d *DatabaseEntityStorage) Save(reportDir string, silent bool) error {
+	signatureReportPath := path.Join(reportDir, d.service+"."+d.entity+".signature.json")
+	signatureReport := d.ComputeSignatureReport()
+	bufSig, err := json.Marshal(signatureReport)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(signatureReportPath, bufSig, 0644); err != nil {
+		return err
+	}
+	if !silent {
+		fmt.Printf("%s: save: signature report files created at %s\n", d.entity, signatureReportPath)
+	}
+	encryptionReportPath := path.Join(reportDir, d.service+"."+d.entity+".encryption.json")
+	encryptionReport := d.ComputeEncryptionReport()
+	bufEnc, err := json.Marshal(encryptionReport)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(encryptionReportPath, bufEnc, 0644); err != nil {
+		return err
+	}
+	if !silent {
+		fmt.Printf("%s: save: encryption report files created at %s\n", d.entity, encryptionReportPath)
+	}
+	corruptedReportPath := path.Join(reportDir, d.service+"."+d.entity+".corrupted.json")
+	corruptedReport := d.ComputeCorruptedReport()
+	bufCor, err := json.Marshal(corruptedReport)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(corruptedReportPath, bufCor, 0644); err != nil {
+		return err
+	}
+	if !silent {
+		fmt.Printf("%s: save: corrupted report files created at %s\n", d.entity, corruptedReportPath)
+	}
+	return nil
+}
+
+func (d *DatabaseEntityStorage) ComputeSignatureReport() map[int64][]string {
+	report := make(map[int64][]string)
+	for _, e := range d.MInfo {
+		if e.Signed && !e.Corrupted {
+			if _, ok := report[e.SignatureTS]; !ok {
+				report[e.SignatureTS] = nil
+			}
+			report[e.SignatureTS] = append(report[e.SignatureTS], e.PK)
+		}
+	}
+	return report
+}
+
+func (d *DatabaseEntityStorage) ComputeEncryptionReport() map[int64][]string {
+	report := make(map[int64][]string)
+	for _, e := range d.MInfo {
+		if e.Encrypted && !e.Corrupted {
+			if _, ok := report[e.EncryptionTS]; !ok {
+				report[e.EncryptionTS] = nil
+			}
+			report[e.EncryptionTS] = append(report[e.EncryptionTS], e.PK)
+		}
+	}
+	return report
+}
+
+func (d *DatabaseEntityStorage) ComputeCorruptedReport() []string {
+	var report []string
+	for _, e := range d.MInfo {
+		if e.Corrupted {
+			report = append(report, e.PK)
+		}
+	}
+	return report
+}
+
+func (d *DatabaseEntityStorage) ComputePKsFromKeyTimestamp(ts int64) []string {
+	var res []string
+	for _, e := range d.MInfo {
+		if (e.Encrypted && e.EncryptionTS == ts || e.Signed && e.SignatureTS == ts) && !e.Corrupted {
+			res = append(res, e.PK)
+		}
+	}
+	return res
+}
+
+func (d *DatabaseEntityStorage) PrintReport() {
+	fmt.Printf("%s: report: found %d tuple(s)\n", d.entity, len(d.MInfo))
+	signatureReport := d.ComputeSignatureReport()
+	if len(signatureReport) > 0 {
+		fmt.Printf("	- %d signature key(s) found:\n", len(signatureReport))
+		for ts, pks := range signatureReport {
+			fmt.Printf("		- %d: %d tuple(s)\n", ts, len(pks))
+		}
+	}
+	encryptionReport := d.ComputeEncryptionReport()
+	if len(encryptionReport) > 0 {
+		fmt.Printf("	- %d encryption key(s) found:\n", len(encryptionReport))
+		for ts, pks := range encryptionReport {
+			fmt.Printf("		- %d: %d tuple(s)\n", ts, len(pks))
+		}
+	}
+	corruptedReport := d.ComputeCorruptedReport()
+	if len(corruptedReport) > 0 {
+		fmt.Printf("	- %d corrupted tuple(s) found:\n", len(corruptedReport))
+		for _, pk := range corruptedReport {
+			fmt.Printf("		- %s\n", pk)
+		}
+	}
 }

@@ -51,6 +51,7 @@ var (
 	ErrInvalidApplicationPattern                     = Error{ID: 36, Status: http.StatusBadRequest}
 	ErrInvalidPipelinePattern                        = Error{ID: 37, Status: http.StatusBadRequest}
 	ErrNotFound                                      = Error{ID: 38, Status: http.StatusNotFound}
+	ErrCorruptedData                                 = Error{ID: 39, Status: http.StatusNotFound}
 	ErrNoHook                                        = Error{ID: 40, Status: http.StatusNotFound}
 	ErrNoAttachedPipeline                            = Error{ID: 41, Status: http.StatusNotFound}
 	ErrNoReposManager                                = Error{ID: 42, Status: http.StatusNotFound}
@@ -241,6 +242,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidWorkerModelNamePattern.ID:                 "worker model name must respect '^[a-zA-Z0-9._-]{1,}$'",
 	ErrInvalidPipelinePattern.ID:                        "pipeline name must respect '^[a-zA-Z0-9._-]{1,}$'",
 	ErrNotFound.ID:                                      "resource not found",
+	ErrCorruptedData.ID:                                 "corrupted entity",
 	ErrNoHook.ID:                                        "hook not found",
 	ErrNoAttachedPipeline.ID:                            "pipeline not attached to the application",
 	ErrNoReposManager.ID:                                "repositories manager not found",

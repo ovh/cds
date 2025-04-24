@@ -468,7 +468,11 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 	// Synchronize run result in a separate transaction
 	api.GoRoutines.Exec(ctx, "api.synchronizeRunResults", func(ctx context.Context) {
 		if err := api.synchronizeRunResults(ctx, api.mustDBWithCtx(ctx), run.ID); err != nil {
-			log.ErrorWithStackTrace(ctx, err)
+			if sdk.ErrorIs(err, sdk.ErrLocked) {
+				log.Info(ctx, "synchronizeRunResults already lock for run "+run.ID)
+			} else {
+				log.ErrorWithStackTrace(ctx, err)
+			}
 		}
 	})
 
@@ -731,6 +735,18 @@ synchronizeRunResults : for a runID, this func:
 - delete build, then create build info.
 */
 func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) error {
+	lockKey := cache.Key("api:workflow:sync:results:run", runID)
+	b, err := api.Cache.Lock(lockKey, 1*time.Minute, 0, 1)
+	if err != nil {
+		return err
+	}
+	if !b {
+		return sdk.WithStack(sdk.ErrLocked)
+	}
+	defer func() {
+		_ = api.Cache.Unlock(lockKey)
+	}()
+
 	run, err := workflow_v2.LoadRunByID(ctx, db, runID)
 	if err != nil {
 		return err

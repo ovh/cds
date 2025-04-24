@@ -246,13 +246,15 @@ type Configuration struct {
 		JobSchedulingMaxErrors     int64  `toml:"jobSchedulingMaxErrors" comment:"Number of scheduling error before failing the job" json:"jobSchedulingMaxErrors" default:"5"`
 		RunRetentionScheduling     int64  `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"15"`
 		WorkflowRunRetention       int64  `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
+		WorkflowRunMaxRetention    int64  `toml:"workflowRunMaxRetention" comment:"Workflow run max retention in days" json:"workflowRunMaxRetention" default:"1095"`
 		LibraryProjectKey          string `toml:"libraryProjectKey" comment:"Library project key" json:"libraryProjectKey" commented:"true"`
 		VersionRetentionScheduling int64  `toml:"versionRetentionScheduling" comment:"Time in minute between 2 run of the workflow version purge" json:"versionRetentionScheduling" default:"60"`
 		VersionRetention           int64  `toml:"versionRetention" comment:"Number of Workflow version CDS keep" json:"versionRetention" commented:"true"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Entity struct {
-		RoutineDelay int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
-		Retention    string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+		RoutineDelay      int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
+		Retention         string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+		AnalysisRetention int64  `toml:"analysisRetention" comment:"Number of analysis to keep" json:"analysisRetention" commented:"true" default:"250"`
 	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
 	Project struct {
 		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
@@ -515,6 +517,9 @@ func (a *API) Serve(ctx context.Context) error {
 	if a.Config.Entity.Retention == "" {
 		a.Config.Entity.Retention = "24h"
 	}
+	if a.Config.Entity.AnalysisRetention <= 0 {
+		a.Config.Entity.AnalysisRetention = 250
+	}
 	if a.Config.WorkflowV2.VersionRetentionScheduling == 0 {
 		a.Config.WorkflowV2.VersionRetentionScheduling = 60
 	}
@@ -531,6 +536,9 @@ func (a *API) Serve(ctx context.Context) error {
 
 	if a.Config.WorkflowV2.WorkflowRunRetention <= 0 {
 		a.Config.WorkflowV2.WorkflowRunRetention = 90
+	}
+	if a.Config.WorkflowV2.WorkflowRunMaxRetention <= 0 {
+		a.Config.WorkflowV2.WorkflowRunMaxRetention = 1095
 	}
 
 	// Checking downloadable binaries
@@ -721,6 +729,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 	migrate.Add(ctx, sdk.Migration{Name: "MigrateAllProjectGPGKeys", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateAllProjectGPGKeys(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateHeadCommit", Release: "0.55.1", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateHeadCommit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
 	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())

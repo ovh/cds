@@ -273,48 +273,32 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 	}
 }
 
-func (api *API) deleteDatabaseMigrationHandler() service.Handler {
-	return database.AdminDeleteDatabaseMigration(api.mustDB)
-}
-
-func (api *API) postDatabaseMigrationUnlockedHandler() service.Handler {
-	return database.AdminDatabaseMigrationUnlocked(api.mustDB)
-}
-
-func (api *API) getDatabaseMigrationHandler() service.Handler {
+func (api *API) getAdminDatabaseMigrationHandler() service.Handler {
 	return database.AdminGetDatabaseMigration(api.mustDB)
 }
 
-func (api *API) getAdminDatabaseSignatureResume() service.Handler {
-	return database.AdminDatabaseSignatureResume(api.mustDB, gorpmapping.Mapper)
+func (api *API) deleteAdminDatabaseMigrationHandler() service.Handler {
+	return database.AdminDeleteDatabaseMigration(api.mustDB)
 }
 
-func (api *API) getAdminDatabaseSignatureTuplesBySigner() service.Handler {
-	return database.AdminDatabaseSignatureTuplesBySigner(api.mustDB, gorpmapping.Mapper)
+func (api *API) postAdminDatabaseMigrationUnlockHandler() service.Handler {
+	return database.AdminPostDatabaseMigrationUnlock(api.mustDB)
 }
 
-func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handler {
-	return database.AdminDatabaseSignatureRollEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
+func (api *API) getAdminDatabaseEntityList() service.Handler {
+	return database.AdminGetDatabaseEntityList(api.mustDB, api.mustMapper)
 }
 
-func (api *API) getAdminDatabaseSignatureInfoEntityByPrimaryKey() service.Handler {
-	return database.AdminDatabaseSignatureInfoEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
+func (api *API) getAdminDatabaseEntity() service.Handler {
+	return database.AdminGetDatabaseEntity(api.mustDB, api.mustMapper)
 }
 
-func (api *API) getAdminDatabaseEncryptedEntities() service.Handler {
-	return database.AdminDatabaseEncryptedEntities(api.mustDB, gorpmapping.Mapper)
+func (api *API) postAdminDatabaseEntityInfo() service.Handler {
+	return database.AdminPostDatabaseEntityInfo(api.mustDB, api.mustMapper)
 }
 
-func (api *API) getAdminDatabaseTuplesByEntity() service.Handler {
-	return database.AdminDatabaseTuplesByEntity(api.mustDB, gorpmapping.Mapper)
-}
-
-func (api *API) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handler {
-	return database.AdminDatabaseRollEncryptedEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
-}
-
-func (api *API) getAdminDatabaseInfoEncryptedEntityByPrimaryKey() service.Handler {
-	return database.AdminDatabaseInfoEncryptedEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
+func (api *API) postAdminDatabaseEntityRoll() service.Handler {
+	return database.AdminPostDatabaseEntityRoll(api.mustDB, api.mustMapper)
 }
 
 func (api *API) getAdminFeatureFlipping() service.Handler {

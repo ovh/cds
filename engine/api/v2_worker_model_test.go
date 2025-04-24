@@ -55,11 +55,12 @@ func TestGetWorkerModelV2Handler(t *testing.T) {
 
 	e := sdk.Entity{
 		Name:                "model1",
-		Commit:              "HEAD",
+		Commit:              "123456",
 		Ref:                 "refs/heads/master",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
+		Head:                true,
 		Data: fmt.Sprintf(`name: docker-unix
 type: docker
 spec:

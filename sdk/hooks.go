@@ -26,6 +26,8 @@ type HookListWorkflowRequest struct {
 	AnalyzedProjectKeys StringSlice           `json:"project_keys"`
 	Models              []EntityFullName      `json:"models"`
 	Workflows           []EntityFullName      `json:"workflows"`
+	SkippedWorkflows    []EntityFullName      `json:"skipped_workflows"`
+	SkippedHooks        []V2WorkflowHook      `json:"skipped_hooks"`
 }
 
 func IsValidHookPath(ctx context.Context, configuredPaths []string, paths []string) bool {

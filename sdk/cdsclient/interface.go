@@ -41,17 +41,13 @@ type TemplateV2Client interface {
 
 // Admin expose all function to CDS administration
 type Admin interface {
+	AdminDatabaseMigrationList(service string) ([]sdk.DatabaseMigrationStatus, error)
 	AdminDatabaseMigrationDelete(service string, id string) error
 	AdminDatabaseMigrationUnlock(service string, id string) error
-	AdminDatabaseMigrationsList(service string) ([]sdk.DatabaseMigrationStatus, error)
-	AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error)
-	AdminDatabaseSignaturesTuplesBySigner(service string, e string, s string) ([]string, error)
-	AdminDatabaseRollSignedEntity(service string, e string, pks []string) error
-	AdminDatabaseInfoSignedEntity(service string, e string, pk string) (int64, error)
-	AdminDatabaseListEncryptedEntities(service string) ([]string, error)
-	AdminDatabaseRollEncryptedEntity(service string, e string, pks []string) error
-	AdminDatabaseInfoEncryptedEntity(service string, e string, pk string) (int64, error)
-	AdminDatabaseListTuples(service string, e string) ([]string, error)
+	AdminDatabaseEntityList(service string) ([]sdk.DatabaseEntity, error)
+	AdminDatabaseEntity(service string, e string, mods ...RequestModifier) ([]string, error)
+	AdminDatabaseEntityInfo(service string, e string, pks []string) ([]sdk.DatabaseEntityInfo, error)
+	AdminDatabaseEntityRoll(service string, e string, pks []string, mods ...RequestModifier) ([]sdk.DatabaseEntityInfo, error)
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
@@ -802,6 +798,22 @@ func Workflows(ws ...string) RequestModifier {
 		for _, w := range ws {
 			q.Add("workflow", w)
 		}
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func Signer(signer string) RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("signer", signer)
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func IgnoreMissing() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("ignoreMissing", sdk.TrueString)
 		r.URL.RawQuery = q.Encode()
 	}
 }

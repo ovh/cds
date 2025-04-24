@@ -69,11 +69,16 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 		return sdk.WrapError(err, "AuthorizedClient (%s, %s)", event.ProjectKey, eventWNR.RepositoryManagerName)
 	}
 
+	status := eventWNR.Status
+	if status == sdk.StatusSkipped {
+		status = sdk.StatusSuccess
+	}
+
 	buildStatus := sdk.VCSBuildStatus{
 		Description:        eventWNR.NodeName + ":" + eventWNR.Status,
 		URLCDS:             fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, event.ProjectKey, event.WorkflowName, eventWNR.Number),
 		Context:            fmt.Sprintf("%s-%s-%s", event.ProjectKey, event.WorkflowName, eventWNR.NodeName),
-		Status:             eventWNR.Status,
+		Status:             status,
 		RepositoryFullname: eventWNR.RepositoryFullName,
 		GitHash:            eventWNR.Hash,
 		GerritChange:       eventWNR.GerritChange,

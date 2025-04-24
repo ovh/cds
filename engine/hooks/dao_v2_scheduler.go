@@ -70,7 +70,7 @@ func (d *dao) GetAllSchedulerExecutions(ctx context.Context) ([]sdk.SchedulerExe
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %v", schedulerNextExecutionRootKey)
 	}
-	schedulerExecs := make([]*sdk.SchedulerExecution, nbExec, nbExec)
+	schedulerExecs := make([]*sdk.SchedulerExecution, nbExec)
 	for i := 0; i < nbExec; i++ {
 		schedulerExecs[i] = &sdk.SchedulerExecution{}
 	}

@@ -257,13 +257,32 @@ func RunResultsSynchronize(ctx context.Context, c *actionplugin.Common) error {
 		return err
 	}
 
-	resp, err := c.DoRequest(req)
-	if err != nil {
-		return errors.Wrap(err, "unable to synchronize run results")
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		return errors.Wrapf(err, "unable to synchronize run result (status code %d)", resp.StatusCode)
+	retry := 1
+	for {
+		resp, err := c.DoRequest(req)
+		if err != nil {
+			return errors.Wrap(err, "unable to synchronize run results")
+		}
+		if resp.StatusCode >= 300 {
+			bts, err := io.ReadAll(resp.Body)
+			if err != nil {
+				_ = resp.Body.Close()
+				return errors.Wrap(err, "unable to read run results synchronization response")
+			}
+			if strings.Contains(string(bts), "Resource locked") {
+				_ = resp.Body.Close()
+				if retry >= 3 {
+					return sdk.NewErrorFrom(sdk.ErrLocked, "unable to synchronize run result (status code %d), run resuls are being synchronized", resp.StatusCode)
+				}
+				Errorf(c, "failed to synchronize run results, retrying %d/2", retry)
+				retry++
+				time.Sleep(1 * time.Second)
+				continue
+			}
+			_ = resp.Body.Close()
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to synchronize run result (status code %d): %s", resp.StatusCode, string(bts))
+		}
+		break
 	}
 
 	return nil
@@ -753,7 +772,7 @@ func UploadRunResultWorker(ctx context.Context, actplugin *actionplugin.Common, 
 	}
 }
 
-func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output *UploadRunResultOutput, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, fileName string, result string, f fs.File, size int64, fileChecksum ChecksumResult) error {
+func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output *UploadRunResultOutput, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, filePath string, fileName string, f fs.File, size int64, fileChecksum ChecksumResult) error {
 	workerConfig, err := GetWorkerConfig(ctx, actplugin)
 	if err != nil {
 		return err
@@ -764,7 +783,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output
 		return err
 	}
 
-	message := fmt.Sprintf("\nUpload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s", fileName, result, size, fileChecksum.Md5, fileChecksum.Sha1, fileChecksum.Sha256)
+	message := fmt.Sprintf("\nUpload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s", filePath, fileName, size, fileChecksum.Md5, fileChecksum.Sha1, fileChecksum.Sha256)
 	output.Logs = append(output.Logs, UploadRunResultLogLevel{Log: message, Level: "success"})
 
 	// Upload the file to an artifactory or CDN

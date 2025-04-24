@@ -131,7 +131,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				runRequest := sdk.V2WorkflowRunHookRequest{
 					HookEventID:        hre.UUID,
 					Ref:                hre.ExtractData.Ref,
-					Sha:                hre.ExtractData.Commit,
+					Sha:                wh.TargetCommit,
 					CommitMessage:      hre.ExtractData.CommitMessage,
 					Payload:            event,
 					EventName:          hre.EventName,
@@ -147,25 +147,19 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				if hre.Initiator != nil {
 					runRequest.DeprecatedUserID = hre.Initiator.UserID
 				}
+				if wh.Data.TargetBranch != "" {
+					runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
+				} else if wh.Data.TargetTag != "" {
+					runRequest.Ref = sdk.GitRefTagPrefix + wh.Data.TargetTag
+				}
 
 				// Override repository ref to clone in the workflow
 				switch wh.Type {
-				case sdk.WorkflowHookTypeManual:
-					if wh.Data.TargetBranch != "" {
-						runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
-					} else {
-						runRequest.Ref = sdk.GitRefTagPrefix + wh.Data.TargetTag
-					}
-					runRequest.Sha = wh.TargetCommit
 				case sdk.WorkflowHookTypeWorkflow:
 					runRequest.EntityUpdated = wh.WorkflowName
-					runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
-					runRequest.Sha = wh.TargetCommit
 					runRequest.EventName = "workflow-update"
 				case sdk.WorkflowHookTypeWorkerModel:
 					runRequest.EntityUpdated = wh.ModelFullName
-					runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
-					runRequest.Sha = wh.TargetCommit
 					runRequest.EventName = "model-update"
 				case sdk.WorkflowHookTypeScheduler:
 					runRequest.Cron = hre.ExtractData.Scheduler.Cron
@@ -174,15 +168,6 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				case sdk.WorkflowHookTypeWorkflowRun:
 					runRequest.WorkflowRun = hre.ExtractData.WorkflowRun.Workflow
 					runRequest.WorkflowRunID = hre.ExtractData.WorkflowRun.WorkflowRunID
-					mods = make([]cdsclient.RequestModifier, 0) // Do not send query param. Let the CDS api get default branch
-
-					// Let CDS API choose the git context for the workflow execution
-					runRequest.Ref = ""
-					runRequest.Sha = ""
-				case sdk.WorkflowHookTypeWebhook:
-					runRequest.WebhookID = hre.ExtractData.WebHook.ID
-					mods = make([]cdsclient.RequestModifier, 0) // Do not send query param. Let the CDS api get default branch
-					runRequest.Sha = wh.TargetCommit
 				}
 
 				wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,

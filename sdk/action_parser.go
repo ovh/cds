@@ -675,7 +675,7 @@ func (a *ActionParser) and(operands []interface{}) (bool, error) {
 	for _, op := range operands {
 		opBool, ok := op.(bool)
 		if !ok {
-			return false, NewErrorFrom(ErrInvalidData, "operator && only work with boolean, got [%v]", op)
+			return false, NewErrorFrom(ErrInvalidData, "operator && only work with boolean, got [%T: %q]", op, op)
 		}
 		currentResult = currentResult && opBool
 		if !currentResult {
@@ -696,7 +696,7 @@ func (a *ActionParser) or(operands []interface{}) (bool, error) {
 	for _, op := range operands {
 		opBool, ok := op.(bool)
 		if !ok {
-			return false, NewErrorFrom(ErrInvalidData, "operator && only work with boolean, got [%v]", opBool)
+			return false, NewErrorFrom(ErrInvalidData, "operator || only work with boolean, got [%T: %q]", op, op)
 		}
 		currentResult = currentResult || opBool
 		if currentResult {

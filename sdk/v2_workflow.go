@@ -38,7 +38,7 @@ const (
 	SemverTypePoetry WorkflowSemverType = "poetry"
 	SemverTypeDebian WorkflowSemverType = "debian"
 
-	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}.sha.${{git.sha_short}}"
+	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}.sha.g${{git.sha_short}}"
 )
 
 type V2Workflow struct {
@@ -471,6 +471,7 @@ type V2WorkflowHook struct {
 	Commit         string             `json:"commit" db:"commit"`
 	Type           string             `json:"type" db:"type"`
 	Data           V2WorkflowHookData `json:"data" db:"data"`
+	Head           bool               `json:"head" db:"head"`
 }
 
 type V2WorkflowHookShort struct {
@@ -571,13 +572,13 @@ func (w V2Workflow) Lint() []error {
 	workflowSchema := GetWorkflowJsonSchema(nil, nil, nil)
 	workflowSchemaS, err := workflowSchema.MarshalJSON()
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to load workflow schema")}
+		return []error{NewErrorFrom(err, "workfow %s: unable to load workflow schema", w.Name)}
 	}
 	schemaLoader := gojsonschema.NewStringLoader(string(workflowSchemaS))
 
 	modelJson, err := json.Marshal(w)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to marshal workflow")}
+		return []error{NewErrorFrom(err, "workfow %s: unable to marshal workflow", w.Name)}
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
 
@@ -591,7 +592,7 @@ func (w V2Workflow) Lint() []error {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(ErrInvalidData, "unable to validate workflow %s: %v", w.Name, err.Error())}
+		return []error{NewErrorFrom(ErrInvalidData, "workflow %s: unable to validate file: %v", w.Name, err.Error())}
 	}
 
 	for _, e := range result.Errors() {

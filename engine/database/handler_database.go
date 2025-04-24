@@ -14,6 +14,17 @@ import (
 )
 
 type DBFunc func() *gorp.DbMap
+type MapperFunc func() *gorpmapper.Mapper
+
+func AdminGetDatabaseMigration(db DBFunc) service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		a, err := dbmigrate.List(db().Db)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load database migration list %d", err)
+		}
+		return service.WriteJSON(w, a, http.StatusOK)
+	}
+}
 
 func AdminDeleteDatabaseMigration(db DBFunc) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -21,163 +32,140 @@ func AdminDeleteDatabaseMigration(db DBFunc) service.Handler {
 		id := vars["id"]
 
 		if len(id) == 0 {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Id is mandatory. Check id from table gorp_migrations")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Migration id is mandatory. Check id from table gorp_migrations")
 		}
 
 		return dbmigrate.DeleteMigrate(db().Db, id)
 	}
 }
 
-func AdminDatabaseMigrationUnlocked(db DBFunc) service.Handler {
+func AdminPostDatabaseMigrationUnlock(db DBFunc) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
 		if len(id) == 0 {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Id is mandatory. Check id from table gorp_migrations_lock")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Migration id is mandatory. Check id from table gorp_migrations_lock")
 		}
 
 		return dbmigrate.UnlockMigrate(db().Db, id, gorp.PostgresDialect{})
 	}
 }
 
-func AdminGetDatabaseMigration(db DBFunc) service.Handler {
+func AdminGetDatabaseEntityList(db DBFunc, mapper MapperFunc) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		a, err := dbmigrate.List(db().Db)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load database migration list %d", err)
+		var res []sdk.DatabaseEntity
+		for k, v := range mapper().Mapping {
+			if !v.SignedEntity && !v.EncryptedEntity {
+				continue
+			}
+			e := sdk.DatabaseEntity{
+				Name:      k,
+				Signed:    v.SignedEntity,
+				Encrypted: v.EncryptedEntity,
+			}
+			if v.SignedEntity {
+				data, err := mapper().ListCanonicalFormsByEntity(db(), k)
+				if err != nil {
+					return err
+				}
+				e.CanonicalForms = data
+			}
+			res = append(res, e)
 		}
-		return service.WriteJSON(w, a, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
-func AdminDatabaseSignatureResume(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
+func AdminGetDatabaseEntity(db DBFunc, mapper MapperFunc) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var entities = mapper.ListSignedEntities()
-		var resume = make(sdk.CanonicalFormUsageResume, len(entities))
+		vars := mux.Vars(r)
+		entity := vars["entity"]
 
-		for _, e := range entities {
-			data, err := mapper.ListCanonicalFormsByEntity(db(), e)
+		signer := r.FormValue("signer")
+		if signer != "" {
+			res, err := mapper().ListTuplesByCanonicalForm(db(), entity, signer)
 			if err != nil {
 				return err
 			}
-			resume[e] = data
+			return service.WriteJSON(w, res, http.StatusOK)
 		}
 
-		return service.WriteJSON(w, resume, http.StatusOK)
-	}
-}
-
-func AdminDatabaseSignatureTuplesBySigner(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		entity := vars["entity"]
-		signer := vars["signer"]
-
-		pks, err := mapper.ListTupleByCanonicalForm(db(), entity, signer)
+		res, err := mapper().ListTuplesByEntity(db(), entity)
 		if err != nil {
 			return err
 		}
-
-		return service.WriteJSON(w, pks, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
-func AdminDatabaseSignatureRollEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		entity := vars["entity"]
-		pk := vars["pk"]
-
-		tx, err := db().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		if err := mapper.RollSignedTupleByPrimaryKey(ctx, tx, entity, pk); err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
-	}
-}
-
-func AdminDatabaseSignatureInfoEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		entity := vars["entity"]
-		pk := vars["pk"]
-
-		ts, err := mapper.InfoSignedTupleByPrimaryKey(ctx, db(), entity, pk)
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, ts, http.StatusOK)
-	}
-}
-
-func AdminDatabaseEncryptedEntities(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, mapper.ListEncryptedEntities(), http.StatusOK)
-	}
-}
-
-func AdminDatabaseTuplesByEntity(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
+func AdminPostDatabaseEntityInfo(db DBFunc, mapper MapperFunc) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		entity := vars["entity"]
 
-		pks, err := mapper.ListTuplesByEntity(db(), entity)
-		if err != nil {
+		var pks []string
+		if err := service.UnmarshalBody(r, &pks); err != nil {
 			return err
 		}
 
-		return service.WriteJSON(w, pks, http.StatusOK)
+		var res []sdk.DatabaseEntityInfo
+		for _, pk := range pks {
+			i, err := mapper().InfoTupleByPrimaryKey(ctx, db(), entity, pk)
+			if err != nil {
+				return err
+			}
+			if i != nil {
+				res = append(res, *i)
+			}
+		}
+
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
-func AdminDatabaseRollEncryptedEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
+func AdminPostDatabaseEntityRoll(db DBFunc, mapper MapperFunc) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		entity := vars["entity"]
-		pk := vars["pk"]
 
-		tx, err := db().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
+		ignoreMissing := r.FormValue("ignoreMissing") == sdk.TrueString
 
-		defer tx.Rollback() // nolint
-
-		if err := mapper.RollEncryptedTupleByPrimaryKey(ctx, tx, entity, pk); err != nil {
+		var pks []string
+		if err := service.UnmarshalBody(r, &pks); err != nil {
 			return err
 		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
+		if len(pks) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "no primary key was given")
 		}
 
-		return nil
-	}
-}
+		var res []sdk.DatabaseEntityInfo
+		for _, pk := range pks {
+			tx, err := db().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
 
-func AdminDatabaseInfoEncryptedEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		entity := vars["entity"]
-		pk := vars["pk"]
+			i, err := mapper().RollTupleByPrimaryKey(ctx, tx, entity, pk)
+			if err != nil {
+				tx.Rollback() // nolint
+				return err
+			}
+			if i == nil {
+				tx.Rollback() //nolint
+				if ignoreMissing {
+					continue
+				}
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "no tuple found for primary key %s", pk)
+			}
 
-		ts, err := mapper.InfoEncryptedTupleByPrimaryKey(ctx, db(), entity, pk)
-		if err != nil {
-			return err
+			res = append(res, *i)
+			if err := tx.Commit(); err != nil {
+				tx.Rollback() // nolint
+				return sdk.WithStack(err)
+			}
 		}
 
-		return service.WriteJSON(w, ts, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }

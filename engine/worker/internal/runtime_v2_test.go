@@ -72,14 +72,23 @@ func TestGetRunResult(t *testing.T) {
 				},
 			},
 		},
+		{
+			Type: sdk.V2WorkflowRunResultTypeGeneric,
+			Detail: sdk.V2WorkflowRunResultDetail{
+				Type: "V2WorkflowRunResultGenericDetail",
+				Data: sdk.V2WorkflowRunResultGenericDetail{
+					Name: "foobar.log",
+				},
+			},
+		},
 	}, nil)
 
 	filter := workerruntime.V2FilterRunResult{
-		Pattern: "docker:**/my/image:* helm:machart:* date.log",
+		Pattern: "docker:**/my/image:* helm:machart:* date.log generic:foobar*",
 	}
 	result, err := w.V2GetRunResult(ctx, filter)
 	require.NoError(t, err)
 	t.Logf("%+v", result)
 
-	require.Equal(t, 3, len(result.RunResults))
+	require.Equal(t, 4, len(result.RunResults))
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/worker_v2"
+	"github.com/ovh/cds/sdk/cdsclient"
 	sdkhatch "github.com/ovh/cds/sdk/hatchery"
 
 	"github.com/go-gorp/gorp"
@@ -531,11 +532,15 @@ func NewRequest(t *testing.T, method, uri string, i interface{}) *http.Request {
 }
 
 // NewJWTAuthentifiedRequest prepare a request
-func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}) *http.Request {
+func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}, mods ...cdsclient.RequestModifier) *http.Request {
 	req := NewRequest(t, method, uri, i)
 
 	auth := "Bearer " + jwt
 	req.Header.Add("Authorization", auth)
+
+	for _, m := range mods {
+		m(req)
+	}
 
 	return req
 }
