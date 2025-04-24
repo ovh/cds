@@ -471,12 +471,94 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 		}
 		if ok {
 			// Load entity to get the right commit instead of HEAD
-			e, err := entity.LoadByID(ctx, db, hook.EntityID)
+			if hook.Commit == "HEAD" {
+				e, err := entity.LoadByID(ctx, db, hook.EntityID)
+				if err != nil {
+					return nil, err
+				}
+				hook.Commit = e.Commit
+			}
+			filteredWorkflowHooks = append(filteredWorkflowHooks, *hook)
+		}
+	}
+
+	// For PullRequest event, skipped hooks are always empty
+	if len(hookRequest.SkippedHooks) == 0 && hookRequest.RepositoryEventName == sdk.WorkflowHookEventNamePullRequest {
+
+		hooks, err := workflow_v2.LoadHookHeadPullRequestHookByWorkflowAndEvent(ctx, db, hookRequest.VCSName, hookRequest.RepositoryName)
+		if err != nil {
+			return nil, err
+		}
+		headhooks := make(map[string]sdk.V2WorkflowHook)
+		for _, h := range hooks {
+			// Check with existing hook to trigger
+			skip := false
+			for _, filteredHook := range filteredWorkflowHooks {
+				// Ignore if it cames from the same entity
+				if filteredHook.EntityID == h.EntityID {
+					skip = true
+					break
+				}
+				// Ignore if the workflow is already trigger
+				if h.VCSName == filteredHook.VCSName && h.RepositoryName == filteredHook.RepositoryName && h.WorkflowName == filteredHook.WorkflowName {
+					skip = true
+					break
+				}
+			}
+			if skip {
+				continue
+			}
+
+			hookKey := fmt.Sprintf("%s/%s/%s", h.VCSName, h.RepositoryName, h.WorkflowName)
+
+			// If definition found is on the same repo / branch, add the hook
+			if h.VCSName == hookRequest.VCSName && h.RepositoryName == hookRequest.RepositoryName && h.Ref == hookRequest.Ref {
+				headhooks[hookKey] = h
+				continue
+			}
+			// If definition found is on the same repo but another branch: check the ref
+			if h.VCSName == hookRequest.VCSName && h.RepositoryName == hookRequest.RepositoryName && h.Ref != hookRequest.Ref {
+				_, has := headhooks[hookKey]
+				if !has {
+					// Check default branch
+					vcsAuth, err := repositoriesmanager.AuthorizedClient(ctx, db, store, h.ProjectKey, h.VCSName)
+					if err != nil {
+						return nil, err
+					}
+					b, err := vcsAuth.Branch(ctx, h.RepositoryName, sdk.VCSBranchFilters{Default: true})
+					if err != nil {
+						return nil, err
+					}
+					// If default branch, keep it
+					if h.Ref == b.ID {
+						headhooks[hookKey] = h
+					}
+				}
+				continue
+			}
+			if h.VCSName != hookRequest.VCSName || h.RepositoryName != hookRequest.RepositoryName {
+				// Add it. On distant workflow, only the webhook on default branch is saved
+				headhooks[hookKey] = h
+				continue
+			}
+		}
+
+		for _, hook := range headhooks {
+			ok, err := validateRepositoryWebHook(ctx, db, store, hookRequest, hook, repoCache, true)
 			if err != nil {
 				return nil, err
 			}
-			hook.Commit = e.Commit
-			filteredWorkflowHooks = append(filteredWorkflowHooks, *hook)
+			if ok {
+				// Load entity to get the right commit instead of HEAD
+				if hook.Commit == "HEAD" {
+					e, err := entity.LoadByID(ctx, db, hook.EntityID)
+					if err != nil {
+						return nil, err
+					}
+					hook.Commit = e.Commit
+				}
+				filteredWorkflowHooks = append(filteredWorkflowHooks, hook)
+			}
 		}
 	}
 
