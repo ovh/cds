@@ -22,6 +22,7 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 	@Input() test: string;
 
 	editorOption: EditorOptions;
+	editorOptionRaw: EditorOptions;
 	resizingSubscription: Subscription;
 	tabs: Array<Tab>;
 	selectedTab: Tab;
@@ -48,7 +49,15 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 			language: 'json',
 			minimap: { enabled: false },
 			readOnly: true,
-			wordWrap: 'on'
+			wordWrap: 'on',
+			scrollBeyondLastLine: false
+		};
+		this.editorOptionRaw = {
+			language: 'text',
+			minimap: { enabled: false },
+			readOnly: true,
+			wordWrap: 'on',
+			scrollBeyondLastLine: false
 		};
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
