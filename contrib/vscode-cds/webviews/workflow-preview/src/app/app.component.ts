@@ -3,7 +3,7 @@ import { Messenger, VsCodeApi } from 'vscode-messenger-webview';
 import { load, LoadOptions } from 'js-yaml';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { GenerateWorkflow, GenerateWorkflowDataResponse, Parameter, WorkflowData, WorkflowRefresh, WorkflowTemplate, WorkflowTemplateGenerated } from '../../../../src/type';
-import { WorkflowV2StagesGraphComponent } from 'workflow-graph';
+import { GraphComponent } from 'workflow-graph';
 
 export declare function acquireVsCodeApi(): VsCodeApi;
 const vsCodeApi = acquireVsCodeApi();
@@ -27,7 +27,7 @@ export class AppComponent {
   
   viewMessenger: Messenger;
 
-  @ViewChild('stageGraph') stageGraph: WorkflowV2StagesGraphComponent | undefined;
+  @ViewChild('graph') graph: GraphComponent | undefined;
 
   constructor() {
     this.viewMessenger = new Messenger(vsCodeApi);
@@ -53,8 +53,8 @@ export class AppComponent {
 
   resizeGraph(): void {
     setTimeout(() => {
-      if (this.stageGraph) {
-        this.stageGraph.resize();
+      if (this.graph) {
+        this.graph.resize();
       }
     }, 1);
   }

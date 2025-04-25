@@ -10,7 +10,7 @@ import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { CaretRightOutline, CaretDownOutline, UserOutline } from '@ant-design/icons-angular/icons';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { WorkflowGraphModule } from 'workflow-graph';
+import { GraphModule } from 'workflow-graph';
 
 const icons: IconDefinition[] = [CaretRightOutline, CaretDownOutline, UserOutline];
 
@@ -27,7 +27,7 @@ const icons: IconDefinition[] = [CaretRightOutline, CaretDownOutline, UserOutlin
     NzFormModule,
     NzInputModule,
     NzButtonModule,
-    WorkflowGraphModule
+    GraphModule
   ],
   providers: [],
   bootstrap: [AppComponent]

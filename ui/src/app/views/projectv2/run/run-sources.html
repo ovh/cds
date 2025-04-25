@@ -1,0 +1,6 @@
+<nz-tabset nzType="card" nzSize="small" [nzSelectedIndex]="selectedFileIndex">
+	<nz-tab *ngFor="let f of filenames; let i = index" [nzTitle]="f" (nzSelect)="selectFile(i)"></nz-tab>
+</nz-tabset>
+
+<nz-code-editor *ngIf="files.length > 0" #editor [ngModel]="files[selectedFileIndex]" [nzEditorOption]="editorOption"
+	(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>

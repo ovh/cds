@@ -11,7 +11,7 @@ import { ProjectV2ExploreComponent } from './explore/explore.component';
 import { ProjectV2RunListSidebarComponent } from './run-list/run-list-sidebar.component';
 import { RunHookComponent } from './run/run-hook.component';
 import { RunResultComponent } from './run/run-result.component';
-import { RunWorkflowComponent } from './run/run-workflow.component';
+import { RunSourcesComponent } from './run/run-sources.component';
 import { RunContextsComponent } from './run/run-contexts.component';
 import { RunTestsComponent } from './run/run-tests.component';
 import { RunTestComponent } from './run/run-test.component';
@@ -50,9 +50,9 @@ import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
         RunJobComponent,
         RunResultComponent,
         RunResultsComponent,
+        RunSourcesComponent,
         RunTestComponent,
-        RunTestsComponent,
-        RunWorkflowComponent
+        RunTestsComponent
     ],
     imports: [
         RouterModule,
