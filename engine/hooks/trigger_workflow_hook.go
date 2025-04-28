@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -189,11 +188,6 @@ func (s *Service) handleWebhookHook(ctx context.Context, hre *sdk.HookRepository
 }
 
 func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
-	var userRequest sdk.V2WorkflowRunManualRequest
-	if err := json.Unmarshal(hre.Body, &userRequest); err != nil {
-		return err
-	}
-
 	// Get workflow definition
 	e, err := s.Client.EntityGet(ctx, hre.ExtractData.Manual.Project, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.Manual.Workflow,
 		cdsclient.WithQueryParameter("ref", hre.ExtractData.Ref), cdsclient.WithQueryParameter("commit", hre.ExtractData.Commit))
@@ -234,8 +228,8 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 		Type:                 sdk.WorkflowHookTypeManual,
 		Status:               sdk.HookEventWorkflowStatusScheduled,
 		Ref:                  hre.ExtractData.Ref,
-		Commit:               e.Commit,
-		TargetCommit:         userRequest.Sha,
+		Commit:               hre.ExtractData.Commit,
+		TargetCommit:         hre.ExtractData.Manual.TargetCommit,
 		Data: sdk.V2WorkflowHookData{
 			VCSServer:      workflowVCS,
 			RepositoryName: workflowRepo,
