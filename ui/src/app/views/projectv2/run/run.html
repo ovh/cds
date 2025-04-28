@@ -38,7 +38,7 @@
                             [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
                     </nz-select>
                     <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
-                        (click)="openPanel('workflow')"><span nz-icon nzType="file-text"
+                        (click)="openPanel('sources')"><span nz-icon nzType="file-text"
                             nzTheme="outline"></span>Sources</button>
                     <button nz-button nzType="default" nzSize="small" title="Show workflow run contexts"
                         (click)="openPanel('contexts')"><span nz-icon nzType="read"
@@ -112,11 +112,10 @@
                     title="Stop workflow run" [nzLoading]="loading.stop" (click)="clickStopRun()">Stop workflow
                     run</button>
             </div>
-            <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
+            <app-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
                 [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
                 (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
-                (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)"
-                #graph></app-stages-graph>
+                (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)" #graph></app-graph>
         </div>
 
         <!--  BOTTOM PANELS -->
@@ -155,7 +154,7 @@
             (onSubmit)="onGateSubmit()"></app-run-gate>
         <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"></app-run-hook>
         <app-run-result *ngIf="selectedItemType === 'result'" [result]="selectedRunResult"></app-run-result>
-        <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"></app-run-workflow>
+        <app-run-sources *ngIf="selectedItemType === 'sources'" [run]="workflowRun"></app-run-sources>
         <app-run-contexts *ngIf="selectedItemType === 'contexts'" [run]="workflowRun"></app-run-contexts>
         <app-run-test *ngIf="selectedItemType === 'test'" [tests]="tests" [test]="selectedTest"></app-run-test>
     </app-resizable-panel>

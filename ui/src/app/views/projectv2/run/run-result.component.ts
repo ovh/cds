@@ -46,7 +46,8 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 		this.editorOption = {
 			language: 'json',
 			minimap: { enabled: false },
-			readOnly: true
+			readOnly: true,
+			scrollBeyondLastLine: false
 		};
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
