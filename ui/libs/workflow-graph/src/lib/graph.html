@@ -14,6 +14,12 @@
             <b>Manual</b>&nbsp;trigger
         </div>
     </ng-container>
+    <ng-container  *ngIf="selectedHook === 'webhook'">
+        <div class="hook" [class.active]="true" (click)="clickHook('webhook')">
+            <span nz-icon nzType="api" nzTheme="outline"></span>
+            <b>Webhook</b>&nbsp;trigger
+        </div>
+    </ng-container>
 </div>
 
 <div *ngIf="!_workflowRun" class="hooks">

@@ -301,6 +301,7 @@ export class V2WorkflowRunManualRequest {
     sha: string;
     workflow_branch: string;
     workflow_tag: string;
+    payload: any;
 }
 
 export class V2WorkflowRunManualResponse {
