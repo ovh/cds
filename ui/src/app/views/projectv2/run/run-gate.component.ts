@@ -2,15 +2,15 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, In
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { ToastService } from "app/shared/toast/ToastService";
-import { V2JobGate, V2WorkflowRun } from "../../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2JobGate, V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { lastValueFrom } from "rxjs";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { ErrorUtils } from "app/shared/error.utils";
 
 @Component({
     selector: 'app-run-gate',
-    templateUrl: './gate.html',
-    styleUrls: ['./gate.scss'],
+    templateUrl: './run-gate.html',
+    styleUrls: ['./run-gate.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()

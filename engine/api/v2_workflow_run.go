@@ -1117,6 +1117,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 			if inputs == nil {
+				inputs = make(map[string]interface{})
 				// Retrieve inputs from last run if exists
 				for _, je := range wr.RunJobEvent {
 					if je.RunAttempt == wr.RunAttempt && je.JobID == jobToRuns[0].JobID {
@@ -1125,6 +1126,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 					}
 				}
 			}
+			inputs["manual"] = true
 
 			stages := wr.GetStages()
 			if len(stages) > 0 {

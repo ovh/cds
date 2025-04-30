@@ -20,7 +20,8 @@
   </nz-form-item>
   <nz-form-item>
     <nz-form-label [nzSpan]="6" nzFor="workflow">Workflow</nz-form-label>
-    <nz-form-control [nzSpan]="14">
+    <nz-form-control [nzSpan]="14" [nzValidateStatus]="noWorkflowFound ? 'warning' : null"
+      nzWarningTip="No workflow found for the current branch, fallback on the default one.">
       <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a workflow" formControlName="workflow" id="workflow"
         (ngModelChange)="workflowChange($event)">
         <nz-option *ngFor="let workflow of workflows" [nzLabel]="workflow" [nzValue]="workflow"></nz-option>
@@ -42,14 +43,14 @@
   </nz-form-item>
   <nz-form-item>
     <nz-form-label [nzSpan]="6" nzFor="sourceRef">Payload</nz-form-label>
-    <nz-form-control [nzSpan]="14">
-      <nz-code-editor #editor formControlName="payload" id="payload" [nzEditorOption]="editorOption"></nz-code-editor>
-      <nz-alert nzType="error" nzMessage="Invalid JSON" *ngIf="invalidJson"></nz-alert>
+    <nz-form-control [nzSpan]="14" nzErrorTip="Should be valid JSON">
+      <app-editor-input #editor formControlName="payload" id="payload"
+        [config]="{ language: 'json' }"></app-editor-input>
     </nz-form-control>
   </nz-form-item>
   <nz-form-item *ngIf="!event">
     <nz-form-control [nzSpan]="12" [nzOffset]="6">
-      <button nz-button nzType="primary" [nzLoading]="isLoading()">Start</button>
+      <button nz-button nzType="primary" [disabled]="!validateForm.valid" [nzLoading]="isLoading()">Start</button>
     </nz-form-control>
   </nz-form-item>
 </form>

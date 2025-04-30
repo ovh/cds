@@ -20,6 +20,7 @@ import { FormItem, JSONFormSchema, JSONFormSchemaOneOfItem, JSONFormSchemaTypeIt
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityJSONFormComponent implements OnInit, OnChanges {
+    @Input() name: string;
     @Input() schema: FlatSchema;
     @Input() parentType: string;
     @Input() disabled: boolean;

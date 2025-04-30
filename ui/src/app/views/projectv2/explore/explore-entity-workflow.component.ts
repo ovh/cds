@@ -55,6 +55,7 @@ export class ProjectV2ExploreEntityWorkflowComponent implements OnInit, OnChange
     resizing: boolean;
     resizingSubscription: Subscription;
     selectedJob: string;
+    selectedHook: string;
     actionEntity = EntityType.Action;
 
     syntaxErrors: string[];
@@ -102,6 +103,11 @@ export class ProjectV2ExploreEntityWorkflowComponent implements OnInit, OnChange
         this.selectedJob = jobName;
         this.updateSelectedJob();
         this.updateSchemaWithNewJobs()
+        this._cd.markForCheck();
+    }
+
+    selectHook(data: any) {
+        this.selectedHook = data;
         this._cd.markForCheck();
     }
 

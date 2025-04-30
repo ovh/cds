@@ -5,7 +5,6 @@ import { ProjectV2RunComponent } from "./run/run.component";
 import { ProjectV2ExploreSidebarComponent } from './explore/explore-sidebar.component';
 import { ProjectV2ExploreEntityComponent } from './explore/explore-entity.component';
 import { RunJobComponent } from "./run/run-job.component";
-import { RunGateComponent } from "./run/gate/gate.component";
 import { ProjectV2RunListComponent } from './run-list/run-list.component';
 import { ProjectV2ExploreComponent } from './explore/explore.component';
 import { ProjectV2RunListSidebarComponent } from './run-list/run-list-sidebar.component';
@@ -26,6 +25,7 @@ import { ProjectV2TriggerAnalysisComponent } from './explore/trigger-analysis/tr
 import { RunResultsComponent } from './run/run-results.component';
 import { RunInfoComponent } from './run/run-info.component';
 import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
+import { RunGateComponent } from './run/run-gate.component';
 
 @NgModule({
     declarations: [

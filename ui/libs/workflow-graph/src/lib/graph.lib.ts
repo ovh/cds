@@ -224,11 +224,12 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                     this.transformed = event.transform;
                 }
             });
-            this.svg.call(this.zoom);
 
             if (!!this.transformed) {
                 this.svg.call(this.zoom.transform,
                     d3.zoomIdentity.translate(this.transformed.x, this.transformed.y).scale(this.transformed.k));
+            } else {
+                this.svg.call(this.zoom);
             }
         }
     }

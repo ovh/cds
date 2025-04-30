@@ -2130,17 +2130,19 @@ func checkCanRunJob(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 						currentJobContext.Gate[k] = ""
 					}
 				}
-
 			}
 		}
+
+		// Insert a boolean parameter called "manual" automatically that will be useful to trigger a job manually through a gate without any other parameter.
+		// This parameter will override any user defined params called "manual". It's false by default and will be set to true on workflow manual run by the handler.
+		currentJobContext.Gate["manual"] = false
 
 		// Override with value sent by user
 		for k, v := range jobInputs {
 			if _, has := currentJobContext.Gate[k]; has {
 
 				// Check user gate inputs
-				gateDefInput := gate.Inputs[k]
-				if gateDefInput.Options != nil {
+				if gateDefInput, ok := gate.Inputs[k]; ok && gateDefInput.Options != nil {
 					if !gateDefInput.Options.Multiple {
 						valueFound := false
 						for _, possibleValue := range gateDefInput.Options.Values {

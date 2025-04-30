@@ -4,10 +4,18 @@
     [class.fail]="node?.run?.status === statusEnum.Fail || node?.run?.status === statusEnum.Stopped"
     [class.building]="node?.run?.status === statusEnum.Building || node?.run?.status === statusEnum.Waiting || node?.run?.status === statusEnum.Scheduling">
     <div class="commands">
-        <button *ngIf="node?.gate && !runActive" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
-            (click)="clickRunGate($event)">
-            <span nz-icon nzType="caret-right" style="margin-left: 2px;font-size: 16px;" nzTheme="fill"></span>
-        </button>
+        <ng-container *ngIf="node?.gate && !runActive">
+            <button *ngIf="node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
+                (click)="clickRunGate($event)">
+                <span nz-icon nzType="caret-right" style="margin-left: 2px;font-size: 16px;" nzTheme="fill"></span>
+            </button>
+            <button *ngIf="!node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
+                nz-popconfirm nzPopconfirmTitle="Confirm run the job" nzPopconfirmPlacement="bottom"
+                (nzOnConfirm)="confirmRunGate()" (click)="$event.preventDefault();$event.stopPropagation();">
+                <span nz-icon nzType="caret-right" style="margin-left: 2px;font-size: 16px;" nzTheme="fill"></span>
+            </button>
+        </ng-container>
+
         <ng-container *ngIf="node && node.run">
             <button *ngIf="!(node.run.status | isJobTerminated)" nz-button nzGhost nzSize="small" nzShape="circle"
                 title="Stop the job" (click)="clickStop($event)">
@@ -31,7 +39,8 @@
             </button>
         </ng-container>
     </div>
-    <div *ngIf="node?.job?.name && node.job.name.indexOf('$\{{') !== 0; else jobID" class="name"  title="{{node?.job?.name}}">
+    <div *ngIf="node?.job?.name && node.job.name.indexOf('$\{{') !== 0; else jobID" class="name"
+        title="{{node?.job?.name}}">
         {{node?.job?.name}}
     </div>
     <ng-template #jobID>
@@ -39,7 +48,7 @@
             {{node?.name}}
         </div>
     </ng-template>
-    
+
     <div *ngIf="duration" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
         {{duration}}
         <ng-template #durationTooltip>

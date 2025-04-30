@@ -113,7 +113,7 @@
                     run</button>
             </div>
             <app-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-                [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
+                [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="selectJobGate($event)"
                 (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
                 (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)" #graph></app-graph>
         </div>
