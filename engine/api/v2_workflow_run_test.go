@@ -749,8 +749,11 @@ func TestRunManualSkippedJob(t *testing.T) {
 
 	rJob2, has := mapJob["job2"]
 	require.True(t, has)
-	require.Equal(t, 1, len(rJob2.GateInputs))
+	require.Equal(t, 2, len(rJob2.GateInputs))
 	v, has := rJob2.GateInputs["approve"]
+	require.True(t, has)
+	require.Equal(t, "true", fmt.Sprintf("%v", v))
+	v, has = rJob2.GateInputs["manual"]
 	require.True(t, has)
 	require.Equal(t, "true", fmt.Sprintf("%v", v))
 	require.True(t, rJob2.Initiator.IsAdminWithMFA)
