@@ -768,7 +768,7 @@ skipEntity:
 		if e.Type == sdk.EntityTypeWorkflow {
 			hooks, err := manageWorkflowHooks(ctx, tx, api.Cache, ef, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch, srvs)
 			if err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to create workflow hooks for %s", e.Name))
 			}
 			newHooks = append(newHooks, hooks...)
 		}
@@ -781,7 +781,7 @@ skipEntity:
 		}
 		hooks, err := prepareWorkflowHooks(ctx, tx, api.Cache, ef, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch)
 		if err != nil {
-			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to create workflow hooks for %s", e.Name))
 		}
 		skippedHooks = append(skippedHooks, hooks...)
 	}
@@ -882,7 +882,7 @@ func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 			return nil, err
 		}
 		if msg != "" {
-			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, msg)
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg)
 		}
 		if _, err := entTemplate.Template.Resolve(ctx, &e.Workflow); err != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute workflow from template: %v", err)
@@ -1634,7 +1634,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 						err = append(err, errSearch)
 					}
 					if msg != "" {
-						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, msg))
+						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg))
 					}
 				}
 

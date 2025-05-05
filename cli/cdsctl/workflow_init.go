@@ -612,8 +612,8 @@ func workflowInitRun(c cli.Values) error {
 		fmt.Printf("error: unable to setup git local config to store cds workflow name: %v\n", err)
 	}
 
-	fmt.Printf("Now you can run: ")
-	fmt.Printf(cli.Magenta("git add %s/ && git commit -s -m \"chore: init CDS workflow files\"\n", dotCDS))
+	fmt.Print("Now you can run: ")
+	fmt.Print(cli.Magenta("git add %s/ && git commit -s -m \"chore: init CDS workflow files\"\n", dotCDS))
 
 	return nil
 }

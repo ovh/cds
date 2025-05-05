@@ -304,7 +304,7 @@ func retrieveRunObjectsToUnLocked(ctx context.Context, db *gorp.DbMap, projKey, 
 	if ruleToApply == nil {
 		msg := fmt.Sprintf("unable to retrieve concurreny rule %s scope %s for workflow %s", concurrencyDef.Name, concurrencyDef.Scope, workflowName)
 		log.Error(ctx, msg)
-		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, msg)
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg)
 	}
 
 	// If cancel in progress, just retrieve the newest rjs to start

@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/telemetry"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 
 	"github.com/ovh/cds/sdk"
 )

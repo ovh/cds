@@ -35,16 +35,16 @@ func TestLoadSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// LoadSessionByID
-	res, err := authentication.LoadSessionByID(context.TODO(), db, sdk.RandomString(10))
+	_, err = authentication.LoadSessionByID(context.TODO(), db, sdk.RandomString(10))
 	assert.Error(t, err)
-	res, err = authentication.LoadSessionByID(context.TODO(), db, s1.ID)
+	res, err := authentication.LoadSessionByID(context.TODO(), db, s1.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, res.ID, s1.ID)
 
 	// LoadSessionByConsumerIDs
-	ress, err := authentication.LoadSessionsByConsumerIDs(context.TODO(), db, nil)
+	_, err = authentication.LoadSessionsByConsumerIDs(context.TODO(), db, nil)
 	assert.NoError(t, err)
-	ress, err = authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{c1.ID})
+	ress, err := authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{c1.ID})
 	assert.NoError(t, err)
 	require.Equal(t, 2, len(ress))
 	assert.Equal(t, s1.ID, ress[0].ID)
@@ -97,7 +97,7 @@ func TestDeleteSession(t *testing.T) {
 
 	require.NoError(t, authentication.DeleteSessionByID(db, s.ID))
 
-	res, err = authentication.LoadSessionByID(context.TODO(), db, s.ID)
+	_, err = authentication.LoadSessionByID(context.TODO(), db, s.ID)
 	require.Error(t, err)
 }
 

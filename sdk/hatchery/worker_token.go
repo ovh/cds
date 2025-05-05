@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -48,9 +48,9 @@ func NewWorkerTokenV2(hatcheryName string, privateKey *rsa.PrivateKey, expiratio
 	claims := WorkerJWTClaimsV2{
 		Worker: SpawnArgumentsJWTV2{
 			WorkerName:   w.WorkerName,
-			RunJobID:        w.JobID,
+			RunJobID:     w.JobID,
 			HatcheryName: w.HatcheryName,
-      ModelName: w.ModelName(),
+			ModelName:    w.ModelName(),
 		},
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    hatcheryName,

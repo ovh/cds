@@ -1183,7 +1183,7 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 			return nil, false, err
 		}
 		if !content.IsFile {
-			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute cds version: file not found wih path "+workflowDef.Semver.Path)
+			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute cds version: file not found wih path %s", workflowDef.Semver.Path)
 		}
 		if content.Content == "" {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "the file found %s is empty", workflowDef.Semver.Path)

@@ -2,12 +2,13 @@ package authentication
 
 import (
 	"context"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
-	"time"
 )
 
 func getConsumers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sdk.AuthConsumer, error) {
@@ -65,7 +66,7 @@ func insertConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sd
 	if ac.ID == "" {
 		ac.ID = sdk.UUID()
 	}
-	ac.Created = time.Now()
+	ac.Created = database.NowMS()
 	ac.ValidityPeriods.Sort()
 	c := authConsumer{AuthConsumer: *ac}
 	if err := gorpmapping.InsertAndSign(ctx, db, &c); err != nil {

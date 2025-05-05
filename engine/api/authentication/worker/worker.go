@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/rockbears/log"
 
 	hatchdao "github.com/ovh/cds/engine/api/hatchery"

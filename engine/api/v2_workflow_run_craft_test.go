@@ -2572,7 +2572,7 @@ spec: |-
 
 	require.Equal(t, 1, len(infos))
 	require.Contains(t, infos[0].Message, "already exist in the parent workflow")
-	t.Logf(infos[0].Message)
+	t.Log(infos[0].Message)
 }
 
 func TestComputeJobFromTemplate_AddingStageOnNonStagedWorkflow(t *testing.T) {

@@ -142,7 +142,7 @@ func TestContextValue(t *testing.T) {
 				if tt.output != got {
 					t.Errorf("got %q, want %q", got, tt.output)
 				}
-				t.Logf(got)
+				t.Logf("%s", got)
 			}
 		})
 	}
@@ -340,7 +340,7 @@ func Test_newStringActionFunc(t *testing.T) {
 			if tt.output != got {
 				t.Errorf("got %q, want %q", got, tt.output)
 			}
-			t.Logf(got)
+			t.Logf("%s", got)
 		})
 	}
 }
@@ -387,7 +387,7 @@ func Test_newStringStringActionFunc(t *testing.T) {
 			if tt.output != got {
 				t.Errorf("got %q, want %q", got, tt.output)
 			}
-			t.Logf(got)
+			t.Logf("%s", got)
 		})
 	}
 }

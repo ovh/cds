@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/log/hook/graylog"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

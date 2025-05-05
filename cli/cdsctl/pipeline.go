@@ -90,7 +90,7 @@ func pipelineExportRun(v cli.Values) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf(string(btes))
+	fmt.Print(string(btes))
 	return nil
 }
 

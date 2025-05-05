@@ -278,7 +278,7 @@ version: v1.0`),
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)
-	t.Logf(w.Body.String())
+	t.Log(w.Body.String())
 
 	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	require.NoError(t, err)

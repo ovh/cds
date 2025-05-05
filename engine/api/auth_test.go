@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	corpssodriver "github.com/ovh/cds/engine/api/driver/corpsso"
-	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -18,7 +16,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/corpsso"
+	corpssodriver "github.com/ovh/cds/engine/api/driver/corpsso"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
@@ -449,7 +449,7 @@ func Test_getAuthMe(t *testing.T) {
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
-	t.Logf(rec.Body.String())
+	t.Log(rec.Body.String())
 }
 
 func TestUserSetOrganization_EnsureGroup(t *testing.T) {

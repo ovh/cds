@@ -177,12 +177,12 @@ func TestMarshalEvent(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	t.Logf(string(msg))
+	t.Log(string(msg))
 }
 
 func (m *MockSSERoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
-	m.t.Logf(string(dump))
+	m.t.Log(string(dump))
 	resp := new(http.Response)
 	resp.Header = http.Header{
 		"Content-Type": []string{"text/event-stream"},
