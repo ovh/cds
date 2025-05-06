@@ -1,11 +1,13 @@
 <div class="title">Trigger job&nbsp;<b>{{job}}</b></div>
-<div class="content">
+<div class="content" (dblclick)="$event.stopPropagation();">
     <ng-container *ngFor="let k of request | keys">
-        <nz-form-item>
-            <nz-form-label [nzSpan]="4">{{k}}<i nz-icon nzType="info-circle" nzTheme="outline" [nz-tooltip]="currentGate.inputs[k].description"></i></nz-form-label>
+        <nz-form-item *ngIf="currentGate.inputs[k]">
+            <nz-form-label [nzSpan]="4">{{k}}<i nz-icon *ngIf="currentGate.inputs[k].description" nzType="info-circle"
+                    nzTheme="outline" [nz-tooltip]="currentGate.inputs[k].description"></i></nz-form-label>
             <ng-container *ngIf="currentGate.inputs[k].options">
                 <nz-form-control>
-                    <nz-select [(ngModel)]="request[k]" nzMode="multiple" *ngIf="currentGate.inputs[k].options.multiple">
+                    <nz-select [(ngModel)]="request[k]" nzMode="multiple"
+                        *ngIf="currentGate.inputs[k].options.multiple">
                         <nz-option *ngFor="let o of currentGate.inputs[k].options.values" [nzValue]="o"
                             [nzLabel]="o"></nz-option>
                     </nz-select>
@@ -13,7 +15,7 @@
                         <nz-option *ngFor="let o of currentGate.inputs[k].options.values" [nzValue]="o"
                             [nzLabel]="o"></nz-option>
                     </nz-select>
-            </nz-form-control>
+                </nz-form-control>
             </ng-container>
             <ng-container *ngIf="!currentGate.inputs[k].options">
                 <ng-container [ngSwitch]="currentGate.inputs[k].type">
@@ -30,11 +32,10 @@
                         </nz-select>
                     </nz-form-control>
                     <nz-form-control *ngSwitchDefault>
-                        <input nz-input [(ngModel)]="request[k]" type="text" />
+                        <textarea nz-input [(ngModel)]="request[k]" nzAutosize></textarea>
                     </nz-form-control>
                 </ng-container>
             </ng-container>
-        
         </nz-form-item>
     </ng-container>
     <button nz-button nzBlock [nzLoading]="loading" nzType="primary" (click)="triggerJob()">Run</button>

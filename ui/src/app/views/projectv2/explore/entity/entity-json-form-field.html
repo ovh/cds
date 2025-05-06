@@ -4,7 +4,7 @@
         field.name.length)}}</h3>
     <ng-container *ngIf="isConditionnal; else tmplNoCondition">
         <ng-container *ngIf="selectedCondition">
-            <app-entity-json-form-field *ngFor="let f of jsonFormSchema.types[selectedCondition.type].fields"
+            <app-entity-json-form-field *ngFor="let f of jsonFormSchema.types[selectedCondition.type]?.fields"
                 [disabled]="disabled" [parentType]="selectedCondition.type" [jsonFormSchema]="jsonFormSchema"
                 [field]="f" [model]="currentModel[field.name]" [entityType]="entityType"
                 (modelChange)="onValueChanged($event)" [indent]="indent+10"></app-entity-json-form-field>
@@ -13,7 +13,7 @@
             nzDescription="Please select a value for field '{{conditionRefProperties}}'" nzShowIcon></nz-alert>
     </ng-container>
     <ng-template #tmplNoCondition>
-        <ng-container *ngFor="let f of jsonFormSchema.types[field.objectType].fields">
+        <ng-container *ngFor="let f of jsonFormSchema.types[field.objectType]?.fields">
             <app-entity-json-form-field [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
                 [entityType]="entityType" [model]="currentModel[field.name]" (modelChange)="onValueChanged($event)"
                 [indent]="indent+10"></app-entity-json-form-field>

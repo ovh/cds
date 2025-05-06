@@ -10,4 +10,8 @@
         width: 100%;
         overflow: hidden;
     }
+
+    &.ng-invalid {
+        border-color: #a61d24 !important;
+    }
 }

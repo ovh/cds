@@ -86,4 +86,12 @@ export class EditorInputComponent implements ControlValueAccessor, OnInit {
             this.editor.layout();
         }
     }
+
+    setDisabledState(isDisabled: boolean) {
+        this._config = {
+            ...this._config,
+            readOnly: isDisabled
+        };
+        this._cd.markForCheck();
+    }
 }

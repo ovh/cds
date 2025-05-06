@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@import '../../../../common';
 
 :host {
     height: 100%;
@@ -46,7 +46,9 @@
 }
 
 .content {
+    flex: 1;
     padding: 20px;
+
     i {
         padding-left: 5px;
     }

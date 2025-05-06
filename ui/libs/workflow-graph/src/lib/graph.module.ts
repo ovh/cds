@@ -12,6 +12,7 @@ import { AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline } 
 import { IconDefinition } from '@ant-design/icons-angular';
 import { GraphMatrixNodeComponent } from './node/matrix-node.component';
 import { IsJobTerminatedPipe } from './is-job-terminated.pipe';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 
 const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline];
 
@@ -29,6 +30,7 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
     NzAvatarModule,
     NzButtonModule,
     NzIconModule.forRoot(icons),
+    NzPopconfirmModule,
     NzToolTipModule
   ],
   exports: [
