@@ -38,7 +38,7 @@ testcases:
     steps:
       - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks list --filter workflow_id={{.get-imported-workflow.workflow_id}} --format json"
         assertions:
-          - result.systemoutjson.systemoutjson0.cron ShouldEqual '10 * * * *'
+          - result.systemoutjson.systemoutjson0.Cron ShouldEqual '10 * * * *'
 
   - name: update workflow
     steps:
@@ -63,4 +63,4 @@ testcases:
     steps:
       - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks list --filter workflow_id={{.get-updated-workflow.workflow_id}} --format json"
         assertions:
-          - result.systemoutjson.systemoutjson0.cron ShouldEqual '20 * * * *'
+          - result.systemoutjson.systemoutjson0.Cron ShouldEqual '20 * * * *'
