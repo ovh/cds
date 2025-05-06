@@ -56,7 +56,7 @@ testcases:
     url: '{{.smtpmock.url}}/messages/notif@localhost.local'
     assertions:
     - result.statuscode ShouldEqual 200
-    - result.bodyjson.__len__ ShouldEqual 1
+    - result.bodyjson ShouldHaveLength 1
     retry: 10
     delay: 3
   - type: http
@@ -75,7 +75,7 @@ testcases:
     url: '{{.smtpmock.url}}/messages/notif1@locahost.local'
     assertions:
     - result.statuscode ShouldEqual 200
-    - result.bodyjson.__len__ ShouldEqual 1
+    - result.bodyjson ShouldHaveLength 1
     retry: 10
     delay: 3
   - type: http
@@ -83,7 +83,7 @@ testcases:
     url: '{{.smtpmock.url}}/messages/notif2@locahost.local'
     assertions:
     - result.statuscode ShouldEqual 200
-    - result.bodyjson.__len__ ShouldEqual 1
+    - result.bodyjson ShouldHaveLength 1
     retry: 10
     delay: 3
 
@@ -113,6 +113,6 @@ testcases:
     url: '{{.smtpmock.url}}/messages/notif-empty@localhost.local'
     assertions:
     - result.statuscode ShouldEqual 200
-    - result.bodyjson.__len__ ShouldEqual 1
+    - result.bodyjson ShouldHaveLength 1
     retry: 30
     delay: 1
