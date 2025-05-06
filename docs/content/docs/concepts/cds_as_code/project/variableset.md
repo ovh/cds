@@ -16,7 +16,7 @@ For each type of variable it's possible to provide a JSON value.
 
 # Permission
 
-To be able to manage repository manager you will need the permission `manage` on your project
+To be able to manage repository manager you will need the permission `manage` on your project.
 
 # Add a variableset using CLI
 
