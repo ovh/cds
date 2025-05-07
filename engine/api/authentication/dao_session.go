@@ -8,6 +8,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -135,7 +136,7 @@ func LoadSessionByID(ctx context.Context, db gorp.SqlExecutor, id string, opts .
 // InsertSession in database.
 func InsertSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, as *sdk.AuthSession) error {
 	as.ID = sdk.UUID()
-	as.Created = time.Now()
+	as.Created = database.NowMS()
 	s := authSession{AuthSession: *as}
 	if err := gorpmapping.InsertAndSign(ctx, db, &s); err != nil {
 		return sdk.WrapError(err, "unable to insert auth session")

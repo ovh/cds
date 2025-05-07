@@ -2,12 +2,12 @@ package local
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -50,7 +50,7 @@ func InsertRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ur
 	if ur.ID == "" {
 		ur.ID = sdk.UUID()
 	}
-	ur.Created = time.Now()
+	ur.Created = database.NowMS()
 	r := userRegistration{UserRegistration: *ur}
 	if err := gorpmapping.InsertAndSign(ctx, db, &r); err != nil {
 		return sdk.WrapError(err, "unable to insert user registration")

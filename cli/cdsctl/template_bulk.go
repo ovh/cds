@@ -574,7 +574,7 @@ func templateBulkRun(v cli.Values) error {
 			}
 
 			if !v.GetBool("no-interactive") {
-				currentDisplay.Printf(out)
+				currentDisplay.Printf("%s", out)
 			}
 
 			time.Sleep(500 * time.Millisecond)

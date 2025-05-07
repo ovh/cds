@@ -7,7 +7,7 @@ import (
 
 	types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 

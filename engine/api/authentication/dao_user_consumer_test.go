@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -31,7 +32,7 @@ func TestLoadConsumer(t *testing.T) {
 			Name:            sdk.RandomString(10),
 			Description:     sdk.RandomString(10),
 			Type:            sdk.ConsumerLocal,
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(database.NowMS(), 0),
 		},
 		AuthConsumerUser: sdk.AuthUserConsumerData{
 			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
@@ -46,7 +47,7 @@ func TestLoadConsumer(t *testing.T) {
 			Name:            sdk.RandomString(10),
 			Description:     sdk.RandomString(10),
 			Type:            sdk.ConsumerBuiltin,
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(database.NowMS(), 0),
 		},
 		AuthConsumerUser: sdk.AuthUserConsumerData{
 			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
@@ -57,14 +58,14 @@ func TestLoadConsumer(t *testing.T) {
 	require.NoError(t, authentication.InsertUserConsumer(context.TODO(), db, &c2))
 
 	// LoadUserConsumerByID
-	res, err := authentication.LoadUserConsumerByID(context.TODO(), db, sdk.RandomString(10))
+	_, err := authentication.LoadUserConsumerByID(context.TODO(), db, sdk.RandomString(10))
 	assert.Error(t, err)
-	res, err = authentication.LoadUserConsumerByID(context.TODO(), db, c1.ID)
+	res, err := authentication.LoadUserConsumerByID(context.TODO(), db, c1.ID)
 	assert.NoError(t, err)
 	test.Equal(t, c1, res)
 
 	// LoadUserConsumerByTypeAndUserID
-	res, err = authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLDAP, sdk.RandomString(10))
+	_, err = authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLDAP, sdk.RandomString(10))
 	assert.Error(t, err)
 	res, err = authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 	assert.NoError(t, err)
@@ -106,7 +107,7 @@ func TestInsertConsumer(t *testing.T) {
 	c := sdk.AuthUserConsumer{
 		AuthConsumer: sdk.AuthConsumer{
 			Name:            sdk.RandomString(10),
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(database.NowMS(), 0),
 		},
 		AuthConsumerUser: sdk.AuthUserConsumerData{
 			AuthentifiedUserID: u.ID,
@@ -131,7 +132,7 @@ func TestUpdateConsumer(t *testing.T) {
 	c := sdk.AuthUserConsumer{
 		AuthConsumer: sdk.AuthConsumer{
 			Name:            sdk.RandomString(10),
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(database.NowMS(), 0),
 		},
 		AuthConsumerUser: sdk.AuthUserConsumerData{
 			AuthentifiedUserID: u.ID,

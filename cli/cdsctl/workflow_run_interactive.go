@@ -78,7 +78,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 										failedOn = fmt.Sprintf("%s%s / %s / %s / %s %s \n", failedOn, v.GetString(_WorkflowName), wnr.WorkflowNodeName, stage.Name, titleStep, strings.Replace(line, "Starting", "", 1))
 									}
 									failedOnStepKnowned = true
-									titleStep = fmt.Sprintf(tm.Color(titleStep, tm.RED))
+									titleStep = tm.Color(titleStep, tm.RED)
 								}
 
 								if line != "" {
@@ -87,14 +87,14 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 							}
 						}
 						if job.Done.After(job.Start) {
-							newOutput += fmt.Sprintf("\n")
+							newOutput += "\n"
 						}
 
 						if newOutput != output {
 							tm.Clear() // Clear current screen
 							tm.MoveCursor(1, 1)
 							output = newOutput
-							tm.Printf(output)
+							tm.Printf("%s", output)
 							tm.Flush()
 						}
 					}

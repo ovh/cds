@@ -51,7 +51,7 @@ func (a *ActionParser) Validate(ctx context.Context, input string) error {
 	}
 
 	if len(validationInputs) > 0 {
-		return NewErrorFrom(ErrInvalidData, strings.Join(validationInputs, "\n"))
+		return NewErrorFrom(ErrInvalidData, "%s", strings.Join(validationInputs, "\n"))
 	}
 	return nil
 }
@@ -117,7 +117,7 @@ func (a *ActionParser) parse(ctx context.Context, elt string) (interface{}, erro
 	p, errorLst := a.createLexerAndParser(elt)
 	tree := p.Expression()
 	if len(errorLst.Errors) != 0 {
-		return "", fmt.Errorf(strings.Join(errorLst.Errors, "\n"))
+		return "", fmt.Errorf("%s", strings.Join(errorLst.Errors, "\n"))
 	}
 
 	for i := 0; i < tree.GetChildCount(); i++ {
