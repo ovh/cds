@@ -41,13 +41,6 @@
         placeHolder="Select a ref" id="sourceRef"></app-repository-ref-select>
     </nz-form-control>
   </nz-form-item>
-  <nz-form-item>
-    <nz-form-label [nzSpan]="6" nzFor="sourceRef">Payload</nz-form-label>
-    <nz-form-control [nzSpan]="14" nzErrorTip="Should be valid JSON">
-      <app-editor-input #editor formControlName="payload" id="payload"
-        [config]="{ language: 'json' }"></app-editor-input>
-    </nz-form-control>
-  </nz-form-item>
   <nz-form-item *ngIf="!event">
     <nz-form-control [nzSpan]="12" [nzOffset]="6">
       <button nz-button nzType="primary" [disabled]="!validateForm.valid" [nzLoading]="isLoading()">Start</button>
