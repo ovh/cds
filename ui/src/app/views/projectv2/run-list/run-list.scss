@@ -61,6 +61,49 @@
     flex: 1;
     overflow-y: auto;
 
+    nz-list-item {
+      &.append {
+        background-color: #f5f5f5;
+
+        :host-context(.night) & {
+          background-color: rgba(255, 255, 255, 0.08);
+        }
+      }
+    }
+
+    nz-list-item-meta {
+      ::ng-deep {
+        .ant-list-item-meta-content {
+          width: unset !important;
+        }
+      }
+
+      [nzCopyable] {
+        color: inherit;
+
+        ::ng-deep {
+          .ant-typography-copy {
+            color: inherit;
+            margin: 0 2px 0 0;
+          }
+
+          &:hover {
+            color: #177ddc;
+          }
+        }
+      }
+    }
+
+    .dotted {
+      color: inherit;
+      text-decoration: underline dotted;
+      white-space: nowrap;
+
+      &:hover {
+        color: #177ddc;
+      }
+    }
+
     .run-avatar {
       display: flex;
       flex-direction: row;
@@ -79,10 +122,49 @@
           color: $cds_color_red;
         }
 
+        &.cancel {
+          color: $polar_grey_2;
+        }
+
         &.building {
           color: $cds_color_teal;
         }
+
+        &.blocked {
+          color: $cds_color_teal;
+        }
+
+        &.skipped {
+          color: $polar_grey_2;
+        }
+        
+        &.stopped {
+          font-size: 21px;
+          border: 2px solid $cds_color_red; 
+          border-radius: 12px;
+          color: $cds_color_red;
+        }
       }
+    }
+
+    .annotations {
+      flex: 1;
+      display: flex;
+      flex-direction: row-reverse;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 0 10px;
+      overflow: hidden;
+
+      &>* {
+        margin: 4px;
+      }
+    }
+
+    [nz-list-item-actions] {
+      text-align: right;
+      margin: 0 0 0 10px;
+      min-width: 120px;
     }
   }
 
@@ -93,6 +175,20 @@
 
     nz-pagination {
       margin-left: auto;
+    }
+
+    nz-select {
+      margin-left: 4px;
+
+      ::ng-deep {
+        .ant-select-selector {
+          padding: unset;
+        }
+
+        .ant-select-arrow {
+          right: 4px;
+        }
+      }
     }
   }
 }

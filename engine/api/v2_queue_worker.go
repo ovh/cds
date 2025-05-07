@@ -26,6 +26,40 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (api *API) getJobRunProjectV2KeyHandler() ([]service.RbacChecker, service.Handler) {
+	return []service.RbacChecker{api.jobRunUpdate, api.isWorker},
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+
+			runJobID := vars["runJobID"]
+			keyName := vars["keyName"]
+
+			clearKey := service.FormBool(req, "clearKey")
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), runJobID)
+			if err != nil {
+				return err
+			}
+
+			service.TrackActionMetadataFromFields(w, runJob)
+
+			opts := make([]project.LoadOptionFunc, 0, 1)
+			if clearKey {
+				opts = append(opts, project.LoadOptions.WithClearKeys)
+			}
+			p, err := project.Load(ctx, api.mustDB(), runJob.ProjectKey, opts...)
+			if err != nil {
+				return err
+			}
+			for _, k := range p.Keys {
+				if k.Name == keyName {
+					return service.WriteJSON(w, k, http.StatusOK)
+				}
+			}
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find key %s", keyName)
+		}
+}
+
 func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Handler) {
 	return []service.RbacChecker{api.jobRunUpdate, api.isWorker}, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -71,7 +105,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			if err != nil {
 				return err
 			}
-			vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID, gorpmapper.GetOptions.WithDecryption)
+			vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID, gorpmapper.GetAllOptions.WithDecryption)
 			if err != nil {
 				return err
 			}
@@ -84,8 +118,23 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		}
 		defer tx.Rollback() // nolint
 
-		contexts, sensitiveDatas, err := computeRunJobContext(ctx, tx, projWithSecrets, vcsWithSecrets, vss, *run, *jobRun, *wk)
+		now := time.Now()
+
+		contexts, sensitiveDatas, err := computeRunJobContext(ctx, tx, projWithSecrets, vcsWithSecrets, vss, *run, *jobRun)
 		if err != nil {
+			info := sdk.V2WorkflowRunJobInfo{
+				Level:            sdk.WorkflowRunInfoLevelError,
+				IssuedAt:         now,
+				WorkflowRunJobID: jobRun.ID,
+				WorkflowRunID:    jobRun.WorkflowRunID,
+				Message:          fmt.Sprintf("Worker %q is unable to take job %q: %v", wk.Name, jobRun.JobID, err.Error()),
+			}
+			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
 			return err
 		}
 
@@ -94,8 +143,6 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		if err := worker_v2.Update(ctx, tx, wrkWithSecret); err != nil {
 			return err
 		}
-
-		now := time.Now()
 
 		jobRun.Status = sdk.V2WorkflowRunJobStatusBuilding
 		jobRun.Started = &now
@@ -127,7 +174,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			SensitiveDatas: sensitiveDatas,
 		}
 
-		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobBuilding, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobBuilding, *run, *jobRun)
 		return service.WriteJSON(w, takeResponse, http.StatusOK)
 	}
 }
@@ -142,28 +189,185 @@ func buildSensitiveData(value string) []string {
 	return datas
 }
 
-func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, []string, error) {
+func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob) (*sdk.WorkflowRunJobsContext, []string, error) {
 	contexts := &sdk.WorkflowRunJobsContext{}
 	contexts.CDS = run.Contexts.CDS
 	contexts.CDS.Job = jobRun.JobID
 	contexts.CDS.Stage = jobRun.Job.Stage
 	contexts.Git = run.Contexts.Git
+	contexts.Gate = jobRun.GateInputs
+	contexts.Matrix = jobRun.Matrix
 
 	sensitiveDatas := sdk.StringSlice{}
 
-	for _, k := range proj.Keys {
-		if k.Name == vcs.Auth.SSHKeyName {
-			contexts.Git.SSHPrivate = k.Private
-			sensitiveDatas = append(sensitiveDatas, buildSensitiveData(k.Private)...)
-			break
-		}
-	}
 	if vcs.Auth.Token != "" {
 		contexts.Git.Token = vcs.Auth.Token
 		sensitiveDatas = append(sensitiveDatas, buildSensitiveData(vcs.Auth.Token)...)
 	}
 
-	contexts.Vars = make(map[string]interface{})
+	// Build var context
+	varCtx, varSecret, err := buildVarsContext(ctx, vss)
+	if err != nil {
+		return nil, nil, err
+	}
+	contexts.Vars = varCtx
+	sensitiveDatas = append(sensitiveDatas, varSecret...)
+
+	contexts.Env = make(map[string]string)
+	for k, v := range run.Contexts.Env {
+		contexts.Env[k] = v
+	}
+	// override with job env
+	for k, v := range jobRun.Job.Env {
+		contexts.Env[k] = v
+	}
+
+	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, db, run.ID, run.RunAttempt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped}, run.RunAttempt)
+	if err != nil {
+		return nil, nil, err
+	}
+	contexts.Jobs = sdk.JobsResultContext{}
+	for _, rj := range runJobs {
+		jobResult := sdk.JobResultContext{
+			Result:  rj.Status,
+			Outputs: sdk.JobResultOutput{},
+		}
+		for _, r := range runResults {
+			if r.WorkflowRunJobID != rj.ID {
+				continue
+			}
+			log.Debug(ctx, "computeRunJobContext> processing run result %s %s", r.Type, r.Name())
+			switch r.Type {
+			case sdk.V2WorkflowRunResultTypeVariable, sdk.V2WorkflowRunResultVariableDetailType:
+				x, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultVariableDetail](&r)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					continue
+				}
+				jobResult.Outputs[x.Name] = x.Value
+			default:
+				if jobResult.JobRunResults == nil {
+					jobResult.JobRunResults = sdk.JobRunResults{}
+				}
+				jobResult.JobRunResults[r.Name()], _ = r.GetDetail()
+			}
+		}
+		contexts.Jobs[rj.JobID] = jobResult
+	}
+
+	contexts.Needs = sdk.NeedsContext{}
+	for _, n := range jobRun.Job.Needs {
+		if j, has := contexts.Jobs[n]; has {
+			needContext := sdk.NeedContext{
+				Result:  j.Result,
+				Outputs: contexts.Jobs[n].Outputs,
+			}
+			if j.Result == sdk.V2WorkflowRunJobStatusFail && run.WorkflowData.Workflow.Jobs[n].ContinueOnError {
+				needContext.Result = sdk.V2WorkflowRunJobStatusSuccess
+			}
+			contexts.Needs[n] = needContext
+		}
+	}
+
+	contexts.Integrations = &sdk.JobIntegrationsContexts{}
+	integs, err := integration.LoadIntegrationsByProjectIDWithClearPassword(ctx, db, proj.ID) // Here
+	if err != nil {
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
+	}
+
+	// this private function is called on job integrations to set the integration on the context, and then on the workflow integration
+	// the job integration are always predominant on workflow integration
+	var matchIntegration = func(i string) error {
+		var integ *sdk.ProjectIntegration
+		for j := range integs {
+			if integs[j].Name == i {
+				integ = &integs[j]
+				break
+			}
+		}
+		if integ == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not found", i)
+		}
+		switch {
+		case integ.Model.ArtifactManager:
+			if contexts.Integrations.ArtifactManager.Name != "" {
+				return nil // If it's already set, it's by job integration
+			}
+			contexts.Integrations.ArtifactManager = sdk.JobIntegrationsContext{
+				Name:      integ.Name,
+				Config:    integ.ToJobRunContextConfig(),
+				ModelName: integ.Model.Name,
+			}
+		case integ.Model.Deployment:
+			if contexts.Integrations.Deployment.Name != "" {
+				return nil // If it's already set, it's by job integration
+			}
+			contexts.Integrations.Deployment = sdk.JobIntegrationsContext{
+				Name:      integ.Name,
+				Config:    integ.ToJobRunContextConfig(),
+				ModelName: integ.Model.Name,
+			}
+		default:
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not supported", i)
+		}
+		if err := workflow_v2.InsertRunJobInfo(ctx, db, &sdk.V2WorkflowRunJobInfo{
+			IssuedAt:         time.Now(),
+			Level:            sdk.WorkflowRunInfoLevelInfo,
+			WorkflowRunID:    run.ID,
+			WorkflowRunJobID: jobRun.ID,
+			Message:          fmt.Sprintf("Integration %q enabled on job %q", integ.Name, jobRun.JobID),
+		}); err != nil {
+			return err
+		}
+
+		// Reload integration with secret
+		currentInteg, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, integ.ID)
+		if err != nil {
+			return err
+		}
+		for _, v := range currentInteg.Config {
+			if v.Type == sdk.IntegrationConfigTypePassword {
+				sensitiveDatas = append(sensitiveDatas, v.Value)
+			}
+		}
+
+		if _, has := currentInteg.Model.PublicConfigurations[currentInteg.Name]; has {
+			for _, publicConfigValue := range currentInteg.Model.PublicConfigurations[currentInteg.Name] {
+				if publicConfigValue.Type == sdk.IntegrationConfigTypePassword {
+					sensitiveDatas = append(sensitiveDatas, publicConfigValue.Value)
+				}
+			}
+		}
+		return nil
+	}
+
+	// Load integration from the job level
+	// This must be done before the workflow level
+	for _, i := range jobRun.Job.Integrations {
+		if err := matchIntegration(i); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// Load integration from the workflow level
+	for _, i := range run.WorkflowData.Workflow.Integrations {
+		if err := matchIntegration(i); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	sensitiveDatas.Unique()
+	return contexts, sensitiveDatas, nil
+}
+
+func buildVarsContext(ctx context.Context, vss []sdk.ProjectVariableSet) (map[string]interface{}, sdk.StringSlice, error) {
+	varCtx := make(map[string]interface{})
+	sensitiveDatas := sdk.StringSlice{}
 	for _, vs := range vss {
 		vsMap := make(map[string]interface{})
 		for _, item := range vs.Items {
@@ -176,7 +380,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 					}
 				} else {
 					vsMap[item.Name] = jsonValue
-					// also add all value from json
+
 					if item.Type == sdk.ProjectVariableTypeSecret {
 						datas, err := getAllSensitiveDataFromJson(ctx, jsonValue)
 						if err != nil {
@@ -210,142 +414,9 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 				sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
 			}
 		}
-		contexts.Vars[vs.Name] = vsMap
+		varCtx[vs.Name] = vsMap
 	}
-
-	contexts.Env = make(map[string]string)
-	for k, v := range run.Contexts.Env {
-		contexts.Env[k] = v
-	}
-	// override with job env
-	for k, v := range jobRun.Job.Env {
-		contexts.Env[k] = v
-	}
-
-	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, run.ID, run.RunAttempt)
-	if err != nil {
-		return nil, nil, err
-	}
-	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
-	for _, rr := range runResults {
-		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
-			continue
-		}
-		detail := rr.Detail.Data.(*sdk.V2WorkflowRunResultVariableDetail)
-		jobResults, has := runResultMap[rr.WorkflowRunJobID]
-		if !has {
-			jobResults = make([]sdk.V2WorkflowRunResultVariableDetail, 0)
-		}
-		jobResults = append(jobResults, *detail)
-		runResultMap[rr.WorkflowRunJobID] = jobResults
-	}
-
-	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped})
-	if err != nil {
-		return nil, nil, err
-	}
-	contexts.Jobs = sdk.JobsResultContext{}
-	for _, rj := range runJobs {
-		jobResult := sdk.JobResultContext{
-			Result:  rj.Status,
-			Outputs: sdk.JobResultOutput{},
-		}
-		// Set jobs context output
-		if runResults, has := runResultMap[rj.ID]; has {
-			for _, r := range runResults {
-				jobResult.Outputs[r.Name] = r.Value
-			}
-		}
-		contexts.Jobs[rj.JobID] = jobResult
-	}
-
-	contexts.Needs = sdk.NeedsContext{}
-	for _, n := range jobRun.Job.Needs {
-		if j, has := contexts.Jobs[n]; has {
-			needContext := sdk.NeedContext{
-				Result:  j.Result,
-				Outputs: contexts.Jobs[n].Outputs,
-			}
-			if j.Result == sdk.V2WorkflowRunJobStatusFail && run.WorkflowData.Workflow.Jobs[n].ContinueOnError {
-				needContext.Result = sdk.V2WorkflowRunJobStatusSuccess
-			}
-			contexts.Needs[n] = needContext
-		}
-	}
-
-	contexts.Integrations = &sdk.JobIntegrationsContext{}                    // The context only contais name of integration by function (artifact_manager / deployment)
-	integs, err := integration.LoadIntegrationsByProjectID(ctx, db, proj.ID) // Here
-	if err != nil {
-		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
-	}
-
-	// this private function is called on job integrations to set the integration on the context, and then on the workflow integration
-	// the job integration are always predominant on workflow integration
-	var matchIntegration = func(i string) error {
-		var integ *sdk.ProjectIntegration
-		for j := range integs {
-			if integs[j].Name == i {
-				integ = &integs[j]
-				break
-			}
-		}
-		if integ == nil {
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not found", i)
-		}
-		switch {
-		case integ.Model.ArtifactManager:
-			if contexts.Integrations.ArtifactManager != "" {
-				return nil // If it's already set, it's by job integration
-			}
-			contexts.Integrations.ArtifactManager = integ.Name
-		case integ.Model.Deployment:
-			if contexts.Integrations.Deployment != "" {
-				return nil // If it's already set, it's by job integration
-			}
-			contexts.Integrations.Deployment = integ.Name
-		default:
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not supported", i)
-		}
-		if err := workflow_v2.InsertRunJobInfo(ctx, db, &sdk.V2WorkflowRunJobInfo{
-			IssuedAt:         time.Now(),
-			Level:            sdk.WorkflowRunInfoLevelInfo,
-			WorkflowRunID:    run.ID,
-			WorkflowRunJobID: jobRun.ID,
-			Message:          fmt.Sprintf("Integration %q enabled on job %q", integ.Name, jobRun.JobID),
-		}); err != nil {
-			return err
-		}
-
-		// Reload integration with secret
-		currentInteg, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, integ.ID)
-		if err != nil {
-			return err
-		}
-		for _, v := range currentInteg.Config {
-			if v.Type == sdk.IntegrationConfigTypePassword {
-				sensitiveDatas = append(sensitiveDatas, v.Value)
-			}
-		}
-		return nil
-	}
-
-	// Load integration from the job level
-	// This must be done before the workflow level
-	for _, i := range jobRun.Job.Integrations {
-		if err := matchIntegration(i); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	// Load integration from the workflow level
-	for _, i := range run.WorkflowData.Workflow.Integrations {
-		if err := matchIntegration(i); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	sensitiveDatas.Unique()
-	return contexts, sensitiveDatas, nil
+	return varCtx, sensitiveDatas, nil
 }
 
 func getAllSensitiveDataFromJsonArray(ctx context.Context, secretJsonValue []interface{}) ([]string, error) {
@@ -405,6 +476,17 @@ func getAllSensitiveDataFromJson(ctx context.Context, secretJsonValue map[string
 func (api *API) postV2RefreshWorkerHandler() ([]service.RbacChecker, service.Handler) {
 	return []service.RbacChecker{api.jobRunUpdate, api.isWorker}, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		wk := getWorker(ctx)
+		vars := mux.Vars(r)
+		jobRunID := vars["runJobID"]
+
+		jobRun, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
+		if err != nil {
+			return err
+		}
+		if jobRun.Status.IsTerminated() {
+			return sdk.NewErrorFrom(sdk.ErrAlreadyEnded, "job ended: %s", jobRun.Status)
+		}
+
 		wk.LastBeat = time.Now()
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -454,6 +536,9 @@ func (api *API) postV2RegisterWorkerHandler() ([]service.RbacChecker, service.Ha
 		if err != nil {
 			return err
 		}
+
+		service.TrackActionMetadataFromFields(w, runJob)
+
 		if runJob.Status != sdk.V2WorkflowRunJobStatusScheduling || runJob.HatcheryName != hatch.Name || runJob.ID != jobRunID || runJob.Region != regionName {
 			return sdk.WrapError(sdk.ErrForbidden, "unable to take job %s, current status: %s, hatchery: %s, region: %s", runJob.ID, runJob.Status, runJob.HatcheryName, runJob.Region)
 		}

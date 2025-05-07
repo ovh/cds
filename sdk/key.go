@@ -26,12 +26,13 @@ func GenerateProjectDefaultKeyName(projectKey string, t KeyType) string {
 
 // Key represent a key of type SSH or GPG.
 type Key struct {
-	ID      int64   `json:"id" db:"id" cli:"-"`
-	Name    string  `json:"name" db:"name" cli:"name"`
-	Public  string  `json:"public" db:"public" cli:"publickey"`
-	Private string  `json:"private" db:"private" cli:"-"`
-	KeyID   string  `json:"keyID" db:"key_id" cli:"-"`
-	Type    KeyType `json:"type" db:"type" cli:"type"`
+	ID        int64   `json:"id" db:"id" cli:"-"`
+	Name      string  `json:"name" db:"name" cli:"name"`
+	Public    string  `json:"public" db:"public" cli:"publickey"`
+	Private   string  `json:"private" db:"private" cli:"-"`
+	KeyID     string  `json:"keyID" db:"key_id" cli:"-"`
+	Type      KeyType `json:"type" db:"type" cli:"type"`
+	LongKeyID string  `json:"long_key_id" db:"long_key_id" cli:"-"`
 }
 
 // ProjectKey represent a key attach to a project
@@ -45,6 +46,7 @@ type ProjectKey struct {
 	ProjectID int64   `json:"project_id" db:"project_id" cli:"-"`
 	Builtin   bool    `json:"-" db:"builtin" cli:"-"`
 	Disabled  bool    `json:"disabled" db:"disabled" cli:"disabled"`
+	LongKeyID string  `json:"long_key_id" db:"long_key_id" cli:"-"`
 }
 
 // ApplicationKey represent a key attach to an application
@@ -69,7 +71,28 @@ type EnvironmentKey struct {
 	EnvironmentID int64   `json:"environment_id" db:"environment_id"`
 }
 
-func ImportGPGKey(dir string, keyName string, publicKey string) (string, []byte, error) {
+func IsGPGKeyAlreadyInstalled(longKeyID string) bool {
+	gpg2Found := false
+	if _, err := exec.LookPath("gpg2"); err == nil {
+		gpg2Found = true
+	}
+	if !gpg2Found {
+		if _, err := exec.LookPath("gpg"); err != nil {
+			return false
+		}
+	}
+	gpgBin := "gpg"
+	if gpg2Found {
+		gpgBin = "gpg2"
+	}
+	cmd := exec.Command(gpgBin, "--list-secret-keys", longKeyID)
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
+}
+
+func ImportGPGKey(dir string, keyName string, content []byte) (string, []byte, error) {
 	gpg2Found := false
 
 	if _, err := exec.LookPath("gpg2"); err == nil {
@@ -81,7 +104,6 @@ func ImportGPGKey(dir string, keyName string, publicKey string) (string, []byte,
 			return "", nil, NewErrorFrom(ErrNotFound, "command gpg/gpg2 not found")
 		}
 	}
-	content := []byte(publicKey)
 	tmpfile, errTmpFile := os.CreateTemp(dir, keyName)
 	if errTmpFile != nil {
 		return "", content, NewError(ErrUnknownError, fmt.Errorf("cannot setup pgp key %s : %v", keyName, errTmpFile))

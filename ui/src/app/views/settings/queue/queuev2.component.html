@@ -1,0 +1,46 @@
+<app-breadcrumb [path]="path"></app-breadcrumb>
+
+<nz-table #jobTable [nzData]="jobs" [nsAutoHeightTable]="181" nzSize="small" [nzPageSize]="30" [nzPageIndex]="pageIndex"
+    [nzLoading]="loading" [nzFrontPagination]="false" [nzTotal]="totalCount" [nzShowPagination]="false"
+    (nzQueryParams)="onQueryParamsChange($event)">
+    <thead>
+        <tr>
+            <th>Since</th>
+            <th nzColumnKey="status" [nzFilterMultiple]="true" [nzFilters]="statusFilterList" [nzFilterFn]="true">Status
+            </th>
+            <th>Region / Hatchery</th>
+            <th>TriggeredBy</th>
+            <th>Run Number</th>
+            <th>JobName</th>
+            <th>Worker Model Type</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let data of jobTable.data">
+            <td>{{data.queued | amTimeAgo}}</td>
+            <td>{{data.status}}</td>
+            <td>{{data.region}}</td>
+            <td>{{data.username}}</td>
+            <td>{{data.run_number + "." + data.run_attempt}}</td>
+            <td>{{data.job_id}}</td>
+            <td>{{data.model_type}}</td>
+            <td nzAlign="right">
+                <nz-button-group>
+                    <a nz-button nzType="primary"
+                        [routerLink]="['/project', data.project_key, 'run', data.workflow_run_id]"
+                        [queryParams]="{'panel': 'job:'+data.id}">Open</a>
+                    <button nz-button nzDanger nzType="primary" (click)="stopJob(data)">Stop</button>
+                </nz-button-group>
+            </td>
+        </tr>
+    </tbody>
+</nz-table>
+
+<div *ngIf="totalCount > 0" class="footer">
+    <button nz-button nzType="primary" (click)="loadQueue()" title="Refresh jobs"><span nz-icon
+            [nzType]="'reload'"></span></button>
+    {{totalCount}} results
+    <nz-pagination [nzPageIndex]="pageIndex" [nzPageSize]="30" [nzTotal]="totalCount"
+        (nzPageIndexChange)="pageIndexChange($event)"></nz-pagination>
+</div>

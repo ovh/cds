@@ -29,7 +29,7 @@ type Canonicaller interface {
 }
 
 // InsertAndSign a data in database, given data should implement canonicaller interface.
-func (m *Mapper) InsertAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
+func (m *Mapper) InsertAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller) error {
 	if err := m.Insert(db, i); err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (m *Mapper) InsertAndSign(ctx context.Context, db gorp.SqlExecutor, i Canon
 }
 
 // UpdateAndSign a data in database, given data should implement canonicaller interface.
-func (m *Mapper) UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
+func (m *Mapper) UpdateAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller) error {
 	if err := m.Update(db, i); err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (m *Mapper) UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canon
 }
 
 // UpdateColumnsAndSign a data in database, given data should implement canonicaller interface.
-func (m *Mapper) UpdateColumnsAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller, colFilter gorp.ColumnFilter) error {
+func (m *Mapper) UpdateColumnsAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller, colFilter gorp.ColumnFilter) error {
 	if err := m.UpdateColumns(db, i, colFilter); err != nil {
 		return err
 	}
@@ -54,47 +54,64 @@ func (m *Mapper) UpdateColumnsAndSign(ctx context.Context, db gorp.SqlExecutor, 
 
 // CheckSignature return true if a given signature is valid for given object.
 func (m *Mapper) CheckSignature(i Canonicaller, sig []byte) (bool, error) {
+	valid, _, err := m.CheckSignatureUncap(i, sig)
+	return valid, err
+}
+
+func (m *Mapper) CheckSignatureUncap(i Canonicaller, sig []byte) (bool, int, error) {
 	var canonicalForms = i.Canonical()
 	var f *CanonicalForm
 	for {
 		f, canonicalForms = canonicalForms.Latest()
 		if f == nil {
-			return false, nil
+			return false, 0, nil
 		}
-		ok, err := m.checkSignature(i, m.signatureKey, f, sig)
+		ok, keyIdx, err := m.checkSignature(i, f, sig)
 		if err != nil {
-			return ok, err
+			return ok, 0, err
 		}
 		if ok {
-			return true, nil
+			return true, keyIdx, nil
 		}
 	}
 }
 
-func (m *Mapper) checkSignature(i Canonicaller, k symmecrypt.Key, f *CanonicalForm, sig []byte) (bool, error) {
+func (m *Mapper) checkSignature(i Canonicaller, f *CanonicalForm, sig []byte) (bool, int, error) {
 	tmpl, err := m.getCanonicalTemplate(f)
 	if err != nil {
-		return false, err
+		return false, 0, err
 	}
 
 	var clearContent = new(bytes.Buffer)
 	if err := tmpl.Execute(clearContent, i); err != nil {
-		return false, nil
+		return false, 0, nil
 	}
 
-	decryptedSig, err := k.Decrypt(sig)
+	var keyIdx int
+	var decryptedSig []byte
+	if cKey, ok := m.signatureKey.(symmecrypt.CompositeKey); ok {
+		for idx, k := range cKey {
+			decryptedSig, err = k.Decrypt(sig)
+			if err == nil {
+				keyIdx = idx
+				break
+			}
+		}
+	} else {
+		decryptedSig, err = m.signatureKey.Decrypt(sig)
+	}
 	if err != nil {
-		return false, sdk.WrapError(err, "unable to decrypt content (%s)", string(sig))
+		return false, 0, sdk.WrapError(err, "unable to decrypt content (%s)", string(sig))
 	}
 
 	clearContentStr := clearContent.String()
 	res := clearContentStr == string(decryptedSig)
 
-	return res, nil
+	return res, keyIdx, nil
 }
 
 func (m *Mapper) getCanonicalTemplate(f *CanonicalForm) (*template.Template, error) {
-	sha := getSigner(f)
+	sha := GetSigner(f)
 
 	m.CanonicalFormTemplates.L.RLock()
 	t, has := m.CanonicalFormTemplates.M[sha]
@@ -107,7 +124,7 @@ func (m *Mapper) getCanonicalTemplate(f *CanonicalForm) (*template.Template, err
 	return t, nil
 }
 
-func getSigner(f *CanonicalForm) string {
+func GetSigner(f *CanonicalForm) string {
 	h := sha1.New()
 	_, _ = h.Write(f.Bytes())
 	bs := h.Sum(nil)
@@ -121,7 +138,7 @@ func (m *Mapper) canonicalTemplate(data Canonicaller) (string, *template.Templat
 		return "", nil, sdk.WithStack(fmt.Errorf("no canonical function available for %T", data))
 	}
 
-	sha := getSigner(f)
+	sha := GetSigner(f)
 
 	m.CanonicalFormTemplates.L.RLock()
 	t, has := m.CanonicalFormTemplates.M[sha]

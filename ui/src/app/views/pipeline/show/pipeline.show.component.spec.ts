@@ -1,6 +1,6 @@
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed } from '@angular/core/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -21,7 +21,6 @@ import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { KeyService } from 'app/service/keys/keys.service';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
@@ -35,6 +34,8 @@ import { ConfigService } from 'app/service/services.module';
 
 describe('CDS: Pipeline Show', () => {
 
+    let routerService: RouterService;
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [],
@@ -46,7 +47,6 @@ describe('CDS: Pipeline Show', () => {
                 PipelineService,
                 ProjectService,
                 ProjectStore,
-                NavbarService,
                 MonitoringService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ToastService, useClass: MockToast },
@@ -58,17 +58,21 @@ describe('CDS: Pipeline Show', () => {
                 UserService,
                 RouterService,
                 AuthenticationService,
-                ConfigService
+                ConfigService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 PipelineModule,
                 NgxsStoreModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
-                SharedModule,
-                HttpClientTestingModule
+                SharedModule
             ]
         }).compileComponents();
+        const injector = getTestBed();
+        routerService = injector.get(RouterService);
+        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({ key: 'key1', pipName: 'pip1' }));
     });
 
     it('should load component', fakeAsync(() => {
@@ -126,7 +130,7 @@ describe('CDS: Pipeline Show', () => {
 
         let event: ParameterEvent = new ParameterEvent('add', param);
         let store: Store = TestBed.get(Store);
-        spyOn(store, 'dispatch').and.callFake(() => of(new Pipeline()));
+        spyOn(store, 'dispatch').and.callFake(() => of());
         fixture.componentInstance.parameterEvent(event);
         expect(store.dispatch).toHaveBeenCalledWith(new AddPipelineParameter({
             projectKey: 'key1',

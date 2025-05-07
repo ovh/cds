@@ -28,8 +28,8 @@ type Redis struct {
 }
 
 // NewRedisLRU instanciates a new Redis LRU
-func NewRedisLRU(db *gorp.DbMap, maxSize int64, host string, password string, dbindex int) (*Redis, error) {
-	c, err := cache.New(host, password, dbindex, -1)
+func NewRedisLRU(db *gorp.DbMap, maxSize int64, redisConf sdk.RedisConf) (*Redis, error) {
+	c, err := cache.New(redisConf, -1)
 	if err != nil {
 		return nil, err
 	}

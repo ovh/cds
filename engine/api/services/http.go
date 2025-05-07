@@ -452,7 +452,7 @@ func doRequestFromURL(ctx context.Context, method string, callURL *url.URL, read
 
 	// Try to catch the CDS Error
 	if cdserr := sdk.DecodeError(body); cdserr != nil {
-		return nil, resp.Header, resp.StatusCode, cdserr
+		return nil, resp.Header, resp.StatusCode, sdk.WithStack(cdserr)
 	}
 
 	return nil, resp.Header, resp.StatusCode, sdk.WithStack(fmt.Errorf("request failed with status code: %d", resp.StatusCode))

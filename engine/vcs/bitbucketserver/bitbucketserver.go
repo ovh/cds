@@ -19,13 +19,11 @@ type bitbucketClient struct {
 
 // bitbucketConsumer implements vcs.Server and it's used to instantiate a bitbucketClient
 type bitbucketConsumer struct {
-	ConsumerKey string `json:"consumer_key"`
-	PrivateKey  []byte `json:"-"`
-	URL         string `json:"url"`
-	cache       cache.Store
-	apiURL      string
-	uiURL       string
-	proxyURL    string
+	URL      string `json:"url"`
+	cache    cache.Store
+	apiURL   string
+	uiURL    string
+	proxyURL string
 }
 
 // New creates a new bitbucket Consumer

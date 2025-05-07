@@ -13,5 +13,5 @@ testcases:
 - name: list migrations cdn
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list cdn
-    retry: 2
-    delay: 5
+    retry: 10
+    delay: 1

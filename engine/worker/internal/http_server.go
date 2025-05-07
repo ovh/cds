@@ -62,11 +62,15 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/run-result/add/static-file", LogMiddleware(addRunResultStaticFileHandler(c, w)))
 	r.HandleFunc("/version", LogMiddleware(setVersionHandler(c, w)))
 
+	r.HandleFunc("/v2/workerConfig", LogMiddleware(workerruntime.V2_workerConfig(c, w)))
+	r.HandleFunc("/v2/cache/signature/{cacheKey}", LogMiddleware(workerruntime.V2_cacheSignatureHandler(c, w)))
+	r.HandleFunc("/v2/cache/signature/{cacheKey}/link", LogMiddleware(workerruntime.V2_cacheLinkHandler(c, w)))
 	r.HandleFunc("/v2/output", LogMiddleware(workerruntime.V2_outputHandler(c, w)))
 	r.HandleFunc("/v2/jobrun", LogMiddleware(workerruntime.V2_jobRunHandler(c, w)))
+	r.HandleFunc("/v2/key/{name}", LogMiddleware(workerruntime.V2_projectKeyHandler(c, w)))
 	r.HandleFunc("/v2/context", LogMiddleware(workerruntime.V2_contextHandler(c, w)))
 	r.HandleFunc("/v2/result", LogMiddleware(workerruntime.V2_runResultHandler(c, w)))
-	r.HandleFunc("/v2/integrations/{name}", LogMiddleware(workerruntime.V2_integrationsHandler(c, w)))
+	r.HandleFunc("/v2/result/synchronize", LogMiddleware(workerruntime.V2_runResultsSynchronizeHandler(c, w)))
 
 	srv := &http.Server{
 		Handler: r,

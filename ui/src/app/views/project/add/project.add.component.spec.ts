@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -20,7 +20,6 @@ import { Group, GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { GroupService } from 'app/service/group/group.service';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
@@ -31,6 +30,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CDS: Project Show Component', () => {
 
@@ -46,7 +46,6 @@ describe('CDS: Project Show Component', () => {
                 WorkflowRunService,
                 AuthenticationService,
                 ConfigService,
-                NavbarService,
                 ProjectService,
                 PipelineService,
                 MonitoringService,
@@ -61,15 +60,16 @@ describe('CDS: Project Show Component', () => {
                 UserService,
                 RouterService,
                 WorkflowService,
-                { provide: ToastService, useClass: MockToast }
+                { provide: ToastService, useClass: MockToast },
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 ProjectModule,
                 SharedModule,
                 NgxsStoreModule,
                 TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([]),
-                HttpClientTestingModule
+                RouterTestingModule.withRoutes([])
             ],
             schemas: [
                 CUSTOM_ELEMENTS_SCHEMA

@@ -22,6 +22,7 @@ type dbApplication struct {
 func (e dbApplication) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ProjectID, e.Name}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ProjectID}}{{.Name}}",
 		"{{print .ProjectID}}{{.Name}}",
 	}
 }
@@ -266,7 +267,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 
 func getAllWithClearVCS(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Application, error) {
 	var res []dbApplication
-	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetAllOptions.WithDecryption); err != nil {
 		return nil, err
 	}
 
@@ -292,7 +293,7 @@ func getAllWithClearVCS(ctx context.Context, db gorp.SqlExecutor, query gorpmapp
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Application, error) {
 	var res []dbApplication
-	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetAllOptions.WithDecryption); err != nil {
 		return nil, err
 	}
 

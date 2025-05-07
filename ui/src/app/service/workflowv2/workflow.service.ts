@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
-import { CDNLogLinks } from "../../model/pipeline.model";
-import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunManualRequest, V2WorkflowRunManualResponse, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { CDNLogLink, CDNLogLinks } from "app/model/cdn.model";
 
 @Injectable()
 export class V2WorkflowRunService {
@@ -10,16 +10,25 @@ export class V2WorkflowRunService {
         private _http: HttpClient
     ) { }
 
-    getRun(projKey: string, runIdentifier: string): Observable<V2WorkflowRun> {
-        return this._http.get<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}`);
+    getRun(projKey: string, workflowRunID: string): Observable<V2WorkflowRun> {
+        return this._http.get<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}`);
     }
 
-    restart(projKey: string, runIdentifier: string): Observable<V2WorkflowRun> {
-        return this._http.put<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}/restart`, null);
+    restart(projKey: string, workflowRunID: string): Observable<V2WorkflowRun> {
+        return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/restart`, null);
     }
 
-    stop(projKey: string, runIdentifier: string) {
-        return this._http.post(`/v2/project/${projKey}/run/${runIdentifier}/stop`, null);
+    start(projKey: string, vcsName: string, repoName: string, workflowName: string, data: V2WorkflowRunManualRequest) {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.post<V2WorkflowRunManualResponse>(`/v2/project/${projKey}/vcs/${vcsName}/repository/${encodedRepo}/workflow/${workflowName}/run`, data);
+    }
+
+    stop(projKey: string, workflowRunID: string) {
+        return this._http.post(`/v2/project/${projKey}/run/${workflowRunID}/stop`, null);
+    }
+
+    stopJob(projKey: string, workflowRunID: string, jobRunID: string) {
+        return this._http.post(`/v2/project/${projKey}/run/${workflowRunID}/job/${jobRunID}/stop`, null);
     }
 
     getJobs(r: V2WorkflowRun, attempt: number = null): Observable<Array<V2WorkflowRunJob>> {
@@ -42,15 +51,19 @@ export class V2WorkflowRunService {
         return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/run/${r.id}/infos`);
     }
 
-    getRunJobInfos(r: V2WorkflowRun, jobIdentifier: string): Observable<Array<WorkflowRunInfo>> {
-        return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/run/${r.id}/job/${jobIdentifier}/infos`);
+    getRunJobInfos(r: V2WorkflowRun, jobRunID: string): Observable<Array<WorkflowRunInfo>> {
+        return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/run/${r.id}/job/${jobRunID}/infos`);
     }
 
-    getAllLogsLinks(run: V2WorkflowRun, jobIdentifier: string): Observable<CDNLogLinks> {
-        return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobIdentifier}/logs/links`);
+    getAllLogsLinks(run: V2WorkflowRun, jobRunID: string): Observable<CDNLogLinks> {
+        return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobRunID}/logs/links`);
     }
 
-    triggerJob(run: V2WorkflowRun, jobIdentifier: string, inputs: {}): Observable<V2WorkflowRun> {
-        return this._http.put<V2WorkflowRun>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobIdentifier}/run`, inputs);
+    getRunJobServiceLogsLink(run: V2WorkflowRun, jobRunID: string, serviceName: string): Observable<CDNLogLink> {
+        return this._http.get<CDNLogLink>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobRunID}/service/${serviceName}/link`);
+    }
+
+    triggerJob(projKey: string, workflowRunID: string, jobRunID: string, data?: any): Observable<V2WorkflowRun> {
+        return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/job/${jobRunID}/run`, data);
     }
 }

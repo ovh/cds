@@ -21,26 +21,34 @@ type V2Action struct {
 
 type ActionRuns struct {
 	Steps []ActionStep `json:"steps" jsonschema_description:"List of sequential steps executed by the action"`
+	Post  string       `json:"post,omitempty" jsonschema_description:"script that will be executed at the end of the job"`
 }
 
 type ActionInput struct {
-	Description string `json:"description,omitempty" jsonschema_extras:"order=2"`
-	Default     string `json:"default,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Default input value used if the caller do not specified anything"`
+	Description string      `json:"description,omitempty" jsonschema_extras:"order=3"`
+	Default     interface{} `json:"default,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Default input value used if the caller do not specified anything"`
 }
 
+type ActionOutputType string
+
+const (
+	ActionOutputTypePath = "path"
+)
+
 type ActionOutput struct {
-	Description string `json:"description,omitempty" jsonschema_extras:"order=2"`
-	Value       string `json:"value" jsonschema_extras:"order=1"`
+	Description string           `json:"description,omitempty" jsonschema_extras:"order=2"`
+	Value       string           `json:"value" jsonschema_extras:"order=1"`
+	Type        ActionOutputType `json:"type,omitempty" jsonschema_extras:"order=3"`
 }
 
 type ActionStep struct {
-	ID              string            `json:"id,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Identifier of the step"`
-	Uses            string            `json:"uses,omitempty" jsonschema:"oneof_required=uses" jsonschema_extras:"order=4,onchange=loadentity,prefix=actions/" jsonschema_description:"Sub action to call"`
-	Run             string            `json:"run,omitempty" jsonschema:"oneof_required=run" jsonschema_extras:"order=4,code=true" jsonschema_description:"Script to execute"`
-	With            map[string]string `json:"with,omitempty" jsonschema:"oneof_not_required=run" jsonschema_extras:"order=5,mode=use" jsonschema_description:"Action parameters"`
-	If              string            `json:"if,omitempty" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute/skip the step"`
-	ContinueOnError bool              `json:"continue-on-error,omitempty" jsonschema_extras:"order=2"  jsonschema_description:"Allow a job to continue when this step fails"`
-	Env             map[string]string `json:"env,omitempty" jsonschema_extras:"order=3,mode=edit" jsonschema_description:"Environment variable available in the step"`
+	ID              string                 `json:"id,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Identifier of the step"`
+	Uses            string                 `json:"uses,omitempty" jsonschema:"oneof_required=uses" jsonschema_extras:"order=4,onchange=loadentity,prefix=actions/" jsonschema_description:"Sub action to call"`
+	Run             string                 `json:"run,omitempty" jsonschema:"oneof_required=run" jsonschema_extras:"order=4,code=true" jsonschema_description:"Script to execute"`
+	With            map[string]interface{} `json:"with,omitempty" jsonschema:"oneof_not_required=run" jsonschema_extras:"order=5,mode=use" jsonschema_description:"Action parameters"`
+	If              string                 `json:"if,omitempty" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute/skip the step"`
+	ContinueOnError bool                   `json:"continue-on-error,omitempty" jsonschema_extras:"order=2"  jsonschema_description:"Allow a job to continue when this step fails"`
+	Env             map[string]string      `json:"env,omitempty" jsonschema_extras:"order=3,mode=edit" jsonschema_description:"Environment variable available in the step"`
 }
 
 type ActionStepUsesWith map[string]string
@@ -53,19 +61,19 @@ func (a V2Action) Lint() []error {
 	actionSchema := GetActionJsonSchema(nil)
 	actionSchemaS, err := actionSchema.MarshalJSON()
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to load action schema")}
+		return []error{NewErrorFrom(err, "action %s: unable to load action schema", a.Name)}
 	}
 	schemaLoader := gojsonschema.NewStringLoader(string(actionSchemaS))
 
 	modelJson, err := json.Marshal(a)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to marshal action")}
+		return []error{NewErrorFrom(err, "action: %s: unable to marshal action", a.Name)}
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to validate action")}
+		return []error{NewErrorFrom(ErrInvalidData, "action %s: unable to validate action: %v", a.Name, err.Error())}
 	}
 	if result.Valid() {
 		return nil
@@ -73,7 +81,7 @@ func (a V2Action) Lint() []error {
 
 	errors := make([]error, 0, len(result.Errors()))
 	for _, e := range result.Errors() {
-		errors = append(errors, NewErrorFrom(ErrInvalidData, e.String()))
+		errors = append(errors, NewErrorFrom(ErrInvalidData, "action %s: yaml validation failed: %s", a.Name, e.String()))
 	}
 	return errors
 }

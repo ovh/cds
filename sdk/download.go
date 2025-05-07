@@ -24,17 +24,18 @@ const URLGithubReleases = "https://github.com/ovh/cds/releases"
 
 type DownloadableResource struct {
 	Name      string `json:"name"`
-	OS        string `json:"os"`
-	Arch      string `json:"arch"`
+	OS        string `json:"os,omitempty"`
+	Arch      string `json:"arch,omitempty"`
 	Variant   string `json:"variant,omitempty"`
 	Filename  string `json:"filename,omitempty"`
 	Available *bool  `json:"available,omitempty"`
 }
 
 var (
-	binaries        = []string{"engine", "worker", "cdsctl"}
-	supportedOS     = []string{"windows", "darwin", "linux", "freebsd", "openbsd"}
-	supportedARCH   = []string{"amd64", "arm", "386", "arm64", "ppc64le"}
+	Assets          = StringSlice{"vscode-cds.vsix"}
+	Binaries        = StringSlice{"engine", "worker", "cdsctl"}
+	SupportedOS     = StringSlice{"windows", "darwin", "linux", "freebsd", "openbsd"}
+	SupportedARCH   = StringSlice{"amd64", "arm", "386", "arm64", "ppc64le"}
 	supportedOSArch = []string{}
 	cdsctlVariant   = []string{"nokeychain"}
 )
@@ -42,8 +43,8 @@ var (
 func InitSupportedOSArch(supportedOSArchConf []string) error {
 	if len(supportedOSArchConf) == 0 {
 		// if the supportedOSArchConf is empty, we init it with the full list
-		for _, os := range supportedOS {
-			for _, arch := range supportedARCH {
+		for _, os := range SupportedOS {
+			for _, arch := range SupportedARCH {
 				supportedOSArch = append(supportedOSArch, os+"/"+arch)
 			}
 		}
@@ -56,10 +57,10 @@ func InitSupportedOSArch(supportedOSArchConf []string) error {
 		if len(t) != 2 {
 			return fmt.Errorf("invalid value %q in supportedOSArch configuration", v)
 		}
-		if !IsInArray(t[0], supportedOS) {
+		if !SupportedOS.Contains(t[0]) {
 			return fmt.Errorf("invalid value for os %q in supportedOSArch configuration", t[0])
 		}
-		if !IsInArray(t[1], supportedARCH) {
+		if !SupportedARCH.Contains(t[1]) {
 			return fmt.Errorf("invalid value for arch %q in supportedOSArch configuration", t[1])
 		}
 		supportedOSArch = append(supportedOSArch, v)
@@ -69,8 +70,15 @@ func InitSupportedOSArch(supportedOSArchConf []string) error {
 
 func AllDownloadableResources() []DownloadableResource {
 	var all []DownloadableResource
-	for _, b := range binaries {
 
+	for _, b := range Assets {
+		all = append(all, DownloadableResource{
+			Filename: b,
+			Name:     b,
+		})
+	}
+
+	for _, b := range Binaries {
 		for _, osArch := range supportedOSArch {
 			t := strings.Split(osArch, "/")
 			os := t[0]
@@ -95,12 +103,13 @@ func AllDownloadableResources() []DownloadableResource {
 			}
 		}
 	}
+
 	return all
 }
 
-// getArchName returns 386 for "386", "i386", "i686"
+// GetArchName returns 386 for "386", "i386", "i686"
 // amd64 for "amd64", "x86_64" (uname -m)
-func getArchName(a string) string {
+func GetArchName(a string) string {
 	switch a {
 	case "386", "i386", "i686":
 		return "386"
@@ -124,7 +133,7 @@ func BinaryFilename(name, os, arch, variant string) string {
 	if os == "windows" {
 		suffix = ".exe"
 	}
-	return NoPath(fmt.Sprintf("%s%s-%s-%s%s%s", prefix, name, os, getArchName(arch), variant, suffix))
+	return NoPath(fmt.Sprintf("%s%s-%s-%s%s%s", prefix, name, os, GetArchName(arch), variant, suffix))
 }
 
 // IsDownloadedBinary returns true if the binary is already downloaded, false otherwise
@@ -201,7 +210,7 @@ func DownloadFromGitHub(ctx context.Context, directory, filename string, version
 	}
 
 	fullpath := path.Join(directory, filename)
-	log.Debug(ctx, "downloading %v into  %v", urlBinary, fullpath)
+	log.Debug(ctx, "downloading %v into %v", urlBinary, fullpath)
 	if err := os.WriteFile(fullpath, body, 0755); err != nil {
 		return WrapError(err, "error while write file content for %s in %s", filename, directory)
 	}

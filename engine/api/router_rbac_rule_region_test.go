@@ -3,9 +3,11 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/rockbears/yaml"
 	"testing"
 
+	"github.com/rockbears/yaml"
+
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -21,7 +23,17 @@ func TestRbacRegionAllUsers(t *testing.T) {
 	_, err = db.Exec("DELETE FROM region")
 	require.NoError(t, err)
 
+	org := sdk.Organization{
+		Name: sdk.RandomString(10),
+	}
+	require.NoError(t, organization.Insert(context.TODO(), db, &org))
+	t.Cleanup(func() {
+		organization.Delete(db, org.ID)
+	})
+
 	user1, _ := assets.InsertLambdaUser(t, db)
+
+	user2, _ := assets.InsertLambdaUserInOrganization(t, db, org.Name)
 
 	reg := sdk.Region{Name: sdk.RandomString(10)}
 	require.NoError(t, region.Insert(context.TODO(), db, &reg))
@@ -47,5 +59,15 @@ regions:
 			AuthentifiedUser:   user1,
 		},
 	}
-	require.NoError(t, api.regionRead(context.TODO(), &c, api.Cache, db, map[string]string{"regionIdentifier": reg.Name}))
+	require.NoError(t, api.regionRead(context.WithValue(context.TODO(), contextUserConsumer, &c),
+		map[string]string{"regionIdentifier": reg.Name}))
+
+	c2 := sdk.AuthUserConsumer{
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			AuthentifiedUserID: user2.ID,
+			AuthentifiedUser:   user2,
+		},
+	}
+	err = api.regionRead(context.WithValue(context.TODO(), contextUserConsumer, &c2), map[string]string{"regionIdentifier": reg.Name})
+	require.True(t, sdk.ErrorIs(err, sdk.ErrForbidden))
 }

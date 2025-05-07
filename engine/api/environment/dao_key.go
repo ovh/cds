@@ -47,10 +47,10 @@ func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.Environment
 
 // LoadAllKeysForEnvsWithDecryption load all keys for all given environments, with description
 func LoadAllKeysForEnvsWithDecryption(ctx context.Context, db gorp.SqlExecutor, envIDS []int64) (map[int64][]sdk.EnvironmentKey, error) {
-	return loadAllKeysForEnvs(ctx, db, envIDS, gorpmapping.GetOptions.WithDecryption)
+	return loadAllKeysForEnvs(ctx, db, envIDS, gorpmapping.GetAllOptions.WithDecryption)
 }
 
-func loadAllKeysForEnvs(ctx context.Context, db gorp.SqlExecutor, envIDS []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.EnvironmentKey, error) {
+func loadAllKeysForEnvs(ctx context.Context, db gorp.SqlExecutor, envIDS []int64, opts ...gorpmapping.GetAllOptionFunc) (map[int64][]sdk.EnvironmentKey, error) {
 	var res []dbEnvironmentKey
 	query := gorpmapping.NewQuery(`
 		SELECT * FROM environment_key WHERE environment_id = ANY($1) ORDER BY environment_id

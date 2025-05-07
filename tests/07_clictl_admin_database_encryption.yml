@@ -1,22 +1,30 @@
 name: Database Encryption Commands TestSuite
 
 testcases:
-- name: API_signature_key_rollover
+- name: API_signature_signer_rollover
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-signed-data api
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data api
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data-signer api --batch-size 100 --no-interactive
 
-- name: API_encryption_key_rollover
-  steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-encrypted-data api
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-encrypted-data api
-
-- name: CDN_signature_key_rollover
+- name: CDN_signature_signer_rollover
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-signed-data cdn
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data cdn
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data-signer cdn --batch-size 100 --no-interactive
 
-- name: CDN_encryption_key_rollover
+- name: API_key_rollover
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-encrypted-data cdn
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-encrypted-data cdn
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database info-entity api user.authentifiedUser --report-dir ./report --batch-size 100 --no-cache
+  - script: jq 'keys | map(. | tonumber) | sort | reverse | .[0]' ./report/api.user.authentifiedUser.signature.json
+    vars:
+      timestamp:
+        from: result.systemout
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-entity api {{.timestamp}} user.authentifiedUser --report-dir ./report --no-interactive
+
+- name: CDN_key_rollover
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database info-entity cdn item.cdnItemDB --report-dir ./report --batch-size 100 --no-cache
+  - script: jq 'keys | map(. | tonumber) | sort | reverse | .[0]' ./report/cdn.item.cdnItemDB.signature.json
+    vars:
+      timestamp:
+        from: result.systemout
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-entity cdn {{.timestamp | default "0"}} item.cdnItemDB --report-dir ./report --no-interactive

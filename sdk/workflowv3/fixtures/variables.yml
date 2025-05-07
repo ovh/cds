@@ -1,8 +1,0 @@
-variables:
-  myvar1: value1
-  myvar2:
-    subvar1: subvalue1
-    subvar2: subvalue2
-    subvar3:
-      subsubvar1: subsubvalue1
-      subsubvar2: subsubvalue2

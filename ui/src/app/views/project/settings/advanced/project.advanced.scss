@@ -1,0 +1,33 @@
+:host {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+nz-card:not(:first-child) {
+  margin-top: 20px;
+}
+
+form {
+  .controls {
+    button:not(:first-child) {
+      margin-left: 8px;
+    }
+  }
+
+  .icon {
+    display: block;
+    height: 50px;
+    margin-bottom: 10px;
+  }  
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.title {
+  font-weight: bold;
+}

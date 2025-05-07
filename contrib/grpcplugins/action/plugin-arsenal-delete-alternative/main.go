@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"text/template"
+
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/contrib/integrations/arsenal"
-	"text/template"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
@@ -32,13 +33,20 @@ func (e *arsenalDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) 
 	}, nil
 }
 
+func (p *arsenalDeploymentPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	return sdk.ErrNotImplemented
+}
+
 func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	// Read and check inputs
 	var (
-		arsenalHost     = getStringOption(q, "cds.integration.deployment.host")
-		deploymentToken = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
-		alternative     = getStringOption(q, "cds.integration.deployment.alternative.config")
-		alternativeName = getStringOption(q, "alternative_name")
+		arsenalHost          = getStringOption(q, "cds.integration.deployment.host")
+		deploymentToken      = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
+		arsenalGWTokenSource = getStringOption(q, "cds.integration.deployment.gw.source")
+		arsenalGWTokenSecret = getStringOption(q, "cds.integration.deployment.gw.token")
+		arsenalGWServiceName = getStringOption(q, "cds.integration.deployment.gw.service")
+		alternative          = getStringOption(q, "cds.integration.deployment.alternative.config")
+		alternativeName      = getStringOption(q, "alternative_name")
 	)
 	if arsenalHost == "" {
 		return fail("missing arsenal host")
@@ -59,7 +67,13 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *actionplugin.Actio
 	}
 
 	// Delete alternative.
-	arsenalClient := arsenal.NewClient(arsenalHost, deploymentToken)
+	arsenalClient := arsenal.NewClient(arsenal.Conf{
+		Host:            arsenalHost,
+		DeploymentToken: deploymentToken,
+		GWServiceName:   arsenalGWServiceName,
+		GWTokenSource:   arsenalGWTokenSource,
+		GWTokenSecret:   arsenalGWTokenSecret,
+	})
 	fmt.Printf("Deleting alternative %q\n", alternativeName)
 	if err := arsenalClient.DeleteAlternative(alternativeName); err != nil {
 		return fail("failed to delete alternative: %v", err)

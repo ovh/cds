@@ -11,6 +11,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (client *gerritClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, vcsReport sdk.VCSInsight) error {
+	// not implemented
+	return nil
+}
+
 // SetStatus set build status on Gerrit
 func (client *gerritClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
 	if buildStatus.GerritChange == nil {

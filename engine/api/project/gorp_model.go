@@ -12,6 +12,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type dbProjectWebHook struct {
+	sdk.ProjectWebHook
+}
+
+type dbProjectConcurrency struct {
+	sdk.ProjectConcurrency
+}
+
 type dbProjectVariableSet struct {
 	gorpmapper.SignedEntity
 	sdk.ProjectVariableSet
@@ -36,6 +44,7 @@ type dbProjectVariableSetItemText struct {
 func (e dbProjectVariableSetItemText) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ID, e.ProjectVariableSetID, e.Name, e.Value}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ID}}{{printf .ProjectVariableSetID}}{{.Name}}{{.Value}}",
 		"{{print .ID}}{{print .ProjectVariableSetID}}{{.Name}}{{.Value}}",
 	}
 }
@@ -72,6 +81,7 @@ type dbProjectVariableSetItemSecret struct {
 func (e dbProjectVariableSetItemSecret) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ID, e.ProjectVariableSetID, e.Name}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ID}}{{printf .ProjectVariableSetID}}{{.Name}}",
 		"{{print .ID}}{{print .ProjectVariableSetID}}{{.Name}}",
 	}
 }
@@ -125,6 +135,7 @@ type dbProjectVariable struct {
 func (e dbProjectVariable) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ProjectID, e.ID, e.Name, e.Type}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ProjectID}}{{printf .ID}}{{.Name}}{{.Type}}",
 		"{{print .ProjectID}}{{print .ID}}{{.Name}}{{.Type}}",
 	}
 }
@@ -177,6 +188,8 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableSet{}, "project_variable_set", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableSetItemText{}, "project_variable_set_text", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableSetItemSecret{}, "project_variable_set_secret", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectConcurrency{}, "project_concurrency", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectWebHook{}, "project_webhook", false, "id"))
 }
 
 // PostGet is a db hook

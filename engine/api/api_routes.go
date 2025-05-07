@@ -74,15 +74,14 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/cds/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminMigrationsHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/cds/migration/{id}/cancel", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminMigrationCancelHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/cds/migration/{id}/todo", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminMigrationTodoHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/migration/delete/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/migration/unlock/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postDatabaseMigrationUnlockedHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	r.Handle("/admin/debug/profiles", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDebugProfilesHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 	r.Handle("/admin/debug/goroutines", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDebugGoroutinesHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 	r.Handle("/admin/debug/trace", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getTraceHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getTraceHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 	r.Handle("/admin/debug/cpu", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getCPUProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getCPUProfileHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 	r.Handle("/admin/debug/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getProfileHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
+
+	r.Handle("/admin/user", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postUserHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	r.Handle("/admin/plugin", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getAllGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/plugin/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)))
@@ -96,12 +95,13 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, service.OverrideAuth(api.authMaintainerMiddleware)), r.POST(api.postAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Admin database
-	r.Handle("/admin/database/signature", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureResume, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/signature/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseSignatureRollEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/signature/{entity}/{signer}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureTuplesBySigner, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/encryption", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEncryptedEntities, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/encryption/{entity}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEncryptedTuplesByEntity, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/database/encryption/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/migration/delete/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteAdminDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/migration/unlock/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseMigrationUnlockHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/entity", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEntityList, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/entity/{entity}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEntity, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/entity/{entity}/info", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseEntityInfo, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/database/entity/{entity}/roll", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseEntityRoll, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Organization
 	r.Handle("/admin/organization", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminOrganizationHandler, service.OverrideAuth(api.authAdminMiddleware)))
@@ -116,8 +116,7 @@ func (api *API) InitRouter() {
 	r.Handle("/download", ScopeNone(), r.GET(api.downloadsHandler))
 	r.Handle("/download/plugin/{name}/binary/{os}/{arch}", ScopeNone(), r.GET(api.getGRPCluginBinaryHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/download/plugin/{name}/binary/{os}/{arch}/infos", ScopeNone(), r.GET(api.getGRPCluginBinaryInfosHandler))
-
-	r.Handle("/download/{name}/{os}/{arch}", ScopeNone(), r.GET(api.downloadHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.HandlePrefix("/download/", ScopeNone(), r.GET(api.downloadHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	// feature
 	r.Handle("/feature/enabled/{name}", ScopeNone(), r.POST(api.isFeatureEnabledHandler))
@@ -146,7 +145,6 @@ func (api *API) InitRouter() {
 
 	r.Handle("/help", ScopeNone(), r.GET(api.getHelpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
-	r.Handle("/ui/navbar", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getNavbarHandler))
 	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationOverviewHandler))
 
 	// Import As Code
@@ -154,7 +152,8 @@ func (api *API) InitRouter() {
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postPerformImportAsCodeHandler))
 
 	// Bookmarks
-	r.Handle("/bookmarks", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getBookmarksHandler))
+	r.Handle("/bookmark", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getBookmarksHandler), r.POSTv2(api.postBookmarkHandler))
+	r.Handle("/bookmark/{type}/{id}", Scope(sdk.AuthConsumerScopeUser), r.DELETEv2(api.deleteBookmarkHandler))
 
 	// Project
 	r.Handle("/project", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectsHandler), r.POST(api.postProjectHandler))
@@ -244,11 +243,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowHookHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/hook/model", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowHookModelsHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/outgoinghook/model", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowOutgoingHookModelsHandler))
-
-	// Workflows v3
-	r.Handle("/project/{permProjectKey}/workflowv3/validate", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowV3ValidateHandler))
-	r.Handle("/project/{key}/workflowv3/{permWorkflowName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowV3Handler))
-	r.Handle("/project/{key}/workflowv3/{permWorkflowName}/run/{number}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowV3RunHandler))
 
 	// Outgoing hook model
 	r.Handle("/workflow/outgoinghook/model", ScopeNone(), r.GET(api.getWorkflowOutgoingHookModelsHandler))
@@ -349,11 +343,11 @@ func (api *API) InitRouter() {
 	// Suggest
 	r.Handle("/suggest/variable/{permProjectKey}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariablesHandler))
 
-	//Requirements
+	// Requirements
 	r.Handle("/requirement/types", ScopeNone(), r.GET(api.getRequirementTypesHandler))
 	r.Handle("/requirement/types/{type}", ScopeNone(), r.GET(api.getRequirementTypeValuesHandler))
 
-	// config
+	// Config
 	r.Handle("/config/user", ScopeNone(), r.GET(api.configUserHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/config/vcsgerrit", ScopeNone(), r.GET(api.configVCSGerritHandler))
 	r.Handle("/config/cdn", ScopeNone(), r.GET(api.configCDNHandler))
@@ -362,9 +356,9 @@ func (api *API) InitRouter() {
 	r.Handle("/link/driver", ScopeNone(), r.GET(api.getLinkDriversHandler))
 	r.Handle("/link/{consumerType}/ask", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postAskLinkExternalUserWithCDSHandler))
 	r.Handle("/link/{consumerType}", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postLinkExternalUserWithCDSHandler))
+
 	// Users
 	r.Handle("/user", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUsersHandler))
-	r.Handle("/user/favorite", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/schema", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserJSONSchema))
 	r.Handle("/user/timeline", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
@@ -405,7 +399,6 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForGroupHandler))
 
 	// Workflows
-
 	r.Handle("/workflow/search", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getSearchWorkflowHandler))
 	r.Handle("/workflow/hook", Scope(sdk.AuthConsumerScopeHooks), r.GET(api.getWorkflowHooksHandler))
 	r.Handle("/workflow/hook/executions", Scope(sdk.AuthConsumerScopeHooks), r.GET(api.getWorkflowHookExecutionsHandler))
@@ -417,6 +410,10 @@ func (api *API) InitRouter() {
 	// Engine µServices
 	r.Handle("/services/heartbeat", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceHearbeatHandler))
 	r.Handle("/services/{type}", Scope(sdk.AuthConsumerScopeService), r.GET(api.getServiceHandler))
+
+	// Search
+	r.Handle("/search", nil, r.GETv2(api.getSearchHandler))
+	r.Handle("/search/filter", nil, r.GETv2(api.getSearchFiltersHandler))
 
 	// Templates
 	r.Handle("/template", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))
@@ -445,11 +442,12 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/hatchery/{hatcheryIdentifier}/regen", nil, r.POSTv2(api.postHatcheryRegenTokenHandler))
 
 	r.Handle("/v2/hooks/workflows", nil, r.POSTv2(api.postRetrieveWorkflowToTriggerHandler))
+	r.Handle("/v2/hooks/workflows/hook/{hookID}", nil, r.GETv2(api.getV2WorkflowHookHandler))
 	r.Handle("/v2/hooks/event/signKey", nil, r.POSTv2(api.postHookEventRetrieveSignKeyHandler))
 	r.Handle("/v2/hooks/event/signKey/{uuid}", nil, r.GETv2(api.getRetrieveSignKeyOperationHandler))
 	r.Handle("/v2/hooks/event/user", nil, r.POSTv2(api.postRetrieveEventUserHandler))
 	r.Handle("/v2/hooks/repositories/{vcsServer}/{repositoryName}", nil, r.GETv2(api.getHooksRepositoriesHandler))
-	r.Handle("/v2/hooks/{projectKey}/vcs/{vcsType}/{vcsServer}/repository/{repositoryName}/secret", nil, r.GETv2(api.getRepositoryWebHookSecretHandler))
+	r.Handle("/v2/hooks/{projectKey}/vcs/{vcsServer}/repository/{repositoryName}/insight/{commit}/{insightKey}", nil, r.POSTv2(api.postInsightReportHandler))
 	r.Handle("/v2/hooks/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunFromHookV2Handler))
 
 	r.Handle("/v2/jsonschema/{type}", nil, r.GETv2(api.getJsonSchemaHandler))
@@ -464,6 +462,32 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/region", nil, r.POSTv2(api.postRegionHandler), r.GETv2(api.getRegionsHandler))
 	r.Handle("/v2/region/{regionIdentifier}", nil, r.GETv2(api.getRegionHandler), r.DELETEv2(api.deleteRegionHandler))
+
+	r.Handle("/v2/migrate/project/{projectKey}/variableset/item", nil, r.POSTv2(api.postMigrateProjectVariableHandler))
+	r.Handle("/v2/migrate/project/{projectKey}/variableset/application", nil, r.POSTv2(api.postMigrateApplicationVariableToVariableSetHandler))
+	r.Handle("/v2/migrate/project/{projectKey}/variableset/application/integration", nil, r.POSTv2(api.postMigrateApplicationIntegrationVariableToVariableSetHandler))
+	r.Handle("/v2/migrate/project/{projectKey}/variableset/environment", nil, r.POSTv2(api.postMigrateEnvironmentVariableToVariableSetHandler))
+	r.Handle("/v2/migrate/project/{projectKey}/variableset/ascode", nil, r.POSTv2(api.postMigrateAsCodeVariableToVariableSetItemHandler))
+
+	r.Handle("/v2/project", nil, r.GETv2(api.getProjectsV2Handler))
+	r.Handle("/v2/project/{projectKey}", nil, r.GETv2(api.getProjectV2Handler), r.PUTv2(api.updateProjectV2Handler), r.DELETEv2(api.deleteProjectV2Handler))
+
+	r.Handle("/v2/project/{projectKey}/concurrency", nil, r.GETv2(api.getProjectConcurrenciesHandler), r.POSTv2(api.postProjectConcurrencyHandler))
+	r.Handle("/v2/project/{projectKey}/concurrency/{concurrencyName}", nil, r.GETv2(api.getProjectConcurrencyHandler), r.PUTv2(api.putProjectConcurrencyHandler), r.DELETEv2(api.deleteProjectConcurrencyHandler))
+	r.Handle("/v2/project/{projectKey}/concurrency/{concurrencyName}/runs", nil, r.GETv2(api.getProjectConcurrencyRunsHandler))
+
+	r.Handle("/v2/project/{projectKey}/hook", nil, r.GETv2(api.getProjectHooksHandler), r.POSTv2(api.postProjectHookHandler))
+	r.Handle("/v2/project/{projectKey}/hook/{uuid}", nil, r.GETv2(api.getProjectHookHandler), r.DELETEv2(api.deleteProjectHookHandler))
+
+	r.Handle("/v2/project/{projectKey}/integrations", nil, r.GETv2(api.getProjectV2IntegrationsHandler), r.POSTv2(api.postProjectV2IntegrationHandler))
+	r.Handle("/v2/project/{projectKey}/integrations/{integrationName}", nil, r.GETv2(api.getProjectV2IntegrationHandler), r.PUTv2(api.putProjectV2IntegrationHandler), r.DELETEv2(api.deleteProjectV2IntegrationHandler))
+	r.Handle("/v2/project/{projectKey}/integrations/{integrationName}/workerhooks", nil, r.GETv2(api.getV2ProjectIntegrationWorkerHookHandler), r.POSTv2(api.postV2ProjectIntegrationWorkerHookHandler))
+	r.Handle("/v2/project/{projectKey}/keys", nil, r.GETv2(api.getKeysInProjectV2Handler), r.POSTv2(api.addKeyInProjectV2Handler))
+	r.Handle("/v2/project/{projectKey}/keys/{name}", nil, r.DELETEv2(api.deleteKeyInProjectV2Handler))
+	r.Handle("/v2/project/{projectKey}/keys/{name}/disable", nil, r.POSTv2(api.postDisableKeyInProjectV2Handler))
+	r.Handle("/v2/project/{projectKey}/keys/{name}/enable", nil, r.POSTv2(api.postEnableKeyInProjectV2Handler))
+
+	r.Handle("/v2/project/{projectKey}/type/{type}/access", Scope(sdk.AuthConsumerScopeService), r.GETv2(api.getProjectV2AccessHandler))
 
 	r.Handle("/v2/project/{projectKey}/notification", nil, r.GETv2(api.getProjectNotifsHandler), r.POSTv2(api.postProjectNotificationHandler))
 	r.Handle("/v2/project/{projectKey}/notification/{notification}", nil, r.GETv2(api.getProjectNotificationHandler), r.PUTv2(api.putProjectNotificationHandler), r.DELETEv2(api.deleteProjectNotificationHandler))
@@ -480,6 +504,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis", nil, r.GETv2(api.getProjectRepositoryAnalysesHandler), r.POSTv2(api.postRepositoryAnalysisHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis/{analysisID}", nil, r.GETv2(api.getProjectRepositoryAnalysisHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/branches", nil, r.GETv2(api.getProjectRepositoryBranchesHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/tags", nil, r.GETv2(api.getProjectRepositoryTagsHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/entities", nil, r.GETv2(api.getProjectEntitiesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/entities/{entityType}/{entityName}", nil, r.GETv2(api.getProjectEntityHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/events", nil, r.GETv2(api.getProjectRepositoryEventsHandler))
@@ -487,25 +512,31 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/version", nil, r.GETv2(api.getWorkflowVersionsHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/version/{version}", nil, r.GETv2(api.getWorkflowVersionHandler), r.DELETEv2(api.deleteWorkflowVersionHandler))
 	r.Handle("/v2/project/{projectKey}/run", nil, r.GETv2(api.getWorkflowRunsSearchV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/filter", nil, r.GETv2(api.getWorkflowRunsFiltersV2Handler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}", nil, r.GETv2(api.getWorkflowRunV2Handler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/restart", nil, r.PUTv2(api.putWorkflowRunV2Handler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/infos", nil, r.GETv2(api.getWorkflowRunInfoV2Handler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/stop", nil, r.POSTv2(api.postStopWorkflowRunHandler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job", nil, r.GETv2(api.getWorkflowRunJobsV2Handler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/result", nil, r.GETv2(api.getWorkflowRunResultsV2Handler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job/{jobIdentifier}", nil, r.GETv2(api.getWorkflowRunJobHandler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job/{jobIdentifier}/infos", nil, r.GETv2(api.getWorkflowRunJobInfosHandler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job/{jobIdentifier}/run", nil, r.PUTv2(api.putWorkflowRunJobV2Handler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job/{jobIdentifier}/stop", nil, r.POSTv2(api.postStopJobHandler))
-	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job/{jobIdentifier}/logs/links", nil, r.GETv2(api.getWorkflowRunJobLogsLinksV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}", nil, r.GETv2(api.getWorkflowRunV2Handler), r.DELETEv2(api.deleteWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/restart", nil, r.POSTv2(api.postRestartWorkflowRunHandler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/infos", nil, r.GETv2(api.getWorkflowRunInfoV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/stop", nil, r.POSTv2(api.postStopWorkflowRunHandler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job", nil, r.GETv2(api.getWorkflowRunJobsV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/result", nil, r.GETv2(api.getWorkflowRunResultsV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job/{jobRunID}", nil, r.GETv2(api.getWorkflowRunJobHandler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job/{jobRunID}/infos", nil, r.GETv2(api.getWorkflowRunJobInfosHandler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job/{jobIdentifier}/run", nil, r.POSTv2(api.postRunJobHandler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job/{jobIdentifier}/stop", nil, r.POSTv2(api.postStopJobHandler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job/{jobRunID}/logs/links", nil, r.GETv2(api.getWorkflowRunJobLogsLinksV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job/{jobRunID}/service/{serviceName}/link", nil, r.GETv2(api.getWorkflowRunJobServiceLogsLinkV2Handler))
+	r.Handle("/v2/run", nil, r.GETv2(api.getWorkflowRunsSearchAllProjectV2Handler))
+	r.Handle("/v2/template/workflow/generate", nil, r.POSTv2(api.postGenerateWorkflowFromTemplateHandler))
 
 	r.Handle("/v2/plugin", nil, r.POSTv2(api.postImportPluginHandler))
 	r.Handle("/v2/plugin/{name}", nil, r.GETv2(api.getPluginHandler))
 
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}", nil, r.GETv2(api.getJobRunQueueInfoHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/info", nil, r.POSTv2(api.postJobRunInfoHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/key/{keyName}", nil, r.GETv2(api.getJobRunProjectV2KeyHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runinfo", nil, r.POSTv2(api.postRunInfoHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", nil, r.POSTv2(api.postJobRunStepHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/take", nil, r.POSTv2(api.postV2WorkerTakeJobHandler))
@@ -515,9 +546,12 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/hatchery/take", nil, r.POSTv2(api.postHatcheryTakeJobRunHandler), r.DELETEv2(api.deleteHatcheryReleaseJobRunHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/result", nil, r.POSTv2(api.postJobResultHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult", nil, r.GETv2(api.getJobRunResultsHandler), r.POSTv2(api.postJobRunResultHandler), r.PUTv2(api.putJobRunResultHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult/synchronize", nil, r.PUTv2(api.putJobRunResultSynchronizeHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult/{runResultID}", nil, r.GETv2(api.getJobRunResultHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/cache/{cacheKey}/link", nil, r.GETv2(api.getCacheLinkHandler))
 
-	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedHandler))
+	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedRegionalizedHandler))
+	r.Handle("/v2/queue", nil, r.GETv2(api.getJobsQueuedHandler))
 
 	r.Handle("/v2/worker", nil, r.GETv2(api.getWorkersV2Handler))
 	r.Handle("/v2/worker/{workerName}", nil, r.GETv2(api.getWorkerV2Handler))
@@ -525,6 +559,10 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", nil, r.GETv2(api.getUserGPGKeyHandler))
 	r.Handle("/v2/user/{user}/gpgkey", nil, r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))
 	r.Handle("/v2/user/{user}/gpgkey/{gpgKeyID}", nil, r.DELETEv2(api.deleteUserGPGKey))
+
+	r.Handle("/v2/vcs/gpgkeys/{gpgKeyID}", ScopeNone(), r.GETv2(api.GetVCSPGKeyHandler))
+
+	r.Handle("/v2/ws", ScopeNone(), r.GET(api.getWebsocketV2Handler))
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)

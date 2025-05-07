@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
@@ -20,7 +20,6 @@ import { Application } from '../../../model/application.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
 import { EnvironmentService } from '../../../service/environment/environment.service';
-import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../service/project/project.service';
 import { ProjectStore } from '../../../service/project/project.store';
@@ -29,6 +28,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineAddComponent } from './pipeline.add.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CDS: Pipeline Add Component', () => {
 
@@ -37,8 +37,7 @@ describe('CDS: Pipeline Add Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 ApplicationService,
                 EnvironmentService,
@@ -51,7 +50,6 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                NavbarService,
                 PipelineService,
                 EnvironmentService,
                 VariableService,
@@ -60,15 +58,16 @@ describe('CDS: Pipeline Add Component', () => {
                 UserService,
                 RouterService,
                 AuthenticationService,
-                ConfigService
+                ConfigService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 PipelineModule,
                 NgxsStoreModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule
+                TranslateModule.forRoot()
             ]
         }).compileComponents();
 

@@ -31,8 +31,8 @@ testcases:
 - name: check_workflow_is_success
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status {{.projectKey}}  test-artifactory-multiple-maturity {{.run_workflow.runNumber}} --format json # check the workflow status
-    retry: 120
-    delay: 5
+    retry: 600
+    delay: 1
     info: "{{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0

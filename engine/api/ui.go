@@ -8,24 +8,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/metrics"
-	"github.com/ovh/cds/engine/api/navbar"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
-
-func (api *API) getNavbarHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getUserConsumer(ctx)
-		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *consumer.AuthConsumerUser.AuthentifiedUser)
-		if err != nil {
-			return err
-		}
-		return service.WriteJSON(w, data, http.StatusOK)
-	}
-}
 
 func (api *API) getApplicationOverviewHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

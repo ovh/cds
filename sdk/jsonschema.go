@@ -63,10 +63,15 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	stepUses := propStepUses.(*jsonschema.Schema)
 	// Enum on step uses
 	if len(publicActionNames) > 0 {
-
+		stepUses.AnyOf = make([]*jsonschema.Schema, 0)
+		anyOfEnum := &jsonschema.Schema{}
 		for _, actName := range publicActionNames {
-			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
+			anyOfEnum.Enum = append(anyOfEnum.Enum, "actions/"+actName)
 		}
+		stepUses.AnyOf = append(stepUses.AnyOf, anyOfEnum)
+		stepUses.AnyOf = append(stepUses.AnyOf, &jsonschema.Schema{
+			Pattern: "^.cds/actions/.*.(yaml|yml)",
+		})
 	}
 	return actionSchema
 }
@@ -77,11 +82,18 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 
 	propStepUses, _ := jobSchema.Definitions["ActionStep"].Properties.Get("uses")
 	stepUses := propStepUses.(*jsonschema.Schema)
+
 	// Enum on step uses
 	if len(publicActionNames) > 0 {
+		stepUses.AnyOf = make([]*jsonschema.Schema, 0)
+		anyOfEnum := &jsonschema.Schema{}
 		for _, actName := range publicActionNames {
-			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
+			anyOfEnum.Enum = append(anyOfEnum.Enum, "actions/"+actName)
 		}
+		stepUses.AnyOf = append(stepUses.AnyOf, anyOfEnum)
+		stepUses.AnyOf = append(stepUses.AnyOf, &jsonschema.Schema{
+			Pattern: "^.cds/actions/.*.(yaml|yml)",
+		})
 	}
 
 	// Enum on region
@@ -96,9 +108,15 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 	propWM, _ := jobSchema.Definitions["V2Job"].Properties.Get("runs-on")
 	wmSchema := propWM.(*jsonschema.Schema)
 	if len(workerModels) > 0 {
+		wmSchema.AnyOf = make([]*jsonschema.Schema, 0)
+		enumSchema := &jsonschema.Schema{}
 		for _, wmName := range workerModels {
-			wmSchema.Enum = append(wmSchema.Enum, wmName)
+			enumSchema.Enum = append(enumSchema.Enum, wmName)
 		}
+		wmSchema.AnyOf = append(wmSchema.AnyOf, enumSchema)
+		wmSchema.AnyOf = append(wmSchema.AnyOf, &jsonschema.Schema{
+			Pattern: "^.cds/worker-models/.*.(yaml|yml)",
+		})
 	}
 
 	return jobSchema
@@ -140,6 +158,8 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 	workflowSchema.Definitions["WorkflowOnPullRequestComment"] = workflowOn.Definitions["WorkflowOnPullRequestComment"]
 	workflowSchema.Definitions["WorkflowOnModelUpdate"] = workflowOn.Definitions["WorkflowOnModelUpdate"]
 	workflowSchema.Definitions["WorkflowOnWorkflowUpdate"] = workflowOn.Definitions["WorkflowOnWorkflowUpdate"]
+	workflowSchema.Definitions["WorkflowOnSchedule"] = workflowOn.Definitions["WorkflowOnSchedule"]
+	workflowSchema.Definitions["WorkflowOnRun"] = workflowOn.Definitions["WorkflowOnRun"]
 
 	// Prop On
 	propsOn := &jsonschema.Schema{
@@ -158,4 +178,20 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 	workflowSchema.Definitions["V2Workflow"].Properties.Set("on", propsOn)
 
 	return workflowSchema
+}
+
+func GetWorkflowTemplateJsonSchema() *jsonschema.Schema {
+	reflector := jsonschema.Reflector{Anonymous: false}
+	templateSchema := reflector.Reflect(&V2WorkflowTemplate{})
+
+	// Replace spec with type string instead of object
+	spec, _ := templateSchema.Definitions["V2WorkflowTemplate"].Properties.Get("spec")
+	if schema, ok := spec.(*jsonschema.Schema); ok {
+		schema.Type = "string"
+		schema.Ref = ""
+		templateSchema.Definitions["V2WorkflowTemplate"].Properties.Set("spec", schema)
+		delete(templateSchema.Definitions, "WorkflowSpec")
+	}
+
+	return templateSchema
 }

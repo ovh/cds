@@ -18,12 +18,12 @@ import (
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 type handledMessage struct {
 	Signature    cdn.Signature
-	Msg          hook.Message
+	Msg          graylog.Message
 	IsTerminated bool
 }
 
@@ -73,13 +73,9 @@ type Configuration struct {
 	PublicHTTP         string                          `toml:"publicHTTP" default:"http://localhost:8089" comment:"Public address to access to CDN HTTP server" json:"public_http"`
 	Database           database.DBConfiguration        `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache              struct {
-		TTL     int   `toml:"ttl" default:"60" json:"ttl"`
-		LruSize int64 `toml:"lruSize" default:"134217728" json:"lruSize" comment:"Redis LRU cache for logs items in bytes (default: 128MB)"`
-		Redis   struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
-			Password string `toml:"password" json:"-"`
-			DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
-		} `toml:"redis" json:"redis"`
+		TTL     int           `toml:"ttl" default:"60" json:"ttl"`
+		LruSize int64         `toml:"lruSize" default:"134217728" json:"lruSize" comment:"Redis LRU cache for logs items in bytes (default: 128MB)"`
+		Redis   sdk.RedisConf `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDN Cache Settings \n######################" json:"cache"`
 	API     service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Log     storage.LogConfig               `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`

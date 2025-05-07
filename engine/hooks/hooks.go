@@ -57,13 +57,24 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 
 	if !sdk.IsURL(s.Cfg.URLPublic) {
-		return fmt.Errorf("Invalid hooks configuration, urlPublic configuration is mandatory")
+		return fmt.Errorf("invalid hooks configuration, urlPublic configuration is mandatory")
 	}
 
 	if s.Cfg.RepositoryEventRetention == 0 {
 		s.Cfg.RepositoryEventRetention = 30
 	}
-
+	if s.Cfg.OldRepositoryEventQueueLen == 0 {
+		s.Cfg.OldRepositoryEventQueueLen = 200
+	}
+	if s.Cfg.OldRepositoryEventRetry == 0 {
+		s.Cfg.OldRepositoryEventRetry = 1
+	}
+	if s.Cfg.OutgoingEventTTL == 0 {
+		s.Cfg.OutgoingEventTTL = 7
+	}
+	if s.Cfg.AnalysisCheckMaxRetry == 0 {
+		s.Cfg.AnalysisCheckMaxRetry = 30
+	}
 	return nil
 }
 
@@ -91,13 +102,22 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Init the cache
 	var errCache error
-	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.Redis.DbIndex, s.Cfg.Cache.TTL)
+	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
 	if errCache != nil {
-		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
+		return fmt.Errorf("cannot connect to redis instance : %v", errCache)
 	}
 
+	outgoingHookEventTTL := s.Cfg.OutgoingEventTTL * 3600 * 24
+
 	//Init the DAO
-	s.Dao = dao{store: s.Cache}
+	s.Dao = dao{store: s.Cache, outgoingHookEventTTL: outgoingHookEventTTL}
+
+	// Get ui rul
+	config, err := s.Client.ConfigUser()
+	if err != nil {
+		return err
+	}
+	s.UIURL = config.URLUI
 
 	// Get current maintenance state
 	var b bool
@@ -119,14 +139,24 @@ func (s *Service) Serve(c context.Context) error {
 			s.dequeueRepositoryEvent(ctx)
 		})
 
+		s.GoRoutines.RunWithRestart(ctx, "dequeueWorkflowRunOutgoingEvent", func(ctx context.Context) {
+			s.dequeueWorkflowRunOutgoingEvent(ctx)
+		})
+
 		s.GoRoutines.RunWithRestart(ctx, "dequeueRepositoryEventCallback", func(ctx context.Context) {
 			s.dequeueRepositoryEventCallback(ctx)
 		})
 
 		// Reenqueue old repository event
-		s.GoRoutines.RunWithRestart(ctx, "manageOldRepositoryEvent", func(ctx context.Context) {
-			s.manageOldRepositoryEvent(ctx)
-		})
+		if !s.Cfg.DisableRepositoryEventRetry {
+			s.GoRoutines.RunWithRestart(ctx, "manageOldRepositoryEvent", func(ctx context.Context) {
+				s.manageOldRepositoryEvent(ctx)
+			})
+			s.GoRoutines.RunWithRestart(ctx, "manageOldOUtgoingEvent", func(ctx context.Context) {
+				s.manageOldWorkflowRunOutgoingEvent(ctx)
+			})
+		}
+
 		// Delete old repository event
 		s.GoRoutines.RunWithRestart(ctx, "cleanRepositoryEvent", func(ctx context.Context) {
 			s.scheduleCleanOldRepositoryEvent(ctx)
@@ -147,6 +177,10 @@ func (s *Service) Serve(c context.Context) error {
 				cancel()
 			}
 		}()
+
+		s.GoRoutines.RunWithRestart(ctx, "schedulerv2", func(ctx context.Context) {
+			s.schedulerExecutionRoutine(ctx)
+		})
 	}
 
 	if s.Cfg.WebhooksPublicKeySign != "" {

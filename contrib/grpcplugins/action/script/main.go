@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/sdk"
@@ -20,14 +18,13 @@ type runActionScriptPlugin struct {
 }
 
 func main() {
-	actPlugin := runActionScriptPlugin{}
-	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
+	p := runActionScriptPlugin{}
+	if err := actionplugin.Start(context.Background(), &p); err != nil {
 		panic(err)
 	}
-	return
 }
 
-func (actPlugin *runActionScriptPlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
+func (plug *runActionScriptPlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
 		Name:        "script",
 		Author:      "Steven GUIHEUX <steven.guiheux@corp.ovh.com>",
@@ -36,33 +33,39 @@ func (actPlugin *runActionScriptPlugin) Manifest(_ context.Context, _ *empty.Emp
 	}, nil
 }
 
-func (actPlugin *runActionScriptPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+func (plug *runActionScriptPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
+}
+
+func (plug *runActionScriptPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	plug.StreamServer = stream
 	goRoutines := sdk.NewGoRoutines(ctx)
 
 	content := q.GetOptions()["content"]
 
-	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &actPlugin.Common)
+	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &plug.Common)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get working directory: %v", err)
+		return fmt.Errorf("unable to get working directory: %v", err)
 	}
 
 	chanRes := make(chan *actionplugin.ActionResult)
 
 	goRoutines.Exec(ctx, "runActionScriptPlugin-runScript", func(ctx context.Context) {
-		if err := grpcplugins.RunScript(ctx, chanRes, workDirs.WorkingDir, content); err != nil {
-			fmt.Printf("%+v\n", err)
-		}
+		grpcplugins.RunScript(ctx, &plug.Common, chanRes, workDirs.WorkingDir, content)
 	})
 
-	res := &actionplugin.ActionResult{}
+	res := &actionplugin.StreamResult{}
 	select {
 	case <-ctx.Done():
-		fmt.Printf("CDS Worker execution canceled: %v", ctx.Err())
-		return nil, errors.New("CDS Worker execution canceled")
-	case res = <-chanRes:
-		if res.Status != sdk.StatusFail {
-			res.Status = sdk.StatusSuccess
-		}
+		res.Status = sdk.StatusFail
+		res.Details = "CDS Worker execution canceled: " + ctx.Err().Error()
+	case result := <-chanRes:
+		res.Status = result.Status
+		res.Details = result.Details
 	}
-	return res, nil
+	if err := stream.Send(res); err != nil {
+		return err
+	}
+	return nil
 }

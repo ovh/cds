@@ -10,27 +10,49 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (s *Service) getGenerateRepositoryWebHookSecretHandler() service.Handler {
+func (s *Service) postGenerateWorkflowWebHookSecretHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
+		pKey := vars["projectKey"]
 		vcsServerName := vars["vcsServer"]
 		repoName, err := url.PathUnescape(vars["repoName"])
 		if err != nil {
 			return sdk.WithStack(err)
 		}
+		workflowName := vars["workflowName"]
 
-		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsServerName, repoName)
-		return service.WriteJSON(w, sdk.GenerateRepositoryWebhook{Key: key}, http.StatusOK)
+		uuid := sdk.UUID()
+
+		key := sdk.GenerateWorkflowWebHookSecret(s.Cfg.RepositoryWebHookKey, pKey, vcsServerName, repoName, workflowName, uuid)
+		return service.WriteJSON(w, sdk.GeneratedWebhook{Key: key, UUID: uuid, HookPublicURL: s.Cfg.URLPublic}, http.StatusOK)
+	}
+}
+
+func (s *Service) postGenerateRepositoryWebHookSecretHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		pKey := vars["projectKey"]
+		vcsServerName := vars["vcsServer"]
+		repoName, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		uuid := sdk.UUID()
+
+		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, pKey, vcsServerName, repoName, uuid)
+		return service.WriteJSON(w, sdk.GeneratedWebhook{Key: key, UUID: uuid, HookPublicURL: s.Cfg.URLPublic}, http.StatusOK)
 	}
 }
 
@@ -44,6 +66,103 @@ func (s *Service) postRepositoryEventAnalysisCallbackHandler() service.Handler {
 			return err
 		}
 		s.Dao.enqueuedRepositoryEventCallbackIncr()
+		return nil
+	}
+}
+
+func (s *Service) deleteSchedulerByWorkflowHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		vcsServerName := vars["vcsServer"]
+		repoName, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		workflowName := vars["workflowName"]
+
+		if err := s.removeSchedulersAndNextExecution(ctx, vcsServerName, repoName, workflowName); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (s *Service) deleteSchedulerHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		hookID := vars["hookID"]
+
+		exec, err := s.Dao.GetSchedulerExecution(ctx, hookID)
+		if err != nil {
+			return err
+		}
+		if exec == nil {
+			return nil
+		}
+
+		if err := s.Dao.RemoveScheduler(ctx, exec.SchedulerDef.VCSName, exec.SchedulerDef.RepositoryName, exec.SchedulerDef.WorkflowName, hookID); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (s *Service) getAllSchedulersHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		schedulers, err := s.listAllSchedulers(ctx)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, schedulers, http.StatusOK)
+	}
+}
+
+func (s *Service) getWorkflowSchedulersHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		workflowName := vars["workflowName"]
+		vcsServerName := vars["vcsServer"]
+		repoName, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return err
+		}
+
+		schedulers, err := s.listSchedulersByWorkflow(ctx, vcsServerName, repoName, workflowName)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, schedulers, http.StatusOK)
+	}
+}
+
+func (s *Service) geSchedulerExecutionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		hookID := vars["hookID"]
+
+		exec, err := s.Dao.GetSchedulerExecution(ctx, hookID)
+		if err != nil {
+			return err
+		}
+		if exec != nil {
+			return service.WriteJSON(w, exec, http.StatusOK)
+		}
+		return sdk.WithStack(sdk.ErrNotFound)
+	}
+}
+
+func (s *Service) postInstantiateSchedulerHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var hooks []sdk.V2WorkflowHook
+		if err := service.UnmarshalBody(r, &hooks); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		if err := s.instantiateScheduler(ctx, hooks); err != nil {
+			return err
+		}
 		return nil
 	}
 }
@@ -65,32 +184,45 @@ func (s *Service) workflowManualHandler() service.Handler {
 func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.HookManualWorkflowRun) (*sdk.HookRepositoryEvent, error) {
 	repoKey := s.Dao.GetRepositoryMemberKey(runRequest.VCSServer, runRequest.Repository)
 	if s.Dao.FindRepository(ctx, repoKey) == nil {
-		if _, err := s.Dao.CreateRepository(ctx, runRequest.VCSType, runRequest.VCSServer, runRequest.Repository); err != nil {
+		if _, err := s.Dao.CreateRepository(ctx, runRequest.VCSServer, runRequest.Repository); err != nil {
 			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
 		}
 	}
 
-	request, _ := json.Marshal(runRequest.UserRequest)
+	var request []byte
+	if runRequest.UserRequest.Payload != nil {
+		request, _ = json.Marshal(runRequest.UserRequest.Payload)
+	}
+
 	extractedData := sdk.HookRepositoryEventExtractData{
-		CDSEventName:   sdk.WorkflowHookManual,
-		Commit:         runRequest.Commit,
-		Ref:            runRequest.Ref,
-		ProjectManual:  runRequest.Project,
-		WorkflowManual: runRequest.Workflow,
+		CDSEventName: sdk.WorkflowHookEventNameManual,
+		Commit:       runRequest.WorkflowCommit,
+		Ref:          runRequest.WorkflowRef,
+		Manual: sdk.HookRepositoryEventExtractedDataManual{
+			Project:      runRequest.Project,
+			Workflow:     runRequest.Workflow,
+			TargetCommit: runRequest.UserRequest.Sha,
+			TargetBranch: runRequest.UserRequest.Branch,
+			TargetTag:    runRequest.UserRequest.Tag,
+		},
+		DeprecatedAdminMFA: runRequest.AdminMFA,
 	}
 
 	exec := &sdk.HookRepositoryEvent{
-		UUID:           sdk.UUID(),
-		UserID:         runRequest.UserID,
-		Username:       runRequest.Username,
-		EventName:      sdk.WorkflowHookManual,
-		VCSServerType:  runRequest.VCSType,
-		VCSServerName:  runRequest.VCSServer,
-		RepositoryName: runRequest.Repository,
-		Body:           request,
-		Created:        time.Now().UnixNano(),
-		Status:         sdk.HookEventStatusScheduled,
-		ExtractData:    extractedData,
+		UUID:               sdk.UUID(),
+		DeprecatedUserID:   runRequest.UserID,
+		DeprecatedUsername: runRequest.Username,
+		EventName:          sdk.WorkflowHookEventNameManual,
+		VCSServerName:      runRequest.VCSServer,
+		RepositoryName:     runRequest.Repository,
+		Body:               request,
+		Created:            time.Now().UnixNano(),
+		Status:             sdk.HookEventStatusScheduled,
+		ExtractData:        extractedData,
+		Initiator: &sdk.V2Initiator{
+			UserID:         runRequest.UserID,
+			IsAdminWithMFA: runRequest.AdminMFA,
+		},
 	}
 
 	// Save event
@@ -102,9 +234,89 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec); err != nil {
 		return exec, sdk.WrapError(err, "unable to enqueue repository event %s", exec.GetFullName())
 	}
-	s.Dao.enqueuedRepositoryEventIncr()
 
 	return exec, nil
+}
+
+func (s *Service) getOutgoingHooksExecutionsByWorkflowHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		proj := vars["projectKey"]
+		vcs := vars["vcsServer"]
+		workflow := vars["workflowName"]
+		repo, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		events, err := s.Dao.ListWorkflowRunOutgoingEvents(ctx, proj, vcs, repo, workflow)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, events, http.StatusOK)
+	}
+}
+
+func (s *Service) getOutgoingHookExecutionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		vcs := vars["vcsServer"]
+		proj := vars["projectKey"]
+		workflow := vars["workflowName"]
+		hookID := vars["hookID"]
+
+		repo, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		k := strings.ToLower(cache.Key(workflowRunOutgoingEventRootKey, s.Dao.GetOutgoingMemberKey(proj, vcs, repo, workflow), hookID))
+
+		var e sdk.HookWorkflowRunOutgoingEvent
+		find, err := s.Cache.Get(k, &e)
+		if err != nil {
+			return err
+		}
+		if !find {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find outgoing event")
+		}
+		return service.WriteJSON(w, e, http.StatusOK)
+	}
+}
+
+func (s *Service) workflowRunOutgoingEventHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var runRequest sdk.HookWorkflowRunEvent
+		if err := service.UnmarshalBody(r, &runRequest); err != nil {
+			return sdk.WithStack(err)
+		}
+		exec, err := s.handleWorkflowRunOutgoingEvent(ctx, runRequest)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, exec, http.StatusAccepted)
+	}
+}
+
+func (s *Service) handleWorkflowRunOutgoingEvent(ctx context.Context, runRequest sdk.HookWorkflowRunEvent) (*sdk.HookWorkflowRunOutgoingEvent, error) {
+	event := &sdk.HookWorkflowRunOutgoingEvent{
+		UUID:    sdk.UUID(),
+		Created: time.Now().UnixNano(),
+		Status:  sdk.HookEventStatusScheduled,
+		Event:   runRequest,
+	}
+
+	// Save event
+	if err := s.Dao.SaveWorkflowRunOutgoingEvent(ctx, event); err != nil {
+		return nil, sdk.WrapError(err, "unable to create repository event %s", event.GetFullName())
+	}
+
+	// Enqueue event
+	if err := s.Dao.EnqueueWorkflowRunOutgoingEvent(ctx, event); err != nil {
+		return event, sdk.WrapError(err, "unable to enqueue repository event %s", event.GetFullName())
+	}
+
+	return event, nil
 }
 
 func (s *Service) repositoryHooksHandler() service.Handler {
@@ -125,7 +337,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			return err
 		}
 
-		exec, err := s.handleRepositoryEvent(ctx, vcsType, vcsName, repoName, extractData, body)
+		exec, err := s.handleRepositoryEvent(ctx, vcsName, strings.ToLower(repoName), extractData, body)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return err
@@ -135,9 +347,49 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 	}
 }
 
+func (s *Service) workflowWebHookHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projKey := vars["projectKey"]
+		vcsServerName := vars["vcsServer"]
+		repoName, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		repoName = strings.ToLower(repoName)
+		wkfName := vars["workflowName"]
+		webhookID := vars["uuid"]
+		defer r.Body.Close()
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
+		}
+
+		extractedData := sdk.HookRepositoryEventExtractData{
+			WebHook: sdk.HookRepositoryEventExtractedDataWebHook{
+				Project:    projKey,
+				VCS:        vcsServerName,
+				Repository: repoName,
+				Workflow:   wkfName,
+				ID:         webhookID,
+			},
+			CDSEventName: sdk.WorkflowHookEventNameWebHook,
+		}
+
+		exec, err := s.handleRepositoryEvent(ctx, vcsServerName, repoName, extractedData, body)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, exec, http.StatusAccepted)
+
+	}
+}
+
 func (s *Service) repositoryWebHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
+		projKey := vars["projectKey"]
 		vcsServerType := vars["vcsServerType"]
 		vcsServerName := vars["vcsServer"]
 
@@ -156,8 +408,9 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+		extractedData.HookProjectKey = projKey
 
-		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, repoName, extractedData, body)
+		exec, err := s.handleRepositoryEvent(ctx, vcsServerName, strings.ToLower(repoName), extractedData, body)
 		if err != nil {
 			return err
 		}
@@ -166,10 +419,10 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 	}
 }
 
-func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, extractedData sdk.HookRepositoryEventExtractData, event []byte) (*sdk.HookRepositoryEvent, error) {
+func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerName string, repoName string, extractedData sdk.HookRepositoryEventExtractData, event []byte) (*sdk.HookRepositoryEvent, error) {
 	repoKey := s.Dao.GetRepositoryMemberKey(vcsServerName, repoName)
 	if s.Dao.FindRepository(ctx, repoKey) == nil {
-		if _, err := s.Dao.CreateRepository(ctx, vcsServerType, vcsServerName, repoName); err != nil {
+		if _, err := s.Dao.CreateRepository(ctx, vcsServerName, repoName); err != nil {
 			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
 		}
 	}
@@ -178,7 +431,6 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType strin
 		UUID:           sdk.UUID(),
 		EventName:      extractedData.CDSEventName, // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest, sdk.WorkflowHookEventPullRequestComment
 		EventType:      extractedData.CDSEventType, // WorkflowHookEventPullRequestTypeOpened, WorkflowHookEventPullRequestTypeEdited, etc...
-		VCSServerType:  vcsServerType,
 		VCSServerName:  vcsServerName,
 		RepositoryName: repoName,
 		Body:           event,
@@ -196,7 +448,6 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType strin
 	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec); err != nil {
 		return exec, sdk.WrapError(err, "unable to enqueue repository event %s", exec.GetFullName())
 	}
-	s.Dao.enqueuedRepositoryEventIncr()
 
 	return exec, nil
 }
@@ -749,7 +1000,14 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	if float64(hookEventCallbackIn) > float64(hookEventCallbackOut) {
 		status = sdk.MonitoringStatusWarn
 	}
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceRepositoryEventCallbackEvent", Value: fmt.Sprintf("%d/%d", hookEventIn, hookEventOut), Status: status})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceRepositoryEventCallbackEvent", Value: fmt.Sprintf("%d/%d", hookEventCallbackIn, hookEventCallbackOut), Status: status})
+
+	hookOutgoingEventIn, hookOutgoingEventOut := s.Dao.OutgoingEventCallbackBalance()
+	status = sdk.MonitoringStatusOK
+	if float64(hookOutgoingEventIn) > float64(hookOutgoingEventOut) {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceOutgoingEvent", Value: fmt.Sprintf("%d/%d", hookOutgoingEventIn, hookOutgoingEventOut), Status: status})
 
 	var nbHooksKafkaTotal int64
 
@@ -841,7 +1099,7 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 				e.LastError = TaskExecutionDone
 				e.NbErrors = s.Cfg.RetryError + 1
 				s.Dao.SaveTaskExecution(e)
-				log.Info(ctx, "Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stoppped", uuid, timestamp)
+				log.Info(ctx, "Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stopped", uuid, timestamp)
 				return nil
 			}
 		}

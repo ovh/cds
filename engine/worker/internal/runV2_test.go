@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/engine/worker/internal/plugin/mock"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -17,10 +16,44 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
+
+func TestIntegToEnvVar(t *testing.T) {
+	integ := sdk.JobIntegrationsContext{
+		Name: "myInteg",
+		Config: sdk.JobIntegrationsContextConfig{
+			"build": map[string]interface{}{
+				"info": map[string]interface{}{
+					"prefix": "myvalue",
+					"prefixx": map[string]interface{}{
+						"tot": "titi",
+					},
+				},
+				"titi": map[string]interface{}{
+					"subPrefix": "my2ndValue",
+				},
+			},
+			"url":        "myurl",
+			"token":      "mytoken",
+			"token_name": "myuser",
+		},
+	}
+
+	vars := computeIntegrationConfigToEnvVar(integ, "ARTIFACT_MANAGER")
+
+	require.Equal(t, 7, len(vars))
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_INFO_PREFIX"], "myvalue")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_INFO_PREFIXX_TOT"], "titi")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_TITI_SUBPREFIX"], "my2ndValue")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_URL"], "myurl")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_NAME"], "myInteg")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN"], "mytoken")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME"], "myuser")
+}
 
 func TestRunJobContinueOnError(t *testing.T) {
 	var w = new(CurrentWorker)
@@ -49,7 +82,7 @@ func TestRunJobContinueOnError(t *testing.T) {
 	w.SetContextForTestJobV2(t, ctx)
 	w.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
 
-	l, h, err := cdslog.New(ctx, &hook.Config{Hostname: ""})
+	l, h, err := cdslog.New(ctx, &graylog.Config{Hostname: ""})
 	require.NoError(t, err)
 	w.SetGelfLogger(h, l)
 
@@ -102,7 +135,7 @@ func TestRunJobContinueAlways(t *testing.T) {
 	w.SetContextForTestJobV2(t, ctx)
 	w.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
 
-	l, h, err := cdslog.New(ctx, &hook.Config{Hostname: ""})
+	l, h, err := cdslog.New(ctx, &graylog.Config{Hostname: ""})
 	require.NoError(t, err)
 	w.SetGelfLogger(h, l)
 
@@ -257,11 +290,6 @@ func TestCurrentWorker_executeHooksSetupV2(t *testing.T) {
 			return nil, sdk.ErrNotFound
 		},
 	)
-	mockClient.EXPECT().ProjectIntegrationGet(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
-			return sdk.ProjectIntegration{}, nil
-		},
-	)
 
 	// Setup test worker
 	wk := &CurrentWorker{
@@ -288,7 +316,12 @@ func TestCurrentWorker_executeHooksSetupV2(t *testing.T) {
 	}
 	wk.SetContextForTestJobV2(t, context.TODO())
 	wk.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
-	wk.currentJobV2.runJobContext.Integrations = &sdk.JobIntegrationsContext{ArtifactManager: "foo"}
+	wk.currentJobV2.runJobContext.Integrations = &sdk.JobIntegrationsContexts{
+		ArtifactManager: sdk.JobIntegrationsContext{
+			Name:   "foo",
+			Config: sdk.JobIntegrationsContextConfig{},
+		},
+	}
 	wk.currentJobV2.integrations = make(map[string]sdk.ProjectIntegration)
 
 	wk.hooks = []workerHook{{

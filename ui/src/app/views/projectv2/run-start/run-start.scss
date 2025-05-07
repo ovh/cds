@@ -1,0 +1,27 @@
+nz-result {
+  .message {
+    width: 100%;
+    text-align: center;
+  }
+
+  [nz-result-extra] {
+    [nz-button] {
+      color: inherit;
+    }
+  }
+
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+}
+
+nz-code-editor {
+  height: 300px;
+  border-left: 1px solid #f0f0f0;
+
+  :host-context(.night) & {
+      background-color: #1e1e1e;
+      border-left: 1px solid #303030;
+  }
+}

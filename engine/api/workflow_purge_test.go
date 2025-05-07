@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
@@ -17,6 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/artifact_manager/mock_artifact_manager"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"go.uber.org/mock/gomock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

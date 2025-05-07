@@ -47,10 +47,11 @@ type yamlSchemaPath struct {
 }
 
 type yamlSchemaPathV2 struct {
-	Workflow    string
-	WorkerModel string
-	Action      string
-	Job         string
+	Workflow         string
+	WorkerModel      string
+	Action           string
+	Job              string
+	WorkflowTemplate string
 }
 
 type yamlSchemaInstaller interface {
@@ -106,6 +107,11 @@ func toolsYamlSchemaRun(v cli.Values) error {
 		return err
 	}
 
+	v2WorkflowTemplate, err := client.UserGetSchemaV2(context.Background(), sdk.EntityTypeWorkflowTemplate)
+	if err != nil {
+		return err
+	}
+
 	var installer yamlSchemaInstaller
 
 	switch v.GetString("ide-name") {
@@ -135,10 +141,11 @@ func toolsYamlSchemaRun(v cli.Values) error {
 	}
 
 	pathsV2 := yamlSchemaPathV2{
-		Workflow:    path.Join(targetFolder, "workflow.v2.schema.json"),
-		WorkerModel: path.Join(targetFolder, "worker-model.v2.schema.json"),
-		Action:      path.Join(targetFolder, "action.v2.schema.json"),
-		Job:         path.Join(targetFolder, "job.v2.schema.json"),
+		Workflow:         path.Join(targetFolder, "workflow.v2.schema.json"),
+		WorkerModel:      path.Join(targetFolder, "worker-model.v2.schema.json"),
+		Action:           path.Join(targetFolder, "action.v2.schema.json"),
+		Job:              path.Join(targetFolder, "job.v2.schema.json"),
+		WorkflowTemplate: path.Join(targetFolder, "workflow-template.v2.schema.json"),
 	}
 
 	if err := os.WriteFile(paths.Workflow, []byte(v1.Workflow), 0644); err != nil {
@@ -180,6 +187,11 @@ func toolsYamlSchemaRun(v cli.Values) error {
 		return cli.WrapError(err, "Cannot write file at %s", pathsV2.Job)
 	}
 	fmt.Printf("File %s successfully written.\n", pathsV2.Job)
+
+	if err := os.WriteFile(pathsV2.WorkflowTemplate, v2WorkflowTemplate, 0644); err != nil {
+		return cli.WrapError(err, "Cannot write file at %s", pathsV2.WorkflowTemplate)
+	}
+	fmt.Printf("File %s successfully written.\n", pathsV2.WorkflowTemplate)
 
 	paths.Workflow = "file://" + paths.Workflow
 	paths.Pipeline = "file://" + paths.Pipeline

@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -11,14 +13,17 @@ import (
 	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
+	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -40,6 +45,8 @@ func (api *API) postJobRunStepHandler() ([]service.RbacChecker, service.Handler)
 		if err != nil {
 			return err
 		}
+
+		service.TrackActionMetadataFromFields(w, runjob)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -74,6 +81,8 @@ func (api *API) postRunInfoHandler() ([]service.RbacChecker, service.Handler) {
 
 		runInfo.WorkflowRunID = runjob.WorkflowRunID
 
+		service.TrackActionMetadataFromFields(w, runjob)
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -101,6 +110,8 @@ func (api *API) postJobRunInfoHandler() ([]service.RbacChecker, service.Handler)
 			return err
 		}
 
+		service.TrackActionMetadataFromFields(w, runjob)
+
 		runJobInfo := &sdk.V2WorkflowRunJobInfo{
 			Level:            jobInfo.Level,
 			Message:          jobInfo.Message,
@@ -121,31 +132,116 @@ func (api *API) postJobRunInfoHandler() ([]service.RbacChecker, service.Handler)
 	}
 }
 
-func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.jobRunList),
+func (api *API) getJobsQueuedRegionalizedHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunListRegionalized),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			regionName := vars["regionName"]
+
+			osarch := FormStringSlice(req, "osarch")
+			if len(osarch) == 0 {
+				osarch = []string{"linux/amd64"}
+			}
 			hatchConsumer := getHatcheryConsumer(ctx)
+
+			hatch, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), hatchConsumer.AuthConsumerHatchery.HatcheryID)
+			if err != nil {
+				return err
+			}
+			jobs, err := workflow_v2.LoadQueuedRunJobByModelTypeAndRegionAndModelOSArch(ctx, api.mustDB(), regionName, hatch.ModelType, osarch)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, jobs, http.StatusOK)
+		}
+}
+
+func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			u := getUserConsumer(ctx)
-			switch {
-			case hatchConsumer != nil:
-				hatch, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), hatchConsumer.AuthConsumerHatchery.HatcheryID)
-				if err != nil {
-					return err
-				}
-				jobs, err := workflow_v2.LoadQueuedRunJobByModelTypeAndRegion(ctx, api.mustDB(), regionName, hatch.ModelType)
-				if err != nil {
-					return err
-				}
-				return service.WriteJSON(w, jobs, http.StatusOK)
-			case u != nil:
-				// TODO
-				// check permission region / project / admin
-				return sdk.WithStack(sdk.ErrNotImplemented)
+
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
-			return nil
+			statuses := req.URL.Query()["status"]
+			offset := service.FormInt(req, "offset")
+			limit := service.FormInt(req, "limit")
+			if offset < 0 {
+				offset = 0
+			}
+			if limit == 0 {
+				limit = 10
+			}
+			if limit > 100 {
+				limit = 100
+			}
+
+			// Check status filter
+			statusFilter := make([]sdk.V2WorkflowRunJobStatus, 0)
+			for _, s := range statuses {
+				jobStatus, err := sdk.NewV2WorkflowRunJobStatusFromString(s)
+				if err != nil {
+					return err
+				}
+				if jobStatus.IsTerminated() {
+					continue
+				}
+				statusFilter = append(statusFilter, jobStatus)
+			}
+			if len(statusFilter) == 0 {
+				statusFilter = []sdk.V2WorkflowRunJobStatus{sdk.V2WorkflowRunJobStatusBuilding, sdk.V2WorkflowRunJobStatusWaiting}
+			}
+
+			var err error
+			pKeys := make([]string, 0)
+			regionsFilter := make([]string, 0)
+			if !isAdmin(ctx) {
+				pKeys, err = rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
+				if err != nil {
+					return err
+				}
+				if len(pKeys) == 0 {
+					w.Header().Set("X-Total-Count", "0")
+					return service.WriteJSON(w, []sdk.V2WorkflowRunJob{}, http.StatusOK)
+				}
+
+				rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, api.mustDB(), sdk.RegionRoleExecute, u.AuthConsumerUser.AuthentifiedUserID)
+				if err != nil {
+					return err
+				}
+				regionIDs := sdk.StringSlice{}
+				for _, r := range rbacRegions {
+					regionIDs = append(regionIDs, r.RegionID)
+				}
+				regionIDs.Unique()
+
+				allowedRegions, err := region.LoadRegionByIDs(ctx, api.mustDB(), regionIDs)
+				if err != nil {
+					return err
+				}
+				for _, r := range allowedRegions {
+					regionsFilter = append(regionsFilter, r.Name)
+				}
+				if len(regionsFilter) == 0 {
+					w.Header().Set("X-Total-Count", "0")
+					return service.WriteJSON(w, []sdk.V2WorkflowRunJob{}, http.StatusOK)
+				}
+			}
+
+			count, err := workflow_v2.CountRunJobsByProjectStatusAndRegions(ctx, api.mustDB(), pKeys, statusFilter, regionsFilter)
+			if err != nil {
+				return err
+			}
+
+			jobs, err := workflow_v2.LoadRunJobsByProjectStatusAndRegions(ctx, api.mustDB(), pKeys, statusFilter, regionsFilter, offset, limit)
+			if err != nil {
+				return err
+			}
+
+			w.Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
+			return service.WriteJSON(w, jobs, http.StatusOK)
 		}
 }
 
@@ -165,6 +261,10 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			if err != nil {
 				return err
 			}
+			service.TrackActionMetadataFromFields(w, jobRun)
+
+			ctx = context.WithValue(ctx, cdslog.WorkflowRunID, jobRun.WorkflowRunID)
+
 			if jobRun.Region != regionName {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
@@ -176,6 +276,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
 				trace.StringAttribute(telemetry.TagWorkflow, jobRun.WorkflowName),
 				trace.StringAttribute(telemetry.TagProjectKey, jobRun.ProjectKey),
+				trace.StringAttribute(telemetry.TagWorkflowRun, jobRun.WorkflowRunID),
 				trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(jobRun.RunNumber, 10)))
 
 			hatchConsumer := getHatcheryConsumer(ctx)
@@ -215,8 +316,9 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			if err := sdk.WithStack(tx.Commit()); err != nil {
 				return err
 			}
+			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
 
-			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.UserID, jobRun.WorkflowName, jobRun.RunNumber)
+			api.manageEndConcurrency(jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.WorkflowRunID, jobRun.ID, jobRun.Concurrency)
 
 			api.GoRoutines.Exec(ctx, "postJobResultHandler.event", func(ctx context.Context) {
 				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
@@ -224,7 +326,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *run, *jobRun)
 			})
 
 			return nil
@@ -241,6 +343,7 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 			if err != nil {
 				return err
 			}
+			service.TrackActionMetadataFromFields(w, runJob)
 
 			var runResult sdk.V2WorkflowRunResult
 			if err := service.UnmarshalBody(req, &runResult); err != nil {
@@ -251,10 +354,6 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 			runResult.WorkflowRunJobID = runJob.ID
 			runResult.WorkflowRunID = runJob.WorkflowRunID
 			runResult.RunAttempt = runJob.RunAttempt
-			// TODO handle integration
-			/*if runJob.Integrations != nil {
-				runResult.ArtifactManagerIntegration = runJob.Integrations.ArtifactManager
-			}*/
 
 			if runResult.Status == "" {
 				return sdk.WithStack(sdk.ErrWrongRequest)
@@ -277,6 +376,25 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 		}
 }
 
+func (api *API) putJobRunResultSynchronizeHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunUpdate, api.isWorker),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			jobRunID := vars["runJobID"]
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
+			if err != nil {
+				return err
+			}
+
+			if err := api.synchronizeRunResults(ctx, api.mustDB(), runJob.WorkflowRunID); err != nil {
+				return err
+			}
+
+			return nil
+		}
+}
+
 func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.jobRunUpdate),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -287,6 +405,8 @@ func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler
 			if err != nil {
 				return err
 			}
+
+			service.TrackActionMetadataFromFields(w, runJob)
 
 			var runResult sdk.V2WorkflowRunResult
 			if err := service.UnmarshalBody(req, &runResult); err != nil {
@@ -324,6 +444,39 @@ func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler
 		}
 }
 
+func (api *API) getCacheLinkHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunUpdate),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			runJobID := vars["runJobID"]
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), runJobID)
+			if err != nil {
+				return err
+			}
+
+			cacheKey, err := url.PathUnescape(vars["cacheKey"])
+			if err != nil {
+				return err
+			}
+
+			p, err := project.Load(ctx, api.mustDBWithCtx(ctx), runJob.ProjectKey)
+			if err != nil {
+				return err
+			}
+
+			itemsLinks, err := cdn.ListItems(ctx, api.mustDBWithCtx(ctx), sdk.CDNTypeItemWorkerCacheV2, map[string]string{
+				cdn.ParamProjectKey: p.Key,
+				cdn.ParamCacheTag:   cacheKey,
+			})
+			if err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, itemsLinks, http.StatusOK)
+		}
+}
+
 func (api *API) getJobRunResultHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.jobRunRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -357,7 +510,7 @@ func (api *API) getJobRunResultsHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), runJob.WorkflowRunID, runJob.RunAttempt)
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), runJob.WorkflowRunID, runJob.RunAttempt)
 			if err != nil {
 				return err
 			}
@@ -383,8 +536,21 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s taken by hatchery %s", jobRun.ID, regionName, hatch.Name)
 			}
 
+			service.TrackActionMetadataFromFields(w, jobRun)
+
 			jobRun.Status = sdk.V2WorkflowRunJobStatusWaiting
 			jobRun.HatcheryName = ""
+
+			runInfos, err := workflow_v2.LoadRunJobInfosByRunJobID(ctx, api.mustDB(), jobRun.ID)
+			if err != nil {
+				return err
+			}
+			nbHatcheryStopWarning := int64(0)
+			for _, ri := range runInfos {
+				if strings.Contains(ri.Message, "stops working on the job") {
+					nbHatcheryStopWarning++
+				}
+			}
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -392,10 +558,7 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 			}
 			defer tx.Rollback() // nolint
 
-			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
-				return err
-			}
-
+			nbHatcheryStopWarning++
 			info := sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    jobRun.WorkflowRunID,
 				IssuedAt:         time.Now(),
@@ -407,18 +570,41 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return err
 			}
 
+			if nbHatcheryStopWarning >= api.Config.WorkflowV2.JobSchedulingMaxErrors {
+				jobRun.Status = sdk.V2WorkflowRunJobStatusFail
+
+				info := sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    jobRun.WorkflowRunID,
+					IssuedAt:         time.Now(),
+					Level:            sdk.WorkflowRunInfoLevelError,
+					WorkflowRunJobID: jobRun.ID,
+					Message:          "unable to start job: too many hatchery failed attempts",
+				}
+				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
+					return err
+				}
+			}
+
+			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
+				return err
+			}
+
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
 
-			// Enqueue the job
+			api.manageEndConcurrency(jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.WorkflowRunID, jobRun.ID, jobRun.Concurrency)
+
+			if nbHatcheryStopWarning >= 0 {
+				api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
+			}
 			api.GoRoutines.Exec(ctx, "deleteHatcheryReleaseJobRunHandler.event", func(ctx context.Context) {
 				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
 				if err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, *run, *jobRun)
 			})
 			return nil
 		}
@@ -458,6 +644,8 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 			if err != nil {
 				return err
 			}
+			service.TrackActionMetadataFromFields(w, jobRun)
+
 			if jobRun.Region != regionName {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
@@ -508,7 +696,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobScheduled, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobScheduled, *run, *jobRun)
 			})
 			return service.WriteJSON(w, jobRun, http.StatusOK)
 
@@ -534,6 +722,8 @@ func (api *API) getJobRunQueueInfoHandler() ([]service.RbacChecker, service.Hand
 			if err != nil {
 				return err
 			}
+
+			service.TrackActionMetadataFromFields(w, run)
 
 			hatch := getHatcheryConsumer(ctx)
 			switch {

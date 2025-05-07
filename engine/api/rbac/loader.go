@@ -15,21 +15,25 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, *rbac) error
 
 // LoadOptions provides all options on rbac loads functions
 var LoadOptions = struct {
-	Default          LoadOptionFunc
-	LoadRBACGlobal   LoadOptionFunc
-	LoadRBACProject  LoadOptionFunc
-	LoadRBACHatchery LoadOptionFunc
-	LoadRBACRegion   LoadOptionFunc
-	LoadRBACWorkflow LoadOptionFunc
-	All              LoadOptionFunc
+	Default               LoadOptionFunc
+	LoadRBACGlobal        LoadOptionFunc
+	LoadRBACProject       LoadOptionFunc
+	LoadRBACHatchery      LoadOptionFunc
+	LoadRBACRegion        LoadOptionFunc
+	LoadRBACWorkflow      LoadOptionFunc
+	LoadRBACVariableSet   LoadOptionFunc
+	LoadRbacRegionProject LoadOptionFunc
+	All                   LoadOptionFunc
 }{
-	Default:          loadDefault,
-	LoadRBACGlobal:   loadRBACGlobal,
-	LoadRBACProject:  loadRBACProject,
-	LoadRBACHatchery: loadRBACHatchery,
-	LoadRBACRegion:   loadRBACRegion,
-	LoadRBACWorkflow: loadRBACWorkflow,
-	All:              loadAll,
+	Default:               loadDefault,
+	LoadRBACGlobal:        loadRBACGlobal,
+	LoadRBACProject:       loadRBACProject,
+	LoadRBACHatchery:      loadRBACHatchery,
+	LoadRBACRegion:        loadRBACRegion,
+	LoadRBACWorkflow:      loadRBACWorkflow,
+	LoadRBACVariableSet:   loadRBACVariableSet,
+	LoadRbacRegionProject: loadRBACRegionProject,
+	All:                   loadAll,
 }
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
@@ -57,6 +61,42 @@ func loadAll(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 	}
 	if err := loadRBACWorkflow(ctx, db, rbac); err != nil {
 		return err
+	}
+	if err := loadRBACVariableSet(ctx, db, rbac); err != nil {
+		return err
+	}
+	if err := loadRBACRegionProject(ctx, db, rbac); err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadRBACVariableSet(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
+	query := "SELECT * FROM rbac_variableset WHERE rbac_id = $1"
+	var rbacVariableSets []rbacVariableSet
+	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacVariableSets); err != nil {
+		return err
+	}
+	rbac.VariableSets = make([]sdk.RBACVariableSet, 0, len(rbacVariableSets))
+	for i := range rbacVariableSets {
+		rbacVS := &rbacVariableSets[i]
+		isValid, err := gorpmapping.CheckSignature(rbacVS, rbacVS.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_variableset %d", rbacVS.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "loadRBACVariableSet> rbac_variableset %d data corrupted", rbacVS.ID)
+			continue
+		}
+		if !rbacVS.AllUsers {
+			if err := loadRBACVariableSetUsers(ctx, db, rbacVS); err != nil {
+				return err
+			}
+			if err := loadRBACVariableSetGroups(ctx, db, rbacVS); err != nil {
+				return err
+			}
+		}
+		rbac.VariableSets = append(rbac.VariableSets, rbacVS.RBACVariableSet)
 	}
 	return nil
 }
@@ -148,6 +188,33 @@ func loadRBACGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 			return err
 		}
 		rbac.Global = append(rbac.Global, rg.RBACGlobal)
+	}
+	return nil
+}
+
+func loadRBACRegionProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
+	query := "SELECT * FROM rbac_region_project WHERE rbac_id = $1"
+	var rbacRegionProjects []rbacRegionProject
+	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacRegionProjects); err != nil {
+		return err
+	}
+	rbac.RegionProjects = make([]sdk.RBACRegionProject, 0, len(rbacRegionProjects))
+	for i := range rbacRegionProjects {
+		rbacRegionProject := &rbacRegionProjects[i]
+		isValid, err := gorpmapping.CheckSignature(rbacRegionProject, rbacRegionProject.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_region_project %d", rbacRegionProject.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "loadRBACRegionProject> rbac_region_project %d data corrupted", rbacRegionProject.ID)
+			continue
+		}
+		if !rbacRegionProject.AllProjects {
+			if err := loadRBACRegionProjectKeys(ctx, db, rbacRegionProject); err != nil {
+				return err
+			}
+		}
+		rbac.RegionProjects = append(rbac.RegionProjects, rbacRegionProject.RBACRegionProject)
 	}
 	return nil
 }

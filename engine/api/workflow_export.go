@@ -39,7 +39,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 		wk, err := workflow.Export(ctx, api.mustDB(), api.Cache, *proj, name, opts...)
 		if err != nil {
@@ -58,7 +58,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 	}
 }
 
-//Pull is only in yaml
+// Pull is only in yaml
 func (api *API) getWorkflowPullHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -73,7 +73,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, *proj, name, project.EncryptWithBuiltinKey, opts...)

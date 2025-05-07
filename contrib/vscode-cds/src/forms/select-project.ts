@@ -14,10 +14,6 @@ class ProjectPickItem implements QuickPickItem {
         this.label = project?.key || '';
         this.description = project?.name || '';
         this.detail = project?.description || '';
-
-        if (project?.favorite === 'true') {
-            this.iconPath = new ThemeIcon('star');
-        }
     }
 }
 
@@ -47,16 +43,7 @@ export function selectProject(): Promise<Project> {
         });
 
         CDS.getProjects().then(projects => {
-            const favorites = projects.filter(p => p.favorite === 'true');
-            const other = projects.filter(p => p.favorite === 'false');
-
-            const items: ProjectPickItem[] = [...favorites.map(p => new ProjectPickItem(p))];
-
-            if (items) {
-                items.push(new ProjectPickItemSeparator());
-            }
-
-            items.push(...other.map(p => new ProjectPickItem(p)));
+            const items: ProjectPickItem[] = [...projects.map(p => new ProjectPickItem(p))];
 
             Journal.logInfo(JSON.stringify(items));
 

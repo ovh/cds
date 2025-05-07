@@ -45,6 +45,7 @@ func Parse(ctx context.Context, db gorp.SqlExecutor, projID int64, kname string,
 			}
 			k.Public = string(pubBytes)
 			k.KeyID = pgpEntity.PrimaryKey.KeyIdShortString()
+			k.LongKeyID = pgpEntity.PrimaryKey.KeyIdString()
 		//Compute SSH Keys
 		case sdk.KeyTypeSSH:
 			privKey, errPrivKey := getSSHPrivateKey(strings.NewReader(privateKey))

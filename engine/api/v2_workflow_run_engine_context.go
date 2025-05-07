@@ -4,26 +4,25 @@ import (
 	"context"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
-func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) sdk.JobsResultContext {
-	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
+func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) (sdk.JobsResultContext, sdk.JobsGateContext) {
+	runResultMap := make(map[string][]sdk.V2WorkflowRunResult)
 	for _, rr := range runResults {
-		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
-			continue
-		}
-		detail := rr.Detail.Data.(*sdk.V2WorkflowRunResultVariableDetail)
 		jobResults, has := runResultMap[rr.WorkflowRunJobID]
 		if !has {
-			jobResults = make([]sdk.V2WorkflowRunResultVariableDetail, 0)
+			jobResults = make([]sdk.V2WorkflowRunResult, 0)
 		}
-		jobResults = append(jobResults, *detail)
+		jobResults = append(jobResults, rr)
 		runResultMap[rr.WorkflowRunJobID] = jobResults
 	}
 
 	// Compute jobs context
 	jobsContext := sdk.JobsResultContext{}
+	gatesContext := sdk.JobsGateContext{}
 	matrixJobs := make(map[string][]sdk.JobResultContext)
+
 	for _, rj := range runJobs {
 		if rj.Status.IsTerminated() && len(rj.Matrix) == 0 {
 			result := sdk.JobResultContext{
@@ -32,10 +31,26 @@ func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []
 			}
 			if rr, has := runResultMap[rj.ID]; has {
 				for _, r := range rr {
-					result.Outputs[r.Name] = r.Value
+					switch r.Type {
+					case sdk.V2WorkflowRunResultTypeVariable, sdk.V2WorkflowRunResultVariableDetailType:
+						x, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultVariableDetail](&r)
+						if err != nil {
+							log.ErrorWithStackTrace(ctx, err)
+							continue
+						}
+						result.Outputs[x.Name] = x.Value
+					default:
+						if result.JobRunResults == nil {
+							result.JobRunResults = sdk.JobRunResults{}
+						}
+						result.JobRunResults[r.Name()], _ = r.GetDetail()
+					}
 				}
 			}
 			jobsContext[rj.JobID] = result
+			if len(rj.GateInputs) > 0 {
+				gatesContext[rj.JobID] = rj.GateInputs
+			}
 		} else if len(rj.Matrix) > 0 {
 			jobs, has := matrixJobs[rj.JobID]
 			if !has {
@@ -48,17 +63,55 @@ func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []
 			rr, has := runResultMap[rj.ID]
 			if has {
 				for _, r := range rr {
-					jobResultContext.Outputs[r.Name] = r.Value
+					switch r.Type {
+					case sdk.V2WorkflowRunResultTypeVariable, sdk.V2WorkflowRunResultVariableDetailType:
+						x, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultVariableDetail](&r)
+						if err != nil {
+							log.ErrorWithStackTrace(ctx, err)
+							continue
+						}
+						jobResultContext.Outputs[x.Name] = x.Value
+					default:
+						if jobResultContext.JobRunResults == nil {
+							jobResultContext.JobRunResults = sdk.JobRunResults{}
+						}
+						jobResultContext.JobRunResults[r.Name()], _ = r.GetDetail()
+					}
 				}
 			}
 			jobs = append(jobs, jobResultContext)
 			matrixJobs[rj.JobID] = jobs
+			if len(rj.GateInputs) > 0 {
+				gatesContext[rj.JobID] = rj.GateInputs
+			}
 		}
 	}
 
-	// Manage matric jobs
+	// Manage matrix jobs
 nextjob:
 	for k := range matrixJobs {
+		// Check if all permutations have run
+		var jobDef sdk.V2Job
+		for _, rj := range runJobs {
+			if rj.JobID == k {
+				jobDef = rj.Job
+				break
+			}
+		}
+		var nbPermutations = 1
+		for _, v := range jobDef.Strategy.Matrix {
+			if vString, ok := v.([]string); ok {
+				nbPermutations *= len(vString)
+			} else if vInterface, ok := v.([]interface{}); ok {
+				nbPermutations *= len(vInterface)
+			}
+		}
+		// if there is still permutation to run, ignore this job context
+		if nbPermutations > len(matrixJobs[k]) {
+			continue
+		}
+
+		// Compute job status
 		outputs := sdk.JobResultOutput{}
 		var finalStatus sdk.V2WorkflowRunJobStatus
 		for _, rj := range matrixJobs[k] {
@@ -89,26 +142,43 @@ nextjob:
 		jobsContext[k] = result
 	}
 
-	return jobsContext
+	return jobsContext, gatesContext
 }
 
-func buildContextForJob(_ context.Context, allJobs map[string]sdk.V2Job, runJobsContexts sdk.JobsResultContext, runContext sdk.WorkflowRunContext, jobID string) sdk.WorkflowRunJobsContext {
+func buildContextForJob(ctx context.Context, workflow sdk.V2Workflow, runJobsContexts sdk.JobsResultContext, runContext sdk.WorkflowRunContext, stages sdk.WorkflowRunStages, jobID string) sdk.WorkflowRunJobsContext {
 	jobsContext := sdk.JobsResultContext{}
-	buildAncestorJobContext(jobID, allJobs, runJobsContexts, jobsContext)
+	buildAncestorJobContext(ctx, jobID, workflow, runJobsContexts, stages, jobsContext)
 
-	jobDef := allJobs[jobID]
+	jobDef := workflow.Jobs[jobID]
 	needsContext := sdk.NeedsContext{}
-	for _, n := range jobDef.Needs {
+
+	var jobNeeds []string
+	if len(jobDef.Needs) > 0 {
+		jobNeeds = jobDef.Needs
+
+	} else if jobDef.Stage != "" {
+		jobNeeds = make([]string, 0)
+		// add all final jobs from parent stages
+		neededStages := workflow.Stages[jobDef.Stage].Needs
+		for _, n := range neededStages {
+			for jobID, jobInStage := range stages[n].Jobs {
+				if jobInStage.IsFinal {
+					jobNeeds = append(jobNeeds, jobID)
+				}
+			}
+		}
+	}
+
+	for _, n := range jobNeeds {
 		if j, has := jobsContext[n]; has {
 			needContext := sdk.NeedContext{
 				Result:  j.Result,
 				Outputs: j.Outputs,
 			}
 			// override result if job has continue-on-error
-			if allJobs[n].ContinueOnError && j.Result == sdk.V2WorkflowRunJobStatusFail {
+			if workflow.Jobs[n].ContinueOnError && j.Result == sdk.V2WorkflowRunJobStatusFail {
 				needContext.Result = sdk.V2WorkflowRunJobStatusSuccess
 			}
-
 			needsContext[n] = needContext
 		}
 	}
@@ -121,14 +191,25 @@ func buildContextForJob(_ context.Context, allJobs map[string]sdk.V2Job, runJobs
 	return currentJobContext
 }
 
-func buildAncestorJobContext(jobID string, jobs map[string]sdk.V2Job, runJobsContext sdk.JobsResultContext, currentJobContext sdk.JobsResultContext) {
-	jobDef := jobs[jobID]
-	if len(jobDef.Needs) == 0 {
-		return
+func buildAncestorJobContext(ctx context.Context, jobID string, workflow sdk.V2Workflow, runJobsContext sdk.JobsResultContext, stages sdk.WorkflowRunStages, currentJobContext sdk.JobsResultContext) {
+	jobDef := workflow.Jobs[jobID]
+	if len(jobDef.Needs) == 0 && jobDef.Stage != "" {
+		// add all final jobs from parent stages
+		neededStages := workflow.Stages[jobDef.Stage].Needs
+		for _, n := range neededStages {
+			for jobID, jobInStage := range stages[n].Jobs {
+				if jobInStage.IsFinal {
+					jobCtx := runJobsContext[jobID]
+					currentJobContext[jobID] = jobCtx
+					buildAncestorJobContext(ctx, jobID, workflow, runJobsContext, stages, currentJobContext)
+				}
+			}
+		}
 	}
+
 	for _, n := range jobDef.Needs {
 		jobCtx := runJobsContext[n]
 		currentJobContext[n] = jobCtx
-		buildAncestorJobContext(n, jobs, runJobsContext, currentJobContext)
+		buildAncestorJobContext(ctx, n, workflow, runJobsContext, stages, currentJobContext)
 	}
 }

@@ -2,8 +2,10 @@ package mock
 
 import (
 	"context"
+
 	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+	"github.com/ovh/cds/sdk"
 )
 
 type MockFactory struct {
@@ -27,6 +29,10 @@ func (m MockClient) Close(ctx context.Context) {
 
 func (m *MockClient) Run(ctx context.Context, opts map[string]string) *plugin.Result {
 	return &plugin.Result{Status: m.Result}
+}
+
+func (m *MockClient) GetPostAction() *sdk.PluginPost {
+	return nil
 }
 
 func NewMockClient(status string) (plugin.Client, error) {

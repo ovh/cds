@@ -8,7 +8,7 @@ import (
 )
 
 // IsInArray checks if the element is in the array
-func IsInArray(elt string, array []string) bool {
+func IsInArray[T comparable](elt T, array []T) bool {
 	for _, item := range array {
 		if item == elt {
 			return true
@@ -137,4 +137,16 @@ func (m ReqMatcher) Matches(x interface{}) bool {
 
 func (m ReqMatcher) String() string {
 	return fmt.Sprintf("Method is %q, URL Path is %q", m.Method, m.URLPath)
+}
+
+func Unique[T comparable](s []T) []T {
+	inResult := make(map[T]bool)
+	var result []T
+	for _, str := range s {
+		if _, ok := inResult[str]; !ok {
+			inResult[str] = true
+			result = append(result, str)
+		}
+	}
+	return result
 }

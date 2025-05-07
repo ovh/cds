@@ -9,12 +9,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/bugsnag/osext"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/pkg/errors"
@@ -28,7 +26,7 @@ type script struct {
 	opts    []string
 }
 
-func RunScript(ctx context.Context, chanRes chan *actionplugin.ActionResult, workingDir string, content string) error {
+func RunScript(ctx context.Context, actPlug *actionplugin.Common, chanRes chan *actionplugin.ActionResult, workingDir string, content string) error {
 	gores := &actionplugin.ActionResult{Status: sdk.StatusSuccess}
 
 	script := prepareScriptContent(content, workingDir)
@@ -51,21 +49,7 @@ func RunScript(ctx context.Context, chanRes chan *actionplugin.ActionResult, wor
 	cmd.Dir = script.dir
 	cmd.Stdout = pw
 	cmd.Stderr = pw
-
-	workerpath, err := osext.Executable()
-	if err != nil {
-		gores.Status = sdk.StatusFail
-		gores.Details = fmt.Sprintf("failure due to internal error (Worker Path): %v", err)
-		chanRes <- gores
-		return err
-	}
-
-	for i := range cmd.Env {
-		if strings.HasPrefix(cmd.Env[i], "PATH") {
-			cmd.Env[i] = fmt.Sprintf("%s:%s", cmd.Env[i], path.Dir(workerpath))
-			break
-		}
-	}
+	cmd.Env = os.Environ()
 
 	reader := bufio.NewReader(pr)
 
@@ -75,7 +59,7 @@ func RunScript(ctx context.Context, chanRes chan *actionplugin.ActionResult, wor
 		for {
 			line, errs := reader.ReadString('\n')
 			if line != "" {
-				fmt.Printf("%s", line)
+				Log(actPlug, line)
 			}
 			if errs != nil {
 				close(outchan)
@@ -142,7 +126,7 @@ func prepareScriptContent(scriptContent string, workingDir string) *script {
 	return &script
 }
 
-func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(), error) {
+func writeScriptContent(_ context.Context, script *script, fs afero.Fs) (func(), error) {
 	workDir, err := fs.Open(script.dir)
 	if err != nil {
 		return nil, errors.Errorf("unable to open working directory %s [%s]: %v", script.dir, filepath.Base(script.dir), err)
@@ -166,7 +150,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(
 		tmpFileName += ".PS1"
 	}
 
-	scriptPath := filepath.Join(path.Dir(script.dir), tmpFileName)
+	scriptPath := filepath.Join(filepath.Dir(script.dir), tmpFileName)
 
 	tmpscript, err := fs.OpenFile(scriptPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
@@ -210,7 +194,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(
 	}
 
 	deferFunc := func() {
-		filename := filepath.Join(path.Dir(script.dir), tmpFileName)
+		filename := filepath.Join(filepath.Dir(script.dir), tmpFileName)
 		_ = fs.Remove(filename)
 	}
 

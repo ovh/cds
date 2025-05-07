@@ -1,41 +1,42 @@
 import { TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {Requirement} from '../../../model/requirement.model';
-import {RequirementEvent} from '../requirement.event.model';
-import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
-import {SharedModule} from '../../shared.module';
-import {RequirementService} from '../../../service/requirement/requirement.service';
-import {RequirementStore} from '../../../service/requirement/requirement.store';
-import {RequirementsFormComponent} from './requirements.form.component';
+import { TranslateService, TranslateLoader, TranslateParser, TranslateModule } from '@ngx-translate/core';
+import { RouterTestingModule } from '@angular/router/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Requirement } from '../../../model/requirement.model';
+import { RequirementEvent } from '../requirement.event.model';
+import { WorkerModelService } from '../../../service/worker-model/worker-model.service';
+import { SharedModule } from '../../shared.module';
+import { RequirementService } from '../../../service/requirement/requirement.service';
+import { RequirementStore } from '../../../service/requirement/requirement.store';
+import { RequirementsFormComponent } from './requirements.form.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CDS: Requirement Form Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 RequirementService,
                 RequirementStore,
                 TranslateService,
                 WorkerModelService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
-            imports : [
+            imports: [
                 SharedModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
-                BrowserAnimationsModule,
-                HttpClientTestingModule
+                BrowserAnimationsModule
             ]
         }).compileComponents();
     });
 
-    it('should create a new requirement and auto write name', fakeAsync( () => {
+    it('should create a new requirement and auto write name', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
 
 

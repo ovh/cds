@@ -6,11 +6,6 @@ testcases:
       - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_b/pipeline.pip.yml ]'
       - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_a/workflow.yml ]'
       - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_b/workflow.yml ]'
-      - script: |-
-          {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
-          if [ $? -ne 0 ]; then
-              {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
-          fi
 
   - name: prepare test
     steps:
@@ -27,7 +22,7 @@ testcases:
           - result.code ShouldEqual 0
       - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json"
         assertions:
-          - result.systemoutjson.hooks.itscwrkflw16-pipeline.itscwrkflw16-pipeline0.config.cron ShouldEqual '10 * * * *'
+          - result.systemoutjson.hooks.ITSCWRKFLW16-PIPELINE.ITSCWRKFLW16-PIPELINE0.config.cron ShouldEqual '10 * * * *'
 
   - name: get-imported-workflow
     steps:
@@ -43,7 +38,7 @@ testcases:
     steps:
       - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks list --filter workflow_id={{.get-imported-workflow.workflow_id}} --format json"
         assertions:
-          - result.systemoutjson.systemoutjson0.cron ShouldEqual '10 * * * *'
+          - result.systemoutjson.systemoutjson0.Cron ShouldEqual '10 * * * *'
 
   - name: update workflow
     steps:
@@ -52,7 +47,7 @@ testcases:
           - result.code ShouldEqual 0
       - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json"
         assertions:
-          - result.systemoutjson.hooks.itscwrkflw16-pipeline.itscwrkflw16-pipeline0.config.cron ShouldEqual '20 * * * *'
+          - result.systemoutjson.hooks.ITSCWRKFLW16-PIPELINE.ITSCWRKFLW16-PIPELINE0.config.cron ShouldEqual '20 * * * *'
 
   - name: get-updated-workflow
     steps:
@@ -68,4 +63,4 @@ testcases:
     steps:
       - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks list --filter workflow_id={{.get-updated-workflow.workflow_id}} --format json"
         assertions:
-          - result.systemoutjson.systemoutjson0.cron ShouldEqual '20 * * * *'
+          - result.systemoutjson.systemoutjson0.Cron ShouldEqual '20 * * * *'

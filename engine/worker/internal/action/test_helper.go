@@ -31,6 +31,17 @@ type TestWorker struct {
 	logBuffer        bytes.Buffer
 }
 
+func (*TestWorker) V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error) {
+	panic("unimplemented")
+}
+
+func (*TestWorker) V2GetCacheSignature(ctx context.Context, cacheKey string) (*workerruntime.CDNSignature, error) {
+	panic("unimplemented")
+}
+func (*TestWorker) V2GetCacheLink(ctx context.Context, cacheKey string) (*sdk.CDNItemLinks, error) {
+	panic("unimplemented")
+}
+
 // V2GetJobContext implements workerruntime.Runtime.
 func (*TestWorker) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
 	panic("unimplemented")
@@ -38,11 +49,6 @@ func (*TestWorker) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsCont
 
 // V2GetJobRun implements workerruntime.Runtime.
 func (*TestWorker) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
-	panic("unimplemented")
-}
-
-// V2GetIntegrationByName implements workerruntime.Runtime.
-func (*TestWorker) V2GetIntegrationByName(ctx context.Context, name string) (*sdk.ProjectIntegration, error) {
 	panic("unimplemented")
 }
 
@@ -189,6 +195,10 @@ func (w *TestWorker) V2AddRunResult(ctx context.Context, req workerruntime.V2Run
 
 func (w *TestWorker) V2UpdateRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
 	return nil, nil
+}
+
+func (w *TestWorker) V2RunResultsSynchronize(ctx context.Context) error {
+	return nil
 }
 
 func (w *TestWorker) AddStepOutput(ctx context.Context, outputName string, outputValue string) {

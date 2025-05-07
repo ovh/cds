@@ -81,7 +81,7 @@ func (c *CDNItem) UnmarshalJSON(data []byte) error {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
-	case CDNTypeItemWorkerCache:
+	case CDNTypeItemWorkerCache, CDNTypeItemWorkerCacheV2:
 		var apiRef CDNWorkerCacheAPIRef
 		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
 			return WithStack(err)
@@ -117,17 +117,8 @@ type CDNLogsLines struct {
 }
 
 type CDNLogLinks struct {
-	CDNURL   string           `json:"cdn_url,omitempty"`
-	ItemType CDNItemType      `json:"item_type,omitempty"` // workflow v2: it's empty
-	Data     []CDNLogLinkData `json:"datas"`
-}
-
-type CDNLogLinkData struct {
-	APIRef      string      `json:"api_ref"`
-	StepOrder   int64       `json:"step_order"`
-	StepName    string      `json:"step_name"`
-	ServiceName string      `json:"service_name"`
-	ItemType    CDNItemType `json:"item_type"`
+	CDNURL string       `json:"cdn_url,omitempty"`
+	Data   []CDNLogLink `json:"datas"`
 }
 
 type CDNLogLink struct {
@@ -136,7 +127,8 @@ type CDNLogLink struct {
 }
 
 type CDNMarkDelete struct {
-	RunID int64 `json:"run_id,omitempty"`
+	RunID   int64  `json:"run_id,omitempty"`
+	RunV2ID string `json:"run_v2_id,omitempty"`
 }
 
 type CDNApiRef interface {
@@ -220,7 +212,7 @@ func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
 		return NewCDNLogApiRef(signature), nil
 	case CDNTypeItemRunResult:
 		return NewCDNRunResultApiRef(signature), nil
-	case CDNTypeItemWorkerCache:
+	case CDNTypeItemWorkerCache, CDNTypeItemWorkerCacheV2:
 		return NewCDNWorkerCacheApiRef(signature), nil
 	case CDNTypeItemJobStepLog, CDNTypeItemServiceLogV2:
 		return NewCDNLogApiRefV2(signature), nil
@@ -478,7 +470,7 @@ type CDNItemType string
 
 func (t CDNItemType) Validate() error {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache, CDNTypeItemJobStepLog, CDNTypeItemRunResultV2, CDNTypeItemServiceLogV2:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache, CDNTypeItemWorkerCacheV2, CDNTypeItemJobStepLog, CDNTypeItemRunResultV2, CDNTypeItemServiceLogV2:
 		return nil
 	}
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")
@@ -493,15 +485,16 @@ func (t CDNItemType) IsLog() bool {
 }
 
 const (
-	CDNTypeItemStepLog      CDNItemType = "step-log"
-	CDNTypeItemJobStepLog   CDNItemType = "job-step-log" // v2
-	CDNTypeItemServiceLog   CDNItemType = "service-log"
-	CDNTypeItemServiceLogV2 CDNItemType = "service-log-v2"
-	CDNTypeItemRunResult    CDNItemType = "run-result"
-	CDNTypeItemRunResultV2  CDNItemType = "run-result-v2"
-	CDNTypeItemWorkerCache  CDNItemType = "worker-cache"
-	CDNStatusItemIncoming               = "Incoming"
-	CDNStatusItemCompleted              = "Completed"
+	CDNTypeItemStepLog       CDNItemType = "step-log"
+	CDNTypeItemJobStepLog    CDNItemType = "job-step-log" // v2
+	CDNTypeItemServiceLog    CDNItemType = "service-log"
+	CDNTypeItemServiceLogV2  CDNItemType = "service-log-v2"
+	CDNTypeItemRunResult     CDNItemType = "run-result"
+	CDNTypeItemRunResultV2   CDNItemType = "run-result-v2"
+	CDNTypeItemWorkerCache   CDNItemType = "worker-cache"
+	CDNTypeItemWorkerCacheV2 CDNItemType = "worker-cache-v2"
+	CDNStatusItemIncoming                = "Incoming"
+	CDNStatusItemCompleted               = "Completed"
 )
 
 type CDNReaderFormat string

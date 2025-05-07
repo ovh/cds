@@ -57,7 +57,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	if err != nil {
 		return nil, cli.WrapError(err, "unable to get latest commit")
 	}
-	latestCommit, err := r.LatestCommit(ctx)
+	latestCommit, err := r.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
 	if err != nil {
 		return nil, cli.WrapError(err, "unable to get latest commit")
 	}
@@ -225,7 +225,6 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 		for k, kv := range pl {
 			payload = append(payload, fmt.Sprintf("%s:%s", k, kv))
 		}
-		payload = append(payload)
 	}
 	wt := &wtags{*run, strings.Join(payload, " "), strings.Join(tags, " ")}
 	return *wt, nil

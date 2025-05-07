@@ -96,7 +96,6 @@ var (
 	MsgWorkflowGeneratedFromTemplateVersion = &Message{"MsgWorkflowGeneratedFromTemplateVersion", trad{FR: "Le workflow a été généré à partir du modèle de workflow: %s", EN: "The workflow was generated from the template: %s"}, nil, RunInfoTypInfo}
 	MsgTooMuchWorkflowRun                   = &Message{"MsgTooMuchWorkflowRun", trad{FR: "L'exécution de ce workflow est suspendu. Vous dépassez le nombre maximum d'éxécution autorisé (%.f). Merci de revoir la politique de retention de ce workflow", EN: "Workflow run is delayed. The maximum number of runs for this workflow has been reached ( %.f ). Please update your workflow retention policy"}, nil, RunInfoTypeWarning}
 	MsgSpawnErrorHatcheryRetryAttempt       = &Message{"MsgSpawnErrorHatcheryRetryAttempt", trad{EN: "Job execution failed by hatchery %s. Reason: %s"}, nil, RunInfoTypeError}
-	MsgWorkflowV3Preview                    = &Message{"MsgWorkflowV3Preview", trad{FR: "Le workflow a été généré en version 3 à partir d'une ancienne version", EN: "The workflow was generated in version 3 from an old version"}, nil, RunInfoTypeWarning}
 	MsgSpawnInfoDisableSecretInjection      = &Message{"MsgSpawnInfoDisableSecretInjection", trad{EN: "⚠ Project's secrets were not automatically injected for this job because of a region prerequisite: %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoManualSecretInjection       = &Message{"MsgSpawnInfoManualSecretInjection", trad{EN: "Prerequisites of type secret matched %s secret(s)"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerHookSetup             = &Message{"MsgSpawnInfoWorkerHookSetup", trad{EN: "Setting up worker hook %q"}, nil, RunInfoTypInfo}
@@ -185,7 +184,6 @@ var Messages = map[string]*Message{
 	MsgWorkflowGeneratedFromTemplateVersion.ID: MsgWorkflowGeneratedFromTemplateVersion,
 	MsgTooMuchWorkflowRun.ID:                   MsgTooMuchWorkflowRun,
 	MsgSpawnErrorHatcheryRetryAttempt.ID:       MsgSpawnErrorHatcheryRetryAttempt,
-	MsgWorkflowV3Preview.ID:                    MsgWorkflowV3Preview,
 	MsgSpawnInfoDisableSecretInjection.ID:      MsgSpawnInfoDisableSecretInjection,
 	MsgSpawnInfoManualSecretInjection.ID:       MsgSpawnInfoManualSecretInjection,
 	MsgSpawnInfoWorkerHookSetup.ID:             MsgSpawnInfoWorkerHookSetup,

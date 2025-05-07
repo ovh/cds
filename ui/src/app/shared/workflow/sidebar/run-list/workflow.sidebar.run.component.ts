@@ -21,7 +21,7 @@ import { CleanWorkflowRun, ClearListRuns, SetWorkflowRuns } from 'app/store/work
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { DurationService } from '../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
+import { DurationService } from '../../../../../../libs/workflow-graph/src/lib/duration.service';
 
 const limitWorkflowRun = 30;
 

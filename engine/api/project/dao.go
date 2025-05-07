@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -81,6 +82,18 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	return loadprojects(ctx, db, opts, query, args...)
 }
 
+func LoadAllByKeys(ctx context.Context, db gorp.SqlExecutor, keys []string) (sdk.Projects, error) {
+	var end func()
+	ctx, end = telemetry.Span(ctx, "project.LoadAllByKeys")
+	defer end()
+	query := `SELECT project.*
+	FROM project
+	WHERE project.projectkey = ANY($1)
+	ORDER by project.name, project.projectkey ASC`
+	args := []interface{}{pq.StringArray(keys)}
+	return loadprojects(ctx, db, nil, query, args...)
+}
+
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	var end func()
@@ -88,6 +101,20 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts .
 	defer end()
 	query := "select project.* from project ORDER by project.name, project.projectkey ASC"
 	return loadprojects(ctx, db, opts, query)
+}
+
+// LoadAllProjectKeys returns all project keys
+func LoadAllProjectKeys(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) ([]string, error) {
+	_, end := telemetry.Span(ctx, "project.LoadAllProjectKeys")
+	defer end()
+	var keys []string
+	if _, err := db.Select(&keys, "SELECT projectkey FROM project"); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrNoProject)
+		}
+		return nil, sdk.WithStack(err)
+	}
+	return keys, nil
 }
 
 // LoadPermissions loads all projects where group has access
@@ -163,6 +190,7 @@ func Insert(db gorpmapper.SqlExecutorWithTx, proj *sdk.Project) error {
 
 	pk := sdk.ProjectKey{}
 	pk.KeyID = k.KeyID
+	pk.LongKeyID = k.LongKeyID
 	pk.Name = BuiltinGPGKey
 	pk.Private = k.Private
 	pk.Public = k.Public
@@ -328,22 +356,11 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 		vcsProjects[i].Auth.Username = decryptedVCSProject.Auth.Username
 		vcsProjects[i].Auth.SSHKeyName = decryptedVCSProject.Auth.SSHKeyName
 		vcsProjects[i].Auth.SSHUsername = decryptedVCSProject.Auth.SSHUsername
+		vcsProjects[i].Auth.GPGKeyName = decryptedVCSProject.Auth.GPGKeyName
+		vcsProjects[i].Auth.EmailAddress = decryptedVCSProject.Auth.EmailAddress
 	}
 
 	proj.VCSServers = vcsProjects
 
 	return &proj, nil
-}
-
-// UpdateFavorite add or delete project from user favorites
-func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID string, add bool) error {
-	var query string
-	if add {
-		query = "INSERT INTO project_favorite (authentified_user_id, project_id) VALUES ($1, $2)"
-	} else {
-		query = "DELETE FROM project_favorite WHERE authentified_user_id = $1 AND project_id = $2"
-	}
-
-	_, err := db.Exec(query, userID, projectID)
-	return sdk.WithStack(err)
 }

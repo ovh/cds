@@ -65,7 +65,7 @@ export class WorkflowNodeHookFormComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        this.editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -114,7 +114,7 @@ export class WorkflowNodeHookFormComponent implements OnInit, OnDestroy {
         if (!this.node && this.hook) {
             this.node = Workflow.getNodeByID(this.hook.node_id, this.workflow);
         }
-        if (!this._store.selectSnapshot(WorkflowState).workflowRun) {
+        if (!this._store.selectSnapshot(WorkflowState.current).workflowRun) {
             this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
                 first(),
                 finalize(() => {

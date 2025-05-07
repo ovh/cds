@@ -3,15 +3,16 @@ package hooks
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestManageAnalysisCallback(t *testing.T) {
@@ -30,10 +31,9 @@ func TestManageAnalysisCallback(t *testing.T) {
 	hr := sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
 		VCSServerName:  "private-github",
-		VCSServerType:  "github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusAnalysis,
-		EventName:      "push",
+		EventName:      sdk.WorkflowHookEventNamePush,
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
 		Analyses: []sdk.HookRepositoryEventAnalysis{
@@ -47,17 +47,19 @@ func TestManageAnalysisCallback(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
+	eventKey := strings.ToLower(cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID))
 	callback := sdk.HookEventCallback{
 		RepositoryName: hr.RepositoryName,
 		VCSServerName:  hr.VCSServerName,
-		VCSServerType:  hr.VCSServerType,
 		HookEventUUID:  hr.UUID,
+		HookEventKey:   eventKey,
 		AnalysisCallback: &sdk.HookAnalysisCallback{
 			AnalysisID:     hr.Analyses[0].AnalyzeID,
 			AnalysisStatus: sdk.RepositoryAnalysisStatusSucceed,
+			Initiator:      &sdk.V2Initiator{},
 		},
 	}
 
@@ -88,10 +90,9 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 	hr := sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
 		VCSServerName:  "private-github",
-		VCSServerType:  "github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusScheduled,
-		EventName:      "push",
+		EventName:      sdk.WorkflowHookEventNamePush,
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
 		ExtractData: sdk.HookRepositoryEventExtractData{
@@ -102,8 +103,10 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
+
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().CreateInsightReport(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().HookRepositoriesList(gomock.Any(), hr.VCSServerName, hr.RepositoryName).Return([]sdk.ProjectRepository{
 		{
@@ -134,10 +137,9 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	hr := sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
 		VCSServerName:  "private-github",
-		VCSServerType:  "github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusScheduled,
-		EventName:      "pull_request",
+		EventName:      sdk.WorkflowHookEventNamePullRequest,
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
 		SignKey:        "AZERTY",
@@ -145,8 +147,23 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
+
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().HookRepositoriesList(gomock.Any(), gomock.Any(), gomock.Any()).Return([]sdk.ProjectRepository{
+		{
+			ProjectKey: "PROJ",
+		},
+	}, nil)
+
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().ProjectRepositoryAnalysisList(gomock.Any(), "PROJ", "private-github", "ovh/cds").Return([]sdk.ProjectRepositoryAnalysis{
+		{
+			ID:     "123456",
+			Status: sdk.RepositoryAnalysisStatusSucceed,
+		},
+	}, nil)
+
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().CreateInsightReport(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().ListWorkflowToTrigger(gomock.Any(), gomock.Any()).Return([]sdk.V2WorkflowHook{
 		{

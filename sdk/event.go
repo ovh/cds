@@ -145,7 +145,8 @@ type EventFake struct {
 }
 
 type EventJobSummary struct {
-	ID                   int64      `json:"id"`
+	ID                   int64      `json:"id"`         // job v1
+	JobRunID             string     `json:"job_run_id"` // ascode job v2, it's the uuid
 	ProjectKey           string     `json:"project_key"`
 	Workflow             string     `json:"workflow"`
 	Pipeline             string     `json:"pipeline"`

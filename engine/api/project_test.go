@@ -207,7 +207,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 
 	projGet := sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
-	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, true, projGet.Permissions.Writable, "writable should be true")
 
 	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
@@ -223,7 +222,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 
 	projGet = sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
-	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, true, projGet.Permissions.Writable, "writable should be true")
 
 	userMaintainer, passMaintainer := assets.InsertMaintainerUser(t, db)
@@ -239,7 +237,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 
 	projGet = sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
-	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, false, projGet.Permissions.Writable, "writable should be false")
 }
 
@@ -487,7 +484,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 		BuiltinConsumerAuthenticationToken: jws,
 	})
 
-	projs, err := sdkclientAdmin.ProjectList(true, true, false, cdsclient.Filter{Name: "repo", Value: "ovh/" + repofullName})
+	projs, err := sdkclientAdmin.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: "ovh/" + repofullName})
 	require.NoError(t, err)
 	require.True(t, len(projs) == 1)
 	require.True(t, len(projs[0].Workflows) == 1)

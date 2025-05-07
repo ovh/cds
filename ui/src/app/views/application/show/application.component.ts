@@ -7,7 +7,6 @@ import { Environment } from 'app/model/environment.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { ApplicationStore } from 'app/service/application/application.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -15,12 +14,13 @@ import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import * as applicationsActions from 'app/store/applications.action';
 import { CancelApplicationEdition, ClearCacheApplication } from 'app/store/applications.action';
 import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { RouterService } from 'app/service/services.module';
 
 @Component({
     selector: 'app-application-show',
@@ -67,14 +67,14 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     storeSub: Subscription;
 
     constructor(
-        private _applicationStore: ApplicationStore,
         private _routeActivated: ActivatedRoute,
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _routerService: RouterService
     ) {
         this.project = this._routeActivated.snapshot.data['project'];
 
@@ -83,15 +83,15 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         this.workflowNodeRun = this._routeActivated.snapshot.queryParams['node'];
         this.workflowPipeline = this._routeActivated.snapshot.queryParams['wpipeline'];
 
-        this.projectSubscription = this._store.select(ProjectState)
-            .subscribe(
-                (projectState: ProjectStateModel) => {
-                    this.project = projectState.project;
-                    this._cd.markForCheck();
-                }
-            );
+        this.projectSubscription = this._store.select(ProjectState.projectSnapshot)
+            .subscribe((p: Project) => {
+                this.project = p;
+                this._cd.markForCheck();
+            });
 
-        this._routeParamsSub = this._routeActivated.params.subscribe(params => {
+        this._routeParamsSub = this._routeActivated.params.subscribe(_router => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+
             let projectKey = params['key'];
             this.urlAppName = params['appName'];
             if (this.application && this.application.name !== this.urlAppName) {
@@ -105,13 +105,13 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     .subscribe(
                         () => {
                         },
-                        () => this._router.navigate(['/project', projectKey], {queryParams: {tab: 'applications'}}),
+                        () => this._router.navigate(['/project', projectKey], { queryParams: { tab: 'applications' } }),
                         null
                     );
             }
         });
 
-        this.storeSub = this._store.select(ApplicationsState.currentState())
+        this.storeSub = this._store.select(ApplicationsState.current)
             .pipe(filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.urlAppName))
             .subscribe((s: ApplicationStateModel) => {
                 this.readyApp = true;
@@ -125,7 +125,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.application = cloneDeep(s.application);
                 }
 
-
                 if (this.application.usage) {
                     this.workflows = this.application.usage.workflows || [];
                     this.environments = this.application.usage.environments || [];
@@ -134,11 +133,9 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 }
                 this.initTabs();
 
-                // Update recent application viewed
-                this._applicationStore.updateRecentApplication(s.currentProjectKey, this.application);
                 this._cd.markForCheck();
             }, () => {
-                this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'applications'}});
+                this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
             });
     }
 

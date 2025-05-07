@@ -1,13 +1,10 @@
-import {TestBed, fakeAsync} from '@angular/core/testing';
-import {RouterTestingModule} from '@angular/router/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {WorkflowModule} from '../../../workflow.module';
-import {SharedModule} from '../../../../../shared/shared.module';
-import {WorkflowRunTestsResultComponent} from './tests.component';
-import {PluginManager} from "@ngxs/store/src/plugin-manager";
-import {NgxsStoragePlugin} from "@ngxs/storage-plugin";
-import {NgxsModule} from "@ngxs/store";
-import {NgxsTestModule} from "@ngxs/store/internals/testing/helpers/ngxs-test.module";
+import { TestBed, fakeAsync } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateService, TranslateLoader, TranslateParser, TranslateModule } from '@ngx-translate/core';
+import { WorkflowModule } from '../../../workflow.module';
+import { SharedModule } from '../../../../../shared/shared.module';
+import { WorkflowRunTestsResultComponent } from './tests.component';
+import { NgxsModule } from "@ngxs/store";
 
 describe('CDS: Test Report component', () => {
 

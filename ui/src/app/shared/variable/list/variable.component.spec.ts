@@ -1,28 +1,27 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
-import {APP_BASE_HREF} from '@angular/common';
-import {VariableService} from '../../../service/variable/variable.service';
-import {SharedService} from '../../shared.service';
-import {Variable} from '../../../model/variable.model';
-import {SharedModule} from '../../shared.module';
-import {VariableEvent} from '../variable.event.model';
-import {ProjectAuditService} from '../../../service/project/project.audit.service';
-import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
-import {ApplicationAuditService} from '../../../service/application/application.audit.service';
-import {VariableComponent} from './variable.component';
+import { TranslateService, TranslateLoader, TranslateParser, TranslateModule } from '@ngx-translate/core';
+import { RouterTestingModule } from '@angular/router/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { APP_BASE_HREF } from '@angular/common';
+import { VariableService } from '../../../service/variable/variable.service';
+import { SharedService } from '../../shared.service';
+import { Variable } from '../../../model/variable.model';
+import { SharedModule } from '../../shared.module';
+import { VariableEvent } from '../variable.event.model';
+import { ProjectAuditService } from '../../../service/project/project.audit.service';
+import { EnvironmentAuditService } from '../../../service/environment/environment.audit.service';
+import { ApplicationAuditService } from '../../../service/application/application.audit.service';
+import { VariableComponent } from './variable.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CDS: Variable List Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 VariableService,
                 SharedService,
@@ -32,20 +31,21 @@ describe('CDS: Variable List Component', () => {
                 ProjectAuditService,
                 EnvironmentAuditService,
                 ApplicationAuditService,
-                { provide: APP_BASE_HREF, useValue : '/' }
+                { provide: APP_BASE_HREF, useValue: '/' },
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
-            imports : [
+            imports: [
                 BrowserAnimationsModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule
+                TranslateModule.forRoot()
             ]
         }).compileComponents();
     });
 
 
-    it('Load Component + update value', fakeAsync(  () => {
+    it('Load Component + update value', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
 
         let mock = ['string', 'password'];

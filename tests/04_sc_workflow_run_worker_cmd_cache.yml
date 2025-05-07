@@ -26,8 +26,8 @@ testcases:
 - name: check workflow
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --format json
-    retry: 20
-    delay: 10
+    retry: 200
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -38,14 +38,14 @@ testcases:
 - name: check result
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLRELATIVEFROMWORKSPACE; grep "my file content" *.log
-      retry: 10
-      delay: 3
+      retry: 30
+      delay: 1
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLABSOLUTEFROMWORKSPACE; grep "my file content" *.log
-      retry: 10
-      delay: 3
+      retry: 30
+      delay: 1
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLRELATIVEFROMTMP; grep "my file content" *.log
-      retry: 10
-      delay: 3
+      retry: 30
+      delay: 1
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLABSOLUTEFROMTMP; grep "my file content" *.log
-      retry: 10
-      delay: 3
+      retry: 30
+      delay: 1

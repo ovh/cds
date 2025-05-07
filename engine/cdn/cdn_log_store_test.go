@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 func TestStoreNewStepLog(t *testing.T) {
@@ -48,7 +48,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	s.Units = cdnUnits
 
 	hm := handledMessage{
-		Msg: hook.Message{
+		Msg: graylog.Message{
 			Full: "this is a message",
 		},
 		Signature: cdn.Signature{
@@ -131,7 +131,9 @@ func TestStoreLastStepLog(t *testing.T) {
 	s.Units = cdnUnits
 
 	hm := handledMessage{
-		Msg:          hook.Message{},
+		Msg: graylog.Message{
+			Full: "message",
+		},
 		IsTerminated: sdk.StatusTerminated,
 		Signature: cdn.Signature{
 			ProjectKey:   sdk.RandomString(10),
@@ -220,7 +222,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 	s.Units = cdnUnits
 
 	hm := handledMessage{
-		Msg: hook.Message{
+		Msg: graylog.Message{
 			Full: "this is a message",
 		},
 		Signature: cdn.Signature{

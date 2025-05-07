@@ -24,6 +24,14 @@ func (d *dao) dequeuedRepositoryEventIncr() {
 	atomic.AddInt64(&d.dequeuedRepositoryEvents, 1)
 }
 
+func (d *dao) enqueuedWorkflowRunOutgoingEventIncr() {
+	atomic.AddInt64(&d.enqueuedWorkflowRunOutgoingEvents, 1)
+}
+
+func (d *dao) dequeuedWorkflowRunOutgoingEventIncr() {
+	atomic.AddInt64(&d.dequeuedWorkflowRunOutgoingEvents, 1)
+}
+
 func (d *dao) RepositoryEventQueueLen() (int, error) {
 	return d.store.QueueLen(repositoryEventQueue)
 }
@@ -34,8 +42,8 @@ func (d *dao) SaveRepositoryEvent(_ context.Context, e *sdk.HookRepositoryEvent)
 	return d.store.SetAdd(k, e.UUID, e)
 }
 
-func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, e sdk.HookRepositoryEvent) error {
-	return d.store.SetRemove(repositoryEventInProgressKey, e.UUID, e)
+func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, eventUUID string) error {
+	return d.store.SetRemove(repositoryEventInProgressKey, eventUUID, nil)
 }
 
 func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
@@ -43,16 +51,18 @@ func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryE
 	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerName, e.RepositoryName), e.UUID))
 	log.Debug(ctx, "enqueue event: %s", k)
 
-	if err := d.RemoveRepositoryEventFromInProgressList(ctx, *e); err != nil {
-		return err
-	}
 	if err := d.store.SetRemove(repositoryEventInProgressKey, e.UUID, k); err != nil {
 		return err
 	}
 	if err := d.store.SetAdd(repositoryEventInProgressKey, e.UUID, k); err != nil {
 		return err
 	}
-	return d.store.Enqueue(repositoryEventQueue, k)
+
+	if err := d.store.Enqueue(repositoryEventQueue, k); err != nil {
+		return err
+	}
+	d.enqueuedRepositoryEventIncr()
+	return nil
 }
 
 func (d *dao) getRepositoryEventLockKey(vcsName, repoName, hookEventUUID string) string {
@@ -118,6 +128,7 @@ func (d *dao) DeleteAllRepositoryEvent(ctx context.Context, vcsServer, repoName 
 		return err
 	}
 	for _, re := range repoEvents {
+		_ = d.RemoveRepositoryEventFromInProgressList(ctx, re.UUID)
 		if err := d.DeleteRepositoryEvent(ctx, re.VCSServerName, re.RepositoryName, re.UUID); err != nil {
 			return err
 		}

@@ -94,7 +94,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
             this.project = datas['project'];
         });
 
-        this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+        this.workflowSubscription = this._store.select(WorkflowState.current).subscribe((s: WorkflowStateModel) => {
             this._cd.markForCheck();
             this.editMode = s.editMode;
             if (s.editMode) {
@@ -120,8 +120,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
                 // If a node is selected, update it
                 this.direction = this._workflowStore.getDirection(s.projectKey, this.detailedWorkflow.name);
-                this._workflowStore.updateRecentWorkflow(s.projectKey, this.detailedWorkflow);
-
+                
                 if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
                     return;
                 }

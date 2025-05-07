@@ -36,6 +36,7 @@ type AuthConsumerOld struct {
 func (c AuthConsumerOld) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{c.ID, c.AuthentifiedUserID, c.Type, c.Data, c.Created, c.GroupIDs, c.ScopeDetails, c.Disabled, c.ServiceName, c.ServiceType, c.ServiceRegion, c.ServiceIgnoreJobWithNoRegion} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.AuthentifiedUserID}}{{printf .Type}}{{printf .Data}}{{printDate .Created}}{{printf .GroupIDs}}{{printf .ScopeDetails}}{{printf .Disabled}}",
 		"{{.ID}}{{.AuthentifiedUserID}}{{print .Type}}{{print .Data}}{{printDate .Created}}{{print .GroupIDs}}{{print .ScopeDetails}}{{print .Disabled}}",
 	}
 }
@@ -46,8 +47,9 @@ type authConsumer struct {
 }
 
 func (c authConsumer) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{c.ID, c.Type, c.Created, c.Disabled} // Checks that fields exists at compilation
+	_ = []interface{}{c.ID, c.Type, c.Created, c.Disabled, c.Name} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{printf .Type}}{{printDate .Created}}{{printf .Disabled}}{{.Name}}",
 		"{{.ID}}{{print .Type}}{{printDate .Created}}{{print .Disabled}}",
 	}
 }
@@ -60,6 +62,7 @@ type authConsumerUserData struct {
 func (c authConsumerUserData) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{c.ID, c.AuthConsumerID, c.AuthentifiedUserID, c.Data, c.GroupIDs, c.ScopeDetails} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.AuthConsumerID}}{{.AuthentifiedUserID}}{{printf .Data}}{{printf .GroupIDs}}{{printf .ScopeDetails}}",
 		"{{.ID}}{{.AuthConsumerID}}{{.AuthentifiedUserID}}{{print .Data}}{{print .GroupIDs}}{{print .ScopeDetails}}",
 	}
 }
@@ -82,8 +85,9 @@ type authSession struct {
 }
 
 func (s authSession) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{s.ID, s.ConsumerID, s.ExpireAt, s.Created} // Checks that fields exists at compilation
+	_ = []interface{}{s.ID, s.ConsumerID, s.ExpireAt, s.Created, s.MFA} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.ConsumerID}}{{printDate .ExpireAt}}{{printDate .Created}}{{printf .MFA}}",
 		"{{.ID}}{{.ConsumerID}}{{printDate .ExpireAt}}{{printDate .Created}}",
 	}
 }

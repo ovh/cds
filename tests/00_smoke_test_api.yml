@@ -9,13 +9,13 @@ testcases:
   - type: http
     method: GET
     url: '{{.api.url}}/mon/version'
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1
   - type: http
     method: GET
     url: '{{.api.url}}/mon/status'
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1
 
 - name: Check CLI binary is available
   steps:  

@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 	"github.com/rockbears/log"
 )
 
@@ -31,13 +31,14 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	defer cancel()
 	w.currentJobV2.context = ctx
 	w.currentJobV2.runJob = &info.RunJob
+	w.currentJobV2.sensitiveDatas = info.SensitiveDatas
 	w.currentJobV2.integrations = make(map[string]sdk.ProjectIntegration)
 	w.actions = info.AsCodeActions
 	w.currentJobV2.runJobContext = info.Contexts
 	w.actionPlugin = make(map[string]*sdk.GRPCPlugin)
 
 	// setup blur
-	w.blur, err = sdk.NewBlur(info.SensitiveDatas)
+	w.blur, err = sdk.NewBlur(w.currentJobV2.sensitiveDatas)
 	if err != nil {
 		return err
 	}
@@ -53,12 +54,12 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	w.signer = signer
 
 	log.Info(ctx, "Setup step logger %s", w.cfg.GelfServiceAddr)
-	throttlePolicy := hook.NewDefaultThrottlePolicy()
+	throttlePolicy := graylog.NewDefaultThrottlePolicy()
 
-	var graylogCfg = &hook.Config{
+	var graylogCfg = &graylog.Config{
 		Addr:     w.cfg.GelfServiceAddr,
 		Protocol: "tcp",
-		ThrottlePolicy: &hook.ThrottlePolicyConfig{
+		ThrottlePolicy: &graylog.ThrottlePolicyConfig{
 			Amount: 100,
 			Period: 10 * time.Millisecond,
 			Policy: throttlePolicy,

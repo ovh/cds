@@ -21,7 +21,6 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, *sdk.Project) error
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
 	Default                                 LoadOptionFunc
-	WithIcon                                LoadOptionFunc
 	WithApplications                        LoadOptionFunc
 	WithApplicationNames                    LoadOptionFunc
 	WithVariables                           LoadOptionFunc
@@ -40,11 +39,9 @@ var LoadOptions = struct {
 	WithClearKeys                           LoadOptionFunc
 	WithIntegrations                        LoadOptionFunc
 	WithClearIntegrations                   LoadOptionFunc
-	WithFavorites                           func(uID string) LoadOptionFunc
 	WithLabels                              LoadOptionFunc
 }{
 	Default:                                 loadDefault,
-	WithIcon:                                loadIcon,
 	WithPipelines:                           loadPipelines,
 	WithPipelineNames:                       loadPipelineNames,
 	WithEnvironments:                        loadEnvironments,
@@ -62,7 +59,6 @@ var LoadOptions = struct {
 	WithClearKeys:                           loadClearKeys,
 	WithIntegrations:                        loadIntegrations,
 	WithClearIntegrations:                   loadClearIntegrations,
-	WithFavorites:                           loadFavorites,
 	WithApplicationWithDeploymentStrategies: loadApplicationWithDeploymentStrategies,
 	WithLabels:                              loadLabels,
 }
@@ -221,15 +217,6 @@ func loadApplicationsWithOpts(ctx context.Context, db gorp.SqlExecutor, proj *sd
 	return nil
 }
 
-func loadIcon(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
-	icon, err := db.SelectStr("SELECT icon FROM project WHERE id = $1", proj.ID)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	proj.Icon = icon
-	return nil
-}
-
 func loadPipelines(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	pipelines, err := pipeline.LoadPipelines(db, proj.ID, false)
 	if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) && !sdk.ErrorIs(err, sdk.ErrPipelineNotAttached) {
@@ -283,15 +270,4 @@ func loadLabels(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error
 	}
 	proj.Labels = labels
 	return nil
-}
-
-func loadFavorites(uID string) LoadOptionFunc {
-	return func(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
-		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND authentified_user_id = $2", proj.ID, uID)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		proj.Favorite = count > 0
-		return nil
-	}
 }

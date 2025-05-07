@@ -134,7 +134,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 	}
 
 	if out != nil {
-		if header.Get("Content-Type") == "application/gzip" {
+		if header.Get("Content-Type") == "application/gzip" || header.Get("Content-Type") == "application/zip" {
 			zreader, err := zip.NewReader(bytes.NewReader(res), int64(len(res)))
 			if err != nil {
 				return res, header, code, errors.Wrap(err, "unable to open zip content")

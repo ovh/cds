@@ -9,20 +9,37 @@ import (
 
 // GithubWebHookEvent represents payload send by github on a push event
 type GithubWebHookEvent struct {
-	Action     string            `json:"action,omitempty"` // used by pull_request event
-	Ref        string            `json:"ref"`
-	Before     string            `json:"before"`
-	After      string            `json:"after"`
-	Created    bool              `json:"created"`
-	Deleted    bool              `json:"deleted"`
-	Forced     bool              `json:"forced"`
-	BaseRef    interface{}       `json:"base_ref"`
-	Compare    string            `json:"compare"`
-	Commits    []GithubCommit    `json:"commits"`
-	HeadCommit *GithubCommit     `json:"head_commit"`
-	Repository *GithubRepository `json:"repository"`
-	Pusher     GithubOwner       `json:"pusher"`
-	Sender     GithubSender      `json:"sender"`
+	Action      string             `json:"action,omitempty"` // used by pull_request event
+	Ref         string             `json:"ref"`
+	Before      string             `json:"before"`
+	After       string             `json:"after"`
+	Created     bool               `json:"created"`
+	Deleted     bool               `json:"deleted"`
+	Forced      bool               `json:"forced"`
+	BaseRef     interface{}        `json:"base_ref"`
+	Compare     string             `json:"compare"`
+	Commits     []GithubCommit     `json:"commits"`
+	HeadCommit  *GithubCommit      `json:"head_commit"`
+	Repository  *GithubRepository  `json:"repository"`
+	Pusher      GithubOwner        `json:"pusher"`
+	Sender      GithubSender       `json:"sender"`
+	PullRequest *GithubPullRequest `json:"pull_request"`
+}
+
+type GithubPullRequest struct {
+	ID   int64             `json:"id"`
+	URL  string            `json:"url"`
+	Body string            `json:"body"`
+	Head PullRequestCommit `json:"head"`
+	Base PullRequestCommit `json:"base"`
+}
+
+type PullRequestCommit struct {
+	Label string           `json:"label"`
+	Ref   string           `json:"ref"` // branch name ( not refs/heads )
+	Sha   string           `json:"sha"`
+	User  GithubSender     `json:"user"`
+	Repo  GithubRepository `json:"repo"`
 }
 
 type GithubSender struct {

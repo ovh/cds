@@ -118,7 +118,7 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 
 	lastCommitPerBranch := map[string]sdk.VCSCommit{}
 	for _, e := range events {
-		branch := strings.Replace(e.Payload.Ref, "refs/heads/", "", 1)
+		branch := strings.Replace(e.Payload.Ref, sdk.GitRefBranchPrefix, "", 1)
 		for _, c := range e.Payload.Commits {
 			commit := sdk.VCSCommit{
 				Hash:      c.Sha,

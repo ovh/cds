@@ -31,6 +31,12 @@ message ActionResult {
     string details = 2;
 }
 
+message StreamResult {
+    string status = 1;
+    string details = 2;
+    string logs = 3;
+}
+
 message WorkerHTTPPortQuery {
     int32 port = 1;
 }
@@ -38,6 +44,7 @@ message WorkerHTTPPortQuery {
 service ActionPlugin {
     rpc Manifest (google.protobuf.Empty) returns (ActionPluginManifest) {}
     rpc Run (ActionQuery) returns (ActionResult) {}
+    rpc Stream (ActionQuery) returns (stream StreamResult) {}
     rpc WorkerHTTPPort (WorkerHTTPPortQuery) returns (google.protobuf.Empty) {}
     rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

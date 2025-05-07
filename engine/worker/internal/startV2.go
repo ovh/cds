@@ -59,7 +59,7 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 	// Errors check loops
 	go func() {
 		for err := range errsChan {
-			log.Error(ctx, "An error has occured: %v", err)
+			log.Error(ctx, "An error has occurred: %v", err)
 			if strings.Contains(err.Error(), "not authenticated") {
 				endFunc()
 				return
@@ -76,6 +76,11 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 				return
 			case <-refreshTick.C:
 				if err := w.ClientV2().V2WorkerRefresh(ctx, region, runJobID); err != nil {
+					if sdk.ErrorIs(err, sdk.ErrAlreadyEnded) || strings.Contains(err.Error(), "job ended") {
+						errsChan <- err
+						continue
+					}
+
 					log.Error(ctx, "Heartbeat failed: %v", err)
 					nbErrors++
 					if nbErrors == 5 {
@@ -90,7 +95,7 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 	//Take the job
 	log.Debug(ctx, "checkQueue> Try take the job %d", runJobID)
 	if err := w.V2Take(ctx, region, runJobID); err != nil {
-		log.Info(ctx, "Unable to run this job  %s. Take info: %v", runJobID, err)
+		log.Info(ctx, "Unable to run this job %s: %v", runJobID, err)
 		errsChan <- err
 	}
 

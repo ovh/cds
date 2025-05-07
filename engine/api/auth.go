@@ -130,7 +130,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		ctx = context.WithValue(ctx, cdslog.AuthUsername, userInfo.Username)
-		SetTracker(w, cdslog.AuthUsername, userInfo.Username)
+		service.SetTracker(w, cdslog.AuthUsername, userInfo.Username)
 
 		userCreated := false
 		tx, err := api.mustDB().Begin()

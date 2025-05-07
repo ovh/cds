@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -11,28 +11,32 @@ import { ParameterEvent } from '../parameter.event.model';
 import { ParameterFormComponent } from './parameter.form';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxsModule } from '@ngxs/store';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { PreferencesState } from 'app/store/preferences.state';
 
 describe('CDS: parameter From Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 { provide: ParameterService, useClass: MockParameterService },
                 ParameterService,
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                RepoManagerService
+                RepoManagerService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
-                NgxsModule.forRoot(),
+                NgxsModule.forRoot([
+                    PreferencesState
+                ]),
                 SharedModule,
                 BrowserAnimationsModule,
                 TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([]),
-                HttpClientTestingModule
+                RouterTestingModule.withRoutes([])
             ]
         }).compileComponents();
     });

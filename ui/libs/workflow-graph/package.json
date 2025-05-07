@@ -2,10 +2,10 @@
   "name": "workflow-graph",
   "version": "1.0.0",
   "peerDependencies": {
-    "@angular/common": "16.2.12",
-    "@angular/core": "16.2.12",
-    "ng-zorro-antd": "16.2.2",
-    "@icholy/duration": "5.0.0"
+    "@angular/common": "18.2.13",
+    "@angular/core": "18.2.13",
+    "@icholy/duration": "5.0.0",
+    "ng-zorro-antd": "18.2.1"
   },
   "dependencies": {
     "tslib": "2.3.0"
@@ -13,5 +13,8 @@
   "scripts": {
     "ng": "ng"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "devDependencies": {
+    "@ctrl/tinycolor": "4.1.0"
+  }
 }

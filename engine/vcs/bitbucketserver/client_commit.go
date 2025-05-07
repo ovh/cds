@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/rockbears/log"
 
@@ -41,27 +42,16 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 			params.Add("until", until)
 		}
 
-		for {
-			if ctx.Err() != nil {
-				break
+		// get only the first page of commits: default limit to 25 commits max.
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response, Options{}); err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, nil
 			}
-
-			if response.NextPageStart != 0 {
-				params.Set("start", fmt.Sprintf("%d", response.NextPageStart))
-			}
-
-			if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
-				if sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return nil, nil
-				}
-				return nil, sdk.WrapError(err, "Unable to get commits %s", path)
-			}
-
-			stashCommits = append(stashCommits, response.Values...)
-			if response.IsLastPage {
-				break
-			}
+			return nil, sdk.WrapError(err, "Unable to get commits %s", path)
 		}
+
+		stashCommits = response.Values
+
 		//3 hours
 		if err := b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", stashCommitsKey, err)
@@ -88,7 +78,10 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 				Slug:        sc.Committer.Slug,
 				ID:          strconv.Itoa(sc.Committer.ID),
 			},
-			URL: urlCommit + sc.Hash,
+			URL:       urlCommit + sc.Hash,
+			Verified:  sc.Properties.Signature.IsVerified,
+			Signature: "",
+			KeyID:     strings.ReplaceAll(sc.Properties.Signature.Fingerprint, " ", ""),
 		}
 		if sc.Author.Slug != "" && sc.Author.Slug != "unknownSlug" {
 			c.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", b.consumer.URL, sc.Author.Slug)
@@ -108,7 +101,7 @@ func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VC
 
 	sc := Commit{}
 	path := fmt.Sprintf("/projects/%s/repos/%s/commits/%s", project, slug, hash)
-	if err := b.do(ctx, "GET", "core", path, nil, nil, &sc); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &sc, Options{}); err != nil {
 		return commit, sdk.WrapError(err, "Unable to get commit %s", path)
 	}
 
@@ -131,7 +124,10 @@ func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VC
 			Slug:        sc.Committer.Slug,
 			ID:          strconv.Itoa(sc.Committer.ID),
 		},
-		URL: urlCommit,
+		URL:       urlCommit,
+		Verified:  sc.Properties.Signature.IsVerified,
+		Signature: "",
+		KeyID:     strings.ReplaceAll(sc.Properties.Signature.Fingerprint, " ", ""),
 	}
 	if sc.Author.Slug != "" && sc.Author.Slug != "unknownSlug" {
 		commit.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", b.consumer.URL, sc.Author.Slug)
@@ -170,7 +166,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 				params.Set("start", fmt.Sprintf("%d", response.NextPageStart))
 			}
 
-			if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+			if err := b.do(ctx, "GET", "core", path, params, nil, &response, Options{}); err != nil {
 				if sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, nil
 				}
@@ -208,7 +204,10 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 				Slug:        sc.Committer.Slug,
 				ID:          strconv.Itoa(sc.Committer.ID),
 			},
-			URL: urlCommit + sc.Hash,
+			URL:       urlCommit + sc.Hash,
+			Verified:  sc.Properties.Signature.IsVerified,
+			Signature: "",
+			KeyID:     strings.ReplaceAll(sc.Properties.Signature.Fingerprint, " ", ""),
 		}
 
 		if sc.Author.Slug != "" && sc.Author.Slug != "unknownSlug" {

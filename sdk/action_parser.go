@@ -104,7 +104,7 @@ func (a *ActionParser) Interpolate(ctx context.Context, input string) (interface
 			if err != nil {
 				return nil, NewErrorFrom(ErrInvalidData, "unable to stringify %s: %v", match, err)
 			}
-			interpolatedInput = strings.Replace(interpolatedInput, match, fmt.Sprintf("%s", string(bts)), 1)
+			interpolatedInput = strings.Replace(interpolatedInput, match, string(bts), 1)
 		default:
 			interpolatedInput = strings.Replace(interpolatedInput, match, fmt.Sprintf("%v", result), 1)
 		}
@@ -293,6 +293,9 @@ func (a *ActionParser) parseNotExpression(ctx context.Context, exp *parser.NotEx
 func (a *ActionParser) parseFunctionCallContext(ctx context.Context, exp *parser.FunctionCallContext) (interface{}, error) {
 	log.Debug(ctx, "Function call expression detected: %s", exp.GetText())
 	var funcName string
+	var result interface{}
+	funcHasbeenCalled := false
+	isFilter := false
 	args := make([]interface{}, 0)
 	for i := 0; i < exp.GetChildCount(); i++ {
 		switch t := exp.GetChild(i).(type) {
@@ -311,11 +314,31 @@ func (a *ActionParser) parseFunctionCallContext(ctx context.Context, exp *parser
 			if t.GetText() != "(" && t.GetText() != ")" && t.GetText() != "," {
 				return nil, NewErrorFrom(ErrInvalidData, "unknown string found in functionCall expression: [%s]", t.GetText())
 			}
+		case *parser.VariablePathContext:
+			// Execute function and use result to continue
+			if !funcHasbeenCalled {
+				var err error
+				result, err = a.callFunction(ctx, funcName, args)
+				if err != nil {
+					return nil, NewErrorFrom(ErrInvalidData, "function %s failed: %v", funcName, err)
+				}
+				funcHasbeenCalled = true
+			}
+
+			var err error
+			result, isFilter, err = a.getItemFromPathContext(ctx, t, result, isFilter)
+			if err != nil {
+				return nil, err
+			}
+
 		default:
 			return nil, NewErrorFrom(ErrInvalidData, "unknown type %T in FunctionCall", t)
 		}
 	}
-	return a.callFunction(ctx, funcName, args)
+	if !funcHasbeenCalled {
+		return a.callFunction(ctx, funcName, args)
+	}
+	return result, nil
 }
 
 func (a *ActionParser) parseFunctionCallArgumentsContext(ctx context.Context, exp *parser.FunctionCallArgumentsContext) (interface{}, error) {
@@ -331,6 +354,8 @@ func (a *ActionParser) parseFunctionCallArgumentsContext(ctx context.Context, ex
 			return nil, err
 		}
 		return result, nil
+	case *parser.FunctionCallContext:
+		return a.parseFunctionCallContext(ctx, t)
 	case *parser.StringExpressionContext:
 		return a.trimString(t.GetText()), nil
 	case *parser.NumberExpressionContext:
@@ -398,34 +423,44 @@ func (a *ActionParser) parseVariableContextContext(ctx context.Context, exp *par
 			}
 			continue
 		case *parser.VariablePathContext:
-			key, err := a.parseVariablePathContext(ctx, t)
+			var err error
+			selectedValue, isFilter, err = a.getItemFromPathContext(ctx, t, selectedValue, isFilter)
 			if err != nil {
 				return nil, err
 			}
-			switch kType := key.(type) {
-			case string:
-				if key == "*" {
-					if isFilter {
-						return nil, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
-					}
-					isFilter = true
-				} else {
-					selectedValue, err = a.getItemValueFromContext(ctx, selectedValue, kType, isFilter)
-					if err != nil {
-						return nil, err
-					}
-				}
-			case int:
-				selectedValue, err = a.getArrayItemValueFromContext(ctx, selectedValue, kType)
-				if err != nil {
-					return nil, err
-				}
-			}
+
 		default:
 			return false, NewErrorFrom(ErrInvalidData, "unknown type %T in VariableContext", t)
 		}
 	}
 	return selectedValue, nil
+}
+
+func (a *ActionParser) getItemFromPathContext(ctx context.Context, t *parser.VariablePathContext, selectedValue interface{}, isFilter bool) (interface{}, bool, error) {
+	key, err := a.parseVariablePathContext(ctx, t)
+	if err != nil {
+		return nil, isFilter, err
+	}
+	switch kType := key.(type) {
+	case string:
+		if key == "*" {
+			if isFilter {
+				return nil, isFilter, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
+			}
+			isFilter = true
+		} else {
+			selectedValue, err = a.getItemValueFromContext(ctx, selectedValue, kType, isFilter)
+			if err != nil {
+				return nil, isFilter, err
+			}
+		}
+	case int:
+		selectedValue, err = a.getArrayItemValueFromContext(ctx, selectedValue, kType)
+		if err != nil {
+			return nil, isFilter, err
+		}
+	}
+	return selectedValue, isFilter, nil
 }
 
 func (a *ActionParser) parseVariablePathContext(ctx context.Context, exp *parser.VariablePathContext) (interface{}, error) {
@@ -503,16 +538,27 @@ func (a *ActionParser) getArrayItemValueFromContext(_ context.Context, currentCo
 func (a *ActionParser) getItemValueFromContext(ctx context.Context, currentContext interface{}, key string, isFilter bool) (interface{}, error) {
 	if isFilter {
 		varContext, ok := currentContext.([]map[string]interface{})
-		if !ok {
-			return nil, NewErrorFrom(ErrInvalidData, "unable to filter a non array object")
-		}
-		result := make([]interface{}, 0, len(varContext))
-		for _, currentItem := range varContext {
-			result = append(result, currentItem[key])
-		}
+		if ok {
+			result := make([]interface{}, 0, len(varContext))
+			for _, currentItem := range varContext {
+				result = append(result, currentItem[key])
+			}
 
+			return result, nil
+		}
+		slice, ok := currentContext.([]interface{})
+		if !ok {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to filter a non array object: %T", currentContext)
+		}
+		result := make([]interface{}, 0)
+		for _, s := range slice {
+			if item, ok := s.(map[string]interface{}); ok {
+				result = append(result, item[key])
+			}
+		}
 		return result, nil
 	}
+
 	varContext, ok := currentContext.(map[string]interface{})
 	if !ok {
 		log.Debug(ctx, "key [%s] do not exist in current context")
@@ -529,21 +575,42 @@ func (a *ActionParser) compare(operands []interface{}, operator string) (bool, e
 	if len(operands) != 2 {
 		return false, NewErrorFrom(ErrInvalidData, "cannot compare more or less than 2 operands")
 	}
-	operand1, ok := operands[0].(float64)
+	var operand1, operand2 float64
+
+	jsonNum1, ok := operands[0].(json.Number)
 	if !ok {
-		operand1Int, ok := operands[0].(int)
+		operand1, ok = operands[0].(float64)
 		if !ok {
-			return false, NewErrorFrom(ErrInvalidData, "%v must be a float or an int, got [%T]", operands[0], operands[0])
+			operand1Int, ok := operands[0].(int)
+			if !ok {
+				return false, NewErrorFrom(ErrInvalidData, "%v must be a float or an int, got [%T]", operands[0], operands[0])
+			}
+			operand1 = float64(operand1Int)
 		}
-		operand1 = float64(operand1Int)
+	} else {
+		var err error
+		operand1, err = jsonNum1.Float64()
+		if err != nil {
+			return false, NewErrorFrom(ErrInvalidData, "unable to cast %s into a float", operands[0])
+		}
 	}
-	operand2, ok := operands[1].(float64)
+
+	jsonNum2, ok := operands[1].(json.Number)
 	if !ok {
-		operand2Int, ok := operands[1].(int)
+		operand2, ok = operands[1].(float64)
 		if !ok {
-			return false, NewErrorFrom(ErrInvalidData, "%v must be a float or an int, got [%T]", operands[1], operands[1])
+			operand2Int, ok := operands[1].(int)
+			if !ok {
+				return false, NewErrorFrom(ErrInvalidData, "%v must be a float or an int, got [%T]", operands[1], operands[1])
+			}
+			operand2 = float64(operand2Int)
 		}
-		operand2 = float64(operand2Int)
+	} else {
+		var err error
+		operand2, err = jsonNum2.Float64()
+		if err != nil {
+			return false, NewErrorFrom(ErrInvalidData, "unable to cast %s into a float", operands[1])
+		}
 	}
 
 	switch operator {
@@ -565,13 +632,35 @@ func (a *ActionParser) equal(operands []interface{}, operator string) (bool, err
 		return false, NewErrorFrom(ErrInvalidData, "cannot equalize more or less than 2 operands")
 	}
 
+	operand0 := a.getPrimitiveType(operands[0])
+	operand1 := a.getPrimitiveType(operands[1])
+
 	switch operator {
 	case "==":
-		return operands[0] == operands[1], nil
+		return operand0 == operand1, nil
 	case "!=":
-		return operands[0] != operands[1], nil
+		return operand0 != operand1, nil
 	default:
 		return false, NewErrorFrom(ErrInvalidData, "unknown equalizer operator %s", operator)
+	}
+}
+
+func (a ActionParser) getPrimitiveType(operand interface{}) interface{} {
+	switch s := operand.(type) {
+	case string, bool, float64:
+		return s
+	case int64:
+		return float64(s)
+	case int:
+		return float64(s)
+	case json.Number:
+		f, err := s.Float64()
+		if err != nil {
+			return s.String()
+		}
+		return f
+	default:
+		return fmt.Sprintf("%v", operand)
 	}
 }
 
@@ -586,7 +675,7 @@ func (a *ActionParser) and(operands []interface{}) (bool, error) {
 	for _, op := range operands {
 		opBool, ok := op.(bool)
 		if !ok {
-			return false, NewErrorFrom(ErrInvalidData, "operator && only work with boolean, got [%v]", op)
+			return false, NewErrorFrom(ErrInvalidData, "operator && only work with boolean, got [%T: %q]", op, op)
 		}
 		currentResult = currentResult && opBool
 		if !currentResult {
@@ -607,7 +696,7 @@ func (a *ActionParser) or(operands []interface{}) (bool, error) {
 	for _, op := range operands {
 		opBool, ok := op.(bool)
 		if !ok {
-			return false, NewErrorFrom(ErrInvalidData, "operator && only work with boolean, got [%v]", opBool)
+			return false, NewErrorFrom(ErrInvalidData, "operator || only work with boolean, got [%T: %q]", op, op)
 		}
 		currentResult = currentResult || opBool
 		if currentResult {

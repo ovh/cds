@@ -4,12 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
+
+func (c *client) V2QueueGetCacheLinks(ctx context.Context, regionName string, id string, cacheKey string) (*sdk.CDNItemLinks, error) {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/cache/%s/link", regionName, id, url.PathEscape(cacheKey))
+	var result sdk.CDNItemLinks
+	if _, err := c.GetJSON(ctx, path, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
 
 func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jobRunID string, stepsStatus sdk.JobStepsStatus) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/step", regionName, jobRunID)
@@ -61,6 +72,14 @@ func (c *client) V2QueueJobRunResultsGet(ctx context.Context, regionName string,
 	return result, nil
 }
 
+func (c *client) V2QueueJobRunResultsSynchronize(ctx context.Context, regionName string, jobRunID string) error {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/runresult/synchronize", regionName, jobRunID)
+	if _, err := c.PutJSON(ctx, path, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/runresult", regionName, jobRunID)
 	if _, err := c.PostJSON(ctx, path, result, result); err != nil {
@@ -105,7 +124,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -156,7 +175,11 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
 			var queue []sdk.V2WorkflowRunJob
-			if _, err := c.GetJSON(ctxt, "/v2/queue/"+regionName, &queue); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
+			path := fmt.Sprintf("/v2/queue/%s", regionName)
+			if len(osarch) > 0 {
+				path += "?osarch=" + strings.Join(osarch, "&osarch=")
+			}
+			if _, err := c.GetJSON(ctxt, path, &queue); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
 				errs <- newError(fmt.Errorf("unable to load jobs: %v", err))
 				cancel()
 				continue
@@ -187,7 +210,8 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 
 				jobInfo, err := c.V2QueueGetJobRun(ctx, regionName, queueFiltered[i].ID)
 				if err != nil {
-					return err
+					log.Error(ctx, "unable to retrieve run %s: %v", queueFiltered[i].ID, err)
+					continue
 				}
 				jobs <- *jobInfo
 			}

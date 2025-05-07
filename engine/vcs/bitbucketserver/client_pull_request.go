@@ -25,7 +25,7 @@ func (b *bitbucketClient) PullRequest(ctx context.Context, repo string, id strin
 	params := url.Values{}
 
 	var response sdk.BitbucketServerPullRequest
-	if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+	if err := b.do(ctx, "GET", "core", path, params, nil, &response, Options{}); err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to get pullrequest")
 	}
 
@@ -68,7 +68,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string, opts sd
 		}
 
 		var response PullRequestResponse
-		if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response, Options{}); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get repos")
 		}
 
@@ -113,7 +113,7 @@ func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, p
 
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prRequest.ID)
 
-	return b.do(ctx, "POST", "core", path, nil, values, nil)
+	return b.do(ctx, "POST", "core", path, nil, values, nil, Options{})
 }
 
 func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
@@ -128,7 +128,7 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 		Open:   true,
 		Closed: false,
 		FromRef: sdk.BitbucketServerRef{
-			ID: fmt.Sprintf("refs/heads/%s", pr.Head.Branch.DisplayID),
+			ID: sdk.GitRefBranchPrefix + pr.Head.Branch.DisplayID,
 			Repository: sdk.BitbucketServerRepository{
 				Slug: slug,
 				Project: sdk.BitbucketServerProject{
@@ -137,7 +137,7 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 			},
 		},
 		ToRef: sdk.BitbucketServerRef{
-			ID: fmt.Sprintf("refs/heads/%s", pr.Base.Branch.DisplayID),
+			ID: sdk.GitRefBranchPrefix + pr.Base.Branch.DisplayID,
 			Repository: sdk.BitbucketServerRepository{
 				Slug: slug,
 				Project: sdk.BitbucketServerProject{
@@ -153,7 +153,7 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 	values, _ := json.Marshal(request)
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests", project, slug)
 
-	if err := b.do(ctx, "POST", "core", path, nil, values, &request); err != nil {
+	if err := b.do(ctx, "POST", "core", path, nil, values, &request, Options{}); err != nil {
 		return pr, sdk.WithStack(err)
 	}
 
@@ -167,14 +167,14 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 		Merged: pullRequest.State == "MERGED",
 		Base: sdk.VCSPushEvent{
 			Branch: sdk.VCSBranch{
-				ID:           strings.Replace(pullRequest.ToRef.ID, "refs/heads/", "", 1),
+				ID:           strings.Replace(pullRequest.ToRef.ID, sdk.GitRefBranchPrefix, "", 1),
 				DisplayID:    pullRequest.ToRef.DisplayID,
 				LatestCommit: pullRequest.ToRef.LatestCommit,
 			},
 		},
 		Head: sdk.VCSPushEvent{
 			Branch: sdk.VCSBranch{
-				ID:           strings.Replace(pullRequest.FromRef.ID, "refs/heads/", "", 1),
+				ID:           strings.Replace(pullRequest.FromRef.ID, sdk.GitRefBranchPrefix, "", 1),
 				DisplayID:    pullRequest.FromRef.DisplayID,
 				LatestCommit: pullRequest.FromRef.LatestCommit,
 			},

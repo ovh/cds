@@ -24,6 +24,11 @@ type statusData struct {
 	context      string
 }
 
+func (g *githubClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, vcsReport sdk.VCSInsight) error {
+	// not implemented
+	return nil
+}
+
 // SetStatus Users with push access can create commit statuses for a given ref:
 // https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
@@ -46,6 +51,10 @@ func (g *githubClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildSt
 		ghStatus.State = "failure"
 	case sdk.StatusBuilding:
 		ghStatus.State = "pending"
+	case sdk.StatusSkipped:
+		ghStatus.State = "skipped"
+	case sdk.StatusCancelled:
+		ghStatus.State = "cancelled"
 	default:
 		log.Debug(ctx, "SetStatus> github setStatus not managed for %s", buildStatus.Status)
 		return nil

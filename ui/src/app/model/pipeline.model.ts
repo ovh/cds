@@ -203,50 +203,6 @@ export class SpawnInfoMessage {
     id: string;
 }
 
-export class CDNLogLink {
-    item_type: string;
-    api_ref: string;
-}
-
-export class CDNLogsLines {
-    api_ref: string
-    lines_count: number
-}
-
-export class CDNLogLinks {
-    item_type: string;
-    datas: Array<CDNLogLinkData>;
-}
-
-export class CDNLogLinkData {
-    api_ref: string
-    step_order: number
-    step_name: string
-    service_name: string
-    requirement_id: number
-    item_type: string;
-}
-
-export class CDNLinesResponse {
-    totalCount: number;
-    lines: Array<CDNLine>;
-}
-
-export class CDNLine {
-    number: number;
-    value: string;
-    api_ref_hash: string;
-    since: number; // the count of milliseconds since job start
-
-    // properties used by ui only
-    extra: Array<string>;
-}
-
-export class CDNStreamFilter {
-    item_type: string;
-    job_run_id: string;
-}
-
 export class Tests {
     pipeline_build_id: number;
     total: number;

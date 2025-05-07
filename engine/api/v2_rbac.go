@@ -67,11 +67,7 @@ func (api *API) getRBACHandler() ([]service.RbacChecker, service.Handler) {
 			vars := mux.Vars(req)
 			rbacIdentifier := vars["rbacIdentifier"]
 			perm, err := api.getRBACByIdentifier(ctx, rbacIdentifier,
-				rbac.LoadOptions.LoadRBACGlobal,
-				rbac.LoadOptions.LoadRBACProject,
-				rbac.LoadOptions.LoadRBACWorkflow,
-				rbac.LoadOptions.LoadRBACHatchery,
-				rbac.LoadOptions.LoadRBACRegion)
+				rbac.LoadOptions.All)
 			if err != nil {
 				return err
 			}
@@ -207,6 +203,19 @@ func (rl *RBACLoader) FillRBACWithNames(ctx context.Context, r *sdk.RBAC) error 
 			return err
 		}
 	}
+	for vsID := range r.VariableSets {
+		rbacVS := &r.VariableSets[vsID]
+		if err := rl.fillRBACVariableSetWithNames(ctx, rbacVS); err != nil {
+			return err
+		}
+	}
+	for rpID := range r.RegionProjects {
+		rp := &r.RegionProjects[rpID]
+		if err := rl.fillRBACRegionProjectWithNames(ctx, rp); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -248,7 +257,19 @@ func (rl *RBACLoader) FillRBACWithIDs(ctx context.Context, r *sdk.RBAC) error {
 	}
 	for wID := range r.Workflows {
 		rbacWf := &r.Workflows[wID]
-		if err := rl.fillRBACWorkflowWIthID(ctx, rbacWf); err != nil {
+		if err := rl.fillRBACWorkflowWithID(ctx, rbacWf); err != nil {
+			return err
+		}
+	}
+	for vsID := range r.VariableSets {
+		rbacVS := &r.VariableSets[vsID]
+		if err := rl.fillRBACVariableSetWIthID(ctx, rbacVS); err != nil {
+			return err
+		}
+	}
+	for rpID := range r.RegionProjects {
+		rp := &r.RegionProjects[rpID]
+		if err := rl.fillRBACRegionProjectWithID(ctx, rp); err != nil {
 			return err
 		}
 	}
@@ -282,6 +303,25 @@ func (rl *RBACLoader) fillRBACHatcheryWithID(ctx context.Context, rbacHatchery *
 		return err
 	}
 	rbacHatchery.RegionID = reg.ID
+	return nil
+}
+
+func (rl *RBACLoader) fillRBACRegionProjectWithNames(ctx context.Context, rbacRegionProject *sdk.RBACRegionProject) error {
+	rg, err := region.LoadRegionByID(ctx, rl.db, rbacRegionProject.RegionID)
+	if err != nil {
+		return err
+	}
+	rbacRegionProject.RegionName = rg.Name
+	return nil
+}
+
+func (rl *RBACLoader) fillRBACRegionProjectWithID(ctx context.Context, rbacRegionProject *sdk.RBACRegionProject) error {
+	rg, err := region.LoadRegionByName(ctx, rl.db, rbacRegionProject.RegionName)
+	if err != nil {
+		return err
+	}
+	rbacRegionProject.RegionID = rg.ID
+
 	return nil
 }
 
@@ -447,6 +487,36 @@ func (rl *RBACLoader) fillRBACProjectWithID(ctx context.Context, rbacPrj *sdk.RB
 	return nil
 }
 
+func (rl *RBACLoader) fillRBACVariableSetWithNames(ctx context.Context, rbacVS *sdk.RBACVariableSet) error {
+	rbacVS.RBACUsersName = make([]string, 0, len(rbacVS.RBACUsersIDs))
+	for _, userID := range rbacVS.RBACUsersIDs {
+		userName := rl.userCache[userID]
+		if userName == "" {
+			authentifierUser, err := user.LoadByID(ctx, rl.db, userID)
+			if err != nil {
+				return err
+			}
+			userName = authentifierUser.Username
+			rl.userCache[userID] = userName
+		}
+		rbacVS.RBACUsersName = append(rbacVS.RBACUsersName, userName)
+	}
+	rbacVS.RBACGroupsName = make([]string, 0, len(rbacVS.RBACGroupsIDs))
+	for _, groupID := range rbacVS.RBACGroupsIDs {
+		groupName := rl.groupCache[groupID]
+		if groupName == "" {
+			groupDB, err := group.LoadByID(ctx, rl.db, groupID)
+			if err != nil {
+				return err
+			}
+			groupName = groupDB.Name
+			rl.groupCache[groupDB.ID] = groupName
+		}
+		rbacVS.RBACGroupsName = append(rbacVS.RBACGroupsName, groupName)
+	}
+	return nil
+}
+
 func (rl *RBACLoader) fillRBACWorkflowWithNames(ctx context.Context, rbacWkf *sdk.RBACWorkflow) error {
 	rbacWkf.RBACUsersName = make([]string, 0, len(rbacWkf.RBACUsersIDs))
 	for _, userID := range rbacWkf.RBACUsersIDs {
@@ -477,7 +547,37 @@ func (rl *RBACLoader) fillRBACWorkflowWithNames(ctx context.Context, rbacWkf *sd
 	return nil
 }
 
-func (rl *RBACLoader) fillRBACWorkflowWIthID(ctx context.Context, rbacWkf *sdk.RBACWorkflow) error {
+func (rl *RBACLoader) fillRBACVariableSetWIthID(ctx context.Context, rbacVS *sdk.RBACVariableSet) error {
+	rbacVS.RBACUsersIDs = make([]string, 0, len(rbacVS.RBACUsersName))
+	for _, userName := range rbacVS.RBACUsersName {
+		userID := rl.userCache[userName]
+		if userID == "" {
+			authentifierUser, err := user.LoadByUsername(ctx, rl.db, userName)
+			if err != nil {
+				return err
+			}
+			userID = authentifierUser.ID
+			rl.userCache[userName] = userID
+		}
+		rbacVS.RBACUsersIDs = append(rbacVS.RBACUsersIDs, userID)
+	}
+	rbacVS.RBACGroupsIDs = make([]int64, 0, len(rbacVS.RBACGroupsName))
+	for _, groupName := range rbacVS.RBACGroupsName {
+		groupID := rl.groupIDCache[groupName]
+		if groupID == 0 {
+			groupDB, err := group.LoadByName(ctx, rl.db, groupName)
+			if err != nil {
+				return err
+			}
+			groupID = groupDB.ID
+			rl.groupIDCache[groupDB.Name] = groupID
+		}
+		rbacVS.RBACGroupsIDs = append(rbacVS.RBACGroupsIDs, groupID)
+	}
+	return nil
+}
+
+func (rl *RBACLoader) fillRBACWorkflowWithID(ctx context.Context, rbacWkf *sdk.RBACWorkflow) error {
 	rbacWkf.RBACUsersIDs = make([]string, 0, len(rbacWkf.RBACUsersName))
 	for _, userName := range rbacWkf.RBACUsersName {
 		userID := rl.userCache[userName]

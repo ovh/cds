@@ -64,3 +64,11 @@ export class Schema {
     environment: string;
     workflow: string;
 }
+
+export class UserGPGKey {
+    id: string;
+    authentified_user_id: string;
+    key_id: string;
+    public_key: string;
+    created: string;
+}

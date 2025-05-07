@@ -10,6 +10,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/rockbears/log"
 
@@ -30,16 +31,16 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	if err := h.checkSpawnLimits(ctx, spawnArgs); err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, err.Error())
-		return nil
-	}
-
 	// Get flavor for target model
 	flavor, err := h.flavor(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
 	if err != nil {
 		return err
+	}
+
+	if err := h.checkSpawnLimits(ctx, flavor, spawnArgs); err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, err.Error())
+		return nil
 	}
 
 	// Get image ID
@@ -70,6 +71,19 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
+	var cmdPrefix string
+	if cmdUsername := h.GetImageUsername(ctx, spawnArgs.Model.GetOpenstackImage()); cmdUsername != "" {
+		cmdPrefix = fmt.Sprintf("sudo -u %s -i ", cmdUsername)
+		hatcheryTakeInfo := sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Time:    time.Now(),
+			Message: fmt.Sprintf("Hatchery %q is configured to use the username '%s' for this worker", h.Name(), cmdUsername),
+		}
+		if err = h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, hatcheryTakeInfo); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}
+
 	var cmdSuffix string
 	if spawnArgs.RegisterOnly {
 		cmdSuffix = fmt.Sprintf(" --config %s register", workerConfig.EncodeBase64())
@@ -77,7 +91,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		cmdSuffix += fmt.Sprintf(" --config %s", workerConfig.EncodeBase64())
 	}
 
-	udata := spawnArgs.Model.GetPreCmd() + "\n" + spawnArgs.Model.GetCmd() + cmdSuffix + "\n" + spawnArgs.Model.GetPostCmd()
+	udata := spawnArgs.Model.GetPreCmd() + "\n" + cmdPrefix + spawnArgs.Model.GetCmd() + cmdSuffix + "\n" + spawnArgs.Model.GetPostCmd()
 	tmpl, err := template.New("udata").Parse(udata)
 	if err != nil {
 		return err
@@ -170,23 +184,17 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	return nil
 }
 
-func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
+func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors.Flavor, spawnArgs hatchery.SpawnArguments) error {
 	existingServers := h.getServers(ctx)
 	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
 		return sdk.WithStack(fmt.Errorf("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker))
-	}
-
-	// Get flavor for target model
-	flavor, err := h.flavor(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
-	if err != nil {
-		return err
 	}
 
 	// If a max CPUs count is set in configuration we will check that there are enough CPUs available to spawn the model
 	var totalCPUsUsed int
 	if h.Config.MaxCPUs > 0 {
 		for i := range existingServers {
-			flavorName, _ := existingServers[i].Metadata["flavor"]
+			flavorName := existingServers[i].Metadata["flavor"]
 			flavor, err := h.flavor(flavorName)
 			if err == nil {
 				totalCPUsUsed += flavor.VCPUs

@@ -29,10 +29,6 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-const (
-	defaultLimit = 10
-)
-
 func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int
@@ -57,7 +53,10 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 		offset = 0
 	}
 	if limit == 0 {
-		limit = defaultLimit
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
 	}
 
 	//Parse all form values
@@ -224,7 +223,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		options := workflow.LoadOptions{}
@@ -266,9 +265,6 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowNameAdvanced"]
-		if name == "" {
-			name = vars["permWorkflowName"] // Useful for workflowv3 routes
-		}
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -1238,12 +1234,23 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 			if v.Type != sdk.SecretVariable {
 				continue
 			}
+			value := v.Value
+			if value == sdk.PasswordPlaceholder || value == "" {
+				if publicIntegrationConfig, has := projectIntegration.Model.PublicConfigurations[projectIntegration.Name]; has {
+					if publicConfigValue, has2 := publicIntegrationConfig[k]; has2 {
+						if publicConfigValue.Value == sdk.PasswordPlaceholder || publicConfigValue.Value == "" {
+							continue
+						}
+						value = publicConfigValue.Value
+					}
+				}
+			}
 			wrSecret := sdk.WorkflowRunSecret{
 				WorkflowRunID: wr.ID,
 				Context:       fmt.Sprintf(workflow.SecretProjIntegrationContext, ppID),
 				Name:          fmt.Sprintf("cds.integration.%s.%s", sdk.GetIntegrationVariablePrefix(projectIntegration.Model), k),
 				Type:          v.Type,
-				Value:         []byte(v.Value),
+				Value:         []byte(value),
 			}
 			if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {
 				return err

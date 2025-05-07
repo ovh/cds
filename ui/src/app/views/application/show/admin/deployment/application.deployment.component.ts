@@ -6,7 +6,6 @@ import {
     DeleteApplicationDeployment,
     UpdateApplicationDeployment
 } from 'app/store/applications.action';
-import { cloneDeep } from 'lodash-es';
 import { finalize } from 'rxjs/operators';
 import { Application } from 'app/model/application.model';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -20,26 +19,12 @@ import { ToastService } from 'app/shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApplicationDeploymentComponent {
-
-    _project: Project;
-    @Input()
-    set project(project: Project) {
-        this._project = project;
-        if (project.integrations) {
-            this.filteredIntegrations = cloneDeep(project.integrations.filter(p => p.model.deployment));
-        }
-    }
-
-    get project(): Project {
-        return this._project;
-    }
-
+    @Input() project: Project;
     @Input() application: Application;
     @Input() editMode: boolean;
+    @Input() deploymentIntegrations: Array<ProjectIntegration>;
 
-    filteredIntegrations: Array<ProjectIntegration>;
     selectedIntegration: ProjectIntegration;
-
     loadingBtn = false;
 
     constructor(
@@ -47,9 +32,7 @@ export class ApplicationDeploymentComponent {
         public _translate: TranslateService,
         private store: Store,
         private _cd: ChangeDetectorRef
-    ) {
-
-    }
+    ) { }
 
     getIntegrationNames(): Array<string> {
         if (this.application.deployment_strategies) {
@@ -74,7 +57,6 @@ export class ApplicationDeploymentComponent {
                 } else {
                     this._toast.success('', this._translate.instant('application_integration_deleted'));
                 }
-
             });
     }
 
@@ -95,7 +77,6 @@ export class ApplicationDeploymentComponent {
                 } else {
                     this._toast.success('', this._translate.instant('application_integration_updated'));
                 }
-
             });
     }
 

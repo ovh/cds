@@ -63,12 +63,41 @@ func (api *API) cancelAbandonnedRunResult(ctx context.Context, db *gorp.DbMap, i
 
 	log.Debug(ctx, "cancelAbandonnedRunResult: %s", id)
 
-	runResult.Status = sdk.V2WorkflowRunResultStatusCanceled
+	runResult.Status = sdk.V2WorkflowRunResultStatusCancelled
 	if err := workflow_v2.UpdateRunResult(ctx, tx, runResult); err != nil {
 		return err
 	}
 
 	return sdk.WithStack(tx.Commit())
+}
+
+func (api *API) StopUnstartedJobs(ctx context.Context) {
+	tickUnstartedJob := time.NewTicker(1 * time.Minute)
+	defer tickUnstartedJob.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
+		case <-tickUnstartedJob.C:
+			jobWaitingTimeout := api.Config.WorkflowV2.JobWaitingTimeout
+			if jobWaitingTimeout == 0 {
+				jobWaitingTimeout = 3600
+			}
+			jobs, err := workflow_v2.LoadOldWaitingRunJob(ctx, api.mustDB(), jobWaitingTimeout)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				continue
+			}
+			for i := range jobs {
+				if err := api.failOldWaitingRunJob(ctx, api.Cache, api.mustDB(), jobs[i].ID); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
+			}
+		}
+	}
 }
 
 func (api *API) StopDeadJobs(ctx context.Context) {
@@ -125,6 +154,75 @@ func (api *API) ReEnqueueScheduledJobs(ctx context.Context) {
 	}
 }
 
+func (api *API) failOldWaitingRunJob(ctx context.Context, store cache.Store, db *gorp.DbMap, runJobID string) error {
+	ctx, next := telemetry.Span(ctx, "failOldWaitingRunJob")
+	defer next()
+
+	_, next = telemetry.Span(ctx, "failOldWaitingRunJob.lock")
+	lockKey := cache.Key(jobLockKey, runJobID)
+	b, err := store.Lock(lockKey, 1*time.Minute, 0, 1)
+	if err != nil {
+		next()
+		return err
+	}
+	if !b {
+		next()
+		return nil
+	}
+	next()
+	defer func() {
+		_ = store.Unlock(lockKey)
+	}()
+
+	runJob, err := workflow_v2.LoadRunJobByID(ctx, db, runJobID)
+	if err != nil {
+		return err
+	}
+	if runJob.Status != sdk.V2WorkflowRunJobStatusWaiting {
+		return nil
+	}
+
+	ctx = context.WithValue(ctx, cdslog.WorkflowRunID, runJob.WorkflowRunID)
+	ctx = context.WithValue(ctx, cdslog.Workflow, runJob.WorkflowName)
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback() // nolint
+
+	log.Info(ctx, fmt.Sprintf("failRunJob: job %s/%s (timeout %s) on workflow %s run %d", runJob.JobID, runJob.ID, time.Now().Sub(sdk.TimeSafe(&runJob.Queued)).String(), runJob.WorkflowName, runJob.RunNumber))
+
+	runJob.Status = sdk.V2WorkflowRunJobStatusFail
+
+	if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
+		return err
+	}
+
+	info := sdk.V2WorkflowRunJobInfo{
+		WorkflowRunID:    runJob.WorkflowRunID,
+		IssuedAt:         time.Now(),
+		Level:            sdk.WorkflowRunInfoLevelError,
+		WorkflowRunJobID: runJob.ID,
+		Message:          "the job has been in waiting state for too long, stopping it. Please contact an administrator",
+	}
+	if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	// Trigger workflow
+	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.Initiator, runJob.WorkflowName, runJob.RunNumber)
+
+	// Trigger other workflow regarding concurrency
+	api.manageEndConcurrency(runJob.ProjectKey, runJob.VCSServer, runJob.Repository, runJob.WorkflowName, runJob.WorkflowRunID, runJob.ID, runJob.Concurrency)
+
+	return nil
+}
+
 func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMap, runJobID string) error {
 	ctx, next := telemetry.Span(ctx, "reEnqueueScheduledJob")
 	defer next()
@@ -153,6 +251,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 		return nil
 	}
 
+	ctx = context.WithValue(ctx, cdslog.WorkflowRunID, runJob.WorkflowRunID)
 	ctx = context.WithValue(ctx, cdslog.Workflow, runJob.WorkflowName)
 
 	tx, err := db.Begin()
@@ -179,7 +278,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	if err != nil {
 		return err
 	}
-	event_v2.PublishRunJobEvent(ctx, store, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, *runJob)
+	event_v2.PublishRunJobEvent(ctx, store, sdk.EventRunJobEnqueued, *run, *runJob)
 	return nil
 }
 
@@ -213,6 +312,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 		return err
 	}
 
+	ctx = context.WithValue(ctx, cdslog.WorkflowRunID, runJob.WorkflowRunID)
 	ctx = context.WithValue(ctx, cdslog.Workflow, runJob.WorkflowName)
 
 	if runJob.Status.IsTerminated() {
@@ -227,6 +327,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 
 	log.Info(ctx, fmt.Sprintf("stopDeadJob: stopping job %s/%s on workflow %s run %d", runJob.JobID, runJob.ID, runJob.WorkflowName, runJob.RunNumber))
 	runJob.Status = sdk.V2WorkflowRunJobStatusStopped
+
 	now := time.Now()
 	runJob.Ended = &now
 
@@ -251,7 +352,10 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	}
 
 	// Trigger workflow
-	event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, *runJob)
-	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber)
+	event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *run, *runJob)
+	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.Initiator, runJob.WorkflowName, runJob.RunNumber)
+
+	// Trigger other workflow regarding concurrency
+	api.manageEndConcurrency(runJob.ProjectKey, runJob.VCSServer, runJob.Repository, runJob.WorkflowName, runJob.WorkflowRunID, runJob.ID, runJob.Concurrency)
 	return nil
 }

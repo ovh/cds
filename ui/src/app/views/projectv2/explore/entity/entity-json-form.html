@@ -1,0 +1,7 @@
+<h4 *ngIf="name" nz-typography nzCopyable [nzContent]="name">{{name}}</h4>
+
+<form *ngIf="jsonFormSchema && model" nz-form>
+    <app-entity-json-form-field *ngFor="let f of jsonFormSchema.types[parentType].fields" [parentType]="parentType"
+        [disabled]="disabled" [field]="f" [jsonFormSchema]="jsonFormSchema" [model]="model" [entityType]="entityType"
+        (modelChange)="mergeModelAndData($event)"></app-entity-json-form-field>
+</form>

@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
@@ -16,22 +16,21 @@ import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.sa
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
     CleanWorkflowState,
     GetWorkflow,
-    SelectHook,
-    UpdateFavoriteWorkflow
+    SelectHook
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import {
     WorkflowTemplateApplyModalComponent
 } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
-
+import { RouterService } from 'app/service/services.module';
 
 @Component({
     selector: 'app-workflow',
@@ -55,7 +54,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     eventsRouteSubscription: Subscription;
 
     loading = true;
-    loadingFav = false;
 
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
@@ -63,8 +61,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     selectedNodeID: number;
     selectedNodeRef: string;
     selectecHookRef: string;
-
-    workflowV3Enabled: boolean;
     asCodeTagColor: string = '';
     templateTagColor: string = '';
     previewV3TagColor: string = '';
@@ -78,14 +74,15 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         private _store: Store,
         private _cd: ChangeDetectorRef,
         private _featureService: FeatureService,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _routerService: RouterService
     ) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.projectSubscription = this._store.select(ProjectState).subscribe((projectState: ProjectStateModel) => {
-            this.project = projectState.project;
+        this.projectSubscription = this._store.select(ProjectState.projectSnapshot).subscribe((p: Project) => {
+            this.project = p;
             if (this.project && this.workflow && this.project.key !== this.workflow.project_key) {
                 delete this.workflow;
             }
@@ -114,9 +111,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                         exists: f.exists
                     }
                 }));
-            });
-            this._featureService.isEnabled(FeatureNames.WorkflowV3, data).subscribe(f => {
-                this.workflowV3Enabled = f.enabled;
             });
         });
 
@@ -168,7 +162,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         });
 
         // Workflow subscription
-        this.paramsRouteSubscription = this._activatedRoute.params.subscribe(params => {
+        this.paramsRouteSubscription = this._activatedRoute.params.subscribe(_ => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
             let projectKey = params['key'];
             let workflowName = params['workflowName'];
 
@@ -191,22 +186,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                 }
             }
         });
-    }
-
-    updateFav() {
-        if (this.loading || !this.workflow) {
-            return;
-        }
-        this.loadingFav = true;
-        this._cd.markForCheck();
-        this._store.dispatch(new UpdateFavoriteWorkflow({
-            projectKey: this.project.key,
-            workflowName: this.workflow.name
-        })).pipe(finalize(() => {
-            this.loadingFav = false;
-            this._cd.markForCheck()
-        }))
-            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')));
     }
 
     showTemplateFrom(): void {

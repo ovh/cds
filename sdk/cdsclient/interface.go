@@ -1,3 +1,4 @@
+//go:generate mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface
 package cdsclient
 
 import (
@@ -34,17 +35,19 @@ type TemplateClient interface {
 	TemplateDeleteInstance(groupName, templateSlug string, id int64) error
 }
 
+type TemplateV2Client interface {
+	TemplateGenerateWorkflowFromFile(ctx context.Context, req sdk.V2WorkflowTemplateGenerateRequest) (*sdk.V2WorkflowTemplateGenerateResponse, error)
+}
+
 // Admin expose all function to CDS administration
 type Admin interface {
+	AdminDatabaseMigrationList(service string) ([]sdk.DatabaseMigrationStatus, error)
 	AdminDatabaseMigrationDelete(service string, id string) error
 	AdminDatabaseMigrationUnlock(service string, id string) error
-	AdminDatabaseMigrationsList(service string) ([]sdk.DatabaseMigrationStatus, error)
-	AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error)
-	AdminDatabaseSignaturesRollEntity(service string, e string, idx *int64) error
-	AdminDatabaseSignaturesRollAllEntities(service string) error
-	AdminDatabaseListEncryptedEntities(service string) ([]string, error)
-	AdminDatabaseRollEncryptedEntity(service string, e string, idx *int64) error
-	AdminDatabaseRollAllEncryptedEntities(service string) error
+	AdminDatabaseEntityList(service string) ([]sdk.DatabaseEntity, error)
+	AdminDatabaseEntity(service string, e string, mods ...RequestModifier) ([]string, error)
+	AdminDatabaseEntityInfo(service string, e string, pks []string) ([]sdk.DatabaseEntityInfo, error)
+	AdminDatabaseEntityRoll(service string, e string, pks []string, mods ...RequestModifier) ([]sdk.DatabaseEntityInfo, error)
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
@@ -53,6 +56,7 @@ type Admin interface {
 	AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error)
 	AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error
 	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
+	AdminUserCreate(ctx context.Context, user sdk.CreateUser) error
 	HasProjectRole(ctx context.Context, projectKey, sessionID string, role string) error
 	Features() ([]sdk.Feature, error)
 	FeatureCreate(f sdk.Feature) error
@@ -244,6 +248,8 @@ type ProjectClientV2 interface {
 	ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error)
 
 	ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error
+	ProjectVariableSetCreateFromApplication(ctx context.Context, pKey string, req sdk.CopyApplicationVariableToVariableSet) error
+	ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error
 	ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string, mod ...RequestModifier) error
 	ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error)
 	ProjectVariableSetShow(ctx context.Context, pKey string, vsName string) (*sdk.ProjectVariableSet, error)
@@ -252,6 +258,23 @@ type ProjectClientV2 interface {
 	ProjectVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
 	ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
 	ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
+	ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...RequestModifier) error
+	ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...RequestModifier) error
+	ProjectVariableSetItemFromApplicationIntegrationVariable(ctx context.Context, pKey string, req sdk.CopyApplicationIntegrationVariableToVariableSet, mods ...RequestModifier) error
+
+	ProjectConcurrencyCreate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error
+	ProjectConcurrencyGet(ctx context.Context, pKey string, name string) (*sdk.ProjectConcurrency, error)
+	ProjectConcurrencyList(ctx context.Context, pKey string) ([]sdk.ProjectConcurrency, error)
+	ProjectConcurrencyUpdate(ctx context.Context, pKey string, c *sdk.ProjectConcurrency) error
+	ProjectConcurrencyDelete(ctx context.Context, pKey string, name string) error
+	ProjectConcurrencyListRuns(ctx context.Context, pKey string, name string) ([]sdk.ProjectConcurrencyRunObject, error)
+
+	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
+
+	ProjectWebHookAdd(ctx context.Context, projectKey string, r sdk.PostProjectWebHook) (*sdk.HookAccessData, error)
+	ProjectWebHookList(ctx context.Context, projectKey string) ([]sdk.ProjectWebHook, error)
+	ProjectWebHookGet(ctx context.Context, projectKey string, uuid string) (*sdk.ProjectWebHook, error)
+	ProjectWebHookDelete(ctx context.Context, projectKey string, uuid string) error
 }
 
 // ProjectClient exposes project related functions
@@ -262,7 +285,7 @@ type ProjectClient interface {
 	ProjectGroupDelete(projectKey, groupName string) error
 	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
 	ProjectUpdate(key string, project *sdk.Project) error
-	ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...Filter) ([]sdk.Project, error)
+	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error)
@@ -278,7 +301,6 @@ type ProjectClient interface {
 	ProjectVCSDelete(ctx context.Context, projectKey string, vcsName string) error
 	ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repo sdk.ProjectRepository) error
 	ProjectVCSRepositoryList(ctx context.Context, projectKey string, vcsName string) ([]sdk.ProjectRepository, error)
-	ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error)
 	ProjectRepositoryDelete(ctx context.Context, projectKey string, vcsName string, repositoryName string) error
 	ProjectRepositoryAnalysis(ctx context.Context, analysis sdk.AnalysisRequest) (sdk.AnalysisResponse, error)
 	ProjectRepositoryAnalysisList(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string) ([]sdk.ProjectRepositoryAnalysis, error)
@@ -317,16 +339,18 @@ type ProjectVariablesClient interface {
 
 type V2QueueClient interface {
 	V2QueueGetJobRun(ctx context.Context, regionName string, id string) (*sdk.V2QueueJobInfo, error)
-	V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
+	V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
 	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
 	V2QueueJobRunResultGet(ctx context.Context, regionName string, jobRunID string, runResultID string) (*sdk.V2WorkflowRunResult, error)
 	V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string) ([]sdk.V2WorkflowRunResult, error)
+	V2QueueJobRunResultsSynchronize(ctx context.Context, regionName string, jobRunID string) error
 	V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
 	V2QueueJobRunResultUpdate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
 	V2QueuePushRunInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2WorkflowRunInfo) error
 	V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error
 	V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error)
 	V2QueueJobStepUpdate(ctx context.Context, regionName string, id string, stepsStatus sdk.JobStepsStatus) error
+	V2QueueGetCacheLinks(ctx context.Context, regionName string, id string, cacheKey string) (*sdk.CDNItemLinks, error)
 }
 
 // QueueClient exposes queue related functions
@@ -357,8 +381,8 @@ type UserClient interface {
 	UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error)
 	UserUpdate(ctx context.Context, username string, user *sdk.AuthentifiedUser) error
 	UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error)
+	UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error)
 	UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error)
-	UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error)
 	UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error)
 	UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error)
 	UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error)
@@ -371,6 +395,8 @@ type V2WorkerClient interface {
 	V2WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm, region, runJobID string) (*sdk.V2Worker, error)
 	V2WorkerUnregister(ctx context.Context, region, runJobID string) error
 	V2WorkerRefresh(ctx context.Context, region, runJobID string) error
+
+	V2WorkerProjectGetKey(ctx context.Context, region, runJobID, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 // WorkerClient exposes workers functions
@@ -408,11 +434,14 @@ type HookClient interface {
 	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
 	VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error)
 
+	HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V2WorkflowHook, error)
 	HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error)
 	ListWorkflowToTrigger(ctx context.Context, req sdk.HookListWorkflowRequest) ([]sdk.V2WorkflowHook, error)
 	RetrieveHookEventSigningKey(ctx context.Context, req sdk.HookRetrieveSignKeyRequest) (sdk.Operation, error)
 	RetrieveHookEventSigningKeyOperation(ctx context.Context, operationUUID string) (sdk.Operation, error)
 	RetrieveHookEventUser(ctx context.Context, req sdk.HookRetrieveUserRequest) (sdk.HookRetrieveUserResponse, error)
+	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string, mods ...RequestModifier) (*sdk.Entity, error)
+	CreateInsightReport(ctx context.Context, projKey string, vcsName string, repoName string, commit string, insightKey string, insightReport sdk.VCSInsight) error
 }
 
 // ServiceClient exposes functions used for services
@@ -422,18 +451,23 @@ type ServiceClient interface {
 
 type WorkflowV2Client interface {
 	WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunHookRequest, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
-	WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...RequestModifier) (*sdk.HookRepositoryEvent, error)
-	WorkflowV2Restart(ctx context.Context, projectKey, runIdentifier string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
-	WorkflowV2JobStart(ctx context.Context, projectKey, runIdentifier, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...RequestModifier) (*sdk.V2WorkflowRunManualResponse, error)
+	WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2JobStart(ctx context.Context, projectKey, workflowRunID, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2RunSearchAllProjects(ctx context.Context, offset, limit int64, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)
 	WorkflowV2RunSearch(ctx context.Context, projectKey string, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)
-	WorkflowV2RunInfoList(ctx context.Context, projectKey, runIdentifier string, mods ...RequestModifier) ([]sdk.V2WorkflowRunInfo, error)
-	WorkflowV2RunStatus(ctx context.Context, projectKey, runIdentifier string) (*sdk.V2WorkflowRun, error)
-	WorkflowV2RunJobs(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunJob, error)
-	WorkflowV2RunJob(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (*sdk.V2WorkflowRunJob, error)
-	WorkflowV2RunJobInfoList(ctx context.Context, projKey, runIdentifier, jobIdentifier string) ([]sdk.V2WorkflowRunJobInfo, error)
-	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (sdk.CDNLogLinks, error)
-	WorkflowV2Stop(ctx context.Context, projKey, runIdentifier string) error
-	WorkflowV2StopJob(ctx context.Context, projKey, runIdentifier, jobIdentifier string) error
+	WorkflowV2RunInfoList(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) ([]sdk.V2WorkflowRunInfo, error)
+	WorkflowV2RunStatus(ctx context.Context, projectKey, workflowRunID string) (*sdk.V2WorkflowRun, error)
+	WorkflowV2RunJobs(ctx context.Context, projKey, workflowRunID string) ([]sdk.V2WorkflowRunJob, error)
+	WorkflowV2RunJob(ctx context.Context, projKey, workflowRunID, jobRunID string) (*sdk.V2WorkflowRunJob, error)
+	WorkflowV2RunJobInfoList(ctx context.Context, projKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJobInfo, error)
+	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, workflowRunID, jobRunID string) (sdk.CDNLogLinks, error)
+	WorkflowV2Stop(ctx context.Context, projKey, workflowRunID string) error
+	WorkflowV2StopJob(ctx context.Context, projKey, workflowRunID, jobIdentifier string) error
+	WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error)
+	WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error)
+	WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error)
+	WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error
 }
 
 // WorkflowClient exposes workflows functions
@@ -470,10 +504,6 @@ type WorkflowClient interface {
 	WorkflowAllHooksList() ([]sdk.NodeHook, error)
 	WorkflowAllHooksExecutions() ([]string, error)
 	WorkflowTransformAsCode(projectKey, workflowName, branch, message string) (*sdk.Operation, error)
-}
-
-type WorkflowV3Client interface {
-	WorkflowV3Get(projectKey string, workflowName string, opts ...RequestModifier) ([]byte, error)
 }
 
 // MonitoringClient exposes monitoring functions
@@ -524,7 +554,6 @@ type Interface interface {
 	OrganizationClient
 	RegionClient
 	QueueClient
-	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
 	ServiceClient
@@ -533,14 +562,15 @@ type Interface interface {
 	WorkerClient
 	WorkflowClient
 	WorkflowV2Client
-	WorkflowV3Client
 	MonitoringClient
 	HookClient
 	Version() (*sdk.Version, error)
 	TemplateClient
+	TemplateV2Client
 	WebsocketClient
 	V2QueueClient
 	EntityLint(ctx context.Context, entityType string, data interface{}) (*sdk.EntityCheckResponse, error)
+	VCSGPGKey(ctx context.Context, gpgKeyID string) ([]sdk.VCSUserGPGKey, error)
 }
 
 type V2WorkerInterface interface {
@@ -768,6 +798,22 @@ func Workflows(ws ...string) RequestModifier {
 		for _, w := range ws {
 			q.Add("workflow", w)
 		}
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func Signer(signer string) RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("signer", signer)
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func IgnoreMissing() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("ignoreMissing", sdk.TrueString)
 		r.URL.RawQuery = q.Encode()
 	}
 }

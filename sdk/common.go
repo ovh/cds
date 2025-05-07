@@ -196,6 +196,9 @@ func DirectoryExists(path string) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	}
+	if s == nil {
+		return false, err
+	}
 	return s.IsDir(), err
 }
 
@@ -344,9 +347,19 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 	d.UseNumber()
 	err := d.Decode(i)
 	if err != nil {
-		return WithStack(err)
+		return NewErrorWithStack(err, ErrInvalidData)
 	}
 	return nil
+}
+
+func IsPointer(i any) bool {
+	val := reflect.ValueOf(i)
+	if val.Kind() != reflect.Ptr {
+		return false
+	}
+
+	val = val.Elem()
+	return val.CanAddr()
 }
 
 type KeyValues struct {

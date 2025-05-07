@@ -31,7 +31,6 @@ func workflow() *cobra.Command {
 		cli.NewCommand(workflowImportCmd, workflowImportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowPullCmd, workflowPullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
-		cli.NewCommand(workflowFavoriteCmd, workflowFavoriteRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowTransformAsCodeCmd, workflowTransformAsCodeRun, nil, withAllCommandModifiers()...),
 		workflowLabel(),
 		workflowArtifact(),
@@ -49,7 +48,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 		return 0, nil
 	}
 
-	latestCommit, err := r.LatestCommit(ctx)
+	latestCommit, err := r.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
 	if err != nil {
 		return 0, cli.WrapError(err, "unable to get latest commit")
 	}

@@ -17,8 +17,6 @@
     <ng-template #projectPart>
         <app-project-breadcrumb [project]="project" [workflow]="workflowName" [workflowRun]="workflowNum"
             [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
-            <app-favorite-button *ngIf="project" [active]="project?.favorite" (click)="updateFav()"
-                [loading]="loadingFav"></app-favorite-button>
         </app-project-breadcrumb>
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <div class="scrollingContent">
@@ -47,16 +45,6 @@
                     <div *ngSwitchCase="'permissions'">
                         <app-project-permissions [project]="project">
                         </app-project-permissions>
-                    </div>
-                    <div *ngSwitchCase="'keys'">
-                        <app-project-keys [project]="project"></app-project-keys>
-                    </div>
-                    <div *ngSwitchCase="'integrations'">
-                        <app-project-integrations [project]="project"></app-project-integrations>
-                    </div>
-                    <div *ngSwitchCase="'advanced'">
-                        <h3>{{ 'project_advanced_title' | translate }}</h3>
-                        <app-project-admin [project]="project"></app-project-admin>
                     </div>
                 </div>
             </div>

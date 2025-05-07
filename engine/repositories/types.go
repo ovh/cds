@@ -4,6 +4,8 @@ package repositories
 import (
 	"path/filepath"
 
+	gocache "github.com/patrickmn/go-cache"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -13,11 +15,12 @@ import (
 // Service is the repostories service
 type Service struct {
 	service.Common
-	Cfg       Configuration
-	Router    *api.Router
-	Cache     cache.Store
-	dao       dao
-	cacheSize int64
+	Cfg        Configuration
+	Router     *api.Router
+	Cache      cache.Store
+	dao        dao
+	cacheSize  int64
+	localCache *gocache.Cache
 }
 
 // Configuration is the vcs configuration structure
@@ -30,13 +33,10 @@ type Configuration struct {
 	URL                   string                          `default:"http://localhost:8085" json:"url"`
 	API                   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Cache                 struct {
-		TTL   int `toml:"ttl" default:"60" json:"ttl"`
-		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379" json:"host"`
-			Password string `toml:"password" json:"-"`
-			DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
-		} `toml:"redis" json:"redis"`
+		TTL   int           `toml:"ttl" default:"60" json:"ttl"`
+		Redis sdk.RedisConf `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Repositories Cache Settings \n######################" json:"cache"`
+	MaxWorkers int `toml:"maxWorkers" comment:"Maximum of operations that can be done in parallel" default:"10" json:"maxWorkers"`
 }
 
 // Repo retiens a sdk.OperationRepo from an sdk.Operation

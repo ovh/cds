@@ -15,23 +15,6 @@ testcases:
     - name: "Display username"
       info: "Connected CDS user is {{.cdsUser}}"
 
-    - type: v2_create_project
-      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-      cds_project: "{{.cds_project}}"
-      git_host: "{{.git.host}}"
-      git_user: "{{.git.user}}"
-      git_password: "{{.git.password}}"
-      cds_region: "{{.cds.region}}"
-
-    - type: v2_add_git_repo
-      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-      cds_project: "{{.cds_project}}"
-      cds_hook_url: "{{.gitea.hook.url}}"
-      git_host: "{{.git.host}}"
-      git_user: "{{.git.user}}"
-      git_password: "{{.git.password}}"
-      git_repo: "{{.git_repo}}"
-
     - type: v2_install_gpg_key
       cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
       gpg_key_id: "{{.gpg.key_id}}"
@@ -42,9 +25,27 @@ testcases:
         emailaddress:
           from: result.emailaddress
 
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+      git_emailAddress: "{{.emailaddress}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+
 - name: Push workflow file
   steps:
-    - type: v2_push_files_on_repo
+    - type: v2_push_cds_files_on_repo
       git_repo: "{{.git_repo}}"
       git_host: "{{.git.host}}"
       git_user: "{{.git.user}}"
@@ -66,7 +67,7 @@ testcases:
           on:
             pull-request:
               comment: "a comment here"
-              types: ["opened"]
+              types: ["opened", "edited"]
           jobs:
             myjob:
               runs-on: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
@@ -84,8 +85,8 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
 
 - name: Work on another git branch
   steps:
@@ -105,8 +106,8 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
 
 - name: Create Pull-Request
   steps:
@@ -140,45 +141,84 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 40
-      delay: 5
+      retry: 200
+      delay: 1
       vars:
-        runIdentifier:
+        workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
-    - name: Download logs
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}"
-
-    - name: Check workflowEnv log content
-      script: "cat {{.cds_workflow}}-*-myjob* | grep \"job done\""
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        # Check workflowEnv log content
+        cat {{.cds_workflow}}-*-myjob* | grep "job done"
+      retry: 60
+      delay: 1
 
 - name: Check comment created on gitea
   steps:
-    - name: Get pull-request from gitea and check comment
-      type: http
-      method: GET
-      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/reviews"
-      basic_auth_user: "{{.git.user}}"
-      basic_auth_password: "{{.git.password}}"
-      headers:
-        Content-Type: application/json
-      assertions:
-        - result.statuscode ShouldEqual 200
-        - result.bodyjson ShouldHaveLength 1
-        - result.bodyjson.bodyjson0.body ShouldEqual "a comment here"
+  - name: Get pull-request from gitea and check comment
+    type: http
+    method: GET
+    url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/reviews"
+    basic_auth_user: "{{.git.user}}"
+    basic_auth_password: "{{.git.password}}"
+    headers:
+      Content-Type: application/json
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson ShouldHaveLength 1
+      - result.bodyjson.bodyjson0.body ShouldEqual "a comment here"
+    retry: 10
+    delay: 1
 
 - name: Check status created on gitea
   steps:
-    - name: Get status from gitea
-      type: http
-      method: GET
-      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/commits/{{.Create-Pull-Request.gitSha}}/status"
-      basic_auth_user: "{{.git.user}}"
-      basic_auth_password: "{{.git.password}}"
-      headers:
-        Content-Type: application/json
-      assertions:
-        - result.statuscode ShouldEqual 200
-        - result.bodyjson.statuses ShouldHaveLength 1
-        - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
-        - result.bodyjson.statuses.statuses0.context ShouldEqual "ITV2WFNOTIF-WorkflowNotificationsLog"
+  - name: Get status from gitea
+    type: http
+    method: GET
+    url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/commits/{{.Create-Pull-Request.gitSha}}/status"
+    basic_auth_user: "{{.git.user}}"
+    basic_auth_password: "{{.git.password}}"
+    headers:
+      Content-Type: application/json
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.statuses ShouldHaveLength 1
+      - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
+      - "result.bodyjson.statuses.statuses0.context ShouldEqual \"ITV2WFNOTIF-WorkflowNotificationsLog\""
+    retry: 10
+    delay: 1
+
+- name: Update the pull request by adding a new commit
+  steps:
+  - name: Update the branch
+    script: |- 
+      cd /tmp/repos/{{.git_repo}}
+      echo 'FOO' > foo_updated.md
+      git add --all
+      git commit --gpg-sign={{.gpg.key_id}} -m "add file and sign" --author "{{.git.user}} <{{.Prepare-test.emailaddress}}>"
+      git push origin new-branch
+
+  - name: Check CDS project analyses status after push on new-branch
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 4
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+      - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
+      - result.systemoutjson.systemoutjson3.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 2
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 200
+    delay: 1

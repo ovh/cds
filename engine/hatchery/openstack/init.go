@@ -3,6 +3,7 @@ package openstack
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
@@ -47,6 +48,7 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 
 	if err := h.initFlavors(); err != nil {
 		log.Warn(ctx, "Error getting flavors: %v", err)
+		return err
 	}
 
 	if err := h.initNetworks(); err != nil {
@@ -56,6 +58,8 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 	if err := h.initIPStatus(ctx); err != nil {
 		log.Warn(ctx, "Error on initIPStatus(): %v", err)
 	}
+
+	h.initImagesUsername(ctx)
 
 	h.GoRoutines.Run(ctx, "hatchery openstack routines", func(ctx context.Context) {
 		h.main(ctx)
@@ -120,6 +124,14 @@ func (h *HatcheryOpenstack) initNetworks() error {
 		}
 	}
 	return nil
+}
+
+func (h *HatcheryOpenstack) initImagesUsername(ctx context.Context) {
+	h.imagesUsername = make(map[*regexp.Regexp]string)
+
+	for _, override := range h.Config.OverrideImagesUsername {
+		h.imagesUsername[regexp.MustCompile(override.Image)] = override.Username
+	}
 }
 
 // initIPStatus initializes ipsInfos to

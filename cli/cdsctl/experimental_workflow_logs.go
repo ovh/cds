@@ -29,11 +29,11 @@ var workflowRunJobLogsDownloadCmd = cli.Command{
 	Name:    "download",
 	Aliases: []string{"dl"},
 	Short:   "Get the workflow run job status",
-	Example: "cdsctl experimental workflow logs download <proj_key> <run_identifier>",
+	Example: "cdsctl experimental workflow logs download <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -45,7 +45,7 @@ var workflowRunJobLogsDownloadCmd = cli.Command{
 
 func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
+	workflowRunID := v.GetString("workflow_run_id")
 
 	var reg *regexp.Regexp
 	var err error
@@ -56,7 +56,7 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 		}
 	}
 
-	runJobs, err := client.WorkflowV2RunJobs(context.Background(), projKey, runIdentifier)
+	runJobs, err := client.WorkflowV2RunJobs(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return err
 	}
@@ -65,13 +65,31 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 		if reg != nil && !reg.MatchString(rj.JobID) {
 			continue
 		}
-		links, err := client.WorkflowV2RunJobLogLinks(context.Background(), projKey, runIdentifier, rj.JobID)
+		links, err := client.WorkflowV2RunJobLogLinks(context.Background(), projKey, workflowRunID, rj.ID)
 		if err != nil {
 			return err
 		}
 
-		for _, link := range links.Data {
-			fileName := getFileName(rj, rj.Job.Steps[link.StepOrder].ID, link.StepOrder)
+		steps := make([]string, 0)
+
+		// Foreach step create a ref if a step status exists
+		for i, s := range rj.Job.Steps {
+			stepName := sdk.GetJobStepName(s.ID, i)
+			if _, ok := rj.StepsStatus[stepName]; ok {
+				steps = append(steps, stepName)
+			}
+		}
+
+		// Foreach step create a ref if a post step status exists
+		for i := len(rj.Job.Steps) - 1; i >= 0; i-- {
+			stepName := sdk.GetJobStepName(rj.Job.Steps[i].ID, i)
+			if _, ok := rj.StepsStatus["Post-"+stepName]; ok {
+				steps = append(steps, "Post-"+stepName)
+			}
+		}
+
+		for idx, link := range links.Data {
+			fileName := getFileName(rj, steps[idx])
 			data, err := client.WorkflowLogDownload(context.Background(), sdk.CDNLogLink{APIRef: link.APIRef, ItemType: link.ItemType})
 			if err != nil {
 				if strings.Contains(err.Error(), "resource not found") {
@@ -89,6 +107,6 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 	return nil
 }
 
-func getFileName(rj sdk.V2WorkflowRunJob, stepID string, stepOrder int64) string {
-	return fmt.Sprintf("%s-%d-%d-%s-%s", rj.WorkflowName, rj.RunNumber, rj.RunAttempt, rj.JobID, sdk.GetJobStepName(stepID, int(stepOrder)))
+func getFileName(rj sdk.V2WorkflowRunJob, name string) string {
+	return fmt.Sprintf("%s-%d-%d-%s-%s", rj.WorkflowName, rj.RunNumber, rj.RunAttempt, rj.JobID, name)
 }

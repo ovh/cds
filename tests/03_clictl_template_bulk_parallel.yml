@@ -27,8 +27,8 @@ testcases:
 - name: check bulk request status
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /template/shared.infra/example-simple-safe/bulk/{{.sendTemplateBulkRequest.bulkid}}
-    retry: 10
-    delay: 2
+    retry: 20
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.operations.operations0.status ShouldEqual 2

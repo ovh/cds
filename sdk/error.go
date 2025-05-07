@@ -10,6 +10,7 @@ import (
 
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 )
 
 // Existing CDS errors
@@ -50,6 +51,7 @@ var (
 	ErrInvalidApplicationPattern                     = Error{ID: 36, Status: http.StatusBadRequest}
 	ErrInvalidPipelinePattern                        = Error{ID: 37, Status: http.StatusBadRequest}
 	ErrNotFound                                      = Error{ID: 38, Status: http.StatusNotFound}
+	ErrCorruptedData                                 = Error{ID: 39, Status: http.StatusNotFound}
 	ErrNoHook                                        = Error{ID: 40, Status: http.StatusNotFound}
 	ErrNoAttachedPipeline                            = Error{ID: 41, Status: http.StatusNotFound}
 	ErrNoReposManager                                = Error{ID: 42, Status: http.StatusNotFound}
@@ -98,6 +100,7 @@ var (
 	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusForbidden}
 	ErrPipelineBuildNotFound                         = Error{ID: 90, Status: http.StatusNotFound}
 	ErrAlreadyTaken                                  = Error{ID: 91, Status: http.StatusGone}
+	ErrAlreadyEnded                                  = Error{ID: 92, Status: http.StatusGone}
 	ErrWorkflowNodeNotFound                          = Error{ID: 93, Status: http.StatusNotFound}
 	ErrWorkflowInvalidRoot                           = Error{ID: 94, Status: http.StatusBadRequest}
 	ErrWorkflowNodeRef                               = Error{ID: 95, Status: http.StatusBadRequest}
@@ -133,7 +136,6 @@ var (
 	ErrInvalidKeyName                                = Error{ID: 125, Status: http.StatusBadRequest}
 	ErrRepoOperationTimeout                          = Error{ID: 126, Status: http.StatusRequestTimeout}
 	ErrInvalidGitBranch                              = Error{ID: 127, Status: http.StatusBadRequest}
-	ErrInvalidFavoriteType                           = Error{ID: 128, Status: http.StatusBadRequest}
 	ErrUnsupportedOSArchPlugin                       = Error{ID: 129, Status: http.StatusNotFound}
 	ErrInvalidPatternModel                           = Error{ID: 132, Status: http.StatusBadRequest}
 	ErrWorkerModelNoAdmin                            = Error{ID: 133, Status: http.StatusForbidden}
@@ -200,7 +202,6 @@ var (
 	ErrMFARequired                                   = Error{ID: 194, Status: http.StatusForbidden}
 	ErrHatcheryNoResourceAvailable                   = Error{ID: 195, Status: http.StatusInternalServerError}
 	ErrRegionNotAllowed                              = Error{ID: 196, Status: http.StatusInternalServerError}
-	ErrInvalidRunIdentifier                          = Error{ID: 197, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -241,6 +242,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidWorkerModelNamePattern.ID:                 "worker model name must respect '^[a-zA-Z0-9._-]{1,}$'",
 	ErrInvalidPipelinePattern.ID:                        "pipeline name must respect '^[a-zA-Z0-9._-]{1,}$'",
 	ErrNotFound.ID:                                      "resource not found",
+	ErrCorruptedData.ID:                                 "corrupted entity",
 	ErrNoHook.ID:                                        "hook not found",
 	ErrNoAttachedPipeline.ID:                            "pipeline not attached to the application",
 	ErrNoReposManager.ID:                                "repositories manager not found",
@@ -289,6 +291,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrJobAlreadyBooked.ID:                              "Job already booked",
 	ErrPipelineBuildNotFound.ID:                         "Pipeline build not found",
 	ErrAlreadyTaken.ID:                                  "This job is already taken by another worker",
+	ErrAlreadyEnded.ID:                                  "This job is already finished",
 	ErrWorkflowNodeNotFound.ID:                          "Workflow node not found",
 	ErrWorkflowInvalidRoot.ID:                           "Invalid workflow root",
 	ErrWorkflowNodeRef.ID:                               "Invalid workflow node reference",
@@ -323,7 +326,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidKeyName.ID:                                "Invalid key name. Application key must have prefix 'app-'; environment key must have prefix 'env-'",
 	ErrRepoOperationTimeout.ID:                          "Analyzing repository took too much time",
 	ErrInvalidGitBranch.ID:                              "Invalid git.branch value, you cannot have an empty git.branch value in your default payload",
-	ErrInvalidFavoriteType.ID:                           "Invalid favorite type: must be 'project' or 'workflow'",
 	ErrUnsupportedOSArchPlugin.ID:                       "Unsupported os/architecture for this plugin",
 	ErrInvalidPatternModel.ID:                           "Invalid worker model pattern: name, type and main command are mandatory",
 	ErrWorkerModelNoAdmin.ID:                            "Forbidden: you are neither a CDS administrator or the administrator for the group in which you want to create the worker model",
@@ -384,7 +386,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrMFARequired.ID:                                   "Multi factor authentication is required",
 	ErrHatcheryNoResourceAvailable.ID:                   "No enough resource available to start worker",
 	ErrRegionNotAllowed.ID:                              "Region not allowed",
-	ErrInvalidRunIdentifier.ID:                          "Invalid run identifier",
 }
 
 // Error type.
@@ -507,6 +508,14 @@ func ContextWithStacktrace(ctx context.Context, err error) context.Context {
 		return context.WithValue(ctx, cdslog.Stacktrace, fmt.Sprintf("%+v", err))
 	}
 	return ctx
+}
+
+func (e errorWithStack) StackTrace() errors.StackTrace {
+	errWithStracktrace, ok := e.root.(log.StackTracer)
+	if ok {
+		return errWithStracktrace.StackTrace()
+	}
+	return nil
 }
 
 // IsErrorWithStack returns true if given error is an errorWithStack.

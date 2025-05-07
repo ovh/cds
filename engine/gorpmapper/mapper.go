@@ -23,12 +23,14 @@ type Mapper struct {
 		M map[string]*template.Template
 		L sync.RWMutex
 	}
-	encryptionKey symmecrypt.Key
-	signatureKey  symmecrypt.Key
-	once          sync.Once
+	encryptionKey          symmecrypt.Key
+	encryptionKeyTimestamp []int64
+	signatureKey           symmecrypt.Key
+	signatureKeyTimestamp  []int64
+	once                   sync.Once
 }
 
-//Register intialiaze gorp mapping
+// Register intialiaze gorp mapping
 func (m *Mapper) Register(ms ...TableMapping) {
 	m.mappingMutex.Lock()
 	defer m.mappingMutex.Unlock()

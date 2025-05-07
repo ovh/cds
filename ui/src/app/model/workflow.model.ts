@@ -48,7 +48,6 @@ export class Workflow {
     from_template: string;
     template_instance: WorkflowTemplateInstance;
     template_up_to_date: boolean;
-    favorite: boolean;
     pipelines: { [key: number]: Pipeline; };
     applications: { [key: number]: Application; };
     environments: { [key: number]: Environment; };

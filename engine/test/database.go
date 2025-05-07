@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -65,6 +64,16 @@ type FakeTransaction struct {
 func (f *FakeTransaction) Rollback() error { return nil }
 func (f *FakeTransaction) Commit() error   { return nil }
 
+var DefaultSignatureKey = database.KeyConfig{
+	Timestamp: 1234567890,
+	Key:       "8f17c90d5306028bdf6ef66cc6da387aca9dd57a11f44e5e2752228398b7d165",
+}
+
+var DefaultEncryptionKey = database.KeyConfig{
+	Timestamp: 1234567890,
+	Key:       "fd27b8872bdefeb207bbefc1a82e94039b85d3ec68d891e22a5dcaa81542fc6b",
+}
+
 func SetupPGWithMapper(t *testing.T, m *gorpmapper.Mapper, serviceType string, bootstrapFunc ...Bootstrapf) (*FakeTransaction, cache.Store) {
 	log.Factory = log.NewTestingWrapper(t)
 	db, _, cache, cancel := SetupPGToCancel(t, m, serviceType, bootstrapFunc...)
@@ -95,27 +104,15 @@ func SetupPGToCancel(t require.TestingT, m *gorpmapper.Mapper, serviceType strin
 
 	sigKeys := database.RollingKeyConfig{
 		Cipher: "hmac",
-		Keys: []database.KeyConfig{
-			{
-				Timestamp: time.Now().Unix(),
-				Key:       "8f17c90d5306028bdf6ef66cc6da387aca9dd57a11f44e5e2752228398b7d165",
-			},
-		},
+		Keys:   []database.KeyConfig{DefaultSignatureKey},
 	}
-
 	encryptKeys := database.RollingKeyConfig{
 		Cipher: "xchacha20-poly1305",
-		Keys: []database.KeyConfig{
-			{
-				Timestamp: time.Now().Unix(),
-				Key:       "fd27b8872bdefeb207bbefc1a82e94039b85d3ec68d891e22a5dcaa81542fc6b",
-			},
-		},
+		Keys:   []database.KeyConfig{DefaultEncryptionKey},
 	}
-
 	signatureKeyConfig := sigKeys.GetKeys(gorpmapper.KeySignIdentifier)
-	encryptionKeyConfig := encryptKeys.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
-	require.NoError(t, m.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig), "cannot setup database keys")
+	encryptionKeyConfig := encryptKeys.GetKeys(gorpmapper.KeyEncryptionIdentifier)
+	require.NoError(t, m.ConfigureKeys(signatureKeyConfig, encryptionKeyConfig), "cannot setup database keys")
 
 	dbConnectionConfigKey := dbUser + dbRole + dbPassword + dbName + dbSchema + dbHost + fmt.Sprintf("%d", dbPort)
 	mDBConnectionFactoriesMutex.RLock()
@@ -147,7 +144,7 @@ func SetupPGToCancel(t require.TestingT, m *gorpmapper.Mapper, serviceType strin
 		require.NoError(t, f(context.TODO(), sdk.DefaultValues{}, factory.GetDBMap(m)))
 	}
 
-	store, err := cache.NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
+	store, err := cache.NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err, "unable to connect to redis")
 
 	cancel := func() {

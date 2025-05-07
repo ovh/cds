@@ -25,8 +25,9 @@ type dbApplicationVariable struct {
 }
 
 func (e dbApplicationVariable) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type}
+	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type, e.ClearValue}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ApplicationID}}{{printf .ID}}{{.Name}}{{.Type}}{{.ClearValue}}",
 		"{{print .ApplicationID}}{{print .ID}}{{.Name}}{{.Type}}",
 	}
 }
@@ -70,7 +71,7 @@ func (e dbApplicationVariable) Variable() sdk.ApplicationVariable {
 	}
 }
 
-func loadAllVariables(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ApplicationVariable, error) {
+func loadAllVariables(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.ApplicationVariable, error) {
 	var res []dbApplicationVariable
 	vars := make([]sdk.ApplicationVariable, 0, len(res))
 
@@ -110,7 +111,7 @@ func LoadAllVariablesWithDecrytion(ctx context.Context, db gorp.SqlExecutor, app
 		WHERE application_id = $1
 		ORDER BY var_name
 	`).Args(appID)
-	return loadAllVariables(ctx, db, query, gorpmapping.GetOptions.WithDecryption)
+	return loadAllVariables(ctx, db, query, gorpmapping.GetAllOptions.WithDecryption)
 }
 
 func loadVariable(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.ApplicationVariable, error) {
@@ -262,10 +263,10 @@ func DeleteVariable(db gorp.SqlExecutor, appID int64, variable *sdk.ApplicationV
 
 // LoadAllVariablesForAppsWithDecryption load all variables from all given applications, with decryption
 func LoadAllVariablesForAppsWithDecryption(ctx context.Context, db gorp.SqlExecutor, appIDs []int64) (map[int64][]sdk.ApplicationVariable, error) {
-	return loadAllVariablesForApps(ctx, db, appIDs, gorpmapping.GetOptions.WithDecryption)
+	return loadAllVariablesForApps(ctx, db, appIDs, gorpmapping.GetAllOptions.WithDecryption)
 }
 
-func loadAllVariablesForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ApplicationVariable, error) {
+func loadAllVariablesForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetAllOptionFunc) (map[int64][]sdk.ApplicationVariable, error) {
 	var res []dbApplicationVariable
 	query := gorpmapping.NewQuery(`
 		SELECT *

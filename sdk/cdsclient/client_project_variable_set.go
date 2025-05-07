@@ -57,3 +57,43 @@ func (c *client) ProjectVariableSetItemGet(ctx context.Context, pKey string, vsN
 	_, err := c.GetJSON(ctx, path, &item)
 	return &item, err
 }
+
+func (c *client) ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...RequestModifier) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/item", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil, mods...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) ProjectVariableSetCreateFromApplication(ctx context.Context, pKey string, req sdk.CopyApplicationVariableToVariableSet) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/application", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/environment", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...RequestModifier) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/ascode", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) ProjectVariableSetItemFromApplicationIntegrationVariable(ctx context.Context, pKey string, req sdk.CopyApplicationIntegrationVariableToVariableSet, mods ...RequestModifier) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/application/integration", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil); err != nil {
+		return err
+	}
+	return nil
+}

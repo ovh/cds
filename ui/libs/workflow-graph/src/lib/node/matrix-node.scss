@@ -8,27 +8,44 @@
     align-items: flex-start;
 }
 
+[nzGhost] {
+    color: $polar_grey_1;
+    border-color: $polar_grey_1;
+
+    &:hover {
+        color: black !important;
+        border-color: black !important;
+    }
+
+    :host-context(.night) & {
+        color: $darkTheme_grey_6;
+        border-color: $darkTheme_grey_6;
+
+        &:hover {
+            color: white !important;
+            border-color: white !important;
+        }
+    }
+}
+
 .label {
-    height: 30px;
+    height: 34px;
     width: 100%;
     overflow: hidden;
     display: flex;
     flex-direction: row;
     align-items: center;
 
-    .gate {
-        color: $polar_grey_1;
-        font-size: 16px;
-        overflow: hidden;
+    [nz-button] {
+        height: 18px;
+        width: 18px;
+        min-width: unset;
         margin-left: 2px;
-        cursor: pointer;
+        margin-bottom: 4px;
+        border-width: 2px;
 
-        :host-context(.night) & {
-            color: $darkTheme_grey_6;
-        }
-
-        &:hover {
-            color: grey !important;
+        [nz-icon] {
+            font-size: 12px;
         }
     }
 
@@ -37,7 +54,9 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        margin: 0 2px;
+        margin-left: 5px;
+        margin-bottom: 6px;
+        font-weight: bold;
     }
 }
 
@@ -68,6 +87,7 @@
         padding: 10px;
 
         .job {
+            position: relative;
             height: 30px;
             width: 100%;
             display: flex;
@@ -84,27 +104,50 @@
 
             .name {
                 flex: 1;
-                font-size: 1em;
-                font-weight: bold;
+                font-size: 0.8em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                margin: 0 10px;
+                margin: 0 5px;
+            }
 
-                .key {
-                    font-size: 0.8em;
-                    font-weight: unset;
+            .infos {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                margin-right: 5px;
+                align-items: end;
+
+                .duration {
+                    font-size: 0.7em;
+                    line-height: 0.7em;
+                }
+
+                .durationTooltip {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .status {
+                    margin-top: 4px;
+                    font-size: 0.5em;
+                    line-height: 0.5em;
                 }
             }
 
-            .duration {
-                font-size: 0.8em;
-                margin-right: 10px;
-            }
-
-            .durationTooltip {
+            .commands {
                 display: flex;
-                flex-direction: column;
+                flex-direction: row;
+                align-items: center;
+                height: 100%;
+                background-color: inherit;
+
+                [nz-button] {
+                    height: 18px;
+                    width: 18px;
+                    min-width: unset;
+                    margin-left: 4px;
+                }
             }
 
             &.success {
@@ -122,22 +165,18 @@
                 border-color: $cds_color_teal;
             }
 
-            &.scheduling {
-                border-color: $cds_color_teal;
-            }
-
             &.inactive {
                 background-color: $cds_color_light_grey;
                 border-color: grey;
             }
 
             &.active {
-                border: 3px solid black;
+                border: 3px solid $polar_grey_0;
                 padding: 1px;
             }
 
             &.highlight {
-                border-color: black;
+                border-color: $polar_grey_0;
             }
 
             :host-context(.night) & {
@@ -157,10 +196,6 @@
 
                 &.building {
                     background-color: $darkTheme_night_blue;
-                    border-color: $darkTheme_blue;
-                }
-
-                &.scheduling {
                     border-color: $darkTheme_blue;
                 }
 

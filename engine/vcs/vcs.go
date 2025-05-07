@@ -153,10 +153,9 @@ func (s *Service) Serve(c context.Context) error {
 	}
 	s.UI.HTTP.URL = cfgUser.URLUI
 
-	var errCache error
-	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.Redis.DbIndex, s.Cfg.Cache.TTL)
-	if errCache != nil {
-		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
+	s.Cache, err = cache.New(s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
+	if err != nil {
+		return fmt.Errorf("Cannot connect to redis instance : %v", err)
 	}
 
 	//Init the http server

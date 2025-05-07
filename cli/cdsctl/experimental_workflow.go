@@ -29,8 +29,11 @@ func experimentalWorkflow() *cobra.Command {
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowRunStopCmd, workflowRunStopFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowLintCmd, workflowLintFunc, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(workflowRunSearchCmd, workflowRunSearchFunc, nil, withAllCommandModifiers()...),
 		experimentalWorkflowRunLogs(),
 		experimentalWorkflowJob(),
+		experimentalWorkflowResult(),
+		experimentalWorkflowVersion(),
 	})
 }
 
@@ -87,23 +90,102 @@ func workflowLintFunc(v cli.Values) error {
 var workflowRunInfosListCmd = cli.Command{
 	Name:    "info",
 	Aliases: []string{"i", "infos"},
-	Short:   "List run informations",
-	Example: "cdsctl experimental workflow info <proj_key> <run_identifier>",
+	Short:   "List run information",
+	Example: "cdsctl experimental workflow info <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 }
 
 func workflowRunInfosListFunc(v cli.Values) (cli.ListResult, error) {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
-	runInfos, err := client.WorkflowV2RunInfoList(context.Background(), projKey, runIdentifier)
+	workflowRunID := v.GetString("workflow_run_id")
+	runInfos, err := client.WorkflowV2RunInfoList(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return nil, err
 	}
 	return cli.AsListResult(runInfos), nil
+}
+
+var workflowRunSearchCmd = cli.Command{
+	Name:    "search",
+	Aliases: []string{""},
+	Short:   "Search a workflow run inside a project",
+	Example: "cdsctl experimental workflow search",
+	Ctx:     []cli.Arg{},
+	Args:    []cli.Arg{},
+	Flags: []cli.Flag{
+		{Name: "commit"},
+		{Name: "workflow", Usage: "<vcs>/<repo>/<workflow_name>"},
+		{Name: "project"},
+		{Name: "branch"},
+		{Name: "status"},
+		{Name: "actor"},
+		{Name: "offset"},
+		{Name: "limit"},
+	},
+}
+
+func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
+	commit := v.GetString("commit")
+	workflow := v.GetString("workflow")
+	projKey := v.GetString("project")
+	branch := v.GetString("branch")
+	status := v.GetString("status")
+	actor := v.GetString("actor")
+
+	offset, err := v.GetInt64("offset")
+	if err != nil {
+		return nil, err
+	}
+	limit, err := v.GetInt64("limit")
+	if err != nil {
+		return nil, err
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	if limit == 0 {
+		limit = 1
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	mods := make([]cdsclient.RequestModifier, 0)
+	if commit != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("commit", commit))
+	}
+	if workflow != "" {
+		mods = append(mods, cdsclient.Workflows(workflow))
+	}
+	if branch != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("branch", branch))
+	}
+	if actor != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("actor", actor))
+	}
+	if status != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("status", status))
+	}
+
+	var runs []sdk.V2WorkflowRun
+	if projKey == "" {
+		// Search accross all project
+		runs, err = client.WorkflowV2RunSearchAllProjects(context.Background(), offset, limit, mods...)
+	} else {
+		mods = append(mods, cdsclient.WithQueryParameter("offset", fmt.Sprintf("%d", offset)))
+		mods = append(mods, cdsclient.WithQueryParameter("limit", fmt.Sprintf("%d", limit)))
+		runs, err = client.WorkflowV2RunSearch(context.Background(), projKey, mods...)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cli.AsListResult(runs), nil
 }
 
 var workflowRunHistoryCmd = cli.Command{
@@ -118,6 +200,11 @@ var workflowRunHistoryCmd = cli.Command{
 		{Name: "repo_identifier"},
 		{Name: "workflow_name"},
 	},
+	Flags: []cli.Flag{
+		{
+			Name: "commit",
+		},
+	},
 }
 
 func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
@@ -125,10 +212,18 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	vcsId := v.GetString("vcs_identifier")
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
+	commit := v.GetString("commit")
 
 	wkfIdentifier := vcsId + "/" + repoId + "/" + wkfName
 
-	runs, err := client.WorkflowV2RunSearch(context.Background(), projKey, cdsclient.Workflows(wkfIdentifier))
+	mods := make([]cdsclient.RequestModifier, 0)
+	mods = append(mods, cdsclient.Workflows(wkfIdentifier))
+
+	if commit != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("commit", commit))
+	}
+
+	runs, err := client.WorkflowV2RunSearch(context.Background(), projKey, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,18 +234,18 @@ var workflowRunStatusCmd = cli.Command{
 	Name:    "status",
 	Aliases: []string{"st"},
 	Short:   "Get the workflow run status",
-	Example: "cdsctl experimental workflow status <proj_key> <run_identifier>",
+	Example: "cdsctl experimental workflow status <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 }
 
 func workflowRunStatusFunc(v cli.Values) (interface{}, error) {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
-	run, err := client.WorkflowV2RunStatus(context.Background(), projKey, runIdentifier)
+	workflowRunID := v.GetString("workflow_run_id")
+	run, err := client.WorkflowV2RunStatus(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return nil, err
 	}
@@ -161,21 +256,21 @@ var workflowRunStopCmd = cli.Command{
 	Name:    "stop",
 	Aliases: []string{""},
 	Short:   "Stop the workflow run",
-	Example: "cdsctl experimental workflow stop <proj_key> <run_identifier>",
+	Example: "cdsctl experimental workflow stop <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 }
 
 func workflowRunStopFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
-	if err := client.WorkflowV2Stop(context.Background(), projKey, runIdentifier); err != nil {
+	workflowRunID := v.GetString("workflow_run_id")
+	if err := client.WorkflowV2Stop(context.Background(), projKey, workflowRunID); err != nil {
 		return err
 	}
-	fmt.Printf("Workflow run %s has been stopped\n", runIdentifier)
+	fmt.Printf("Workflow run %s has been stopped\n", workflowRunID)
 	return nil
 }
 
@@ -207,6 +302,9 @@ var workflowRunCmd = cli.Command{
 		{
 			Name: "workflow-tag",
 		},
+		{
+			Name: "data",
+		},
 	},
 }
 
@@ -236,8 +334,15 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		WorkflowBranch: workflowBranch,
 		WorkflowTag:    workflowTag,
 	}
+	if strings.TrimSpace(v.GetString("data")) != "" {
+		data := map[string]interface{}{}
+		if err := sdk.JSONUnmarshal([]byte(v.GetString("data")), &data); err != nil {
+			return nil, cli.NewError("error data isn't a valid json")
+		}
+		payload.Payload = data
+	}
 
-	hookRunEvent, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload)
+	runResp, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -247,11 +352,12 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		RunNumber int64  `json:"run_number" cli:"run_number"`
 		RunID     string `json:"run_id" cli:"run_id"`
 		Error     string `json:"error" cli:"error"`
+		UIUrl     string `json:"uri_url" cli:"ui_url"`
 	}
 
 	retry := 0
 	for {
-		event, err := client.ProjectRepositoryEvent(context.Background(), projKey, vcsId, repoId, hookRunEvent.UUID)
+		event, err := client.ProjectRepositoryEvent(context.Background(), projKey, vcsId, repoId, runResp.HookEventUUID)
 		if err != nil {
 			return nil, err
 		}
@@ -261,6 +367,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 					Workflow:  wkfName,
 					RunNumber: event.WorkflowHooks[0].RunNumber,
 					RunID:     event.WorkflowHooks[0].RunID,
+					UIUrl:     fmt.Sprintf("%s/project/%s/run/%s", runResp.UIUrl, projKey, event.WorkflowHooks[0].RunID),
 				}, nil
 			}
 			return nil, fmt.Errorf("workflow did not start")
@@ -281,18 +388,18 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 var workflowRestartCmd = cli.Command{
 	Name:    "restart",
 	Short:   "Restart workflow failed jobs",
-	Example: "cdsctl workflow restart <proj_key> <run_identifier>",
+	Example: "cdsctl workflow restart <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 }
 
 func workflowRestartFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
-	run, err := client.WorkflowV2Restart(context.Background(), projKey, runIdentifier)
+	workflowRunID := v.GetString("workflow_run_id")
+	run, err := client.WorkflowV2Restart(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return err
 	}

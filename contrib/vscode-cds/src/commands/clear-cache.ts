@@ -5,7 +5,7 @@ export const ClearCacheCommandID = 'vscode-cds.clearCache';
 
 export class ClearCacheCommand implements Command {
     getID(): string {
-        return ClearCacheCommandID
+        return ClearCacheCommandID;
     }
 
     async run(): Promise<void> {

@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { Job } from 'app/model/job.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
@@ -36,13 +36,14 @@ export function getInitialPipelinesState(): PipelinesStateModel {
 @Injectable()
 export class PipelinesState {
 
-    constructor(private _http: HttpClient, private _pipelineService: PipelineService) { }
+    constructor(
+        private _http: HttpClient,
+        private _pipelineService: PipelineService
+    ) { }
 
-    static getCurrent() {
-        return createSelector(
-            [PipelinesState],
-            (state: PipelinesStateModel): PipelinesStateModel => state
-        );
+    @Selector()
+    static current(state: PipelinesStateModel) {
+        return state;
     }
 
     @Action(actionPipeline.AddPipeline)
@@ -215,10 +216,10 @@ export class PipelinesState {
                 const state = ctx.getState();
                 let pipToUpdate = cloneDeep(state.pipeline);
                 pipToUpdate.parameters = pipToUpdate.parameters.map(p => {
-                   if (p.id === param.id) {
-                       return param;
-                   }
-                   return p;
+                    if (p.id === param.id) {
+                        return param;
+                    }
+                    return p;
                 });
                 ctx.setState({
                     ...state,
@@ -394,7 +395,7 @@ export class PipelinesState {
 
         if (stateEditMode.editMode) {
             let pipToUpdate = cloneDeep(stateEditMode.editPipeline);
-            pipToUpdate.stages = pipToUpdate.stages.filter( s => s.ref !== action.payload.stage.ref);
+            pipToUpdate.stages = pipToUpdate.stages.filter(s => s.ref !== action.payload.stage.ref);
             pipToUpdate.editModeChanged = true;
             ctx.setState({
                 ...stateEditMode,
@@ -574,22 +575,22 @@ export class PipelinesState {
     resync(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.ResyncPipeline) {
         return this._pipelineService.getPipeline(action.payload.projectKey, action.payload.pipelineName)
             .pipe(tap((pip) => {
-            const state = ctx.getState();
-            let editMode = false;
-            let editPipeline: Pipeline;
-            if (pip.from_repository) {
-                editMode = true;
-                editPipeline = cloneDeep(pip);
-                Pipeline.InitRef(editPipeline);
-            }
-            ctx.setState({
-                ...state,
-                pipeline: pip,
-                editPipeline,
-                currentProjectKey: action.payload.projectKey,
-                editMode,
-            });
-        }));
+                const state = ctx.getState();
+                let editMode = false;
+                let editPipeline: Pipeline;
+                if (pip.from_repository) {
+                    editMode = true;
+                    editPipeline = cloneDeep(pip);
+                    Pipeline.InitRef(editPipeline);
+                }
+                ctx.setState({
+                    ...state,
+                    pipeline: pip,
+                    editPipeline,
+                    currentProjectKey: action.payload.projectKey,
+                    editMode,
+                });
+            }));
     }
 
     @Action(actionPipeline.ClearCachePipeline)
@@ -617,7 +618,7 @@ export class PipelinesState {
     refreshAsCodeEvents(ctx: StateContext<PipelinesStateModel>, _) {
         const state = ctx.getState();
         if (state.pipeline) {
-            ctx.dispatch(new actionPipeline.ResyncPipeline({projectKey: state.currentProjectKey, pipelineName: state.pipeline.name}));
+            ctx.dispatch(new actionPipeline.ResyncPipeline({ projectKey: state.currentProjectKey, pipelineName: state.pipeline.name }));
         }
     }
 }

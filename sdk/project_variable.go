@@ -10,11 +10,12 @@ const (
 )
 
 type ProjectVariableSet struct {
-	ID         string                   `json:"id" db:"id"`
-	ProjectKey string                   `json:"project_key" db:"project_key"`
-	Name       string                   `json:"name" db:"name" cli:"name"`
-	Created    time.Time                `json:"created" db:"created" cli:"created"`
-	Items      []ProjectVariableSetItem `json:"items" db:"-"`
+	ID         string    `json:"id" db:"id"`
+	ProjectKey string    `json:"project_key" db:"project_key"`
+	Name       string    `json:"name" db:"name" cli:"name" action_metadata:"variable-set-name"`
+	Created    time.Time `json:"created" db:"created" cli:"created"`
+	// aggregates
+	Items []ProjectVariableSetItem `json:"items,omitempty" db:"-"`
 }
 
 type ProjectVariableSetItem struct {
@@ -24,4 +25,34 @@ type ProjectVariableSetItem struct {
 	Name                 string    `json:"name" cli:"name"`
 	Type                 string    `json:"type" cli:"type"`
 	Value                string    `json:"value" cli:"value"`
+}
+
+type CopyProjectVariableToVariableSet struct {
+	VariableName    string `json:"variable_name"`
+	VariableSetName string `json:"variable_set_name"`
+	NewName         string `json:"new_name,omitempty"`
+}
+
+type CopyAsCodeSecretToVariableSet struct {
+	VariableSetItemName string `json:"variable_set_item_name"`
+	VariableSetName     string `json:"variable_set_name"`
+	AsCodeIdentifier    string `json:"ascode_id"`
+}
+
+type CopyApplicationIntegrationVariableToVariableSet struct {
+	VariableSetItemName string `json:"variable_set_item_name"`
+	VariableSetName     string `json:"variable_set_name"`
+	ApplicationName     string `json:"application_name"`
+	IntegrationName     string `json:"integration_name"`
+	VariableName        string `json:"variable_name"`
+}
+
+type CopyApplicationVariableToVariableSet struct {
+	ApplicationName string `json:"application_name"`
+	VariableSetName string `json:"variable_set_name"`
+}
+
+type CopyEnvironmentVariableToVariableSet struct {
+	EnvironmentName string `json:"environment_name"`
+	VariableSetName string `json:"variable_set_name"`
 }

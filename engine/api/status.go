@@ -212,6 +212,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 	api.Metrics.nbGroups = stats.Int64("cds/cds-api/nb_groups", "nb_groups", stats.UnitDimensionless)
 	api.Metrics.nbPipelines = stats.Int64("cds/cds-api/nb_pipelines", "nb_pipelines", stats.UnitDimensionless)
 	api.Metrics.nbWorkflows = stats.Int64("cds/cds-api/nb_workflows", "nb_workflows", stats.UnitDimensionless)
+	api.Metrics.nbWorkflowsAsCodeV2 = stats.Int64("cds/cds-api/nb_workflows_as_code_v2", "nb_workflows_as_code_v2", stats.UnitDimensionless)
 	api.Metrics.nbArtifacts = stats.Int64("cds/cds-api/nb_artifacts", "nb_artifacts", stats.UnitDimensionless)
 	api.Metrics.nbWorkerModels = stats.Int64("cds/cds-api/nb_worker_models", "nb_worker_models", stats.UnitDimensionless)
 	api.Metrics.nbWorkflowRuns = stats.Int64("cds/cds-api/nb_workflow_runs", "nb_workflow_runs", stats.UnitDimensionless)
@@ -266,6 +267,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 		telemetry.NewViewLast("cds/nb_groups", api.Metrics.nbGroups, nil),
 		telemetry.NewViewLast("cds/nb_pipelines", api.Metrics.nbPipelines, nil),
 		telemetry.NewViewLast("cds/nb_workflows", api.Metrics.nbWorkflows, nil),
+		telemetry.NewViewLast("cds/nb_workflows_as_code_v2", api.Metrics.nbWorkflowsAsCodeV2, nil),
 		telemetry.NewViewLast("cds/nb_artifacts", api.Metrics.nbArtifacts, nil),
 		telemetry.NewViewLast("cds/nb_worker_models", api.Metrics.nbWorkerModels, nil),
 		telemetry.NewViewLast("cds/nb_workflow_runs", api.Metrics.nbWorkflowRuns, nil),
@@ -310,6 +312,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetric(ctx, api.Metrics.nbGroups, "SELECT COUNT(1) FROM \"group\"")
 				api.countMetric(ctx, api.Metrics.nbPipelines, "SELECT COUNT(1) FROM pipeline")
 				api.countMetric(ctx, api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow")
+				api.countMetric(ctx, api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct(project_repository_id,name)) from entity where type = 'Workflow'")
 				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts")
 				api.countMetric(ctx, api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
 				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COUNT(1) FROM workflow_run")

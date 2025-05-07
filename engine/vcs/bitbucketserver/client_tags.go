@@ -22,7 +22,7 @@ func (b *bitbucketClient) Tag(ctx context.Context, fullname string, tagName stri
 	var bitbucketTag Tag
 	path := fmt.Sprintf("/projects/%s/repos/%s/tags/%s", t[0], t[1], tagName)
 
-	if err := b.do(ctx, "GET", "core", path, nil, nil, &bitbucketTag); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &bitbucketTag, Options{}); err != nil {
 		return sdk.VCSTag{}, sdk.WrapError(err, "Unable to get tag %s", path)
 	}
 
@@ -58,7 +58,7 @@ func (b *bitbucketClient) Tags(ctx context.Context, fullname string) ([]sdk.VCST
 		}
 
 		var response TagResponse
-		if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response, Options{}); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get tags %s", path)
 		}
 
@@ -73,7 +73,7 @@ func (b *bitbucketClient) Tags(ctx context.Context, fullname string) ([]sdk.VCST
 	tags := make([]sdk.VCSTag, len(bitbucketTags))
 	for i, tag := range bitbucketTags {
 		tags[i] = sdk.VCSTag{
-			Tag:  strings.Replace(tag.ID, "refs/tags/", "", 1),
+			Tag:  strings.Replace(tag.ID, sdk.GitRefTagPrefix, "", 1),
 			Hash: tag.LatestCommit,
 			Sha:  tag.Hash,
 		}

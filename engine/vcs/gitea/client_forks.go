@@ -21,15 +21,7 @@ func (c *giteaClient) ListForks(ctx context.Context, fullname string) ([]sdk.VCS
 
 	var ret []sdk.VCSRepo
 	for _, repo := range repos {
-		ret = append(ret, sdk.VCSRepo{
-			ID:           fmt.Sprintf("%d", repo.ID),
-			Name:         repo.Name,
-			Slug:         strings.Split(repo.FullName, "/")[0],
-			Fullname:     repo.FullName,
-			URL:          repo.HTMLURL,
-			HTTPCloneURL: repo.CloneURL,
-			SSHCloneURL:  repo.SSHURL,
-		})
+		ret = append(ret, c.ToVCSRepo(repo))
 	}
 
 	return ret, nil

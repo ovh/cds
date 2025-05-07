@@ -38,10 +38,8 @@ func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 
 	h := &HatcherySwarm{
 		dockerClients: map[string]*dockerClient{},
-		Config: HatcheryConfiguration{
-			DisableDockerOptsOnRequirements: false,
-		},
-		Common: hatchery.Common{},
+		Config:        HatcheryConfiguration{},
+		Common:        hatchery.Common{},
 	}
 	h.dockerClients["default"] = &dockerClient{Client: *c, MaxContainers: 2, name: "default"}
 
@@ -62,9 +60,7 @@ func InitTestHatcherySwarm(t *testing.T) *HatcherySwarm {
 
 	h := &HatcherySwarm{
 		dockerClients: map[string]*dockerClient{},
-		Config: HatcheryConfiguration{
-			DisableDockerOptsOnRequirements: false,
-		},
+		Config:        HatcheryConfiguration{},
 	}
 	h.ServiceInstance = &sdk.Service{
 		CanonicalService: sdk.CanonicalService{

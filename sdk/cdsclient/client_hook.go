@@ -57,3 +57,20 @@ func (c *client) RetrieveHookEventSigningKeyOperation(ctx context.Context, opera
 	_, err := c.GetJSON(ctx, "/v2/hooks/event/signKey/"+operationUUID, &ope)
 	return ope, err
 }
+
+func (c *client) CreateInsightReport(ctx context.Context, projKey string, vcsName string, repoName string, commit string, insightKey string, insightReport sdk.VCSInsight) error {
+	path := fmt.Sprintf("/v2/hooks/%s/vcs/%s/repository/%s/insight/%s/%s", projKey, vcsName, url.PathEscape(repoName), commit, insightKey)
+	if _, err := c.PostJSON(ctx, path, &insightReport, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V2WorkflowHook, error) {
+	path := fmt.Sprintf("/v2/hooks/workflows/hook/" + hookID)
+	var h sdk.V2WorkflowHook
+	if _, err := c.GetJSON(ctx, path, &h); err != nil {
+		return nil, err
+	}
+	return &h, nil
+}

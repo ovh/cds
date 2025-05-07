@@ -1,8 +1,15 @@
 package sdk
 
-// Bookmark represents the type for a bookmark with his icon and description
+type BookmarkType string
+
+const (
+	ProjectBookmarkType        BookmarkType = "project"
+	WorkflowBookmarkType       BookmarkType = "workflow"
+	WorkflowLegacyBookmarkType BookmarkType = "workflow-legacy"
+)
+
 type Bookmark struct {
-	Icon        string `json:"icon" db:"icon"`
-	Description string `json:"description" db:"description"`
-	NavbarProjectData
+	Type  BookmarkType `json:"type"`
+	ID    string       `json:"id"`
+	Label string       `json:"label"`
 }

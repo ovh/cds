@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/slug"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -106,6 +106,10 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	h.Config, ok = cfg.(HatcheryConfiguration)
 	if !ok {
 		return sdk.WithStack(fmt.Errorf("invalid configuration"))
+	}
+
+	if len(h.Config.OSArch) == 0 {
+		h.Config.OSArch = []string{"linux/amd64"}
 	}
 
 	var err error
@@ -201,9 +205,19 @@ func (h *HatcheryKubernetes) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModel
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "kubernetes.CanSpawn")
 	defer end()
+
+	// For workflow v2, check os/arch of worker model
+	if model.ModelV2 != nil {
+		modelOSArch := model.ModelV2.OSArch
+		if !slices.Contains(h.Config.OSArch, modelOSArch) {
+			log.Debug(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, modelOSArch, h.Config.OSArch)
+			return false
+		}
+	}
+
 	// Service and Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
@@ -239,6 +253,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	if memory == 0 {
 		memory = 1024
 	}
+	if spawnArgs.Model.Memory != 0 {
+		memory = spawnArgs.Model.Memory
+	}
+
 	for _, r := range spawnArgs.Requirements {
 		if r.Type == sdk.MemoryRequirement {
 			var err error
@@ -331,9 +349,8 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Namespace:                  h.Config.Namespace,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
-				LABEL_HATCHERY_NAME:     h.Configuration().Name,
-				LABEL_WORKER_NAME:       workerConfig.Name,
-				LABEL_WORKER_MODEL_PATH: slug.Convert(spawnArgs.Model.GetPath()),
+				LABEL_HATCHERY_NAME: h.Configuration().Name,
+				LABEL_WORKER_NAME:   workerConfig.Name,
 			},
 			Annotations: map[string]string{},
 		},

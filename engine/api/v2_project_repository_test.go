@@ -10,9 +10,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/services/mock_services"
+	"go.uber.org/mock/gomock"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -48,6 +48,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 		services.NewClient = services.NewDefaultClient
 	}()
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/v2/repository/event/vcs-github/ovh%2Fcds", gomock.Any(), gomock.Any(), gomock.Any())
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/ovh/cds", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(

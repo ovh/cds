@@ -90,6 +90,8 @@ func (api *API) postHatcheryHeartbeatHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
+			service.TrackActionMetadataFromFields(w, h)
+
 			var mon sdk.MonitoringStatus
 			if err := service.UnmarshalBody(req, &mon); err != nil {
 				return err

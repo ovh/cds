@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestGetRunResult(t *testing.T) {
@@ -31,7 +31,7 @@ func TestGetRunResult(t *testing.T) {
 	require.NoError(t, err)
 	w.signer = signer
 
-	l, h, err := cdslog.New(ctx, &hook.Config{Hostname: ""})
+	l, h, err := cdslog.New(ctx, &graylog.Config{Hostname: ""})
 	require.NoError(t, err)
 	w.SetGelfLogger(h, l)
 
@@ -72,12 +72,23 @@ func TestGetRunResult(t *testing.T) {
 				},
 			},
 		},
+		{
+			Type: sdk.V2WorkflowRunResultTypeGeneric,
+			Detail: sdk.V2WorkflowRunResultDetail{
+				Type: "V2WorkflowRunResultGenericDetail",
+				Data: sdk.V2WorkflowRunResultGenericDetail{
+					Name: "foobar.log",
+				},
+			},
+		},
 	}, nil)
 
 	filter := workerruntime.V2FilterRunResult{
-		Pattern: "docker:**/my/image:* helm:machart:* date.log",
+		Pattern: "docker:**/my/image:* helm:machart:* date.log generic:foobar*",
 	}
 	result, err := w.V2GetRunResult(ctx, filter)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(result.RunResults))
+	t.Logf("%+v", result)
+
+	require.Equal(t, 4, len(result.RunResults))
 }

@@ -1,10 +1,10 @@
 import {
-    ChangeDetectionStrategy, ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    OnInit,
-    Output
+  ChangeDetectionStrategy, ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,16 +21,16 @@ import { ApplicationsState, ApplicationStateModel } from 'app/store/applications
 import { AddEnvironment } from 'app/store/environment.action';
 import { AddPipeline } from 'app/store/pipelines.action';
 import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, of as observableOf } from 'rxjs';
-import { filter, finalize, first, flatMap, map } from 'rxjs/operators';
+import { filter, finalize, first, map, switchMap } from 'rxjs/operators';
 
 @Component({
-    selector: 'app-workflow-node-add-wizard',
-    templateUrl: './node.wizard.html',
-    styleUrls: ['./node.wizard.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-workflow-node-add-wizard',
+  templateUrl: './node.wizard.html',
+  styleUrls: ['./node.wizard.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowNodeAddWizardComponent implements OnInit {
 
@@ -54,9 +54,9 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   applicationsName: IdName[] = [];
   environmentsName: IdName[] = [];
 
-    pipIndexTab: number;
-    appIndexTab: number;
-    envIndexTab: number;
+  pipIndexTab: number;
+  appIndexTab: number;
+  envIndexTab: number;
 
   errorPipelineNamePattern = false;
   loadingCreatePipeline = false;
@@ -88,9 +88,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     private _appService: ApplicationService,
     private store: Store,
     private _cd: ChangeDetectorRef
-  ) {
-
-  }
+  ) { }
 
   ngOnInit() {
     if (Array.isArray(this.project.application_names)) {
@@ -116,7 +114,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       this.node.type = WNodeType.PIPELINE;
       this.node.context.pipeline_id = Number(this.node.context.pipeline_id);
     } else {
-        this.node.type = WNodeType.FORK;
+      this.node.type = WNodeType.FORK;
     }
     if (this.node.context.application_id) {
       this.node.context.application_id = Number(this.node.context.application_id);
@@ -144,17 +142,17 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       projectKey: this.project.key,
       pipeline: this.newPipeline
     })).pipe(
-        finalize(() => {
-          this.loadingCreatePipeline = false;
-          this._cd.markForCheck();
-        }),
-        flatMap(() => this.store.selectOnce(PipelinesState.getCurrent())),
-        map((pip: PipelinesStateModel) => {
-          this._toast.success('', this._translate.instant('pipeline_added'));
-          this.node.context.pipeline_id = pip.pipeline.id;
-          this.pipelineSection = 1;
-          return pip.pipeline;
-        }));
+      finalize(() => {
+        this.loadingCreatePipeline = false;
+        this._cd.markForCheck();
+      }),
+      switchMap(() => this.store.selectOnce(PipelinesState.current)),
+      map((pip: PipelinesStateModel) => {
+        this._toast.success('', this._translate.instant('pipeline_added'));
+        this.node.context.pipeline_id = pip.pipeline.id;
+        this.pipelineSection = 1;
+        return pip.pipeline;
+      }));
   }
 
   selectOrCreatePipeline(): Observable<number> {
@@ -180,10 +178,10 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       application: this.newApplication
     })).pipe(
       finalize(() => {
-          this.loadingCreateApplication = false;
-          this._cd.markForCheck();
+        this.loadingCreateApplication = false;
+        this._cd.markForCheck();
       }),
-      flatMap(() => this.store.selectOnce(ApplicationsState.currentState())),
+      switchMap(() => this.store.selectOnce(ApplicationsState.current)),
       filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.newApplication.name),
       map((s: ApplicationStateModel) => {
         this._toast.success('', this._translate.instant('application_created'));
@@ -201,7 +199,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
     this.getIntegrations();
     this.pipelineSection = 2;
-      this._cd.markForCheck();
+    this._cd.markForCheck();
     return observableOf(2);
   }
 
@@ -221,8 +219,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     this._appService.getDeploymentStrategies(this.project.key, app.name).pipe(
       first(),
       finalize(() => {
-          this.loadingIntegrations = false;
-          this._cd.markForCheck();
+        this.loadingIntegrations = false;
+        this._cd.markForCheck();
       })
     ).subscribe(
       (data) => {
@@ -248,12 +246,11 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       environment: this.newEnvironment
     })).pipe(
       finalize(() => {
-          this.loadingCreateEnvironment = false;
-          this._cd.markForCheck();
+        this.loadingCreateEnvironment = false;
+        this._cd.markForCheck();
       }),
-      flatMap(() => this.store.selectOnce(ProjectState)),
-      map((projState: ProjectStateModel) => {
-        let proj = projState.project;
+      switchMap(() => this.store.selectOnce(ProjectState.projectSnapshot)),
+      map((proj: Project) => {
         this._toast.success('', this._translate.instant('environment_created'));
         this.node.context.environment_id = proj.environments.find((env) => env.name === this.newEnvironment.name).id;
         if (!this.node.context.application_id) {
@@ -287,8 +284,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   }
 
   public goToPreviousSection() {
-      this.pipelineSection--;
-      this._cd.markForCheck();
+    this.pipelineSection--;
+    this._cd.markForCheck();
 
   }
 

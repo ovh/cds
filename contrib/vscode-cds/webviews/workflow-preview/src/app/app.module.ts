@@ -2,8 +2,17 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { WorkflowGraphModule} from 'workflow-graph';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { AppComponent } from './app.component';
+import { FormsModule } from '@angular/forms';
+import { CaretRightOutline, CaretDownOutline, UserOutline } from '@ant-design/icons-angular/icons';
+import { IconDefinition } from '@ant-design/icons-angular';
+import { GraphModule } from 'workflow-graph';
+
+const icons: IconDefinition[] = [CaretRightOutline, CaretDownOutline, UserOutline];
 
 @NgModule({
   declarations: [
@@ -12,8 +21,13 @@ import { AppComponent } from './app.component';
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
-    NzIconModule,
-    WorkflowGraphModule
+    FormsModule,
+    NzIconModule.forRoot(icons),
+    NzAlertModule,
+    NzFormModule,
+    NzInputModule,
+    NzButtonModule,
+    GraphModule
   ],
   providers: [],
   bootstrap: [AppComponent]

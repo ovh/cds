@@ -210,14 +210,25 @@ type VCSProject struct {
 
 type VCSAuthProject struct {
 	// VCS Authentication
-	Username   string `json:"username,omitempty" db:"-"`
-	Token      string `json:"token,omitempty" db:"-"`
-	SSHKeyName string `json:"sshKeyName,omitempty" db:"-"`
+	Username     string `json:"username,omitempty" db:"-"`
+	Token        string `json:"token,omitempty" db:"-"`
+	SSHKeyName   string `json:"sshKeyName,omitempty" db:"-"`
+	GPGKeyName   string `json:"gpgKeyName,omitempty" db:"-"`
+	EmailAddress string `json:"emailAddress,omitempty" db:"-"`
 
 	// Used by gerrit
 	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
 	SSHPort       int    `json:"sshPort,omitempty" db:"-"`
 	SSHPrivateKey string `json:"sshPrivateKey,omitempty" db:"-"`
+}
+
+type VCSUserGPGKey struct {
+	ProjectKey     string `json:"project_key"`
+	VCSProjectName string `json:"vcs_project_name"`
+	Username       string `json:"username"`
+	KeyName        string `json:"gpg_key_name"`
+	KeyID          string `json:"key_id"`
+	PublicKey      string `json:"public_key"`
 }
 
 type VCSOptionsProject struct {
@@ -304,10 +315,12 @@ type VCSServer interface {
 type VCSBranchFilters struct {
 	BranchName string
 	Default    bool
+	NoCache    bool
 }
 
 type VCSBranchesFilter struct {
-	Limit int64
+	Limit   int64
+	NoCache bool
 }
 
 type VCSArchiveRequest struct {
@@ -357,6 +370,9 @@ type VCSAuthorizedClientCommon interface {
 	SetStatus(ctx context.Context, buildStatus VCSBuildStatus) error
 	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
 
+	// Insight
+	CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, report VCSInsight) error
+
 	// Release
 	Release(ctx context.Context, repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
 	UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.Reader, length int) error
@@ -366,7 +382,7 @@ type VCSAuthorizedClientCommon interface {
 
 	// File
 	GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error)
-	ListContent(ctx context.Context, repo string, commit, dir string) ([]VCSContent, error)
+	ListContent(ctx context.Context, repo string, commit, dir string, offset, limit string) ([]VCSContent, error)
 	GetContent(ctx context.Context, repo string, commit, dir string) (VCSContent, error)
 
 	// Search
@@ -424,7 +440,7 @@ type VCSBuildStatus struct {
 	Description string `json:"description"`
 
 	// v1: fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, event.ProjectKey, event.WorkflowName, eventNR.Number)
-	// v2: TODO
+	// v2: fmt.Sprintf("%s/project/%s/run/%s", cdsUIURL, event.ProjectKey, event.WorkflowRunID)
 	URLCDS string `json:"url_cds"` //
 
 	// v1: fmt.Sprintf("%s-%s-%s", event.ProjectKey, event.WorkflowName, eventNR.NodeName)

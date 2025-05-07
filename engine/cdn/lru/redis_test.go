@@ -23,7 +23,7 @@ func TestRedisLRU(t *testing.T) {
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-	r, err := NewRedisLRU(db.DbMap, 100, cfg["redisHost"], cfg["redisPassword"], 0)
+	r, err := NewRedisLRU(db.DbMap, 100, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
 
 	l, _ := r.Len()

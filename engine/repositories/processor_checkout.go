@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fsamin/go-repo"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
@@ -49,7 +50,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 				return sdk.WithStack(err)
 			}
 		} else {
-			currentCommit, err := gitRepo.LatestCommit(ctx)
+			currentCommit, err := gitRepo.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
 			if err != nil {
 				return sdk.WithStack(err)
 			}
@@ -68,8 +69,21 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		}
 	}
 
+	if op.Setup.Checkout.GetMessage {
+		currentCommit, err := gitRepo.LatestCommit(ctx, repo.CommitOption{DisableDiffDetail: true})
+		if err != nil {
+			return err
+		}
+		op.Setup.Checkout.Result.CommitMessage = currentCommit.Subject
+	}
+
 	if op.Setup.Checkout.ProcessSemver {
-		describe, err := gitRepo.Describe(ctx, nil)
+		describe, err := gitRepo.Describe(ctx, &repo.DescribeOpt{
+			DirtySemver: true,
+			Long:        true,
+			Match:       []string{"v[0-9]*", "[0-9]*"},
+			DirtyMark:   "-dirty",
+		})
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, errors.Wrap(err, "git describe failed"))
 		} else {
@@ -92,7 +106,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 			gpgKeyID = t.GPGKeyID
 		} else {
 			log.Debug(ctx, "retrieve gpg key id from commit %s", op.Setup.Checkout.Commit)
-			c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit)
+			c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit, repo.CommitOption{DisableDiffDetail: true})
 			if err != nil {
 				return sdk.WithStack(err)
 			}
@@ -102,57 +116,104 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		if gpgKeyID == "" {
 			op.Setup.Checkout.Result.CommitVerified = false
 			op.Setup.Checkout.Result.Msg = "commit not signed"
-			return nil
-		}
-		ctx = context.WithValue(ctx, cdslog.GpgKey, gpgKeyID)
-		op.Setup.Checkout.Result.SignKeyID = gpgKeyID
+		} else {
+			ctx = context.WithValue(ctx, cdslog.GpgKey, gpgKeyID)
+			op.Setup.Checkout.Result.SignKeyID = gpgKeyID
 
-		// Search for public key on vcsserver
-		var publicKey string
-		vcsKeys, has := vcsPublicKeys[op.VCSServer]
-		if has {
-			for _, k := range vcsKeys {
-				if k.KeyID == gpgKeyID {
-					publicKey = k.Public
-					break
+			// Search for public key on vcsserver
+			var publicKey string
+			vcsKeys, has := vcsPublicKeys[op.VCSServer]
+			if has {
+				for _, k := range vcsKeys {
+					if k.KeyID == gpgKeyID {
+						publicKey = k.Public
+						break
+					}
+				}
+			}
+
+			// If not key found, try to get it from a user
+			if publicKey == "" {
+				// Retrieve gpg public key on users
+				userKey, _ := s.Client.UserGpgKeyGet(ctx, gpgKeyID)
+				if userKey.PublicKey != "" {
+					publicKey = userKey.PublicKey
+				} else {
+					// Retrieve gpg public key on vcs
+					vcsUsers, _ := s.Client.VCSGPGKey(ctx, gpgKeyID)
+					for _, vcsUser := range vcsUsers {
+						if vcsUser.VCSProjectName == op.VCSServer && vcsUser.KeyID == gpgKeyID {
+							publicKey = vcsUser.PublicKey
+							break
+						}
+					}
+					if publicKey == "" {
+						op.Setup.Checkout.Result.CommitVerified = false
+						op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", gpgKeyID, err)
+						return nil
+					}
+				}
+			}
+
+			// Import gpg public key
+			fileName, _, err := sdk.ImportGPGKey(os.TempDir(), gpgKeyID, []byte(publicKey))
+			if err != nil {
+				return err
+			}
+			log.Debug(ctx, "key: %s, fileName: %s imported", gpgKeyID, fileName)
+
+			// Check commit signature
+			if op.Setup.Checkout.Tag != "" {
+				if _, err := gitRepo.VerifyTag(ctx, op.Setup.Checkout.Tag); err != nil {
+					op.Setup.Checkout.Result.CommitVerified = false
+					op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
+					return nil
+				}
+			} else {
+				if err := gitRepo.VerifyCommit(ctx, op.Setup.Checkout.Commit); err != nil {
+					op.Setup.Checkout.Result.CommitVerified = false
+					op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
+					return nil
+				}
+			}
+			op.Setup.Checkout.Result.CommitVerified = true
+		}
+	}
+
+	if op.Setup.Checkout.GetChangeSet {
+		op.Setup.Checkout.Result.Files = make(map[string]sdk.OperationChangetsetFile)
+		computeFromLastCommit := false
+		if op.Setup.Checkout.ChangeSetCommitSince != "" {
+			files, err := gitRepo.DiffSinceCommitMergeBase(ctx, op.Setup.Checkout.ChangeSetCommitSince)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				computeFromLastCommit = true
+			} else {
+				for k, v := range files {
+					op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
+						Filename: v.Filename,
+						Status:   v.Status,
+					}
+				}
+			}
+		} else {
+			computeFromLastCommit = true
+		}
+
+		if computeFromLastCommit {
+			commitWithChangesets, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit, repo.CommitOption{DisableDiffDetail: true})
+			if err != nil {
+				return err
+			}
+
+			for k, v := range commitWithChangesets.Files {
+				op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
+					Filename: v.Filename,
+					Status:   v.Status,
 				}
 			}
 		}
 
-		// If not key found, try to get it from a user
-		if publicKey == "" {
-			// Retrieve gpg public key
-			userKey, err := s.Client.UserGpgKeyGet(ctx, gpgKeyID)
-			if err != nil {
-				op.Setup.Checkout.Result.CommitVerified = false
-				op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", gpgKeyID, err)
-				return nil
-			}
-			publicKey = userKey.PublicKey
-		}
-
-		// Import gpg public key
-		fileName, _, err := sdk.ImportGPGKey(os.TempDir(), gpgKeyID, publicKey)
-		if err != nil {
-			return err
-		}
-		log.Debug(ctx, "key: %s, fileName: %s imported", gpgKeyID, fileName)
-
-		// Check commit signature
-		if op.Setup.Checkout.Tag != "" {
-			if _, err := gitRepo.VerifyTag(ctx, op.Setup.Checkout.Tag); err != nil {
-				op.Setup.Checkout.Result.CommitVerified = false
-				op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
-				return nil
-			}
-		} else {
-			if err := gitRepo.VerifyCommit(ctx, op.Setup.Checkout.Commit); err != nil {
-				op.Setup.Checkout.Result.CommitVerified = false
-				op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
-				return nil
-			}
-		}
-		op.Setup.Checkout.Result.CommitVerified = true
 	}
 
 	log.Info(ctx, "processCheckout> repository %s ready", op.URL)

@@ -24,7 +24,6 @@ type V2RunResultRequest struct {
 type V2AddResultResponse struct {
 	RunResult    *sdk.V2WorkflowRunResult
 	CDNSignature string
-	CDNAddress   string
 }
 
 type V2GetResultResponse struct {
@@ -39,6 +38,10 @@ type V2UpdateResultResponse struct {
 type V2FilterRunResult struct {
 	Pattern string
 	Type    []sdk.V2WorkflowRunResultType
+}
+
+type V2WorkerConfig struct {
+	CDNEndpoint string `json:"cdn_endpoint"`
 }
 
 type WorkerConfig struct {
@@ -85,7 +88,6 @@ type FilePath struct {
 type OutputRequest struct {
 	Name             string `json:"name"`
 	Value            string `json:"value"`
-	StepOnly         bool   `json:"step_only"`
 	WorkflowRunID    string `json:"workflow_run_id"`
 	WorkflowRunJobID string `json:"workflow_run_job_id"`
 }
@@ -117,6 +119,11 @@ const (
 type (
 	contextKey int
 )
+
+type CDNSignature struct {
+	Signature  string `json:"signature"`
+	CDNAddress string `json:"cdn_address"`
+}
 
 const (
 	jobID contextKey = iota
@@ -159,10 +166,13 @@ type Runtime interface {
 	V2AddRunResult(ctx context.Context, req V2RunResultRequest) (*V2AddResultResponse, error)
 	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)
 	AddStepOutput(ctx context.Context, outputName string, outputValue string)
+	V2RunResultsSynchronize(ctx context.Context) error
 	V2GetRunResult(ctx context.Context, filter V2FilterRunResult) (*V2GetResultResponse, error)
-	V2GetIntegrationByName(ctx context.Context, name string) (*sdk.ProjectIntegration, error)
 	V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob
 	V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext
+	V2GetCacheSignature(ctx context.Context, cacheKey string) (*CDNSignature, error)
+	V2GetCacheLink(ctx context.Context, cacheKey string) (*sdk.CDNItemLinks, error)
+	V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 func JobID(ctx context.Context) (int64, error) {

@@ -11,6 +11,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -129,7 +131,7 @@ func isMFA(ctx context.Context) bool {
 
 func trackSudo(ctx context.Context, w http.ResponseWriter) {
 	if isAdmin(ctx) && !isService(ctx) && !isWorker(ctx) {
-		SetTracker(w, cdslog.Sudo, true)
+		service.SetTracker(w, cdslog.Sudo, true)
 	}
 }
 
@@ -226,6 +228,10 @@ func (a *API) mustDB() *gorp.DbMap {
 		panic(fmt.Errorf("Database unavailable"))
 	}
 	return db
+}
+
+func (a *API) mustMapper() *gorpmapper.Mapper {
+	return gorpmapping.Mapper
 }
 
 func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {

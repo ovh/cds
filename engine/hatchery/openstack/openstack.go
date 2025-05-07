@@ -3,6 +3,7 @@ package openstack
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -146,7 +147,38 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 		}
 	}
 
+	if err := h.checkOverrideImagesUsername(hconfig.OverrideImagesUsername); err != nil {
+		return fmt.Errorf("invalid image username override: %w", err)
+	}
+
 	return nil
+}
+
+var (
+	usernameRe = regexp.MustCompile("^[a-z_][a-z0-9_-]{0,31}$")
+)
+
+func (h *HatcheryOpenstack) checkOverrideImagesUsername(overrides []ImageUsernameOverride) error {
+	for _, override := range overrides {
+		if _, err := regexp.Compile(override.Image); err != nil {
+			return fmt.Errorf("invalid image expression %q: %w", override.Image, err)
+		}
+
+		if !usernameRe.MatchString(override.Username) {
+			return fmt.Errorf("invalid username %q: must match %s", override.Username, usernameRe.String())
+		}
+	}
+
+	return nil
+}
+
+func (h *HatcheryOpenstack) GetImageUsername(ctx context.Context, imageName string) string {
+	for image, username := range h.imagesUsername {
+		if image.MatchString(imageName) {
+			return username
+		}
+	}
+	return ""
 }
 
 func (h *HatcheryOpenstack) Signin(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {

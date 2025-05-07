@@ -1,0 +1,47 @@
+<div class="repoAdd">
+    <ng-container *ngIf="vcsProject && repositories">
+        <div class="repoAdd-container">
+            <h3>Select a repository</h3>
+            <nz-alert nzType="info" [nzMessage]="infoMsg"></nz-alert>
+            <ng-template #infoMsg>
+                <div class="info">
+                    <div class="title">
+                        <i nz-icon nzType="info-circle" class="info" nzTheme="outline"></i> CDS requires permission to
+                        read repository data
+                    </div>
+                    <div class="content">
+                        Make sure that user "{{vcsProject.auth.username}}" can read the target repository, then resync
+                        repositories if needed.
+                    </div>
+                </div>
+            </ng-template>
+            <nz-row>
+                <nz-col [nzSpan]="2" [nzOffset]="1">
+                    Repository:
+                </nz-col>
+                <nz-col [nzSpan]="16">
+                    <nz-select nzShowSearch nzPlaceHolder="Select a repository" (nzOnSearch)="filterRepo($event)"
+                        [(ngModel)]="selectedRepo">
+                        <nz-option *ngFor="let r of filteredRepos; trackBy: trackRepo" [nzValue]="r"
+                            [nzLabel]="r.fullname"></nz-option>
+                    </nz-select>
+                </nz-col>
+                <nz-col [nzSpan]="2" [nzOffset]="1">
+                    <button nz-button nzType="primary" (click)="listRepositories(true)"
+                        [nzLoading]="loadingResync">Resynchronize</button>
+                </nz-col>
+            </nz-row>
+        </div>
+        <div class="footer">
+            <div class="buttons">
+                <button nz-button [routerLink]="['/', 'project', this.project.key]"
+                    [nzLoading]="loading">Cancel</button>
+                <button nz-button nzType="primary" (click)="addRepositoryOnProject()" [disabled]="!selectedRepo"
+                    [nzLoading]="loading">Add</button>
+            </div>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="!vcsProject">
+        <nz-spin nzTip="Loading..."></nz-spin>
+    </ng-container>
+</div>

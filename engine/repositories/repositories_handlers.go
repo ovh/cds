@@ -23,6 +23,19 @@ func muxVar(r *http.Request, s string) string {
 	return vars[s]
 }
 
+func (s *Service) GetLocalCacheHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return service.WriteJSON(w, s.localCache.Items(), http.StatusOK)
+	}
+}
+
+func (s *Service) ClearLocalCacheHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		s.localCache.Flush()
+		return nil
+	}
+}
+
 func (s *Service) postOperationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		op := new(sdk.Operation)

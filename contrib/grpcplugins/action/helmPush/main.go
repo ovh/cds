@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -52,9 +51,11 @@ func (*helmPushPlugin) Manifest(context.Context, *emptypb.Empty) (*actionplugin.
 	}, nil
 }
 
-// Run implements actionplugin.ActionPluginServer.
-func (p *helmPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *helmPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
@@ -75,7 +76,7 @@ func (p *helmPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (
 		if err != nil {
 			res.Status = sdk.StatusFail
 			res.Details = "invalid value for parameter <updateDependencies>"
-			return res, err
+			return stream.Send(res)
 		}
 	}
 
@@ -90,12 +91,17 @@ func (p *helmPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
+		return stream.Send(res)
 	}
 
-	grpcplugins.Logf("Helm chart %s pushed in %.3fs", result.Name(), d.Seconds())
+	grpcplugins.Logf(&p.Common, "Helm chart %s pushed in %.3fs", result.Name(), d.Seconds())
 
-	return res, nil
+	return stream.Send(res)
+}
+
+// Run implements actionplugin.ActionPluginServer.
+func (p *helmPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 type chartMuseumOptions struct {
@@ -149,13 +155,7 @@ func (p *helmPushPlugin) perform(
 			IssuedAt: time.Now(),
 			Type:     sdk.V2WorkflowRunResultTypeHelm,
 			Status:   sdk.V2WorkflowRunResultStatusPending,
-			Detail: sdk.V2WorkflowRunResultDetail{
-				Data: sdk.V2WorkflowRunResultHelmDetail{
-					Name:         chart.Name(),
-					AppVersion:   chart.AppVersion(),
-					ChartVersion: chart.Metadata.Version,
-				},
-			},
+			Detail:   grpcplugins.ComputeRunResultHelmDetail(chart.Name(), chart.AppVersion(), chart.Metadata.Version),
 		},
 	}
 
@@ -166,16 +166,17 @@ func (p *helmPushPlugin) perform(
 
 	result := response.RunResult
 
+	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
+	if err != nil {
+		return nil, time.Since(t0), err
+	}
+
 	switch {
 	case result.ArtifactManagerIntegrationName != nil:
-		integration, err := grpcplugins.GetIntegrationByName(ctx, &p.Common, *result.ArtifactManagerIntegrationName)
-		if err != nil {
-			return nil, time.Since(t0), err
-		}
-
+		integration := jobCtx.Integrations.ArtifactManager
 		rtConfig := grpcplugins.ArtifactoryConfig{
-			URL:   integration.Config[sdk.ArtifactoryConfigURL].Value,
-			Token: integration.Config[sdk.ArtifactoryConfigToken].Value,
+			URL:   integration.Get(sdk.ArtifactoryConfigURL),
+			Token: integration.Get(sdk.ArtifactoryConfigToken),
 		}
 
 		if !strings.HasSuffix(rtConfig.URL, "/") {
@@ -222,7 +223,7 @@ func (p *helmPushPlugin) pushChartMuseum(ctx context.Context, result *sdk.V2Work
 	}
 	client.Option(cm.ContextPath(index.ServerInfo.ContextPath))
 
-	grpcplugins.Logf("Pushing %s to %s...", filepath.Base(chartPackagePath), repo.Config.URL)
+	grpcplugins.Logf(&p.Common, "Pushing %s to %s...", filepath.Base(chartPackagePath), repo.Config.URL)
 	resp, err := client.UploadChartPackage(chartPackagePath, true)
 	if err != nil {
 		return err
@@ -234,7 +235,7 @@ func (p *helmPushPlugin) pushChartMuseum(ctx context.Context, result *sdk.V2Work
 		}
 		return getChartmuseumError(b, resp.StatusCode)
 	}
-	grpcplugins.Logf("Done.")
+	grpcplugins.Logf(&p.Common, "Done.")
 
 	result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
 	result.ArtifactManagerMetadata.Set("repository", repo.Config.URL) // This is the virtual repository
@@ -245,8 +246,8 @@ func (p *helmPushPlugin) pushChartMuseum(ctx context.Context, result *sdk.V2Work
 	return nil
 }
 
-func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2WorkflowRunResult, chart *helm.Chart, chartPackagePath string, integration *sdk.ProjectIntegration, rtConfig grpcplugins.ArtifactoryConfig) error {
-	repository := integration.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-helm"
+func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2WorkflowRunResult, chart *helm.Chart, chartPackagePath string, integration sdk.JobIntegrationsContext, rtConfig grpcplugins.ArtifactoryConfig) error {
+	repository := integration.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-helm"
 
 	resp, err := p.UploadChartPackageToArtifactory(ctx, repository, chart.Metadata.Name, chartPackagePath, rtConfig)
 	if err != nil {
@@ -259,20 +260,20 @@ func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2Work
 		if err != nil {
 			return err
 		}
-		grpcplugins.Error(string(btes))
-		grpcplugins.Error(fmt.Sprintf("HTTP %d", resp.StatusCode))
+		grpcplugins.Error(&p.Common, string(btes))
+		grpcplugins.Error(&p.Common, fmt.Sprintf("HTTP %d", resp.StatusCode))
 		return errors.Errorf("unable to upload chart package: HTTP %d", resp.StatusCode)
 	}
 
-	fi, err := grpcplugins.GetArtifactoryFileInfo(context.TODO(), &p.Common, rtConfig, repository, path.Join(chart.Metadata.Name, filepath.Base(chartPackagePath)))
+	fi, err := grpcplugins.GetArtifactoryFileInfo(context.TODO(), &p.Common, rtConfig, repository, filepath.Join(chart.Metadata.Name, filepath.Base(chartPackagePath)))
 	if err != nil {
 		return errors.Errorf("unable to get Artifactory file info %s: %v", chartPackagePath, err)
 	}
 
-	maturity := integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+	maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 	localRepository := repository + "-" + maturity
 	grpcplugins.ExtractFileInfoIntoRunResult(result, *fi, chart.Metadata.Name, "helm", localRepository, repository, maturity)
-	grpcplugins.Success("Done.")
+	grpcplugins.Success(&p.Common, "Done.")
 	return nil
 }
 
@@ -288,7 +289,7 @@ func (p *helmPushPlugin) UploadChartPackageToArtifactory(ctx context.Context, re
 		return nil, err
 	}
 
-	u.Path = path.Join(u.Path, repository, chartName, filepath.Base(chartPackagePath))
+	u.Path = filepath.Join(u.Path, repository, chartName, filepath.Base(chartPackagePath))
 	req, err := buildRequest(ctx, u.String(), f)
 	if err != nil {
 		return nil, err
@@ -297,7 +298,7 @@ func (p *helmPushPlugin) UploadChartPackageToArtifactory(ctx context.Context, re
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rtConfig.Token))
 	req.Header.Set("User-Agent", "cds-helm-push-plugin-"+sdk.VERSION)
 
-	grpcplugins.Logf("Pushing %s to %s...\n", filepath.Base(chartPackagePath), u.String())
+	grpcplugins.Logf(&p.Common, "Pushing %s to %s...\n", filepath.Base(chartPackagePath), u.String())
 	return p.HTTPClient.Do(req)
 }
 

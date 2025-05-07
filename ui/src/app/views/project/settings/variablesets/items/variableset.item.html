@@ -1,0 +1,78 @@
+<h2> Create a new variableset item</h2>
+<form nz-form (ngSubmit)="createVariableSetItem()">
+    <nz-row>
+        <nz-col [nzSpan]="16">
+            <nz-form-item>
+                <nz-form-label [nzSpan]="3">
+                    Item name
+                </nz-form-label>
+                <nz-form-control>
+                    <input nz-input name="name" id="itemname" [(ngModel)]="newItem.name">
+                    <nz-alert *ngIf="errorItemName" nzType="warning" nzMessage="Name must respect pattern ^[a-zA-Z0-9_-]{1,}$"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="16">
+            <nz-form-item>
+                <nz-form-label [nzSpan]="3">
+                    Item Type
+                </nz-form-label>
+                <nz-form-control>
+                    <nz-select [(ngModel)]="newItem.type" name="type">
+                        <nz-option nzValue="string" nzLabel="string"></nz-option>
+                        <nz-option nzValue="secret" nzLabel="secret"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="16">
+            <nz-form-item>
+                <nz-form-label [nzSpan]="3">
+                    Item value
+                </nz-form-label>
+                <nz-form-control>
+                    <ng-container *ngIf="newItem.type === 'secret'">
+                        <input nz-input type="password" name="value" [(ngModel)]="newItem.value">
+                    </ng-container>
+                    <ng-container *ngIf="newItem.type !== 'secret'">
+                        <textarea nz-input  name="value" id="itemvalue" [(ngModel)]="newItem.value"></textarea>
+                    </ng-container>
+                    <nz-alert *ngIf="errorItemValue" nzType="warning" nzMessage="Value must not be empty"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="16">
+            <nz-form-item> 
+                <button nz-button nzType="primary" nzBlock [nzLoading]="itemFormLoading">Create</button>
+            </nz-form-item>
+        </nz-col>
+    </nz-row>
+</form>
+<h2> List of existing variablesets</h2>
+<nz-table #table [nzData]="items" [nzLoading]="loading">
+    <thead>
+        <tr>
+            <th>Item name</th>
+            <th>Type</th>
+            <th [nzWidth]="200">Value</th>
+            <th>Deletion</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let data of table.data">
+            <td>{{data.name}}</td>
+            <td>{{data.type}}</td>
+            <td><pre class="break">{{data.value}}</pre></td>
+            <td>
+                <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this item ?"
+                (nzOnConfirm)="deleteVariableSetItem(data)">Delete</button>
+            </td>
+        </tr>
+    </tbody>
+</nz-table>

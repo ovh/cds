@@ -13,7 +13,7 @@ import { WNode, Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowNodeHookFormComponent } from 'app/shared/workflow/wizard/hook/hook.form.component';
 import { WorkflowState } from 'app/store/workflow.state';
-import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 import { AddHookWorkflow } from 'app/store/workflow.action';
 import { finalize } from 'rxjs/operators';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -43,8 +43,13 @@ export class WorkflowHookModalComponent implements OnInit, OnDestroy {
     @ViewChild('hookFormComponent')
     hookFormComponent: WorkflowNodeHookFormComponent;
 
-    constructor(private _modal: NzModalRef, private _store: Store, private _cd: ChangeDetectorRef, private _toast: ToastService) {
-        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+    constructor(
+        private _modal: NzModalRef,
+        private _store: Store,
+        private _cd: ChangeDetectorRef,
+        private _toast: ToastService
+    ) {
+        this.editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
     }
 
     readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
@@ -56,7 +61,7 @@ export class WorkflowHookModalComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     saveHook(): void {
         this.loading = true;

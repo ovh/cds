@@ -23,6 +23,7 @@ func experimentalCommands() []*cobra.Command {
 		experimentalWorkerModel(),
 		experimentalHatchery(),
 		experimentalWorkflow(),
+		experimentalWorkflowTemplate(),
 	}
 }
 

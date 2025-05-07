@@ -92,24 +92,21 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 			// Set those value in ctx
 			ctx = context.WithValue(ctx, contextHatcheryConsumer, consumer)
 			ctx = context.WithValue(ctx, cdslog.AuthHatcheryID, consumer.AuthConsumerHatchery.HatcheryID)
-			SetTracker(w, cdslog.AuthHatcheryID, consumer.AuthConsumerHatchery.HatcheryID)
+			service.SetTracker(w, cdslog.AuthHatcheryID, consumer.AuthConsumerHatchery.HatcheryID)
 			ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
-			SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
+			service.SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
 
 			ctx = context.WithValue(ctx, contextSession, session)
 			ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
-			SetTracker(w, cdslog.AuthSessionID, session.ID)
+			service.SetTracker(w, cdslog.AuthSessionID, session.ID)
 			ctx = context.WithValue(ctx, cdslog.AuthSessionIAT, session.Created.Unix())
-			SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
+			service.SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
 			ctx = context.WithValue(ctx, contextSession, session)
 
 			var driverManifest *sdk.AuthDriverManifest
 			m := hatchery.GetManifest()
 			driverManifest = &m
 
-			if driverManifest == nil {
-				return sdk.WrapError(sdk.ErrUnauthorized, "consumer driver (%s) was not found", consumer.Type)
-			}
 			ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
 
 			// Set a cookie with the jwt token

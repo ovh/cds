@@ -25,16 +25,7 @@ func (c *gitlabClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	}
 
 	for _, p := range projects {
-		r := sdk.VCSRepo{
-			ID:           fmt.Sprintf("%d", p.ID),
-			Name:         p.NameWithNamespace,
-			Slug:         p.PathWithNamespace,
-			Fullname:     p.PathWithNamespace,
-			URL:          p.WebURL,
-			HTTPCloneURL: p.HTTPURLToRepo,
-			SSHCloneURL:  p.SSHURLToRepo,
-		}
-		repos = append(repos, r)
+		repos = append(repos, c.ToVCSRepo(p))
 	}
 
 	for resp.NextPage != 0 {
@@ -50,16 +41,7 @@ func (c *gitlabClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 		}
 
 		for _, p := range projects {
-			r := sdk.VCSRepo{
-				ID:           fmt.Sprintf("%d", p.ID),
-				Name:         p.NameWithNamespace,
-				Slug:         p.PathWithNamespace,
-				Fullname:     p.PathWithNamespace,
-				URL:          p.WebURL,
-				HTTPCloneURL: p.HTTPURLToRepo,
-				SSHCloneURL:  p.SSHURLToRepo,
-			}
-			repos = append(repos, r)
+			repos = append(repos, c.ToVCSRepo(p))
 		}
 	}
 
@@ -74,13 +56,21 @@ func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 	if err != nil {
 		return repo, err
 	}
-	repo.ID = fmt.Sprintf("%d", p.ID)
-	repo.Name = p.NameWithNamespace
-	repo.Slug = p.Name
-	repo.Fullname = p.PathWithNamespace
-	repo.URL = p.WebURL
-	repo.HTTPCloneURL = p.HTTPURLToRepo
-	repo.SSHCloneURL = p.SSHURLToRepo
 
-	return repo, nil
+	return c.ToVCSRepo(p), nil
+}
+
+func (c *gitlabClient) ToVCSRepo(p *gitlab.Project) sdk.VCSRepo {
+	return sdk.VCSRepo{
+		ID:              fmt.Sprintf("%d", p.ID),
+		Name:            p.NameWithNamespace,
+		Slug:            p.PathWithNamespace,
+		Fullname:        p.PathWithNamespace,
+		URL:             p.WebURL,
+		URLCommitFormat: p.WebURL + "/-/commit/%s",
+		URLTagFormat:    p.WebURL + "/-/tree/%s?ref_type=tags",
+		URLBranchFormat: p.WebURL + "/-/tree/%s?ref_type=heads",
+		HTTPCloneURL:    p.HTTPURLToRepo,
+		SSHCloneURL:     p.SSHURLToRepo,
+	}
 }

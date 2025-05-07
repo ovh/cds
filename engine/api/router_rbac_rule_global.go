@@ -3,20 +3,18 @@ package api
 import (
 	"context"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/rbac"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
-func hasGlobalRole(ctx context.Context, auth *sdk.AuthUserConsumer, _ cache.Store, db gorp.SqlExecutor, role string) error {
+func (api *API) hasGlobalRole(ctx context.Context, role string) error {
+	auth := getUserConsumer(ctx)
 	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := rbac.HasGlobalRole(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser.ID)
+	hasRole, err := rbac.HasGlobalRole(ctx, api.mustDBWithCtx(ctx), role, auth.AuthConsumerUser.AuthentifiedUser.ID)
 	if err != nil {
 		return err
 	}
@@ -29,22 +27,22 @@ func hasGlobalRole(ctx context.Context, auth *sdk.AuthUserConsumer, _ cache.Stor
 }
 
 // GlobalPermissionManage return nil if the current AuthConsumer have the ProjectRoleManage on current project KEY
-func (api *API) globalPermissionManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
-	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManagePermission)
+func (api *API) globalPermissionManage(ctx context.Context, _ map[string]string) error {
+	return api.hasGlobalRole(ctx, sdk.GlobalRoleManagePermission)
 }
 
-func (api *API) globalOrganizationManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
-	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageOrganization)
+func (api *API) globalOrganizationManage(ctx context.Context, _ map[string]string) error {
+	return api.hasGlobalRole(ctx, sdk.GlobalRoleManageOrganization)
 }
 
-func (api *API) globalRegionManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
-	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageRegion)
+func (api *API) globalRegionManage(ctx context.Context, _ map[string]string) error {
+	return api.hasGlobalRole(ctx, sdk.GlobalRoleManageRegion)
 }
 
-func (api *API) globalHatcheryManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
-	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageHatchery)
+func (api *API) globalHatcheryManage(ctx context.Context, _ map[string]string) error {
+	return api.hasGlobalRole(ctx, sdk.GlobalRoleManageHatchery)
 }
 
-func (api *API) globalPluginManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
-	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManagePlugin)
+func (api *API) globalPluginManage(ctx context.Context, _ map[string]string) error {
+	return api.hasGlobalRole(ctx, sdk.GlobalRoleManagePlugin)
 }

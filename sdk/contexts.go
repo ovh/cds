@@ -57,18 +57,33 @@ type ActionContext struct {
 
 type CDSContext struct {
 	// Workflow
-	EventName          string                 `json:"event_name,omitempty"`
+	EventName          WorkflowHookEventName  `json:"event_name,omitempty"`
 	Event              map[string]interface{} `json:"event,omitempty"`
 	ProjectKey         string                 `json:"project_key,omitempty"`
 	RunID              string                 `json:"run_id,omitempty"`
 	RunNumber          int64                  `json:"run_number,omitempty"`
 	RunAttempt         int64                  `json:"run_attempt,omitempty"`
+	RunURL             string                 `json:"run_url,omitempty"`
 	Workflow           string                 `json:"workflow,omitempty"`
 	WorkflowRef        string                 `json:"workflow_ref,omitempty"`
 	WorkflowSha        string                 `json:"workflow_sha,omitempty"`
 	WorkflowVCSServer  string                 `json:"workflow_vcs_server,omitempty"`
 	WorkflowRepository string                 `json:"workflow_repository,omitempty"`
 	TriggeringActor    string                 `json:"triggering_actor,omitempty"`
+	Version            string                 `json:"version,omitempty"`
+	VersionNext        string                 `json:"version_next,omitempty"`
+
+	// Workflow Template
+	WorkflowTemplate                 string            `json:"workflow_template,omitempty"`
+	WorkflowTemplateRef              string            `json:"workflow_template_ref,omitempty"`
+	WorkflowTemplateSha              string            `json:"workflow_template_sha,omitempty"`
+	WorkflowTemplateVCSServer        string            `json:"workflow_template_vcs_server,omitempty"`
+	WorkflowTemplateRepository       string            `json:"workflow_template_repository,omitempty"`
+	WorkflowTemplateProjectKey       string            `json:"workflow_template_project_key,omitempty"`
+	WorkflowTemplateParams           map[string]string `json:"workflow_template_params,omitempty"`
+	WorkflowTemplateCommitWebURL     string            `json:"workflow_template_commit_web_url,omitempty"`
+	WorkflowTemplateRefWebURL        string            `json:"workflow_template_ref_web_url,omitempty"`
+	WorkflowTemplateRepositoryWebURL string            `json:"workflow_template_repository_web_url,omitempty"`
 
 	// Job
 	Job   string `json:"job,omitempty"`
@@ -82,20 +97,30 @@ type CDSContext struct {
 }
 
 type GitContext struct {
-	Server        string `json:"server,omitempty"`
-	Repository    string `json:"repository,omitempty"`
-	RepositoryURL string `json:"repositoryUrl,omitempty"`
-	Ref           string `json:"ref,omitempty"`
-	RefName       string `json:"ref_name,omitempty"`
-	Sha           string `json:"sha,omitempty"`
-	RefType       string `json:"ref_type,omitempty"`
-	Connection    string `json:"connection,omitempty"`
-	SSHKey        string `json:"ssh_key,omitempty"`
-	SSHPrivate    string `json:"ssh_private,omitempty"`
-	Username      string `json:"username,omitempty"`
-	Token         string `json:"token,omitempty"`
-	SemverCurrent string `json:"semver_current,omitempty"`
-	SemverNext    string `json:"semver_next,omitempty"`
+	Server               string   `json:"server,omitempty"`
+	Repository           string   `json:"repository,omitempty"`
+	RepositoryURL        string   `json:"repositoryUrl,omitempty"`
+	RepositoryWebURL     string   `json:"repository_web_url,omitempty"`
+	RefWebURL            string   `json:"ref_web_url,omitempty"`
+	CommitWebURL         string   `json:"commit_web_url,omitempty"`
+	CommitMessage        string   `json:"commit_message,omitempty"`
+	Ref                  string   `json:"ref,omitempty"`
+	RefName              string   `json:"ref_name,omitempty"`
+	Sha                  string   `json:"sha,omitempty"`
+	ShaShort             string   `json:"sha_short,omitempty"`
+	RefType              string   `json:"ref_type,omitempty"`
+	Connection           string   `json:"connection,omitempty"`
+	SSHKey               string   `json:"ssh_key,omitempty"`
+	Username             string   `json:"username,omitempty"`
+	Token                string   `json:"token,omitempty"`
+	SemverCurrent        string   `json:"semver_current,omitempty"`
+	SemverNext           string   `json:"semver_next,omitempty"`
+	ChangeSets           []string `json:"changesets,omitempty"`
+	PullRequestID        int64    `json:"pullrequest_id,omitempty"`
+	PullRequestToRef     string   `json:"pullrequest_to_ref,omitempty"`
+	PullRequestToRefName string   `json:"pullrequest_to_ref_name,omitempty"`
+	GPGKey               string   `json:"gpg_key,omitempty"`
+	Email                string   `json:"email,omitempty"`
 }
 
 type JobContext struct {
@@ -113,12 +138,17 @@ type JobContextService struct {
 
 type JobsResultContext map[string]JobResultContext
 
+type JobsGateContext map[string]GateInputs
+
 type JobResultContext struct {
+	JobRunResults
 	Result  V2WorkflowRunJobStatus `json:"result"`
 	Outputs JobResultOutput        `json:"outputs"`
 }
 
-type JobResultOutput map[string]string
+type JobResultOutput map[string]any
+
+type JobRunResults map[string]any
 
 func (jro JobResultOutput) Value() (driver.Value, error) {
 	j, err := json.Marshal(jro)

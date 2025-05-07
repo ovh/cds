@@ -21,11 +21,11 @@ func (s *Service) generatePayloadFromGithubRequest(ctx context.Context, t *sdk.T
 			return nil, nil
 		}
 
-		branch := strings.TrimPrefix(request.Ref, "refs/heads/")
-		if !strings.HasPrefix(request.Ref, "refs/tags/") {
+		branch := strings.TrimPrefix(request.Ref, sdk.GitRefBranchPrefix)
+		if !strings.HasPrefix(request.Ref, sdk.GitRefTagPrefix) {
 			payload[GIT_BRANCH] = branch
 		} else {
-			payload[GIT_TAG] = strings.TrimPrefix(request.Ref, "refs/tags/")
+			payload[GIT_TAG] = strings.TrimPrefix(request.Ref, sdk.GitRefTagPrefix)
 		}
 	}
 	if request.Before != "" {

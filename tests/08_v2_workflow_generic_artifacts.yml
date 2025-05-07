@@ -16,23 +16,6 @@ testcases:
   - name: "Display username"
     info: "Connected CDS user is {{.cdsUser}}"
 
-  - type: v2_create_project
-    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-    cds_project: "{{.cds_project}}"
-    git_host: "{{.git.host}}"
-    git_user: "{{.git.user}}"
-    git_password: "{{.git.password}}"
-    cds_region: "{{.cds.region}}"
-
-  - type: v2_add_git_repo
-    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-    cds_project: "{{.cds_project}}"
-    cds_hook_url: "{{.gitea.hook.url}}"
-    git_host: "{{.git.host}}"
-    git_user: "{{.git.user}}"
-    git_password: "{{.git.password}}"
-    git_repo: "{{.git_repo}}"
-
   - type: v2_install_gpg_key
     cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
     gpg_key_id: "{{.gpg.key_id}}"
@@ -43,10 +26,28 @@ testcases:
       emailaddress:
         from: result.emailaddress
 
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+    git_emailAddress: "{{.emailaddress}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo}}"
+
 
 - name: Push workflow file
   steps:
-  - type: v2_push_files_on_repo
+  - type: v2_push_cds_files_on_repo
     git_repo: "{{.git_repo}}"
     git_host: "{{.git.host}}"
     git_user: "{{.git.user}}"
@@ -91,8 +92,8 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
     - result.systemoutjson ShouldHaveLength 2
-    retry: 20
-    delay: 2
+    retry: 40
+    delay: 1
     vars:
       analysisID:
         from:
@@ -102,13 +103,29 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
     assertions:
     - 'result.systemout ShouldContainSubstring "status: Success"'
-    retry: 20
-    delay: 2
+    retry: 40
+    delay: 1
 
   - name: Check that the CDS workflow has at least one execution and is Success
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
     assertions:
       - result.systemoutjson ShouldHaveLength 1
       - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-    retry: 30
-    delay: 5
+    retry: 150
+    delay: 1
+    vars:
+      runIdentifier:
+        from: result.systemoutjson.systemoutjson0.id
+
+  - name: List result
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.runIdentifier}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 2
+
+  - name: Download result
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result get {{.cds_project}} {{.runIdentifier}} --pattern generic:*"
+
+  - name: Check file foo 
+    script: "cat foo.txt && cat foo.txt | grep \"foobar\""
+
+     

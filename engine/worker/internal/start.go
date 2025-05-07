@@ -80,7 +80,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 	// Errors check loops
 	go func() {
 		for err := range errsChan {
-			log.Error(ctx, "An error has occured: %v", err)
+			log.Error(ctx, "An error has occurred: %v", err)
 			if strings.Contains(err.Error(), "not authenticated") {
 				endFunc()
 				return

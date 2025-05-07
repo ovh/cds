@@ -165,12 +165,12 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 		}
 		switch rData.RepoType {
 		case "docker":
-			if err := art.PromoteDockerImage(ctx, artifactClient, art.FileToPromote{RepoType: rData.RepoType, RepoName: rData.RepoName, Name: rData.Name, Path: rData.Path}, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props, true); err != nil {
+			if _, err := art.PromoteDockerImage(ctx, artifactClient, art.FileToPromote{RepoType: rData.RepoType, RepoName: rData.RepoName, Name: rData.Name, Path: rData.Path}, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props, true); err != nil {
 				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+latestPromotion.ToMaturity, err)
 			}
 			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
 		default:
-			if err := art.PromoteFile(artifactClient, art.FileToPromote{RepoType: rData.RepoType, RepoName: rData.RepoName, Name: rData.Name, Path: rData.Path}, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props, true); err != nil {
+			if _, err := art.PromoteFile(artifactClient, art.FileToPromote{RepoType: rData.RepoType, RepoName: rData.RepoName, Name: rData.Name, Path: rData.Path}, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props, true); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
 			// artifactory does not manage virtual cargo repositories
@@ -261,7 +261,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient art.DistribC
 			return "", "", fmt.Errorf("unable to create release bundle %s/%s: %v", params.Name, params.Version, err)
 		}
 	} else {
-		fmt.Printf("Release bundle %s/%s already exist\n", params.Name, params.Version)
+		fmt.Printf("Release bundle %s/%s already exists\n", params.Name, params.Version)
 	}
 	return params.Name, params.Version, nil
 }

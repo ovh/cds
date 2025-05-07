@@ -8,7 +8,7 @@ export class V2WorkflowRun {
     workflow_name: string;
     workflow_sha: string;
     workflow_ref: string;
-    status: string;
+    status: V2WorkflowRunStatus;
     run_number: number;
     run_attempt: number;
     started: string;
@@ -20,6 +20,27 @@ export class V2WorkflowRun {
     contexts: any;
     event: WorkflowEvent;
     job_events: V2WorkflowRunJobEvent[];
+    annotations: { [key: string]: string };
+}
+
+export enum V2WorkflowRunStatus {
+    Crafting = "Crafting",
+    Building = "Building",
+    Fail = "Fail",
+    Stopped = "Stopped",
+    Success = "Success",
+    Skipped = "Skipped"
+}
+
+export function V2WorkflowRunStatusIsTerminated(s: V2WorkflowRunStatus): boolean {
+    switch (s) {
+        case V2WorkflowRunStatus.Fail:
+        case V2WorkflowRunStatus.Stopped:
+        case V2WorkflowRunStatus.Success:
+        case V2WorkflowRunStatus.Skipped:
+            return true;
+    }
+    return false;
 }
 
 export class WorkflowRunData {
@@ -40,9 +61,9 @@ export class WorkflowEvent {
     hook_type: string
     ref: string;
     event_name: string;
-    sha: String;
+    sha: string;
     payload: string;
-    entity_updated: String;
+    entity_updated: string;
 }
 
 export class V2Workflow {
@@ -105,6 +126,13 @@ export class V2JobGateInput {
     type: string;
     default: any;
     values: Array<string>;
+    description: string;
+    options: V2JobGateOptions;
+}
+
+export class V2JobGateOptions {
+    values: Array<any>;
+    multiple: boolean;
 }
 
 export class V2JobGateReviewers {
@@ -139,13 +167,49 @@ export class V2WorkflowRunJob {
 }
 
 export enum V2WorkflowRunJobStatus {
+    Blocked = 'Blocked',
+    Cancelled = 'Cancelled',
     Waiting = 'Waiting',
     Building = 'Building',
     Fail = 'Fail',
     Stopped = 'Stopped',
     Success = 'Success',
     Scheduling = 'Scheduling',
-    Skipped = 'Skipped'
+    Skipped = 'Skipped',
+    Unknown = 'Unknown'
+}
+
+export function V2WorkflowRunJobStatusIsTerminated(s: V2WorkflowRunJobStatus): boolean {
+    switch (s) {
+        case V2WorkflowRunJobStatus.Cancelled:
+        case V2WorkflowRunJobStatus.Fail:
+        case V2WorkflowRunJobStatus.Stopped:
+        case V2WorkflowRunJobStatus.Success:
+        case V2WorkflowRunJobStatus.Skipped:
+            return true;
+    }
+    return false;
+}
+
+export function V2WorkflowRunJobStatusIsActive(s: V2WorkflowRunJobStatus): boolean {
+    switch (s) {
+        case V2WorkflowRunJobStatus.Unknown:
+        case V2WorkflowRunJobStatus.Waiting:
+        case V2WorkflowRunJobStatus.Building:
+        case V2WorkflowRunJobStatus.Scheduling:
+        case V2WorkflowRunJobStatus.Blocked:
+            return true;
+    }
+    return false;
+}
+
+export function V2WorkflowRunJobStatusIsFailed(s: V2WorkflowRunJobStatus): boolean {
+    switch (s) {
+        case V2WorkflowRunJobStatus.Stopped:
+        case V2WorkflowRunJobStatus.Fail:
+            return true;
+    }
+    return false;
 }
 
 export class V2Job {
@@ -153,7 +217,7 @@ export class V2Job {
     if: string;
     gate: string;
     inputs: { [key: string]: string };
-    steps: Array<any>;
+    steps: Array<ActionStep>;
     needs: Array<string>;
     stage: string;
     region: string;
@@ -164,6 +228,16 @@ export class V2Job {
     vars: Array<string>;
     env: { [key: string]: string };
     services: { [key: string]: any };
+}
+
+export class ActionStep {
+    id: string;
+    uses: string;
+    run: string;
+    with: { [key: string]: string };
+    if: string;
+    'continue-on-error': boolean;
+    env: { [key: string]: string };
 }
 
 export class V2JobStrategy {
@@ -188,11 +262,49 @@ export class WorkflowRunInfo {
 
 export class WorkflowRunResult {
     id: string;
-    type: string;
+    type: WorkflowRunResultType | string;
     detail: WorkflowRunResultDetail;
+    metadata: { [key: string]: WorkflowRunResultMetadata };
+    url: string;
+    label: string;
+    identifier: string;
+    artifact_manager_metadata: any;
+}
+
+export enum WorkflowRunResultMetadataType {
+    text = 'TEXT',
+    number = 'NUMBER',
+    url = 'URL'
+}
+
+export class WorkflowRunResultMetadata {
+    type: WorkflowRunResultMetadataType
+    value: any;
+}
+
+export enum WorkflowRunResultType {
+    tests = 'tests',
+    coverage = "coverage",
+	release = "release",
+	generic = "generic",
+	variable = "variable"
 }
 
 export class WorkflowRunResultDetail {
     data: any;
     type: string;
+}
+
+export class V2WorkflowRunManualRequest {
+    branch: string;
+    tag: string;
+    sha: string;
+    workflow_branch: string;
+    workflow_tag: string;
+    payload: any;
+}
+
+export class V2WorkflowRunManualResponse {
+    hook_event_uuid: string;
+    ui_url: string;
 }

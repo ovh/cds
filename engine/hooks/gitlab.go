@@ -29,11 +29,11 @@ func (s *Service) generatePayloadFromGitlabRequest(ctx context.Context, t *sdk.T
 	payload[CDS_TRIGGERED_BY_EMAIL] = request.UserEmail
 
 	if request.Ref != "" {
-		if !strings.HasPrefix(request.Ref, "refs/tags/") {
-			branch := strings.TrimPrefix(request.Ref, "refs/heads/")
+		if !strings.HasPrefix(request.Ref, sdk.GitRefTagPrefix) {
+			branch := strings.TrimPrefix(request.Ref, sdk.GitRefBranchPrefix)
 			payload[GIT_BRANCH] = branch
 		} else {
-			payload[GIT_TAG] = strings.TrimPrefix(request.Ref, "refs/tags/")
+			payload[GIT_TAG] = strings.TrimPrefix(request.Ref, sdk.GitRefTagPrefix)
 		}
 	}
 	if request.Before != "" {

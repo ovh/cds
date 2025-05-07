@@ -125,15 +125,15 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		// Set those values (has it would be done in api.authOptionalMiddleware)
 		ctx = context.WithValue(ctx, contextUserConsumer, consumer)
 		ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
-		SetTracker(w, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
+		service.SetTracker(w, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
 		ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
-		SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
+		service.SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
 
 		ctx = context.WithValue(ctx, contextSession, session)
 		ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
-		SetTracker(w, cdslog.AuthSessionID, session.ID)
+		service.SetTracker(w, cdslog.AuthSessionID, session.ID)
 		ctx = context.WithValue(ctx, cdslog.AuthSessionIAT, session.Created.Unix())
-		SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
+		service.SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
 		ctx = context.WithValue(ctx, contextSession, session)
 
 		var driverManifest *sdk.AuthDriverManifest
@@ -149,16 +149,16 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		// If the Signin has a *service* Payload, we have to perform the service registration
 		if hasService {
 			ctx = context.WithValue(ctx, cdslog.AuthServiceName, srv.Name)
-			SetTracker(w, cdslog.AuthServiceName, srv.Name)
+			service.SetTracker(w, cdslog.AuthServiceName, srv.Name)
 			ctx = context.WithValue(ctx, cdslog.AuthServiceType, srv.Type)
-			SetTracker(w, cdslog.AuthServiceType, srv.Type)
+			service.SetTracker(w, cdslog.AuthServiceType, srv.Type)
 
 			if err := api.serviceRegister(ctx, tx, &srv); err != nil {
 				return err
 			}
 		} else {
 			ctx = context.WithValue(ctx, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
-			SetTracker(w, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
+			service.SetTracker(w, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
 		}
 
 		// Set a cookie with the jwt token

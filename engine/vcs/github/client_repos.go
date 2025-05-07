@@ -76,16 +76,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {
-		r := sdk.VCSRepo{
-			ID:           strconv.Itoa(repo.ID),
-			Name:         repo.Name,
-			Slug:         strings.Split(repo.FullName, "/")[0],
-			Fullname:     repo.FullName,
-			URL:          repo.HTMLURL,
-			HTTPCloneURL: repo.CloneURL,
-			SSHCloneURL:  repo.SSHURL,
-		}
-		responseRepos = append(responseRepos, r)
+		responseRepos = append(responseRepos, g.ToVCSRepo(repo))
 	}
 
 	return responseRepos, nil
@@ -103,16 +94,7 @@ func (g *githubClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 		return sdk.VCSRepo{}, err
 	}
 
-	r := sdk.VCSRepo{
-		ID:           strconv.Itoa(repo.ID),
-		Name:         repo.Name,
-		Slug:         strings.Split(repo.FullName, "/")[0],
-		Fullname:     repo.FullName,
-		URL:          repo.HTMLURL,
-		HTTPCloneURL: repo.CloneURL,
-		SSHCloneURL:  repo.SSHURL,
-	}
-	return r, nil
+	return g.ToVCSRepo(repo), nil
 }
 
 func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Repository, error) {
@@ -185,4 +167,19 @@ func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname stri
 		}
 	}
 	return permResp.Permission == "write" || permResp.Permission == "admin", nil
+}
+
+func (g *githubClient) ToVCSRepo(repo Repository) sdk.VCSRepo {
+	return sdk.VCSRepo{
+		ID:              strconv.Itoa(repo.ID),
+		Name:            repo.Name,
+		Slug:            strings.Split(repo.FullName, "/")[0],
+		Fullname:        repo.FullName,
+		URL:             repo.HTMLURL,
+		URLCommitFormat: repo.HTMLURL + "/commit/%s",
+		URLTagFormat:    repo.HTMLURL + "/commits/%s",
+		URLBranchFormat: repo.HTMLURL + "/commits/%s",
+		HTTPCloneURL:    repo.CloneURL,
+		SSHCloneURL:     repo.SSHURL,
+	}
 }

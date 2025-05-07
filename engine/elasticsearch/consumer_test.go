@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/elasticsearch/mock_elasticsearch"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/engine/test/config"
 	"github.com/rockbears/log"
+	"go.uber.org/mock/gomock"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/event"
@@ -32,7 +32,7 @@ func Test_consumeKafka(t *testing.T) {
 
 	mockESClient := mock_elasticsearch.NewMockESClient(ctrl)
 	s.esClient = mockESClient
-	mockESClient.EXPECT().IndexDoc(gomock.Any(), "IndexJobSummary", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(1)
+	mockESClient.EXPECT().IndexDocWithoutType(gomock.Any(), "IndexJobSummary", gomock.Any(), gomock.Any()).MinTimes(1)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeElasticsearch)
 	if cfg["broker"] == "" {

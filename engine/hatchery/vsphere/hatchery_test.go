@@ -8,21 +8,21 @@ import (
 	"testing"
 	"time"
 
-	sdkhatchery "github.com/ovh/cds/sdk/hatchery"
-
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
+	sdkhatchery "github.com/ovh/cds/sdk/hatchery"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	"go.uber.org/mock/gomock"
 )
 
-func TestHatcheryVSphere_CanSpawn(t *testing.T) {
+func TestHatcheryVSphere_CanSpawnv1(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
@@ -129,6 +129,15 @@ func TestHatcheryVSphere_NeedRegistration(t *testing.T) {
 	c := NewVSphereClientTest(t)
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelPath: "model",
+					Username:  "user",
+					Password:  "password",
+				},
+			},
+		},
 	}
 
 	var ctx = context.Background()
@@ -222,29 +231,9 @@ func TestHatcheryVSphere_killDisabledWorkers(t *testing.T) {
 		},
 	).AnyTimes()
 
-	var vm = object.VirtualMachine{
-		Common: object.Common{},
-	}
-
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
-			return &vm, nil
-		},
-	)
-
-	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
-			return nil
-		},
-	)
-
-	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
-			return nil
-		},
-	)
-
 	h.killDisabledWorkers(context.Background())
+
+	assert.Equal(t, 1, len(h.cacheToDelete.list))
 }
 
 func TestHatcheryVSphere_killAwolServers(t *testing.T) {
@@ -265,6 +254,8 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 			},
 		},
 	}
+	h.Config.WorkerTTL = 5
+	h.Config.WorkerRegistrationTTL = 5
 
 	cdsclient.EXPECT().WorkerList(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]sdk.Worker, error) {
@@ -278,6 +269,45 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 			}, nil
 		},
 	)
+
+	c.EXPECT().GetVirtualMachinePowerState(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
+			switch vm.Name() {
+			case "worker0":
+				return types.VirtualMachinePowerStatePoweredOn, nil
+			default:
+				return types.VirtualMachinePowerStatePoweredOff, nil
+			}
+		},
+	).AnyTimes()
+
+	c.EXPECT().LoadVirtualMachineEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
+			t.Logf("LoadVirtualMachineEvents for %s", vm.Name())
+			switch vm.Name() {
+			case "worker0":
+				return []types.BaseEvent{
+					&types.VmStartingEvent{
+						VmEvent: types.VmEvent{
+							Event: types.Event{
+								CreatedTime: time.Now(),
+							},
+						},
+					},
+				}, nil
+			default:
+				return []types.BaseEvent{
+					&types.VmStartingEvent{
+						VmEvent: types.VmEvent{
+							Event: types.Event{
+								CreatedTime: time.Now().Add(-10 * time.Minute),
+							},
+						},
+					},
+				}, nil
+			}
+		},
+	).Times(5)
 
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]mo.VirtualMachine, error) {
@@ -339,30 +369,36 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 				},
 			}, nil
 		},
-	).Times(2)
+	).Times(1)
 
 	var vm0 = object.VirtualMachine{
 		Common: object.Common{
 			InventoryPath: "worker0",
 		},
 	}
-	var vm1 = object.VirtualMachine{Common: object.Common{}}
-	var vm3 = object.VirtualMachine{Common: object.Common{}}
+	var vm1 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker1"}}
+	var vm3 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker3"}}
 
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker0").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm0, nil },
-	)
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm1, nil },
-	)
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vmname string) (*object.VirtualMachine, error) {
+			t.Logf("calling LoadVirtualMachine: %s", vmname)
+			switch vmname {
+			case "worker0":
+				return &vm0, nil
+			case "worker1":
+				return &vm1, nil
+			case "worker3":
+				return &vm3, nil
+			}
+			return nil, fmt.Errorf("not expected: %s", vmname)
+		},
+	).Times(5)
+
 	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
 	)
 	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker3").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm3, nil },
 	)
 	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm3).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
@@ -428,7 +464,7 @@ func TestHatcheryVSphere_Status(t *testing.T) {
 	assert.NotNil(t, s)
 }
 
-func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
+func TestHatcheryVSphere_provisioning_v1_do_nothing(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	var validModel = sdk.Model{
@@ -486,7 +522,7 @@ func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
 					},
 				}, {
 					ManagedEntity: mo.ManagedEntity{
-						Name: "provision-worker",
+						Name: "provision-v1-worker",
 					},
 					Summary: types.VirtualMachineSummary{
 						Config: types.VirtualMachineConfigSummary{
@@ -510,10 +546,62 @@ func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
 		},
 	)
 
-	h.provisioning(context.Background())
+	h.provisioningV1(context.Background())
 }
 
-func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
+func TestHatcheryVSphere_provisioning_v2_do_nothing(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	cdsclient := mock_cdsclient.NewMockInterface(ctrl)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{
+				GoRoutines: sdk.NewGoRoutines(context.Background()),
+				Client:     cdsclient,
+			},
+		},
+		Config: HatcheryConfiguration{
+			WorkerProvisioning: []WorkerProvisioningConfig{
+				{
+					ModelVMWare: "the-model",
+					Number:      1,
+				},
+			},
+		},
+	}
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{
+						Name: "provision-v2-worker",
+					},
+					Summary: types.VirtualMachineSummary{
+						Config: types.VirtualMachineConfigSummary{
+							Template: false,
+						},
+					},
+					Config: &types.VirtualMachineConfigInfo{
+						Annotation: `{"model": false, "vmware_model_path": "the-model", "provisioning": true}`,
+					},
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOff,
+					},
+				},
+			}, nil
+		},
+	)
+
+	h.provisioningV2(context.Background())
+}
+
+func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	var validModel = sdk.Model{
@@ -649,8 +737,8 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 
 	var workerVM object.VirtualMachine
 
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error) {
 			assert.False(t, cloneSpec.Template)
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation
@@ -662,8 +750,8 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
 			return nil
 		},
 	)
@@ -674,5 +762,37 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 		},
 	)
 
-	h.provisioning(context.Background())
+	h.provisioningV1(context.Background())
+}
+
+func TestHatcheryVSphere_GetDetaultModelV2Name(t *testing.T) {
+	h := HatcheryVSphere{
+		Config: HatcheryConfiguration{
+			DefaultWorkerModelsV2: []DefaultWorkerModelsV2{
+				{
+					WorkerModelV2: "the-model-v2",
+					Binaries:      []string{"docker"},
+				},
+			},
+		},
+	}
+
+	requirements := []sdk.Requirement{
+		{
+			Name:  "binary",
+			Value: "docker",
+			Type:  sdk.BinaryRequirement,
+		},
+	}
+	got := h.GetDetaultModelV2Name(context.TODO(), requirements)
+	require.Equal(t, "the-model-v2", got)
+
+	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{})
+	require.Equal(t, "the-model-v2", got)
+
+	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{{Name: "foo", Value: "bar", Type: sdk.BinaryRequirement}, {Name: "foo", Value: "docker", Type: sdk.BinaryRequirement}})
+	require.Equal(t, "the-model-v2", got)
+
+	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{{Name: "foo", Value: "bar", Type: sdk.BinaryRequirement}})
+	require.Equal(t, "", got)
 }

@@ -102,7 +102,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	}
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 	ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, claims.TokenID)
-	SetTracker(w, cdslog.AuthSessionTokenID, claims.TokenID)
+	service.SetTracker(w, cdslog.AuthSessionTokenID, claims.TokenID)
 	ctx = context.WithValue(ctx, contextClaims, claims)
 
 	// Check for session based on jwt from context
@@ -116,9 +116,9 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		return ctx, nil
 	}
 	ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
-	SetTracker(w, cdslog.AuthSessionID, session.ID)
+	service.SetTracker(w, cdslog.AuthSessionID, session.ID)
 	ctx = context.WithValue(ctx, cdslog.AuthSessionIAT, session.Created.Unix())
-	SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
+	service.SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
 	ctx = context.WithValue(ctx, contextSession, session)
 
 	// Load consumer
@@ -142,7 +142,7 @@ func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
-	SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
+	service.SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
 
 	// If the consumer is disabled, return an error
 	if consumer.Disabled {
@@ -166,13 +166,13 @@ func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http
 	}
 	ctx = context.WithValue(ctx, contextWorker, work)
 	if work != nil {
-		SetTracker(w, cdslog.AuthWorkerName, work.Name)
+		service.SetTracker(w, cdslog.AuthWorkerName, work.Name)
 	}
 
 	ctx = context.WithValue(ctx, cdslog.AuthServiceName, currentHatchery.Name)
-	SetTracker(w, cdslog.AuthServiceName, currentHatchery.Name)
+	service.SetTracker(w, cdslog.AuthServiceName, currentHatchery.Name)
 	ctx = context.WithValue(ctx, cdslog.AuthServiceType, sdk.ConsumerHatchery)
-	SetTracker(w, cdslog.AuthServiceType, sdk.ConsumerHatchery)
+	service.SetTracker(w, cdslog.AuthServiceType, sdk.ConsumerHatchery)
 
 	return ctx, nil
 }
@@ -186,9 +186,9 @@ func (api *API) handleAuthMiddlewareUserConsumer(ctx context.Context, w http.Res
 	}
 
 	ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
-	SetTracker(w, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
+	service.SetTracker(w, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
 	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
-	SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
+	service.SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
 
 	// If the consumer is disabled, return an error
 	if consumer.Disabled {
@@ -218,9 +218,9 @@ func (api *API) handleAuthMiddlewareUserConsumer(ctx context.Context, w http.Res
 	}
 	if consumer.AuthConsumerUser.Service != nil {
 		ctx = context.WithValue(ctx, cdslog.AuthServiceName, consumer.AuthConsumerUser.Service.Name)
-		SetTracker(w, cdslog.AuthServiceName, consumer.AuthConsumerUser.Service.Name)
+		service.SetTracker(w, cdslog.AuthServiceName, consumer.AuthConsumerUser.Service.Name)
 		ctx = context.WithValue(ctx, cdslog.AuthServiceType, consumer.AuthConsumerUser.Service.Type)
-		SetTracker(w, cdslog.AuthServiceType, consumer.AuthConsumerUser.Service.Type)
+		service.SetTracker(w, cdslog.AuthServiceType, consumer.AuthConsumerUser.Service.Type)
 	}
 
 	// Add worker for consumer if exists
@@ -230,12 +230,12 @@ func (api *API) handleAuthMiddlewareUserConsumer(ctx context.Context, w http.Res
 	}
 	if consumer.AuthConsumerUser.Worker != nil {
 		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, consumer.AuthConsumerUser.Worker.Name)
-		SetTracker(w, cdslog.AuthWorkerName, consumer.AuthConsumerUser.Worker.Name)
+		service.SetTracker(w, cdslog.AuthWorkerName, consumer.AuthConsumerUser.Worker.Name)
 	}
 
 	if consumer.AuthConsumerUser.Service == nil && consumer.AuthConsumerUser.Worker == nil {
 		ctx = context.WithValue(ctx, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
-		SetTracker(w, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
+		service.SetTracker(w, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
 	}
 
 	ctx = context.WithValue(ctx, contextUserConsumer, consumer)

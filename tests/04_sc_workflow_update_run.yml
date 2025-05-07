@@ -13,11 +13,6 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW2 ITSCWRKFLW2"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-APPLICATION"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-ANOTHER-APPLICATION"
-  - script: |-
-      {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
-      if [ $? -ne 0 ]; then
-          {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
-      fi
 
 - name: import pipeline
   steps:
@@ -37,8 +32,8 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
-    retry: 10
-    delay: 3
+    retry: 60
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -51,8 +46,8 @@ testcases:
 - name: check log
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1; grep "ITSCWRKFLW2-APPLICATION" *.log
-      retry: 10
-      delay: 3
+      retry: 60
+      delay: 1
       assertions:
       - result.code ShouldEqual 0
 
@@ -71,8 +66,8 @@ testcases:
 - name: check workflow run 2
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2 --format json
-    retry: 10
-    delay: 3
+    retry: 60
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -85,7 +80,7 @@ testcases:
 - name: check log 2
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2; grep "ITSCWRKFLW2-ANOTHER-APPLICATION" *.log
-      retry: 10
-      delay: 3
+      retry: 60
+      delay: 1
       assertions:
       - result.code ShouldEqual 0

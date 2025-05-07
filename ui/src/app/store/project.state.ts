@@ -3,16 +3,14 @@ import { Injectable } from '@angular/core';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
-import { ProjectIntegration } from 'app/model/integration.model';
-import { Key } from 'app/model/keys.model';
 import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
-import { ProjectStore } from 'app/service/project/project.store';
 import { cloneDeep } from 'lodash-es';
-import { tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
+import { of } from 'rxjs';
+import { Bookmark, BookmarkType } from 'app/model/bookmark.model';
 
 export class ProjectStateModel {
     public project: Project;
@@ -35,8 +33,6 @@ export class ProjectState {
 
     constructor(
         private _http: HttpClient,
-        private _navbarService: NavbarService,
-        private _projectStore: ProjectStore,
         private _projectService: ProjectService
     ) { }
 
@@ -94,10 +90,16 @@ export class ProjectState {
         return this._projectService.getProject(action.payload.projectKey, [
             ...action.payload.opts,
             new LoadOpts('withLabels', 'labels')
-        ])
-            .pipe(tap((res: Project) => {
+        ]).pipe(
+            catchError(() => of(null)),
+            tap((res: Project) => {
+                if (!res) {
+                    ctx.dispatch(new ProjectAction.DeleteProjectFromCache());
+                    return;
+                }
                 ctx.dispatch(new ProjectAction.LoadProject(res));
-            }));
+            })
+        );
     }
 
     @Action(ProjectAction.EnrichProject)
@@ -162,6 +164,7 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: null,
+            currentProjectKey: null
         });
     }
 
@@ -176,54 +179,12 @@ export class ProjectState {
         return this._http.post<Project>(
             '/project',
             action.payload
-        ).pipe(tap((project) => {
+        ).pipe(tap((project: Project) => {
             ctx.setState({
                 ...state,
                 project,
                 loading: false,
             });
-            return this._projectStore.getProjectsList(true);
-        }));
-    }
-
-    @Action(ProjectAction.UpdateProject)
-    update(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateProject) {
-        const state = ctx.getState();
-
-        ctx.setState({
-            ...state,
-            loading: true,
-        });
-        return this._http.put<Project>(
-            '/project/' + action.payload.key,
-            action.payload
-        ).pipe(tap((project: Project) => {
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, project),
-                loading: false,
-            });
-            return this._projectStore.getProjectsList(true);
-        }));
-    }
-
-    @Action(ProjectAction.DeleteProject)
-    delete(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteProject) {
-        const state = ctx.getState();
-
-        ctx.setState({
-            ...state,
-            loading: true,
-        });
-        return this._http.delete(
-            '/project/' + action.payload.projectKey
-        ).pipe(tap(() => {
-            ctx.setState({
-                ...state,
-                project: null,
-                loading: false,
-            });
-            return this._projectStore.getProjectsList(true);
         }));
     }
 
@@ -399,28 +360,6 @@ export class ProjectState {
                 ...state,
                 project: Object.assign({}, state.project, <Project>{ workflow_names }),
             });
-        }));
-    }
-
-
-    //  ------- Misc --------- //
-    @Action(ProjectAction.UpdateFavoriteProject)
-    updateFavorite(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateFavoriteProject) {
-        const state = ctx.getState();
-
-        return this._http.post('/user/favorite', {
-            type: 'project',
-            project_key: action.payload.projectKey
-        }).pipe(tap(() => {
-            this._navbarService.refreshData();
-            if (state.project && state.project.key) {
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
-                });
-            }
-            // TODO: dispatch action on global state to update project in list and user state
-            // TODO: move this one on user state and just update state here, not XHR
         }));
     }
 
@@ -683,151 +622,6 @@ export class ProjectState {
             ctx.setState({
                 ...state,
                 project: Object.assign({}, state.project, <Project>{ groups: perms.concat(perm) }),
-            });
-        }));
-    }
-
-    //  ------- Key --------- //
-    @Action(ProjectAction.FetchKeysInProject)
-    fetchKeys(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchKeysInProject) {
-        const state = ctx.getState();
-
-        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
-            state.project && state.project.key && state.project.keys) {
-            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
-        }
-        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
-            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
-        }
-
-        return ctx.dispatch(new ProjectAction.ResyncKeysInProject(action.payload));
-    }
-
-    @Action(ProjectAction.LoadKeysInProject)
-    loadKeys(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadKeysInProject) {
-        const state = ctx.getState();
-        ctx.setState({
-            ...state,
-            project: Object.assign({}, state.project, <Project>{ keys: action.payload }),
-        });
-    }
-
-    @Action(ProjectAction.ResyncKeysInProject)
-    resyncKeys(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncKeysInProject) {
-        return this._http
-            .get<Key[]>(`/project/${action.payload.projectKey}/keys`)
-            .pipe(tap((keys: Key[]) => {
-                ctx.dispatch(new ProjectAction.LoadKeysInProject(keys));
-            }));
-    }
-
-    @Action(ProjectAction.AddKeyInProject)
-    addKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddKeyInProject) {
-        const state = ctx.getState();
-        return this._http.post<Key>('/project/' + action.payload.projectKey + '/keys', action.payload.key)
-            .pipe(tap((key: Key) => {
-                let keys = state.project.keys ? state.project.keys.concat([key]) : [key];
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ keys }),
-                });
-            }));
-    }
-
-    @Action(ProjectAction.DeleteKeyInProject)
-    deleteKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteKeyInProject) {
-        const state = ctx.getState();
-        return this._http.delete('/project/' + action.payload.projectKey + '/keys/' + action.payload.key.name)
-            .pipe(tap(() => {
-                let keys = state.project.keys ? state.project.keys.concat([]) : [];
-                keys = keys.filter((key) => key.name !== action.payload.key.name);
-
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ keys }),
-                });
-            }));
-    }
-
-    //  ------- Integration --------- //
-    @Action(ProjectAction.FetchIntegrationsInProject)
-    fetchIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchIntegrationsInProject) {
-        const state = ctx.getState();
-        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
-            state.project && state.project.key && state.project.integrations) {
-            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
-        }
-        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
-            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
-        }
-
-        return ctx.dispatch(new ProjectAction.ResyncIntegrationsInProject(action.payload));
-    }
-
-    @Action(ProjectAction.LoadIntegrationsInProject)
-    loadIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadIntegrationsInProject) {
-        const state = ctx.getState();
-        ctx.setState({
-            ...state,
-            project: Object.assign({}, state.project, <Project>{ integrations: action.payload }),
-        });
-    }
-
-    @Action(ProjectAction.ResyncIntegrationsInProject)
-    resyncIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncIntegrationsInProject) {
-        return this._http
-            .get<ProjectIntegration[]>(`/project/${action.payload.projectKey}/integrations`)
-            .pipe(tap((integrations: ProjectIntegration[]) => {
-                ctx.dispatch(new ProjectAction.LoadIntegrationsInProject(integrations));
-            }));
-    }
-
-    @Action(ProjectAction.AddIntegrationInProject)
-    addIntegration(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddIntegrationInProject) {
-        const state = ctx.getState();
-        return this._http.post<ProjectIntegration>('/project/' + action.payload.projectKey + '/integrations', action.payload.integration)
-            .pipe(tap((integration: ProjectIntegration) => {
-                let integrations = state.project.integrations ? state.project.integrations.concat([integration]) : [integration];
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ integrations }),
-                });
-            }));
-    }
-
-    @Action(ProjectAction.DeleteIntegrationInProject)
-    deleteIntegration(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteIntegrationInProject) {
-        const state = ctx.getState();
-        return this._http.delete('/project/' + action.payload.projectKey + '/integrations/' + action.payload.integration.name)
-            .pipe(tap(() => {
-                let integrations = state.project.integrations ? state.project.integrations.concat([]) : [];
-                integrations = integrations.filter((integration) => integration.name !== action.payload.integration.name);
-
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ integrations }),
-                });
-            }));
-    }
-
-    @Action(ProjectAction.UpdateIntegrationInProject)
-    updateIntegration(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateIntegrationInProject) {
-        const state = ctx.getState();
-        return this._http.put<ProjectIntegration>(
-            '/project/' + action.payload.projectKey + '/integrations/' + action.payload.integrationName,
-            action.payload.changes
-        ).pipe(tap((integration) => {
-            let integrations = cloneDeep(state.project.integrations ? state.project.integrations.concat([]) : []);
-            integrations = integrations.map((integ) => {
-                if (integ.name === action.payload.integrationName) {
-                    return integration;
-                }
-                return integ;
-            });
-
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, <Project>{ integrations }),
             });
         }));
     }

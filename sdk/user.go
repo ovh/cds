@@ -35,6 +35,14 @@ type UserRegistration struct {
 
 var usernameRegex = regexp.MustCompile("[a-z0-9._-]{3,32}")
 
+// CreateUser is used by cdsctl admin user create command
+type CreateUser struct {
+	Username     string `json:"username"`
+	Fullname     string `json:"fullname"`
+	Organization string `json:"organization"`
+	Email        string `json:"email"`
+}
+
 // AuthentifiedUser struct contains all information about a cds user.
 type AuthentifiedUser struct {
 	ID       string    `json:"id" yaml:"id" cli:"id" db:"id"`
@@ -44,9 +52,23 @@ type AuthentifiedUser struct {
 	Ring     string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
 	// aggregates
 	Contacts     UserContacts `json:"-" yaml:"-" db:"-"`
-	Favorites    []Favorite   `json:"favorites" yaml:"favorites" db:"-"`
 	Groups       Groups       `json:"groups" yaml:"groups" db:"-"`
 	Organization string       `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization" db:"-"`
+}
+
+func (u *AuthentifiedUser) Initiator() *V2InitiatorUser {
+	if u == nil {
+		return nil
+	}
+	var email string
+	if u.Contacts.Primary() != nil {
+		email = u.Contacts.Primary().Value
+	}
+	return &V2InitiatorUser{
+		Username: u.Username,
+		Ring:     u.Ring,
+		Email:    email,
+	}
 }
 
 func IsValidUsername(username string) error {
@@ -186,12 +208,6 @@ func (u UserContacts) Primary() *UserContact {
 		}
 	}
 	return nil
-}
-
-// Favorite represent the favorites workflow or project of the user
-type Favorite struct {
-	ProjectIDs  []int64 `json:"project_ids" yaml:"project_ids"`
-	WorkflowIDs []int64 `json:"workflow_ids" yaml:"workflow_ids"`
 }
 
 type UserResponse struct {

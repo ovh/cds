@@ -1,9 +1,10 @@
-DIST := dist
-
 .PHONY: clean package
 
-$(DIST):
-	mkdir -p $(DIST)
+VERSION := $(if ${CDS_VERSION},${CDS_VERSION},0.0.0-snapshot)
+TARGET_DIST := ./dist
+
+$(TARGET_DIST):
+	@mkdir -p $(TARGET_DIST)
 
 workflow-graph:
 	cd ../../ui && npm ci && npm run ng -- build workflow-graph
@@ -12,15 +13,16 @@ package-workflow-graph: workflow-graph
 	cd ../../ui/dist/workflow-graph && npm pack
 
 webviews: package-workflow-graph
-	cd webviews/workflow-preview && npm install && npm run build
+	cd webviews/workflow-preview && rm -f package-lock.json && npm install && npm run build
 
-build: $(DIST) webviews
-	npm install --include=dev
-	npm run vsce package
-	mv vscode-cds-*.vsix $(DIST)
+plugin: $(TARGET_DIST)
+	npm ci
+	npm run vsce -- package $(VERSION) --no-update-package-json -o $(TARGET_DIST)/vscode-cds.vsix
 
-package: $(TARGET_DIST) build
-	cp -f $(DIST)/vscode-cds-*.vsix $(TARGET_DIST)
+build: webviews plugin
 
 clean:
-	rm -f $(DIST)/vscode-cds-*.vsix
+	rm -rf ./dist-web ./out $(TARGET_DIST)
+
+install:
+	code --install-extension $(TARGET_DIST)/vscode-cds.vsix --force

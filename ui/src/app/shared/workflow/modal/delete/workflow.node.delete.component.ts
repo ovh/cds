@@ -9,7 +9,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { WorkflowState } from 'app/store/workflow.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { finalize } from 'rxjs/operators';
-import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -39,8 +39,12 @@ export class WorkflowDeleteNodeComponent implements OnInit {
 
     readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
-    constructor(public _modal: NzModalRef, private _store: Store, private _cd: ChangeDetectorRef,
-        private _toast: ToastService) { }
+    constructor(
+        public _modal: NzModalRef,
+        private _store: Store,
+        private _cd: ChangeDetectorRef,
+        private _toast: ToastService
+    ) { }
 
     ngOnInit(): void {
         this.node = this.nzModalData.node;
@@ -65,7 +69,7 @@ export class WorkflowDeleteNodeComponent implements OnInit {
 
     updateWorkflow(w: Workflow): void {
         this.loading = true;
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        let editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,

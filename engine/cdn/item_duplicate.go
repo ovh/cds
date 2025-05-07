@@ -2,11 +2,12 @@ package cdn
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
-	"net/http"
 
 	"github.com/ovh/cds/engine/service"
 )
@@ -18,7 +19,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			return err
 		}
 
-		items, err := item.LoadByRunJobID(ctx, s.Mapper, s.mustDBWithCtx(ctx), duplicateRequest.FromJob, gorpmapping.GetOptions.WithDecryption)
+		items, err := item.LoadByRunJobID(ctx, s.Mapper, s.mustDBWithCtx(ctx), duplicateRequest.FromJob, gorpmapping.GetAllOptions.WithDecryption)
 		if err != nil {
 			return err
 		}
@@ -32,10 +33,12 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			newItem := i
 			newItem.ID = ""
 			switch newItem.Type {
-			case sdk.CDNTypeItemJobStepLog:
+			case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
 				logRef, _ := newItem.GetCDNLogApiRefV2()
 				logRef.RunJobID = duplicateRequest.ToJob
+				logRef.RunAttempt++
 				newItem.APIRef = logRef
+
 				hashRef, err := logRef.ToHash()
 				if err != nil {
 					return err
@@ -44,6 +47,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			case sdk.CDNTypeItemRunResultV2:
 				logRef, _ := newItem.GetCDNRunResultApiRefV2()
 				logRef.RunJobID = duplicateRequest.ToJob
+				logRef.RunAttempt++
 				newItem.APIRef = logRef
 				hashRef, err := logRef.ToHash()
 				if err != nil {
@@ -58,7 +62,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			}
 
 			// Load storage unit item
-			storageUnitItems, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, tx, i.ID, gorpmapping.GetOptions.WithDecryption)
+			storageUnitItems, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, tx, i.ID, gorpmapping.GetAllOptions.WithDecryption)
 			if err != nil {
 				return err
 			}
@@ -70,8 +74,15 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 				if err := storage.InsertItemUnit(ctx, s.Mapper, tx, &newSUI); err != nil {
 					return err
 				}
+
+				if sui.UnitID == s.Units.LogsBuffer().ID() {
+					// Copy logs in buffer
+					if err := s.Units.LogsBuffer().Copy(ctx, i.ID, newItem.ID); err != nil {
+						return err
+					}
+				}
 			}
 		}
-		return nil
+		return sdk.WithStack(tx.Commit())
 	}
 }

@@ -50,7 +50,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 						}
 
 						for _, info := range job.SpawnInfos {
-							newOutput += fmt.Sprintf("\nInformations: %s - %s", info.APITime, info.UserMessage)
+							newOutput += fmt.Sprintf("\nInformation %s - %s", info.APITime, info.UserMessage)
 						}
 						newOutput += "\n"
 

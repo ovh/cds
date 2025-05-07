@@ -1,63 +1,63 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from 'app/shared/shared.module';
-import { projectV2Routing } from './project.routing';
-import { ProjectV2ShowComponent } from 'app/views/projectv2/project.component';
-import { ProjectV2TopMenuComponent } from 'app/views/projectv2/top-menu/project.top.menu.component';
-import {
-    ProjectV2RepositoryAddComponent
-} from 'app/views/projectv2/vcs/repository/project.repository.add.component';
-import {
-    ProjectV2RepositoryShowComponent
-} from 'app/views/projectv2/vcs/repository/show/project.repository.show.component';
-import { ProjectV2WorkerModelShowComponent } from "./vcs/repository/workermodel/show/project.workermodel.show.component";
-import { ProjectV2ActionShowComponent } from "./vcs/repository/action/show/project.action.show.component";
-import { ProjectV2WorkflowShowComponent } from "./vcs/repository/workflow/show/project.workflow.show.component";
-import { ProjectWorkflowEntityComponent } from "./vcs/repository/workflow/show/entity/project.workflow.entity.component";
-import { ProjectV2WorkflowRunComponent } from "./run/project.run.component";
-import { ProjectV2SidebarComponent } from './sidebar/workspace/sidebar.component';
+import { ProjectV2RunComponent } from "./run/run.component";
+import { ProjectV2ExploreSidebarComponent } from './explore/explore-sidebar.component';
+import { ProjectV2ExploreEntityComponent } from './explore/explore-entity.component';
 import { RunJobComponent } from "./run/run-job.component";
-import { RunJobLogsComponent } from "./run/run-job-logs.component";
-import { RunGateComponent } from "./run/gate/gate.component";
-import { ProjectV2ActivityBarComponent } from './activity-bar/activity-bar.component';
-import { ProjectV2WorkflowRunListComponent } from './run-list/run-list.component';
-import { WorkflowGraphModule } from '../../../../libs/workflow-graph/src/public-api';
+import { ProjectV2RunListComponent } from './run-list/run-list.component';
 import { ProjectV2ExploreComponent } from './explore/explore.component';
-import { ProjectV2WorkflowRunListSidebarComponent } from './run-list/run-list-sidebar.component';
+import { ProjectV2RunListSidebarComponent } from './run-list/run-list-sidebar.component';
 import { RunHookComponent } from './run/run-hook.component';
 import { RunResultComponent } from './run/run-result.component';
-import { RunResultTestsComponent } from './run/run-result-tests/run-result-tests.component';
-import { RunWorkflowComponent } from './run/run-workflow.component';
+import { RunSourcesComponent } from './run/run-sources.component';
+import { RunContextsComponent } from './run/run-contexts.component';
+import { RunTestsComponent } from './run/run-tests.component';
+import { RunTestComponent } from './run/run-test.component';
+import { ProjectV2ExploreRepositoryComponent } from './explore/explore-repository.component';
+import { ProjectV2ExploreRepositoryAddComponent } from './explore/explore-repository-add.component';
+import { ProjectV2ExploreEntityWorkflowComponent } from './explore/explore-entity-workflow.component';
+import { EntityFormComponent } from './explore/entity/entity-form.component';
+import { EntityJSONFormComponent } from './explore/entity/entity-json-form.component';
+import { EntityJSONFormFieldComponent } from './explore/entity/entity-json-form-field.component';
+import { ProjectV2RunStartComponent } from './run-start/run-start.component';
+import { ProjectV2TriggerAnalysisComponent } from './explore/trigger-analysis/trigger-analysis.component';
+import { RunResultsComponent } from './run/run-results.component';
+import { RunInfoComponent } from './run/run-info.component';
+import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
+import { RunGateComponent } from './run/run-gate.component';
 
 @NgModule({
     declarations: [
-        ProjectV2ActionShowComponent,
-        ProjectV2ActivityBarComponent,
+        EntityFormComponent,
+        EntityJSONFormComponent,
+        EntityJSONFormFieldComponent,
         ProjectV2ExploreComponent,
-        ProjectV2RepositoryAddComponent,
-        ProjectV2RepositoryShowComponent,
-        ProjectV2ShowComponent,
-        ProjectV2SidebarComponent,
-        ProjectV2TopMenuComponent,
-        ProjectV2WorkerModelShowComponent,
-        ProjectV2WorkflowRunComponent,
-        ProjectV2WorkflowRunListComponent,
-        ProjectV2WorkflowRunListSidebarComponent,
-        ProjectV2WorkflowShowComponent,
-        ProjectWorkflowEntityComponent,
+        ProjectV2ExploreEntityComponent,
+        ProjectV2ExploreEntityWorkflowComponent,
+        ProjectV2ExploreRepositoryAddComponent,
+        ProjectV2ExploreRepositoryComponent,
+        ProjectV2ExploreSidebarComponent,
+        ProjectV2RunComponent,
+        ProjectV2RunListComponent,
+        ProjectV2RunListSidebarComponent,
+        ProjectV2RunStartComponent,
+        ProjectV2TriggerAnalysisComponent,
+        RunContextsComponent,
         RunGateComponent,
         RunHookComponent,
+        RunInfoComponent,
         RunJobComponent,
-        RunJobLogsComponent,
         RunResultComponent,
-        RunResultTestsComponent,
-        RunWorkflowComponent
+        RunResultsComponent,
+        RunSourcesComponent,
+        RunTestComponent,
+        RunTestsComponent
     ],
     imports: [
-        SharedModule,
         RouterModule,
-        projectV2Routing,
-        WorkflowGraphModule
+        SharedModule,
+        GraphModule
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA

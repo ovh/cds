@@ -1,0 +1,86 @@
+<h3>Create a Webhook</h3>
+<nz-alert nzType="info" nzCloseable [nzMessage]="hookCreation" *ngIf="createdHook" (nzOnClose)="closeAlert()"></nz-alert>
+<ng-template #hookCreation>
+Hook URL: {{createdHook.url}}<br/>
+Hook secret: {{createdHook.hook_sign_key}}
+</ng-template>
+<form nz-form (ngSubmit)="createHook()">
+    <nz-row>
+        <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4">
+            <nz-form-item>
+                <nz-form-label>
+                    Hook Type
+                </nz-form-label>
+                <nz-form-control>
+                    <nz-select name="type" id="type" [(ngModel)]="newWebhook.type">
+                        <nz-option *ngFor="let n of hookTypes" [nzLabel]="n" [nzValue]="n"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4" [nzOffset]="1">
+            <nz-form-item>
+                <nz-form-label>
+                    Vcs server
+                </nz-form-label>
+                <nz-form-control>
+                    <nz-select name="vcs" id="vcs" [(ngModel)]="newWebhook.vcs_server">
+                        <nz-option *ngFor="let n of vcss" [nzLabel]="n.name" [nzValue]="n.name"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4" [nzOffset]="1">
+            <nz-form-item>
+                <nz-form-label>
+                    Repository
+                </nz-form-label>
+                <nz-form-control>
+                    <input nz-input name="repository" id="repository" [(ngModel)]="newWebhook.repository">
+                    <nz-alert *ngIf="errorRepository" nzType="warning" nzMessage="Repository cannot be empty"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>  
+        <nz-col [nzSpan]="5" [nzOffset]="1" *ngIf="newWebhook.type === 'workflow'">
+            <nz-form-item>
+                <nz-form-label>
+                    Workflow
+                </nz-form-label>
+                <nz-form-control>
+                    <input nz-input name="workflow" id="workflow" [(ngModel)]="newWebhook.workflow">
+                    <nz-alert *ngIf="errorWorkflow" nzType="warning" nzMessage="Workflow cannot be empty"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>  
+        <nz-col [nzSpan]="4" class="alignEnd">
+            <button nz-button nzType="primary" [nzLoading]="loading.action">Create</button>
+        </nz-col>
+    </nz-row>
+</form>
+
+<h3>Webhooks :</h3>
+<div class="list">
+    <nz-table #table [nzData]="webhooks" [nsAutoHeightTable]="39" [nzFrontPagination]="false" nzSize="small"
+        [nzLoading]="loading.list">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Target</th>
+                <th>Created</th>
+                <th>Username</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let data of table.data">
+                <td>{{data.id}}</td>
+                <td>{{data.type}}</td>
+                <td>{{data.vcs_server}}/{{data.repository}}<span *ngIf="data.workflow !== ''">/{{data.workflow}}</span></td>
+                <td>{{data.created}}</td>
+                <td>{{data.username}}</td>
+                <td class="alignEnd"><button nz-button nzDanger [nzLoading]="loading.action" nz-popconfirm="Are you sure you want to revoke this webhook?" (nzOnConfirm)="deleteWebhook(data)">Delete</button></td>
+            </tr>
+        </tbody>
+    </nz-table>
+</div>

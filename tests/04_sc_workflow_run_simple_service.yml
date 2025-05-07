@@ -10,11 +10,6 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNSIMPLESERVICE"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunsimpleservice "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNSIMPLESERVICE 04SCWorkflowRunSimpleService"
-  - script: |-
-      {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
-      if [ $? -ne 0 ]; then
-          {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
-      fi
 
 - name: import pipeline and workflow
   steps:
@@ -31,8 +26,8 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNSIMPLESERVICE 04SCWorkflowRunSimpleService-WORKFLOW 1 --format json
-    retry: 30
-    delay: 10
+    retry: 300
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty

@@ -6,12 +6,10 @@ import { RetentionDryRunEvent } from 'app/model/purge.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { concatMap, first } from 'rxjs/operators';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
-import { NavbarService } from './service/navbar/navbar.service';
-import { RouterService, SidebarService } from './service/services.module';
+import { RouterService } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
 import {
@@ -36,9 +34,8 @@ import {
     UpdateWorkflowRunList
 } from './store/workflow.action';
 import { WorkflowState } from './store/workflow.state';
-import { SidebarEvent } from 'app/service/sidebar/sidebar.service';
-import { FlatNodeItem } from 'app/shared/tree/tree.component';
-import {AnalysisEvent, AnalysisService} from "./service/analysis/analysis.service";
+import { AnalysisEvent, AnalysisService } from "./service/analysis/analysis.service";
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class AppService {
@@ -55,8 +52,6 @@ export class AppService {
         private _toast: ToastService,
         private _workflowRunService: WorkflowRunService,
         private _store: Store,
-        private _navbarService: NavbarService,
-        private _sidebarService: SidebarService,
         private _analysisService: AnalysisService
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
@@ -114,17 +109,6 @@ export class AppService {
             event.type_event === EventType.WORKFLOW_ADD || event.type_event === EventType.WORKFLOW_UPDATE ||
             event.type_event === EventType.WORKFLOW_DELETE) {
             await this.updateProjectCache(event);
-
-            switch (event.type_event) {
-                case EventType.APPLICATION_UPDATE:
-                case EventType.WORKFLOW_UPDATE:
-                    this._navbarService.refreshData();
-                    break;
-                case EventType.PROJECT_REPOSITORY_REMOVE:
-                    let removeEvent = new SidebarEvent(event?.payload['repository']?.id, event?.payload['repository']?.name, 'repository', 'remove', [event?.payload['vcs']?.id]);
-                    this._sidebarService.sendEvent(removeEvent);
-                    break;
-            }
         }
         if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
             await this.updateApplicationCache(event);
@@ -141,9 +125,9 @@ export class AppService {
         if (!event || !event.type_event) {
             return;
         }
-        let projState = this._store.selectSnapshot(ProjectState);
-        if (projState && projState.project && projState.project.key === event.project_key) {
-            let projectInCache = projState.project;
+        let p = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        if (p && p.key === event.project_key) {
+            let projectInCache = p;
             // If working on project or sub resources
             if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
                 // if modification from another user, display a notification
@@ -154,12 +138,12 @@ export class AppService {
                 }
             } else {
                 // If no working on current project, remove from cache
-                await this._store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key })).toPromise();
+                await lastValueFrom(this._store.dispatch(new projectActions.DeleteProjectFromCache()));
                 return;
             }
 
             if (event.type_event === EventType.PROJECT_DELETE) {
-                await this._store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key })).toPromise();
+                await lastValueFrom(this._store.dispatch(new projectActions.DeleteProjectFromCache()));
                 return;
             }
 
@@ -170,8 +154,6 @@ export class AppService {
                 opts.push(new LoadOpts('withGroups', 'groups'));
             } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
                 opts.push(new LoadOpts('withKeys', 'keys'));
-            } else if (event.type_event.indexOf(EventType.PROJECT_INTEGRATION_PREFIX) === 0) {
-                opts.push(new LoadOpts('withIntegrations', 'integrations'));
             } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
                 opts.push(new LoadOpts('withApplicationNames', 'application_names'));
             } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
@@ -196,7 +178,7 @@ export class AppService {
         }
         const payload = { projectKey: event.project_key, applicationName: event.application_name };
 
-        let appState = this._store.selectSnapshot(ApplicationsState);
+        let appState = this._store.selectSnapshot(ApplicationsState.current);
         if (!appState.application ||
             !(appState.application.name === event.application_name &&
                 appState.currentProjectKey === event.project_key)) {
@@ -243,7 +225,7 @@ export class AppService {
             return;
         }
 
-        let pips = this._store.selectSnapshot(PipelinesState);
+        let pips = this._store.selectSnapshot(PipelinesState.current);
         if (!pips || !pips.pipeline || pips.pipeline.name !== event.pipeline_name || pips.currentProjectKey !== event.project_key) {
             return;
         }
@@ -286,7 +268,7 @@ export class AppService {
         if (!event || !event.type_event) {
             return;
         }
-        let wf = this._store.selectSnapshot(WorkflowState);
+        let wf = this._store.selectSnapshot(WorkflowState.current);
         if (wf != null && wf.workflow && (wf.projectKey !== event.project_key || wf.workflow.name !== event.workflow_name)) {
             if (event.type_event === EventType.WORKFLOW_DELETE) {
                 await this._store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name })).toPromise();

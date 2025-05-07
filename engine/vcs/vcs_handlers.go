@@ -91,6 +91,7 @@ func (s *Service) getBranchesHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 		limitS := r.URL.Query().Get("limit")
+		noCacheS := r.URL.Query().Get("noCache")
 
 		var limit int64
 		if limitS != "" {
@@ -100,6 +101,7 @@ func (s *Service) getBranchesHandler() service.Handler {
 			}
 			limit = int64(l)
 		}
+		noCache := noCacheS == "true"
 
 		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
@@ -116,7 +118,7 @@ func (s *Service) getBranchesHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 
-		branches, err := client.Branches(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchesFilter{Limit: limit})
+		branches, err := client.Branches(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchesFilter{Limit: limit, NoCache: noCache})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get repo %s/%s", owner, repo)
 		}
@@ -131,11 +133,14 @@ func (s *Service) getBranchHandler() service.Handler {
 		repo := muxVar(r, "repo")
 		branch := r.URL.Query().Get("branch")
 		defaultBranchS := r.URL.Query().Get("default")
+		noCacheS := r.URL.Query().Get("noCache")
 
 		var defaultBranch bool
 		if defaultBranchS == "true" {
 			defaultBranch = true
 		}
+
+		noCache := noCacheS == "true"
 
 		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
@@ -152,7 +157,7 @@ func (s *Service) getBranchHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 
-		ghBranch, err := client.Branch(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchFilters{BranchName: branch, Default: defaultBranch})
+		ghBranch, err := client.Branch(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchFilters{BranchName: branch, Default: defaultBranch, NoCache: noCache})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get repo %s/%s branch %s", owner, repo, branch)
 		}
@@ -165,7 +170,12 @@ func (s *Service) getTagHandler() service.Handler {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
-		tag := muxVar(r, "tagName")
+		stag := muxVar(r, "tagName")
+
+		tag, err := url.PathUnescape(stag)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unescape tag: %v", err)
+		}
 
 		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
@@ -315,6 +325,42 @@ func (s *Service) getCommitHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get commit %s on %s/%s", commit, owner, repo)
 		}
 		return service.WriteJSON(w, c, http.StatusOK)
+	}
+}
+
+func (s *Service) postInsightHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+		commit := muxVar(r, "commit")
+		insightKey := muxVar(r, "insightKey")
+
+		var report sdk.VCSInsight
+		if err := service.UnmarshalBody(r, &report); err != nil {
+			return sdk.WrapError(err, "Unable to read body")
+		}
+
+		vcsAuth, err := getVCSAuth(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
+		}
+
+		consumer, err := s.getConsumer(name, vcsAuth)
+		if err != nil {
+			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
+		}
+
+		if err := client.CreateInsightReport(ctx, fmt.Sprintf("%s/%s", owner, repo), commit, insightKey, report); err != nil {
+			return sdk.WrapError(err, "Unable to create insight report on commit %s on %s/%s", commit, owner, repo)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -594,7 +640,7 @@ func (s *Service) postStatusHandler() service.Handler {
 
 		buildStatus := sdk.VCSBuildStatus{}
 		if err := service.UnmarshalBody(r, &buildStatus); err != nil {
-			return sdk.WrapError(err, "Unable to read body")
+			return sdk.WrapError(err, "unable to read body")
 		}
 
 		vcsAuth, err := getVCSAuth(ctx)
@@ -609,11 +655,11 @@ func (s *Service) postStatusHandler() service.Handler {
 
 		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to get authorized client")
+			return sdk.WrapError(err, "unable to get authorized client")
 		}
 
 		if err := client.SetStatus(ctx, buildStatus); err != nil {
-			return sdk.WrapError(err, "Unable to set status on %s", name)
+			return sdk.WrapError(err, "unable to set status on %s", name)
 		}
 
 		return nil
@@ -934,6 +980,8 @@ func (s *Service) getListContentsHandler() service.Handler {
 		if err != nil {
 			return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to get filepath: %v", err)
 		}
+		offset := QueryString(r, "offset")
+		limit := QueryString(r, "limit")
 
 		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
@@ -950,7 +998,7 @@ func (s *Service) getListContentsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 
-		contents, err := client.ListContent(ctx, owner+"/"+repo, commit, filePath)
+		contents, err := client.ListContent(ctx, owner+"/"+repo, commit, filePath, offset, limit)
 		if err != nil {
 			return sdk.WrapError(err, "unable to list content")
 		}

@@ -1,4 +1,4 @@
-import {Schema} from 'jsonschema';
+import { Schema } from 'jsonschema';
 
 export class JSONSchema implements Schema {
 
@@ -208,11 +208,14 @@ export class JSONSchema implements Schema {
                     if (!o.required) {
                         return;
                     }
-                    o.required.forEach(r => {
+                    if (!Array.isArray(o.required)) {
+                        return !!o.required;
+                    }
+                    (o.required as string[]).forEach(r => {
                         if (!flatElement.oneOf[r]) {
                             flatElement.oneOf[r] = [];
                         }
-                        flatElement.oneOf[r].push(...o.required);
+                        flatElement.oneOf[r].push(...(o.required as string[]));
                     });
                 });
             }

@@ -51,7 +51,7 @@ export class WorkflowWNodeJoinComponent implements OnDestroy {
     selectJoinToLink(): void {
         let cloneWorkflow = cloneDeep(this.workflow);
         let currentJoin: WNode;
-        if (this.store.selectSnapshot(WorkflowState).editMode) {
+        if (this.store.selectSnapshot(WorkflowState.current).editMode) {
             currentJoin = Workflow.getNodeByRef(this.node.ref, cloneWorkflow);
         } else {
             currentJoin = Workflow.getNodeByID(this.node.id, cloneWorkflow);
@@ -66,7 +66,7 @@ export class WorkflowWNodeJoinComponent implements OnDestroy {
     }
 
     updateWorkflow(w: Workflow): void {
-        let editMode = this.store.selectSnapshot(WorkflowState).editMode;
+        let editMode = this.store.selectSnapshot(WorkflowState.current).editMode;
         this.store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,
             workflowName: w.name,

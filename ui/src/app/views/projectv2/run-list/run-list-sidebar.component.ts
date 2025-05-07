@@ -21,7 +21,7 @@ import { Subscription } from 'rxjs';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2WorkflowRunListSidebarComponent implements OnInit, OnDestroy {
+export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 	@Input() project: Project;
 
 	authSummary: AuthSummary;
@@ -56,6 +56,7 @@ export class ProjectV2WorkflowRunListSidebarComponent implements OnInit, OnDestr
 						}
 					}
 				});
+				if (s.sort) { params['sort'] = s.sort; }
 				return {
 					name: s.name,
 					params

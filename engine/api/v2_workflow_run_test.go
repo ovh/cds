@@ -4,16 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/services"
@@ -26,7 +28,108 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRunManualJob_WrongGateReviewer(t *testing.T) {
+func TestPurgeWorkflowRun(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM v2_workflow_run")
+	require.NoError(t, err) // Mock Hook
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_CDN", sdk.TypeCDN)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/bulk/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, proj.ID, "vcs", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcs.ID, sdk.RandomString(10))
+
+	wr1 := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcs.ID,
+		VCSServer:    vcs.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now().Add(-24 * 365 * time.Hour),
+		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     "github",
+				Repository: "ovh/cds",
+				Ref:        "refs/heads/master",
+				Sha:        "123456",
+			},
+		},
+		RetentionDate: time.Now().Add(-24 * time.Hour),
+		WorkflowData:  sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr1))
+
+	wr2 := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcs.ID,
+		VCSServer:    vcs.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     "github",
+				Repository: "ovh/cds",
+				Ref:        "refs/heads/master",
+				Sha:        "123456",
+			},
+		},
+		RetentionDate: time.Now().Add(24 * time.Hour * 90),
+		WorkflowData:  sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr2))
+
+	ids, err := workflow_v2.LoadRunIDsToDelete(context.TODO(), db)
+	require.NoError(t, err)
+	require.Len(t, ids, 1)
+	require.Equal(t, wr1.ID, ids[0])
+
+	require.NoError(t, purge.WorkflowRunV2(context.TODO(), db.DbMap, ids[0]))
+
+	_, err = workflow_v2.LoadRunByID(context.TODO(), db, ids[0])
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
+}
+
+func TestSearchAllWorkflow(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	admin, pwd := assets.InsertAdminUser(t, db)
@@ -47,10 +150,74 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     "github",
+				Repository: "ovh/cds",
+				Ref:        "refs/heads/master",
+				Sha:        "123456",
+			},
+		},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunsSearchAllProjectV2Handler, map[string]string{})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri+"?commit=123456&offset=0&limit=1", nil)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	var runs []sdk.V2WorkflowRun
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &runs))
+	require.Len(t, runs, 1)
+	require.Equal(t, wr.ID, runs[0].ID)
+
+}
+
+func TestRunManualJob_WrongGateReviewer(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	lambda, pwd := assets.InsertLambdaUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wName := sdk.RandomString(10)
+	assets.InsertRBAcWorkflow(t, db, sdk.WorkflowRoleTrigger, proj.Key, "github/"+repo.Name+"/"+wName, *lambda)
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: wName,
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: lambda.ID,
+			User:   lambda.Initiator(),
+		},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     vcsServer.Name,
+				Repository: repo.Name,
+			},
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -97,6 +264,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -107,6 +275,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		JobID:         "job2",
 		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -116,6 +285,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -125,6 +295,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -134,6 +305,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -143,6 +315,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -152,6 +325,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -171,18 +345,21 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
 
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, map[string]string{
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"jobIdentifier": "job2",
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, lambda, pwd, http.MethodPost, uri, map[string]interface{}{
 		"approve": true,
 	})
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 403, w.Code)
+
+	body := w.Body.String()
+	require.Contains(t, body, "gate conditions are not satisfied")
 }
 
 func TestRunManualJob_WrongGateCondition(t *testing.T) {
@@ -207,9 +384,11 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -253,6 +432,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -263,6 +443,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		JobID:         "job2",
 		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -272,6 +453,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -281,6 +463,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -290,6 +473,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -299,6 +483,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -308,6 +493,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -327,13 +513,13 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
 
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, map[string]string{
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"jobIdentifier": "job2",
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
 		"approve": false,
 	})
 	w := httptest.NewRecorder()
@@ -341,7 +527,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 	require.Equal(t, 403, w.Code)
 }
 
-func TestRunManualJob(t *testing.T) {
+func TestRunManualSkippedJob(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	_, err := db.Exec("delete from region where name = 'build-test'")
@@ -350,10 +536,14 @@ func TestRunManualJob(t *testing.T) {
 	reg := sdk.Region{Name: "build-test"}
 	require.NoError(t, region.Insert(context.TODO(), db, &reg))
 
-	admin, pwd := assets.InsertAdminUser(t, db)
+	// admin, pwd := assets.InsertAdminUser(t, db)
+	lambda, pwd := assets.InsertLambdaUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wName := sdk.RandomString(10)
+	assets.InsertRBAcWorkflow(t, db, sdk.WorkflowRoleTrigger, proj.Key, "github/"+repo.Name+"/"+wName, *lambda)
 
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
@@ -361,7 +551,7 @@ func TestRunManualJob(t *testing.T) {
 		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
 		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
+		WorkflowName: wName,
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
 		RunAttempt:   0,
@@ -369,9 +559,17 @@ func TestRunManualJob(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: lambda.ID,
+			User:   lambda.Initiator(),
+		},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     vcsServer.Name,
+				Repository: repo.Name,
+			},
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
 				"preprod": {
@@ -389,6 +587,9 @@ func TestRunManualJob(t *testing.T) {
 					Gate:   "preprod",
 					Region: "build-test",
 					Needs:  []string{"job1"},
+					Steps: []sdk.ActionStep{{
+						Run: "echo hello",
+					}},
 				},
 				"job3": {
 					Needs: []string{"job1"},
@@ -416,6 +617,7 @@ func TestRunManualJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -426,6 +628,7 @@ func TestRunManualJob(t *testing.T) {
 		JobID:         "job2",
 		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -435,6 +638,7 @@ func TestRunManualJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -444,6 +648,7 @@ func TestRunManualJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -453,6 +658,7 @@ func TestRunManualJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -462,6 +668,7 @@ func TestRunManualJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -471,6 +678,7 @@ func TestRunManualJob(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -490,13 +698,13 @@ func TestRunManualJob(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
 
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, map[string]string{
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"jobIdentifier": "job2",
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, lambda, pwd, http.MethodPost, uri, map[string]interface{}{
 		"approve": true,
 	})
 	w := httptest.NewRecorder()
@@ -505,8 +713,12 @@ func TestRunManualJob(t *testing.T) {
 
 	// trigger jobs
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         lambda.ID,
+			User:           lambda.Initiator(),
+			IsAdminWithMFA: true,
+		},
 	}))
 
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
@@ -537,10 +749,313 @@ func TestRunManualJob(t *testing.T) {
 
 	rJob2, has := mapJob["job2"]
 	require.True(t, has)
-	require.Equal(t, 1, len(rJob2.GateInputs))
+	require.Equal(t, 2, len(rJob2.GateInputs))
 	v, has := rJob2.GateInputs["approve"]
 	require.True(t, has)
 	require.Equal(t, "true", fmt.Sprintf("%v", v))
+	v, has = rJob2.GateInputs["manual"]
+	require.True(t, has)
+	require.Equal(t, "true", fmt.Sprintf("%v", v))
+	require.True(t, rJob2.Initiator.IsAdminWithMFA)
+}
+
+func TestRunManualSuccessJob(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("delete from region where name = 'build-test'")
+	require.NoError(t, err)
+
+	reg := sdk.Region{Name: "build-test"}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusSuccess,
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": true,
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	// trigger jobs
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}))
+
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status)
+	require.Equal(t, int64(2), wrDB.RunAttempt)
+
+	runjobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wrDB.ID, wrDB.RunAttempt)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(runjobs))
+
+	mapJob := make(map[string]sdk.V2WorkflowRunJob)
+	for _, rj := range runjobs {
+		mapJob[rj.JobID] = rj
+	}
+
+	rJob1, has := mapJob["job1"]
+	require.True(t, has)
+	require.Equal(t, int64(2), rJob1.RunAttempt)
+}
+
+func TestRunManualFailedJob(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("delete from region where name = 'build-test'")
+	require.NoError(t, err)
+
+	reg := sdk.Region{Name: "build-test"}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusSuccess,
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusFail,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": true,
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	// trigger jobs
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}))
+
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status)
+	require.Equal(t, int64(2), wrDB.RunAttempt)
+
+	runjobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wrDB.ID, wrDB.RunAttempt)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(runjobs))
+
+	mapJob := make(map[string]sdk.V2WorkflowRunJob)
+	for _, rj := range runjobs {
+		mapJob[rj.JobID] = rj
+	}
+
+	rJob1, has := mapJob["job1"]
+	require.True(t, has)
+	require.Equal(t, int64(2), rJob1.RunAttempt)
+}
+
+func TestRunManualSkippedJobWithoutGate(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("delete from region where name = 'build-test'")
+	require.NoError(t, err)
+
+	reg := sdk.Region{Name: "build-test"}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusSuccess,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+			},
+		}},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": true,
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 403, w.Code)
 }
 
 func TestPutWorkflowRun(t *testing.T) {
@@ -565,9 +1080,11 @@ func TestPutWorkflowRun(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusFail,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -600,6 +1117,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job1",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
 
@@ -609,6 +1127,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job2",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
 
@@ -618,6 +1137,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job3",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
 
@@ -627,6 +1147,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job4",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
 
@@ -636,6 +1157,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job5",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
 
@@ -645,6 +1167,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job6",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
 
@@ -654,6 +1177,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		ProjectKey:    proj.Key,
 		JobID:         "job7",
 		RunAttempt:    wr.RunAttempt,
+		Initiator:     *wr.Initiator,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
 
@@ -673,13 +1197,13 @@ func TestPutWorkflowRun(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(2)
 
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunV2Handler, map[string]string{
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRestartWorkflowRunHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"runNumber":     strconv.FormatInt(wr.RunNumber, 10),
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)
@@ -707,7 +1231,7 @@ func TestPutWorkflowRun(t *testing.T) {
 	require.Equal(t, int64(2), rJob3.RunAttempt)
 }
 
-func TestPutWorkflowRun_BuildingRun(t *testing.T) {
+func TestPostRestartWorkflowRun_BuildingRun(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	admin, pwd := assets.InsertAdminUser(t, db)
@@ -729,9 +1253,11 @@ func TestPutWorkflowRun_BuildingRun(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -743,22 +1269,18 @@ func TestPutWorkflowRun_BuildingRun(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
-	vars := map[string]string{
-		"projectKey":           proj.Key,
-		"vcsIdentifier":        vcsServer.ID,
-		"repositoryIdentifier": repo.ID,
-		"workflow":             wr.WorkflowName,
-		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
-	}
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunV2Handler, vars)
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRestartWorkflowRunHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 400, w.Code)
 }
 
-func TestPutWorkflowRun_NoFailingJob(t *testing.T) {
+func TestPostRestartWorkflowRun_NoFailingJob(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	admin, pwd := assets.InsertAdminUser(t, db)
@@ -780,9 +1302,11 @@ func TestPutWorkflowRun_NoFailingJob(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -794,16 +1318,12 @@ func TestPutWorkflowRun_NoFailingJob(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
-	vars := map[string]string{
-		"projectKey":           proj.Key,
-		"vcsIdentifier":        vcsServer.ID,
-		"repositoryIdentifier": repo.ID,
-		"workflow":             wr.WorkflowName,
-		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
-	}
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunV2Handler, vars)
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRestartWorkflowRunHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 400, w.Code)
@@ -831,9 +1351,11 @@ func TestGetWorkflowRunInfoV2Handler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -855,7 +1377,7 @@ func TestGetWorkflowRunInfoV2Handler(t *testing.T) {
 
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunInfoV2Handler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"runNumber":     strconv.FormatInt(wr.RunNumber, 10),
 	})
 	test.NotEmpty(t, uri)
@@ -893,9 +1415,11 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -910,18 +1434,20 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunAttempt:    wr.RunAttempt,
-		JobID:         sdk.RandomString(10),
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		ProjectKey: wr.ProjectKey,
+		RunAttempt: wr.RunAttempt,
+		JobID:      sdk.RandomString(10),
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
-		"jobIdentifier": wrj.JobID,
+		"workflowRunID": wr.ID,
+		"jobRunID":      wrj.ID,
 	})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri, nil)
@@ -957,9 +1483,11 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -974,11 +1502,13 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunAttempt:    wr.RunAttempt,
-		JobID:         sdk.RandomString(10),
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		ProjectKey: wr.ProjectKey,
+		RunAttempt: wr.RunAttempt,
+		JobID:      sdk.RandomString(10),
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -993,8 +1523,8 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunJobInfosHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
-		"jobIdentifier": wrj.JobID,
+		"workflowRunID": wr.ID,
+		"jobRunID":      wrj.ID,
 	})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri, nil)
@@ -1036,9 +1566,11 @@ func TestPostJobRunStepHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1078,12 +1610,14 @@ hatcheries:
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		JobID:         sdk.RandomString(10),
-		Region:        reg.Name,
-		HatcheryName:  hatch.Name,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		ProjectKey:   wr.ProjectKey,
+		JobID:        sdk.RandomString(10),
+		Region:       reg.Name,
+		HatcheryName: hatch.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -1139,9 +1673,11 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1156,11 +1692,13 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunAttempt:    wr.RunAttempt,
-		JobID:         sdk.RandomString(10),
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		ProjectKey: wr.ProjectKey,
+		RunAttempt: wr.RunAttempt,
+		JobID:      sdk.RandomString(10),
 		StepsStatus: sdk.JobStepsStatus{
 			"step1": {
 				Outcome:    sdk.StatusSuccess,
@@ -1172,8 +1710,8 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 
 	uriGet := api.Router.GetRouteV2("GET", api.getWorkflowRunJobLogsLinksV2Handler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
-		"jobIdentifier": wrj.JobID,
+		"workflowRunID": wr.ID,
+		"jobRunID":      wrj.ID,
 	})
 	test.NotEmpty(t, uriGet)
 	reqGet := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uriGet, nil)
@@ -1208,9 +1746,11 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1225,16 +1765,18 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		ProjectKey: wr.ProjectKey,
+		RunAttempt: wr.RunAttempt,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
 	uriGet := api.Router.GetRouteV2("GET", api.getWorkflowRunJobsV2Handler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uriGet)
 	reqGet := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uriGet, nil)
@@ -1270,9 +1812,11 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1287,16 +1831,37 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		ProjectKey: wr.ProjectKey,
+		RunNumber:  wr.RunNumber,
+		RunAttempt: wr.RunAttempt,
+		Status:     sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/outgoing", gomock.Any(), gomock.Any())
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	go api.V2WorkflowRunEngineDequeue(ctx)
+
 	uri := api.Router.GetRouteV2("POST", api.postStopWorkflowRunHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, nil)
@@ -1304,11 +1869,29 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 204, w.Code)
 
-	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
-	require.NoError(t, err)
-	require.Equal(t, sdk.V2WorkflowRunStatusStopped, wrDB.Status)
+	enqueueRequest := sdk.V2WorkflowRunEnqueue{
+		RunID:     wr.ID,
+		Initiator: *wr.Initiator,
+		Status:    sdk.V2WorkflowRunStatusStopped,
+	}
+	require.NoError(t, api.workflowRunV2Trigger(context.Background(), enqueueRequest))
 
-	rjDB, err := workflow_v2.LoadRunJobByRunIDAndID(context.TODO(), db, wrDB.ID, wrj.ID)
+	nbRetry := 10
+	for i := 0; i < nbRetry; i++ {
+		wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+		require.NoError(t, err)
+		if wrDB.Status != sdk.V2WorkflowRunStatusStopped {
+			if i == nbRetry-1 {
+				t.Fail()
+			}
+			time.Sleep(1 * time.Second)
+		} else {
+			break
+		}
+	}
+	cancel()
+
+	rjDB, err := workflow_v2.LoadRunJobByRunIDAndID(context.TODO(), db, wr.ID, wrj.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.V2WorkflowRunJobStatusStopped, rjDB.Status)
 }
@@ -1335,9 +1918,11 @@ func TestPostStopJobHandler(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		UserID:       admin.ID,
-		Username:     admin.Username,
-		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -1353,17 +1938,19 @@ func TestPostStopJobHandler(t *testing.T) {
 		JobID:         sdk.RandomString(10),
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		UserID:        admin.ID,
-		Username:      admin.Username,
-		ProjectKey:    wr.ProjectKey,
-		Status:        sdk.V2WorkflowRunJobStatusBuilding,
-		RunAttempt:    wr.RunAttempt,
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+		ProjectKey: wr.ProjectKey,
+		Status:     sdk.V2WorkflowRunJobStatusBuilding,
+		RunAttempt: wr.RunAttempt,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
 	uri := api.Router.GetRouteV2("POST", api.postStopJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"jobIdentifier": wrj.JobID,
 	})
 	test.NotEmpty(t, uri)
@@ -1441,4 +2028,362 @@ jobs:
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
+}
+
+func TestRunManualJob_GateArrayInput(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusSuccess,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve == 'foo'}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Options: &sdk.V2JobGateOptions{
+								Values: []interface{}{"foo", "boo"},
+							},
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Gate: "preprod",
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		Initiator:     *wr.Initiator,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": "foo",
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+}
+
+func TestRunManualJob_GateArrayWrongValue(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusSuccess,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve == 'foo'}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Options: &sdk.V2JobGateOptions{
+								Values: []interface{}{"foo", "boo"},
+							},
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Gate: "preprod",
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		Initiator:     *wr.Initiator,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": "toto",
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 400, w.Code)
+}
+
+func TestRunManualJob_GateArrayMultipleValues(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusSuccess,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve[0] == 'foo' && gate.approve[1] == 'bar'}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Options: &sdk.V2JobGateOptions{
+								Multiple: true,
+								Values:   []interface{}{"foo", "bar"},
+							},
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Gate: "preprod",
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		Initiator:     *wr.Initiator,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": []interface{}{"foo", "bar"},
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+}
+
+func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:         proj.Key,
+		VCSServerID:        vcsServer.ID,
+		VCSServer:          vcsServer.Name,
+		RepositoryID:       repo.ID,
+		Repository:         repo.Name,
+		WorkflowName:       sdk.RandomString(10),
+		WorkflowSha:        "123",
+		WorkflowRef:        "master",
+		RunAttempt:         0,
+		RunNumber:          1,
+		Started:            time.Now(),
+		LastModified:       time.Now(),
+		Status:             sdk.V2WorkflowRunStatusSuccess,
+		DeprecatedUserID:   admin.ID,
+		DeprecatedUsername: admin.Username,
+		Initiator:          &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+		RunEvent:           sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve[0] == 'foo' && gate.approve[1] == 'bar'}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Options: &sdk.V2JobGateOptions{
+								Multiple: true,
+								Values:   []interface{}{"foo", "bar"},
+							},
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					Gate: "preprod",
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.V2WorkflowRunJobStatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
+		Initiator:     sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+		"jobIdentifier": "job1",
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+		"approve": []interface{}{"foo", "bar", "boo"},
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 400, w.Code)
 }

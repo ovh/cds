@@ -5,7 +5,6 @@ import { Action, createSelector, Selector, State, StateContext } from '@ngxs/sto
 import { RunToKeep } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun, WorkflowRunSummary } from 'app/model/workflow.run.model';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -16,6 +15,7 @@ import { finalize, first, tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
 import { SelectWorkflowNodeRunJob, UpdateModal, UpdateWorkflowRunList } from './workflow.action';
+import { Bookmark, BookmarkType } from 'app/model/bookmark.model';
 
 export class WorkflowStateModel {
     workflow: Workflow; // selected workflow
@@ -75,9 +75,13 @@ export function getInitialWorkflowState(): WorkflowStateModel {
 @Injectable()
 export class WorkflowState {
 
-    constructor(private _http: HttpClient, private _navbarService: NavbarService, private _routerService: RouterService,
-        private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService, private _router: Router) {
-    }
+    constructor(
+        private _http: HttpClient,
+        private _routerService: RouterService,
+        private _workflowService: WorkflowService,
+        private _workflowRunService: WorkflowRunService,
+        private _router: Router
+    ) { }
 
     static getEditModal() {
         return createSelector(
@@ -91,12 +95,9 @@ export class WorkflowState {
         return state.workflow;
     }
 
-    /** @deprecated */
-    static getCurrent() {
-        return createSelector(
-            [WorkflowState],
-            (state: WorkflowStateModel): WorkflowStateModel => state
-        );
+    @Selector()
+    static current(state: WorkflowStateModel) {
+        return state;
     }
 
     static getWorkflow() {
@@ -287,7 +288,7 @@ export class WorkflowState {
         return this._http.post<Workflow>(
             `/project/${action.payload.projectKey}/workflows`,
             action.payload.workflow
-        ).pipe(tap((wf) => {
+        ).pipe(tap((wf: Workflow) => {
             ctx.setState({
                 ...state,
                 projectKey: action.payload.projectKey,
@@ -370,7 +371,7 @@ export class WorkflowState {
         return this._http.put<Workflow>(
             `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}`,
             action.payload.changes
-        ).pipe(tap((wf) => {
+        ).pipe(tap((wf: Workflow) => {
             const state = ctx.getState();
             let oldWorkflow = cloneDeep(state.workflow);
             if (action.payload.workflowName !== wf.name) {
@@ -1072,29 +1073,6 @@ export class WorkflowState {
                     editMode
                 });
             }));
-    }
-
-    @Action(actionWorkflow.UpdateFavoriteWorkflow)
-    updateFavorite(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateFavoriteWorkflow) {
-        const state = ctx.getState();
-
-        return this._http.post('/user/favorite', {
-            type: 'workflow',
-            project_key: action.payload.projectKey,
-            workflow_name: action.payload.workflowName,
-        }).pipe(tap(() => {
-            this._navbarService.refreshData();
-            if (state.workflow) {
-                ctx.setState({
-                    ...state,
-                    workflow: Object.assign({}, state.workflow, <Workflow>{
-                        favorite: !state.workflow.favorite
-                    })
-                });
-            }
-            // TODO: dispatch action on global state to update project in list and user state
-            // TODO: move this one on user state and just update state here, not XHR
-        }));
     }
 
     @Action(actionWorkflow.UpdateModal)

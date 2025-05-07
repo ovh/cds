@@ -32,6 +32,7 @@ import { WorkflowTemplateEditorComponent } from './workflow-template/editor/work
 import { WorkflowTemplateFormComponent } from './workflow-template/form/workflow-template.form.component';
 import { WorkflowTemplateHelpComponent } from './workflow-template/help/workflow-template.help.component';
 import { WorkflowTemplateListComponent } from './workflow-template/list/workflow-template.list.component';
+import { QueueV2Component } from './queue/queuev2.component';
 
 @NgModule({
     declarations: [
@@ -64,6 +65,7 @@ import { WorkflowTemplateListComponent } from './workflow-template/list/workflow
         WorkflowTemplateListComponent,
         WorkflowTemplateHelpComponent,
         QueueComponent,
+        QueueV2Component,
         ScopeDetailComponent
     ],
     imports: [

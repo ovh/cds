@@ -293,7 +293,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		}
 		localDriver := authDriver.GetDriver().(*localdriver.LocalDriver)
 
-		var reqData sdk.AuthConsumerSigninRequest
+		var reqData = make(sdk.AuthConsumerSigninRequest)
 		var tokenInQueryString = QueryString(r, "token")
 		if tokenInQueryString != "" {
 			reqData["token"] = tokenInQueryString

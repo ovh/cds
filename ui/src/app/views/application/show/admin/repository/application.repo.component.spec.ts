@@ -1,6 +1,6 @@
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, Injector, NO_ERRORS_SCHEMA } from '@angular/core';
 import { fakeAsync, flush, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -10,11 +10,9 @@ import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
 import { RepositoriesManager, RepositoriesManagerAuth } from 'app/model/repositories.model';
 import { ApplicationService } from 'app/service/application/application.service';
-import { ApplicationStore } from 'app/service/application/application.store';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { KeyService } from 'app/service/keys/keys.service';
-import { NavbarService } from 'app/service/navbar/navbar.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
@@ -48,11 +46,9 @@ describe('CDS: Application Repo Component', () => {
                 DummyComponent
             ],
             providers: [
-                { provide: ApplicationStore, useClass: MockStore },
                 ApplicationService,
                 KeyService,
                 ProjectStore,
-                NavbarService,
                 ProjectService,
                 MonitoringService,
                 PipelineService,
@@ -70,7 +66,9 @@ describe('CDS: Application Repo Component', () => {
                 WorkflowService,
                 UserService,
                 AuthenticationService,
-                ConfigService
+                ConfigService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 RouterTestingModule.withRoutes([
@@ -81,8 +79,7 @@ describe('CDS: Application Repo Component', () => {
                 ApplicationModule,
                 SharedModule,
                 NgxsStoreModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule
+                TranslateModule.forRoot()
             ],
             schemas: [NO_ERRORS_SCHEMA]
         }).compileComponents();

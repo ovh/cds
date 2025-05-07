@@ -1,5 +1,5 @@
-import { HttpClient, HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClient, HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -22,7 +22,6 @@ import { Project } from './model/project.model';
 import { AuthSummary } from './model/user.model';
 import { ApplicationService } from './service/application/application.service';
 import { AuthenticationService } from './service/authentication/authentication.service';
-import { NavbarService } from './service/navbar/navbar.service';
 import { NotificationService } from './service/notification/notification.service';
 import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
@@ -33,57 +32,62 @@ import { SharedModule } from './shared/shared.module';
 import { ToastService } from './shared/toast/ToastService';
 import { FetchCurrentAuth } from './store/authentication.action';
 import { NgxsStoreModule } from './store/store.module';
-import { NavbarModule } from './views/navbar/navbar.module';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
-import { ConfigService, SidebarService } from 'app/service/services.module';
+import { ConfigService } from 'app/service/services.module';
 import { AnalysisService } from "./service/analysis/analysis.service";
+import { EventV2Service } from './event-v2.service';
+import { FeatureService } from './service/feature/feature.service';
+import { NavbarComponent } from './views/navbar/navbar.component';
+import { SearchComponent } from './views/search/search.component';
 
 describe('App: CDS', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [
-                AppComponent
+                AppComponent,
+                SearchComponent,
+                NavbarComponent
             ],
             providers: [
-                Store,
-                SidebarService,
                 AnalysisService,
-                WorkflowService,
-                WorkflowRunService,
-                UserService,
-                NavbarService,
-                HelpService,
-                MonitoringService,
-                EventService,
-                ProjectStore,
-                EnvironmentService,
+                AppService,
                 AuthenticationService,
                 ConfigService,
+                EnvironmentService,
+                EventService,
+                EventV2Service,
+                FeatureService,
+                HelpService,
+                MonitoringService,
                 NotificationService,
-                AppService,
+                ProjectStore,
                 RouterService,
+                Store,
                 ToastService,
+                UserService,
+                WorkflowRunService,
+                WorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService },
                 { provide: PipelineService, useClass: MockPipelineService },
-                { provide: ActivatedRoute, useClass: MockActivatedRoutes }
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes },
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 NgxsStoreModule,
                 SharedModule,
-                NavbarModule,
                 NzNotificationModule,
                 RouterTestingModule.withRoutes([]),
-                HttpClientTestingModule,
                 TranslateModule.forRoot({
                     loader: {
                         provide: TranslateLoader,
                         useFactory: createTranslateLoader,
                         deps: [HttpClient]
                     }
-                }),
+                })
             ]
         }).compileComponents();
     });

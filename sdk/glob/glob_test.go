@@ -1,6 +1,7 @@
 package glob
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -148,7 +149,15 @@ func TestGlob_Match(t *testing.T) {
 func TestGlob_MatchFiles(t *testing.T) {
 	pattern := "path/to/**/* !path/to/**/*.tmp"
 	g := New(pattern)
-	result, err := g.MatchFiles(os.DirFS("tests/"), "fixtures")
+	result, err := g.MatchFiles(os.DirFS("tests/fixtures"))
 	require.NoError(t, err)
 	t.Logf("%s matches %s", pattern, result.String())
+}
+
+func TestGlob_Relative(t *testing.T) {
+	pattern := "./path/to/artifacts/bar"
+	cwd := fmt.Sprintf("%s", os.DirFS("tests/fixtures"))
+	result, err := Glob(cwd, pattern)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result.Results))
 }

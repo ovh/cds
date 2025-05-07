@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { onContextChanged } from './events/context';
-import { CDSPreview } from "./preview";
+import { CDSWorkflowPreview } from "./preview";
 import { Journal } from './utils/journal';
 import { CDS } from './cds';
 import { createContextStatusBarItem } from './components/context-status';
@@ -34,6 +34,9 @@ const schemas = {
     'worker-model': [
         new RegExp(/\/.cds\/worker-models\/.+\.ya?ml$/),
     ],
+    'workflow-template': [
+        new RegExp(/\/.cds\/workflow-templates\/.+\.ya?ml$/),
+    ],
 };
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -47,13 +50,13 @@ export async function activate(context: vscode.ExtensionContext) {
     const yamlExtensionAPI = await yamlExtension.activate();
 
     // instanciate the preview component
-    const cdsPreview = new CDSPreview(context);
+    const workflowPreview = new CDSWorkflowPreview(context);
 
     // register the commands
     registerCommand(context, new ClearCacheCommand());
     registerCommand(context, new SetCurrentContext());
     registerCommand(context, new SetCurrentProjectCommand());
-    registerCommand(context, new PreviewWorkflowCommand(cdsPreview));
+    registerCommand(context, new PreviewWorkflowCommand(workflowPreview));
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('cds.config')) {

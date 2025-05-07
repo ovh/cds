@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
@@ -31,7 +32,7 @@ func (c Containers) FilterWorkers() Containers {
 	return res
 }
 
-func (h *HatcherySwarm) getContainers(ctx context.Context, dockerClient *dockerClient, options types.ContainerListOptions) (Containers, error) {
+func (h *HatcherySwarm) getContainers(ctx context.Context, dockerClient *dockerClient, options container.ListOptions) (Containers, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 

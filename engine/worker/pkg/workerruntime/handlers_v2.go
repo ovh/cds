@@ -3,18 +3,84 @@ package workerruntime
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
-	"time"
+	"net/url"
+	"runtime/debug"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 )
 
+func V2_workerConfig(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			writeJSON(w, V2WorkerConfig{
+				CDNEndpoint: wk.CDNHttpURL(),
+			}, http.StatusOK)
+		default:
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+	}
+}
+
+func V2_cacheLinkHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		cacheKey, err := url.PathUnescape(vars["cacheKey"])
+		if err != nil {
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			cdnLinks, err := wk.V2GetCacheLink(r.Context(), cacheKey)
+			if err != nil && !strings.Contains(err.Error(), "resource not found") {
+				writeError(w, r, err)
+				return
+			} else if err != nil && strings.Contains(err.Error(), "resource not found") {
+				cdnLinks = &sdk.CDNItemLinks{}
+			}
+			cdnLinks.CDNHttpURL = wk.CDNHttpURL()
+			writeJSON(w, cdnLinks, http.StatusOK)
+		default:
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+	}
+}
+
+func V2_cacheSignatureHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		cacheKey, err := url.PathUnescape(vars["cacheKey"])
+		if err != nil {
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			sign, err := wk.V2GetCacheSignature(r.Context(), cacheKey)
+			if err != nil {
+				writeError(w, r, err)
+				return
+			}
+			writeJSON(w, sign, http.StatusOK)
+		default:
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+	}
+}
+
 func V2_outputHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		btes, err := io.ReadAll(r.Body)
 		if err != nil {
 			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
@@ -30,32 +96,6 @@ func V2_outputHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 		// Create step output
 		wk.AddStepOutput(ctx, output.Name, output.Value)
 
-		// Create run result
-		if !output.StepOnly {
-			result := V2RunResultRequest{
-				RunResult: &sdk.V2WorkflowRunResult{
-					IssuedAt:         time.Now(),
-					Status:           sdk.StatusSuccess,
-					WorkflowRunID:    output.WorkflowRunID,
-					WorkflowRunJobID: output.WorkflowRunJobID,
-					Type:             sdk.V2WorkflowRunResultTypeVariable,
-					Detail: sdk.V2WorkflowRunResultDetail{
-						Data: sdk.V2WorkflowRunResultVariableDetail{
-							Name:  output.Name,
-							Value: output.Value,
-						},
-					},
-				},
-			}
-
-			response, err := wk.V2AddRunResult(ctx, result)
-			if err != nil {
-				writeError(w, r, err)
-				return
-			}
-			log.Info(ctx, "run result %s created", response.RunResult.ID)
-		}
-
 		writeJSON(w, nil, http.StatusNoContent)
 	}
 }
@@ -67,6 +107,24 @@ func V2_jobRunHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			writeJSON(w, wk.V2GetJobRun(r.Context()), http.StatusOK)
 		default:
 			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+	}
+}
+
+func V2_projectKeyHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		name := vars["name"]
+		switch r.Method {
+		case http.MethodGet:
+			k, err := wk.V2GetProjectKey(r.Context(), name, true)
+			if err != nil {
+				writeError(w, r, err)
+				return
+			}
+			writeJSON(w, k, http.StatusOK)
+		default:
 			return
 		}
 	}
@@ -86,6 +144,15 @@ func V2_contextHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 
 func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if _r := recover(); _r != nil {
+				fmt.Println("Recovered from panic:", _r)
+				fmt.Println(string(debug.Stack()))
+				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, errors.Errorf("Internal server error: panic")))
+			}
+		}()
+
+		log.Info(ctx, "V2_runResultHandler (%s)", r.Method)
 		btes, err := io.ReadAll(r.Body)
 		if err != nil {
 			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
@@ -102,6 +169,7 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			}
 			response, err := wk.V2GetRunResult(ctx, filter)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				writeError(w, r, err)
 				return
 			}
@@ -109,11 +177,13 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 		case http.MethodPost:
 			var runResultRequest V2RunResultRequest
 			if err := sdk.JSONUnmarshal(btes, &runResultRequest); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 				return
 			}
 			response, err := wk.V2AddRunResult(ctx, runResultRequest)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				writeError(w, r, err)
 				return
 			}
@@ -138,25 +208,14 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	}
 }
 
-func V2_integrationsHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+func V2_runResultsSynchronizeHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		name := vars["name"]
-		if name == "" && len(r.URL.Query()["name"]) > 0 {
-			name = r.URL.Query()["name"][0] // This part if for unit test
-		}
-		if name == "" {
-			log.Error(ctx, "missing parameter 'name'")
-			writeError(w, r, sdk.ErrNotFound)
-			return
-		}
-		integ, err := wk.V2GetIntegrationByName(r.Context(), name)
-		if err != nil {
-			log.Error(ctx, "unable to get integration %q", name)
+
+		if err := wk.V2RunResultsSynchronize(ctx); err != nil {
 			writeError(w, r, err)
 			return
 		}
-		writeJSON(w, integ, http.StatusOK)
+		writeJSON(w, "run results synchronized", http.StatusOK)
 	}
 }
 

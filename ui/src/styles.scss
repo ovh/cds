@@ -196,27 +196,6 @@ app-workflow-admin .CodeMirror-scroll {
     overflow: hidden;
 }
 
-$scrollbarsize: 10px;
-$scrollbarradius: 0px;
-
-body ::-webkit-scrollbar {
-    width: $scrollbarsize;
-    height: $scrollbarsize;
-}
-
-* ::-webkit-scrollbar {
-    width: $scrollbarsize;
-    height: $scrollbarsize;
-}
-
-body ::-webkit-scrollbar-thumb {
-    border-radius: $scrollbarradius;
-}
-
-* ::-webkit-scrollbar-thumb {
-    border-radius: $scrollbarradius;
-}
-
 .toast {
     padding: 0;
     margin: 0;
@@ -563,4 +542,55 @@ foreignObject {
 
 [ng-reflect-router-link] {
     cursor: pointer;
+}
+
+.navbar-suggestion,
+.navbar-bookmark {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    overflow: hidden;
+    color: inherit;
+
+    &:hover {
+        color: #177ddc;
+    }
+
+    .title {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+
+        .label {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        .id {
+            flex: 1;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            margin-left: 5px;
+            margin-right: 5px;
+            overflow: hidden;
+            color: rgba(0, 0, 0, .45);
+
+            .night & {
+                color: rgba(255, 255, 255, 0.45);
+            }
+        }
+    }
+}
+
+.navbar-bookmark {
+    width: 250px !important;
+
+    nz-tag {
+        margin: 0;
+    }
+}
+
+.monaco-editor {
+    outline: unset !important;
 }

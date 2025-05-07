@@ -2,8 +2,9 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk"
 	"net/http"
+
+	"github.com/ovh/cds/sdk"
 
 	"github.com/ovh/cds/engine/service"
 )

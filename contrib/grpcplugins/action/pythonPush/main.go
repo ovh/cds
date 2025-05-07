@@ -2,15 +2,15 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -46,11 +46,14 @@ type pythonOpts struct {
 	username    string
 	password    string
 	wheel       bool
+	binary      string
 }
 
-// Run implements actionplugin.ActionPluginServer.
-func (actPlugin *pythonPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *pythonPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
@@ -61,27 +64,31 @@ func (actPlugin *pythonPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	urlRepo := q.GetOptions()["url"]
 	username := q.GetOptions()["username"]
 	password := q.GetOptions()["password"]
+	pythonBinary := q.GetOptions()["pythonBinary"]
 
+	if pythonBinary == "" {
+		pythonBinary = "python"
+	}
 	if pkg == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "'package' input must not be empty"
-		return res, nil
+		return stream.Send(res)
 	}
 	if version == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "'version' input must not be empty"
-		return res, nil
+		return stream.Send(res)
 	}
 	if directory == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "'directory' input must not be empty"
-		return res, nil
+		return stream.Send(res)
 	}
 	wheel, err := strconv.ParseBool(wheelString)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = "'wheel' input must be a boolean"
-		return res, nil
+		return stream.Send(res)
 	}
 
 	opts := pythonOpts{
@@ -89,66 +96,75 @@ func (actPlugin *pythonPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 		version:     version,
 		directory:   directory,
 		wheel:       wheel,
+		binary:      pythonBinary,
 	}
 
-	var integ *sdk.ProjectIntegration
+	var integ *sdk.JobIntegrationsContext
 
 	// If not url provided, check integration
 	if urlRepo == "" {
-		jobCtx, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
+		jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
 		if err != nil {
 			res.Status = sdk.StatusFail
-			res.Details = "'wheel' input must be a boolean"
-			return res, nil
+			res.Details = "unable to retrieve job context"
+			return stream.Send(res)
 		}
-		if jobCtx == nil || jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager == "" {
+		if jobCtx == nil || jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager.Name == "" {
 			res.Status = sdk.StatusFail
 			res.Details = "unable to upload package, no integration found on the current job"
-			return res, nil
+			return stream.Send(res)
 		}
-		integ, err = grpcplugins.GetIntegrationByName(ctx, &actPlugin.Common, jobCtx.Integrations.ArtifactManager)
-		if err != nil {
-			res.Status = sdk.StatusFail
-			res.Details = fmt.Sprintf("unable to get integration %s", jobCtx.Integrations.ArtifactManager)
-			return res, nil
-		}
-		completeURL := fmt.Sprintf("%sapi/pypi/%s", integ.Config[sdk.ArtifactoryConfigURL].Value, integ.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value+"-pypi")
+		integ = &jobCtx.Integrations.ArtifactManager
+		completeURL := fmt.Sprintf("%sapi/pypi/%s-pypi", integ.Get(sdk.ArtifactoryConfigURL), integ.Get(sdk.ArtifactoryConfigRepositoryPrefix))
 		opts.url = completeURL
-		opts.username = integ.Config[sdk.ArtifactoryConfigTokenName].Value
-		opts.password = integ.Config[sdk.ArtifactoryConfigToken].Value
+		opts.username = integ.Get(sdk.ArtifactoryConfigTokenName)
+		opts.password = integ.Get(sdk.ArtifactoryConfigToken)
 	} else {
 		opts.url = urlRepo
 		if username == "" {
 			res.Status = sdk.StatusFail
 			res.Details = "'username' input must not be empty"
-			return res, nil
+			return stream.Send(res)
 		}
 		if password == "" {
 			res.Status = sdk.StatusFail
 			res.Details = "'password' input must not be empty"
-			return res, nil
+			return stream.Send(res)
 		}
 		opts.username = username
 		opts.password = password
 	}
 
-	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &actPlugin.Common)
+	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = fmt.Sprintf("unable to get working directory: %v", err)
-		return res, nil
+		return stream.Send(res)
 	}
 
-	if err := actPlugin.perform(ctx, workDirs.WorkingDir, opts, integ); err != nil {
+	if err := p.perform(ctx, workDirs.WorkingDir, opts, integ); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
+		return stream.Send(res)
 	}
-	return res, nil
+	return stream.Send(res)
 }
 
-func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceDir string, opts pythonOpts, integ *sdk.ProjectIntegration) error {
-	grpcplugins.Logf("Pushing %s on version %s", opts.packageName, opts.version)
+// Run implements actionplugin.ActionPluginServer.
+func (actPlugin *pythonPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
+}
+
+func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceDir string, opts pythonOpts, integ *sdk.JobIntegrationsContext) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered from panic:", r)
+			fmt.Println(string(debug.Stack()))
+			err = errors.Errorf("Internal server error: panic")
+		}
+	}()
+
+	grpcplugins.Logf(&actPlugin.Common, "Pushing %s on version %s", opts.packageName, opts.version)
 
 	var runResultRequest = workerruntime.V2RunResultRequest{
 		RunResult: &sdk.V2WorkflowRunResult{
@@ -171,7 +187,7 @@ func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceD
 
 	pullScript := fmt.Sprintf(`#!/bin/bash
 # write .pypirc file
-cat <<EOF >> .pypirc
+cat <<EOF >> ${HOME}/.pypirc
 [distutils]
 index-servers = artifactory
 [artifactory]
@@ -180,11 +196,11 @@ username: %s
 password: %s
 EOF
 
-pythonBinary="python"
+pythonBinary="%s"
 if [[ -e venv/bin/python ]]; then
 	pythonBinary="venv/bin/python"
 fi
-`, opts.url, opts.username, opts.password)
+`, opts.url, opts.username, opts.password, opts.binary)
 	if opts.wheel {
 		pullScript += "$pythonBinary setup.py sdist bdist_wheel upload -r artifactory"
 	} else {
@@ -200,14 +216,14 @@ fi
 	}
 
 	goRoutines.Exec(ctx, "runActionPythonPushPlugin-runScript", func(ctx context.Context) {
-		if err := grpcplugins.RunScript(ctx, chanRes, scriptWorkDir, pullScript); err != nil {
-			fmt.Printf("%+v\n", err)
+		if err := grpcplugins.RunScript(ctx, &actPlugin.Common, chanRes, scriptWorkDir, pullScript); err != nil {
+			grpcplugins.Errorf(&actPlugin.Common, "%+v\n", err)
 		}
 	})
 
 	select {
 	case <-ctx.Done():
-		fmt.Printf("CDS Worker execution canceled: %v", ctx.Err())
+		grpcplugins.Errorf(&actPlugin.Common, "CDS Worker execution canceled: %v", ctx.Err())
 		return errors.New("CDS Worker execution canceled")
 	case res := <-chanRes:
 		if res.Status != sdk.StatusSuccess {
@@ -216,19 +232,19 @@ fi
 	}
 
 	if integ != nil {
-		repository := integ.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-pypi"
-		maturity := integ.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+		repository := integ.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-pypi"
+		maturity := integ.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 		localRepository := repository + "-" + maturity
 
 		rtConfig := grpcplugins.ArtifactoryConfig{
-			URL:   integ.Config[sdk.ArtifactoryConfigURL].Value,
-			Token: integ.Config[sdk.ArtifactoryConfigToken].Value,
+			URL:   integ.Get(sdk.ArtifactoryConfigURL),
+			Token: integ.Get(sdk.ArtifactoryConfigToken),
 		}
 		if !strings.HasSuffix(rtConfig.URL, "/") {
 			rtConfig.URL = rtConfig.URL + "/"
 		}
 
-		folderInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository, path.Join(opts.packageName, opts.version))
+		folderInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository, filepath.Join(opts.packageName, opts.version))
 		if err != nil {
 			return err
 		}
@@ -236,34 +252,30 @@ fi
 			if c.Folder {
 				continue
 			}
-			fi, err := grpcplugins.GetArtifactoryFileInfo(context.TODO(), &actPlugin.Common, rtConfig, repository, path.Join(opts.packageName, opts.version, strings.TrimPrefix(c.URI, "/")))
+			fi, err := grpcplugins.GetArtifactoryFileInfo(context.TODO(), &actPlugin.Common, rtConfig, repository, filepath.Join(opts.packageName, opts.version, strings.TrimPrefix(c.URI, "/")))
 			if err != nil {
 				return fmt.Errorf("unable to get Artifactory file info %s: %v", c.URI, err)
 			}
-			grpcplugins.Logf("Get info ok for %s", c.URI)
+			grpcplugins.Logf(&actPlugin.Common, "Get info ok for %s", c.URI)
 
 			// Python can upload a tar.gz file + a wheel file
 			var runResult *sdk.V2WorkflowRunResult
 			if c.URI == fmt.Sprintf("/%s-%s.%s", opts.packageName, opts.version, "tar.gz") {
 				runResult = result.RunResult
+				_, fileName := filepath.Split(fi.Path)
+				grpcplugins.ExtractFileInfoIntoRunResult(runResult, *fi, fileName, "pypi", localRepository, repository, maturity)
 			} else {
 				// Create a new run result
 				runResult = &sdk.V2WorkflowRunResult{
-					IssuedAt: time.Now(),
-					Type:     sdk.V2WorkflowRunResultTypePython,
-					Status:   sdk.V2WorkflowRunResultStatusPending,
-					Detail: sdk.V2WorkflowRunResultDetail{
-						Data: sdk.V2WorkflowRunResultPythonDetail{
-							Name:      strings.TrimPrefix(c.URI, "/"),
-							Version:   opts.version,
-							Extension: strings.TrimPrefix(filepath.Ext(c.URI), "."),
-						},
-					},
+					IssuedAt:                       time.Now(),
+					Type:                           sdk.V2WorkflowRunResultTypePython,
+					Status:                         sdk.V2WorkflowRunResultStatusPending,
+					ArtifactManagerIntegrationName: &integ.Name,
+					Detail:                         grpcplugins.ComputeRunResultPythonDetail(strings.TrimPrefix(c.URI, "/"), opts.version, strings.TrimPrefix(filepath.Ext(c.URI), ".")),
 				}
+				grpcplugins.ExtractFileInfoIntoRunResult(runResult, *fi, strings.TrimPrefix(c.URI, "/"), "pypi", localRepository, repository, maturity)
 			}
-			grpcplugins.ExtractFileInfoIntoRunResult(runResult, *fi, opts.packageName, "python", localRepository, repository, maturity)
 			runResult.Status = sdk.V2WorkflowRunResultStatusCompleted
-
 			var runResultRequest = workerruntime.V2RunResultRequest{
 				RunResult: runResult,
 			}

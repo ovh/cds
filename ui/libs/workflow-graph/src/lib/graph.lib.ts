@@ -4,7 +4,7 @@ import * as dagreD3 from 'dagre-d3';
 import { GraphNode, GraphNodeType } from './graph.model';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
-import { NodeStatus } from './node/status.model';
+import { NodeStatus } from './node/model';
 
 export type WorkflowNodeComponent =
     GraphForkJoinNodeComponent
@@ -15,12 +15,17 @@ export enum GraphDirection {
     VERTICAL = 'vertical'
 }
 
+export enum NodeMouseEvent {
+    Enter = 'enter',
+    Out = 'out'
+}
+
 export interface WithHighlight {
     getNodes(): Array<GraphNode>;
-
     setHighlight(active: boolean, options?: any): void;
-
-    setSelect(active: boolean, options?: any): void;
+    selectNode(navigationKey: string): void;
+    activateNode(navigationKey: string): void;
+    setRunActive(active: boolean): void;
 }
 
 export type ComponentFactory<T> = (nodes: Array<GraphNode>, type: string) => ComponentRef<T>;
@@ -41,10 +46,7 @@ export class Edge {
 export class WorkflowV2Graph<T extends WithHighlight> {
     static margin = 40; // let 40px on top and bottom of the graph
     static marginSubGraph = 20; // let 20px on top and bottom of the sub graph
-    static maxOriginScale = 1;
-    static baseStageWidth = 300;
-    static minStageWidth = 200;
-    static minJobWidth = 60;
+    static maxOriginScale = 1.5;
 
     nodesComponent = new Map<string, ComponentRef<T>>();
     nodes = new Array<Node>();
@@ -64,13 +66,12 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     forks: { [key: string]: { parents: Array<string>, children: Array<string> } } = {};
     joins: { [key: string]: { parents: Array<string>, children: Array<string> } } = {};
     nodeStatus: { [key: string]: string } = {};
-    currentSelectedNodeKey: string = null;
 
     constructor(
         factory: ComponentFactory<T>,
         direction: GraphDirection,
-        minScale: number,
-        maxScale: number
+        minScale: number = 1,
+        maxScale: number = 1
     ) {
         this.componentFactory = factory;
         this.direction = direction;
@@ -223,17 +224,13 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                     this.transformed = event.transform;
                 }
             });
-            this.svg.call(this.zoom);
 
             if (!!this.transformed) {
                 this.svg.call(this.zoom.transform,
                     d3.zoomIdentity.translate(this.transformed.x, this.transformed.y).scale(this.transformed.k));
+            } else {
+                this.svg.call(this.zoom);
             }
-        }
-
-        if (this.currentSelectedNodeKey) {
-            this.unselectAllNode();
-            this.selectNode(this.currentSelectedNodeKey);
         }
     }
 
@@ -270,11 +267,15 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             return;
         }
         let node = this.graph.node(nodeName);
+        if (!node) { return; }
         // calculate optimal scale for current graph
-        let oScale = Math.min((containerWidth - WorkflowV2Graph.margin * 2) / 300,
-            (containerHeight - WorkflowV2Graph.margin * 2) / 169);
+        let oScale = Math.min((containerWidth - WorkflowV2Graph.margin * 2) / node.width,
+            (containerHeight - WorkflowV2Graph.margin * 2) / node.width);
         // calculate final scale that fit min and max scale values
-        let scale = Math.max(this.minScale, oScale);
+        let scale = Math.min(
+            WorkflowV2Graph.maxOriginScale,
+            Math.max(this.minScale, oScale)
+        );
         let nodeDeltaCenterX = containerWidth / 2 - node.x * scale;
         let nodeDeltaCenterY = containerHeight / 2 - node.y * scale;
         this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(nodeDeltaCenterX, nodeDeltaCenterY).scale(scale));
@@ -451,8 +452,21 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         }
     }
 
-    createNode(key: string, type: GraphNodeType, componentRef: ComponentRef<T>, width: number = 200, height: number = 60): void {
-        this.nodes.push(<Node>{ type, key, width, height });
+    createNode(key: string, node: GraphNode, componentRef: ComponentRef<T>, h?: number, w?: number): void {
+        let width = 200
+        let height = 60;
+        switch (node.type) {
+            case GraphNodeType.Stage:
+                width = w;
+                height = h;
+                break;
+            case GraphNodeType.Matrix:
+                width = 240;
+                const alls = GraphNode.generateMatrixOptions(node.job.strategy.matrix);
+                height = 30 * alls.length + 10 * (alls.length - 1) + 60 + 20;
+                break;
+        }
+        this.nodes.push(<Node>{ type: node.type, key, width, height });
         this.nodesComponent.set(`node-${key}`, componentRef);
     }
 
@@ -504,32 +518,27 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         });
     }
 
-    nodeMouseEvent(type: string, key: string, options?: any): void {
+    nodeMouseEvent(type: NodeMouseEvent, key: string, options?: any): void {
         switch (type) {
-            case 'enter':
+            case NodeMouseEvent.Enter:
                 this.highlightNode(true, key, options);
                 break;
-            case 'out':
+            case NodeMouseEvent.Out:
                 this.highlightNode(false, key, options);
                 break;
-            case 'click':
-                this.unselectAllNode();
-                this.selectNode(key, options);
-                break;
         }
     }
 
-    unselectAllNode(): void {
-        this.nodesComponent.forEach(n => n.instance.setSelect(false));
+    selectNode(navigationKey: string): void {
+        this.nodesComponent.forEach(n => n.instance.selectNode(navigationKey));
     }
 
-    selectNode(key: string, options?: any): void {
-        if (this.nodesComponent.has(`node-${key}`)) {
-            this.nodesComponent.get(`node-${key}`).instance.setSelect(true, options);
-            this.currentSelectedNodeKey = key;
-        } else {
-            this.currentSelectedNodeKey = null;
-        }
+    activateNode(navigationKey: string): void {
+        this.nodesComponent.forEach(n => n.instance.activateNode(navigationKey));
+    }
+
+    setRunActive(active: boolean): void {
+        this.nodesComponent.forEach(n => n.instance.setRunActive(active));
     }
 
     highlightNode(active: boolean, key: string, options?: any) {

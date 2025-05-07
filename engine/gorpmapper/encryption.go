@@ -12,10 +12,11 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/ovh/symmecrypt"
 )
 
 const (
-	KeyEcnryptionIdentifier = "db-crypt"
+	KeyEncryptionIdentifier = "db-crypt"
 )
 
 func (m *Mapper) Encrypt(src interface{}, dst *[]byte, extra []interface{}) error {
@@ -60,10 +61,43 @@ func (m *Mapper) Decrypt(src []byte, dest interface{}, extra []interface{}) erro
 	return sdk.JSONUnmarshal(clearContent, dest)
 }
 
+func (m *Mapper) DecryptUncap(src []byte, dest interface{}, extra []interface{}) (int, error) {
+	t := reflect.TypeOf(dest)
+	if t.Kind() != reflect.Ptr {
+		return 0, fmt.Errorf("gorpmapping: cannot Decrypt into a non-pointer : %v", t)
+	}
+
+	var extrabytes [][]byte
+	for _, e := range extra {
+		btes, _ := json.Marshal(e)
+		extrabytes = append(extrabytes, btes)
+	}
+
+	var keyIdx int
+	var clearContent []byte
+	var err error
+	if cKey, ok := m.encryptionKey.(symmecrypt.CompositeKey); ok {
+		for idx, k := range cKey {
+			clearContent, err = k.Decrypt(src, extrabytes...)
+			if err == nil {
+				keyIdx = idx
+				break
+			}
+		}
+	} else {
+		clearContent, err = m.encryptionKey.Decrypt(src, extrabytes...)
+	}
+	if err != nil {
+		return 0, sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
+	}
+
+	return keyIdx, sdk.JSONUnmarshal(clearContent, dest)
+}
+
 func (m *Mapper) updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	mapping, has := m.GetTableMapping(i)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 
 	if !mapping.EncryptedEntity {
@@ -126,7 +160,7 @@ func (m *Mapper) updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 func (m *Mapper) resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	mapping, has := m.GetTableMapping(i)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 	if !mapping.EncryptedEntity {
 		return nil
@@ -152,31 +186,26 @@ func (m *Mapper) resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 }
 
 func getEncryptedData(ctx context.Context, m *Mapper, db gorp.SqlExecutor, i interface{}) error {
+	_, err := getEncryptedDataUncap(ctx, m, db, i)
+	return err
+}
+
+func getEncryptedDataUncap(ctx context.Context, m *Mapper, db gorp.SqlExecutor, i interface{}) (int, error) {
 	_, end := telemetry.Span(ctx, "gorpmappeer.getEncryptedData")
 	defer end()
-
-	// If the target is a slice or a pointer of slice, let's call getEncryptedSliceData
-	t := reflect.TypeOf(i)
-	if t.Kind() == reflect.Ptr {
-		if t = t.Elem(); t.Kind() == reflect.Slice {
-			return m.getEncryptedSliceData(ctx, db, i)
-		}
-	} else if t.Kind() == reflect.Slice {
-		return m.getEncryptedSliceData(ctx, db, i)
-	}
 
 	// Get the TableMapping for the concrete type. If the type entity is not encrypt, let's skip all the things
 	mapping, has := m.GetTableMapping(i)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return 0, sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 	if !mapping.EncryptedEntity {
-		return nil
+		return 0, nil
 	}
 
 	table, key, id, err := m.dbMappingPKey(i)
 	if err != nil {
-		return sdk.WrapError(err, "primary key field not found in table: %s", table)
+		return 0, sdk.WrapError(err, "primary key field not found in table: %s", table)
 	}
 
 	var encryptedColumnsSlice = make([]string, len(mapping.EncryptedFields))
@@ -204,11 +233,12 @@ func getEncryptedData(ctx context.Context, m *Mapper, db gorp.SqlExecutor, i int
 
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s = $1", strings.Join(encryptedColumnsSlice, ","), table, key)
 	if err := db.QueryRow(query, id).Scan(encryptedContents...); err != nil {
-		return sdk.WrapError(err, "query: %s", query)
+		return 0, sdk.WrapError(err, "query: %s", query)
 	}
 
 	// Loop over the loaded encrypted content
 	// Decrypt them and set the target fields with the result
+	var keyIdx int
 	for idx, encryptedContent := range encryptedContents {
 		extrasFieldNames := extrasFieldsNames[idx]
 		var extras []interface{}
@@ -220,16 +250,17 @@ func getEncryptedData(ctx context.Context, m *Mapper, db gorp.SqlExecutor, i int
 		var targetField = val.FieldByName(mapping.EncryptedFields[idx].Name)
 		var targetHolder = reflect.New(reflect.TypeOf(targetField.Interface())).Interface()
 
-		if err := m.Decrypt(*encryptedContent, targetHolder, extras); err != nil {
-			return err
+		keyIdx, err = m.DecryptUncap(*encryptedContent, targetHolder, extras)
+		if err != nil {
+			return 0, err
 		}
 		fieldsValue[idx].Set(reflect.ValueOf(targetHolder).Elem())
 	}
 
-	return nil
+	return keyIdx, nil
 }
 
-func (m *Mapper) getEncryptedSliceData(ctx context.Context, db gorp.SqlExecutor, i interface{}) error {
+func getEncryptedSliceData(ctx context.Context, m *Mapper, db gorp.SqlExecutor, i interface{}) error {
 	_, end := telemetry.Span(ctx, "gorpmappeer.getEncryptedSliceData")
 	defer end()
 
@@ -246,7 +277,7 @@ func (m *Mapper) getEncryptedSliceData(ctx context.Context, db gorp.SqlExecutor,
 	// Find the tabble mapping for the contained type of the slice
 	mapping, has := m.GetTableMapping(ieval)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 	// If the entity is not encrypted, let's skip all the things
 	if !mapping.EncryptedEntity {

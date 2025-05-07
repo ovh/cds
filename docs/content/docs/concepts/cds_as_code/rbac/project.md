@@ -10,6 +10,7 @@ These roles allow users/groups to manage resources on a project
 * `manage-worker-model`: Allow users/groups to create/update/delete a worker model
 * `manage-action`: Allow users/groups to create/update/delete an action
 * `manage-workflow`: Allow users/groups to create/update/delete a workflow
+* `manage-workflow-template`: Allow users/groups to create/update/delete a workflow template
 
 
 Yaml example:

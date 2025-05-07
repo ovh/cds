@@ -27,14 +27,14 @@ func (h *HatcheryOpenstack) imageID(ctx context.Context, img string) (string, er
 // Find flavor ID from flavor name
 func (h *HatcheryOpenstack) flavor(flavor string) (flavors.Flavor, error) {
 	if flavor == "" {
-		return flavors.Flavor{}, sdk.WithStack(fmt.Errorf("no flavor specified"))
+		return flavors.Flavor{}, sdk.NewErrorFrom(sdk.ErrInvalidData, "no flavor specified")
 	}
 	for i := range h.flavors {
 		if h.flavors[i].Name == flavor {
 			return h.flavors[i], nil
 		}
 	}
-	return flavors.Flavor{}, sdk.WithStack(fmt.Errorf("flavor '%s' not found", flavor))
+	return flavors.Flavor{}, sdk.NewErrorFrom(sdk.ErrNotFound, "flavor '%s' not found", flavor)
 }
 
 // Find flavor ID from flavor name

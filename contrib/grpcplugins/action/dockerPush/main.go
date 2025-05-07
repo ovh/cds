@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -44,9 +45,11 @@ func (actPlugin *dockerPushPlugin) Manifest(_ context.Context, _ *empty.Empty) (
 	}, nil
 }
 
-// Run implements actionplugin.ActionPluginServer.
-func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *dockerPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
@@ -57,27 +60,27 @@ func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 
 	tags = strings.Replace(tags, " ", ",", -1) // If tags are separated by <space>
 	tags = strings.Replace(tags, ";", ",", -1) // If tags are separated by <semicolon>
-	tagSlice := strings.Split(tags, ",")
+
+	var tagSlice []string
+	if len(tags) > 0 {
+		tagSlice = strings.Split(tags, ",")
+	}
 
 	if !strings.ContainsRune(image, ':') { // Latest is the default tag
 		image = image + ":latest"
 	}
 
-	if err := actPlugin.perform(ctx, image, tagSlice, registry, auth); err != nil {
+	if err := p.perform(ctx, image, tagSlice, registry, auth); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
 	}
+	return stream.Send(res)
 
-	return res, nil
 }
 
-type img struct {
-	repository string
-	tag        string
-	imageID    string
-	created    string
-	size       string
+// Run implements actionplugin.ActionPluginServer.
+func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, tags []string, registry, registryAuth string) error {
@@ -87,7 +90,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return sdk.Errorf("unable to get instanciate docker client: %v", err)
+		return sdk.Errorf("unable to get instantiate docker client: %v", err)
 	}
 
 	imageSummaries, err := cli.ImageList(ctx, types.ImageListOptions{All: false})
@@ -95,25 +98,28 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 		return sdk.Errorf("unable to get docker image %q: %v", image, err)
 	}
 
-	images := []img{}
+	images := []grpcplugins.Img{}
 	for _, image := range imageSummaries {
 		repository := "<none>"
 		tag := "<none>"
-		if len(image.RepoTags) > 0 {
-			splitted := strings.Split(image.RepoTags[0], ":")
-			repository = splitted[0]
-			tag = splitted[1]
-		} else if len(image.RepoDigests) > 0 {
-			repository = strings.Split(image.RepoDigests[0], "@")[0]
-		}
 		duration := HumanDuration(image.Created)
 		size := HumanSize(image.Size)
-		images = append(images, img{repository: repository, tag: tag, imageID: image.ID[7:19], created: duration, size: size})
+		if len(image.RepoTags) > 0 {
+			for _, rt := range image.RepoTags {
+				splitted := strings.Split(rt, ":")
+				repository = splitted[0]
+				tag = splitted[1]
+				images = append(images, grpcplugins.Img{Repository: repository, Tag: tag, ImageID: image.ID[7:19], Created: duration, Size: size})
+			}
+		} else if len(image.RepoDigests) > 0 {
+			repository = strings.Split(image.RepoDigests[0], "@")[0]
+			images = append(images, grpcplugins.Img{Repository: repository, Tag: tag, ImageID: image.ID[7:19], Created: duration, Size: size})
+		}
 	}
 
-	var imgFound *img
+	var imgFound *grpcplugins.Img
 	for i := range images {
-		if images[i].repository+":"+images[i].tag == image {
+		if images[i].Repository+":"+images[i].Tag == image {
 			imgFound = &images[i]
 			break
 		}
@@ -124,38 +130,29 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 	}
 
 	if len(tags) == 0 { // If no tag is provided, keep the actual tag
-		tags = []string{imgFound.tag}
+		tags = []string{imgFound.Tag}
 	}
 
 	for _, tag := range tags {
 		result, d, err := actPlugin.performImage(ctx, cli, image, imgFound, registry, registryAuth, strings.TrimSpace(tag))
 		if err != nil {
-			grpcplugins.Error(err.Error())
 			return err
 		}
-		grpcplugins.Successf("Image %s pushed in %.3fs", result.Name(), d.Seconds())
+		grpcplugins.Successf(&actPlugin.Common, "Image %s pushed in %.3fs", result.Name(), d.Seconds())
 	}
 
 	return nil
 }
 
-func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client.Client, source string, img *img, registryURL string, registryAuth string, tag string) (*sdk.V2WorkflowRunResult, time.Duration, error) {
+func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client.Client, source string, img *grpcplugins.Img, registryURL string, registryAuth string, tag string) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
-
 	// Create run result at status "pending"
 	var runResultRequest = workerruntime.V2RunResultRequest{
 		RunResult: &sdk.V2WorkflowRunResult{
 			IssuedAt: time.Now(),
 			Type:     sdk.V2WorkflowRunResultTypeDocker,
 			Status:   sdk.V2WorkflowRunResultStatusPending,
-			Detail: sdk.V2WorkflowRunResultDetail{
-				Data: sdk.V2WorkflowRunResultDockerDetail{
-					Name:         source,
-					ID:           img.imageID,
-					HumanSize:    img.size,
-					HumanCreated: img.created,
-				},
-			},
+			Detail:   grpcplugins.ComputeRunResultDockerDetail(source, *img),
 		},
 	}
 
@@ -166,17 +163,22 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 
 	result := response.RunResult
 
+	jobCtx, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
+	if err != nil {
+		return nil, time.Since(t0), err
+	}
+
 	var destination string
 	// Upload the file to an artifactory or the docker registry
 	switch {
 	case result.ArtifactManagerIntegrationName != nil:
-		integration, err := grpcplugins.GetIntegrationByName(ctx, &actPlugin.Common, *response.RunResult.ArtifactManagerIntegrationName)
-		if err != nil {
-			return nil, time.Since(t0), err
+		if jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager.Name == "" {
+			return nil, time.Since(t0), errors.New("artifactory integration not found")
 		}
+		integration := jobCtx.Integrations.ArtifactManager
 
-		repository := integration.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-docker"
-		rtURLRaw := integration.Config[sdk.ArtifactoryConfigURL].Value
+		repository := integration.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-docker"
+		rtURLRaw := integration.Get(sdk.ArtifactoryConfigURL)
 		if !strings.HasSuffix(rtURLRaw, "/") {
 			rtURLRaw = rtURLRaw + "/"
 		}
@@ -185,24 +187,25 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			return nil, time.Since(t0), err
 		}
 
-		destination = repository + "." + rtURL.Host + "/" + img.repository + ":" + tag
+		destination = repository + "." + rtURL.Host + "/" + img.Repository + ":" + tag
 
 		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
 			Name:         destination,
-			ID:           img.imageID,
-			HumanSize:    img.size,
-			HumanCreated: img.created,
+			ID:           img.ImageID,
+			HumanSize:    img.Size,
+			HumanCreated: img.Created,
 		}
 
-		if tag != img.tag { // if the image already has the right tag, nothing to do
-			if err := cli.ImageTag(ctx, img.imageID, destination); err != nil {
+		// Check if we need to tag the image
+		if destination != img.Repository+":"+img.Tag {
+			if err := cli.ImageTag(ctx, img.ImageID, destination); err != nil {
 				return nil, time.Since(t0), errors.Errorf("unable to tag %q to %q: %v", source, destination, err)
 			}
 		}
 
 		auth := registry.AuthConfig{
-			Username:      integration.Config[sdk.ArtifactoryConfigTokenName].Value,
-			Password:      integration.Config[sdk.ArtifactoryConfigToken].Value,
+			Username:      integration.Get(sdk.ArtifactoryConfigTokenName),
+			Password:      integration.Get(sdk.ArtifactoryConfigToken),
 			ServerAddress: repository + "." + rtURL.Host,
 		}
 		buf, _ := json.Marshal(auth)
@@ -219,11 +222,19 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 
 		var rtConfig = grpcplugins.ArtifactoryConfig{
 			URL:   rtURL.String(),
-			Token: integration.Config[sdk.ArtifactoryConfigToken].Value,
+			Token: integration.Get(sdk.ArtifactoryConfigToken),
 		}
 
-		rtFolderPath := img.repository + "/" + tag
-		rtFolderPathInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository, rtFolderPath)
+		maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+		rtFolderPath := img.Repository + "/" + tag
+
+		// here, we GetArtifactoryFolderInfo from the repository+"-"+maturity (=generaly ...-docker-snaphot repo)
+		// if a docker image exists on a remote repo, with the same name on local repo, then we want to getFileInfo from the layers pushed only.
+		// Example:
+		// a multi-arch exists on the remote repo with a list.manifest.json
+		// docker push is done on virtual with the same name:tag, pushing manifest.json and not list.manifest.json
+		// the rtFolderPathInfo should not include the list.manifest.json
+		rtFolderPathInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository+"-"+maturity, rtFolderPath)
 		if err != nil {
 			return nil, time.Since(t0), err
 		}
@@ -231,19 +242,19 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		var manifestFound bool
 		for _, child := range rtFolderPathInfo.Children {
 			if strings.HasSuffix(child.URI, "manifest.json") { // Can be manifest.json of list.manifest.json for multi-arch docker image
-				rtPathInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &actPlugin.Common, rtConfig, repository, rtFolderPath+child.URI)
+				rtPathInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &actPlugin.Common, rtConfig, repository+"-"+maturity, rtFolderPath+child.URI)
 				if err != nil {
 					return nil, time.Since(t0), err
 				}
 				manifestFound = true
-				localRepo := repository + "-" + integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
-				maturity := integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+				localRepo := fmt.Sprintf("%s-%s", repository, integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity))
 
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
-				result.ArtifactManagerMetadata.Set("id", img.imageID)
+				result.ArtifactManagerMetadata.Set("id", img.ImageID)
 				break
 			}
 		}
+		result.ArtifactManagerMetadata.Set("dir", rtFolderPathInfo.Path)
 		if !manifestFound {
 			return nil, time.Since(t0), errors.New("unable to get uploaded image manifest")
 		}
@@ -254,13 +265,13 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			return nil, time.Since(t0), errors.New("wrong usage: <registry> and <registryAuth> parameters should not be both empty")
 		}
 
-		destination = img.repository + ":" + tag
+		destination = img.Repository + ":" + tag
 		if registryURL != "" {
 			destination = registryURL + "/" + destination
 		}
 
-		if tag != img.tag { // if the image already has the right tag, nothing to do
-			if err := cli.ImageTag(ctx, img.imageID, destination); err != nil {
+		if tag != img.Tag { // if the image already has the right tag, nothing to do
+			if err := cli.ImageTag(ctx, img.ImageID, destination); err != nil {
 				return nil, time.Since(t0), errors.Errorf("unable to tag %q to %q: %v", source, destination, err)
 			}
 		}
@@ -277,10 +288,10 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
 		result.ArtifactManagerMetadata.Set("registry", registryURL)
 		result.ArtifactManagerMetadata.Set("name", destination)
-		result.ArtifactManagerMetadata.Set("id", img.imageID)
+		result.ArtifactManagerMetadata.Set("id", img.ImageID)
 	}
 
-	details, err := result.GetDetailAsV2WorkflowRunResultDockerDetail()
+	details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultDockerDetail](result)
 	if err != nil {
 		return nil, time.Since(t0), err
 	}

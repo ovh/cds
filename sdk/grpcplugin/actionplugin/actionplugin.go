@@ -20,9 +20,10 @@ import (
 // Common is the common struct of actionplugin
 type Common struct {
 	grpcplugin.Common
-	conn       *grpc.ClientConn //nolint
-	HTTPPort   int32
-	HTTPClient cdsclient.HTTPClient
+	conn         *grpc.ClientConn //nolint
+	HTTPPort     int32
+	HTTPClient   cdsclient.HTTPClient
+	StreamServer ActionPlugin_StreamServer
 }
 
 // Start is useful to start grpcplugin

@@ -224,7 +224,7 @@ func (c *vcsClient) Tag(ctx context.Context, fullname string, tagName string) (s
 		return items.(sdk.VCSTag), nil
 	}
 	var tag sdk.VCSTag
-	path := fmt.Sprintf("/vcs/%s/repos/%s/tags/%s", c.name, fullname, tagName)
+	path := fmt.Sprintf("/vcs/%s/repos/%s/tags/%s", c.name, fullname, url.QueryEscape(tagName))
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &tag); err != nil {
 		return tag, sdk.NewErrorFrom(err, "unable to get tag %s on repository %s from %s", tagName, fullname, c.name)
 	}
@@ -259,6 +259,9 @@ func (c *vcsClient) Branches(ctx context.Context, fullname string, filters sdk.V
 
 	branches := []sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches?limit=%d", c.name, fullname, filters.Limit)
+	if filters.NoCache {
+		path += fmt.Sprintf("&noCache=%t", filters.NoCache)
+	}
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branches); err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to find branches on repository %s from %s", fullname, c.name)
 	}
@@ -280,6 +283,9 @@ func (c *vcsClient) SearchPullRequest(ctx context.Context, repoFullName, commit,
 func (c *vcsClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
 	branch := sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s&default=%v", c.name, fullname, url.QueryEscape(filters.BranchName), filters.Default)
+	if filters.NoCache {
+		path += fmt.Sprintf("&noCache=%t", filters.NoCache)
+	}
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branch); err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to find branch %q (default: %t) on repository %s from %s", filters.BranchName, filters.Default, fullname, c.name)
 	}
@@ -505,6 +511,14 @@ func (c *vcsClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, 
 	return forks, nil
 }
 
+func (c *vcsClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, report sdk.VCSInsight) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s/insight/%s", c.name, repo, sha, insightKey)
+	if _, err := c.doJSONRequest(ctx, "POST", path, report, nil); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
 func (c *vcsClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	statuses := []sdk.VCSCommitStatus{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s/statuses", c.name, repo, ref)
@@ -518,8 +532,8 @@ func (c *vcsClient) GetAccessToken(_ context.Context) string {
 	return ""
 }
 
-func (c *vcsClient) ListContent(ctx context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/contents/%s?commit=%s", c.name, repo, url.PathEscape(dir), commit)
+func (c *vcsClient) ListContent(ctx context.Context, repo string, commit, dir string, offset, limit string) ([]sdk.VCSContent, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/contents/%s?commit=%s&offset=%s&limit=%s", c.name, repo, url.PathEscape(dir), commit, offset, limit)
 	var contents []sdk.VCSContent
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &contents); err != nil {
 		return nil, sdk.WithStack(err)

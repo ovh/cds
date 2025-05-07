@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/download"
@@ -23,13 +23,35 @@ func (api *API) downloadsHandler() service.Handler {
 
 func (api *API) downloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		name := sdk.NoPath(vars["name"])
-		os := sdk.NoPath(vars["os"])
-		arch := sdk.NoPath(vars["arch"])
+		fragment := strings.Split(strings.TrimPrefix(r.URL.Path, "/download/"), "/")
+
+		var name, os, arch string
+		if len(fragment) == 1 {
+			if !sdk.Assets.Contains(fragment[0]) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given file name: %q", fragment[0])
+			}
+		} else if len(fragment) == 3 {
+			if !sdk.Binaries.Contains(fragment[0]) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given binary name: %q", fragment[0])
+			}
+			if !sdk.SupportedOS.Contains(fragment[1]) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given OS: %q", fragment[1])
+			}
+			if !sdk.SupportedARCH.Contains(sdk.GetArchName(fragment[2])) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given ARCH: %q", fragment[2])
+			}
+		} else {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "given file path should be like binary-name/os/arch")
+		}
+
+		name = sdk.NoPath(fragment[0])
+		if len(fragment) == 3 {
+			os = sdk.NoPath(fragment[1])
+			arch = sdk.NoPath(fragment[2])
+		}
+
 		r.ParseForm() // nolint
 		variant := sdk.NoPath(r.Form.Get("variant"))
-
 		if !sdk.IsInArray(variant, []string{"", "nokeychain", "keychain"}) {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variant: %s", variant)
 		}
@@ -38,7 +60,12 @@ func (api *API) downloadHandler() service.Handler {
 			return err
 		}
 
-		filename := sdk.BinaryFilename(name, os, arch, variant)
+		var filename string
+		if sdk.Assets.Contains(name) {
+			filename = name
+		} else {
+			filename = sdk.BinaryFilename(name, os, arch, variant)
+		}
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment;filename="%s"`, filename))
 

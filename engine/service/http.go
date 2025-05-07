@@ -8,16 +8,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -25,7 +24,7 @@ import (
 
 // Handler defines the HTTP handler used in CDS engine
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
-type RbacChecker func(ctx context.Context, auth *sdk.AuthUserConsumer, cache cache.Store, db gorp.SqlExecutor, vars map[string]string) error
+type RbacChecker func(ctx context.Context, vars map[string]string) error
 type RbacCheckers []RbacChecker
 
 func RBAC(checkers ...RbacChecker) []RbacChecker {
@@ -94,8 +93,37 @@ func Write(w http.ResponseWriter, r io.Reader, status int, contentType string) e
 	return nil
 }
 
+// map to avoid to register twice the same action_metadata field
+var registeredActionMetadataFiels = new(sync.Map)
+
+func TrackActionMetadataFromFields(w http.ResponseWriter, data interface{}) {
+	if responseTracker := UnwrapResponseWriter(w); responseTracker != nil && data != nil {
+		dataV := sdk.ValueFromInterface(data)
+		dataT := dataV.Type()
+		if dataT.Kind() == reflect.Struct {
+			for i := 0; i < dataT.NumField(); i++ {
+				v := dataV.Field(i)
+				t, hasTag := dataT.Field(i).Tag.Lookup("action_metadata")
+				if v.Kind() == reflect.Struct && hasTag {
+					TrackActionMetadataFromFields(w, v.Interface())
+				} else {
+					if hasTag && fmt.Sprintf("%v", v.Interface()) != "" {
+						var f = log.Field("action_metadata_" + t)
+						if _, exist := registeredActionMetadataFiels.Load(f); !exist {
+							registeredActionMetadataFiels.Store(f, struct{}{})
+							log.RegisterField(f)
+						}
+						SetTracker(responseTracker, f, v.Interface())
+					}
+				}
+			}
+		}
+	}
+}
+
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
 func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
+	TrackActionMetadataFromFields(w, data)
 	b, err := json.Marshal(data)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal json data")
@@ -107,6 +135,8 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 // Response format could be application/json or appliation/x-yaml, depends on the Accept header
 // default response is application/x-yaml
 func WriteMarshal(w http.ResponseWriter, req *http.Request, data interface{}, status int) error {
+	TrackActionMetadataFromFields(w, data)
+
 	var contentType string
 	var body []byte
 	var err error
@@ -154,7 +184,7 @@ func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err
 	if httpErr.Status < 500 {
 		log.Info(ctx, "%s", err)
 	} else {
-		log.Error(ctx, "%s", err)
+		log.ErrorWithStackTrace(ctx, err)
 	}
 
 	// safely ignore error returned by WriteJSON
@@ -171,6 +201,9 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 	defer r.Body.Close()
+	if len(data) == 0 {
+		return nil
+	}
 	if err := sdk.JSONUnmarshal(data, i); err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}
@@ -229,8 +262,6 @@ func CheckRequestSignatureMiddleware(pubKey *rsa.PublicKey) Middleware {
 		if err := verifier.Verify(req); err != nil {
 			return ctx, sdk.NewError(sdk.ErrUnauthorized, err)
 		}
-
-		log.Debug(ctx, "Request has been successfully verified")
 		return ctx, nil
 	}
 }

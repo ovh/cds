@@ -33,9 +33,9 @@ func (rg rbacGlobal) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacGlobalUser struct {
-	ID               int64  `db:"id"`
-	RbacGlobalID     int64  `db:"rbac_global_id"`
-	RbacGlobalUserID string `db:"user_id"`
+	ID               int64  `json:"-" db:"id"`
+	RbacGlobalID     int64  `json:"-" db:"rbac_global_id"`
+	RbacGlobalUserID string `json:"-" db:"user_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -48,8 +48,8 @@ func (rgu rbacGlobalUser) Canonical() gorpmapper.CanonicalForms {
 
 type rbacGlobalGroup struct {
 	ID                int64 `json:"-" db:"id"`
-	RbacGlobalID      int64 `db:"rbac_global_id"`
-	RbacGlobalGroupID int64 `db:"group_id"`
+	RbacGlobalID      int64 `json:"-" db:"rbac_global_id"`
+	RbacGlobalGroupID int64 `json:"-" db:"group_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -130,6 +130,34 @@ func (rh rbacHatchery) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
+type rbacRegionProject struct {
+	ID     int64  `json:"-" db:"id"`
+	RbacID string `json:"-"  db:"rbac_id"`
+	sdk.RBACRegionProject
+	gorpmapper.SignedEntity
+}
+
+func (rr rbacRegionProject) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rr.ID, rr.RbacID, rr.RegionID, rr.Role}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacID}}{{.RegionID}}{{.Role}}",
+	}
+}
+
+type rbacRegionProjectKey struct {
+	ID                  int64  `json:"-" db:"id"`
+	RbacRegionProjectID int64  `json:"-" db:"rbac_region_project_id"`
+	ProjectKey          string `json:"-" db:"project_key"`
+	gorpmapper.SignedEntity
+}
+
+func (rr rbacRegionProjectKey) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rr.ID, rr.RbacRegionProjectID, rr.ProjectKey}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacRegionProjectID}}{{.ProjectKey}}",
+	}
+}
+
 type rbacRegion struct {
 	sdk.RBACRegion
 	gorpmapper.SignedEntity
@@ -144,8 +172,8 @@ func (rr rbacRegion) Canonical() gorpmapper.CanonicalForms {
 
 type rbacRegionUser struct {
 	ID           int64  `json:"-" db:"id"`
-	RbacRegionID int64  `db:"rbac_region_id"`
-	RbacUserID   string `db:"user_id"`
+	RbacRegionID int64  `json:"-" db:"rbac_region_id"`
+	RbacUserID   string `json:"-" db:"user_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -158,8 +186,8 @@ func (rru rbacRegionUser) Canonical() gorpmapper.CanonicalForms {
 
 type rbacRegionGroup struct {
 	ID           int64 `json:"-" db:"id"`
-	RbacRegionID int64 `db:"rbac_region_id"`
-	RbacGroupID  int64 `db:"group_id"`
+	RbacRegionID int64 `json:"-" db:"rbac_region_id"`
+	RbacGroupID  int64 `json:"-" db:"group_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -172,8 +200,8 @@ func (rrg rbacRegionGroup) Canonical() gorpmapper.CanonicalForms {
 
 type rbacRegionOrganization struct {
 	ID                 int64  `json:"-" db:"id"`
-	RbacRegionID       int64  `db:"rbac_region_id"`
-	RbacOrganizationID string `db:"organization_id"`
+	RbacRegionID       int64  `json:"-" db:"rbac_region_id"`
+	RbacOrganizationID string ` json:"-" db:"organization_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -181,6 +209,48 @@ func (rro rbacRegionOrganization) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{rro.ID, rro.RbacRegionID, rro.RbacOrganizationID}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.RbacRegionID}}{{.RbacOrganizationID}}",
+	}
+}
+
+type rbacVariableSet struct {
+	ID     int64  `json:"-" db:"id"`
+	RbacID string `json:"-" db:"rbac_id"`
+	sdk.RBACVariableSet
+	gorpmapper.SignedEntity
+}
+
+func (rp rbacVariableSet) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rp.ID, rp.RbacID, rp.Role, rp.AllUsers}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacID}}{{.Role}}{{.AllUsers}}",
+	}
+}
+
+type rbacVariableSetUser struct {
+	ID                    int64  `json:"-" db:"id"`
+	RbacVariableSetID     int64  `json:"-" db:"rbac_variableset_id"`
+	RbacVariableSetUserID string `json:"-" db:"user_id"`
+	gorpmapper.SignedEntity
+}
+
+func (rgu rbacVariableSetUser) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgu.ID, rgu.RbacVariableSetID, rgu.RbacVariableSetUserID}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacVariableSetID}}{{.RbacVariableSetUserID}}",
+	}
+}
+
+type rbacVariableSetGroup struct {
+	ID                     int64 `json:"-" db:"id"`
+	RbacVariableSetID      int64 `json:"-" db:"rbac_variableset_id"`
+	RbacVariableSetGroupID int64 ` json:"-" db:"group_id"`
+	gorpmapper.SignedEntity
+}
+
+func (rgg rbacVariableSetGroup) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgg.ID, rgg.RbacVariableSetID, rgg.RbacVariableSetGroupID}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacVariableSetID}}{{.RbacVariableSetGroupID}}",
 	}
 }
 
@@ -200,8 +270,8 @@ func (rp rbacWorkflow) Canonical() gorpmapper.CanonicalForms {
 
 type rbacWorkflowUser struct {
 	ID                 int64  `json:"-" db:"id"`
-	RbacWorkflowID     int64  `db:"rbac_workflow_id"`
-	RbacWorkflowUserID string `db:"user_id"`
+	RbacWorkflowID     int64  `json:"-" db:"rbac_workflow_id"`
+	RbacWorkflowUserID string ` json:"-" db:"user_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -214,8 +284,8 @@ func (rgu rbacWorkflowUser) Canonical() gorpmapper.CanonicalForms {
 
 type rbacWorkflowGroup struct {
 	ID                  int64 `json:"-" db:"id"`
-	RbacWorkflowID      int64 `db:"rbac_workflow_id"`
-	RbacWorkflowGroupID int64 `db:"group_id"`
+	RbacWorkflowID      int64 `json:"-" db:"rbac_workflow_id"`
+	RbacWorkflowGroupID int64 `json:"-" db:"group_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -247,4 +317,12 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(rbacWorkflow{}, "rbac_workflow", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacWorkflowUser{}, "rbac_workflow_users", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacWorkflowGroup{}, "rbac_workflow_groups", true, "id"))
+
+	gorpmapping.Register(gorpmapping.New(rbacVariableSet{}, "rbac_variableset", true, "id"))
+	gorpmapping.Register(gorpmapping.New(rbacVariableSetUser{}, "rbac_variableset_users", true, "id"))
+	gorpmapping.Register(gorpmapping.New(rbacVariableSetGroup{}, "rbac_variableset_groups", true, "id"))
+
+	gorpmapping.Register(gorpmapping.New(rbacRegionProject{}, "rbac_region_project", true, "id"))
+	gorpmapping.Register(gorpmapping.New(rbacRegionProjectKey{}, "rbac_region_project_keys_project", true, "id"))
+
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -443,6 +444,49 @@ func (config IntegrationConfig) MergeWith(cfg IntegrationConfig) {
 		}
 		config[k] = val
 	}
+}
+
+func (pi *ProjectIntegration) ToJobRunContextConfig() JobIntegrationsContextConfig {
+	result := make(map[string]interface{})
+
+	for key, configValue := range pi.Config {
+		parts := strings.Split(key, ".")
+		current := result
+
+		value := configValue.Value
+
+		// if we found a password with a placeholder, we try to find the value from the public_configuration
+		if configValue.Type == SecretVariable && (value == PasswordPlaceholder || value == "") {
+			if publicIntegrationConfig, has := pi.Model.PublicConfigurations[pi.Name]; has {
+				if publicConfigValue, has2 := publicIntegrationConfig[key]; has2 {
+					if publicConfigValue.Value == PasswordPlaceholder || publicConfigValue.Value == "" {
+						continue
+					}
+					value = publicConfigValue.Value
+				}
+			}
+		}
+
+		for i, part := range parts {
+			// Hack for artifactory
+			if pi.Model.Name == ArtifactoryIntegrationModelName && i == (len(parts)-2) && part == "token" {
+				current[part+"_"+parts[len(parts)-1]] = value
+			} else if i == len(parts)-1 {
+				current[part] = value
+			} else {
+				if _, exists := current[part]; !exists {
+					current[part] = make(map[string]interface{})
+				}
+				current = current[part].(map[string]interface{})
+			}
+		}
+	}
+	ctxConfig := JobIntegrationsContextConfig{}
+	for k, v := range result {
+		ctxConfig[k] = v
+	}
+
+	return ctxConfig
 }
 
 // HideSecrets replaces password with a placeholder

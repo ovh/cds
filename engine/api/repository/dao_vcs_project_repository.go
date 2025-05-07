@@ -61,7 +61,7 @@ func getRepository(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Q
 	return &res.ProjectRepository, nil
 }
 
-func getRepositories(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectRepository, error) {
+func getRepositories(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.ProjectRepository, error) {
 	var res []dbProjectRepository
 	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
 		return nil, err
@@ -117,7 +117,12 @@ func LoadByNameWithoutVCSServer(ctx context.Context, db gorp.SqlExecutor, repoNa
 }
 
 func LoadAllRepositoriesByVCSProjectID(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string) ([]sdk.ProjectRepository, error) {
-	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1`).Args(vcsProjectID)
+	query := gorpmapping.NewQuery(`
+		SELECT * 
+		FROM project_repository
+		WHERE vcs_project_id = $1
+		ORDER BY name ASC
+	`).Args(vcsProjectID)
 	var res []dbProjectRepository
 	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
 		return nil, err

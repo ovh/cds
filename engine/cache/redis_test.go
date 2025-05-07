@@ -20,7 +20,8 @@ func TestSortedSet(t *testing.T) {
 	redisPassword := cfg["redisPassword"]
 	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
 	require.NoError(t, err, "error when unmarshal config")
-	s, err := NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
+
+	s, err := NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err)
 
 	s.Delete("test")
@@ -38,7 +39,7 @@ func TestDequeueJSONRawMessagesWithContext(t *testing.T) {
 	redisPassword := cfg["redisPassword"]
 	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
 	require.NoError(t, err, "error when unmarshal config")
-	s, err := NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
+	s, err := NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err)
 
 	s.Delete("test")
@@ -78,7 +79,7 @@ func TestDequeueJSONRawMessagesWithContextMaxTimeout(t *testing.T) {
 	redisPassword := cfg["redisPassword"]
 	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
 	require.NoError(t, err, "error when unmarshal config")
-	s, err := NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
+	s, err := NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err)
 
 	s.Delete("test")

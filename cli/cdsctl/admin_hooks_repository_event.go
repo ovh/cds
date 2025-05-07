@@ -71,7 +71,7 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 		ID                  string                            `cli:"id"`
 		Created             time.Time                         `cli:"created"`
 		LastUpdate          time.Time                         `cli:"last_update"`
-		EventName           string                            `cli:"event_name"`
+		EventName           sdk.WorkflowHookEventName         `cli:"event_name"`
 		VCSServerName       string                            `cli:"vcs_server_name"`
 		RepositoryName      string                            `cli:"repository_name"`
 		Ref                 string                            `cli:"ref"`
@@ -91,7 +91,7 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 	cli := HookEventCLI{
 		ID:                  event.UUID,
 		Created:             time.Unix(0, event.Created),
-		LastUpdate:          time.Unix(event.LastUpdate, 0),
+		LastUpdate:          time.UnixMilli(event.LastUpdate),
 		EventName:           event.EventName,
 		VCSServerName:       event.VCSServerName,
 		RepositoryName:      event.RepositoryName,
@@ -102,13 +102,14 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 		Status:              event.Status,
 		Error:               event.LastError,
 		NbErrors:            event.NbErrors,
-		UserID:              event.UserID,
-		Username:            event.Username,
 		Analyses:            event.Analyses,
 		SignKey:             event.SignKey,
 		SigningKeyOperation: event.SigningKeyOperation,
 	}
-
+	if event.Initiator != nil {
+		cli.UserID = event.Initiator.UserID
+		cli.Username = event.Initiator.Username()
+	}
 	return cli, nil
 }
 
@@ -133,12 +134,12 @@ func adminHooksRepoEventListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	type Result struct {
-		UUID      string    `cli:"uuid"`
-		Created   time.Time `cli:"created"`
-		EventName string    `cli:"event_name"`
-		Status    string    `cli:"status"`
-		Ref       string    `cli:"ref"`
-		Commit    string    `cli:"commit"`
+		UUID      string                    `cli:"uuid"`
+		Created   time.Time                 `cli:"created"`
+		EventName sdk.WorkflowHookEventName `cli:"event_name"`
+		Status    string                    `cli:"status"`
+		Ref       string                    `cli:"ref"`
+		Commit    string                    `cli:"commit"`
 	}
 	rs := make([]Result, 0, len(events))
 	for _, e := range events {

@@ -26,12 +26,12 @@ type Cache struct {
 	WorkingDirectory string   `json:"working_directory"`
 }
 
-//GetName returns the name the artifact
+// GetName returns the name the artifact
 func (c *Cache) GetName() string {
 	return c.Name
 }
 
-//GetPath returns the path of the artifact
+// GetPath returns the path of the artifact
 func (c *Cache) GetPath() string {
 	container := fmt.Sprintf("%s-%s", c.Project, c.Tag)
 	container = url.QueryEscape(container)

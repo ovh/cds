@@ -10,7 +10,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime/mock_workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -18,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func Test_helmPushPlugin(t *testing.T) {
@@ -25,9 +25,9 @@ func Test_helmPushPlugin(t *testing.T) {
 	artifactoryURL := os.Getenv("ARTIFACTORY_URL")
 	artifactoryToken := os.Getenv("ARTIFACTORY_TOKEN")
 	artifactoryUsername := os.Getenv("ARTIFACTORY_USERNAME")
-
-	if artifactoryRepoPrefix == "" {
-		artifactoryRepoPrefix = "fsamin-default"
+	if artifactoryRepoPrefix == "" || artifactoryURL == "" || artifactoryToken == "" || artifactoryUsername == "" {
+		t.Logf("unable to get Artifactory credentials")
+		t.SkipNow()
 	}
 
 	log.Factory = log.NewTestingWrapper(t)
@@ -92,12 +92,33 @@ func Test_helmPushPlugin(t *testing.T) {
 		},
 	)
 
-	mockHTTPClient.EXPECT().Do(sdk.ReqMatcher{Method: "GET", URLPath: "/v2/integrations/artifactory-integration"}).DoAndReturn(
+	jobCtx := sdk.WorkflowRunJobsContext{
+		Integrations: &sdk.JobIntegrationsContexts{
+			ArtifactManager: sdk.JobIntegrationsContext{
+				Name:   "artifactory-integration",
+				Config: map[string]interface{}{},
+			},
+		},
+	}
+
+	mPrefix := map[string]interface{}{
+		"prefix": artifactoryRepoPrefix,
+	}
+	jobCtx.Integrations.ArtifactManager.Config["repo"] = mPrefix
+	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigURL] = artifactoryURL
+	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigToken] = artifactoryToken
+	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigTokenName] = artifactoryUsername
+	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigPromotionLowMaturity] = "snapshot"
+
+	mockWorker.EXPECT().V2GetJobContext(gomock.Any()).Return(
+		&jobCtx,
+	)
+	mockHTTPClient.EXPECT().Do(sdk.ReqMatcher{Method: "GET", URLPath: "/v2/context"}).DoAndReturn(
 		func(req *http.Request) (*http.Response, error) {
-			h := workerruntime.V2_integrationsHandler(context.TODO(), mockWorker)
+			h := workerruntime.V2_contextHandler(context.TODO(), mockWorker)
 			rec := httptest.NewRecorder()
 			apiReq := http.Request{
-				Method: "POST",
+				Method: "GET",
 				URL:    &url.URL{},
 			}
 			q := apiReq.URL.Query()
@@ -106,25 +127,6 @@ func Test_helmPushPlugin(t *testing.T) {
 			h(rec, &apiReq)
 			return rec.Result(), nil
 		},
-	)
-
-	integ := sdk.ProjectIntegration{
-		ID:                 1,
-		ProjectID:          1,
-		Name:               "artifactory-integration",
-		IntegrationModelID: 1,
-		Model:              sdk.ArtifactoryIntegration,
-		Config:             sdk.ArtifactoryIntegration.DefaultConfig.Clone(),
-	}
-
-	integ.Config.SetValue(sdk.ArtifactoryConfigRepositoryPrefix, artifactoryRepoPrefix)
-	integ.Config.SetValue(sdk.ArtifactoryConfigURL, artifactoryURL)
-	integ.Config.SetValue(sdk.ArtifactoryConfigToken, artifactoryToken)
-	integ.Config.SetValue(sdk.ArtifactoryConfigTokenName, artifactoryUsername)
-	integ.Config.SetValue(sdk.ArtifactoryConfigPromotionLowMaturity, "snapshot")
-
-	mockWorker.EXPECT().V2GetIntegrationByName(gomock.Any(), "artifactory-integration").Return(
-		&integ, nil,
 	)
 
 	mockWorker.EXPECT().V2AddRunResult(gomock.Any(), gomock.Any()).DoAndReturn(

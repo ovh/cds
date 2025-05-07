@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Branches retrieves the branches
+// Branches retrieves the branches
 func (c *gerritClient) Branches(ctx context.Context, fullname string, _ sdk.VCSBranchesFilter) ([]sdk.VCSBranch, error) {
 	branches, _, err := c.client.Projects.ListBranches(fullname, nil)
 	if err != nil {
@@ -33,7 +33,7 @@ func (c *gerritClient) Branches(ctx context.Context, fullname string, _ sdk.VCSB
 		newBranch := sdk.VCSBranch{
 			ID:           b.Ref,
 			LatestCommit: b.Revision,
-			DisplayID:    strings.Replace(b.Ref, "refs/heads/", "", -1),
+			DisplayID:    strings.Replace(b.Ref, sdk.GitRefBranchPrefix, "", -1),
 			Default:      false,
 		}
 		if newBranch.DisplayID == defaultBranch {
@@ -44,7 +44,7 @@ func (c *gerritClient) Branches(ctx context.Context, fullname string, _ sdk.VCSB
 	return bs, nil
 }
 
-//Branch retrieves the branch
+// Branch retrieves the branch
 func (c *gerritClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
 	if filters.Default {
 		bs, err := c.Branches(ctx, fullname, sdk.VCSBranchesFilter{})
@@ -69,7 +69,7 @@ func (c *gerritClient) Branch(ctx context.Context, fullname string, filters sdk.
 	newBranch := sdk.VCSBranch{
 		ID:           branch.Ref,
 		LatestCommit: branch.Revision,
-		DisplayID:    strings.Replace(branch.Ref, "refs/heads/", "", -1),
+		DisplayID:    strings.Replace(branch.Ref, sdk.GitRefBranchPrefix, "", -1),
 		Default:      false,
 	}
 

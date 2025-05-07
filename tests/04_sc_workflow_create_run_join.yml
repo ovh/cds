@@ -8,12 +8,6 @@ testcases:
   - script: '[ -f ./fixtures/ITSCWRKFLW3/deploy.pip.yml ]'
   - script: '[ -f ./fixtures/ITSCWRKFLW3/root.pip.yml ]'
   - script: '[ -f ./fixtures/ITSCWRKFLW3/tests.pip.yml ]'
-  - script: |-
-      {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
-      if [ $? -ne 0 ]; then
-          {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
-      fi
-
 
 - name: Create workflow ITSCWRKFLW3 and run it
   steps:
@@ -28,7 +22,6 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #1 has been launched"
-  - script: "sleep 1"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 1 --format json"
     assertions:
     - result.code ShouldEqual 0
@@ -38,25 +31,27 @@ testcases:
     - result.systemoutjson.num ShouldEqual 1
     - result.systemoutjson.status ShouldEqual 'Never Built'
     - result.systemoutjson.tags ShouldContainSubstring triggered_by
+    retry: 30
+    delay: 1
   - script:  "{{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW -d '{\"git.branch\": \"master\"}'"
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #2 has been launched"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Building
     - result.systemoutjson.num ShouldContainSubstring 2
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow stop ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2"
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
       - result.code ShouldEqual 0
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
       - result.code ShouldEqual 0
       - result.systemoutjson.status ShouldEqual Stopped

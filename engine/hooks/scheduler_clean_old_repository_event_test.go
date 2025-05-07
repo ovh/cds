@@ -2,10 +2,11 @@ package hooks
 
 import (
 	"context"
+	"testing"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestCleanRepositoryEvent(t *testing.T) {
@@ -13,7 +14,7 @@ func TestCleanRepositoryEvent(t *testing.T) {
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 
-	repo, err := s.Dao.CreateRepository(context.TODO(), "github", "mypvtgithub", "ovh/myrepo")
+	repo, err := s.Dao.CreateRepository(context.TODO(), "mypvtgithub", "ovh/myrepo")
 	require.NoError(t, err)
 
 	require.NoError(t, s.Dao.DeleteAllRepositoryEvent(context.TODO(), repo.VCSServerName, repo.RepositoryName))

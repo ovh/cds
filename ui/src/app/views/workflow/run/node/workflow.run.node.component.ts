@@ -91,7 +91,7 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.nodeRunSubs = this._store.select(WorkflowState.getSelectedNodeRun()).subscribe(nr => {
             let w = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
-            let wr = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
+            let wr = this._store.selectSnapshot(WorkflowState.current).workflowRun;
             if (!w || this.workflowName !== w.name) {
                 return;
             }

@@ -2,10 +2,10 @@ package gitlab
 
 import (
 	"context"
-	"fmt"
+
+	gitlab "github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
-	gitlab "github.com/xanzy/go-gitlab"
 )
 
 func (c *gitlabClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, error) {
@@ -21,16 +21,7 @@ func (c *gitlabClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 	}
 
 	for _, p := range projects {
-		r := sdk.VCSRepo{
-			ID:           fmt.Sprintf("%d", p.ID),
-			Name:         p.NameWithNamespace,
-			Slug:         p.PathWithNamespace,
-			Fullname:     p.PathWithNamespace,
-			URL:          p.WebURL,
-			HTTPCloneURL: p.HTTPURLToRepo,
-			SSHCloneURL:  p.SSHURLToRepo,
-		}
-		repos = append(repos, r)
+		repos = append(repos, c.ToVCSRepo(p))
 	}
 
 	for resp.NextPage != 0 {
@@ -46,16 +37,7 @@ func (c *gitlabClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 		}
 
 		for _, p := range projects {
-			r := sdk.VCSRepo{
-				ID:           fmt.Sprintf("%d", p.ID),
-				Name:         p.NameWithNamespace,
-				Slug:         p.PathWithNamespace,
-				Fullname:     p.PathWithNamespace,
-				URL:          p.WebURL,
-				HTTPCloneURL: p.HTTPURLToRepo,
-				SSHCloneURL:  p.SSHURLToRepo,
-			}
-			repos = append(repos, r)
+			repos = append(repos, c.ToVCSRepo(p))
 		}
 	}
 

@@ -6,6 +6,7 @@ import { PreferencesState } from "app/store/preferences.state";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
 import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { editor } from "monaco-editor";
 
 @Component({
 	selector: 'app-run-hook',
@@ -19,7 +20,6 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 
 	@Input() run: V2WorkflowRun;
 	@Input() hook: string;
-	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
@@ -44,7 +44,8 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 		this.editorOption = {
 			language: 'json',
 			minimap: { enabled: false },
-			readOnly: true
+			readOnly: true,
+			scrollBeyondLastLine: false
 		};
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
@@ -66,8 +67,8 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 		this._cd.markForCheck();
 	}
 
-	clickClose(): void {
-		this.onClose.emit();
+	onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
+		this.editor.layout();
 	}
 
 }

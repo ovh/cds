@@ -47,17 +47,13 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
 
-	r.Handle("/admin/database/migration/delete/{id}", nil, r.DELETE(s.deleteDatabaseMigrationHandler))
-	r.Handle("/admin/database/migration/unlock/{id}", nil, r.POST(s.postDatabaseMigrationUnlockedHandler))
-	r.Handle("/admin/database/migration", nil, r.GET(s.getDatabaseMigrationHandler))
-
-	r.Handle("/admin/database/signature", nil, r.GET(s.getAdminDatabaseSignatureResume))
-	r.Handle("/admin/database/signature/{entity}/roll/{pk}", nil, r.POST(s.postAdminDatabaseSignatureRollEntityByPrimaryKey))
-	r.Handle("/admin/database/signature/{entity}/{signer}", nil, r.GET(s.getAdminDatabaseSignatureTuplesBySigner))
-	r.Handle("/admin/database/encryption", nil, r.GET(s.getAdminDatabaseEncryptedEntities))
-	r.Handle("/admin/database/encryption/{entity}", nil, r.GET(s.getAdminDatabaseEncryptedTuplesByEntity))
-	r.Handle("/admin/database/encryption/{entity}/roll/{pk}", nil, r.POST(s.postAdminDatabaseRollEncryptedEntityByPrimaryKey))
+	r.Handle("/admin/database/migration", nil, r.GET(s.getAdminDatabaseMigrationHandler))
+	r.Handle("/admin/database/migration/delete/{id}", nil, r.DELETE(s.deleteAdminDatabaseMigrationHandler))
+	r.Handle("/admin/database/migration/unlock/{id}", nil, r.POST(s.postAdminDatabaseMigrationUnlockHandler))
+	r.Handle("/admin/database/entity", nil, r.GET(s.getAdminDatabaseEntityList))
+	r.Handle("/admin/database/entity/{entity}", nil, r.GET(s.getAdminDatabaseEntity))
+	r.Handle("/admin/database/entity/{entity}/info", nil, r.POST(s.postAdminDatabaseEntityInfo))
+	r.Handle("/admin/database/entity/{entity}/roll", nil, r.POST(s.postAdminDatabaseEntityRoll))
 
 	r.Handle("/admin/backend/{id}/resync/{type}", nil, r.POST(s.postAdminResyncBackendWithDatabaseHandler))
-
 }

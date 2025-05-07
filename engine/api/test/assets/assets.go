@@ -17,8 +17,10 @@ import (
 
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
 	"github.com/ovh/cds/engine/api/organization"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/worker_v2"
+	"github.com/ovh/cds/sdk/cdsclient"
 	sdkhatch "github.com/ovh/cds/sdk/hatchery"
 
 	"github.com/go-gorp/gorp"
@@ -61,6 +63,46 @@ projects:
 	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
 }
 
+func InsertRBAcRegion(t *testing.T, db gorpmapper.SqlExecutorWithTx, org, regionName, role string, user sdk.AuthentifiedUser) {
+	reg, err := region.LoadRegionByName(context.TODO(), db, regionName)
+	require.NoError(t, err)
+
+	orga, err := organization.LoadOrganizationByName(context.TODO(), db, org)
+	require.NoError(t, err)
+
+	perm := fmt.Sprintf(`name: perm-%s-region-%s
+regions:
+  - role: %s
+    region: %s
+    organization: [%s]
+    users: [%s]
+`, role, reg.Name, role, reg.Name, orga.Name, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.Regions[0].RegionID = reg.ID
+	rb.Regions[0].RBACOrganizationIDs = []string{orga.ID}
+	rb.Regions[0].RBACUsersIDs = []string{user.ID}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
+func InsertRBAcVariableSet(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string, vsName string, user sdk.AuthentifiedUser) {
+	perm := fmt.Sprintf(`name: perm-%s-variablesets-%s
+variablesets:
+  - role: %s
+    project: %s
+    variablesets: [%s]
+    users: [%s]
+`, role, projKey, role, projKey, vsName, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.VariableSets[0].ProjectKey = projKey
+	rb.VariableSets[0].RBACVariableSetNames = []string{vsName}
+	rb.VariableSets[0].RBACUsersIDs = []string{user.ID}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
 func InsertRBAcProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string, user sdk.AuthentifiedUser) {
 	perm := fmt.Sprintf(`name: perm-%s-project-%s
 projects:
@@ -73,6 +115,21 @@ projects:
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
 	rb.Projects[0].RBACProjectKeys = []string{projKey}
 	rb.Projects[0].RBACUsersIDs = []string{user.ID}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
+func InsertRBAcWorkflow(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey, workflow string, user sdk.AuthentifiedUser) {
+	perm := fmt.Sprintf(`name: perm-%s-workflow-%s
+workflows:
+  - role: %s
+    project: %s
+    workflows: [%s]
+    users: [%s]
+`, role, projKey, role, projKey, workflow, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.Workflows[0].RBACUsersIDs = []string{user.ID}
 	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
 }
 
@@ -475,11 +532,15 @@ func NewRequest(t *testing.T, method, uri string, i interface{}) *http.Request {
 }
 
 // NewJWTAuthentifiedRequest prepare a request
-func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}) *http.Request {
+func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}, mods ...cdsclient.RequestModifier) *http.Request {
 	req := NewRequest(t, method, uri, i)
 
 	auth := "Bearer " + jwt
 	req.Header.Add("Authorization", auth)
+
+	for _, m := range mods {
+		m(req)
+	}
 
 	return req
 }

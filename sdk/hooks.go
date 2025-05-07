@@ -5,24 +5,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
+	"github.com/ovh/cds/sdk/glob"
 	"github.com/rockbears/log"
 
 	"database/sql/driver"
 )
 
 type HookListWorkflowRequest struct {
-	HookEventUUID       string           `json:"hook_event_uuid"`
-	VCSName             string           `json:"vcs_name"`
-	RepositoryName      string           `json:"repository_name"`
-	Ref                 string           `json:"ref"`
-	Sha                 string           `json:"sha"`
-	Paths               []string         `json:"paths"`
-	RepositoryEventName string           `json:"repository_event"`
-	RepositoryEventType string           `json:"repository_event_type"`
-	AnayzedProjectKeys  StringSlice      `json:"project_keys"`
-	Models              []EntityFullName `json:"models"`
-	Workflows           []EntityFullName `json:"workflows"`
+	HookEventUUID       string                `json:"hook_event_uuid"`
+	VCSName             string                `json:"vcs_name"`
+	RepositoryName      string                `json:"repository_name"`
+	Ref                 string                `json:"ref"`
+	PullRequestRefTo    string                `json:"pullrequest_ref_to"`
+	Sha                 string                `json:"sha"`
+	Paths               []string              `json:"paths"`
+	RepositoryEventName WorkflowHookEventName `json:"repository_event"`
+	RepositoryEventType WorkflowHookEventType `json:"repository_event_type"`
+	AnalyzedProjectKeys StringSlice           `json:"project_keys"`
+	Models              []EntityFullName      `json:"models"`
+	Workflows           []EntityFullName      `json:"workflows"`
+	SkippedWorkflows    []EntityFullName      `json:"skipped_workflows"`
+	SkippedHooks        []V2WorkflowHook      `json:"skipped_hooks"`
 }
 
 func IsValidHookPath(ctx context.Context, configuredPaths []string, paths []string) bool {
@@ -56,17 +61,14 @@ func IsValidHookRefs(ctx context.Context, configuredRefs []string, currentEventR
 	if len(configuredRefs) == 0 {
 		return true
 	}
-	for _, b := range configuredRefs {
-		regexpB, err := regexp.Compile(b)
-		if err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-			continue
-		}
-		if regexpB.MatchString(currentEventRef) {
-			return true
-		}
+	fullPattern := strings.Join(configuredRefs, " ")
+	g := glob.New(fullPattern)
+	result, err := g.MatchString(currentEventRef)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return false
 	}
-	return false
+	return result != nil
 }
 
 type HookAccessData struct {

@@ -1,6 +1,6 @@
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -24,7 +24,7 @@ import { ActionComponent } from './action.component';
 import { ActionEvent } from './action.event.model';
 import { StepEvent } from './step/step.event';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {ActionAsCodeService, ConfigService, EntityService} from 'app/service/services.module';
+import { ActionAsCodeService, ConfigService, EntityService } from 'app/service/services.module';
 
 describe('CDS: Action Component', () => {
 
@@ -47,14 +47,15 @@ describe('CDS: Action Component', () => {
                 UserService,
                 AuthenticationService,
                 ActionAsCodeService,
-                ConfigService
+                ConfigService,
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
             imports: [
                 BrowserAnimationsModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule
+                TranslateModule.forRoot()
             ]
         }).compileComponents();
     });

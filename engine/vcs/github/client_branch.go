@@ -85,7 +85,7 @@ func (g *githubClient) Branches(ctx context.Context, fullname string, filters sd
 	for _, b := range branches {
 		branch := sdk.VCSBranch{
 			DisplayID:    b.Name,
-			ID:           b.Name,
+			ID:           "refs/heads/" + b.Name,
 			LatestCommit: b.Commit.Sha,
 			Default:      b.Name == repo.DefaultBranch,
 		}
@@ -166,7 +166,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.
 
 	branchResult := &sdk.VCSBranch{
 		DisplayID:    branch.Name,
-		ID:           branch.Name,
+		ID:           "refs/heads/" + branch.Name,
 		LatestCommit: branch.Commit.Sha,
 		Default:      branch.Name == repo.DefaultBranch,
 	}

@@ -59,7 +59,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     ) {
         super();
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        this.editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -70,7 +70,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     ngOnInit(): void {
         this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
-            if (n && !this._store.selectSnapshot(WorkflowState).hook) {
+            if (n && !this._store.selectSnapshot(WorkflowState.current).hook) {
                 this.editableNode = cloneDeep(n);
                 delete this.editableHook;
                 if (!this.editableNode.context) {

@@ -15,12 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-	"github.com/ovh/symmecrypt/keyloader"
-
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
+	"github.com/ovh/symmecrypt/keyloader"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -62,7 +61,7 @@ func TestPostUploadHandler(t *testing.T) {
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"refis_buffer": {
-				Redis: &storage.RedisBufferConfiguration{
+				Redis: &sdk.RedisConf{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
 					DbIndex:  0,
@@ -193,7 +192,7 @@ func TestPostUploadHandler(t *testing.T) {
 	require.Equal(t, 202, rec.Code)
 	require.True(t, gock.IsDone())
 
-	its, err := item.LoadAll(ctx, s.Mapper, db, 1, gorpmapper.GetOptions.WithDecryption)
+	its, err := item.LoadAll(ctx, s.Mapper, db, 1, gorpmapper.GetAllOptions.WithDecryption)
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(its))
@@ -273,7 +272,7 @@ func TestPostUploadHandler_WorkflowV2(t *testing.T) {
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"refis_buffer": {
-				Redis: &storage.RedisBufferConfiguration{
+				Redis: &sdk.RedisConf{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
 					DbIndex:  0,

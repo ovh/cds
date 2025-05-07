@@ -7,7 +7,6 @@ import (
 	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -71,13 +70,12 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 
 	// Load the event
 	var hre sdk.HookRepositoryEvent
-	eventKey := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(callback.VCSServerName, callback.RepositoryName), callback.HookEventUUID)
-	find, err := s.Cache.Get(eventKey, &hre)
+	find, err := s.Cache.Get(callback.HookEventKey, &hre)
 	if err != nil {
-		return sdk.WrapError(err, "unable to get hook event %s", eventKey)
+		return sdk.WrapError(err, "unable to get hook event %s", callback.HookEventKey)
 	}
 	if !find {
-		log.Info(ctx, "repository hook %s does not exist anymore", eventKey)
+		log.Info(ctx, "repository hook %s does not exist anymore", callback.HookEventKey)
 		return nil
 	}
 
@@ -92,6 +90,11 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 						a.Error = callback.AnalysisCallback.Error
 						hre.ModelUpdated = append(hre.ModelUpdated, callback.AnalysisCallback.Models...)
 						hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.AnalysisCallback.Workflows...)
+						hre.DeprecatedUserID = callback.AnalysisCallback.Initiator.UserID
+						hre.DeprecatedUsername = callback.AnalysisCallback.Initiator.Username()
+						hre.Initiator = callback.AnalysisCallback.Initiator
+						hre.SkippedWorkflows = append(hre.SkippedWorkflows, callback.AnalysisCallback.SkippedWorkflows...)
+						hre.SkippedHooks = append(hre.SkippedHooks, callback.AnalysisCallback.SkippedHooks...)
 						if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 							return err
 						}
@@ -103,25 +106,10 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			return sdk.Errorf("missing analysis callback data")
 		}
 
-	case sdk.HookEventStatusSignKey:
+	case sdk.HookEventStatusSignKey, sdk.HookEventStatusGitInfo:
 		if callback.SigningKeyCallback != nil {
-			hre.SemverCurrent = callback.SigningKeyCallback.SemverCurrent
-			hre.SemverNext = callback.SigningKeyCallback.SemverNext
-			hre.SigningKeyOperationStatus = callback.SigningKeyCallback.Status
-
-			if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
-				// event on error commit unverified
-				hre.Status = sdk.HookEventStatusSkipped
-				hre.LastError = callback.SigningKeyCallback.Error
-				hre.NbErrors++
-				log.Error(ctx, "unable to verify commit for event %s: %s", callback.HookEventUUID, hre.LastError)
-			} else if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error == "" {
-				// commit verified
-				hre.SignKey = callback.SigningKeyCallback.SignKey
-			} else if callback.SigningKeyCallback.Error != "" {
-				hre.LastError = "Unable to get signing key: " + callback.SigningKeyCallback.Error
-				hre.NbErrors++
-				hre.Status = sdk.HookEventStatusError
+			if err := s.manageRepositoryOperationCallback(ctx, *callback.SigningKeyCallback, &hre); err != nil {
+				return err
 			}
 		} else {
 			return sdk.Errorf("missing analysis callback data")
@@ -134,8 +122,15 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 		return err
 	}
 
-	if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
-		return err
+	// if hre is in error or skipped, remove it from in progress list
+	if (&hre).IsTerminated() {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
+			return err
+		}
+	} else {
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
+			return err
+		}
 	}
 	return nil
 }

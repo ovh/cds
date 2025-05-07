@@ -82,12 +82,8 @@ type Configuration struct {
 	} `toml:"secrets" json:"secrets"`
 	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache    struct {
-		TTL   int `toml:"ttl" default:"60" json:"ttl"`
-		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379" json:"host"`
-			Password string `toml:"password" json:"-"`
-			DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
-		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
+		TTL   int           `toml:"ttl" default:"60" json:"ttl"`
+		Redis sdk.RedisConf `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################" json:"cache"`
 	Download struct {
 		Directory          string   `toml:"directory" default:"/var/lib/cds-engine" json:"directory" comment:"this directory contains cds binaries. If it's empty, cds will download binaries from GitHub (property downloadFromGitHub) or from an artifactory instance (property artifactory) to it"`
@@ -233,7 +229,7 @@ type Configuration struct {
 	Help struct {
 		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
-	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
+	} `toml:"help" comment:"######################\n 'Help' information \n######################" json:"help"`
 	Workflow struct {
 		MaxRuns                         int64            `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
 		DefaultRetentionPolicy          string           `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
@@ -245,10 +241,20 @@ type Configuration struct {
 		WorkerModelDockerImageWhiteList []string         `toml:"workerModelDockerImageWhiteList" comment:"White list for docker image worker model " json:"workerModelDockerImageWhiteList" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	WorkflowV2 struct {
-		JobSchedulingTimeout int64 `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
+		JobWaitingTimeout          int64  `toml:"jobWaitingTimeout" comment:"Timeout delay for waiting job (in seconds)" json:"jobWaitingTimeout" default:"3600"`
+		JobSchedulingTimeout       int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
+		JobSchedulingMaxErrors     int64  `toml:"jobSchedulingMaxErrors" comment:"Number of scheduling error before failing the job" json:"jobSchedulingMaxErrors" default:"5"`
+		RunRetentionScheduling     int64  `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"15"`
+		WorkflowRunRetention       int64  `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
+		WorkflowRunMaxRetention    int64  `toml:"workflowRunMaxRetention" comment:"Workflow run max retention in days" json:"workflowRunMaxRetention" default:"1095"`
+		LibraryProjectKey          string `toml:"libraryProjectKey" comment:"Library project key" json:"libraryProjectKey" commented:"true"`
+		VersionRetentionScheduling int64  `toml:"versionRetentionScheduling" comment:"Time in minute between 2 run of the workflow version purge" json:"versionRetentionScheduling" default:"60"`
+		VersionRetention           int64  `toml:"versionRetention" comment:"Number of Workflow version CDS keep" json:"versionRetention" commented:"true"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Entity struct {
-		Retention string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+		RoutineDelay      int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
+		Retention         string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+		AnalysisRetention int64  `toml:"analysisRetention" comment:"Number of analysis to keep" json:"analysisRetention" commented:"true" default:"250"`
 	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
 	Project struct {
 		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
@@ -310,7 +316,9 @@ type API struct {
 	StartupTime         time.Time
 	Maintenance         bool
 	WSBroker            *websocket.Broker
+	WSV2Broker          *websocket.Broker
 	WSServer            *websocketServer
+	WSV2Server          *websocketV2Server
 	WSHatcheryBroker    *websocket.Broker
 	WSHatcheryServer    *websocketHatcheryServer
 	Cache               cache.Store
@@ -324,6 +332,7 @@ type API struct {
 		nbGroups                   *stats.Int64Measure
 		nbPipelines                *stats.Int64Measure
 		nbWorkflows                *stats.Int64Measure
+		nbWorkflowsAsCodeV2        *stats.Int64Measure
 		nbArtifacts                *stats.Int64Measure
 		nbWorkerModels             *stats.Int64Measure
 		nbWorkflowRuns             *stats.Int64Measure
@@ -499,12 +508,37 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.StartupTime = time.Now()
 
+	if a.Config.WorkflowV2.JobSchedulingMaxErrors <= 0 {
+		a.Config.WorkflowV2.JobSchedulingMaxErrors = 5
+	}
+	if a.Config.Entity.RoutineDelay == 0 {
+		a.Config.Entity.RoutineDelay = 15
+	}
 	if a.Config.Entity.Retention == "" {
 		a.Config.Entity.Retention = "24h"
+	}
+	if a.Config.Entity.AnalysisRetention <= 0 {
+		a.Config.Entity.AnalysisRetention = 250
+	}
+	if a.Config.WorkflowV2.VersionRetentionScheduling == 0 {
+		a.Config.WorkflowV2.VersionRetentionScheduling = 60
+	}
+	if a.Config.WorkflowV2.VersionRetention == 0 {
+		a.Config.WorkflowV2.VersionRetention = 25
 	}
 	entityRetention, err := time.ParseDuration(a.Config.Entity.Retention)
 	if err != nil {
 		return sdk.WrapError(err, "wrong entity retention %s, bad format.", a.Config.Entity.Retention)
+	}
+	if a.Config.WorkflowV2.RunRetentionScheduling == 0 {
+		a.Config.WorkflowV2.RunRetentionScheduling = 15
+	}
+
+	if a.Config.WorkflowV2.WorkflowRunRetention <= 0 {
+		a.Config.WorkflowV2.WorkflowRunRetention = 90
+	}
+	if a.Config.WorkflowV2.WorkflowRunMaxRetention <= 0 {
+		a.Config.WorkflowV2.WorkflowRunMaxRetention = 1095
 	}
 
 	// Checking downloadable binaries
@@ -610,9 +644,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info(ctx, "Setting up database keys...")
-	encryptionKeyConfig := a.Config.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
+	encryptionKeyConfig := a.Config.Database.EncryptionKey.GetKeys(gorpmapper.KeyEncryptionIdentifier)
 	signatureKeyConfig := a.Config.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
-	if err := gorpmapping.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
+	if err := gorpmapping.ConfigureKeys(signatureKeyConfig, encryptionKeyConfig); err != nil {
 		return fmt.Errorf("cannot setup database keys: %v", err)
 	}
 
@@ -622,9 +656,7 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info(ctx, "Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	// Init the cache
 	a.Cache, err = cache.New(
-		a.Config.Cache.Redis.Host,
-		a.Config.Cache.Redis.Password,
-		a.Config.Cache.Redis.DbIndex,
+		a.Config.Cache.Redis,
 		a.Config.Cache.TTL)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to cache store")
@@ -689,6 +721,18 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(ctx, sdk.Migration{Name: "MigrateHeadEntity", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateHeadEntity(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunSignature", Release: "0.53.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateRunSignatureWithoutContext(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateHookSignature", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateWorkflowHookSignatureWithoutData(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateAllProjectGPGKeys", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateAllProjectGPGKeys(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateHeadCommit", Release: "0.55.1", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateHeadCommit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
+	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
 	if err != nil {
@@ -725,6 +769,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
+		return err
+	}
+	if err := a.initWebsocketV2(event_v2.EventUIWS); err != nil {
 		return err
 	}
 	if err := a.initHatcheryWebsocket(event_v2.EventHatcheryWS); err != nil {
@@ -919,6 +966,9 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.StopDeadJobs", func(ctx context.Context) {
 		a.StopDeadJobs(ctx)
 	})
+	a.GoRoutines.RunWithRestart(ctx, "api.StopUnStartedJobs", func(ctx context.Context) {
+		a.StopUnstartedJobs(ctx)
+	})
 	a.GoRoutines.RunWithRestart(ctx, "api.TriggerBlockedWorkflowRuns", func(ctx context.Context) {
 		a.TriggerBlockedWorkflowRuns(ctx)
 	})
@@ -936,7 +986,10 @@ func (a *API) Serve(ctx context.Context) error {
 		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, a.Cache, 5*time.Second)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "project.CleanAsCodeEntities", func(ctx context.Context) {
-		a.cleanProjectEntities(ctx, 1*time.Minute, entityRetention)
+		a.cleanProjectEntities(ctx, entityRetention)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "project.CleanWorkflowVersion", func(ctx context.Context) {
+		a.cleanWorkflowVersion(ctx)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "worker.DeleteDisabledWorkers", func(ctx context.Context) {
@@ -1022,6 +1075,10 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.Run(ctx, "Purge-Workflow",
 		func(ctx context.Context) {
 			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
+		})
+	a.GoRoutines.Run(ctx, "Purge-Runs-V2",
+		func(ctx context.Context) {
+			purge.WorkflowRunsV2(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Config.WorkflowV2.RunRetentionScheduling)
 		})
 
 	// Check maintenance on redis

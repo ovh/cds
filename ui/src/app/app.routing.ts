@@ -3,6 +3,8 @@ import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { AppModule } from 'app/app.module';
 import { APIConfigGuard } from './guard/api-config.guard';
 import { AuthenticationGuard } from './guard/authentication.guard';
+import { SearchComponent } from './views/search/search.component';
+import { HomeComponent } from './views/home/home.component';
 
 const routes: Routes = [
     {
@@ -10,19 +12,18 @@ const routes: Routes = [
         canActivateChild: [AuthenticationGuard, APIConfigGuard],
         children: [
             {
-                path: '', redirectTo: 'project/list/all', pathMatch: 'full'
+                path: '',
+                component: HomeComponent,
+                data: { title: 'Home' }
             },
             {
-                path: 'favorite', loadChildren: () => import('app/views/favorite/favorite.module')
-                    .then(m => m.FavoriteModule), data: { title: 'Bookmarks' }
+                path: 'search',
+                component: SearchComponent,
+                data: { title: 'Search' }
             },
             {
                 path: 'project', loadChildren: () => import('app/views/project/project.module')
                     .then(m => m.ProjectModule), data: { title: 'Project' }
-            },
-            {
-                path: 'projectv2', loadChildren: () => import('app/views/projectv2/project.module')
-                    .then(m => m.ProjectV2Module), data: { title: 'Project' }
             },
             {
                 path: 'settings', loadChildren: () => import('app/views/settings/settings.module')

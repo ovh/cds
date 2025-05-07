@@ -64,7 +64,7 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 
 		encryptedValue, erre := project.EncryptWithBuiltinKey(ctx, api.mustDB(), p.ID, variable.Name, variable.Value)
 		if erre != nil {
-			return sdk.WrapError(erre, "unable to encrypte content %s", variable.Name)
+			return sdk.WrapError(erre, "unable to encrypt content %s", variable.Name)
 		}
 
 		variable.Value = encryptedValue

@@ -22,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	loghook "github.com/ovh/cds/sdk/log/hook"
+	loghook "github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 const (
@@ -40,13 +40,16 @@ type logger struct {
 }
 
 type CurrentJobV2 struct {
-	runJob           *sdk.V2WorkflowRunJob
-	runJobContext    sdk.WorkflowRunJobsContext
-	context          context.Context
-	currentStepIndex int
-	currentStepName  string
-	integrations     map[string]sdk.ProjectIntegration // contains integration with clearPassword
-	envFromHooks     map[string]string
+	runJob                 *sdk.V2WorkflowRunJob
+	runJobContext          sdk.WorkflowRunJobsContext
+	context                context.Context
+	currentStepIndexForLog int
+	currentStepNameForLog  string
+	integrations           map[string]sdk.ProjectIntegration // contains integration with clearPassword
+	envFromHooks           map[string]string
+	sensitiveDatas         []string
+	runningStepStatus      sdk.JobStepsStatus
+	subStepName            string
 }
 
 type CurrentWorker struct {
@@ -113,6 +116,22 @@ func (wk *CurrentWorker) Init(cfg *workerruntime.WorkerConfig, workspace afero.F
 	return nil
 }
 
+func (wk *CurrentWorker) SetCurrentStepsStatus(stepStatus sdk.JobStepsStatus) {
+	wk.currentJobV2.runningStepStatus = stepStatus
+}
+
+func (wk *CurrentWorker) GetCurrentStepsStatus() sdk.JobStepsStatus {
+	return wk.currentJobV2.runningStepStatus
+}
+
+func (wk *CurrentWorker) GetSubStepName() string {
+	return wk.currentJobV2.subStepName
+}
+
+func (wk *CurrentWorker) SetSubStepName(name string) {
+	wk.currentJobV2.subStepName = name
+}
+
 func (wk *CurrentWorker) GetJobIdentifiers() (int64, int64, int64) {
 	return wk.currentJob.runID, wk.currentJob.wJob.WorkflowNodeRunID, wk.currentJob.wJob.ID
 }
@@ -174,6 +193,20 @@ func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
 	return signature, sdk.WrapError(err, "cannot sign log message")
 }
 
+func (wk *CurrentWorker) WorkerCacheSignatureV2(cacheKey string) (*workerruntime.CDNSignature, error) {
+	sig := cdn.Signature{
+		ProjectKey: wk.currentJobV2.runJob.ProjectKey,
+		RunJobID:   wk.currentJobV2.runJob.ID,
+		Worker: &cdn.SignatureWorker{
+			WorkerID:   wk.id,
+			WorkerName: wk.Name(),
+			CacheTag:   cacheKey,
+		},
+	}
+	signature, err := jws.Sign(wk.signer, sig)
+	return &workerruntime.CDNSignature{Signature: signature, CDNAddress: wk.CDNHttpURL()}, sdk.WrapError(err, "cannot sign worker cache")
+}
+
 func (wk *CurrentWorker) GetActionPlugin(pluginName string) *sdk.GRPCPlugin {
 	return wk.actionPlugin[pluginName]
 }
@@ -224,6 +257,11 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 	if isReadinessServices, _ := workerruntime.IsReadinessServices(ctx); isReadinessServices {
 		log.Info(ctx, msg.Value)
 		return
+	}
+
+	switch level {
+	case workerruntime.LevelError:
+		msg.Value = ErrColor + msg.Value + NoColor
 	}
 
 	wk.gelfLogger.logger.
@@ -360,7 +398,7 @@ func (wk *CurrentWorker) Environ() []string {
 		newEnv = append(newEnv, e)
 	}
 
-	newEnv = append(newEnv, "CDS_KEY=********") //We have to let it here for some legacy reason
+	newEnv = append(newEnv, "CDS_KEY=********") // We have to let it here for some legacy reason
 	newEnv = append(newEnv, fmt.Sprintf("%s=%d", WorkerServerPort, wk.HTTPPort()))
 	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSApiUrl, wk.cfg.APIEndpoint))
 	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSCDNUrl, wk.cfg.CDNEndpoint))
@@ -389,7 +427,7 @@ func (wk *CurrentWorker) Environ() []string {
 			newEnv = append(newEnv, "BASEDIR="+wk.cfg.Basedir)
 		}
 
-		//set up environment variables from pipeline build job parameters
+		// set up environment variables from pipeline build job parameters
 		for _, p := range wk.currentJob.params {
 			// avoid put private key in environment var as it's a binary value
 			if strings.HasPrefix(p.Name, "cds.key.") && strings.HasSuffix(p.Name, ".priv") {
@@ -411,7 +449,7 @@ func (wk *CurrentWorker) Environ() []string {
 			newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, sdk.OneLineValue(p.Value)))
 		}
 
-		//Set env variables from hooks
+		// Set env variables from hooks
 		for k, v := range wk.currentJob.envFromHooks {
 			newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
 		}
@@ -454,4 +492,11 @@ func (wk *CurrentWorker) SetSecrets(secrets []sdk.Variable) error {
 	wk.blur = b
 
 	return nil
+}
+
+type ActionPostJob struct {
+	ContinueOnError bool
+	PluginName      string
+	Inputs          map[string]interface{}
+	StepName        string
 }

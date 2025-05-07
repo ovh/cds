@@ -9,9 +9,8 @@ import (
 )
 
 const (
-	LABEL_HATCHERY_NAME     = "CDS_HATCHERY_NAME"
-	LABEL_WORKER_NAME       = "CDS_WORKER_NAME"
-	LABEL_WORKER_MODEL_PATH = "CDS_WORKER_MODEL_PATH"
+	LABEL_HATCHERY_NAME = "CDS_HATCHERY_NAME"
+	LABEL_WORKER_NAME   = "CDS_WORKER_NAME"
 )
 
 var containerServiceNameRegexp = regexp.MustCompile(`service-([0-9]+)-(.*)`)

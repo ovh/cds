@@ -34,9 +34,11 @@ func (p *rtReleasePlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionpl
 	}, nil
 }
 
-// Run implements actionplugin.ActionPluginServer.
-func (p *rtReleasePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *rtReleasePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
@@ -48,10 +50,14 @@ func (p *rtReleasePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) 
 	if err := p.perform(ctx, artifacts, maturity, properties, releaseNotes); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
 	}
 
-	return res, nil
+	return stream.Send(res)
+}
+
+// Run implements actionplugin.ActionPluginServer.
+func (p *rtReleasePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 func (p *rtReleasePlugin) perform(ctx context.Context, artifacts string, maturity string, properties string, releaseNotes string) (err error) {
@@ -81,7 +87,7 @@ func (p *rtReleasePlugin) perform(ctx context.Context, artifacts string, maturit
 		}
 	}
 
-	grpcplugins.Logf("Total number of artifacts that will be released: %d", len(results.RunResults))
+	grpcplugins.Logf(&p.Common, "Total number of artifacts that will be released: %d", len(results.RunResults))
 
 	if err := artifactorypluginslib.ReleaseArtifactoryRunResult(ctx, &p.Common, results.RunResults, maturity, props, releaseNotes); err != nil {
 		return err

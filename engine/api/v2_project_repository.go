@@ -74,7 +74,7 @@ func (api *API) getProjectRepositoryEventHandler() ([]service.RbacChecker, servi
 			var repositoryEvent sdk.HookRepositoryEvent
 			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvent)
 			if (errHooks != nil || code >= 400) && code != 404 {
-				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
+				return sdk.WrapError(errHooks, "unable to get repository event [HTTP: %d]", code)
 			}
 			return service.WriteJSON(w, repositoryEvent, http.StatusOK)
 		}
@@ -116,7 +116,7 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 			var repositoryEvents []sdk.HookRepositoryEvent
 			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
 			if (errHooks != nil || code >= 400) && code != 404 {
-				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
+				return sdk.WrapError(errHooks, "unable to list repository event [HTTP: %d]", code)
 			}
 			return service.WriteJSON(w, repositoryEvents, http.StatusOK)
 		}
@@ -282,7 +282,11 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				ref:           defaultBranch.ID,
 				commit:        defaultBranch.LatestCommit,
 				hookEventUUID: "",
-				user:          u.AuthConsumerUser.AuthentifiedUser,
+				initiator: &sdk.V2Initiator{
+					UserID:         u.AuthConsumerUser.AuthentifiedUser.ID,
+					User:           u.AuthConsumerUser.AuthentifiedUser.Initiator(),
+					IsAdminWithMFA: isAdmin(ctx),
+				},
 			}
 			a, err := api.createAnalyze(ctx, tx, createAnalysis)
 			if err != nil {
@@ -291,6 +295,20 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
+			}
+
+			// Clean events
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+			if err != nil {
+				return err
+			}
+			if len(srvs) < 1 {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
+			}
+			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProjectWithSecret.Name, url.PathEscape(repoDB.Name))
+			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodDelete, path, nil, nil)
+			if (errHooks != nil || code >= 400) && code != 404 {
+				return sdk.WrapError(errHooks, "unable to delete repository events [HTTP: %d]", code)
 			}
 
 			event_v2.PublishRepositoryEvent(ctx, api.Cache, sdk.EventRepositoryCreated, pKey, vcsProjectWithSecret.Name, repoDB, *u.AuthConsumerUser.AuthentifiedUser)
@@ -348,20 +366,71 @@ func (api *API) getProjectRepositoryBranchesHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
+			var repoName string
+			if sdk.IsValidUUID(repositoryIdentifier) {
+				repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+				if err != nil {
+					return err
+				}
+				repoName = repo.Name
+			} else {
+				repoName = repositoryIdentifier
 			}
 
 			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
 			if err != nil {
 				return err
 			}
-			branches, err := client.Branches(ctx, repo.Name, sdk.VCSBranchesFilter{Limit: int64(limit)})
+
+			branches, err := client.Branches(ctx, repoName, sdk.VCSBranchesFilter{Limit: int64(limit)})
 			if err != nil {
 				return err
 			}
 
 			return service.WriteJSON(w, branches, http.StatusOK)
+		}
+}
+
+func (api *API) getProjectRepositoryTagsHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			var repoName string
+			if sdk.IsValidUUID(repositoryIdentifier) {
+				repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+				if err != nil {
+					return err
+				}
+				repoName = repo.Name
+			} else {
+				repoName = repositoryIdentifier
+			}
+
+			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
+			if err != nil {
+				return err
+			}
+
+			tags, err := client.Tags(ctx, repoName)
+			if err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, tags, http.StatusOK)
 		}
 }

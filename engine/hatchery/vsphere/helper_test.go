@@ -3,8 +3,8 @@ package vsphere
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/hatchery/vsphere/mock_vsphere"
+	"go.uber.org/mock/gomock"
 )
 
 func NewVSphereClientTest(t *testing.T) *mock_vsphere.MockVSphereClient {

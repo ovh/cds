@@ -7,7 +7,7 @@ import (
 // Pipeline represents the complete behavior of CDS for each projects
 type Pipeline struct {
 	ID             int64         `json:"id" yaml:"-" db:"id"`
-	Name           string        `json:"name" cli:"name,key" db:"name"`
+	Name           string        `json:"name" cli:"name,key" db:"name" action_metadata:"pipeline-key"`
 	Description    string        `json:"description" cli:"description" db:"description"`
 	ProjectKey     string        `json:"projectKey" db:"projectKey"`
 	ProjectID      int64         `json:"-" db:"project_id"`

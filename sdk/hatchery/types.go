@@ -182,6 +182,11 @@ type InterfaceWithModels interface {
 	WorkerModelSecretList(sdk.Model) (sdk.WorkerModelSecrets, error)
 }
 
+type InterfaceWithDetaultWorkerModelV2 interface {
+	Interface
+	GetDetaultModelV2Name(ctx context.Context, requirements []sdk.Requirement) string
+}
+
 type JobIdentifiers struct {
 	JobIdentifiersV1 JobIdentifiersV1
 	JobIdentifiersV2 JobIdentifiersV2

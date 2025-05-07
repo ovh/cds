@@ -6,6 +6,7 @@ import (
 	"time"
 
 	types "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
@@ -86,7 +87,7 @@ func (h *HatcherySwarm) Status(ctx context.Context) *sdk.MonitoringStatus {
 		m.AddLine(sdk.MonitoringStatusLine{Component: "Images-" + dockerName, Value: fmt.Sprintf("%d", len(images)), Status: status})
 		//Check containers
 		status = sdk.MonitoringStatusOK
-		cs, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
+		cs, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
 			log.Warn(ctx, "hatchery> swarm> %s> Status> Unable to list containers on %s: %s", h.Name(), dockerName, err)
 			status = sdk.MonitoringStatusWarn

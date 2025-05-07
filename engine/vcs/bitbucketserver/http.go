@@ -23,6 +23,10 @@ var (
 	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
 )
 
+type Options struct {
+	DisableCache bool
+}
+
 func (b *bitbucketClient) getFullAPIURL(api string) string {
 	var url string
 	switch api {
@@ -34,12 +38,14 @@ func (b *bitbucketClient) getFullAPIURL(api string) string {
 		url = fmt.Sprintf("%s/rest/api/1.0", b.consumer.URL)
 	case "build-status":
 		url = fmt.Sprintf("%s/rest/build-status/1.0", b.consumer.URL)
+	case "insights":
+		url = fmt.Sprintf("%s/rest/insights/1.0", b.consumer.URL)
 	}
 
 	return url
 }
 
-func (b *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}) error {
+func (b *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}, opts Options) error {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.do_http")
 	defer end()
 
@@ -91,7 +97,7 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	if v != nil && method == "GET" {
+	if v != nil && method == "GET" && !opts.DisableCache {
 		find, err := b.consumer.cache.Get(cacheKey, v)
 		if err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)

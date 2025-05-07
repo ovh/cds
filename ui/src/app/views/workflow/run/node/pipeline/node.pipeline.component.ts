@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { CDNLine, CDNStreamFilter, PipelineStatus } from 'app/model/pipeline.model';
+import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
@@ -9,13 +9,14 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workflow-run-job.component';
-import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
+import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration.service';
+import { CDNLine, CDNStreamFilter } from 'app/model/cdn.model';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -64,8 +65,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         private _workflowService: WorkflowService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.workflowName = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow.name;
-        this.workflowRunNum = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.num;
+        this.workflowName = this._store.selectSnapshot(WorkflowState.current).workflowRun.workflow.name;
+        this.workflowRunNum = this._store.selectSnapshot(WorkflowState.current).workflowRun.num;
     }
 
     ngOnInit() {
@@ -92,7 +93,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             this.currentNodeJobRun = cloneDeep(rj);
             // Start websocket if job is not finished
             if (!PipelineStatus.isDone(this.currentNodeJobRun.status)) {
-                this.startStreamingLogsForJob().then(() => {});
+                this.startStreamingLogsForJob().then(() => { });
             }
 
             this._cd.markForCheck();
@@ -190,7 +191,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     refreshNodeRun(data: WorkflowNodeRun): boolean {
         let refresh = false;
-        let currentNodeJobRun = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeJobRun;
+        let currentNodeJobRun = this._store.selectSnapshot(WorkflowState.current).workflowNodeJobRun;
 
         if (this.currentNodeRunStatus !== data.status) {
             this.currentNodeRunStatus = data.status;

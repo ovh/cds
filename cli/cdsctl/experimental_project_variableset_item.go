@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var projectVariableSetItemCmd = cli.Command{
@@ -23,6 +25,9 @@ func projectVariableSetItem() *cobra.Command {
 		cli.NewCommand(projectVariableSetItemCreateCmd, projectVariableSetItemCreateFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableSetItemUpdateCmd, projectVariableSetItemUpdateFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectVariableSetItemShowCmd, projectVariableSetItemShowFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableSetItemFromProjectCmd, projectVariableSetItemFromProjectFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableSetItemFromAsCodeCmd, projectVariableSetItemFromAsCodeFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableSetItemFromApplicationIntegrationCmd, projectVariableSetItemFromApplicationIntegrationFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -79,6 +84,49 @@ func projectVariableSetItemDeleteFunc(v cli.Values) error {
 	return client.ProjectVariableSetItemDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("variableset-name"), v.GetString("item-name"))
 }
 
+var projectVariableSetItemFromProjectCmd = cli.Command{
+	Name:    "from-project",
+	Aliases: []string{"fp"},
+	Short:   "Copy a project variable to the given variable set",
+	Example: "cdsctl X project variableset item from-project PROJECT_KEY VARIABLE_NAME MY-VARIABLESET-NAME --rename NEW_NAME",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "variable-name"},
+		{Name: "variableset-name"},
+	},
+	Flags: []cli.Flag{
+		{
+			Name:  "rename",
+			Type:  cli.FlagString,
+			Usage: "New name for the variable",
+		},
+		{
+			Name:  "force",
+			Type:  cli.FlagBool,
+			Usage: "Create the variable set if it not exists",
+		},
+	},
+}
+
+func projectVariableSetItemFromProjectFunc(v cli.Values) error {
+	varName := v.GetString("variable-name")
+	vsName := v.GetString("variableset-name")
+	rename := v.GetString("rename")
+	force := strconv.FormatBool(v.GetBool("force"))
+
+	copyRequest := sdk.CopyProjectVariableToVariableSet{
+		VariableName:    varName,
+		VariableSetName: vsName,
+		NewName:         rename,
+	}
+	if copyRequest.NewName == "" {
+		copyRequest.NewName = varName
+	}
+	return client.ProjectVariableSetItemFromProjectVariable(context.Background(), v.GetString(_ProjectKey), copyRequest, cdsclient.WithQueryParameter("force", force))
+}
+
 var projectVariableSetItemCreateCmd = cli.Command{
 	Name:    "add",
 	Aliases: []string{"create"},
@@ -97,7 +145,7 @@ var projectVariableSetItemCreateCmd = cli.Command{
 		{
 			Name:  "force",
 			Type:  cli.FlagBool,
-			Usage: "create the variable set if it not exists",
+			Usage: "create the variable set if it does not exists",
 		},
 	},
 }
@@ -152,4 +200,66 @@ func projectVariableSetItemUpdateFunc(v cli.Values) error {
 		Value: v.GetString("item-value"),
 	}
 	return client.ProjectVariableSetItemUpdate(context.Background(), v.GetString(_ProjectKey), v.GetString("variableset-name"), &item)
+}
+
+var projectVariableSetItemFromAsCodeCmd = cli.Command{
+	Name:    "from-ascode",
+	Aliases: []string{"fas"},
+	Short:   "Copy an ascode secret to the given variable set",
+	Example: "cdsctl X project variableset item from-project PROJECT_KEY MY-VARIABLESET-NAME MY-VARIABLESET-ITEM --ascode <ASCODE_IDENTIFIER>",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "variableset-name"},
+		{Name: "variableset-item-name"},
+		{Name: "ascode-token"},
+	},
+}
+
+func projectVariableSetItemFromAsCodeFunc(v cli.Values) error {
+	itemName := v.GetString("variableset-item-name")
+	vsName := v.GetString("variableset-name")
+	ascode := v.GetString("ascode-token")
+
+	copyRequest := sdk.CopyAsCodeSecretToVariableSet{
+		VariableSetItemName: itemName,
+		VariableSetName:     vsName,
+		AsCodeIdentifier:    ascode,
+	}
+	return client.ProjectVariableSetItemFromAsCodeSecret(context.Background(), v.GetString(_ProjectKey), copyRequest)
+}
+
+var projectVariableSetItemFromApplicationIntegrationCmd = cli.Command{
+	Name:    "from-app-integration",
+	Aliases: []string{"fai"},
+	Short:   "Copy an ascode secret to the given variable set",
+	Example: "cdsctl X project variableset item from-app-integration PROJECT_KEY MY-VARIABLESET-NAME MY-VARIABLESET-ITEM APPLICATION_NAME INTEGRATION_NAME VAR_NAME",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "variableset-name"},
+		{Name: "variableset-item-name"},
+		{Name: "application-name"},
+		{Name: "integration-name"},
+		{Name: "variable-name"},
+	},
+}
+
+func projectVariableSetItemFromApplicationIntegrationFunc(v cli.Values) error {
+	itemName := v.GetString("variableset-item-name")
+	vsName := v.GetString("variableset-name")
+	app := v.GetString("application-name")
+	integration := v.GetString("integration-name")
+	varName := v.GetString("variable-name")
+
+	copyRequest := sdk.CopyApplicationIntegrationVariableToVariableSet{
+		VariableSetItemName: itemName,
+		VariableSetName:     vsName,
+		ApplicationName:     app,
+		IntegrationName:     integration,
+		VariableName:        varName,
+	}
+	return client.ProjectVariableSetItemFromApplicationIntegrationVariable(context.Background(), v.GetString(_ProjectKey), copyRequest)
 }

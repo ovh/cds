@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -12,21 +14,28 @@ import (
 )
 
 func CmdOutput() *cobra.Command {
-	var stepFlag bool
 	c := &cobra.Command{
 		Use:     "output",
 		Aliases: []string{"export"},
 		Short:   "worker output <output_name> <output_value>",
 		Long:    `Inside a job, create an output available through the jobs and steps contexts`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 2 {
+			var value string
+			if len(args) == 1 {
+				stdin, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					sdk.Exit("Error reading stdin: %v", err)
+				}
+				value = string(stdin)
+			} else if len(args) == 2 {
+				value = args[1]
+			} else {
 				sdk.Exit("wrong number of arguments. Need 2, Got [%d]", len(args))
 			}
 
 			outputRequest := workerruntime.OutputRequest{
-				Name:     args[0],
-				Value:    args[1],
-				StepOnly: stepFlag,
+				Name:  args[0],
+				Value: value,
 			}
 			req := MustNewWorkerHTTPRequest(http.MethodPost, "/v2/output", outputRequest)
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -37,6 +46,5 @@ func CmdOutput() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().BoolVar(&stepFlag, "step", false, "create an output only for the next job steps, available through the steps context")
 	return c
 }

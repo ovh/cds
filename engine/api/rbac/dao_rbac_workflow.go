@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -10,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -74,9 +76,36 @@ func getAllRBACWorkflows(ctx context.Context, db gorp.SqlExecutor, q gorpmapping
 	return worflowsFiltered, nil
 }
 
-func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, workflowName string) (bool, error) {
+func HasRoleOnWorkflowAndVCSUsername(ctx context.Context, db gorp.SqlExecutor, role string, VCSUser sdk.RBACVCSUser, projectKey string, vcs, repo, workflowName string) (bool, error) {
+	workflowNamePerm := fmt.Sprintf("%s/%s/%s", vcs, repo, workflowName)
+
+	workflows, allWorkflowAllowed, err := LoadAllWorkflowsAllowedForVCSUSer(ctx, db, role, projectKey, VCSUser)
+	if err != nil {
+		return false, err
+	}
+	log.Info(ctx, "HasRoleOnWorkflowAndVCSUsername> granted workflows for %s/%s: %+v , allWorkflowAllowed=%v", VCSUser.VCSServer, VCSUser.VCSUsername, workflows, allWorkflowAllowed)
+
+	if allWorkflowAllowed {
+		return true, nil
+	}
+	for _, item := range workflows {
+		g := glob.New(item)
+		r, err := g.MatchString(workflowNamePerm)
+		if err != nil {
+			return false, err
+		}
+		if r != nil {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, vcs, repo, workflowName string) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnWorkflowAndUserID")
 	defer next()
+
+	workflowNamePerm := fmt.Sprintf("%s/%s/%s", vcs, repo, workflowName)
 
 	workflows, allWorkflowAllowed, err := LoadAllWorkflowsAllowed(ctx, db, role, projectKey, userID)
 	if err != nil {
@@ -85,7 +114,50 @@ func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role s
 	if allWorkflowAllowed {
 		return true, nil
 	}
-	return sdk.IsInArray(workflowName, workflows), nil
+	for _, item := range workflows {
+		g := glob.New(item)
+		r, err := g.MatchString(workflowNamePerm)
+		if err != nil {
+			return false, err
+		}
+		if r != nil {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func LoadAllWorkflowsAllowedForVCSUSer(ctx context.Context, db gorp.SqlExecutor, role string, projectKey string, user sdk.RBACVCSUser) (sdk.StringSlice, bool, error) {
+	workflows := sdk.StringSlice{}
+
+	rbacWorkflows, err := loadRBACWorkflowsByProjectAndRole(ctx, db, projectKey, role)
+	if err != nil {
+		return nil, false, err
+	}
+
+	for _, rw := range rbacWorkflows {
+		if rw.AllUsers {
+			if rw.AllWorkflows {
+				return nil, true, nil
+			}
+			workflows = append(workflows, rw.RBACWorkflowsNames...)
+			continue
+		}
+		for _, rbacVCSUser := range rw.RBACVCSUsers {
+			log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> checking %s/%s against %s/%s", user.VCSServer, user.VCSUsername, rbacVCSUser.VCSServer, rbacVCSUser.VCSUsername)
+			if rbacVCSUser.VCSServer == user.VCSServer && rbacVCSUser.VCSUsername == user.VCSUsername {
+				if rw.AllWorkflows {
+					log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on all workflows of project %s", rbacVCSUser.VCSServer, rbacVCSUser.VCSUsername, projectKey)
+					return nil, true, nil
+				}
+				log.Info(ctx, "LoadAllWorkflowsAllowedForVCSUSer> %s/%s is allowed on workflows %+v of project %s", rbacVCSUser.VCSServer, rbacVCSUser.VCSUsername, rw.RBACWorkflowsNames, projectKey)
+				workflows = append(workflows, rw.RBACWorkflowsNames...)
+				break
+			}
+		}
+	}
+
+	return workflows, false, nil
 }
 
 func LoadAllWorkflowsAllowed(ctx context.Context, db gorp.SqlExecutor, role string, projectKey string, userID string) (sdk.StringSlice, bool, error) {

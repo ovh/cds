@@ -125,7 +125,7 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 		}, nil
 
 	case string(sdk.KeyTypePGP):
-		tmpFileName, content, err := sdk.ImportGPGKey("", key.Name, key.Value)
+		tmpFileName, content, err := sdk.ImportGPGKey("", key.Name, []byte(key.Value))
 		if err != nil {
 			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, err)
 		}

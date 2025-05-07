@@ -3,8 +3,6 @@ package github
 import (
 	"context"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/rockbears/log"
 
@@ -74,16 +72,7 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {
-		r := sdk.VCSRepo{
-			ID:           strconv.Itoa(repo.ID),
-			Name:         repo.Name,
-			Slug:         strings.Split(repo.FullName, "/")[0],
-			Fullname:     repo.FullName,
-			URL:          repo.HTMLURL,
-			HTTPCloneURL: repo.CloneURL,
-			SSHCloneURL:  repo.SSHURL,
-		}
-		responseRepos = append(responseRepos, r)
+		responseRepos = append(responseRepos, g.ToVCSRepo(repo))
 	}
 
 	return responseRepos, nil

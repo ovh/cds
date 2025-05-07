@@ -91,7 +91,7 @@ func LoadVariableSetByName(ctx context.Context, db gorp.SqlExecutor, projectKey 
 }
 
 func LoadVariableSetsByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVariableSet, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM project_variable_set WHERE project_key = $1").Args(projectKey)
+	query := gorpmapping.NewQuery("SELECT * FROM project_variable_set WHERE project_key = $1 ORDER BY name").Args(projectKey)
 	return getAllVariableSets(ctx, db, query)
 }
 
@@ -131,9 +131,9 @@ func LoadVariableSetItemWithType(ctx context.Context, db gorp.SqlExecutor, varia
 	}
 }
 
-func LoadVariableSetAllItem(ctx context.Context, db gorp.SqlExecutor, variableSetID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.ProjectVariableSetItem, error) {
+func LoadVariableSetAllItem(ctx context.Context, db gorp.SqlExecutor, variableSetID string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.ProjectVariableSetItem, error) {
 	items := make([]sdk.ProjectVariableSetItem, 0)
-	query := gorpmapping.NewQuery("SELECT * FROM project_variable_set_text WHERE project_variable_set_id = $1").Args(variableSetID)
+	query := gorpmapping.NewQuery("SELECT * FROM project_variable_set_text WHERE project_variable_set_id = $1 ORDER BY name").Args(variableSetID)
 	itemsText, err := getAllVariableSetItemsText(ctx, db, query)
 	if err != nil {
 		return nil, err

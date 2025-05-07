@@ -37,7 +37,7 @@ runs:
 
 
 * <span style="color:red">*</span>`name`: The name of your workflow
-* `descrption`: information about the action
+* `description`: information about the action
 * `inputs`: action inputs
     * `inputs.description`
     * `required`: indicates if the inputs is mandatory

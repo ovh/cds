@@ -31,8 +31,8 @@ testcases:
 - name: check workflow is running
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWTEMPLATERUN testtemplate 1 --format json
-    retry: 20
-    delay: 10
+    retry: 200
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty

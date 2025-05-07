@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (g *giteaClient) ListContent(_ context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
+func (g *giteaClient) ListContent(_ context.Context, repo string, commit, dir string, _, _ string) ([]sdk.VCSContent, error) {
 	owner, repoName, err := getRepo(repo)
 	if err != nil {
 		return nil, err

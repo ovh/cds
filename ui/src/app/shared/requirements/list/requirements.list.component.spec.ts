@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -13,13 +13,13 @@ import { SharedModule } from '../../shared.module';
 import { RequirementEvent } from '../requirement.event.model';
 import { RequirementsListComponent } from './requirements.list.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CDS: Requirement List Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 TranslateParser,
                 RequirementService,
@@ -27,20 +27,21 @@ describe('CDS: Requirement List Component', () => {
                 RequirementStore,
                 WorkerModelService,
                 TranslateLoader,
-                { provide: APP_BASE_HREF, useValue : '/' }
+                { provide: APP_BASE_HREF, useValue: '/' },
+                provideHttpClient(withInterceptorsFromDi()),
+                provideHttpClientTesting()
             ],
-            imports : [
+            imports: [
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
-                BrowserAnimationsModule,
-                HttpClientTestingModule
+                BrowserAnimationsModule
             ]
         }).compileComponents();
     });
 
 
-    it('should load component + delete requirement', fakeAsync(  () => {
+    it('should load component + delete requirement', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let mock = ['binary'];
 

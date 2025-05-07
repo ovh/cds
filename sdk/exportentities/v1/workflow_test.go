@@ -862,7 +862,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				expectedValue := expectedValues[expectedKey]
 				actualValue, ok := actualValues[expectedKey]
 				if strings.Contains(expectedKey, ".Ref") {
-					assert.NotEmpty(t, actualValue, "value %s is empty but shoud not be empty", expectedKey)
+					assert.NotEmpty(t, actualValue, "value %s is empty but should not be empty", expectedKey)
 				} else {
 					assert.True(t, ok, "%s not found", expectedKey)
 					assert.Equal(t, expectedValue, actualValue, "value %s doesn't match. Got %s but want %s", expectedKey, actualValue, expectedValue)

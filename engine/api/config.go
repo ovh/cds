@@ -29,7 +29,7 @@ func (api *API) configVCSGerritHandler() service.Handler {
 
 		vcsGerritConfigurationServers := make(map[string]sdk.VCSGerritConfiguration)
 
-		vcsGerritProjects, err := vcs.LoadAllVCSGerrit(ctx, api.mustDB(), gorpmapping.GetOptions.WithDecryption)
+		vcsGerritProjects, err := vcs.LoadAllVCSGerrit(ctx, api.mustDB(), gorpmapping.GetAllOptions.WithDecryption)
 		if err != nil {
 			return err
 		}

@@ -103,7 +103,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 			// heartbeat
 			heartbeatKey := cache.Key(keyJobHearbeat, queueIdentifier)
 			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
-				err = sdk.WrapError(err, "unable to hearbeat %s", heartbeatKey)
+				err = sdk.WrapError(err, "unable to heartbeat %s", heartbeatKey)
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, err.Error())
 				continue

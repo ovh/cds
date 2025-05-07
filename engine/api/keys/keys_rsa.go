@@ -43,7 +43,7 @@ func generateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err erro
 	return pubkey, privb, err
 }
 
-//getSSHPrivateKey returns the RSA private key
+// getSSHPrivateKey returns the RSA private key
 func getSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
 	privBytes, errr := io.ReadAll(r)
 	if errr != nil {
@@ -66,7 +66,7 @@ func getSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
 	return key, nil
 }
 
-//getSSHPublicKey returns the public key from a private key
+// getSSHPublicKey returns the public key from a private key
 func getSSHPublicKey(name string, privateKey *rsa.PrivateKey) (io.Reader, error) {
 	// generate and write public key
 	pubkey, err := ssh.NewPublicKey(&privateKey.PublicKey)

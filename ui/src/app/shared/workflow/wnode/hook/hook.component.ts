@@ -138,7 +138,7 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
     }
 
     deleteHook() {
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        let editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
         this._cd.markForCheck();
         this._store.dispatch(new DeleteHookWorkflow({
             projectKey: this.projectKey,

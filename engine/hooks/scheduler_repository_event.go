@@ -71,6 +71,11 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 	if !find {
 		return nil
 	}
+
+	if hre.Initiator == nil && hre.DeprecatedUserID != "" {
+		hre.Initiator = &sdk.V2Initiator{UserID: hre.DeprecatedUserID}
+	}
+
 	ctx = context.WithValue(ctx, cdslog.HookEventID, hre.UUID)
 	ctx = context.WithValue(ctx, cdslog.VCSServer, hre.VCSServerName)
 	ctx = context.WithValue(ctx, cdslog.Repository, hre.RepositoryName)
@@ -112,7 +117,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 			return sdk.WrapError(err, "norepo > unable to save repository event: %s", hre.GetFullName())
 		}
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			return sdk.WrapError(err, "norepo > unable to remove event %s from inprogress list", hre.GetFullName())
 		}
 		return nil
@@ -125,7 +130,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 			return sdk.WrapError(err, "stopped > unable to save repository event %s", hre.GetFullName())
 		}
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			return sdk.WrapError(err, "stopped > unable to remove event %s from inprogress list", hre.GetFullName())
 		}
 		return nil
@@ -136,13 +141,14 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 			return sdk.WrapError(err, "maxerror > unable to save repository event %s", hre.GetFullName())
 		}
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			return sdk.WrapError(err, "maxerror > unable to remove event %s from inprogress list", hre.GetFullName())
 		}
 		return nil
 	}
 
 	if err := s.executeEvent(ctx, &hre); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		log.Warn(ctx, "dequeueRepositoryEvent> %s failed err[%d]: %v", hre.GetFullName(), hre.NbErrors, err)
 		hre.LastError = err.Error()
 		hre.NbErrors++
@@ -159,6 +165,13 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
 	ctx, next := telemetry.Span(ctx, "s.executeEvent")
 	defer next()
+	defer func() {
+		if hre.EventName != sdk.WorkflowHookEventNameWorkflowRun {
+			if err := s.pushInsightReport(ctx, hre); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+		}
+	}()
 
 	switch hre.Status {
 	// Start processing event
@@ -166,40 +179,64 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		hre.ProcessingTimestamp = time.Now().UnixNano()
 		hre.LastError = ""
 		hre.NbErrors = 0
-		if hre.EventName == sdk.RepoEventPush || hre.EventName == sdk.WorkflowHookManual {
+		switch hre.EventName {
+		case sdk.WorkflowHookEventNamePush, sdk.WorkflowHookEventNameManual:
 			// analyze have to be trigger only on push event
 			hre.Status = sdk.HookEventStatusAnalysis
 			if err := s.triggerAnalyses(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to trigger analyses")
 			}
-		} else {
+		// For PR event, waiting exisiting analysis before searching for hooks
+		case sdk.WorkflowHookEventNamePullRequest:
+			// Check push analysis to be completed
+			hre.Status = sdk.HookEventStatusCheckAnalysis
+			if err := s.triggerCheckAnalyses(ctx, hre); err != nil {
+				return sdk.WrapError(err, "unable to check analyses")
+			}
+		case sdk.WorkflowHookEventNameWorkflowRun:
+			hre.Status = sdk.HookEventStatusSignKey
+			if err := s.triggerGetSigningKey(ctx, hre); err != nil {
+				return sdk.WrapError(err, "unable to trigger get gitinfo")
+			}
+		default:
+			// Retrieve workflow to trigger
 			hre.Status = sdk.HookEventStatusWorkflowHooks
-			if err := s.triggerWorkflowHooks(ctx, hre); err != nil {
+			if err := s.triggerGetWorkflowHooks(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to trigger workflow hooks")
 			}
 		}
-
 		// Check if all analysis are ended
 	case sdk.HookEventStatusAnalysis:
 		if err := s.triggerAnalyses(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger analyses")
 		}
-		// Check if all workflow triggered has been sent
+	case sdk.HookEventStatusCheckAnalysis:
+		if err := s.triggerCheckAnalyses(ctx, hre); err != nil {
+			return sdk.WrapError(err, "unable to check analyses")
+		}
+		// Retrieve workflow hooks
 	case sdk.HookEventStatusWorkflowHooks:
-		if err := s.triggerWorkflowHooks(ctx, hre); err != nil {
+		if err := s.triggerGetWorkflowHooks(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger workflow hooks")
 		}
+		// Retrieve signing key if we don't have it
 	case sdk.HookEventStatusSignKey:
 		if err := s.triggerGetSigningKey(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to get signing key")
 		}
+		// Compute git info ( semver )
+	case sdk.HookEventStatusGitInfo:
+		if err := s.triggerGetGitInfo(ctx, hre); err != nil {
+			return sdk.WrapError(err, "unable to get get info")
+		}
+		// Trigger workflows
 	case sdk.HookEventStatusWorkflow:
 		if err := s.triggerWorkflows(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger workflow")
 		}
 	case sdk.HookEventStatusDone, sdk.HookEventStatusSkipped, sdk.HookEventStatusError:
 		// Remove event from inprogressList
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 			log.Error(ctx, "executeEvent >unable to remove event %s from inprogress list: %v", hre.UUID, err)
 		}
 	}

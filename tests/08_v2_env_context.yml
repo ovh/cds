@@ -13,6 +13,17 @@ testcases:
           from: result.systemoutjson.username
     - name: "Display username"
       info: "Connected CDS user is {{.cdsUser}}"
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+
     - type: v2_create_project
       cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
       cds_project: "{{.cds_project}}"
@@ -20,6 +31,7 @@ testcases:
       git_user: "{{.git.user}}"
       git_password: "{{.git.password}}"
       cds_region: "{{.cds.region}}"
+      git_emailAddress: "{{.emailaddress}}"
 
     - type: v2_add_git_repo
       cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
@@ -36,19 +48,11 @@ testcases:
     - name: Create variable set item secret multiline line
       script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 myMultilineSecret \"secretMultiline1 \n secretMultiline2\" secret" 
 
-    - type: v2_install_gpg_key
-      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-      gpg_key_id: "{{.gpg.key_id}}"
-      git_host: "{{.git.host}}"
-      git_user: "{{.git.user}}"
-      git_password: "{{.git.password}}"
-      vars:
-        emailaddress:
-          from: result.emailaddress
 
+      
 - name: Push workflow file
   steps:
-    - type: v2_push_files_on_repo
+    - type: v2_push_cds_files_on_repo
       git_repo: "{{.git_repo}}"
       git_host: "{{.git.host}}"
       git_user: "{{.git.user}}"
@@ -102,36 +106,45 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
 
     - name: Check that the CDS workflow has at least one execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
       vars:
-        runIdentifier:
+        workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
-    - name: Download logs
-      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}
-
-    - name: Check workflowEnv log content
-      script: "cat {{.cds_workflow}}-1-1-init-workflowEnv | grep \"barWorkflow\""
-    - name: Check jobEnv log content
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-jobEnv | grep \"barJob\""
-    - name: Check stepEnv log content
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-stepEnv | grep \"barStep\""
-    - name: Check globEnv log content
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-globEnv | grep \"{{.cds_workflow}}\""
-    - name: Check stringVar log content
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-stringVar && cat {{.cds_workflow}}-1-1-overrideEnv-stringVar | grep \"value\""  
-    - name: Check secretVar log content
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-secretVar && cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep \"**********\""
-    - name: Check multiline secret
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-varset1 && cat {{.cds_workflow}}-1-1-overrideEnv-varset1 | grep \"**********\""   
-    - name: Check git context    
-      script: 'cat {{.cds_workflow}}-1-1-overrideEnv-env && cat {{.cds_workflow}}-1-1-overrideEnv-env | grep "GIT_SSH_PRIVATE=**********"'
+    - name: Get run info
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"
+    - name: Get job info
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        ls -l
+        # Check workflowEnv log content
+        cat {{.cds_workflow}}-1-1-init-workflowEnv | grep "barWorkflow"
+        # Check jobEnv log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-jobEnv | grep "barJob"
+        # Check stepEnv log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-stepEnv | grep "barStep"
+        # Check globEnv log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-globEnv | grep "{{.cds_workflow}}"
+        # Check stringVar log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-stringVar && cat {{.cds_workflow}}-1-1-overrideEnv-stringVar | grep "value"
+        # Check secretVar log content
+        cat {{.cds_workflow}}-1-1-overrideEnv-secretVar && cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep "**********"
+        # Check multiline secret
+        cat {{.cds_workflow}}-1-1-overrideEnv-varset1 && cat {{.cds_workflow}}-1-1-overrideEnv-varset1 | grep "**********"
+      retry: 60
+      delay: 1

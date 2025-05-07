@@ -1,21 +1,19 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { GroupPermission } from 'app/model/group.model';
 import { LoadOpts, Project } from 'app/model/project.model';
 import { HelpersService } from 'app/service/helpers/helpers.service';
-import { ProjectStore } from 'app/service/services.module';
+import { RouterService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { FetchProject } from 'app/store/project.action';
+import { ProjectState } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { filter, finalize } from 'rxjs/operators';
-import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
-import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-show',
@@ -31,8 +29,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     projectSubscriber: Subscription;
     groupsOutsideOrganization: Array<GroupPermission>;
 
-    ascodeEnabled: boolean = false;
-
     tabs: Array<Tab>;
     selectedTab: Tab;
 
@@ -44,71 +40,34 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     loadingFav = false;
 
     constructor(
-        private _route: ActivatedRoute,
+        private _activatedRoute: ActivatedRoute,
         private _toast: ToastService,
         public _translate: TranslateService,
         private _helpersService: HelpersService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
-        private _projectStore: ProjectStore,
-        private _featureService: FeatureService
+        private _routerService: RouterService,
+        private _router: Router
     ) {
-        this.projectSubscriber = this._store.select(ProjectState)
-            .pipe(filter((projState: ProjectStateModel) => projState && projState.project &&
-                projState.project.key !== null && !projState.project.externalChange &&
-                this._route.snapshot.params['key'] === projState.project.key))
-            .subscribe((projState: ProjectStateModel) => {
-                let proj = cloneDeep(projState.project); // TODO: to delete when all will be in store, here it is usefull to skip readonly
+        this.projectSubscriber = this._store.select(ProjectState.projectSnapshot)
+            .pipe(filter((p: Project) => p &&
+                p.key !== null && !p.externalChange &&
+                this._activatedRoute.snapshot.parent.params['key'] === p.key))
+            .subscribe((p: Project) => {
+                let proj = cloneDeep(p); // TODO: to delete when all will be in store, here it is usefull to skip readonly
                 if (proj.labels) {
                     proj.labels = proj.labels.map((lbl) => {
                         lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
                         return lbl;
                     });
                 }
-                if (!this.project || this.project.key !== proj?.key) {
-                    let data = { 'project_key': proj.key }
-                    this._featureService.isEnabled(FeatureNames.AllAsCode, data).subscribe(f => {
-                        this.ascodeEnabled = f.enabled;
-                        this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
-                            key: f.name,
-                            result: {
-                                paramString: JSON.stringify(data),
-                                enabled: f.enabled,
-                                exists: f.exists
-                            }
-                        }));
-                        this.initTabs();
-                    });
-                }
                 this.project = proj;
-                this._projectStore.updateRecentProject(this.project);
                 this.initTabs();
-                if (this.project.integrations) {
-                    this.project.integrations.forEach(integ => {
-                        if (!integ.model.default_config) {
-                            return;
-                        }
-                        let keys = Object.keys(integ.model.default_config);
-                        if (keys) {
-                            keys.forEach(k => {
-                                if (!integ.config) {
-                                    integ.config = {};
-                                }
-                                if (!integ.config[k]) {
-                                    integ.config[k] = integ.model.default_config[k];
-                                }
-                            });
-                        }
-                    });
-                }
-
 
                 if (!!this.project.organization) {
                     this.groupsOutsideOrganization = this.project.groups.filter(gp =>
                         gp.group.organization && gp.group.organization !== this.project.organization);
                 }
-
-
 
                 this._cd.markForCheck();
             });
@@ -119,8 +78,9 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     ngOnInit() {
         this.initTabs();
 
-        this._route.params.subscribe(routeParams => {
-            const key = routeParams['key'];
+        this._activatedRoute.params.subscribe(_ => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            const key = params['key'];
             if (key) {
                 if (this.project && this.project.key !== key) {
                     this.project = undefined;
@@ -132,11 +92,11 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
             }
         });
 
-        if (this._route.snapshot && this._route.snapshot.queryParams) {
-            this.workflowName = this._route.snapshot.queryParams['workflow'];
-            this.workflowNum = this._route.snapshot.queryParams['run'];
-            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
-            this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
+        if (this._activatedRoute.snapshot && this._activatedRoute.snapshot.queryParams) {
+            this.workflowName = this._activatedRoute.snapshot.queryParams['workflow'];
+            this.workflowNum = this._activatedRoute.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._activatedRoute.snapshot.queryParams['node'];
+            this.workflowPipeline = this._activatedRoute.snapshot.queryParams['wpipeline'];
         }
     }
 
@@ -171,34 +131,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
             key: 'permissions',
             iconTheme: 'outline',
             icon: 'user-switch',
-        }, <Tab>{
-            title: 'Keys',
-            icon: 'lock',
-            iconTheme: 'outline',
-            key: 'keys'
-        }, <Tab>{
-            title: 'Integrations',
-            icon: 'usb',
-            iconTheme: 'outline',
-            key: 'integrations'
         }];
-        if (this.ascodeEnabled) {
-            this.tabs.push(<Tab>{
-                title: 'AsCode',
-                icon: 'code',
-                iconTheme: 'outline',
-                link: ['/', 'projectv2', this.project.key],
-                key: 'ascode',
-            })
-        }
-        if (this.project?.permissions?.writable) {
-            this.tabs.push(<Tab>{
-                title: 'Advanced',
-                icon: 'setting',
-                iconTheme: 'fill',
-                key: 'advanced'
-            })
-        }
     }
 
     ngAfterViewInit(): void {
@@ -227,15 +160,5 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     refreshDatas(key: string): void {
         let opts = [new LoadOpts('withLabels', 'labels')];
         this._store.dispatch(new FetchProject({ projectKey: key, opts }));
-    }
-
-    updateFav() {
-        this.loadingFav = true;
-        this._store.dispatch(new UpdateFavoriteProject({ projectKey: this.project.key }))
-            .pipe(finalize(() => {
-                this.loadingFav = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')));
     }
 }

@@ -110,6 +110,9 @@ func (c *client) WorkflowRunSearch(projectKey string, offset, limit int64, filte
 	if limit == 0 {
 		limit = 50
 	}
+	if limit > 100 {
+		limit = 100
+	}
 
 	path := fmt.Sprintf("/project/%s/runs?offset=%d&limit=%d", projectKey, offset, limit)
 	for _, f := range filters {
@@ -136,6 +139,9 @@ func (c *client) WorkflowRunList(projectKey string, workflowName string, offset,
 	}
 	if limit == 0 {
 		limit = 50
+	}
+	if limit > 100 {
+		limit = 100
 	}
 
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs?offset=%d&limit=%d", projectKey, workflowName, offset, limit)

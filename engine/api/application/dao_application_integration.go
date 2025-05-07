@@ -25,8 +25,9 @@ type dbApplicationDeploymentStrategy struct {
 }
 
 func (e dbApplicationDeploymentStrategy) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{e.ProjectIntegrationID, e.ApplicationID}
+	var _ = []interface{}{e.ID, e.ProjectIntegrationID, e.ApplicationID}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ID}}{{printf .ProjectIntegrationID}}{{printf .ApplicationID}}",
 		"{{print .ProjectIntegrationID}}{{print .ApplicationID}}",
 	}
 }
@@ -55,7 +56,7 @@ func LoadDeploymentStrategies(ctx context.Context, db gorp.SqlExecutor, appID in
   `).Args(appID)
 
 	var res []dbApplicationDeploymentStrategy
-	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetAllOptions.WithDecryption); err != nil {
 		return nil, sdk.WrapError(err, "unable to load deployment strategies")
 	}
 
@@ -178,10 +179,10 @@ func SetDeploymentStrategy(db gorpmapper.SqlExecutorWithTx, projID, appID, pfMod
 
 // LoadAllDeploymnentForAppsWithDecryption load all deployments for all given applications, with decryption
 func LoadAllDeploymnentForAppsWithDecryption(ctx context.Context, db gorp.SqlExecutor, appIDs []int64) (map[int64]map[int64]sdk.IntegrationConfig, error) {
-	return loadAllDeploymentsForApps(ctx, db, appIDs, gorpmapping.GetOptions.WithDecryption)
+	return loadAllDeploymentsForApps(ctx, db, appIDs, gorpmapping.GetAllOptions.WithDecryption)
 }
 
-func loadAllDeploymentsForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64]map[int64]sdk.IntegrationConfig, error) {
+func loadAllDeploymentsForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetAllOptionFunc) (map[int64]map[int64]sdk.IntegrationConfig, error) {
 	var res []dbApplicationDeploymentStrategy
 	query := gorpmapping.NewQuery(`
 		SELECT *

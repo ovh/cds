@@ -28,7 +28,8 @@ type V2WorkerModelDockerSpec struct {
 }
 
 type V2WorkerModelOpenstackSpec struct {
-	Image string `json:"image" jsonschema_description:"Name of the openstack image"`
+	Image  string `json:"image" jsonschema_description:"Name of the openstack image"`
+	Flavor string `json:"flavor,omitempty" jsonschema_description:"Default flavor to use"`
 }
 
 type V2WorkerModelVSphereSpec struct {
@@ -45,19 +46,19 @@ func (wm V2WorkerModel) Lint() []error {
 	workerModelSchema := GetWorkerModelJsonSchema()
 	workerModelSchemaS, err := workerModelSchema.MarshalJSON()
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to load worker model schema")}
+		return []error{NewErrorFrom(err, "worker model %s: unable to load worker model schema", wm.Name)}
 	}
 	schemaLoader := gojsonschema.NewStringLoader(string(workerModelSchemaS))
 
 	modelJson, err := json.Marshal(wm)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to marshal worker model")}
+		return []error{NewErrorFrom(err, "worker model %s: unable to marshal worker model", wm.Name)}
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to validate worker model")}
+		return []error{NewErrorFrom(ErrInvalidData, "worker model %s: unable to validate worker model: %v", wm.Name, err.Error())}
 	}
 	if result.Valid() {
 		return nil
@@ -65,7 +66,7 @@ func (wm V2WorkerModel) Lint() []error {
 
 	errors := make([]error, 0, len(result.Errors()))
 	for _, e := range result.Errors() {
-		errors = append(errors, NewErrorFrom(ErrInvalidData, e.String()))
+		errors = append(errors, NewErrorFrom(ErrInvalidData, "worker model %s: yaml validation failed: %s", wm.Name, e.String()))
 	}
 	return errors
 }

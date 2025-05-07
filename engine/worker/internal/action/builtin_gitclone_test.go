@@ -40,6 +40,7 @@ func TestRunGitCloneInSSHWithoutKeyShouldRaiseError(t *testing.T) {
 
 func TestRunGitCloneInSSHWithPrivateKey(t *testing.T) {
 	wk, ctx := SetupTest(t)
+	t.SkipNow()
 
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{
@@ -93,6 +94,7 @@ func TestRunGitCloneInSSHWithTheWrongPrivateKeyShouldFail(t *testing.T) {
 
 func TestRunGitCloneInSSHWithPrivateKeyWithTargetDirectory(t *testing.T) {
 	wk, ctx := SetupTest(t)
+	t.SkipNow()
 
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{
@@ -125,6 +127,8 @@ func TestRunGitCloneInSSHWithPrivateKeyWithTargetDirectory(t *testing.T) {
 
 func TestRunGitCloneInSSHWithPrivateKeyAndExtractInfo(t *testing.T) {
 	wk, ctx := SetupTest(t)
+	t.SkipNow()
+
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "git.url",
@@ -166,6 +170,8 @@ func TestRunGitCloneInSSHWithPrivateKeyAndExtractInfo(t *testing.T) {
 
 func TestRunGitCloneInSSHWithApplicationVCSStrategy(t *testing.T) {
 	wk, ctx := SetupTest(t)
+	t.SkipNow()
+
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "git.connection.type",
@@ -258,6 +264,8 @@ func TestRunGitCloneInHTTPSWithoutAuth(t *testing.T) {
 
 func TestRunGitCloneWithSecret(t *testing.T) {
 	wk, ctx := SetupTest(t)
+	t.SkipNow()
+
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{

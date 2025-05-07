@@ -139,10 +139,24 @@ func CleanURLParameter(u string) string {
 		u = "variable-set-name"
 	case "itemName":
 		u = "item-name"
-	case "runIdentifier":
-		u = "run-identifier"
 	case "eventID":
 		u = "event-id"
+	case "workflowRunID":
+		u = "workflow-run-id"
+	case "jobRunID":
+		u = "job-run-id"
+	case "keyName":
+		u = "key-name"
+	case "insightKey":
+		u = "insight-key"
+	case "cacheKey":
+		u = "cache-key"
+	case "hookID":
+		u = "hook-id"
+	case "keyID":
+		u = "key-id"
+	case "concurrencyName":
+		u = "concurrency-name"
 	}
 	return u
 }

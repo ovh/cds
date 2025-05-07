@@ -18,7 +18,7 @@ func fillPayload(ctx context.Context, pushEvent sdk.VCSPushEvent) map[string]str
 	payload := make(map[string]string)
 	payload["git.author"] = pushEvent.Commit.Author.Name
 	payload["git.author.email"] = pushEvent.Commit.Author.Email
-	payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Branch.DisplayID, "refs/heads/"), "refs/tags/")
+	payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Branch.DisplayID, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix)
 	payload["git.hash"] = pushEvent.Commit.Hash
 	payload["git.hash.short"] = sdk.StringFirstN(pushEvent.Commit.Hash, 7)
 	payload["git.repository"] = pushEvent.Repo
@@ -33,8 +33,8 @@ func fillPayload(ctx context.Context, pushEvent sdk.VCSPushEvent) map[string]str
 	}
 	payload["payload"] = string(payloadStr)
 
-	if strings.HasPrefix(pushEvent.Branch.DisplayID, "refs/tags/") {
-		payload["git.tag"] = strings.TrimPrefix(pushEvent.Branch.DisplayID, "refs/tags/")
+	if strings.HasPrefix(pushEvent.Branch.DisplayID, sdk.GitRefTagPrefix) {
+		payload["git.tag"] = strings.TrimPrefix(pushEvent.Branch.DisplayID, sdk.GitRefTagPrefix)
 	}
 
 	return payload

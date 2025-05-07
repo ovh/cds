@@ -2,16 +2,12 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from 'app/shared/shared.module';
 import { ProjectAddComponent } from './add/project.add.component';
-import { ProjectListComponent } from './list/project.list.component';
 import { projectRouting } from './project.routing';
-import { ProjectAdminComponent } from './show/admin/project.admin.component';
-import { ProjectRepoManagerComponent } from './show/admin/repomanager/list/project.repomanager.list.component';
+import { ProjectRepoManagerListComponent } from './settings/advanced/repomanager/list/project.repomanager.list.component';
 import { ProjectApplicationListComponent } from './show/application/application.list.component';
 import { ProjectEnvironmentListComponent } from './show/environment/environment.list.component';
-import { ProjectIntegrationFormComponent } from './show/integrations/form/integration.form.component';
-import { ProjectIntegrationListComponent } from './show/integrations/list/integration.list.component';
-import { ProjectIntegrationsComponent } from './show/integrations/project.integrations.component';
-import { ProjectKeysComponent } from './show/keys/project.keys.component';
+import { ProjectIntegrationsComponent } from './settings/integrations/project.integrations.component';
+import { ProjectKeysComponent } from './settings/keys/project.keys.component';
 import { ProjectPermissionsComponent } from './show/permission/permission.component';
 import { ProjectPipelinesComponent } from './show/pipeline/pipeline.list.component';
 import { ProjectShowComponent } from './show/project.component';
@@ -20,37 +16,58 @@ import { ProjectWorkflowListBlocsComponent } from './show/workflow/blocs/workflo
 import { ProjectWorkflowListLabelsComponent } from './show/workflow/labels/workflow.list.labels.component';
 import { ProjectWorkflowListLinesComponent } from './show/workflow/lines/workflow.list.lines.component';
 import { ProjectWorkflowListComponent } from './show/workflow/workflow.list.component';
+import { ProjectComponent } from './project.component';
+import { ProjectActivityBarComponent } from './activity-bar/activity-bar.component';
+import { ProjectSettingsComponent } from './settings/settings.component';
+import { ProjectVariableSetsComponent } from './settings/variablesets/variablesets.component';
+import { ProjectVariableSetItemsComponent } from './settings/variablesets/items/variableset.item.component';
+import { ProjectAdvancedComponent } from './settings/advanced/project.advanced.component';
+import { ProjectRepoManagerFormComponent } from './settings/advanced/repomanager/from/project.repomanager.form.component';
+import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from './project.guard';
+import { ProjectConcurrenciesComponent } from './settings/concurrency/concurrencies.components';
+import { ProjectConcurrencyFormComponent } from './settings/concurrency/concurrency.form.component';
+import { ProjectWebhooksComponent } from './settings/webhooks/webhooks.component';
 
 @NgModule({
     declarations: [
+        ProjectActivityBarComponent,
         ProjectAddComponent,
-        ProjectListComponent,
-        ProjectAdminComponent,
+        ProjectAdvancedComponent,
         ProjectApplicationListComponent,
+        ProjectComponent,
+        ProjectConcurrenciesComponent,
+        ProjectConcurrencyFormComponent,
         ProjectEnvironmentListComponent,
-        ProjectKeysComponent,
-        ProjectPipelinesComponent,
-        ProjectVariablesComponent,
-        ProjectPermissionsComponent,
-        ProjectRepoManagerComponent,
-        ProjectShowComponent,
-        ProjectWorkflowListBlocsComponent,
-        ProjectWorkflowListLabelsComponent,
-        ProjectWorkflowListLinesComponent,
-        ProjectWorkflowListComponent,
         ProjectEnvironmentListComponent,
         ProjectIntegrationsComponent,
-        ProjectIntegrationFormComponent,
-        ProjectIntegrationListComponent
+        ProjectKeysComponent,
+        ProjectPermissionsComponent,
+        ProjectPipelinesComponent,
+        ProjectRepoManagerFormComponent,
+        ProjectRepoManagerListComponent,
+        ProjectSettingsComponent,
+        ProjectShowComponent,
+        ProjectVariablesComponent,
+        ProjectVariableSetItemsComponent,
+        ProjectVariableSetsComponent,
+        ProjectWebhooksComponent,
+        ProjectWorkflowListBlocsComponent,
+        ProjectWorkflowListComponent,
+        ProjectWorkflowListLabelsComponent,
+        ProjectWorkflowListLinesComponent
     ],
     imports: [
         SharedModule,
         RouterModule,
-        projectRouting,
+        projectRouting
+    ],
+    providers: [
+        ProjectExistsGuard,
+        ProjectGuard,
+        ProjectV2Guard
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
     ]
 })
-export class ProjectModule {
-}
+export class ProjectModule { }

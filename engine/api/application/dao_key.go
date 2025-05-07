@@ -18,8 +18,9 @@ type dbApplicationKey struct {
 }
 
 func (e dbApplicationKey) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{e.ApplicationID, e.ID, e.Name}
+	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ApplicationID}}{{printf .ID}}{{.Name}}{{.Type}}",
 		"{{print .ApplicationID}}{{print .ID}}{{.Name}}",
 	}
 }
@@ -121,10 +122,10 @@ func loadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ApplicationKey
 
 // LoadAllKeysForAppsWithDecryption load all keys for all given applications, with decryption
 func LoadAllKeysForAppsWithDecryption(ctx context.Context, db gorp.SqlExecutor, appIDs []int64) (map[int64][]sdk.ApplicationKey, error) {
-	return loadAllKeysForApps(ctx, db, appIDs, gorpmapping.GetOptions.WithDecryption)
+	return loadAllKeysForApps(ctx, db, appIDs, gorpmapping.GetAllOptions.WithDecryption)
 }
 
-func loadAllKeysForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ApplicationKey, error) {
+func loadAllKeysForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetAllOptionFunc) (map[int64][]sdk.ApplicationKey, error) {
 	var res []dbApplicationKey
 	query := gorpmapping.NewQuery(`
 		SELECT *

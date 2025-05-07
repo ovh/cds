@@ -1,78 +1,123 @@
 package sdk
 
 import (
+	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
+	"strings"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 )
+
+type V2RunJobConcurrencyScope string
 
 const (
 	GitBranchManualPayload = "git.branch"
 	GitCommitManualPayload = "git.commit"
 	GitTagManualPayload    = "git.tag"
+
+	V2RunConcurrencyScopeProject  V2RunJobConcurrencyScope = "project"
+	V2RunConcurrencyScopeWorkflow V2RunJobConcurrencyScope = "workflow"
 )
 
 type V2WorkflowRunHookRequest struct {
-	HookEventID   string                 `json:"hook_event_id"`
-	UserID        string                 `json:"user_id"`
-	EventName     string                 `json:"event_name"`
-	Ref           string                 `json:"ref,omitempty"`
-	Sha           string                 `json:"sha,omitempty"`
-	Payload       map[string]interface{} `json:"payload"`
-	HookType      string                 `json:"hook_type"`
-	EntityUpdated string                 `json:"entity_updated"`
-	SemverCurrent string                 `json:"semver_current"`
-	SemverNext    string                 `json:"semver_next"`
+	HookEventID        string                 `json:"hook_event_id"`
+	DeprecatedUserID   string                 `json:"user_id"` // Deprecated
+	EventName          WorkflowHookEventName  `json:"event_name"`
+	Ref                string                 `json:"ref,omitempty"`
+	Sha                string                 `json:"sha,omitempty"`
+	PullrequestID      int64                  `json:"pr_id,omitempty"`
+	PullrequestToRef   string                 `json:"pr_to_ref,omitempty"`
+	CommitMessage      string                 `json:"commit_message,omitempty"`
+	Payload            map[string]interface{} `json:"payload"`
+	HookType           string                 `json:"hook_type"`
+	EntityUpdated      string                 `json:"entity_updated"`
+	SemverCurrent      string                 `json:"semver_current"`
+	SemverNext         string                 `json:"semver_next"`
+	ChangeSets         []string               `json:"changesets"`
+	Cron               string                 `json:"cron"`
+	CronTimezone       string                 `json:"cron_timezone"`
+	DeprecatedAdminMFA bool                   `json:"admin_mfa"` // Deprecated
+	WorkflowRun        string                 `json:"workflow_run"`
+	WorkflowRunID      string                 `json:"workflow_run_id"`
+	WebhookID          string                 `json:"webhook_id"`
+	Initiator          *V2Initiator           `json:"initiator"`
 }
 
 type V2WorkflowRun struct {
-	ID           string                 `json:"id" db:"id" cli:"id"`
-	ProjectKey   string                 `json:"project_key" db:"project_key"`
-	VCSServerID  string                 `json:"vcs_server_id" db:"vcs_server_id"`
-	VCSServer    string                 `json:"vcs_server" db:"vcs_server"`
-	RepositoryID string                 `json:"repository_id" db:"repository_id"`
-	Repository   string                 `json:"repository" db:"repository"`
-	WorkflowName string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
-	WorkflowSha  string                 `json:"workflow_sha" db:"workflow_sha"`
-	WorkflowRef  string                 `json:"workflow_ref" db:"workflow_ref"`
-	Status       V2WorkflowRunStatus    `json:"status" db:"status" cli:"status"`
-	RunNumber    int64                  `json:"run_number" db:"run_number" cli:"run_number"`
-	RunAttempt   int64                  `json:"run_attempt" db:"run_attempt"`
-	Started      time.Time              `json:"started" db:"started" cli:"started"`
-	LastModified time.Time              `json:"last_modified" db:"last_modified" cli:"last_modified"`
-	ToDelete     bool                   `json:"to_delete" db:"to_delete"`
-	WorkflowData V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
-	UserID       string                 `json:"user_id" db:"user_id"`
-	Username     string                 `json:"username" db:"username" cli:"username"`
-	Contexts     WorkflowRunContext     `json:"contexts" db:"contexts"`
-	RunEvent     V2WorkflowRunEvent     `json:"event" db:"event"`
-	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
+	ID                 string                 `json:"id" db:"id" cli:"id" action_metadata:"workflow-run-id"`
+	ProjectKey         string                 `json:"project_key" cli:"project_key" db:"project_key" action_metadata:"project-key"`
+	VCSServerID        string                 `json:"vcs_server_id" db:"vcs_server_id"`
+	VCSServer          string                 `json:"vcs_server" db:"vcs_server" action_metadata:"vcs-server"`
+	RepositoryID       string                 `json:"repository_id" db:"repository_id"`
+	Repository         string                 `json:"repository" db:"repository" action_metadata:"repository-identifier"`
+	WorkflowName       string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name" action_metadata:"workflow-name"`
+	WorkflowSha        string                 `json:"workflow_sha" db:"workflow_sha"`
+	WorkflowRef        string                 `json:"workflow_ref" db:"workflow_ref"`
+	Status             V2WorkflowRunStatus    `json:"status" db:"status" cli:"status"`
+	RunNumber          int64                  `json:"run_number" db:"run_number" cli:"run_number" action_metadata:"run-number"`
+	RunAttempt         int64                  `json:"run_attempt" db:"run_attempt"`
+	Started            time.Time              `json:"started" db:"started" cli:"started"`
+	LastModified       time.Time              `json:"last_modified" db:"last_modified" cli:"last_modified"`
+	ToDelete           bool                   `json:"to_delete" db:"to_delete"`
+	WorkflowData       V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
+	DeprecatedUserID   string                 `json:"user_id" db:"user_id"`                                             // Deprecated
+	DeprecatedUsername string                 `json:"username" db:"username" cli:"username" action_metadata:"username"` // Deprecated
+	DeprecatedAdminMFA bool                   `json:"admin_mfa" db:"admin_mfa" cli:"admin_mfa"`                         // Deprecated
+	Contexts           WorkflowRunContext     `json:"contexts" db:"contexts"`
+	RunEvent           V2WorkflowRunEvent     `json:"event" db:"event"`
+	RunJobEvent        V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
+	RetentionDate      time.Time              `json:"retention_date,omitempty" db:"retention_date" cli:"-"`
+	Annotations        WorkflowRunAnnotations `json:"annotations,omitempty" db:"annotations" cli:"-"`
+	Initiator          *V2Initiator           `json:"initiator,omitempty" db:"initiator" cli:"-"`
+	Concurrency        *V2RunConcurrency      `json:"concurrency,omitempty" db:"concurrency" cli:"-"`
 }
 
 type V2WorkflowRunStatus string
 
 const (
-	V2WorkflowRunStatusSkipped  V2WorkflowRunStatus = "Skipped"
-	V2WorkflowRunStatusFail     V2WorkflowRunStatus = "Fail"
-	V2WorkflowRunStatusSuccess  V2WorkflowRunStatus = "Success"
-	V2WorkflowRunStatusStopped  V2WorkflowRunStatus = "Stopped"
-	V2WorkflowRunStatusBuilding V2WorkflowRunStatus = "Building"
-	V2WorkflowRunStatusCrafting V2WorkflowRunStatus = "Crafting"
+	V2WorkflowRunStatusSkipped   V2WorkflowRunStatus = "Skipped"
+	V2WorkflowRunStatusFail      V2WorkflowRunStatus = "Fail"
+	V2WorkflowRunStatusSuccess   V2WorkflowRunStatus = "Success"
+	V2WorkflowRunStatusStopped   V2WorkflowRunStatus = "Stopped"
+	V2WorkflowRunStatusBuilding  V2WorkflowRunStatus = "Building"
+	V2WorkflowRunStatusCrafting  V2WorkflowRunStatus = "Crafting"
+	V2WorkflowRunStatusBlocked   V2WorkflowRunStatus = "Blocked"
+	V2WorkflowRunStatusCancelled V2WorkflowRunStatus = "Cancelled"
 )
 
 func (s V2WorkflowRunStatus) IsTerminated() bool {
 	switch s {
-	case V2WorkflowRunStatusBuilding, V2WorkflowRunStatusCrafting:
+	case V2WorkflowRunStatusBuilding, V2WorkflowRunStatusCrafting, V2WorkflowRunStatusBlocked:
 		return false
 	}
 	return true
+}
+
+type WorkflowRunAnnotations map[string]string
+
+func (m WorkflowRunAnnotations) Value() (driver.Value, error) {
+	if m == nil {
+		return []byte("{}"), nil
+	}
+	j, err := json.Marshal(m)
+	return j, WrapError(err, "cannot marshal WorkflowRunAnnotations")
+}
+
+func (m *WorkflowRunAnnotations) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, m), "cannot unmarshal WorkflowRunAnnotations")
 }
 
 type WorkflowRunContext struct {
@@ -99,14 +144,27 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
-	Jobs         JobsResultContext       `json:"jobs"`
-	Needs        NeedsContext            `json:"needs"`
-	Inputs       map[string]interface{}  `json:"inputs"`
-	Steps        StepsContext            `json:"steps"`
-	Matrix       map[string]string       `json:"matrix"`
-	Integrations *JobIntegrationsContext `json:"integrations,omitempty"`
-	Gate         map[string]interface{}  `json:"gate"`
-	Vars         map[string]interface{}  `json:"vars"`
+	Inputs       map[string]interface{}   `json:"inputs,omitempty"`
+	Jobs         JobsResultContext        `json:"jobs"`
+	Needs        NeedsContext             `json:"needs"`
+	Steps        StepsContext             `json:"steps"`
+	Matrix       map[string]string        `json:"matrix"`
+	Integrations *JobIntegrationsContexts `json:"integrations,omitempty"`
+	Gate         map[string]interface{}   `json:"gate"`
+	Vars         map[string]interface{}   `json:"vars"`
+
+	// Parent path - internal worker
+	ParentPaths StringSlice `json:"-"`
+}
+
+type ComputeAnnotationsContext struct {
+	WorkflowRunContext
+	Jobs map[string]ComputeAnnotationsJobContext `json:"jobs"`
+}
+
+type ComputeAnnotationsJobContext struct {
+	Results JobResultContext `json:"results"`
+	Gate    GateInputs       `json:"gate"`
 }
 
 type V2WorkflowRunData struct {
@@ -158,15 +216,23 @@ func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunEvent struct {
-	HookType      string                 `json:"hook_type"`
-	EventName     string                 `json:"event_name"`
-	Ref           string                 `json:"ref"`
-	Sha           string                 `json:"sha"`
-	SemverCurrent string                 `json:"semver_current"`
-	SemverNext    string                 `json:"semver_next"`
-	Payload       map[string]interface{} `json:"payload,omitempty"`
-	EntityUpdated string                 `json:"entity_updated,omitempty"`
-	Cron          string                 `json:"cron,omitempty"`
+	HookType         string                 `json:"hook_type"`
+	EventName        WorkflowHookEventName  `json:"event_name"`
+	Ref              string                 `json:"ref"`
+	Sha              string                 `json:"sha"`
+	PullRequestID    int64                  `json:"pullrequest_id"`
+	PullRequestToRef string                 `json:"pullrequest_to_ref,omitempty"`
+	CommitMessage    string                 `json:"commit_message"`
+	SemverCurrent    string                 `json:"semver_current"`
+	SemverNext       string                 `json:"semver_next"`
+	ChangeSets       []string               `json:"changesets"`
+	Payload          map[string]interface{} `json:"payload,omitempty"`
+	EntityUpdated    string                 `json:"entity_updated,omitempty"`
+	Cron             string                 `json:"cron,omitempty"`
+	CronTimezone     string                 `json:"timezone,omitempty"`
+	WorkflowRun      string                 `json:"workflow_run"`
+	WorkflowRunID    string                 `json:"workflow_run_id"`
+	WebHookID        string                 `json:"webhook_id"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {
@@ -186,40 +252,53 @@ func (w *V2WorkflowRunEvent) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunJob struct {
-	ID            string                 `json:"id" db:"id"`
-	JobID         string                 `json:"job_id" db:"job_id" cli:"job_id"`
-	WorkflowRunID string                 `json:"workflow_run_id" db:"workflow_run_id"`
-	ProjectKey    string                 `json:"project_key" db:"project_key"`
-	WorkflowName  string                 `json:"workflow_name" db:"workflow_name"`
-	RunNumber     int64                  `json:"run_number" db:"run_number"`
-	RunAttempt    int64                  `json:"run_attempt" db:"run_attempt"`
-	Status        V2WorkflowRunJobStatus `json:"status" db:"status" cli:"status"`
-	Queued        time.Time              `json:"queued" db:"queued"`
-	Scheduled     *time.Time             `json:"scheduled,omitempty" db:"scheduled"`
-	Started       *time.Time             `json:"started,omitempty" db:"started"`
-	Ended         *time.Time             `json:"ended,omitempty" db:"ended"`
-	Job           V2Job                  `json:"job" db:"job"`
-	WorkerID      string                 `json:"worker_id,omitempty" db:"worker_id"`
-	WorkerName    string                 `json:"worker_name" db:"worker_name"`
-	HatcheryName  string                 `json:"hatchery_name" db:"hatchery_name"`
-	StepsStatus   JobStepsStatus         `json:"steps_status" db:"steps_status"`
-	UserID        string                 `json:"user_id" db:"user_id"`
-	Username      string                 `json:"username" db:"username"`
-	Region        string                 `json:"region,omitempty" db:"region"`
-	ModelType     string                 `json:"model_type,omitempty" db:"model_type"`
-	Matrix        JobMatrix              `json:"matrix,omitempty" db:"matrix"`
-	GateInputs    GateInputs             `json:"gate_inputs,omitempty" db:"gate_inputs"`
+	ID                 string                 `json:"id" db:"id"`
+	JobID              string                 `json:"job_id" db:"job_id" cli:"job_id"`
+	WorkflowRunID      string                 `json:"workflow_run_id" db:"workflow_run_id" action_metadata:"workflow-run-id"`
+	ProjectKey         string                 `json:"project_key" db:"project_key" action_metadata:"project-key"`
+	VCSServer          string                 `json:"vcs_server" db:"vcs_server" action_metadata:"vcs-server"`
+	Repository         string                 `json:"repository" db:"repository" action_metadata:"repository-name"`
+	WorkflowName       string                 `json:"workflow_name" db:"workflow_name" action_metadata:"workflow-name"`
+	RunNumber          int64                  `json:"run_number" db:"run_number" action_metadata:"run-number"`
+	RunAttempt         int64                  `json:"run_attempt" db:"run_attempt"`
+	Status             V2WorkflowRunJobStatus `json:"status" db:"status" cli:"status"`
+	Queued             time.Time              `json:"queued" db:"queued"`
+	Scheduled          *time.Time             `json:"scheduled,omitempty" db:"scheduled"`
+	Started            *time.Time             `json:"started,omitempty" db:"started"`
+	Ended              *time.Time             `json:"ended,omitempty" db:"ended"`
+	Job                V2Job                  `json:"job" db:"job"`
+	WorkerID           string                 `json:"worker_id,omitempty" db:"worker_id"`
+	WorkerName         string                 `json:"worker_name" db:"worker_name" action_metadata:"worker-name"`
+	HatcheryName       string                 `json:"hatchery_name" db:"hatchery_name" action_metadata:"hatchery-name"`
+	StepsStatus        JobStepsStatus         `json:"steps_status" db:"steps_status"`
+	DeprecatedUserID   string                 `json:"user_id" db:"user_id"`                              // Deprecated
+	DeprecatedUsername string                 `json:"username" db:"username" action_metadata:"username"` // Deprecated
+	DeprecatedAdminMFA bool                   `json:"admin_mfa" db:"admin_mfa"`                          // Deprecated
+	Region             string                 `json:"region,omitempty" db:"region"`
+	ModelType          string                 `json:"model_type,omitempty" db:"model_type"`
+	ModelOSArch        string                 `json:"model_osarch,omitempty" db:"model_osarch"`
+	Matrix             JobMatrix              `json:"matrix,omitempty" db:"matrix"`
+	GateInputs         GateInputs             `json:"gate_inputs,omitempty" db:"gate_inputs"`
+	Initiator          V2Initiator            `json:"initiator,omitempty" db:"initiator"`
+	Concurrency        *V2RunConcurrency      `json:"concurrency,omitempty" db:"concurrency"`
+}
+
+type V2RunConcurrency struct {
+	WorkflowConcurrency
+	Scope V2RunJobConcurrencyScope `json:"scope"`
 }
 
 type V2WorkflowRunJobStatus string
 
 const (
 	V2WorkflowRunJobStatusUnknown    V2WorkflowRunJobStatus = ""
+	V2WorkflowRunJobStatusBlocked    V2WorkflowRunJobStatus = "Blocked"
 	V2WorkflowRunJobStatusWaiting    V2WorkflowRunJobStatus = "Waiting"
 	V2WorkflowRunJobStatusBuilding   V2WorkflowRunJobStatus = "Building"
 	V2WorkflowRunJobStatusFail       V2WorkflowRunJobStatus = "Fail"
 	V2WorkflowRunJobStatusStopped    V2WorkflowRunJobStatus = "Stopped"
 	V2WorkflowRunJobStatusSuccess    V2WorkflowRunJobStatus = "Success"
+	V2WorkflowRunJobStatusCancelled  V2WorkflowRunJobStatus = "Cancelled"
 	V2WorkflowRunJobStatusScheduling V2WorkflowRunJobStatus = "Scheduling"
 	V2WorkflowRunJobStatusSkipped    V2WorkflowRunJobStatus = "Skipped"
 )
@@ -230,32 +309,78 @@ func NewV2WorkflowRunJobStatusFromString(s string) (V2WorkflowRunJobStatus, erro
 		return V2WorkflowRunJobStatusFail, nil
 	case StatusSuccess:
 		return V2WorkflowRunJobStatusSuccess, nil
+	case StatusWaiting:
+		return V2WorkflowRunJobStatusWaiting, nil
+	case StatusSkipped:
+		return V2WorkflowRunJobStatusSkipped, nil
+	case StatusScheduling:
+		return V2WorkflowRunJobStatusScheduling, nil
+	case StatusStopped:
+		return V2WorkflowRunJobStatusStopped, nil
+	case StatusBuilding:
+		return V2WorkflowRunJobStatusBuilding, nil
+	case StatusBlocked:
+		return V2WorkflowRunJobStatusBlocked, nil
+	case StatusCancelled:
+		return V2WorkflowRunJobStatusCancelled, nil
 	}
 	return V2WorkflowRunJobStatusUnknown, errors.Errorf("cannot convert given status value %q to workflow run job v2 status", s)
 }
 
 func (s V2WorkflowRunJobStatus) IsTerminated() bool {
 	switch s {
-	case V2WorkflowRunJobStatusUnknown, V2WorkflowRunJobStatusBuilding, V2WorkflowRunJobStatusWaiting, V2WorkflowRunJobStatusScheduling:
+	case V2WorkflowRunJobStatusUnknown, V2WorkflowRunJobStatusBlocked, V2WorkflowRunJobStatusBuilding, V2WorkflowRunJobStatusWaiting, V2WorkflowRunJobStatusScheduling:
 		return false
 	}
 	return true
 }
 
-type JobIntegrationsContext struct {
-	ArtifactManager string `json:"artifact_manager,omitempty"`
-	Deployment      string `json:"deployment,omitempty"`
+type JobIntegrationsContexts struct {
+	ArtifactManager JobIntegrationsContext `json:"artifact_manager,omitempty"`
+	Deployment      JobIntegrationsContext `json:"deployment,omitempty"`
 }
 
-func (c JobIntegrationsContext) All() []string {
-	var res []string
-	if c.ArtifactManager != "" {
-		res = append(res, c.ArtifactManager)
+func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
+	integs := make([]JobIntegrationsContext, 0)
+	if jics.ArtifactManager.Name != "" {
+		integs = append(integs, jics.ArtifactManager)
 	}
-	if c.Deployment != "" {
-		res = append(res, c.Deployment)
+	if jics.Deployment.Name != "" {
+		integs = append(integs, jics.Deployment)
 	}
-	return res
+	return integs
+}
+
+type JobIntegrationsContext struct {
+	Name      string                       `json:"name,omitempty"`
+	Config    JobIntegrationsContextConfig `json:"config,omitempty"`
+	ModelName string                       `json:"model_name,omitempty"`
+}
+
+type JobIntegrationsContextConfig map[string]interface{}
+
+func (j JobIntegrationsContext) Get(key string) string {
+	keySplit := strings.Split(key, ".")
+	if len(keySplit) == 1 {
+		return fmt.Sprintf("%s", j.Config[key])
+	}
+
+	if j.ModelName == ArtifactoryIntegrationModelName && key == ArtifactoryConfigTokenName {
+		keySplit = []string{"token_name"}
+	}
+
+	currentValue := j.Config
+	for _, k := range keySplit {
+		if _, ok := currentValue[k]; !ok {
+			return ""
+		}
+		if itemMap, ok := currentValue[k].(map[string]interface{}); ok {
+			currentValue = itemMap
+		} else {
+			return fmt.Sprintf("%s", currentValue[k])
+		}
+	}
+	return ""
 }
 
 type JobStepsStatus map[string]JobStepStatus
@@ -265,6 +390,9 @@ type JobStepStatus struct {
 	Outputs    JobResultOutput        `json:"outputs"`
 	Started    time.Time              `json:"started"`
 	Ended      time.Time              `json:"ended"`
+
+	// Path Outputs
+	PathOutputs StringSlice `json:"-"`
 }
 
 type GateInputs map[string]interface{}
@@ -303,6 +431,22 @@ func (jm *JobMatrix) Scan(src interface{}) error {
 	return WrapError(yaml.Unmarshal([]byte(source), jm), "cannot unmarshal JobMatrix")
 }
 
+func (vjc V2RunConcurrency) Value() (driver.Value, error) {
+	j, err := json.Marshal(vjc)
+	return j, WrapError(err, "cannot marshal V2RunConcurrency")
+}
+
+func (sc *V2RunConcurrency) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, sc), "cannot unmarshal V2RunConcurrency")
+}
+
 func (sc JobStepsStatus) Value() (driver.Value, error) {
 	j, err := json.Marshal(sc)
 	return j, WrapError(err, "cannot marshal JobStepsStatus")
@@ -335,10 +479,60 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 	return stepsContext
 }
 
+type V2Initiator struct {
+	UserID         string           `json:"user_id"`
+	User           *V2InitiatorUser `json:"user"`
+	VCS            string           `json:"vcs"`
+	VCSUsername    string           `json:"vcs_username"`
+	IsAdminWithMFA bool             `json:"is_admin_with_mfa"`
+}
+
+type V2InitiatorUser struct {
+	Username string `json:"username"`
+	Ring     string `json:"-"` // Ring is only used by postWorkflowRunFromHookV2Handler, it's loaded just before so we don't need to store it
+	Email    string `json:"email"`
+}
+
+func (i *V2Initiator) Username() string {
+	if i == nil {
+		return ""
+	}
+	if i.UserID != "" {
+		return i.User.Username // Yes it can panic
+	}
+	if i.VCS != "" && i.VCSUsername != "" {
+		return i.VCS + "/" + i.VCSUsername
+	}
+	return ""
+}
+
+func (i *V2Initiator) IsUser() bool {
+	return i.VCSUsername == "" && i.UserID != ""
+}
+
+func (i V2Initiator) Value() (driver.Value, error) {
+	m, err := json.Marshal(i)
+	return m, WrapError(err, "cannot marshal V2Initiator")
+}
+
+func (i *V2Initiator) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal([]byte(source), i), "cannot unmarshal V2Initiator")
+}
+
 type V2WorkflowRunEnqueue struct {
-	RunID  string                   `json:"run_id"`
-	UserID string                   `json:"user_id"`
-	Gate   V2WorkflowRunEnqueueGate `json:"gate"`
+	RunID                    string              `json:"run_id"`
+	DeprecatedUserID         string              `json:"user_id"` // Deprecated
+	Initiator                V2Initiator         `json:"initiator"`
+	DeprecatedIsAdminWithMFA bool                `json:"is_admin_mfa"` // Deprecated
+	Status                   V2WorkflowRunStatus `json:"status"`
 }
 
 type V2WorkflowRunEnqueueGate struct {
@@ -395,8 +589,8 @@ func (wrs WorkflowRunStages) ComputeStatus() {
 stageLoop:
 	for name := range wrs {
 		stage := wrs[name]
-		for _, status := range stage.Jobs {
-			if !status.IsTerminated() {
+		for _, j := range stage.Jobs {
+			if !j.Status.IsTerminated() {
 				stage.Ended = false
 				wrs[name] = stage
 				continue stageLoop
@@ -425,20 +619,32 @@ stageLoop:
 type WorkflowRunStage struct {
 	WorkflowStage
 	CanBeRun bool
-	Jobs     map[string]V2WorkflowRunJobStatus
+	Jobs     map[string]WorkflowRunStageJob
 	Ended    bool
+}
+
+type WorkflowRunStageJob struct {
+	Status  V2WorkflowRunJobStatus
+	IsFinal bool
 }
 
 func (w V2WorkflowRun) GetStages() WorkflowRunStages {
 	stages := WorkflowRunStages{}
 	for k, s := range w.WorkflowData.Workflow.Stages {
-		stages[k] = WorkflowRunStage{WorkflowStage: s, Jobs: make(map[string]V2WorkflowRunJobStatus)}
+		stages[k] = WorkflowRunStage{WorkflowStage: s, Jobs: make(map[string]WorkflowRunStageJob)}
 	}
 	if len(stages) == 0 {
 		return stages
 	}
 	for jobID, job := range w.WorkflowData.Workflow.Jobs {
-		stages[job.Stage].Jobs[jobID] = V2WorkflowRunJobStatusUnknown
+		isFinalJob := true
+		for _, existingJob := range w.WorkflowData.Workflow.Jobs {
+			if job.Stage == existingJob.Stage && IsInArray(jobID, existingJob.Needs) {
+				isFinalJob = false
+				break
+			}
+		}
+		stages[job.Stage].Jobs[jobID] = WorkflowRunStageJob{IsFinal: isFinalJob, Status: V2WorkflowRunJobStatusUnknown}
 	}
 	return stages
 }
@@ -455,225 +661,61 @@ type V2WorkflowRunResult struct {
 	Detail                         V2WorkflowRunResultDetail                   `json:"detail" db:"artifact_manager_detail"`
 	DataSync                       *WorkflowRunResultSync                      `json:"sync" db:"sync"`
 	Status                         string                                      `json:"status" db:"status"`
+	// Below are computed fields and displayed on the UI
+	Label      string                                       `json:"label,omitempty" db:"-"`
+	Identifier string                                       `json:"identifier,omitempty" db:"-"`
+	Metadata   map[string]V2WorkflowRunResultDetailMetadata `json:"metadata,omitempty" db:"-"`
 }
 
-func (r *V2WorkflowRunResult) GetDetail() (any, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
+func (r *V2WorkflowRunResult) ComputedFields() {
+	if err := r.CastDetail(); err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
+		return
 	}
-	return r.Detail.Data, nil
+	r.Identifier = r.Name()
+	r.Label = r.GetLabel()
+	r.Metadata = r.GetMetadata()
 }
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultVariableDetail() (*V2WorkflowRunResultVariableDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
+func (r *V2WorkflowRunResult) GetLabel() string {
+	detail, err := r.GetDetail()
+	if err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
+		return "-"
 	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultVariableDetail)
-	if !ok {
-		var ii V2WorkflowRunResultVariableDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultVariableDetail)
-		if ok {
-			i = &ii
-		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
-	}
-	return i, nil
+	return detail.GetLabel()
 }
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail() (*V2WorkflowRunResultArsenalDeploymentDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
+func (r *V2WorkflowRunResult) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	detail, err := r.GetDetail()
+	if err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
+		return nil
 	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultArsenalDeploymentDetail)
-	if !ok {
-		var ii V2WorkflowRunResultArsenalDeploymentDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultArsenalDeploymentDetail)
-		if ok {
-			i = &ii
-		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
-	}
-	return i, nil
+	return detail.GetMetadata()
 }
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultPythonDetail() (*V2WorkflowRunResultPythonDetail, error) {
-	if err := r.Detail.castData(); err != nil {
+func (r *V2WorkflowRunResult) GetDetail() (V2WorkflowRunResultDetailInterface, error) {
+	if err := r.CastDetail(); err != nil {
 		return nil, err
 	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultPythonDetail)
-	if !ok {
-		var ii V2WorkflowRunResultPythonDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultPythonDetail)
-		if ok {
-			i = &ii
-		}
+	if x, ok := r.Detail.Data.(V2WorkflowRunResultDetailInterface); ok {
+		return x, nil
+	} else { // Manage interface conversion of s.Detail.Data
+		value := reflect.ValueOf(r.Detail.Data)
+		t := reflect.New(value.Type())
+		t.Elem().Set(value)
+		return t.Interface().(V2WorkflowRunResultDetailInterface), nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultPythonDetail")
-	}
-	return i, nil
-}
-
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDebianDetail() (*V2WorkflowRunResultDebianDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultDebianDetail)
-	if !ok {
-		var ii V2WorkflowRunResultDebianDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultDebianDetail)
-		if ok {
-			i = &ii
-		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultDebianDetail")
-	}
-	return i, nil
-}
-
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultHelmDetail() (*V2WorkflowRunResultHelmDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
-	if !ok {
-		var ii V2WorkflowRunResultHelmDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultHelmDetail)
-		if ok {
-			i = &ii
-		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultHelmDetail")
-	}
-	return i, nil
-}
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDockerDetail() (*V2WorkflowRunResultDockerDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultDockerDetail)
-	if !ok {
-		var ii V2WorkflowRunResultDockerDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultDockerDetail)
-		if ok {
-			i = &ii
-		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultDockerDetail")
-	}
-	return i, nil
-}
-
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTestDetail() (*V2WorkflowRunResultTestDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultTestDetail)
-	if !ok {
-		var ii V2WorkflowRunResultTestDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultTestDetail)
-		if ok {
-			i = &ii
-		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultTestDetail")
-	}
-	return i, nil
-}
-
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultGenericDetail() (*V2WorkflowRunResultGenericDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultGenericDetail)
-	if !ok {
-		var ii V2WorkflowRunResultGenericDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultGenericDetail)
-		if ok {
-			i = &ii
-		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultGenericDetail")
-	}
-	return i, nil
-}
-
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultReleaseDetail() (*V2WorkflowRunResultReleaseDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultReleaseDetail)
-	if !ok {
-		var ii V2WorkflowRunResultReleaseDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultReleaseDetail)
-		if ok {
-			i = &ii
-		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultReleaseDetail")
-	}
-	return i, nil
 }
 
 func (r *V2WorkflowRunResult) Name() string {
-	switch r.Type {
-	case V2WorkflowRunResultTypeTest:
-		detail, err := r.GetDetailAsV2WorkflowRunResultTestDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypeGeneric, V2WorkflowRunResultTypeCoverage:
-		detail, err := r.GetDetailAsV2WorkflowRunResultGenericDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypePython:
-		detail, err := r.GetDetailAsV2WorkflowRunResultPythonDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name + ":" + detail.Version
-		}
-	case V2WorkflowRunResultTypeDebian:
-		detail, err := r.GetDetailAsV2WorkflowRunResultDebianDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypeDocker:
-		detail, err := r.GetDetailAsV2WorkflowRunResultDockerDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypeVariable:
-		detail, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypeArsenalDeployment:
-		detail, err := r.GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.DeploymentName
-		}
-	case V2WorkflowRunResultTypeHelm:
-		detail, err := r.GetDetailAsV2WorkflowRunResultHelmDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name + ":" + detail.ChartVersion
-		}
-	case V2WorkflowRunResultTypeRelease:
-		detail, err := r.GetDetailAsV2WorkflowRunResultReleaseDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name + ":" + detail.Version
-		}
+	detailData, err := r.GetDetail()
+	if err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
 	}
-	return string(r.Type) + ":" + r.ID
+
+	return string(r.Type) + ":" + detailData.GetName()
 }
 
 func (r *V2WorkflowRunResult) Typ() string {
@@ -688,7 +730,7 @@ const (
 	V2WorkflowRunResultStatusCompleted = "COMPLETED"
 	V2WorkflowRunResultStatusPromoted  = "PROMOTED"
 	V2WorkflowRunResultStatusReleased  = "RELEASED"
-	V2WorkflowRunResultStatusCanceled  = "CANCELED"
+	V2WorkflowRunResultStatusCancelled = "CANCELLED"
 )
 
 type V2WorkflowRunResultArtifactManagerMetadata map[string]string
@@ -720,286 +762,53 @@ func (x *V2WorkflowRunResultArtifactManagerMetadata) Scan(src interface{}) error
 	return WrapError(JSONUnmarshal([]byte(source), x), "cannot unmarshal V2WorkflowRunResultArtifactManagerMetadata")
 }
 
-type V2WorkflowRunResultDetail struct {
-	Data interface{} `json:"data"`
-	Type string      `json:"type"`
-}
-
-func (s *V2WorkflowRunResultDetail) castData() error {
-	switch s.Type {
-	case "V2WorkflowRunResultTestDetail":
-		var detail = new(V2WorkflowRunResultTestDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultTestDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultGenericDetail":
-		var detail = new(V2WorkflowRunResultGenericDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultGenericDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultVariableDetail":
-		var detail = new(V2WorkflowRunResultVariableDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultVariableDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultDebianDetail":
-		var detail = new(V2WorkflowRunResultDebianDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultDebianDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultDockerDetail":
-		var detail = new(V2WorkflowRunResultDockerDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultDockerDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultHelmDetail":
-		var detail = new(V2WorkflowRunResultHelmDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultHelmDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultPythonDetail":
-		var detail = new(V2WorkflowRunResultPythonDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultPythonDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultArsenalDeploymentDetail":
-		var detail = new(V2WorkflowRunResultArsenalDeploymentDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultArsenalDeploymentDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultReleaseDetail":
-		var detail = new(V2WorkflowRunResultReleaseDetail)
-		decoderConfig := &mapstructure.DecoderConfig{
-			Metadata: nil,
-			Result:   &detail,
-		}
-		// Here is the trick to transform the map to a json.RawMessage for the SBOM itself
-		decoderConfig.DecodeHook = mapstructure.ComposeDecodeHookFunc(
-			func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-				if f.Kind() != reflect.Map {
-					return data, nil
-				}
-				result := reflect.New(t).Interface()
-				_, ok := result.(*json.RawMessage)
-				if !ok {
-					return data, nil
-				}
-				btes, err := json.Marshal(data)
-				if err != nil {
-					return nil, err
-				}
-				return json.RawMessage(btes), nil
-			},
-		)
-		decoder, err := mapstructure.NewDecoder(decoderConfig)
-		if err != nil {
-			panic(err)
-		}
-		if err := decoder.Decode(s.Data); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultReleaseDetail")
-		}
-		s.Data = *detail
-		return nil
-	default:
-		return errors.Errorf("unsupported type %q", s.Type)
-	}
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (s *V2WorkflowRunResultDetail) UnmarshalJSON(source []byte) error {
-	var content = struct {
-		Data interface{}
-		Type string
-	}{}
-	if err := JSONUnmarshal(source, &content); err != nil {
-		return WrapError(err, "cannot unmarshal V2WorkflowRunResultDetail")
-	}
-	s.Data = content.Data
-	s.Type = content.Type
-
-	if err := s.castData(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// MarshalJSON implements json.Marshaler.
-func (s *V2WorkflowRunResultDetail) MarshalJSON() ([]byte, error) {
-	if s.Type == "" {
-		s.Type = reflect.TypeOf(s.Data).Name()
-	}
-
-	var content = struct {
-		Data interface{} `json:"data"`
-		Type string      `json:"type"`
-	}{
-		Data: s.Data,
-		Type: s.Type,
-	}
-
-	btes, _ := json.Marshal(content)
-	return btes, nil
-}
-
-var (
-	_ json.Marshaler   = new(V2WorkflowRunResultDetail)
-	_ json.Unmarshaler = new(V2WorkflowRunResultDetail)
-)
-
-// Value returns driver.Value from V2WorkflowRunResultDetail
-func (s V2WorkflowRunResultDetail) Value() (driver.Value, error) {
-	j, err := json.Marshal(s)
-	return j, WrapError(err, "cannot marshal V2WorkflowRunResultDetail")
-}
-
-// Scan V2WorkflowRunResultDetail
-func (s *V2WorkflowRunResultDetail) Scan(src interface{}) error {
-	if src == nil {
-		return nil
-	}
-	source, ok := src.([]byte)
-	if !ok {
-		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
-	}
-	if err := JSONUnmarshal(source, s); err != nil {
-		return WrapError(err, "cannot unmarshal V2WorkflowRunResultDetail")
-	}
-	return nil
-}
-
-type V2WorkflowRunResultType string
-
-const (
-	V2WorkflowRunResultTypeCoverage          = "coverage"
-	V2WorkflowRunResultTypeTest              = "tests"
-	V2WorkflowRunResultTypeRelease           = "release"
-	V2WorkflowRunResultTypeGeneric           = "generic"
-	V2WorkflowRunResultTypeVariable          = "variable"
-	V2WorkflowRunResultTypeDocker            = "docker"
-	V2WorkflowRunResultTypeDebian            = "debian"
-	V2WorkflowRunResultTypePython            = "python"
-	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
-	V2WorkflowRunResultTypeHelm              = "helm"
-	// Other values may be instantiated from Artifactory Manager repository type
-)
-
-type V2WorkflowRunResultTestDetail struct {
-	Name        string           `json:"name" mapstructure:"name"`
-	Size        int64            `json:"size" mapstructure:"size"`
-	Mode        os.FileMode      `json:"mode" mapstructure:"mode"`
-	MD5         string           `json:"md5" mapstructure:"md5"`
-	SHA1        string           `json:"sha1" mapstructure:"sha1"`
-	SHA256      string           `json:"sha256" mapstructure:"sha256"`
-	TestsSuites JUnitTestsSuites `json:"tests_suites" mapstructure:"tests_suites"`
-	TestStats   TestsStats       `json:"tests_stats" mapstructure:"tests_stats"`
-}
-
-type V2WorkflowRunResultGenericDetail struct {
-	Name   string      `json:"name" mapstructure:"name"`
-	Size   int64       `json:"size" mapstructure:"size"`
-	Mode   os.FileMode `json:"mode" mapstructure:"mode"`
-	MD5    string      `json:"md5" mapstructure:"md5"`
-	SHA1   string      `json:"sha1" mapstructure:"sha1"`
-	SHA256 string      `json:"sha256" mapstructure:"sha256"`
-}
-
-type V2WorkflowRunResultArsenalDeploymentDetail struct {
-	IntegrationName string                              `json:"integration_name" mapstructure:"integration_name"`
-	DeploymentID    string                              `json:"deployment_id" mapstructure:"deployment_id"`
-	DeploymentName  string                              `json:"deployment_name" mapstructure:"deployment_name"`
-	StackID         string                              `json:"stack_id" mapstructure:"stack_id"`
-	StackName       string                              `json:"stack_name" mapstructure:"stack_name"`
-	StackPlatform   string                              `json:"stack_platform" mapstructure:"stack_platform"`
-	Namespace       string                              `json:"namespace" mapstructure:"namespace"`
-	Version         string                              `json:"version" mapstructure:"version"`
-	Alternative     *ArsenalDeploymentDetailAlternative `json:"alternative" mapstructure:"alternative"`
-}
-
-type ArsenalDeploymentDetailAlternative struct {
-	Name    string                 `json:"name" mapstructure:"name"`
-	From    string                 `json:"from,omitempty" mapstructure:"from"`
-	Config  map[string]interface{} `json:"config" mapstructure:"config"`
-	Options map[string]interface{} `json:"options,omitempty" mapstructure:"options"`
-}
-
-type V2WorkflowRunResultDockerDetail struct {
-	Name         string `json:"name" mapstructure:"name"`
-	ID           string `json:"id" mapstructure:"id"`
-	HumanSize    string `json:"human_size" mapstructure:"human_size"`
-	HumanCreated string `json:"human_created" mapstructure:"human_created"`
-}
-
-type V2WorkflowRunResultDebianDetail struct {
-	Name          string   `json:"name" mapstructure:"name"`
-	Size          int64    `json:"size" mapstructure:"size"`
-	MD5           string   `json:"md5" mapstructure:"md5"`
-	SHA1          string   `json:"sha1" mapstructure:"sha1"`
-	SHA256        string   `json:"sha256" mapstructure:"sha256"`
-	Components    []string `json:"components" mapstructure:"components"`
-	Distributions []string `json:"distributions" mapstructure:"distributions"`
-	Architectures []string `json:"architectures" mapstructure:"architectures"`
-}
-
-type V2WorkflowRunResultPythonDetail struct {
-	Name      string `json:"name" mapstructure:"name"`
-	Version   string `json:"version" mapstructure:"version"`
-	Extension string `json:"extension" mapstructure:"extension"`
-}
-
-type V2WorkflowRunResultHelmDetail struct {
-	Name         string `json:"name" mapstructure:"name"`
-	AppVersion   string `json:"appVersion" mapstructure:"appVersion"`
-	ChartVersion string `json:"chartVersion" mapstructure:"chartVersion"`
-}
-
-type V2WorkflowRunResultVariableDetail struct {
-	Name  string `json:"name" mapstructure:"name"`
-	Value string `json:"value" mapstructure:"value"`
-}
-
-type V2WorkflowRunResultReleaseDetail struct {
-	Name    string          `json:"name" mapstructure:"name"`
-	Version string          `json:"version" mapstructure:"version"`
-	SBOM    json.RawMessage `json:"sbom" mapstructure:"sbom"`
-}
-
-type V2WorkflowRunSearchFilter struct {
-	Key     string   `json:"key"`
-	Options []string `json:"options"`
-	Example string   `json:"example"`
-}
-
 type V2QueueJobInfo struct {
 	RunJob V2WorkflowRunJob `json:"runjob"`
 	Model  V2WorkerModel    `json:"model"`
 }
 
 type HookManualWorkflowRun struct {
-	UserRequest V2WorkflowRunManualRequest
-	Project     string
-	VCSType     string
-	VCSServer   string
-	Repository  string
-	Ref         string
-	Commit      string
-	Workflow    string
-	UserID      string
-	Username    string
+	UserRequest    V2WorkflowRunManualRequest
+	Project        string
+	VCSServer      string
+	Repository     string
+	WorkflowRef    string
+	WorkflowCommit string
+	Workflow       string
+	UserID         string
+	Username       string
+	AdminMFA       bool
+}
+
+type HookWorkflowRunEvent struct {
+	Request HookWorkflowRunEventRequest
+
+	// Data needed to process hook
+	WorkflowProject    string
+	WorkflowVCSServer  string
+	WorkflowRepository string
+	WorkflowName       string
+	WorkflowRunID      string
+	WorkflowStatus     V2WorkflowRunStatus
+	WorkflowRef        string
+}
+
+// Request that will be sent to sub-workflow
+type HookWorkflowRunEventRequest struct {
+	WorkflowRun HookWorkflowRunEventRequestWorkflowRun `json:"workflow_run"`
+}
+
+type HookWorkflowRunEventRequestWorkflowRun struct {
+	CDS                CDSContext                         `json:"cds"`
+	Git                GitContext                         `json:"git"`
+	DeprecatedUserID   string                             `json:"user_id"`
+	DeprecatedUserName string                             `json:"username"`
+	Conclusion         string                             `json:"conclusion"`
+	CreatedAt          time.Time                          `json:"created_at"`
+	Jobs               map[string]HookWorkflowRunEventJob `json:"jobs"`
+	Initiator          V2Initiator                        `json:"initiator"`
+}
+
+type HookWorkflowRunEventJob struct {
+	Conclusion string `json:"conclusion"`
 }

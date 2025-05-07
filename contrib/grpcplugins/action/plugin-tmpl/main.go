@@ -33,6 +33,10 @@ func (actPlugin *tmplActionPlugin) Manifest(ctx context.Context, _ *empty.Empty)
 	}, nil
 }
 
+func (p *tmplActionPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	return sdk.ErrNotImplemented
+}
+
 func (actPlugin *tmplActionPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	file := q.GetOptions()["file"]
 	output := q.GetOptions()["output"]
