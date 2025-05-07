@@ -85,7 +85,7 @@ func (b *bitbucketClient) Branch(ctx context.Context, fullname string, filters s
 	}
 
 	branches := BranchResponse{}
-	path := fmt.Sprintf("/projects/%s/repos/%s/branches?filterText=%s", t[0], t[1], url.QueryEscape(filters.BranchName))
+	path := fmt.Sprintf("/projects/%s/repos/%s/branches?orderBy=MODIFICATION&filterText=%s", t[0], t[1], url.QueryEscape(filters.BranchName))
 
 	if err := b.do(ctx, "GET", "core", path, nil, nil, &branches, Options{DisableCache: filters.NoCache}); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get branch %s %s", filters.BranchName, path)

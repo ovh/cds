@@ -45,7 +45,7 @@ testcases:
     path: ./fixtures/template/simple/export-detached/*.yml
     assertions:
     - result.err ShouldEqual ""
-    - result.md5sum.fixtures_template_simple_export-detached_first-environment.env.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow-detached_first-environment}}"
-    - result.md5sum.fixtures_template_simple_export-detached_first-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow-detached_first-pipeline}}"
-    - result.md5sum.fixtures_template_simple_export-detached_second-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow-detached_second-pipeline}}"
-    - result.md5sum.fixtures_template_simple_export-detached_itcliwkf.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow-detached_itcliwkf}}"
+    - result.md5sum.fixtures_template_simple_export-detached_First-environment.env.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow-detached_first-environment}}"
+    - result.md5sum.fixtures_template_simple_export-detached_First-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow-detached_first-pipeline}}"
+    - result.md5sum.fixtures_template_simple_export-detached_Second-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow-detached_second-pipeline}}"
+    - result.md5sum.fixtures_template_simple_export-detached_ITCLIWKF.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow-detached_itcliwkf}}"
