@@ -596,7 +596,7 @@ func (w V2Workflow) Lint() []error {
 	}
 
 	for _, e := range result.Errors() {
-		errs = append(errs, NewErrorFrom(ErrInvalidData, "workfow %s: yaml validation failed: %s", w.Name, e.String()))
+		errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s: yaml validation failed: %s", w.Name, e.String()))
 	}
 
 	if len(errs) > 0 {
@@ -665,14 +665,14 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 		for k := range stages {
 			for _, n := range stages[k].Needs {
 				if _, exist := stages[n]; !exist {
-					errs = append(errs, NewErrorFrom(ErrInvalidData, "workfow %s stage %s: needs not found %s", w.Name, k, n))
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s stage %s: needs not found %s", w.Name, k, n))
 				}
 			}
 		}
 		// Check job needs
 		for k, j := range w.Jobs {
 			if j.Stage == "" {
-				errs = append(errs, NewErrorFrom(ErrInvalidData, "workfow %s: missing stage on job %s", w.Name, k))
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s: missing stage on job %s", w.Name, k))
 				continue
 			}
 			if _, stageExist := stages[j.Stage]; !stageExist {
