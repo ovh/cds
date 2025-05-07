@@ -16,7 +16,7 @@ For each type of variable it's possible to provide a JSON value.
 
 # Permission
 
-To be able to manage repository manager you will need the permission `manage` on your project
+To be able to manage repository manager you will need the permission `manage` on your project.
 
 # Add a variableset using CLI
 
@@ -31,7 +31,7 @@ cdsctl experimental project variableset add <PROJECT-KEY> <VARIABLESET-NAME>
 # Add a variable in a variableset using CLI
 
 ```
-cdsctl experimental project variableset add <PROJECT-KEY> <VARIABLESET-NAME> <NAME> <VALUE> <TYPE> 
+cdsctl experimental project variableset item add <PROJECT-KEY> <VARIABLESET-NAME> <NAME> <VALUE> <TYPE> 
 ```
 * `PROJECT-KEY`: The project key
 * `VARIABLESET-NAME`: The name of the variableset
