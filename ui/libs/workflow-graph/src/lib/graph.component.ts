@@ -12,7 +12,7 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import { WorkflowV2JobsGraphComponent } from './jobs-graph.component';
+import { GraphStageNodeComponent } from './node/stage-node.component';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
 import { GraphNode, GraphNodeType, NavigationGraph } from './graph.model';
@@ -22,15 +22,15 @@ import { V2Workflow, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsAc
 import { GraphMatrixNodeComponent } from './node/matrix-node.component';
 import { GraphNodeAction } from './node/model';
 
-export type WorkflowV2JobsGraphOrNodeOrMatrixComponent = WorkflowV2JobsGraphComponent | GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphMatrixNodeComponent;
+export type WorkflowV2JobsGraphOrNodeOrMatrixComponent = GraphStageNodeComponent | GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphMatrixNodeComponent;
 
 @Component({
-    selector: 'app-stages-graph',
-    templateUrl: './stages-graph.html',
-    styleUrls: ['./stages-graph.scss'],
+    selector: 'app-graph',
+    templateUrl: './graph.html',
+    styleUrls: ['./graph.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy {
+export class GraphComponent implements AfterViewInit, OnDestroy {
     static maxScale = 15;
     static minScale = 1 / 5;
 
@@ -140,6 +140,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
 
     // workflow graph
     @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
+
     graph: WorkflowV2Graph<WorkflowV2JobsGraphOrNodeOrMatrixComponent>;
 
     constructor(
@@ -161,8 +162,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             } else {
                 this.hooks = Object.keys(this.hooksOn);
             }
-            this.selectedHook = this._workflowRun?.event?.event_name;
         }
+        this.selectedHook = this._workflowRun?.event?.event_name;
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -298,8 +299,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         }
         if (!this.graph || this.graph.direction !== this.direction) {
             this.graph = new WorkflowV2Graph(this.createForkJoinNodeComponent.bind(this), this.direction,
-                WorkflowV2StagesGraphComponent.minScale,
-                WorkflowV2StagesGraphComponent.maxScale);
+                GraphComponent.minScale,
+                GraphComponent.maxScale);
         }
         this.navigationGraph = new NavigationGraph(this.nodes, this.direction);
 
@@ -307,8 +308,9 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             let component: ComponentRef<WorkflowV2JobsGraphOrNodeOrMatrixComponent>;
             switch (n.type) {
                 case GraphNodeType.Stage:
-                    component = this.createSubGraphComponent(n);
-                    this.graph.createNode(n.name, n, component);
+                    const r = this.createSubGraphComponent(n);
+                    component = r;
+                    this.graph.createNode(n.name, n, component, r.instance.graph.graph.graph().height + 2 * WorkflowV2Graph.marginSubGraph, r.instance.graph.graph.graph().width + 2 * WorkflowV2Graph.marginSubGraph);
                     break;
                 case GraphNodeType.Matrix:
                     component = this.createJobMatrixComponent(n);
@@ -401,8 +403,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         return componentRef;
     }
 
-    createSubGraphComponent(node: GraphNode): ComponentRef<WorkflowV2JobsGraphComponent> {
-        const componentRef = this.svgContainer.createComponent(WorkflowV2JobsGraphComponent);
+    createSubGraphComponent(node: GraphNode): ComponentRef<GraphStageNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphStageNodeComponent);
         componentRef.instance.graphNode = node;
         componentRef.instance.direction = this.direction;
         componentRef.instance.centerCallback = this.centerNode.bind(this);

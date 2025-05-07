@@ -1,8 +1,15 @@
 <div *ngIf="node?.name" class="label" title="{{node?.name}}">
-    <button *ngIf="node?.gate && !runActive" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
-        (click)="clickRunGate($event)">
-        <span nz-icon nzType="caret-right" style="margin-left: 2px;" nzTheme="fill"></span>
-    </button>
+    <ng-container *ngIf="node?.gate && !runActive">
+        <button *ngIf="node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
+            (click)="clickRunGate($event)">
+            <span nz-icon nzType="caret-right" style="margin-left: 2px;" nzTheme="fill"></span>
+        </button>
+        <button *ngIf="!node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
+            nz-popconfirm nzPopconfirmTitle="Confirm run the job" nzPopconfirmPlacement="bottom"
+            (nzOnConfirm)="confirmRunGate()" (click)="$event.preventDefault();$event.stopPropagation();">
+            <span nz-icon nzType="caret-right" style="margin-left: 2px;" nzTheme="fill"></span>
+        </button>
+    </ng-container>
     <span class="name">{{node?.name}}</span>
 </div>
 <div class="node pointing">
@@ -34,7 +41,7 @@
                 </button>
             </div>
 
-           
+
             <div *ngIf="displayNames[key]" class="name" title="{{displayNames[key]}} - {{key}}">
                 {{displayNames[key]}}
             </div>

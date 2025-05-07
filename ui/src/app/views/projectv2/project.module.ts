@@ -5,14 +5,12 @@ import { ProjectV2RunComponent } from "./run/run.component";
 import { ProjectV2ExploreSidebarComponent } from './explore/explore-sidebar.component';
 import { ProjectV2ExploreEntityComponent } from './explore/explore-entity.component';
 import { RunJobComponent } from "./run/run-job.component";
-import { RunGateComponent } from "./run/gate/gate.component";
 import { ProjectV2RunListComponent } from './run-list/run-list.component';
-import { WorkflowGraphModule } from '../../../../libs/workflow-graph/src/public-api';
 import { ProjectV2ExploreComponent } from './explore/explore.component';
 import { ProjectV2RunListSidebarComponent } from './run-list/run-list-sidebar.component';
 import { RunHookComponent } from './run/run-hook.component';
 import { RunResultComponent } from './run/run-result.component';
-import { RunWorkflowComponent } from './run/run-workflow.component';
+import { RunSourcesComponent } from './run/run-sources.component';
 import { RunContextsComponent } from './run/run-contexts.component';
 import { RunTestsComponent } from './run/run-tests.component';
 import { RunTestComponent } from './run/run-test.component';
@@ -26,6 +24,8 @@ import { ProjectV2RunStartComponent } from './run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent } from './explore/trigger-analysis/trigger-analysis.component';
 import { RunResultsComponent } from './run/run-results.component';
 import { RunInfoComponent } from './run/run-info.component';
+import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
+import { RunGateComponent } from './run/run-gate.component';
 
 @NgModule({
     declarations: [
@@ -50,14 +50,14 @@ import { RunInfoComponent } from './run/run-info.component';
         RunJobComponent,
         RunResultComponent,
         RunResultsComponent,
+        RunSourcesComponent,
         RunTestComponent,
-        RunTestsComponent,
-        RunWorkflowComponent
+        RunTestsComponent
     ],
     imports: [
         RouterModule,
         SharedModule,
-        WorkflowGraphModule
+        GraphModule
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA

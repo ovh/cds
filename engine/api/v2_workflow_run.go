@@ -1117,6 +1117,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 			if inputs == nil {
+				inputs = make(map[string]interface{})
 				// Retrieve inputs from last run if exists
 				for _, je := range wr.RunJobEvent {
 					if je.RunAttempt == wr.RunAttempt && je.JobID == jobToRuns[0].JobID {
@@ -1125,6 +1126,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 					}
 				}
 			}
+			inputs["manual"] = true
 
 			stages := wr.GetStages()
 			if len(stages) > 0 {
@@ -1346,6 +1348,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		CronTimezone:     runRequest.CronTimezone,
 		WorkflowRun:      runRequest.WorkflowRun,
 		WorkflowRunID:    runRequest.WorkflowRunID,
+		WebHookID:        runRequest.WebhookID,
 	}
 
 	var msg string
@@ -1362,6 +1365,8 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		msg = fmt.Sprintf("Workflow was triggered by the scheduler %s %s", runEvent.Cron, runEvent.CronTimezone)
 	case sdk.WorkflowHookTypeWorkflowRun:
 		msg = fmt.Sprintf("Workflow was triggered by the workflow-run hook on workflow %s", runEvent.WorkflowRun)
+	case sdk.WorkflowHookTypeWebhook:
+		msg = fmt.Sprintf("Workflow was triggered by webhook %s", runEvent.WebHookID)
 	default:
 		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event %s not implemented", runEvent.HookType)
 	}

@@ -199,7 +199,9 @@ export class EntityJSONFormFieldComponent implements OnInit, OnChanges, OnDestro
             this.currentModel[this.field.name] = {}
         }
         if (this.field.objectType === 'string') {
-            this.currentModel[this.field.name] = [];
+            this.currentModel[this.field.name][''] = '';
+        } else {
+            this.currentModel[this.field.name][''] = {};
         }
         this._cd.markForCheck();
     }

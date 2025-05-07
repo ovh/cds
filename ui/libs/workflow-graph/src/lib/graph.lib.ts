@@ -70,8 +70,8 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     constructor(
         factory: ComponentFactory<T>,
         direction: GraphDirection,
-        minScale: number,
-        maxScale: number
+        minScale: number = 1,
+        maxScale: number = 1
     ) {
         this.componentFactory = factory;
         this.direction = direction;
@@ -224,11 +224,12 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                     this.transformed = event.transform;
                 }
             });
-            this.svg.call(this.zoom);
 
             if (!!this.transformed) {
                 this.svg.call(this.zoom.transform,
                     d3.zoomIdentity.translate(this.transformed.x, this.transformed.y).scale(this.transformed.k));
+            } else {
+                this.svg.call(this.zoom);
             }
         }
     }
@@ -451,13 +452,13 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         }
     }
 
-    createNode(key: string, node: GraphNode, componentRef: ComponentRef<T>): void {
+    createNode(key: string, node: GraphNode, componentRef: ComponentRef<T>, h?: number, w?: number): void {
         let width = 200
         let height = 60;
         switch (node.type) {
             case GraphNodeType.Stage:
-                width = 300;
-                height = 170;
+                width = w;
+                height = h;
                 break;
             case GraphNodeType.Matrix:
                 width = 240;

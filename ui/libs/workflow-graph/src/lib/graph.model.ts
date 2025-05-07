@@ -328,8 +328,3 @@ export enum NavigationGraphNodeType {
     Job = 'job',
     Join = 'join'
 }
-
-
-
-
-

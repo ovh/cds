@@ -63,9 +63,11 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		}
 	}
 
-	var event map[string]interface{}
-	if err := json.Unmarshal(hre.Body, &event); err != nil {
-		return err
+	event := make(map[string]interface{})
+	if len(hre.Body) > 0 {
+		if err := json.Unmarshal(hre.Body, &event); err != nil {
+			return sdk.WithStack(err)
+		}
 	}
 
 	for i := range hre.WorkflowHooks {
@@ -162,6 +164,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				case sdk.WorkflowHookTypeScheduler:
 					runRequest.Cron = hre.ExtractData.Scheduler.Cron
 					runRequest.CronTimezone = hre.ExtractData.Scheduler.Timezone
+					runRequest.Sha = wh.TargetCommit
 				case sdk.WorkflowHookTypeWorkflowRun:
 					runRequest.WorkflowRun = hre.ExtractData.WorkflowRun.Workflow
 					runRequest.WorkflowRunID = hre.ExtractData.WorkflowRun.WorkflowRunID

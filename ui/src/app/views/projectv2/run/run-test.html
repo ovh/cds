@@ -1,10 +1,10 @@
 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
 <ng-container *ngIf="selectedTab && selectedTab.key === 'error'">
-	<nz-code-editor #editor [ngModel]="outputError" [nzEditorOption]="editorOption"
+	<nz-code-editor #editor [ngModel]="outputError" [nzEditorOption]="editorOptionRaw"
 		(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>
 </ng-container>
 <ng-container *ngIf="selectedTab && selectedTab.key === 'systemout'">
-	<nz-code-editor #editor [ngModel]="systemout" [nzEditorOption]="editorOption"
+	<nz-code-editor #editor [ngModel]="systemout" [nzEditorOption]="editorOptionRaw"
 		(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>
 </ng-container>
 <ng-container *ngIf="selectedTab && selectedTab.key === 'raw'">

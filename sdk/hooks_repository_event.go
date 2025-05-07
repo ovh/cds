@@ -43,6 +43,7 @@ const (
 	WorkflowHookEventNameModelUpdate    WorkflowHookEventName = "model-update"
 	WorkflowHookEventNamePush           WorkflowHookEventName = "push"
 	WorkflowHookEventNameManual         WorkflowHookEventName = "manual"
+	WorkflowHookEventNameWebHook        WorkflowHookEventName = "webhook"
 	WorkflowHookEventNameWorkflowRun    WorkflowHookEventName = "workflow-run"
 	WorkflowHookEventNameScheduler      WorkflowHookEventName = "scheduler"
 
@@ -287,12 +288,24 @@ type HookRepositoryEventExtractData struct {
 	DeprecatedAdminMFA bool                                        `json:"admin_mfa"` // Deprecated
 	Scheduler          HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
 	WorkflowRun        HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
+	WebHook            HookRepositoryEventExtractedDataWebHook     `json:"workflow_hook,omitempty"`
 	HookProjectKey     string                                      `json:"hook_project_key"` // force the hook to only trigger from the given CDS project
 }
 
+type HookRepositoryEventExtractedDataWebHook struct {
+	Project    string `json:"project"`
+	VCS        string `json:"vcs"`
+	Repository string `json:"repository"`
+	Workflow   string `json:"workflow"`
+	ID         string `json:"id"`
+}
+
 type HookRepositoryEventExtractedDataManual struct {
-	Project  string `json:"project"`
-	Workflow string `json:"workflow"`
+	Project      string `json:"project"`
+	Workflow     string `json:"workflow"`
+	TargetCommit string `json:"target_commit"`
+	TargetBranch string `json:"target_branch"`
+	TargetTag    string `json:"target_tag"`
 }
 
 type HookRepositoryEventExtractedDataWorkflowRun struct {
@@ -313,7 +326,7 @@ type HookRepositoryEventExtractedDataScheduler struct {
 	Timezone       string `json:"timezone"`
 }
 
-type GenerateRepositoryWebhook struct {
+type GeneratedWebhook struct {
 	Key           string `json:"key"`
 	UUID          string `json:"uuid"`
 	HookPublicURL string `json:"url"`
@@ -381,6 +394,13 @@ type AnalysisResponse struct {
 
 func GenerateRepositoryWebHookSecret(hookSecretKey, pkey, vcsName, repoName, uuid string) string {
 	pass := fmt.Sprintf("%s-%s-%s-%s", pkey, vcsName, repoName, uuid)
+	keyBytes := pbkdf2.Key([]byte(pass), []byte(hookSecretKey), 4096, 128, sha512.New)
+	key64 := base64.StdEncoding.EncodeToString(keyBytes)
+	return key64
+}
+
+func GenerateWorkflowWebHookSecret(hookSecretKey, pkey, vcsName, repoName, workflowName, uuid string) string {
+	pass := fmt.Sprintf("%s-%s-%s-%s-%s", pkey, vcsName, repoName, workflowName, uuid)
 	keyBytes := pbkdf2.Key([]byte(pass), []byte(hookSecretKey), 4096, 128, sha512.New)
 	key64 := base64.StdEncoding.EncodeToString(keyBytes)
 	return key64

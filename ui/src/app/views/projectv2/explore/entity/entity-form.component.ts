@@ -37,6 +37,7 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('editor') editor: NzCodeEditorComponent;
 
     @Input() path: string;
+    @Input() name: string;
     @Input() data: string;
     @Input() schema: Schema;
     @Input() disabled: boolean;

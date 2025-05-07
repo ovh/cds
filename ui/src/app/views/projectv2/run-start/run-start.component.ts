@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
-import { FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
+import { FormBuilder, FormControl, FormGroup, Validators, ValidationErrors } from "@angular/forms";
 import { Store } from "@ngxs/store";
 import { EntityType } from "app/model/entity.model";
 import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent } from "app/model/project.model";
@@ -46,6 +46,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
+    payload: FormControl<string | null>;
   }>;
   event: RepositoryHookEvent;
   loaders: {
@@ -54,11 +55,12 @@ export class ProjectV2RunStartComponent implements OnInit {
     ref: boolean,
     workflow: boolean
   } = {
-    global: false,
-    repository: false,
-    ref: false,
-    workflow: false
-  };
+      global: false,
+      repository: false,
+      ref: false,
+      workflow: false
+    };
+  noWorkflowFound: boolean = false;
 
   constructor(
     private _drawerRef: NzDrawerRef<string>,
@@ -76,6 +78,16 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
+      payload: this._fb.control<string | null>(null, (control) => {
+        if (control.value) {
+          try {
+            JSON.parse(control.value);
+          } catch (e) {
+            return <ValidationErrors>{ 'error': true };
+          }
+        }
+        return null;
+      }),
     });
   }
 
@@ -144,6 +156,13 @@ export class ProjectV2RunStartComponent implements OnInit {
     try {
       const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, splitted.vcs, splitted.repo, branch));
       this.workflows = resp.filter(e => e.type === EntityType.Workflow).map(e => e.name);
+      this.noWorkflowFound = this.workflows.length === 0;
+      if (this.noWorkflowFound) {
+        // If not entities were found, suggest entities from default branch
+        const defaultBranch = this.branches.find(b => b.default).display_id;
+        const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, splitted.vcs, splitted.repo, defaultBranch));
+        this.workflows = resp.filter(e => e.type === EntityType.Workflow).map(e => e.name);
+      }
     } catch (e) {
       this._messageService.error(`Unable to get repo entities: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
       this.loaders.ref = false;
@@ -169,7 +188,8 @@ export class ProjectV2RunStartComponent implements OnInit {
     const splitted = this.splitRepository(form.repository.value);
     let wkf: V2Workflow;
     try {
-      const entity = await lastValueFrom(this._projectService.getRepoEntity(this.project.key, splitted.vcs, splitted.repo, EntityType.Workflow, form.workflow.value, form.ref.value));
+      const ref = this.noWorkflowFound ? 'refs/heads/' + this.branches.find(b => b.default).display_id : form.ref.value;
+      const entity = await lastValueFrom(this._projectService.getRepoEntity(this.project.key, splitted.vcs, splitted.repo, EntityType.Workflow, form.workflow.value, ref));
       wkf = load(entity.data && entity.data !== '' ? entity.data : '{}', <LoadOptions>{
         onWarning: (e) => { }
       });
@@ -253,7 +273,14 @@ export class ProjectV2RunStartComponent implements OnInit {
       }
     }
 
+    if (this.noWorkflowFound) {
+      req.workflow_branch = this.branches.find(b => b.default).display_id;
+    }
+    if (this.validateForm.value.payload) {
+      req.payload = JSON.parse(this.validateForm.value.payload);
+    }
     let hookEventUUID: string;
+
     try {
       const resp = await lastValueFrom(this._workflowRunService.start(this.project.key, splitted.vcs, splitted.repo, this.validateForm.value.workflow, req));
       this._messageService.success('Workflow run started', { nzDuration: 2000 });

@@ -137,4 +137,8 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
         event.preventDefault();
         event.stopPropagation();
     }
+
+    confirmRunGate(): void {
+        this.actionCallback(GraphNodeAction.Click, this.node, { gateName: this.node.gate });
+    }
 }
