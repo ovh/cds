@@ -56,7 +56,7 @@ func Test_postOperationHandler(t *testing.T) {
 
 	//Asserts
 	assert.Equal(t, 200, rec.Code)
-	t.Logf(rec.Body.String())
+	t.Log(rec.Body.String())
 }
 
 func Test_postOperationMultiPartHandler(t *testing.T) {
@@ -101,7 +101,7 @@ func Test_postOperationMultiPartHandler(t *testing.T) {
 
 	//Asserts
 	assert.Equal(t, 200, rec.Code)
-	t.Logf(rec.Body.String())
+	t.Log(rec.Body.String())
 }
 
 func getWorkflowTarFile(t *testing.T, buf *bytes.Buffer) {

@@ -38,7 +38,7 @@ type OperationError struct {
 }
 
 func FromGitToHumanError(targetError, err error) error {
-	return NewErrorFrom(targetError, strings.Split(err.Error(), "\n")[0])
+	return NewErrorFrom(targetError, "%s", strings.Split(err.Error(), "\n")[0])
 }
 
 func ToOperationError(err error) *OperationError {

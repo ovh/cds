@@ -1,6 +1,6 @@
-name: go-official-1.23
+name: go-official-1.24
 group: shared.infra
-image: golang:1.23
+image: golang:1.24
 description: official from https://hub.docker.com/_/golang/
 type: docker
 pattern_name: basic_unix

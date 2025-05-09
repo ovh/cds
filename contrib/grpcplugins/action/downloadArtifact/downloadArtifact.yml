@@ -7,7 +7,7 @@ inputs:
   name:
     type: string
     description: >
-      Artifact name or wilcard pattern.
+      Artifact name or wildcard pattern.
 
       If empty, all the artifacts identifed as "generic" result previously uploaded in the workflow will be downloaded.
   path:
@@ -15,4 +15,4 @@ inputs:
     description: >
       Destination path
 
-      If empty, all the artifacts will be downloadded in the job workspace.
+      If empty, all the artifacts will be downloaded in the job workspace.

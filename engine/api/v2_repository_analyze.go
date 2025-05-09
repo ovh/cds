@@ -768,7 +768,7 @@ skipEntity:
 		if e.Type == sdk.EntityTypeWorkflow {
 			hooks, err := manageWorkflowHooks(ctx, tx, api.Cache, ef, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch, srvs)
 			if err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to create workflow hooks for %s", e.Name))
 			}
 			newHooks = append(newHooks, hooks...)
 		}
@@ -781,7 +781,7 @@ skipEntity:
 		}
 		hooks, err := prepareWorkflowHooks(ctx, tx, api.Cache, ef, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch)
 		if err != nil {
-			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to create workflow hooks for %s", e.Name))
 		}
 		skippedHooks = append(skippedHooks, hooks...)
 	}
@@ -882,7 +882,7 @@ func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 			return nil, err
 		}
 		if msg != "" {
-			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, msg)
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg)
 		}
 		if _, err := entTemplate.Template.Resolve(ctx, &e.Workflow); err != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute workflow from template: %v", err)
@@ -1610,7 +1610,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 			sameVCS := x.Repository == nil || x.Repository.VCSServer == ef.currentVCS.Name || x.Repository.VCSServer == ""
 			sameRepo := x.Repository == nil || x.Repository.Name == ef.currentRepo.Name || x.Repository.Name == ""
 			if sameVCS && sameRepo && x.Repository != nil && x.Repository.InsecureSkipSignatureVerify {
-				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workfow.repository.name`. ", x.Name))
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workflow.repository.name`. ", x.Name))
 			}
 			for jobID, j := range x.Jobs {
 				// Check if worker model exists
@@ -1634,7 +1634,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 						err = append(err, errSearch)
 					}
 					if msg != "" {
-						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, msg))
+						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg))
 					}
 				}
 

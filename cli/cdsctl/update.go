@@ -56,7 +56,7 @@ func updateRun(v cli.Values) error {
 	defer resp.Body.Close()
 
 	if err := sdk.CheckContentTypeBinary(resp); err != nil {
-		return cli.NewError(err.Error())
+		return cli.NewError("%s", err.Error())
 	}
 
 	if resp.StatusCode != 200 {

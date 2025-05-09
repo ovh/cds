@@ -97,6 +97,6 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 	assert.NoError(t, err)
 
 	pub2, _ := io.ReadAll(pubReader)
-	t.Logf(string(pub2))
+	t.Log(string(pub2))
 	assert.Equal(t, string([]byte(k.Public)), string(pub2))
 }

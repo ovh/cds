@@ -3,7 +3,7 @@ package main
 import (
 	"crypto/rsa"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 )
 

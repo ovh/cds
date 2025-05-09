@@ -20,7 +20,7 @@ func (c *client) V2WorkerProjectGetKey(ctx context.Context, region, runJobID, ke
 
 func (c *client) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
 	var workers []sdk.V2Worker
-	url := fmt.Sprintf("/v2/worker")
+	url := "/v2/worker"
 	if _, err := c.GetJSON(ctx, url, &workers); err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (c *client) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
 
 func (c *client) V2WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.V2Worker, error) {
 	var worker sdk.V2Worker
-	url := fmt.Sprintf("/v2/worker/" + name)
+	url := "/v2/worker/" + name
 	if _, err := c.GetJSON(ctx, url, &worker, mods...); err != nil {
 		return nil, err
 	}

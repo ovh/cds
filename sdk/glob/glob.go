@@ -182,7 +182,7 @@ func (g *Globber) MatchFiles(_fs fs.FS) (*FileResults, error) {
 func (g *Globber) walkdirFunc(target *[]string) func(path string, d fs.DirEntry, err error) error {
 	return func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			Debug(err.Error())
+			Debug("%s", err.Error())
 			return nil
 		}
 		Debug("path: %s name: %s, isDir:%v", path, d.Name(), d.IsDir())

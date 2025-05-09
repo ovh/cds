@@ -257,7 +257,7 @@ version: v1.0`),
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
-	t.Logf(w.Body.String())
+	t.Log(w.Body.String())
 }
 
 func Test_postResyncPRAsCodeHandler(t *testing.T) {
@@ -398,7 +398,7 @@ vcs_ssh_key: proj-blabla
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 204, w.Code)
-	t.Logf(w.Body.String())
+	t.Log(w.Body.String())
 
 	// Check there is no more events in db
 	assDB, err := ascode.LoadEventsByWorkflowID(context.TODO(), db, wf.ID)

@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -20,7 +21,7 @@ const (
 func newSession(c *sdk.AuthConsumer, duration time.Duration) sdk.AuthSession {
 	return sdk.AuthSession{
 		ConsumerID: c.ID,
-		ExpireAt:   time.Now().Add(duration),
+		ExpireAt:   database.NowMS().Add(duration),
 	}
 }
 

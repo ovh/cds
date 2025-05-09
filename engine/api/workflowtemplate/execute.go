@@ -158,7 +158,7 @@ func Parse(wt sdk.WorkflowTemplate) (sdk.WorkflowTemplateParsed, error) {
 			ID:     sdk.ErrCannotParseTemplate.ID,
 			Status: sdk.ErrCannotParseTemplate.Status,
 			Data:   errs,
-		}, strings.Join(causes, ", "))
+		}, "%s", strings.Join(causes, ", "))
 	}
 
 	return result, nil

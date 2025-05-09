@@ -52,7 +52,7 @@ func adminHookSchedulerDeleteRun(v cli.Values) error {
 	}
 
 	if hookID != "" {
-		path := fmt.Sprintf("/admin/scheduler/execution/" + hookID)
+		path := "/admin/scheduler/execution/" + hookID
 		if err := client.ServiceCallDELETE("hooks", path); err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ var adminHooksGetSchedulerCmd = cli.Command{
 func adminHooksGetSchedulerRun(v cli.Values) (interface{}, error) {
 	hookID := v.GetString("hookID")
 
-	path := fmt.Sprintf("/admin/scheduler/execution/" + hookID)
+	path := "/admin/scheduler/execution/" + hookID
 	bts, err := client.ServiceCallGET("hooks", path)
 	if err != nil {
 		return nil, err

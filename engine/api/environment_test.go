@@ -107,7 +107,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := io.ReadAll(w.Body)
-	t.Logf(string(res))
+	t.Log(string(res))
 	projectResult := &sdk.Project{}
 	json.Unmarshal(res, &projectResult)
 	assert.Equal(t, len(projectResult.Environments), 1)
