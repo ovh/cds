@@ -10,8 +10,8 @@ inputs:
     required: true
   tags:
     type: string
-    description: |- 
-      The tags to associate with the image on the registry.
+    description: |-
+      The tags to associate with the image on the registry, separated by comma, space or semicolon.
 
       This parameter can be empty if you want to keep the same tag.
     required: false
@@ -25,8 +25,8 @@ inputs:
   registryAuth:
     type: string
     description: |-
-      Docker base64url-encoded auth configuration. 
-      
+      Docker base64url-encoded auth configuration.
+
       See docker authentication section for more details: https://docs.docker.com/engine/api/v1.41/#section/Authentication.
 
       This parameter can be empty when an Artifactory integration is set up.
