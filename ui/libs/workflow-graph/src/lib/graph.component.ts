@@ -340,7 +340,9 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
 
         this.resize();
 
-        if (!this.graph.transformed) {
+        if (!this.graph.transformed && this.centeredNode) {
+            this.centerNode(this.centeredNode);
+        } else if (!this.graph.transformed) {
             this.clickOrigin();
         }
 
@@ -359,19 +361,22 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
             return;
         }
         this.graph.resize(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
-        if (this.centeredNode) {
-            this.centerNode(this.centeredNode);
-        } else {
-            this.clickOrigin();
-        }
     }
 
     clickOrigin() {
         if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
             return;
         }
-        this.graph.center(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
         this.centeredNode = null;
+        this.graph.center(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
+    }
+
+    centerNode(n: GraphNode): void {
+        if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
+            return;
+        }
+        this.graph.centerNode(`node-${n.job && n.job.stage ? `${n.job.stage}-${n.name}` : n.name}`, this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
+        this.centeredNode = n;
     }
 
     clickHook(type: string): void {
@@ -411,16 +416,6 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
         componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
-    }
-
-    centerNode(node: GraphNode): void {
-        if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
-            return;
-        }
-        this.centeredNode = node;
-        this.graph.centerNode(`node-${node.name}`,
-            this.svgContainer.element.nativeElement.offsetWidth,
-            this.svgContainer.element.nativeElement.offsetHeight);
     }
 
     onNodeAction(type: GraphNodeAction, n: GraphNode, options?: any) {

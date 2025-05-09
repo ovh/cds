@@ -103,11 +103,22 @@
         :host-context(.night) & {
             background-color: rgba(255, 255, 255, 0.08);
         }
+
+
+        app-favorite-button {
+            visibility: visible;
+        }
     }
 
     app-repository-ref-select {
         overflow: hidden;
         max-width: 50%;
+    }
+
+    app-favorite-button {
+        visibility: hidden;
+        font-size: 14px;
+        margin-right: 5px;
     }
 }
 
@@ -138,18 +149,6 @@
         &:has(~ .tree-node-header) {
             margin-bottom: 5px;
         }
-    }
-
-    &:hover {
-        app-favorite-button {
-            visibility: visible;
-        }
-    }
-
-    app-favorite-button {
-        visibility: hidden;
-        font-size: 14px;
-        margin-right: 5px;
     }
 
     ::ng-deep {

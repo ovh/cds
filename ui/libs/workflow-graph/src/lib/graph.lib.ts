@@ -51,7 +51,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     nodesComponent = new Map<string, ComponentRef<T>>();
     nodes = new Array<Node>();
     edges = new Array<Edge>();
-    direction: string;
+    direction: GraphDirection = GraphDirection.HORIZONTAL;
     zoom: d3.ZoomBehavior<Element, {}>;
     svg: d3.Selection<any, any, any, any>;
     g: d3.Selection<any, any, any, any>;
@@ -228,9 +228,8 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             if (!!this.transformed) {
                 this.svg.call(this.zoom.transform,
                     d3.zoomIdentity.translate(this.transformed.x, this.transformed.y).scale(this.transformed.k));
-            } else {
-                this.svg.call(this.zoom);
             }
+            this.svg.call(this.zoom);
         }
     }
 
@@ -267,10 +266,27 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             return;
         }
         let node = this.graph.node(nodeName);
-        if (!node) { return; }
+        if (!node) {
+            // Check for node in stages
+            for (let i = 0; i < this.nodes.length; i++) {
+                if (this.nodes[i].type !== GraphNodeType.Stage) {
+                    continue;
+                }
+                const subNode = (this.nodesComponent.get(`node-${this.nodes[i].key}`).instance as any).graph.graph.node(nodeName);
+                if (subNode) {
+                    const stageNode = this.graph.node(`node-${this.nodes[i].key}`);
+                    node = {
+                        ...subNode,
+                        x: (stageNode.x - stageNode.width / 2) + subNode.x,
+                        y: (stageNode.y - stageNode.height / 2) + subNode.y
+                    };
+                    break;
+                }
+            }
+        }
         // calculate optimal scale for current graph
         let oScale = Math.min((containerWidth - WorkflowV2Graph.margin * 2) / node.width,
-            (containerHeight - WorkflowV2Graph.margin * 2) / node.width);
+            (containerHeight - WorkflowV2Graph.margin * 2) / node.height);
         // calculate final scale that fit min and max scale values
         let scale = Math.min(
             WorkflowV2Graph.maxOriginScale,
@@ -279,6 +295,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         let nodeDeltaCenterX = containerWidth / 2 - node.x * scale;
         let nodeDeltaCenterY = containerHeight / 2 - node.y * scale;
         this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(nodeDeltaCenterX, nodeDeltaCenterY).scale(scale));
+        this.transformed = null;
     }
 
     drawNodes(): void {
