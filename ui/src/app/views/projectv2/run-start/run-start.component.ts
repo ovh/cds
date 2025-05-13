@@ -46,7 +46,6 @@ export class ProjectV2RunStartComponent implements OnInit {
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
-    payload: FormControl<string | null>;
   }>;
   event: RepositoryHookEvent;
   loaders: {
@@ -78,16 +77,6 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
-      payload: this._fb.control<string | null>(null, (control) => {
-        if (control.value) {
-          try {
-            JSON.parse(control.value);
-          } catch (e) {
-            return <ValidationErrors>{ 'error': true };
-          }
-        }
-        return null;
-      }),
     });
   }
 
@@ -275,9 +264,6 @@ export class ProjectV2RunStartComponent implements OnInit {
 
     if (this.noWorkflowFound) {
       req.workflow_branch = this.branches.find(b => b.default).display_id;
-    }
-    if (this.validateForm.value.payload) {
-      req.payload = JSON.parse(this.validateForm.value.payload);
     }
     let hookEventUUID: string;
 
