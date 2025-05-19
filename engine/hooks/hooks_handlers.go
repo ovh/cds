@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -189,11 +188,6 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		}
 	}
 
-	var request []byte
-	if runRequest.UserRequest.Payload != nil {
-		request, _ = json.Marshal(runRequest.UserRequest.Payload)
-	}
-
 	extractedData := sdk.HookRepositoryEventExtractData{
 		CDSEventName: sdk.WorkflowHookEventNameManual,
 		Commit:       runRequest.WorkflowCommit,
@@ -215,7 +209,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		EventName:          sdk.WorkflowHookEventNameManual,
 		VCSServerName:      runRequest.VCSServer,
 		RepositoryName:     runRequest.Repository,
-		Body:               request,
+		Body:               nil,
 		Created:            time.Now().UnixNano(),
 		Status:             sdk.HookEventStatusScheduled,
 		ExtractData:        extractedData,
