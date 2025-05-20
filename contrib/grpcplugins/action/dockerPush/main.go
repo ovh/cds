@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -186,15 +185,13 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		if err != nil {
 			return nil, time.Since(t0), err
 		}
-
-		destination = repository + "." + rtURL.Host + "/" + img.Repository + ":" + tag
-
-		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
-			Name:         destination,
-			ID:           img.ImageID,
-			HumanSize:    img.Size,
-			HumanCreated: img.Created,
+		rtConfig := grpcplugins.ArtifactoryConfig{
+			URL:   rtURL.String(),
+			Token: integration.Get(sdk.ArtifactoryConfigToken),
 		}
+
+		repositoryDestination := repository + "." + rtURL.Host + "/" + img.Repository
+		destination = repositoryDestination + ":" + tag
 
 		// Check if we need to tag the image
 		if destination != img.Repository+":"+img.Tag {
@@ -220,43 +217,11 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			return nil, time.Since(t0), errors.Errorf("unable to push %q: %v", destination, err)
 		}
 
-		var rtConfig = grpcplugins.ArtifactoryConfig{
-			URL:   rtURL.String(),
-			Token: integration.Get(sdk.ArtifactoryConfigToken),
-		}
+		// set the image tag to the destination tag
+		img.Tag = tag
 
-		maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
-		rtFolderPath := img.Repository + "/" + tag
-
-		// here, we GetArtifactoryFolderInfo from the repository+"-"+maturity (=generaly ...-docker-snaphot repo)
-		// if a docker image exists on a remote repo, with the same name on local repo, then we want to getFileInfo from the layers pushed only.
-		// Example:
-		// a multi-arch exists on the remote repo with a list.manifest.json
-		// docker push is done on virtual with the same name:tag, pushing manifest.json and not list.manifest.json
-		// the rtFolderPathInfo should not include the list.manifest.json
-		rtFolderPathInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository+"-"+maturity, rtFolderPath)
-		if err != nil {
+		if err := grpcplugins.FinalizeRunResultDockerDetail(ctx, &actPlugin.Common, rtConfig, result, destination, img); err != nil {
 			return nil, time.Since(t0), err
-		}
-
-		var manifestFound bool
-		for _, child := range rtFolderPathInfo.Children {
-			if strings.HasSuffix(child.URI, "manifest.json") { // Can be manifest.json of list.manifest.json for multi-arch docker image
-				rtPathInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &actPlugin.Common, rtConfig, repository+"-"+maturity, rtFolderPath+child.URI)
-				if err != nil {
-					return nil, time.Since(t0), err
-				}
-				manifestFound = true
-				localRepo := fmt.Sprintf("%s-%s", repository, integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity))
-
-				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
-				result.ArtifactManagerMetadata.Set("id", img.ImageID)
-				break
-			}
-		}
-		result.ArtifactManagerMetadata.Set("dir", rtFolderPathInfo.Path)
-		if !manifestFound {
-			return nil, time.Since(t0), errors.New("unable to get uploaded image manifest")
 		}
 
 	default:
