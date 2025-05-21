@@ -78,6 +78,9 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 			}];
 		let t: TestCase;
 		for (let i = 0; i < this.tests.test_suites.length; i++) {
+			if (!this.tests.test_suites[i].tests) {
+				continue
+			}
 			for (let j = 0; j < this.tests.test_suites[i].tests.length; j++) {
 				const key = this.tests.test_suites[i].name + '/' + this.tests.test_suites[i].tests[j].name;
 				if (key === this.test) {
