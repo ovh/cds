@@ -1623,6 +1623,17 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 			}
 			runJob.GateInputs = jobEvent.Inputs
 		}
+		// If no gate input provided but there is a gate on the job, fill with the default values
+		if runJob.GateInputs == nil && runJob.Job.Gate != "" {
+			runJob.GateInputs = sdk.GateInputs{}
+			for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
+				if v.Default == nil {
+					continue
+				}
+				runJob.GateInputs[k] = v.Default
+			}
+			runJob.GateInputs["manual"] = false
+		}
 		data.runJobContext.Gate = runJob.GateInputs
 		data.runJobContext.Matrix = runJob.Matrix
 		runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, data.defaultRegion, data.regionPermCache, data.runJobContext, data.wrEnqueue)
