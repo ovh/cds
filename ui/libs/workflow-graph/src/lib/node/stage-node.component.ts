@@ -126,7 +126,6 @@ export class GraphStageNodeComponent implements AfterViewInit {
         const element = this.svgContainer.element.nativeElement;
         this.graph.draw(element, false);
         this.graph.resize(this.graph.graph.graph().width + 2 * WorkflowV2Graph.marginSubGraph, this.graph.graph.graph().height + 2 * WorkflowV2Graph.marginSubGraph);
-        this.graph.center(this.graph.graph.graph().width + 2 * WorkflowV2Graph.marginSubGraph, this.graph.graph.graph().height + 2 * WorkflowV2Graph.marginSubGraph);
         this._cd.markForCheck();
     }
 
@@ -172,4 +171,6 @@ export class GraphStageNodeComponent implements AfterViewInit {
             this.centerCallback(this.node);
         }
     }
+
+    match(navigationKey: string): boolean { return false; }
 }

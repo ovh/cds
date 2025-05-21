@@ -54,29 +54,22 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			}
 
 			// Load last running step
-			var iuID string
-			jobRunInt, err := strconv.Atoi(filter.JobRunID)
-			if err == nil {
-				iu, err := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), int64(jobRunInt), sdk.CDNTypeItemStepLog)
-				if err != nil {
-					log.ErrorWithStackTrace(ctx, err)
-					return
-				}
-				if iu != nil {
-					iuID = iu.ID
-				}
-			} else {
-				iu, err := storage.LoadLastItemUnitByRunJobIDUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog)
-				if err != nil {
-					log.ErrorWithStackTrace(ctx, err)
-					return
-				}
-				if iu != nil {
-					iuID = iu.ID
+			if _, err := strconv.Atoi(filter.JobRunID); err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Warn(ctx, err.Error())
+				return
+			}
+			var latestItemUnitID string
+			if iu, err := storage.LoadLastItemUnitByNodeJobRunIDAndUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog); err == nil {
+				latestItemUnitID = iu.ID
+			}
+			if latestItemUnitID == "" {
+				if iu, err := storage.LoadLastItemUnitByNodeJobRunIDAndUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemServiceLog); err == nil {
+					latestItemUnitID = iu.ID
 				}
 			}
 
-			if err := wsClientData.UpdateFilter(filter, iuID); err != nil {
+			if err := wsClientData.UpdateFilter(filter, latestItemUnitID); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Warn(ctx, err.Error())
 				return
@@ -148,29 +141,17 @@ func (s *Service) getItemLogsStreamV2Handler() service.Handler {
 			}
 
 			// Load last running step
-			var iuID string
-			jobRunInt, err := strconv.Atoi(filter.JobRunID)
-			if err == nil {
-				iu, err := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), int64(jobRunInt), sdk.CDNTypeItemJobStepLog)
-				if err != nil {
-					log.ErrorWithStackTrace(ctx, err)
-					return
-				}
-				if iu != nil {
-					iuID = iu.ID
-				}
-			} else {
-				iu, err := storage.LoadLastItemUnitByRunJobIDUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemServiceLogV2)
-				if err != nil {
-					log.ErrorWithStackTrace(ctx, err)
-					return
-				}
-				if iu != nil {
-					iuID = iu.ID
+			var latestItemUnitID string
+			if iu, err := storage.LoadLastItemUnitByRunJobIDAndUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemJobStepLog); err == nil {
+				latestItemUnitID = iu.ID
+			}
+			if latestItemUnitID == "" {
+				if iu, err := storage.LoadLastItemUnitByRunJobIDAndUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemServiceLogV2); err == nil {
+					latestItemUnitID = iu.ID
 				}
 			}
 
-			if err := wsClientData.UpdateFilter(filter, iuID); err != nil {
+			if err := wsClientData.UpdateFilter(filter, latestItemUnitID); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Warn(ctx, err.Error())
 				return

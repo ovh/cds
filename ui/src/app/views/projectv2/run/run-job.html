@@ -16,11 +16,11 @@
     <!-- Display job services and steps -->
     <div class="step"
         *ngFor="let logBlock of tabs[currentTabIndex].logBlocks; trackBy: trackStepElement; let i = index">
-        <div class="line info" (click)="clickOpen(logBlock)">
+        <div class="line info" (click)="clickOpenClose(logBlock)">
             <div class="number">
-                <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && !logBlock.open" nz-icon
+                <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && logBlock.closed" nz-icon
                     nzType="caret-right" nzTheme="fill"></span>
-                <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && logBlock.open" nz-icon
+                <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && !logBlock.closed" nz-icon
                     nzType="caret-down" nzTheme="fill"></span>
                 <span nz-icon [nzType]="'loading'" *ngIf="logBlock.lines.length === 0 && logBlock.loading"></span>
                 {{logBlock.firstDisplayedLineNumber ? logBlock.firstDisplayedLineNumber : ''}}
@@ -42,7 +42,7 @@
                     (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
             </div>
         </div>
-        <ng-container *ngIf="logBlock.open">
+        <ng-container *ngIf="!logBlock.closed">
             <div class="line" *ngFor="let line of logBlock.lines; trackBy: trackLineElement; let j = index">
                 <div class="number">{{logBlock.firstDisplayedLineNumber + j + 1}}</div>
                 <div class="value">

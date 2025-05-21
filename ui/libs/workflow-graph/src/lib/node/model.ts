@@ -43,6 +43,7 @@ export enum GraphNodeAction {
     Out = 'out',
     Click = 'click',
     ClickGate = 'click-gate',
+    ClickConfirmGate = 'click-confirm-gate',
     ClickRestart = 'click-restart',
     ClickStop = 'click-stop',
 }
