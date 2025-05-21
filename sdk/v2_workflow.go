@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/gorhill/cronexpr"
-	"github.com/rockbears/yaml"
 	"github.com/xeipuuv/gojsonschema"
+	"sigs.k8s.io/yaml"
 )
 
 const (
