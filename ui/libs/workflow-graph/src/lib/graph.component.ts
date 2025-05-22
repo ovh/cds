@@ -34,13 +34,7 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
     static maxScale = 15;
     static minScale = 1 / 5;
 
-    nodes: Array<GraphNode> = [];
-    hooks: Array<any> = [];
-    selectedHook: string;
-    hooksOn: any;
-    centeredNode: GraphNode;
-    selectedNodeNavigationKey: string;
-    navigationGraph: NavigationGraph;
+    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
 
     @Input() set workflow(data: any) {
         // Parse the workflow
@@ -128,19 +122,21 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
 
     @Output() onSelectJob = new EventEmitter<string>();
     @Output() onSelectJobGate = new EventEmitter<string>();
+    @Output() onConfirmJobGate = new EventEmitter<string>();
     @Output() onSelectJobRun = new EventEmitter<string>();
     @Output() onSelectJobRunRestart = new EventEmitter<string>();
     @Output() onSelectJobRunStop = new EventEmitter<string>();
     @Output() onSelectHook = new EventEmitter<string>();
 
+    nodes: Array<GraphNode> = [];
+    hooks: Array<any> = [];
+    selectedHook: string;
+    hooksOn: any;
+    selectedNodeNavigationKey: string;
+    navigationGraph: NavigationGraph;
     direction: GraphDirection = GraphDirection.HORIZONTAL;
-
     ready: boolean;
     hasStages = false;
-
-    // workflow graph
-    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
-
     graph: WorkflowV2Graph<WorkflowV2JobsGraphOrNodeOrMatrixComponent>;
 
     constructor(
@@ -202,12 +198,13 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
         if (newSelected) {
             this.selectedNodeNavigationKey = newSelected;
             this.graph.selectNode(this.selectedNodeNavigationKey);
+            this.graph.centerNode(this.selectedNodeNavigationKey, true);
         }
     }
 
     unSelect() {
         this.graph.selectNode(null);
-        this.clickOrigin();
+        this.graph.centeredNode = null;
     }
 
     onResize() {
@@ -340,12 +337,6 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
 
         this.resize();
 
-        if (!this.graph.transformed && this.centeredNode) {
-            this.centerNode(this.centeredNode);
-        } else if (!this.graph.transformed) {
-            this.clickOrigin();
-        }
-
         if (this.selectedNodeNavigationKey) {
             this.graph.selectNode(this.selectedNodeNavigationKey);
         }
@@ -364,19 +355,7 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
     }
 
     clickOrigin() {
-        if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
-            return;
-        }
-        this.centeredNode = null;
-        this.graph.center(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
-    }
-
-    centerNode(n: GraphNode): void {
-        if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
-            return;
-        }
-        this.graph.centerNode(`node-${n.job && n.job.stage ? `${n.job.stage}-${n.name}` : n.name}`, this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
-        this.centeredNode = n;
+        this.graph.center();
     }
 
     clickHook(type: string): void {
@@ -412,7 +391,7 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
         const componentRef = this.svgContainer.createComponent(GraphStageNodeComponent);
         componentRef.instance.graphNode = node;
         componentRef.instance.direction = this.direction;
-        componentRef.instance.centerCallback = this.centerNode.bind(this);
+        componentRef.instance.centerCallback = (n: GraphNode) => { this.graph.centerStage(`node-${node.name}`); };
         componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
@@ -428,9 +407,11 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
                 break;
             case GraphNodeAction.Click:
             case GraphNodeAction.ClickGate:
-                this.selectedNodeNavigationKey = n.job.stage ? `${n.job.stage}-${n.name}` : n.name;
+                const baseKey = (n.job && n.job.stage) ? `${n.job.stage}-${n.name}` : n.name;
+                this.selectedNodeNavigationKey = baseKey
                 if (n.type === GraphNodeType.Matrix) { this.selectedNodeNavigationKey += '-' + options.jobMatrixKey; }
                 this.graph.selectNode(this.selectedNodeNavigationKey);
+                this.graph.centerNode(baseKey);
                 if (options && options['jobRunID']) {
                     this.onSelectJobRun.emit(options['jobRunID']);
                 } else if (options && options['gateName']) {
@@ -438,7 +419,9 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
                 } else {
                     this.onSelectJob.emit(n.name);
                 }
-                this.centerNode(n);
+                break;
+            case GraphNodeAction.ClickConfirmGate:
+                this.onConfirmJobGate.emit(n.name);
                 break;
             case GraphNodeAction.ClickRestart:
                 this.onSelectJobRunRestart.emit(options['jobRunID']);

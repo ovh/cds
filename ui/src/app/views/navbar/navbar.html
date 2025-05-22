@@ -103,9 +103,14 @@
                     <div nz-menu-divider></div>
                     <a nz-menu-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate
                         }}</a>
-                    <a nz-menu-item href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">{{
-                        'navbar_documentation' | translate }}</a>
-                    <div nz-menu-divider></div>
+                    <a *ngIf="!help.documentationLink" nz-menu-item href="#" [routerLink]="['docs', '']" target="_blank"
+                        rel="noopener noreferrer">
+                        {{ 'navbar_documentation' | translate }}
+                    </a>
+                    <a *ngIf="help.documentationLink" nz-menu-item href="{{help.documentationLink}}" target="_blank"
+                        rel="noopener noreferrer">
+                        {{ 'navbar_documentation' | translate }}
+                    </a>
                 </ng-container>
 
                 <div nz-menu-item>

@@ -1502,7 +1502,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
 					IssuedAt:      time.Now(),
-					Message:       fmt.Sprintf("Job %s: there is more than one job with this name", data.jobID),
+					Message:       fmt.Sprintf("Job %q: there is more than one job with the name %q", data.jobID, k),
 				}}
 			}
 			newJobs[k] = v
@@ -1526,7 +1526,12 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 
 	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job, data.allVariableSets, data.defaultRegion)
 	if err != nil {
-
+		return []sdk.V2WorkflowRunInfo{{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			IssuedAt:      time.Now(),
+			Message:       err.Error(),
+		}}
 	}
 	if len(msgs) > 0 {
 		return msgs

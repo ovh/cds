@@ -31,7 +31,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
     keys: Array<string> = [];
     status: { [key: string]: V2WorkflowRunJobStatus } = {};
     jobRunIDs: { [key: string]: string } = {};
-    displayNames:  { [key: string]: string } = {};
+    displayNames: { [key: string]: string } = {};
     runActive: boolean = false;
 
     constructor(
@@ -66,7 +66,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
             };
             this.status[key] = r.status;
             this.jobRunIDs[key] = r.id;
-            this.displayNames[key] = r.job.name && r.job.name.indexOf('$\{{') !== 0? r.job.name: key;
+            this.displayNames[key] = r.job.name && r.job.name.indexOf('$\{{') !== 0 ? r.job.name : key;
         });
         const isRunning = Object.keys(this.status).findIndex(key => this.status[key] === V2WorkflowRunJobStatus.Waiting ||
             this.status[key] === V2WorkflowRunJobStatus.Scheduling ||
@@ -166,7 +166,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    clickRunGate(event: Event): void {
+    clickGate(event: Event): void {
         this.actionCallback(GraphNodeAction.Click, this.node, { gateName: this.node.gate });
         event.preventDefault();
         event.stopPropagation();
@@ -185,6 +185,19 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
     }
 
     confirmRunGate(): void {
-        this.actionCallback(GraphNodeAction.Click, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickConfirmGate, this.node, { gateName: this.node.gate });
+    }
+
+    match(navigationKey: string): boolean {
+        const baseKey = this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name;
+        if (navigationKey === baseKey) {
+            return true;
+        }
+        for (let i = 0; i < this.keys.length; i++) {
+            if (`${baseKey}-${this.keys[i]}` === navigationKey) {
+                return true;
+            }
+        }
+        return false;
     }
 }

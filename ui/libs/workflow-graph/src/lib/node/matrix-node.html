@@ -1,7 +1,7 @@
 <div *ngIf="node?.name" class="label" title="{{node?.name}}">
     <ng-container *ngIf="node?.gate && !runActive">
         <button *ngIf="node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
-            (click)="clickRunGate($event)">
+            (click)="clickGate($event)">
             <span nz-icon nzType="caret-right" style="margin-left: 2px;" nzTheme="fill"></span>
         </button>
         <button *ngIf="!node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
