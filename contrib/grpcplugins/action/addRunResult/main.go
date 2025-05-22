@@ -87,15 +87,12 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	}
 
 	path := artifactPath
-	if resultType == sdk.V2WorkflowRunResultTypeDocker {
-		path = strings.Replace(path, ":", "/", -1)
-		path += "/manifest.json"
-	}
 
 	repository := jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix)
 	switch resultType {
 	case sdk.V2WorkflowRunResultTypeDocker:
-		repository += "-docker"
+		// Docker needs a very specific behavior due to the layout. All the common steps bellow are skipped and handled by performDocker.
+		return p.performDocker(ctx, artifactPath)
 	case sdk.V2WorkflowRunResultTypeDebian:
 		repository += "-debian"
 	case sdk.V2WorkflowRunResultTypeTest, sdk.V2WorkflowRunResultTypeCoverage, sdk.V2WorkflowRunResultTypeGeneric:
@@ -176,11 +173,6 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 
 	mustReturnKO := false
 	switch resultType {
-	case sdk.V2WorkflowRunResultTypeDocker:
-		runResult.Type = sdk.V2WorkflowRunResultTypeDocker
-		if err := performDocker(ctx, &p.Common, &runResult, jobCtx.Integrations.ArtifactManager, artifactPath, path, *fileInfo); err != nil {
-			return true, err
-		}
 	case sdk.V2WorkflowRunResultTypeDebian:
 		runResult.Type = sdk.V2WorkflowRunResultTypeDebian
 		if err := performDebian(&runResult, fileInfo, fileProps); err != nil {
@@ -243,6 +235,73 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	}
 	grpcplugins.Success(&p.Common, fmt.Sprintf("run result %s created", runResult.Name()))
 	return mustReturnKO, err
+}
+
+// performDocker is very specific to docker artifactory layout. It doesn't share anything with other perform functions
+func (p *addRunResultPlugin) performDocker(ctx context.Context, dockerImageName string) (bool, error) {
+	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
+	if err != nil {
+		return true, err
+	}
+
+	if jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager.Name == "" {
+		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "you must have an artifact manager integration on your job")
+	}
+
+	rtURLRaw := jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigURL)
+	if !strings.HasSuffix(rtURLRaw, "/") {
+		rtURLRaw = rtURLRaw + "/"
+	}
+	rtURL, err := url.Parse(rtURLRaw)
+	if err != nil {
+		return true, err
+	}
+
+	repository := jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-docker" + "." + rtURL.Host
+	splittedDockerImageName := strings.Split(dockerImageName, ":")
+	destinationImageName := repository + "/" + splittedDockerImageName[0]
+	var tag string
+	if len(splittedDockerImageName) == 1 {
+		tag = "latest"
+	} else if len(splittedDockerImageName) == 2 {
+		tag = splittedDockerImageName[1]
+	} else {
+		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to retrieve tag from image %s", dockerImageName)
+	}
+	destinationImageName += ":" + tag
+
+	dockerImg := grpcplugins.Img{
+		Repository: splittedDockerImageName[0],
+		Tag:        tag,
+	}
+
+	runResult := sdk.V2WorkflowRunResult{
+		WorkflowRunID:                  jobCtx.CDS.RunID,
+		IssuedAt:                       time.Now(),
+		Status:                         sdk.V2WorkflowRunResultStatusCompleted,
+		ArtifactManagerIntegrationName: &jobCtx.Integrations.ArtifactManager.Name,
+		Detail:                         grpcplugins.ComputeRunResultDockerDetail(destinationImageName, dockerImg),
+		Type:                           sdk.V2WorkflowRunResultTypeDocker,
+	}
+
+	rtConfig := grpcplugins.ArtifactoryConfig{
+		URL:   rtURL.String(),
+		Token: jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigToken),
+	}
+
+	if err := grpcplugins.FinalizeRunResultDockerDetail(ctx, &p.Common, rtConfig, &runResult, destinationImageName, &dockerImg); err != nil {
+		return true, err
+	}
+
+	var runResultRequest = workerruntime.V2RunResultRequest{RunResult: &runResult}
+	runResultResponse, err := grpcplugins.CreateRunResult(ctx, &p.Common, &runResultRequest)
+	if err != nil {
+		grpcplugins.Errorf(&p.Common, "unable to create result: %v", err.Error())
+		return true, err
+	}
+	grpcplugins.Success(&p.Common, fmt.Sprintf("run result %s created", runResultResponse.RunResult.Name()))
+
+	return false, nil
 }
 
 func performStaticFiles(ctx context.Context, c *actionplugin.Common, destinationPath string, detail sdk.V2WorkflowRunResultDetail) error {
@@ -370,6 +429,10 @@ func performDocker(ctx context.Context, c *actionplugin.Common, runResult *sdk.V
 
 	name := fmt.Sprintf("%s.%s/%s", repository, url.Host, dockerImageName)
 	runResult.Detail = grpcplugins.ComputeRunResultDockerDetail(name, img)
+
+	runResult.ArtifactManagerMetadata.Set("dir", "") // <- repository where sits the manifest.json
+	runResult.ArtifactManagerMetadata.Set("name", manifestPath)
+
 	return nil
 }
 

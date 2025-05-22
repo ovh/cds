@@ -200,7 +200,7 @@ func GetWorkerDirectories(ctx context.Context, c *actionplugin.Common) (*sdk.Wor
 
 	resp, err := c.DoRequest(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to create run result")
+		return nil, errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
@@ -232,7 +232,7 @@ func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	}
 	resp, err := c.DoRequest(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to create run result")
+		return nil, errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
@@ -439,7 +439,7 @@ type ArtifactoryConfig struct {
 }
 
 type ArtifactoryFilePropertiesResponse struct {
-	Properties map[string][]string `properties`
+	Properties map[string][]string `json:"properties"`
 }
 
 type ArtifactoryFileInfo struct {
