@@ -1274,7 +1274,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 	return nil
 }
 
-func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2Initiator, string, string, error) {
+func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha string, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2Initiator, string, string, error) {
 	ctx, next := telemetry.Span(ctx, "findCommitter", trace.StringAttribute(telemetry.TagProjectKey, projKey), trace.StringAttribute(telemetry.TagVCSServer, vcsProjectWithSecret.Name), trace.StringAttribute(telemetry.TagRepository, repoName))
 	defer next()
 
@@ -1748,8 +1748,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 
 // analyzeCommitSignatureThroughVcsAPI analyzes commit.
 func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysis sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) (string, string, error) {
-	var keyID, analyzesError string
-
+	var keyID, signature, analyzesError string
 	ctx, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughVcsAPI")
 	defer next()
 
@@ -1758,23 +1757,34 @@ func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysi
 	if err != nil {
 		return keyID, analyzesError, err
 	}
-	vcsCommit, err := client.Commit(ctx, repoWithSecret.Name, analysis.Commit)
-	if err != nil {
-		return keyID, analyzesError, err
+
+	switch {
+	case strings.HasPrefix(analysis.Ref, sdk.GitRefTagPrefix) && (vcsProject.Type == sdk.VCSTypeGithub):
+		tag, err := client.Tag(ctx, repoWithSecret.Name, strings.TrimPrefix(analysis.Ref, sdk.GitRefTagPrefix))
+		if err != nil {
+			return keyID, analyzesError, err
+		}
+		signature = tag.Signature
+	default:
+		vcsCommit, err := client.Commit(ctx, repoWithSecret.Name, analysis.Commit)
+		if err != nil {
+			return keyID, analyzesError, err
+		}
+		if vcsCommit.Hash == "" {
+			return keyID, analyzesError, sdk.WithStack(fmt.Errorf("commit %s not found", analysis.Commit))
+		}
+		keyID = vcsCommit.KeyID
+		signature = vcsCommit.Signature
 	}
 
-	if vcsCommit.Hash == "" {
-		return keyID, analyzesError, fmt.Errorf("commit %s not found", analysis.Commit)
-	}
-	keyID = vcsCommit.KeyID
 	if keyID == "" {
-		if vcsCommit.Signature != "" {
-			keyID, err = gpg.GetKeyIdFromSignature(vcsCommit.Signature)
+		if signature != "" {
+			keyID, err = gpg.GetKeyIdFromSignature(signature)
 			if err != nil {
 				return keyID, analyzesError, fmt.Errorf("unable to extract keyID from signature: %v", err)
 			}
 		} else {
-			analyzesError = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
+			analyzesError = fmt.Sprintf("commit %s is not signed", analysis.Commit)
 		}
 	}
 	return keyID, analyzesError, nil

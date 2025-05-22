@@ -76,11 +76,14 @@ type VCSRemote struct {
 
 // VCSTag represents branches known by the repositories manager
 type VCSTag struct {
-	Tag     string    `json:"tag"`
-	Sha     string    `json:"sha"` // Represent sha of tag
-	Message string    `json:"message"`
-	Tagger  VCSAuthor `json:"tagger"`
-	Hash    string    `json:"hash"` // Represent hash of commit
+	Tag       string    `json:"tag"`
+	Sha       string    `json:"sha"` // Represent sha of tag
+	Message   string    `json:"message"`
+	Tagger    VCSAuthor `json:"tagger"`
+	Hash      string    `json:"hash"` // Represent hash of commit
+	Verified  bool      `json:"verified"`
+	Signature string    `json:"signature"`
+	KeyID     string    `json:"key_id"`
 }
 
 type VCSSearch struct {
