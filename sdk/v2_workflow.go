@@ -619,6 +619,13 @@ func (w V2Workflow) CheckGates() []error {
 		if g.If == "" {
 			errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s gate %s: if cannot be empty", w.Name, gateName))
 		}
+		for k, gateInput := range g.Inputs {
+			if gateInput.Options != nil && gateInput.Options.Multiple && gateInput.Default != nil {
+				if _, ok := gateInput.Default.([]interface{}); !ok {
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s gate %s input %s: default value must be an array", w.Name, gateName, k))
+				}
+			}
+		}
 	}
 	return errs
 }
