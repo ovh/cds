@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -78,6 +79,12 @@ func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEv
 			CronTimeZone:   hre.ExtractData.Scheduler.Timezone,
 		},
 	}
+	// For scheduler, retrieve the workflow entity to get userID
+	e, err := s.Client.EntityGet(ctx, hre.ExtractData.Scheduler.TargetProject, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.Scheduler.TargetWorkflow)
+	if err != nil {
+		return err
+	}
+	wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
 	return nil
 }
@@ -139,6 +146,21 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 		}
 		if wh.Type == sdk.WorkflowHookTypeRepository {
 			w.TargetCommit = hre.ExtractData.Commit
+			// force target branch as we may have fallback on another workflow hook definition
+			w.Data.TargetBranch = strings.TrimPrefix(hre.ExtractData.Ref, sdk.GitRefBranchPrefix)
+		}
+
+		if hre.EventName != sdk.WorkflowHookEventNamePush {
+			// Get workflow definition
+			mods := []cdsclient.RequestModifier{
+				cdsclient.WithQueryParameter("ref", wh.Ref),
+				cdsclient.WithQueryParameter("commit", wh.Commit),
+			}
+			e, err := s.Client.EntityGet(ctx, wh.ProjectKey, wh.VCSName, wh.RepositoryName, sdk.EntityTypeWorkflow, wh.WorkflowName, mods...)
+			if err != nil {
+				return err
+			}
+			w.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 		}
 		hre.WorkflowHooks = append(hre.WorkflowHooks, w)
 	}
