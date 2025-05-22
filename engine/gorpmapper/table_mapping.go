@@ -10,9 +10,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/rockbears/yaml"
-
 	"github.com/ovh/cds/sdk"
+
+	"sigs.k8s.io/yaml"
 )
 
 // TableMapping represents a table mapping with gorp
