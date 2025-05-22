@@ -334,6 +334,9 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             return;
         }
         const node = this.getSVGNodeForNavigationKey(navigationKey);
+        if (!node) {
+            return;
+        }
         const nodeDeltaCenterX = this.currentWidth / 2 - node.x * this.currentScale;
         const nodeDeltaCenterY = this.currentHeight / 2 - node.y * this.currentScale;
         if (transform) {

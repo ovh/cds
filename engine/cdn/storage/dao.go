@@ -157,25 +157,22 @@ func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxSto
 	return itemIDs, nil
 }
 
-func LoadLastItemUnitByNodeJobRunIDAndUnitType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, nodeJobRunID string, cdnType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
+func LoadLastLogItemUnitByNodeJobRunIDOrRunJobID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, nodeJobRunIDOrRunJobID string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
 	url := `
 		SELECT sui.* FROM storage_unit_item  sui
 		JOIN item on item.id = sui.item_id
-		WHERE item.api_ref->>'node_run_job_id' = $1 AND sui.unit_id= $2 AND sui.type = $3
-        ORDER BY item.api_ref->>'step_order' DESC LIMIT 1
+		WHERE 
+			(item.api_ref->>'node_run_job_id' = $1 OR item.api_ref->>'run_job_id' = $1)
+			AND sui.unit_id = $2
+			AND sui.type = ANY($3)
+    ORDER BY item.api_ref->>'step_order' DESC LIMIT 1
 	`
-	query := gorpmapper.NewQuery(url).Args(nodeJobRunID, unitID, cdnType)
-	return getItemUnit(ctx, m, db, query, opts...)
-}
-
-func LoadLastItemUnitByRunJobIDAndUnitType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, runJobID string, cdnType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
-	url := `
-		SELECT sui.* FROM storage_unit_item  sui
-		JOIN item on item.id = sui.item_id
-		WHERE item.api_ref->>'run_job_id' = $1 AND sui.unit_id= $2 AND sui.type = $3
-        ORDER BY item.api_ref->>'step_order' DESC LIMIT 1
-	`
-	query := gorpmapper.NewQuery(url).Args(runJobID, unitID, cdnType)
+	query := gorpmapper.NewQuery(url).Args(nodeJobRunIDOrRunJobID, unitID, pq.StringArray([]string{
+		string(sdk.CDNTypeItemStepLog),
+		string(sdk.CDNTypeItemJobStepLog),
+		string(sdk.CDNTypeItemServiceLog),
+		string(sdk.CDNTypeItemServiceLogV2),
+	}))
 	return getItemUnit(ctx, m, db, query, opts...)
 }
 

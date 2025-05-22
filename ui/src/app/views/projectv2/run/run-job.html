@@ -12,7 +12,8 @@
             (click)="clickMode(displayModes.HTML);$event.stopPropagation();">HTML</button>
     </div>
 </div>
-<div *ngIf="jobRun" class="scrollWrapper" (dblclick)="$event.stopPropagation();" #scrollWrapper>
+<div *ngIf="jobRun" class="scrollWrapper" (scroll)="onScroll($event)" (dblclick)="$event.stopPropagation();"
+    #scrollWrapper>
     <!-- Display job services and steps -->
     <div class="step"
         *ngFor="let logBlock of tabs[currentTabIndex].logBlocks; trackBy: trackStepElement; let i = index">

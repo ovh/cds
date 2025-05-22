@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -54,101 +53,9 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			}
 
 			// Load last running step
-			if _, err := strconv.Atoi(filter.JobRunID); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Warn(ctx, err.Error())
-				return
-			}
 			var latestItemUnitID string
-			if iu, err := storage.LoadLastItemUnitByNodeJobRunIDAndUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog); err == nil {
+			if iu, err := storage.LoadLastLogItemUnitByNodeJobRunIDOrRunJobID(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID); err == nil {
 				latestItemUnitID = iu.ID
-			}
-			if latestItemUnitID == "" {
-				if iu, err := storage.LoadLastItemUnitByNodeJobRunIDAndUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemServiceLog); err == nil {
-					latestItemUnitID = iu.ID
-				}
-			}
-
-			if err := wsClientData.UpdateFilter(filter, latestItemUnitID); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Warn(ctx, err.Error())
-				return
-			}
-			// Trigger one update at routine startup
-			wsClientData.TriggerUpdate()
-		})
-
-		ctx, cancel := context.WithCancel(s.Router.Background)
-		ctx = context.WithValue(ctx, service.ContextSessionID, sessionID)
-		defer cancel()
-
-		s.GoRoutines.Exec(ctx, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
-			log.Debug(ctx, "getItemLogsStreamHandler> start routine for client %s (session %s)", wsClient.UUID(), s.sessionID(ctx))
-
-			// Create a ticker to periodically send logs if needed
-			sendTicker := time.NewTicker(time.Millisecond * 100)
-			defer sendTicker.Stop()
-			for {
-				select {
-				case <-ctx.Done():
-					log.Debug(ctx, "getItemLogsStreamHandler> stop routine for stream client %s", wsClient.UUID())
-					return
-				case <-sendTicker.C:
-					if !wsClientData.ConsumeTrigger() {
-						continue
-					}
-					if err := s.sendLogsToWSClient(ctx, wsClient, wsClientData); err != nil {
-						log.Warn(ctx, "getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
-						return
-					}
-				}
-			}
-		})
-
-		if err := wsClient.Listen(ctx, s.GoRoutines); err != nil {
-			return err
-		}
-
-		log.Debug(ctx, "getItemLogsStreamHandler> stop listening for client %s", wsClient.UUID())
-		return nil
-	}
-}
-
-func (s *Service) getItemLogsStreamV2Handler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		c, err := websocket.Upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			service.WriteError(ctx, w, r, sdk.NewErrorWithStack(err, sdk.ErrWebsocketUpgrade))
-			return nil
-		}
-		defer c.Close() //nolint
-
-		jwtToken := ctx.Value(service.ContextJWT).(*jwt.Token)
-		claims := jwtToken.Claims.(*sdk.AuthSessionJWTClaims)
-		sessionID := claims.StandardClaims.Id
-
-		wsClient := websocket.NewClient(c)
-		wsClientData := &websocketClientData{sessionID: sessionID}
-		s.WSServer.AddClient(wsClient, wsClientData)
-		defer s.WSServer.RemoveClient(wsClient.UUID())
-
-		wsClient.OnMessage(func(m []byte) {
-			var filter sdk.CDNStreamFilter
-			if err := sdk.JSONUnmarshal(m, &filter); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Warn(ctx, err.Error())
-				return
-			}
-
-			// Load last running step
-			var latestItemUnitID string
-			if iu, err := storage.LoadLastItemUnitByRunJobIDAndUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemJobStepLog); err == nil {
-				latestItemUnitID = iu.ID
-			}
-			if latestItemUnitID == "" {
-				if iu, err := storage.LoadLastItemUnitByRunJobIDAndUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemServiceLogV2); err == nil {
-					latestItemUnitID = iu.ID
-				}
 			}
 
 			if err := wsClientData.UpdateFilter(filter, latestItemUnitID); err != nil {

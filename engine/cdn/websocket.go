@@ -207,7 +207,7 @@ func (d *websocketClientData) UpdateFilter(filter sdk.CDNStreamFilter, itemUnitI
 	defer d.mutexData.Unlock()
 
 	d.itemFilter = &filter
-	if d.itemFilter.JobRunID != filter.JobRunID {
+	if d.itemUnitsData == nil || d.itemFilter.JobRunID != filter.JobRunID {
 		d.itemUnitsData = make(map[string]ItemUnitClientData)
 	}
 	if itemUnitID != "" {

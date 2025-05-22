@@ -79,6 +79,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     jobRunInfos: Array<WorkflowRunInfo> = [];
+    autoScrolling: boolean = true;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -128,12 +129,8 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
             this._cd.markForCheck();
             await this.loadStepsLogs();
         }
-        if (isInit) {
-            this._cd.detectChanges();
-            this.clickScroll(ScrollTarget.BOTTOM);
-        } else {
-            this._cd.markForCheck();
-        }
+        this._cd.detectChanges();
+        this.autoScroll();
     }
 
     async setServices() {
@@ -347,6 +344,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
                         this.tabs[i].logBlocks[j].endLines.push(l);
                         this.tabs[i].logBlocks[j].totalLinesCount++;
                         this._cd.detectChanges();
+                        this.autoScroll();
                     }
                     return;
                 }
@@ -363,7 +361,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         const host = window.location.host;
         const href = this._router['location']._basePath;
         this.websocket = webSocket({
-            url: `${protocol}//${host}${href}/cdscdn/v2/item/stream`,
+            url: `${protocol}//${host}${href}/cdscdn/item/stream`,
             openObserver: {
                 next: value => {
                     if (value.type === 'open') {
@@ -402,6 +400,15 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         await this.loadStepsLogs();
         this._cd.detectChanges();
         this.clickScroll(ScrollTarget.BOTTOM);
+    }
+
+    onScroll(e: any): void {
+        // If the scroll is nearly complete, activate auto scroll for the view.
+        this.autoScrolling = Math.abs(this.scrollWrapper.nativeElement.scrollHeight - this.scrollWrapper.nativeElement.clientHeight - this.scrollWrapper.nativeElement.scrollTop) <= 50;
+    }
+
+    autoScroll(): void {
+        if (this.autoScrolling) { this.clickScroll(ScrollTarget.BOTTOM); }
     }
 
 }
