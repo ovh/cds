@@ -424,3 +424,22 @@ func TimeSafe(t *time.Time) time.Time {
 	}
 	return *t
 }
+
+func CleanString(s string) string {
+	for {
+		s = strings.TrimSpace(s)
+		if len(s) == 0 {
+			break
+		}
+		if s[0] == '\n' {
+			s = strings.TrimPrefix(s, "\n")
+			continue
+		}
+		if s[len(s)-1] == '\n' {
+			s = strings.TrimSuffix(s, "\n")
+			continue
+		}
+		break
+	}
+	return s
+}
