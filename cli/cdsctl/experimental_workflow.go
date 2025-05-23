@@ -23,6 +23,7 @@ var experimentalWorkflowCmd = cli.Command{
 func experimentalWorkflow() *cobra.Command {
 	return cli.NewCommand(experimentalWorkflowCmd, nil, []*cobra.Command{
 		cli.NewGetCommand(workflowRunCmd, workflowRunFunc, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(workflowV2RunDeleteCmd, workflowV2RunDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowRestartCmd, workflowRestartFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunHistoryCmd, workflowRunHistoryFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunInfosListCmd, workflowRunInfosListFunc, nil, withAllCommandModifiers()...),
@@ -272,6 +273,24 @@ func workflowRunStopFunc(v cli.Values) error {
 	}
 	fmt.Printf("Workflow run %s has been stopped\n", workflowRunID)
 	return nil
+}
+
+var workflowV2RunDeleteCmd = cli.Command{
+	Name:    "delete",
+	Aliases: []string{"remove", "rm"},
+	Short:   "Delete a workflow run",
+	Example: "cdsctl X workflow run delete <proj_key> <run_identifier>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "proj_key"},
+		{Name: "run_identifier"},
+	},
+}
+
+func workflowV2RunDeleteFunc(v cli.Values) error {
+	projKey := v.GetString("proj_key")
+	runIdentifier := v.GetString("run_identifier")
+	return client.WorkflowV2RunDelete(context.Background(), projKey, runIdentifier)
 }
 
 var workflowRunCmd = cli.Command{
