@@ -11,7 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
-	"sigs.k8s.io/yaml"
+	"github.com/rockbears/yaml"
 )
 
 type V2RunJobConcurrencyScope string
