@@ -10,7 +10,7 @@
                 <span nz-icon nzType="caret-right" style="margin-left: 2px;font-size: 16px;" nzTheme="fill"></span>
             </button>
             <button *ngIf="!node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
-                nz-popconfirm nzPopconfirmTitle="Confirm run the job" nzPopconfirmPlacement="bottom"
+                nz-popconfirm nzPopconfirmTitle="Confirm run the job" nzPopconfirmPlacement="bottom" [nzPopconfirmTrigger]="node.run?'click':'null'"
                 (nzOnConfirm)="confirmRunGate()" (click)="$event.preventDefault();$event.stopPropagation();">
                 <span nz-icon nzType="caret-right" style="margin-left: 2px;font-size: 16px;" nzTheme="fill"></span>
             </button>
