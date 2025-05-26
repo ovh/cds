@@ -82,7 +82,7 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
-func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
+func (s *Service) getConsumer(vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
 	switch vcsAuth.Type {
 	case sdk.VCSTypeGitea:
 		return gitea.New(strings.TrimSuffix(vcsAuth.URL, "/"),
@@ -167,6 +167,9 @@ func (s *Service) Serve(c context.Context) error {
 		WriteTimeout:   10 * time.Minute,
 		MaxHeaderBytes: 1 << 20,
 	}
+
+	// register custom field
+	log.RegisterField(log.Field(github.LogFieldGithubRateLimitRemaining))
 
 	//Start the http server
 	log.Info(c, "VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
