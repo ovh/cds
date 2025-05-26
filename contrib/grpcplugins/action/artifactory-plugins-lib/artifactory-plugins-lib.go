@@ -186,7 +186,7 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 }
 
 func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, results []sdk.V2WorkflowRunResult, maturity string, props *utils.Properties, releaseNotes string) error {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 
 	t0 := time.Now()
