@@ -365,8 +365,8 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	}
 
 	// Open connection
-	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
-	t.Cleanup(func() { cancel() })
+	ctx, cancelConn0 := context.WithTimeout(context.TODO(), time.Second*10)
+	t.Cleanup(func() { cancelConn0() })
 	chanMsgToSend := make(chan json.RawMessage)
 	chanMsgReceived := make(chan json.RawMessage, 10)
 	chanErrorReceived := make(chan error, 10)
@@ -380,13 +380,14 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	chanMsgToSend <- buf
 
 	var lines []redis.Line
+
+forLoop0:
 	for ctx.Err() == nil && len(lines) < 10 {
 		select {
 		case <-ctx.Done():
-			break
+			break forLoop0
 		case err := <-chanErrorReceived:
 			require.NoError(t, err)
-			break
 		case msg := <-chanMsgReceived:
 			var line redis.Line
 			require.NoError(t, json.Unmarshal(msg, &line))
@@ -405,13 +406,13 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		sendMessage()
 	}
 
+forLoop1:
 	for ctx.Err() == nil && len(lines) < 20 {
 		select {
 		case <-ctx.Done():
-			break
+			break forLoop1
 		case err := <-chanErrorReceived:
 			require.NoError(t, err)
-			break
 		case msg := <-chanMsgReceived:
 			var line redis.Line
 			require.NoError(t, json.Unmarshal(msg, &line))
@@ -423,9 +424,11 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	require.Equal(t, "message 19\n", lines[19].Value)
 	require.Equal(t, int64(19), lines[19].Number)
 
+	cancelConn0()
+
 	// Try another connection with offset
-	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
-	t.Cleanup(func() { cancel() })
+	ctx, cancelConn1 := context.WithTimeout(context.TODO(), time.Second*10)
+	t.Cleanup(func() { cancelConn1() })
 	go func() {
 		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
@@ -436,13 +439,14 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	chanMsgToSend <- buf
 
 	lines = make([]redis.Line, 0)
+
+forLoop2:
 	for ctx.Err() == nil && len(lines) < 10 {
 		select {
 		case <-ctx.Done():
-			break
+			break forLoop2
 		case err := <-chanErrorReceived:
 			require.NoError(t, err)
-			break
 		case msg := <-chanMsgReceived:
 			var line redis.Line
 			require.NoError(t, json.Unmarshal(msg, &line))

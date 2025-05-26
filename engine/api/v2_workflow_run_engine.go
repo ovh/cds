@@ -1350,6 +1350,17 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					}
 					runJob.GateInputs = jobEvent.Inputs
 				}
+				// If no gate input provided but there is a gate on the job, fill with the default values
+				if runJob.GateInputs == nil && runJob.Job.Gate != "" {
+					runJob.GateInputs = sdk.GateInputs{}
+					for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
+						if v.Default == nil {
+							continue
+						}
+						runJob.GateInputs[k] = v.Default
+					}
+					runJob.GateInputs["manual"] = false
+				}
 				runJobContext.Gate = runJob.GateInputs
 				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue)
 				if runJobInfo != nil {
@@ -1502,7 +1513,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
 					IssuedAt:      time.Now(),
-					Message:       fmt.Sprintf("Job %s: there is more than one job with this name", data.jobID),
+					Message:       fmt.Sprintf("Job %q: there is more than one job with the name %q", data.jobID, k),
 				}}
 			}
 			newJobs[k] = v
@@ -1526,7 +1537,12 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 
 	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job, data.allVariableSets, data.defaultRegion)
 	if err != nil {
-
+		return []sdk.V2WorkflowRunInfo{{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			IssuedAt:      time.Now(),
+			Message:       err.Error(),
+		}}
 	}
 	if len(msgs) > 0 {
 		return msgs
@@ -1611,6 +1627,17 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 				continue
 			}
 			runJob.GateInputs = jobEvent.Inputs
+		}
+		// If no gate input provided but there is a gate on the job, fill with the default values
+		if runJob.GateInputs == nil && runJob.Job.Gate != "" {
+			runJob.GateInputs = sdk.GateInputs{}
+			for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
+				if v.Default == nil {
+					continue
+				}
+				runJob.GateInputs[k] = v.Default
+			}
+			runJob.GateInputs["manual"] = false
 		}
 		data.runJobContext.Gate = runJob.GateInputs
 		data.runJobContext.Matrix = runJob.Matrix

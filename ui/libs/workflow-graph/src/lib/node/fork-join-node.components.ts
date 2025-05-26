@@ -49,5 +49,7 @@ export class GraphForkJoinNodeComponent implements OnInit {
 
     activateNode(navigationKey: string): void { }
 
-    setRunActive(active: boolean): void {}   
+    setRunActive(active: boolean): void { }
+
+    match(navigationKey: string): boolean { return false; }
 }

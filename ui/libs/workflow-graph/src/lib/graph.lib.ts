@@ -26,6 +26,7 @@ export interface WithHighlight {
     selectNode(navigationKey: string): void;
     activateNode(navigationKey: string): void;
     setRunActive(active: boolean): void;
+    match(navigateKey: string): boolean;
 }
 
 export type ComponentFactory<T> = (nodes: Array<GraphNode>, type: string) => ComponentRef<T>;
@@ -60,12 +61,17 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     minScale = 1;
     maxScale = 1;
     transformed: any = null;
+    previousTransformed: any = null;
     componentFactory: ComponentFactory<T>;
     nodeOutNames: { [key: string]: string } = {};
     nodeInNames: { [key: string]: string } = {};
     forks: { [key: string]: { parents: Array<string>, children: Array<string> } } = {};
     joins: { [key: string]: { parents: Array<string>, children: Array<string> } } = {};
     nodeStatus: { [key: string]: string } = {};
+    centeredNode: string = null;
+    currentScale: number = 1;
+    currentWidth: number = 0;
+    currentHeight: number = 0;
 
     constructor(
         factory: ComponentFactory<T>,
@@ -190,8 +196,23 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         if (!this.svg) {
             return;
         }
+        const diffWidth = (this.currentWidth - width);
+        const diffHeight = (this.currentHeight - height);
+        this.currentHeight = height;
+        this.currentWidth = width;
         this.svg.attr('width', width);
         this.svg.attr('height', height);
+        if (this.centeredNode) {
+            this.centerNode(this.centeredNode);
+        } else if (this.previousTransformed) {
+            this.svg.call(this.zoom.transform,
+                d3.zoomIdentity.translate(this.previousTransformed.x, this.previousTransformed.y).scale(this.previousTransformed.k));
+        } else if (this.transformed) {
+            this.svg.call(this.zoom.transform,
+                d3.zoomIdentity.translate(this.transformed.x - diffWidth / 2, this.transformed.y - diffHeight / 2).scale(this.transformed.k));
+        } else {
+            this.center();
+        }
     }
 
     clean(): void {
@@ -222,10 +243,12 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                     && event.transform.y && event.transform.y !== Number.POSITIVE_INFINITY) {
                     this.g.attr('transform', event.transform);
                     this.transformed = event.transform;
+                    this.currentScale = event.transform.k;
+                    this.centeredNode = null;
+                    this.previousTransformed = null;
                 }
             });
-
-            if (!!this.transformed) {
+            if (this.transformed) {
                 this.svg.call(this.zoom.transform,
                     d3.zoomIdentity.translate(this.transformed.x, this.transformed.y).scale(this.transformed.k));
             }
@@ -233,46 +256,65 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         }
     }
 
-    center(containerWidth: number, containerHeight: number): void {
-        if (this.zoom) {
-            let w = containerWidth - WorkflowV2Graph.margin * 2;
-            let h = containerHeight - WorkflowV2Graph.margin * 2;
-            let gw = this.graph.graph().width;
-            let gh = this.graph.graph().height;
-            let oScale = Math.min(w / gw, h / gh); // calculate optimal scale for current graph
-            // calculate final scale that fit min and max scale values
-            let scale = Math.min(
-                WorkflowV2Graph.maxOriginScale,
-                Math.max(this.minScale, oScale)
-            );
-            let centerX = (w - gw * scale + WorkflowV2Graph.margin * 2) / 2;
-            let centerY = (h - gh * scale + WorkflowV2Graph.margin * 2) / 2;
-            this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(centerX, centerY).scale(scale));
-        } else {
-            let w = containerWidth - WorkflowV2Graph.marginSubGraph * 2;
-            let h = containerHeight - WorkflowV2Graph.marginSubGraph * 2;
-            let gw = this.graph.graph().width;
-            let gh = this.graph.graph().height;
-            let oScale = Math.min(w / gw, h / gh); // calculate optimal scale for current graph
-            let centerX = (w - gw * oScale + WorkflowV2Graph.marginSubGraph * 2) / 2;
-            let centerY = (h - gh * oScale + WorkflowV2Graph.marginSubGraph * 2) / 2;
+    center(): void {
+        if (!this.zoom) {
+            const w = this.currentWidth - WorkflowV2Graph.marginSubGraph * 2;
+            const h = this.currentHeight - WorkflowV2Graph.marginSubGraph * 2;
+            const gw = this.graph.graph().width;
+            const gh = this.graph.graph().height;
+            const oScale = Math.min(w / gw, h / gh); // calculate optimal scale for current graph
+            const centerX = (w - gw * oScale + WorkflowV2Graph.marginSubGraph * 2) / 2;
+            const centerY = (h - gh * oScale + WorkflowV2Graph.marginSubGraph * 2) / 2;
             this.g.attr('transform', `translate(${centerX}, ${centerY}) scale(${oScale})`);
+            return;
         }
+        const w = this.currentWidth - WorkflowV2Graph.margin * 2;
+        const h = this.currentHeight - WorkflowV2Graph.margin * 2;
+        const gw = this.graph.graph().width;
+        const gh = this.graph.graph().height;
+        const oScale = Math.min(w / gw, h / gh); // calculate optimal scale for current graph
+        // calculate final scale that fit min and max scale values
+        const scale = Math.min(
+            WorkflowV2Graph.maxOriginScale,
+            Math.max(this.minScale, oScale)
+        );
+        const centerX = (w - gw * scale + WorkflowV2Graph.margin * 2) / 2;
+        const centerY = (h - gh * scale + WorkflowV2Graph.margin * 2) / 2;
+        this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(centerX, centerY).scale(scale));
+        this.centeredNode = null;
         this.transformed = null;
+        this.previousTransformed = null;
     }
 
-    centerNode(nodeName: string, containerWidth: number, containerHeight: number): void {
+    centerStage(nodeName: string): void {
         if (!this.zoom) {
             return;
         }
-        let node = this.graph.node(nodeName);
-        if (!node) {
-            // Check for node in stages
-            for (let i = 0; i < this.nodes.length; i++) {
-                if (this.nodes[i].type !== GraphNodeType.Stage) {
-                    continue;
-                }
-                const subNode = (this.nodesComponent.get(`node-${this.nodes[i].key}`).instance as any).graph.graph.node(nodeName);
+        const node = this.graph.node(nodeName);
+        // calculate optimal scale for current graph
+        const oScale = Math.min((this.currentWidth - WorkflowV2Graph.margin * 2) / node.width,
+            (this.currentHeight - WorkflowV2Graph.margin * 2) / node.height);
+        // calculate final scale that fit min and max scale values
+        const scale = Math.min(WorkflowV2Graph.maxOriginScale, Math.max(this.minScale, oScale));
+        const nodeDeltaCenterX = this.currentWidth / 2 - node.x * scale;
+        const nodeDeltaCenterY = this.currentHeight / 2 - node.y * scale;
+        this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(nodeDeltaCenterX, nodeDeltaCenterY).scale(scale));
+        this.centeredNode = null;
+    }
+
+    getSVGNodeForNavigationKey(navigationKey: string): any {
+        let node;
+        for (let i = 0; i < this.nodes.length; i++) {
+            if (this.nodes[i].type === GraphNodeType.Stage) {
+                continue;
+            }
+            if (this.nodesComponent.get(`node-${this.nodes[i].key}`).instance.match(navigationKey)) {
+                return this.graph.node(`node-${this.nodes[i].key}`);
+            }
+        }
+        for (let i = 0; i < this.nodes.length; i++) {
+            if (this.nodes[i].type === GraphNodeType.Stage) {
+                const subNode = (this.nodesComponent.get(`node-${this.nodes[i].key}`).instance as any).graph.getSVGNodeForNavigationKey(navigationKey);
                 if (subNode) {
                     const stageNode = this.graph.node(`node-${this.nodes[i].key}`);
                     node = {
@@ -284,17 +326,29 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                 }
             }
         }
-        // calculate optimal scale for current graph
-        let oScale = Math.min((containerWidth - WorkflowV2Graph.margin * 2) / node.width,
-            (containerHeight - WorkflowV2Graph.margin * 2) / node.height);
-        // calculate final scale that fit min and max scale values
-        let scale = Math.min(
-            WorkflowV2Graph.maxOriginScale,
-            Math.max(this.minScale, oScale)
-        );
-        let nodeDeltaCenterX = containerWidth / 2 - node.x * scale;
-        let nodeDeltaCenterY = containerHeight / 2 - node.y * scale;
-        this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(nodeDeltaCenterX, nodeDeltaCenterY).scale(scale));
+        return node;
+    }
+
+    centerNode(navigationKey: string, transform: boolean = false): void {
+        if (!this.zoom) {
+            return;
+        }
+        const node = this.getSVGNodeForNavigationKey(navigationKey);
+        if (!node) {
+            return;
+        }
+        const nodeDeltaCenterX = this.currentWidth / 2 - node.x * this.currentScale;
+        const nodeDeltaCenterY = this.currentHeight / 2 - node.y * this.currentScale;
+        if (transform) {
+            this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(nodeDeltaCenterX, nodeDeltaCenterY).scale(this.currentScale));
+            this.centeredNode = null;
+            this.previousTransformed = null;
+            return;
+        }
+        const previousTransformation = this.previousTransformed ?? (this.transformed ? { ...this.transformed } : null);
+        this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(nodeDeltaCenterX, nodeDeltaCenterY).scale(this.currentScale));
+        this.previousTransformed = previousTransformation;
+        this.centeredNode = navigationKey;
         this.transformed = null;
     }
 

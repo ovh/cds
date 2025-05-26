@@ -12,7 +12,7 @@ import { concatMap } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NavigationState } from "app/store/navigation.state";
-import { V2JobGate, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2JobGate, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatus, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { RouterService } from "app/service/services.module";
 import { ErrorUtils } from "app/shared/error.utils";
 import moment from "moment";
@@ -22,6 +22,7 @@ import { HttpParams } from "@angular/common/http";
 import { ToastService } from "app/shared/toast/ToastService";
 import { Clipboard } from '@angular/cdk/clipboard';
 import { GraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
+import { Title } from "@angular/platform-browser";
 
 @Component({
     selector: 'app-projectv2-run',
@@ -90,7 +91,8 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         private _drawerService: NzDrawerService,
         private _toast: ToastService,
         private _clipboard: Clipboard,
-        private _toastService: ToastService
+        private _toastService: ToastService,
+        private _titleService: Title
     ) {
         this.paramsSub = this._route.params.subscribe(_ => {
             const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
@@ -152,6 +154,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         await this.loadRun(workflowRunID);
         this.selectedRunAttempt = runAttempt ?? this.workflowRun.run_attempt;
+        this._titleService.setTitle(`#${this.workflowRun.run_number} [${this.workflowRun.contexts.git.ref_name}] • ${this.workflowRun.vcs_server}/${this.workflowRun.repository}/${this.workflowRun.workflow_name} • Workflow Run`);
 
         this.workflowGraph = dump(this.workflowRun.workflow_data.workflow, { lineWidth: -1 });
 
@@ -281,20 +284,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     panelEndResize(): void {
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
-        this._cd.detectChanges(); // force rendering to compute graph container size
-        if (this.graph) {
-            this.graph.resize();
-        }
     }
 
     async openPanel(type: string, data: string = null) {
         this.clearPanel();
-
-        this.selectedItemType = type;
-
-        let params = new HttpParams();
-        params = params.append('panel', `${type}:${encodeURI(data)}`);
-        this.selectedItemShareLink = `/project/${this.projectKey}/run/${this.workflowRun.id}?${params.toString()}`;
 
         switch (type) {
             case 'hook':
@@ -307,17 +300,24 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
                 this.selectedRunResult = this.results.find(r => r.id === data);
                 break;
             case 'job':
-                this.selectedJobRun = this.jobs.find(j => j.id === data);
+                const selectedJobRun = this.jobs.find(j => j.id === data);
+                if (selectedJobRun.status === V2WorkflowRunJobStatus.Skipped) {
+                    return;
+                }
+                this.selectedJobRun = selectedJobRun;
                 break;
             case 'test':
                 this.selectedTest = data;
                 break;
         }
 
-        this._cd.detectChanges(); // force rendering to compute graph container size
-        if (this.graph) {
-            this.graph.resize();
-        }
+        this.selectedItemType = type;
+
+        let params = new HttpParams();
+        params = params.append('panel', `${type}:${encodeURI(data)}`);
+        this.selectedItemShareLink = `/project/${this.projectKey}/run/${this.workflowRun.id}?${params.toString()}`;
+
+        this._cd.markForCheck();
     }
 
     async refreshPanel() {
@@ -393,13 +393,17 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     }
 
     clickClosePanel(): void {
+        const panelOpened = !!this.selectedItemType;
         this.clearPanel();
         this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunComponent.JOB_PANEL_KEY)) ?? '50%';
         this.panelExpanded = false;
 
-        this._cd.detectChanges(); // force rendering to compute graph container size
         if (this.graph) {
             this.graph.unSelect();
+            if (!panelOpened) {
+                // Force resize to restore the previous transformation
+                this.graph.resize();
+            }
         }
 
         this._router.navigate(['/project', this.projectKey, 'run', this.workflowRun.id], {
@@ -418,10 +422,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             this.jobPanelSize = '90%';
             this.panelExpanded = true;
         }
-        this._cd.detectChanges();
-        if (this.graph) {
-            this.graph.resize();
-        }
+        this._cd.markForCheck();
     }
 
     @HostListener('window:keydown.escape', ['$event'])
@@ -490,7 +491,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this._toast.success('', 'Annotation value copied!');
     }
 
-    async selectJobGate(jobName: any) {
+    async confirmJobGate(jobName: any) {
         const job = this.workflowRun.workflow_data.workflow.jobs[jobName];
         const currentGate = <V2JobGate>this.workflowRun.workflow_data.workflow.gates[job.gate];
         if (!currentGate.inputs) {

@@ -5902,6 +5902,20 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Run(ctx, projectKey, vcsId
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Run", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2Run), varargs...)
 }
 
+// WorkflowV2RunDelete mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunDelete(ctx context.Context, projectKey, runIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunDelete", ctx, projectKey, runIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2RunDelete indicates an expected call of WorkflowV2RunDelete.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunDelete(ctx, projectKey, runIdentifier any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunDelete", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunDelete), ctx, projectKey, runIdentifier)
+}
+
 // WorkflowV2RunFromHook mocks base method.
 func (m *MockWorkflowV2Client) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunHookRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
@@ -12365,6 +12379,20 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2Run(ctx, projectKey, vcsIdentifie
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Run", reflect.TypeOf((*MockInterface)(nil).WorkflowV2Run), varargs...)
+}
+
+// WorkflowV2RunDelete mocks base method.
+func (m *MockInterface) WorkflowV2RunDelete(ctx context.Context, projectKey, runIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunDelete", ctx, projectKey, runIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2RunDelete indicates an expected call of WorkflowV2RunDelete.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunDelete(ctx, projectKey, runIdentifier any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunDelete", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunDelete), ctx, projectKey, runIdentifier)
 }
 
 // WorkflowV2RunFromHook mocks base method.

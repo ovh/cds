@@ -621,7 +621,7 @@ func retrieveAndUpdateAllJobDependencies(ctx context.Context, db *gorp.DbMap, st
 				WorkflowRunID: run.ID,
 				IssuedAt:      time.Now(),
 				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       "unable to rean run context. Please contact an administrator",
+				Message:       "unable to read run context. Please contact an administrator",
 			}
 		}
 		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
