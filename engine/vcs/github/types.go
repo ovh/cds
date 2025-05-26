@@ -696,6 +696,31 @@ type DiffCommits struct {
 	} `json:"files"`
 }
 
+type Tag struct {
+	NodeID string `json:"node_id"`
+	Sha    string `json:"sha"`
+	URL    string `json:"url"`
+	Tagger struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+		Date  string `json:"date"`
+	} `json:"tagger"`
+	Object struct {
+		Sha  string `json:"sha"`
+		Type string `json:"type"`
+		URL  string `json:"url"`
+	} `json:"object"`
+	Tag          string `json:"tag"`
+	Message      string `json:"message"`
+	Verification struct {
+		Verified   bool      `json:"verified"`
+		Reason     string    `json:"reason"`
+		Signature  string    `json:"signature"`
+		Payload    string    `json:"payload"`
+		VerifiedAt time.Time `json:"verified_at"`
+	} `json:"verification"`
+}
+
 type Ref struct {
 	Ref    string `json:"ref"`
 	NodeID string `json:"node_id"`
