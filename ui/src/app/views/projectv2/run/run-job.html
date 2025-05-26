@@ -5,7 +5,7 @@
                 (click)="selectTab(i);$event.stopPropagation();">{{tab.name}}</button>
         </ng-container>
     </div>
-    <div class=" menu right">
+    <div class="menu right">
         <button [class.active]="mode === displayModes.ANSI"
             (click)="clickMode(displayModes.ANSI);$event.stopPropagation();">ANSI</button>
         <button [class.active]="mode === displayModes.HTML"
