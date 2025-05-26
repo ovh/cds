@@ -17,6 +17,14 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 	ctx, next := telemetry.Span(ctx, "s.triggerGetSigningKey")
 	defer next()
 
+	if hre.EventName != sdk.WorkflowHookEventNamePush {
+		hre.Status = sdk.HookEventStatusGitInfo
+		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+			return err
+		}
+		return s.executeEvent(ctx, hre)
+	}
+
 	log.Info(ctx, "triggering get git signing key for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// If operation not started and not manual hook => run repository operation to get signinkey
@@ -28,14 +36,10 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 
 		for _, wh := range hre.WorkflowHooks {
 			switch wh.Type {
-			case sdk.WorkflowHookTypeWorkflow:
-				signinkey = true
-			case sdk.WorkflowHookTypeWorkerModel:
-				signinkey = true
+			case sdk.WorkflowHookTypeWorkflow, sdk.WorkflowHookTypeWorkerModel:
 			default:
 				changesets = true
 				semver = true
-				signinkey = true
 				commitMessage = true
 			}
 		}
