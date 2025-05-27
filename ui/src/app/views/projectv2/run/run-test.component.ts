@@ -29,6 +29,7 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 	testRaw: string;
 	outputError: string = "";
 	systemout: string = "";
+	systemerr: string = "";
 
 	constructor(
 		private _cd: ChangeDetectorRef,
@@ -108,11 +109,21 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 		if (t?.systemout?.value) {
 			this.systemout = t?.systemout?.value
 		}
+		if (t?.systemerr?.value) {
+			this.systemout = t?.systemerr?.value
+		}
 
 		if (this.systemout != "") {
 			this.tabs.unshift(<Tab>{
 				title: 'SystemOut',
 				key: 'systemout',
+				default: true
+			});
+		}
+		if (this.systemerr != "") {
+			this.tabs.unshift(<Tab>{
+				title: 'SystemErr',
+				key: 'systemerr',
 				default: true
 			});
 		}
