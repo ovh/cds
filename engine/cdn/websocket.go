@@ -44,11 +44,12 @@ func (s *Service) initWebsocket() error {
 	})
 	s.WSBroker.Init(s.Router.Background, s.GoRoutines, pubSub)
 
-	tickerMetrics := time.NewTicker(10 * time.Second)
-	defer tickerMetrics.Stop()
-	tickerPublish := time.NewTicker(100 * time.Millisecond)
-	defer tickerMetrics.Stop()
-	s.GoRoutines.Run(s.Router.Background, "cdn.initWebsocket.SendWSEvents", func(ctx context.Context) {
+	s.GoRoutines.RunWithRestart(s.Router.Background, "cdn.initWebsocket.SendWSEvents", func(ctx context.Context) {
+		tickerMetrics := time.NewTicker(10 * time.Second)
+		defer tickerMetrics.Stop()
+		tickerPublish := time.NewTicker(100 * time.Millisecond)
+		defer tickerPublish.Stop()
+
 		for {
 			select {
 			case <-ctx.Done():
