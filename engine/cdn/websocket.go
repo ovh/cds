@@ -44,11 +44,12 @@ func (s *Service) initWebsocket() error {
 	})
 	s.WSBroker.Init(s.Router.Background, s.GoRoutines, pubSub)
 
-	tickerMetrics := time.NewTicker(10 * time.Second)
-	defer tickerMetrics.Stop()
-	tickerPublish := time.NewTicker(100 * time.Millisecond)
-	defer tickerMetrics.Stop()
-	s.GoRoutines.Run(s.Router.Background, "cdn.initWebsocket.SendWSEvents", func(ctx context.Context) {
+	s.GoRoutines.RunWithRestart(s.Router.Background, "cdn.initWebsocket.SendWSEvents", func(ctx context.Context) {
+		tickerMetrics := time.NewTicker(10 * time.Second)
+		defer tickerMetrics.Stop()
+		tickerPublish := time.NewTicker(100 * time.Millisecond)
+		defer tickerPublish.Stop()
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -207,11 +208,15 @@ func (d *websocketClientData) UpdateFilter(filter sdk.CDNStreamFilter, itemUnitI
 	defer d.mutexData.Unlock()
 
 	d.itemFilter = &filter
-	d.itemUnitsData = make(map[string]ItemUnitClientData)
+	if d.itemUnitsData == nil || d.itemFilter.JobRunID != filter.JobRunID {
+		d.itemUnitsData = make(map[string]ItemUnitClientData)
+	}
 	if itemUnitID != "" {
-		d.itemUnitsData[itemUnitID] = ItemUnitClientData{
-			itemUnit:            nil,
-			scoreNextLineToSend: -10,
+		if _, ok := d.itemUnitsData[itemUnitID]; !ok {
+			d.itemUnitsData[itemUnitID] = ItemUnitClientData{
+				itemUnit:            nil,
+				scoreNextLineToSend: -10,
+			}
 		}
 	}
 	return nil

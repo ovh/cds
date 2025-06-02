@@ -20,6 +20,14 @@ func (c *client) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdent
 	return &run, nil
 }
 
+func (c *client) WorkflowV2RunDelete(ctx context.Context, projectKey, runIdentifier string) error {
+	path := fmt.Sprintf("/v2/project/%s/run/%s", projectKey, runIdentifier)
+	if _, _, _, err := c.RequestJSON(ctx, "DELETE", path, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...RequestModifier) (*sdk.V2WorkflowRunManualResponse, error) {
 	var resp sdk.V2WorkflowRunManualResponse
 	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/run", projectKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName)

@@ -113,9 +113,10 @@
                     run</button>
             </div>
             <app-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-                [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="selectJobGate($event)"
-                (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
-                (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)" #graph></app-graph>
+                [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
+                (onConfirmJobGate)="confirmJobGate($event)" (onSelectJobRun)="openPanel('job', $event)"
+                (onSelectHook)="openPanel('hook', $event)" (onSelectJobRunRestart)="restartJob($event)"
+                (onSelectJobRunStop)="stopJob($event)" #graph></app-graph>
         </div>
 
         <!--  BOTTOM PANELS -->
@@ -137,14 +138,15 @@
         (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)"
         (dblclick)="$event.stopPropagation(); dblClickOnPanel()">
         <div class="controls">
-            <div class="control" (click)="clickClosePanel()">
+            <div class="control" title="Close panel" (click)="clickClosePanel()">
                 <span nz-icon nzType="close" nzTheme="outline"></span>
             </div>
-            <div class="control" [class.expand]="!panelExpanded" [class.expanded]="panelExpanded"
-                (click)="clickExpandPanel()">
+            <div class="control" title="Expand/Reduce panel" [class.expand]="!panelExpanded"
+                [class.expanded]="panelExpanded" (click)="clickExpandPanel()">
                 <span nz-icon nzType="vertical-align-top" nzTheme="outline"></span>
             </div>
-            <a class="control" [href]="selectedItemShareLink" #shareLink (click)="confirmCopy($event)">
+            <a class="control" title="Copy share link" [href]="selectedItemShareLink" #shareLink
+                (click)="confirmCopy($event)">
                 <span nz-icon nzType="share-alt" nzTheme="outline"></span>
             </a>
         </div>

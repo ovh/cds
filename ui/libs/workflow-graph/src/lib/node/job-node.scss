@@ -137,5 +137,23 @@
                 }
             }
         }
+
+        .gate {
+            border: 2px solid $polar_grey_1;
+            color: $polar_grey_1;
+            border-radius: 50%;
+            margin-left: 10px;
+            height: 24px;
+            width: 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            :host-context(.night) & {
+                color: $darkTheme_grey_6;
+                border-color: $darkTheme_grey_6;
+            }
+        }
     }
 }

@@ -1,11 +1,14 @@
 <div *ngIf="node?.name" class="label" title="{{node?.name}}">
     <ng-container *ngIf="node?.gate && !runActive">
-        <button *ngIf="node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
-            (click)="clickRunGate($event)">
+        <div *ngIf="!node.runs" title="Job gate" class="gate">
+            <span nz-icon nzType="caret-right" style="margin-left: 3px;" nzTheme="fill"></span>
+        </div>
+        <button *ngIf="node.gate.inputs && node.runs" nz-button nzGhost nzSize="small" nzShape="circle"
+            title="Run job gate" (click)="clickGate($event)">
             <span nz-icon nzType="caret-right" style="margin-left: 2px;" nzTheme="fill"></span>
         </button>
-        <button *ngIf="!node.gate.inputs" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
-            nz-popconfirm nzPopconfirmTitle="Confirm run the job" nzPopconfirmPlacement="bottom"
+        <button *ngIf="!node.gate.inputs && node.runs" nz-button nzGhost nzSize="small" nzShape="circle"
+            title="Run job gate" nz-popconfirm nzPopconfirmTitle="Confirm run the job" nzPopconfirmPlacement="bottom"
             (nzOnConfirm)="confirmRunGate()" (click)="$event.preventDefault();$event.stopPropagation();">
             <span nz-icon nzType="caret-right" style="margin-left: 2px;" nzTheme="fill"></span>
         </button>

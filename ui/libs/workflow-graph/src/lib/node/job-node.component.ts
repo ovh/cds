@@ -105,12 +105,12 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
     }
 
     selectNode(navigationKey: string): void {
-        this.selected = navigationKey === (this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name);
+        this.selected = this.match(navigationKey);
         this._cd.markForCheck();
     }
 
     activateNode(navigationKey: string): void {
-        if (navigationKey === (this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name)) {
+        if (this.match(navigationKey)) {
             this.actionCallback(GraphNodeAction.Click, this.node, { jobRunID: this.node.run ? this.node.run.id : null });
         }
     }
@@ -120,8 +120,8 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    clickRunGate(event: Event): void {
-        this.actionCallback(GraphNodeAction.Click, this.node, { gateName: this.node.gate });
+    clickGate(event: Event): void {
+        this.actionCallback(GraphNodeAction.ClickGate, this.node, { gateName: this.node.gate });
         event.preventDefault();
         event.stopPropagation();
     }
@@ -139,6 +139,10 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
     }
 
     confirmRunGate(): void {
-        this.actionCallback(GraphNodeAction.Click, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickConfirmGate, this.node, { gateName: this.node.gate });
+    }
+
+    match(navigationKey: string): boolean {
+        return navigationKey === (this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name);
     }
 }

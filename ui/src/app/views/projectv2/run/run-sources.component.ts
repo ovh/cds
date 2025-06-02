@@ -34,11 +34,11 @@ export class RunSourcesComponent implements OnInit, OnChanges, OnDestroy {
 	ngOnChanges(): void {
 		let files = [dump(this.run.workflow_data.workflow, { lineWidth: -1 })];
 		let filenames = ['workflow - ' + this.run.workflow_name];
-		Object.keys(this.run.workflow_data.actions).sort().forEach((k) => {
+		Object.keys(this.run.workflow_data.actions ?? []).sort().forEach((k) => {
 			files.push(dump(this.run.workflow_data.actions[k], { lineWidth: -1 }));
 			filenames.push('action - ' + k);
 		});
-		Object.keys(this.run.workflow_data.worker_models).sort().forEach((k) => {
+		Object.keys(this.run.workflow_data.worker_models ?? []).sort().forEach((k) => {
 			files.push(dump(this.run.workflow_data.worker_models[k], { lineWidth: -1 }));
 			filenames.push('model - ' + k);
 		});

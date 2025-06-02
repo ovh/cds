@@ -452,6 +452,7 @@ type ServiceClient interface {
 type WorkflowV2Client interface {
 	WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunHookRequest, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
 	WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...RequestModifier) (*sdk.V2WorkflowRunManualResponse, error)
+	WorkflowV2RunDelete(ctx context.Context, projectKey, runIdentifier string) error
 	WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
 	WorkflowV2JobStart(ctx context.Context, projectKey, workflowRunID, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
 	WorkflowV2RunSearchAllProjects(ctx context.Context, offset, limit int64, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)

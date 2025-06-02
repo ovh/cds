@@ -106,7 +106,7 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 		releaseToken = token
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 
 	distriClient, err := art.CreateDistributionClient(ctx, distributionURL, releaseToken)

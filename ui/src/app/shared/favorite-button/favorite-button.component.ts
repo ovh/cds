@@ -1,9 +1,9 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, Input, OnInit, OnDestroy } from "@angular/core";
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { Bookmark, BookmarkType } from "app/model/bookmark.model";
 import { Subscription } from "rxjs";
 import { AutoUnsubscribe } from "../decorator/autoUnsubscribe";
-import { BookmarkCreate, BookmarkDelete, BookmarkState } from "app/store/bookmark.state";
+import { BookmarkCreate, BookmarkDelete, BookmarkState, BookmarkStateModel } from "app/store/bookmark.state";
 
 @Component({
     selector: 'app-favorite-button',
@@ -12,7 +12,7 @@ import { BookmarkCreate, BookmarkDelete, BookmarkState } from "app/store/bookmar
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class FavoriteButtonComponent implements OnInit, OnDestroy {
+export class FavoriteButtonComponent implements OnInit, OnChanges, OnDestroy {
     @Input() type: BookmarkType;
     @Input() id: string;
     loading: boolean;
@@ -27,11 +27,20 @@ export class FavoriteButtonComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.sub = this._store.select(BookmarkState.state).subscribe((s) => {
-            this.loading = s.loading === (this.type + this.id);
-            this.bookmark = s.all.find((b) => b.type === this.type && b.id === this.id);
-            this._cd.markForCheck();
+        this.sub = this._store.select(BookmarkState.state).subscribe(s => {
+            this.update(s);
         });
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        const s = this._store.selectSnapshot(BookmarkState.state);
+        this.update(s);
+    }
+
+    update(s: BookmarkStateModel) {
+        this.loading = s.loading === (this.type + this.id);
+        this.bookmark = s.all.find((b) => b.type === this.type && b.id === this.id);
+        this._cd.markForCheck();
     }
 
     click(): void {

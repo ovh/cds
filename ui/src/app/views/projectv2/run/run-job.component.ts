@@ -11,7 +11,7 @@ import {
     OnInit
 } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
-import { DisplayMode, LogBlock, ScrollTarget } from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
+import { DisplayMode, ScrollTarget } from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
 import { PipelineStatus } from "app/model/pipeline.model";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { concatMap, delay, from, interval, lastValueFrom, retryWhen, Subscription } from "rxjs";
@@ -19,7 +19,7 @@ import { StepStatus, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsTe
 import { DurationService } from "../../../../../libs/workflow-graph/src/lib/duration.service";
 import moment from "moment";
 import { NzMessageService } from "ng-zorro-antd/message";
-import { CDNLine, CDNStreamFilter } from "app/model/cdn.model";
+import { CDNLine, CDNLogLink, CDNStreamFilter } from "app/model/cdn.model";
 import { CDNService } from "app/service/cdn.service";
 import { webSocket, WebSocketSubject } from "rxjs/webSocket";
 import { Router } from "@angular/router";
@@ -28,6 +28,30 @@ import { ErrorUtils } from "app/shared/error.utils";
 export class Tab {
     name: string;
     logBlocks: Array<LogBlock>;
+}
+export class LogBlock {
+    id: number;
+    name: string;
+    lines: Array<CDNLine>;
+    endLines: Array<CDNLine>;
+    closed: boolean;
+    firstDisplayedLineNumber: number;
+    totalLinesCount: number;
+    link: CDNLogLink;
+    startDate: Date;
+    duration: string;
+    optional: boolean;
+    disabled: boolean;
+    failed: boolean;
+    loading: boolean;
+
+    constructor(name: string) {
+        this.name = name;
+        this.lines = [];
+        this.endLines = [];
+        this.firstDisplayedLineNumber = 0;
+        this.totalLinesCount = 0;
+    }
 }
 
 @Component({
@@ -49,12 +73,13 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     @Input() jobRun: V2WorkflowRunJob;
 
     mode = DisplayMode.ANSI;
-    tabs: Array<Tab> = [{ name: 'Job', logBlocks: [new LogBlock('Information')] }];
+    tabs: Array<Tab> = [];
     currentTabIndex = 0;
     pollRunJobInfosSubs: Subscription;
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     jobRunInfos: Array<WorkflowRunInfo> = [];
+    autoScrolling: boolean = true;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -62,10 +87,11 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         private _messageService: NzMessageService,
         private _cdnService: CDNService,
         private _router: Router
-    ) { }
+    ) {
+        this.reset();
+    }
 
     ngOnDestroy(): void {
-        // Should be set to use @AutoUnsubscribe with AOT
         if (this.websocket) { this.stopStreamingLogsForJob(); }
     }
 
@@ -77,18 +103,21 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         this.change(changes);
     }
 
+    reset(): void {
+        this.tabs = [{ name: 'Job', logBlocks: [new LogBlock('Information')] }];
+        this.currentTabIndex = 0;
+        if (this.pollRunJobInfosSubs) { this.pollRunJobInfosSubs.unsubscribe(); }
+        this.stopStreamingLogsForJob();
+    }
+
     async change(changes: SimpleChanges = null) {
         const isInit = this.jobRun && !changes;
-        const jobRunChanged = changes && changes.jobRun;
+        const jobRunChanged = !!changes && !!changes.jobRun;
         const jobRunIDChanged = jobRunChanged && changes.jobRun.previousValue && changes.jobRun.previousValue.id !== changes.jobRun.currentValue.id;
         if (jobRunIDChanged) {
-            // Reset view
-            this.tabs = [{ name: 'Job', logBlocks: [new LogBlock('Information')] }];
-            if (this.pollRunJobInfosSubs) { this.pollRunJobInfosSubs.unsubscribe(); }
-            this.stopStreamingLogsForJob();
+            this.reset();
         }
         if (isInit || jobRunIDChanged) {
-            this.currentTabIndex = 0;
             await this.setInfos();
             this._cd.markForCheck();
             await this.setServices();
@@ -100,12 +129,8 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
             this._cd.markForCheck();
             await this.loadStepsLogs();
         }
-        if (isInit) {
-            this._cd.detectChanges();
-            this.clickScroll(ScrollTarget.BOTTOM);
-        } else {
-            this._cd.markForCheck();
-        }
+        this._cd.detectChanges();
+        this.autoScroll();
     }
 
     async setServices() {
@@ -227,9 +252,24 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     async loadStepsLogs() {
         let ps = [];
         for (let i = 0; i < this.tabs[this.currentTabIndex].logBlocks.length; i++) {
-            ps.push(this.open(this.tabs[this.currentTabIndex].logBlocks[i]));
+            ps.push(this.loadStepLogs(this.tabs[this.currentTabIndex].logBlocks[i]));
         }
         await Promise.all(ps);
+    }
+
+    async loadStepLogs(logBlock: LogBlock) {
+        if (logBlock.lines.length > 0 || !logBlock.link) {
+            return;
+        }
+        logBlock.loading = true;
+        const results = await Promise.all([
+            lastValueFrom(this._cdnService.getLogLines(logBlock.link, { limit: `${this.initLoadLinesCount}` })),
+            lastValueFrom(this._cdnService.getLogLines(logBlock.link, { offset: `-${this.initLoadLinesCount}` }))
+        ]);
+        logBlock.lines = results[0].lines;
+        logBlock.endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
+        logBlock.totalLinesCount = results[0].totalCount;
+        logBlock.loading = false;
     }
 
     computeStepFirstLineNumbers(): void {
@@ -254,7 +294,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     async clickExpandStepDown(stepName: string, event: MouseEvent) {
-        let step = this.tabs[this.currentTabIndex].logBlocks.find(s => s.name === stepName);
+        const step = this.tabs[this.currentTabIndex].logBlocks.find(s => s.name === stepName);
         if (!step) {
             return;
         }
@@ -262,7 +302,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         if (event.shiftKey) {
             limit = '0';
         }
-        let result = await lastValueFrom(this._cdnService.getLogLines(step.link,
+        const result = await lastValueFrom(this._cdnService.getLogLines(step.link,
             { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit }
         ));
         step.totalLinesCount = result.totalCount;
@@ -271,11 +311,11 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     async clickExpandStepUp(stepName: string) {
-        let step = this.tabs[this.currentTabIndex].logBlocks.find(s => s.name === stepName);
+        const step = this.tabs[this.currentTabIndex].logBlocks.find(s => s.name === stepName);
         if (!step) {
             return;
         }
-        let result = await lastValueFrom(this._cdnService.getLogLines(step.link,
+        const result = await lastValueFrom(this._cdnService.getLogLines(step.link,
             { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` }
         ));
         step.totalLinesCount = result.totalCount;
@@ -284,31 +324,15 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.detectChanges();
     }
 
-    async clickOpen(logBlock: LogBlock) {
-        if (logBlock.open) {
-            logBlock.open = !logBlock.open;
+    async clickOpenClose(logBlock: LogBlock) {
+        if (!logBlock.closed) {
+            logBlock.closed = true;
             return;
         }
 
-        await this.open(logBlock);
+        logBlock.closed = false;
+        await this.loadStepLogs(logBlock);
         this._cd.detectChanges();
-    }
-
-    async open(logBlock: LogBlock) {
-        if (logBlock.lines.length > 0 || !logBlock.link) {
-            logBlock.open = true;
-            return;
-        }
-        logBlock.loading = true;
-        let results = await Promise.all([
-            lastValueFrom(this._cdnService.getLogLines(logBlock.link, { limit: `${this.initLoadLinesCount}` })),
-            lastValueFrom(this._cdnService.getLogLines(logBlock.link, { offset: `-${this.initLoadLinesCount}` }))
-        ]);
-        logBlock.lines = results[0].lines;
-        logBlock.endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
-        logBlock.totalLinesCount = results[0].totalCount;
-        logBlock.open = true;
-        logBlock.loading = false;
     }
 
     receiveLogs(l: CDNLine): void {
@@ -320,6 +344,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
                         this.tabs[i].logBlocks[j].endLines.push(l);
                         this.tabs[i].logBlocks[j].totalLinesCount++;
                         this._cd.detectChanges();
+                        this.autoScroll();
                     }
                     return;
                 }
@@ -336,7 +361,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         const host = window.location.host;
         const href = this._router['location']._basePath;
         this.websocket = webSocket({
-            url: `${protocol}//${host}${href}/cdscdn/v2/item/stream`,
+            url: `${protocol}//${host}${href}/cdscdn/item/stream`,
             openObserver: {
                 next: value => {
                     if (value.type === 'open') {
@@ -375,6 +400,15 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         await this.loadStepsLogs();
         this._cd.detectChanges();
         this.clickScroll(ScrollTarget.BOTTOM);
+    }
+
+    onScroll(e: any): void {
+        // If the scroll is nearly complete, activate auto scroll for the view.
+        this.autoScrolling = Math.abs(this.scrollWrapper.nativeElement.scrollHeight - this.scrollWrapper.nativeElement.clientHeight - this.scrollWrapper.nativeElement.scrollTop) <= 50;
+    }
+
+    autoScroll(): void {
+        if (this.autoScrolling) { this.clickScroll(ScrollTarget.BOTTOM); }
     }
 
 }
