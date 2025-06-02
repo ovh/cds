@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rockbears/log"
@@ -26,6 +27,8 @@ var (
 	RateLimitReset     = int(time.Now().Unix())
 
 	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
+
+	mutexRateLimit = sync.RWMutex{}
 )
 
 func (c *githubClient) setETag(ctx context.Context, path string, headers http.Header) {
@@ -124,7 +127,12 @@ func (c *githubClient) post(ctx context.Context, path string, bodyType string, b
 		req.ContentLength = int64(s)
 	}
 
-	return httpClient.Do(req)
+	res, err := httpClient.Do(req)
+	if res != nil {
+		c.manageRateLimit(ctx, http.MethodDelete, path, res.Header, res.StatusCode)
+	}
+
+	return res, err
 }
 
 func (c *githubClient) patch(ctx context.Context, path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
@@ -229,9 +237,17 @@ func (c *githubClient) get(ctx context.Context, path string, opts ...getArgFunc)
 
 	c.setETag(ctx, path, res.Header)
 
-	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
-	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
-	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
+	c.manageRateLimit(ctx, http.MethodGet, callURL.String(), res.Header, res.StatusCode)
+
+	return res.StatusCode, resBody, res.Header, nil
+}
+
+func (c *githubClient) manageRateLimit(ctx context.Context, method string, callURL string, header http.Header, statusCode int) {
+	mutexRateLimit.Lock()
+	defer mutexRateLimit.Unlock()
+	rateLimitLimit := header.Get("X-RateLimit-Limit")
+	rateLimitRemaining := header.Get("X-RateLimit-Remaining")
+	rateLimitReset := header.Get("X-RateLimit-Reset")
 
 	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
 		RateLimitLimit, _ = strconv.Atoi(rateLimitLimit)
@@ -239,7 +255,10 @@ func (c *githubClient) get(ctx context.Context, path string, opts ...getArgFunc)
 		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
 	}
 
-	return res.StatusCode, resBody, res.Header, nil
+	ctx = context.WithValue(ctx, LogFieldGithubRateLimitRemaining, rateLimitRemaining)
+	ctx = context.WithValue(ctx, LogFieldGithubRateLimitLimit, rateLimitLimit)
+	ctx = context.WithValue(ctx, LogFieldGithubRateLimitReset, rateLimitReset)
+	log.Info(ctx, "‰v | %v | %v", method, statusCode, callURL)
 }
 
 func (c *githubClient) delete(ctx context.Context, path string) error {
@@ -267,14 +286,7 @@ func (c *githubClient) delete(ctx context.Context, path string) error {
 		return sdk.WrapError(err, "Cannot do delete request")
 	}
 
-	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
-	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
-	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
-
-	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
-		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
-		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
-	}
+	c.manageRateLimit(ctx, http.MethodDelete, path, res.Header, res.StatusCode)
 
 	if res.StatusCode != 204 {
 		return fmt.Errorf("github>delete wrong status code %d on url %s", res.StatusCode, path)

@@ -117,7 +117,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         if (jobRunIDChanged) {
             this.reset();
         }
-        if (isInit) {
+        if (isInit || jobRunIDChanged) {
             await this.setInfos();
             this._cd.markForCheck();
             await this.setServices();

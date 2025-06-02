@@ -9,6 +9,9 @@ import (
 
 // GetStatus returns github status
 func GetStatus() []sdk.MonitoringStatusLine {
+	mutexRateLimit.RLock()
+	defer mutexRateLimit.RUnlock()
+
 	var statusRemaining string
 	switch {
 	case RateLimitRemaining < 100:

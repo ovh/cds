@@ -5,6 +5,13 @@ import (
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
+)
+
+const (
+	LogFieldGithubRateLimitRemaining log.Field = "vcs_github_ratelimit_remaining"
+	LogFieldGithubRateLimitLimit     log.Field = "vcs_github_ratelimit_limit"
+	LogFieldGithubRateLimitReset     log.Field = "vcs_github_ratelimit_reset"
 )
 
 // githubClient is a github.com wrapper for CDS vcs. interface
@@ -29,8 +36,6 @@ type githubConsumer struct {
 	uiURL        string
 	apiURL       string
 	proxyURL     string
-	username     string
-	token        string
 }
 
 // New creates a new GithubConsumer
