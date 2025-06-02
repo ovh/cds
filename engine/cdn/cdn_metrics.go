@@ -53,7 +53,7 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	itemToSyncCountView := telemetry.NewViewLast(s.Metrics.ItemToSyncCount.Name(), s.Metrics.ItemToSyncCount, []tag.Key{tagStorage, tagItemType})
 
 	s.Metrics.WSClients = stats.Int64("cdn/websocket_clients", "number of  websocket clients", stats.UnitDimensionless)
-	metricsWSClients := telemetry.NewViewCount(s.Metrics.WSClients.Name(), s.Metrics.WSClients, []tag.Key{tagServiceName, tagItemType})
+	metricsWSClients := telemetry.NewViewLast(s.Metrics.WSClients.Name(), s.Metrics.WSClients, []tag.Key{tagServiceName, tagItemType})
 
 	s.Metrics.WSEvents = stats.Int64("cdn/websocket_events", "number of websocket events", stats.UnitDimensionless)
 	metricsWSEvents := telemetry.NewViewCount(s.Metrics.WSEvents.Name(), s.Metrics.WSEvents, []tag.Key{tagServiceName, tagItemType})

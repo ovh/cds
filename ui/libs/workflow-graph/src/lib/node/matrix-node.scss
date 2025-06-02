@@ -58,6 +58,29 @@
         margin-bottom: 6px;
         font-weight: bold;
     }
+
+    .gate {
+        border: 2px solid $polar_grey_1;
+        color: $polar_grey_1;
+        border-radius: 50%;
+        margin-left: 2px;
+        margin-bottom: 4px;
+        height: 18px;
+        width: 18px;
+        text-align: center;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        :host-context(.night) & {
+            color: $darkTheme_grey_6;
+            border-color: $darkTheme_grey_6;
+        }
+
+        [nz-icon] {
+            font-size: 12px;
+        }
+    }
 }
 
 .node {
