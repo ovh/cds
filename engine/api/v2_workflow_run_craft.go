@@ -941,7 +941,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 		if entityWithAction != nil {
 			step.Uses = "actions/" + completePath
 
-			// Recreate wref with vcs/repo = template's repo and not workflow's repo
+			// Recreate wref with vcs/repo = action's repo and not workflow's repo
 			actionProject := wref.project
 			actionVCS := wref.ef.currentVCS
 			actionRepo := wref.ef.currentRepo
