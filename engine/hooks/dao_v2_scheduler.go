@@ -56,9 +56,6 @@ func (d *dao) CreateSchedulerDefinition(ctx context.Context, h sdk.V2WorkflowHoo
 }
 
 func (d *dao) CreateSchedulerNextExecution(ctx context.Context, exec sdk.SchedulerExecution) error {
-	if err := d.RemoveSchedulerExecution(ctx, exec.SchedulerDef.ID); err != nil {
-		return err
-	}
 	if err := d.store.SetAdd(schedulerNextExecutionRootKey, exec.SchedulerDef.ID, exec); err != nil {
 		return err
 	}
