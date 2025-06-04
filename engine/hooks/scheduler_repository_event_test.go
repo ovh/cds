@@ -175,6 +175,10 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	}, nil)
 
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().RetrieveHookEventSigningKey(gomock.Any(), gomock.Any()).Times(1)
+	userID := "aaa-bbb-ccc"
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().EntityGet(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&sdk.Entity{
+		UserID: &userID,
+	}, nil).Times(1)
 
 	// Force dequeue
 	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID)
