@@ -30,6 +30,10 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 		if err := s.handleScheduler(ctx, hre); err != nil {
 			return err
 		}
+	case sdk.WorkflowHookEventNameWorkflowRun:
+		if err := s.handleWorkflowRunHook(ctx, hre); err != nil {
+			return err
+		}
 	default:
 		if err := s.handleWorkflowHook(ctx, hre); err != nil {
 			return err
@@ -86,6 +90,18 @@ func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEv
 	}
 	wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
+	return nil
+}
+
+func (s *Service) handleWorkflowRunHook(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
+	for i := range hre.WorkflowHooks {
+		wh := &hre.WorkflowHooks[i]
+		e, err := s.Client.EntityGet(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, sdk.EntityTypeWorkflow, wh.WorkflowName)
+		if err != nil {
+			return err
+		}
+		wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+	}
 	return nil
 }
 
