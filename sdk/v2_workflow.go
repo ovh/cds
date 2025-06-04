@@ -384,6 +384,16 @@ type V2JobGateReviewers struct {
 	Users  []string `json:"users,omitempty"`
 }
 
+func (job *V2Job) Clean() {
+	for stepIndex := range job.Steps {
+		step := &job.Steps[stepIndex]
+		step.Run = CleanString(step.Run)
+	}
+	for kParam, vParam := range job.Parameters {
+		job.Parameters[kParam] = CleanString(vParam)
+	}
+}
+
 func (job V2Job) Value() (driver.Value, error) {
 	j, err := yaml.Marshal(job)
 	return j, WrapError(err, "cannot marshal V2Job")
@@ -545,6 +555,17 @@ type V2JobStrategy struct {
 }
 
 type V2JobConcurrency struct {
+}
+
+func (w *V2Workflow) Clean() {
+	if w.CommitStatus != nil {
+		w.CommitStatus.Description = CleanString(w.CommitStatus.Description)
+	}
+	for k := range w.Jobs {
+		job := w.Jobs[k]
+		(&job).Clean()
+		w.Jobs[k] = job
+	}
 }
 
 func (w V2Workflow) GetName() string {
