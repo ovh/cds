@@ -321,6 +321,12 @@ var workflowRunCmd = cli.Command{
 		{
 			Name: "workflow-tag",
 		},
+		{
+			Name: "target-repository",
+		},
+		{
+			Name: "target-vcs",
+		},
 	},
 }
 
@@ -334,6 +340,8 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 	destCommit := v.GetString("commit")
 	workflowBranch := v.GetString("workflow-branch")
 	workflowTag := v.GetString("workflow-tag")
+	targetRepo := v.GetString("target-repository")
+	targetVCS := v.GetString("target-vcs")
 
 	if destBranch != "" && destTag != "" {
 		return nil, fmt.Errorf("you cannot use branch and tag together")
@@ -344,11 +352,13 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 	}
 
 	payload := sdk.V2WorkflowRunManualRequest{
-		Branch:         destBranch,
-		Tag:            destTag,
-		Sha:            destCommit,
-		WorkflowBranch: workflowBranch,
-		WorkflowTag:    workflowTag,
+		Branch:           destBranch,
+		Tag:              destTag,
+		Sha:              destCommit,
+		WorkflowBranch:   workflowBranch,
+		WorkflowTag:      workflowTag,
+		TargetRepository: targetRepo,
+		TargetVCS:        targetVCS,
 	}
 
 	runResp, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload)

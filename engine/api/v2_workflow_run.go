@@ -863,6 +863,19 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger a workflow", theOneWhoTriggers.Username())
 			}
 
+			if runRequest.TargetVCS != "" {
+				if wk.Repository == nil {
+					wk.Repository = &sdk.WorkflowRepository{}
+				}
+				wk.Repository.VCSServer = runRequest.TargetVCS
+			}
+			if runRequest.TargetRepository != "" {
+				if wk.Repository == nil {
+					wk.Repository = &sdk.WorkflowRepository{}
+				}
+				wk.Repository.Name = runRequest.TargetRepository
+			}
+
 			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, *theOneWhoTriggers)
 			if err != nil {
 				return err
@@ -1301,6 +1314,8 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				VCSServer:      vcsProject.Name,
 				Repository:     repo.Name,
 				WorkflowRef:    workflowRef,
+				TargetRepo:     runRequest.TargetRepository,
+				TargetVCS:      runRequest.TargetVCS,
 				WorkflowCommit: workflowCommit,
 				Workflow:       workflowName,
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,

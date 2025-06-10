@@ -302,11 +302,13 @@ type HookRepositoryEventExtractedDataWebHook struct {
 }
 
 type HookRepositoryEventExtractedDataManual struct {
-	Project      string `json:"project"`
-	Workflow     string `json:"workflow"`
-	TargetCommit string `json:"target_commit"`
-	TargetBranch string `json:"target_branch"`
-	TargetTag    string `json:"target_tag"`
+	Project          string `json:"project,omitempty"`
+	Workflow         string `json:"workflow,omitempty"`
+	TargetCommit     string `json:"target_commit,omitempty"`
+	TargetBranch     string `json:"target_branch,omitempty"`
+	TargetTag        string `json:"target_tag,omitempty"`
+	TargetRepository string `json:"target_repository,omitempty"`
+	TargetVCS        string `json:"target_vcs,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWorkflowRun struct {

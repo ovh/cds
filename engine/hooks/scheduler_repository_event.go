@@ -222,7 +222,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		// Compute git info ( semver )
 	case sdk.HookEventStatusGitInfo:
 		if err := s.triggerGetGitInfo(ctx, hre); err != nil {
-			return sdk.WrapError(err, "unable to get get info")
+			return sdk.WrapError(err, "unable to get git info")
 		}
 		// Trigger workflows
 	case sdk.HookEventStatusWorkflow:

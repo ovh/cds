@@ -193,11 +193,13 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		Commit:       runRequest.WorkflowCommit,
 		Ref:          runRequest.WorkflowRef,
 		Manual: sdk.HookRepositoryEventExtractedDataManual{
-			Project:      runRequest.Project,
-			Workflow:     runRequest.Workflow,
-			TargetCommit: runRequest.UserRequest.Sha,
-			TargetBranch: runRequest.UserRequest.Branch,
-			TargetTag:    runRequest.UserRequest.Tag,
+			Project:          runRequest.Project,
+			Workflow:         runRequest.Workflow,
+			TargetRepository: runRequest.TargetRepo,
+			TargetVCS:        runRequest.TargetVCS,
+			TargetCommit:     runRequest.UserRequest.Sha,
+			TargetBranch:     runRequest.UserRequest.Branch,
+			TargetTag:        runRequest.UserRequest.Tag,
 		},
 		DeprecatedAdminMFA: runRequest.AdminMFA,
 	}
