@@ -354,7 +354,7 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFi
 		"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
 		"repositories":          pq.StringArray(filters.Repositories),
 		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
-		"author":                pq.StringArray(filters.Authors),
+		"authors":               pq.StringArray(filters.Authors),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
 		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
