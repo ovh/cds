@@ -100,6 +100,8 @@ type OperationCheckout struct {
 		SignKeyID      string `json:"sign_key_id"`
 		CommitVerified bool   `json:"verified"`
 		Msg            string `json:"msg"`
+		Author         string `json:"author"`
+		AuthorEmail    string `json:"author_email"`
 		Semver         struct {
 			Current string `json:"current"`
 			Next    string `json:"next"`

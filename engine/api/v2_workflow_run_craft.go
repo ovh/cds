@@ -1107,6 +1107,8 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		RefType:              refType,
 		Sha:                  commit,
 		CommitMessage:        wr.RunEvent.CommitMessage,
+		Author:               wr.RunEvent.CommitAuthor,
+		AuthorEmail:          wr.RunEvent.CommitAuthorEmail,
 		SemverCurrent:        semverCurrent,
 		SemverNext:           semverNext,
 		ChangeSets:           wr.RunEvent.ChangeSets,
