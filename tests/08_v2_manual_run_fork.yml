@@ -2,7 +2,6 @@ name: Manual run
 vars:
   cds_project: "ITV2MANUALFORK"
   git_repo: "it_v2_manual"
-  git_repo_fork: "it_v2_manual_fork"
   cds_workflow: "WorkflowManualFORK"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
 
@@ -44,14 +43,10 @@ testcases:
       git_password: "{{.git.password}}"
       git_repo: "{{.git_repo}}"
 
-    - type: v2_add_git_repo
-      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-      cds_project: "{{.cds_project}}"
-      cds_hook_url: "{{.gitea.hook.url}}"
-      git_host: "{{.git.host}}"
-      git_user: "{{.git.user}}"
-      git_password: "{{.git.password}}"
-      git_repo: "{{.git_repo_fork}}"
+    - name: Delete previous fork
+      script: "curl -X POST {{.git.host}}/api/v1/repos/{{.git.user.fork}}/{{.git_repo}} -u \"{{.git.user.fork}}:{{.git.password}}\""
+    - name: Fork repository
+      script: "curl --fail -X POST {{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/forks --data '{\"name\": \"{{.git_repo}}\"}' -u \"{{.git.user.fork}}:{{.git.password}}\""
 
 - name: Push workflow file
   steps:
@@ -94,7 +89,7 @@ testcases:
 - name: Run Fork
   steps:
     - name: Manual run 
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --target-repository {{.git.user}}/{{.git_repo_fork}}"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --fork {{.git.user.fork}}/{{.git_repo}}"
     - name: Check CDS project analyses status 
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
       assertions:
@@ -123,7 +118,7 @@ testcases:
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
         # Check log content
-        cat {{.cds_workflow}}-1-1-init-gitvariables | grep "GIT_REPOSITORY={{.git.user}}/{{.git_repo_fork}}"
+        cat {{.cds_workflow}}-1-1-init-gitvariables | grep "GIT_REPOSITORY={{.git.user.fork}}/{{.git_repo}}"
       retry: 60
       delay: 1
 

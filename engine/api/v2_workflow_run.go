@@ -863,16 +863,31 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger a workflow", theOneWhoTriggers.Username())
 			}
 
-			if runRequest.TargetVCS != "" {
+			if runRequest.TargetRepository != "" && runRequest.TargetRepository != repo.Name {
+				// Check fork
+				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, vcsProject.Name)
+				if err != nil {
+					return err
+				}
+				forks, err := client.ListForks(ctx, repo.Name)
+				if err != nil {
+					return err
+				}
+				found := false
+				for _, f := range forks {
+					if f.Fullname == runRequest.TargetRepository {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "fork %s not found", runRequest.TargetRepository)
+				}
+
 				if wk.Repository == nil {
 					wk.Repository = &sdk.WorkflowRepository{}
 				}
-				wk.Repository.VCSServer = runRequest.TargetVCS
-			}
-			if runRequest.TargetRepository != "" {
-				if wk.Repository == nil {
-					wk.Repository = &sdk.WorkflowRepository{}
-				}
+				wk.Repository.VCSServer = vcsProject.Name
 				wk.Repository.Name = runRequest.TargetRepository
 			}
 
@@ -1315,7 +1330,6 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				Repository:     repo.Name,
 				WorkflowRef:    workflowRef,
 				TargetRepo:     runRequest.TargetRepository,
-				TargetVCS:      runRequest.TargetVCS,
 				WorkflowCommit: workflowCommit,
 				Workflow:       workflowName,
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,

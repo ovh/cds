@@ -760,7 +760,6 @@ type V2WorkflowRunManualRequest struct {
 	WorkflowBranch   string `json:"workflow_branch,omitempty"`
 	WorkflowTag      string `json:"workflow_tag,omitempty"`
 	TargetRepository string `json:"target_repository,omitempty`
-	TargetVCS        string `json:"target_vcs,omitempty`
 }
 
 type V2WorkflowRunManualResponse struct {

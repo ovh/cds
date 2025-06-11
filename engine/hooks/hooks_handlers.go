@@ -196,7 +196,6 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 			Project:          runRequest.Project,
 			Workflow:         runRequest.Workflow,
 			TargetRepository: runRequest.TargetRepo,
-			TargetVCS:        runRequest.TargetVCS,
 			TargetCommit:     runRequest.UserRequest.Sha,
 			TargetBranch:     runRequest.UserRequest.Branch,
 			TargetTag:        runRequest.UserRequest.Tag,

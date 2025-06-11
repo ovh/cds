@@ -308,7 +308,6 @@ type HookRepositoryEventExtractedDataManual struct {
 	TargetBranch     string `json:"target_branch,omitempty"`
 	TargetTag        string `json:"target_tag,omitempty"`
 	TargetRepository string `json:"target_repository,omitempty"`
-	TargetVCS        string `json:"target_vcs,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWorkflowRun struct {
