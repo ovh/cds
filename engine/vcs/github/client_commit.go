@@ -219,14 +219,11 @@ func (g *githubClient) allCommitBetween(ctx context.Context, repo string, untilD
 		log.Warn(ctx, "githubClient.Commits> Error %s", errorAPI(body))
 		return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 	}
-	nextCommits := []Commit{}
 
-	if err := sdk.JSONUnmarshal(body, &nextCommits); err != nil {
+	if err := sdk.JSONUnmarshal(body, &commits); err != nil {
 		log.Warn(ctx, "githubClient.Commits> Unable to parse github commits: %s", err)
 		return nil, err
 	}
-
-	commits = append(commits, nextCommits...)
 
 	return commits, nil
 }
