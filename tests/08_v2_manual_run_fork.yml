@@ -1,7 +1,7 @@
-name: Manual run
+name: Manual run fork
 vars:
   cds_project: "ITV2MANUALFORK"
-  git_repo: "it_v2_manual"
+  git_repo: "it_v2_manual_fork"
   cds_workflow: "WorkflowManualFORK"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
 
