@@ -75,6 +75,8 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 			return err
 		}
 		op.Setup.Checkout.Result.CommitMessage = currentCommit.Subject
+		op.Setup.Checkout.Result.Author = currentCommit.Author
+		op.Setup.Checkout.Result.AuthorEmail = currentCommit.AuthorEmail
 	}
 
 	if op.Setup.Checkout.ProcessSemver {

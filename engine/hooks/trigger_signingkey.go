@@ -145,6 +145,12 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 	if hre.ExtractData.CommitMessage == "" {
 		hre.ExtractData.CommitMessage = ope.Setup.Checkout.Result.CommitMessage
 	}
+	if hre.ExtractData.CommitAuthor == "" {
+		hre.ExtractData.CommitAuthor = ope.Setup.Checkout.Result.Author
+	}
+	if hre.ExtractData.CommitAuthorEmail == "" {
+		hre.ExtractData.CommitAuthorEmail = ope.Setup.Checkout.Result.AuthorEmail
+	}
 
 	// Update repository hook status
 	allHooksSkipped := true

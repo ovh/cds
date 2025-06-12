@@ -120,6 +120,7 @@ testcases:
         cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout branch master"
         # Check gitvariables log content to check SEMVER variables are available
         cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep SEMVER
+        cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep GIT_AUTHOR={{.git.user}}
       retry: 60
       delay: 1
 

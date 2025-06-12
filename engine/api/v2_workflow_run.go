@@ -517,6 +517,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
+			authors, err := workflow_v2.LoadRunsAuthors(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
 			workflowNames, err := workflow_v2.LoadRunsWorkflowNames(ctx, api.mustDB(), proj.Key)
 			if err != nil {
 				return err
@@ -556,6 +561,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				{
 					Key:     "actor",
 					Options: actors,
+					Example: consumer.GetUsername(),
+				},
+				{
+					Key:     "author",
+					Options: authors,
 					Example: consumer.GetUsername(),
 				},
 				{
@@ -618,6 +628,8 @@ func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchRunsFil
 			filters.Workflows = v
 		case "actor":
 			filters.Actors = v
+		case "author":
+			filters.Authors = v
 		case "status":
 			filters.Status = v
 		case "ref":
@@ -1332,23 +1344,25 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
 
 	runEvent := sdk.V2WorkflowRunEvent{
-		HookType:         runRequest.HookType,
-		EventName:        runRequest.EventName,
-		Ref:              runRequest.Ref,
-		Sha:              runRequest.Sha,
-		PullRequestID:    runRequest.PullrequestID,
-		PullRequestToRef: runRequest.PullrequestToRef,
-		CommitMessage:    runRequest.CommitMessage,
-		SemverCurrent:    runRequest.SemverCurrent,
-		SemverNext:       runRequest.SemverNext,
-		ChangeSets:       runRequest.ChangeSets,
-		EntityUpdated:    runRequest.EntityUpdated,
-		Payload:          runRequest.Payload,
-		Cron:             runRequest.Cron,
-		CronTimezone:     runRequest.CronTimezone,
-		WorkflowRun:      runRequest.WorkflowRun,
-		WorkflowRunID:    runRequest.WorkflowRunID,
-		WebHookID:        runRequest.WebhookID,
+		HookType:          runRequest.HookType,
+		EventName:         runRequest.EventName,
+		Ref:               runRequest.Ref,
+		Sha:               runRequest.Sha,
+		PullRequestID:     runRequest.PullrequestID,
+		PullRequestToRef:  runRequest.PullrequestToRef,
+		CommitMessage:     runRequest.CommitMessage,
+		CommitAuthor:      runRequest.CommitAuthor,
+		CommitAuthorEmail: runRequest.CommitAuthorEmail,
+		SemverCurrent:     runRequest.SemverCurrent,
+		SemverNext:        runRequest.SemverNext,
+		ChangeSets:        runRequest.ChangeSets,
+		EntityUpdated:     runRequest.EntityUpdated,
+		Payload:           runRequest.Payload,
+		Cron:              runRequest.Cron,
+		CronTimezone:      runRequest.CronTimezone,
+		WorkflowRun:       runRequest.WorkflowRun,
+		WorkflowRunID:     runRequest.WorkflowRunID,
+		WebHookID:         runRequest.WebhookID,
 	}
 
 	var msg string

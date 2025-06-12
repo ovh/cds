@@ -180,6 +180,20 @@ func LoadRunsWorkflowNames(ctx context.Context, db gorp.SqlExecutor, projKey str
 	return names, nil
 }
 
+func LoadRunsAuthors(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var authors []string
+	_, next := telemetry.Span(ctx, "LoadRunsAuthors")
+	defer next()
+	if _, err := db.Select(&authors, `
+		SELECT DISTINCT contexts -> 'git' ->> 'author'
+		FROM v2_workflow_run
+		WHERE project_key = $1 AND contexts -> 'git' ->> 'author' IS NOT NULL
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return authors, nil
+}
+
 func LoadRunsActors(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
 	var actors []string
 	_, next := telemetry.Span(ctx, "LoadRunsActors")
@@ -310,6 +324,7 @@ const runQueryFilters = `
 	AND (array_length(:workflow_refs::text[], 1) IS NULL OR workflow_ref = ANY(:workflow_refs))
 	AND (array_length(:repositories::text[], 1) IS NULL OR ((contexts -> 'git' ->> 'server') || '/' || (contexts -> 'git' ->> 'repository')) = ANY(:repositories))
 	AND (array_length(:workflow_repositories::text[], 1) IS NULL OR (vcs_server || '/' || repository) = ANY(:workflow_repositories))
+	AND (array_length(:authors::text[], 1) IS NULL OR contexts -> 'git' ->> 'author' = ANY(:authors))
 	AND (array_length(:commits::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY(:commits))
 	AND (array_length(:templates::text[], 1) IS NULL OR ((contexts -> 'cds' ->> 'workflow_template_vcs_server') || '/' || (contexts -> 'cds' ->> 'workflow_template_repository') || '/' || (contexts -> 'cds' ->> 'workflow_template')) = ANY(:templates))
 	AND (array_length(:annotation_keys::text[], 1) IS NULL OR annotation_keys @> :annotation_keys)
@@ -339,6 +354,7 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFi
 		"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
 		"repositories":          pq.StringArray(filters.Repositories),
 		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
+		"authors":               pq.StringArray(filters.Authors),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
 		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
@@ -374,6 +390,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 		"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
 		"repositories":          pq.StringArray(filters.Repositories),
 		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
+		"authors":               pq.StringArray(filters.Authors),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
 		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
@@ -387,6 +404,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 type SearchRunsFilters struct {
 	Workflows            []string
 	Actors               []string
+	Authors              []string
 	Status               []string
 	Refs                 []string
 	WorkflowRefs         []string
@@ -457,6 +475,7 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 			"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
 			"repositories":          pq.StringArray(filters.Repositories),
 			"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
+			"authors":               pq.StringArray(filters.Authors),
 			"commits":               pq.StringArray(filters.Commits),
 			"templates":             pq.StringArray(filters.Templates),
 			"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
@@ -511,6 +530,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 		"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
 		"repositories":          pq.StringArray(filters.Repositories),
 		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
+		"authors":               pq.StringArray(filters.Authors),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
 		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
