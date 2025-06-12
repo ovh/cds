@@ -396,8 +396,9 @@ func TestHatcherySwarm_CanSpawn(t *testing.T) {
 	}
 	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	b := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
+	b, err := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
 	assert.True(t, b)
+	require.Nil(t, err)
 	assert.True(t, gock.IsDone())
 }
 
@@ -432,8 +433,9 @@ func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 	}
 
 	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
-	b := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
+	b, err := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
 	assert.False(t, b)
+	require.Nil(t, err)
 	assert.True(t, gock.IsDone())
 }
 
@@ -450,7 +452,8 @@ func TestHatcherySwarm_CanSpawnNoDockerClient(t *testing.T) {
 		},
 	}
 	jobID := int64(1)
-	b := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
+	b, err := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
 	assert.False(t, b)
+	require.Nil(t, err)
 	assert.True(t, gock.IsDone())
 }

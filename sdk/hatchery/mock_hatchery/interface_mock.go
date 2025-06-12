@@ -74,11 +74,12 @@ func (mr *MockInterfaceMockRecorder) CDSClientV2() *gomock.Call {
 }
 
 // CanSpawn mocks base method.
-func (m *MockInterface) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+func (m *MockInterface) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CanSpawn indicates an expected call of CanSpawn.
@@ -309,11 +310,12 @@ func (mr *MockInterfaceWithModelsMockRecorder) CDSClientV2() *gomock.Call {
 }
 
 // CanSpawn mocks base method.
-func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CanSpawn indicates an expected call of CanSpawn.
@@ -602,11 +604,12 @@ func (mr *MockInterfaceWithDetaultWorkerModelV2MockRecorder) CDSClientV2() *gomo
 }
 
 // CanSpawn mocks base method.
-func (m *MockInterfaceWithDetaultWorkerModelV2) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+func (m *MockInterfaceWithDetaultWorkerModelV2) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CanSpawn indicates an expected call of CanSpawn.

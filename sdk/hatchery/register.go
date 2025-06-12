@@ -64,7 +64,12 @@ loopModels:
 		if ms[k].Type != h.ModelType() {
 			continue
 		}
-		if h.CanSpawn(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &ms[k]}, "0", nil) && (h.NeedRegistration(ctx, &ms[k]) || ms[k].CheckRegistration) {
+		can, err := h.CanSpawn(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &ms[k]}, "0", nil)
+		if err != nil {
+			log.Error(ctx, "unable to check can spawn for worker %s", ms[k].Name)
+			continue
+		}
+		if can && (h.NeedRegistration(ctx, &ms[k]) || ms[k].CheckRegistration) {
 			log.Debug(ctx, "model %q need to register", ms[k].Path())
 		} else {
 			continue

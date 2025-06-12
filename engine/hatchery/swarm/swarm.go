@@ -565,7 +565,7 @@ const (
 
 // CanSpawn checks if the model can be spawned by this hatchery
 // it checks on every docker engine is one of the docker has availability
-func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	ctx, end := telemetry.Span(ctx, "swarm.CanSpawn", telemetry.Tag(telemetry.TagWorker, model.GetName()))
 	defer end()
 
@@ -574,7 +574,7 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 		modelOSArch := model.ModelV2.OSArch
 		if !slices.Contains(h.Config.OSArch, modelOSArch) {
 			log.Debug(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, modelOSArch, h.Config.OSArch)
-			return false
+			return false, nil
 		}
 	}
 
@@ -582,14 +582,16 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
 			log.Debug(ctx, "CanSpawn> Job %s has a hostname requirement. Swarm can't spawn a worker for this job", jobID)
-			return false
+			return false, nil
 		}
 	}
+	var lastError error
 	for dockerName, dockerClient := range h.dockerClients {
 		// List all containers to check if we can spawn a new one
 		cs, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
 			log.Error(ctx, "hatchery> swarm> CanSpawn> Unable to list containers on %s: %s", dockerName, err)
+			lastError = err
 			continue
 		}
 
@@ -608,10 +610,9 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 				links[r.Name] = strings.Split(r.Value, " ")[0]
 			}
 		}
-
-		return true
+		return true, nil
 	}
-	return false
+	return false, lastError
 }
 
 // WorkersStarted returns the number of instances started but

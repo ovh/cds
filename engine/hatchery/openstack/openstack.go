@@ -264,20 +264,20 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, _ string, requirements []sdk.Requirement) bool {
+func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, _ string, requirements []sdk.Requirement) (bool, error) {
 	ctx, end := telemetry.Span(ctx, "openstack.CanSpawn")
 	defer end()
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
-			return false
+			return false, nil
 		}
 		if r.Type == sdk.FlavorRequirement && len(h.Config.AllowedFlavors) > 0 {
 			if !slices.Contains(h.Config.AllowedFlavors, r.Value) {
-				return false
+				return false, nil
 			}
 		}
 	}
-	return true
+	return true, nil
 }
 
 func (h *HatcheryOpenstack) main(ctx context.Context) {

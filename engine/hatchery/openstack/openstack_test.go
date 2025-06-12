@@ -18,20 +18,24 @@ func TestHatcheryOpenstack_CanSpawn(t *testing.T) {
 	h.cache = NewCache(1, 1)
 
 	// no model, no requirement, canSpawn must be true
-	canSpawn := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", nil)
+	canSpawn, err := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", nil)
 	require.True(t, canSpawn)
+	require.Nil(t, err)
 
 	// no model, service requirement, canSpawn must be false: service can't be managed by openstack hatchery
-	canSpawn = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Name: "pg", Type: sdk.ServiceRequirement, Value: "postgres:9.5.4"}})
+	canSpawn, err = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Name: "pg", Type: sdk.ServiceRequirement, Value: "postgres:9.5.4"}})
 	require.False(t, canSpawn)
+	require.Nil(t, err)
 
 	// no model, memory prerequisite, canSpawn must be false: memory prerequisite can't be managed by openstack hatchery
-	canSpawn = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Name: "mem", Type: sdk.MemoryRequirement, Value: "4096"}})
+	canSpawn, err = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Name: "mem", Type: sdk.MemoryRequirement, Value: "4096"}})
 	require.False(t, canSpawn)
+	require.Nil(t, err)
 
 	// no model, hostname prerequisite, canSpawn must be false: hostname can't be managed by openstack hatchery
-	canSpawn = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Type: sdk.HostnameRequirement, Value: "localhost"}})
+	canSpawn, err = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Type: sdk.HostnameRequirement, Value: "localhost"}})
 	require.False(t, canSpawn)
+	require.Nil(t, err)
 }
 
 func TestHatcheryOpenstack_WorkerModelsEnabled(t *testing.T) {
