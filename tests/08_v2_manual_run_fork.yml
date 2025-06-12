@@ -44,7 +44,7 @@ testcases:
       git_repo: "{{.git_repo}}"
 
     - name: Delete previous fork
-      script: "curl -X POST {{.git.host}}/api/v1/repos/{{.git.user.fork}}/{{.git_repo}} -u \"{{.git.user.fork}}:{{.git.password}}\""
+      script: "curl -X DELETE {{.git.host}}/api/v1/repos/{{.git.user.fork}}/{{.git_repo}} -u \"{{.git.user.fork}}:{{.git.password}}\""
     - name: Fork repository
       script: "curl --fail -X POST {{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/forks --data '{\"name\": \"{{.git_repo}}\"}' -u \"{{.git.user.fork}}:{{.git.password}}\""
 
