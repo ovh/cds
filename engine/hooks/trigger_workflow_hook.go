@@ -257,6 +257,9 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 		workflowVCS = wk.Repository.VCSServer
 		workflowRepo = wk.Repository.Name
 	}
+	if hre.ExtractData.Manual.TargetRepository != "" {
+		workflowRepo = hre.ExtractData.Manual.TargetRepository
+	}
 
 	wh := sdk.HookRepositoryEventWorkflow{
 		ProjectKey:           hre.ExtractData.Manual.Project,
