@@ -380,11 +380,11 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 	run.WorkflowData.Actions = make(map[string]sdk.V2Action)
 	for k, v := range wref.ef.actionsCache {
-		run.WorkflowData.Actions[k] = v
+		run.WorkflowData.Actions[k] = v.Action
 	}
 	for _, v := range wref.ef.localActionsCache {
 		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Name, wref.ef.currentRef)
-		run.WorkflowData.Actions[completeName] = v
+		run.WorkflowData.Actions[completeName] = v.Action
 	}
 	run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
 	for k, v := range wref.ef.workerModelCache {
@@ -556,6 +556,7 @@ func retrieveAndUpdateAllJobDependencies(ctx context.Context, db *gorp.DbMap, st
 	}
 
 	// Get actions and sub actions
+
 	msg, err := searchActions(ctx, db, store, wref, j.Steps)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
@@ -884,14 +885,14 @@ loop:
 
 	for k, v := range wrefTemplate.ef.actionsCache {
 		if _, has := run.WorkflowData.Actions[k]; !has {
-			run.WorkflowData.Actions[k] = v
+			run.WorkflowData.Actions[k] = v.Action
 		}
 		wref.ef.actionsCache[k] = v
 	}
 	for _, v := range wrefTemplate.ef.localActionsCache {
 		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wrefTemplate.run.ProjectKey, wrefTemplate.ef.currentVCS.Name, wrefTemplate.ef.currentRepo.Name, v.Name, templateEntity.Ref)
 		if _, has := run.WorkflowData.Actions[completeName]; !has {
-			run.WorkflowData.Actions[completeName] = v
+			run.WorkflowData.Actions[completeName] = v.Action
 		}
 		wref.ef.actionsCache[completeName] = v
 	}
@@ -925,7 +926,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			continue
 		}
 
-		act, completePath, msg, err := wref.ef.searchAction(ctx, db, store, step.Uses)
+		entityWithAction, completePath, msg, err := wref.ef.searchAction(ctx, db, store, step.Uses)
 		if err != nil {
 			return nil, err
 		}
@@ -937,11 +938,52 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			}
 			return &runMsg, nil
 		}
-		if act != nil {
+		if entityWithAction != nil {
 			step.Uses = "actions/" + completePath
-			msgAction, err := searchActions(ctx, db, store, wref, act.Runs.Steps)
+
+			// Recreate wref with vcs/repo = action's repo and not workflow's repo
+			actionProject := wref.project
+			actionVCS := wref.ef.currentVCS
+			actionRepo := wref.ef.currentRepo
+			if entityWithAction.ProjectKey != wref.project.Key {
+				p, err := project.Load(ctx, db, entityWithAction.ProjectKey)
+				if err != nil {
+					return nil, sdk.WrapError(err, "unable to find project %s: %+v", entityWithAction.ProjectKey, *entityWithAction)
+				}
+				actionProject = *p
+			}
+			if entityWithAction.ProjectKey != wref.project.Key || entityWithAction.ProjectRepositoryID != wref.ef.currentRepo.ID {
+				repo, err := repository.LoadRepositoryByID(ctx, db, entityWithAction.ProjectRepositoryID)
+				if err != nil {
+					return nil, err
+				}
+				actionRepo = *repo
+
+				if repo.VCSProjectID != wref.ef.currentVCS.ID {
+					v, err := vcs.LoadVCSByIDAndProjectKey(ctx, db, entityWithAction.ProjectKey, repo.VCSProjectID)
+					if err != nil {
+						return nil, err
+					}
+					actionVCS = *v
+				}
+			}
+
+			wrefAction, err := NewWorkflowRunEntityFinder(ctx, db, actionProject, wref.run, actionRepo, actionVCS, entityWithAction.Ref, entityWithAction.Commit, wref.ef.libraryProject, &wref.ef.initiator)
+			if err != nil {
+				return nil, err
+			}
+
+			msgAction, err := searchActions(ctx, db, store, wrefAction, entityWithAction.Action.Runs.Steps)
 			if msgAction != nil || err != nil {
 				return msgAction, err
+			}
+
+			// Insert sub action in the main entity finder
+			for k, v := range wrefAction.ef.localActionsCache {
+				wref.ef.localActionsCache[k] = v
+			}
+			for k, v := range wrefAction.ef.actionsCache {
+				wref.ef.actionsCache[k] = v
 			}
 		}
 	}

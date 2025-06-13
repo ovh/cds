@@ -1731,8 +1731,8 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 			ef.workerModelCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Model.Name, analysis.Ref)] = eo
 		case sdk.EntityTypeAction:
 			eo.Action = any(o).(sdk.V2Action)
-			ef.localActionsCache[eo.Entity.FilePath] = eo.Action
-			ef.actionsCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Action.Name, analysis.Ref)] = eo.Action
+			ef.localActionsCache[eo.Entity.FilePath] = eo
+			ef.actionsCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Action.Name, analysis.Ref)] = eo
 		case sdk.EntityTypeWorkflow:
 			eo.Workflow = any(o).(sdk.V2Workflow)
 		case sdk.EntityTypeWorkflowTemplate:

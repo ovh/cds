@@ -174,7 +174,7 @@ testcases:
       retry: 100
       delay: 1
 
-    - name: Check that the CDS workflow fro has at least one execution and is Success
+    - name: Check that the CDS workflow from has at least one execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_from}} {{.cds_workflow_from}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1

@@ -253,6 +253,7 @@ type HookRepositoryEventWorkflow struct {
 	ModelFullName        string             `json:"model,omitempty"`
 	PathFilters          []string           `json:"path_filters,omitempty"`
 	Data                 V2WorkflowHookData `json:"data,omitempty"`
+	Initiator            *V2Initiator       `json:"initiator,omitempty"`
 
 	// Workflow run result
 	RunID     string `json:"run_id,omitempty"`
