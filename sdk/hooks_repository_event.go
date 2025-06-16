@@ -281,6 +281,8 @@ type HookRepositoryEventExtractData struct {
 	Commit             string                                      `json:"commit"`
 	CommitFrom         string                                      `json:"commit_from"`
 	CommitMessage      string                                      `json:"commit_message"`
+	CommitAuthor       string                                      `json:"commit_author,omitempty"`
+	CommitAuthorEmail  string                                      `json:"commit_author_email,omitempty"`
 	Paths              []string                                    `json:"paths"`
 	Ref                string                                      `json:"ref"`
 	PullRequestID      int64                                       `json:"pullrequest_id"`

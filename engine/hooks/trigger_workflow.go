@@ -137,6 +137,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					Ref:                hre.ExtractData.Ref,
 					Sha:                wh.TargetCommit,
 					CommitMessage:      hre.ExtractData.CommitMessage,
+					CommitAuthor:       hre.ExtractData.CommitAuthor,
+					CommitAuthorEmail:  hre.ExtractData.CommitAuthorEmail,
 					Payload:            event,
 					EventName:          hre.EventName,
 					HookType:           wh.Type,
