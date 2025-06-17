@@ -1222,7 +1222,7 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		content, err = vcsClient.GetContent(ctx, runContext.Git.Repository, runContext.Git.Sha, filePath)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "file %s doesn't not exist on commit %s", filePath, runContext.Git.Sha)
+				return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "file %s doesn't exist on commit %s", filePath, runContext.Git.Sha)
 			}
 			return nil, false, err
 		}
