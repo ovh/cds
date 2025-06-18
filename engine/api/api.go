@@ -246,10 +246,9 @@ type Configuration struct {
 		JobSchedulingTimeout             int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
 		JobSchedulingMaxErrors           int64  `toml:"jobSchedulingMaxErrors" comment:"Number of scheduling error before failing the job" json:"jobSchedulingMaxErrors" default:"5"`
 		RunRetentionScheduling           int64  `toml:"runRetentionScheduling" comment:"Time in hour between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"1"`
-		WorkflowRunRetention             int64  `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
 		WorkflowRunMaxRetention          int64  `toml:"workflowRunMaxRetention" comment:"Workflow run max retention in days" json:"workflowRunMaxRetention" default:"1095"`
-		WorkflowRunRetentionDefaultCount int64  `toml:"workflowRunRetentionDefaultCount" comment:Workflow run retention default nb of run to keep" json:"workflowRunRetentionDefaultCount" default:"60"`
-		WorkflowRunRetentionDefaultDays  int64  `toml:"workflowRunRetentionDefaultDays" comment:Workflow run retention default nb of days" json:"workflowRunRetentionDefaultDays" default:"30"`
+		WorkflowRunRetentionDefaultCount int64  `toml:"workflowRunRetentionDefaultCount" comment:"Workflow run retention default nb of run to keep" json:"workflowRunRetentionDefaultCount" default:"60"`
+		WorkflowRunRetentionDefaultDays  int64  `toml:"workflowRunRetentionDefaultDays" comment:"Workflow run retention default nb of days" json:"workflowRunRetentionDefaultDays" default:"30"`
 		LibraryProjectKey                string `toml:"libraryProjectKey" comment:"Library project key" json:"libraryProjectKey" commented:"true"`
 		VersionRetentionScheduling       int64  `toml:"versionRetentionScheduling" comment:"Time in minute between 2 run of the workflow version purge" json:"versionRetentionScheduling" default:"60"`
 		VersionRetention                 int64  `toml:"versionRetention" comment:"Number of Workflow version CDS keep" json:"versionRetention" commented:"true"`
@@ -537,9 +536,13 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.WorkflowV2.RunRetentionScheduling = 15
 	}
 
-	if a.Config.WorkflowV2.WorkflowRunRetention <= 0 {
-		a.Config.WorkflowV2.WorkflowRunRetention = 90
+	if a.Config.WorkflowV2.WorkflowRunRetentionDefaultCount <= 0 {
+		a.Config.WorkflowV2.WorkflowRunRetentionDefaultCount = 60
 	}
+	if a.Config.WorkflowV2.WorkflowRunRetentionDefaultDays <= 0 {
+		a.Config.WorkflowV2.WorkflowRunRetentionDefaultDays = 30
+	}
+
 	if a.Config.WorkflowV2.WorkflowRunMaxRetention <= 0 {
 		a.Config.WorkflowV2.WorkflowRunMaxRetention = 1095
 	}

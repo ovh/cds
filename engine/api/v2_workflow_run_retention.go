@@ -34,32 +34,43 @@ func (api *API) putWorkflowRunRetentionHandler() ([]service.RbacChecker, service
 				return err
 			}
 
+			// Set default retention
 			if projectRunRetention.Retentions.DefaultRetention.DurationInDays < 0 {
-				projectRunRetention.Retentions.DefaultRetention.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetention
+				projectRunRetention.Retentions.DefaultRetention.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetentionDefaultDays
 			}
 
 			if projectRunRetention.Retentions.DefaultRetention.DurationInDays > api.Config.WorkflowV2.WorkflowRunMaxRetention {
 				projectRunRetention.Retentions.DefaultRetention.DurationInDays = api.Config.WorkflowV2.WorkflowRunMaxRetention
 			}
+			if projectRunRetention.Retentions.DefaultRetention.Count <= 0 {
+				projectRunRetention.Retentions.DefaultRetention.Count = api.Config.WorkflowV2.WorkflowRunRetentionDefaultCount
+			}
 
+			// Check value for each workflow
 			for i := range projectRunRetention.Retentions.WorkflowRetentions {
 				r := &projectRunRetention.Retentions.WorkflowRetentions[i]
 				if r.DefaultRetention == nil {
 					continue
 				}
 				if r.DefaultRetention.DurationInDays < 0 {
-					r.DefaultRetention.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetention
+					r.DefaultRetention.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetentionDefaultDays
 				}
 				if r.DefaultRetention.DurationInDays > api.Config.WorkflowV2.WorkflowRunMaxRetention {
 					r.DefaultRetention.DurationInDays = api.Config.WorkflowV2.WorkflowRunMaxRetention
 				}
+				if r.DefaultRetention.Count <= 0 {
+					r.DefaultRetention.Count = api.Config.WorkflowV2.WorkflowRunRetentionDefaultCount
+				}
 				for j := range r.Rules {
 					g := &r.Rules[j]
 					if g.DurationInDays < 0 {
-						g.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetention
+						g.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetentionDefaultDays
 					}
 					if g.DurationInDays > api.Config.WorkflowV2.WorkflowRunMaxRetention {
 						g.DurationInDays = api.Config.WorkflowV2.WorkflowRunMaxRetention
+					}
+					if g.Count <= 0 {
+						g.Count = api.Config.WorkflowV2.WorkflowRunRetentionDefaultCount
 					}
 				}
 			}
@@ -88,7 +99,7 @@ func (api *API) putWorkflowRunRetentionHandler() ([]service.RbacChecker, service
 			if err := tx.Commit(); err != nil {
 				return err
 			}
-			return service.WriteJSON(w, retention, http.StatusOK)
+			return service.WriteJSON(w, retentionDB, http.StatusOK)
 		}
 }
 
