@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -13,14 +14,16 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow_v2"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/glob"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // WorkflowRunsV2 deletes workflow run v2
-func WorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, purgeRoutineTIcker int64) {
-	tickPurge := time.NewTicker(time.Duration(purgeRoutineTIcker) * time.Minute)
+func PurgeWorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, purgeRoutineTicker int64) {
+	tickPurge := time.NewTicker(time.Duration(purgeRoutineTicker) * time.Hour)
 	defer tickPurge.Stop()
 
 	for {
@@ -31,12 +34,13 @@ func WorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, purgeRoutine
 				return
 			}
 		case <-tickPurge.C:
-			ids, err := workflow_v2.LoadRunIDsToDelete(ctx, DBFunc())
+			pkeys, err := project.LoadAllProjectKeys(ctx, DBFunc(), store)
 			if err != nil {
-				log.ErrorWithStackTrace(ctx, err)
+				log.Error(ctx, "PurgeWorkflowRunsV2 > unable to list project keys: %v", err)
 			}
-			for _, id := range ids {
-				if err := WorkflowRunV2(ctx, DBFunc(), id); err != nil {
+			for _, pkey := range pkeys {
+				ctx := context.WithValue(ctx, cdslog.Project, pkey)
+				if err := ApplyRunRetentionOnProject(ctx, DBFunc(), store, pkey); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			}
@@ -44,7 +48,132 @@ func WorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, purgeRoutine
 	}
 }
 
-func WorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
+func ApplyRunRetentionOnProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pkey string) error {
+	lockKey := cache.Key("v2", "purge", "run", pkey)
+	b, err := store.Lock(lockKey, 5*time.Minute, 100, 1)
+	if err != nil {
+		return err
+	}
+	if !b {
+		return nil
+	}
+	defer store.Unlock(lockKey)
+	log.Info(ctx, "Start PurgeProjectWorkflowRun for project %s", pkey)
+	defer log.Info(ctx, "End PurgeProjectWorkflowRun for project %s", pkey)
+	projectRunRetention, err := project.LoadRunRetentionByProjectKey(ctx, db, pkey)
+	if err != nil {
+		return sdk.WrapError(err, "unable to load project run retention")
+	}
+
+	// Load workflow
+	wnames, err := workflow_v2.LoadRunsWorkflowNames(ctx, db, pkey)
+	if err != nil {
+		return err
+	}
+	for _, w := range wnames {
+		ApplyRunRetentionOnWorkflow(ctx, db, pkey, w, projectRunRetention)
+	}
+
+	return nil
+}
+
+func ApplyRunRetentionOnWorkflow(ctx context.Context, db *gorp.DbMap, pkey, workflowFullName string, projectRunRetention *sdk.ProjectRunRetention) {
+	nameSplit := strings.Split(workflowFullName, "/")
+	if len(nameSplit) != 4 {
+		log.Error(ctx, "unable to parse workflow %s. Must be VCS / My / Repo / Workflow", workflowFullName)
+		return
+	}
+	vcs := nameSplit[0]
+	repo := nameSplit[1] + "/" + nameSplit[2]
+	workflowName := nameSplit[3]
+	ctx = context.WithValue(ctx, cdslog.VCSServer, vcs)
+	ctx = context.WithValue(ctx, cdslog.Repository, repo)
+	ctx = context.WithValue(ctx, cdslog.Workflow, workflowName)
+
+	var workflowRetention *sdk.WorkflowRetentions
+	for _, wkfRetention := range projectRunRetention.Retentions.WorkflowRetentions {
+		globResult, err := glob.New(wkfRetention.Workflow).MatchString(workflowFullName)
+		if err != nil {
+			log.Error(ctx, "unable to match glob expression %q with workflow name %q: %v", wkfRetention.Workflow, workflowFullName, err)
+			return
+		}
+		if globResult == nil {
+			continue
+		}
+		workflowRetention = &wkfRetention
+		break
+	}
+	// If no workflow retention found, use the default one
+	if workflowRetention == nil {
+		workflowRetention = &sdk.WorkflowRetentions{}
+	}
+	// If not default retention on workflow, retrieve the global one
+	if workflowRetention.DefaultRetention == nil {
+		workflowRetention.DefaultRetention = &projectRunRetention.Retentions.DefaultRetention
+	}
+
+	// Load branches
+	refs, err := workflow_v2.LoadRunsWorkflowRefsByWorkflow(ctx, db, pkey, vcs, repo, workflowName)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return
+	}
+	for _, ref := range refs {
+		var ruleRetention *sdk.RetentionRule
+		for _, wrr := range workflowRetention.Rules {
+			globResult, err := glob.New(wrr.GitRef).MatchString(ref)
+			if err != nil {
+				log.Error(ctx, "unable to match glob expression %q with ref %q: %v", wrr.GitRef, ref, err)
+				return
+			}
+			if globResult == nil {
+				continue
+			}
+			ruleRetention = &wrr.RetentionRule
+			break
+		}
+		if ruleRetention == nil {
+			ruleRetention = workflowRetention.DefaultRetention
+		}
+
+		if err := ApplyRunRetentionOnWorkflowRef(ctx, db, pkey, vcs, repo, workflowName, ref, ruleRetention); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			continue
+		}
+
+	}
+}
+
+func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, pkey, vcs, repo, workflowName, ref string, ruleRetention *sdk.RetentionRule) error {
+	log.Info(ctx, "Start deleting run for workflow %s/%s/%s/%s on branch %s. Count %d Duration %d", pkey, vcs, repo, workflowName, ref, ruleRetention.Count, ruleRetention.DurationInDays)
+	defer log.Info(ctx, "End deleting run for workflow %s/%s/%s/%s on branch %s", pkey, vcs, repo, workflowName, ref)
+
+	// Load old runs
+	ids, err := workflow_v2.LoadOlderRuns(ctx, db, pkey, vcs, repo, workflowName, ref, ruleRetention.DurationInDays)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if err := RemoveWorkflowRunV2(ctx, db, id); err != nil {
+			return err
+		}
+	}
+
+	// Select next run to delete runs
+	ids, err = workflow_v2.LoadRunsDescAtOffset(ctx, db, pkey, vcs, repo, workflowName, ref, ruleRetention.Count)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if err := RemoveWorkflowRunV2(ctx, db, id); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func RemoveWorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeCDN)
 	if err != nil {
 		return err
@@ -66,8 +195,6 @@ func WorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
 		}
 		return err
 	}
-	ctx = context.WithValue(ctx, cdslog.Project, run.ProjectKey)
-	ctx = context.WithValue(ctx, cdslog.Workflow, run.WorkflowName)
 
 	if err := DeleteArtifactsFromRepositoryManagerV2(ctx, tx, run); err != nil {
 		return sdk.WithStack(err)
@@ -85,7 +212,7 @@ func WorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Info(ctx, "run %s / %s / %s deleted", run.ProjectKey, run.WorkflowName, run.ID)
+	log.Info(ctx, "run %s / %s (%d) / %s deleted", run.ProjectKey, run.WorkflowName, run.RunNumber, run.ID)
 	return nil
 }
 

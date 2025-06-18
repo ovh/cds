@@ -465,6 +465,16 @@ func (api *API) postProjectHandler() service.Handler {
 			prj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
 		}
 
+		projectRunRetention := sdk.ProjectRunRetention{
+			ProjectKey: prj.Key,
+			Retentions: sdk.Retentions{
+				DefaultRetention: sdk.RetentionRule{
+					DurationInDays: api.Config.WorkflowV2.WorkflowRunRetentionDefaultDays,
+					Count:          api.Config.WorkflowV2.WorkflowRunRetentionDefaultCount,
+				},
+			},
+		}
+
 		// Create a project within a transaction
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -604,6 +614,10 @@ func (api *API) postProjectHandler() service.Handler {
 			if err != nil {
 				return sdk.WithStack(err)
 			}
+		}
+
+		if err := project.InsertRunRetention(ctx, tx, &projectRunRetention); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
