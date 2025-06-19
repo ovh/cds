@@ -3669,3 +3669,39 @@ func TestCraftWorkflowRun_Fallback(t *testing.T) {
 		require.True(t, strings.HasSuffix(k, "@refs/heads/master"))
 	}
 }
+
+func TestInsertRunWithEmptyLine(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	wData := `jobs:
+  root:
+    runs-on: .cds/worker-models/mymodel.yml
+    steps:
+    - run: |-
+        
+        
+        echo toto
+        
+        echo toto2
+name: aa
+on: [push]
+`
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	vcsProj := assets.InsertTestVCSProject(t, db, proj.ID, "vcs-github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProj.ID, "my/repo")
+	var wkf sdk.V2Workflow
+	require.NoError(t, yaml.Unmarshal([]byte(wData), &wkf))
+
+	run := sdk.V2WorkflowRun{
+		ID:           sdk.UUID(),
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsProj.ID,
+		RepositoryID: repo.ID,
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: wkf},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &run))
+
+	_, err := workflow_v2.LoadRunByID(context.Background(), db, run.ID)
+	require.NoError(t, err)
+
+}
