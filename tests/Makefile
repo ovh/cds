@@ -54,8 +54,7 @@ gitea_start:
   		echo "Starting gitea..."; \
   		sleep 5; \
   		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER) --password $(GITEA_PASSWORD) --email $(GITEA_USER)@gitea.eu --config /data/gitea/conf/app.ini; \
-		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER_FORK) --password $(GITEA_PASSWORD) --email $(GITEA_USER_FORK)@gitea.eu --config /data/gitea/conf/app.ini; \
-		docker exec gitea su-exec git /app/gitea/gitea admin user change-password --username "$(GITEA_USER_FORK)" --password $(GITEA_PASSWORD) --config /data/gitea/conf/app.ini; \
+		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER_FORK) --password $(GITEA_PASSWORD) --email $(GITEA_USER_FORK)@gitea.eu --must-change-password=false --config /data/gitea/conf/app.ini; \
 		echo "Gitea started"; \
   	fi
 
