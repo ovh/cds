@@ -16,7 +16,7 @@ VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 
 GITEA_USER := $(if ${GITEA_USER},${GITEA_USER},gituser)
 GITEA_USER_FORK := $(if ${GITEA_USER_FORK},${GITEA_USER_FORK},gituserfork)
-GITEA_PASSWORD := $(if ${GITEA_PASSWORD},${GITEA_PASSWORD},gitpwd)
+GITEA_PASSWORD := $(if ${GITEA_PASSWORD},${GITEA_PASSWORD},gitpassword)
 GITEA_DOMAIN := $(if ${GITEA_DOMAIN},${GITEA_DOMAIN},localhost)
 GITEA_SSH_PORT := $(if ${GITEA_SSH_PORT},${GITEA_SSH_PORT},2222)
 
@@ -55,7 +55,7 @@ gitea_start:
   		sleep 5; \
   		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER) --password $(GITEA_PASSWORD) --email $(GITEA_USER)@gitea.eu --config /data/gitea/conf/app.ini; \
 		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER_FORK) --password $(GITEA_PASSWORD) --email $(GITEA_USER_FORK)@gitea.eu --config /data/gitea/conf/app.ini; \
-		docker exec gitea su-exec git /app/gitea/gitea admin user change-password --username "$(GITEA_USER_FORK)" --password $(GITEA_PASSWORD) --config /data/gitea/conf/app.ini; \
+		docker exec gitea su-exec git /app/gitea/gitea admin user change-password --username "$(GITEA_USER_FORK)" --password $(GITEA_PASSWORD) --must-change-password=false --config /data/gitea/conf/app.ini; \
 		echo "Gitea started"; \
   	fi
 
