@@ -122,7 +122,7 @@ func TestContextValue(t *testing.T) {
 			"rootObjectDoesntExist",
 			[]interface{}{"vars", "myvarset2", "item1"},
 			nil,
-			"object [vars myvarset2] doesn't not exist",
+			"object [vars myvarset2] doesn't exist",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
