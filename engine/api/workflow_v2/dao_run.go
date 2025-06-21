@@ -249,6 +249,20 @@ func LoadRunsWorkflowRefs(ctx context.Context, db gorp.SqlExecutor, projKey stri
 	return refs, nil
 }
 
+func LoadRunsWorkflowRefsByWorkflow(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repository, workflow string) ([]string, error) {
+	var refs []string
+	_, next := telemetry.Span(ctx, "LoadRunsWorkflowRefsByWorkflow")
+	defer next()
+	if _, err := db.Select(&refs, `
+		SELECT DISTINCT workflow_ref
+		FROM v2_workflow_run
+		WHERE project_key = $1 AND vcs_server = $2 AND repository = $3 AND workflow_name = $4
+	`, projKey, vcs, repository, workflow); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return refs, nil
+}
+
 func LoadRunsGitRepositories(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
 	var names []string
 	_, next := telemetry.Span(ctx, "LoadRunsGitRepositories")
@@ -632,6 +646,41 @@ func LoadRunsUnsafeWithPagination(ctx context.Context, db gorp.SqlExecutor, offs
 		runs = append(runs, dbWkfRun.V2WorkflowRun)
 	}
 	return runs, nil
+}
+
+func LoadRunsDescAtOffset(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow, ref string, offset int64) ([]string, error) {
+	query := `
+	SELECT id FROM v2_workflow_run 
+	WHERE project_key = $1 AND
+	vcs_server = $2 AND
+	repository = $3 AND
+	workflow_name = $4 AND
+	workflow_ref = $5
+	ORDER BY run_number DESC
+	OFFSET $6`
+
+	var ids []string
+	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, offset); err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
+func LoadOlderRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow, ref string, days int64) ([]string, error) {
+	query := `
+	SELECT id FROM v2_workflow_run 
+	WHERE project_key = $1 AND
+	vcs_server = $2 AND
+	repository = $3 AND
+	workflow_name = $4 AND
+	workflow_ref = $5 AND
+	now() - started > $6 * INTERVAL '1' DAY`
+
+	var ids []string
+	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, days); err != nil {
+		return nil, err
+	}
+	return ids, nil
 }
 
 func LoadRunIDsToDelete(ctx context.Context, db gorp.SqlExecutor) ([]string, error) {

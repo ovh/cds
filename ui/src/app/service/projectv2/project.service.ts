@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { Concurrency, ProjectConcurrencyRuns } from 'app/model/project.concurrency.model';
-import { Project } from 'app/model/project.model';
+import { Project, ProjectRunRetention } from 'app/model/project.model';
 import { PostProjectWebHook, PostResponseCreateHook, ProjectWebHook } from 'app/model/project.webhook.model';
 import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 import { Observable } from 'rxjs';
@@ -69,6 +69,17 @@ export class V2ProjectService {
         return this._http.delete(`/v2/project/${key}/concurrency/${vsName}`, { params });
     }
 
+    getRetentionSchema(key: string): Observable<any> {
+        return this._http.get<any>(`/v2/project/${key}/run/retention/schema`)
+    }
+
+    getRetention(key: string): Observable<ProjectRunRetention> {
+        return this._http.get<ProjectRunRetention>(`/v2/project/${key}/run/retention`)
+    }
+
+    updateRetention(key: string, retention: ProjectRunRetention): Observable<ProjectRunRetention> {
+        return this._http.put<ProjectRunRetention>(`/v2/project/${key}/run/retention`, retention);
+    }
 
     getVariableSets(key: string): Observable<Array<VariableSet>> {
         return this._http.get<Array<VariableSet>>(`/v2/project/${key}/variableset`)

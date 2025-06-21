@@ -1,0 +1,10 @@
+<ng-container *ngIf="retention && jsonSchema">
+    <div class="editor">
+        <h3>Workflow run retentions rules</h3>
+        <nz-code-editor #editor [ngModel]="dataEditor" [nzEditorOption]="editorOption"
+        (nzEditorInitialized)="onEditorInit($event)" (ngModelChange)="onEditorChange($event)"></nz-code-editor>
+        <div class="button">
+            <button nz-button nzType="primary" (click)="updateRetention()">Update</button>
+        </div>
+    </div>
+</ng-container>

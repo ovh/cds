@@ -33,7 +33,7 @@ export class EntityJSONFormComponent implements OnInit, OnChanges {
 
     constructor(
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {}
 
     ngOnInit() {
         this.buildSchemaType();
