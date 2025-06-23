@@ -49,6 +49,7 @@ type V2WorkflowRunHookRequest struct {
 	WorkflowRunID      string                 `json:"workflow_run_id"`
 	WebhookID          string                 `json:"webhook_id"`
 	Initiator          *V2Initiator           `json:"initiator"`
+	TargetRepository   string                 `json:"target_repository"`
 }
 
 type V2WorkflowRun struct {
@@ -778,6 +779,8 @@ type HookManualWorkflowRun struct {
 	Repository     string
 	WorkflowRef    string
 	WorkflowCommit string
+	TargetRepo     string
+	TargetVCS      string
 	Workflow       string
 	UserID         string
 	Username       string
