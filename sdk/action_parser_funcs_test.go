@@ -32,7 +32,6 @@ func Test_replace(t *testing.T) {
 	s, ok = r.(string)
 	require.True(t, ok)
 	require.Equal(t, "my-super/repo", s)
-
 }
 
 func Test_match(t *testing.T) {
@@ -390,4 +389,63 @@ func Test_newStringStringActionFunc(t *testing.T) {
 			t.Logf("%s", got)
 		})
 	}
+}
+
+func Test_Default(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		type testcase struct {
+			name     string
+			inputs   []any
+			expected any
+		}
+
+		cases := []testcase{
+			{name: "empty"},
+			{name: "one_arg_str", inputs: []any{"a"}, expected: "a"},
+			{name: "one_arg_int", inputs: []any{18}, expected: 18},
+			{name: "two_args_non_empty", inputs: []any{"a", "b"}, expected: "a"},
+			{name: "two_args_default_empty", inputs: []any{"", "b"}, expected: "b"},
+			{name: "two_args_input_empty", inputs: []any{"a", ""}, expected: "a"},
+			{name: "two_args_input_empty_int", inputs: []any{56, 0}, expected: 56},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Act
+				result, err := dfault(context.TODO(), nil, tc.inputs...)
+
+				// Assert
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+			})
+		}
+	})
+}
+
+func Test_Coalesce(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		type testcase struct {
+			name     string
+			inputs   []any
+			expected any
+		}
+
+		cases := []testcase{
+			{name: "empty"},
+			{name: "one_arg_str", inputs: []any{"a"}, expected: "a"},
+			{name: "one_arg_int", inputs: []any{18}, expected: 18},
+			{name: "two_args_non_empty", inputs: []any{"a", "b"}, expected: "a"},
+			{name: "two_args_first_empty", inputs: []any{"", "b"}, expected: "b"},
+			{name: "many_args_first_non_empty", inputs: []any{"", 0, "b", "", 18}, expected: "b"},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Act
+				result, err := coalesce(context.TODO(), nil, tc.inputs...)
+
+				// Assert
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+			})
+		}
+	})
 }
