@@ -876,20 +876,20 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			}
 
 			if runRequest.TargetRepository != "" && runRequest.TargetRepository != repo.Name {
-				targetVCS := vcsProject.Name
-				targetRepo := repo.Name
+				originVCS := vcsProject.Name
+				originRepo := repo.Name
 
 				if wk.Repository != nil && wk.Repository.Name != "" {
-					targetVCS = wk.Repository.VCSServer
-					targetRepo = wk.Repository.Name
+					originVCS = wk.Repository.VCSServer
+					originRepo = wk.Repository.Name
 				}
 
 				// Check fork
-				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, targetVCS)
+				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, originVCS)
 				if err != nil {
 					return err
 				}
-				forks, err := client.ListForks(ctx, targetRepo)
+				forks, err := client.ListForks(ctx, originRepo)
 				if err != nil {
 					return err
 				}
@@ -907,7 +907,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				if wk.Repository == nil {
 					wk.Repository = &sdk.WorkflowRepository{}
 				}
-				wk.Repository.VCSServer = vcsProject.Name
+				wk.Repository.VCSServer = originVCS
 				wk.Repository.Name = runRequest.TargetRepository
 			}
 
