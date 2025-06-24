@@ -99,6 +99,7 @@ type CDSContext struct {
 type GitContext struct {
 	Server               string   `json:"server,omitempty"`
 	Repository           string   `json:"repository,omitempty"`
+	RepositoryOrigin     string   `json:"repository_origin",omitempty`
 	RepositoryURL        string   `json:"repositoryUrl,omitempty"`
 	RepositoryWebURL     string   `json:"repository_web_url,omitempty"`
 	RefWebURL            string   `json:"ref_web_url,omitempty"`
