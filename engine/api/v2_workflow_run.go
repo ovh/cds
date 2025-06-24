@@ -875,14 +875,13 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger a workflow", theOneWhoTriggers.Username())
 			}
 
-			if runRequest.TargetRepository != "" && runRequest.TargetRepository != repo.Name {
-				originVCS := vcsProject.Name
-				originRepo := repo.Name
-
-				if wk.Repository != nil && wk.Repository.Name != "" {
-					originVCS = wk.Repository.VCSServer
-					originRepo = wk.Repository.Name
-				}
+			originRepo := repo.Name
+			originVCS := vcsProject.Name
+			if wk.Repository != nil && wk.Repository.Name != "" {
+				originRepo = wk.Repository.Name
+				originVCS = wk.Repository.VCSServer
+			}
+			if runRequest.TargetRepository != "" && runRequest.TargetRepository != originRepo {
 
 				// Check fork
 				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, originVCS)
@@ -911,7 +910,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				wk.Repository.Name = runRequest.TargetRepository
 			}
 
-			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, *theOneWhoTriggers)
+			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, originRepo, *workflowEntity, wk, runRequest, *theOneWhoTriggers)
 			if err != nil {
 				return err
 			}
@@ -1377,7 +1376,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 		}
 }
 
-func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, initiator sdk.V2Initiator) (*sdk.V2WorkflowRun, error) {
+func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, repoOrigin string, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, initiator sdk.V2Initiator) (*sdk.V2WorkflowRun, error) {
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
 
 	runEvent := sdk.V2WorkflowRunEvent{
@@ -1400,6 +1399,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		WorkflowRun:       runRequest.WorkflowRun,
 		WorkflowRunID:     runRequest.WorkflowRunID,
 		WebHookID:         runRequest.WebhookID,
+		RepositoryOrigin:  repoOrigin,
 	}
 
 	var msg string
