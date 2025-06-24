@@ -1098,6 +1098,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 
 	gitContext := sdk.GitContext{
 		Server:               workflowVCSServer.Name,
+		RepositoryOrigin:     wr.RunEvent.RepositoryOrigin,
 		SSHKey:               workflowVCSServer.Auth.SSHKeyName,
 		GPGKey:               workflowVCSServer.Auth.GPGKeyName,
 		Username:             workflowVCSServer.Auth.Username,
@@ -1107,6 +1108,8 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		RefType:              refType,
 		Sha:                  commit,
 		CommitMessage:        wr.RunEvent.CommitMessage,
+		Author:               wr.RunEvent.CommitAuthor,
+		AuthorEmail:          wr.RunEvent.CommitAuthorEmail,
 		SemverCurrent:        semverCurrent,
 		SemverNext:           semverNext,
 		ChangeSets:           wr.RunEvent.ChangeSets,
@@ -1220,7 +1223,7 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		content, err = vcsClient.GetContent(ctx, runContext.Git.Repository, runContext.Git.Sha, filePath)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "file %s doesn't not exist on commit %s", filePath, runContext.Git.Sha)
+				return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "file %s doesn't exist on commit %s", filePath, runContext.Git.Sha)
 			}
 			return nil, false, err
 		}

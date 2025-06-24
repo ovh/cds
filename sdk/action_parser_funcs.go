@@ -94,7 +94,7 @@ func contextValue(_ context.Context, a *ActionParser, inputs ...interface{}) (in
 	var currentObject any
 	for i, index := range inputs {
 		if i > 0 && currentObject == nil {
-			return nil, NewErrorFrom(ErrInvalidData, "contextValue: object %v doesn't not exist", inputs[0:i])
+			return nil, NewErrorFrom(ErrInvalidData, "contextValue: object %v doesn't exist", inputs[0:i])
 		}
 		switch t := index.(type) {
 		case string:

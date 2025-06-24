@@ -99,11 +99,14 @@ type CDSContext struct {
 type GitContext struct {
 	Server               string   `json:"server,omitempty"`
 	Repository           string   `json:"repository,omitempty"`
+	RepositoryOrigin     string   `json:"repository_origin",omitempty`
 	RepositoryURL        string   `json:"repositoryUrl,omitempty"`
 	RepositoryWebURL     string   `json:"repository_web_url,omitempty"`
 	RefWebURL            string   `json:"ref_web_url,omitempty"`
 	CommitWebURL         string   `json:"commit_web_url,omitempty"`
 	CommitMessage        string   `json:"commit_message,omitempty"`
+	Author               string   `json:"author,omitempty"`
+	AuthorEmail          string   `json:"author_email,omitempty"`
 	Ref                  string   `json:"ref,omitempty"`
 	RefName              string   `json:"ref_name,omitempty"`
 	Sha                  string   `json:"sha,omitempty"`

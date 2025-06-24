@@ -754,11 +754,12 @@ func WorkflowJobParentsNeeds(w V2Workflow, jobID string) []string {
 }
 
 type V2WorkflowRunManualRequest struct {
-	Branch         string `json:"branch,omitempty"`
-	Tag            string `json:"tag,omitempty"`
-	Sha            string `json:"sha,omitempty"`
-	WorkflowBranch string `json:"workflow_branch,omitempty"`
-	WorkflowTag    string `json:"workflow_tag,omitempty"`
+	Branch           string `json:"branch,omitempty"`
+	Tag              string `json:"tag,omitempty"`
+	Sha              string `json:"sha,omitempty"`
+	WorkflowBranch   string `json:"workflow_branch,omitempty"`
+	WorkflowTag      string `json:"workflow_tag,omitempty"`
+	TargetRepository string `json:"target_repository,omitempty`
 }
 
 type V2WorkflowRunManualResponse struct {

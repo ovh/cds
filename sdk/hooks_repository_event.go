@@ -281,6 +281,8 @@ type HookRepositoryEventExtractData struct {
 	Commit             string                                      `json:"commit"`
 	CommitFrom         string                                      `json:"commit_from"`
 	CommitMessage      string                                      `json:"commit_message"`
+	CommitAuthor       string                                      `json:"commit_author,omitempty"`
+	CommitAuthorEmail  string                                      `json:"commit_author_email,omitempty"`
 	Paths              []string                                    `json:"paths"`
 	Ref                string                                      `json:"ref"`
 	PullRequestID      int64                                       `json:"pullrequest_id"`
@@ -302,11 +304,12 @@ type HookRepositoryEventExtractedDataWebHook struct {
 }
 
 type HookRepositoryEventExtractedDataManual struct {
-	Project      string `json:"project"`
-	Workflow     string `json:"workflow"`
-	TargetCommit string `json:"target_commit"`
-	TargetBranch string `json:"target_branch"`
-	TargetTag    string `json:"target_tag"`
+	Project          string `json:"project,omitempty"`
+	Workflow         string `json:"workflow,omitempty"`
+	TargetCommit     string `json:"target_commit,omitempty"`
+	TargetBranch     string `json:"target_branch,omitempty"`
+	TargetTag        string `json:"target_tag,omitempty"`
+	TargetRepository string `json:"target_repository,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWorkflowRun struct {

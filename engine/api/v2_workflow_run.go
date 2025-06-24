@@ -517,6 +517,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
+			authors, err := workflow_v2.LoadRunsAuthors(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
 			workflowNames, err := workflow_v2.LoadRunsWorkflowNames(ctx, api.mustDB(), proj.Key)
 			if err != nil {
 				return err
@@ -556,6 +561,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				{
 					Key:     "actor",
 					Options: actors,
+					Example: consumer.GetUsername(),
+				},
+				{
+					Key:     "author",
+					Options: authors,
 					Example: consumer.GetUsername(),
 				},
 				{
@@ -618,6 +628,8 @@ func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchRunsFil
 			filters.Workflows = v
 		case "actor":
 			filters.Actors = v
+		case "author":
+			filters.Authors = v
 		case "status":
 			filters.Status = v
 		case "ref":
@@ -863,7 +875,42 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger a workflow", theOneWhoTriggers.Username())
 			}
 
-			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, *theOneWhoTriggers)
+			originRepo := repo.Name
+			originVCS := vcsProject.Name
+			if wk.Repository != nil && wk.Repository.Name != "" {
+				originRepo = wk.Repository.Name
+				originVCS = wk.Repository.VCSServer
+			}
+			if runRequest.TargetRepository != "" && runRequest.TargetRepository != originRepo {
+
+				// Check fork
+				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, originVCS)
+				if err != nil {
+					return err
+				}
+				forks, err := client.ListForks(ctx, originRepo)
+				if err != nil {
+					return err
+				}
+				found := false
+				for _, f := range forks {
+					if f.Fullname == runRequest.TargetRepository {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "fork %s not found", runRequest.TargetRepository)
+				}
+
+				if wk.Repository == nil {
+					wk.Repository = &sdk.WorkflowRepository{}
+				}
+				wk.Repository.VCSServer = originVCS
+				wk.Repository.Name = runRequest.TargetRepository
+			}
+
+			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, originRepo, *workflowEntity, wk, runRequest, *theOneWhoTriggers)
 			if err != nil {
 				return err
 			}
@@ -1301,6 +1348,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				VCSServer:      vcsProject.Name,
 				Repository:     repo.Name,
 				WorkflowRef:    workflowRef,
+				TargetRepo:     runRequest.TargetRepository,
 				WorkflowCommit: workflowCommit,
 				Workflow:       workflowName,
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
@@ -1328,27 +1376,30 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 		}
 }
 
-func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, initiator sdk.V2Initiator) (*sdk.V2WorkflowRun, error) {
+func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, repoOrigin string, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, initiator sdk.V2Initiator) (*sdk.V2WorkflowRun, error) {
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
 
 	runEvent := sdk.V2WorkflowRunEvent{
-		HookType:         runRequest.HookType,
-		EventName:        runRequest.EventName,
-		Ref:              runRequest.Ref,
-		Sha:              runRequest.Sha,
-		PullRequestID:    runRequest.PullrequestID,
-		PullRequestToRef: runRequest.PullrequestToRef,
-		CommitMessage:    runRequest.CommitMessage,
-		SemverCurrent:    runRequest.SemverCurrent,
-		SemverNext:       runRequest.SemverNext,
-		ChangeSets:       runRequest.ChangeSets,
-		EntityUpdated:    runRequest.EntityUpdated,
-		Payload:          runRequest.Payload,
-		Cron:             runRequest.Cron,
-		CronTimezone:     runRequest.CronTimezone,
-		WorkflowRun:      runRequest.WorkflowRun,
-		WorkflowRunID:    runRequest.WorkflowRunID,
-		WebHookID:        runRequest.WebhookID,
+		HookType:          runRequest.HookType,
+		EventName:         runRequest.EventName,
+		Ref:               runRequest.Ref,
+		Sha:               runRequest.Sha,
+		PullRequestID:     runRequest.PullrequestID,
+		PullRequestToRef:  runRequest.PullrequestToRef,
+		CommitMessage:     runRequest.CommitMessage,
+		CommitAuthor:      runRequest.CommitAuthor,
+		CommitAuthorEmail: runRequest.CommitAuthorEmail,
+		SemverCurrent:     runRequest.SemverCurrent,
+		SemverNext:        runRequest.SemverNext,
+		ChangeSets:        runRequest.ChangeSets,
+		EntityUpdated:     runRequest.EntityUpdated,
+		Payload:           runRequest.Payload,
+		Cron:              runRequest.Cron,
+		CronTimezone:      runRequest.CronTimezone,
+		WorkflowRun:       runRequest.WorkflowRun,
+		WorkflowRunID:     runRequest.WorkflowRunID,
+		WebHookID:         runRequest.WebhookID,
+		RepositoryOrigin:  repoOrigin,
 	}
 
 	var msg string

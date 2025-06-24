@@ -34,6 +34,8 @@ type V2WorkflowRunHookRequest struct {
 	PullrequestID      int64                  `json:"pr_id,omitempty"`
 	PullrequestToRef   string                 `json:"pr_to_ref,omitempty"`
 	CommitMessage      string                 `json:"commit_message,omitempty"`
+	CommitAuthor       string                 `json:"commit_author,omitempty"`
+	CommitAuthorEmail  string                 `json:"commit_author_email,omitempty"`
 	Payload            map[string]interface{} `json:"payload"`
 	HookType           string                 `json:"hook_type"`
 	EntityUpdated      string                 `json:"entity_updated"`
@@ -47,6 +49,7 @@ type V2WorkflowRunHookRequest struct {
 	WorkflowRunID      string                 `json:"workflow_run_id"`
 	WebhookID          string                 `json:"webhook_id"`
 	Initiator          *V2Initiator           `json:"initiator"`
+	TargetRepository   string                 `json:"target_repository"`
 }
 
 type V2WorkflowRun struct {
@@ -216,23 +219,26 @@ func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunEvent struct {
-	HookType         string                 `json:"hook_type"`
-	EventName        WorkflowHookEventName  `json:"event_name"`
-	Ref              string                 `json:"ref"`
-	Sha              string                 `json:"sha"`
-	PullRequestID    int64                  `json:"pullrequest_id"`
-	PullRequestToRef string                 `json:"pullrequest_to_ref,omitempty"`
-	CommitMessage    string                 `json:"commit_message"`
-	SemverCurrent    string                 `json:"semver_current"`
-	SemverNext       string                 `json:"semver_next"`
-	ChangeSets       []string               `json:"changesets"`
-	Payload          map[string]interface{} `json:"payload,omitempty"`
-	EntityUpdated    string                 `json:"entity_updated,omitempty"`
-	Cron             string                 `json:"cron,omitempty"`
-	CronTimezone     string                 `json:"timezone,omitempty"`
-	WorkflowRun      string                 `json:"workflow_run"`
-	WorkflowRunID    string                 `json:"workflow_run_id"`
-	WebHookID        string                 `json:"webhook_id"`
+	HookType          string                 `json:"hook_type"`
+	EventName         WorkflowHookEventName  `json:"event_name"`
+	Ref               string                 `json:"ref"`
+	Sha               string                 `json:"sha"`
+	RepositoryOrigin  string                 `json:"repository_origin"`
+	PullRequestID     int64                  `json:"pullrequest_id"`
+	PullRequestToRef  string                 `json:"pullrequest_to_ref,omitempty"`
+	CommitMessage     string                 `json:"commit_message"`
+	CommitAuthor      string                 `json:"commit_author,omitempty"`
+	CommitAuthorEmail string                 `json:"commit_author_email,omitempty"`
+	SemverCurrent     string                 `json:"semver_current"`
+	SemverNext        string                 `json:"semver_next"`
+	ChangeSets        []string               `json:"changesets"`
+	Payload           map[string]interface{} `json:"payload,omitempty"`
+	EntityUpdated     string                 `json:"entity_updated,omitempty"`
+	Cron              string                 `json:"cron,omitempty"`
+	CronTimezone      string                 `json:"timezone,omitempty"`
+	WorkflowRun       string                 `json:"workflow_run"`
+	WorkflowRunID     string                 `json:"workflow_run_id"`
+	WebHookID         string                 `json:"webhook_id"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {
@@ -774,6 +780,8 @@ type HookManualWorkflowRun struct {
 	Repository     string
 	WorkflowRef    string
 	WorkflowCommit string
+	TargetRepo     string
+	TargetVCS      string
 	Workflow       string
 	UserID         string
 	Username       string
