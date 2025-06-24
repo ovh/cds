@@ -223,6 +223,7 @@ type V2WorkflowRunEvent struct {
 	EventName         WorkflowHookEventName  `json:"event_name"`
 	Ref               string                 `json:"ref"`
 	Sha               string                 `json:"sha"`
+	RepositoryOrigin  string                 `json:"repository_origin"`
 	PullRequestID     int64                  `json:"pullrequest_id"`
 	PullRequestToRef  string                 `json:"pullrequest_to_ref,omitempty"`
 	CommitMessage     string                 `json:"commit_message"`
