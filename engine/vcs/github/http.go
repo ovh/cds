@@ -129,7 +129,7 @@ func (c *githubClient) post(ctx context.Context, path string, bodyType string, b
 
 	res, err := httpClient.Do(req)
 	if res != nil {
-		c.manageRateLimit(ctx, http.MethodDelete, path, res.Header, res.StatusCode)
+		c.manageRateLimit(ctx, http.MethodPost, path, res.Header, res.StatusCode)
 	}
 
 	return res, err

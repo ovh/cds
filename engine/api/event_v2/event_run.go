@@ -124,15 +124,16 @@ func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.Event
 		ProjectEventV2: sdk.ProjectEventV2{
 			ProjectKey: wr.ProjectKey,
 		},
-		VCSName:       wr.Contexts.Git.Server,
-		Repository:    wr.Contexts.Git.Repository,
-		Workflow:      wr.WorkflowName,
-		RunNumber:     wr.RunNumber,
-		RunAttempt:    wr.RunAttempt,
-		Status:        wr.Status,
-		WorkflowRunID: wr.ID,
-		UserID:        initiator.UserID,
-		Username:      initiator.Username(),
+		VCSName:          wr.Contexts.Git.Server,
+		Repository:       wr.Contexts.Git.Repository,
+		RepositoryOrigin: wr.Contexts.Git.RepositoryOrigin,
+		Workflow:         wr.WorkflowName,
+		RunNumber:        wr.RunNumber,
+		RunAttempt:       wr.RunAttempt,
+		Status:           wr.Status,
+		WorkflowRunID:    wr.ID,
+		UserID:           initiator.UserID,
+		Username:         initiator.Username(),
 	}
 
 	if initiator.User != nil {
