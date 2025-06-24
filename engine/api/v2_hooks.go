@@ -172,6 +172,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 				GetChangeSet:         hookRetrieveSignKey.GetChangesets,
 				ChangeSetCommitSince: hookRetrieveSignKey.ChangesetsCommitSince,
 				GetMessage:           hookRetrieveSignKey.GetCommitMessage,
+				ChangeSetBranchTo:    hookRetrieveSignKey.ChangesetsBranchTo,
 			}
 			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, refToClone, opts)
 			if err != nil {
