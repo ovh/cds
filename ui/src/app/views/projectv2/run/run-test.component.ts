@@ -110,7 +110,7 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 			this.systemout = t?.systemout?.value
 		}
 		if (t?.systemerr?.value) {
-			this.systemout = t?.systemerr?.value
+			this.systemerr = t?.systemerr?.value
 		}
 
 		if (this.systemout != "") {
