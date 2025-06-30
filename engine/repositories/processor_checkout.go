@@ -185,7 +185,20 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	if op.Setup.Checkout.GetChangeSet {
 		op.Setup.Checkout.Result.Files = make(map[string]sdk.OperationChangetsetFile)
 		computeFromLastCommit := false
-		if op.Setup.Checkout.ChangeSetCommitSince != "" {
+		if op.Setup.Checkout.ChangeSetBranchTo != "" {
+			files, err := gitRepo.DiffBetweenBranches(ctx, op.Setup.Checkout.Branch, op.Setup.Checkout.ChangeSetBranchTo)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				computeFromLastCommit = true
+			} else {
+				for k, v := range files {
+					op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
+						Filename: v.Filename,
+						Status:   v.Status,
+					}
+				}
+			}
+		} else if op.Setup.Checkout.ChangeSetCommitSince != "" {
 			files, err := gitRepo.DiffSinceCommitMergeBase(ctx, op.Setup.Checkout.ChangeSetCommitSince)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)

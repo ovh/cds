@@ -81,6 +81,20 @@ export class ProjectVariableSetItemsComponent implements OnChanges {
         
     }
 
+    updateVariableSetItem(i: VariableSetItem): void {
+        this.loading = true;
+        this._cd.markForCheck();
+        this._v2ProjectService.updateVariableSetItem(this.project.key, this.variableSet.name, i.name, i)
+        .pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
+        .subscribe(() => {
+            this._toast.success('', `Item ${i.name} updated`);
+            this.loadVariableSet();
+        })
+    }
+
     deleteVariableSetItem(i: VariableSetItem): void {
         this.loading = true;
         this._cd.markForCheck();

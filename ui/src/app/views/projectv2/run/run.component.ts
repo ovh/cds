@@ -301,9 +301,6 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
                 break;
             case 'job':
                 const selectedJobRun = this.jobs.find(j => j.id === data);
-                if (selectedJobRun.status === V2WorkflowRunJobStatus.Skipped) {
-                    return;
-                }
                 this.selectedJobRun = selectedJobRun;
                 break;
             case 'test':
