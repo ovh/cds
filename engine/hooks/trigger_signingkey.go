@@ -63,6 +63,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		}
 		if changesets {
 			req.ChangesetsCommitSince = hre.ExtractData.CommitFrom
+			req.ChangesetsBranchTo = hre.ExtractData.PullRequestRefTo
 		}
 		ope, err := s.Client.RetrieveHookEventSigningKey(ctx, req)
 		if err != nil {

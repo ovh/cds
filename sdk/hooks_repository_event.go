@@ -358,6 +358,7 @@ type HookRetrieveSignKeyRequest struct {
 	HookEventKey          string `json:"hook_event_key"`
 	GetSigninKey          bool   `json:"get_signin_key"`
 	ChangesetsCommitSince string `json:"changesets_commit"`
+	ChangesetsBranchTo    string `json:"changesets_branch_to"`
 	GetChangesets         bool   `json:"get_changesets"`
 	GetSemver             bool   `json:"get_semver"`
 	GetCommitMessage      bool   `json:"commit_message"`
