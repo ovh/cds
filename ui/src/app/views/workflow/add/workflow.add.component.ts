@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { NavigationEnd, ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { EventService } from 'app/event.service';
@@ -24,6 +24,9 @@ import { Subscription } from 'rxjs';
 import { filter, finalize, first, map } from 'rxjs/operators';
 import { APIConfig } from "app/model/config.service";
 import { ConfigState } from "app/store/config.state";
+import { Help } from 'app/model/help.model';
+import { HelpState } from 'app/store/help.state';
+import { RouterService } from 'app/service/services.module';
 
 @Component({
     selector: 'app-workflow-add',
@@ -34,7 +37,7 @@ import { ConfigState } from "app/store/config.state";
 @AutoUnsubscribe()
 export class WorkflowAddComponent implements OnInit, OnDestroy {
     @ViewChild('codeMirror') codemirror: any;
-
+    help: Help = new Help();
     workflow: Workflow;
     project: Project;
     creationMode = 'graphical';
@@ -88,7 +91,8 @@ workflow:
         private _workflowTemplateService: WorkflowTemplateService,
         private _sharedService: SharedService,
         private _cd: ChangeDetectorRef,
-        private _eventService: EventService
+        private _eventService: EventService,
+        private _routerService: RouterService
     ) {
         this.workflow = new Workflow();
         this.selectedStrategy = new VCSStrategy();
@@ -130,6 +134,14 @@ workflow:
             });
 
         this.fetchTemplates();
+        this._store.select(HelpState.last)
+            .pipe(
+                filter((help) => help != null),
+            )
+            .subscribe(help => {
+                this.help = help;
+                this._cd.markForCheck();
+            });
     }
 
     goToProject(): void {
