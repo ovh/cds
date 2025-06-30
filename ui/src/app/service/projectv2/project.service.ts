@@ -92,6 +92,10 @@ export class V2ProjectService {
         return this._http.post<VariableSetItem>(`/v2/project/${key}/variableset/${vsName}/item`, vsItem)
     }
 
+    updateVariableSetItem(key: string, vsName: string, itemName: string, vsItem: VariableSetItem): Observable<any> {
+        return this._http.put(`/v2/project/${key}/variableset/${vsName}/item/${itemName}`, vsItem);
+    }
+
     deleteVariableSetItem(key: string, vsName: string, itemName: string): Observable<any> {
         return this._http.delete(`/v2/project/${key}/variableset/${vsName}/item/${itemName}`);
     }
