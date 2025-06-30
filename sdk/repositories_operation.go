@@ -95,6 +95,7 @@ type OperationCheckout struct {
 	ProcessSemver        bool   `json:"process_semver,omitempty"`
 	GetChangeSet         bool   `json:"get_changeset,omitempty"`
 	ChangeSetCommitSince string `json:"changeset_commit,omitempty"`
+	ChangeSetBranchTo    string `json:"changeset_branch_to,omitempty"`
 	GetMessage           bool   `json:"get_message,omitempty"`
 	Result               struct {
 		SignKeyID      string `json:"sign_key_id"`
