@@ -85,6 +85,6 @@ func GetProjectRunRetentionJsonSchema() *jsonschema.Schema {
 	return retentionSchema
 }
 
-type DryRunResponse struct {
+type StartRunResponse struct {
 	ReportID string `json:"report_id"`
 }

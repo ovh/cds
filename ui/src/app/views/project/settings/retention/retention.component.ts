@@ -1,18 +1,14 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from "@angular/core";
-import { Router } from "@angular/router";
 import { Store } from "@ngxs/store";
 import { editor } from 'monaco-editor';
 import { Schema } from 'app/model/json-schema.model';
-import { Concurrency, ProjectConcurrencyRuns } from "app/model/project.concurrency.model";
 import { Project, ProjectRunRetention } from "app/model/project.model";
 import { FlatSchema, JSONSchema } from "app/model/schema.model";
 import { V2ProjectService } from "app/service/projectv2/project.service";
-import { ErrorUtils } from "app/shared/error.utils";
-import * as actionPreferences from 'app/store/preferences.action';
 import { NzMessageService } from "ng-zorro-antd/message";
-import { finalize, first, forkJoin, lastValueFrom, pipe, Subscription } from "rxjs";
+import { finalize, first, forkJoin, Subscription } from "rxjs";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
-import { dump, load, LoadOptions, YAMLException } from "js-yaml";
+import { dump, load, LoadOptions } from "js-yaml";
 import { EventV2Service } from "app/event-v2.service";
 import { WebsocketV2Filter, WebsocketV2FilterType } from "app/model/websocket-v2";
 import { EventV2State } from "app/store/event-v2.state";
@@ -42,6 +38,9 @@ export class ProjectRunRetentionComponent implements OnInit {
     dryRunReport: any;
     dryRunReportID: string;
 
+    reportID: string;
+    reportLoading: boolean = false;
+
     eventV2Subscription: Subscription;
 
     constructor(private _cd: ChangeDetectorRef,
@@ -51,10 +50,22 @@ export class ProjectRunRetentionComponent implements OnInit {
         private _v2ProjectService: V2ProjectService) {
 
         this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => {
-            if (this.dryRunReportID && event && event?.type == EventV2Type.EventProjectPurge && event?.payload?.id === this.dryRunReportID) {
-                this.dryRunReport = event.payload;
-                this._cd.markForCheck();
+            if (event && event?.type == EventV2Type.EventProjectPurge) {
+                if (this.dryRunReportID && event?.payload?.id === this.dryRunReportID) {
+                    this.dryRunReport = event.payload;
+                    this._cd.markForCheck();
+                } else if (this.reportID && event?.payload?.id === this.reportID) {
+                    // reload retention
+                    this._v2ProjectService.getRetention(this.project.key).pipe(first(), finalize(() => {
+                        this._cd.markForCheck();
+                    })).subscribe(r => {
+                        this.retention = r;
+                        this.reportLoading = false;
+                    })
+                    this._cd.markForCheck();
+                }
             }
+           
         });
 
     }
@@ -92,7 +103,7 @@ export class ProjectRunRetentionComponent implements OnInit {
         this._v2ProjectService.runDryRunRetention(this.project.key, this.retention).pipe(first(), finalize(() => {
             this._cd.markForCheck();
         })).subscribe(e => {
-            this._messageService.success('Project run retention updated');
+            this._messageService.success('Dry run started, please wait');
             this._eventV2Service.updateFilter(<WebsocketV2Filter>{
                 type: WebsocketV2FilterType.PROJECT_PURGE_REPORT,
                 project_key: this.project.key,
@@ -104,8 +115,17 @@ export class ProjectRunRetentionComponent implements OnInit {
     }
 
     runRetention(): void {
-        this._v2ProjectService.runRetention(this.project.key, this.retention).pipe(first()).subscribe(() => {
-            this._messageService.success('Project run retention updated');
+        this._v2ProjectService.runRetention(this.project.key, this.retention).pipe(first(), finalize(() => {
+            this._cd.markForCheck();
+        })).subscribe(e => {
+            this._messageService.success('Run retention started, please wait');
+            this.reportID = e.report_id;
+            this.reportLoading = true;
+            this._eventV2Service.updateFilter(<WebsocketV2Filter>{
+                type: WebsocketV2FilterType.PROJECT_PURGE_REPORT,
+                project_key: this.project.key,
+                purge_report_id: e.report_id
+            });
         });
     }
 

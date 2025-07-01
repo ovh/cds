@@ -5,22 +5,23 @@
         (nzEditorInitialized)="onEditorInit($event)" (ngModelChange)="onEditorChange($event)"></nz-code-editor>
         <div class="buttons">
             <div class="left">
-                <button nz-button nzType="primary" (click)="runRetention()">Execute</button>
+                <button nz-button nzType="primary" [nzLoading]="reportLoading" (click)="runRetention()">Execute</button>
             </div>
             <div class="right">
-                <button nz-button nzType="primary" (click)="runDryRunRetention()">Dry run</button>
+                <button nz-button nzType="default" (click)="runDryRunRetention()">Dry run</button>
                 <button nz-button nzType="primary" (click)="updateRetention()">Update</button>
             </div>
             
         </div>
     </div>
     <div class="report" *ngIf="retention.last_report">
-        <h3>Last execution {{retention.last_execution}} : {{retention.last_status}}</h3>
+        <h3>Last execution: {{ retention.last_execution | amTimeAgo}} - {{retention.last_status}}</h3>
+        <h4>Report ID: {{retention.last_report.id}}</h4>
         <app-project-run-retention-report [report]="retention.last_report"></app-project-run-retention-report>
     </div>
 </ng-container>
 
-<nz-modal [(nzVisible)]="dryRunVisible" nzTitle="Dry Run" (nzOnOk)="closeModal()" nzClosable="false" [nzCancelText]="null" [nzWidth]="1200">
+<nz-modal [(nzVisible)]="dryRunVisible" [nzTitle]="'Dry Run ' + dryRunReportID" (nzOnOk)="closeModal()" nzClosable="false" [nzCancelText]="null" [nzWidth]="1200">
     <ng-container *nzModalContent>
         <div class="modalHeight">
             <ng-container *ngIf="!dryRunReport">

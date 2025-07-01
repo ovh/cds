@@ -37,13 +37,13 @@ func (api *API) postWorkflowRunRetentionDryRunHandler() ([]service.RbacChecker, 
 			reportID := sdk.UUID()
 			api.GoRoutines.Exec(context.Background(), "manual-dry-run-purge-"+pKey, func(ctx context.Context) {
 				ctx = context.WithValue(ctx, cdslog.Project, pKey)
-				time.Sleep(2 * time.Second)
+				time.Sleep(1 * time.Second)
 				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, purge.PurgeOption{DisabledDryRun: false, ReportID: reportID}); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			})
 
-			return service.WriteJSON(w, sdk.DryRunResponse{ReportID: reportID}, http.StatusOK)
+			return service.WriteJSON(w, sdk.StartRunResponse{ReportID: reportID}, http.StatusOK)
 		}
 }
 
@@ -58,14 +58,16 @@ func (api *API) postWorkflowRunRetentionStartHandler() ([]service.RbacChecker, s
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
+			reportID := sdk.UUID()
 			api.GoRoutines.Exec(context.Background(), "manual-purge-"+pKey, func(ctx context.Context) {
 				ctx = context.WithValue(ctx, cdslog.Project, pKey)
-				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, purge.PurgeOption{DisabledDryRun: true}); err != nil {
+				time.Sleep(1 * time.Second)
+				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, purge.PurgeOption{DisabledDryRun: true, ReportID: reportID}); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			})
 
-			return service.WriteJSON(w, nil, http.StatusOK)
+			return service.WriteJSON(w, sdk.StartRunResponse{ReportID: reportID}, http.StatusOK)
 		}
 }
 

@@ -142,7 +142,7 @@ export class RepositoryHookWorkflow {
   run_id: string;
 }
 
-export class PurgeDrynRunResponse {
+export class StartPurgeResponse {
   report_id: string;
 }
 
