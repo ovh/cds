@@ -16,6 +16,16 @@
                 </nz-row>
                 <nz-row>
                     <nz-col [nzSpan]="24" class="nzSegment">
+                        <nz-alert
+                        nzType="info"
+                        nzMessage="Depreciation Notice"
+                        [nzDescription]="depreciationNoticeTemplate"
+                        nzShowIcon ></nz-alert>
+                        <ng-template #depreciationNoticeTemplate>
+                        <p>Please note that the CDS V1 Workflow you are about to create will be deprecated soon. We recommend transitioning to the new CDS as-code V2 workflow for improved functionality and support.
+                            Refer to the <a *ngIf="!help.documentationLink" href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">documentation</a>
+                            <a *ngIf="help.documentationLink" href="{{help.documentationLink}}" target="_blank" rel="noopener noreferrer">documentation</a>.</p>
+                        </ng-template>
                         <form nz-form [ngSwitch]="currentStep" nzLayout="vertical">
                             <!-- ######### WORKFLOW FIRST STEP ######### -->
                             <div *ngSwitchCase="0">
