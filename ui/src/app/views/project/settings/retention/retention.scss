@@ -7,7 +7,7 @@
     padding: 20px;
 
     .editor {
-        height: 70%;
+        height: 50%;
         width: 100%;
 
         nz-code-editor {
@@ -20,10 +20,32 @@
             }
         }
 
-        .button {
+        .buttons {
             height: 10%;
             display: flex;
-            justify-content: end;
+
+            .left {
+                width: 50%;
+                justify-content: flex-start;
+            }
+            .right {
+                width: 50%;
+                display: flex;
+                justify-content: flex-end;
+
+                button {
+                    margin-left: 10px;
+                }
+            }
         }
     }
+
+    .report {
+        height: 50%;
+        padding-top: 20px;
+    }
+}
+
+.modalHeight {
+    height: 500px;
 }

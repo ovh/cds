@@ -142,11 +142,18 @@ export class RepositoryHookWorkflow {
   run_id: string;
 }
 
+export class PurgeDrynRunResponse {
+  report_id: string;
+}
+
 export class ProjectRunRetention {
   id: string;
   project_key: string;
   last_modified: string;
   retentions: Retention;
+  last_execution: string;
+  last_status: string;
+  last_report: any;
 }
 
 export class Retention {

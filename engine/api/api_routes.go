@@ -517,6 +517,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/run", nil, r.GETv2(api.getWorkflowRunsSearchV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/filter", nil, r.GETv2(api.getWorkflowRunsFiltersV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/retention", nil, r.GETv2(api.getWorkflowRunRetentionHandler), r.PUTv2(api.putWorkflowRunRetentionHandler))
+	r.Handle("/v2/project/{projectKey}/run/retention/dryrun", nil, r.POSTv2(api.postWorkflowRunRetentionDryRunHandler))
+	r.Handle("/v2/project/{projectKey}/run/retention/start", nil, r.POSTv2(api.postWorkflowRunRetentionStartHandler))
 	r.Handle("/v2/project/{projectKey}/run/retention/schema", nil, r.GETv2(api.getWorkflowRunRetentionSchemaHandler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}", nil, r.GETv2(api.getWorkflowRunV2Handler), r.DELETEv2(api.deleteWorkflowRunV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/restart", nil, r.POSTv2(api.postRestartWorkflowRunHandler))

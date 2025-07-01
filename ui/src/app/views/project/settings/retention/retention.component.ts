@@ -10,9 +10,13 @@ import { V2ProjectService } from "app/service/projectv2/project.service";
 import { ErrorUtils } from "app/shared/error.utils";
 import * as actionPreferences from 'app/store/preferences.action';
 import { NzMessageService } from "ng-zorro-antd/message";
-import { finalize, first, forkJoin, lastValueFrom, pipe } from "rxjs";
+import { finalize, first, forkJoin, lastValueFrom, pipe, Subscription } from "rxjs";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { dump, load, LoadOptions, YAMLException } from "js-yaml";
+import { EventV2Service } from "app/event-v2.service";
+import { WebsocketV2Filter, WebsocketV2FilterType } from "app/model/websocket-v2";
+import { EventV2State } from "app/store/event-v2.state";
+import { EventV2Type } from "app/model/event-v2.model";
 
 declare const monaco: any;
 
@@ -34,10 +38,24 @@ export class ProjectRunRetentionComponent implements OnInit {
     dataEditor: string;
     editorOption: EditorOptions;
 
+    dryRunVisible: boolean = false;
+    dryRunReport: any;
+    dryRunReportID: string;
+
+    eventV2Subscription: Subscription;
+
     constructor(private _cd: ChangeDetectorRef,
         private _messageService: NzMessageService,
+        private _eventV2Service: EventV2Service,
         private _store: Store,
         private _v2ProjectService: V2ProjectService) {
+
+        this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => {
+            if (this.dryRunReportID && event && event?.type == EventV2Type.EventProjectPurge && event?.payload?.id === this.dryRunReportID) {
+                this.dryRunReport = event.payload;
+                this._cd.markForCheck();
+            }
+        });
 
     }
 
@@ -62,14 +80,33 @@ export class ProjectRunRetentionComponent implements OnInit {
             this.retention = result[0];
             this.dataEditor = dump(this.retention.retentions);
             this.jsonFlatSchema = JSONSchema.flat(result[1]);
-            
         });
     }
 
     onEditorChange(event: string) {
-        console.log(event);
         this.dataEditor = event;
         this._cd.markForCheck();
+    }
+
+    runDryRunRetention(): void {
+        this._v2ProjectService.runDryRunRetention(this.project.key, this.retention).pipe(first(), finalize(() => {
+            this._cd.markForCheck();
+        })).subscribe(e => {
+            this._messageService.success('Project run retention updated');
+            this._eventV2Service.updateFilter(<WebsocketV2Filter>{
+                type: WebsocketV2FilterType.PROJECT_PURGE_REPORT,
+                project_key: this.project.key,
+                purge_report_id: e.report_id
+            });
+            this.dryRunReportID = e.report_id;
+            this.dryRunVisible = true;
+        });
+    }
+
+    runRetention(): void {
+        this._v2ProjectService.runRetention(this.project.key, this.retention).pipe(first()).subscribe(() => {
+            this._messageService.success('Project run retention updated');
+        });
     }
 
     updateRetention(): void {
@@ -79,7 +116,7 @@ export class ProjectRunRetentionComponent implements OnInit {
             });
             this._v2ProjectService.updateRetention(this.project.key, this.retention).pipe(first()).subscribe(() => {
                 this._messageService.success('Project run retention updated');
-            })
+            });
         } catch (e) {
             this._messageService.error('Invalid yaml data');
         }
@@ -88,5 +125,10 @@ export class ProjectRunRetentionComponent implements OnInit {
     onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({ schemas: [{ uri: '', schema: this.jsonFlatSchema }] });
         this.editor.layout();
+    }
+
+    closeModal(): void {
+        this.dryRunVisible = false;
+        this._cd.markForCheck();
     }
 }

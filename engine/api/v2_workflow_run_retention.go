@@ -3,18 +3,69 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/glob"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getWorkflowRunRetentionSchemaHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			return service.WriteJSON(w, sdk.GetProjectRunRetentionJsonSchema(), http.StatusOK)
+		}
+}
+
+func (api *API) postWorkflowRunRetentionDryRunHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectManage),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			reportID := sdk.UUID()
+			api.GoRoutines.Exec(context.Background(), "manual-dry-run-purge-"+pKey, func(ctx context.Context) {
+				ctx = context.WithValue(ctx, cdslog.Project, pKey)
+				time.Sleep(2 * time.Second)
+				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, purge.PurgeOption{DisabledDryRun: false, ReportID: reportID}); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
+			})
+
+			return service.WriteJSON(w, sdk.DryRunResponse{ReportID: reportID}, http.StatusOK)
+		}
+}
+
+func (api *API) postWorkflowRunRetentionStartHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectManage),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			api.GoRoutines.Exec(context.Background(), "manual-purge-"+pKey, func(ctx context.Context) {
+				ctx = context.WithValue(ctx, cdslog.Project, pKey)
+				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, purge.PurgeOption{DisabledDryRun: true}); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
+			})
+
+			return service.WriteJSON(w, nil, http.StatusOK)
 		}
 }
 
@@ -71,6 +122,16 @@ func (api *API) putWorkflowRunRetentionHandler() ([]service.RbacChecker, service
 					}
 					if g.Count <= 0 {
 						g.Count = api.Config.WorkflowV2.WorkflowRunRetentionDefaultCount
+					}
+				}
+			}
+
+			// Check all git ref expressions
+			defaultBranch := "refs/heads/my/branch"
+			for _, wr := range projectRunRetention.Retentions.WorkflowRetentions {
+				for _, data := range wr.Rules {
+					if _, err := glob.New(data.GitRef).MatchString(defaultBranch); err != nil {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "wrong expression %q for workflow %q", data.GitRef, wr.Workflow)
 					}
 				}
 			}

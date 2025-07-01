@@ -28,6 +28,7 @@ import { ProjectConcurrenciesComponent } from './settings/concurrency/concurrenc
 import { ProjectConcurrencyFormComponent } from './settings/concurrency/concurrency.form.component';
 import { ProjectWebhooksComponent } from './settings/webhooks/webhooks.component';
 import { ProjectRunRetentionComponent } from './settings/retention/retention.component';
+import { ProjectRunRetentionReportComponent } from './settings/retention/retention.report.component';
 
 @NgModule({
     declarations: [
@@ -47,6 +48,7 @@ import { ProjectRunRetentionComponent } from './settings/retention/retention.com
         ProjectRepoManagerFormComponent,
         ProjectRepoManagerListComponent,
         ProjectRunRetentionComponent,
+        ProjectRunRetentionReportComponent,
         ProjectSettingsComponent,
         ProjectShowComponent,
         ProjectVariablesComponent,

@@ -125,7 +125,7 @@ func TestApplyRunRetentionOnProject_WorkflowWithRetention(t *testing.T) {
 		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 	}
 
-	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key))
+	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, PurgeOption{DisabledDryRun: true}))
 
 	wrDB, err := workflow_v2.LoadRuns(ctx, db, p.Key, vcs.ID, repo.ID, wkname)
 	require.NoError(t, err)
@@ -140,6 +140,7 @@ func TestApplyRunRetentionOnProject_WorkflowWithRetention(t *testing.T) {
 	require.Equal(t, int64(38), wrDB[3].RunNumber)
 	require.Equal(t, int64(20), wrDB[4].RunNumber)
 	require.Equal(t, int64(19), wrDB[5].RunNumber)
+
 }
 
 func TestApplyRunRetentionOnProject_FallbackProjectDefaultRule(t *testing.T) {
@@ -212,15 +213,21 @@ func TestApplyRunRetentionOnProject_FallbackProjectDefaultRule(t *testing.T) {
 
 	}
 
-	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key))
+	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, PurgeOption{DisabledDryRun: true}))
 
 	wrDB, err := workflow_v2.LoadRuns(ctx, db, p.Key, vcs.ID, repo.ID, wkname)
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(wrDB)) // 19 20
-	for _, r := range wrDB {
-		t.Logf("%s - %d", r.WorkflowRef, r.RunNumber)
-	}
 	require.Equal(t, int64(20), wrDB[0].RunNumber)
 	require.Equal(t, int64(19), wrDB[1].RunNumber)
+
+	// check report
+	retentionRule, err := project.LoadRunRetentionByProjectKey(ctx, db, p.Key)
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(retentionRule.LastReport.Workflows))
+	require.Equal(t, wr.VCSServer+"/"+wr.Repository+"/"+wr.WorkflowName, retentionRule.LastReport.Workflows[0].WorkflowName)
+	require.Equal(t, 1, len(retentionRule.LastReport.Workflows[0].Refs))
+	require.Equal(t, 18, len(retentionRule.LastReport.Workflows[0].Refs[0].DeletedDatas))
 }

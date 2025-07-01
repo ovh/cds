@@ -1,0 +1,11 @@
+<ng-container *ngIf="report">
+    <div class="editor">
+        <ng-container *ngIf="report?.workflows">
+            <nz-code-editor #editor [ngModel]="dataEditor" [nzEditorOption]="editorOption"
+            (ngModelChange)="onEditorChange($event)"></nz-code-editor>
+        </ng-container>
+        <ng-container *ngIf="!report?.workflows">
+            Nothing deleted
+        </ng-container>
+    </div>
+</ng-container>

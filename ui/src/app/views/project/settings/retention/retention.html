@@ -3,8 +3,32 @@
         <h3>Workflow run retentions rules</h3>
         <nz-code-editor #editor [ngModel]="dataEditor" [nzEditorOption]="editorOption"
         (nzEditorInitialized)="onEditorInit($event)" (ngModelChange)="onEditorChange($event)"></nz-code-editor>
-        <div class="button">
-            <button nz-button nzType="primary" (click)="updateRetention()">Update</button>
+        <div class="buttons">
+            <div class="left">
+                <button nz-button nzType="primary" (click)="runRetention()">Execute</button>
+            </div>
+            <div class="right">
+                <button nz-button nzType="primary" (click)="runDryRunRetention()">Dry run</button>
+                <button nz-button nzType="primary" (click)="updateRetention()">Update</button>
+            </div>
+            
         </div>
     </div>
+    <div class="report" *ngIf="retention.last_report">
+        <h3>Last execution {{retention.last_execution}} : {{retention.last_status}}</h3>
+        <app-project-run-retention-report [report]="retention.last_report"></app-project-run-retention-report>
+    </div>
 </ng-container>
+
+<nz-modal [(nzVisible)]="dryRunVisible" nzTitle="Dry Run" (nzOnOk)="closeModal()" nzClosable="false" [nzCancelText]="null" [nzWidth]="1200">
+    <ng-container *nzModalContent>
+        <div class="modalHeight">
+            <ng-container *ngIf="!dryRunReport">
+                <i nz-icon nzType="loading" zTheme="outline"></i>  Dry run ongoing
+              </ng-container>
+              <ng-container *ngIf="dryRunReport">
+                <app-project-run-retention-report [report]="dryRunReport"></app-project-run-retention-report>
+              </ng-container>
+        </div>
+    </ng-container>
+</nz-modal>

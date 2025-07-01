@@ -9,12 +9,23 @@ import (
 	"github.com/sguiheux/jsonschema"
 )
 
+const (
+	PurgeStatusSuccess PurgeStatus = "Success"
+	PurgeStatusFail    PurgeStatus = "Fail"
+)
+
+type PurgeStatus string
+
 type ProjectRunRetention struct {
-	ID           string     `json:"id" db:"id"`
-	ProjectKey   string     `json:"project_key" db:"project_key"`
-	LastModified time.Time  `json:"last_modified" db:"last_modified"`
-	Retentions   Retentions `json:"retentions" db:"retention"`
+	ID            string      `json:"id" db:"id"`
+	ProjectKey    string      `json:"project_key" db:"project_key"`
+	LastModified  time.Time   `json:"last_modified" db:"last_modified"`
+	Retentions    Retentions  `json:"retentions" db:"retention"`
+	LastExecution time.Time   `json:"last_execution" db:"last_execution"`
+	LastStatus    PurgeStatus `json:"last_status" db:"last_status"`
+	LastReport    PurgeReport `json:"last_report" db:"last_report"`
 }
+
 type Retentions struct {
 	WorkflowRetentions []WorkflowRetentions `json:"retention,omitempty"`
 	DefaultRetention   RetentionRule        `json:"default_retention"`
@@ -52,8 +63,28 @@ func (r *Retentions) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, r), "cannot unmarshal Retentions")
 }
 
+func (r PurgeReport) Value() (driver.Value, error) {
+	j, err := json.Marshal(r)
+	return j, WrapError(err, "cannot marshal PurgeReport")
+}
+
+func (r *PurgeReport) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, r), "cannot unmarshal PurgeReport")
+}
+
 func GetProjectRunRetentionJsonSchema() *jsonschema.Schema {
 	reflector := jsonschema.Reflector{Anonymous: false}
 	retentionSchema := reflector.Reflect(&Retentions{})
 	return retentionSchema
+}
+
+type DryRunResponse struct {
+	ReportID string `json:"report_id"`
 }
