@@ -88,7 +88,7 @@ func (c *client) ProjectRunPurge(ctx context.Context, projectKey string) error {
 
 func (c *client) ProjectRunRetentionImport(ctx context.Context, projectKey string, prr sdk.ProjectRunRetention) error {
 	url := fmt.Sprintf("/v2/project/%s/run/retention", projectKey)
-	if _, err := c.PostJSON(ctx, url, prr, nil); err != nil {
+	if _, err := c.PutJSON(ctx, url, prr, nil); err != nil {
 		return err
 	}
 	return nil
@@ -96,7 +96,7 @@ func (c *client) ProjectRunRetentionImport(ctx context.Context, projectKey strin
 func (c *client) ProjectRunRetentionGet(ctx context.Context, projectKey string) (*sdk.ProjectRunRetention, error) {
 	var prr sdk.ProjectRunRetention
 	url := fmt.Sprintf("/v2/project/%s/run/retention", projectKey)
-	if _, err := c.GetJSON(ctx, url, prr); err != nil {
+	if _, err := c.GetJSON(ctx, url, &prr); err != nil {
 		return nil, err
 	}
 	return &prr, nil

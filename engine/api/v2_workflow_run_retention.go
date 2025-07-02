@@ -88,7 +88,7 @@ func (api *API) putWorkflowRunRetentionHandler() ([]service.RbacChecker, service
 			}
 
 			// Set default retention
-			if projectRunRetention.Retentions.DefaultRetention.DurationInDays < 0 {
+			if projectRunRetention.Retentions.DefaultRetention.DurationInDays <= 0 {
 				projectRunRetention.Retentions.DefaultRetention.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetentionDefaultDays
 			}
 
@@ -105,7 +105,7 @@ func (api *API) putWorkflowRunRetentionHandler() ([]service.RbacChecker, service
 				if r.DefaultRetention == nil {
 					continue
 				}
-				if r.DefaultRetention.DurationInDays < 0 {
+				if r.DefaultRetention.DurationInDays <= 0 {
 					r.DefaultRetention.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetentionDefaultDays
 				}
 				if r.DefaultRetention.DurationInDays > api.Config.WorkflowV2.WorkflowRunMaxRetention {
@@ -116,7 +116,7 @@ func (api *API) putWorkflowRunRetentionHandler() ([]service.RbacChecker, service
 				}
 				for j := range r.Rules {
 					g := &r.Rules[j]
-					if g.DurationInDays < 0 {
+					if g.DurationInDays <= 0 {
 						g.DurationInDays = api.Config.WorkflowV2.WorkflowRunRetentionDefaultDays
 					}
 					if g.DurationInDays > api.Config.WorkflowV2.WorkflowRunMaxRetention {

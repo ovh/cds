@@ -109,17 +109,18 @@ testcases:
 - name: Update project retention
   steps:
     - name: Update project retention
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} project retention import {{.cds_project}} ./fixtures/project_retention.yml"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project retention import {{.cds_project}} ./fixtures/project_retention.yml"
 
 - name: Start purge and check result
   steps:
     - name: Update project retention
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} project delete-runs {{.cds_project}}"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project delete-runs {{.cds_project}}"
     - name: Check that the CDS workflow run is success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson0.run_number ShouldEqual 2
       retry: 60
       delay: 1
     
