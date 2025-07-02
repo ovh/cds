@@ -1372,7 +1372,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				}
 			}
 			// Manage concurrency if the job is not skipped
-			if !jobToTrigger.Status.IsTerminated() {
+			if !runJob.Status.IsTerminated() {
 				runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 				if err != nil {
 					return nil, nil, nil, nil, hasToUpdateRun, err
