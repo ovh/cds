@@ -1371,13 +1371,15 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					hasToUpdateRun = runUpdated
 				}
 			}
-			// Manage concurrency
-			runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
-			if err != nil {
-				return nil, nil, nil, nil, hasToUpdateRun, err
-			}
-			if runJobInfo != nil {
-				runJobsInfo[runJob.ID] = *runJobInfo
+			// Manage concurrency if the job is not skipped
+			if !runJob.Status.IsTerminated() {
+				runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
+				if err != nil {
+					return nil, nil, nil, nil, hasToUpdateRun, err
+				}
+				if runJobInfo != nil {
+					runJobsInfo[runJob.ID] = *runJobInfo
+				}
 			}
 			runJobs = append(runJobs, runJob)
 		} else {
@@ -1649,7 +1651,7 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 			hasToUpdateRun = runUpdated
 		}
 
-		// Manage concurrency
+		// Manage concurrency if the job is not skipped
 		if !data.jobToTrigger.Status.IsTerminated() {
 			runJobInfo, err := manageJobConcurrency(ctx, db, *run, data.jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjToCancelled)
 			if err != nil {
