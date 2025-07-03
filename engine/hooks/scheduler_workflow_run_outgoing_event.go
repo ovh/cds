@@ -223,6 +223,7 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 					Ref:                  wh.Ref,
 					Commit:               wh.Commit,
 					Data:                 wh.Data,
+					EntityID:             wh.EntityID,
 				},
 			},
 		}

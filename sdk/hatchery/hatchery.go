@@ -45,6 +45,18 @@ func (c *CacheNbAttemptsJobIDs) NewAttempt(key string) int {
 	return nbAttempt
 }
 
+func (c *CacheNbAttemptsJobIDs) GetAttempt(key string) int {
+	nbAttempt, has := c.cache.Get(key)
+	if !has {
+		return 0
+	}
+	nbAttemptInt, ok := nbAttempt.(int)
+	if !ok {
+		return 0
+	}
+	return nbAttemptInt
+}
+
 // Create creates hatchery
 func Create(ctx context.Context, h Interface) error {
 	ctx = telemetry.ContextWithTag(ctx,
@@ -297,7 +309,12 @@ func Create(ctx context.Context, h Interface) error {
 						if workerStarterModelWithModelv2 == nil {
 							for i := range models {
 								// find the first model matching with the pre-requisite
-								if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
+								can, err := canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i])
+								if err != nil {
+									log.Error(currentCtx, "%v", err)
+									continue
+								}
+								if can {
 									chosenModel = &models[i]
 									break
 								}
@@ -314,7 +331,13 @@ func Create(ctx context.Context, h Interface) error {
 					}
 					canTakeJob = true
 				} else {
-					if canRunJob(currentCtx, h, workerRequest) {
+					b, err := canRunJob(currentCtx, h, workerRequest)
+					if err != nil {
+						log.Error(currentCtx, "hatchery %s: unable to check canRunJob: %v", h.Name(), err)
+						endTrace("unable to check canRunJob", strconv.FormatInt(j.ID, 10))
+						continue
+					}
+					if b {
 						log.Debug(currentCtx, "hatchery %s can try to spawn a worker for job %d", h.Name(), j.ID)
 						canTakeJob = true
 					}
@@ -448,7 +471,7 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 	// Check if we already try to start a worker for this job
 	maxAttemptsNumberBeforeFailure := h.Configuration().Provision.MaxAttemptsNumberBeforeFailure
 	if maxAttemptsNumberBeforeFailure > -1 {
-		nbAttempts := cacheAttempts.NewAttempt(jobInfo.RunJob.ID)
+		nbAttempts := cacheAttempts.GetAttempt(jobInfo.RunJob.ID)
 		if maxAttemptsNumberBeforeFailure == 0 {
 			maxAttemptsNumberBeforeFailure = defaultMaxAttemptsNumberBeforeFailure
 		}
@@ -462,15 +485,26 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 	if hWithModels != nil {
 		workerModel, err := getWorkerModelV2(ctx, hWithModels, jobInfo)
 		if err != nil {
+			cacheAttempts.NewAttempt(jobInfo.RunJob.ID)
 			log.Error(ctx, "hatchery %q failed to get worker model %s: %v", h.Configuration().Name, jobInfo.Model.Name, err)
 			endTrace(fmt.Sprintf("%v", err.Error()), jobInfo.RunJob.ID)
 			return err
 		}
 		workerRequest.model = *workerModel
-		if !h.CanSpawn(ctx, *workerModel, jobInfo.RunJob.ID, nil) {
+		can, err := h.CanSpawn(ctx, *workerModel, jobInfo.RunJob.ID, nil)
+		if err != nil {
+			log.Error(ctx, "hatchery %q failed to check canSpawn: %v", h.Configuration().Name, err)
+			endTrace(fmt.Sprintf("%v", err.Error()), jobInfo.RunJob.ID)
+			return err
+		}
+		cacheAttempts.NewAttempt(jobInfo.RunJob.ID)
+		if !can {
+			log.Warn(ctx, "cannot spawn worker")
 			endTrace("cannot spawn", jobInfo.RunJob.ID)
 			return nil
 		}
+	} else {
+		cacheAttempts.NewAttempt(jobInfo.RunJob.ID)
 	}
 
 	logStepInfo(ctx, "processed", jobInfo.RunJob.Queued)
@@ -479,17 +513,17 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 	return nil
 }
 
-func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
+func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) (bool, error) {
 	for _, r := range j.requirements {
 		// If requirement is an hostname requirement, it's for a specific worker
 		if r.Type == sdk.HostnameRequirement && r.Value != j.hostname {
 			log.Debug(ctx, "hostname requirement r.Value(%s) != hostname(%s)", r.Value, j.hostname)
-			return false
+			return false, nil
 		}
 
 		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
 			log.Debug(ctx, "job with region requirement: cannot spawn. hatchery-region: %s prerequisite: %s", h.Configuration().Provision.Region, r.Value)
-			return false
+			return false, nil
 		}
 
 		// Skip others requirement as we can't check it
@@ -595,8 +629,11 @@ fi`
 			ModelV2:     model,
 			VSphereSpec: vsphereSpec,
 		}
-
-		if !h.CanSpawn(ctx, workerStarterModelWithModelv2, j.id, j.requirements) {
+		b, err := h.CanSpawn(ctx, workerStarterModelWithModelv2, j.id, j.requirements)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !b {
 			return nil, nil, nil
 		}
 		return nil, &workerStarterModelWithModelv2, nil
@@ -624,7 +661,11 @@ fi`
 		}
 	}
 
-	if !h.CanSpawn(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &oldModel}, j.id, j.requirements) {
+	b, err := h.CanSpawn(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &oldModel}, j.id, j.requirements)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !b {
 		return nil, nil, nil
 	}
 	return &oldModel, nil, nil
@@ -640,16 +681,18 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 
 	workerStarterModel := &sdk.WorkerStarterWorkerModel{ModelV2: &jobInf.Model}
 
-	preCmd := `#!/bin/sh
-    if [ ! -z ` + "`which curl`" + ` ]; then
-      curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o /usr/local/bin/worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
-    elif [ ! -z ` + "`which wget`" + ` ]; then
-      wget "{{.API}}/download/worker/linux/$(uname -m)" -O /usr/local/bin/worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
+	// No check need on jobInf.Model.OSArch as the hatchery can only take osarch that match herself
+
+	preCmd := fmt.Sprintf(`#!/bin/sh
+    if [ ! -z `+"`which curl`"+` ]; then
+      curl -L "{{.API}}/download/worker/%s" -o /usr/local/bin/worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
+    elif [ ! -z `+"`which wget`"+` ]; then
+      wget "{{.API}}/download/worker/%s" -O /usr/local/bin/worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
     else
       echo "Missing requirements to download CDS worker binary.";
       exit 1;
     fi
-  `
+  `, jobInf.Model.OSArch, jobInf.Model.OSArch)
 
 	switch jobInf.Model.Type {
 	case sdk.WorkerModelTypeDocker:
@@ -657,7 +700,7 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 			workerStarterModel.Cmd = "curl {{.API}}/download/worker/windows/amd64 -o worker.exe && worker.exe"
 			workerStarterModel.Shell = "cmd.exe /C"
 		} else {
-			workerStarterModel.Cmd = "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
+			workerStarterModel.Cmd = "curl {{.API}}/download/worker/" + jobInf.Model.OSArch + " -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
 			workerStarterModel.Shell = "sh -c"
 		}
 		var dockerSpec sdk.V2WorkerModelDockerSpec
@@ -724,21 +767,21 @@ func checkDefaultModelV2(ctx context.Context, h InterfaceWithModels, workerReque
 
 }
 
-func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
+func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) (bool, error) {
 	if model.Type != h.ModelType() {
 		log.Debug(ctx, "model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
-		return false
+		return false, nil
 	}
 
 	// If the model needs registration, don't spawn for now
 	if h.NeedRegistration(ctx, model) {
 		log.Debug(ctx, "model %s needs registration", model.Name)
-		return false
+		return false, nil
 	}
 
 	if model.NbSpawnErr > 5 {
 		log.Warn(ctx, "too many errors on spawn with model %s, please check this worker model", model.Name)
-		return false
+		return false, nil
 	}
 
 	if len(j.execGroups) > 0 {
@@ -751,7 +794,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 		}
 		if !checkGroup {
 			log.Debug(ctx, "model %s attached to group %d can't run this job", model.Name, model.GroupID)
-			return false
+			return false, nil
 		}
 	}
 
@@ -767,7 +810,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 
 	if model.IsDeprecated && !containsModelRequirement {
 		log.Debug(ctx, "cannot launch this model because it is deprecated")
-		return false
+		return false, nil
 	}
 
 	// Common check
@@ -782,20 +825,20 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			isSameName := modelName == model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
 			if !isGroupModel && !isSharedInfraModel && !isSameName {
 				log.Debug(ctx, "model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
-				return false
+				return false, nil
 			}
 		}
 
 		// service and memory requirements are only supported by docker model
 		if model.Type != sdk.Docker && (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) {
 			log.Debug(ctx, "job with service requirement or memory requirement: only for model docker. current model: %s", model.Type)
-			return false
+			return false, nil
 		}
 
 		// flavor requirement is only supported by openstack model
 		if model.Type != sdk.Openstack && r.Type == sdk.FlavorRequirement {
 			log.Debug(ctx, "job with flavor requirement: only for model openstack. current model: %s", model.Type)
-			return false
+			return false, nil
 		}
 
 		// Skip other requirement as we can't check it
@@ -806,12 +849,12 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 
 		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != nil && *model.RegisteredOS != "" && model.RegisteredArch != nil && *model.RegisteredArch != "" && r.Value != (*model.RegisteredOS+"/"+*model.RegisteredArch) {
 			log.Debug(ctx, "job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", *model.RegisteredOS, *model.RegisteredArch)
-			return false
+			return false, nil
 		}
 
 		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
 			log.Debug(ctx, "job with region requirement: cannot spawn. hatchery-region: %s prerequisite: %s", h.Configuration().Provision.Region, r.Value)
-			return false
+			return false, nil
 		}
 
 		if !containsModelRequirement && !containsHostnameRequirement {
@@ -827,7 +870,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 
 				if !found {
 					log.Debug(ctx, "model(%s) does not have binary %s(%s) for this job.", model.Name, r.Name, r.Value)
-					return false
+					return false, nil
 				}
 			}
 		}

@@ -29,8 +29,8 @@ type EntityFinder struct {
 	vcsServerCache        map[string]sdk.VCSProject
 	repoCache             map[string]sdk.ProjectRepository
 	repoDefaultRefCache   map[string]string
-	actionsCache          map[string]sdk.V2Action
-	localActionsCache     map[string]sdk.V2Action
+	actionsCache          map[string]sdk.EntityWithObject
+	localActionsCache     map[string]sdk.EntityWithObject
 	localWorkerModelCache map[string]sdk.EntityWithObject
 	workerModelCache      map[string]sdk.EntityWithObject
 	localTemplatesCache   map[string]sdk.EntityWithObject
@@ -50,8 +50,8 @@ func NewEntityFinder(ctx context.Context, db *gorp.DbMap, pkey, currentRef, curr
 		currentRepo:           repo,
 		currentRef:            currentRef,
 		currentSha:            currentSha,
-		actionsCache:          make(map[string]sdk.V2Action),
-		localActionsCache:     make(map[string]sdk.V2Action),
+		actionsCache:          make(map[string]sdk.EntityWithObject),
+		localActionsCache:     make(map[string]sdk.EntityWithObject),
 		workerModelCache:      make(map[string]sdk.EntityWithObject),
 		localWorkerModelCache: make(map[string]sdk.EntityWithObject),
 		templatesCache:        make(map[string]sdk.EntityWithObject),
@@ -195,7 +195,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 			vcsDB, err := vcs.LoadVCSByProject(ctx, db, projKey, vcsName)
 			if err != nil {
 				if sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return "", fmt.Sprintf("vcs %s not found on project %s", vcsName, projKey), nil
+					return "", fmt.Sprintf("vcs %s not found on project %s for entity path %s", vcsName, projKey, name), nil
 				}
 				return "", "", err
 			}
@@ -310,7 +310,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 		if err := yaml.Unmarshal([]byte(entityDB.Data), &act); err != nil {
 			return "", "", err
 		}
-		ef.actionsCache[completePath] = act
+		ef.actionsCache[completePath] = sdk.EntityWithObject{Entity: *entityDB, Action: act}
 	case sdk.EntityTypeWorkerModel:
 		var wm sdk.V2WorkerModel
 		if err := yaml.Unmarshal([]byte(entityDB.Data), &wm); err != nil {
@@ -343,7 +343,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 	return completePath, "", nil
 }
 
-func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.V2Action, string, string, error) {
+func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, string, error) {
 	// Local def
 	if strings.HasPrefix(name, ".cds/actions/") {
 		// Find action from path
@@ -353,7 +353,8 @@ func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, s
 			if err != nil {
 				return nil, "", fmt.Sprintf("Unable to find action %s", name), nil
 			}
-			if err := yaml.Unmarshal([]byte(actionEntity.Data), &localAct); err != nil {
+			localAct.Entity = *actionEntity
+			if err := yaml.Unmarshal([]byte(actionEntity.Data), &localAct.Action); err != nil {
 				return nil, "", "", err
 			}
 			if !ef.initiator.IsAdminWithMFA {

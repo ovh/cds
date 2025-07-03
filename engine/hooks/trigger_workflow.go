@@ -72,7 +72,11 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 
 	for i := range hre.WorkflowHooks {
 		wh := &hre.WorkflowHooks[i]
-		if !wh.Data.InsecureSkipSignatureVerify && (hre.Initiator == nil || (hre.Initiator.UserID == "" && hre.Initiator.VCSUsername == "")) {
+		initiator := hre.Initiator
+		if wh.Initiator != nil {
+			initiator = wh.Initiator
+		}
+		if !wh.Data.InsecureSkipSignatureVerify && (initiator == nil || (initiator.UserID == "" && initiator.VCSUsername == "")) {
 			wh.Status = sdk.HookEventWorkflowStatusSkipped
 			wh.Error = "unknown user"
 			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
@@ -126,13 +130,15 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				mods := make([]cdsclient.RequestModifier, 0, 2)
 				mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
 
-				log.Debug(ctx, "triggerWorkflows - initiator: %+v", hre.Initiator)
+				log.Debug(ctx, "triggerWorkflows - initiator: %+v", initiator)
 
 				runRequest := sdk.V2WorkflowRunHookRequest{
 					HookEventID:        hre.UUID,
 					Ref:                hre.ExtractData.Ref,
 					Sha:                wh.TargetCommit,
 					CommitMessage:      hre.ExtractData.CommitMessage,
+					CommitAuthor:       hre.ExtractData.CommitAuthor,
+					CommitAuthorEmail:  hre.ExtractData.CommitAuthorEmail,
 					Payload:            event,
 					EventName:          hre.EventName,
 					HookType:           wh.Type,
@@ -142,10 +148,10 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					DeprecatedAdminMFA: hre.ExtractData.DeprecatedAdminMFA,
 					PullrequestID:      hre.ExtractData.PullRequestID,
 					PullrequestToRef:   hre.ExtractData.PullRequestRefTo,
-					Initiator:          hre.Initiator,
+					Initiator:          initiator,
 				}
-				if hre.Initiator != nil {
-					runRequest.DeprecatedUserID = hre.Initiator.UserID
+				if initiator != nil {
+					runRequest.DeprecatedUserID = initiator.UserID
 				}
 				if wh.Data.TargetBranch != "" {
 					runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
@@ -168,6 +174,9 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				case sdk.WorkflowHookTypeWorkflowRun:
 					runRequest.WorkflowRun = hre.ExtractData.WorkflowRun.Workflow
 					runRequest.WorkflowRunID = hre.ExtractData.WorkflowRun.WorkflowRunID
+				case sdk.WorkflowHookTypeManual:
+					// Manual run can override repo and vcs
+					runRequest.TargetRepository = wh.Data.RepositoryName
 				}
 
 				wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,

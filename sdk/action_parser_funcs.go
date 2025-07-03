@@ -53,12 +53,40 @@ var (
 		"match":        match,
 		"replace":      replace,
 		"contextValue": contextValue,
+		"default":      dfault,
+		"coalesce":     coalesce,
 	}
 )
 
 type ActionFunc func(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error)
 
-func replace(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+func dfault(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+	switch len(inputs) {
+	case 0:
+		return nil, nil // default
+	case 1:
+		return inputs[0], nil // default "var" OR default ""
+	case 2:
+		if !empty(inputs[0]) {
+			return inputs[0], nil // default "var" "" OR default "var" "another"
+		}
+		return inputs[1], nil // default "" "var" OR default "" ""
+	default:
+		return nil, NewErrorFrom(ErrInvalidData, "default: wrong number of arguments")
+	}
+}
+
+// coalesce returns the first non-empty value.
+func coalesce(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+	for _, val := range inputs {
+		if !empty(val) {
+			return val, nil
+		}
+	}
+	return nil, nil
+}
+
+func replace(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) != 3 && len(inputs) != 4 {
 		return nil, NewErrorFrom(ErrInvalidData, "replace: wrong number of arguments")
 	}
@@ -86,6 +114,7 @@ func replace(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 
 	return strings.Replace(input, old, new, nbOfReplacements), nil
 }
+
 func contextValue(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) == 0 {
 		return nil, NewErrorFrom(ErrInvalidData, "contextValue: wrong number of arguments")
@@ -94,7 +123,7 @@ func contextValue(_ context.Context, a *ActionParser, inputs ...interface{}) (in
 	var currentObject any
 	for i, index := range inputs {
 		if i > 0 && currentObject == nil {
-			return nil, NewErrorFrom(ErrInvalidData, "contextValue: object %v doesn't not exist", inputs[0:i])
+			return nil, NewErrorFrom(ErrInvalidData, "contextValue: object %v doesn't exist", inputs[0:i])
 		}
 		switch t := index.(type) {
 		case string:
@@ -621,5 +650,33 @@ func base32decode(v string) (string, error) {
 func nilerr(fn func(string) string) stringActionFunc {
 	return func(s string) (string, error) {
 		return fn(s), nil
+	}
+}
+
+// empty returns true if the given value has the zero value for its type.
+func empty(given interface{}) bool {
+	g := reflect.ValueOf(given)
+	if !g.IsValid() {
+		return true
+	}
+
+	// Basically adapted from text/template.isTrue
+	switch g.Kind() {
+	case reflect.Array, reflect.Slice, reflect.Map, reflect.String:
+		return g.Len() == 0
+	case reflect.Bool:
+		return g.Bool() == false
+	case reflect.Complex64, reflect.Complex128:
+		return g.Complex() == 0
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return g.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return g.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return g.Float() == 0
+	case reflect.Struct:
+		return false
+	default:
+		return g.IsNil()
 	}
 }

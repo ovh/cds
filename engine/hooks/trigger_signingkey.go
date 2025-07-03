@@ -17,6 +17,14 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 	ctx, next := telemetry.Span(ctx, "s.triggerGetSigningKey")
 	defer next()
 
+	if hre.EventName != sdk.WorkflowHookEventNamePush {
+		hre.Status = sdk.HookEventStatusGitInfo
+		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+			return err
+		}
+		return s.executeEvent(ctx, hre)
+	}
+
 	log.Info(ctx, "triggering get git signing key for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// If operation not started and not manual hook => run repository operation to get signinkey
@@ -28,14 +36,10 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 
 		for _, wh := range hre.WorkflowHooks {
 			switch wh.Type {
-			case sdk.WorkflowHookTypeWorkflow:
-				signinkey = true
-			case sdk.WorkflowHookTypeWorkerModel:
-				signinkey = true
+			case sdk.WorkflowHookTypeWorkflow, sdk.WorkflowHookTypeWorkerModel:
 			default:
 				changesets = true
 				semver = true
-				signinkey = true
 				commitMessage = true
 			}
 		}
@@ -59,6 +63,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		}
 		if changesets {
 			req.ChangesetsCommitSince = hre.ExtractData.CommitFrom
+			req.ChangesetsBranchTo = hre.ExtractData.PullRequestRefTo
 		}
 		ope, err := s.Client.RetrieveHookEventSigningKey(ctx, req)
 		if err != nil {
@@ -140,6 +145,12 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 	}
 	if hre.ExtractData.CommitMessage == "" {
 		hre.ExtractData.CommitMessage = ope.Setup.Checkout.Result.CommitMessage
+	}
+	if hre.ExtractData.CommitAuthor == "" {
+		hre.ExtractData.CommitAuthor = ope.Setup.Checkout.Result.Author
+	}
+	if hre.ExtractData.CommitAuthorEmail == "" {
+		hre.ExtractData.CommitAuthorEmail = ope.Setup.Checkout.Result.AuthorEmail
 	}
 
 	// Update repository hook status

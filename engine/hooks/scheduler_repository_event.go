@@ -193,11 +193,6 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 			if err := s.triggerCheckAnalyses(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to check analyses")
 			}
-		case sdk.WorkflowHookEventNameWorkflowRun:
-			hre.Status = sdk.HookEventStatusSignKey
-			if err := s.triggerGetSigningKey(ctx, hre); err != nil {
-				return sdk.WrapError(err, "unable to trigger get gitinfo")
-			}
 		default:
 			// Retrieve workflow to trigger
 			hre.Status = sdk.HookEventStatusWorkflowHooks
@@ -227,7 +222,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		// Compute git info ( semver )
 	case sdk.HookEventStatusGitInfo:
 		if err := s.triggerGetGitInfo(ctx, hre); err != nil {
-			return sdk.WrapError(err, "unable to get get info")
+			return sdk.WrapError(err, "unable to get git info")
 		}
 		// Trigger workflows
 	case sdk.HookEventStatusWorkflow:

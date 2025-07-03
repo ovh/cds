@@ -95,11 +95,14 @@ type OperationCheckout struct {
 	ProcessSemver        bool   `json:"process_semver,omitempty"`
 	GetChangeSet         bool   `json:"get_changeset,omitempty"`
 	ChangeSetCommitSince string `json:"changeset_commit,omitempty"`
+	ChangeSetBranchTo    string `json:"changeset_branch_to,omitempty"`
 	GetMessage           bool   `json:"get_message,omitempty"`
 	Result               struct {
 		SignKeyID      string `json:"sign_key_id"`
 		CommitVerified bool   `json:"verified"`
 		Msg            string `json:"msg"`
+		Author         string `json:"author"`
+		AuthorEmail    string `json:"author_email"`
 		Semver         struct {
 			Current string `json:"current"`
 			Next    string `json:"next"`

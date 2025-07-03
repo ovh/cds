@@ -129,7 +129,7 @@ func (c *githubClient) post(ctx context.Context, path string, bodyType string, b
 
 	res, err := httpClient.Do(req)
 	if res != nil {
-		c.manageRateLimit(ctx, http.MethodDelete, path, res.Header, res.StatusCode)
+		c.manageRateLimit(ctx, http.MethodPost, path, res.Header, res.StatusCode)
 	}
 
 	return res, err
@@ -258,7 +258,7 @@ func (c *githubClient) manageRateLimit(ctx context.Context, method string, callU
 	ctx = context.WithValue(ctx, LogFieldGithubRateLimitRemaining, rateLimitRemaining)
 	ctx = context.WithValue(ctx, LogFieldGithubRateLimitLimit, rateLimitLimit)
 	ctx = context.WithValue(ctx, LogFieldGithubRateLimitReset, rateLimitReset)
-	log.Info(ctx, "‰v | %v | %v", method, statusCode, callURL)
+	log.Info(ctx, "%v | %v | %v", method, statusCode, callURL)
 }
 
 func (c *githubClient) delete(ctx context.Context, path string) error {

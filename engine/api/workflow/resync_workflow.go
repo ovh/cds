@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -46,7 +47,7 @@ func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	return UpdateWorkflowRun(ctx, db, wr)
 }
 
-//ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
+// ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
 func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	var counterStatus statusCounter
@@ -120,6 +121,9 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db *gorp.DbMap, store cache.
 				return
 			}
 
+			ctx := context.WithValue(ctx, cdslog.Project, wr.Workflow.ProjectKey)
+			ctx = context.WithValue(ctx, cdslog.Workflow, wr.Workflow.Name)
+
 			var nodeName string
 			var app sdk.Application
 			var env *sdk.Environment
@@ -141,10 +145,11 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db *gorp.DbMap, store cache.
 			}
 
 			//New context because we are in goroutine
+			log.Info(ctx, "ResyncNodeRuns> Retrieve node run commits on node run %s for workflow %s/%s#%d", proj.Key, wr.Workflow.Name, wr.Number, nodeName)
 			commits, curVCSInfos, err := GetNodeRunBuildCommits(ctx, tx, store, proj, wr.Workflow, nodeName, wr.Number, nr, &app, env)
 			if err != nil {
 				ctx := log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "ResyncNodeRuns> cannot get build commits on a node run %v", err)
+				log.Error(ctx, "ResyncNodeRuns> cannot get build commits on a node run %s for workflow %s/%s#%d: %v", proj.Key, wr.Workflow.Name, wr.Number, nodeName, err)
 			} else if commits != nil {
 				nr.Commits = commits
 			}

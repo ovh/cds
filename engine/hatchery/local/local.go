@@ -224,30 +224,30 @@ func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	ctx, end := telemetry.Span(ctx, "local.CanSpawn")
 	defer end()
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
 			log.Debug(ctx, "CanSpawn false hatchery.checkRequirement ok:%v err:%v r:%v", ok, err, r)
-			return false
+			return false, nil
 		}
 	}
 
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.FlavorRequirement {
 			log.Debug(ctx, "CanSpawn false service or memory")
-			return false
+			return false, nil
 		}
 
 		if r.Type == sdk.OSArchRequirement && r.Value != (runtime.GOOS+"/"+runtime.GOARCH) {
 			log.Debug(ctx, "CanSpawn> job %s cannot spawn on this OSArch.", jobID)
-			return false
+			return false, nil
 		}
 	}
 	log.Debug(ctx, "CanSpawn true for job %s", jobID)
-	return true
+	return true, nil
 }
 
 // killWorker kill a local process

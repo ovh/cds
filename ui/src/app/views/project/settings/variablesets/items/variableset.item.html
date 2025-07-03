@@ -68,9 +68,13 @@
         <tr *ngFor="let data of table.data">
             <td>{{data.name}}</td>
             <td>{{data.type}}</td>
-            <td><pre class="break">{{data.value}}</pre></td>
             <td>
-                <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this item ?"
+                <textarea nz-input  name="value" id="itemvalue" [(ngModel)]="data.value" (ngModelChange)="data.changed = true"></textarea>
+            </td>
+            <td>
+                <button *ngIf="data.changed" nz-button nzType="primary" [nzLoading]="loading"
+                (click)="updateVariableSetItem(data)">Update</button>
+                <button *ngIf="!data.changed" nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this item ?"
                 (nzOnConfirm)="deleteVariableSetItem(data)">Delete</button>
             </td>
         </tr>
