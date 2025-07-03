@@ -484,6 +484,8 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	defer tx.Rollback() // nolint
 
+	run.Status = sdk.V2WorkflowRunStatusBuilding
+
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
 	}
