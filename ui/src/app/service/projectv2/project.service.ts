@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { Concurrency, ProjectConcurrencyRuns } from 'app/model/project.concurrency.model';
-import { Project } from 'app/model/project.model';
+import { Project, ProjectRunRetention, StartPurgeResponse } from 'app/model/project.model';
 import { PostProjectWebHook, PostResponseCreateHook, ProjectWebHook } from 'app/model/project.webhook.model';
 import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 import { Observable } from 'rxjs';
@@ -67,6 +67,26 @@ export class V2ProjectService {
         let params = new HttpParams();
         params.set('force', 'true');
         return this._http.delete(`/v2/project/${key}/concurrency/${vsName}`, { params });
+    }
+
+    getRetentionSchema(key: string): Observable<any> {
+        return this._http.get<any>(`/v2/project/${key}/run/retention/schema`)
+    }
+
+    getRetention(key: string): Observable<ProjectRunRetention> {
+        return this._http.get<ProjectRunRetention>(`/v2/project/${key}/run/retention`)
+    }
+
+    updateRetention(key: string, retention: ProjectRunRetention): Observable<ProjectRunRetention> {
+        return this._http.put<ProjectRunRetention>(`/v2/project/${key}/run/retention`, retention);
+    }
+
+    runRetention(key: string, retention: ProjectRunRetention): Observable<StartPurgeResponse> {
+        return this._http.post<StartPurgeResponse>(`/v2/project/${key}/run/retention/start`, retention);
+    }
+
+    runDryRunRetention(key: string, retention: ProjectRunRetention): Observable<StartPurgeResponse> {
+        return this._http.post<StartPurgeResponse>(`/v2/project/${key}/run/retention/dryrun`, retention);
     }
 
 

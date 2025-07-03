@@ -275,6 +275,10 @@ type ProjectClientV2 interface {
 	ProjectWebHookList(ctx context.Context, projectKey string) ([]sdk.ProjectWebHook, error)
 	ProjectWebHookGet(ctx context.Context, projectKey string, uuid string) (*sdk.ProjectWebHook, error)
 	ProjectWebHookDelete(ctx context.Context, projectKey string, uuid string) error
+
+	ProjectRunPurge(ctx context.Context, projectKey string) error
+	ProjectRunRetentionImport(ctx context.Context, projectKey string, prr sdk.ProjectRunRetention) error
+	ProjectRunRetentionGet(ctx context.Context, projectKey string) (*sdk.ProjectRunRetention, error)
 }
 
 // ProjectClient exposes project related functions

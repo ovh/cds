@@ -142,3 +142,37 @@ export class RepositoryHookWorkflow {
   run_id: string;
 }
 
+export class StartPurgeResponse {
+  report_id: string;
+}
+
+export class ProjectRunRetention {
+  id: string;
+  project_key: string;
+  last_modified: string;
+  retentions: Retention;
+  last_execution: string;
+  last_status: string;
+  last_report: any;
+}
+
+export class Retention {
+  retention: Array<WorkflowRetentions>;
+  default_retention: RetentionRule;
+}
+
+export class RetentionRule {
+  duration_in_days: number;
+  count: number;
+}
+
+export class WorkflowRetentions {
+  workflow: string
+  rules: Array<WorkflowRetentionRule>;
+}
+
+export class WorkflowRetentionRule {
+  git_ref: string;
+  duration_in_days: number;
+  count: number;
+}
