@@ -14,7 +14,7 @@
             
         </div>
     </div>
-    <div class="report" *ngIf="retention.last_report">
+    <div class="report" *ngIf="retention.last_status && retention.last_report">
         <h3>Last execution: {{ retention.last_execution | amTimeAgo}} - {{retention.last_status}}</h3>
         <h4>Report ID: {{retention.last_report.id}}</h4>
         <app-project-run-retention-report [report]="retention.last_report"></app-project-run-retention-report>
