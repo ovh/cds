@@ -1282,7 +1282,10 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		if err := toml.Unmarshal([]byte(fileContent), &file); err != nil {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read poetry file: %v", err)
 		}
-		fileVersion = file.Tool.Poetry.Version
+		fileVersion = file.Project.Version
+		if fileVersion == "" {
+			fileVersion = file.Tool.Poetry.Version
+		}
 	case sdk.SemverTypeDebian:
 		firsLine := strings.Split(fileContent, "\n")[0]
 		r, _ := regexp.Compile(`.*\((.*)\).*`) // format: package (version) distribution; urgency=low
