@@ -119,13 +119,6 @@ func (api *API) updateProjectV2Handler() ([]service.RbacChecker, service.Handler
 				return sdk.WrapError(sdk.ErrWrongRequest, "bad Project key %s/%s ", key, proj.Key)
 			}
 
-			if proj.WorkflowRetention <= 0 {
-				proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
-			}
-			if proj.WorkflowRetention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
-				proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
-			}
-
 			// Check is project exist
 			p, err := project.Load(ctx, api.mustDB(), key)
 			if err != nil {

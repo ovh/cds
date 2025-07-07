@@ -27,6 +27,8 @@ import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from './project.guar
 import { ProjectConcurrenciesComponent } from './settings/concurrency/concurrencies.components';
 import { ProjectConcurrencyFormComponent } from './settings/concurrency/concurrency.form.component';
 import { ProjectWebhooksComponent } from './settings/webhooks/webhooks.component';
+import { ProjectRunRetentionComponent } from './settings/retention/retention.component';
+import { ProjectRunRetentionReportComponent } from './settings/retention/retention.report.component';
 
 @NgModule({
     declarations: [
@@ -45,6 +47,8 @@ import { ProjectWebhooksComponent } from './settings/webhooks/webhooks.component
         ProjectPipelinesComponent,
         ProjectRepoManagerFormComponent,
         ProjectRepoManagerListComponent,
+        ProjectRunRetentionComponent,
+        ProjectRunRetentionReportComponent,
         ProjectSettingsComponent,
         ProjectShowComponent,
         ProjectVariablesComponent,

@@ -1,0 +1,27 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    padding: 20px;
+
+    .editor {
+        height: 100%;
+        width: 100%;
+
+        nz-code-editor {
+            border-left: 1px solid #f0f0f0;
+
+            :host-context(.night) & {
+                background-color: #1e1e1e;
+                border-left: 1px solid #303030;
+            }
+        }
+
+        i {
+            margin-right: 10px;
+        }
+    }
+}
+

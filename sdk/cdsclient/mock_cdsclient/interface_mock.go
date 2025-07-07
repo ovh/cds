@@ -3187,6 +3187,49 @@ func (mr *MockProjectClientV2MockRecorder) ProjectNotificationUpdate(ctx, pKey, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationUpdate), ctx, pKey, notif)
 }
 
+// ProjectRunPurge mocks base method.
+func (m *MockProjectClientV2) ProjectRunPurge(ctx context.Context, projectKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunPurge", ctx, projectKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRunPurge indicates an expected call of ProjectRunPurge.
+func (mr *MockProjectClientV2MockRecorder) ProjectRunPurge(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunPurge", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRunPurge), ctx, projectKey)
+}
+
+// ProjectRunRetentionGet mocks base method.
+func (m *MockProjectClientV2) ProjectRunRetentionGet(ctx context.Context, projectKey string) (*sdk.ProjectRunRetention, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunRetentionGet", ctx, projectKey)
+	ret0, _ := ret[0].(*sdk.ProjectRunRetention)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRunRetentionGet indicates an expected call of ProjectRunRetentionGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectRunRetentionGet(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunRetentionGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRunRetentionGet), ctx, projectKey)
+}
+
+// ProjectRunRetentionImport mocks base method.
+func (m *MockProjectClientV2) ProjectRunRetentionImport(ctx context.Context, projectKey string, prr sdk.ProjectRunRetention) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunRetentionImport", ctx, projectKey, prr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRunRetentionImport indicates an expected call of ProjectRunRetentionImport.
+func (mr *MockProjectClientV2MockRecorder) ProjectRunRetentionImport(ctx, projectKey, prr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunRetentionImport", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRunRetentionImport), ctx, projectKey, prr)
+}
+
 // ProjectV2Access mocks base method.
 func (m *MockProjectClientV2) ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
 	m.ctrl.T.Helper()
@@ -9562,6 +9605,49 @@ func (m *MockInterface) ProjectRepositoryEvents(ctx context.Context, projectKey,
 func (mr *MockInterfaceMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vcsName, repoName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
+}
+
+// ProjectRunPurge mocks base method.
+func (m *MockInterface) ProjectRunPurge(ctx context.Context, projectKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunPurge", ctx, projectKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRunPurge indicates an expected call of ProjectRunPurge.
+func (mr *MockInterfaceMockRecorder) ProjectRunPurge(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunPurge", reflect.TypeOf((*MockInterface)(nil).ProjectRunPurge), ctx, projectKey)
+}
+
+// ProjectRunRetentionGet mocks base method.
+func (m *MockInterface) ProjectRunRetentionGet(ctx context.Context, projectKey string) (*sdk.ProjectRunRetention, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunRetentionGet", ctx, projectKey)
+	ret0, _ := ret[0].(*sdk.ProjectRunRetention)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRunRetentionGet indicates an expected call of ProjectRunRetentionGet.
+func (mr *MockInterfaceMockRecorder) ProjectRunRetentionGet(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunRetentionGet", reflect.TypeOf((*MockInterface)(nil).ProjectRunRetentionGet), ctx, projectKey)
+}
+
+// ProjectRunRetentionImport mocks base method.
+func (m *MockInterface) ProjectRunRetentionImport(ctx context.Context, projectKey string, prr sdk.ProjectRunRetention) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunRetentionImport", ctx, projectKey, prr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRunRetentionImport indicates an expected call of ProjectRunRetentionImport.
+func (mr *MockInterfaceMockRecorder) ProjectRunRetentionImport(ctx, projectKey, prr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunRetentionImport", reflect.TypeOf((*MockInterface)(nil).ProjectRunRetentionImport), ctx, projectKey, prr)
 }
 
 // ProjectUpdate mocks base method.

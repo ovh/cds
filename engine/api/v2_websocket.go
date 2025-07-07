@@ -109,6 +109,7 @@ func (c *websocketV2ClientData) updateEventFilters(ctx context.Context, db gorp.
 		}
 		switch f.Type {
 		case sdk.WebsocketV2FilterTypeProject,
+			sdk.WebsocketV2FilterTypeProjectPurgeReport,
 			sdk.WebsocketV2FilterTypeProjectRuns:
 			if isMaintainer {
 				continue
@@ -201,7 +202,6 @@ func (a *API) initWebsocketV2(pubSubKey string) error {
 			log.Warn(ctx, err.Error())
 			return
 		}
-
 		a.websocketV2OnMessage(e)
 	})
 	a.WSV2Broker.Init(a.Router.Background, a.GoRoutines, pubSub)
@@ -273,12 +273,14 @@ func (a *API) websocketV2OnMessage(e sdk.FullEventV2) {
 
 			if needPostCheck {
 				allowed, err := c.eventPostCheck(ctx, a.mustDBWithCtx(ctx), a.Cache, e)
+
 				if err != nil {
 					err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", clientID, c.AuthConsumer.ID)
 					ctx = sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, err.Error())
 					return
 				}
+
 				if !allowed {
 					return
 				}
@@ -301,10 +303,17 @@ func (a *API) websocketV2ComputeEventKeys(event sdk.FullEventV2) []string {
 	var keys []string
 
 	// Event that match project-runs filter
-	if event.Type == sdk.EventRunCrafted || event.Type == sdk.EventRunBuilding || event.Type == sdk.EventRunEnded || event.Type == sdk.EventRunRestart {
+	switch event.Type {
+	case sdk.EventRunCrafted, sdk.EventRunBuilding, sdk.EventRunEnded, sdk.EventRunRestart:
 		keys = append(keys, sdk.WebsocketV2Filter{
 			Type:       sdk.WebsocketV2FilterTypeProjectRuns,
 			ProjectKey: event.ProjectKey,
+		}.Key())
+	case sdk.EventProjectPurge:
+		keys = append(keys, sdk.WebsocketV2Filter{
+			Type:          sdk.WebsocketV2FilterTypeProjectPurgeReport,
+			ProjectKey:    event.ProjectKey,
+			PurgeReportID: event.PurgeReportID,
 		}.Key())
 	}
 

@@ -1,0 +1,8 @@
+retention:
+  - workflow: '**/it_v2_retention/WorkflowWithRetention'
+    default_retention:
+      duration_in_days: 10
+      count: 1
+default_retention:
+  duration_in_days: 10
+  count: 10

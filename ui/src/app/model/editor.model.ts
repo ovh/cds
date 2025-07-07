@@ -9,6 +9,7 @@ export class Editor {
             triggerCharacters: [' ', ':', '\n'],
             async provideCompletionItems(model, position) {
                 let flatSchema: FlatSchema = monaco.languages.json.jsonDefaults._diagnosticsOptions.schemas[0].schema;
+                
                 const wordInfo = model.getWordUntilPosition(position);
                 let currentLine = model.getLineContent(position.lineNumber);
                 let firstColon = currentLine.indexOf(':');
@@ -29,6 +30,7 @@ export class Editor {
                 if (!result) {
                     return null;
                 }
+                    
                 return {
                     incomplete: false,
                     suggestions: result.map(r => {
@@ -84,33 +86,49 @@ export class Editor {
         return currentEltPosition;
     }
 
+
     static findParent(model: ITextModel, position: IPosition, currentDepth: number) {
+        let initialDepth = currentDepth;
         let parents = [];
         for (let i = position.lineNumber; i > 0; i--) {
             let currentText = model.getLineContent(i);
             if (currentText.indexOf(':') === -1) {
                 continue
             }
-            // if has key, find indentation
-            let currentLintDepth = Editor.findDepth(currentText);
-            if (currentLintDepth >= currentDepth) {
-                continue
-            }
-            // find parent key
-            let pkey = currentText.substring(0, currentText.indexOf(':')).trim();
-            parents.unshift(pkey);
-            currentDepth = currentLintDepth;
-            if (currentDepth === 0) {
-                break;
+            let currentLineDepth = Editor.findDepth(currentText);
+            if (currentLineDepth < initialDepth) {
+                    parents.push(currentText);
             }
         }
-        return parents;
+        parents.forEach((v, i) => {
+            v = v.replace('- ', '  ');
+            parents[i] = v
+        })
+        // Remove all parents after the one at level 0
+        let indexRootParent = parents.findIndex(p => p.indexOf(' ') !== 0);
+        if (indexRootParent === -1) {
+            return [];
+        }
+        parents.splice(indexRootParent+1, parents.length-indexRootParent);
+
+        let finalParent = [];
+        let currenMaxSpaceLen = (position.column - 1);
+        parents.forEach(v => {
+            let spaceLen = v.length - v.trimStart().length;
+            if (spaceLen < currenMaxSpaceLen) {
+                currenMaxSpaceLen = spaceLen;
+                let pkey = v.substring(0, v.indexOf(':')).trim();
+                finalParent.unshift(pkey);
+            }
+            
+        });
+        return finalParent;
     }
 
     static findDepth(text) {
         let spaceNumber = 0;
         for (let i = 0; i < text.length; i++) {
-            if (text[i] === ' ' || text[i] === '-') {
+            if (text[i] === ' ' || (text[i] === '-' && i == 0)) {
                 spaceNumber++;
                 continue;
             } else {
@@ -121,13 +139,18 @@ export class Editor {
         if (spaceNumber % 2 === 0) {
             depth = spaceNumber / 2;
         }
+        if (depth === -1) {
+            return 0
+        }
         return depth;
     }
 
     static autoCompleteKey(model: ITextModel, position: IPosition, flatSchema: FlatSchema, currentDepthCursor: number) {
         let parents = Editor.findParent(model, position, currentDepthCursor);
+        let finalDepth = parents.length;
+       
         // Get suggestion
-        return Editor.findKeySuggestion(model, position, parents, flatSchema, currentDepthCursor);
+        return Editor.findKeySuggestion(model, position, parents, flatSchema, finalDepth);
     }
 
     // Exclude key that are already here
@@ -158,22 +181,36 @@ export class Editor {
         let neighbour = [];
         let givenLine = model.getLineContent(position.lineNumber);
         let nbOfSpaces = givenLine.length - givenLine.trim().length;
+        if (nbOfSpaces%2 !== 0) {
+            return neighbour;
+        }
         if (position.lineNumber > 0) {
             // find neighbour before
-            for (let i = position.lineNumber; i >= 1; i--) {
+            let rootArrayElement = false;
+      
+            for (let i = position.lineNumber -1; i >= 1; i--) {
                 let currentLine = model.getLineContent(i);
-                let currentText = currentLine.trim();
+                let currentText = currentLine.trimStart();
                 let currentSpace = currentLine.length - currentText.length;
-                if (currentSpace !== nbOfSpaces) {
-                    // check if we are in a array
-                    if (currentSpace + 2 !== nbOfSpaces || currentText.indexOf('-') !== 0) {
+                if (currentSpace < nbOfSpaces) {
+                    if ( !(currentText.indexOf('-') === 0 && currentSpace + 2 === nbOfSpaces)) {
                         break;
                     }
-                    currentText = currentText.substr(1, currentText.length).trim();
-                } else if (currentText.indexOf('-') === 0) {
+                }
+                if (currentSpace > nbOfSpaces) {
+                    continue;
+                }
+                if (currentText.indexOf('-') === 0) {
+                    currentText = currentText.substring(2, currentText.length);
+                    rootArrayElement = true;
+                }
+                if (currentText.split(':')[0] === '' ) {
                     continue;
                 }
                 neighbour.push(currentText.split(':')[0]);
+                if (rootArrayElement) {
+                    break;
+                }
             }
         }
         if (position.lineNumber <= model.getLineCount()) {
@@ -200,54 +237,66 @@ export class Editor {
     }
 
     static findKeySuggestion(model: ITextModel, position: IPosition, parents: string[], schema: FlatSchema, depth: number) {
-        let eltMatchesLevel = schema.flatElements
-            .filter(felt => felt.positions.findIndex(p => p.depth === depth) !== -1)
-            .map(felt => {
-                felt.positions = felt.positions.filter(p => p.depth === depth);
-                return felt;
-            });
         let suggestions = [];
-
-        let lastParent = parents[parents.length - 1];
-        if (lastParent && parents[parents.length - 1].indexOf('-') === 0) {
-            let lastParentTrimmed = lastParent.substring(1, lastParent.length).trim();
-            suggestions = schema.flatElements
-                .filter(elt => elt.positions.filter(p => p.depth === depth && p.parent[depth - 1] === lastParentTrimmed).length > 0)
-                .map(elt => elt.name);
-        } else {
-            if (lastParent && parents[parents.length - 1].indexOf('-') === 0) {
-                let lastParentTrimmed = lastParent.substring(1, lastParent.length).trim();
-                suggestions = schema.flatElements
-                    .filter(elt => elt.positions.filter(p => p.depth === depth && p.parent[depth - 1] === lastParentTrimmed).length > 0)
-                    .map(elt => elt.name);
-            } else {
-                // Find key to exclude from suggestion
-                let keyToExclude = Editor.findKeyToExclude(model, position, lastParent, schema);
-
-                // Filter suggestion ( match match and not in exclude array )
-                suggestions = eltMatchesLevel.map(elt => {
-                    let keepElt = false;
-                    for (let i = 0; i < elt.positions.length; i++) {
-                        let parentMatch = true;
-                        for (let j = 0; j < elt.positions[i].parent.length; j++) {
-                            const regExp = RegExp(elt.positions[i].parent[j]);
-                            if (!regExp.test(parents[j])) {
-                                parentMatch = false;
-                                break;
-                            }
-                        }
-                        if (parentMatch) {
-                            keepElt = true;
-                            break;
-                        }
-                    }
-                    if (keepElt && keyToExclude.findIndex(e => e === elt.name) === -1) {
-                        return elt.name + ': ';
-                    }
-                }).filter(elt => elt);
-            }
+        if (!depth) {
+            depth = 0;
         }
 
+       
+        let lastParent = parents[parents.length - 1];
+        // Find key to exclude from suggestion    
+        let keyToExclude = Editor.findKeyToExclude(model, position, lastParent, schema);
+
+        let eltMatchesLevel = schema.flatElements
+        .filter(felt => felt.positions.findIndex(p => p.depth === depth) !== -1)
+        .map(felt => {
+            let i = JSON.parse(JSON.stringify(felt))
+            i.positions = i.positions.filter(p => p.depth === depth);
+            return i;
+        });
+
+        // Filter suggestion ( match match and not in exclude array )
+        suggestions = eltMatchesLevel.map(elt => {
+            let keepElt = false;
+            for (let i = 0; i < elt.positions.length; i++) {
+                let parentMatch = true;
+                for (let j = 0; j < elt.positions[i].parent.length; j++) {
+                    let regexp = elt.positions[i].parent[j];
+                    if (regexp.indexOf('[') === -1) {
+                        regexp = '^' + regexp + '$';
+                    }
+                    const regExp = RegExp(regexp);
+                    if (!regExp.test(parents[j])) {
+                        parentMatch = false;
+                        break;
+                    }
+                }
+                if (parentMatch) {
+                    keepElt = true;
+                    break;
+                }
+            }
+            if (keepElt && keyToExclude.findIndex(e => e === elt.name) === -1) {
+                return elt.name + ': ';
+            }
+        }).filter(elt => elt);
+
+        // Check if parent is an array and if we start a new element ( ie: in the suggestion there is all the children )
+        if (depth > 0 && suggestions.length > 0) {
+            let eltMatchesLevel = schema.flatElements
+                .filter(felt => felt.name === lastParent && felt.positions.findIndex(p => p.depth === depth-1) !== -1);
+            if (eltMatchesLevel.length === 1) {
+                if (eltMatchesLevel[0].type.length === 1 && eltMatchesLevel[0].type[0] === 'array') {
+                    let schemaType = eltMatchesLevel[0].schemaType;
+                    if (schemaType && schema.flatTypes.has(schemaType) && schema.flatTypes.get(schemaType).length === suggestions.length) {
+                       suggestions.forEach((v, i) => {
+                        suggestions[i] = '- ' + v;
+                       })
+                    }
+                }
+            }
+       } 
+    
         return suggestions;
     }
 
