@@ -7,6 +7,10 @@
 	<nz-code-editor #editor [ngModel]="systemout" [nzEditorOption]="editorOptionRaw"
 		(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>
 </ng-container>
+<ng-container *ngIf="selectedTab && selectedTab.key === 'systemerr'">
+	<nz-code-editor #editor [ngModel]="systemerr" [nzEditorOption]="editorOptionRaw"
+		(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>
+</ng-container>
 <ng-container *ngIf="selectedTab && selectedTab.key === 'raw'">
 	<nz-code-editor #editor [ngModel]="testRaw" [nzEditorOption]="editorOption"
 		(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>

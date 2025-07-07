@@ -103,6 +103,7 @@ type FullEventV2 struct {
 	PurgeReportID    string          `json:"purge_report_id,omitempty"`
 	VCSName          string          `json:"vcs_name,omitempty"`
 	Repository       string          `json:"repository,omitempty"`
+	RepositoryOrigin string          `json:"repository_origin,omitempty"`
 	Workflow         string          `json:"workflow,omitempty"`
 	WorkflowRunID    string          `json:"workflow_run_id,omitempty"`
 	RunJobID         string          `json:"run_job_id,omitempty"`
@@ -300,16 +301,17 @@ type UserGPGEvent struct {
 type WorkflowRunEvent struct {
 	GlobalEventV2
 	ProjectEventV2
-	VCSName       string              `json:"vcs_name"`
-	Repository    string              `json:"repository"`
-	Workflow      string              `json:"workflow"`
-	RunNumber     int64               `json:"run_number"`
-	RunAttempt    int64               `json:"run_attempt"`
-	Status        V2WorkflowRunStatus `json:"status"`
-	WorkflowRunID string              `json:"workflow_run_id"`
-	UserID        string              `json:"user_id"`
-	Username      string              `json:"username"`
-	UserEmail     string              `json:"user_mail"`
+	VCSName          string              `json:"vcs_name"`
+	Repository       string              `json:"repository"`
+	RepositoryOrigin string              `json:"repository_origin"`
+	Workflow         string              `json:"workflow"`
+	RunNumber        int64               `json:"run_number"`
+	RunAttempt       int64               `json:"run_attempt"`
+	Status           V2WorkflowRunStatus `json:"status"`
+	WorkflowRunID    string              `json:"workflow_run_id"`
+	UserID           string              `json:"user_id"`
+	Username         string              `json:"username"`
+	UserEmail        string              `json:"user_mail"`
 }
 
 type WorkflowRunJobEvent struct {

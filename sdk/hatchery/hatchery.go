@@ -681,16 +681,18 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 
 	workerStarterModel := &sdk.WorkerStarterWorkerModel{ModelV2: &jobInf.Model}
 
-	preCmd := `#!/bin/sh
-    if [ ! -z ` + "`which curl`" + ` ]; then
-      curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o /usr/local/bin/worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
-    elif [ ! -z ` + "`which wget`" + ` ]; then
-      wget "{{.API}}/download/worker/linux/$(uname -m)" -O /usr/local/bin/worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
+	// No check need on jobInf.Model.OSArch as the hatchery can only take osarch that match herself
+
+	preCmd := fmt.Sprintf(`#!/bin/sh
+    if [ ! -z `+"`which curl`"+` ]; then
+      curl -L "{{.API}}/download/worker/%s" -o /usr/local/bin/worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
+    elif [ ! -z `+"`which wget`"+` ]; then
+      wget "{{.API}}/download/worker/%s" -O /usr/local/bin/worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
     else
       echo "Missing requirements to download CDS worker binary.";
       exit 1;
     fi
-  `
+  `, jobInf.Model.OSArch, jobInf.Model.OSArch)
 
 	switch jobInf.Model.Type {
 	case sdk.WorkerModelTypeDocker:
@@ -698,7 +700,7 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 			workerStarterModel.Cmd = "curl {{.API}}/download/worker/windows/amd64 -o worker.exe && worker.exe"
 			workerStarterModel.Shell = "cmd.exe /C"
 		} else {
-			workerStarterModel.Cmd = "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
+			workerStarterModel.Cmd = "curl {{.API}}/download/worker/" + jobInf.Model.OSArch + " -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
 			workerStarterModel.Shell = "sh -c"
 		}
 		var dockerSpec sdk.V2WorkerModelDockerSpec

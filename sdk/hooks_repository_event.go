@@ -304,11 +304,12 @@ type HookRepositoryEventExtractedDataWebHook struct {
 }
 
 type HookRepositoryEventExtractedDataManual struct {
-	Project      string `json:"project"`
-	Workflow     string `json:"workflow"`
-	TargetCommit string `json:"target_commit"`
-	TargetBranch string `json:"target_branch"`
-	TargetTag    string `json:"target_tag"`
+	Project          string `json:"project,omitempty"`
+	Workflow         string `json:"workflow,omitempty"`
+	TargetCommit     string `json:"target_commit,omitempty"`
+	TargetBranch     string `json:"target_branch,omitempty"`
+	TargetTag        string `json:"target_tag,omitempty"`
+	TargetRepository string `json:"target_repository,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWorkflowRun struct {
@@ -357,6 +358,7 @@ type HookRetrieveSignKeyRequest struct {
 	HookEventKey          string `json:"hook_event_key"`
 	GetSigninKey          bool   `json:"get_signin_key"`
 	ChangesetsCommitSince string `json:"changesets_commit"`
+	ChangesetsBranchTo    string `json:"changesets_branch_to"`
 	GetChangesets         bool   `json:"get_changesets"`
 	GetSemver             bool   `json:"get_semver"`
 	GetCommitMessage      bool   `json:"commit_message"`

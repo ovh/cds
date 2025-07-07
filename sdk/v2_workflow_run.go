@@ -49,6 +49,7 @@ type V2WorkflowRunHookRequest struct {
 	WorkflowRunID      string                 `json:"workflow_run_id"`
 	WebhookID          string                 `json:"webhook_id"`
 	Initiator          *V2Initiator           `json:"initiator"`
+	TargetRepository   string                 `json:"target_repository"`
 }
 
 type V2WorkflowRun struct {
@@ -221,6 +222,7 @@ type V2WorkflowRunEvent struct {
 	EventName         WorkflowHookEventName  `json:"event_name"`
 	Ref               string                 `json:"ref"`
 	Sha               string                 `json:"sha"`
+	RepositoryOrigin  string                 `json:"repository_origin"`
 	PullRequestID     int64                  `json:"pullrequest_id"`
 	PullRequestToRef  string                 `json:"pullrequest_to_ref,omitempty"`
 	CommitMessage     string                 `json:"commit_message"`
@@ -777,6 +779,8 @@ type HookManualWorkflowRun struct {
 	Repository     string
 	WorkflowRef    string
 	WorkflowCommit string
+	TargetRepo     string
+	TargetVCS      string
 	Workflow       string
 	UserID         string
 	Username       string
