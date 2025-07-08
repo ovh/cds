@@ -1868,10 +1868,10 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 	// Check jobs : Needs / Condition / User Right
 	stages := run.GetStages()
 	if len(stages) > 0 {
-		for k, j := range allrunJobsMap {
+		for k, j := range runJobsContexts {
 			stageName := run.WorkflowData.Workflow.Jobs[k].Stage
 			jobInStage := stages[stageName].Jobs[k]
-			jobInStage.Status = j.Status
+			jobInStage.Status = j.Result
 			stages[stageName].Jobs[k] = jobInStage
 		}
 		stages.ComputeStatus()
