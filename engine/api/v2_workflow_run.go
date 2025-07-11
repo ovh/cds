@@ -1323,7 +1323,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 
 			// Search workflow commit to run
 			workflowEntity, err := entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName)
-			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
 			// If not found, fallback on default branch
