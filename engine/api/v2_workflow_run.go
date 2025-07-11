@@ -1303,17 +1303,15 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			var workflowRef, workflowCommit string
+			var workflowRef string
 			if runRequest.WorkflowBranch != "" {
 				workflowRef = sdk.GitRefBranchPrefix + runRequest.WorkflowBranch
 			} else if runRequest.WorkflowTag != "" {
 				workflowRef = sdk.GitRefTagPrefix + runRequest.WorkflowTag
 			} else if runRequest.Branch != "" {
 				workflowRef = sdk.GitRefBranchPrefix + runRequest.Branch
-				workflowCommit = runRequest.Sha
 			} else if runRequest.Tag != "" {
 				workflowRef = sdk.GitRefTagPrefix + runRequest.Tag
-				workflowCommit = runRequest.Sha
 			} else {
 				// Retrieve default branch
 				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
@@ -1321,24 +1319,22 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 					return err
 				}
 				workflowRef = defaultBranch.ID
-				workflowCommit = defaultBranch.LatestCommit
 			}
-			if workflowCommit == "" || workflowCommit == "HEAD" {
-				switch {
-				case strings.HasPrefix(workflowRef, sdk.GitRefBranchPrefix):
-					// Retrieve branch to get commit
-					b, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(workflowRef, sdk.GitRefBranchPrefix)})
-					if err != nil {
-						return err
-					}
-					workflowCommit = b.LatestCommit
-				default:
-					// Retrieve branch to get commit
-					t, err := vcsClient.Tag(ctx, repo.Name, strings.TrimPrefix(workflowRef, sdk.GitRefTagPrefix))
-					if err != nil {
-						return err
-					}
-					workflowCommit = t.Hash
+
+			// Search workflow commit to run
+			workflowEntity, err := entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName)
+			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			// If not found, fallback on default branch
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+				if err != nil {
+					return err
+				}
+				workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, defaultBranch.ID, sdk.EntityTypeWorkflow, workflowName)
+				if err != nil {
+					return err
 				}
 			}
 
@@ -1349,7 +1345,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				Repository:     repo.Name,
 				WorkflowRef:    workflowRef,
 				TargetRepo:     runRequest.TargetRepository,
-				WorkflowCommit: workflowCommit,
+				WorkflowCommit: workflowEntity.Commit,
 				Workflow:       workflowName,
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				Username:       u.AuthConsumerUser.AuthentifiedUser.Username,
