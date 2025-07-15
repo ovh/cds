@@ -1,0 +1,51 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    padding: 20px;
+
+    .editor {
+        height: 50%;
+        width: 100%;
+
+        nz-code-editor {
+            height: 90%;
+            border-left: 1px solid #f0f0f0;
+
+            :host-context(.night) & {
+                background-color: #1e1e1e;
+                border-left: 1px solid #303030;
+            }
+        }
+
+        .buttons {
+            height: 10%;
+            display: flex;
+
+            .left {
+                width: 50%;
+                justify-content: flex-start;
+            }
+            .right {
+                width: 50%;
+                display: flex;
+                justify-content: flex-end;
+
+                button {
+                    margin-left: 10px;
+                }
+            }
+        }
+    }
+
+    .report {
+        height: 50%;
+        padding-top: 20px;
+    }
+}
+
+.modalHeight {
+    height: 500px;
+}

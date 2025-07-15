@@ -222,14 +222,6 @@ func (api *API) updateProjectHandler() service.Handler {
 		if key != proj.Key {
 			return sdk.WrapError(sdk.ErrWrongRequest, "updateProject> bad Project key %s/%s ", key, proj.Key)
 		}
-
-		if proj.WorkflowRetention <= 0 {
-			proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
-		}
-		if proj.WorkflowRetention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
-			proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
-		}
-
 		// Check is project exist
 		p, errProj := project.Load(ctx, api.mustDB(), key)
 		if errProj != nil {
@@ -458,11 +450,14 @@ func (api *API) postProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidProjectName, "project name must no be empty")
 		}
 
-		if prj.WorkflowRetention <= 0 {
-			prj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
-		}
-		if prj.WorkflowRetention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
-			prj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
+		projectRunRetention := sdk.ProjectRunRetention{
+			ProjectKey: prj.Key,
+			Retentions: sdk.Retentions{
+				DefaultRetention: sdk.RetentionRule{
+					DurationInDays: api.Config.WorkflowV2.WorkflowRunRetentionDefaultDays,
+					Count:          api.Config.WorkflowV2.WorkflowRunRetentionDefaultCount,
+				},
+			},
 		}
 
 		// Create a project within a transaction
@@ -604,6 +599,10 @@ func (api *API) postProjectHandler() service.Handler {
 			if err != nil {
 				return sdk.WithStack(err)
 			}
+		}
+
+		if err := project.InsertRunRetention(ctx, tx, &projectRunRetention); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {

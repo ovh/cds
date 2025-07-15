@@ -120,7 +120,7 @@ testcases:
         osarch: linux/amd64
         type: docker
         spec:
-          image: buildpack-deps:buster
+          image: buildpack-deps:bookworm
       workflows/workflowA.yaml:
         name: WorkflowA
         on: [push]

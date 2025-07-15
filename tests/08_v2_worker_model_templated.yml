@@ -52,7 +52,7 @@ testcases:
     git_email: "{{.Prepare-test.emailaddress}}"
     git_password: "{{.git.password}}"
     gpg_key_id: "{{.gpg.key_id}}"
-    branch: "buster"
+    branch: "bookworm"
     files:
       worker-models/model.yml:
         name: docker-buildpack-deps-tmpl

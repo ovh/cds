@@ -1445,7 +1445,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	if cdsUser == nil { // Committer can be not nil in GitHub usescases
 		cdsUser, err = user.LoadByUsername(ctx, db, committer, user.LoadOptions.WithContacts)
 		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", committer))
 			}
 		}
