@@ -85,7 +85,7 @@ testcases:
         osarch: linux/amd64
         type: docker
         spec:
-          image: buildpack-deps:buster
+          image: buildpack-deps:bookworm
       workflow-templates/jobMatrix.yaml:
         name: "matrixTemplate"
         parameters:
@@ -121,7 +121,7 @@ testcases:
         osarch: linux/amd64
         type: docker
         spec:
-          image: buildpack-deps:buster
+          image: buildpack-deps:bookworm
       workflow-templates/jobtmpl.yaml:
         name: "normalJobTemplate"
         parameters: []
@@ -155,7 +155,7 @@ testcases:
         osarch: linux/amd64
         type: docker
         spec:
-          image: buildpack-deps:buster
+          image: buildpack-deps:bookworm
       workflow-templates/wkftmpl.yaml:
         name: "workflowTmpl"
         parameters: []

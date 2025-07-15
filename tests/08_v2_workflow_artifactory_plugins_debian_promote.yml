@@ -147,7 +147,7 @@ testcases:
         osarch: linux/amd64
         type: docker
         spec:
-          image: buildpack-deps:buster
+          image: buildpack-deps:bookworm
       workflows/debian.yaml:
         name: {{.cds_workflow}}
         on: [push]
