@@ -157,7 +157,7 @@ testcases:
             runs-on: "{{.worker_model}}"
             steps:
               - uses: actions/checkout
-              - run: apt-get update -y && apt-get install -y python3-pip python3-stem python3-stdeb fakeroot python3-setuptools
+              - run: apt-get update -y && apt-get install -y python3-pip python3-stem python3-stdeb fakeroot python3-setuptools dh-python
               - run: |
                   pkgVersion=0.0.$(date +%s)
                   sed -i "s/0.0.1/${pkgVersion}/g" setup.py
