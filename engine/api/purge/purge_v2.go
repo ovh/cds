@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -367,13 +368,14 @@ func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExec
 	props.AddProperty("ovh.to_delete", "true")
 	props.AddProperty("ovh.to_delete_timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
-	results := make(chan bool, len(runResults))
+	wg := &sync.WaitGroup{}
 
 	for i := range runResults {
 		result := &runResults[i]
 		routines.Exec(ctx, fmt.Sprintf("purge-run-%s-result-%s", run.ID, result.ID), func(ctx context.Context) {
+			wg.Add(1)
 			defer func() {
-				results <- true
+				wg.Done()
 			}()
 
 			// Mark only artifact in snapshot repositories
@@ -398,10 +400,7 @@ func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExec
 			}
 		})
 	}
-
-	for i := 0; i < len(runResults); i++ {
-		<-results
-	}
+	wg.Wait()
 
 	return nil
 }
