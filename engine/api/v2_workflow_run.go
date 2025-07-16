@@ -491,7 +491,7 @@ func (api *API) deleteWorkflowRunV2Handler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			if err := purge.WorkflowRunV2(ctx, api.mustDB(), wr.ID); err != nil {
+			if err := purge.RemoveWorkflowRunV2(ctx, api.mustDB(), wr.ID); err != nil {
 				return err
 			}
 
@@ -1446,22 +1446,6 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, err
 	}
 	wr.RunNumber = wrNumber
-
-	if proj.WorkflowRetention <= 0 {
-		proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
-	}
-	if proj.WorkflowRetention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
-		proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
-	}
-
-	retention := time.Duration(proj.WorkflowRetention*24) * time.Hour
-	if wk.Retention > 0 {
-		if wk.Retention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
-			wk.Retention = api.Config.WorkflowV2.WorkflowRunMaxRetention
-		}
-		retention = time.Duration(wk.Retention*24) * time.Hour
-	}
-	wr.RetentionDate = time.Now().Add(retention)
 
 	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
 

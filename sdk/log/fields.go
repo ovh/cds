@@ -35,6 +35,7 @@ const (
 	RequestID          = log.Field("request_id")
 	RequestURI         = log.Field("request_uri")
 	Repository         = log.Field("repository")
+	PurgeReport        = log.Field("purge_report")
 	Operation          = log.Field("operation")
 	Route              = log.Field("route")
 	Service            = log.Field("service")
@@ -86,6 +87,7 @@ func init() {
 		Method,
 		Operation,
 		Project,
+		PurgeReport,
 		RbackCheckerName,
 		Repository,
 		RbacRole,

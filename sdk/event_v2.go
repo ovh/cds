@@ -27,6 +27,7 @@ const (
 	EventRunBuilding EventType = "RunBuilding"
 	EventRunEnded    EventType = "RunEnded"
 	EventRunRestart  EventType = "RunRestart"
+	EventRunDeleted  EventType = "RunDeleted"
 
 	EventEntityCreated EventType = "EntityCreated"
 	EventEntityUpdated EventType = "EntityUpdated"
@@ -76,6 +77,8 @@ const (
 	EventProjectUpdated EventType = "ProjectUpdated"
 	EventProjectDeleted EventType = "ProjectDeleted"
 
+	EventProjectPurge EventType = "EventProjectPurge"
+
 	EventNotificationCreated EventType = "NotificationCreated"
 	EventNotificationUpdated EventType = "NotificationUpdated"
 	EventNotificationDeleted EventType = "NotificationDeleted"
@@ -97,6 +100,7 @@ type FullEventV2 struct {
 	Type             EventType       `json:"type"`
 	Payload          json.RawMessage `json:"payload"`
 	ProjectKey       string          `json:"project_key,omitempty"`
+	PurgeReportID    string          `json:"purge_report_id,omitempty"`
 	VCSName          string          `json:"vcs_name,omitempty"`
 	Repository       string          `json:"repository,omitempty"`
 	RepositoryOrigin string          `json:"repository_origin,omitempty"`
@@ -370,6 +374,12 @@ type ProjectEvent struct {
 	ProjectEventV2
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
+}
+
+type ProjectPurgeEvent struct {
+	GlobalEventV2
+	ProjectEventV2
+	PurgeReportID string `json:"purge_report_id,omitempty"`
 }
 
 func NewEventWorkflowRunPayload(wr V2WorkflowRun, rjs map[string]V2WorkflowRunJob, runResults []V2WorkflowRunResult) (*EventWorkflowRunPayload, error) {
