@@ -25,11 +25,12 @@ import (
 
 type PurgeOption struct {
 	DisabledDryRun bool
+	DryRunRules    *sdk.ProjectRunRetention
 	ReportID       string
 }
 
 // WorkflowRunsV2 deletes workflow run v2
-func PurgeWorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, purgeRoutineTicker int64) {
+func PurgeWorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, purgeRoutineTicker int64, routines *sdk.GoRoutines) {
 	tickPurge := time.NewTicker(time.Duration(purgeRoutineTicker) * time.Hour)
 	defer tickPurge.Stop()
 
@@ -47,7 +48,7 @@ func PurgeWorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, store c
 			}
 			for _, pkey := range pkeys {
 				ctx := context.WithValue(ctx, cdslog.Project, pkey)
-				if err := ApplyRunRetentionOnProject(ctx, DBFunc(), store, pkey, PurgeOption{DisabledDryRun: true}); err != nil {
+				if err := ApplyRunRetentionOnProject(ctx, DBFunc(), store, pkey, routines, PurgeOption{DisabledDryRun: true}); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			}
@@ -55,7 +56,7 @@ func PurgeWorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, store c
 	}
 }
 
-func ApplyRunRetentionOnProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pkey string, opts PurgeOption) error {
+func ApplyRunRetentionOnProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pkey string, routines *sdk.GoRoutines, opts PurgeOption) error {
 	lockKey := cache.Key("v2", "purge", "run", pkey)
 	b, err := store.Lock(lockKey, 5*time.Minute, 100, 1)
 	if err != nil {
@@ -68,9 +69,12 @@ func ApplyRunRetentionOnProject(ctx context.Context, db *gorp.DbMap, store cache
 	log.Info(ctx, "Start PurgeProjectWorkflowRun for project %s", pkey)
 	defer log.Info(ctx, "End PurgeProjectWorkflowRun for project %s", pkey)
 
-	projectRunRetention, err := project.LoadRunRetentionByProjectKey(ctx, db, pkey)
-	if err != nil {
-		return sdk.WrapError(err, "unable to load project run retention")
+	projectRunRetention := opts.DryRunRules
+	if projectRunRetention == nil {
+		projectRunRetention, err = project.LoadRunRetentionByProjectKey(ctx, db, pkey)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load project run retention")
+		}
 	}
 
 	// Load workflow
@@ -90,7 +94,7 @@ func ApplyRunRetentionOnProject(ctx context.Context, db *gorp.DbMap, store cache
 
 	ctx = context.WithValue(ctx, cdslog.PurgeReport, report.ID)
 	for _, w := range wnames {
-		reportWorkflow := ApplyRunRetentionOnWorkflow(ctx, db, store, pkey, w, projectRunRetention, opts)
+		reportWorkflow := ApplyRunRetentionOnWorkflow(ctx, db, store, pkey, w, projectRunRetention, routines, opts)
 		if len(reportWorkflow.Refs) > 0 {
 			report.Workflows = append(report.Workflows, reportWorkflow)
 		}
@@ -125,7 +129,7 @@ func ApplyRunRetentionOnProject(ctx context.Context, db *gorp.DbMap, store cache
 	return nil
 }
 
-func ApplyRunRetentionOnWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, pkey, workflowFullName string, projectRunRetention *sdk.ProjectRunRetention, opts PurgeOption) sdk.WorkflowPurgeReport {
+func ApplyRunRetentionOnWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, pkey, workflowFullName string, projectRunRetention *sdk.ProjectRunRetention, routines *sdk.GoRoutines, opts PurgeOption) sdk.WorkflowPurgeReport {
 	workflowReport := sdk.WorkflowPurgeReport{
 		WorkflowName: workflowFullName,
 	}
@@ -193,7 +197,7 @@ func ApplyRunRetentionOnWorkflow(ctx context.Context, db *gorp.DbMap, store cach
 			ruleRetention = workflowRetention.DefaultRetention
 		}
 
-		refReport, err := ApplyRunRetentionOnWorkflowRef(ctx, db, store, pkey, vcs, repo, workflowName, ref, ruleRetention, opts)
+		refReport, err := ApplyRunRetentionOnWorkflowRef(ctx, db, store, pkey, vcs, repo, workflowName, ref, ruleRetention, routines, opts)
 		if len(refReport.DeletedDatas) != 0 || refReport.Error != "" {
 			workflowReport.Refs = append(workflowReport.Refs, refReport)
 		}
@@ -206,7 +210,7 @@ func ApplyRunRetentionOnWorkflow(ctx context.Context, db *gorp.DbMap, store cach
 	return workflowReport
 }
 
-func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store cache.Store, pkey, vcs, repo, workflowName, ref string, ruleRetention *sdk.RetentionRule, opts PurgeOption) (sdk.WorkflowRefPurgeReport, error) {
+func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store cache.Store, pkey, vcs, repo, workflowName, ref string, ruleRetention *sdk.RetentionRule, routines *sdk.GoRoutines, opts PurgeOption) (sdk.WorkflowRefPurgeReport, error) {
 	log.Info(ctx, "Start deleting run for workflow %s/%s/%s/%s on branch %s. Count %d Duration %d", pkey, vcs, repo, workflowName, ref, ruleRetention.Count, ruleRetention.DurationInDays)
 	defer log.Info(ctx, "End deleting run for workflow %s/%s/%s/%s on branch %s", pkey, vcs, repo, workflowName, ref)
 
@@ -227,7 +231,7 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 			return gitRefReport, err
 		}
 		if opts.DisabledDryRun {
-			if err := RemoveWorkflowRunV2(ctx, db, id); err != nil {
+			if err := RemoveWorkflowRunV2(ctx, db, id, routines); err != nil {
 				gitRefReport.Error = "unable to remove run " + id
 				return gitRefReport, err
 			}
@@ -248,7 +252,7 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 			return gitRefReport, err
 		}
 		if opts.DisabledDryRun {
-			if err := RemoveWorkflowRunV2(ctx, db, id); err != nil {
+			if err := RemoveWorkflowRunV2(ctx, db, id, routines); err != nil {
 				gitRefReport.Error = "unable to remove run " + id
 				return gitRefReport, err
 			}
@@ -263,7 +267,7 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 	return gitRefReport, nil
 }
 
-func RemoveWorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
+func RemoveWorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string, routines *sdk.GoRoutines) error {
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeCDN)
 	if err != nil {
 		return err
@@ -286,7 +290,7 @@ func RemoveWorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
 		return err
 	}
 
-	if err := DeleteArtifactsFromRepositoryManagerV2(ctx, tx, run); err != nil {
+	if err := DeleteArtifactsFromRepositoryManagerV2(ctx, tx, run, routines); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -306,7 +310,7 @@ func RemoveWorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
 	return nil
 }
 
-func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExecutor, run *sdk.V2WorkflowRun) error {
+func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExecutor, run *sdk.V2WorkflowRun, routines *sdk.GoRoutines) error {
 	proj, err := project.Load(ctx, db, run.ProjectKey, project.LoadOptions.WithClearIntegrations)
 	if err != nil {
 		return err
@@ -363,29 +367,40 @@ func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExec
 	props.AddProperty("ovh.to_delete", "true")
 	props.AddProperty("ovh.to_delete_timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
+	results := make(chan bool, len(runResults))
+
 	for i := range runResults {
 		result := &runResults[i]
+		routines.Exec(ctx, fmt.Sprintf("purge-run-%s-result-%s", run.ID, result.ID), func(ctx context.Context) {
+			defer func() {
+				results <- true
+			}()
 
-		// Mark only artifact in snapshot repositories
-		if result.ArtifactManagerMetadata.Get("maturity") != lowMaturity {
-			continue
-		}
-		if result.ArtifactManagerIntegrationName == nil {
-			continue
-		}
-		localRepository := result.ArtifactManagerMetadata.Get("localRepository")
-		filePath := result.ArtifactManagerMetadata.Get("path")
-		fi, err := artifactClient.GetFileInfo(localRepository, filePath)
-		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
-			continue
-		}
-		if err := artifactClient.SetProperties(localRepository, fi.Path, props); err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Info(ctx, "unable to mark artifact %q %q (run result %d) to delete: %v", localRepository, fi.Path, result.ID, err)
-			continue
-		}
+			// Mark only artifact in snapshot repositories
+			if result.ArtifactManagerMetadata.Get("maturity") != lowMaturity {
+				return
+			}
+			if result.ArtifactManagerIntegrationName == nil {
+				return
+			}
+			localRepository := result.ArtifactManagerMetadata.Get("localRepository")
+			filePath := result.ArtifactManagerMetadata.Get("path")
+			fi, err := artifactClient.GetFileInfo(localRepository, filePath)
+			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
+				return
+			}
+			if err := artifactClient.SetProperties(localRepository, fi.Path, props); err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Info(ctx, "unable to mark artifact %q %q (run result %d) to delete: %v", localRepository, fi.Path, result.ID, err)
+				return
+			}
+		})
+	}
+
+	for i := 0; i < len(runResults); i++ {
+		<-results
 	}
 
 	return nil
