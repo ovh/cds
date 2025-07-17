@@ -1087,7 +1087,7 @@ func (a *API) Serve(ctx context.Context) error {
 		})
 	a.GoRoutines.Run(ctx, "Purge-Runs-V2",
 		func(ctx context.Context) {
-			purge.PurgeWorkflowRunsV2(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.WorkflowV2.RunRetentionScheduling)
+			purge.PurgeWorkflowRunsV2(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.WorkflowV2.RunRetentionScheduling, a.GoRoutines)
 		})
 
 	// Check maintenance on redis

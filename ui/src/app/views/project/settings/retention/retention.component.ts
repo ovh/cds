@@ -100,6 +100,17 @@ export class ProjectRunRetentionComponent implements OnInit {
     }
 
     runDryRunRetention(): void {
+         try {
+            this.retention.retentions = load(this.dataEditor && this.dataEditor !== '' ? this.dataEditor : '{}', <LoadOptions>{
+                onWarning: (e) => {}
+            });
+            this._v2ProjectService.updateRetention(this.project.key, this.retention).pipe(first()).subscribe(() => {
+                this._messageService.success('Project run retention updated');
+            });
+        } catch (e) {
+            this._messageService.error('Invalid yaml data');
+            return;
+        }
         this._v2ProjectService.runDryRunRetention(this.project.key, this.retention).pipe(first(), finalize(() => {
             this._cd.markForCheck();
         })).subscribe(e => {
