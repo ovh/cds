@@ -125,7 +125,7 @@ func TestApplyRunRetentionOnProject_WorkflowWithRetention(t *testing.T) {
 		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 	}
 
-	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, PurgeOption{DisabledDryRun: true}))
+	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, &sdk.GoRoutines{}, PurgeOption{DisabledDryRun: true}))
 
 	wrDB, err := workflow_v2.LoadRuns(ctx, db, p.Key, vcs.ID, repo.ID, wkname)
 	require.NoError(t, err)
@@ -213,7 +213,7 @@ func TestApplyRunRetentionOnProject_FallbackProjectDefaultRule(t *testing.T) {
 
 	}
 
-	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, PurgeOption{DisabledDryRun: true}))
+	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, &sdk.GoRoutines{}, PurgeOption{DisabledDryRun: true}))
 
 	wrDB, err := workflow_v2.LoadRuns(ctx, db, p.Key, vcs.ID, repo.ID, wkname)
 	require.NoError(t, err)
