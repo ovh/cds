@@ -160,16 +160,16 @@ func (w WorkerStarterWorkerModel) GetFlavor(reqs RequirementList, defaultFlavor 
 			return w.ModelV1.ModelVirtualMachine.Flavor
 		}
 	case w.ModelV2 != nil:
+		for _, r := range reqs {
+			if r.Type == FlavorRequirement && r.Value != "" {
+				return r.Value
+			}
+		}
 		if w.Flavor != "" {
 			return w.Flavor
 		}
 		if w.OpenstackSpec.Flavor != "" {
 			return w.OpenstackSpec.Flavor
-		}
-		for _, r := range reqs {
-			if r.Type == FlavorRequirement && r.Value != "" {
-				return r.Value
-			}
 		}
 	}
 	return defaultFlavor
