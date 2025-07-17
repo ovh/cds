@@ -372,11 +372,9 @@ func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExec
 
 	for i := range runResults {
 		result := &runResults[i]
+		wg.Add(1)
 		routines.Exec(ctx, fmt.Sprintf("purge-run-%s-result-%s", run.ID, result.ID), func(ctx context.Context) {
-			wg.Add(1)
-			defer func() {
-				wg.Done()
-			}()
+			defer wg.Done()
 
 			// Mark only artifact in snapshot repositories
 			if result.ArtifactManagerMetadata.Get("maturity") != lowMaturity {
