@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/rockbears/log"
@@ -14,8 +15,15 @@ import (
 )
 
 func TestHatcheryOpenstack_CanSpawn(t *testing.T) {
-	h := &HatcheryOpenstack{}
+	h := &HatcheryOpenstack{Config: HatcheryConfiguration{
+		DefaultFlavor: "b2-7",
+	}}
+	h.Config.Provision.MaxWorker = 10
 	h.cache = NewCache(1, 1)
+	h.cache.SetServers([]servers.Server{
+		{Metadata: map[string]string{"flavor": "b2-7"}},
+	})
+	h.flavors = []flavors.Flavor{{Name: "b2-7", VCPUs: 2}}
 
 	// no model, no requirement, canSpawn must be true
 	canSpawn, err := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", nil)
