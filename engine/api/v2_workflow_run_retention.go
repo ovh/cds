@@ -34,11 +34,16 @@ func (api *API) postWorkflowRunRetentionDryRunHandler() ([]service.RbacChecker, 
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
+			var projectRunRetention sdk.ProjectRunRetention
+			if err := service.UnmarshalBody(req, &projectRunRetention); err != nil {
+				return err
+			}
+
 			reportID := sdk.UUID()
 			api.GoRoutines.Exec(context.Background(), "manual-dry-run-purge-"+pKey, func(ctx context.Context) {
 				ctx = context.WithValue(ctx, cdslog.Project, pKey)
 				time.Sleep(1 * time.Second)
-				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, purge.PurgeOption{DisabledDryRun: false, ReportID: reportID}); err != nil {
+				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, api.GoRoutines, purge.PurgeOption{DisabledDryRun: false, DryRunRules: &projectRunRetention, ReportID: reportID}); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			})
@@ -62,7 +67,7 @@ func (api *API) postWorkflowRunRetentionStartHandler() ([]service.RbacChecker, s
 			api.GoRoutines.Exec(context.Background(), "manual-purge-"+pKey, func(ctx context.Context) {
 				ctx = context.WithValue(ctx, cdslog.Project, pKey)
 				time.Sleep(1 * time.Second)
-				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, purge.PurgeOption{DisabledDryRun: true, ReportID: reportID}); err != nil {
+				if err := purge.ApplyRunRetentionOnProject(ctx, api.mustDB(), api.Cache, pKey, api.GoRoutines, purge.PurgeOption{DisabledDryRun: true, ReportID: reportID}); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			})

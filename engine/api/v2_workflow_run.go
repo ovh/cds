@@ -491,7 +491,7 @@ func (api *API) deleteWorkflowRunV2Handler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			if err := purge.RemoveWorkflowRunV2(ctx, api.mustDB(), wr.ID); err != nil {
+			if err := purge.RemoveWorkflowRunV2(ctx, api.mustDB(), wr.ID, api.GoRoutines); err != nil {
 				return err
 			}
 
