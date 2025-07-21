@@ -58,7 +58,7 @@ testcases:
           osarch: linux/amd64
           type: docker
           spec:
-            image: buildpack-deps:buster
+            image: buildpack-deps:bookworm
         workflows/workflow_notifications.yaml:
           name: {{.cds_workflow}}
           commit-status:

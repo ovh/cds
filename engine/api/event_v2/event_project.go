@@ -26,3 +26,20 @@ func PublishProjectEvent(ctx context.Context, store cache.Store, eventType sdk.E
 	}
 	publish(ctx, store, e)
 }
+
+func PublishProjectPurgeEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, projectKey string, purgeReport sdk.PurgeReport) {
+	bts, _ := json.Marshal(purgeReport)
+	e := sdk.ProjectPurgeEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
+		ProjectEventV2: sdk.ProjectEventV2{
+			ProjectKey: projectKey,
+		},
+		PurgeReportID: purgeReport.ID,
+	}
+	publish(ctx, store, e)
+}

@@ -77,3 +77,27 @@ func (c *client) ProjectV2Access(ctx context.Context, projectKey, sessionID stri
 	}
 	return nil
 }
+
+func (c *client) ProjectRunPurge(ctx context.Context, projectKey string) error {
+	url := fmt.Sprintf("/v2/project/%s/run/retention/start", projectKey)
+	if _, err := c.PostJSON(ctx, url, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) ProjectRunRetentionImport(ctx context.Context, projectKey string, prr sdk.ProjectRunRetention) error {
+	url := fmt.Sprintf("/v2/project/%s/run/retention", projectKey)
+	if _, err := c.PutJSON(ctx, url, prr, nil); err != nil {
+		return err
+	}
+	return nil
+}
+func (c *client) ProjectRunRetentionGet(ctx context.Context, projectKey string) (*sdk.ProjectRunRetention, error) {
+	var prr sdk.ProjectRunRetention
+	url := fmt.Sprintf("/v2/project/%s/run/retention", projectKey)
+	if _, err := c.GetJSON(ctx, url, &prr); err != nil {
+		return nil, err
+	}
+	return &prr, nil
+}

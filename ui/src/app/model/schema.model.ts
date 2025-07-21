@@ -201,6 +201,9 @@ export class JSONSchema implements Schema {
                 type = ['object'];
             }
             flatElement.type = type;
+            if (properties?.items?.$ref) {
+               flatElement.schemaType = properties?.items.$ref.replace(JSONSchema.refPrefix, '');
+            }
             flatElement.positions = new Array<FlatElementPosition>();
             flatElement.oneOf = new FlatElementsOneOfRequired();
             if (oneOf) {
@@ -268,6 +271,7 @@ export class FlatElement {
     name: string;
     positions: Array<FlatElementPosition>;
     type: Array<string>;
+    schemaType: string;
     enum: Array<string>;
     children: Array<string>;
     oneOf: FlatElementsOneOfRequired;

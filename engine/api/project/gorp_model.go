@@ -12,6 +12,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type dbProjectRunRetention struct {
+	sdk.ProjectRunRetention
+}
+
 type dbProjectWebHook struct {
 	sdk.ProjectWebHook
 }
@@ -190,6 +194,8 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableSetItemSecret{}, "project_variable_set_secret", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectConcurrency{}, "project_concurrency", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectWebHook{}, "project_webhook", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectRunRetention{}, "project_run_retention", false, "id"))
+
 }
 
 // PostGet is a db hook
