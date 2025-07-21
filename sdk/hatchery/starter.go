@@ -168,7 +168,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		jobRun, err := h.CDSClientV2().V2HatcheryTakeJob(ctx, j.region, j.id)
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Info(ctx, "cannot book job: %s", err)
+			log.Info(ctx, "cannot book job with id %q: %s", j.id, err)
 			return false
 		}
 		arg.RunID = jobRun.WorkflowRunID
@@ -200,7 +200,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			next()
 			// perhaps already booked by another hatchery
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Info(ctx, "cannot book job: %s", err)
+			log.Info(ctx, "cannot book job with id %q: %s", j.id, err)
 			cancel()
 			return false
 		}
