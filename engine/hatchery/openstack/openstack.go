@@ -264,19 +264,44 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, _ string, requirements []sdk.Requirement) (bool, error) {
+func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "openstack.CanSpawn")
 	defer end()
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
-			return false, nil
+			return false
 		}
 		if r.Type == sdk.FlavorRequirement && len(h.Config.AllowedFlavors) > 0 {
 			if !slices.Contains(h.Config.AllowedFlavors, r.Value) {
-				return false, nil
+				return false
 			}
 		}
 	}
+
+	return true
+}
+
+func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
+	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
+	log.Debug(ctx, "CanAllocateResources> Job %s will require a %q flavor to start", jobID, flavorName)
+
+	flavor, err := h.flavor(flavorName)
+	if err != nil {
+		return false, err
+	}
+
+	if len(h.Config.AllowedFlavors) > 0 && !slices.Contains(h.Config.AllowedFlavors, flavor.Name) {
+		log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID)
+		return false, nil
+	}
+
+	if err := h.checkSpawnLimits(ctx, flavor, model); err != nil {
+		log.Debug(ctx, "CanAllocateResources> Job %s can't spawn because check limits returned and error: %v", jobID, err)
+		return false, nil
+	}
+
+	log.Debug(ctx, "CanAllocateResources> Job %s can spawn on the Hatchery", jobID)
+
 	return true, nil
 }
 

@@ -2,7 +2,6 @@ package swarm
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -386,7 +385,24 @@ func TestHatcherySwarm_CanSpawn(t *testing.T) {
 			Name: "mygroup",
 		},
 	}
-	jobID := int64(1)
+
+	can := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, "1", []sdk.Requirement{})
+	assert.True(t, can)
+}
+
+func TestHatcherySwarm_CanAllocateResources(t *testing.T) {
+	defer gock.Off()
+	h := InitTestHatcherySwarm(t)
+	h.dockerClients["default"].MaxContainers = 1
+
+	m := sdk.Model{
+		ID:   1,
+		Name: "my-model",
+		Group: &sdk.Group{
+			ID:   1,
+			Name: "mygroup",
+		},
+	}
 
 	containers := []types.Container{
 		{
@@ -396,13 +412,13 @@ func TestHatcherySwarm_CanSpawn(t *testing.T) {
 	}
 	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	b, err := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
-	assert.True(t, b)
+	can, err := h.CanAllocateResources(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, "1", []sdk.Requirement{})
+	assert.True(t, can)
 	require.Nil(t, err)
 	assert.True(t, gock.IsDone())
 }
 
-func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
+func TestHatcherySwarm_CanAllocateResourcesMaxContainerReached(t *testing.T) {
 	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.Config.Name = "swarmy"
@@ -415,7 +431,6 @@ func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 			Name: "mygroup",
 		},
 	}
-	jobID := int64(1)
 
 	containers := []types.Container{
 		{
@@ -433,13 +448,13 @@ func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 	}
 
 	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
-	b, err := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
-	assert.False(t, b)
+	can, err := h.CanAllocateResources(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, "1", []sdk.Requirement{})
+	assert.False(t, can)
 	require.Nil(t, err)
 	assert.True(t, gock.IsDone())
 }
 
-func TestHatcherySwarm_CanSpawnNoDockerClient(t *testing.T) {
+func TestHatcherySwarm_CanAllocateResourcesNoDockerClient(t *testing.T) {
 	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.dockerClients = nil
@@ -451,9 +466,29 @@ func TestHatcherySwarm_CanSpawnNoDockerClient(t *testing.T) {
 			Name: "mygroup",
 		},
 	}
-	jobID := int64(1)
-	b, err := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
-	assert.False(t, b)
+	can, err := h.CanAllocateResources(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, "1", []sdk.Requirement{})
+	assert.False(t, can)
 	require.Nil(t, err)
+	assert.True(t, gock.IsDone())
+}
+
+func TestHatcherySwarm_CanAllocateResourcesClientError(t *testing.T) {
+	defer gock.Off()
+	h := InitTestHatcherySwarm(t)
+	h.Config.Name = "swarmy"
+	h.dockerClients["default"].MaxContainers = 2
+	m := sdk.Model{
+		ID:   1,
+		Name: "my-model",
+		Group: &sdk.Group{
+			ID:   1,
+			Name: "mygroup",
+		},
+	}
+
+	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusInternalServerError)
+	can, err := h.CanAllocateResources(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, "1", []sdk.Requirement{})
+	assert.False(t, can)
+	require.Error(t, err)
 	assert.True(t, gock.IsDone())
 }
