@@ -1882,6 +1882,7 @@ func TestPostWorkflowRunHandler(t *testing.T) {
 		Ref:                 "refs/heads/master",
 		Commit:              "HEAD",
 		ProjectRepositoryID: repo.ID,
+		Head:                true,
 		Data: `name: MyFirstWorkflow
 jobs:
   myFirstJob:
@@ -1896,6 +1897,7 @@ jobs:
 
 	// Mock Hook
 	s, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	s2, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
@@ -1904,11 +1906,27 @@ jobs:
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, s2)
 		services.NewClient = services.NewDefaultClient
 	}()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/manual", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/"+repo.Name+"/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				b := &sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					ID:           "refs/heads/master",
+					LatestCommit: "HEAD",
+				}
+				*(out.(*sdk.VCSBranch)) = *b
+				return nil, 200, nil
+			},
+		).Times(1)
 
 	vars := map[string]string{
 		"projectKey":           proj.Key,
