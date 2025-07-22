@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/kardianos/osext"
 	"github.com/rockbears/log"
@@ -51,18 +52,30 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 	// Try to download the plugin
 	if _, err := w.BaseDir().Stat(pluginBinaryInfos.Name); os.IsNotExist(err) {
 		log.Debug(ctx, "Downloading the plugin %s", pluginBinaryInfos.PluginName)
-		//If the file doesn't exist. Download it.
-		fi, err := w.BaseDir().OpenFile(pluginBinaryInfos.Name, os.O_CREATE|os.O_RDWR, os.FileMode(pluginBinaryInfos.Perm))
-		if err != nil {
-			return nil, nil, sdk.WrapError(err, "unable to create the file %s", pluginBinaryInfos.Name)
-		}
+		var retry int
+		for {
+			//If the file doesn't exist. Download it.
+			fi, err := w.BaseDir().OpenFile(pluginBinaryInfos.Name, os.O_CREATE|os.O_RDWR, os.FileMode(pluginBinaryInfos.Perm))
+			if err != nil {
+				return nil, nil, sdk.WrapError(err, "unable to create the file %s", pluginBinaryInfos.Name)
+			}
 
-		log.Debug(ctx, "Get the binary plugin %s", pluginBinaryInfos.PluginName)
-		if err := w.PluginGetBinary(pluginBinaryInfos.PluginName, currentOS, currentARCH, fi); err != nil {
+			log.Debug(ctx, "Get the binary plugin %s", pluginBinaryInfos.PluginName)
+			if err := w.PluginGetBinary(pluginBinaryInfos.PluginName, currentOS, currentARCH, fi); err != nil {
+				err = sdk.WrapError(err, "unable to get the binary plugin the file %s", pluginBinaryInfos.PluginName)
+				if retry >= 20 {
+					_ = fi.Close()
+					return nil, nil, err
+				}
+				log.Debug(ctx, "%v", err)
+				retry++
+				time.Sleep(3 * time.Second)
+				continue
+			}
+
 			_ = fi.Close()
-			return nil, nil, sdk.WrapError(err, "unable to get the binary plugin the file %s", pluginBinaryInfos.PluginName)
+			break
 		}
-		_ = fi.Close()
 	} else {
 		log.Debug(ctx, "plugin binary is in cache %s", pluginBinaryInfos)
 	}
