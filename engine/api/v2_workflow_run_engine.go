@@ -1017,9 +1017,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 					if v.Type == sdk.IntegrationConfigTypeRegion {
 						rj.Job.Region = v.Value
 						rj.Region = v.Value
-						jobDef := run.WorkflowData.Workflow.Jobs[rj.JobID]
-						jobDef.Region = v.Value
-						run.WorkflowData.Workflow.Jobs[rj.JobID] = jobDef
 						runUpdated = true
 						break integLoop
 					}
@@ -1051,9 +1048,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 			}, false
 		}
 		rj.Job.Name = jobName
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.Name = jobName
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 
@@ -1073,9 +1067,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		}
 		rj.Region = reg
 		rj.Job.Region = reg
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.Region = reg
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 
@@ -1147,9 +1138,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 			rj.ModelOSArch = wref.ef.workerModelCache[completeName].Model.OSArch
 		}
 		rj.Job.RunsOn.Model = completeName
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.RunsOn.Model = completeName
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 	if strings.HasPrefix(rj.Job.RunsOn.Flavor, "${{") {
@@ -1165,9 +1153,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 			}, false
 		}
 		rj.Job.RunsOn.Flavor = flavor
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.RunsOn.Flavor = flavor
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 	if strings.HasPrefix(rj.Job.RunsOn.Memory, "${{") {
@@ -1183,9 +1168,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 			}, false
 		}
 		rj.Job.RunsOn.Memory = mem
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.RunsOn.Memory = mem
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 
