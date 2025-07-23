@@ -146,16 +146,16 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 // CanSpawn return wether or not hatchery can spawn model
 // some requirements are not supported
 // This func is called with job v1 and job v2.
-func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
+func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "vsphere.CanSpawn")
 	defer end()
 
 	if model.ModelV2 != nil && model.ModelV2.Type != sdk.WorkerModelTypeVSphere {
-		return false, nil
+		return false
 	}
 
 	if model.ModelV1 != nil && model.ModelV1.Type != sdk.VSphere {
-		return false, nil
+		return false
 	}
 
 	for _, r := range requirements {
@@ -164,7 +164,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 			r.Type == sdk.HostnameRequirement ||
 			r.Type == sdk.FlavorRequirement ||
 			model.GetCmd() == "" {
-			return false, nil
+			return false
 		}
 	}
 
@@ -181,19 +181,19 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 
 			if model.ModelV1 == nil {
 				log.Warn(ctx, "can't register a worker model v2: %s", model.GetName())
-				return false, nil
+				return false
 			}
 			switch {
 			case vm.Name == model.ModelV1.Name+"-tmp":
 				log.Warn(ctx, "can't span worker for model %q registration because there is a temporary machine %q", model.GetName(), vm.Name)
-				return false, nil
+				return false
 			case strings.HasPrefix(vm.Name, "register-") && model.ModelV1.Name == vmAnnotation.WorkerModelPath:
 				log.Warn(ctx, "can't span worker for model %q registration because there is a registering worker %q", model.GetName(), vm.Name)
-				return false, nil
+				return false
 			}
 		}
 
-		return true, nil
+		return true
 	}
 
 	// Check if there is a pending virtual machine with the same jobId in annotation - we want to avoid duplicates
@@ -204,7 +204,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		}
 		if annot.JobID == jobID {
 			log.Info(ctx, "can't span worker for job %s because there is a registering worker %q for the same job", jobID, vm.Name)
-			return false, nil
+			return false
 		}
 	}
 
@@ -213,17 +213,21 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 	defer h.cachePendingJobID.mu.Unlock()
 	for _, id := range h.cachePendingJobID.list {
 		if id == jobID {
-			return false, nil
+			return false
 		}
 	}
 
 	// Check if there is one ip available
 	if len(h.availableIPAddresses) > 0 {
 		if _, err := h.findAvailableIP(ctx); err != nil {
-			return false, nil
+			return false
 		}
 	}
 
+	return true
+}
+
+func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	return true, nil
 }
 

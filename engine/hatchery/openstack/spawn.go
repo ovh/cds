@@ -22,7 +22,7 @@ import (
 // requirements are not supported
 func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	if spawnArgs.JobID != "0" {
-		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s for job %d", spawnArgs.WorkerName, spawnArgs.Model.GetName(), spawnArgs.JobID)
+		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s for job %s", spawnArgs.WorkerName, spawnArgs.Model.GetName(), spawnArgs.JobID)
 	} else {
 		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s", spawnArgs.WorkerName, spawnArgs.Model.GetName())
 	}
@@ -37,7 +37,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return err
 	}
 
-	if err := h.checkSpawnLimits(ctx, flavor, spawnArgs); err != nil {
+	if err := h.checkSpawnLimits(ctx, flavor, spawnArgs.Model); err != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, err.Error())
 		return nil
@@ -184,7 +184,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	return nil
 }
 
-func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors.Flavor, spawnArgs hatchery.SpawnArguments) error {
+func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors.Flavor, model sdk.WorkerStarterWorkerModel) error {
 	existingServers := h.getServers(ctx)
 	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
 		return sdk.WithStack(fmt.Errorf("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker))
@@ -215,10 +215,10 @@ func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors
 			countCPUsLeft := int(math.Max(.0, float64(h.Config.MaxCPUs-totalCPUsUsed))) // Set zero as min value in case that the limit changed and count of used greater than max count
 			if minCPUsNeededToStart > countCPUsLeft {
 				return sdk.WithStack(fmt.Errorf("CountSmallerFlavorToKeep limit reached, can't start model %s with flavor %s that requires %d CPUs. Smaller flavor is %s and need %d CPUs. There are currently %d/%d left CPUs",
-					spawnArgs.Model.GetFullPath(), flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs))
+					model.GetFullPath(), flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs))
 			}
 			log.Debug(ctx, "checkSpawnLimits> %d/%d CPUs left is enough to start model %s with flavor %s that require %d CPUs",
-				countCPUsLeft, h.Config.MaxCPUs, spawnArgs.Model.GetFullPath(), flavor.Name, flavor.VCPUs)
+				countCPUsLeft, h.Config.MaxCPUs, model.GetFullPath(), flavor.Name, flavor.VCPUs)
 		}
 	}
 
