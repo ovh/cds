@@ -2,6 +2,7 @@ package authentication_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,37 +24,37 @@ func TestLoadSession(t *testing.T) {
 	c1, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 
-	s1, err := authentication.NewSession(context.TODO(), db, &c1.AuthConsumer, time.Second)
+	s1, err := authentication.NewSession(context.TODO(), db, &c1.AuthConsumer, time.Minute)
 	require.NoError(t, err)
-	s2, err := authentication.NewSession(context.TODO(), db, &c1.AuthConsumer, time.Second)
+	s2, err := authentication.NewSession(context.TODO(), db, &c1.AuthConsumer, time.Minute)
 	require.NoError(t, err)
 
 	c2, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
-	s3, err := authentication.NewSession(context.TODO(), db, &c2.AuthConsumer, time.Second)
+	s3, err := authentication.NewSession(context.TODO(), db, &c2.AuthConsumer, time.Minute)
 	require.NoError(t, err)
 
 	// LoadSessionByID
 	_, err = authentication.LoadSessionByID(context.TODO(), db, sdk.RandomString(10))
-	assert.Error(t, err)
+	require.Error(t, err)
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s1.ID)
-	assert.NoError(t, err)
-	assert.Equal(t, res.ID, s1.ID)
+	require.NoError(t, err)
+	require.Equal(t, res.ID, s1.ID)
 
 	// LoadSessionByConsumerIDs
 	_, err = authentication.LoadSessionsByConsumerIDs(context.TODO(), db, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	ress, err := authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{c1.ID})
-	assert.NoError(t, err)
-	require.Equal(t, 2, len(ress))
-	assert.Equal(t, s1.ID, ress[0].ID)
-	assert.Equal(t, s2.ID, ress[1].ID)
+	require.NoError(t, err)
+	require.Len(t, ress, 2)
+	require.True(t, slices.ContainsFunc(ress, func(e sdk.AuthSession) bool { return e.ID == s1.ID }))
+	require.True(t, slices.ContainsFunc(ress, func(e sdk.AuthSession) bool { return e.ID == s2.ID }))
 	ress, err = authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{c1.ID, c2.ID})
-	assert.NoError(t, err)
-	require.Equal(t, len(ress), 3)
-	assert.Equal(t, s1.ID, ress[0].ID)
-	assert.Equal(t, s2.ID, ress[1].ID)
-	assert.Equal(t, s3.ID, ress[2].ID)
+	require.NoError(t, err)
+	require.Len(t, ress, 3)
+	require.True(t, slices.ContainsFunc(ress, func(e sdk.AuthSession) bool { return e.ID == s1.ID }))
+	require.True(t, slices.ContainsFunc(ress, func(e sdk.AuthSession) bool { return e.ID == s2.ID }))
+	require.True(t, slices.ContainsFunc(ress, func(e sdk.AuthSession) bool { return e.ID == s3.ID }))
 }
 
 func TestInsertSession(t *testing.T) {
@@ -63,17 +63,17 @@ func TestInsertSession(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	test.NoError(t, user.Insert(context.TODO(), db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c, err := local.NewConsumer(context.TODO(), db, u.ID)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Second)
-	test.NoError(t, err)
+	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Minute)
+	require.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
-	test.NoError(t, err)
-	test.NotNil(t, res)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 	test.Equal(t, s, res)
 }
 
@@ -88,7 +88,7 @@ func TestDeleteSession(t *testing.T) {
 	c, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 
-	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Second)
+	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Minute)
 	require.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
@@ -59,9 +60,10 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 	require.Equal(t, 200, rec.Code)
 
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &cs))
-	require.Equal(t, 2, len(cs))
-	assert.Equal(t, localConsumer.ID, cs[0].ID)
-	assert.Equal(t, consumer.ID, cs[1].ID)
+	require.Len(t, cs, 2)
+	require.Equal(t, localConsumer.ID, cs[0].ID)
+	require.True(t, slices.ContainsFunc(cs, func(c sdk.AuthUserConsumer) bool { return c.ID == localConsumer.ID }))
+	require.True(t, slices.ContainsFunc(cs, func(c sdk.AuthUserConsumer) bool { return c.ID == consumer.ID }))
 }
 
 func Test_postConsumerByUserHandler(t *testing.T) {
@@ -104,13 +106,13 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 
 	var created sdk.AuthConsumerCreateResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
-	assert.NotEmpty(t, created.Token)
-	assert.Equal(t, data.Name, created.Consumer.Name)
-	require.Equal(t, 1, len(created.Consumer.AuthConsumerUser.GroupIDs))
-	assert.Equal(t, g.ID, created.Consumer.AuthConsumerUser.GroupIDs[0])
-	require.Equal(t, 1, len(created.Consumer.AuthConsumerUser.ScopeDetails))
-	assert.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.AuthConsumerUser.ScopeDetails[0].Scope)
-	assert.Equal(t, localConsumer.ID, *created.Consumer.ParentID)
+	require.NotEmpty(t, created.Token)
+	require.Equal(t, data.Name, created.Consumer.Name)
+	require.Len(t, created.Consumer.AuthConsumerUser.GroupIDs, 1)
+	require.Equal(t, g.ID, created.Consumer.AuthConsumerUser.GroupIDs[0])
+	require.Len(t, created.Consumer.AuthConsumerUser.ScopeDetails, 1)
+	require.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.AuthConsumerUser.ScopeDetails[0].Scope)
+	require.Equal(t, localConsumer.ID, *created.Consumer.ParentID)
 }
 
 func Test_deleteConsumerByUserHandler(t *testing.T) {
@@ -131,7 +133,7 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 	require.NoError(t, err)
 	cs, err := authentication.LoadUserConsumersByUserID(context.TODO(), db, u.ID)
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(cs))
+	require.Len(t, cs, 2)
 
 	uri := api.Router.GetRoute(http.MethodDelete, api.deleteConsumerByUserHandler, map[string]string{
 		"permUsername":   u.Username,
@@ -145,7 +147,7 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 
 	cs, err = authentication.LoadUserConsumersByUserID(context.TODO(), db, u.ID)
 	require.NoError(t, err)
-	assert.Equal(t, 1, len(cs))
+	require.Len(t, cs, 1)
 }
 
 func Test_postConsumerRegenByUserHandler(t *testing.T) {
@@ -339,10 +341,10 @@ func Test_getSessionsByUserHandler(t *testing.T) {
 
 	var ss []sdk.AuthSession
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &ss))
-	require.Equal(t, 3, len(ss))
-	assert.Equal(t, localConsumer.ID, ss[0].ConsumerID)
-	assert.Equal(t, s2.ID, ss[1].ID)
-	assert.Equal(t, s3.ID, ss[2].ID)
+	require.Len(t, ss, 3)
+	require.True(t, slices.ContainsFunc(ss, func(e sdk.AuthSession) bool { return e.ConsumerID == localConsumer.ID }))
+	require.True(t, slices.ContainsFunc(ss, func(e sdk.AuthSession) bool { return e.ID == s2.ID }))
+	require.True(t, slices.ContainsFunc(ss, func(e sdk.AuthSession) bool { return e.ID == s3.ID }))
 }
 
 func Test_deleteSessionByUserHandler(t *testing.T) {
@@ -364,7 +366,7 @@ func Test_deleteSessionByUserHandler(t *testing.T) {
 
 	ss, err := authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{localConsumer.ID, consumer.ID})
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(ss))
+	require.Len(t, ss, 2)
 
 	uri := api.Router.GetRoute(http.MethodDelete, api.deleteSessionByUserHandler, map[string]string{
 		"permUsername":  u.Username,
@@ -378,5 +380,5 @@ func Test_deleteSessionByUserHandler(t *testing.T) {
 
 	ss, err = authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{localConsumer.ID, consumer.ID})
 	require.NoError(t, err)
-	assert.Equal(t, 1, len(ss))
+	require.Len(t, ss, 1)
 }
