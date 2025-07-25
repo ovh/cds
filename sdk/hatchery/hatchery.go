@@ -461,6 +461,12 @@ func handleJobV2(ctx context.Context, h Interface, jobRunID string, cacheAttempt
 		endTrace(ctx.Err().Error(), jobInfo.RunJob.ID)
 	}()
 
+	if jobInfo.RunJob.Status != sdk.StatusWaiting {
+		log.Debug(ctx, "hatchery> job %q is not waiting: %s", jobRunID, jobInfo.RunJob.Status)
+		endTrace("job is not waiting", jobRunID)
+		return nil
+	}
+
 	fields := log.FieldValues(ctx)
 	for k, v := range fields {
 		ctx = context.WithValue(ctx, k, v)

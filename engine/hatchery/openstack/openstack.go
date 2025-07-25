@@ -264,15 +264,33 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "openstack.CanSpawn")
 	defer end()
+
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
 		}
 		if r.Type == sdk.FlavorRequirement && len(h.Config.AllowedFlavors) > 0 {
 			if !slices.Contains(h.Config.AllowedFlavors, r.Value) {
+				log.Debug(ctx, "CanSpawn> Job %s has an invalid flavor requirement: %q", jobID, r.Value)
+				return false
+			}
+		}
+	}
+
+	// Check required binaries according config if not model was set
+	if len(h.Config.RequiredBinariesRequirement) > 0 && model.ModelV1 == nil && model.ModelV2 == nil {
+		var binaries []string
+		for _, r := range requirements {
+			if r.Type == sdk.BinaryRequirement {
+				binaries = append(binaries, r.Value)
+			}
+		}
+		for _, r := range h.Config.RequiredBinariesRequirement {
+			if !slices.ContainsFunc(binaries, func(b string) bool { return r == b }) {
+				log.Debug(ctx, "CanSpawn> Job %s can't spawn because no model is defined and is missing %q binary requirement: %v", jobID, r, binaries)
 				return false
 			}
 		}
@@ -327,7 +345,6 @@ func (h *HatcheryOpenstack) main(ctx context.Context) {
 				log.Error(ctx, "Hatchery> openstack> Exiting routines")
 			}
 			return
-
 		}
 	}
 }
