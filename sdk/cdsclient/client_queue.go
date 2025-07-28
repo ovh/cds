@@ -47,7 +47,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...RequestModifier) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -112,8 +112,6 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 				}
 				// push the job in the channel
 				if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
-					job.Header["WS"] = "true"
-
 					id := strconv.FormatInt(job.ID, 10)
 					if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
 						log.Debug(ctx, "skipping job %s", id)
@@ -122,7 +120,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 					lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
 					log.Debug(ctx, "v1_len_queue: %v", lenqueue)
 					telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
-					jobs <- *job
+					jobs <- jobEvent.ID
 				}
 			}
 		case <-jobsTicker.C:
@@ -158,7 +156,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 				id := strconv.FormatInt(j.ID, 10)
 				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
-				jobs <- j
+				jobs <- j.ID
 			}
 		}
 	}

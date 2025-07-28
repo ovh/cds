@@ -2928,7 +2928,7 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobStepUpdate(ctx, regio
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -4596,7 +4596,7 @@ func (mr *MockV2QueueClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, i
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -4783,7 +4783,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobTag(ctx, jobID, tags any) *gomock
 }
 
 // QueuePolling mocks base method.
-func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
@@ -10229,7 +10229,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags any) *gomock.C
 }
 
 // QueuePolling mocks base method.
-func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
@@ -11312,7 +11312,7 @@ func (mr *MockInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, s
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -13037,7 +13037,7 @@ func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionNam
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -13485,7 +13485,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags any) *go
 }
 
 // QueuePolling mocks base method.
-func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {

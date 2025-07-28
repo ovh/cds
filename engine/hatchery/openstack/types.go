@@ -70,6 +70,8 @@ type HatcheryConfiguration struct {
 
 	// OverrideImagesUsername define the username to use for the specified image.
 	OverrideImagesUsername []ImageUsernameOverride `mapstructure:"overrideImagesUsername" toml:"overrideImagesUsername" default:"" commented:"true" comment:"Override the user used for the images" json:"overrideImagesUsername"`
+
+	RequiredBinariesRequirement []string `mapstructure:"requiredBinariesRequirement" toml:"requiredBinariesRequirement" default:"" commented:"true" comment:"If a job don't have any model requirement, check if there is at least required binaries" json:"requiredBinariesRequirement"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'

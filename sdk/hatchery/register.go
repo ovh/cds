@@ -64,14 +64,24 @@ loopModels:
 		if ms[k].Type != h.ModelType() {
 			continue
 		}
-		can, err := h.CanSpawn(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &ms[k]}, "0", nil)
-		if err != nil {
-			log.Error(ctx, "unable to check can spawn for worker %s", ms[k].Name)
+
+		if !h.NeedRegistration(ctx, &ms[k]) && !ms[k].CheckRegistration {
 			continue
 		}
-		if can && (h.NeedRegistration(ctx, &ms[k]) || ms[k].CheckRegistration) {
-			log.Debug(ctx, "model %q need to register", ms[k].Path())
-		} else {
+		log.Debug(ctx, "model %q need to register", ms[k].Path())
+
+		if can := h.CanSpawn(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &ms[k]}, "0", nil); !can {
+			log.Debug(ctx, "hatchery cannot spawm model %q for register", ms[k].Path())
+			continue
+		}
+
+		can, err := h.CanAllocateResources(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &ms[k]}, "0", nil)
+		if err != nil {
+			log.Error(ctx, "unable to check can allocate resource for worker model %s", ms[k].Name)
+			return err
+		}
+		if !can {
+			log.Debug(ctx, "hatchery cannot allocate resources to model %q for register", ms[k].Path())
 			continue
 		}
 
