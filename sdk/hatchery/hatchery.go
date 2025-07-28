@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"go.opencensus.io/stats"
@@ -93,8 +94,8 @@ func Create(ctx context.Context, h Interface) error {
 		modelType = hWithModels.ModelType()
 	}
 
-	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxConcurrentProvisioning)
-	v2Runjobs := make(chan sdk.V2QueueJobInfo, h.Configuration().Provision.MaxConcurrentProvisioning)
+	wjobs := make(chan int64, h.Configuration().Provision.MaxConcurrentProvisioning)
+	v2Runjobs := make(chan string, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
 
 	// Create a cache to only process each jobID only a number of attempts before force to fail the job
@@ -185,9 +186,17 @@ func Create(ctx context.Context, h Interface) error {
 	return nil
 }
 
-func handleJob(ctx context.Context, hostname string, h Interface, j sdk.WorkflowNodeJobRun, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
-	if j.ID == 0 {
+func handleJob(ctx context.Context, hostname string, h Interface, jobID int64, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
+	if jobID == 0 {
 		return nil
+	}
+
+	j, err := h.CDSClient().QueueJobInfo(ctx, strconv.FormatInt(jobID, 10))
+	if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
+		return nil
+	}
+	if err != nil {
+		return errors.Wrapf(err, "unable to get job %v info", jobID)
 	}
 
 	currentCtx, currentCancel := context.WithTimeout(context.Background(), 10*time.Minute)
@@ -215,13 +224,6 @@ func handleJob(ctx context.Context, hostname string, h Interface, j sdk.Workflow
 			telemetry.Tag(telemetry.TagWorkflowRun, r),
 			telemetry.Tag(telemetry.TagProjectKey, p),
 			telemetry.Tag(telemetry.TagWorkflowNodeJobRun, j.ID))
-
-		if _, ok := j.Header["WS"]; ok {
-			log.Debug(currentCtx, "hatchery> received job from WS")
-			telemetry.Current(currentCtx,
-				telemetry.Tag("from", "ws"),
-			)
-		}
 	}
 	endTrace := func(reason string, jobID string) {
 		if jobID != "" {
@@ -247,14 +249,15 @@ func handleJob(ctx context.Context, hostname string, h Interface, j sdk.Workflow
 
 	stats.Record(currentCtx, GetMetrics().Jobs.M(1))
 
-	if _, ok := j.Header["WS"]; ok {
-		stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
-	}
-
 	// Check bookedBy current hatchery
+	if j.Status != sdk.StatusWaiting {
+		log.Debug(currentCtx, "hatchery> job %d is not waiting: %s", jobID, j.Status)
+		endTrace("job is not waiting", strconv.FormatInt(jobID, 10))
+		return nil
+	}
 	if j.BookedBy.ID != 0 {
-		log.Debug(currentCtx, "hatchery> job %d is already booked", j.ID)
-		endTrace("booked by someone", strconv.FormatInt(j.ID, 10))
+		log.Debug(currentCtx, "hatchery> job %d is already booked", jobID)
+		endTrace("booked by someone", strconv.FormatInt(jobID, 10))
 		return nil
 	}
 
@@ -416,7 +419,15 @@ func handleJob(ctx context.Context, hostname string, h Interface, j sdk.Workflow
 	return nil
 }
 
-func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
+func handleJobV2(ctx context.Context, h Interface, jobRunID string, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
+	jobInfo, err := h.CDSClientV2().V2QueueGetJobRun(ctx, h.GetRegion(), jobRunID)
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil
+	}
+	if err != nil {
+		return errors.Wrapf(err, "unable to get job %s info", jobRunID)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	ctx = telemetry.ContextWithTag(ctx,
 		telemetry.TagServiceName, h.Name(),
@@ -449,6 +460,12 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 		<-ctx.Done()
 		endTrace(ctx.Err().Error(), jobInfo.RunJob.ID)
 	}()
+
+	if jobInfo.RunJob.Status != sdk.StatusWaiting {
+		log.Debug(ctx, "hatchery> job %q is not waiting: %s", jobRunID, jobInfo.RunJob.Status)
+		endTrace("job is not waiting", jobRunID)
+		return nil
+	}
 
 	fields := log.FieldValues(ctx)
 	for k, v := range fields {
@@ -497,7 +514,7 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 	}
 
 	if hWithModels != nil {
-		workerModel, err := getWorkerModelV2(ctx, hWithModels, jobInfo)
+		workerModel, err := getWorkerModelV2(ctx, hWithModels, *jobInfo)
 		if err != nil {
 			cacheAttempts.NewAttempt(jobInfo.RunJob.ID)
 			log.Error(ctx, "hatchery %q failed to get worker model %s: %v", h.Configuration().Name, jobInfo.Model.Name, err)

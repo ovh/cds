@@ -40,6 +40,8 @@ type HatcheryConfiguration struct {
 	RegistryCredentials []RegistryCredential `mapstructure:"registryCredentials" toml:"registryCredentials" commented:"true" comment:"List of Docker registry credentials" json:"-"`
 
 	WorkerMetricsRefreshDelay int64 `toml:"workerMetricsRefreshDelay" json:"workerMetricsRefreshDelay" commented:"true" comment:"Interval to compute worker metrics (in seconds), set to 0 will disable worker metrics."`
+
+	ExcludedBinariesRequirement []string `mapstructure:"excludedBinariesRequirement" toml:"excludedBinariesRequirement" default:"" commented:"true" comment:"If a job don't have any model requirement, check if there is no excluded binaries" json:"excludedBinariesRequirement"`
 }
 
 // HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api

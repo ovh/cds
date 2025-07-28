@@ -586,6 +586,22 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 		}
 	}
 
+	// Check excluded binaries according config if not model was set
+	if len(h.Config.ExcludedBinariesRequirement) > 0 && model.ModelV1 == nil && model.ModelV2 == nil {
+		var binaries []string
+		for _, r := range requirements {
+			if r.Type == sdk.BinaryRequirement {
+				binaries = append(binaries, r.Value)
+			}
+		}
+		for _, r := range h.Config.ExcludedBinariesRequirement {
+			if slices.ContainsFunc(binaries, func(b string) bool { return r == b }) {
+				log.Debug(ctx, "CanSpawn> Job %s can't spawn because no model is defined and has an excluded %q binary requirement: %v", jobID, r, binaries)
+				return false
+			}
+		}
+	}
+
 	return true
 }
 
