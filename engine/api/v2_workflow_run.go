@@ -1303,15 +1303,17 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			var workflowRef string
+			var workflowRef, workflowCommit string
 			if runRequest.WorkflowBranch != "" {
 				workflowRef = sdk.GitRefBranchPrefix + runRequest.WorkflowBranch
 			} else if runRequest.WorkflowTag != "" {
 				workflowRef = sdk.GitRefTagPrefix + runRequest.WorkflowTag
 			} else if runRequest.Branch != "" {
 				workflowRef = sdk.GitRefBranchPrefix + runRequest.Branch
+				workflowCommit = runRequest.Sha
 			} else if runRequest.Tag != "" {
 				workflowRef = sdk.GitRefTagPrefix + runRequest.Tag
+				workflowCommit = runRequest.Sha
 			} else {
 				// Retrieve default branch
 				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
@@ -1321,20 +1323,31 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				workflowRef = defaultBranch.ID
 			}
 
-			// Search workflow commit to run
-			workflowEntity, err := entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName)
-			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return err
-			}
-			// If not found, fallback on default branch
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
+			// Search entity on workflowCommit
+			var workflowEntity *sdk.Entity
+			if workflowCommit != "" {
+				workflowEntity, err = entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName, workflowCommit)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return err
 				}
-				workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, defaultBranch.ID, sdk.EntityTypeWorkflow, workflowName)
-				if err != nil {
+			}
+
+			// If no entity found, search head entity on current branch
+			if workflowEntity == nil {
+				workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return err
+				}
+				// If not found, fallback on default branch
+				if sdk.ErrorIs(err, sdk.ErrNotFound) {
+					defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+					if err != nil {
+						return err
+					}
+					workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, defaultBranch.ID, sdk.EntityTypeWorkflow, workflowName)
+					if err != nil {
+						return err
+					}
 				}
 			}
 
