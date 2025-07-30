@@ -1321,24 +1321,33 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 					return err
 				}
 				workflowRef = defaultBranch.ID
-				workflowCommit = defaultBranch.LatestCommit
 			}
-			if workflowCommit == "" || workflowCommit == "HEAD" {
-				switch {
-				case strings.HasPrefix(workflowRef, sdk.GitRefBranchPrefix):
-					// Retrieve branch to get commit
-					b, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(workflowRef, sdk.GitRefBranchPrefix)})
+
+			// Search entity on workflowCommit
+			var workflowEntity *sdk.Entity
+			if workflowCommit != "" {
+				workflowEntity, err = entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName, workflowCommit)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return err
+				}
+			}
+
+			// If no entity found, search head entity on current branch
+			if workflowEntity == nil {
+				workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return err
+				}
+				// If not found, fallback on default branch
+				if sdk.ErrorIs(err, sdk.ErrNotFound) {
+					defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
 					if err != nil {
 						return err
 					}
-					workflowCommit = b.LatestCommit
-				default:
-					// Retrieve branch to get commit
-					t, err := vcsClient.Tag(ctx, repo.Name, strings.TrimPrefix(workflowRef, sdk.GitRefTagPrefix))
+					workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, defaultBranch.ID, sdk.EntityTypeWorkflow, workflowName)
 					if err != nil {
 						return err
 					}
-					workflowCommit = t.Hash
 				}
 			}
 
@@ -1349,7 +1358,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				Repository:     repo.Name,
 				WorkflowRef:    workflowRef,
 				TargetRepo:     runRequest.TargetRepository,
-				WorkflowCommit: workflowCommit,
+				WorkflowCommit: workflowEntity.Commit,
 				Workflow:       workflowName,
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				Username:       u.AuthConsumerUser.AuthentifiedUser.Username,
