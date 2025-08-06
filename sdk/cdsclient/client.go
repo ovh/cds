@@ -92,7 +92,7 @@ func New(c Config) Interface {
 func NewWorkerV2(endpoint string, name string, c *http.Client) V2WorkerInterface {
 	conf := Config{
 		Host:  endpoint,
-		Retry: 10,
+		Retry: 20,
 	}
 	cli := new(serviceClient)
 	cli.config = &conf
@@ -116,7 +116,7 @@ func NewWorkerV2(endpoint string, name string, c *http.Client) V2WorkerInterface
 func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 	conf := Config{
 		Host:  endpoint,
-		Retry: 10,
+		Retry: 20,
 	}
 	cli := new(serviceClient)
 	cli.config = &conf
