@@ -544,6 +544,10 @@ type WorkflowNodeJobRunInfo struct {
 	Created              time.Time   `json:"created"`
 }
 
+type WorkflowNodeJobRunBook struct {
+	Delay int64  `json:"delay"`
+}
+
 type WorkflowNodeJobRunBooked struct {
 	ProjectKey   string `json:"project_key"`
 	WorkflowName string `json:"workflow_name"`

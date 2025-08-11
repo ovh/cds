@@ -188,6 +188,10 @@ type InterfaceWithDetaultWorkerModelV2 interface {
 	GetDetaultModelV2Name(ctx context.Context, requirements []sdk.Requirement) string
 }
 
+type InterfaceWithCustomBookDelay interface {
+	ComputeBookDelay(ctx context.Context, model sdk.WorkerStarterWorkerModel) int64
+}
+
 type JobIdentifiers struct {
 	JobIdentifiersV1 JobIdentifiersV1
 	JobIdentifiersV2 JobIdentifiersV2

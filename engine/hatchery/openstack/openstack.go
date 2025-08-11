@@ -327,6 +327,16 @@ func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.
 	return
 }
 
+func (h *HatcheryOpenstack) ComputeBookDelay(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) int64 {
+	imageName := model.GetOpenstackImage()
+	for image, delay := range h.imagesBookDelay {
+		if image.MatchString(imageName) {
+			return delay
+		}
+	}
+	return 0
+}
+
 func (h *HatcheryOpenstack) main(ctx context.Context) {
 	killAwolServersTick := time.NewTicker(30 * time.Second).C
 	killErrorServersTick := time.NewTicker(60 * time.Second).C
