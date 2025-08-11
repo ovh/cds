@@ -361,12 +361,13 @@ func BookNodeJobRun(ctx context.Context, store cache.Store, delay int, id int64,
 	}
 	if !find {
 		// job not already booked, book it for given delay
+		log.Info(ctx, "book job %d by %s with delay %d seconds", id, h.Name, delay)
 		if err := store.SetWithTTL(k, hatchery, delay); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 		return nil, nil
 	}
-	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
+	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
 // FreeNodeJobRun  Free a job for a hatchery
