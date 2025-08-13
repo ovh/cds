@@ -1,89 +1,101 @@
-<div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-scrollview class="scrollview">
-        <h2><span *ngIf="!loading && nodeJobRuns && nodeJobRuns.length > 0">({{nodeJobRuns.length}}
-                jobs)</span></h2>
-        <div *ngIf="!loading && nodeJobRuns;then showQueue;else loadQueue"></div>
-        <ng-template #showQueue>
-            <nz-row>
-                <nz-col [nzSpan]="24">
-                    <nz-select nzShowSearch nzMode="multiple" [(ngModel)]="status" (ngModelChange)="statusFilterChange()">
-                        <nz-option *ngFor="let opt of statusOptions" [nzValue]="opt" [nzLabel]="opt"></nz-option>
-                    </nz-select>
-                </nz-col>
-            </nz-row>
-            <nz-row>
-                <nz-col [nzSpan]="24">
-                    <nz-table [nzData]="nodeJobRuns" nzPageSize="100" #jobrunTab>
-                        <thead>
-                        <tr>
-                            <th nzWidth="20px">since</th>
-                            <th nzWidth="20px">status</th>
-                            <th nzWidth="20px">by</th>
-                            <th nzWidth="10px">run</th>
-                            <th nzWidth="20px">project/workflow</th>
-                            <th [nzWidth]="currentAuthSummary.isAdmin()?'10px':'40px'"
-                                    [ngClass]="{'four wide': !currentAuthSummary.isAdmin(), 'one wide': currentAuthSummary.isAdmin()}">
-                                node</th>
-                            <th nzWidth="20px">triggered_by</th>
-                            <th nzWidth="30px" *ngIf="currentAuthSummary.isAdmin()">requirements</th>
-                            <th nzWidth="20px"></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr *ngFor="let wNodeJobRun of jobrunTab.data; let index = index">
-                            <td>
-                                {{wNodeJobRun.queued | amTimeAgo}}
-                            </td>
-                            <td>
-                                {{wNodeJobRun.status}}
-                            </td>
-                            <td>
-                                {{bookedOrBuildingByList[index]}}
-                            </td>
-                            <td>
-                                <a [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow'], 'run', parametersMaps[index]['cds.run.number']]"
-                                   *ngIf="parametersMaps[index] != null">
-                                    {{parametersMaps[index]['cds.run.number']}}
-                                </a>
-                            </td>
-                            <td>
-                                <a [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow']]"
-                                   *ngIf="parametersMaps[index] != null">
-                                    {{parametersMaps[index]['cds.project']}}/{{parametersMaps[index]['cds.workflow']}}
-                                </a>
-                            </td>
-                            <td>
-                                <a [href]="parametersMaps[index]['cds.ui.pipeline.run']">
-                                    {{parametersMaps[index]['cds.node']}}
-                                </a>
-                            </td>
-                            <td>
-                                <span *ngIf="parametersMaps[index] != null">
-                                    {{parametersMaps[index]['cds.triggered_by'] ||
-                                parametersMaps[index]['cds.triggered_by.username']}}
-                                </span>
-                            </td>
-                            <td *ngIf="currentAuthSummary.isAdmin()">
-                                <span
-                                        *ngIf="wNodeJobRun.job != null && wNodeJobRun.job.action != null && wNodeJobRun.job.action.requirements != null">
-                                    {{requirementsList[index]}}
-                                </span>
-                            </td>
-                            <td class="alignRight">
-                                <button nz-button nzDanger nzType="primary" [nzLoading]="wNodeJobRun.updating"
-                                        [disabled]="wNodeJobRun.updating" (click)="stopNode(index)">
-                                    <i nz-icon nzType="stop" nzTheme="outline"></i>Stop
-                                </button>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </nz-table>
-                </nz-col>
-            </nz-row>
-        </ng-template>
-        <ng-template #loadQueue>
-            <nz-spin nzTip="Loading..."></nz-spin>
-        </ng-template>
-    </app-scrollview>
+<app-breadcrumb [path]="path"></app-breadcrumb>
+
+<div class="queues">
+    <div class="queue">
+        <nz-table #jobsV1Table [nzData]="jobsV1" [nsAutoHeightTable]="181" nzSize="small" [nzPageSize]="100"
+            [nzPageIndex]="pageIndexV1" [nzLoading]="loading.v1" [nzShowPagination]="false"
+            (nzQueryParams)="onQueryParamsV1Change($event)">
+            <thead>
+                <tr>
+                    <th>Since</th>
+                    <th nzColumnKey="statusV1" [nzFilterMultiple]="true" [nzFilters]="statusFilterListV1"
+                        [nzFilterFn]="filterJobsV1">Status
+                    </th>
+                    <th>Booked By</th>
+                    <th>ID</th>
+                    <th>Path</th>
+                    <th>Triggered By</th>
+                    <th>Details</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let job of jobsV1Table.data">
+                    <td>{{job.queued | amTimeAgo}}</td>
+                    <td>{{job.status}}</td>
+                    <td>{{job.bookedBySummary}}</td>
+                    <td>{{job.id}}</td>
+                    <td>
+                        <a [href]="job.mParameters != null && job.mParameters['cds.ui.pipeline.run']">
+                            {{job.mParameters['cds.project']}}/{{job.mParameters['cds.workflow']}}/{{job.mParameters['cds.run.number']}}/{{job.mParameters['cds.node']}}/{{job.mParameters['cds.job']}}
+                        </a>
+                    </td>
+                    <td>
+                        {{job.mParameters['cds.triggered_by'] ||
+                        job.mParameters['cds.triggered_by.username']}}
+                    </td>
+                    <td>
+                        {{job.requirementsSummary}}
+                    </td>
+                    <td nzAlign="right">
+                        <button nz-button nzDanger nzType="primary" [nzLoading]="job.updating" [disabled]="job.updating"
+                            (click)="stopJobV1(job)">
+                            Stop Node
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </nz-table>
+        <div class="footer">
+            <button nz-button nzType="primary" (click)="loadJobsV1()" title="Refresh jobs"><span nz-icon
+                    [nzType]="'reload'"></span></button>
+            {{jobsV1.length}} results
+            <nz-pagination [nzPageIndex]="pageIndexV1" [nzPageSize]="100" [nzTotal]="jobsV1.length"
+                (nzPageIndexChange)="pageIndexV1Change($event)"></nz-pagination>
+        </div>
+    </div>
+
+    <div class="queue">
+        <nz-table #jobsV2Table [nzData]="jobsV2" [nsAutoHeightTable]="181" nzSize="small" [nzPageSize]="100"
+            [nzPageIndex]="pageIndexV2" [nzLoading]="loading.v2" [nzFrontPagination]="false"
+            [nzTotal]="jobsV2totalCount" [nzShowPagination]="false" (nzQueryParams)="onQueryParamsV2Change($event)">
+            <thead>
+                <tr>
+                    <th>Since</th>
+                    <th nzColumnKey="statusV2" [nzFilterMultiple]="true" [nzFilters]="statusFilterListV2"
+                        [nzFilterFn]="true">Status
+                    </th>
+                    <th>ID</th>
+                    <th>Path</th>
+                    <th>Triggered By</th>
+                    <th>Details</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let job of jobsV2Table.data">
+                    <td>{{job.queued | amTimeAgo}}</td>
+                    <td>{{job.status}}</td>
+                    <td>{{job.id}}</td>
+                    <td>
+                        <a [routerLink]="['/project', job.project_key, 'run', job.workflow_run_id]"
+                            [queryParams]="{'panel': 'job:'+job.id}">{{job.project_key}}/{{job.vcs_server}}/{{job.repository}}/{{job.workflow_name}}/{{job.run_number}}/{{job.job_id}}</a>
+                    </td>
+                    <td>{{job.username}}</td>
+                    <td>region={{job.region}}, type={{job.model_type}}</td>
+                    <td nzAlign="right">
+                        <button nz-button nzDanger nzType="primary" [nzLoading]="job.updating" [disabled]="job.updating"
+                            (click)="stopJobV2(job)">Stop</button>
+                    </td>
+                </tr>
+            </tbody>
+        </nz-table>
+        <div class="footer">
+            <button nz-button nzType="primary" (click)="loadJobsV2()" title="Refresh jobs"><span nz-icon
+                    [nzType]="'reload'"></span></button>
+            {{jobsV2totalCount}} results
+            <nz-pagination [nzPageIndex]="pageIndexV2" [nzPageSize]="100" [nzTotal]="jobsV2totalCount"
+                (nzPageIndexChange)="pageIndexV2Change($event)"></nz-pagination>
+        </div>
+    </div>
 </div>

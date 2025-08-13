@@ -1,9 +1,44 @@
 @import '../../../../common.scss';
 
-nz-select {
-  width: 100%;
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
-.alignRight {
-  text-align: right;
+.queues {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  overflow: hidden;
+
+  .queue {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+
+    nz-table {
+      margin: 20px;
+      flex: 1;
+    }
+
+    .footer {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      margin: 20px;
+
+      button {
+        margin-right: 10px;
+      }
+
+      nz-pagination {
+        margin-left: auto;
+      }
+    }
+  }
 }

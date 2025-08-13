@@ -204,8 +204,10 @@ export class WorkflowNodeJobRun {
     spawninfos: Array<SpawnInfo>;
 
     // UI infos for queue
-    duration: string;
     updating: boolean;
+    mParameters: { [name: string]: string }
+    requirementsSummary: string;
+    bookedBySummary: string;
 }
 
 export class BookedBy {
