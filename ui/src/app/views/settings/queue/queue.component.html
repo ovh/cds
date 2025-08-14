@@ -7,16 +7,16 @@
             (nzQueryParams)="onQueryParamsV1Change($event)">
             <thead>
                 <tr>
-                    <th>Since</th>
-                    <th nzColumnKey="statusV1" [nzFilterMultiple]="true" [nzFilters]="statusFilterListV1"
-                        [nzFilterFn]="filterJobsV1">Status
+                    <th nzWidth="120px">Since</th>
+                    <th nzWidth="100px" nzColumnKey="statusV1" [nzFilterMultiple]="true"
+                        [nzFilters]="statusFilterListV1" [nzFilterFn]="filterJobsV1">Status
                     </th>
-                    <th>Booked By</th>
-                    <th>ID</th>
-                    <th>Path</th>
-                    <th>Triggered By</th>
-                    <th>Details</th>
-                    <th></th>
+                    <th nzWidth="200px">Booked By</th>
+                    <th nzWidth="80px">ID</th>
+                    <th nzWidth="300px">Path</th>
+                    <th nzWidth="150px">Triggered By</th>
+                    <th nzWidth="300px">Details</th>
+                    <th nzWidth="100px" nzRight></th>
                 </tr>
             </thead>
             <tbody>
@@ -35,9 +35,9 @@
                         job.mParameters['cds.triggered_by.username']}}
                     </td>
                     <td>
-                        {{job.requirementsSummary}}
+                        <pre>{{job.requirementsSummary}}</pre>
                     </td>
-                    <td nzAlign="right">
+                    <td nzRight nzAlign="right">
                         <button nz-button nzDanger nzType="primary" [nzLoading]="job.updating" [disabled]="job.updating"
                             (click)="stopJobV1(job)">
                             Stop Node
@@ -61,16 +61,16 @@
             [nzTotal]="jobsV2totalCount" [nzShowPagination]="false" (nzQueryParams)="onQueryParamsV2Change($event)">
             <thead>
                 <tr>
-                    <th>Since</th>
-                    <th nzColumnKey="statusV2" [nzFilterMultiple]="true" [nzFilters]="statusFilterListV2"
-                        [nzFilterFn]="true">Status
+                    <th nzWidth="120px">Since</th>
+                    <th nzWidth="100px" nzColumnKey="statusV2" [nzFilterMultiple]="true"
+                        [nzFilters]="statusFilterListV2" [nzFilterFn]="true">Status
                     </th>
-                    <th>Booked By</th>
-                    <th>ID</th>
-                    <th>Path</th>
-                    <th>Triggered By</th>
-                    <th>Details</th>
-                    <th></th>
+                    <th nzWidth="200px">Booked By</th>
+                    <th nzWidth="150px">ID</th>
+                    <th nzWidth="300px">Path</th>
+                    <th nzWidth="150px">Triggered By</th>
+                    <th nzWidth="300px">Details</th>
+                    <th nzWidth="80px" nzRight></th>
                 </tr>
             </thead>
             <tbody>
@@ -84,8 +84,10 @@
                             [queryParams]="{'panel': 'job:'+job.id}">{{job.project_key}}/{{job.vcs_server}}/{{job.repository}}/{{job.workflow_name}}/{{job.run_number}}/{{job.job_id}}</a>
                     </td>
                     <td>{{job.username}}</td>
-                    <td>{{job.requirementsSummary}}</td>
-                    <td nzAlign="right">
+                    <td>
+                        <pre>{{job.requirementsSummary}}</pre>
+                    </td>
+                    <td nzRight nzAlign="right">
                         <button nz-button nzDanger nzType="primary" [nzLoading]="job.updating" [disabled]="job.updating"
                             (click)="stopJobV2(job)">Stop</button>
                     </td>

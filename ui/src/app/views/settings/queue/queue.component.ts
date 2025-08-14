@@ -264,7 +264,7 @@ export class QueueComponent implements OnDestroy {
         }
         let requirementsSummary = '';
         if (job.job && job.job.action && job.job.action.requirements) {
-            requirementsSummary = job.job.action.requirements.map(req => `${req.type}=${req.value}`).join(', ');
+            requirementsSummary = job.job.action.requirements.map(req => `${req.type}: ${req.value}`).join('\n');
         }
         return {
             ...job,
@@ -284,7 +284,7 @@ export class QueueComponent implements OnDestroy {
         } else if (job.status === V2WorkflowRunJobStatus.Scheduling) {
             bookedBySummary = `${job.hatchery_name}`;
         }
-        let requirementsSummary = `region=${job.region}, type=${job.model_type}, runs-on=${job.job['runs-on']}`;
+        let requirementsSummary = `region: ${job.region}\ntype: ${job.model_type}\nruns-on: ${job.job['runs-on']}`;
         return {
             ...job,
             bookedBySummary,

@@ -24,6 +24,14 @@
     nz-table {
       margin: 20px;
       flex: 1;
+
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        width: 100%;
+        overflow: hidden;
+      }
     }
 
     .footer {
