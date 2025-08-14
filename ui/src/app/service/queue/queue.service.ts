@@ -7,10 +7,10 @@ import { Observable } from 'rxjs';
 export class QueueService {
     constructor(private _http: HttpClient) { }
 
-    getWorkflows(status: Array<string>): Observable<Array<WorkflowNodeJobRun>> {
+    getWorkflows(statuses: string[]): Observable<Array<WorkflowNodeJobRun>> {
         let params = new HttpParams();
-        if (status && status.length > 0) {
-            status.forEach(s => {
+        if (statuses) {
+            statuses.forEach(s => {
                 params = params.append('status', s);
             });
         }
@@ -28,6 +28,6 @@ export class QueueService {
                 params = params.append("status", s);
             })
         }
-        return this._http.get<any>(`/v2/queue?limit=${limit}&offset=${offset}`, { params: params, observe: 'response'});
+        return this._http.get<any>(`/v2/queue?limit=${limit}&offset=${offset}`, { params: params, observe: 'response' });
     }
 }

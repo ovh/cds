@@ -63,24 +63,35 @@ export class EventV2Service {
             });
     }
 
-    subscribeAutoFromUrl(url: string) {
+    subscribeAutoFromPath(path: string) {
         // When we move from a page to another we reset the filters
         let fs: Array<WebsocketV2Filter> = [
             <WebsocketV2Filter>{ type: WebsocketV2FilterType.GLOBAL }
         ];
-        let urlSplitted = url.substr(1, url.length - 1).split('/');
-        switch (urlSplitted[0]) {
-            case 'project':
-                if (urlSplitted.length === 1) { // Ignore project creation page
+        let pathSplitted = path.substring(1, path.length).split('/');
+        switch (pathSplitted[0]) {
+            case 'settings':
+                if (pathSplitted.length === 1) { // Ignore settings root page
                     break;
                 }
-
-                let projectKey = urlSplitted[1].split('?')[0];
+                let pageName = pathSplitted[1];
+                switch (pageName) {
+                    case 'queue':
+                        fs.push(<WebsocketV2Filter>{
+                            type: WebsocketV2FilterType.QUEUE
+                        });
+                        break;
+                }
+                break;
+            case 'project':
+                if (pathSplitted.length === 1) { // Ignore project creation page
+                    break;
+                }
+                let projectKey = pathSplitted[1];
                 fs.push(<WebsocketV2Filter>{
                     type: WebsocketV2FilterType.PROJECT,
                     project_key: projectKey
                 });
-
                 break;
         }
         this.updateFilters(fs);

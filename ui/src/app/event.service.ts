@@ -57,7 +57,7 @@ export class EventService {
                 }),
                 concatMap((message: WebsocketEvent) => from(this._appService.manageEvent(message.event)))
             )
-            .subscribe(() => {}, (err) => {
+            .subscribe(() => { }, (err) => {
                 console.error('Error: ', err);
             }, () => {
                 console.warn('Websocket Completed');
@@ -91,19 +91,19 @@ export class EventService {
         }));
     }
 
-    subscribeAutoFromUrl(url: string) {
+    subscribeAutoFromPath(path: string) {
         // When we move from a page to another we reset the filters
         let fs: Array<WebsocketFilter> = [
             <WebsocketFilter>{ type: WebsocketFilterType.GLOBAL }
         ];
 
-        let urlSplitted = url.substr(1, url.length - 1).split('/');
-        switch (urlSplitted[0]) {
+        let pathSplitted = path.substring(1, path.length).split('/');
+        switch (pathSplitted[0]) {
             case 'settings':
-                if (urlSplitted.length === 1) { // Ignore settings root page
+                if (pathSplitted.length === 1) { // Ignore settings root page
                     break;
                 }
-                let pageName = urlSplitted[1];
+                let pageName = pathSplitted[1];
                 switch (pageName) {
                     case 'queue':
                         fs.push(<WebsocketFilter>{ type: WebsocketFilterType.QUEUE });
@@ -111,22 +111,22 @@ export class EventService {
                 }
                 break;
             case 'project':
-                if (urlSplitted.length === 1) { // Ignore project creation page
+                if (pathSplitted.length === 1) { // Ignore project creation page
                     break;
                 }
-                let projectKey = urlSplitted[1].split('?')[0];
-                if (urlSplitted.length === 2) { // Project page
+                let projectKey = pathSplitted[1];
+                if (pathSplitted.length === 2) { // Project page
                     fs.push(<WebsocketFilter>{
                         type: WebsocketFilterType.PROJECT,
                         project_key: projectKey
                     });
                     break;
                 }
-                if (urlSplitted.length === 3) { // Ignore application/pipeline/environment/workflow creation pages
+                if (pathSplitted.length === 3) { // Ignore application/pipeline/environment/workflow creation pages
                     break;
                 }
-                let entityType = urlSplitted[2];
-                let entityName = urlSplitted[3].split('?')[0];
+                let entityType = pathSplitted[2];
+                let entityName = pathSplitted[3];
                 switch (entityType) {
                     case 'pipeline':
                         fs.push(<WebsocketFilter>{
@@ -159,20 +159,20 @@ export class EventService {
                             project_key: projectKey,
                             workflow_name: entityName
                         });
-                        if (urlSplitted.length >= 6) {
+                        if (pathSplitted.length >= 6) {
                             fs.push(<WebsocketFilter>{
                                 type: WebsocketFilterType.WORKFLOW_RUN,
                                 project_key: projectKey,
                                 workflow_name: entityName,
-                                workflow_run_num: Number(urlSplitted[5].split('?')[0])
+                                workflow_run_num: Number(pathSplitted[5])
                             });
                         }
-                        if (urlSplitted.length >= 8) {
+                        if (pathSplitted.length >= 8) {
                             fs.push(<WebsocketFilter>{
                                 type: WebsocketFilterType.WORKFLOW_NODE_RUN,
                                 project_key: projectKey,
                                 workflow_name: entityName,
-                                workflow_node_run_id: Number(urlSplitted[7].split('?')[0])
+                                workflow_node_run_id: Number(pathSplitted[7])
                             });
                         }
                         break;

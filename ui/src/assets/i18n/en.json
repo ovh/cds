@@ -23,7 +23,6 @@
   "action_usage_actions_using": "This action is used by following actions:",
   "action_usage_not_used": "This action is not used by your pipelines or actions.",
   "action_help_add_from": "Current action was initialized with data from \"{{jobName}}\" job of \"{{pipelineName}}\" pipeline in \"{{projectKey}}\" project. The data will not be stored until you save the action.",
-  "admin_queue_title": "Current CDS jobs queue",
   "cdsapi_loading": "CDS API is starting. Please wait.",
   "application_ascode_updated": "Draft updated",
   "application_home_history": "History",

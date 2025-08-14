@@ -53,18 +53,18 @@ func (s *websocketServer) GetClientData(uuid string) *websocketClientData {
 
 type webSocketFilters []sdk.WebsocketFilter
 
-func (f webSocketFilters) HasOneKey(keys ...string) (found bool, needCheckPermission bool) {
+func (f webSocketFilters) HasOneKey(keys ...string) (found bool, needPostCheck bool) {
 	for i := range keys {
 		for _, filter := range f {
 			if keys[i] == filter.Key() {
 				found = true
 				switch filter.Type {
 				case sdk.WebsocketFilterTypeGlobal, sdk.WebsocketFilterTypeQueue, sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
-					needCheckPermission = true
+					needPostCheck = true
 				}
 				// If we found a filter that don't need to check permission we can return directly
 				// If not we will check if another filter match the given keys, this will prevent from checking permission if not needed
-				if !needCheckPermission {
+				if !needPostCheck {
 					return
 				}
 			}
@@ -142,7 +142,7 @@ func (c *websocketClientData) updateEventFilters(ctx context.Context, db gorp.Sq
 }
 
 // We need to check permission for some kind of events, when permission can't be verified at filter subscription.
-func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, event sdk.Event) (bool, error) {
+func (c *websocketClientData) eventPostCheck(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, event sdk.Event) (bool, error) {
 	var isMaintainer = c.AuthConsumer.Maintainer()
 	var isHatchery = c.AuthConsumer.AuthConsumerUser.Service != nil && c.AuthConsumer.AuthConsumerUser.Service.Type == sdk.TypeHatchery
 	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.AuthConsumerUser.GroupIDs) > 0
@@ -161,7 +161,6 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 		}
 
 		if isHatchery && event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
-
 			var hatcheryType string
 			for _, f := range c.filters {
 				if f.HatcheryType != "" {
@@ -312,17 +311,17 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 			}
 
 			c.mutex.Lock()
-			found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
+			found, needPostCheck := c.filters.HasOneKey(eventKeys...)
 			c.mutex.Unlock()
 
 			if !found {
 				return
 			}
 
-			if needCheckPermission {
-				allowed, err := c.checkEventPermission(ctx, a.mustDBWithCtx(ctx), a.Cache, e)
+			if needPostCheck {
+				allowed, err := c.eventPostCheck(ctx, a.mustDBWithCtx(ctx), a.Cache, e)
 				if err != nil {
-					err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", clientID, c.AuthConsumer.ID)
+					err = sdk.WrapError(err, "unable to validate event post check for client %s with consumer id: %s", clientID, c.AuthConsumer.ID)
 					ctx = sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, err.Error())
 					return

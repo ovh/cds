@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -59,7 +61,8 @@ func (f webSocketV2Filters) HasOneKey(keys ...string) (found bool, needPostCheck
 				found = true
 				switch filter.Type {
 				case sdk.WebsocketV2FilterTypeGlobal,
-					sdk.WebsocketV2FilterTypeProjectRuns:
+					sdk.WebsocketV2FilterTypeProjectRuns,
+					sdk.WebsocketV2FilterTypeQueue:
 					needPostCheck = true
 				}
 				// If we found a filter that don't need post check we can return directly
@@ -138,6 +141,44 @@ func (c *websocketV2ClientData) updateEventFilters(ctx context.Context, db gorp.
 func (c *websocketV2ClientData) eventPostCheck(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, event sdk.FullEventV2) (result bool, err error) {
 	log.Debug(ctx, "websocketV2ClientData.eventPostCheck> running eventPostCheck for event.Type: %q", string(event.Type))
 	defer log.Debug(ctx, "websocketV2ClientData.eventPostCheck> result eventPostCheck for event.Type: %q is %t", string(event.Type), result)
+
+	var isMaintainer = c.AuthConsumer.Maintainer()
+
+	if strings.HasPrefix(string(event.Type), "RunJob") {
+		if isMaintainer {
+			return true, nil
+		}
+
+		pKeys, err := rbac.LoadAllProjectKeysAllowed(ctx, db, sdk.ProjectRoleRead, c.AuthConsumer.AuthConsumerUser.AuthentifiedUserID)
+		if err != nil {
+			return false, err
+		}
+		if len(pKeys) == 0 || !pKeys.Contains(event.ProjectKey) {
+			return false, nil
+		}
+
+		rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, c.AuthConsumer.AuthConsumerUser.AuthentifiedUserID)
+		if err != nil {
+			return false, err
+		}
+		regionIDs := sdk.StringSlice{}
+		for _, r := range rbacRegions {
+			regionIDs = append(regionIDs, r.RegionID)
+		}
+		regionIDs.Unique()
+
+		allowedRegions, err := region.LoadRegionByIDs(ctx, db, regionIDs)
+		if err != nil {
+			return false, err
+		}
+		for _, r := range allowedRegions {
+			if r.Name == event.Region {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	}
 
 	if event.Type == sdk.EventRunCrafted || event.Type == sdk.EventRunBuilding || event.Type == sdk.EventRunEnded || event.Type == sdk.EventRunRestart {
 		filter := c.filters.GetFirstByType(sdk.WebsocketV2FilterTypeProjectRuns)
@@ -273,14 +314,12 @@ func (a *API) websocketV2OnMessage(e sdk.FullEventV2) {
 
 			if needPostCheck {
 				allowed, err := c.eventPostCheck(ctx, a.mustDBWithCtx(ctx), a.Cache, e)
-
 				if err != nil {
-					err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", clientID, c.AuthConsumer.ID)
+					err = sdk.WrapError(err, "unable to validate event post check for client %s with consumer id: %s", clientID, c.AuthConsumer.ID)
 					ctx = sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, err.Error())
 					return
 				}
-
 				if !allowed {
 					return
 				}
@@ -314,6 +353,10 @@ func (a *API) websocketV2ComputeEventKeys(event sdk.FullEventV2) []string {
 			Type:          sdk.WebsocketV2FilterTypeProjectPurgeReport,
 			ProjectKey:    event.ProjectKey,
 			PurgeReportID: event.PurgeReportID,
+		}.Key())
+	case sdk.EventRunJobEnqueued, sdk.EventRunJobBlocked, sdk.EventRunJobCancelled, sdk.EventRunJobSkipped, sdk.EventRunJobStopped, sdk.EventRunJobScheduled, sdk.EventRunJobBuilding, sdk.EventRunJobEnded:
+		keys = append(keys, sdk.WebsocketV2Filter{
+			Type: sdk.WebsocketV2FilterTypeQueue,
 		}.Key())
 	}
 

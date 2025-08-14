@@ -11,6 +11,7 @@ const (
 	WebsocketV2FilterTypeProject            WebsocketV2FilterType = "project"
 	WebsocketV2FilterTypeProjectPurgeReport WebsocketV2FilterType = "project-purge-report"
 	WebsocketV2FilterTypeProjectRuns        WebsocketV2FilterType = "project-runs"
+	WebsocketV2FilterTypeQueue              WebsocketV2FilterType = "queue"
 )
 
 func (f WebsocketV2FilterType) IsValid() bool {
@@ -18,7 +19,8 @@ func (f WebsocketV2FilterType) IsValid() bool {
 	case WebsocketV2FilterTypeGlobal,
 		WebsocketV2FilterTypeProject,
 		WebsocketV2FilterTypeProjectRuns,
-		WebsocketV2FilterTypeProjectPurgeReport:
+		WebsocketV2FilterTypeProjectPurgeReport,
+		WebsocketV2FilterTypeQueue:
 		return true
 	}
 	return false

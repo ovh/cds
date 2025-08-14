@@ -4,6 +4,8 @@ export enum EventV2Type {
 	EventRunEnded = "RunEnded",
 	EventRunRestart = "RunRestart",
 
+	EventRunJobEnqueued = "RunJobEnqueued",
+
 	EventProjectPurge = "EventProjectPurge"
 }
 

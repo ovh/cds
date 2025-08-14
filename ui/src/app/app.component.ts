@@ -58,7 +58,7 @@ export class AppComponent implements OnInit, OnDestroy {
     maintenance: boolean;
     cdsstateSub: Subscription;
     currentAuthSummary: AuthSummary;
-    previousURL: string;
+    previousPath: string;
     websocket: WebSocketSubject<any>;
     loading = true;
 
@@ -187,10 +187,11 @@ export class AppComponent implements OnInit, OnDestroy {
         this._routerNavEndSubscription = this._router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
             .pipe(map((e: NavigationEnd) => {
-                if ((!this.previousURL || this.previousURL.split('?')[0] !== e.url.split('?')[0])) {
-                    this.previousURL = e.url;
-                    this._eventService.subscribeAutoFromUrl(e.url);
-                    this._eventV2Service.subscribeAutoFromUrl(e.url);
+                const path = e.url.split('?')[0]; 
+                if ((!this.previousPath || this.previousPath !== path)) {
+                    this.previousPath = path;
+                    this._eventService.subscribeAutoFromPath(path);
+                    this._eventV2Service.subscribeAutoFromPath(path);
                     return;
                 }
             }))

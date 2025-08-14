@@ -10,7 +10,7 @@ export class Job {
     warnings: Array<ActionWarning>;
     worker_name: string;
     worker_id: string;
-
+    
     // UI parameter
     hasChanged: boolean;
     ref: number;

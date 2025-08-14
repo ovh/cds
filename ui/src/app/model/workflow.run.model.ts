@@ -202,10 +202,13 @@ export class WorkflowNodeJobRun {
     model: string;
     bookedby: BookedBy;
     spawninfos: Array<SpawnInfo>;
+    hatchery_name: string;
 
     // UI infos for queue
-    duration: string;
     updating: boolean;
+    mParameters: { [name: string]: string }
+    requirementsSummary: string;
+    bookedBySummary: string;
 }
 
 export class BookedBy {

@@ -42,6 +42,11 @@ export class ErrorInterceptor implements HttpInterceptor {
                         return observableThrowError(e);
                     }
 
+                    // ignore 403 errors for /queue/workflows/<job-id>/infos routes
+                    if (e.status === 403 && /^.*\/queue\/workflows\/[0-9]+\/infos$/.test(req.url)) {
+                        return observableThrowError(e);
+                    }
+
                     // error formatted from CDS API
                     if (!e.error) {
                         return observableThrowError(e);

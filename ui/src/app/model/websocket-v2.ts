@@ -4,7 +4,8 @@ export enum WebsocketV2FilterType {
     GLOBAL = 'global',
     PROJECT = 'project',
     PROJECT_RUNS = 'project-runs',
-    PROJECT_PURGE_REPORT = 'project-purge-report'
+    PROJECT_PURGE_REPORT = 'project-purge-report',
+    QUEUE = 'queue'
 }
 
 export class WebsocketV2Filter {
