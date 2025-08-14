@@ -354,7 +354,7 @@ func (a *API) websocketV2ComputeEventKeys(event sdk.FullEventV2) []string {
 			ProjectKey:    event.ProjectKey,
 			PurgeReportID: event.PurgeReportID,
 		}.Key())
-	case sdk.EventRunJobEnqueued, sdk.EventRunJobBlocked, sdk.EventRunJobCancelled, sdk.EventRunJobSkipped, sdk.EventRunJobStopped, sdk.EventRunJobScheduled, sdk.EventRunJobBuilding, sdk.EventRunJobManualTriggered, sdk.EventRunJobEnded:
+	case sdk.EventRunJobEnqueued, sdk.EventRunJobBlocked, sdk.EventRunJobCancelled, sdk.EventRunJobSkipped, sdk.EventRunJobStopped, sdk.EventRunJobScheduled, sdk.EventRunJobBuilding, sdk.EventRunJobEnded:
 		keys = append(keys, sdk.WebsocketV2Filter{
 			Type: sdk.WebsocketV2FilterTypeQueue,
 		}.Key())

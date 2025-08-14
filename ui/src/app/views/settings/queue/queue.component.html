@@ -49,8 +49,8 @@
         <div class="footer">
             <button nz-button nzType="primary" (click)="loadJobsV1()" title="Refresh jobs"><span nz-icon
                     [nzType]="'reload'"></span></button>
-            {{jobsV1.length}} results
-            <nz-pagination [nzPageIndex]="pageIndexV1" [nzPageSize]="100" [nzTotal]="jobsV1.length"
+            {{jobsV1Table.data.length}} results
+            <nz-pagination [nzPageIndex]="pageIndexV1" [nzPageSize]="100" [nzTotal]="jobsV1Table.data.length"
                 (nzPageIndexChange)="pageIndexV1Change($event)"></nz-pagination>
         </div>
     </div>

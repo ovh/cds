@@ -20,6 +20,7 @@ import { NzTableQueryParams, NzTableFilterList } from 'ng-zorro-antd/table';
 import { lastValueFrom, Subscription } from 'rxjs';
 import { V2WorkflowRunJob, V2WorkflowRunJobStatus } from '../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model';
 import { EventV2State } from 'app/store/event-v2.state';
+import Debounce from 'app/shared/decorator/debounce';
 
 @Component({
     selector: 'app-queue',
@@ -118,6 +119,7 @@ export class QueueComponent implements OnDestroy {
                 this.removeJobV2(jobID);
             }
             this._cd.markForCheck();
+            this.loadJobsV2TotalCount();
         });
 
         this._activatedRoute.queryParamMap.subscribe(q => {
@@ -138,7 +140,7 @@ export class QueueComponent implements OnDestroy {
 
         try {
             const resp = await lastValueFrom(this._queueService.getWorkflows(this.statusFiltersV1));
-            this.jobsV1 = resp.map(this.mapJobV1);
+            this.jobsV1 = resp.map(this.mapJobV1).sort(this.sortJobsV1);
         } catch (e) {
             this._messageService.error(`Unable to list workflow run jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
@@ -162,6 +164,15 @@ export class QueueComponent implements OnDestroy {
 
         this.loading.v2 = false;
         this._cd.markForCheck();
+    }
+
+    @Debounce(500)
+    async loadJobsV2TotalCount() {
+        try {
+            const resp = await lastValueFrom(this._queueService.getV2Jobs(this.statusFiltersV2, null, 0, 1));
+            this.jobsV2totalCount = parseInt(resp.headers.get('X-Total-Count'), 10);
+            this._cd.markForCheck();
+        } catch (e) { }
     }
 
     async stopJobV1(job: WorkflowNodeJobRun) {
@@ -235,15 +246,11 @@ export class QueueComponent implements OnDestroy {
     }
 
     appendOrUpdateJobV1(job: WorkflowNodeJobRun) {
-        this.jobsV1 = this.jobsV1.filter(j => j.id !== job.id).sort(this.sortJobsV1).concat(this.mapJobV1(job));
+        this.jobsV1 = this.jobsV1.filter(j => j.id !== job.id).concat(this.mapJobV1(job)).sort(this.sortJobsV1);
     }
 
     appendOrUpdateJobV2(job: V2WorkflowRunJob) {
-        const previousLength = this.jobsV2.length;
-        this.jobsV2 = this.jobsV2.filter(j => j.id !== job.id).concat(this.mapJobV2(job)).sort(this.sortJobsV2).slice(0, 100);
-        if (this.jobsV2.length > previousLength) {
-            this.jobsV2totalCount++;
-        }
+        this.jobsV2 = this.jobsV2.filter(j => j.id !== job.id).concat(this.mapJobV2(job)).filter(this.filterJobsV2.bind(this)).sort(this.sortJobsV2).slice(0, 100);
     }
 
     removeJobV1(jobID: number) {
@@ -252,7 +259,6 @@ export class QueueComponent implements OnDestroy {
 
     removeJobV2(jobID: string) {
         this.jobsV2 = this.jobsV2.filter(j => j.id !== jobID);
-        this.jobsV2totalCount--;
     }
 
     mapJobV1(job: WorkflowNodeJobRun): WorkflowNodeJobRun {
@@ -297,4 +303,6 @@ export class QueueComponent implements OnDestroy {
     sortJobsV2(a: V2WorkflowRunJob, b: V2WorkflowRunJob) { return moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1; }
 
     filterJobsV1(statuses: string[], job: WorkflowNodeJobRun) { return statuses.find(s => s === job.status); }
+
+    filterJobsV2(job: V2WorkflowRunJob) { return this.statusFiltersV2.find(s => s === job.status); }
 }
