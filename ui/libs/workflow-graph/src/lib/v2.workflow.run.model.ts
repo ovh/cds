@@ -167,6 +167,8 @@ export class V2WorkflowRunJob {
 
     // UI infos for queue
     updating: boolean;
+    bookedBySummary: string;
+    requirementsSummary: string;
 }
 
 export enum V2WorkflowRunJobStatus {

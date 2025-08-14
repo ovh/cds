@@ -65,6 +65,7 @@
                     <th nzColumnKey="statusV2" [nzFilterMultiple]="true" [nzFilters]="statusFilterListV2"
                         [nzFilterFn]="true">Status
                     </th>
+                    <th>Booked By</th>
                     <th>ID</th>
                     <th>Path</th>
                     <th>Triggered By</th>
@@ -76,13 +77,14 @@
                 <tr *ngFor="let job of jobsV2Table.data">
                     <td>{{job.queued | amTimeAgo}}</td>
                     <td>{{job.status}}</td>
+                    <td>{{job.bookedBySummary}}</td>
                     <td>{{job.id}}</td>
                     <td>
                         <a [routerLink]="['/project', job.project_key, 'run', job.workflow_run_id]"
                             [queryParams]="{'panel': 'job:'+job.id}">{{job.project_key}}/{{job.vcs_server}}/{{job.repository}}/{{job.workflow_name}}/{{job.run_number}}/{{job.job_id}}</a>
                     </td>
                     <td>{{job.username}}</td>
-                    <td>region={{job.region}}, type={{job.model_type}}</td>
+                    <td>{{job.requirementsSummary}}</td>
                     <td nzAlign="right">
                         <button nz-button nzDanger nzType="primary" [nzLoading]="job.updating" [disabled]="job.updating"
                             (click)="stopJobV2(job)">Stop</button>

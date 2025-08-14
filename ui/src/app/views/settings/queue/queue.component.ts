@@ -155,7 +155,7 @@ export class QueueComponent implements OnDestroy {
             let offset = (this.pageIndexV2 - 1) * 100;
             const resp = await lastValueFrom(this._queueService.getV2Jobs(this.statusFiltersV2, null, offset, 100));
             this.jobsV2totalCount = parseInt(resp.headers.get('X-Total-Count'), 10);
-            this.jobsV2 = resp.body;
+            this.jobsV2 = resp.body.map(this.mapJobV2);
         } catch (e) {
             this._messageService.error(`Unable to list workflow run jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
@@ -240,7 +240,7 @@ export class QueueComponent implements OnDestroy {
 
     appendOrUpdateJobV2(job: V2WorkflowRunJob) {
         const previousLength = this.jobsV2.length;
-        this.jobsV2 = this.jobsV2.filter(j => j.id !== job.id).concat(job).sort(this.sortJobsV2).slice(0, 100);
+        this.jobsV2 = this.jobsV2.filter(j => j.id !== job.id).concat(this.mapJobV2(job)).sort(this.sortJobsV2).slice(0, 100);
         if (this.jobsV2.length > previousLength) {
             this.jobsV2totalCount++;
         }
@@ -258,7 +258,7 @@ export class QueueComponent implements OnDestroy {
     mapJobV1(job: WorkflowNodeJobRun): WorkflowNodeJobRun {
         let bookedBySummary = '';
         if (job.status === PipelineStatus.BUILDING) {
-            bookedBySummary = job.job.worker_name;
+            bookedBySummary = `${job.hatchery_name}/${job.job.worker_name}`;
         } else if (job?.bookedby?.name) {
             bookedBySummary = job.bookedby.name;
         }
@@ -274,6 +274,21 @@ export class QueueComponent implements OnDestroy {
                 params[param.name] = param.value;
                 return params;
             }, {})
+        };
+    }
+
+    mapJobV2(job: V2WorkflowRunJob): V2WorkflowRunJob {
+        let bookedBySummary = '';
+        if (job.status === V2WorkflowRunJobStatus.Building) {
+            bookedBySummary = `${job.hatchery_name}/${job.worker_name}`;
+        } else if (job.status === V2WorkflowRunJobStatus.Scheduling) {
+            bookedBySummary = `${job.hatchery_name}`;
+        }
+        let requirementsSummary = `region=${job.region}, type=${job.model_type}, runs-on=${job.job['runs-on']}`;
+        return {
+            ...job,
+            bookedBySummary,
+            requirementsSummary
         };
     }
 

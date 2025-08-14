@@ -202,6 +202,7 @@ export class WorkflowNodeJobRun {
     model: string;
     bookedby: BookedBy;
     spawninfos: Array<SpawnInfo>;
+    hatchery_name: string;
 
     // UI infos for queue
     updating: boolean;
