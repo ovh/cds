@@ -164,6 +164,11 @@ export class V2WorkflowRunJob {
     model_type: string;
     matrix: { [key: string]: string };
     gate_inputs: { [key: string]: any };
+
+    // UI infos for queue
+    updating: boolean;
+    bookedBySummary: string;
+    requirementsSummary: string;
 }
 
 export enum V2WorkflowRunJobStatus {
