@@ -195,7 +195,13 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		}
 		ctxQueueJobBook, next := telemetry.Span(ctx, "hatchery.QueueJobBook")
 		ctxQueueJobBook, cancel := context.WithTimeout(ctxQueueJobBook, 10*time.Second)
-		bookedInfos, err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id)
+
+		var customBookDelay int64
+		if hWithCustomBookDelay, ok := h.(InterfaceWithCustomBookDelay); ok {
+			customBookDelay = hWithCustomBookDelay.ComputeBookDelay(ctxQueueJobBook, j.model)
+		}
+
+		bookedInfos, err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id, customBookDelay)
 		if err != nil {
 			next()
 			// perhaps already booked by another hatchery

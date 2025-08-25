@@ -1,22 +1,26 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { AuthSummary } from 'app/model/user.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { QueueService } from 'app/service/queue/queue.service';
+import { V2WorkflowRunService } from 'app/service/services.module';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ErrorUtils } from 'app/shared/error.utils';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { EventState } from 'app/store/event.state';
-import { AddOrUpdateJob, RemoveJob, SetJobs, SetJobUpdating } from 'app/store/queue.action';
-import { QueueState } from 'app/store/queue.state';
 import moment from 'moment';
-import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzTableQueryParams, NzTableFilterList } from 'ng-zorro-antd/table';
+import { lastValueFrom, Subscription } from 'rxjs';
+import { V2WorkflowRunJob, V2WorkflowRunJobStatus } from '../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model';
+import { EventV2State } from 'app/store/event-v2.state';
+import Debounce from 'app/shared/decorator/debounce';
 
 @Component({
     selector: 'app-queue',
@@ -26,115 +30,279 @@ import { finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class QueueComponent implements OnDestroy {
-    queueSubscription: Subscription;
-    eventSubscription: Subscription;
+    eventV1Subscription: Subscription;
+    eventV2Subscription: Subscription;
     currentAuthSummary: AuthSummary;
-    nodeJobRuns: Array<WorkflowNodeJobRun> = [];
-    parametersMaps: Array<{}> = [];
-    requirementsList: Array<string> = [];
-    bookedOrBuildingByList: Array<string> = [];
-    loading = true;
-    statusOptions: Array<string> = [PipelineStatus.WAITING, PipelineStatus.BUILDING];
-    status: Array<string>;
+
+    loading = {
+        v1: true,
+        v2: true
+    };
+
     path: Array<PathItem>;
 
+    jobsV1: Array<WorkflowNodeJobRun> = [];
+    jobsV2: Array<V2WorkflowRunJob> = [];
+    jobsV2totalCount = 0;
+    pageIndexV1: number = 1;
+    pageIndexV2: number = 1;
+    statusFiltersV1: Array<string> = [];
+    statusFiltersV2: Array<string> = [];
+    paramsV1: NzTableQueryParams;
+    paramsV2: NzTableQueryParams;
+    statusFilterListV1: NzTableFilterList = [];
+    statusFilterListV2: NzTableFilterList = [];
+
     constructor(
-        private _store: Store,
-        private _wfRunService: WorkflowRunService,
+        private _activatedRoute: ActivatedRoute,
+        private _cd: ChangeDetectorRef,
+        private _messageService: NzMessageService,
         private _queueService: QueueService,
+        private _router: Router,
+        private _store: Store,
         private _toast: ToastService,
-        private _translate: TranslateService,
-        private _cd: ChangeDetectorRef
+        private _wfRunService: WorkflowRunService,
+        private _workflowService: V2WorkflowRunService
     ) {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
-        this.status = [this.statusOptions[0]];
 
         this.path = [<PathItem>{
             translate: 'common_settings'
         }, <PathItem>{
-            translate: 'admin_queue_title'
+            text: 'Current CDS jobs queue'
         }];
 
-        this.eventSubscription = this._store.select(EventState.last).subscribe(e => {
+        const initialStatusV1 = this._activatedRoute.snapshot.queryParamMap.getAll("statusV1");
+        this.statusFilterListV1 = [
+            { text: PipelineStatus.WAITING, value: PipelineStatus.WAITING, byDefault: true },
+            { text: PipelineStatus.BUILDING, value: PipelineStatus.BUILDING }
+        ].map(f => ({
+            ...f,
+            byDefault: initialStatusV1.length > 0 ? initialStatusV1.indexOf(f.value) != -1 : f.byDefault
+        }));
+
+        const initialStatusV2 = this._activatedRoute.snapshot.queryParamMap.getAll("statusV2");
+        this.statusFilterListV2 = [
+            { text: V2WorkflowRunJobStatus.Waiting, value: V2WorkflowRunJobStatus.Waiting, byDefault: true },
+            { text: V2WorkflowRunJobStatus.Scheduling, value: V2WorkflowRunJobStatus.Scheduling, byDefault: true },
+            { text: V2WorkflowRunJobStatus.Building, value: V2WorkflowRunJobStatus.Building }
+        ].map(f => ({
+            ...f,
+            byDefault: initialStatusV2.length > 0 ? initialStatusV2.indexOf(f.value) != -1 : f.byDefault
+        }));
+
+        this.eventV1Subscription = this._store.select(EventState.last).subscribe(e => {
             if (!e || e.type_event !== EventType.RUN_WORKFLOW_JOB) {
                 return;
             }
             let jobID = e.payload['id'];
             if (e.status === PipelineStatus.WAITING || e.status === PipelineStatus.BUILDING) {
-                this._queueService.getJobInfos(jobID).subscribe(wnr => {
-                    this._store.dispatch(new AddOrUpdateJob(wnr));
-                });
+                try {
+                    this._queueService.getJobInfos(jobID).subscribe(job => { this.appendOrUpdateJobV1(job); });
+                } catch (e) {
+                    this.removeJobV1(jobID);
+                }
             } else {
-                this._store.dispatch(new RemoveJob(jobID));
-            }
-        });
-
-        this.queueSubscription = this._store.select(QueueState.jobs).subscribe(js => {
-            let fitlers = this.status.length > 0 ? this.status : this.statusOptions;
-            this.nodeJobRuns = js.filter(j => !!fitlers.find(f => f === j.status))
-                .sort((a: WorkflowNodeJobRun, b: WorkflowNodeJobRun) => moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1);
-            if (this.nodeJobRuns.length > 0) {
-                this.requirementsList = [];
-                this.bookedOrBuildingByList = [];
-                this.parametersMaps = this.nodeJobRuns.map((nj) => {
-                    if (this.currentAuthSummary.user.ring === 'ADMIN' && nj.job && nj.job.action && nj.job.action.requirements) {
-                        let requirements = nj.job.action.requirements
-                            .reduce((reqs, req) => `type: ${req.type}, value: ${req.value}; ${reqs}`, '');
-                        this.requirementsList.push(requirements);
-                    }
-                    this.bookedOrBuildingByList.push(((): string => {
-                        if (nj.status === PipelineStatus.BUILDING) {
-                            return nj.job.worker_name;
-                        }
-                        if (nj?.bookedby?.name) {
-                            return nj.bookedby.name;
-                        }
-                        return '';
-                    })());
-                    if (!nj.parameters) {
-                        return null;
-                    }
-                    return nj.parameters.reduce((params, param) => {
-                        params[param.name] = param.value;
-                        return params;
-                    }, {});
-                });
+                this.removeJobV1(jobID);
             }
             this._cd.markForCheck();
         });
 
-        this.loadAll();
+        this.eventV2Subscription = this._store.select(EventV2State.last).subscribe(e => {
+            if (!e || e.type.indexOf('RunJob') === -1) {
+                return;
+            }
+            let jobID = e.payload['id'];
+            if (e.status === V2WorkflowRunJobStatus.Waiting || e.status === V2WorkflowRunJobStatus.Scheduling || e.status === V2WorkflowRunJobStatus.Building) {
+                this.appendOrUpdateJobV2(e.payload as V2WorkflowRunJob);
+            } else {
+                this.removeJobV2(jobID);
+            }
+            this._cd.markForCheck();
+            this.loadJobsV2TotalCount();
+        });
+
+        this._activatedRoute.queryParamMap.subscribe(q => {
+            this.pageIndexV1 = q.get('pageV1') ? parseInt(q.get('pageV1'), 10) : 1;
+            this.statusFiltersV1 = q.getAll('statusV1') ?? [];
+            this.pageIndexV2 = q.get('pageV2') ? parseInt(q.get('pageV2'), 10) : 1;
+            this.statusFiltersV2 = q.getAll('statusV2') ?? [];
+            this.loadJobsV1();
+            this.loadJobsV2();
+        });
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
-    statusFilterChange() {
-        this.loadAll();
+    async loadJobsV1() {
+        this.loading.v1 = true;
+        this._cd.markForCheck();
+
+        try {
+            const resp = await lastValueFrom(this._queueService.getWorkflows(this.statusFiltersV1));
+            this.jobsV1 = resp.map(this.mapJobV1).sort(this.sortJobsV1);
+        } catch (e) {
+            this._messageService.error(`Unable to list workflow run jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+
+        this.loading.v1 = false;
+        this._cd.markForCheck();
     }
 
-    loadAll() {
-        this.loading = true;
-        let status = this.status.length > 0 ? this.status : this.statusOptions;
-        this._queueService.getWorkflows(status).pipe(finalize(() => {
-            this.loading = false;
+    async loadJobsV2() {
+        this.loading.v2 = true;
+        this._cd.markForCheck();
+
+        try {
+            let offset = (this.pageIndexV2 - 1) * 100;
+            const resp = await lastValueFrom(this._queueService.getV2Jobs(this.statusFiltersV2, null, offset, 100));
+            this.jobsV2totalCount = parseInt(resp.headers.get('X-Total-Count'), 10);
+            this.jobsV2 = resp.body.map(this.mapJobV2);
+        } catch (e) {
+            this._messageService.error(`Unable to list workflow run jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+
+        this.loading.v2 = false;
+        this._cd.markForCheck();
+    }
+
+    @Debounce(500)
+    async loadJobsV2TotalCount() {
+        try {
+            const resp = await lastValueFrom(this._queueService.getV2Jobs(this.statusFiltersV2, null, 0, 1));
+            this.jobsV2totalCount = parseInt(resp.headers.get('X-Total-Count'), 10);
             this._cd.markForCheck();
-        })).subscribe(js => {
-            this._store.dispatch(new SetJobs(js));
+        } catch (e) { }
+    }
+
+    async stopJobV1(job: WorkflowNodeJobRun) {
+        job.updating = true;
+        this.appendOrUpdateJobV1(job);
+        this._cd.markForCheck();
+
+        try {
+            await lastValueFrom(this._wfRunService.stopNodeRun(job.mParameters['cds.project'], job.mParameters['cds.workflow'],
+                parseInt(job.mParameters['cds.run.number'], 10), parseInt(job.mParameters['cds.node.id'], 10)
+            ));
+            this._toast.success('', 'Job stopped');
+        } catch (e) {
+            this._messageService.error(`Unable to stop workflow run job: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+    }
+
+    async stopJobV2(job: V2WorkflowRunJob) {
+        job.updating = true;
+        this.appendOrUpdateJobV2(job);
+        this._cd.markForCheck();
+
+        try {
+            await lastValueFrom(this._workflowService.stopJob(job.project_key, job.workflow_run_id, job.id));
+            this._toast.success('', 'Job stopped');
+        } catch (e) {
+            this._messageService.error(`Unable to stop workflow run job: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
+    }
+
+    pageIndexV1Change(index: number): void {
+        this.pageIndexV1 = index;
+        this._cd.markForCheck();
+        this.saveSearchInQueryParams();
+    }
+
+    pageIndexV2Change(index: number): void {
+        this.pageIndexV2 = index;
+        this._cd.markForCheck();
+        this.saveSearchInQueryParams();
+    }
+
+    onQueryParamsV1Change(params: NzTableQueryParams): void {
+        this.paramsV1 = params;
+        this.saveSearchInQueryParams();
+    }
+
+    onQueryParamsV2Change(params: NzTableQueryParams): void {
+        this.paramsV2 = params;
+        this.saveSearchInQueryParams();
+    }
+
+    saveSearchInQueryParams() {
+        let queryParams = {};
+        if (this.pageIndexV1 > 1) {
+            queryParams['pageV1'] = this.pageIndexV1;
+        }
+        if (this.pageIndexV2 > 1) {
+            queryParams['pageV2'] = this.pageIndexV2;
+        }
+        if (this.paramsV1) {
+            this.paramsV1.filter.forEach(f => { queryParams[f.key] = f.value });
+        }
+        if (this.paramsV2) {
+            this.paramsV2.filter.forEach(f => { queryParams[f.key] = f.value });
+        }
+        this._router.navigate([], {
+            relativeTo: this._activatedRoute,
+            queryParams
         });
     }
 
-    stopNode(index: number) {
-        let parameters = this.parametersMaps[index];
-        this._store.dispatch(new SetJobUpdating(this.nodeJobRuns[index].id));
-        this._wfRunService.stopNodeRun(
-            parameters['cds.project'],
-            parameters['cds.workflow'],
-            parseInt(parameters['cds.run.number'], 10),
-            parseInt(parameters['cds.node.id'], 10)
-        )
-            .pipe(finalize(() => {
-                this._cd.markForCheck();
-            }))
-            .subscribe(() => this._toast.success('', this._translate.instant('pipeline_stop')));
+    appendOrUpdateJobV1(job: WorkflowNodeJobRun) {
+        this.jobsV1 = this.jobsV1.filter(j => j.id !== job.id).concat(this.mapJobV1(job)).sort(this.sortJobsV1);
     }
+
+    appendOrUpdateJobV2(job: V2WorkflowRunJob) {
+        this.jobsV2 = this.jobsV2.filter(j => j.id !== job.id).concat(this.mapJobV2(job)).filter(this.filterJobsV2.bind(this)).sort(this.sortJobsV2).slice(0, 100);
+    }
+
+    removeJobV1(jobID: number) {
+        this.jobsV1 = this.jobsV1.filter(j => j.id !== jobID);
+    }
+
+    removeJobV2(jobID: string) {
+        this.jobsV2 = this.jobsV2.filter(j => j.id !== jobID);
+    }
+
+    mapJobV1(job: WorkflowNodeJobRun): WorkflowNodeJobRun {
+        let bookedBySummary = '';
+        if (job.status === PipelineStatus.BUILDING) {
+            bookedBySummary = `${job.hatchery_name}/${job.job.worker_name}`;
+        } else if (job?.bookedby?.name) {
+            bookedBySummary = job.bookedby.name;
+        }
+        let requirementsSummary = '';
+        if (job.job && job.job.action && job.job.action.requirements) {
+            requirementsSummary = job.job.action.requirements.map(req => `${req.type}: ${req.value}`).join('\n');
+        }
+        return {
+            ...job,
+            bookedBySummary,
+            requirementsSummary,
+            mParameters: job.parameters.reduce((params, param) => {
+                params[param.name] = param.value;
+                return params;
+            }, {})
+        };
+    }
+
+    mapJobV2(job: V2WorkflowRunJob): V2WorkflowRunJob {
+        let bookedBySummary = '';
+        if (job.status === V2WorkflowRunJobStatus.Building) {
+            bookedBySummary = `${job.hatchery_name}/${job.worker_name}`;
+        } else if (job.status === V2WorkflowRunJobStatus.Scheduling) {
+            bookedBySummary = `${job.hatchery_name}`;
+        }
+        let requirementsSummary = `region: ${job.region}\ntype: ${job.model_type}\nruns-on: ${job.job['runs-on']}`;
+        return {
+            ...job,
+            bookedBySummary,
+            requirementsSummary
+        };
+    }
+
+    sortJobsV1(a: WorkflowNodeJobRun, b: WorkflowNodeJobRun) { return moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1; }
+
+    sortJobsV2(a: V2WorkflowRunJob, b: V2WorkflowRunJob) { return moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1; }
+
+    filterJobsV1(statuses: string[], job: WorkflowNodeJobRun) { return statuses.find(s => s === job.status); }
+
+    filterJobsV2(job: V2WorkflowRunJob) { return this.statusFiltersV2.find(s => s === job.status); }
 }

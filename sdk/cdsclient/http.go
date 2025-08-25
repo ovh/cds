@@ -422,6 +422,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 
 		resp, err := httpClient.Do(req)
 		if err != nil {
+			time.Sleep(250 * time.Millisecond)
 			savederror = newTransportError(err)
 			continue
 		}
@@ -450,7 +451,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 	if savedCodeError == 409 {
 		return nil, nil, savedCodeError, savederror
 	}
-	return nil, nil, savedCodeError, newError(fmt.Errorf("request failed after %d retries: %v", c.config.Retry, savederror))
+	return nil, nil, savedCodeError, newError(fmt.Errorf("request failed after %d retries: %v savedCodeError: %d", c.config.Retry, savederror, savedCodeError))
 }
 
 // UploadMultiPart upload multipart

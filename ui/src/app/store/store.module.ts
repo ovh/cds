@@ -17,7 +17,6 @@ import { FeatureState } from './feature.state';
 import { HelpState } from './help.state';
 import { PreferencesState } from './preferences.state';
 import { ProjectState } from './project.state';
-import { QueueState } from './queue.state';
 import { WorkflowState } from './workflow.state';
 import { NavigationState } from './navigation.state';
 import { EventV2State } from './event-v2.state';
@@ -47,7 +46,6 @@ import { BookmarkState } from './bookmark.state';
             PreferencesState,
             ProjectState,
             ProjectV2State,
-            QueueState,
             WorkflowState
         ], { developmentMode: !env.production })
     ],

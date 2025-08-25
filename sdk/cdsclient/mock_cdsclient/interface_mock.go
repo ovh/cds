@@ -4697,18 +4697,18 @@ func (mr *MockQueueClientMockRecorder) QueueCountWorkflowNodeJobRun(since, until
 }
 
 // QueueJobBook mocks base method.
-func (m *MockQueueClient) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockQueueClient) QueueJobBook(ctx context.Context, id string, delay int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
+	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id, delay)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook.
-func (mr *MockQueueClientMockRecorder) QueueJobBook(ctx, id any) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueueJobBook(ctx, id, delay any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockQueueClient)(nil).QueueJobBook), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockQueueClient)(nil).QueueJobBook), ctx, id, delay)
 }
 
 // QueueJobInfo mocks base method.
@@ -10143,18 +10143,18 @@ func (mr *MockInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, 
 }
 
 // QueueJobBook mocks base method.
-func (m *MockInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockInterface) QueueJobBook(ctx context.Context, id string, delay int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
+	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id, delay)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook.
-func (mr *MockInterfaceMockRecorder) QueueJobBook(ctx, id any) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueueJobBook(ctx, id, delay any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockInterface)(nil).QueueJobBook), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockInterface)(nil).QueueJobBook), ctx, id, delay)
 }
 
 // QueueJobInfo mocks base method.
@@ -13399,18 +13399,18 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, u
 }
 
 // QueueJobBook mocks base method.
-func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id string, delay int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
+	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id, delay)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook.
-func (mr *MockWorkerInterfaceMockRecorder) QueueJobBook(ctx, id any) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueueJobBook(ctx, id, delay any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockWorkerInterface)(nil).QueueJobBook), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockWorkerInterface)(nil).QueueJobBook), ctx, id, delay)
 }
 
 // QueueJobInfo mocks base method.
