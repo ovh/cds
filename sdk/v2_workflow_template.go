@@ -124,7 +124,8 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 	}
 
 	var buf bytes.Buffer
-	if err := wt.Spec.tpl.Execute(&buf, map[string]map[string]interface{}{
+	if err := wt.Spec.tpl.Execute(&buf, map[string]interface{}{
+		"name":   w.Name,
 		"params": params,
 	}); err != nil {
 		return "", err
