@@ -458,7 +458,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     openRunStartDrawer(): void {
         const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
-            nzTitle: 'Start new worklfow run',
+            nzTitle: 'Start new workflow run',
             nzContent: ProjectV2RunStartComponent,
             nzContentParams: {
                 params: <ProjectV2RunStartComponentParams>{
