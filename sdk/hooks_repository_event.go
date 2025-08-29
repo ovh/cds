@@ -132,8 +132,8 @@ func (h *HookWorkflowRunOutgoingEvent) GetFullName() string {
 type HookRepositoryEvent struct {
 	UUID                      string                         `json:"uuid"`
 	Created                   int64                          `json:"created"`
-	EventName                 WorkflowHookEventName          `json:"event_name"` // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
-	EventType                 WorkflowHookEventType          `json:"event_type"` // created, deleted, edited, opened
+	EventName                 WorkflowHookEventName          `json:"event_name"`           // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
+	EventType                 WorkflowHookEventType          `json:"event_type,omitempty"` // created, deleted, edited, opened
 	VCSServerName             string                         `json:"vcs_server_name"`
 	RepositoryName            string                         `json:"repository_name"`
 	Body                      []byte                         `json:"body"`
@@ -141,13 +141,13 @@ type HookRepositoryEvent struct {
 	Status                    string                         `json:"status"`
 	ProcessingTimestamp       int64                          `json:"processing_timestamp"`
 	LastUpdate                int64                          `json:"last_update"`
-	LastError                 string                         `json:"last_error"`
-	NbErrors                  int64                          `json:"nb_errors"`
-	Analyses                  []HookRepositoryEventAnalysis  `json:"analyses"`
-	ModelUpdated              []EntityFullName               `json:"model_updated"`
-	WorkflowUpdated           []EntityFullName               `json:"workflow_updated"`
-	SkippedWorkflows          []EntityFullName               `json:"skipped_workflows"`
-	SkippedHooks              []V2WorkflowHook               `json:"skipped_hooks"`
+	LastError                 string                         `json:"last_error,omitempty"`
+	NbErrors                  int64                          `json:"nb_errors,omitempty"`
+	Analyses                  []HookRepositoryEventAnalysis  `json:"analyses,omitempty"`
+	ModelUpdated              EntityFullNames                `json:"model_updated,omitempty"`
+	WorkflowUpdated           EntityFullNames                `json:"workflow_updated,omitempty"`
+	SkippedWorkflows          EntityFullNames                `json:"skipped_workflows,omitempty"`
+	SkippedHooks              []V2WorkflowHook               `json:"skipped_hooks,omitempty"`
 	WorkflowHooks             []HookRepositoryEventWorkflow  `json:"workflows"`
 	DeprecatedUserID          string                         `json:"user_id"`  // Deprecated
 	DeprecatedUsername        string                         `json:"username"` // Deprecated
@@ -238,6 +238,36 @@ func (h *HookRepositoryEvent) ToInsightReport(uiURL string) VCSInsight {
 	return report
 }
 
+func (h *HookRepositoryEvent) FilterByProject(key string) {
+	var filteredAnalyses []HookRepositoryEventAnalysis
+	for i := range h.Analyses {
+		if h.Analyses[i].ProjectKey == key {
+			filteredAnalyses = append(filteredAnalyses, h.Analyses[i])
+		}
+	}
+	h.Analyses = filteredAnalyses
+
+	h.ModelUpdated = h.ModelUpdated.FilterByProjectKey(key)
+	h.WorkflowUpdated = h.WorkflowUpdated.FilterByProjectKey(key)
+	h.SkippedWorkflows = h.SkippedWorkflows.FilterByProjectKey(key)
+
+	var filteredSkippedHooks []V2WorkflowHook
+	for i := range h.SkippedHooks {
+		if h.SkippedHooks[i].ProjectKey == key {
+			filteredSkippedHooks = append(filteredSkippedHooks, h.SkippedHooks[i])
+		}
+	}
+	h.SkippedHooks = filteredSkippedHooks
+
+	var filteredWorkflowHooks []HookRepositoryEventWorkflow
+	for i := range h.WorkflowHooks {
+		if h.WorkflowHooks[i].ProjectKey == key {
+			filteredWorkflowHooks = append(filteredWorkflowHooks, h.WorkflowHooks[i])
+		}
+	}
+	h.WorkflowHooks = filteredWorkflowHooks
+}
+
 type HookRepositoryEventWorkflow struct {
 	ProjectKey           string             `json:"project_key"`
 	VCSIdentifier        string             `json:"vcs_identifier"`
@@ -267,8 +297,8 @@ type HookRepositoryEventWorkflow struct {
 	// Operation data to get gitInfo
 	OperationUUID   string          `json:"operation_uuid"`
 	OperationStatus OperationStatus `json:"operation_status"`
-	OperationError  string          `json:"operation_error"`
-	LastCheck       int64           `json:"last_check"`
+	OperationError  string          `json:"operation_error,omitempty"`
+	LastCheck       int64           `json:"last_check,omitempty"`
 }
 
 func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
@@ -276,23 +306,23 @@ func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
 }
 
 type HookRepositoryEventExtractData struct {
-	CDSEventName       WorkflowHookEventName                       `json:"cds_event_name"`
-	CDSEventType       WorkflowHookEventType                       `json:"cds_event_type"`
-	Commit             string                                      `json:"commit"`
-	CommitFrom         string                                      `json:"commit_from"`
-	CommitMessage      string                                      `json:"commit_message"`
-	CommitAuthor       string                                      `json:"commit_author,omitempty"`
-	CommitAuthorEmail  string                                      `json:"commit_author_email,omitempty"`
-	Paths              []string                                    `json:"paths"`
-	Ref                string                                      `json:"ref"`
-	PullRequestID      int64                                       `json:"pullrequest_id"`
-	PullRequestRefTo   string                                      `json:"pullrequest_ref_to"`
-	Manual             HookRepositoryEventExtractedDataManual      `json:"manual"`
-	DeprecatedAdminMFA bool                                        `json:"admin_mfa"` // Deprecated
-	Scheduler          HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
-	WorkflowRun        HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
-	WebHook            HookRepositoryEventExtractedDataWebHook     `json:"workflow_hook,omitempty"`
-	HookProjectKey     string                                      `json:"hook_project_key"` // force the hook to only trigger from the given CDS project
+	CDSEventName       WorkflowHookEventName                        `json:"cds_event_name"`
+	CDSEventType       WorkflowHookEventType                        `json:"cds_event_type"`
+	Commit             string                                       `json:"commit"`
+	CommitFrom         string                                       `json:"commit_from"`
+	CommitMessage      string                                       `json:"commit_message"`
+	CommitAuthor       string                                       `json:"commit_author,omitempty"`
+	CommitAuthorEmail  string                                       `json:"commit_author_email,omitempty"`
+	Paths              []string                                     `json:"paths,omitempty"`
+	Ref                string                                       `json:"ref"`
+	PullRequestID      int64                                        `json:"pullrequest_id,omitempty"`
+	PullRequestRefTo   string                                       `json:"pullrequest_ref_to,omitempty"`
+	Manual             *HookRepositoryEventExtractedDataManual      `json:"manual,omitempty"`
+	DeprecatedAdminMFA bool                                         `json:"admin_mfa,omitempty"` // Deprecated
+	Scheduler          *HookRepositoryEventExtractedDataScheduler   `json:"scheduler,omitempty"`
+	WorkflowRun        *HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run,omitempty"`
+	WebHook            *HookRepositoryEventExtractedDataWebHook     `json:"workflow_hook,omitempty"`
+	HookProjectKey     string                                       `json:"hook_project_key,omitempty"` // force the hook to only trigger from the given CDS project
 }
 
 type HookRepositoryEventExtractedDataWebHook struct {
@@ -344,8 +374,8 @@ type HookRepositoryEventAnalysis struct {
 	AnalyzeID      string `json:"analyze_id"`
 	Status         string `json:"status"`
 	ProjectKey     string `json:"project_key"`
-	Error          string `json:"error"`
-	FindRetryCount int64  `json:"find_retry_count"`
+	Error          string `json:"error,omitempty"`
+	FindRetryCount int64  `json:"find_retry_count,omitempty"`
 }
 
 type HookRetrieveSignKeyRequest struct {

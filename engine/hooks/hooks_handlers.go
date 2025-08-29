@@ -192,7 +192,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		CDSEventName: sdk.WorkflowHookEventNameManual,
 		Commit:       runRequest.WorkflowCommit,
 		Ref:          runRequest.WorkflowRef,
-		Manual: sdk.HookRepositoryEventExtractedDataManual{
+		Manual: &sdk.HookRepositoryEventExtractedDataManual{
 			Project:          runRequest.Project,
 			Workflow:         runRequest.Workflow,
 			TargetRepository: runRequest.TargetRepo,
@@ -361,7 +361,7 @@ func (s *Service) workflowWebHookHandler() service.Handler {
 		}
 
 		extractedData := sdk.HookRepositoryEventExtractData{
-			WebHook: sdk.HookRepositoryEventExtractedDataWebHook{
+			WebHook: &sdk.HookRepositoryEventExtractedDataWebHook{
 				Project:    projKey,
 				VCS:        vcsServerName,
 				Repository: repoName,
@@ -377,7 +377,6 @@ func (s *Service) workflowWebHookHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, exec, http.StatusAccepted)
-
 	}
 }
 
