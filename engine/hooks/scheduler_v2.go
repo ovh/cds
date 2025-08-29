@@ -198,7 +198,7 @@ func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e s
 			Commit:       updatedExecution.SchedulerDef.Commit,
 			Ref:          updatedExecution.SchedulerDef.Ref,
 			CDSEventName: sdk.WorkflowHookTypeScheduler,
-			Scheduler: sdk.HookRepositoryEventExtractedDataScheduler{
+			Scheduler: &sdk.HookRepositoryEventExtractedDataScheduler{
 				TargetVCS:      updatedExecution.SchedulerDef.Data.VCSServer,
 				TargetRepo:     updatedExecution.SchedulerDef.Data.RepositoryName,
 				TargetWorkflow: updatedExecution.SchedulerDef.WorkflowName,
