@@ -35,8 +35,6 @@ Copyright (c) 2018, Brendan McMillion. All rights reserved.
 Copyright (c) 2023 urfave/cli maintainers
 Copyright 2014 CoreOS, Inc
 Copyright 2018 CoreOS, Inc
-Copyright (C) 2014-2015 Docker Inc & Go Authors. All rights reserved.
-Copyright (C) 2017-2024 SUSE LLC. All rights reserved.
 Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
 Copyright (c) 2022 Robert Kaussow <mail@thegeeklab.de>
 Copyright 2012-2017 Docker, Inc.
@@ -69,7 +67,7 @@ Copyright 2009 The Go Authors.
 Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
 Copyright (c) 2021 golang-jwt maintainers
 Copyright 2017-2020, Google LLC.
-Copyright 2017-2024, Google LLC.
+Copyright 2017-2025, Google LLC.
 Copyright (c) 2017 The Go Authors. All rights reserved.
 Copyright (c) 2013 Google. All rights reserved.
 Copyright (c) 2009,2014 Google Inc. All rights reserved.
@@ -138,6 +136,9 @@ Copyright (c) 2013 Joshua Tacoma
 Copyright © 2019, 2020 OCI Contributors
 Copyright © 2016 Docker, Inc.
 Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+Copyright (C) 2014-2015 Docker Inc & Go Authors. All rights reserved.
+Copyright (C) 2017-2024 SUSE LLC. All rights reserved.
+Copyright 2017-2024, Google LLC.
 Copyright © 2014-2018 HashiCorp, Inc.
 Copyright (c) 2013-2022, OVH SAS
 Copyright (c) 2018, OVH SAS.
