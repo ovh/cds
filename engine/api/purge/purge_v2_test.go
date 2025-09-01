@@ -91,14 +91,16 @@ func TestApplyRunRetentionOnProject_WorkflowWithRetention(t *testing.T) {
 		Initiator: &sdk.V2Initiator{
 			UserID: lambdauser.ID,
 		},
-		RunNumber:   0,
-		WorkflowRef: "",
+		RunNumber: 0,
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{Ref: ""},
+		},
 	}
 	// Create run on master - We must keep only run_number 19 and 20
 	for i := 0; i < 20; i++ {
 		wr.RunNumber = int64(runNumber)
 		runNumber++
-		wr.WorkflowRef = "refs/heads/master"
+		wr.Contexts.Git.Ref = "refs/heads/master"
 
 		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -113,7 +115,7 @@ func TestApplyRunRetentionOnProject_WorkflowWithRetention(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		wr.RunNumber = int64(runNumber)
 		runNumber++
-		wr.WorkflowRef = "refs/heads/dev/my/feat"
+		wr.Contexts.Git.Ref = "refs/heads/dev/my/feat"
 		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 	}
 
@@ -121,7 +123,7 @@ func TestApplyRunRetentionOnProject_WorkflowWithRetention(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		wr.RunNumber = int64(runNumber)
 		runNumber++
-		wr.WorkflowRef = "refs/heads/fix"
+		wr.Contexts.Git.Ref = "refs/heads/fix"
 		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 	}
 
@@ -201,14 +203,18 @@ func TestApplyRunRetentionOnProject_FallbackProjectDefaultRule(t *testing.T) {
 		Initiator: &sdk.V2Initiator{
 			UserID: lambdauser.ID,
 		},
-		RunNumber:   0,
-		WorkflowRef: "",
+		RunNumber: 0,
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Ref: "",
+			},
+		},
 	}
 	// Create run on master - We must keep only run_number 19 and 20
 	for i := 0; i < 20; i++ {
 		wr.RunNumber = int64(runNumber)
 		runNumber++
-		wr.WorkflowRef = "refs/heads/master"
+		wr.Contexts.Git.Ref = "refs/heads/master"
 		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	}
