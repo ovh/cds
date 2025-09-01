@@ -33,6 +33,9 @@ spec: |-
     [[- if eq .params.keyNormal "myValue" ]]
     normal: 
       runs-on: mymodel
+      steps:
+      - run: |-
+          echo "[[.name]]"
     [[- end ]]	
     [[- if eq .params.keyWithDefault "mySurchargedValue" ]]
     withDefault: 
@@ -70,6 +73,7 @@ spec: |-
 	_, has := work.Jobs["noDefault"]
 
 	require.Equal(t, "mymodel", normal.RunsOn.Model)
+	require.Equal(t, "echo \"myworkflow\"", normal.Steps[0].Run)
 	require.Equal(t, "mymodel", withDefault.RunsOn.Model)
 	require.Equal(t, "mymodel", emptyValue.RunsOn.Model)
 	require.Equal(t, "mymodel", goodDefault.RunsOn.Model)
