@@ -269,7 +269,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// Enqueue JOB
 	hasTemplatedMatrixedJob := false
 	for _, j := range jobsToQueue {
-		if !j.Status.IsTerminated() && j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
+		if j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
 			hasTemplatedMatrixedJob = true
 		}
 	}
@@ -1202,32 +1202,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 	for jobID, jobToTrigger := range jobsToQueue {
 		jobDef := jobToTrigger.Job
 
-		// If no step && no template: rj is success
-		if (jobToTrigger.Status.IsTerminated() && jobToTrigger.Job.From != "") || (len(jobDef.Steps) == 0 && jobDef.From == "") {
-			runJob := sdk.V2WorkflowRunJob{
-				WorkflowRunID:      run.ID,
-				Status:             sdk.V2WorkflowRunJobStatusSuccess,
-				JobID:              jobID,
-				Job:                jobDef,
-				DeprecatedUserID:   wrEnqueue.Initiator.UserID,
-				DeprecatedUsername: wrEnqueue.Initiator.Username(),
-				DeprecatedAdminMFA: wrEnqueue.Initiator.IsAdminWithMFA,
-				ProjectKey:         run.ProjectKey,
-				VCSServer:          run.VCSServer,
-				Repository:         run.Repository,
-				Region:             jobDef.Region,
-				WorkflowName:       run.WorkflowName,
-				RunNumber:          run.RunNumber,
-				RunAttempt:         run.RunAttempt,
-				Initiator:          wrEnqueue.Initiator,
-			}
-			if jobToTrigger.Status.IsTerminated() {
-				runJob.Status = jobToTrigger.Status
-			}
-			runJobs = append(runJobs, runJob)
-			continue
-		}
-
 		runJobContext := sdk.WorkflowRunJobsContext{
 			WorkflowRunContext: sdk.WorkflowRunContext{
 				CDS: run.Contexts.CDS,
@@ -1307,6 +1281,9 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				RunNumber:          run.RunNumber,
 				RunAttempt:         run.RunAttempt,
 				Initiator:          wrEnqueue.Initiator,
+			}
+			if len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
+				runJob.Status = sdk.V2WorkflowRunJobStatusSuccess
 			}
 			// If the current job was a matrix, skip it
 			if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
@@ -1595,6 +1572,9 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 			RunAttempt:         run.RunAttempt,
 			Matrix:             sdk.JobMatrix{},
 			Initiator:          data.wrEnqueue.Initiator,
+		}
+		if len(data.jobToTrigger.Job.Steps) == 0 && !data.jobToTrigger.Status.IsTerminated() {
+			runJob.Status = sdk.V2WorkflowRunJobStatusSuccess
 		}
 		for k, v := range m {
 			runJob.Matrix[k] = v
@@ -2013,7 +1993,7 @@ func computeRunStatusFromJobsStatus(ctx context.Context, db gorp.SqlExecutor, ru
 		allJobID[rj.JobID] = struct{}{}
 	}
 
-	if len(allJobID) < nbJob && finalStatus == sdk.V2WorkflowRunStatusSuccess {
+	if len(allJobID) < nbJob && finalStatus.IsTerminated() {
 		finalStatus = sdk.V2WorkflowRunStatusBuilding
 	} else if len(allJobID) == nbJob && allSkipped {
 		finalStatus = sdk.V2WorkflowRunStatusSkipped
