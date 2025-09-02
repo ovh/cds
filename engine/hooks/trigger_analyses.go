@@ -104,6 +104,21 @@ func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookReposit
 		return nil
 	}
 
+	for _, a := range hre.Analyses {
+		if a.Status == sdk.RepositoryAnalysisStatusError {
+			hre.Status = sdk.HookEventStatusError
+			hre.LastError = a.Error
+			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+				return err
+			}
+			break
+		}
+	}
+
+	if hre.IsTerminated() {
+		return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID)
+	}
+
 	hre.Status = sdk.HookEventStatusWorkflowHooks
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 		return err
