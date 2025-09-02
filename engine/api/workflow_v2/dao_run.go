@@ -254,7 +254,7 @@ func LoadRunsWorkflowRefsByWorkflow(ctx context.Context, db gorp.SqlExecutor, pr
 	_, next := telemetry.Span(ctx, "LoadRunsWorkflowRefsByWorkflow")
 	defer next()
 	if _, err := db.Select(&refs, `
-		SELECT DISTINCT workflow_ref
+		SELECT DISTINCT contexts -> 'git' ->> 'ref'::TEXT
 		FROM v2_workflow_run
 		WHERE project_key = $1 AND vcs_server = $2 AND repository = $3 AND workflow_name = $4
 	`, projKey, vcs, repository, workflow); err != nil {
@@ -655,7 +655,7 @@ func LoadRunsDescAtOffset(ctx context.Context, db gorp.SqlExecutor, projKey, vcs
 	vcs_server = $2 AND
 	repository = $3 AND
 	workflow_name = $4 AND
-	workflow_ref = $5
+	contexts -> 'git' ->> 'ref'::TEXT = $5
 	ORDER BY run_number DESC
 	OFFSET $6`
 
@@ -673,7 +673,7 @@ func LoadOlderRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo,
 	vcs_server = $2 AND
 	repository = $3 AND
 	workflow_name = $4 AND
-	workflow_ref = $5 AND
+	contexts -> 'git' ->> 'ref'::TEXT = $5 AND
 	now() - started > $6 * INTERVAL '1' DAY`
 
 	var ids []string

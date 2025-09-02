@@ -1,4 +1,4 @@
-FROM alpine:3.20
+FROM alpine:3.22
 RUN apk update && \
     apk --no-cache add curl && \
     apk --no-cache add gpg && \

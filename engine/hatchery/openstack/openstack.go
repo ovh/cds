@@ -38,6 +38,7 @@ var (
 )
 
 var _ hatchery.InterfaceWithModels = new(HatcheryOpenstack)
+var _ hatchery.InterfaceWithCustomBookDelay = new(HatcheryOpenstack)
 
 // New instanciates a new Hatchery Openstack
 func New() *HatcheryOpenstack {
@@ -325,6 +326,17 @@ func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.
 
 	canSpawn = true
 	return
+}
+
+func (h *HatcheryOpenstack) ComputeBookDelay(ctx context.Context, model sdk.WorkerStarterWorkerModel) int64 {
+	imageName := model.GetOpenstackImage()
+	for image, delay := range h.imagesBookDelay {
+		if image.MatchString(imageName) {
+			log.Debug(ctx, "ComputeBookDelay> Found book delay override to %d for model with image %s", delay, imageName)
+			return delay
+		}
+	}
+	return 0
 }
 
 func (h *HatcheryOpenstack) main(ctx context.Context) {

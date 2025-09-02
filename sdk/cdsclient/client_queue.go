@@ -222,10 +222,10 @@ func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.
 }
 
 // QueueJobBook books a job for a Hatchery
-func (c *client) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
+func (c *client) QueueJobBook(ctx context.Context, id string, delay int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	var resp sdk.WorkflowNodeJobRunBooked
 	path := fmt.Sprintf("/queue/workflows/%s/book", id)
-	_, err := c.PostJSON(ctx, path, nil, &resp)
+	_, err := c.PostJSON(ctx, path, sdk.WorkflowNodeJobRunBook{Delay: delay}, &resp)
 	return resp, err
 }
 

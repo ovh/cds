@@ -352,7 +352,7 @@ func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workfl
 }
 
 // BookNodeJobRun  Book a job for a hatchery
-func BookNodeJobRun(ctx context.Context, store cache.Store, defaultBookDelay int64, customBookDelay map[string]int64, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
+func BookNodeJobRun(ctx context.Context, store cache.Store, delay int, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookJob(id)
 	h := sdk.Service{}
 	find, err := store.Get(k, &h)
@@ -360,22 +360,14 @@ func BookNodeJobRun(ctx context.Context, store cache.Store, defaultBookDelay int
 		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if !find {
-		// job not already booked, book it for 2 min
-		delay := 120
-		if defaultBookDelay > 0 {
-			delay = int(defaultBookDelay)
-		}
-		if customBookDelay != nil {
-			if d, ok := customBookDelay[hatchery.Name]; ok {
-				delay = int(d)
-			}
-		}
+		// job not already booked, book it for given delay
+		log.Info(ctx, "book job %d by %s with delay %d seconds", id, h.Name, delay)
 		if err := store.SetWithTTL(k, hatchery, delay); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 		return nil, nil
 	}
-	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
+	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
 // FreeNodeJobRun  Free a job for a hatchery

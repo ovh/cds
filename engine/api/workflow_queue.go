@@ -269,7 +269,25 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, api.Config.Workflow.JobDefaultBookDelay, api.Config.Workflow.CustomServiceJobBookDelay, id, s); err != nil {
+		var req sdk.WorkflowNodeJobRunBook
+		if err := service.UnmarshalBody(r, &req); err != nil {
+			return sdk.WrapError(err, "cannot unmarshal request")
+		}
+
+		delay := 120
+		if api.Config.Workflow.JobDefaultBookDelay > 0 {
+			delay = int(api.Config.Workflow.JobDefaultBookDelay)
+		}
+		if api.Config.Workflow.CustomServiceJobBookDelay != nil {
+			if d, ok := api.Config.Workflow.CustomServiceJobBookDelay[s.Name]; ok {
+				delay = int(d)
+			}
+		}
+		if req.Delay > 0 {
+			delay = int(req.Delay)
+		}
+
+		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, delay, id, s); err != nil {
 			return sdk.WrapError(err, "job already booked")
 		}
 
