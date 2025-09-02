@@ -36,6 +36,7 @@ var (
 		"success":      success,
 		"always":       always,
 		"cancelled":    cancelled,
+		"stopped":      stopped,
 		"failure":      failure,
 		"result":       result,
 		"toLower":      newStringActionFunc("toLower", nilerr(strings.ToLower)),
@@ -544,11 +545,70 @@ func always(_ context.Context, _ *ActionParser, inputs ...interface{}) (interfac
 	return true, nil
 }
 
-func cancelled(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+func stopped(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) > 0 {
+		return nil, NewErrorFrom(ErrInvalidData, "stopped function must not have arguments")
+	}
+	// Check scope
+	if stepContext, has := a.contexts["steps"]; has && stepContext != nil {
+		var steps StepsContext
+		stepContextBts, _ := json.Marshal(stepContext)
+		if err := json.Unmarshal(stepContextBts, &steps); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
+		}
+		for _, v := range steps {
+			if v.Conclusion == V2WorkflowRunJobStatusStopped {
+				return true, nil
+			}
+		}
+		return false, nil
+	} else if needsContext, has := a.contexts["needs"]; has && needsContext != nil {
+		var needs NeedsContext
+		needsCtxBts, _ := json.Marshal(needsContext)
+		if err := json.Unmarshal(needsCtxBts, &needs); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
+		}
+		for _, v := range needs {
+			if v.Result == V2WorkflowRunJobStatusStopped {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+	return nil, NewErrorFrom(ErrInvalidData, "missing needs context")
+}
+
+func cancelled(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
 	if len(inputs) > 0 {
 		return nil, NewErrorFrom(ErrInvalidData, "cancelled function must not have arguments")
 	}
-	return nil, NewErrorFrom(ErrNotImplemented, "cancelled is not implemented yet")
+	// Check scope
+	if stepContext, has := a.contexts["steps"]; has && stepContext != nil {
+		var steps StepsContext
+		stepContextBts, _ := json.Marshal(stepContext)
+		if err := json.Unmarshal(stepContextBts, &steps); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
+		}
+		for _, v := range steps {
+			if v.Conclusion == V2WorkflowRunJobStatusCancelled {
+				return true, nil
+			}
+		}
+		return false, nil
+	} else if needsContext, has := a.contexts["needs"]; has && needsContext != nil {
+		var needs NeedsContext
+		needsCtxBts, _ := json.Marshal(needsContext)
+		if err := json.Unmarshal(needsCtxBts, &needs); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
+		}
+		for _, v := range needs {
+			if v.Result == V2WorkflowRunJobStatusCancelled {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+	return nil, NewErrorFrom(ErrInvalidData, "missing needs context")
 }
 
 func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {

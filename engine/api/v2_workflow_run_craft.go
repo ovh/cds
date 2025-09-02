@@ -1325,7 +1325,11 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 	mustSaveVersion := false
 	if isReleaseRef {
 		// Check if the release exists
-		_, err := workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.CDS.WorkflowVCSServer, runContext.CDS.WorkflowRepository, runContext.CDS.Workflow, fileVersion)
+		semverCompleteVersion, err := semver.NewVersion(fileVersion)
+		if err != nil {
+			return nil, false, err
+		}
+		_, err = workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.CDS.WorkflowVCSServer, runContext.CDS.WorkflowRepository, runContext.CDS.Workflow, semverCompleteVersion.String())
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, false, err
 		}
