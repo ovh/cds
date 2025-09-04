@@ -320,6 +320,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			}
 			useConcurrency, err = ap.InterpolateToBool(ctx, jobConcurrencyDef.If)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				runInfo := sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					IssuedAt:      time.Now(),
@@ -694,6 +695,7 @@ func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2Wo
 		}
 		value, err := ap.InterpolateToString(ctx, v)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			// If error, insert a run info
 			runInfo := sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
@@ -1080,6 +1082,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		var err error
 		jobInfoMsg, err = checkUserRegionRight(ctx, db, rj, wrEnqueue, rj.Region)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			rj.Status = sdk.V2WorkflowRunJobStatusFail
 			return &sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    run.ID,
@@ -1223,6 +1226,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				}
 				// If not found stop the run
 				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: run.ID,
 						IssuedAt:      time.Now(),
@@ -1433,6 +1437,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		bts, _ := json.Marshal(data.runJobContext)
 		var mapContexts map[string]interface{}
 		if err := json.Unmarshal(bts, &mapContexts); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return []sdk.V2WorkflowRunInfo{{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -1448,6 +1453,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		for k, p := range data.jobToTrigger.Job.Parameters {
 			value, err := ap.InterpolateToString(ctx, p)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				return []sdk.V2WorkflowRunInfo{{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
@@ -1460,6 +1466,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 
 		entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, data.jobToTrigger.Job, run, interpolatedParams)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return []sdk.V2WorkflowRunInfo{{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -1502,6 +1509,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 
 	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job, data.allVariableSets, data.defaultRegion)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return []sdk.V2WorkflowRunInfo{{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
@@ -1700,6 +1708,7 @@ func generateMatrixPermutation(ctx context.Context, rootJobContext sdk.WorkflowR
 
 					interpolatedValue, err := ap.InterpolateToString(ctx, valueString)
 					if err != nil {
+						log.ErrorWithStackTrace(ctx, err)
 						msg := &sdk.V2WorkflowRunInfo{
 							WorkflowRunID: run.ID,
 							IssuedAt:      time.Now(),
@@ -1713,6 +1722,7 @@ func generateMatrixPermutation(ctx context.Context, rootJobContext sdk.WorkflowR
 			} else if valueString, ok := v.(string); ok {
 				interpolatedValue, err := ap.Interpolate(ctx, valueString)
 				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
 					msg := &sdk.V2WorkflowRunInfo{
 						WorkflowRunID: run.ID,
 						IssuedAt:      time.Now(),
@@ -1904,6 +1914,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 		if wrEnqueue.Initiator.IsUser() {
 			has, vInError, err := rbac.HasRoleOnVariableSetsAndUserID(ctx, db, sdk.VariableSetRoleUse, wrEnqueue.Initiator.UserID, run.ProjectKey, varsets)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
@@ -1922,6 +1933,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 		} else {
 			has, vInError, err := rbac.HasRoleOnVariableSetsAndVCSUser(ctx, db, sdk.VariableSetRoleUse, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername}, run.ProjectKey, varsets)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
@@ -1952,6 +1964,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 	// check job condition
 	canRun, err := checkCanRunJob(ctx, db, run, inputs, *jobDef, currentJobContext, wrEnqueue.Initiator)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
