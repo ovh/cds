@@ -1258,12 +1258,12 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		}
 
 		// Compute job matrix strategy
-		matrixPermutation, msInfo := generateMatrixPermutation(ctx, runJobContext, run, jobDef)
+		matrixPermutation, msInfo := generateMatrixPermutation(ctx, runJobContext, run, jobDef, jobToTrigger.Status)
 		if msInfo != nil {
 			return nil, nil, nil, []sdk.V2WorkflowRunInfo{*msInfo}, false, err
 		}
 
-		if len(matrixPermutation) == 0 {
+		if len(matrixPermutation) == 0 || (jobDef.From != "" && jobToTrigger.Status.IsTerminated()) {
 			runJob := sdk.V2WorkflowRunJob{
 				ID:                 sdk.UUID(),
 				WorkflowRunID:      run.ID,
@@ -1300,34 +1300,38 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
 					runJob.ModelOSArch = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].OSArch
 				}
-				for _, jobEvent := range run.RunJobEvent {
-					if jobEvent.RunAttempt != run.RunAttempt {
-						continue
-					}
-					if jobEvent.JobID != runJob.JobID {
-						continue
-					}
-					runJob.GateInputs = jobEvent.Inputs
-				}
-				// If no gate input provided but there is a gate on the job, fill with the default values
-				if runJob.GateInputs == nil && runJob.Job.Gate != "" {
-					runJob.GateInputs = sdk.GateInputs{}
-					for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
-						if v.Default == nil {
+				// Only interpolate job data if job is not skipped to avoid missing variables exported by parent jobs
+				if !runJob.Status.IsTerminated() {
+					for _, jobEvent := range run.RunJobEvent {
+						if jobEvent.RunAttempt != run.RunAttempt {
 							continue
 						}
-						runJob.GateInputs[k] = v.Default
+						if jobEvent.JobID != runJob.JobID {
+							continue
+						}
+						runJob.GateInputs = jobEvent.Inputs
 					}
-					runJob.GateInputs["manual"] = false
-				}
-				runJobContext.Gate = runJob.GateInputs
-				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue)
-				if runJobInfo != nil {
-					runJobsInfo[runJob.ID] = *runJobInfo
-				}
+					// If no gate input provided but there is a gate on the job, fill with the default values
+					if runJob.GateInputs == nil && runJob.Job.Gate != "" {
+						runJob.GateInputs = sdk.GateInputs{}
+						for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
+							if v.Default == nil {
+								continue
+							}
+							runJob.GateInputs[k] = v.Default
+						}
+						runJob.GateInputs["manual"] = false
+					}
+					runJobContext.Gate = runJob.GateInputs
 
-				if runUpdated {
-					hasToUpdateRun = runUpdated
+					runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue)
+					if runJobInfo != nil {
+						runJobsInfo[runJob.ID] = *runJobInfo
+					}
+
+					if runUpdated {
+						hasToUpdateRun = runUpdated
+					}
 				}
 			}
 			// Manage concurrency if the job is not skipped
@@ -1583,38 +1587,37 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 			runJob.ModelType = run.WorkflowData.WorkerModels[permJobDef.RunsOn.Model].Type
 			runJob.ModelOSArch = run.WorkflowData.WorkerModels[permJobDef.RunsOn.Model].OSArch
 		}
-		for _, jobEvent := range run.RunJobEvent {
-			if jobEvent.RunAttempt != run.RunAttempt {
-				continue
-			}
-			if jobEvent.JobID != runJob.JobID {
-				continue
-			}
-			runJob.GateInputs = jobEvent.Inputs
-		}
-		// If no gate input provided but there is a gate on the job, fill with the default values
-		if runJob.GateInputs == nil && runJob.Job.Gate != "" {
-			runJob.GateInputs = sdk.GateInputs{}
-			for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
-				if v.Default == nil {
+		if !data.jobToTrigger.Status.IsTerminated() {
+			for _, jobEvent := range run.RunJobEvent {
+				if jobEvent.RunAttempt != run.RunAttempt {
 					continue
 				}
-				runJob.GateInputs[k] = v.Default
+				if jobEvent.JobID != runJob.JobID {
+					continue
+				}
+				runJob.GateInputs = jobEvent.Inputs
 			}
-			runJob.GateInputs["manual"] = false
-		}
-		data.runJobContext.Gate = runJob.GateInputs
-		data.runJobContext.Matrix = runJob.Matrix
-		runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, data.defaultRegion, data.regionPermCache, data.runJobContext, data.wrEnqueue)
-		if runJobInfo != nil {
-			runJobsInfo[runJob.ID] = *runJobInfo
-		}
-		if runUpdated {
-			hasToUpdateRun = runUpdated
-		}
+			// If no gate input provided but there is a gate on the job, fill with the default values
+			if runJob.GateInputs == nil && runJob.Job.Gate != "" {
+				runJob.GateInputs = sdk.GateInputs{}
+				for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
+					if v.Default == nil {
+						continue
+					}
+					runJob.GateInputs[k] = v.Default
+				}
+				runJob.GateInputs["manual"] = false
+			}
+			data.runJobContext.Gate = runJob.GateInputs
+			data.runJobContext.Matrix = runJob.Matrix
+			runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, data.defaultRegion, data.regionPermCache, data.runJobContext, data.wrEnqueue)
+			if runJobInfo != nil {
+				runJobsInfo[runJob.ID] = *runJobInfo
+			}
+			if runUpdated {
+				hasToUpdateRun = runUpdated
+			}
 
-		// Manage concurrency if the job is not skipped
-		if !data.jobToTrigger.Status.IsTerminated() {
 			runJobInfo, err := manageJobConcurrency(ctx, db, *run, data.jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjToCancelled)
 			if err != nil {
 				return runJobs, hasToUpdateRun, err
@@ -1665,7 +1668,10 @@ func searchPermutationToTrigger(_ context.Context, permutations []map[string]str
 	return permutationToTrigger
 }
 
-func generateMatrixPermutation(ctx context.Context, rootJobContext sdk.WorkflowRunJobsContext, run *sdk.V2WorkflowRun, jobDef sdk.V2Job) ([]map[string]string, *sdk.V2WorkflowRunInfo) {
+func generateMatrixPermutation(ctx context.Context, rootJobContext sdk.WorkflowRunJobsContext, run *sdk.V2WorkflowRun, jobDef sdk.V2Job, status sdk.V2WorkflowRunJobStatus) ([]map[string]string, *sdk.V2WorkflowRunInfo) {
+	if status.IsTerminated() {
+		return make([]map[string]string, 0), nil
+	}
 	keys := make([]string, 0)
 	interpolatedMatrix := make(map[string][]string)
 	if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
@@ -1799,8 +1805,13 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 			// If job with matrix, check if we have to rerun a permmutation
 			if runJobMapItem.Job.Strategy != nil && len(runJobMapItem.Job.Strategy.Matrix) > 0 {
 
-				// If runjob has a status && a template, ignore it. A matrix job can be run it template has been resolved
+				// If runjob has a status && a template, ignore it. A matrix job can be run if template has been resolved
 				if runJobMapItem.Job.From != "" {
+					continue
+				}
+
+				// If no permutation has been used, nothing to check ( job skipped or empty matrix )
+				if len(runJobMapItem.Matrix) == 0 {
 					continue
 				}
 
