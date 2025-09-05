@@ -180,16 +180,6 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             this._messageService.error(`Unable to get jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
 
-        // Reload workflow run if we received a runjob from an unknown job
-        if (this.jobs) {
-            for (let i = 0; i < this.jobs.length; i++) {
-                if (!this.workflowRun.workflow_data.workflow.jobs[this.jobs[i].job_id]) {
-                    await this.load(this.jobs[i].workflow_run_id, this.selectedRunAttempt);
-                    return;
-                }
-            }
-        }
-
         try {
             this.results = await lastValueFrom(this._workflowService.getResults(this.workflowRun, this.selectedRunAttempt));
             if (!!this.results.find(r => r.type === WorkflowRunResultType.tests)) {
@@ -224,7 +214,15 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     }
 
     async pollReload() {
+        const previousJobsCount = Object.keys(this.workflowRun.workflow_data.workflow.jobs).length;
         await this.loadRun(this.workflowRun.id);
+
+        // Force redraw of the graph if the count of jobs changed in the workflow definition
+        if (previousJobsCount !== Object.keys(this.workflowRun.workflow_data.workflow.jobs).length) {
+            await this.load(this.workflowRun.id, this.selectedRunAttempt);
+            return;
+        }
+
         await this.loadJobsAndResults();
     }
 
