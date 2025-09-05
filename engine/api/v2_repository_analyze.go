@@ -699,7 +699,7 @@ skipEntity:
 		}
 
 		// If current analysis is the latest commit of the branch
-		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || currentAnalysisTag.Sha == e.Commit {
+		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || currentAnalysisTag.Hash != "" {
 			e.Entity.Head = true
 
 			if existingHeadEntity != nil {
