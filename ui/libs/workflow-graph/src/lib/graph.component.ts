@@ -247,10 +247,12 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
         this.nodes.forEach(n => {
             if (n.sub_graph) {
                 n.sub_graph.forEach(sub => {
+                    sub.type = GraphNodeType.Job;
                     delete sub.run;
                     delete sub.runs;
                 });
             } else {
+                n.type = GraphNodeType.Job;
                 delete n.run;
                 delete n.runs;
             }
@@ -267,7 +269,6 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
                     n.sub_graph.forEach(sub => {
                         if (sub.name === j.job_id) {
                             if (isMatrix) {
-                                sub.job.strategy.matrix = j.job.strategy.matrix;
                                 sub.type = GraphNodeType.Matrix;
                                 sub.runs = (sub.runs ?? []).concat(j);
                             } else {
@@ -278,7 +279,6 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
                 } else {
                     if (n.name === j.job_id) {
                         if (isMatrix) {
-                            n.job.strategy.matrix = j.job.strategy.matrix;
                             n.type = GraphNodeType.Matrix;
                             n.runs = (n.runs ?? []).concat(j);
                         } else {
