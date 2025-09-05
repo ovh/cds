@@ -1212,6 +1212,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			booleanResult, err := checkCanRunJob(ctx, api.mustDBWithCtx(ctx), *wr, inputs, jobToRuns[0].Job, jobContext, initiator)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				return err
 			}
 			if !booleanResult {

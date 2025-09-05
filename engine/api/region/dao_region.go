@@ -80,7 +80,14 @@ func LoadRegionByName(ctx context.Context, db gorp.SqlExecutor, name string) (*s
 	ctx, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName", trace.StringAttribute(telemetry.TagRegion, name))
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.name = $1`).Args(name)
-	return getRegion(ctx, db, query)
+	region, err := getRegion(ctx, db, query)
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "region %s not found", name)
+		}
+		return nil, err
+	}
+	return region, nil
 }
 
 func LoadRegionByID(ctx context.Context, db gorp.SqlExecutor, ID string) (*sdk.Region, error) {

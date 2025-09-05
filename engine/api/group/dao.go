@@ -117,7 +117,14 @@ func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...L
     FROM "group"
     WHERE "group".name = $1
   `).Args(name)
-	return get(ctx, db, query, opts...)
+	group, err := get(ctx, db, query, opts...)
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "group %s not found", name)
+		}
+		return nil, err
+	}
+	return group, nil
 }
 
 // LoadByID retrieves group from database by id.
