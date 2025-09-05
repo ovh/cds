@@ -205,7 +205,7 @@ func (h *HatcheryKubernetes) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModel
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
+func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "kubernetes.CanSpawn")
 	defer end()
 
@@ -214,7 +214,7 @@ func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model sdk.WorkerStart
 		modelOSArch := model.ModelV2.OSArch
 		if !slices.Contains(h.Config.OSArch, modelOSArch) {
 			log.Debug(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, modelOSArch, h.Config.OSArch)
-			return false, nil
+			return false
 		}
 	}
 
@@ -222,9 +222,13 @@ func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model sdk.WorkerStart
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
 			log.Debug(ctx, "CanSpawn> Job %s has a hostname requirement. Kubernetes can't spawn a worker for this job", jobID)
-			return false, nil
+			return false
 		}
 	}
+	return true
+}
+
+func (h *HatcheryKubernetes) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	return true, nil
 }
 

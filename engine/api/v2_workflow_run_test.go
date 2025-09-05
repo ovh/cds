@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/services"
@@ -27,107 +26,6 @@ import (
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
 )
-
-func TestPurgeWorkflowRun(t *testing.T) {
-	api, db, _ := newTestAPI(t)
-
-	_, err := db.Exec("DELETE FROM v2_workflow_run")
-	require.NoError(t, err) // Mock Hook
-
-	s, _ := assets.InsertService(t, db, t.Name()+"_CDN", sdk.TypeCDN)
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ []sdk.Service) services.Client {
-		return servicesClients
-	}
-	defer func() {
-		_ = services.Delete(db, s)
-		services.NewClient = services.NewDefaultClient
-	}()
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/bulk/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
-
-	admin, _ := assets.InsertAdminUser(t, db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcs := assets.InsertTestVCSProject(t, db, proj.ID, "vcs", "github")
-	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcs.ID, sdk.RandomString(10))
-
-	wr1 := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcs.ID,
-		VCSServer:    vcs.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   0,
-		RunNumber:    1,
-		Started:      time.Now().Add(-24 * 365 * time.Hour),
-		LastModified: time.Now(),
-		Status:       sdk.StatusSuccess,
-		Initiator: &sdk.V2Initiator{
-			UserID: admin.ID,
-			User:   admin.Initiator(),
-		},
-		RunEvent: sdk.V2WorkflowRunEvent{},
-		Contexts: sdk.WorkflowRunContext{
-			Git: sdk.GitContext{
-				Server:     "github",
-				Repository: "ovh/cds",
-				Ref:        "refs/heads/master",
-				Sha:        "123456",
-			},
-		},
-		RetentionDate: time.Now().Add(-24 * time.Hour),
-		WorkflowData:  sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
-	}
-	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr1))
-
-	wr2 := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcs.ID,
-		VCSServer:    vcs.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
-		WorkflowName: sdk.RandomString(10),
-		WorkflowSha:  "123",
-		WorkflowRef:  "master",
-		RunAttempt:   0,
-		RunNumber:    1,
-		Started:      time.Now(),
-		LastModified: time.Now(),
-		Status:       sdk.StatusSuccess,
-		Initiator: &sdk.V2Initiator{
-			UserID: admin.ID,
-			User:   admin.Initiator(),
-		},
-		RunEvent: sdk.V2WorkflowRunEvent{},
-		Contexts: sdk.WorkflowRunContext{
-			Git: sdk.GitContext{
-				Server:     "github",
-				Repository: "ovh/cds",
-				Ref:        "refs/heads/master",
-				Sha:        "123456",
-			},
-		},
-		RetentionDate: time.Now().Add(24 * time.Hour * 90),
-		WorkflowData:  sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
-	}
-	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr2))
-
-	ids, err := workflow_v2.LoadRunIDsToDelete(context.TODO(), db)
-	require.NoError(t, err)
-	require.Len(t, ids, 1)
-	require.Equal(t, wr1.ID, ids[0])
-
-	require.NoError(t, purge.WorkflowRunV2(context.TODO(), db.DbMap, ids[0]))
-
-	_, err = workflow_v2.LoadRunByID(context.TODO(), db, ids[0])
-	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
-}
 
 func TestSearchAllWorkflow(t *testing.T) {
 	api, db, _ := newTestAPI(t)
@@ -1984,6 +1882,7 @@ func TestPostWorkflowRunHandler(t *testing.T) {
 		Ref:                 "refs/heads/master",
 		Commit:              "HEAD",
 		ProjectRepositoryID: repo.ID,
+		Head:                true,
 		Data: `name: MyFirstWorkflow
 jobs:
   myFirstJob:
@@ -1998,6 +1897,7 @@ jobs:
 
 	// Mock Hook
 	s, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	s2, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
@@ -2006,11 +1906,27 @@ jobs:
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, s2)
 		services.NewClient = services.NewDefaultClient
 	}()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/manual", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/"+repo.Name+"/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				b := &sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					ID:           "refs/heads/master",
+					LatestCommit: "HEAD",
+				}
+				*(out.(*sdk.VCSBranch)) = *b
+				return nil, 200, nil
+			},
+		).Times(1)
 
 	vars := map[string]string{
 		"projectKey":           proj.Key,

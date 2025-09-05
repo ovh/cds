@@ -161,7 +161,7 @@ type Interface interface {
 	Type() string
 	InitHatchery(ctx context.Context) error
 	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) error
-	CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error)
+	CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool
 	WorkersStarted(ctx context.Context) ([]string, error)
 	Service() *sdk.Service
 	CDSClient() cdsclient.Interface
@@ -180,11 +180,16 @@ type InterfaceWithModels interface {
 	NeedRegistration(ctx context.Context, model *sdk.Model) bool
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerModelSecretList(sdk.Model) (sdk.WorkerModelSecrets, error)
+	CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error)
 }
 
 type InterfaceWithDetaultWorkerModelV2 interface {
 	Interface
 	GetDetaultModelV2Name(ctx context.Context, requirements []sdk.Requirement) string
+}
+
+type InterfaceWithCustomBookDelay interface {
+	ComputeBookDelay(ctx context.Context, model sdk.WorkerStarterWorkerModel) int64
 }
 
 type JobIdentifiers struct {

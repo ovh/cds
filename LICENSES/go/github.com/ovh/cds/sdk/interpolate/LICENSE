@@ -9,6 +9,7 @@ Copyright (c) 2013 Dario Castañé. All rights reserved.
 Copyright (c) 2012 The Go Authors. All rights reserved.
 Copyright (c) 2009 The Go Authors. All rights reserved.
 Copyright (c) OWASP Foundation
+Copyright (C) 2014-2019, Matt Butcher and Matt Farina
 Copyright (c) 2015 Microsoft
 Copyright (c) 2012-2022, The Go Authors
 Copyright (c) 2012-2022, Martin Angers, Yuki Okushi & Contributors
@@ -17,6 +18,9 @@ Copyright (c) 2013 Shopify
 Copyright (c) 2023 IBM Corporation
 Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
 Copyright (c) 2015 Andy Grunwald
+Copyright (c) 2012-2022 The ANTLR Project. All rights reserved.
+Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
+Copyright Mathias Bynens <https://mathiasbynens.be/>
 Copyright (c) 2012-2023 The ANTLR Project. All rights reserved.
 Copyright (c) 2013 HashiCorp, Inc.
 Copyright 2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -31,7 +35,10 @@ Copyright (c) 2018, Brendan McMillion. All rights reserved.
 Copyright (c) 2023 urfave/cli maintainers
 Copyright 2014 CoreOS, Inc
 Copyright 2018 CoreOS, Inc
+Copyright (C) 2014-2015 Docker Inc & Go Authors. All rights reserved.
+Copyright (C) 2017-2024 SUSE LLC. All rights reserved.
 Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
+Copyright (c) 2022 Robert Kaussow <mail@thegeeklab.de>
 Copyright 2012-2017 Docker, Inc.
 Copyright (c) 2015 John Howard (Microsoft)
 Copyright © 2015 Docker, Inc.
@@ -58,9 +65,11 @@ Copyright (c) 2013 The github.com/redis/go-redis Authors.
 Copyright (c) 2013, The GoGo Authors. All rights reserved.
 Copyright 2010 The Go Authors.  All rights reserved.
 Copyright 2010 The Go Authors.
+Copyright 2009 The Go Authors.
 Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
 Copyright (c) 2021 golang-jwt maintainers
 Copyright 2017-2020, Google LLC.
+Copyright 2017-2024, Google LLC.
 Copyright (c) 2017 The Go Authors. All rights reserved.
 Copyright (c) 2013 Google. All rights reserved.
 Copyright (c) 2009,2014 Google Inc. All rights reserved.
@@ -69,7 +78,7 @@ Copyright (c) 2016 inhere
 Copyright 2012-2013 Rackspace, Inc.
 Copyright Gophercloud authors
 Copyright (c) 2023 The Gorilla Authors. All rights reserved.
-Copyright © 2014-2018 HashiCorp, Inc.
+Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
 Copyright (c) 2020 HashiCorp, Inc.
 Copyright (c) 2015 Toru Nagashima
 Copyright (c) 2016 Ciena Corporation.
@@ -77,6 +86,7 @@ Copyright (c) 2014 HashiCorp, Inc.
 Copyright (c) 2015 HashiCorp, Inc.
 Copyright (c) 2017 HashiCorp, Inc.
 Copyright (c) 2016 HashiCorp, Inc.
+Copyright (c) 2024 HashiCorp, Inc.
 Copyright (c) 2015 Andrew Smith
 Copyright (c) 2021 Taishi Kasuga
 Copyright (c) 2015 Huan Du
@@ -86,6 +96,7 @@ Copyright 2012 Keith Rarick
 Copyright (c) 2014 Juan Batiz-Benet
 Copyright 2016, Jonathan Turner <jt@jtnet.co.uk>
 Copyright (c) 2018 jedib0t
+Copyright (c) 2016 Matthew Holt
 Copyright 2015 James Saryerwinnie
 Copyright (c) 2012-2018 Mat Ryer and Tyler Bunnell
 Copyright (c) 2019 Josh Bleecher Snyder
@@ -113,7 +124,6 @@ Copyright 2012 Matt T. Proud (matt.proud@gmail.com)
 Copyright (c) 2014 Máximo Cuadros
 Copyright (c) 2013 Mario L. Gutierrez
 Copyright (c) 2013 Mario Gutierrez mario@mgutz.com
-Copyright (c) 2016 Matthew Holt
 Copyright (c) 2017-2019 The Miscreant Developers. The canonical list of project
 Copyright (c) 2017-2019 [The Miscreant Developers][AUTHORS].
 Copyright (c) 2013 Mitchell Hashimoto
@@ -128,6 +138,7 @@ Copyright (c) 2013 Joshua Tacoma
 Copyright © 2019, 2020 OCI Contributors
 Copyright © 2016 Docker, Inc.
 Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+Copyright © 2014-2018 HashiCorp, Inc.
 Copyright (c) 2013-2022, OVH SAS
 Copyright (c) 2018, OVH SAS.
 Copyright (c) 2012-2019 Patrick Mylund Nielsen and the go-cache contributors
@@ -185,6 +196,10 @@ Copyright (c) 2006-2011 Kirill Simonov
 Copyright (c) 2011-2019 Canonical Ltd
 Copyright 2011-2016 Canonical Ltd.
 Copyright (c) 2013-2019, OVH SAS
+Copyright (c) 2013 The Go Authors. All rights reserved.
+Copyright 2025 Skeema LLC and the Skeema Knownhosts authors
+Copyright (c) 2016-2024 Uber Technologies, Inc.
+Copyright (c) 2014 Alex Saskevich
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 

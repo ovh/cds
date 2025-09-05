@@ -225,23 +225,36 @@ func checkPluginBinary(ctx context.Context, w *CurrentWorker, p sdk.GRPCPlugin) 
 	// then try to download the plugin
 	//integrationPluginBinary := path.Join(w.BaseDir().Name(), binary.Name)
 	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
-		log.Info(ctx, "Downloading the plugin %s", binary.PluginName)
-		//If the file doesn't exist. Download it.
-		fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
-		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to openfile %q: %v", binary.Name, err)
-			return err
-		}
+		var retry int
+		for {
+			log.Info(ctx, "Downloading the plugin %s", binary.PluginName)
+			//If the file doesn't exist. Download it.
+			fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to openfile %q: %v", binary.Name, err)
+				return err
+			}
 
-		if err := w.client.PluginGetBinary(binary.PluginName, currentOS, currentARCH, fi); err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to download plugin %q, %q , %q: %v", binary.PluginName, currentOS, currentARCH, err)
+			if err := w.client.PluginGetBinary(binary.PluginName, currentOS, currentARCH, fi); err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to download plugin %q, %q , %q, try:%v : %v ", binary.PluginName, currentOS, currentARCH, retry, err)
+
+				err = sdk.NewErrorFrom(sdk.ErrPluginInvalid, "unable to download plugin %q %q %q: %v", binary.PluginName, currentOS, currentARCH, err)
+
+				if retry >= 20 {
+					_ = fi.Close()
+					return err
+				}
+				log.Debug(ctx, "%v", err)
+				retry++
+				time.Sleep(3 * time.Second)
+				continue
+			}
+			//It's downloaded. Close the file
 			_ = fi.Close()
-			return sdk.NewErrorFrom(sdk.ErrPluginInvalid, "unable to download plugin %q %q %q: %v", binary.PluginName, currentOS, currentARCH, err)
+			break
 		}
-		//It's downloaded. Close the file
-		_ = fi.Close()
 	} else {
 		log.Debug(ctx, "plugin binary is in cache")
 	}

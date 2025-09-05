@@ -1282,7 +1282,10 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		if err := toml.Unmarshal([]byte(fileContent), &file); err != nil {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read poetry file: %v", err)
 		}
-		fileVersion = file.Tool.Poetry.Version
+		fileVersion = file.Project.Version
+		if fileVersion == "" {
+			fileVersion = file.Tool.Poetry.Version
+		}
 	case sdk.SemverTypeDebian:
 		firsLine := strings.Split(fileContent, "\n")[0]
 		r, _ := regexp.Compile(`.*\((.*)\).*`) // format: package (version) distribution; urgency=low
@@ -1322,7 +1325,11 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 	mustSaveVersion := false
 	if isReleaseRef {
 		// Check if the release exists
-		_, err := workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.CDS.WorkflowVCSServer, runContext.CDS.WorkflowRepository, runContext.CDS.Workflow, fileVersion)
+		semverCompleteVersion, err := semver.NewVersion(fileVersion)
+		if err != nil {
+			return nil, false, err
+		}
+		_, err = workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.CDS.WorkflowVCSServer, runContext.CDS.WorkflowRepository, runContext.CDS.Workflow, semverCompleteVersion.String())
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, false, err
 		}

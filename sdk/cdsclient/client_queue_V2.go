@@ -124,7 +124,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -166,7 +166,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch [
 				lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.JobRunID)
 				log.Debug(ctx, "v2_len_queue: %v", lenqueue)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
-				jobs <- *j
+				jobs <- wsEvent.JobRunID
 			}
 		case <-jobsTicker.C:
 			if jobs == nil {
@@ -207,13 +207,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch [
 			for i := 0; i < max; i++ {
 				pendingWorkerCreation.SetJobInPendingWorkerCreation(queueFiltered[i].ID)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
-
-				jobInfo, err := c.V2QueueGetJobRun(ctx, regionName, queueFiltered[i].ID)
-				if err != nil {
-					log.Error(ctx, "unable to retrieve run %s: %v", queueFiltered[i].ID, err)
-					continue
-				}
-				jobs <- *jobInfo
+				jobs <- queueFiltered[i].ID
 			}
 		}
 	}

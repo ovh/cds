@@ -81,6 +81,7 @@ func (g *githubClient) Branches(ctx context.Context, fullname string, filters sd
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 
+	defaultBranchFound := false
 	branchesResult := []sdk.VCSBranch{}
 	for _, b := range branches {
 		branch := sdk.VCSBranch{
@@ -93,6 +94,18 @@ func (g *githubClient) Branches(ctx context.Context, fullname string, filters sd
 			branch.Parents = append(branch.Parents, p.Sha)
 		}
 		branchesResult = append(branchesResult, branch)
+
+		if branch.Default {
+			defaultBranchFound = true
+		}
+	}
+
+	if !defaultBranchFound {
+		b, err := g.Branch(ctx, fullname, sdk.VCSBranchFilters{Default: true})
+		if err != nil {
+			return nil, err
+		}
+		branchesResult = append(branchesResult, *b)
 	}
 
 	return branchesResult, nil

@@ -24,7 +24,7 @@ type ProjectConcurrency struct {
 	Order            ConcurrencyOrder `json:"order" db:"order" cli:"order"`
 	Pool             int64            `json:"pool" db:"pool" cli:"pool"`
 	If               string           `json:"if" db:"if" cli:"if"`
-	CancelInProgress bool             `json:"cancel_in_progress" db:"cancel_in_progress" cli:"cancel_in_progress"`
+	CancelInProgress bool             `json:"cancel_in_progress,omitempty" db:"cancel_in_progress" cli:"cancel_in_progress"`
 	LastModified     time.Time        `json:"last_modified" db:"last_modified" cli:"last_modified"`
 }
 

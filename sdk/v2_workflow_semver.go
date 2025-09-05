@@ -17,7 +17,11 @@ type SemverNpmYarnPackage struct {
 }
 
 type SemverPoetry struct {
-	Tool SemverPoetryTool `toml:"tool"`
+	Project SemverPoetryProject `toml:"project"`
+	Tool    SemverPoetryTool    `toml:"tool"`
+}
+type SemverPoetryProject struct {
+	Version string `toml:"version"`
 }
 type SemverPoetryTool struct {
 	Poetry SemverPoetryToolPoetry `toml:"poetry"`

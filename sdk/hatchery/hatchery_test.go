@@ -52,24 +52,22 @@ func TestCreateOneJob(t *testing.T) {
 	mockHatchery.EXPECT().CDSClient().Return(mockCDSClient).AnyTimes()
 	mockHatchery.EXPECT().CDSClientV2().Return(nil).AnyTimes()
 	mockCDSClient.EXPECT().QueuePolling(gomock.Any(), grtn, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
-			j := sdk.WorkflowNodeJobRun{
-				ProjectID:         1,
-				ID:                777,
-				WorkflowNodeRunID: 1,
-				Status:            sdk.StatusWaiting,
-				Job: sdk.ExecutedJob{
-					Job: sdk.Job{},
-				},
-				Start: time.Now(),
-			}
-
-			jobs <- j // Send the job a first time, it will trigger the first call on SpawnWorker
-
+		func(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+			jobs <- 777 // Send the job a first time, it will trigger the first call on SpawnWorker
 			<-ctx.Done()
 			return ctx.Err()
 		},
 	)
+	mockCDSClient.EXPECT().QueueJobInfo(gomock.Any(), "777").Return(&sdk.WorkflowNodeJobRun{
+		ProjectID:         1,
+		ID:                777,
+		WorkflowNodeRunID: 1,
+		Status:            sdk.StatusWaiting,
+		Job: sdk.ExecutedJob{
+			Job: sdk.Job{},
+		},
+		Start: time.Now(),
+	}, nil).AnyTimes()
 
 	m := &sdk.HatcheryPendingWorkerCreation{}
 	m.Init()
@@ -78,8 +76,8 @@ func TestCreateOneJob(t *testing.T) {
 	// This calls are expected for each job received in the channel
 	mockCDSClient.EXPECT().WorkerList(gomock.Any()).Return(nil, nil).AnyTimes()
 	mockHatchery.EXPECT().WorkersStarted(gomock.Any()).Return(nil, nil).AnyTimes()
-	mockHatchery.EXPECT().CanSpawn(gomock.Any(), gomock.Any(), "777", gomock.Any()).Return(true, nil).AnyTimes()
-	mockCDSClient.EXPECT().QueueJobBook(gomock.Any(), "777").Return(sdk.WorkflowNodeJobRunBooked{}, nil).AnyTimes()
+	mockHatchery.EXPECT().CanSpawn(gomock.Any(), gomock.Any(), "777", gomock.Any()).Return(true).AnyTimes()
+	mockCDSClient.EXPECT().QueueJobBook(gomock.Any(), "777", gomock.Any()).Return(sdk.WorkflowNodeJobRunBooked{}, nil).AnyTimes()
 	mockCDSClient.EXPECT().QueueJobSendSpawnInfo(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	privateKey, err := jws.NewRandomRSAKey()
 	require.NoError(t, err)
@@ -126,30 +124,29 @@ func TestCreate(t *testing.T) {
 	mockHatchery.EXPECT().CDSClient().Return(mockCDSClient).AnyTimes()
 	mockHatchery.EXPECT().CDSClientV2().Return(nil).AnyTimes()
 	mockCDSClient.EXPECT().QueuePolling(gomock.Any(), grtn, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
-			j := sdk.WorkflowNodeJobRun{
-				ProjectID:         1,
-				ID:                666,
-				WorkflowNodeRunID: 1,
-				Status:            sdk.StatusWaiting,
-				Job: sdk.ExecutedJob{
-					Job: sdk.Job{},
-				},
-				Start: time.Now(),
-			}
-
-			jobs <- j                   // Send the job a first time, it will trigger the first call on SpawnWorker
+		func(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+			jobs <- 666                 // Send the job a first time, it will trigger the first call on SpawnWorker
 			time.Sleep(1 * time.Second) // Wait
-			jobs <- j                   // This will start the workerStarter, but failed on book in the real life
+			jobs <- 666                 // This will start the workerStarter, but failed on book in the real life
 			time.Sleep(2 * time.Second) // Wait
-			jobs <- j                   // This will trigger a second call on SpawnWorker should fail the job (nbAttempts: > 2) and call QueueSendResult
+			jobs <- 666                 // This will trigger a second call on SpawnWorker should fail the job (nbAttempts: > 2) and call QueueSendResult
 			time.Sleep(3 * time.Second) // Wait
-			jobs <- j                   // This shoud not trigger the call on SpawnWorker but should fail the job (nbAttempts: > 2) and call QueueSendResult
+			jobs <- 666                 // This shoud not trigger the call on SpawnWorker but should fail the job (nbAttempts: > 2) and call QueueSendResult
 
 			<-ctx.Done()
 			return ctx.Err()
 		},
 	)
+	mockCDSClient.EXPECT().QueueJobInfo(gomock.Any(), "666").Return(&sdk.WorkflowNodeJobRun{
+		ProjectID:         1,
+		ID:                666,
+		WorkflowNodeRunID: 1,
+		Status:            sdk.StatusWaiting,
+		Job: sdk.ExecutedJob{
+			Job: sdk.Job{},
+		},
+		Start: time.Now(),
+	}, nil).AnyTimes()
 
 	m := &sdk.HatcheryPendingWorkerCreation{}
 	m.Init()
@@ -158,8 +155,8 @@ func TestCreate(t *testing.T) {
 	// This calls are expected for each job received in the channel
 	mockCDSClient.EXPECT().WorkerList(gomock.Any()).Return(nil, nil).AnyTimes()
 	mockHatchery.EXPECT().WorkersStarted(gomock.Any()).Return(nil, nil).AnyTimes()
-	mockHatchery.EXPECT().CanSpawn(gomock.Any(), gomock.Any(), "666", gomock.Any()).Return(true, nil).AnyTimes()
-	mockCDSClient.EXPECT().QueueJobBook(gomock.Any(), "666").Return(sdk.WorkflowNodeJobRunBooked{}, nil).Times(2)
+	mockHatchery.EXPECT().CanSpawn(gomock.Any(), gomock.Any(), "666", gomock.Any()).Return(true).AnyTimes()
+	mockCDSClient.EXPECT().QueueJobBook(gomock.Any(), "666", gomock.Any()).Return(sdk.WorkflowNodeJobRunBooked{}, nil).Times(2)
 	mockCDSClient.EXPECT().QueueJobSendSpawnInfo(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	privateKey, err := jws.NewRandomRSAKey()
 	require.NoError(t, err)
@@ -174,7 +171,6 @@ func TestCreate(t *testing.T) {
 	hatchery.Create(ctx, mockHatchery)
 
 	<-ctx.Done()
-
 }
 
 type HookMock struct{}

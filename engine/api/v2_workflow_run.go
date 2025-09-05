@@ -237,9 +237,22 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			defer tx.Rollback() // nolint
 
 			for i := range runJobs {
-				runJobs[i].Status = sdk.V2WorkflowRunJobStatusStopped
+				rj := &runJobs[i]
+				if rj.Status.IsTerminated() {
+					continue
+				}
+				rj.Status = sdk.V2WorkflowRunJobStatusStopped
 				now := time.Now()
-				runJobs[i].Ended = &now
+				rj.Ended = &now
+
+				for k, ss := range rj.StepsStatus {
+					if !ss.Conclusion.IsTerminated() {
+						ss.Conclusion = sdk.V2WorkflowRunJobStatusStopped
+						ss.Ended = time.Now()
+						rj.StepsStatus[k] = ss
+					}
+				}
+
 				if err := workflow_v2.UpdateJobRun(ctx, tx, &runJobs[i]); err != nil {
 					return err
 				}
@@ -491,7 +504,7 @@ func (api *API) deleteWorkflowRunV2Handler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			if err := purge.WorkflowRunV2(ctx, api.mustDB(), wr.ID); err != nil {
+			if err := purge.RemoveWorkflowRunV2(ctx, api.mustDB(), wr.ID, api.GoRoutines); err != nil {
 				return err
 			}
 
@@ -1321,24 +1334,33 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 					return err
 				}
 				workflowRef = defaultBranch.ID
-				workflowCommit = defaultBranch.LatestCommit
 			}
-			if workflowCommit == "" || workflowCommit == "HEAD" {
-				switch {
-				case strings.HasPrefix(workflowRef, sdk.GitRefBranchPrefix):
-					// Retrieve branch to get commit
-					b, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(workflowRef, sdk.GitRefBranchPrefix)})
+
+			// Search entity on workflowCommit
+			var workflowEntity *sdk.Entity
+			if workflowCommit != "" {
+				workflowEntity, err = entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName, workflowCommit)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return err
+				}
+			}
+
+			// If no entity found, search head entity on current branch
+			if workflowEntity == nil {
+				workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, workflowRef, sdk.EntityTypeWorkflow, workflowName)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return err
+				}
+				// If not found, fallback on default branch
+				if sdk.ErrorIs(err, sdk.ErrNotFound) {
+					defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
 					if err != nil {
 						return err
 					}
-					workflowCommit = b.LatestCommit
-				default:
-					// Retrieve branch to get commit
-					t, err := vcsClient.Tag(ctx, repo.Name, strings.TrimPrefix(workflowRef, sdk.GitRefTagPrefix))
+					workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, defaultBranch.ID, sdk.EntityTypeWorkflow, workflowName)
 					if err != nil {
 						return err
 					}
-					workflowCommit = t.Hash
 				}
 			}
 
@@ -1349,7 +1371,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				Repository:     repo.Name,
 				WorkflowRef:    workflowRef,
 				TargetRepo:     runRequest.TargetRepository,
-				WorkflowCommit: workflowCommit,
+				WorkflowCommit: workflowEntity.Commit,
 				Workflow:       workflowName,
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				Username:       u.AuthConsumerUser.AuthentifiedUser.Username,
@@ -1450,22 +1472,6 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, err
 	}
 	wr.RunNumber = wrNumber
-
-	if proj.WorkflowRetention <= 0 {
-		proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
-	}
-	if proj.WorkflowRetention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
-		proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunMaxRetention
-	}
-
-	retention := time.Duration(proj.WorkflowRetention*24) * time.Hour
-	if wk.Retention > 0 {
-		if wk.Retention > api.Config.WorkflowV2.WorkflowRunMaxRetention {
-			wk.Retention = api.Config.WorkflowV2.WorkflowRunMaxRetention
-		}
-		retention = time.Duration(wk.Retention*24) * time.Hour
-	}
-	wr.RetentionDate = time.Now().Add(retention)
 
 	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
 

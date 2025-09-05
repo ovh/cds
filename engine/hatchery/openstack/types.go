@@ -70,6 +70,11 @@ type HatcheryConfiguration struct {
 
 	// OverrideImagesUsername define the username to use for the specified image.
 	OverrideImagesUsername []ImageUsernameOverride `mapstructure:"overrideImagesUsername" toml:"overrideImagesUsername" default:"" commented:"true" comment:"Override the user used for the images" json:"overrideImagesUsername"`
+
+	// OverrideImagesBookDelay define the worker book delay to use for the specified image.
+	OverrideImagesBookDelay []ImageBookDelayOverride `mapstructure:"overrideImagesBookDelay" toml:"overrideImagesBookDelay" default:"" commented:"true" comment:"Override the book delay used for the images" json:"overrideImagesBookDelay"`
+
+	RequiredBinariesRequirement []string `mapstructure:"requiredBinariesRequirement" toml:"requiredBinariesRequirement" default:"" commented:"true" comment:"If a job don't have any model requirement, check if there is at least required binaries" json:"requiredBinariesRequirement"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
@@ -82,6 +87,7 @@ type HatcheryOpenstack struct {
 	cache           *cache
 	networkID       string                    // computed from networkString
 	imagesUsername  map[*regexp.Regexp]string // computed from initImagesUsername
+	imagesBookDelay map[*regexp.Regexp]int64  // computed from initBookDelay
 }
 
 type ipInfos struct {
@@ -92,4 +98,9 @@ type ipInfos struct {
 type ImageUsernameOverride struct {
 	Image    string `mapstructure:"image" toml:"image" default:"" commented:"true" comment:"The image name regular expression." json:"image"`
 	Username string `mapstructure:"username" toml:"username" default:"" commented:"true" comment:"The username to use." json:"username"`
+}
+
+type ImageBookDelayOverride struct {
+	Image string `mapstructure:"image" toml:"image" default:"" commented:"true" comment:"The image name regular expression." json:"image"`
+	Delay int64  `mapstructure:"delay" toml:"delay" default:"" commented:"true" comment:"The delay to use (in seconds)." json:"delay"`
 }

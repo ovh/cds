@@ -1,6 +1,6 @@
 name: buildpack-deps
 group: shared.infra
-image: buildpack-deps:buster
+image: buildpack-deps:bookworm
 description: ""
 type: docker
 shell: sh -c
