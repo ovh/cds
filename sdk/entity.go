@@ -18,6 +18,18 @@ const (
 
 var EntityTypes = []string{EntityTypeWorkerModel, EntityTypeAction, EntityTypeWorkflow, EntityTypeWorkflowTemplate}
 
+type EntityFullNames []EntityFullName
+
+func (e EntityFullNames) FilterByProjectKey(key string) EntityFullNames {
+	var res []EntityFullName
+	for i := range e {
+		if e[i].ProjectKey == key {
+			res = append(res, e[i])
+		}
+	}
+	return res
+}
+
 type EntityFullName struct {
 	Name       string `json:"name" db:"name"`
 	Ref        string `json:"ref" db:"ref"`
