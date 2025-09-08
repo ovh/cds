@@ -183,19 +183,19 @@ func IsDefaultHooks(on *WorkflowOn) []WorkflowHookEventName {
 	hookKeys := make([]WorkflowHookEventName, 0)
 	if on.Push != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventNamePush)
-		if len(on.Push.Paths) > 0 || len(on.Push.Branches) > 0 || len(on.Push.Tags) > 0 {
+		if len(on.Push.Paths) > 0 || len(on.Push.Branches) > 0 || len(on.Push.Tags) > 0 || on.Push.Commit != "" {
 			return nil
 		}
 	}
 	if on.PullRequest != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventNamePullRequest)
-		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 || on.PullRequest.Comment != "" {
+		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 || on.PullRequest.Comment != "" || len(on.PullRequest.Types) > 0 {
 			return nil
 		}
 	}
 	if on.PullRequestComment != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventNamePullRequestComment)
-		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" {
+		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" || len(on.PullRequest.Types) > 0 {
 			return nil
 		}
 	}
