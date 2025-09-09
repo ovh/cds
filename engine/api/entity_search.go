@@ -468,6 +468,7 @@ func (ef *EntityFinder) searchWorkflowTemplate(ctx context.Context, db gorp.SqlE
 				}
 			}
 			localEntity.Entity = *wtEntity
+			localEntity.CompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localEntity.Template.Name, ef.currentRef)
 			ef.localTemplatesCache[name] = localEntity
 		}
 		return &localEntity, "", nil

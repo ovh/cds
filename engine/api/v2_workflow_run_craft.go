@@ -974,8 +974,9 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 				return msgAction, err
 			}
 
-			// Insert sub action in the main entity finder
+			// Insert sub action in the main entity finder +
 			for _, v := range wrefAction.ef.localActionsCache {
+				// from action local cache to workflow run non local cache. (to avoid conflict having the same action in diffferent repository)
 				wref.ef.actionsCache[v.CompleteName] = v
 			}
 			for k, v := range wrefAction.ef.actionsCache {
@@ -1451,7 +1452,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			return "", nil, err
 		}
 		if strings.HasPrefix(workerModel, ".cds/worker-models/") {
-			wref.ef.workerModelCache[wm.CompleteName] = *wm
+			wref.ef.localWorkerModelCache[workerModel] = *wm
 		} else {
 			wref.ef.workerModelCache[wm.CompleteName] = *wm
 		}
