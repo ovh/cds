@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/rockbears/log"
 
@@ -121,6 +122,13 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				}
 			} else {
 				canTriggerWithCommitMessage = true
+			}
+
+			for _, skip := range sdk.HookCommitSkipping {
+				if strings.Contains(hre.ExtractData.CommitMessage, skip) {
+					canTriggerWithCommitMessage = false
+					break
+				}
 			}
 
 			if !canTriggerWithChangeSet || !canTriggerWithCommitMessage {

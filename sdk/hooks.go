@@ -13,6 +13,10 @@ import (
 	"database/sql/driver"
 )
 
+var (
+	HookCommitSkipping = []string{"[skip ci]", "[ci skip]", "[no ci]"}
+)
+
 type HookListWorkflowRequest struct {
 	HookEventUUID       string                `json:"hook_event_uuid"`
 	VCSName             string                `json:"vcs_name"`
