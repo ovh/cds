@@ -124,10 +124,13 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				canTriggerWithCommitMessage = true
 			}
 
-			for _, skip := range sdk.HookCommitSkipping {
-				if strings.Contains(hre.ExtractData.CommitMessage, skip) {
-					canTriggerWithCommitMessage = false
-					break
+			// If manual do not check skip ci
+			if hre.ExtractData.Manual.Project == "" {
+				for _, skip := range sdk.HookCommitSkipping {
+					if strings.Contains(hre.ExtractData.CommitMessage, skip) {
+						canTriggerWithCommitMessage = false
+						break
+					}
 				}
 			}
 
