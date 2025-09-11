@@ -521,6 +521,12 @@ func handleJobV2(ctx context.Context, h Interface, jobRunID string, cacheAttempt
 			endTrace(fmt.Sprintf("%v", err.Error()), jobInfo.RunJob.ID)
 			return err
 		}
+		if workerModel == nil {
+			cacheAttempts.NewAttempt(jobInfo.RunJob.ID)
+			log.Error(ctx, "hatchery %q failed to get worker model %s: nil", h.Configuration().Name, jobInfo.Model.Name)
+			return sdk.NewErrorFrom(sdk.ErrInvalidData, "worker model is not valid %v", jobInfo.Model.Name)
+		}
+
 		workerRequest.model = *workerModel
 		if can := h.CanSpawn(ctx, *workerModel, jobInfo.RunJob.ID, nil); !can {
 			log.Warn(ctx, "cannot spawn worker")
