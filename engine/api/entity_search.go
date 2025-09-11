@@ -427,7 +427,7 @@ func (ef *EntityFinder) searchWorkerModel(ctx context.Context, db gorp.SqlExecut
 				}
 			}
 
-			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localWM.Model.Name, ef.currentRef)
+			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, wm.Name, ef.currentRef)
 			localWM = sdk.EntityWithObject{Entity: *wmEntity, Model: wm, CompleteName: completeName}
 			ef.localWorkerModelCache[name] = localWM
 		}
