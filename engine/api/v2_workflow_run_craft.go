@@ -383,16 +383,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.WorkflowData.Actions[k] = v.Action
 	}
 	for _, v := range wref.ef.localActionsCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Name, wref.ef.currentRef)
-		run.WorkflowData.Actions[completeName] = v.Action
+		run.WorkflowData.Actions[v.CompleteName] = v.Action
 	}
 	run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
 	for k, v := range wref.ef.workerModelCache {
 		run.WorkflowData.WorkerModels[k] = v.Model
 	}
 	for _, v := range wref.ef.localWorkerModelCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Model.Name, wref.ef.currentRef)
-		run.WorkflowData.WorkerModels[completeName] = v.Model
+		run.WorkflowData.WorkerModels[v.CompleteName] = v.Model
 	}
 
 	// check concurrency
@@ -890,11 +888,10 @@ loop:
 		wref.ef.actionsCache[k] = v
 	}
 	for _, v := range wrefTemplate.ef.localActionsCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wrefTemplate.run.ProjectKey, wrefTemplate.ef.currentVCS.Name, wrefTemplate.ef.currentRepo.Name, v.Name, templateEntity.Ref)
-		if _, has := run.WorkflowData.Actions[completeName]; !has {
-			run.WorkflowData.Actions[completeName] = v.Action
+		if _, has := run.WorkflowData.Actions[v.CompleteName]; !has {
+			run.WorkflowData.Actions[v.CompleteName] = v.Action
 		}
-		wref.ef.actionsCache[completeName] = v
+		wref.ef.actionsCache[v.CompleteName] = v
 	}
 
 	if run.WorkflowData.WorkerModels == nil {
@@ -908,11 +905,10 @@ loop:
 		wref.ef.workerModelCache[k] = v
 	}
 	for _, v := range wrefTemplate.ef.localWorkerModelCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wrefTemplate.run.ProjectKey, wrefTemplate.ef.currentVCS.Name, wrefTemplate.ef.currentRepo.Name, v.Model.Name, templateEntity.Ref)
-		if _, has := run.WorkflowData.WorkerModels[completeName]; !has {
-			run.WorkflowData.WorkerModels[completeName] = v.Model
+		if _, has := run.WorkflowData.WorkerModels[v.CompleteName]; !has {
+			run.WorkflowData.WorkerModels[v.CompleteName] = v.Model
 		}
-		wref.ef.workerModelCache[completeName] = v
+		wref.ef.workerModelCache[v.CompleteName] = v
 	}
 	return nil, nil
 }
@@ -926,7 +922,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			continue
 		}
 
-		entityWithAction, completePath, msg, err := wref.ef.searchAction(ctx, db, store, step.Uses)
+		entityWithAction, msg, err := wref.ef.searchAction(ctx, db, store, step.Uses)
 		if err != nil {
 			return nil, err
 		}
@@ -939,7 +935,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			return &runMsg, nil
 		}
 		if entityWithAction != nil {
-			step.Uses = "actions/" + completePath
+			step.Uses = "actions/" + entityWithAction.CompleteName
 
 			// Recreate wref with vcs/repo = action's repo and not workflow's repo
 			actionProject := wref.project
@@ -978,9 +974,10 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 				return msgAction, err
 			}
 
-			// Insert sub action in the main entity finder
-			for k, v := range wrefAction.ef.localActionsCache {
-				wref.ef.localActionsCache[k] = v
+			// Insert sub action in the main entity finder +
+			for _, v := range wrefAction.ef.localActionsCache {
+				// from action local cache to workflow run non local cache. (to avoid conflict having the same action in diffferent repository)
+				wref.ef.actionsCache[v.CompleteName] = v
 			}
 			for k, v := range wrefAction.ef.actionsCache {
 				wref.ef.actionsCache[k] = v
@@ -1434,7 +1431,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 	modelType := ""
 
 	if workerModel != "" {
-		wm, fullName, msg, err := wref.ef.searchWorkerModel(ctx, db, store, workerModel)
+		wm, msg, err := wref.ef.searchWorkerModel(ctx, db, store, workerModel)
 		if err != nil {
 			msg := sdk.V2WorkflowRunInfo{
 				WorkflowRunID: wref.run.ID,
@@ -1457,10 +1454,10 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 		if strings.HasPrefix(workerModel, ".cds/worker-models/") {
 			wref.ef.localWorkerModelCache[workerModel] = *wm
 		} else {
-			wref.ef.workerModelCache[fullName] = *wm
+			wref.ef.workerModelCache[wm.CompleteName] = *wm
 		}
 		modelType = wm.Model.Type
-		modelCompleteName = fullName
+		modelCompleteName = wm.CompleteName
 
 	}
 
@@ -1564,7 +1561,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkflowTemplate(ctx context.Context, 
 	ctx, next := telemetry.Span(ctx, "wref.checkWorkflowTemplate", trace.StringAttribute(telemetry.TagWorkflowTemplate, templateName))
 	defer next()
 
-	e, _, msg, err := wref.ef.searchWorkflowTemplate(ctx, db, store, templateName)
+	e, msg, err := wref.ef.searchWorkflowTemplate(ctx, db, store, templateName)
 	if err != nil {
 		return sdk.EntityWithObject{}, nil, err
 	}

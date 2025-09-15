@@ -62,10 +62,11 @@ type Entity struct {
 
 type EntityWithObject struct {
 	Entity
-	Workflow V2Workflow
-	Action   V2Action
-	Model    V2WorkerModel
-	Template V2WorkflowTemplate
+	Workflow     V2Workflow
+	Action       V2Action
+	Model        V2WorkerModel
+	Template     V2WorkflowTemplate
+	CompleteName string
 }
 
 func (e *EntityWithObject) Interpolate(ctx context.Context) error {

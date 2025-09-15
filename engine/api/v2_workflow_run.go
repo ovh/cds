@@ -237,9 +237,22 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			defer tx.Rollback() // nolint
 
 			for i := range runJobs {
-				runJobs[i].Status = sdk.V2WorkflowRunJobStatusStopped
+				rj := &runJobs[i]
+				if rj.Status.IsTerminated() {
+					continue
+				}
+				rj.Status = sdk.V2WorkflowRunJobStatusStopped
 				now := time.Now()
-				runJobs[i].Ended = &now
+				rj.Ended = &now
+
+				for k, ss := range rj.StepsStatus {
+					if !ss.Conclusion.IsTerminated() {
+						ss.Conclusion = sdk.V2WorkflowRunJobStatusStopped
+						ss.Ended = time.Now()
+						rj.StepsStatus[k] = ss
+					}
+				}
+
 				if err := workflow_v2.UpdateJobRun(ctx, tx, &runJobs[i]); err != nil {
 					return err
 				}
@@ -1199,6 +1212,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			booleanResult, err := checkCanRunJob(ctx, api.mustDBWithCtx(ctx), *wr, inputs, jobToRuns[0].Job, jobContext, initiator)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				return err
 			}
 			if !booleanResult {

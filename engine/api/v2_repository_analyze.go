@@ -699,7 +699,7 @@ skipEntity:
 		}
 
 		// If current analysis is the latest commit of the branch
-		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || currentAnalysisTag.Sha == e.Commit {
+		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || currentAnalysisTag.Hash != "" {
 			e.Entity.Head = true
 
 			if existingHeadEntity != nil {
@@ -877,7 +877,7 @@ func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 
 	// If there is a workflow template and non hooks on workflow, check the workflow template
 	if e.Workflow.From != "" && e.Workflow.On == nil {
-		entTemplate, _, msg, err := ef.searchWorkflowTemplate(ctx, db, cache, e.Workflow.From)
+		entTemplate, msg, err := ef.searchWorkflowTemplate(ctx, db, cache, e.Workflow.From)
 		if err != nil {
 			return nil, err
 		}
@@ -1587,7 +1587,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 	case sdk.V2Workflow:
 		switch {
 		case x.From != "":
-			entTmpl, _, msg, errSearch := ef.searchWorkflowTemplate(ctx, db, store, x.From)
+			entTmpl, msg, errSearch := ef.searchWorkflowTemplate(ctx, db, store, x.From)
 			if errSearch != nil {
 				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: unable to retrieve template %s of type %s: %v", x.Name, x.From, sdk.EntityTypeWorkflowTemplate, errSearch))
 				break
@@ -1615,7 +1615,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 			for jobID, j := range x.Jobs {
 				// Check if worker model exists
 				if !strings.Contains(j.RunsOn.Model, "${{") && len(j.Steps) > 0 {
-					_, _, msg, errSearch := ef.searchWorkerModel(ctx, db, store, j.RunsOn.Model)
+					_, msg, errSearch := ef.searchWorkerModel(ctx, db, store, j.RunsOn.Model)
 					if errSearch != nil {
 						err = append(err, errSearch)
 					}
@@ -1629,7 +1629,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 					if s.Uses == "" {
 						continue
 					}
-					_, _, msg, errSearch := ef.searchAction(ctx, db, store, s.Uses)
+					_, msg, errSearch := ef.searchAction(ctx, db, store, s.Uses)
 					if errSearch != nil {
 						err = append(err, errSearch)
 					}
@@ -1720,6 +1720,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 				Type:                t,
 				FilePath:            directory + fileName,
 			},
+			CompleteName: fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, o.GetName(), analysis.Ref),
 		}
 		if !namePattern.MatchString(o.GetName()) {
 			return nil, []error{sdk.NewErrorFrom(sdk.ErrInvalidData, "name %s doesn't match %s", o.GetName(), sdk.EntityNamePattern)}
@@ -1728,17 +1729,17 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 		case sdk.EntityTypeWorkerModel:
 			eo.Model = any(o).(sdk.V2WorkerModel)
 			ef.localWorkerModelCache[eo.Entity.FilePath] = eo
-			ef.workerModelCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Model.Name, analysis.Ref)] = eo
+			ef.workerModelCache[eo.CompleteName] = eo
 		case sdk.EntityTypeAction:
 			eo.Action = any(o).(sdk.V2Action)
 			ef.localActionsCache[eo.Entity.FilePath] = eo
-			ef.actionsCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Action.Name, analysis.Ref)] = eo
+			ef.actionsCache[eo.CompleteName] = eo
 		case sdk.EntityTypeWorkflow:
 			eo.Workflow = any(o).(sdk.V2Workflow)
 		case sdk.EntityTypeWorkflowTemplate:
 			eo.Template = any(o).(sdk.V2WorkflowTemplate)
 			ef.localTemplatesCache[eo.Entity.FilePath] = eo
-			ef.templatesCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Template.Name, analysis.Ref)] = eo
+			ef.templatesCache[eo.CompleteName] = eo
 		}
 
 		entities = append(entities, eo)

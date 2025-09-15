@@ -889,6 +889,180 @@ func TestParserFailure(t *testing.T) {
 	}
 }
 
+func TestParserCancelled(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       bool
+		containError string
+	}{
+		{
+			name:   "Cancelled Job - true",
+			input:  "${{ cancelled() }}",
+			result: true,
+			context: map[string]interface{}{
+				"needs": map[string]interface{}{
+					"job1": map[string]string{
+						"result": string(V2WorkflowRunJobStatusCancelled),
+					},
+					"job2": map[string]string{
+						"result": "Success",
+					},
+				},
+			},
+		},
+		{
+			name:   "Cancelled Job  - false",
+			input:  "${{ cancelled() }}",
+			result: false,
+			context: map[string]interface{}{
+				"needs": map[string]interface{}{
+					"job1": map[string]string{
+						"result": "Success",
+					},
+					"job2": map[string]string{
+						"result": "Success",
+					},
+				},
+			},
+		},
+		{
+			name:   "Cancelled Step - true",
+			input:  "${{ cancelled() }}",
+			result: true,
+			context: map[string]interface{}{
+				"steps": map[string]interface{}{
+					"step1": map[string]string{
+						"conclusion": string(V2WorkflowRunJobStatusCancelled),
+					},
+					"step2": map[string]string{
+						"conclusion": "Success",
+					},
+				},
+			},
+		},
+		{
+			name:   "Cancelled Step - false",
+			input:  "${{ cancelled() }}",
+			result: false,
+			context: map[string]interface{}{
+				"steps": map[string]interface{}{
+					"step1": map[string]string{
+						"conclusion": "Success",
+					},
+					"step2": map[string]string{
+						"conclusion": "Success",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
+}
+
+func TestParserStopped(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       bool
+		containError string
+	}{
+		{
+			name:   "Stopped Job - true",
+			input:  "${{ stopped() }}",
+			result: true,
+			context: map[string]interface{}{
+				"needs": map[string]interface{}{
+					"job1": map[string]string{
+						"result": string(V2WorkflowRunJobStatusStopped),
+					},
+					"job2": map[string]string{
+						"result": "Success",
+					},
+				},
+			},
+		},
+		{
+			name:   "Stopped Job  - false",
+			input:  "${{ stopped() }}",
+			result: false,
+			context: map[string]interface{}{
+				"needs": map[string]interface{}{
+					"job1": map[string]string{
+						"result": "Success",
+					},
+					"job2": map[string]string{
+						"result": "Success",
+					},
+				},
+			},
+		},
+		{
+			name:   "Stopped Step - true",
+			input:  "${{ stopped() }}",
+			result: true,
+			context: map[string]interface{}{
+				"steps": map[string]interface{}{
+					"step1": map[string]string{
+						"conclusion": string(V2WorkflowRunJobStatusStopped),
+					},
+					"step2": map[string]string{
+						"conclusion": "Success",
+					},
+				},
+			},
+		},
+		{
+			name:   "Stopped Step - false",
+			input:  "${{ stopped() }}",
+			result: false,
+			context: map[string]interface{}{
+				"steps": map[string]interface{}{
+					"step1": map[string]string{
+						"conclusion": "Success",
+					},
+					"step2": map[string]string{
+						"conclusion": "Success",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
+}
+
 func TestParserFuncToJSON(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
