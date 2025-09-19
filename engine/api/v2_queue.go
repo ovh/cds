@@ -197,7 +197,7 @@ func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) 
 			var err error
 			pKeys := make([]string, 0)
 			regionsFilter := make([]string, 0)
-			if !isAdmin(ctx) {
+			if !isMaintainer(ctx) {
 				pKeys, err = rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
 				if err != nil {
 					return err
@@ -699,7 +699,6 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobScheduled, *run, *jobRun)
 			})
 			return service.WriteJSON(w, jobRun, http.StatusOK)
-
 		}
 }
 

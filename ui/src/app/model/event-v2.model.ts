@@ -2,7 +2,11 @@ export enum EventV2Type {
 	EventRunCrafted = "RunCrafted",
 	EventRunBuilding = "RunBuilding",
 	EventRunEnded = "RunEnded",
-	EventRunRestart = "RunRestart"
+	EventRunRestart = "RunRestart",
+
+	EventRunJobEnqueued = "RunJobEnqueued",
+
+	EventProjectPurge = "EventProjectPurge"
 }
 
 export class FullEventV2 {

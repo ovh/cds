@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -31,7 +32,7 @@ type EntitiesCleaner struct {
 	projKey   string
 	vcsName   string
 	repoName  string
-	refs      map[string]string
+	refs      []string
 	retention time.Duration
 }
 
@@ -286,34 +287,33 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				projKey:   pKey,
 				vcsName:   vcsServer.Name,
 				repoName:  r.Name,
-				refs:      make(map[string]string),
+				refs:      make([]string, 0),
 				retention: entityRetention,
 			}
 			// Retrieve branches and tags and store the latest commit for each
-			if err := cleaner.getBranches(ctx, db, store); err != nil {
+			if err := cleaner.getRefs(ctx, db, store); err != nil {
 				return err
 			}
 
-			for branchName, branchEntities := range entitiesByRef {
-				if currentHEAD, has := cleaner.refs[branchName]; has {
+			for refName, refEntities := range entitiesByRef {
+				if slices.Contains(cleaner.refs, refName) {
 					// Clean non head commits on existing branch
-					if err := cleaner.cleanNonHeadEntities(ctx, db, store, branchName, currentHEAD, branchEntities, hookServices); err != nil {
+					if err := cleaner.cleanNonHeadEntities(ctx, db, store, refName, refEntities, hookServices); err != nil {
 						return err
 					}
 				} else {
 					// Clean entities that exists on deleted branches
-					if err := cleaner.cleanEntitiesByDeletedRef(ctx, db, store, branchName, branchEntities, hookServices); err != nil {
+					if err := cleaner.cleanEntitiesByDeletedRef(ctx, db, store, refName, refEntities, hookServices); err != nil {
 						return err
 					}
 				}
-
 			}
 		}
 	}
 	return nil
 }
 
-func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
+func (c *EntitiesCleaner) getRefs(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, c.projKey, c.vcsName)
 	if err != nil {
 		return err
@@ -324,9 +324,9 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 		return err
 	}
 
-	c.refs = make(map[string]string)
+	c.refs = make([]string, 0)
 	for _, b := range branches {
-		c.refs[b.ID] = b.LatestCommit
+		c.refs = append(c.refs, b.ID)
 	}
 
 	tags, err := vcsClient.Tags(ctx, c.repoName)
@@ -334,15 +334,15 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 		return err
 	}
 	for _, t := range tags {
-		c.refs[sdk.GitRefTagPrefix+t.Tag] = t.Hash
+		c.refs = append(c.refs, sdk.GitRefTagPrefix+t.Tag)
 	}
 	return nil
 }
 
-func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, refHeadCommit string, entitiesByBranch []sdk.Entity, hookServices []sdk.Service) error {
+func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, entitiesByRef []sdk.Entity, hookServices []sdk.Service) error {
 	deletedEntities := make([]sdk.Entity, 0)
 
-	if len(entitiesByBranch) > 0 {
+	if len(entitiesByRef) > 0 {
 		tx, err := db.Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -350,8 +350,9 @@ func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbM
 		defer tx.Rollback()
 
 		log.Info(ctx, "Deleting non head entities on %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
-		for _, e := range entitiesByBranch {
-			if !e.Head && e.Commit != refHeadCommit && time.Since(e.LastUpdate) > c.retention {
+		for _, e := range entitiesByRef {
+			// If it's an old non head entity, remove it
+			if !e.Head && time.Since(e.LastUpdate) > c.retention {
 				if err := DeleteEntity(ctx, tx, &e, hookServices, DeleteEntityOps{WithHooks: false}); err != nil {
 					return err
 				}

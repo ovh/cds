@@ -88,7 +88,7 @@ testcases:
           osarch: linux/amd64
           type: docker
           spec:
-            image: buildpack-deps:buster
+            image: buildpack-deps:bookworm
         workflows/distant.yaml:
           name: {{.cds_workflow}}
           repository:

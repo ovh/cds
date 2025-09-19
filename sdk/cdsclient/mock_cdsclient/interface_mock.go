@@ -2928,7 +2928,7 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobStepUpdate(ctx, regio
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -3185,6 +3185,49 @@ func (m *MockProjectClientV2) ProjectNotificationUpdate(ctx context.Context, pKe
 func (mr *MockProjectClientV2MockRecorder) ProjectNotificationUpdate(ctx, pKey, notif any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationUpdate), ctx, pKey, notif)
+}
+
+// ProjectRunPurge mocks base method.
+func (m *MockProjectClientV2) ProjectRunPurge(ctx context.Context, projectKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunPurge", ctx, projectKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRunPurge indicates an expected call of ProjectRunPurge.
+func (mr *MockProjectClientV2MockRecorder) ProjectRunPurge(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunPurge", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRunPurge), ctx, projectKey)
+}
+
+// ProjectRunRetentionGet mocks base method.
+func (m *MockProjectClientV2) ProjectRunRetentionGet(ctx context.Context, projectKey string) (*sdk.ProjectRunRetention, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunRetentionGet", ctx, projectKey)
+	ret0, _ := ret[0].(*sdk.ProjectRunRetention)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRunRetentionGet indicates an expected call of ProjectRunRetentionGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectRunRetentionGet(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunRetentionGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRunRetentionGet), ctx, projectKey)
+}
+
+// ProjectRunRetentionImport mocks base method.
+func (m *MockProjectClientV2) ProjectRunRetentionImport(ctx context.Context, projectKey string, prr sdk.ProjectRunRetention) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunRetentionImport", ctx, projectKey, prr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRunRetentionImport indicates an expected call of ProjectRunRetentionImport.
+func (mr *MockProjectClientV2MockRecorder) ProjectRunRetentionImport(ctx, projectKey, prr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunRetentionImport", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectRunRetentionImport), ctx, projectKey, prr)
 }
 
 // ProjectV2Access mocks base method.
@@ -4553,7 +4596,7 @@ func (mr *MockV2QueueClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, i
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -4654,18 +4697,18 @@ func (mr *MockQueueClientMockRecorder) QueueCountWorkflowNodeJobRun(since, until
 }
 
 // QueueJobBook mocks base method.
-func (m *MockQueueClient) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockQueueClient) QueueJobBook(ctx context.Context, id string, delay int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
+	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id, delay)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook.
-func (mr *MockQueueClientMockRecorder) QueueJobBook(ctx, id any) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueueJobBook(ctx, id, delay any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockQueueClient)(nil).QueueJobBook), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockQueueClient)(nil).QueueJobBook), ctx, id, delay)
 }
 
 // QueueJobInfo mocks base method.
@@ -4740,7 +4783,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobTag(ctx, jobID, tags any) *gomock
 }
 
 // QueuePolling mocks base method.
-func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
@@ -9564,6 +9607,49 @@ func (mr *MockInterfaceMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
 }
 
+// ProjectRunPurge mocks base method.
+func (m *MockInterface) ProjectRunPurge(ctx context.Context, projectKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunPurge", ctx, projectKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRunPurge indicates an expected call of ProjectRunPurge.
+func (mr *MockInterfaceMockRecorder) ProjectRunPurge(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunPurge", reflect.TypeOf((*MockInterface)(nil).ProjectRunPurge), ctx, projectKey)
+}
+
+// ProjectRunRetentionGet mocks base method.
+func (m *MockInterface) ProjectRunRetentionGet(ctx context.Context, projectKey string) (*sdk.ProjectRunRetention, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunRetentionGet", ctx, projectKey)
+	ret0, _ := ret[0].(*sdk.ProjectRunRetention)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRunRetentionGet indicates an expected call of ProjectRunRetentionGet.
+func (mr *MockInterfaceMockRecorder) ProjectRunRetentionGet(ctx, projectKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunRetentionGet", reflect.TypeOf((*MockInterface)(nil).ProjectRunRetentionGet), ctx, projectKey)
+}
+
+// ProjectRunRetentionImport mocks base method.
+func (m *MockInterface) ProjectRunRetentionImport(ctx context.Context, projectKey string, prr sdk.ProjectRunRetention) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRunRetentionImport", ctx, projectKey, prr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRunRetentionImport indicates an expected call of ProjectRunRetentionImport.
+func (mr *MockInterfaceMockRecorder) ProjectRunRetentionImport(ctx, projectKey, prr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRunRetentionImport", reflect.TypeOf((*MockInterface)(nil).ProjectRunRetentionImport), ctx, projectKey, prr)
+}
+
 // ProjectUpdate mocks base method.
 func (m *MockInterface) ProjectUpdate(key string, project *sdk.Project) error {
 	m.ctrl.T.Helper()
@@ -10057,18 +10143,18 @@ func (mr *MockInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, 
 }
 
 // QueueJobBook mocks base method.
-func (m *MockInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockInterface) QueueJobBook(ctx context.Context, id string, delay int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
+	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id, delay)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook.
-func (mr *MockInterfaceMockRecorder) QueueJobBook(ctx, id any) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueueJobBook(ctx, id, delay any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockInterface)(nil).QueueJobBook), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockInterface)(nil).QueueJobBook), ctx, id, delay)
 }
 
 // QueueJobInfo mocks base method.
@@ -10143,7 +10229,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags any) *gomock.C
 }
 
 // QueuePolling mocks base method.
-func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
@@ -11226,7 +11312,7 @@ func (mr *MockInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, s
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -12951,7 +13037,7 @@ func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionNam
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, osarch []string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- string, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, region, osarch, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -13313,18 +13399,18 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, u
 }
 
 // QueueJobBook mocks base method.
-func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id string, delay int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
+	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id, delay)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook.
-func (mr *MockWorkerInterfaceMockRecorder) QueueJobBook(ctx, id any) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueueJobBook(ctx, id, delay any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockWorkerInterface)(nil).QueueJobBook), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobBook", reflect.TypeOf((*MockWorkerInterface)(nil).QueueJobBook), ctx, id, delay)
 }
 
 // QueueJobInfo mocks base method.
@@ -13399,7 +13485,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags any) *go
 }
 
 // QueuePolling mocks base method.
-func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- int64, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {

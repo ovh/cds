@@ -60,6 +60,7 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 	}
 
 	h.initImagesUsername(ctx)
+	h.initImagesBookDelay()
 
 	h.GoRoutines.Run(ctx, "hatchery openstack routines", func(ctx context.Context) {
 		h.main(ctx)
@@ -131,6 +132,14 @@ func (h *HatcheryOpenstack) initImagesUsername(ctx context.Context) {
 
 	for _, override := range h.Config.OverrideImagesUsername {
 		h.imagesUsername[regexp.MustCompile(override.Image)] = override.Username
+	}
+}
+
+func (h *HatcheryOpenstack) initImagesBookDelay() {
+	h.imagesBookDelay = make(map[*regexp.Regexp]int64)
+
+	for _, override := range h.Config.OverrideImagesBookDelay {
+		h.imagesBookDelay[regexp.MustCompile(override.Image)] = override.Delay
 	}
 }
 

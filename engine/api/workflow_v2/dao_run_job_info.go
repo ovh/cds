@@ -25,7 +25,9 @@ func getAllRunJobInfo(ctx context.Context, db gorp.SqlExecutor, query gorpmappin
 
 func InsertRunJobInfo(ctx context.Context, db gorpmapper.SqlExecutorWithTx, info *sdk.V2WorkflowRunJobInfo) error {
 	info.ID = sdk.UUID()
-	info.IssuedAt = time.Now()
+	if info.IssuedAt.IsZero() {
+		info.IssuedAt = time.Now()
+	}
 	dbWkfRunInfos := &dbWorkflowRunJobInfo{V2WorkflowRunJobInfo: *info}
 
 	if err := gorpmapping.Insert(db, dbWkfRunInfos); err != nil {

@@ -58,6 +58,11 @@ export class ProjectSettingsComponent implements OnInit, OnDestroy {
 			iconTheme: 'outline',
 			key: 'concurrencies',
 		}, <Tab>{
+			title: 'Retentions',
+			icon: 'delete',
+			iconTheme: 'outline',
+			key: 'retentions',
+		}, <Tab>{
 			title: 'WebHooks',
 			icon: 'share-alt',
 			iconTheme: 'outline',

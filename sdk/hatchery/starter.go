@@ -168,7 +168,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		jobRun, err := h.CDSClientV2().V2HatcheryTakeJob(ctx, j.region, j.id)
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Info(ctx, "cannot book job: %s", err)
+			log.Info(ctx, "cannot book job with id %q: %s", j.id, err)
 			return false
 		}
 		arg.RunID = jobRun.WorkflowRunID
@@ -195,12 +195,18 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		}
 		ctxQueueJobBook, next := telemetry.Span(ctx, "hatchery.QueueJobBook")
 		ctxQueueJobBook, cancel := context.WithTimeout(ctxQueueJobBook, 10*time.Second)
-		bookedInfos, err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id)
+
+		var customBookDelay int64
+		if hWithCustomBookDelay, ok := h.(InterfaceWithCustomBookDelay); ok {
+			customBookDelay = hWithCustomBookDelay.ComputeBookDelay(ctxQueueJobBook, j.model)
+		}
+
+		bookedInfos, err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id, customBookDelay)
 		if err != nil {
 			next()
 			// perhaps already booked by another hatchery
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Info(ctx, "cannot book job: %s", err)
+			log.Info(ctx, "cannot book job with id %q: %s", j.id, err)
 			cancel()
 			return false
 		}

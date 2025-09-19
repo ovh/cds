@@ -38,6 +38,7 @@ var (
 )
 
 var _ hatchery.InterfaceWithModels = new(HatcheryOpenstack)
+var _ hatchery.InterfaceWithCustomBookDelay = new(HatcheryOpenstack)
 
 // New instanciates a new Hatchery Openstack
 func New() *HatcheryOpenstack {
@@ -264,20 +265,78 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, _ string, requirements []sdk.Requirement) (bool, error) {
+func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "openstack.CanSpawn")
 	defer end()
+
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
-			return false, nil
+			return false
 		}
 		if r.Type == sdk.FlavorRequirement && len(h.Config.AllowedFlavors) > 0 {
 			if !slices.Contains(h.Config.AllowedFlavors, r.Value) {
-				return false, nil
+				log.Debug(ctx, "CanSpawn> Job %s has an invalid flavor requirement: %q", jobID, r.Value)
+				return false
 			}
 		}
 	}
-	return true, nil
+
+	// Check required binaries according config if not model was set
+	if len(h.Config.RequiredBinariesRequirement) > 0 && model.ModelV1 == nil && model.ModelV2 == nil {
+		var binaries []string
+		for _, r := range requirements {
+			if r.Type == sdk.BinaryRequirement {
+				binaries = append(binaries, r.Value)
+			}
+		}
+		for _, r := range h.Config.RequiredBinariesRequirement {
+			if !slices.ContainsFunc(binaries, func(b string) bool { return r == b }) {
+				log.Debug(ctx, "CanSpawn> Job %s can't spawn because no model is defined and is missing %q binary requirement: %v", jobID, r, binaries)
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (canSpawn bool, finalErr error) {
+	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
+	log.Debug(ctx, "CanAllocateResources> Job %s will require a %q flavor to start", jobID, flavorName)
+
+	defer func() {
+		log.Info(ctx, "CanAllocateResources> Job %s can spawn on the Hatchery: %t", jobID, canSpawn)
+	}()
+
+	flavor, err := h.flavor(flavorName)
+	if err != nil {
+		finalErr = err
+		return
+	}
+
+	if len(h.Config.AllowedFlavors) > 0 && !slices.Contains(h.Config.AllowedFlavors, flavor.Name) {
+		log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID)
+		return
+	}
+
+	if err := h.checkSpawnLimits(ctx, flavor, model); err != nil {
+		log.Debug(ctx, "CanAllocateResources> Job %s can't spawn because check limits returned and error: %v", jobID, err)
+		return
+	}
+
+	canSpawn = true
+	return
+}
+
+func (h *HatcheryOpenstack) ComputeBookDelay(ctx context.Context, model sdk.WorkerStarterWorkerModel) int64 {
+	imageName := model.GetOpenstackImage()
+	for image, delay := range h.imagesBookDelay {
+		if image.MatchString(imageName) {
+			log.Debug(ctx, "ComputeBookDelay> Found book delay override to %d for model with image %s", delay, imageName)
+			return delay
+		}
+	}
+	return 0
 }
 
 func (h *HatcheryOpenstack) main(ctx context.Context) {
@@ -298,7 +357,6 @@ func (h *HatcheryOpenstack) main(ctx context.Context) {
 				log.Error(ctx, "Hatchery> openstack> Exiting routines")
 			}
 			return
-
 		}
 	}
 }

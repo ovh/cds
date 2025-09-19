@@ -74,12 +74,11 @@ func (mr *MockInterfaceMockRecorder) CDSClientV2() *gomock.Call {
 }
 
 // CanSpawn mocks base method.
-func (m *MockInterface) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
+func (m *MockInterface) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	return ret0
 }
 
 // CanSpawn indicates an expected call of CanSpawn.
@@ -309,13 +308,27 @@ func (mr *MockInterfaceWithModelsMockRecorder) CDSClientV2() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClientV2", reflect.TypeOf((*MockInterfaceWithModels)(nil).CDSClientV2))
 }
 
-// CanSpawn mocks base method.
-func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
+// CanAllocateResources mocks base method.
+func (m *MockInterfaceWithModels) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
+	ret := m.ctrl.Call(m, "CanAllocateResources", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
+}
+
+// CanAllocateResources indicates an expected call of CanAllocateResources.
+func (mr *MockInterfaceWithModelsMockRecorder) CanAllocateResources(ctx, model, jobID, requirements any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanAllocateResources", reflect.TypeOf((*MockInterfaceWithModels)(nil).CanAllocateResources), ctx, model, jobID, requirements)
+}
+
+// CanSpawn mocks base method.
+func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
+	ret0, _ := ret[0].(bool)
+	return ret0
 }
 
 // CanSpawn indicates an expected call of CanSpawn.
@@ -604,12 +617,11 @@ func (mr *MockInterfaceWithDetaultWorkerModelV2MockRecorder) CDSClientV2() *gomo
 }
 
 // CanSpawn mocks base method.
-func (m *MockInterfaceWithDetaultWorkerModelV2) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
+func (m *MockInterfaceWithDetaultWorkerModelV2) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	return ret0
 }
 
 // CanSpawn indicates an expected call of CanSpawn.

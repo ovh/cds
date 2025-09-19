@@ -269,7 +269,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// Enqueue JOB
 	hasTemplatedMatrixedJob := false
 	for _, j := range jobsToQueue {
-		if !j.Status.IsTerminated() && j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
+		if j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
 			hasTemplatedMatrixedJob = true
 		}
 	}
@@ -320,6 +320,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			}
 			useConcurrency, err = ap.InterpolateToBool(ctx, jobConcurrencyDef.If)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				runInfo := sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					IssuedAt:      time.Now(),
@@ -694,6 +695,7 @@ func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2Wo
 		}
 		value, err := ap.InterpolateToString(ctx, v)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			// If error, insert a run info
 			runInfo := sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
@@ -1017,9 +1019,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 					if v.Type == sdk.IntegrationConfigTypeRegion {
 						rj.Job.Region = v.Value
 						rj.Region = v.Value
-						jobDef := run.WorkflowData.Workflow.Jobs[rj.JobID]
-						jobDef.Region = v.Value
-						run.WorkflowData.Workflow.Jobs[rj.JobID] = jobDef
 						runUpdated = true
 						break integLoop
 					}
@@ -1051,9 +1050,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 			}, false
 		}
 		rj.Job.Name = jobName
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.Name = jobName
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 
@@ -1073,9 +1069,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		}
 		rj.Region = reg
 		rj.Job.Region = reg
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.Region = reg
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 
@@ -1089,6 +1082,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		var err error
 		jobInfoMsg, err = checkUserRegionRight(ctx, db, rj, wrEnqueue, rj.Region)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			rj.Status = sdk.V2WorkflowRunJobStatusFail
 			return &sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    run.ID,
@@ -1147,9 +1141,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 			rj.ModelOSArch = wref.ef.workerModelCache[completeName].Model.OSArch
 		}
 		rj.Job.RunsOn.Model = completeName
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.RunsOn.Model = completeName
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 	if strings.HasPrefix(rj.Job.RunsOn.Flavor, "${{") {
@@ -1165,9 +1156,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 			}, false
 		}
 		rj.Job.RunsOn.Flavor = flavor
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.RunsOn.Flavor = flavor
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 	if strings.HasPrefix(rj.Job.RunsOn.Memory, "${{") {
@@ -1183,9 +1171,6 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 			}, false
 		}
 		rj.Job.RunsOn.Memory = mem
-		jobData := run.WorkflowData.Workflow.Jobs[rj.JobID]
-		jobData.RunsOn.Memory = mem
-		run.WorkflowData.Workflow.Jobs[rj.JobID] = jobData
 		runUpdated = true
 	}
 
@@ -1220,32 +1205,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 	for jobID, jobToTrigger := range jobsToQueue {
 		jobDef := jobToTrigger.Job
 
-		// If no step && no template: rj is success
-		if (jobToTrigger.Status.IsTerminated() && jobToTrigger.Job.From != "") || (len(jobDef.Steps) == 0 && jobDef.From == "") {
-			runJob := sdk.V2WorkflowRunJob{
-				WorkflowRunID:      run.ID,
-				Status:             sdk.V2WorkflowRunJobStatusSuccess,
-				JobID:              jobID,
-				Job:                jobDef,
-				DeprecatedUserID:   wrEnqueue.Initiator.UserID,
-				DeprecatedUsername: wrEnqueue.Initiator.Username(),
-				DeprecatedAdminMFA: wrEnqueue.Initiator.IsAdminWithMFA,
-				ProjectKey:         run.ProjectKey,
-				VCSServer:          run.VCSServer,
-				Repository:         run.Repository,
-				Region:             jobDef.Region,
-				WorkflowName:       run.WorkflowName,
-				RunNumber:          run.RunNumber,
-				RunAttempt:         run.RunAttempt,
-				Initiator:          wrEnqueue.Initiator,
-			}
-			if jobToTrigger.Status.IsTerminated() {
-				runJob.Status = jobToTrigger.Status
-			}
-			runJobs = append(runJobs, runJob)
-			continue
-		}
-
 		runJobContext := sdk.WorkflowRunJobsContext{
 			WorkflowRunContext: sdk.WorkflowRunContext{
 				CDS: run.Contexts.CDS,
@@ -1267,6 +1226,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				}
 				// If not found stop the run
 				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: run.ID,
 						IssuedAt:      time.Now(),
@@ -1302,12 +1262,12 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		}
 
 		// Compute job matrix strategy
-		matrixPermutation, msInfo := generateMatrixPermutation(ctx, runJobContext, run, jobDef)
+		matrixPermutation, msInfo := generateMatrixPermutation(ctx, runJobContext, run, jobDef, jobToTrigger.Status)
 		if msInfo != nil {
 			return nil, nil, nil, []sdk.V2WorkflowRunInfo{*msInfo}, false, err
 		}
 
-		if len(matrixPermutation) == 0 {
+		if len(matrixPermutation) == 0 || (jobDef.From != "" && jobToTrigger.Status.IsTerminated()) {
 			runJob := sdk.V2WorkflowRunJob{
 				ID:                 sdk.UUID(),
 				WorkflowRunID:      run.ID,
@@ -1326,6 +1286,9 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				RunAttempt:         run.RunAttempt,
 				Initiator:          wrEnqueue.Initiator,
 			}
+			if len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
+				runJob.Status = sdk.V2WorkflowRunJobStatusSuccess
+			}
 			// If the current job was a matrix, skip it
 			if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
 				runJob.Status = sdk.V2WorkflowRunJobStatusSkipped
@@ -1341,34 +1304,38 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
 					runJob.ModelOSArch = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].OSArch
 				}
-				for _, jobEvent := range run.RunJobEvent {
-					if jobEvent.RunAttempt != run.RunAttempt {
-						continue
-					}
-					if jobEvent.JobID != runJob.JobID {
-						continue
-					}
-					runJob.GateInputs = jobEvent.Inputs
-				}
-				// If no gate input provided but there is a gate on the job, fill with the default values
-				if runJob.GateInputs == nil && runJob.Job.Gate != "" {
-					runJob.GateInputs = sdk.GateInputs{}
-					for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
-						if v.Default == nil {
+				// Only interpolate job data if job is not skipped to avoid missing variables exported by parent jobs
+				if !runJob.Status.IsTerminated() {
+					for _, jobEvent := range run.RunJobEvent {
+						if jobEvent.RunAttempt != run.RunAttempt {
 							continue
 						}
-						runJob.GateInputs[k] = v.Default
+						if jobEvent.JobID != runJob.JobID {
+							continue
+						}
+						runJob.GateInputs = jobEvent.Inputs
 					}
-					runJob.GateInputs["manual"] = false
-				}
-				runJobContext.Gate = runJob.GateInputs
-				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue)
-				if runJobInfo != nil {
-					runJobsInfo[runJob.ID] = *runJobInfo
-				}
+					// If no gate input provided but there is a gate on the job, fill with the default values
+					if runJob.GateInputs == nil && runJob.Job.Gate != "" {
+						runJob.GateInputs = sdk.GateInputs{}
+						for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
+							if v.Default == nil {
+								continue
+							}
+							runJob.GateInputs[k] = v.Default
+						}
+						runJob.GateInputs["manual"] = false
+					}
+					runJobContext.Gate = runJob.GateInputs
 
-				if runUpdated {
-					hasToUpdateRun = runUpdated
+					runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, runJobContext, wrEnqueue)
+					if runJobInfo != nil {
+						runJobsInfo[runJob.ID] = *runJobInfo
+					}
+
+					if runUpdated {
+						hasToUpdateRun = runUpdated
+					}
 				}
 			}
 			// Manage concurrency if the job is not skipped
@@ -1470,6 +1437,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		bts, _ := json.Marshal(data.runJobContext)
 		var mapContexts map[string]interface{}
 		if err := json.Unmarshal(bts, &mapContexts); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return []sdk.V2WorkflowRunInfo{{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -1485,6 +1453,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 		for k, p := range data.jobToTrigger.Job.Parameters {
 			value, err := ap.InterpolateToString(ctx, p)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				return []sdk.V2WorkflowRunInfo{{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
@@ -1497,6 +1466,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 
 		entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, data.jobToTrigger.Job, run, interpolatedParams)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return []sdk.V2WorkflowRunInfo{{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -1539,6 +1509,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 
 	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job, data.allVariableSets, data.defaultRegion)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return []sdk.V2WorkflowRunInfo{{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
@@ -1614,6 +1585,9 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 			Matrix:             sdk.JobMatrix{},
 			Initiator:          data.wrEnqueue.Initiator,
 		}
+		if len(data.jobToTrigger.Job.Steps) == 0 && !data.jobToTrigger.Status.IsTerminated() {
+			runJob.Status = sdk.V2WorkflowRunJobStatusSuccess
+		}
 		for k, v := range m {
 			runJob.Matrix[k] = v
 		}
@@ -1621,38 +1595,37 @@ func createMatrixedRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Stor
 			runJob.ModelType = run.WorkflowData.WorkerModels[permJobDef.RunsOn.Model].Type
 			runJob.ModelOSArch = run.WorkflowData.WorkerModels[permJobDef.RunsOn.Model].OSArch
 		}
-		for _, jobEvent := range run.RunJobEvent {
-			if jobEvent.RunAttempt != run.RunAttempt {
-				continue
-			}
-			if jobEvent.JobID != runJob.JobID {
-				continue
-			}
-			runJob.GateInputs = jobEvent.Inputs
-		}
-		// If no gate input provided but there is a gate on the job, fill with the default values
-		if runJob.GateInputs == nil && runJob.Job.Gate != "" {
-			runJob.GateInputs = sdk.GateInputs{}
-			for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
-				if v.Default == nil {
+		if !data.jobToTrigger.Status.IsTerminated() {
+			for _, jobEvent := range run.RunJobEvent {
+				if jobEvent.RunAttempt != run.RunAttempt {
 					continue
 				}
-				runJob.GateInputs[k] = v.Default
+				if jobEvent.JobID != runJob.JobID {
+					continue
+				}
+				runJob.GateInputs = jobEvent.Inputs
 			}
-			runJob.GateInputs["manual"] = false
-		}
-		data.runJobContext.Gate = runJob.GateInputs
-		data.runJobContext.Matrix = runJob.Matrix
-		runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, data.defaultRegion, data.regionPermCache, data.runJobContext, data.wrEnqueue)
-		if runJobInfo != nil {
-			runJobsInfo[runJob.ID] = *runJobInfo
-		}
-		if runUpdated {
-			hasToUpdateRun = runUpdated
-		}
+			// If no gate input provided but there is a gate on the job, fill with the default values
+			if runJob.GateInputs == nil && runJob.Job.Gate != "" {
+				runJob.GateInputs = sdk.GateInputs{}
+				for k, v := range run.WorkflowData.Workflow.Gates[runJob.Job.Gate].Inputs {
+					if v.Default == nil {
+						continue
+					}
+					runJob.GateInputs[k] = v.Default
+				}
+				runJob.GateInputs["manual"] = false
+			}
+			data.runJobContext.Gate = runJob.GateInputs
+			data.runJobContext.Matrix = runJob.Matrix
+			runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, data.defaultRegion, data.regionPermCache, data.runJobContext, data.wrEnqueue)
+			if runJobInfo != nil {
+				runJobsInfo[runJob.ID] = *runJobInfo
+			}
+			if runUpdated {
+				hasToUpdateRun = runUpdated
+			}
 
-		// Manage concurrency if the job is not skipped
-		if !data.jobToTrigger.Status.IsTerminated() {
 			runJobInfo, err := manageJobConcurrency(ctx, db, *run, data.jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjToCancelled)
 			if err != nil {
 				return runJobs, hasToUpdateRun, err
@@ -1703,7 +1676,10 @@ func searchPermutationToTrigger(_ context.Context, permutations []map[string]str
 	return permutationToTrigger
 }
 
-func generateMatrixPermutation(ctx context.Context, rootJobContext sdk.WorkflowRunJobsContext, run *sdk.V2WorkflowRun, jobDef sdk.V2Job) ([]map[string]string, *sdk.V2WorkflowRunInfo) {
+func generateMatrixPermutation(ctx context.Context, rootJobContext sdk.WorkflowRunJobsContext, run *sdk.V2WorkflowRun, jobDef sdk.V2Job, status sdk.V2WorkflowRunJobStatus) ([]map[string]string, *sdk.V2WorkflowRunInfo) {
+	if status.IsTerminated() {
+		return make([]map[string]string, 0), nil
+	}
 	keys := make([]string, 0)
 	interpolatedMatrix := make(map[string][]string)
 	if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
@@ -1732,6 +1708,7 @@ func generateMatrixPermutation(ctx context.Context, rootJobContext sdk.WorkflowR
 
 					interpolatedValue, err := ap.InterpolateToString(ctx, valueString)
 					if err != nil {
+						log.ErrorWithStackTrace(ctx, err)
 						msg := &sdk.V2WorkflowRunInfo{
 							WorkflowRunID: run.ID,
 							IssuedAt:      time.Now(),
@@ -1745,6 +1722,7 @@ func generateMatrixPermutation(ctx context.Context, rootJobContext sdk.WorkflowR
 			} else if valueString, ok := v.(string); ok {
 				interpolatedValue, err := ap.Interpolate(ctx, valueString)
 				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
 					msg := &sdk.V2WorkflowRunInfo{
 						WorkflowRunID: run.ID,
 						IssuedAt:      time.Now(),
@@ -1837,8 +1815,13 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 			// If job with matrix, check if we have to rerun a permmutation
 			if runJobMapItem.Job.Strategy != nil && len(runJobMapItem.Job.Strategy.Matrix) > 0 {
 
-				// If runjob has a status && a template, ignore it. A matrix job can be run it template has been resolved
+				// If runjob has a status && a template, ignore it. A matrix job can be run if template has been resolved
 				if runJobMapItem.Job.From != "" {
+					continue
+				}
+
+				// If no permutation has been used, nothing to check ( job skipped or empty matrix )
+				if len(runJobMapItem.Matrix) == 0 {
 					continue
 				}
 
@@ -1931,6 +1914,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 		if wrEnqueue.Initiator.IsUser() {
 			has, vInError, err := rbac.HasRoleOnVariableSetsAndUserID(ctx, db, sdk.VariableSetRoleUse, wrEnqueue.Initiator.UserID, run.ProjectKey, varsets)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
@@ -1949,6 +1933,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 		} else {
 			has, vInError, err := rbac.HasRoleOnVariableSetsAndVCSUser(ctx, db, sdk.VariableSetRoleUse, sdk.RBACVCSUser{VCSServer: wrEnqueue.Initiator.VCS, VCSUsername: wrEnqueue.Initiator.VCSUsername}, run.ProjectKey, varsets)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
@@ -1979,6 +1964,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 	// check job condition
 	canRun, err := checkCanRunJob(ctx, db, run, inputs, *jobDef, currentJobContext, wrEnqueue.Initiator)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
@@ -2031,7 +2017,7 @@ func computeRunStatusFromJobsStatus(ctx context.Context, db gorp.SqlExecutor, ru
 		allJobID[rj.JobID] = struct{}{}
 	}
 
-	if len(allJobID) < nbJob && finalStatus == sdk.V2WorkflowRunStatusSuccess {
+	if len(allJobID) < nbJob && finalStatus.IsTerminated() {
 		finalStatus = sdk.V2WorkflowRunStatusBuilding
 	} else if len(allJobID) == nbJob && allSkipped {
 		finalStatus = sdk.V2WorkflowRunStatusSkipped

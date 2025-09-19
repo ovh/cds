@@ -131,7 +131,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         node.intersect = (point) => {
             if (direction === GraphDirection.VERTICAL) {
                 const h = ((node.height) / 2);
-                return { x: node.x, y: node.y + (point.y < node.y ? -h : h) + 30 };
+                return { x: node.x, y: (node.y + (point.y < node.y ? -h : h)) - 30 };
             }
             const w = ((node.width) / 2);
             return { x: node.x + (point.x < node.x ? -w : w), y: node.y };
@@ -222,6 +222,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         this.nodesComponent = new Map<string, ComponentRef<T>>();
         this.nodes = new Array<Node>();
         this.edges = new Array<Edge>();
+        this.nodeStatus = {};
     }
 
     draw(element: any, withZoom: boolean): void {
@@ -613,11 +614,12 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     }
 
     highlightNode(active: boolean, key: string, options?: any) {
-        let selectionEdges = d3.selectAll(`.${key} > .path`);
+        const keyEscape = key.replace('.', '\\.');
+        let selectionEdges = d3.selectAll(`.${keyEscape} > .path`);
         if (selectionEdges.size() > 0) {
             selectionEdges.attr('class', active ? 'path highlight' : 'path');
         }
-        let selectionEdgeMarkers = d3.selectAll(`.${key} > defs > marker > path`);
+        let selectionEdgeMarkers = d3.selectAll(`.${keyEscape} > defs > marker > path`);
         if (selectionEdgeMarkers.size() > 0) {
             selectionEdgeMarkers.attr('class', active ? 'highlight' : '');
         }

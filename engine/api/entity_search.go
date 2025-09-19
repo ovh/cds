@@ -109,14 +109,14 @@ func (ef *EntityFinder) unsafeSearchEntityFromLibrary(ctx context.Context, db go
 	return nil, nil
 }
 
-func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string, entityType string) (string, string, error) {
+func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string, entityType string) (*sdk.EntityWithObject, string, error) {
 	ctx, end := telemetry.Span(ctx, "EntityFinder.searchEntity", trace.StringAttribute("entity-type", entityType), trace.StringAttribute("entity-name", name))
 	defer end()
 
 	var ref, branchOrTag, entityName, repoName, vcsName, projKey string
 
 	if name == "" {
-		return "", fmt.Sprintf("unable to find entity of type %s with an empty name", entityType), nil
+		return nil, fmt.Sprintf("unable to find entity of type %s with an empty name", entityType), nil
 	}
 
 	// Get branch if present
@@ -139,7 +139,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 				log.ErrorWithStackTrace(ctx, err)
 			}
 			if entity == nil {
-				return "", fmt.Sprintf("invalid workflow: unable to find %s", entityFullPath), nil
+				return nil, fmt.Sprintf("invalid workflow: unable to find %s", entityFullPath), nil
 			}
 			projKey = entity.ProjectKey
 			vcsName = entity.VCSName
@@ -147,7 +147,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 			entityName = entity.Name
 			log.Debug(ctx, "searchEntity> matches %q to %s/%s/%s/%s", name, projKey, vcsName, repoName, entityName)
 		} else {
-			return "", fmt.Sprintf("invalid workflow: unable to get repository from %s", entityFullPath), nil
+			return nil, fmt.Sprintf("invalid workflow: unable to get repository from %s", entityFullPath), nil
 		}
 	case 3:
 		repoName = fmt.Sprintf("%s/%s", entityPathSplit[0], entityPathSplit[1])
@@ -162,7 +162,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 		repoName = fmt.Sprintf("%s/%s", entityPathSplit[2], entityPathSplit[3])
 		entityName = entityPathSplit[4]
 	default:
-		return "", fmt.Sprintf("unable to parse the %s: %s", entityType, name), nil
+		return nil, fmt.Sprintf("unable to parse the %s: %s", entityType, name), nil
 	}
 
 	var entityVCS sdk.VCSProject
@@ -176,10 +176,10 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 	if !ef.initiator.IsAdminWithMFA {
 		can, err := ef.checkEntityReadPermission(ctx, db, projKey)
 		if err != nil {
-			return "", "", err
+			return nil, "", err
 		}
 		if !can {
-			return "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+			return nil, fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
 		}
 	}
 
@@ -195,9 +195,9 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 			vcsDB, err := vcs.LoadVCSByProject(ctx, db, projKey, vcsName)
 			if err != nil {
 				if sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return "", fmt.Sprintf("vcs %s not found on project %s for entity path %s", vcsName, projKey, name), nil
+					return nil, fmt.Sprintf("vcs %s not found on project %s for entity path %s", vcsName, projKey, name), nil
 				}
-				return "", "", err
+				return nil, "", err
 			}
 			entityVCS = *vcsDB
 			ef.vcsServerCache[projKey+"/"+vcsName] = *vcsDB
@@ -215,9 +215,9 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 			repoDB, err := repository.LoadRepositoryByName(ctx, db, entityVCS.ID, repoName)
 			if err != nil {
 				if sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return "", fmt.Sprintf("repository %s not found on vcs %s into project %s", repoName, vcsName, projKey), nil
+					return nil, fmt.Sprintf("repository %s not found on vcs %s into project %s", repoName, vcsName, projKey), nil
 				}
-				return "", "", err
+				return nil, "", err
 			}
 			entityRepo = *repoDB
 			ef.repoCache[projKey+"/"+vcsName+"/"+repoName] = *repoDB
@@ -236,11 +236,11 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 				// Get default branch
 				client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projKey, entityVCS.Name)
 				if err != nil {
-					return "", "", err
+					return nil, "", err
 				}
 				b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{Default: true})
 				if err != nil {
-					return "", "", err
+					return nil, "", err
 				}
 				ref = b.ID
 				ef.repoDefaultRefCache[projKey+"/"+entityVCS.Name+"/"+entityRepo.Name] = ref
@@ -252,18 +252,18 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 		// Need to known if branchOrTag is a tag or a branch
 		client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projKey, entityVCS.Name)
 		if err != nil {
-			return "", "", err
+			return nil, "", err
 		}
 		b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{BranchName: branchOrTag})
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return "", "", err
+			return nil, "", err
 		}
 
 		if b == nil {
 			// try to get tag
 			t, err := client.Tag(ctx, entityRepo.Name, branchOrTag)
 			if err != nil {
-				return "", "", err
+				return nil, "", err
 			}
 			ref = sdk.GitRefTagPrefix + t.Tag
 		} else {
@@ -278,16 +278,16 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 
 	switch entityType {
 	case sdk.EntityTypeAction:
-		if _, has := ef.actionsCache[completePath]; has {
-			return completePath, "", nil
+		if act, has := ef.actionsCache[completePath]; has {
+			return &act, "", nil
 		}
 	case sdk.EntityTypeWorkerModel:
-		if _, has := ef.workerModelCache[completePath]; has {
-			return completePath, "", nil
+		if wm, has := ef.workerModelCache[completePath]; has {
+			return &wm, "", nil
 		}
 	case sdk.EntityTypeWorkflowTemplate:
-		if _, has := ef.templatesCache[completePath]; has {
-			return completePath, "", nil
+		if wt, has := ef.templatesCache[completePath]; has {
+			return &wt, "", nil
 		}
 	}
 
@@ -300,50 +300,60 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 	}
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return "", fmt.Sprintf("unable to find workflow dependency: %s", name), nil
+			return nil, fmt.Sprintf("unable to find workflow dependency: %s", name), nil
 		}
-		return "", "", err
+		return nil, "", err
 	}
+
+	var eo *sdk.EntityWithObject
 	switch entityType {
 	case sdk.EntityTypeAction:
 		var act sdk.V2Action
 		if err := yaml.Unmarshal([]byte(entityDB.Data), &act); err != nil {
-			return "", "", err
+			return nil, "", err
 		}
-		ef.actionsCache[completePath] = sdk.EntityWithObject{Entity: *entityDB, Action: act}
+		eo = &sdk.EntityWithObject{Entity: *entityDB, Action: act, CompleteName: completePath}
+		ef.actionsCache[completePath] = *eo
 	case sdk.EntityTypeWorkerModel:
 		var wm sdk.V2WorkerModel
 		if err := yaml.Unmarshal([]byte(entityDB.Data), &wm); err != nil {
-			return "", "", err
+			return nil, "", err
 		}
-		eo := sdk.EntityWithObject{Entity: *entityDB, Model: wm}
+		eo = &sdk.EntityWithObject{Entity: *entityDB, Model: wm, CompleteName: completePath}
 		if err := eo.Interpolate(ctx); err != nil {
-			return "", "", err
+			return nil, "", err
 		}
-		ef.workerModelCache[completePath] = eo
+		ef.workerModelCache[completePath] = *eo
 	case sdk.EntityTypeWorkflowTemplate:
 		var wt sdk.V2WorkflowTemplate
 		if err := yaml.Unmarshal([]byte(entityDB.Data), &wt); err != nil {
-			return "", "", err
+			return nil, "", err
 		}
-		ef.templatesCache[completePath] = sdk.EntityWithObject{
-			Entity:   *entityDB,
-			Template: wt,
+		eo = &sdk.EntityWithObject{
+			Entity:       *entityDB,
+			Template:     wt,
+			CompleteName: completePath,
 		}
+		ef.templatesCache[completePath] = *eo
 	case sdk.EntityTypeWorkflow:
 		var w sdk.V2Workflow
 		if err := yaml.Unmarshal([]byte(entityDB.Data), &w); err != nil {
-			return "", "", err
+			return nil, "", err
 		}
 		ef.workflowCache[completePath] = w
+		eo = &sdk.EntityWithObject{
+			Entity:       *entityDB,
+			Workflow:     w,
+			CompleteName: completePath,
+		}
 
 	default:
-		return "", "", sdk.NewErrorFrom(sdk.ErrNotImplemented, "entity %s not implemented", entityType)
+		return nil, "", sdk.NewErrorFrom(sdk.ErrNotImplemented, "entity %s not implemented", entityType)
 	}
-	return completePath, "", nil
+	return eo, "", nil
 }
 
-func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, string, error) {
+func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, error) {
 	// Local def
 	if strings.HasPrefix(name, ".cds/actions/") {
 		// Find action from path
@@ -351,26 +361,25 @@ func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, s
 		if !has {
 			actionEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
 			if err != nil {
-				return nil, "", fmt.Sprintf("Unable to find action %s", name), nil
+				return nil, fmt.Sprintf("Unable to find action %s", name), nil
 			}
 			localAct.Entity = *actionEntity
 			if err := yaml.Unmarshal([]byte(actionEntity.Data), &localAct.Action); err != nil {
-				return nil, "", "", err
+				return nil, "", err
 			}
 			if !ef.initiator.IsAdminWithMFA {
 				can, err := ef.checkEntityReadPermission(ctx, db, actionEntity.ProjectKey)
 				if err != nil {
-					return nil, "", "", err
+					return nil, "", err
 				}
 				if !can {
-					return nil, "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+					return nil, fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
 				}
 			}
-
+			localAct.CompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", localAct.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, localAct.Name, ef.currentRef)
 			ef.localActionsCache[name] = localAct
 		}
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localAct.Name, ef.currentRef)
-		return &localAct, completeName, "", nil
+		return &localAct, "", nil
 	}
 
 	actionName := strings.TrimPrefix(name, "actions/")
@@ -380,21 +389,20 @@ func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, s
 	if strings.HasPrefix(name, "actions/") && len(actionSplit) == 1 {
 		// Check plugins
 		if _, has := ef.plugins[actionSplit[0]]; !has {
-			return nil, "", fmt.Sprintf("Action %s doesn't exist", actionSplit[0]), nil
+			return nil, fmt.Sprintf("Action %s doesn't exist", actionSplit[0]), nil
 		}
-		return nil, "", "", nil
+		return nil, "", nil
 	}
 
 	// Others
-	completePath, msg, err := ef.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
+	entityWithObj, msg, err := ef.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
 	if msg != "" || err != nil {
-		return nil, completePath, msg, err
+		return nil, msg, err
 	}
-	act := ef.actionsCache[completePath]
-	return &act, completePath, msg, err
+	return entityWithObj, msg, err
 }
 
-func (ef *EntityFinder) searchWorkerModel(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, string, error) {
+func (ef *EntityFinder) searchWorkerModel(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, error) {
 	// Local def
 	if strings.HasPrefix(name, ".cds/worker-models/") {
 		// Find worker model from path
@@ -402,42 +410,42 @@ func (ef *EntityFinder) searchWorkerModel(ctx context.Context, db gorp.SqlExecut
 		if !has {
 			wmEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
 			if err != nil {
-				return nil, "", fmt.Sprintf("Unable to find worker model %s in repository %s", name, ef.currentRepo.Name), nil
+				return nil, fmt.Sprintf("Unable to find worker model %s in repository %s", name, ef.currentRepo.Name), nil
 			}
 			var wm sdk.V2WorkerModel
 			if err := yaml.Unmarshal([]byte(wmEntity.Data), &wm); err != nil {
-				return nil, "", "", err
+				return nil, "", err
 			}
 
 			if !ef.initiator.IsAdminWithMFA {
 				can, err := ef.checkEntityReadPermission(ctx, db, wmEntity.ProjectKey)
 				if err != nil {
-					return nil, "", "", err
+					return nil, "", err
 				}
 				if !can {
-					return nil, "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+					return nil, fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
 				}
 			}
 
-			localWM = sdk.EntityWithObject{Entity: *wmEntity, Model: wm}
+			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, wm.Name, ef.currentRef)
+			localWM = sdk.EntityWithObject{Entity: *wmEntity, Model: wm, CompleteName: completeName}
 			ef.localWorkerModelCache[name] = localWM
 		}
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localWM.Model.Name, ef.currentRef)
-		return &localWM, completeName, "", nil
+
+		return &localWM, "", nil
 	}
 
-	completeName, msg, err := ef.searchEntity(ctx, db, store, name, sdk.EntityTypeWorkerModel)
+	entityWithObj, msg, err := ef.searchEntity(ctx, db, store, name, sdk.EntityTypeWorkerModel)
 	if err != nil {
-		return nil, completeName, "", err
+		return nil, "", err
 	}
 	if msg != "" {
-		return nil, completeName, msg, nil
+		return nil, msg, nil
 	}
-	wm := ef.workerModelCache[completeName]
-	return &wm, completeName, "", nil
+	return entityWithObj, "", nil
 }
 
-func (ef *EntityFinder) searchWorkflowTemplate(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, string, error) {
+func (ef *EntityFinder) searchWorkflowTemplate(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string) (*sdk.EntityWithObject, string, error) {
 	if strings.HasPrefix(name, ".cds/workflow-templates/") {
 		// Find tempalte from path
 		localEntity, has := ef.localTemplatesCache[name]
@@ -445,36 +453,34 @@ func (ef *EntityFinder) searchWorkflowTemplate(ctx context.Context, db gorp.SqlE
 			wtEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
 			if err != nil {
 				msg := fmt.Sprintf("Unable to find workflow template %s %s %s %s", ef.currentRepo.ID, name, ef.currentRef, ef.currentSha)
-				return nil, "", msg, nil
+				return nil, msg, nil
 			}
 			if err := yaml.Unmarshal([]byte(wtEntity.Data), &localEntity.Template); err != nil {
-				return nil, "", "", sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read workflow template %s: %v", name, err)
+				return nil, "", sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read workflow template %s: %v", name, err)
 			}
 			if !ef.initiator.IsAdminWithMFA {
 				can, err := ef.checkEntityReadPermission(ctx, db, wtEntity.ProjectKey)
 				if err != nil {
-					return nil, "", "", err
+					return nil, "", err
 				}
 				if !can {
-					return nil, "", fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+					return nil, fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
 				}
 			}
-
 			localEntity.Entity = *wtEntity
+			localEntity.CompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localEntity.Template.Name, ef.currentRef)
 			ef.localTemplatesCache[name] = localEntity
 		}
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", ef.currentProject, ef.currentVCS.Name, ef.currentRepo.Name, localEntity.Template.Name, ef.currentRef)
-		return &localEntity, completeName, "", nil
+		return &localEntity, "", nil
 	}
-	completeName, msg, err := ef.searchEntity(ctx, db, store, name, sdk.EntityTypeWorkflowTemplate)
+	entityWithObj, msg, err := ef.searchEntity(ctx, db, store, name, sdk.EntityTypeWorkflowTemplate)
 	if err != nil {
-		return nil, completeName, "", err
+		return nil, "", err
 	}
 	if msg != "" {
-		return nil, completeName, msg, nil
+		return nil, msg, nil
 	}
-	e := ef.templatesCache[completeName]
-	return &e, completeName, "", nil
+	return entityWithObj, "", nil
 
 }
 
