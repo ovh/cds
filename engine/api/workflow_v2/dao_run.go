@@ -319,7 +319,7 @@ func LoadRunsAnnotations(ctx context.Context, db gorp.SqlExecutor, projKey strin
 
 	if _, err := db.Select(&annotations, `
 	select annotations.key as "key", array_agg(annotations.value) as "values"
-	from 
+	from
 		v2_workflow_run,
 		jsonb_each_text(annotations) as annotations
 	where project_key = $1 AND annotations IS NOT NULL
@@ -349,15 +349,15 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFi
 	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
 
-	query := `SELECT COUNT(1) 
+	query := `SELECT COUNT(1)
 	FROM v2_workflow_run
 	LEFT JOIN (
 		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
 		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations 
-	ON  
-		v2_workflow_run.id = v2_workflow_run_annotations.id 
+	) v2_workflow_run_annotations
+	ON
+		v2_workflow_run.id = v2_workflow_run_annotations.id
 	WHERE ` + runQueryFilters
 
 	params := map[string]interface{}{
@@ -383,16 +383,16 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
 
-	query := `SELECT COUNT(1) 
+	query := `SELECT COUNT(1)
 	FROM v2_workflow_run
 	LEFT JOIN (
 		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
 		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations 
-	ON  
-		v2_workflow_run.id = v2_workflow_run_annotations.id 
-	WHERE 
+	) v2_workflow_run_annotations
+	ON
+		v2_workflow_run.id = v2_workflow_run_annotations.id
+	WHERE
 		project_key = :projKey AND ` + runQueryFilters
 
 	params := map[string]interface{}{
@@ -472,9 +472,9 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 			GROUP BY v2_workflow_run.id
 		) v2_workflow_run_annotations
 		ON
-			v2_workflow_run.id = v2_workflow_run_annotations.id 
-		WHERE ` + runQueryFilters + `			
-		ORDER BY 
+			v2_workflow_run.id = v2_workflow_run_annotations.id
+		WHERE ` + runQueryFilters + `
+		ORDER BY
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
 			CASE WHEN :sort = 'started:asc' THEN started END asc,
@@ -525,11 +525,11 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 			SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
 			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 			GROUP BY v2_workflow_run.id
-		) v2_workflow_run_annotations 
-		ON  
-			v2_workflow_run.id = v2_workflow_run_annotations.id 
+		) v2_workflow_run_annotations
+		ON
+			v2_workflow_run.id = v2_workflow_run_annotations.id
 		WHERE project_key = :projKey AND ` + runQueryFilters + `
-		ORDER BY 
+		ORDER BY
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
 			CASE WHEN :sort = 'started:asc' THEN started END asc,
@@ -555,6 +555,21 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 	})
 
 	return getRuns(ctx, db, query, opts...)
+}
+
+func LoadRunIDsByProject(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	ctx, next := telemetry.Span(ctx, "LoadRunIDsByProject")
+	defer next()
+	query := `
+    SELECT id
+    FROM v2_workflow_run
+    WHERE project_key = $1 ORDER BY run_number desc`
+
+	var ids []string
+	if _, err := db.Select(&ids, query, projKey); err != nil {
+		return ids, sdk.WrapError(err, "unable to retrieve run ids")
+	}
+	return ids, nil
 }
 
 func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, repoID, workflowName string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowRun, error) {
@@ -621,6 +636,20 @@ func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor, opts
 	return getRuns(ctx, db, query, opts...)
 }
 
+func LoadRunUnsafeByID(ctx context.Context, db gorp.SqlExecutor, ID string) (*sdk.V2WorkflowRun, error) {
+	query := gorpmapping.NewQuery(`SELECT * from v2_workflow_run WHERE id = $1`).Args(ID)
+	var dbWkfRun dbWorkflowRun
+	found, err := gorpmapping.Get(ctx, db, query, &dbWkfRun)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, nil
+	}
+
+	return &dbWkfRun.V2WorkflowRun, nil
+}
+
 func LoadRunsUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRun, error) {
 	query := gorpmapping.NewQuery(`SELECT * from v2_workflow_run`)
 	var dbWkfRuns []dbWorkflowRun
@@ -650,7 +679,7 @@ func LoadRunsUnsafeWithPagination(ctx context.Context, db gorp.SqlExecutor, offs
 
 func LoadRunsDescAtOffset(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow, ref string, offset int64) ([]string, error) {
 	query := `
-	SELECT id FROM v2_workflow_run 
+	SELECT id FROM v2_workflow_run
 	WHERE project_key = $1 AND
 	vcs_server = $2 AND
 	repository = $3 AND
@@ -668,7 +697,7 @@ func LoadRunsDescAtOffset(ctx context.Context, db gorp.SqlExecutor, projKey, vcs
 
 func LoadOlderRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow, ref string, days int64) ([]string, error) {
 	query := `
-	SELECT id FROM v2_workflow_run 
+	SELECT id FROM v2_workflow_run
 	WHERE project_key = $1 AND
 	vcs_server = $2 AND
 	repository = $3 AND

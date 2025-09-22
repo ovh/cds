@@ -1602,7 +1602,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 			// Check required parameters
 			for _, v := range entTmpl.Template.Parameters {
 				if wkfP, has := x.Parameters[v.Key]; (!has || len(wkfP) == 0) && v.Required {
-					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: required template parameter %s is missing or empty", x.Name, x.From))
+					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: required template parameter %q is missing or empty", x.Name, v.Key))
 				}
 			}
 

@@ -5,7 +5,25 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestCleanString(t *testing.T) {
+	value := `
+
+  
+ 
+
+ 
+  foo 
+ 
+   
+
+  
+
+`
+	require.Equal(t, "foo", CleanString(value))
+}
 
 func TestStringIsAscii(t *testing.T) {
 	assert.True(t, StringIsAscii("aaa"))
