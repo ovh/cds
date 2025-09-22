@@ -215,9 +215,9 @@ type Configuration struct {
 			AccessKeyID         string `toml:"accessKeyId" json:"accessKeyId" comment:"A static AWS Secret Key ID"`
 			SecretAccessKey     string `toml:"secretAccessKey" json:"-" comment:"A static AWS Secret Access Key"`
 			SessionToken        string `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
-			Endpoint            string `toml:"endpoint" json:"endpoint" comment:"S3 API Endpoint (optional)" commented:"true"` //optional
-			DisableSSL          bool   `toml:"disableSSL" json:"disableSSL" commented:"true"`                                  //optional
-			ForcePathStyle      bool   `toml:"forcePathStyle" json:"forcePathStyle" commented:"true"`                          //optional
+			Endpoint            string `toml:"endpoint" json:"endpoint" comment:"S3 API Endpoint (optional)" commented:"true"` // optional
+			DisableSSL          bool   `toml:"disableSSL" json:"disableSSL" commented:"true"`                                  // optional
+			ForcePathStyle      bool   `toml:"forcePathStyle" json:"forcePathStyle" commented:"true"`                          // optional
 		} `toml:"awss3" json:"awss3"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
 	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: darwin, freebsd, linux, windows)" json:"defaultOS"`
@@ -587,7 +587,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.InsecureSkipVerifyTLS,
 		a.Config.SMTP.Disable)
 
-	//Initialize artifacts storage
+	// Initialize artifacts storage
 	log.Info(ctx, "Initializing %s objectstore...", a.Config.Artifact.Mode)
 	var objectstoreKind objectstore.Kind
 	switch a.Config.Artifact.Mode {
@@ -741,6 +741,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 	migrate.Add(ctx, sdk.Migration{Name: "MigrateProjectRunRetention", Release: "0.55.1", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateProjectRunRetention(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache, a.Config.WorkflowV2.WorkflowRunRetentionDefaultCount, a.Config.WorkflowV2.WorkflowRunRetentionDefaultDays)
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateWorkflowSerialization", Release: "0.56.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateRunSerialization(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
 	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
