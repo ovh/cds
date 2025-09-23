@@ -118,6 +118,11 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 			if (errHooks != nil || code >= 400) && code != 404 {
 				return sdk.WrapError(errHooks, "unable to list repository event [HTTP: %d]", code)
 			}
+
+			for i := range repositoryEvents {
+				repositoryEvents[i].FilterByProject(pKey)
+			}
+
 			return service.WriteJSON(w, repositoryEvents, http.StatusOK)
 		}
 }

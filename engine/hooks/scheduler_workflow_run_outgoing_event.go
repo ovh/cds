@@ -201,7 +201,7 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 			Body:           eventBody,
 			Status:         sdk.HookEventStatusScheduled,
 			ExtractData: sdk.HookRepositoryEventExtractData{
-				WorkflowRun: sdk.HookRepositoryEventExtractedDataWorkflowRun{
+				WorkflowRun: &sdk.HookRepositoryEventExtractedDataWorkflowRun{
 					Project:               wh.ProjectKey,
 					TargetVCS:             wh.Data.VCSServer,
 					TargetRepository:      wh.Data.RepositoryName,
