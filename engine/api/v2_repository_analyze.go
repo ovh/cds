@@ -26,6 +26,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/event_v2"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
@@ -749,7 +750,7 @@ skipEntity:
 
 			}
 
-			//////////
+			// ////////
 
 		}
 
@@ -1611,6 +1612,19 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 			sameRepo := x.Repository == nil || x.Repository.Name == ef.currentRepo.Name || x.Repository.Name == ""
 			if sameVCS && sameRepo && x.Repository != nil && x.Repository.InsecureSkipSignatureVerify {
 				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workflow.repository.name`. ", x.Name))
+			}
+			// Check gate user and group
+			for gateName, gateValue := range x.Gates {
+				for _, g := range gateValue.Reviewers.Groups {
+					if _, errG := group.LoadByName(ctx, db, g); errG != nil {
+						if sdk.ErrorIs(errG, sdk.ErrNotFound) {
+							err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: gate %s: group %s not found", x.Name, gateName, g))
+						} else {
+							log.ErrorWithStackTrace(ctx, errG)
+							err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow %s: gate %s: unable to check group %s", x.Name, gateName, g))
+						}
+					}
+				}
 			}
 			for jobID, j := range x.Jobs {
 				// Check if worker model exists
