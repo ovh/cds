@@ -2,11 +2,15 @@ package api
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
-	"net/http"
+	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 func (api *API) getUserLinksHandler() service.Handler {
@@ -25,5 +29,76 @@ func (api *API) getUserLinksHandler() service.Handler {
 			return err
 		}
 		return service.WriteJSON(w, links, http.StatusOK)
+	}
+}
+
+func (api *API) postUserLinHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		username := vars["permUsername"]
+
+		// Only keep this handler for admin for the moment
+		if !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		trackSudo(ctx, w)
+
+		var data sdk.UserLink
+		if err := service.UnmarshalBody(r, &data); err != nil {
+			return err
+		}
+
+		if data.Type == "" || data.ExternalID == "" || data.Username == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "type, external_id and username are required")
+		}
+
+		// Retrieve user id
+		userToUpdate, err := user.LoadByUsername(ctx, api.mustDB(), username)
+		if err != nil {
+			return err
+		}
+		data.AuthentifiedUserID = userToUpdate.ID
+
+		// Load links
+		existingLinks, err := link.LoadUserLinksByUserID(ctx, api.mustDB(), userToUpdate.ID)
+		if err != nil {
+			return err
+		}
+
+		// Check if links exists
+		for _, l := range existingLinks {
+			if l.Type == data.Type {
+				return sdk.NewErrorFrom(sdk.ErrConflictData, "user link of type %s already exists", data.Type)
+			}
+		}
+
+		// Check admin update
+		if userToUpdate.Ring == sdk.UserRingAdmin {
+			// Specific audit log for admin: don't change it
+			log.Info(ctx, "Administrator user link has been added (id=%s username: %q) (Link added: %q)",
+				userToUpdate.ID,
+				userToUpdate.Username, data.Username,
+			)
+		}
+
+		if sdk.AuthConsumerType(data.Type).IsValid() {
+			return sdk.WithStack(sdk.ErrInvalidData)
+		}
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		data.Created = time.Now()
+		if err := link.Insert(ctx, tx, &data); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "unable to commit")
+		}
+		return nil
 	}
 }

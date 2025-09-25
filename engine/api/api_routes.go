@@ -82,6 +82,7 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getProfileHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 
 	r.Handle("/admin/user", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postUserHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/user/{permUsername}/link", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postUserLinHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	r.Handle("/admin/plugin", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getAllGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/plugin/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)))

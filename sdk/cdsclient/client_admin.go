@@ -18,6 +18,14 @@ func (c *client) AdminUserCreate(ctx context.Context, user sdk.CreateUser) error
 	return nil
 }
 
+func (c *client) AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error {
+	url := fmt.Sprintf("/admin/user/%s/link", username)
+	if _, err := c.PostJSON(ctx, url, &link, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error {
 	if _, err := c.PostJSON(ctx, fmt.Sprintf("/admin/organization/%s/migrate-user", orgaIdentifier), nil, nil); err != nil {
 		return err
