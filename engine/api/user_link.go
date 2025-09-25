@@ -32,7 +32,7 @@ func (api *API) getUserLinksHandler() service.Handler {
 	}
 }
 
-func (api *API) postUserLinHandler() service.Handler {
+func (api *API) postUserLinkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["permUsername"]
@@ -82,7 +82,7 @@ func (api *API) postUserLinHandler() service.Handler {
 			)
 		}
 
-		if sdk.AuthConsumerType(data.Type).IsValid() {
+		if !sdk.AuthConsumerType(data.Type).IsValid() {
 			return sdk.WithStack(sdk.ErrInvalidData)
 		}
 		tx, err := api.mustDB().Begin()
