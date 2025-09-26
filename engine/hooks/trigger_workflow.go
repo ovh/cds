@@ -24,7 +24,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	if hre.SignKey != "" && (hre.Initiator == nil || (hre.Initiator.UserID == "" && hre.Initiator.VCSUsername == "")) {
 		var req sdk.HookRetrieveUserRequest
 		switch {
-		case hre.ExtractData.WorkflowRun.OutgoingHookEventUUID != "":
+		case hre.ExtractData.WorkflowRun != nil && hre.ExtractData.WorkflowRun.OutgoingHookEventUUID != "":
 			req = sdk.HookRetrieveUserRequest{
 				ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
 				VCSServerName:  hre.ExtractData.WorkflowRun.TargetVCS,
