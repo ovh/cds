@@ -117,4 +117,19 @@ func Test_postUserLinkHandler(t *testing.T) {
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusBadRequest, rec.Code)
+
+	// 6. Delete link
+	varDelete := map[string]string{"permUsername": adminUser.Username, "consumerType": string(sdk.ConsumerBitbucketServer)}
+	uriDelete := api.Router.GetRoute(http.MethodDelete, api.deleteUserLinkHandler, varDelete)
+	test.NotEmpty(t, uriDelete)
+
+	reqDel := assets.NewJWTAuthentifiedRequest(t, adminJWT, http.MethodDelete, uriDelete, nil)
+	recDel := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(recDel, reqDel)
+	require.Equal(t, http.StatusNoContent, recDel.Code)
+
+	links, err = link.LoadUserLinksByUserID(context.Background(), db, adminUser.ID)
+	require.NoError(t, err)
+	require.Len(t, links, 0)
+
 }

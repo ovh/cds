@@ -32,6 +32,69 @@ func (api *API) getUserLinksHandler() service.Handler {
 	}
 }
 
+func (api *API) deleteUserLinkHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		username := vars["permUsername"]
+		consumerType := vars["consumerType"]
+
+		// Only keep this handler for admin for the moment
+		if !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		trackSudo(ctx, w)
+
+		// Retrieve user
+		userToUpdate, err := user.LoadByUsername(ctx, api.mustDB(), username)
+		if err != nil {
+			return err
+		}
+
+		// Load links
+		existingLinks, err := link.LoadUserLinksByUserID(ctx, api.mustDB(), userToUpdate.ID)
+		if err != nil {
+			return err
+		}
+
+		var userLink *sdk.UserLink
+		for _, l := range existingLinks {
+			if l.Type == consumerType {
+				userLink = &l
+				break
+			}
+		}
+		if userLink == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "user link of type %s does not exists", consumerType)
+		}
+
+		// Check admin update
+		if userToUpdate.Ring == sdk.UserRingAdmin {
+			// Specific audit log for admin: don't change it
+			log.Info(ctx, "Administrator user link has been removed (id=%s username: %q) (Link removed: %q)",
+				userToUpdate.ID,
+				userToUpdate.Username, consumerType,
+			)
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		if err := link.Delete(ctx, tx, userLink.ID); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "unable to commit")
+		}
+		log.Info(ctx, "User link of type %s has been removed for user %s", consumerType, username)
+		return service.WriteJSON(w, nil, http.StatusNoContent)
+	}
+}
+
 func (api *API) postUserLinkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
