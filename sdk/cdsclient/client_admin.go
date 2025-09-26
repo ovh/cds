@@ -26,6 +26,14 @@ func (c *client) AdminUserLinkCreate(ctx context.Context, username string, link 
 	return nil
 }
 
+func (c *client) AdminUserLinkDelete(ctx context.Context, username string, link sdk.UserLink) error {
+	url := fmt.Sprintf("/admin/user/%s/link/%s", username, link.Type)
+	if _, err := c.DeleteJSON(ctx, url, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error {
 	if _, err := c.PostJSON(ctx, fmt.Sprintf("/admin/organization/%s/migrate-user", orgaIdentifier), nil, nil); err != nil {
 		return err

@@ -58,6 +58,7 @@ type Admin interface {
 	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
 	AdminUserCreate(ctx context.Context, user sdk.CreateUser) error
 	AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error
+	AdminUserLinkDelete(ctx context.Context, username string, link sdk.UserLink) error
 	HasProjectRole(ctx context.Context, projectKey, sessionID string, role string) error
 	Features() ([]sdk.Feature, error)
 	FeatureCreate(f sdk.Feature) error
