@@ -1383,12 +1383,36 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 		committer = commit.Committer.DisplayName
-	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
+	case sdk.VCSTypeGitlab:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
 			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 		committer = commit.Committer.Slug
+	case sdk.VCSTypeBitbucketServer:
+		commit, err := client.Commit(ctx, repoName, sha)
+		if err != nil {
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
+		}
+		committer = commit.Committer.Slug
+
+		// Retrieve user link by external ID
+		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, string(sdk.ConsumerBitbucketServer), committer)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, "", "", err
+			}
+			// Keep fallback to committer slug and  not return an error if no link found
+			log.Info(ctx, "%s user %s not found in CDS", string(sdk.ConsumerBitbucketServer), committer)
+		}
+
+		if userLink != nil {
+			cdsUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
+			if err != nil {
+				return nil, sdk.RepositoryAnalysisStatusError, "", err
+			}
+		}
+
 	case sdk.VCSTypeGithub:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
