@@ -688,6 +688,15 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 	}
 	tmpWorkflow.Name = e.Name
 
+	// If no stage on template and stage on parent job, apply stage on templated jobs
+	if tmpWorkflow.Stages == nil && j.Stage != "" {
+		for k := range tmpWorkflow.Jobs {
+			templatedJob := tmpWorkflow.Jobs[k]
+			templatedJob.Stage = j.Stage
+			tmpWorkflow.Jobs[k] = templatedJob
+		}
+	}
+
 	// Add stage from parent workflow to lint jobs
 	if tmpWorkflow.Stages == nil {
 		tmpWorkflow.Stages = make(map[string]sdk.WorkflowStage)
@@ -800,7 +809,7 @@ loop:
 		for _, id := range rootJobs {
 			jobDef := newJobs[id]
 
-			// If new root templated job has a diffent stage from the old one
+			// If new root templated job has a different stage from the old one
 			if jobDef.Stage == j.Stage {
 				jobDef.Needs = append(jobDef.Needs, j.Needs...)
 				newJobs[id] = jobDef
