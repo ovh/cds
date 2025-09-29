@@ -29,7 +29,7 @@
                     </nz-form-control>
                 </nz-form-item>
                 <ng-container *ngFor="let k of userLinks.keys()">
-                    <ng-container *ngIf="linkDriver.findIndex(k) === -1">
+                    <ng-container *ngIf="linkDriver.indexOf(k) === -1">
                         <nz-form-label [nzSpan]="2">Link {{k}}</nz-form-label>
                          <nz-form-control>
                             <input name="link-{{k}}" nz-input [readOnly]="true" [ngModel]="userLinks.get(k).username">
