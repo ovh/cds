@@ -21,6 +21,7 @@ func adminUsers() *cobra.Command {
 		cli.NewCommand(adminUserSetOrganizationCmd, adminUserSetOrganizationRun, nil),
 		cli.NewCommand(adminUserRenameCmd, adminUserRenameRun, nil),
 		cli.NewCommand(adminUserCreateCmd, adminUserCreateRun, nil),
+		adminUserLink(),
 	})
 }
 
