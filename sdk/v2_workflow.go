@@ -195,7 +195,7 @@ func IsDefaultHooks(on *WorkflowOn) []WorkflowHookEventName {
 	}
 	if on.PullRequestComment != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventNamePullRequestComment)
-		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" || len(on.PullRequest.Types) > 0 {
+		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" || len(on.PullRequestComment.Types) > 0 {
 			return nil
 		}
 	}
