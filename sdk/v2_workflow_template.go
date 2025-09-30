@@ -119,7 +119,17 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 	// Add parameter with default value
 	for _, v := range wt.Parameters {
 		if _, has := params[v.Key]; !has && v.Default != nil {
-			params[v.Key] = *v.Default
+			switch v.Type {
+			case V2WorkflowTemplateParamTypeJson:
+				var value interface{}
+				if err := json.Unmarshal([]byte(*v.Default), &value); err != nil {
+					return "", NewErrorFrom(ErrWrongRequest, "unable to unmarshal %s", value)
+				}
+				params[v.Key] = value
+			default:
+				params[v.Key] = *v.Default
+			}
+
 		}
 	}
 

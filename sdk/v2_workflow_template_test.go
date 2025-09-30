@@ -21,6 +21,10 @@ parameters:
 - key: keyNormal
 - key: keyWithDefault
   default: myDefaultValue
+- key: keyWithDefaultJson
+  type: json
+  default: |-
+    ["debian", "ubuntu"]
 - key: keyEmptyValue
   default: not
 - key: keyGoodDefault
@@ -52,7 +56,18 @@ spec: |-
     [[- if .params.noDefault ]]
     noDefault: 
       runs-on: mymodel
-    [[- end]]`
+    [[- end]]
+    defaultJson:
+      runs-on: mymodel
+      strategy:
+        matrix:
+          os: 
+          [[range $i, $a := .params.keyWithDefaultJson ]]
+          - [[$a]]
+          [[end ]]
+      steps:
+      - run: echo "${{ matrix.os}}"
+`
 
 	var work V2Workflow
 	require.NoError(t, yaml.Unmarshal([]byte(wk), &work))
@@ -70,6 +85,7 @@ spec: |-
 	withDefault := work.Jobs["withDefault"]
 	emptyValue := work.Jobs["emptyValue"]
 	goodDefault := work.Jobs["goodDefault"]
+	defaultJson := work.Jobs["defaultJson"]
 	_, has := work.Jobs["noDefault"]
 
 	require.Equal(t, "mymodel", normal.RunsOn.Model)
@@ -77,9 +93,10 @@ spec: |-
 	require.Equal(t, "mymodel", withDefault.RunsOn.Model)
 	require.Equal(t, "mymodel", emptyValue.RunsOn.Model)
 	require.Equal(t, "mymodel", goodDefault.RunsOn.Model)
+	require.Equal(t, []interface{}{"debian", "ubuntu"}, defaultJson.Strategy.Matrix["os"])
 	require.False(t, has)
 
-	require.Equal(t, 4, len(work.Jobs))
+	require.Equal(t, 5, len(work.Jobs))
 }
 func TestOverrideWorkflowOnEmpty(t *testing.T) {
 	wk := `name: myworkflow
