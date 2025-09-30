@@ -728,7 +728,7 @@ skipEntity:
 				// Remove old entity
 				entityWithCommitHEAD, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, "HEAD")
 				if err != nil {
-					log.ErrorWithStackTrace(ctx, err)
+					log.Info(ctx, "No HEAD entity found: %v", err)
 				}
 				if entityWithCommitHEAD != nil {
 					if err := entity.Delete(ctx, tx, entityWithCommitHEAD); err != nil {
@@ -739,7 +739,7 @@ skipEntity:
 				// Remove old head hooks
 				headHooks, err := workflow_v2.LoadOldHeadHooksByVCSAndRepoAndRefAndWorkflow(ctx, tx, repo.ProjectKey, vcsProjectWithSecret.Name, repo.Name, e.Ref, e.Name)
 				if err != nil {
-					log.ErrorWithStackTrace(ctx, err)
+					log.Info(ctx, "No HEAD hook found: %v", err)
 				}
 				for _, h := range headHooks {
 					if err := workflow_v2.DeleteWorkflowHookByID(ctx, tx, h.ID); err != nil {
