@@ -38,8 +38,8 @@ func CreateDistributionClient(ctx context.Context, url, token string) (DistribCl
 		SetThreads(1).
 		SetDryRun(false).
 		SetContext(ctx).
-		SetDialTimeout(60 * time.Second).
-		SetOverallRequestTimeout(60 * time.Second).
+		SetDialTimeout(80 * time.Second).
+		SetOverallRequestTimeout(80 * time.Second).
 		SetHttpRetries(5).
 		Build()
 	if err != nil {
