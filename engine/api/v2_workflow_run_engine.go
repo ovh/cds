@@ -1409,7 +1409,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					Level:            sdk.WorkflowRunInfoLevelInfo,
 					Message:          "Job has been unlocked",
 				}
-				rj.Queued = time.Now()
 				rj.Status = sdk.V2WorkflowRunJobStatusWaiting
 				runJobs = append(runJobs, rj)
 			}

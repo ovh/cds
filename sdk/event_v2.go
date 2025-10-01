@@ -109,6 +109,10 @@ type FullEventV2 struct {
 	RunJobID         string          `json:"run_job_id,omitempty"`
 	RunNumber        int64           `json:"run_number,omitempty"`
 	RunAttempt       int64           `json:"run_attempt,omitempty"`
+	RunJobQueued     time.Time       `json:"run_job_queued"`
+	RunJobScheduled  *time.Time      `json:"run_job_scheduled,omitempty"`
+	RunJobStarted    *time.Time      `json:"run_job_started,omitempty"`
+	RunJobEnded      *time.Time      `json:"run_job_ended,omitempty"`
 	Region           string          `json:"region,omitempty"`
 	Hatchery         string          `json:"hatchery,omitempty"`
 	ModelType        string          `json:"model_type,omitempty"`
@@ -317,21 +321,25 @@ type WorkflowRunEvent struct {
 type WorkflowRunJobEvent struct {
 	GlobalEventV2
 	ProjectEventV2
-	VCSName       string                 `json:"vcs_name"`
-	Repository    string                 `json:"repository"`
-	Workflow      string                 `json:"workflow"`
-	WorkflowRunID string                 `json:"workflow_run_id"`
-	RunJobID      string                 `json:"run_job_id"`
-	RunNumber     int64                  `json:"run_number"`
-	RunAttempt    int64                  `json:"run_attempt"`
-	Region        string                 `json:"region"`
-	Hatchery      string                 `json:"hatchery"`
-	ModelType     string                 `json:"model_type"`
-	ModelOSArch   string                 `json:"model_osarch"`
-	JobID         string                 `json:"job_id"`
-	Status        V2WorkflowRunJobStatus `json:"status"`
-	UserID        string                 `json:"user_id"`
-	Username      string                 `json:"username"`
+	VCSName         string                 `json:"vcs_name"`
+	Repository      string                 `json:"repository"`
+	Workflow        string                 `json:"workflow"`
+	WorkflowRunID   string                 `json:"workflow_run_id"`
+	RunJobID        string                 `json:"run_job_id"`
+	RunNumber       int64                  `json:"run_number"`
+	RunAttempt      int64                  `json:"run_attempt"`
+	Region          string                 `json:"region"`
+	Hatchery        string                 `json:"hatchery"`
+	ModelType       string                 `json:"model_type"`
+	ModelOSArch     string                 `json:"model_osarch"`
+	JobID           string                 `json:"job_id"`
+	Status          V2WorkflowRunJobStatus `json:"status"`
+	RunJobQueued    time.Time              `json:"run_job_queued"`
+	RunJobScheduled *time.Time             `json:"run_job_scheduled,omitempty"`
+	RunJobStarted   *time.Time             `json:"run_job_started,omitempty"`
+	RunJobEnded     *time.Time             `json:"run_job_ended,omitempty"`
+	UserID          string                 `json:"user_id"`
+	Username        string                 `json:"username"`
 }
 
 type WorkflowRunJobManualEvent struct {

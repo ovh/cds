@@ -56,6 +56,10 @@ const (
 	Project            = log.Field("project")
 	ConcurrencyName    = log.Field("concurrency_name")
 	ConcurrencyScope   = log.Field("concurrency_scope")
+
+	RunJobID          = log.Field("action_metadata_job_id")
+	HatcheryJobStep   = log.Field("hatchery_step")
+	HatcheryStepDelay = log.Field("hatchery_step_delay_num")
 )
 
 func init() {
@@ -80,6 +84,8 @@ func init() {
 		Goroutine,
 		GpgKey,
 		Handler,
+		HatcheryJobStep,
+		HatcheryStepDelay,
 		HookEventID,
 		IPAddress,
 		Latency,
@@ -94,6 +100,7 @@ func init() {
 		Route,
 		RequestID,
 		RequestURI,
+		RunJobID,
 		Service,
 		Size,
 		Stacktrace,

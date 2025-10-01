@@ -122,6 +122,10 @@ func pushToWebsockets(ctx context.Context, store cache.Store, event sdk.FullEven
 	}
 
 	if event.Type == sdk.EventRunJobEnqueued {
+		ctx := context.WithValue(ctx, cdslog.RunJobID, event.RunJobID)
+		ctx = context.WithValue(ctx, cdslog.HatcheryJobStep, "push_to_websocket")
+		ctx = context.WithValue(ctx, cdslog.HatcheryStepDelay, time.Since(event.RunJobQueued).Nanoseconds())
+		log.Info(ctx, "step: push_to_websocket job: "+event.RunJobID)
 		if err := store.Publish(ctx, EventHatcheryWS, string(msg)); err != nil {
 			log.Error(ctx, "EventV2.pushToWebsockets: hatchery: %v", err)
 		}
