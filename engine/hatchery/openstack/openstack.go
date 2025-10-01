@@ -301,6 +301,8 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarte
 }
 
 func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (canSpawn bool, finalErr error) {
+	ctx, end := telemetry.Span(ctx, "hatchery.CanAllocateResources")
+	defer end()
 	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
 	log.Debug(ctx, "CanAllocateResources> Job %s will require a %q flavor to start", jobID, flavorName)
 

@@ -606,6 +606,8 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 }
 
 func (h *HatcherySwarm) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
+	ctx, end := telemetry.Span(ctx, "hatchery.CanAllocateResources")
+	defer end()
 	var lastError error
 	for dockerName, dockerClient := range h.dockerClients {
 		// List all containers to check if we can spawn a new one
