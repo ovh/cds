@@ -179,7 +179,7 @@ func (a *API) websocketHatcheryOnMessage(e sdk.FullEventV2) {
 			ctx = context.WithValue(ctx, cdslog.RunJobID, e.RunJobID)
 			ctx = context.WithValue(ctx, cdslog.HatcheryJobStep, "push_to_hatchery")
 			ctx = context.WithValue(ctx, cdslog.HatcheryStepDelay, time.Since(e.RunJobQueued).Nanoseconds())
-			log.Info(ctx, "step: push_to_websocket job: "+e.RunJobID)
+			log.Info(ctx, "step: push_to_hatchery job: "+e.RunJobID)
 
 			if err := a.WSHatcheryServer.server.SendToClient(clientID, wsHatcheryEvent); err != nil {
 				log.Debug(ctx, "websocketOnMessage> can't send to client %s it will be removed: %+v", clientID, err)
