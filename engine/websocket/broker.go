@@ -21,7 +21,7 @@ type Broker struct {
 
 func (b *Broker) OnMessage(f func(m []byte)) { b.onMessage = f }
 
-//Init the websocketBroker
+// Init the websocketBroker
 func (b *Broker) Init(ctx context.Context, gorts *sdk.GoRoutines, pubSub cache.PubSub) {
 	// Start cache Subscription
 	gorts.Run(ctx, "websocket.Broker.Init.cacheSubscribe", func(ctx context.Context) {
@@ -40,6 +40,7 @@ func (b *Broker) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case msg := <-b.chanMessages:
+			log.Info(ctx, "websocket.Broker> get message fromchanMessage %s", string(msg))
 			if b.onMessage != nil {
 				b.onMessage(msg)
 			}
@@ -59,6 +60,7 @@ func (b *Broker) subscribe(ctx context.Context, pubSub cache.PubSub) {
 				continue
 			}
 			msg, err := pubSub.GetMessage(ctx)
+			log.Info(ctx, "websocket.Broker> get message from pubsub %s", msg)
 			if err != nil {
 				log.Warn(ctx, "websocket.Broker> cannot get message from pubsub %s: %s", msg, err)
 				continue

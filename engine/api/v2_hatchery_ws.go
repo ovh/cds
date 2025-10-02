@@ -157,24 +157,31 @@ func (a *API) websocketHatcheryOnMessage(e sdk.FullEventV2) {
 		ModelOSArch:  e.ModelOSArch,
 	}
 
+	log.Info(context.Background(), "step: ws_event_received job: "+e.RunJobID)
+
 	for _, id := range clientIDs {
 		// Copy idx for goroutine
 		clientID := id
-
 		// Send the event to the client websocket within a goroutine
 		a.GoRoutines.Exec(context.Background(), "websocket-"+clientID, func(ctx context.Context) {
+			log.Info(ctx, "step: ws_check_client job: "+e.RunJobID+" check client "+clientID)
 			c := a.WSHatcheryServer.GetClientData(clientID)
 			if c == nil {
+				log.Info(ctx, "step: ws_id_client job: "+e.RunJobID+" no client")
 				return
 			}
+			log.Info(ctx, "step: ws_id_client job: "+e.RunJobID+" identify client: "+c.AuthConsumer.AuthConsumerHatchery.HatcheryID)
 
 			c.mutex.Lock()
 			canHandleJob := c.filter.Region == currentRegion && c.filter.ModelType == currentModel && (c.filter.DeprecatedOSArch == currentModelOSArch || slices.Contains(c.filter.OSArchSlice, currentModelOSArch))
 			c.mutex.Unlock()
+			log.Info(ctx, "step: ws_can_handle job: "+e.RunJobID+" - %v", canHandleJob)
+			log.Info(ctx, ">>>%+v", e)
+			log.Info(ctx, ">>>%+v", c.filter)
 			if !canHandleJob {
 				return
 			}
-			log.Debug(ctx, "api.websocketHatcheryOnMessage> send data to client %s for hatchery %s", clientID, c.AuthConsumer.AuthConsumerHatchery.HatcheryID)
+			log.Info(ctx, "api.websocketHatcheryOnMessage> send data to client %s for hatchery %s", clientID, c.AuthConsumer.AuthConsumerHatchery.HatcheryID)
 
 			ctx = context.WithValue(ctx, cdslog.RunJobID, e.RunJobID)
 			ctx = context.WithValue(ctx, cdslog.HatcheryJobStep, "push_to_hatchery")
