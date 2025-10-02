@@ -147,6 +147,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch [
 			if jobs == nil {
 				continue
 			}
+			log.Info(ctx, "step: ws_job_received job: "+wsEvent.JobRunID)
 			telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv2, 1)
 			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Region, wsEvent.JobRunID)
 			// Do not log the error if the job does not exist
@@ -167,6 +168,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch [
 				log.Debug(ctx, "v2_len_queue: %v", lenqueue)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- wsEvent.JobRunID
+				log.Info(ctx, "step: ws_chan_handle job: "+wsEvent.JobRunID)
 			}
 		case <-jobsTicker.C:
 			if jobs == nil {
@@ -195,6 +197,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch [
 					log.Debug(ctx, "skipping job %s", job.ID)
 					continue
 				}
+				log.Info(ctx, "step: poll_job_received job: "+job.ID)
 				queueFiltered = append(queueFiltered, job)
 			}
 
@@ -208,6 +211,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch [
 				pendingWorkerCreation.SetJobInPendingWorkerCreation(queueFiltered[i].ID)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- queueFiltered[i].ID
+				log.Info(ctx, "step: poll_chan_handle job: "+queueFiltered[i].ID)
 			}
 		}
 	}
