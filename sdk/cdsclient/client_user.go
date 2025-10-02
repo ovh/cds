@@ -110,3 +110,11 @@ func (c *client) UserGpgKeyCreate(ctx context.Context, username string, publicKe
 	}
 	return key, nil
 }
+
+func (c *client) UserLinks(ctx context.Context, username string) ([]sdk.UserLink, error) {
+	var links []sdk.UserLink
+	if _, err := c.GetJSON(ctx, fmt.Sprintf("/user/%s/link", username), &links); err != nil {
+		return nil, err
+	}
+	return links, nil
+}
