@@ -82,7 +82,9 @@ func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 	if wrj.ID == "" {
 		wrj.ID = sdk.UUID()
 	}
-	wrj.Queued = time.Now()
+	if wrj.Queued.IsZero() {
+		wrj.Queued = time.Now()
+	}
 	dbWkfRunJob := &dbWorkflowRunJob{V2WorkflowRunJob: *wrj}
 
 	// Compat code
