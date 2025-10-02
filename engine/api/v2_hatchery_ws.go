@@ -175,9 +175,15 @@ func (a *API) websocketHatcheryOnMessage(e sdk.FullEventV2) {
 			c.mutex.Lock()
 			canHandleJob := c.filter.Region == currentRegion && c.filter.ModelType == currentModel && (c.filter.DeprecatedOSArch == currentModelOSArch || slices.Contains(c.filter.OSArchSlice, currentModelOSArch))
 			c.mutex.Unlock()
+			log.Info(ctx, "step: ws_can_handle_region [%s]/[%s] job: "+e.RunJobID, c.filter.Region, currentRegion)
+			log.Info(ctx, "step: ws_can_handle_type [%s]/[%s] job: "+e.RunJobID, c.filter.ModelType, currentModel)
+			log.Info(ctx, "step: ws_can_handle_dep_arch [%s] job: "+e.RunJobID, c.filter.DeprecatedOSArch)
+			log.Info(ctx, "step: ws_can_handle_slice_arch %v job: "+e.RunJobID, c.filter.OSArchSlice)
+			log.Info(ctx, "step: ws_can_handle_job_arch [%s] job: "+e.RunJobID, currentModelOSArch)
+
 			log.Info(ctx, "step: ws_can_handle job: "+e.RunJobID+" - %v", canHandleJob)
-			log.Info(ctx, ">>>%+v", e)
-			log.Info(ctx, ">>>%+v", c.filter)
+			log.Info(ctx, ">>>job + "+e.RunJobID+" Event: %+v", e)
+			log.Info(ctx, ">>>job + "+e.RunJobID+" Filter: %+v", c.filter)
 			if !canHandleJob {
 				return
 			}
