@@ -37,7 +37,7 @@ func (api *API) getHatcheryWebsocketHandler() ([]service.RbacChecker, service.Ha
 			}
 
 			iosarch, has := hatch.Config["osArch"]
-			if !has {
+			if !has || iosarch == nil {
 				iosarch = []string{"linux/amd64"}
 			}
 
