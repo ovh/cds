@@ -17,8 +17,10 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
+
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -353,6 +355,8 @@ type API struct {
 	AuthenticationDrivers           map[sdk.AuthConsumerType]sdk.AuthDriver
 	LinkDrivers                     map[sdk.AuthConsumerType]link.LinkDriver
 	WorkerModelDockerImageWhiteList []regexp.Regexp
+	mcpServer                       *mcp.Server
+	mcpHandler                      *mcp.StreamableHTTPHandler
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -1140,7 +1144,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	log.Info(ctx, "Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
-		return fmt.Errorf("Cannot start HTTP server: %v", err)
+		return fmt.Errorf("cannot start HTTP server: %v", err)
 	}
 
 	return nil

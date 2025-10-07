@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/ovh/cds/engine/service"
@@ -570,8 +571,20 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/ws", ScopeNone(), r.GET(api.getWebsocketV2Handler))
 
-	//Not Found handler
+	api.initMCP()
+	r.Handle("/mcp", ScopeNone(), r.GETv2(api.getMCPHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.POSTv2(api.getMCPHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mcpauth", ScopeNone(), r.GETv2(api.getMCPHandler), r.POSTv2(api.getMCPHandler))
+
+	// Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 
 	r.computeScopeDetails()
+}
+
+func (api *API) getMCPHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(),
+		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			api.mcpHandler.ServeHTTP(w, r)
+			return nil
+		}
 }
