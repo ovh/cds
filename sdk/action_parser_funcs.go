@@ -327,6 +327,9 @@ func contains(ctx context.Context, _ *ActionParser, inputs ...interface{}) (inte
 
 func startsWith(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
 	log.Debug(ctx, "function: startsWith with args: %v", inputs)
+	if len(inputs) != 2 {
+		return nil, NewErrorFrom(ErrInvalidData, "startsWith: wrong number of arguments")
+	}
 	searchString, ok := inputs[0].(string)
 	if !ok {
 		return nil, NewErrorFrom(ErrInvalidData, "startsWith: searchString argument must be a string")
@@ -341,6 +344,9 @@ func startsWith(ctx context.Context, _ *ActionParser, inputs ...interface{}) (in
 
 func endsWith(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
 	log.Debug(ctx, "function: endsWith with args: %v", inputs)
+	if len(inputs) != 2 {
+		return nil, NewErrorFrom(ErrInvalidData, "endsWith: wrong number of arguments")
+	}
 	searchString, ok := inputs[0].(string)
 	if !ok {
 		return nil, NewErrorFrom(ErrInvalidData, "endsWith: searchString argument must be a string")
