@@ -3,6 +3,7 @@ package sdk
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -73,7 +74,21 @@ func Untar(fs afero.Fs, dst string, r io.Reader) error {
 			if _, err := io.Copy(f, tr); err != nil {
 				return err
 			}
-			f.Close()
+			if err := f.Close(); err != nil {
+				return err
+			}
+
+		case tar.TypeSymlink:
+			if s, ok := fs.(afero.Symlinker); ok {
+				if err := fs.Remove(target); err != nil && !os.IsNotExist(err) {
+					return err
+				}
+				if err := s.SymlinkIfPossible(header.Linkname, target); err != nil {
+					return err
+				}
+			} else {
+				return errors.New("filesystem does not support symlinks")
+			}
 		}
 	}
 }
