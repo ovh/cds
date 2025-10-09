@@ -138,11 +138,11 @@ testcases:
                 worker export TERRANAME ${terrafile}
                 pyfile=package-$(date +%s).py
                 worker export PYTHONNAME ${pyfile}
-                mvnfile=mvn.pom
+                mvnfile=mvn.pomo
                 worker export MVNNAME ${mvnfile}
-                gradlefile=gradle.pom
+                gradlefile=gradle.pomo
                 worker export GRADLENAME ${gradlefile}
-                sbtfile=sbt.pom
+                sbtfile=sbt.pomo
                 worker export SBTNAME ${sbtfile}
 
                 touch ${debfile} && touch ${terrafile} && touch ${pyfile} && touch ${mvnfile} && touch ${gradlefile} && touch ${sbtfile}
