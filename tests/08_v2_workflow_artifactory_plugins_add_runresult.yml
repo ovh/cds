@@ -172,13 +172,13 @@ testcases:
                 path: ${{steps.name.outputs.MVNNAME}}
                 type: maven
             - id: uploadSbt
-              run: curl --fail -X PUT -T ${{steps.name.outputs.SBTNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-maven/${{steps.name.outputs.SBTNAME}}"
+              run: curl --fail -X PUT -T ${{steps.name.outputs.SBTNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-sbt/${{steps.name.outputs.SBTNAME}}"
             - uses: actions/addRunResult
               with:
                 path: ${{steps.name.outputs.SBTNAME}}
                 type: sbt
             - id: uploadGradle
-              run: curl --fail -X PUT -T ${{steps.name.outputs.GRADLENAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-maven/${{steps.name.outputs.GRADLENAME}}"
+              run: curl --fail -X PUT -T ${{steps.name.outputs.GRADLENAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-gradle/${{steps.name.outputs.GRADLENAME}}"
             - uses: actions/addRunResult
               with:
                 path: ${{steps.name.outputs.GRADLENAME}}
