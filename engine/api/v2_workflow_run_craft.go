@@ -688,9 +688,12 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 	}
 	tmpWorkflow.Name = e.Name
 
-	// If no stage on template and stage on parent job, apply stage on templated jobs
-	if tmpWorkflow.Stages == nil && j.Stage != "" {
+	// If no stage on templated job but a stage on parent job, apply stage on templated job
+	if j.Stage != "" {
 		for k := range tmpWorkflow.Jobs {
+			if tmpWorkflow.Jobs[k].Stage != "" {
+				continue
+			}
 			templatedJob := tmpWorkflow.Jobs[k]
 			templatedJob.Stage = j.Stage
 			tmpWorkflow.Jobs[k] = templatedJob

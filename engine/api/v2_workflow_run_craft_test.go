@@ -2975,6 +2975,8 @@ func TestComputeJobFromTemplate_NoStageInTemplate(t *testing.T) {
 		Data: `name: mytemplate
 spec: |-
   jobs:
+    jobwithstage:
+      stage: mystage
     build:
     test:`,
 	}
@@ -3023,6 +3025,7 @@ spec: |-
 					"stage3": {
 						Needs: []string{"stage2"},
 					},
+					"mystage": {},
 				},
 				Name: wkName,
 				Jobs: map[string]sdk.V2Job{
@@ -3095,6 +3098,10 @@ spec: |-
 
 	require.Equal(t, "stage2", buildJob.Stage)
 	require.Equal(t, "stage2", testJob.Stage)
+
+	testJobWithStage, has := wrDB.WorkflowData.Workflow.Jobs["jobwithstage"]
+	require.True(t, has)
+	require.Equal(t, "mystage", testJobWithStage.Stage)
 }
 
 func TestComputeConcurrency(t *testing.T) {
