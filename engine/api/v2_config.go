@@ -6,6 +6,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 )
 
@@ -23,5 +24,24 @@ func (api *API) configVCSGPGKeysHandler() ([]service.RbacChecker, service.Handle
 				keys[vcsName] = vcsKeys
 			}
 			return service.WriteJSON(w, keys, http.StatusOK)
+		}
+}
+
+func (api *API) configV2CDNHandler() ([]service.RbacChecker, service.Handler) {
+	return nil,
+		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			tcpURL, tcpURLEnableTLS, err := services.GetCDNPublicTCPAdress(ctx, api.mustDB())
+			if err != nil {
+				return err
+			}
+			httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w,
+				sdk.CDNConfig{TCPURL: tcpURL,
+					TCPURLEnableTLS: tcpURLEnableTLS,
+					HTTPURL:         httpURL},
+				http.StatusOK)
 		}
 }

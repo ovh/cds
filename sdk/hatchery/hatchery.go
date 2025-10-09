@@ -78,7 +78,7 @@ func Create(ctx context.Context, h Interface) error {
 	var modelType string
 
 	hWithModels, hatcheryIsWithModels := h.(InterfaceWithModels)
-	if hatcheryIsWithModels {
+	if hatcheryIsWithModels && hWithModels.CDSClient() != nil {
 		// Call WorkerModel Enabled first
 		var errwm error
 		models, errwm = hWithModels.WorkerModelsEnabled()
@@ -113,32 +113,34 @@ func Create(ctx context.Context, h Interface) error {
 		})
 	}
 
-	h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
-		log.Debug(ctx, "starting queue polling")
+	if h.CDSClient() != nil {
+		h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
+			log.Debug(ctx, "starting queue polling")
 
-		var ms []cdsclient.RequestModifier
-		if modelType != "" {
-			ms = append(ms, cdsclient.ModelType(modelType))
-		}
-		region := h.Configuration().Provision.Region
-		if region != "" {
-			regions := []string{region}
-			if !h.Configuration().Provision.IgnoreJobWithNoRegion {
-				regions = append(regions, "")
+			var ms []cdsclient.RequestModifier
+			if modelType != "" {
+				ms = append(ms, cdsclient.ModelType(modelType))
 			}
-			ms = append(ms, cdsclient.Region(regions...))
-		}
+			region := h.Configuration().Provision.Region
+			if region != "" {
+				regions := []string{region}
+				if !h.Configuration().Provision.IgnoreJobWithNoRegion {
+					regions = append(regions, "")
+				}
+				ms = append(ms, cdsclient.Region(regions...))
+			}
 
-		filters := []sdk.WebsocketFilter{
-			{
-				HatcheryType: modelType,
-				Type:         sdk.WebsocketFilterTypeQueue,
-			},
-		}
-		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), GetMetrics(), h.GetMapPendingWorkerCreation(), wjobs, errs, filters, 20*time.Second, ms...); err != nil {
-			log.Error(ctx, "Queues polling stopped: %v", err)
-		}
-	})
+			filters := []sdk.WebsocketFilter{
+				{
+					HatcheryType: modelType,
+					Type:         sdk.WebsocketFilterTypeQueue,
+				},
+			}
+			if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), GetMetrics(), h.GetMapPendingWorkerCreation(), wjobs, errs, filters, 20*time.Second, ms...); err != nil {
+				log.Error(ctx, "Queues polling stopped: %v", err)
+			}
+		})
+	}
 
 	// run the starters pool
 	workersStartChan := startWorkerStarters(ctx, h)

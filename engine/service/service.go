@@ -79,6 +79,10 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 	if c.ServiceType == "api" {
 		return nil
 	}
+	if c.ServiceType == "hatchery" && cdsclientConfig.Token == "" {
+		log.Info(ctx, "No token v1 provided. The hatchery will not handle job v1")
+		return nil
+	}
 	log.Info(ctx, "Init CDS client for service %s(%T) %s", c.Type(), c, c.Name())
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()

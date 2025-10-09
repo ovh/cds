@@ -26,9 +26,13 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 	// First: call API
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	registeredWorkers, err := h.CDSClient().WorkerList(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get registered workers: %v", err)
+	var registeredWorkers []sdk.Worker
+	if h.CDSClient() != nil {
+		var err error
+		registeredWorkers, err = h.CDSClient().WorkerList(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get registered workers: %v", err)
+		}
 	}
 
 	// Then: get all workers in the orchestrator queue

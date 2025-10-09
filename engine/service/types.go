@@ -115,8 +115,8 @@ func (hcc HatcheryCommonConfiguration) Check() error {
 		return fmt.Errorf("API HTTP(s) URL is mandatory")
 	}
 
-	if hcc.API.Token == "" {
-		return fmt.Errorf("API Token URL is mandatory")
+	if hcc.API.Token == "" && hcc.API.TokenV2 == "" {
+		return fmt.Errorf("API Token is mandatory")
 	}
 
 	if hcc.Name == "" {
