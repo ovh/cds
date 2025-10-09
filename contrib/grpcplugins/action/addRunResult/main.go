@@ -109,6 +109,12 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		repository += "-npm"
 	case sdk.V2WorkflowRunResultTypeStaticFiles:
 		return false, performStaticFiles(ctx, &p.Common, path, detail)
+	case sdk.V2WorkflowRunResultTypeMaven:
+		repository += "-maven"
+	case sdk.V2WorkflowRunResultTypeGradle:
+		repository += "-gradle"
+	case sdk.V2WorkflowRunResultTypeSbt:
+		repository += "-sbt"
 	}
 
 	// get file info
@@ -226,6 +232,18 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		if err := performNpm(&runResult, fileInfo, fileProps, fileName); err != nil {
 			return true, err
 
+		}
+	case sdk.V2WorkflowRunResultTypeMaven:
+		if err := performMaven(&runResult, fileInfo, resultType, fileName); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypeGradle:
+		if err := performGradle(&runResult, fileInfo, resultType, fileName); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypeSbt:
+		if err := performSbt(&runResult, fileInfo, resultType, fileName); err != nil {
+			return true, err
 		}
 	default:
 		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unsupported result type %s", resultType)
@@ -606,6 +624,63 @@ func performNpm(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.Artifa
 			MD5:      fileInfo.Checksums.Md5,
 			SHA1:     fileInfo.Checksums.Sha1,
 			SHA256:   fileInfo.Checksums.Sha256,
+		},
+	}
+	return nil
+}
+
+func performSbt(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.ArtifactoryFileInfo, resultType sdk.V2WorkflowRunResultType, fileName string) error {
+	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
+	if err != nil {
+		return err
+	}
+	runResult.Type = resultType
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultSbtDetail{
+			Name:   fileName,
+			Size:   size,
+			Mode:   os.FileMode(0755),
+			MD5:    fileInfo.Checksums.Md5,
+			SHA1:   fileInfo.Checksums.Sha1,
+			SHA256: fileInfo.Checksums.Sha256,
+		},
+	}
+	return nil
+}
+
+func performGradle(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.ArtifactoryFileInfo, resultType sdk.V2WorkflowRunResultType, fileName string) error {
+	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
+	if err != nil {
+		return err
+	}
+	runResult.Type = resultType
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultGradleDetail{
+			Name:   fileName,
+			Size:   size,
+			Mode:   os.FileMode(0755),
+			MD5:    fileInfo.Checksums.Md5,
+			SHA1:   fileInfo.Checksums.Sha1,
+			SHA256: fileInfo.Checksums.Sha256,
+		},
+	}
+	return nil
+}
+
+func performMaven(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.ArtifactoryFileInfo, resultType sdk.V2WorkflowRunResultType, fileName string) error {
+	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
+	if err != nil {
+		return err
+	}
+	runResult.Type = resultType
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultMavenDetail{
+			Name:   fileName,
+			Size:   size,
+			Mode:   os.FileMode(0755),
+			MD5:    fileInfo.Checksums.Md5,
+			SHA1:   fileInfo.Checksums.Sha1,
+			SHA256: fileInfo.Checksums.Sha256,
 		},
 	}
 	return nil
