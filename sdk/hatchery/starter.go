@@ -161,7 +161,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		Region:       j.region,
 		NodeRunID:    j.workflowNodeRunID,
 		Requirements: j.requirements,
-		HatcheryName: h.Service().Name,
+		HatcheryName: h.Name(),
 	}
 
 	if sdk.IsValidUUID(j.id) {

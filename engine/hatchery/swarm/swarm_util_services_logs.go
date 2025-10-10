@@ -20,10 +20,15 @@ func (h *HatcherySwarm) getServicesLogs() error {
 	ctxList, cancelList := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelList()
 
-	apiWorkers, err := h.CDSClient().WorkerList(ctxList)
-	if err != nil {
-		return sdk.WrapError(err, "cannot get worker list from CDS api")
+	var apiWorkers []sdk.Worker
+	if h.CDSClient() != nil {
+		var err error
+		apiWorkers, err = h.CDSClient().WorkerList(ctxList)
+		if err != nil {
+			return sdk.WrapError(err, "cannot get worker list from CDS api")
+		}
 	}
+
 	apiWorkerNames := make(map[string]struct{}, len(apiWorkers))
 	for i := range apiWorkers {
 		apiWorkerNames[apiWorkers[i].Name] = struct{}{}
