@@ -55,6 +55,7 @@ type HatcheryCommonConfiguration struct {
 		} `toml:"tcp" json:"tcp"`
 	} `toml:"cdn" json:"cdn"`
 	Provision struct {
+		DisableV2QueuePolling     bool     `toml:"disableV2QueuePolling" commented:"true" comment:"Disable V2 queue polling" json:"-" mapstructure:"disableV2QueuePolling"`
 		InjectEnvVars             []string `toml:"injectEnvVars" commented:"true" comment:"Inject env variables in workers" json:"-" mapstructure:"injectEnvVars"`
 		MaxWorker                 int      `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers" json:"maxWorker"`
 		MaxConcurrentProvisioning int      `toml:"maxConcurrentProvisioning" default:"10" comment:"Maximum allowed simultaneous workers provisioning" json:"maxConcurrentProvisioning"`

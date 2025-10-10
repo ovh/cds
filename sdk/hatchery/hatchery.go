@@ -104,13 +104,18 @@ func Create(ctx context.Context, h Interface) error {
 	}
 
 	if h.CDSClientV2() != nil {
-		h.GetGoRoutines().Run(ctx, "V2QueuePolling", func(ctx context.Context) {
-			log.Debug(ctx, "starting v2 queue polling")
+		if !h.Configuration().Provision.DisableV2QueuePolling {
+			h.GetGoRoutines().Run(ctx, "V2QueuePolling", func(ctx context.Context) {
+				log.Debug(ctx, "starting v2 queue polling")
 
-			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.Configuration().OSArch, h.GetGoRoutines(), GetMetrics(), h.GetMapPendingWorkerCreation(), v2Runjobs, errs, 20*time.Second); err != nil {
-				log.Error(ctx, "V2 Queues polling stopped: %v", err)
-			}
-		})
+				if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.Configuration().OSArch, h.GetGoRoutines(), GetMetrics(), h.GetMapPendingWorkerCreation(), v2Runjobs, errs, 20*time.Second); err != nil {
+					log.Error(ctx, "V2 Queues polling stopped: %v", err)
+				}
+			})
+		} else {
+			log.Info(ctx, "V2 Queue polling is disabled")
+		}
+
 	}
 
 	if h.CDSClient() != nil {
