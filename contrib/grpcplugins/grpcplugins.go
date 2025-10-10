@@ -757,7 +757,9 @@ func UploadRunResults(ctx context.Context, actplugin *actionplugin.Common, jobCo
 			hasError = true
 			Error(actplugin, result.Error)
 		}
-		results = append(results, *result.RunResultResponse)
+		if result.RunResultResponse != nil {
+			results = append(results, *result.RunResultResponse)
+		}
 	}
 	return results, hasError
 }
