@@ -8,16 +8,18 @@ import { CallbackComponent } from './callback/callback.component';
 import { ResetComponent } from './reset/reset';
 import { SigninComponent } from './signin/signin';
 import { VerifyComponent } from './verify/verify.component';
+import { LogoutComponent } from './logout/logout';
 
 @NgModule({
     declarations: [
-        AuthComponent,
-        SigninComponent,
         AskResetComponent,
         AskSigninComponent,
+        AuthComponent,
+        CallbackComponent,
+        LogoutComponent,
         ResetComponent,
-        VerifyComponent,
-        CallbackComponent
+        SigninComponent,
+        VerifyComponent
     ],
     imports: [
         SharedModule,

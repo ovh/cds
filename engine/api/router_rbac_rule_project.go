@@ -37,6 +37,10 @@ func (api *API) hasRoleOnProject(ctx context.Context, vars map[string]string, ro
 		return nil
 	}
 
+	if role == sdk.ProjectRoleRead && isMaintainer(ctx) {
+		return nil
+	}
+
 	return sdk.WithStack(sdk.ErrForbidden)
 }
 

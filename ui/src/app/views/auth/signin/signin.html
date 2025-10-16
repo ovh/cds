@@ -26,15 +26,14 @@
                             <nz-form-item>
                             </nz-form-item>
                             <nz-form-item nzJustify="end">
-                                <a class="pointing"
-                                   (click)="navigateToAskReset()">Forgotten password</a>
+                                <a class="pointing" (click)="navigateToAskReset()">Forgotten password</a>
                                 <button nz-button nzType="primary" type="submit">Sign in</button>
                             </nz-form-item>
                         </form>
                     </nz-tab>
-                    <nz-tab *ngIf="localDriver && !localDriver.signup_disabled" nzTitle="Sign up" (click)="clickShowLocalSignup()">
-                        <form nz-form *ngIf="!showSuccessSignup" (ngSubmit)="signup(signupForm)"
-                              #signupForm="ngForm">
+                    <nz-tab *ngIf="localDriver && !localDriver.signup_disabled" nzTitle="Sign up"
+                        (click)="clickShowLocalSignup()">
+                        <form nz-form *ngIf="!showSuccessSignup" (ngSubmit)="signup(signupForm)" #signupForm="ngForm">
                             <nz-form-item>
                                 <nz-form-label [nzSpan]="4">Username*</nz-form-label>
                                 <nz-form-control>
@@ -56,22 +55,24 @@
                             <nz-form-item>
                                 <nz-form-label [nzSpan]="4">Password*</nz-form-label>
                                 <nz-form-control>
-                                    <input nz-input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel required>
+                                    <input nz-input type="password" name="password"
+                                        (keyup)="onChangeSignupPassword($event)" ngModel required>
                                     <nz-progress *ngIf="!passwordError && passwordLevel !== null"
-                                                 (keyup)="onChangeSignupPassword($event)"
-                                                 [nzShowInfo]="false"
-                                                 [nzStatus]="passwordLevel<3?'exception': 'success'"
-                                                 [nzPercent]="100 * (passwordLevel + 1)/5"></nz-progress>
+                                        (keyup)="onChangeSignupPassword($event)" [nzShowInfo]="false"
+                                        [nzStatus]="passwordLevel<3?'exception': 'success'"
+                                        [nzPercent]="100 * (passwordLevel + 1)/5"></nz-progress>
                                 </nz-form-control>
                             </nz-form-item>
 
-                            <nz-alert *ngIf="passwordError" nzType="error" nzMessage="{{ passwordError | translate }}"></nz-alert>
+                            <nz-alert *ngIf="passwordError" nzType="error"
+                                nzMessage="{{ passwordError | translate }}"></nz-alert>
                             <nz-form-item nzJustify="end">
                                 <button nz-button nzType="primary" [disabled]="passwordError != null"
-                                        type="submit">Create</button>
+                                    type="submit">Create</button>
                             </nz-form-item>
                         </form>
-                        <nz-alert nzType="success" *ngIf="showSuccessSignup" nzMessage="You successfully sign up to CDS, check your emails to verify your account."></nz-alert>
+                        <nz-alert nzType="success" *ngIf="showSuccessSignup"
+                            nzMessage="You successfully sign up to CDS, check your emails to verify your account."></nz-alert>
                     </nz-tab>
                     <nz-tab *ngIf="ldapDriver" nzTitle="LDAP Sign in" (click)="clickShowLDAPSignin()">
                         <form nz-form (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
@@ -95,23 +96,20 @@
                                 </nz-form-control>
                             </nz-form-item>
                             <nz-form-item nzJustify="end">
-                                <button nz-button nzType="primary"
-                                        type="submit">Sign in</button>
+                                <button nz-button nzType="primary" type="submit">Sign in</button>
                             </nz-form-item>
                         </form>
                     </nz-tab>
                 </nz-tabset>
             </ng-container>
-            <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0"
-                 class="nzSegment noborder">
-                    <hr>
-                    <button nz-button *ngFor="let driver of externalDrivers" nzBlock nzType="primary"
-                           [routerLink]="'/auth/ask-signin/'+driver.type"
-                           [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
-                            <i nz-icon nzType="{{driver.icon}}" nzTheme="outline"></i>
-                            {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
-                    </button>
-
+            <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0" class="nzSegment noborder">
+                <hr>
+                <button nz-button *ngFor="let driver of externalDrivers" nzBlock nzType="primary"
+                    [routerLink]="'/auth/ask-signin/'+driver.type"
+                    [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
+                    <i nz-icon nzType="{{driver.icon}}" nzTheme="outline"></i>
+                    {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
+                </button>
             </div>
         </ng-template>
     </nz-col>

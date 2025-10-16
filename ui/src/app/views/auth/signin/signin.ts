@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { AuthDriverManifest } from 'app/model/authentication.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { lastValueFrom } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import zxcvbn from 'zxcvbn';
 
@@ -43,47 +44,62 @@ export class SigninComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._authenticationService.getDrivers()
-            .pipe(finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((data) => {
-                this.isFirstConnection = data.is_first_connection;
-                this.localDriver = data.manifests.find(d => d.type === 'local' && !d.signup_disabled);
-                this.ldapDriver = data.manifests.find(d => d.type === 'ldap' && !d.signup_disabled);
-                this.externalDrivers = data.manifests
-                    .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin' && !d.signup_disabled)
-                    .sort((a, b) => a.type < b.type ? -1 : 1)
-                    .map(d => {
-                        switch (d.type) {
-                            case 'corporate-sso': {
-                                d.icon = 'safety-certificate';
-                                break;
-                            }
-                            case 'openid-connect': {
-                                d.icon = 'lock';
-                                break;
-                            }
-                            case 'ldap': {
-                                d.icon = 'book';
-                            }
-                            default: {
-                                d.icon = d.type;
-                                break;
-                            }
-                        }
-                        return d;
-                    });
+        this.load();
+    }
 
-                if (this.localDriver && this.isFirstConnection) {
-                    this.localSignupActive = true;
-                } else if (this.localDriver) {
-                    this.localSigninActive = true;
-                } else if (this.ldapDriver) {
-                    this.ldapSigninActive = true;
+    async load() {
+        this.loading = true;
+        this._cd.markForCheck();
+
+        const data = await lastValueFrom(this._authenticationService.getDrivers());
+
+        this.isFirstConnection = data.is_first_connection;
+        this.localDriver = data.manifests.find(d => d.type === 'local' && !d.signup_disabled);
+        this.ldapDriver = data.manifests.find(d => d.type === 'ldap' && !d.signup_disabled);
+        this.externalDrivers = data.manifests
+            .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin' && !d.signup_disabled)
+            .sort((a, b) => a.type < b.type ? -1 : 1)
+            .map(d => {
+                switch (d.type) {
+                    case 'corporate-sso': {
+                        d.icon = 'safety-certificate';
+                        break;
+                    }
+                    case 'openid-connect': {
+                        d.icon = 'lock';
+                        break;
+                    }
+                    case 'ldap': {
+                        d.icon = 'book';
+                    }
+                    default: {
+                        d.icon = d.type;
+                        break;
+                    }
+                }
+                return d;
+            });
+
+        if (this.localDriver && this.isFirstConnection) {
+            this.localSignupActive = true;
+        } else if (this.localDriver) {
+            this.localSigninActive = true;
+        } else if (this.ldapDriver) {
+            this.ldapSigninActive = true;
+        }
+
+        if (!this.localSignupActive && !this.localSigninActive && !this.ldapSigninActive && this.externalDrivers.length === 1) {
+            const driver = this.externalDrivers[0];
+            this._router.navigate(['/auth/ask-signin/' + driver.type], <NavigationExtras>{
+                queryParams: {
+                    redirect_uri: this.redirect,
+                    require_mfa: this.mfa
                 }
             });
+        }
+
+        this.loading = false;
+        this._cd.markForCheck();
     }
 
     clickShowLocalSignin() {
