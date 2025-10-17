@@ -470,9 +470,7 @@ export class UserEditComponent implements OnInit {
 
     clickSessionRevoke(s: AuthSession): void {
         if (s.current) {
-            this._authenticationService.signout().subscribe(() => {
-
-            });
+            this._authenticationService.signout().subscribe(() => { });
         } else {
             this._userService.deleteSession(this.currentAuthSummary.user.username, s.id).subscribe(() => {
                 this.getAuthData();
@@ -696,36 +694,36 @@ export class UserEditComponent implements OnInit {
     getGPGKeys(): void {
         this.loadingGPGKeys = true;
         this._cd.markForCheck();
-        this._userService.getGPGKeys(this.username).pipe(
-            finalize(() => {
+        this._userService.getGPGKeys(this.username)
+            .pipe(finalize(() => {
                 this.loadingGPGKeys = false;
                 this._cd.markForCheck();
-            }
-        )).subscribe(result => {
-            this.gpgKeys = result;
-        });
+            }))
+            .subscribe(result => {
+                this.gpgKeys = result;
+            });
     }
 
     deleteGPGKey(k: UserGPGKey): void {
         this.loadingGPGKeys = true;
         this._cd.markForCheck();
-        this._userService.deleteGPGKey(this.username, k.key_id).pipe(
-            finalize(() => {
+        this._userService.deleteGPGKey(this.username, k.key_id)
+            .pipe(finalize(() => {
                 this.getGPGKeys();
-            }
-        )).subscribe();
+            }))
+            .subscribe();
     }
 
     addGPGKey(): void {
         this.loadingGPGKeys = true;
         this._cd.markForCheck();
-        
+
         let k = new UserGPGKey();
         k.public_key = this.importPublicGPGKey;
-        this._userService.addGPGKey(this.username, k).pipe(
-            finalize(() => {
+        this._userService.addGPGKey(this.username, k)
+            .pipe(finalize(() => {
                 this.getGPGKeys();
-            }
-        )).subscribe(() => this.importPublicGPGKey = null);;
+            }))
+            .subscribe(() => this.importPublicGPGKey = null);;
     }
 }

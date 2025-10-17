@@ -3,11 +3,12 @@ import { ActivatedRouteSnapshot, NavigationExtras, Router, RouterStateSnapshot }
 import { Store } from '@ngxs/store';
 import { FetchCurrentAuth } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { Observable } from 'rxjs';
-import { filter, first, map } from 'rxjs/operators';
+import { FetchAPIConfig } from 'app/store/config.action';
+import { ConfigState } from 'app/store/config.state';
+import { firstValueFrom, lastValueFrom, Observable } from 'rxjs';
 
 @Injectable()
-export class AuthenticationGuard  {
+export class AuthenticationGuard {
 
     constructor(
         private _store: Store,
@@ -22,30 +23,28 @@ export class AuthenticationGuard  {
         });
     }
 
-    getCurrentAuth(state: RouterStateSnapshot): Observable<boolean> {
-        return this._store.select(AuthenticationState.summary)
-            .pipe(
-                map(s => {
-                    if (s) {
-                        return true;
-                    }
-                    this._store.dispatch(new FetchCurrentAuth()).subscribe(
-                        _ => { },
-                        _ => {
-                            this.redirectSignin(state.url);
-                        });
-                    return null;
-                }),
-                filter(exists => exists !== null),
-                first()
-            );
-    }
+    async getCurrentAuth(state: RouterStateSnapshot) {
+        const summary = await firstValueFrom(this._store.select(AuthenticationState.summary));
+        if (!summary) {
+            try {
+                await lastValueFrom(this._store.dispatch(new FetchCurrentAuth()));
+            } catch (e) {
+                this.redirectSignin(state.url);
+                return false;
+            }
+        }
 
-    canActivate(
-        route: ActivatedRouteSnapshot,
-        state: RouterStateSnapshot
-    ): Observable<boolean> | Promise<boolean> | boolean {
-        return this.getCurrentAuth(state);
+        const apiConfig = await firstValueFrom(this._store.select(ConfigState.api));
+        if (!apiConfig) {
+            try {
+                await lastValueFrom(this._store.dispatch(new FetchAPIConfig()));
+            } catch (e) {
+                this.redirectSignin(state.url);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     canActivateChild(

@@ -7,7 +7,7 @@ import { RouterService } from 'app/service/services.module';
 import { SetCurrentProjectV2 } from 'app/store/project-v2.action';
 import { FetchProject } from 'app/store/project.action';
 import { ProjectState } from 'app/store/project.state';
-import { Observable, switchMap } from 'rxjs';
+import { firstValueFrom, lastValueFrom, Observable, switchMap } from 'rxjs';
 import { map, filter, first, tap } from 'rxjs/operators';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class ProjectGuard {
         private _routerService: RouterService
     ) { }
 
-    loadProject(state: RouterStateSnapshot): Observable<boolean> {
+    async loadProject(state: RouterStateSnapshot) {
         const params = this._routerService.getRouteSnapshotParams({}, state.root);
         const opts = [
             new LoadOpts('withApplicationNames', 'application_names'),
@@ -28,27 +28,16 @@ export class ProjectGuard {
             new LoadOpts('withLabels', 'labels')
         ];
 
-        return this._store.dispatch(new FetchProject({
+        await lastValueFrom(this._store.dispatch(new FetchProject({
             projectKey: params['key'],
             opts
-        })).pipe(
-            switchMap(() => this._store.selectOnce(ProjectState.projectSnapshot)),
-            map(p => {
-                return true;
-            }),
-            filter(exists => exists),
-            first()
-        );
+        })));
+
+        const p = await firstValueFrom(this._store.selectOnce(ProjectState.projectSnapshot));
+        return !!p;
     }
 
     canActivate(
-        route: ActivatedRouteSnapshot,
-        state: RouterStateSnapshot
-    ): Observable<boolean> | Promise<boolean> | boolean {
-        return this.loadProject(state);
-    }
-
-    canActivateChild(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean> | Promise<boolean> | boolean {

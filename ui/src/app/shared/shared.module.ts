@@ -247,7 +247,6 @@ import { BitbucketIconComponent } from 'app/shared/icons/bitbucket.icon.componen
 import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.success.component';
 import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
 import { NzCodeEditorModule } from "ng-zorro-antd/code-editor";
-import { APIConfigGuard } from 'app/guard/api-config.guard';
 import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
 import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
 import { EditorInputComponent } from './input/editor/editor.input.component';
@@ -526,7 +525,6 @@ const icons: IconDefinition[] = [
         WorkflowWNodePipelineComponent
     ],
     providers: [
-        APIConfigGuard,
         AuthenticationGuard,
         NoAuthenticationGuard,
         PermissionService,
