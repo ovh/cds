@@ -23,7 +23,7 @@ const projectRoutes: Routes = [
             { path: 'add', component: ProjectAddComponent, data: { title: 'Add • Project' } },
             {
                 path: ':key',
-                canActivate: [ProjectGuard],
+                canActivate: [ProjectV2Guard],
                 component: ProjectComponent,
                 children: [
                     {
