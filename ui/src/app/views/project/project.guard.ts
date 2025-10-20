@@ -33,8 +33,8 @@ export class ProjectGuard {
             opts
         })));
 
-        const p = await firstValueFrom(this._store.selectOnce(ProjectState.projectSnapshot));
-        return !!p;
+        await firstValueFrom(this._store.selectOnce(ProjectState.projectSnapshot));
+        return true; // Always try to load the project using v1 to detect if user have the permission to access it
     }
 
     canActivate(
