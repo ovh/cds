@@ -281,10 +281,18 @@ func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {
 			if err := ctx.Err(); err != nil {
 				return err
 			}
-			cfg, err = c.Client.ConfigCDN()
-			if err == nil {
-				break
+			if c.Clientv2 != nil {
+				cfg, err = c.Clientv2.V2ConfigCDN()
+				if err == nil {
+					break
+				}
+			} else {
+				cfg, err = c.Client.ConfigCDN()
+				if err == nil {
+					break
+				}
 			}
+
 			err = sdk.NewErrorFrom(err, "cannot get CDN config from CDS API, retrying...")
 			log.ErrorWithStackTrace(ctx, err)
 			time.Sleep(2 * time.Second)
@@ -541,8 +549,11 @@ func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context)
 		}()
 	}
 
-	if err := c.Common.Heartbeat(ctx, status); err != nil {
-		return err
+	if c.Client != nil {
+		if err := c.Common.Heartbeat(ctx, status); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }

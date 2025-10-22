@@ -239,6 +239,7 @@ type HatcheryServiceClient interface {
 	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string, mods ...RequestModifier) (*sdk.Entity, error)
 	V2QueueClient
 	V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error)
+	V2ConfigCDN() (sdk.CDNConfig, error)
 }
 
 // ProjectClientV2 exposes project related functions
@@ -543,6 +544,7 @@ type Interface interface {
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
 	ConfigCDN() (sdk.CDNConfig, error)
+	V2ConfigCDN() (sdk.CDNConfig, error)
 	ConfigVCSGPGKeys() (map[string][]sdk.Key, error)
 	DownloadClient
 	EnvironmentClient
