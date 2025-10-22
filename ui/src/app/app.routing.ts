@@ -1,7 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { AppModule } from 'app/app.module';
-import { APIConfigGuard } from './guard/api-config.guard';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { SearchComponent } from './views/search/search.component';
 import { HomeComponent } from './views/home/home.component';
@@ -9,7 +8,7 @@ import { HomeComponent } from './views/home/home.component';
 const routes: Routes = [
     {
         path: '',
-        canActivateChild: [AuthenticationGuard, APIConfigGuard],
+        canActivateChild: [AuthenticationGuard],
         children: [
             {
                 path: '',

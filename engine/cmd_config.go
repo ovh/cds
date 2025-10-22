@@ -292,6 +292,8 @@ var configEditCmd = &cobra.Command{
 				tomlConf.Set(t[0], "", false, "", v)
 			} else if v, err := strconv.ParseInt(t[1], 10, 64); err == nil {
 				tomlConf.Set(t[0], "", false, "", v)
+			} else if v, err := strconv.Unquote(`"` + t[1] + `"`); err == nil {
+				tomlConf.Set(t[0], "", false, "", v)
 			} else {
 				tomlConf.Set(t[0], "", false, "", t[1])
 			}

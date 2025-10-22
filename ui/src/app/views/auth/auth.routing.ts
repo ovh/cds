@@ -9,6 +9,7 @@ import { CallbackComponent } from './callback/callback.component';
 import { ResetComponent } from './reset/reset';
 import { SigninComponent } from './signin/signin';
 import { VerifyComponent } from './verify/verify.component';
+import { LogoutComponent } from './logout/logout';
 
 const routes: Routes = [
     {
@@ -47,6 +48,12 @@ const routes: Routes = [
                 component: AskSigninComponent,
                 data: { title: 'CDS • Authentication' }
             },
+            {
+                path: 'logout',
+                component: LogoutComponent,
+                data: { title: 'CDS • Logout' },
+                canActivate: [NoAuthenticationGuard]
+            }
         ]
     }
 ];

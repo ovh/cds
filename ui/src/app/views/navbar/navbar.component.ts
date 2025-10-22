@@ -140,11 +140,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     clickLogout(): void {
-        this._store.dispatch(new SignoutCurrentUser()).subscribe(
-            () => {
-                this._router.navigate(['/auth/signin']);
-            }
-        );
+        this._store.dispatch(new SignoutCurrentUser()).subscribe(() => {
+            this._router.navigate(['/auth/logout']);
+        });
     }
 
     mfaLogin(): void {

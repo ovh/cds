@@ -21,7 +21,7 @@ func (api *API) rbacMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				return ctx, nil
 			}
 			log.ErrorWithStackTrace(ctx, err)
-			return ctx, sdk.WithStack(sdk.ErrForbidden)
+			return ctx, err
 		}
 	}
 	return ctx, nil

@@ -138,7 +138,14 @@ testcases:
                 worker export TERRANAME ${terrafile}
                 pyfile=package-$(date +%s).py
                 worker export PYTHONNAME ${pyfile}
-                touch ${debfile} && touch ${terrafile} && touch ${pyfile}
+                mvnfile=mvn.pomo
+                worker export MVNNAME ${mvnfile}
+                gradlefile=gradle.pomo
+                worker export GRADLENAME ${gradlefile}
+                sbtfile=sbt.pomo
+                worker export SBTNAME ${sbtfile}
+
+                touch ${debfile} && touch ${terrafile} && touch ${pyfile} && touch ${mvnfile} && touch ${gradlefile} && touch ${sbtfile}
                 ls -l
             - id: uploadDeb
               run: curl --fail -X PUT -T ${{ steps.name.outputs.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
@@ -158,6 +165,24 @@ testcases:
               with:
                 path: ${{steps.name.outputs.PYTHONNAME}}
                 type: python  
+            - id: uploadMvn
+              run: curl --fail -X PUT -T ${{steps.name.outputs.MVNNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-maven/${{steps.name.outputs.MVNNAME}}"
+            - uses: actions/addRunResult
+              with:
+                path: ${{steps.name.outputs.MVNNAME}}
+                type: maven
+            - id: uploadSbt
+              run: curl --fail -X PUT -T ${{steps.name.outputs.SBTNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-sbt/${{steps.name.outputs.SBTNAME}}"
+            - uses: actions/addRunResult
+              with:
+                path: ${{steps.name.outputs.SBTNAME}}
+                type: sbt
+            - id: uploadGradle
+              run: curl --fail -X PUT -T ${{steps.name.outputs.GRADLENAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-gradle/${{steps.name.outputs.GRADLENAME}}"
+            - uses: actions/addRunResult
+              with:
+                path: ${{steps.name.outputs.GRADLENAME}}
+                type: gradle
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
@@ -237,5 +262,17 @@ testcases:
       - result.systemoutjson ShouldHaveLength 1
   - name: Check that we have 1 run result of type terraformProvider
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=terraformProvider --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1
+  - name: Check that we have 1 run result of type terraformProvider
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=maven --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1
+  - name: Check that we have 1 run result of type terraformProvider
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=gradle --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1
+  - name: Check that we have 1 run result of type terraformProvider
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=sbt --format json"  
     assertions:
       - result.systemoutjson ShouldHaveLength 1

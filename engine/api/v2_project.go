@@ -23,7 +23,7 @@ func (api *API) getProjectsV2Handler() ([]service.RbacChecker, service.Handler) 
 			}
 
 			// For admin
-			if isAdmin(ctx) {
+			if isMaintainer(ctx) {
 				projects, err := project.LoadAll(ctx, api.mustDB(), api.Cache)
 				if err != nil {
 					return err
