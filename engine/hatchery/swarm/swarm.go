@@ -797,7 +797,14 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 				continue
 			}
 
-			endLog := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, c.Labels)
+			hatcheryData := hatchery.HatcheryDataServiceLog{
+				Name:         h.Name(),
+				HatcheryV2ID: h.V2HatcheryID,
+			}
+			if h.Service() != nil {
+				hatcheryData.ServiceID = h.Service().ID
+			}
+			endLog := hatchery.PrepareCommonLogMessage(hatcheryData, *jobIdentifiers, c.Labels)
 			endLog.Value = string("End of Job")
 			endLog.Signature.Timestamp = time.Now().UnixNano()
 

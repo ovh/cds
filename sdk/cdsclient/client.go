@@ -160,7 +160,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	return cli
 }
 
-func NewHatcheryServiceClient(ctx context.Context, clientConfig ServiceConfig, requestSign interface{}) (HatcheryServiceClient, []byte, string, error) {
+func NewHatcheryServiceClient(ctx context.Context, clientConfig ServiceConfig, requestSign interface{}) (HatcheryServiceClient, string, []byte, string, error) {
 	conf := Config{
 		Host:                               clientConfig.Host,
 		Retry:                              2,
@@ -197,13 +197,13 @@ retry:
 				goto retry
 			}
 		}
-		return nil, nil, "", err
+		return nil, "", nil, "", err
 	}
 	cli.config.SessionToken = res.Token
 	base64EncodedPubKey := headers.Get("X-Api-Pub-Signing-Key")
 	pubKey, err := base64.StdEncoding.DecodeString(base64EncodedPubKey)
 
-	return cli, pubKey, res.Region, newError(err)
+	return cli, res.Hatchery.ID, pubKey, res.Region, newError(err)
 }
 
 // NewServiceClient returns client for a service

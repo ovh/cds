@@ -94,7 +94,14 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 						continue
 					}
 
-					finalLog := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, labels)
+					hatcheryData := hatchery.HatcheryDataServiceLog{
+						Name:         h.Name(),
+						HatcheryV2ID: h.V2HatcheryID,
+					}
+					if h.Service() != nil {
+						hatcheryData.ServiceID = h.Service().ID
+					}
+					finalLog := hatchery.PrepareCommonLogMessage(hatcheryData, *jobIdentifiers, labels)
 					finalLog.Value = "End of Job"
 					finalLog.Signature.Timestamp = time.Now().UnixNano()
 

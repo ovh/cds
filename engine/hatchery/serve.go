@@ -30,6 +30,7 @@ type Common struct {
 	service.Common
 	Router                        *api.Router
 	Clientv2                      cdsclient.HatcheryServiceClient
+	V2HatcheryID                  string
 	mapServiceNextLineNumberMutex sync.Mutex
 	mapServiceNextLineNumber      map[string]int64
 	mapPendingWorkerCreation      *sdk.HatcheryPendingWorkerCreation
@@ -232,10 +233,11 @@ func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceCon
 		var err error
 		// The call below should return the sdk.Service from the signin
 		fmt.Printf("New Hatchery Client \n")
-		c.Clientv2, c.APIPublicKey, c.Region, err = cdsclient.NewHatcheryServiceClient(ctx, clientConfig, registerPayload)
+		c.Clientv2, c.V2HatcheryID, c.APIPublicKey, c.Region, err = cdsclient.NewHatcheryServiceClient(ctx, clientConfig, registerPayload)
 		if err != nil {
 			fmt.Printf("Waiting for CDS API (%v)...\n", err)
 		}
+
 		return err
 	}
 

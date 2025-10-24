@@ -98,7 +98,14 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 				continue
 			}
 
-			commonMessage := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, labels)
+			hatcheryData := hatchery.HatcheryDataServiceLog{
+				Name:         h.Name(),
+				HatcheryV2ID: h.V2HatcheryID,
+			}
+			if h.Service() != nil {
+				hatcheryData.ServiceID = h.Service().ID
+			}
+			commonMessage := hatchery.PrepareCommonLogMessage(hatcheryData, *jobIdentifiers, labels)
 
 			logsSplitted := strings.Split(string(logs), "\n")
 			for i := range logsSplitted {
