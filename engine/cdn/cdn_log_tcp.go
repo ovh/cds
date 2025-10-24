@@ -335,5 +335,18 @@ func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 		}
 		runCache.Set(fmt.Sprintf("hatchery-key-%d", s.ID), pk, gocache.DefaultExpiration)
 	}
+
+	// Load hatchery
+	hatcheries, err := s.Client.HatcheryList(ctx)
+	if err != nil {
+		return sdk.WrapError(sdk.ErrNotFound, "unable to find hatcheries")
+	}
+	for _, h := range hatcheries {
+		pk, err := jws.NewPublicKeyFromPEM(h.PublicKey)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		runCache.Set(fmt.Sprintf("hatchery-key-%s", h.ID), pk, gocache.DefaultExpiration)
+	}
 	return nil
 }

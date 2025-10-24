@@ -9,7 +9,13 @@ import (
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
-func PrepareCommonLogMessage(hatcheryServiceName string, hatcheryServiceID int64, jobIdentifiers JobIdentifiers, labels map[string]string) cdslog.Message {
+type HatcheryDataServiceLog struct {
+	ServiceID    int64
+	Name         string
+	HatcheryV2ID string
+}
+
+func PrepareCommonLogMessage(hatcheryData HatcheryDataServiceLog, jobIdentifiers JobIdentifiers, labels map[string]string) cdslog.Message {
 	commonMessage := cdslog.Message{}
 	if jobIdentifiers.IsJobV2() {
 		runNumber, _ := strconv.ParseInt(labels[LabelServiceRunNumber], 10, 64)
@@ -30,8 +36,8 @@ func PrepareCommonLogMessage(hatcheryServiceName string, hatcheryServiceID int64
 
 		if v, ok := labels[LabelServiceReqName]; ok && v != "" {
 			commonMessage.Signature.HatcheryService = &cdn.SignatureHatcheryService{
-				HatcheryName: hatcheryServiceName,
-				HatcheryID:   strconv.FormatInt(hatcheryServiceID, 10),
+				HatcheryName: hatcheryData.Name,
+				HatcheryID:   hatcheryData.HatcheryV2ID,
 				ServiceName:  labels[LabelServiceReqName],
 			}
 		}
@@ -51,8 +57,8 @@ func PrepareCommonLogMessage(hatcheryServiceName string, hatcheryServiceID int64
 		}
 		if v, ok := labels[LabelServiceReqName]; ok && v != "" {
 			commonMessage.Signature.Service = &cdn.SignatureService{
-				HatcheryID:      hatcheryServiceID,
-				HatcheryName:    hatcheryServiceName,
+				HatcheryID:      hatcheryData.ServiceID,
+				HatcheryName:    hatcheryData.Name,
 				RequirementID:   jobIdentifiers.JobIdentifiersV1.ServiceID,
 				RequirementName: labels[LabelServiceReqName],
 				WorkerName:      labels[LabelServiceWorker],
