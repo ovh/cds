@@ -26,6 +26,7 @@ import { RunResultsComponent } from './run/run-results.component';
 import { RunInfoComponent } from './run/run-info.component';
 import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
 import { RunGateComponent } from './run/run-gate.component';
+import { WorkflowV2GanttComponent } from './run/gantt/workflow-v2-gantt.component';
 
 @NgModule({
     declarations: [
@@ -52,7 +53,8 @@ import { RunGateComponent } from './run/run-gate.component';
         RunResultsComponent,
         RunSourcesComponent,
         RunTestComponent,
-        RunTestsComponent
+        RunTestsComponent,
+        WorkflowV2GanttComponent
     ],
     imports: [
         RouterModule,
