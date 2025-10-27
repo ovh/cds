@@ -270,7 +270,7 @@ func handleJob(ctx context.Context, hostname string, h Interface, jobID int64, c
 
 	//Check if hatchery is able to start a new worker
 	if !checkCapacities(currentCtx, h) {
-		log.Info(currentCtx, "hatchery %s is not able to provision new worker for job %v", h.Service().Name)
+		log.Info(currentCtx, "hatchery %s is not able to provision new worker for job %v", h.Name())
 		endTrace("no capacities", strconv.FormatInt(j.ID, 10))
 		return nil
 	}
@@ -486,7 +486,7 @@ func handleJobV2(ctx context.Context, h Interface, jobRunID string, cacheAttempt
 
 	//Check if hatchery is able to start a new worker
 	if !checkCapacities(ctx, h) {
-		log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
+		log.Info(ctx, "hatchery %s is not able to provision new worker", h.Name())
 		endTrace("no capacities", jobInfo.RunJob.ID)
 	}
 
