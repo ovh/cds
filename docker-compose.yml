@@ -8,22 +8,22 @@ services:
   cds-db:
     image: postgres:14.0
     environment:
-      POSTGRES_PASSWORD: cds
-      POSTGRES_USER: cds
-      POSTGRES_DB: cds
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME_STRONG_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER:-cds}
+      POSTGRES_DB: ${POSTGRES_DB:-cds}
     volumes:
       - cds-postgres-volume:/var/lib/postgresql/data
 
   cds-db-init:
     image: postgres:14.0
     command: >
-        sh -exc "PGPASSWORD=cds psql -h cds-db -p 5432 -U cds -d cds -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;\";"
+        sh -exc "PGPASSWORD=${POSTGRES_PASSWORD:-CHANGE_ME_STRONG_PASSWORD} psql -h cds-db -p 5432 -U ${POSTGRES_USER:-cds} -d ${POSTGRES_DB:-cds} -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION ${POSTGRES_USER:-cds};\";"
     links:
        - cds-db
 
   cds-cache:
     image: redis:alpine
-    command: redis-server --requirepass cds --save 60 1
+    command: redis-server --requirepass ${REDIS_PASSWORD:-CHANGE_ME_STRONG_REDIS_PASSWORD} --save 60 1
     restart: always
     volumes:
       - cds-redis-volume:/data
@@ -45,8 +45,8 @@ services:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: >
         sh -c "
-        /app/cds-engine-linux-amd64 database upgrade --db-host cds-db --db-user cds --db-password cds --db-name cds --db-schema public --db-sslmode disable --migrate-dir /app/sql/api;
-        /app/cds-engine-linux-amd64 database upgrade --db-host cds-db --db-user cds --db-password cds --db-name cds --db-schema cdn --db-sslmode disable --migrate-dir /app/sql/cdn;"
+        /app/cds-engine-linux-amd64 database upgrade --db-host cds-db --db-user ${POSTGRES_USER:-cds} --db-password ${POSTGRES_PASSWORD:-CHANGE_ME_STRONG_PASSWORD} --db-name ${POSTGRES_DB:-cds} --db-schema public --db-sslmode disable --migrate-dir /app/sql/api;
+        /app/cds-engine-linux-amd64 database upgrade --db-host cds-db --db-user ${POSTGRES_USER:-cds} --db-password ${POSTGRES_PASSWORD:-CHANGE_ME_STRONG_PASSWORD} --db-name ${POSTGRES_DB:-cds} --db-schema cdn --db-sslmode disable --migrate-dir /app/sql/cdn;"
     links:
        - cds-db
 
@@ -64,18 +64,18 @@ services:
         chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local /app/cdn-buffer /app/cdn-storage;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.artifact.local.baseDirectory=/app/artifacts;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.cache.redis.host=cds-cache:6379;
-        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.cache.redis.password=${REDIS_PASSWORD:-CHANGE_ME_STRONG_REDIS_PASSWORD};
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.database.host=cds-db;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.download.directory=/app;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.log.level=info;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.api.http.url=http://cds-api:8081;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.cache.redis.host=cds-cache:6379;
-        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.cache.redis.password=${REDIS_PASSWORD:-CHANGE_ME_STRONG_REDIS_PASSWORD};
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.database.host=cds-db;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.publicTCP=${HOSTNAME}:8090;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.buffers.local-buffer.local.path=/app/cdn-buffer;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.buffers.redis.redis.host=cds-cache:6379;
-        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.buffers.redis.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.buffers.redis.redis.password=${REDIS_PASSWORD:-CHANGE_ME_STRONG_REDIS_PASSWORD};
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.storages.local.local.path=/app/cdn-storage;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.URL=http://cds-cdn:8089;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml elasticsearch.api.http.url=http://cds-api:8081;
@@ -94,12 +94,12 @@ services:
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.dockerEngines.default.maxContainers=4;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.api.http.url=http://cds-api:8081;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.cache.redis.host=cds-cache:6379;
-        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.cache.redis.password=${REDIS_PASSWORD:-CHANGE_ME_STRONG_REDIS_PASSWORD};
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.url=http://cds-hooks:8083;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.api.http.url=http://cds-api:8081;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.basedir=/app/repositories;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.cache.redis.host=cds-cache:6379;
-        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.cache.redis.password=${REDIS_PASSWORD:-CHANGE_ME_STRONG_REDIS_PASSWORD};
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.URL=http://cds-repositories:8085;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml ui.api.http.url=http://cds-api:8081;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml ui.cdnURL=http://cds-cdn:8089;
@@ -107,7 +107,7 @@ services:
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml ui.hooksURL=http://cds-hooks:8083;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.api.http.url=http://cds-api:8081;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.cache.redis.host=cds-cache:6379;
-        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.cache.redis.password=${REDIS_PASSWORD:-CHANGE_ME_STRONG_REDIS_PASSWORD};
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.URL=http://cds-vcs:8084;
         echo '';
         echo '/!\\ Please run the export command BELOW, this will be useful to create admin user';

@@ -72,3 +72,7 @@ docs/content/cli/api/*
 # contrib vscode-cds
 contrib/vscode-cds/node_modules/
 contrib/vscode-cds/out/
+
+# environment variables with secrets
+.env
+.env.local
