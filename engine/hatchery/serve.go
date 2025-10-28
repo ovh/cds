@@ -42,7 +42,6 @@ func (c *Common) MaxHeartbeat() int {
 
 func (c *Common) Service() *sdk.Service {
 	return c.Common.ServiceInstance
-
 }
 
 func (c *Common) ServiceName() string {
@@ -425,7 +424,7 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 			}
 			srv, ok := h.(service.Service)
 			if !ok {
-				return fmt.Errorf("unable to get status from %s", h.Service().Name)
+				return fmt.Errorf("unable to get status from %s", h.Name())
 			}
 			status := srv.Status(ctx)
 			return service.WriteJSON(w, status, status.HTTPStatusCode())
