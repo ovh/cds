@@ -18,7 +18,13 @@ func (g *githubClient) Tag(ctx context.Context, fullname string, tagName string)
 	}
 	for _, t := range tags {
 		if t.Tag == tagName {
-			tag, err := g.TagFromSha(ctx, fullname, t.Sha)
+			tag, status, err := g.TagFromSha(ctx, fullname, t.Sha)
+
+			// lightweight tag: /git/tags/:sha is 404 → try commit
+			if status == http.StatusNotFound {
+				log.Info(ctx, "githubClient.Tag> 404 on /git/tags/%s, trying commit (lightweight tag)", t.Sha)
+				tag, err = g.tagFromCommit(ctx, fullname, t.Sha, tagName)
+			}
 			if err != nil {
 				return sdk.VCSTag{}, err
 			}
@@ -29,7 +35,7 @@ func (g *githubClient) Tag(ctx context.Context, fullname string, tagName string)
 }
 
 // Tags returns list of tags for a repo
-func (g *githubClient) TagFromSha(ctx context.Context, fullname string, tagSha string) (*sdk.VCSTag, error) {
+func (g *githubClient) TagFromSha(ctx context.Context, fullname string, tagSha string) (*sdk.VCSTag, int, error) {
 	var noEtag bool
 	var tag Tag
 
@@ -45,14 +51,14 @@ func (g *githubClient) TagFromSha(ctx context.Context, fullname string, tagSha s
 	status, body, _, err := g.get(ctx, path, opt)
 	if err != nil {
 		log.Warn(ctx, "githubClient.TagFromSha> Error %s", err)
-		return nil, err
+		return nil, status, err
 	}
 	if status >= 400 {
 		if status == http.StatusNotFound {
 			log.Debug(ctx, "githubClient.TagFromSha> status 404 return nil because no tags found")
-			return nil, nil
+			return nil, status, nil
 		}
-		return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+		return nil, status, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 	}
 
 	//Github may return 304 status because we are using conditional request with ETag based headers
@@ -61,13 +67,13 @@ func (g *githubClient) TagFromSha(ctx context.Context, fullname string, tagSha s
 		k := cache.Key("vcs", "github", "tag-sha", sdk.Hash512(g.OAuthToken+g.username), path)
 		if _, err := g.Cache.Get(k, &tag); err != nil {
 			log.Error(ctx, "cannot get from cache %s:%v", k, err)
-			return nil, err
+			return nil, status, err
 		}
 
 	} else {
 		if err := sdk.JSONUnmarshal(body, &tag); err != nil {
 			log.Warn(ctx, "githubClient.TagFromSha> Unable to parse github tags: %s", err)
-			return nil, err
+			return nil, status, err
 		}
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "tag-sha", sdk.Hash512(g.OAuthToken+g.username), path)
@@ -89,6 +95,51 @@ func (g *githubClient) TagFromSha(ctx context.Context, fullname string, tagSha s
 		Hash:      tag.Object.Sha,
 		Verified:  tag.Verification.Verified,
 		Signature: tag.Verification.Signature,
+	}, status, nil
+}
+
+// tagFromCommit builds a VCSTag from a commit (for lightweight tags)
+func (g *githubClient) tagFromCommit(ctx context.Context, fullname, sha, tagName string) (*sdk.VCSTag, error) {
+	path := "/repos/" + fullname + "/git/commits/" + sha
+
+	status, body, _, err := g.get(ctx, path, withETag)
+	if err != nil {
+		return nil, err
+	}
+	if status == http.StatusNotFound {
+		return nil, sdk.WrapError(sdk.ErrNotFound, "githubClient.tagFromCommit> commit not found")
+	}
+	if status >= 400 {
+		return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+	}
+
+	var c struct {
+		Sha     string `json:"sha"`
+		Message string `json:"message"`
+		Author  struct {
+			Name  string `json:"name"`
+			Email string `json:"email"`
+			Date  string `json:"date"`
+		} `json:"author"`
+	}
+
+	if err := sdk.JSONUnmarshal(body, &c); err != nil {
+		return nil, err
+	}
+
+	return &sdk.VCSTag{
+		Tag:     tagName,
+		Sha:     c.Sha,
+		Message: c.Message,
+		Tagger: sdk.VCSAuthor{
+			Name:        c.Author.Name,
+			Slug:        c.Author.Name,
+			Email:       c.Author.Email,
+			DisplayName: c.Author.Name,
+		},
+		// for lightweight tag (== not annotated), commit sha == target sha
+		Hash:     c.Sha,
+		Verified: false,
 	}, nil
 }
 
