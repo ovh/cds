@@ -57,6 +57,7 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 				wh.OperationStatus = ope.Status
 				wh.OperationUUID = ope.UUID
 				repositoryOperationCache[repoKeyUniqueKey] = ope
+				log.Info(ctx, "operation %s created to retrieve git info", ope.UUID)
 			} else {
 				wh.OperationStatus = existingOpe.Status
 				wh.OperationUUID = existingOpe.UUID
@@ -73,9 +74,15 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 				if err != nil {
 					return err
 				}
+				log.Info(ctx, "check operation %s status: %s", ope.UUID, ope.Status)
 				wh.LastCheck = time.Now().UnixMilli()
 				// Operation in progress : do nothing
 				if ope.Status == sdk.OperationStatusPending || ope.Status == sdk.OperationStatusProcessing {
+					if time.Now().UnixMilli()-ope.Date.UnixMilli() > MaxRetryDelayMilli {
+						wh.OperationStatus = sdk.OperationStatusError
+						wh.Error = "unable to retrieve git info: exceeded max retry delay"
+						wh.Status = sdk.HookEventWorkflowStatusError
+					}
 					continue
 				}
 				if err := s.manageRepositoryOperationCallback(ctx, ope, hre); err != nil {
@@ -103,7 +110,7 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 
 	if allFailed {
 		hre.Status = sdk.HookEventStatusError
-		hre.LastError = "All workflow hooks in error"
+		hre.LastError = hre.WorkflowHooks[0].Error
 	} else {
 		hre.Status = sdk.HookEventStatusWorkflow
 	}
