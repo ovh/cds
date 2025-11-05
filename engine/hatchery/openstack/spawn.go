@@ -31,8 +31,13 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
+	// Map the CDS size to the correct openstack flavor
+	flavorName, err := h.getFlavorName(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
+	if err != nil {
+		return err
+	}
 	// Get flavor for target model
-	flavor, err := h.flavor(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
+	flavor, err := h.flavor(flavorName)
 	if err != nil {
 		return err
 	}
@@ -182,6 +187,20 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		break
 	}
 	return nil
+}
+
+func (h *HatcheryOpenstack) getFlavorName(flavorFromJob string) (string, error) {
+	flavorName, has := h.Config.Flavors[strings.ToLower(flavorFromJob)]
+
+	if !has {
+		// Check in old mapping for backward compatibility
+		cdsSize, has := h.Config.OldFlavorsMapping[flavorFromJob]
+		if !has {
+			return "", sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery OldFlavorsMapping", flavorFromJob))
+		}
+		flavorName = h.Config.Flavors[strings.ToLower(cdsSize)]
+	}
+	return flavorName, nil
 }
 
 func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors.Flavor, model sdk.WorkerStarterWorkerModel) error {

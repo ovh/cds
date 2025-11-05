@@ -273,8 +273,8 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarte
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
 		}
-		if r.Type == sdk.FlavorRequirement && len(h.Config.AllowedFlavors) > 0 {
-			if !slices.Contains(h.Config.AllowedFlavors, r.Value) {
+		if r.Type == sdk.FlavorRequirement && len(h.Config.Flavors) > 0 {
+			if _, err := h.getFlavorName(r.Value); err != nil {
 				log.Debug(ctx, "CanSpawn> Job %s has an invalid flavor requirement: %q", jobID, r.Value)
 				return false
 			}
@@ -302,6 +302,15 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarte
 
 func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (canSpawn bool, finalErr error) {
 	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
+	if len(h.Config.Flavors) > 0 {
+		var err error
+		flavorName, err = h.getFlavorName(flavorName)
+		if err != nil {
+			log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID)
+			return
+		}
+	}
+
 	log.Debug(ctx, "CanAllocateResources> Job %s will require a %q flavor to start", jobID, flavorName)
 
 	defer func() {
@@ -311,11 +320,6 @@ func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.
 	flavor, err := h.flavor(flavorName)
 	if err != nil {
 		finalErr = err
-		return
-	}
-
-	if len(h.Config.AllowedFlavors) > 0 && !slices.Contains(h.Config.AllowedFlavors, flavor.Name) {
-		log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID)
 		return
 	}
 
