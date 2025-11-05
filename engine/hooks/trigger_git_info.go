@@ -76,9 +76,10 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 				}
 				log.Info(ctx, "check operation %s status: %s", ope.UUID, ope.Status)
 				wh.LastCheck = time.Now().UnixMilli()
+				wh.OperationRetry++
 				// Operation in progress : do nothing
 				if ope.Status == sdk.OperationStatusPending || ope.Status == sdk.OperationStatusProcessing {
-					if time.Now().UnixMilli()-ope.Date.UnixMilli() > MaxRetryDelayMilli {
+					if wh.OperationRetry >= OperationMaxRretry {
 						wh.OperationStatus = sdk.OperationStatusError
 						wh.Error = "unable to retrieve git info: exceeded max retry delay"
 						wh.Status = sdk.HookEventWorkflowStatusError

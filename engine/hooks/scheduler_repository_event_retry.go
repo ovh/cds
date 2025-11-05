@@ -14,7 +14,7 @@ import (
 
 const (
 	RetryDelayMilli    = 120000
-	MaxRetryDelayMilli = 600000
+	OperationMaxRretry = 10
 )
 
 // Get from queue task execution
