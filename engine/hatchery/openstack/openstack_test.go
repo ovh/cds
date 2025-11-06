@@ -40,6 +40,16 @@ func TestHatcheryOpenstack_WorkerModelsEnabled(t *testing.T) {
 	h := &HatcheryOpenstack{
 		Config: HatcheryConfiguration{
 			DefaultFlavor: "b2-7",
+			Flavors: map[string]string{
+				"xs": "d2-2",
+				"s":  "b2-7",
+				"l":  "b2-120",
+			},
+			OldFlavorsMapping: map[string]string{
+				"d2-2":   "xs",
+				"b2-7":   "s",
+				"b2-120": "l",
+			},
 		},
 	}
 	h.cache = NewCache(1, 1)
