@@ -219,6 +219,9 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 		return nil, err
 	}
 
+	log.Info(context.TODO(), "%+v", h.Config.Flavors)
+	log.Info(context.TODO(), "%+v", h.Config.OldFlavorsMapping)
+
 	filteredModels := make([]sdk.Model, 0, len(allModels))
 	for i := range allModels {
 		if allModels[i].Type != sdk.Openstack {
@@ -232,6 +235,8 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 			continue
 		}
 		allModels[i].ModelVirtualMachine.Flavor = flavor
+
+		log.Info(context.TODO(), "WorkerModelsEnabled> %q / %q", flavorFromModel, flavor)
 
 		// Required flavor should be available on target OpenStack project
 		if _, err := h.flavor(flavor); err != nil {
