@@ -225,9 +225,17 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 			continue
 		}
 
+		flavorFromModel := allModels[i].ModelVirtualMachine.Flavor
+		flavor, err := h.getFlavorName(flavorFromModel)
+		if err != nil {
+			log.Debug(context.TODO(), "WorkerModelsEnabled> no mapping found for flavor %q in model %s/%s", flavorFromModel, allModels[i].Group.Name, allModels[i].Name)
+			continue
+		}
+		allModels[i].ModelVirtualMachine.Flavor = flavor
+
 		// Required flavor should be available on target OpenStack project
-		if _, err := h.flavor(allModels[i].ModelVirtualMachine.Flavor); err != nil {
-			log.Debug(context.TODO(), "WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' not found", allModels[i].Group.Name, allModels[i].Name, allModels[i].ModelVirtualMachine.Flavor)
+		if _, err := h.flavor(flavor); err != nil {
+			log.Debug(context.TODO(), "WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' not found", allModels[i].Group.Name, allModels[i].Name, flavor)
 			continue
 		}
 
