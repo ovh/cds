@@ -228,10 +228,9 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 		flavorFromModel := allModels[i].ModelVirtualMachine.Flavor
 		flavor, err := h.getFlavorName(flavorFromModel)
 		if err != nil {
-			log.Debug(context.TODO(), "WorkerModelsEnabled> no mapping found for flavor %q in model %s/%s", flavorFromModel, allModels[i].Group.Name, allModels[i].Name)
+			log.Error(context.TODO(), "WorkerModelsEnabled> no mapping found for flavor %q in model %s/%s", flavorFromModel, allModels[i].Group.Name, allModels[i].Name)
 			continue
 		}
-		allModels[i].ModelVirtualMachine.Flavor = flavor
 
 		// Required flavor should be available on target OpenStack project
 		if _, err := h.flavor(flavor); err != nil {
@@ -244,8 +243,11 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 
 	// Sort models by required CPUs, this will allows to starts job without defined model on the smallest flavor.
 	sort.Slice(filteredModels, func(i, j int) bool {
-		flavorI, _ := h.flavor(filteredModels[i].ModelVirtualMachine.Flavor)
-		flavorJ, _ := h.flavor(filteredModels[j].ModelVirtualMachine.Flavor)
+		flavorIMapping, _ := h.getFlavorName(filteredModels[i].ModelVirtualMachine.Flavor)
+		flavorJMapping, _ := h.getFlavorName(filteredModels[j].ModelVirtualMachine.Flavor)
+
+		flavorI, _ := h.flavor(flavorIMapping)
+		flavorJ, _ := h.flavor(flavorJMapping)
 
 		// If same flavor sort by model name
 		if flavorI.Name == flavorJ.Name {
@@ -283,7 +285,7 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarte
 		}
 		if r.Type == sdk.FlavorRequirement && len(h.Config.Flavors) > 0 {
 			if _, err := h.getFlavorName(r.Value); err != nil {
-				log.Debug(ctx, "CanSpawn> Job %s has an invalid flavor requirement: %q", jobID, r.Value)
+				log.Error(ctx, "CanSpawn> Job %s has an invalid flavor requirement: %q", jobID, r.Value)
 				return false
 			}
 		}
@@ -310,12 +312,13 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarte
 
 func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (canSpawn bool, finalErr error) {
 	flavorFromJob := model.GetFlavor(requirements, h.Config.DefaultFlavor)
+	log.Debug(ctx, "CanAllocateResources> Job %s requires flavor %q to start", jobID, flavorFromJob)
 	flavorName := flavorFromJob
 	if len(h.Config.Flavors) > 0 {
 		var err error
 		flavorName, err = h.getFlavorName(flavorFromJob)
 		if err != nil {
-			log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID, flavorFromJob)
+			log.Error(ctx, "CanAllocateResources> %v", err)
 			return
 		}
 	}
