@@ -219,9 +219,6 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 		return nil, err
 	}
 
-	log.Info(context.TODO(), "%+v", h.Config.Flavors)
-	log.Info(context.TODO(), "%+v", h.Config.OldFlavorsMapping)
-
 	filteredModels := make([]sdk.Model, 0, len(allModels))
 	for i := range allModels {
 		if allModels[i].Type != sdk.Openstack {
@@ -235,8 +232,6 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 			continue
 		}
 		allModels[i].ModelVirtualMachine.Flavor = flavor
-
-		log.Info(context.TODO(), "WorkerModelsEnabled> %q / %q", flavorFromModel, flavor)
 
 		// Required flavor should be available on target OpenStack project
 		if _, err := h.flavor(flavor); err != nil {
@@ -314,12 +309,13 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarte
 }
 
 func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (canSpawn bool, finalErr error) {
-	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
+	flavorFromJob := model.GetFlavor(requirements, h.Config.DefaultFlavor)
+	flavorName := flavorFromJob
 	if len(h.Config.Flavors) > 0 {
 		var err error
-		flavorName, err = h.getFlavorName(flavorName)
+		flavorName, err = h.getFlavorName(flavorFromJob)
 		if err != nil {
-			log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID, flavorName)
+			log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID, flavorFromJob)
 			return
 		}
 	}
