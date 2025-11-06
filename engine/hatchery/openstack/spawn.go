@@ -191,10 +191,11 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 
 func (h *HatcheryOpenstack) getFlavorName(flavorFromJob string) (string, error) {
 	flavorName, has := h.Config.Flavors[strings.ToLower(flavorFromJob)]
-
+	log.Debug(context.Background(), "getFlavorName> %q -> %q : %v", flavorFromJob, flavorName, has)
 	if !has {
 		// Check in old mapping for backward compatibility
 		cdsSize, has := h.Config.OldFlavorsMapping[flavorFromJob]
+		log.Debug(context.Background(), "getFlavorName-backward> %q -> %q : %v", flavorFromJob, cdsSize, has)
 		if !has {
 			return "", sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery OldFlavorsMapping", flavorFromJob))
 		}
