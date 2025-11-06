@@ -319,7 +319,7 @@ func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.
 		var err error
 		flavorName, err = h.getFlavorName(flavorName)
 		if err != nil {
-			log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID)
+			log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID, flavorName)
 			return
 		}
 	}

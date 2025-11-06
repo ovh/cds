@@ -199,6 +199,7 @@ func (h *HatcheryOpenstack) getFlavorName(flavorFromJob string) (string, error) 
 			return "", sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery OldFlavorsMapping", flavorFromJob))
 		}
 		flavorName = h.Config.Flavors[strings.ToLower(cdsSize)]
+		log.Info(context.Background(), "flavor %q replaced by %q", flavorFromJob, flavorName)
 	}
 	return flavorName, nil
 }
