@@ -17,6 +17,10 @@
     </div>
 </ng-template>
 
+<ng-template #tabTimelineTemplate>
+    Timeline
+</ng-template>
+
 <ng-container *ngIf="workflowRun">
     <div class="content" [class.disableSelection]="resizing">
 
@@ -113,15 +117,20 @@
                 </nz-page-header-content>
             </nz-page-header>
             <div class="controls">
-                <button *ngIf="workflowRunIsTerminated" nz-button nzType="secondary" nzSize="large"
-                    title="Start new run" (click)="openRunStartDrawer()">Start new run</button>
-                <button *ngIf="workflowRunIsTerminated && hasJobsFailed" nz-button nzType="secondary" nzSize="large"
-                    title="Restart failed jobs" [nzLoading]="loading.restart" (click)="clickRestartJobs()">Restart
-                    failed jobs</button>
-                <button *ngIf="workflowRunIsActive" nz-button nzType="primary" nzSize="large" nzDanger
-                    title="Stop workflow run" [nzLoading]="loading.stop" (click)="clickStopRun()">Stop workflow
-                    run</button>
+                <!-- Action buttons -->
+                <div class="action-buttons">
+                    <button *ngIf="workflowRunIsTerminated" nz-button nzType="secondary" nzSize="large"
+                        title="Start new run" (click)="openRunStartDrawer()">Start new run</button>
+                    <button *ngIf="workflowRunIsTerminated && hasJobsFailed" nz-button nzType="secondary" nzSize="large"
+                        title="Restart failed jobs" [nzLoading]="loading.restart" (click)="clickRestartJobs()">Restart
+                        failed jobs</button>
+                    <button *ngIf="workflowRunIsActive" nz-button nzType="primary" nzSize="large" nzDanger
+                        title="Stop workflow run" [nzLoading]="loading.stop" (click)="clickStopRun()">Stop workflow
+                        run</button>
+                </div>
             </div>
+            
+            <!-- Graph View -->
             <app-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
                 [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
                 (onConfirmJobGate)="confirmJobGate($event)" (onSelectJobRun)="openPanel('job', $event)"
@@ -139,6 +148,18 @@
                     (onSelectResult)="openPanel('result', $event)"></app-run-results>
                 <app-run-tests *ngIf="selectedTab && selectedTab.key === 'tests'" [tests]="tests"
                     (onSelectTest)="openPanel('test', $event)"></app-run-tests>
+                <div *ngIf="selectedTab && selectedTab.key === 'timeline'" class="timeline-panel">
+                    <app-workflow-v2-gantt 
+                        [workflowRun]="workflowRun"
+                        [jobs]="jobs"
+                        [results]="results"
+                        [height]="400"
+                        (onJobSelect)="onGanttJobSelect($event)"
+                        (onHookClick)="openPanel('hook', $event)"
+                        (onResultClick)="onGanttResultClick($event)"
+                        #gantt>
+                    </app-workflow-v2-gantt>
+                </div>
             </div>
         </app-resizable-panel>
     </div>

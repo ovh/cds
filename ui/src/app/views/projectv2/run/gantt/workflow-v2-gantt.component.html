@@ -1,0 +1,89 @@
+<div class="workflow-v2-gantt">
+    <div class="canvas-container" #container>
+        <canvas #canvas></canvas>
+
+        <div class="loading-overlay" *ngIf="!rows || rows.length === 0">
+            <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+        </div>
+
+        <div class="tooltip" *ngIf="tooltip.visible" 
+             [style.left.px]="tooltip.x + 10" 
+             [style.top.px]="tooltip.y + 10">
+            <nz-card nzSize="small" nzTitle="Step Details">
+                <div class="step-info">
+                    <div class="step-header">
+                        <span nz-icon nzType="play-circle" nzTheme="outline"></span>
+                        {{ tooltip.jobName }}
+                        <nz-tag [nzColor]="getSegmentTypeColor(tooltip.segment?.type)">{{ tooltip.segment?.type }}</nz-tag>
+                    </div>
+                                        
+                    <div class="step-details">
+                        <div class="detail-row" *ngIf="tooltip.segment?.name">
+                            <div class="detail-label">
+                                <span nz-icon nzType="code" nzTheme="outline"></span>
+                                <strong>Step:</strong>
+                            </div>
+                            <div class="detail-value">
+                                <nz-tag nzColor="blue">{{ tooltip.segment.name }}</nz-tag>
+                            </div>
+                        </div>
+                        <div class="detail-row" *ngIf="tooltip.segment?.status">
+                            <div class="detail-label">
+                                <span nz-icon nzType="info-circle" nzTheme="outline"></span>
+                                <strong>Status:</strong>
+                            </div>
+                            <div class="detail-value">
+                                <nz-tag [nzColor]="getStatusTagColor(tooltip.segment.status)">{{ tooltip.segment.status }}</nz-tag>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">
+                                <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+                                <strong>Start:</strong>
+                            </div>
+                            <div class="detail-value">{{ tooltip.segment?.startTime | date:'HH:mm:ss' }}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">
+                                <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+                                <strong>End:</strong>
+                            </div>
+                            <div class="detail-value">{{ tooltip.segment?.endTime | date:'HH:mm:ss' }}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">
+                                <span nz-icon nzType="hourglass" nzTheme="outline"></span>
+                                <strong>Duration:</strong>
+                            </div>
+                            <div class="detail-value">{{ formatDuration(tooltip.segment?.endTime?.getTime() - tooltip.segment?.startTime?.getTime()) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </nz-card>
+        </div>
+
+        <div class="gate-popover" *ngIf="gatePopover.visible"
+             [style.left.px]="gatePopover.x + 10" 
+             [style.top.px]="gatePopover.y + 10">
+            <nz-card nzSize="small" nzTitle="Gate Details">
+                <div class="gate-info">                                        
+                    <div class="gate-inputs" *ngIf="getGateInputKeys().length > 0">
+                        <div class="input-list">
+                            <div class="input-item" *ngFor="let key of getGateInputKeys()">
+                                <div class="input-key">
+                                    <span nz-icon nzType="key" nzTheme="outline"></span>
+                                    <strong>{{ key }}:</strong>
+                                </div>
+                                <div class="input-value">{{ formatInputValue(gatePopover.gateInputs[key]) }} </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="no-inputs" *ngIf="getGateInputKeys().length === 0">
+                        <nz-empty nzNotFoundContent="No gate inputs available"></nz-empty>
+                    </div>
+                </div>
+            </nz-card>
+        </div>
+    </div>
+</div>

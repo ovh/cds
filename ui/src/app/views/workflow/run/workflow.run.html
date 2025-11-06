@@ -1,7 +1,10 @@
 <div *ngIf="workflowRunData && workflowRunData['id']" class="workflow-run">
-    <app-workflow-run-summary [(direction)]="direction" [project]="project"
+    <app-workflow-run-summary 
+        [(direction)]="direction" 
+        [project]="project"
         [class.above]="workflowRunData['status'] === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
+    
     <nz-row *ngIf="displayError">
         <nz-col [nzOffset]="2" [nzSpan]="20">
             <nz-collapse *ngIf="workflowRunData['infos']">
@@ -70,6 +73,8 @@
             </nz-collapse>
         </nz-col>
     </nz-row>
+    
+    <!-- Workflow Graph -->
     <div class="graph-wrapper">
         <app-workflow-graph
             *ngIf="workflowRunData['status'] !== pipelineStatusEnum.PENDING && workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data"

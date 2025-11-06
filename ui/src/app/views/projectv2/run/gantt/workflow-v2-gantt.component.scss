@@ -1,0 +1,254 @@
+@import '../../../../../common';
+
+.workflow-v2-gantt {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+
+    .canvas-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+
+        canvas {
+            display: block;
+            cursor: grab;
+
+            &:active {
+                cursor: grabbing;
+            }
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 10;
+        }
+
+        .tooltip {
+            position: absolute;
+            z-index: 1000;
+            pointer-events: none;
+            max-width: 400px;
+            min-width: 250px;
+
+            .step-info {
+                .step-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 8px;
+
+                    [nz-icon] {
+                        color: #1890ff;
+                        font-size: 16px;
+                    }
+
+                    strong {
+                        font-size: 16px;
+                        color: #262626;
+                    }
+                }
+
+                .step-details {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+
+                    .detail-row {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        gap: 12px;
+
+                        .detail-label {
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            font-size: 13px;
+                            color: #262626;
+                            min-width: 80px;
+
+                            [nz-icon] {
+                                color: #1890ff;
+                                font-size: 12px;
+                            }
+
+                            strong {
+                                font-weight: 600;
+                            }
+                        }
+
+                        .detail-value {
+                            font-size: 13px;
+                            color: #595959;
+                            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+                            text-align: right;
+                            flex: 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Dark theme support
+:host-context(.night) {
+    .workflow-v2-gantt {
+        background: #141414;
+
+        .canvas-container {
+            background: #141414;
+
+            .loading-overlay {
+                background: rgba(20, 20, 20, 0.9);
+            }
+        }
+    }
+}
+
+// Gate popover styles
+.gate-popover {
+    position: absolute;
+    z-index: 1000;
+    max-width: 400px;
+    min-width: 250px;
+
+    .gate-info {
+        .gate-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+
+            [nz-icon] {
+                color: #52c41a;
+                font-size: 16px;
+            }
+
+            strong {
+                font-size: 16px;
+                color: #262626;
+            }
+        }
+
+        .gate-inputs {
+            h4 {
+                margin: 0 0 12px 0;
+                font-size: 14px;
+                color: #595959;
+                font-weight: 600;
+            }
+
+            .input-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .input-item {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+
+                .input-key {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 13px;
+                    color: #262626;
+
+                    [nz-icon] {
+                        color: #1890ff;
+                        font-size: 12px;
+                    }
+
+                    strong {
+                        font-weight: 600;
+                    }
+                }
+
+                .input-value {
+                    margin-left: 18px;
+                    
+                    nz-tag {
+                        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+                        font-size: 12px;
+                        word-break: break-all;
+                        max-width: 100%;
+                        white-space: pre-wrap;
+                    }
+                }
+            }
+        }
+
+        .no-inputs {
+            padding: 20px 0;
+            text-align: center;
+        }
+    }
+}
+
+// Dark theme support for gate popover
+:host-context(.night) {
+    .gate-popover {
+        .gate-info {
+            .gate-header {
+                strong {
+                    color: #ffffff;
+                }
+            }
+
+            .gate-inputs {
+                h4 {
+                    color: rgba(255, 255, 255, 0.65);
+                }
+
+                .input-item {
+                    background: #1a1a1a;
+                    border-color: #303030;
+
+                    .input-key {
+                        color: rgba(255, 255, 255, 0.85);
+                    }
+                }
+            }
+        }
+    }
+
+    .tooltip {
+        .step-info {
+            .step-header {
+                strong {
+                    color: #ffffff;
+                }
+            }
+
+            .step-details {
+                .detail-row {
+                    background: #1a1a1a;
+                    border-color: #303030;
+
+                    .detail-label {
+                        color: rgba(255, 255, 255, 0.85);
+                    }
+
+                    .detail-value {
+                        color: rgba(255, 255, 255, 0.65);
+                    }
+                }
+            }
+        }
+    }
+}

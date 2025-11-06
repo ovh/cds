@@ -23,6 +23,7 @@ import { ToastService } from "app/shared/toast/ToastService";
 import { Clipboard } from '@angular/cdk/clipboard';
 import { GraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { Title } from "@angular/platform-browser";
+import { WorkflowV2GanttComponent } from "./gantt/workflow-v2-gantt.component";
 
 @Component({
     selector: 'app-projectv2-run',
@@ -33,8 +34,10 @@ import { Title } from "@angular/platform-browser";
 @AutoUnsubscribe()
 export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     @ViewChild('graph') graph: GraphComponent;
+    @ViewChild('gantt') gantt: WorkflowV2GanttComponent;
     @ViewChild('tabResultsTemplate') tabResultsTemplate: TemplateRef<any>;
     @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
+    @ViewChild('tabTimelineTemplate') tabTimelineTemplate: TemplateRef<any>;
     @ViewChild('shareLink') shareLink: any;
 
     workflowRun: V2WorkflowRun;
@@ -117,7 +120,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             }
         });
 
-        this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
+        this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe((resizing: boolean) => {
             this.resizing = resizing;
             this._cd.markForCheck();
         });
@@ -138,6 +141,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             title: 'Tests',
             key: 'tests',
             template: this.tabTestsTemplate
+        }, <Tab>{
+            title: 'Timeline',
+            key: 'timeline',
+            template: this.tabTimelineTemplate
         }];
         this._cd.markForCheck();
     }
@@ -310,7 +317,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         let params = new HttpParams();
         params = params.append('panel', `${type}:${encodeURI(data)}`);
-        this.selectedItemShareLink = `/project/${this.projectKey}/run/${this.workflowRun.id}?${params.toString()}`;
+        
+        // Create share link with base URL
+        const baseUrl = `/project/${this.projectKey}/run/${this.workflowRun.id}`;
+        this.selectedItemShareLink = `${baseUrl}?${params.toString()}`;
 
         this._cd.markForCheck();
     }
@@ -396,7 +406,6 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         if (this.graph) {
             this.graph.unSelect();
             if (!panelOpened) {
-                // Force resize to restore the previous transformation
                 this.graph.resize();
             }
         }
@@ -447,6 +456,17 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         await lastValueFrom(this._workflowService.stopJob(this.projectKey, this.workflowRun.id, id));
         this._messageService.success('Workflow run job stop', { nzDuration: 2000 });
         await this.load(this.workflowRun.id);
+    }
+
+    onGanttJobSelect(jobId: string): void {
+        // Open job panel with the job ID
+        this.openPanel('job', jobId);
+    }
+
+    onGanttResultClick(result: WorkflowRunResult): void {
+        // Select the result and open the result panel
+        this.selectedRunResult = result;
+        this.openPanel('result', result.id);
     }
 
     async onGateSubmit() {

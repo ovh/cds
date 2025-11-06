@@ -95,7 +95,8 @@ const projectRoutes: Routes = [
                             },
                             {
                                 path: ':workflowRunID',
-                                component: ProjectV2RunComponent
+                                component: ProjectV2RunComponent,
+                                data: { title: 'Workflow Run' }
                             }
                         ]
                     }
