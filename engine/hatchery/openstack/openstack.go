@@ -318,7 +318,7 @@ func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.
 		var err error
 		flavorName, err = h.getFlavorName(flavorFromJob)
 		if err != nil {
-			log.Error(ctx, "CanAllocateResources> %v", err)
+			finalErr = err
 			return
 		}
 	}

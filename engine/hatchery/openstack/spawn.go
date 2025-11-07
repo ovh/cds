@@ -42,6 +42,28 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return err
 	}
 
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		flavorInfo := sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Time:    time.Now(),
+			Message: fmt.Sprintf("worker %q will use the flavor %q", spawnArgs.WorkerName, flavorName),
+		}
+		if err = h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, flavorInfo); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	} else {
+		msg := sdk.SpawnMsg{
+			ID: sdk.MsgSpawnInfoHatcheryStartsFlavor.ID,
+			Args: []interface{}{
+				spawnArgs.WorkerName,
+				flavorName,
+			},
+		}
+		infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: msg}}
+		if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, spawnArgs.JobID, infos); err != nil {
+			log.Warn(ctx, "SpawnWorker> cannot client.sendSpawnInfo for job %d: %s", spawnArgs.JobID, err)
+		}
+	}
 	if err := h.checkSpawnLimits(ctx, flavor, spawnArgs.Model); err != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, err.Error())
@@ -142,7 +164,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		"worker":                     spawnArgs.WorkerName,
 		"hatchery_name":              h.Name(),
 		"register_only":              fmt.Sprintf("%t", spawnArgs.RegisterOnly),
-		"flavor":                     spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor),
+		"flavor":                     flavorName,
 		"model":                      spawnArgs.Model.GetOpenstackImage(),
 		"worker_model_path":          spawnArgs.Model.GetFullPath(),
 		"worker_model_last_modified": spawnArgs.Model.GetLastModified(),
@@ -195,12 +217,11 @@ func (h *HatcheryOpenstack) getFlavorName(flavorFromJob string) (string, error) 
 	if !has {
 		// Check in old mapping for backward compatibility
 		cdsSize, has := h.Config.OldFlavorsMapping[flavorFromJob]
-		log.Debug(context.Background(), "getFlavorName-backward> %q -> %q : %v", flavorFromJob, cdsSize, has)
 		if !has {
 			return "", sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery OldFlavorsMapping", flavorFromJob))
 		}
 		flavorName = h.Config.Flavors[strings.ToLower(cdsSize)]
-		log.Info(context.Background(), "flavor %q replaced by %q", flavorFromJob, flavorName)
+		log.Debug(context.Background(), "flavor %q replaced by %q", flavorFromJob, flavorName)
 	}
 	return flavorName, nil
 }
