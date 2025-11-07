@@ -32,10 +32,8 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 
 	// Map the CDS size to the correct openstack flavor
-	flavorName, err := h.getFlavorName(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
-	if err != nil {
-		return err
-	}
+	flavorName := h.getFlavorName(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
+
 	// Get flavor for target model
 	flavor, err := h.flavor(flavorName)
 	if err != nil {
@@ -211,19 +209,18 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	return nil
 }
 
-func (h *HatcheryOpenstack) getFlavorName(flavorFromJob string) (string, error) {
+func (h *HatcheryOpenstack) getFlavorName(flavorFromJob string) string {
 	flavorName, has := h.Config.Flavors[strings.ToLower(flavorFromJob)]
-	log.Debug(context.Background(), "getFlavorName> %q -> %q : %v", flavorFromJob, flavorName, has)
 	if !has {
 		// Check in old mapping for backward compatibility
 		cdsSize, has := h.Config.OldFlavorsMapping[flavorFromJob]
 		if !has {
-			return "", sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery OldFlavorsMapping", flavorFromJob))
+			return h.getFlavorName(h.Config.DefaultFlavor)
 		}
 		flavorName = h.Config.Flavors[strings.ToLower(cdsSize)]
 		log.Debug(context.Background(), "flavor %q replaced by %q", flavorFromJob, flavorName)
 	}
-	return flavorName, nil
+	return flavorName
 }
 
 func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors.Flavor, model sdk.WorkerStarterWorkerModel) error {
