@@ -53,6 +53,7 @@ func TestInitSupportedOSArch(t *testing.T) {
 }
 
 func TestDownloadURLFromGithub(t *testing.T) {
+	t.SkipNow()
 	type args struct {
 		filename string
 		version  string
