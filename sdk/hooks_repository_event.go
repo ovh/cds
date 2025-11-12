@@ -154,6 +154,7 @@ type HookRepositoryEvent struct {
 	SignKey                   string                         `json:"sign_key"`
 	SigningKeyOperation       string                         `json:"signing_key_operation"`
 	SigningKeyOperationStatus OperationStatus                `json:"signing_key_operation_status"`
+	SigningKeyOperationRetry  int64                          `json:"signing_key_operation_retry,omitempty"`
 	Initiator                 *V2Initiator                   `json:"initiator"`
 }
 
@@ -298,6 +299,7 @@ type HookRepositoryEventWorkflow struct {
 	OperationUUID   string          `json:"operation_uuid"`
 	OperationStatus OperationStatus `json:"operation_status"`
 	OperationError  string          `json:"operation_error,omitempty"`
+	OperationRetry  int64           `json:"operation_retry,omitempty"`
 	LastCheck       int64           `json:"last_check,omitempty"`
 }
 
