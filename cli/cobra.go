@@ -20,14 +20,14 @@ import (
 // ShellMode will os.Exit if false, display only exit code if true
 var ShellMode bool
 
-//  If Verbose is set to true, ExitOnError will try to display more detail about the potential errors
+// If Verbose is set to true, ExitOnError will try to display more detail about the potential errors
 var Verbose bool
 
 type stackTracer interface {
 	StackTrace() string
 }
 
-//ExitOnError if the error is not nil; exit the process with printing help functions and the error
+// ExitOnError if the error is not nil; exit the process with printing help functions and the error
 func ExitOnError(err error, helpFunc ...func() error) {
 	if err == nil {
 		return
@@ -441,6 +441,9 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			panic(fmt.Errorf("Unknown function type: %T", f))
 		}
 
+	}
+	cmd.Annotations = map[string]string{
+		"mcp_output": c.McpOutput,
 	}
 
 	return cmd

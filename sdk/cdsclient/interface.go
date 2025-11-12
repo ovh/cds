@@ -282,6 +282,8 @@ type ProjectClientV2 interface {
 	ProjectRunPurge(ctx context.Context, projectKey string) error
 	ProjectRunRetentionImport(ctx context.Context, projectKey string, prr sdk.ProjectRunRetention) error
 	ProjectRunRetentionGet(ctx context.Context, projectKey string) (*sdk.ProjectRunRetention, error)
+
+	ProjectV2List(ctx context.Context) ([]sdk.Project, error)
 }
 
 // ProjectClient exposes project related functions

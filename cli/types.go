@@ -101,6 +101,7 @@ type Command struct {
 	Aliases      []string
 	Hidden       bool
 	PreRun       func(c *Command, args *[]string) error
+	McpOutput    string
 }
 
 // CommandModifier is a function type to extend a command
