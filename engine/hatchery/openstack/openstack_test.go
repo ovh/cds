@@ -39,11 +39,12 @@ func TestHatcheryOpenstack_WorkerModelsEnabled(t *testing.T) {
 
 	h := &HatcheryOpenstack{
 		Config: HatcheryConfiguration{
-			DefaultFlavor: "b2-7",
+			DefaultFlavor: "XL",
 			Flavors: map[string]string{
 				"xs": "d2-2",
 				"s":  "b2-7",
 				"l":  "b2-120",
+				"xl": "b2-240",
 			},
 			OldFlavorsMapping: map[string]string{
 				"d2-2":   "xs",
@@ -99,89 +100,11 @@ func TestHatcheryOpenstack_WorkerModelsEnabled(t *testing.T) {
 	})
 
 	h.flavors = []flavors.Flavor{
-		{Name: "b2-7", VCPUs: 2},
+		{Name: "b2-7", VCPUs: 4},
 		{Name: "b2-30", VCPUs: 16},
 		{Name: "b2-120", VCPUs: 32},
-		{Name: "d2-2", VCPUs: 1},
-	}
-
-	// Only model that match a known flavor should be returned and sorted by CPUs asc
-	ms, err := h.WorkerModelsEnabled()
-	require.NoError(t, err)
-	require.Len(t, ms, 3)
-	assert.Equal(t, "my-model-3", ms[0].Name)
-	assert.Equal(t, "my-model-5", ms[1].Name)
-	assert.Equal(t, "my-model-2", ms[2].Name)
-}
-
-func TestHatcheryOpenstack_WorkerModelsEnabled_BackwardCompatibility(t *testing.T) {
-	log.Factory = log.NewTestingWrapper(t)
-
-	h := &HatcheryOpenstack{
-		Config: HatcheryConfiguration{
-			DefaultFlavor: "b3-7",
-			Flavors: map[string]string{
-				"xs": "d2-4",
-				"s":  "b3-8",
-				"l":  "b3-32",
-			},
-			OldFlavorsMapping: map[string]string{
-				"d2-2":   "xs",
-				"b2-7":   "s",
-				"b2-120": "l",
-			},
-		},
-	}
-	h.cache = NewCache(1, 1)
-
-	ctrl := gomock.NewController(t)
-	mockClient := mock_cdsclient.NewMockInterface(ctrl)
-	h.Client = mockClient
-	t.Cleanup(func() { ctrl.Finish() })
-
-	mockClient.EXPECT().WorkerModelEnabledList().DoAndReturn(func() ([]sdk.Model, error) {
-		return []sdk.Model{
-			{
-				ID:    1,
-				Type:  sdk.Docker,
-				Name:  "my-model-1",
-				Group: &sdk.Group{ID: 1, Name: "mygroup"},
-			},
-			{
-				ID:                  2,
-				Type:                sdk.Openstack,
-				Name:                "my-model-2",
-				Group:               &sdk.Group{ID: 1, Name: "mygroup"},
-				ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "b2-120"},
-			},
-			{
-				ID:                  3,
-				Type:                sdk.Openstack,
-				Name:                "my-model-3",
-				Group:               &sdk.Group{ID: 1, Name: "mygroup"},
-				ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "b2-7"},
-			},
-			{
-				ID:                  4,
-				Type:                sdk.Openstack,
-				Name:                "my-model-4",
-				Group:               &sdk.Group{ID: 1, Name: "mygroup"},
-				ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "unknown"},
-			},
-			{
-				ID:                  5,
-				Type:                sdk.Openstack,
-				Name:                "my-model-5",
-				Group:               &sdk.Group{ID: 1, Name: "mygroup"},
-				ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "d2-2"},
-			},
-		}, nil
-	})
-
-	h.flavors = []flavors.Flavor{
-		{Name: "d2-4", VCPUs: 1},
-		{Name: "b3-8", VCPUs: 2},
-		{Name: "b3-32", VCPUs: 16},
+		{Name: "d2-2", VCPUs: 2},
+		{Name: "s1-4", VCPUs: 1},
 	}
 
 	// Only model that match a known flavor should be returned and sorted by CPUs asc
@@ -191,6 +114,88 @@ func TestHatcheryOpenstack_WorkerModelsEnabled_BackwardCompatibility(t *testing.
 	assert.Equal(t, "my-model-5", ms[0].Name)
 	assert.Equal(t, "my-model-3", ms[1].Name)
 	assert.Equal(t, "my-model-2", ms[2].Name)
+}
+
+func TestHatcheryOpenstack_WorkerModelsEnabled_BackwardCompatibility(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	h := &HatcheryOpenstack{
+		Config: HatcheryConfiguration{
+			DefaultFlavor: "XXS",
+			Flavors: map[string]string{
+				"xxs": "s1-4",
+				"xs":  "d2-4",
+				"s":   "b3-8",
+				"l":   "b3-32",
+			},
+			OldFlavorsMapping: map[string]string{
+				"d2-2":   "xs",
+				"b2-7":   "s",
+				"b2-120": "l",
+			},
+		},
+	}
+	h.cache = NewCache(1, 1)
+
+	ctrl := gomock.NewController(t)
+	mockClient := mock_cdsclient.NewMockInterface(ctrl)
+	h.Client = mockClient
+	t.Cleanup(func() { ctrl.Finish() })
+
+	mockClient.EXPECT().WorkerModelEnabledList().DoAndReturn(func() ([]sdk.Model, error) {
+		return []sdk.Model{
+			{
+				ID:    1,
+				Type:  sdk.Docker,
+				Name:  "my-model-1",
+				Group: &sdk.Group{ID: 1, Name: "mygroup"},
+			},
+			{
+				ID:                  2,
+				Type:                sdk.Openstack,
+				Name:                "my-model-2",
+				Group:               &sdk.Group{ID: 1, Name: "mygroup"},
+				ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "b2-120"},
+			},
+			{
+				ID:                  3,
+				Type:                sdk.Openstack,
+				Name:                "my-model-3",
+				Group:               &sdk.Group{ID: 1, Name: "mygroup"},
+				ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "b2-7"},
+			},
+			{
+				ID:                  4,
+				Type:                sdk.Openstack,
+				Name:                "my-model-4",
+				Group:               &sdk.Group{ID: 1, Name: "mygroup"},
+				ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "unknown"},
+			},
+			{
+				ID:                  5,
+				Type:                sdk.Openstack,
+				Name:                "my-model-5",
+				Group:               &sdk.Group{ID: 1, Name: "mygroup"},
+				ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "d2-2"},
+			},
+		}, nil
+	})
+
+	h.flavors = []flavors.Flavor{
+		{Name: "s1-4", VCPUs: 1},
+		{Name: "d2-4", VCPUs: 2},
+		{Name: "b3-8", VCPUs: 4},
+		{Name: "b3-32", VCPUs: 16},
+	}
+
+	// Only model that match a known flavor should be returned and sorted by CPUs asc
+	ms, err := h.WorkerModelsEnabled()
+	require.NoError(t, err)
+	require.Len(t, ms, 4)
+	assert.Equal(t, "my-model-4", ms[0].Name)
+	assert.Equal(t, "my-model-5", ms[1].Name)
+	assert.Equal(t, "my-model-3", ms[2].Name)
+	assert.Equal(t, "my-model-2", ms[3].Name)
 }
 
 func TestHatcheryOpenstack_checkOverrideImagesUsername(t *testing.T) {
