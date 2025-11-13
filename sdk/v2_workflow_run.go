@@ -26,30 +26,31 @@ const (
 )
 
 type V2WorkflowRunHookRequest struct {
-	HookEventID        string                 `json:"hook_event_id"`
-	DeprecatedUserID   string                 `json:"user_id"` // Deprecated
-	EventName          WorkflowHookEventName  `json:"event_name"`
-	Ref                string                 `json:"ref,omitempty"`
-	Sha                string                 `json:"sha,omitempty"`
-	PullrequestID      int64                  `json:"pr_id,omitempty"`
-	PullrequestToRef   string                 `json:"pr_to_ref,omitempty"`
-	CommitMessage      string                 `json:"commit_message,omitempty"`
-	CommitAuthor       string                 `json:"commit_author,omitempty"`
-	CommitAuthorEmail  string                 `json:"commit_author_email,omitempty"`
-	Payload            map[string]interface{} `json:"payload"`
-	HookType           string                 `json:"hook_type"`
-	EntityUpdated      string                 `json:"entity_updated"`
-	SemverCurrent      string                 `json:"semver_current"`
-	SemverNext         string                 `json:"semver_next"`
-	ChangeSets         []string               `json:"changesets"`
-	Cron               string                 `json:"cron"`
-	CronTimezone       string                 `json:"cron_timezone"`
-	DeprecatedAdminMFA bool                   `json:"admin_mfa"` // Deprecated
-	WorkflowRun        string                 `json:"workflow_run"`
-	WorkflowRunID      string                 `json:"workflow_run_id"`
-	WebhookID          string                 `json:"webhook_id"`
-	Initiator          *V2Initiator           `json:"initiator"`
-	TargetRepository   string                 `json:"target_repository"`
+	HookEventID        string                                        `json:"hook_event_id"`
+	DeprecatedUserID   string                                        `json:"user_id"` // Deprecated
+	EventName          WorkflowHookEventName                         `json:"event_name"`
+	Ref                string                                        `json:"ref,omitempty"`
+	Sha                string                                        `json:"sha,omitempty"`
+	PullrequestID      int64                                         `json:"pr_id,omitempty"`
+	PullrequestToRef   string                                        `json:"pr_to_ref,omitempty"`
+	CommitMessage      string                                        `json:"commit_message,omitempty"`
+	CommitAuthor       string                                        `json:"commit_author,omitempty"`
+	CommitAuthorEmail  string                                        `json:"commit_author_email,omitempty"`
+	Payload            map[string]interface{}                        `json:"payload"`
+	HookType           string                                        `json:"hook_type"`
+	EntityUpdated      string                                        `json:"entity_updated"`
+	SemverCurrent      string                                        `json:"semver_current"`
+	SemverNext         string                                        `json:"semver_next"`
+	ChangeSets         []string                                      `json:"changesets"`
+	Cron               string                                        `json:"cron"`
+	CronTimezone       string                                        `json:"cron_timezone"`
+	DeprecatedAdminMFA bool                                          `json:"admin_mfa"` // Deprecated
+	WorkflowRun        string                                        `json:"workflow_run"`
+	WorkflowRunID      string                                        `json:"workflow_run_id"`
+	WebhookID          string                                        `json:"webhook_id"`
+	Initiator          *V2Initiator                                  `json:"initiator"`
+	TargetRepository   string                                        `json:"target_repository"`
+	JobInputs          map[string]V2WorkflowRunManualRequestJobInput `json:"job_inputs,omitempty"`
 }
 
 type V2WorkflowRun struct {
