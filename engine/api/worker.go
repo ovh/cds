@@ -36,8 +36,6 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 			return err
 		}
 
-		log.Info(ctx, "RegisterWorker> Registering worker %+v", registrationForm.BinaryCapabilities)
-
 		// Check that the worker can authentify on CDS API
 		workerTokenFromHatchery, err := workerauth.VerifyToken(ctx, api.mustDB(), jwt)
 		if err != nil {

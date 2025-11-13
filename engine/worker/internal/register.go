@@ -27,8 +27,6 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 	form.OS = sdk.GOOS
 	form.Arch = sdk.GOARCH
 
-	log.Info(ctx, ">>>>>>>> %+v", form.BinaryCapabilities)
-
 	worker, uptodate, err := w.client.WorkerRegister(context.Background(), w.cfg.APIToken, form)
 	if err != nil {
 		return sdk.WithStack(err)
