@@ -2303,3 +2303,157 @@ func TestRunManualJob_GateArrayMultipleValuesButWrong(t *testing.T) {
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 400, w.Code)
 }
+
+func TestPostWorkflowRunHandler_JobInputs(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	e := sdk.Entity{
+		Name:                sdk.RandomString(10),
+		Type:                sdk.EntityTypeWorkflow,
+		ProjectKey:          proj.Key,
+		Ref:                 "refs/heads/master",
+		Commit:              "HEAD",
+		ProjectRepositoryID: repo.ID,
+		Head:                true,
+		Data: `name: MyFirstWorkflow
+gates:
+  mygate:
+    if: gate.zone != ''
+    inputs:
+      zone:
+        type: string
+jobs:
+  jobNoGate:
+    name: This is my first job
+    worker_model: buildpack-deps-buster
+    region: default
+    steps:
+      - run: |-
+          echo "It is my first step"
+  jobWithGate:
+    gate: mygate
+    name: This is my first job
+    worker_model: buildpack-deps-buster
+    region: default
+    steps:
+      - run: |-
+          echo "It is my first step"
+  jobWithNeeds:
+    gate: mygate
+    needs: [jobWithGate]
+    name: This is my first job
+    worker_model: buildpack-deps-buster
+    region: default
+    steps:
+      - run: |-
+          echo "It is my first step"`,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &e))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	s2, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		_ = services.Delete(db, s2)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/manual", gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/"+repo.Name+"/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				b := &sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					ID:           "refs/heads/master",
+					LatestCommit: "HEAD",
+				}
+				*(out.(*sdk.VCSBranch)) = *b
+				return nil, 200, nil
+			},
+		).AnyTimes()
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             e.Name,
+	}
+
+	payload := sdk.V2WorkflowRunManualRequest{
+		Branch: "main",
+		Sha:    "123456",
+	}
+
+	tests := []struct {
+		name   string
+		inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+		err    string
+	}{
+		{
+			name: "Job with no gate",
+			inputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+				"jobNoGate": {
+					"zone": "zone1",
+				},
+			},
+			err: `unable to send input to a job without a gate \"jobNoGate\"`,
+		},
+		{
+			name: "Non root job",
+			inputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+				"jobWithNeeds": {
+					"zone": "zone1",
+				},
+			},
+			err: `unable to send input to a non root job \"jobWithNeeds\"`,
+		},
+		{
+			name: "Non existing job",
+			inputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+				"unknown": {
+					"zone": "zone1",
+				},
+			},
+			err: `job \"unknown\" not found in workflow`,
+		},
+		{
+			name: "wrong inputs",
+			inputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+				"jobWithGate": {
+					"zaune": "zone1",
+				},
+			},
+			err: `input \"zaune\" not found in gate \"mygate\" of job \"jobWithGate\"`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			payload.JobInputs = tt.inputs
+
+			uri := api.Router.GetRouteV2("POST", api.postWorkflowRunV2Handler, vars)
+			test.NotEmpty(t, uri)
+			payload.JobInputs = tt.inputs
+			req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, payload)
+			w := httptest.NewRecorder()
+			api.Router.Mux.ServeHTTP(w, req)
+			require.Equal(t, 400, w.Code)
+			require.Contains(t, w.Body.String(), tt.err)
+		})
+	}
+}

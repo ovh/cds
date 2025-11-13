@@ -199,6 +199,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 			TargetCommit:     runRequest.UserRequest.Sha,
 			TargetBranch:     runRequest.UserRequest.Branch,
 			TargetTag:        runRequest.UserRequest.Tag,
+			JobInputs:        runRequest.UserRequest.JobInputs,
 		},
 		DeprecatedAdminMFA: runRequest.AdminMFA,
 	}

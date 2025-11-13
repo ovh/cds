@@ -188,6 +188,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				case sdk.WorkflowHookTypeManual:
 					// Manual run can override repo and vcs
 					runRequest.TargetRepository = wh.Data.RepositoryName
+					runRequest.JobInputs = hre.ExtractData.Manual.JobInputs
 				}
 
 				wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,

@@ -1365,6 +1365,40 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				}
 			}
 
+			// Check job inputs regarding workflow definition
+			if runRequest.JobInputs != nil {
+				var wk sdk.V2Workflow
+				if err := yaml.Unmarshal([]byte(workflowEntity.Data), &wk); err != nil {
+					return err
+				}
+				for jobID, inputs := range runRequest.JobInputs {
+					// Retrieve job
+					job, exist := wk.Jobs[jobID]
+					if !exist {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %q not found in workflow %q", jobID, workflowName)
+					}
+					// Check gate
+					if job.Gate == "" {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to send input to a job without a gate %q", jobID)
+					}
+					// Check root job
+					if len(job.Needs) > 0 {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to send input to a non root job %q", jobID)
+					}
+					// Check job in a root stage
+					if job.Stage != "" && len(wk.Stages[job.Stage].Needs) > 0 {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to send input to a non root job %q", jobID)
+					}
+					// Check that gate inputs exist
+					for inputName := range inputs {
+						gate := wk.Gates[job.Gate]
+						if _, has := gate.Inputs[inputName]; !has {
+							return sdk.NewErrorFrom(sdk.ErrInvalidData, "input %q not found in gate %q of job %q", inputName, job.Gate, jobID)
+						}
+					}
+				}
+			}
+
 			hookRequest := sdk.HookManualWorkflowRun{
 				UserRequest:    runRequest,
 				Project:        proj.Key,
@@ -1466,6 +1500,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		DeprecatedUserID:   initiator.UserID,         // Deprecated
 		DeprecatedAdminMFA: initiator.IsAdminWithMFA, // Deprecated
 		DeprecatedUsername: initiator.Username(),     // Deprecated
+		RunJobEvent:        make([]sdk.V2WorkflowRunJobEvent, 0, len(runRequest.JobInputs)),
 	}
 
 	wrNumber, err := workflow_v2.WorkflowRunNextNumber(api.mustDB(), repo.ID, wk.Name)
@@ -1475,6 +1510,16 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	wr.RunNumber = wrNumber
 
 	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
+
+	for jobID, inputs := range runRequest.JobInputs {
+		wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
+			Inputs:     inputs,
+			UserID:     initiator.UserID,
+			Username:   initiator.Username(),
+			JobID:      jobID,
+			RunAttempt: 1,
+		})
+	}
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
