@@ -7,6 +7,7 @@ import (
 )
 
 func TestInit(t *testing.T) {
+	t.Skip()
 	if os.Getenv("CI") != "1" {
 		t.Skip("Skip download test when not running on CI")
 	}

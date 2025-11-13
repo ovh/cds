@@ -1,6 +1,6 @@
 module github.com/ovh/cds
 
-go 1.24
+go 1.24.3
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1-0.20220530220844-359c771ce3d2
@@ -27,7 +27,7 @@ require (
 	github.com/eapache/go-resiliency v1.3.0
 	github.com/fatih/color v1.18.0
 	github.com/fsamin/go-dump v1.8.0
-	github.com/fsamin/go-repo v0.8.1
+	github.com/fsamin/go-repo v0.10.0
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/go-gorp/gorp v2.0.0+incompatible
@@ -112,6 +112,7 @@ require (
 	gopkg.in/spacemonkeygo/httpsig.v0 v0.0.0-20170228231032-6732593ec966
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.14.2
 	k8s.io/api v0.29.1
 	k8s.io/apimachinery v0.29.1
@@ -318,7 +319,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.29.0 // indirect
 	k8s.io/cli-runtime v0.29.0 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
