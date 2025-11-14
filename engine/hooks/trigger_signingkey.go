@@ -72,6 +72,8 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		hre.SigningKeyOperationStatus = ope.Status
 		hre.SigningKeyOperation = ope.UUID
 
+		log.Info(ctx, "operation %s created to retrieve signing key", ope.UUID)
+
 		// For repository webhook signin operation == gitinfo operation
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
@@ -99,9 +101,24 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 				if err != nil {
 					return err
 				}
+				log.Info(ctx, "check operation %s status: %s", ope.UUID, ope.Status)
+				hre.SigningKeyOperationRetry++
 				// Operation in progress : do nothing
 				if ope.Status == sdk.OperationStatusPending || ope.Status == sdk.OperationStatusProcessing {
-					return nil
+					// If operation last more than the maximum expected ( n minutes), failed the event
+					if hre.SigningKeyOperationRetry >= OperationMaxRretry {
+						hre.Status = sdk.HookEventStatusError
+						hre.LastError = "unable to retrieve signing key: exceeded max retry delay"
+						if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+							return err
+						}
+						if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
+							return err
+						}
+					} else {
+						// return and wait
+						return nil
+					}
 				}
 
 				// Update hook repository event with operation
