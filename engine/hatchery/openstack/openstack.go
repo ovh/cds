@@ -225,9 +225,12 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 			continue
 		}
 
+		flavorFromModel := allModels[i].ModelVirtualMachine.Flavor
+		flavor := h.getFlavorName(flavorFromModel)
+
 		// Required flavor should be available on target OpenStack project
-		if _, err := h.flavor(allModels[i].ModelVirtualMachine.Flavor); err != nil {
-			log.Debug(context.TODO(), "WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' not found", allModels[i].Group.Name, allModels[i].Name, allModels[i].ModelVirtualMachine.Flavor)
+		if _, err := h.flavor(flavor); err != nil {
+			log.Debug(context.TODO(), "WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' not found", allModels[i].Group.Name, allModels[i].Name, flavor)
 			continue
 		}
 
@@ -236,8 +239,11 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 
 	// Sort models by required CPUs, this will allows to starts job without defined model on the smallest flavor.
 	sort.Slice(filteredModels, func(i, j int) bool {
-		flavorI, _ := h.flavor(filteredModels[i].ModelVirtualMachine.Flavor)
-		flavorJ, _ := h.flavor(filteredModels[j].ModelVirtualMachine.Flavor)
+		flavorIMapping := h.getFlavorName(filteredModels[i].ModelVirtualMachine.Flavor)
+		flavorJMapping := h.getFlavorName(filteredModels[j].ModelVirtualMachine.Flavor)
+
+		flavorI, _ := h.flavor(flavorIMapping)
+		flavorJ, _ := h.flavor(flavorJMapping)
 
 		// If same flavor sort by model name
 		if flavorI.Name == flavorJ.Name {
@@ -273,12 +279,6 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarte
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
 		}
-		if r.Type == sdk.FlavorRequirement && len(h.Config.AllowedFlavors) > 0 {
-			if !slices.Contains(h.Config.AllowedFlavors, r.Value) {
-				log.Debug(ctx, "CanSpawn> Job %s has an invalid flavor requirement: %q", jobID, r.Value)
-				return false
-			}
-		}
 	}
 
 	// Check required binaries according config if not model was set
@@ -301,21 +301,14 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model sdk.WorkerStarte
 }
 
 func (h *HatcheryOpenstack) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (canSpawn bool, finalErr error) {
-	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
-	log.Debug(ctx, "CanAllocateResources> Job %s will require a %q flavor to start", jobID, flavorName)
-
+	flavorFromJob := model.GetFlavor(requirements, h.Config.DefaultFlavor)
 	defer func() {
 		log.Info(ctx, "CanAllocateResources> Job %s can spawn on the Hatchery: %t", jobID, canSpawn)
 	}()
 
-	flavor, err := h.flavor(flavorName)
+	flavor, err := h.flavor(h.getFlavorName(flavorFromJob))
 	if err != nil {
 		finalErr = err
-		return
-	}
-
-	if len(h.Config.AllowedFlavors) > 0 && !slices.Contains(h.Config.AllowedFlavors, flavor.Name) {
-		log.Debug(ctx, "CanAllocateResources> Job %s has a flavor requirement %q that is not allowed for the Hatchery", jobID)
 		return
 	}
 
