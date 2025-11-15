@@ -63,7 +63,7 @@
     "immutable": "4.0.0",
     "jquery": "3.6.4",
     "js-beautify": "1.8.9",
-    "js-yaml": "3.13.1",
+    "js-yaml": "4.1.1",
     "jsonschema": "1.2.11",
     "jsrsasign": "11.0.0",
     "lodash-es": "4.17.21",
