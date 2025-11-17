@@ -529,7 +529,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/restart", nil, r.POSTv2(api.postRestartWorkflowRunHandler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/infos", nil, r.GETv2(api.getWorkflowRunInfoV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/stop", nil, r.POSTv2(api.postStopWorkflowRunHandler))
-	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job", nil, r.GETv2(api.getWorkflowRunJobsV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job", nil, r.GETv2(api.getWorkflowRunJobsV2Handler), r.POSTv2(api.postStartJobWorkflowRunHandler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/result", nil, r.GETv2(api.getWorkflowRunResultsV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job/{jobRunID}", nil, r.GETv2(api.getWorkflowRunJobHandler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job/{jobRunID}/infos", nil, r.GETv2(api.getWorkflowRunJobInfosHandler))
