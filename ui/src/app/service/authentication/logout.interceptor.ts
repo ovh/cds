@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 import { NavigationExtras, Router } from '@angular/router';
-import { Observable, throwError as observableThrowError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 @Injectable()
@@ -30,7 +30,7 @@ export class LogoutInterceptor implements HttpInterceptor {
                             this._router.navigate(['/auth/signin'], navigationExtras);
                         });
                     }
-                    return observableThrowError(e);
+                    return throwError(() => e);
                 }
             }));
     }

@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
-import { Observable, throwError as observableThrowError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError, filter } from 'rxjs/operators';
 
 @Injectable()
@@ -29,27 +29,27 @@ export class ErrorInterceptor implements HttpInterceptor {
                 if (e instanceof HttpErrorResponse) {
                     if (e.status === 0) {
                         this._toast.error('API Unreachable', '');
-                        return observableThrowError(e);
+                        return throwError(() => e);
                     }
 
                     // ignore error on auth/me used for auth pages and on cdscdn
                     if (req.url.indexOf('auth/me') !== -1 || req.url.indexOf('cdscdn/item') !== -1) {
-                        return observableThrowError(e);
+                        return throwError(() => e);
                     }
 
                     // ignore 404 errors for /v2/project routes
                     if (e.status === 404 && req.url.indexOf('/project') !== -1) {
-                        return observableThrowError(e);
+                        return throwError(() => e);
                     }
 
                     // ignore 403 errors for /queue/workflows/<job-id>/infos routes
                     if (e.status === 403 && /^.*\/queue\/workflows\/[0-9]+\/infos$/.test(req.url)) {
-                        return observableThrowError(e);
+                        return throwError(() => e);
                     }
 
                     // error formatted from CDS API
                     if (!e.error) {
-                        return observableThrowError(e);
+                        return throwError(() => e);
                     }
 
                     if (e.error.message) {
@@ -67,7 +67,7 @@ export class ErrorInterceptor implements HttpInterceptor {
                             }
                         }
                         this._toast.errorHTTP(e.status, e.error.message, e.error.from, e.error.request_id);
-                        return observableThrowError(e);
+                        return throwError(() => e);
                     }
 
                     if (Array.isArray(e.error)) {
@@ -77,14 +77,14 @@ export class ErrorInterceptor implements HttpInterceptor {
                         } catch (e) {
                             this._toast.error(e.statusText, this._translate.instant('common_error'));
                         }
-                        return observableThrowError(e);
+                        return throwError(() => e);
                     }
 
                     this._toast.error(e.statusText, this._translate.instant('common_error'));
-                    return observableThrowError(e);
+                    return throwError(() => e);
                 }
 
-                return observableThrowError(e);
+                return throwError(() => e);
             }));
     }
 }

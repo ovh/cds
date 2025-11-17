@@ -67,7 +67,6 @@ export class ProjectState {
         });
     }
 
-
     @Action(ProjectAction.FetchProject)
     fetch(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchProject) {
         const state = ctx.getState();
@@ -91,7 +90,6 @@ export class ProjectState {
             ...action.payload.opts,
             new LoadOpts('withLabels', 'labels')
         ]).pipe(
-            catchError(() => of(null)),
             tap((res: Project) => {
                 if (!res) {
                     ctx.dispatch(new ProjectAction.DeleteProjectFromCache());
