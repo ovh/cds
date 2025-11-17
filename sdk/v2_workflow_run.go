@@ -821,3 +821,23 @@ type HookWorkflowRunEventRequestWorkflowRun struct {
 type HookWorkflowRunEventJob struct {
 	Conclusion string `json:"conclusion"`
 }
+
+func CheckJobInputWithGate(wk V2Workflow, jobID string, inputs map[string]interface{}) error {
+	// Retrieve job
+	job, exist := wk.Jobs[jobID]
+	if !exist {
+		return NewErrorFrom(ErrInvalidData, "job %q not found in workflow %q", jobID, wk)
+	}
+	// Check gate
+	if job.Gate == "" {
+		return NewErrorFrom(ErrInvalidData, "unable to send input to a job without a gate %q", jobID)
+	}
+	// Check that gate inputs exist
+	for inputName := range inputs {
+		gate := wk.Gates[job.Gate]
+		if _, has := gate.Inputs[inputName]; !has {
+			return NewErrorFrom(ErrInvalidData, "input %q not found in gate %q of job %q", inputName, job.Gate, jobID)
+		}
+	}
+	return nil
+}
