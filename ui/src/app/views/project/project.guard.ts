@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
@@ -28,12 +29,22 @@ export class ProjectGuard {
             new LoadOpts('withLabels', 'labels')
         ];
 
-        await lastValueFrom(this._store.dispatch(new FetchProject({
-            projectKey: params['key'],
-            opts
-        })));
+        try {
+            await lastValueFrom(this._store.dispatch(new FetchProject({
+                projectKey: params['key'],
+                opts
+            })));
 
-        await firstValueFrom(this._store.selectOnce(ProjectState.projectSnapshot));
+            await firstValueFrom(this._store.selectOnce(ProjectState.projectSnapshot));
+        } catch (e) {
+            if (e instanceof HttpErrorResponse) {
+                if (e?.error?.id === 194) {
+                    // MFA required error, let the ErrorInterceptor handle it
+                    return false;
+                }
+            }
+        }
+
         return true; // Always try to load the project using v1 to detect if user have the permission to access it
     }
 
