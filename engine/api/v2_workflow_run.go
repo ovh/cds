@@ -957,11 +957,11 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start jobs on a running workflow")
 			}
 
-			var jobInputs map[string]sdk.V2WorkflowRunManualRequestJobInput
-			if err := service.UnmarshalRequest(ctx, req, &jobInputs); err != nil {
+			var jobsRequest sdk.V2WorkflowRunJobsRequest
+			if err := service.UnmarshalRequest(ctx, req, &jobsRequest); err != nil {
 				return err
 			}
-			if len(jobInputs) == 0 {
+			if len(jobsRequest.JobInputs) == 0 {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "no job provided")
 			}
 
@@ -976,7 +976,7 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 			}
 
 			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
-			for jobID := range jobInputs {
+			for jobID := range jobsRequest.JobInputs {
 				for _, rj := range runJobs {
 					if rj.JobID == jobID {
 						runJobToRestart[rj.ID] = rj
@@ -991,15 +991,9 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 			}
 
 			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, runJobToRestart)
-			for jobID := range jobInputs {
-				if err := sdk.CheckJobInputWithGate(wr.WorkflowData.Workflow, jobID, jobInputs[jobID]); err != nil {
-					return err
-				}
-				jobInputs[jobID]["manual"] = true
-			}
 
 			// Check job input
-			for jobID, inputs := range jobInputs {
+			for jobID := range jobsRequest.JobInputs {
 				skipJob := false
 				for _, rj := range runJobsToKeep {
 					if rj.JobID == jobID {
@@ -1010,14 +1004,15 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				if skipJob {
 					continue
 				}
-				if err := sdk.CheckJobInputWithGate(wr.WorkflowData.Workflow, jobID, inputs); err != nil {
+				if err := sdk.CheckJobInputWithGate(wr.WorkflowData.Workflow, jobID, jobsRequest.JobInputs[jobID]); err != nil {
 					return err
 				}
+				jobsRequest.JobInputs[jobID]["manual"] = true
 
 				// Add run job event
 				wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
 					JobID:      jobID,
-					Inputs:     inputs,
+					Inputs:     jobsRequest.JobInputs[jobID],
 					UserID:     u.AuthConsumerUser.AuthentifiedUserID,
 					Username:   u.GetUsername(),
 					RunAttempt: wr.RunAttempt + 1,

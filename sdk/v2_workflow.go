@@ -792,6 +792,10 @@ type V2WorkflowRunManualRequest struct {
 
 type V2WorkflowRunManualRequestJobInput map[string]interface{}
 
+type V2WorkflowRunJobsRequest struct {
+	JobInputs map[string]V2WorkflowRunManualRequestJobInput `json:"job_inputs,omitempty"`
+}
+
 type V2WorkflowRunManualResponse struct {
 	HookEventUUID string `json:"hook_event_uuid"`
 	UIUrl         string `json:"ui_url"`

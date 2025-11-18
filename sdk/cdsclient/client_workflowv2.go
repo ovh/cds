@@ -99,6 +99,16 @@ func (c *client) WorkflowV2JobStart(ctx context.Context, projectKey, workflowRun
 	return &run, nil
 }
 
+func (c *client) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
+	var run sdk.V2WorkflowRun
+	path := fmt.Sprintf("/v2/project/%s/run/%s/job", projectKey, workflowRunID)
+	_, _, _, err := c.RequestJSON(ctx, http.MethodPost, path, payload, &run, mods...)
+	if err != nil {
+		return nil, err
+	}
+	return &run, nil
+}
+
 func (c *client) WorkflowV2RunStatus(ctx context.Context, projectKey, workflowRunID string) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun
 	path := fmt.Sprintf("/v2/project/%s/run/%s", projectKey, workflowRunID)
