@@ -978,7 +978,7 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
 			for jobID := range jobsRequest.JobInputs {
 				for _, rj := range runJobs {
-					if rj.JobID == jobID {
+					if rj.JobID == jobID && rj.Status.IsTerminated() {
 						runJobToRestart[rj.ID] = rj
 						if len(rj.Matrix) == 0 {
 							break
@@ -987,10 +987,12 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				}
 			}
 			if len(runJobToRestart) == 0 {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow doesn't contains failed or stopped jobs")
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to find job that can be restarted")
 			}
 
 			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, runJobToRestart)
+
+			startJobs := make([]string, 0)
 
 			// Check job input
 			for jobID := range jobsRequest.JobInputs {
@@ -1017,6 +1019,7 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 					Username:   u.GetUsername(),
 					RunAttempt: wr.RunAttempt + 1,
 				})
+				startJobs = append(startJobs, jobID)
 			}
 
 			tx, err := api.mustDB().Begin()
@@ -1033,7 +1036,7 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				WorkflowRunID: wr.ID,
 				IssuedAt:      time.Now(),
 				Level:         sdk.WorkflowRunInfoLevelInfo,
-				Message:       u.GetFullname() + " restarted all failed and stopped jobs",
+				Message:       fmt.Sprintf("%s starts jobs: %v", u.GetFullname(), startJobs),
 			}
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
 				return err
