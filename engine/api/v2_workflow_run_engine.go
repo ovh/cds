@@ -218,6 +218,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
+	// Retrieve jobs that can be queued
 	jobsToQueue, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), wrEnqueue, run, allRunJobs, allrunJobsMap, runJobsContexts, api.Config.Workflow.JobDefaultRegion)
 	if errRetrieve != nil {
 		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, runMsgs, allrunJobsMap, runResults, &wrEnqueue.Initiator)
@@ -267,10 +268,10 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
 
 	// Enqueue JOB
-	hasTemplatedMatrixedJob := false
+	hasTemplatedJob := false
 	for _, j := range jobsToQueue {
-		if j.Job.From != "" && j.Job.Strategy != nil && len(j.Job.Strategy.Matrix) > 0 {
-			hasTemplatedMatrixedJob = true
+		if j.Job.From != "" {
+			hasTemplatedJob = true
 		}
 	}
 
@@ -357,6 +358,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		defer api.Cache.Unlock(lockKey)
 	}
 
+	// Prepare run jobs to be enqueued
 	runJobs, runObjectToCancel, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, proj, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, concurrenciesDef, api.Config.Workflow.JobDefaultRegion)
 	if err != nil {
 		return err
@@ -450,7 +452,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WithStack(tx.Commit())
 	}
 
-	needReEnqueue := hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedMatrixedJob
+	needReEnqueue := hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedJob
 	api.endWorkflowV2Trigger(ctx, run, allrunJobsMap, runJobs, runResults, wrEnqueue, needReEnqueue)
 
 	return nil
@@ -1201,6 +1203,11 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 	concurrencyUnlockedCount := make(map[string]int64)
 	runObjectsToCancelled := make(map[string]workflow_v2.ConcurrencyObject)
 
+	projectVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
+	if err != nil {
+		return nil, nil, nil, nil, false, err
+	}
+
 	// Browse job to queue and compute data ( matrix / region / model etc..... )
 	for jobID, jobToTrigger := range jobsToQueue {
 		jobDef := jobToTrigger.Job
@@ -1267,6 +1274,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			return nil, nil, nil, []sdk.V2WorkflowRunInfo{*msInfo}, false, err
 		}
 
+		// No matrixed jobs or templated job skipped
 		if len(matrixPermutation) == 0 || (jobDef.From != "" && jobToTrigger.Status.IsTerminated()) {
 			runJob := sdk.V2WorkflowRunJob{
 				ID:                 sdk.UUID(),
@@ -1286,7 +1294,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				RunAttempt:         run.RunAttempt,
 				Initiator:          wrEnqueue.Initiator,
 			}
-			if len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
+			if jobDef.From == "" && len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
 				runJob.Status = sdk.V2WorkflowRunJobStatusSuccess
 			}
 			// If the current job was a matrix, skip it
@@ -1299,13 +1307,29 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					Level:            sdk.WorkflowRunInfoLevelWarning,
 					Message:          "found an empty matrix, skipping the job",
 				}
-			} else {
-				if jobDef.RunsOn.Model != "" {
-					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
-					runJob.ModelOSArch = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].OSArch
-				}
-				// Only interpolate job data if job is not skipped to avoid missing variables exported by parent jobs
-				if !runJob.Status.IsTerminated() {
+			}
+			// If job has to be run
+			if !runJob.Status.IsTerminated() {
+				// If from template, retrieve template and apply it
+				if jobDef.From != "" {
+					hasToUpdateRun = true
+					// For templated job, we only create new jobs on the parent worklow
+					// With hasToUpdateRun the workflow run will be saved to update his definition
+					// With previous computed flag `hasTemplatedJob` the workflow will be retriggered in the workflow engine
+					msgs, err := computeJobFromTemplate(ctx, db, store, wref, jobID, jobDef, run, projectVariableSets, defaultRegion)
+					if err != nil {
+						return nil, nil, nil, nil, hasToUpdateRun, err
+					}
+					if len(msgs) > 0 {
+						return nil, nil, nil, msgs, false, nil
+					}
+				} else {
+					// If no template, interpolate job data
+					if jobDef.RunsOn.Model != "" {
+						runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
+						runJob.ModelOSArch = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].OSArch
+					}
+					// Only interpolate job data if job is not skipped to avoid missing variables exported by parent jobs
 					for _, jobEvent := range run.RunJobEvent {
 						if jobEvent.RunAttempt != run.RunAttempt {
 							continue
@@ -1336,20 +1360,26 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					if runUpdated {
 						hasToUpdateRun = runUpdated
 					}
+
+					// Manage concurrency if the job is not skipped
+					runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
+					if err != nil {
+						return nil, nil, nil, nil, hasToUpdateRun, err
+					}
+					if runJobInfo != nil {
+						runJobsInfo[runJob.ID] = *runJobInfo
+					}
+					runJobs = append(runJobs, runJob)
 				}
+			} else {
+				runJobs = append(runJobs, runJob)
 			}
-			// Manage concurrency if the job is not skipped
-			if !runJob.Status.IsTerminated() {
-				runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
-				if err != nil {
-					return nil, nil, nil, nil, hasToUpdateRun, err
-				}
-				if runJobInfo != nil {
-					runJobsInfo[runJob.ID] = *runJobInfo
-				}
-			}
-			runJobs = append(runJobs, runJob)
+
 		} else {
+			// /////////////
+			// Matrixed jobs
+			// /////////////
+
 			allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
 			if err != nil {
 				return nil, nil, nil, nil, false, err
@@ -1368,6 +1398,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				regionPermCache: regionPermCache,
 				allVariableSets: allVariableSets,
 			}
+
 			if jobDef.From == "" {
 				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 				if err != nil {
@@ -1380,7 +1411,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			} else {
 				// For templated matrixed job, we only create new jobs on the parent worklow
 				// With hasToUpdateRun the workflow run will be saved to update his definition
-				// With previous computed flag  `hasTemplatedMatrixedJob` the workflow will be retriggered in the workflow engine
+				// With previous computed flag `hasTemplatedJob` the workflow will be retriggered in the workflow engine
 				msgInfo := createTemplatedMatrixedJobs(ctx, db, store, wref, matrixPermutation, run, jobData)
 				hasToUpdateRun = true
 				if len(msgInfo) > 0 {
@@ -1421,6 +1452,215 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 	}
 
 	return runJobs, runObjectsToCancelled, runJobsInfo, nil, hasToUpdateRun, nil
+}
+
+func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, jobID string, j sdk.V2Job, run *sdk.V2WorkflowRun, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
+	ctx, end := telemetry.Span(ctx, "computeJobFromTemplate")
+	defer end()
+
+	// Retrieve Template and Lint
+	entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, j, run, j.Parameters)
+	if err != nil {
+		return nil, err
+	}
+	if len(msgs) > 0 {
+		return msgs, nil
+	}
+
+	// If there is no matrix, compute the final workflow now. Else it will be done at runtime
+
+	msgs, err = handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplate, run, tmpWorkflow.Jobs, tmpWorkflow.Stages, tmpWorkflow.Gates, tmpWorkflow.Annotations, jobID, j, allVariableSets, defaultRegion)
+	if err != nil {
+		return nil, err
+	}
+	if len(msgs) > 0 {
+		return msgs, nil
+	}
+
+	// Remove templated job
+	delete(run.WorkflowData.Workflow.Jobs, jobID)
+
+	// Check usage of current job stage
+	if j.Stage != "" {
+		stageUsed := false
+		for _, workflowJob := range run.WorkflowData.Workflow.Jobs {
+			if workflowJob.Stage == j.Stage {
+				stageUsed = true
+			}
+		}
+		if !stageUsed {
+			for _, stage := range run.WorkflowData.Workflow.Stages {
+				if slices.Contains(stage.Needs, j.Stage) {
+					stageUsed = true
+				}
+			}
+		}
+		if !stageUsed {
+			delete(run.WorkflowData.Workflow.Stages, j.Stage)
+		}
+	}
+
+	msgsLint := make([]sdk.V2WorkflowRunInfo, 0)
+	errs := run.WorkflowData.Workflow.Lint()
+	for _, e := range errs {
+		msgsLint = append(msgsLint, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			IssuedAt:      time.Now(),
+			Message:       e.Error(),
+		})
+	}
+
+	return nil, nil
+}
+
+func handleTemplatedJobInWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, templateEntity *sdk.EntityWithObject, run *sdk.V2WorkflowRun, newJobs map[string]sdk.V2Job, newStages map[string]sdk.WorkflowStage, newGates map[string]sdk.V2JobGate, newAnnotations map[string]string, jobID string, j sdk.V2Job, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
+	// Check duplication of jobID
+	// Retrieve root job
+	rootJobs := make([]string, 0)
+	for subJobID, subJob := range newJobs {
+		if _, exist := run.WorkflowData.Workflow.Jobs[subJobID]; exist {
+			msgs := []sdk.V2WorkflowRunInfo{{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("job %s: job %s defined in template %s already exist in the parent workflow", jobID, subJobID, j.From),
+			}}
+			return msgs, nil
+		}
+		if len(subJob.Needs) == 0 {
+			rootJobs = append(rootJobs, subJobID)
+		}
+	}
+
+	// Retrieve final jobs
+	finalJobs := make([]string, 0)
+loop:
+	for subJobID := range newJobs {
+		for _, jobDef := range newJobs {
+			if slices.Contains(jobDef.Needs, subJobID) {
+				continue loop
+			}
+		}
+		finalJobs = append(finalJobs, subJobID)
+	}
+
+	// Set needs on templated root job
+	if len(j.Needs) > 0 {
+		for _, id := range rootJobs {
+			jobDef := newJobs[id]
+
+			// If new root templated job has a different stage from the old one
+			if jobDef.Stage == j.Stage {
+				jobDef.Needs = append(jobDef.Needs, j.Needs...)
+				newJobs[id] = jobDef
+			}
+		}
+	}
+
+	// Update needs in parent workflow with job ID from template
+	for id := range run.WorkflowData.Workflow.Jobs {
+		jobDef := run.WorkflowData.Workflow.Jobs[id]
+		for i := range jobDef.Needs {
+			if jobDef.Needs[i] == jobID {
+				jobDef.Needs = slices.Delete(jobDef.Needs, i, i+1)
+				jobDef.Needs = append(jobDef.Needs, finalJobs...)
+				break
+			}
+		}
+		run.WorkflowData.Workflow.Jobs[id] = jobDef
+	}
+
+	if run.WorkflowData.Workflow.Stages == nil {
+		run.WorkflowData.Workflow.Stages = make(map[string]sdk.WorkflowStage)
+	}
+	for k, v := range newStages {
+		if _, has := run.WorkflowData.Workflow.Stages[k]; !has {
+			run.WorkflowData.Workflow.Stages[k] = v
+		}
+	}
+
+	repoTemplate, err := repository.LoadRepositoryByID(ctx, db, templateEntity.ProjectRepositoryID)
+	if err != nil {
+		return nil, err
+	}
+	vcsTemplate, err := vcs.LoadVCSByIDAndProjectKey(ctx, db, templateEntity.ProjectKey, repoTemplate.VCSProjectID)
+	if err != nil {
+		return nil, err
+	}
+	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, wref.project, *run, *repoTemplate, *vcsTemplate, templateEntity.Ref, templateEntity.Commit, wref.ef.libraryProject, &wref.ef.initiator)
+	if err != nil {
+		return nil, err
+	}
+	integrations, msgs, err := wrefTemplate.checkIntegrations(ctx, db, newJobs)
+	if err != nil {
+		return nil, err
+	}
+	if len(msgs) > 0 {
+		return msgs, nil
+	}
+
+	// Set job on workflow
+	for k, v := range newJobs {
+		run.WorkflowData.Workflow.Jobs[k] = v
+		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, k, v, wrefTemplate, integrations, allVariableSets, defaultRegion)
+		if msg != nil {
+			return []sdk.V2WorkflowRunInfo{*msg}, nil
+		}
+	}
+	// Set gate on workflow
+	if run.WorkflowData.Workflow.Gates == nil {
+		run.WorkflowData.Workflow.Gates = make(map[string]sdk.V2JobGate)
+	}
+	for k, v := range newGates {
+		if _, has := run.WorkflowData.Workflow.Gates[k]; !has {
+			run.WorkflowData.Workflow.Gates[k] = v
+		}
+	}
+	// Set annotations on workflow
+	if run.WorkflowData.Workflow.Annotations == nil {
+		run.WorkflowData.Workflow.Annotations = make(map[string]string)
+	}
+	for k, v := range newAnnotations {
+		if _, has := run.WorkflowData.Workflow.Annotations[k]; !has {
+			run.WorkflowData.Workflow.Annotations[k] = v
+		}
+	}
+
+	if run.WorkflowData.Actions == nil {
+		run.WorkflowData.Actions = make(map[string]sdk.V2Action)
+	}
+
+	for k, v := range wrefTemplate.ef.actionsCache {
+		if _, has := run.WorkflowData.Actions[k]; !has {
+			run.WorkflowData.Actions[k] = v.Action
+		}
+		wref.ef.actionsCache[k] = v
+	}
+	for _, v := range wrefTemplate.ef.localActionsCache {
+		if _, has := run.WorkflowData.Actions[v.CompleteName]; !has {
+			run.WorkflowData.Actions[v.CompleteName] = v.Action
+		}
+		wref.ef.actionsCache[v.CompleteName] = v
+	}
+
+	if run.WorkflowData.WorkerModels == nil {
+		run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
+	}
+
+	for k, v := range wrefTemplate.ef.workerModelCache {
+		if _, has := run.WorkflowData.WorkerModels[k]; !has {
+			run.WorkflowData.WorkerModels[k] = v.Model
+		}
+		wref.ef.workerModelCache[k] = v
+	}
+	for _, v := range wrefTemplate.ef.localWorkerModelCache {
+		if _, has := run.WorkflowData.WorkerModels[v.CompleteName]; !has {
+			run.WorkflowData.WorkerModels[v.CompleteName] = v.Model
+		}
+		wref.ef.workerModelCache[v.CompleteName] = v
+	}
+	return nil, nil
 }
 
 func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, matrixPermutation []map[string]string, run *sdk.V2WorkflowRun, data prepareJobData) []sdk.V2WorkflowRunInfo {
