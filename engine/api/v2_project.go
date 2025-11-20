@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/authentication"
@@ -33,6 +34,9 @@ func (api *API) getReposFromRepositoriesManagerV2Handler() ([]service.RbacChecke
 			})
 			if err != nil {
 				return err
+			}
+			for i := range repos {
+				repos[i].Fullname = strings.ToLower(repos[i].Fullname)
 			}
 
 			return service.WriteJSON(w, repos, http.StatusOK)

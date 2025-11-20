@@ -124,6 +124,14 @@
             .number {
                 margin-right: 5px;
             }
+
+            a {
+                color: inherit;
+
+                &:hover {
+                    color: #177ddc;
+                }
+            }
         }
 
         nz-page-header-content {

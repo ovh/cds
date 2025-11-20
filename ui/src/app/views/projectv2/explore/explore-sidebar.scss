@@ -28,6 +28,11 @@
         text-overflow: ellipsis;
         overflow: hidden;
         margin: 0 10px;
+        color: inherit;
+
+        &:hover {
+            color: #177ddc;
+        }
     }
 
     [nz-button] {
@@ -155,5 +160,9 @@
         app-favorite-button:has(>.content>[nz-icon].active) {
             visibility: visible;
         }
+    }
+
+    .analyze {
+        float: right;
     }
 }

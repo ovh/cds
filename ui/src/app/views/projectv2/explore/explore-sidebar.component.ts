@@ -24,6 +24,11 @@ import { RouterService } from 'app/service/services.module';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../run-start/run-start.component';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { ErrorUtils } from 'app/shared/error.utils';
+import { ProjectV2RepositoryAddComponent, ProjectV2RepositoryAddComponentParams } from './repository-add/repository-add.component';
+import { EventV2State } from 'app/store/event-v2.state';
+import { EventV2Type, FullEventV2 } from 'app/model/event-v2.model';
+import { AuthenticationState } from 'app/store/authentication.state';
+import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from './trigger-analysis/trigger-analysis.component';
 
 @Component({
     selector: 'app-projectv2-explore-sidebar',
@@ -46,6 +51,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     refSelectState: { [repositoryPath: string]: string } = {};
     analysisServiceSub: Subscription;
     routerSub: Subscription;
+    eventV2Subscription: Subscription;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -64,7 +70,9 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     ngOnInit(): void {
         this.treeExpandState = this._store.selectSnapshot(PreferencesState.selectProjectTreeExpandState(this.project.key));
         this.refSelectState = this._store.selectSnapshot(PreferencesState.selectProjectRefSelectState(this.project.key));
+
         this.load();
+
         this.routerSub = this._router.events.pipe(
             filter(e => e instanceof NavigationEnd),
         ).subscribe(() => {
@@ -73,12 +81,14 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
                 this._cd.markForCheck();
             });
         });
+
+        this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => {
+            this.handleEvent(event);
+        });
     }
 
     ngAfterViewInit(): void {
-        this.analysisServiceSub = this._analysisService.getObservable().subscribe(e => {
-
-        });
+        this.analysisServiceSub = this._analysisService.getObservable().subscribe(e => { });
     }
 
     async load() {
@@ -229,10 +239,6 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         this._cd.markForCheck();
     }
 
-    clickRefresh() {
-        this.load();
-    }
-
     saveTreeExpandState(): void {
         let state: { [key: string]: boolean } = {};
         const keys = Object.keys(this.treeExpandState);
@@ -313,7 +319,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
 
     openRunStartDrawer(workflow: string, ref: string): void {
         const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
-            nzTitle: 'Start new workflow run',
+            nzTitle: 'Start new Workflow Run',
             nzContent: ProjectV2RunStartComponent,
             nzContentParams: {
                 params: <ProjectV2RunStartComponentParams>{
@@ -324,6 +330,70 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
             nzSize: 'large'
         });
         drawerRef.afterClose.subscribe(data => { });
+    }
+
+    openRepositoryAddDrawer(vcs: string): void {
+        const drawerRef = this._drawerService.create<ProjectV2RepositoryAddComponent, { value: string }, string>({
+            nzTitle: 'Add a new Repository',
+            nzContent: ProjectV2RepositoryAddComponent,
+            nzContentParams: {
+                params: <ProjectV2RepositoryAddComponentParams>{
+                    vcs
+                }
+            },
+            nzSize: 'large'
+        });
+        drawerRef.afterClose.subscribe(data => { });
+    }
+
+    openTriggerAnalysisDrawer(repository: string, ref: string): void {
+        const drawerRef = this._drawerService.create<ProjectV2TriggerAnalysisComponent, { value: string }, string>({
+            nzTitle: 'Trigger repository analysis',
+            nzContent: ProjectV2TriggerAnalysisComponent,
+            nzContentParams: {
+                params: <ProjectV2TriggerAnalysisComponentParams>{
+                    repository,
+                    ref
+                }
+            },
+            nzSize: 'large'
+        });
+        drawerRef.afterClose.subscribe(data => { });
+    }
+
+    async handleEvent(event: FullEventV2) {
+        if (!event || [EventV2Type.EventRepositoryCreated, EventV2Type.EventRepositoryDeleted, EventV2Type.EventAnalysisDone].indexOf(event.type) === -1) { return; }
+
+        if (!this.repositories[event.vcs_name]) {
+            return;
+        }
+
+        if (event.type === EventV2Type.EventRepositoryDeleted) {
+            this.repositories[event.vcs_name] = this.repositories[event.vcs_name].filter(r => r.name !== event.repository);
+            delete this.treeExpandState[event.vcs_name + '/' + event.repository];
+            this.saveTreeExpandState();
+            this._cd.markForCheck();
+            return
+        }
+
+        let repository = this.repositories[event.vcs_name].find(r => r.name === event.repository);
+        if (!repository) {
+            repository = await lastValueFrom(this._projectService.getVCSRepository(this.project.key, event.vcs_name, event.repository));
+            this.repositories[event.vcs_name].push(repository);
+            this.repositories[event.vcs_name].sort((a, b) => a.name < b.name ? -1 : 1);
+        }
+
+        const expand = event.username === this._store.selectSnapshot(AuthenticationState.summary).user.username;
+        this.treeExpandState[event.vcs_name + '/' + event.repository] = expand;
+        if (expand) {
+            this.loadingEntities[event.vcs_name + '/' + event.repository] = true;
+            this._cd.markForCheck();
+            await this.loadRepository(this.vcss.find(vcs => vcs.name === event.vcs_name), repository);
+            this.loadingEntities[event.vcs_name + '/' + event.repository] = false;
+        }
+
+        this.saveTreeExpandState();
+        this._cd.markForCheck();
     }
 
 }

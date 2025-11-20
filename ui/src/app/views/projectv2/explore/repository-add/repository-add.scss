@@ -1,0 +1,44 @@
+nz-row {
+  nz-select {
+    flex: 1;
+    margin-right: 10px;
+  }
+}
+
+nz-alert {
+  margin-top: 20px;
+
+  .info {
+    .title {
+      font-size: 1.1em;
+      margin-bottom: 10px;
+
+      i {
+        font-size: 1.2em;
+        margin-right: 10px;
+      }
+    }
+
+    .content {
+      padding-left: 30px;
+    }
+  }
+}
+
+nz-result {
+  .message {
+    width: 100%;
+    text-align: center;
+  }
+
+  [nz-result-extra] {
+    [nz-button] {
+      color: inherit;
+    }
+  }
+
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+}

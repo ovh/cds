@@ -116,6 +116,13 @@ export class ProjectV2RunStartComponent implements OnInit {
   }
 
   async repositoryChange(value: string) {
+    if (!value) {
+      this.branches = [];
+      this.tags = [];
+      this.validateForm.controls.ref.reset();
+      return;
+    }
+
     this.loaders.repository = true;
     this._cd.markForCheck();
     const splitted = this.splitRepository(value);
@@ -128,22 +135,31 @@ export class ProjectV2RunStartComponent implements OnInit {
       this._cd.markForCheck();
       return
     }
+
     const selectedRef = this.params.workflow_ref ?? (this.params.ref ?? null);
     if (selectedRef && (this.branches.findIndex(b => `refs/heads/${b.display_id}` === selectedRef) !== -1 || this.tags.findIndex(t => `refs/tags/${t.tag}` === selectedRef) !== -1)) {
       this.validateForm.controls.ref.setValue(selectedRef);
     } else {
       this.validateForm.controls.ref.setValue('refs/heads/' + this.branches.find(b => b.default).display_id);
     }
+
     this.loaders.repository = false;
     this._cd.markForCheck();
   }
 
-  async refChange(branch: string) {
+  async refChange(value: string) {
+    if (!value) {
+      this.workflows = [];
+      this.noWorkflowFound = false
+      this.validateForm.controls.workflow.reset();
+      return;
+    }
+
     this.loaders.ref = true;
     this._cd.markForCheck();
     const splitted = this.splitRepository(this.validateForm.controls.repository.value);
     try {
-      const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, splitted.vcs, splitted.repo, branch));
+      const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, splitted.vcs, splitted.repo, value));
       this.workflows = resp.filter(e => e.type === EntityType.Workflow).map(e => e.name);
       this.noWorkflowFound = this.workflows.length === 0;
       if (this.noWorkflowFound) {
