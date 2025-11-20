@@ -61,7 +61,7 @@ export class ProjectV2ExploreRepositoryAddComponent implements OnDestroy {
     listRepositories(resync: boolean): void {
         this.loadingResync = true;
         this._cd.markForCheck();
-        this._repoManagerService.getRepositories(this.project.key, this.vcsProject.name, resync)
+        this._repoManagerService.getV2Repositories(this.project.key, this.vcsProject.name, resync)
             .pipe(finalize(() => {
                 this.loadingResync = false;
                 this._cd.markForCheck();
