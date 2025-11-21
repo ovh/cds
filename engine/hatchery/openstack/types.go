@@ -46,8 +46,11 @@ type HatcheryConfiguration struct {
 	// CreateImageTimeout max wait for create an openstack image (in seconds)
 	CreateImageTimeout int `mapstructure:"createImageTimeout" toml:"createImageTimeout" default:"180" commented:"false" comment:"max wait for create an openstack image (in seconds)" json:"createImageTimeout"`
 
-	// AllowedFlavors if not empty the hatchery will be able to start a model only if its flavor is listed in allowed flavors
-	AllowedFlavors []string `mapstructure:"allowedFlavors" toml:"allowedFlavors" default:"" commented:"true" comment:"List of allowed flavors that can be used by the hatchery." json:"allowedFlavors"`
+	// Flavors
+	Flavors map[string]string `mapstructure:"flavors" toml:"flavors" default:"" commented:"true" comment:"Mapping between CDS flavor size and openstack flavor" json:"flavors"`
+
+	// OldFlavorsMapping support old flavors mapping for backward compatibility (to remove in future)
+	OldFlavorsMapping map[string]string `mapstructure:"oldFlavorsMapping" toml:"oldFlavorsMapping" default:"" commented:"true" comment:"Old mapping openstack flavor to CDS flavor size" json:"oldFlavorsMapping"`
 
 	// MaxCPUs if set the hatchery will stop starting new models if its flavors requires more CPUs than availables
 	MaxCPUs int `mapstructure:"maxCpus" toml:"maxCpus" default:"" commented:"true" comment:"Maximum count of CPUs that can be used at a same time by the hatchery." json:"maxCpus"`

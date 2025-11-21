@@ -74,7 +74,6 @@ func (h *HatcheryOpenstack) initFlavors() error {
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("initFlavors> error on flavors.ListDetail: %v", err))
 	}
-
 	lflavors, err := flavors.ExtractFlavors(all)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("initFlavors> error on flavors.ExtractFlavors: %v", err))
@@ -85,17 +84,17 @@ func (h *HatcheryOpenstack) initFlavors() error {
 	return nil
 }
 
-func (h HatcheryOpenstack) filterAllowedFlavors(allFlavors []flavors.Flavor) []flavors.Flavor {
+func (h *HatcheryOpenstack) filterAllowedFlavors(allFlavors []flavors.Flavor) []flavors.Flavor {
 	// If allowed flavors are given in configuration we should check that given flavor is part of the list.
-	if len(h.Config.AllowedFlavors) == 0 {
+	if len(h.Config.Flavors) == 0 {
 		return allFlavors
 	}
 
 	filteredFlavors := make([]flavors.Flavor, 0, len(allFlavors))
 	for i := range allFlavors {
 		var allowed bool
-		for j := range h.Config.AllowedFlavors {
-			if h.Config.AllowedFlavors[j] == allFlavors[i].Name {
+		for _, flavorName := range h.Config.Flavors {
+			if flavorName == allFlavors[i].Name {
 				allowed = true
 				break
 			}
