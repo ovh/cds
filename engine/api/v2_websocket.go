@@ -180,6 +180,7 @@ func (c *websocketV2ClientData) eventPostCheck(ctx context.Context, db gorp.SqlE
 		return false, nil
 	}
 
+	// Post check to return only runs according query filters
 	if event.Type == sdk.EventRunCrafted || event.Type == sdk.EventRunBuilding || event.Type == sdk.EventRunEnded || event.Type == sdk.EventRunRestart {
 		filter := c.filters.GetFirstByType(sdk.WebsocketV2FilterTypeProjectRuns)
 		if filter == nil {
@@ -343,6 +344,11 @@ func (a *API) websocketV2ComputeEventKeys(event sdk.FullEventV2) []string {
 
 	// Event that match project-runs filter
 	switch event.Type {
+	case sdk.EventRepositoryCreated, sdk.EventRepositoryDeleted, sdk.EventAnalysisStart, sdk.EventAnalysisDone:
+		keys = append(keys, sdk.WebsocketV2Filter{
+			Type:       sdk.WebsocketV2FilterTypeProject,
+			ProjectKey: event.ProjectKey,
+		}.Key())
 	case sdk.EventRunCrafted, sdk.EventRunBuilding, sdk.EventRunEnded, sdk.EventRunRestart:
 		keys = append(keys, sdk.WebsocketV2Filter{
 			Type:       sdk.WebsocketV2FilterTypeProjectRuns,

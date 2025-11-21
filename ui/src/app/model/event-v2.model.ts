@@ -6,7 +6,12 @@ export enum EventV2Type {
 
 	EventRunJobEnqueued = "RunJobEnqueued",
 
-	EventProjectPurge = "EventProjectPurge"
+	EventProjectPurge = "EventProjectPurge",
+
+	EventRepositoryCreated = "RepositoryCreated",
+	EventRepositoryDeleted = "RepositoryDeleted",
+
+	EventAnalysisDone = "AnalysisDone"
 }
 
 export class FullEventV2 {

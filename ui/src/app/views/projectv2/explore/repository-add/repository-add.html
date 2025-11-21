@@ -1,0 +1,67 @@
+<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
+    <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzFor="vcs">VCS</nz-form-label>
+        <nz-form-control [nzSpan]="14">
+            <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a VCS" formControlName="vcs" id="vcs"
+                (ngModelChange)="vcsChange($event)" (ngModelChange)="vcsChange($event)">
+                <nz-option *ngFor="let v of vcss" [nzValue]="v.name" [nzLabel]="v.name"></nz-option>
+            </nz-select>
+        </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzFor="repository">Repository</nz-form-label>
+        <nz-form-control [nzSpan]="14">
+            <nz-row>
+                <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a Repository" formControlName="repository"
+                    id="repository">
+                    <nz-option *ngFor="let r of repositories" [nzValue]="r.fullname" [nzLabel]="r.fullname"></nz-option>
+                </nz-select>
+                <button nz-button nzType="primary" (click)="resyncRepositories($event)" [nzLoading]="isLoading()"
+                    [disabled]="validateForm.disabled" title="Resync Repositories"><span nz-icon
+                        nzType="reload"></span></button>
+            </nz-row>
+
+            <nz-alert *ngIf="validateForm.controls.vcs && vcsProject" nzType="info" [nzMessage]="infoMsg"></nz-alert>
+            <ng-template #infoMsg>
+                <div class="info">
+                    <div class="title">
+                        <i nz-icon nzType="info-circle" class="info" nzTheme="outline"></i> Permissions required to READ
+                        repository
+                    </div>
+                    <div class="content">
+                        Make sure that VCS's User "{{vcsProject.auth.username}}" can read the Repository, then resync
+                        Repositories if needed.
+                    </div>
+                </div>
+            </ng-template>
+        </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item *ngIf="!result">
+        <nz-form-control [nzSpan]="12" [nzOffset]="6">
+            <button nz-button nzType="primary" [disabled]="!validateForm.valid" [nzLoading]="isLoading()">Add</button>
+        </nz-form-control>
+    </nz-form-item>
+</form>
+
+<nz-result *ngIf="result" nzStatus="success" nzTitle="Successfully added a new Repository!">
+    <div nz-result-extra>
+        <a nz-button nzType="primary"
+            [routerLink]="['/', 'project', this.project.key, 'explore', 'vcs', vcsProject.name, 'repository', result.name, 'settings']"
+            (click)="close()">Open Repository</a>
+        <button nz-button (click)="clearForm()">Clear</button>
+    </div>
+</nz-result>
+
+<nz-result *ngIf="error" nzStatus="error" nzTitle="Error adding a new Repository!"
+  [nzSubTitle]="subTitle">
+  <ng-template #subTitle>
+    <div class="message">
+      <pre>{{error}}</pre>
+    </div>
+  </ng-template>
+  <div nz-result-extra>
+    <button nz-button (click)="clearForm()">Clear</button>
+  </div>
+</nz-result>

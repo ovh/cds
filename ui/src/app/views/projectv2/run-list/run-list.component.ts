@@ -282,7 +282,7 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 			}
 		});
 		const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
-			nzTitle: 'Start new workflow run',
+			nzTitle: 'Start new Workflow Run',
 			nzContent: ProjectV2RunStartComponent,
 			nzContentParams: {
 				params: {

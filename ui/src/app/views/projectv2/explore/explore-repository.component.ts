@@ -9,7 +9,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { VCSProject } from 'app/model/vcs.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
-import { ProjectV2TriggerAnalysisComponent } from './trigger-analysis/trigger-analysis.component';
+import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from './trigger-analysis/trigger-analysis.component';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzTableFilterList } from 'ng-zorro-antd/table';
 import { ErrorUtils } from 'app/shared/error.utils';
@@ -100,7 +100,7 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         try {
             await lastValueFrom(this._projectService.deleteVCSRepository(this.project.key, this.vcsProject.name, this.repository.name));
             this._toastService.success('Repository has been removed', '');
-            this._router.navigate(['/', 'project', this.project.key]);
+            this._router.navigate(['/', 'project', this.project.key, 'explore']);
         } catch (e) {
             this._messageService.error(`Unable to remove repository: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
@@ -151,8 +151,8 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
             nzTitle: 'Trigger repository analysis',
             nzContent: ProjectV2TriggerAnalysisComponent,
             nzContentParams: {
-                params: {
-                    repository: this.repository.name
+                params: <ProjectV2TriggerAnalysisComponentParams>{
+                    repository: this.vcsProject.name + "/" + this.repository.name
                 }
             },
             nzSize: 'large'
