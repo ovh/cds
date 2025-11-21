@@ -6,6 +6,58 @@
     height: 100%;
 }
 
+.run-details {
+    display: flex;
+    flex-direction: row;
+
+    .run-avatar {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: 25px;
+        height: 48px;
+
+        [nz-icon] {
+            font-size: 25px;
+
+            &.success {
+                color: $cds_color_green;
+            }
+
+            &.fail {
+                color: $cds_color_red;
+            }
+
+            &.cancelled {
+                color: $polar_grey_2;
+            }
+
+            &.building {
+                color: $cds_color_teal;
+            }
+
+            &.blocked {
+                color: $cds_color_teal;
+            }
+
+            &.skipped {
+                color: $polar_grey_2;
+            }
+
+            &.stopped {
+                font-size: 21px;
+                border: 2px solid $cds_color_red;
+                border-radius: 12px;
+                color: $cds_color_red;
+            }
+        }
+    }
+
+    .run-info {
+        margin-left: 20px;
+    }
+}
+
 .content {
     flex: 1;
     display: flex;
@@ -14,54 +66,206 @@
     height: 100%;
     overflow: hidden;
 
-    .graph {
+    .graph-wrapper {
         flex: 1;
-        position: relative;
         display: flex;
-        flex-direction: column-reverse;
-        align-items: center;
-        width: 100%;
+        flex-direction: row;
         overflow: hidden;
 
-        .title {
-            position: absolute;
-            top: 16px;
-            left: 0;
-            z-index: 100;
-            padding: 0;
+        .list {
+            overflow-y: auto;
+            height: 100%;
+            border-right: 1px solid;
+            border-color: #f0f0f0 !important;
 
-            ::ng-deep {
+            :host-context(.night) & {
+                border-color: #303030 !important;
+            }
 
-                .ant-page-header-heading,
-                nz-page-header-content {
-                    background-color: white;
+            scrollbar-width: none;
+
+            .item {
+                display: flex;
+                height: 50px;
+                min-width: 50px;
+                max-width: 80px;
+                align-items: center;
+                border-bottom: 1px solid #f0f0f0;
+                border-left: 3px solid transparent;
+                padding-right: 3px;
+                cursor: pointer;
+
+                :host-context(.night) & {
+                    border-bottom-color: #303030;
+                }
+
+                &:hover {
+                    background-color: $greyBackground;
+
+                    :host-context(.night) & {
+                        background-color: $darkBackground;
+                    }
+                }
+
+                &.selected {
+                    border-left: 3px solid $polar_grey_1;
+
+                    :host-context(.night) & {
+                        border-left: 3px solid $greyBackground;
+                    }
+                }
+
+                &.append {
+                    background-color: #f5f5f5;
+
+                    :host-context(.night) & {
+                        background-color: rgba(255, 255, 255, 0.08);
+                    }
+                }
+
+                .success {
+                    color: $cds_color_green;
+                }
+
+                .fail,
+                .stopped {
+                    color: $cds_color_red;
+                }
+
+                .cancelled,
+                .skipped {
+                    color: $polar_grey_2;
+                }
+
+                .building,
+                .blocked {
+                    color: $cds_color_teal;
+                }
+
+                span {
+                    width: 100%;
+                    padding: 5px;
+                    text-align: center;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            }
+        }
+
+        .graph {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            width: 100%;
+            overflow: hidden;
+
+            .title {
+                position: absolute;
+                top: 16px;
+                left: 0;
+                z-index: 100;
+                padding: 0;
+
+                ::ng-deep {
+
+                    .ant-page-header-heading,
+                    nz-page-header-content {
+                        background-color: white;
+
+                        :host-context(.night) & {
+                            background-color: #141414;
+                        }
+                    }
+
+                    .ant-page-header-heading {
+                        border-top-right-radius: 10px;
+                        border-bottom-right-radius: 10px;
+                        padding: 0 0 0 24px;
+                    }
+
+                    nz-page-header-content {
+                        display: inline-block;
+                        border-bottom-right-radius: 40px;
+                        padding: 0 0 0 56px;
+                    }
+                }
+
+                [nzCopyable] {
+                    color: inherit;
+
+                    ::ng-deep {
+                        .ant-typography-copy {
+                            color: inherit;
+                            margin: 0 2px 0 0;
+                        }
+
+                        &:hover {
+                            color: #177ddc;
+                        }
+                    }
+                }
+
+                .annotations {
+                    display: flex;
+                    align-items: center;
+                    margin: 8px 0;
+
+                    &>* {
+                        margin-right: 8px;
+                    }
+                }
+            }
+
+            .controls {
+                z-index: 100;
+                margin-bottom: 20px;
+                padding: 10px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+
+                button:not(:first-child) {
+                    margin-left: 10px;
+                }
+
+                button:not([nzDanger]) {
+                    background-color: #fff;
 
                     :host-context(.night) & {
                         background-color: #141414;
                     }
                 }
-
-                .ant-page-header-heading {
-                    border-top-right-radius: 10px;
-                    border-bottom-right-radius: 10px;
-                    padding: 0 0 0 24px;
-                }
-
-                nz-page-header-content {
-                    display: inline-block;
-                    border-bottom-right-radius: 40px;
-                    padding: 0 0 0 56px;
-                }
             }
 
-            [nzCopyable] {
-                color: inherit;
+            app-graph {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%s;
+            }
 
-                ::ng-deep {
-                    .ant-typography-copy {
-                        color: inherit;
-                        margin: 0 2px 0 0;
-                    }
+            nz-page-header-title {
+                font-size: 16px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+
+                button,
+                nz-select,
+                .number {
+                    margin-left: 5px;
+                }
+
+                .number {
+                    margin-right: 5px;
+                }
+
+                a {
+                    color: inherit;
 
                     &:hover {
                         color: #177ddc;
@@ -69,85 +273,21 @@
                 }
             }
 
-            .annotations {
-                display: flex;
-                align-items: center;
-                margin: 8px 0;
+            nz-page-header-content {
+                padding: 0 0 0 32px;
 
-                &>* {
-                    margin-right: 8px;
+                .templateDetails {
+                    margin-left: 5px;
                 }
-            }
-        }
 
-        .controls {
-            z-index: 100;
-            margin-bottom: 20px;
-            padding: 10px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
+                a {
+                    color: inherit;
+                    text-decoration: underline dotted;
+                    white-space: nowrap;
 
-            button:not(:first-child) {
-                margin-left: 10px;
-            }
-
-            button:not([nzDanger]) {
-                background-color: #fff;
-
-                :host-context(.night) & {
-                    background-color: #141414;
-                }
-            }
-        }
-
-        app-graph {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%s;
-        }
-
-        nz-page-header-title {
-            font-size: 16px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-
-            button,
-            nz-select,
-            .number {
-                margin-left: 5px;
-            }
-
-            .number {
-                margin-right: 5px;
-            }
-
-            a {
-                color: inherit;
-
-                &:hover {
-                    color: #177ddc;
-                }
-            }
-        }
-
-        nz-page-header-content {
-            padding: 0 0 0 32px;
-
-            .templateDetails {
-                margin-left: 5px;
-            }
-
-            a {
-                color: inherit;
-                text-decoration: underline dotted;
-                white-space: nowrap;
-
-                &:hover {
-                    color: #177ddc;
+                    &:hover {
+                        color: #177ddc;
+                    }
                 }
             }
         }

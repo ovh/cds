@@ -13,6 +13,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { PreferencesState } from 'app/store/preferences.state';
 import { Subscription } from 'rxjs';
+import * as actionPreferences from 'app/store/preferences.action';
 
 @Component({
 	selector: 'app-projectv2-run-list-sidebar',
@@ -66,5 +67,9 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		});
 
 		this._cd.markForCheck();
+	}
+
+	deleteSearch(name: string): void {
+		this._store.dispatch(new actionPreferences.DeleteProjectWorkflowRunFilter({ projectKey: this.project.key, name }));
 	}
 }
