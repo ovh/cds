@@ -3,5 +3,31 @@
 }
 
 [nz-menu-item] {
-	margin: 0 !important;
+  margin: 0 !important;
+
+  ::ng-deep {
+    .ant-menu-title-content {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
+  a {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  button {
+    margin-left: 5px;
+    display: none;
+  }
+
+  &:hover {
+    button {
+      display: block;
+    }
+  }
 }

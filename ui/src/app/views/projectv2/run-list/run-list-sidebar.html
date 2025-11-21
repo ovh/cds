@@ -6,8 +6,14 @@
 	<li *ngIf="searches && searches.length> 0" nz-menu-group nzTitle="Saved filters">
 		<ul>
 			<ng-container *ngFor="let s of searches">
-				<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/project', project.key, 'run']"
-						[queryParams]="s.params">{{s.name}}</a></li>
+				<li nz-menu-item nzMatchRouter nzMatchRouterExact>
+					<a [title]="s.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="s.params">{{s.name}}</a>
+					<button nz-button nzType="primary" nzDanger nzSize="small" nz-tooltip
+						nzTooltipTitle="Click to delete saved filter" nz-popconfirm
+						nzPopconfirmTitle="Are you sure you want to delete this filter ?" (nzOnConfirm)="deleteSearch(s.name)">
+						<i nz-icon nzType="delete" nzTheme="outline"></i>
+					</button>
+				</li>
 			</ng-container>
 		</ul>
 	</li>
