@@ -51,6 +51,7 @@ var projectRepositoryListCmd = cli.Command{
 	Flags: []cli.Flag{
 		{Name: "vcs-name", Usage: "Specified a VCS by its name"},
 	},
+	Mcp: true,
 }
 
 func projectRepositoryListFunc(v cli.Values) (cli.ListResult, error) {

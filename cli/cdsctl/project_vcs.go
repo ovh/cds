@@ -34,6 +34,7 @@ var projectVCSListCmd = cli.Command{
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
+	Mcp: true,
 }
 
 func projectVCSListFunc(v cli.Values) (cli.ListResult, error) {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -29,14 +28,14 @@ func experimentalProject() *cobra.Command {
 }
 
 var projectV2ListCmd = cli.Command{
-	Name:      "list",
-	Short:     "List CDS projects",
-	McpOutput: fmt.Sprintf("%T", []CliProject{}),
+	Name:  "list",
+	Short: "List CDS projects",
+	Mcp:   true,
 }
 
 type CliProject struct {
-	Name string `json:"name"`
-	Key  string `json:"key"`
+	Name string `json:"name" cli:"name"`
+	Key  string `json:"key" cli:"key"`
 }
 
 func projectV2ListRun(v cli.Values) (cli.ListResult, error) {

@@ -82,9 +82,9 @@ func (v *Values) GetStringArray(s string) []string {
 
 // Arg represent a command argument
 type Arg struct {
-	Name       string
-	IsValid    func(string) bool
-	AllowEmpty bool
+	Name       string            `json:"name"`
+	IsValid    func(string) bool `json:"-"`
+	AllowEmpty bool              `json:"-"`
 }
 
 // Command represents the way to instantiate a cobra.Command
@@ -101,7 +101,7 @@ type Command struct {
 	Aliases      []string
 	Hidden       bool
 	PreRun       func(c *Command, args *[]string) error
-	McpOutput    string
+	Mcp          bool
 }
 
 // CommandModifier is a function type to extend a command

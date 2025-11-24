@@ -10,9 +10,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -161,38 +163,66 @@ func registerTools(server *mcp.Server, v cli.Values) {
 	cmds := FindCommandsByMCPAnnotation(root, v)
 
 	for _, c := range cmds {
-		logTrace(v, "registerTools", fmt.Sprintf("Registering MCP tool for command: %s\n", c.Short))
+		logTrace(v, "registerTools", fmt.Sprintf("Registering MCP tool for command: %s\n", c.Name))
 
+		cmd := c
 		mcp.AddTool(server, &mcp.Tool{
-			Name:        c.Name(),
-			Title:       c.Short,
-			Description: c.Short + "\n" + c.Example,
-		}, func(ctx context.Context, req *mcp.CallToolRequest, in any) (*mcp.CallToolResult, map[string]any, error) {
-			logTrace(v, "CallTool "+c.Name(), fmt.Sprintf("Inputs: %+v", in))
+			Name:        cmd.Name,
+			Title:       cmd.Cmd.Short,
+			Description: cmd.Cmd.Short + "\n" + cmd.Cmd.Example,
+			InputSchema: cmd.Inputs,
+		}, func(ctx context.Context, req *mcp.CallToolRequest, in map[string]string) (*mcp.CallToolResult, map[string]any, error) {
+			logTrace(v, "CallTool "+cmd.Name, fmt.Sprintf("Inputs: %+v", in))
 			var outBuf, errBuf bytes.Buffer
-			c.SetOut(&outBuf)
-			c.SetErr(&errBuf)
-
-			// Préparer les args (sans le nom de la commande)
-			c.SetArgs([]string{"--format", "json"})
-
-			// Parser les flags si besoin explicitement (Execute le fait sinon)
-			_ = c.ParseFlags(c.Flags().Args())
-
-			// Si la commande définit RunE
-			if c.RunE != nil {
-				if err := c.RunE(c, c.Flags().Args()); err != nil {
-					// handle error
+			cmd.Cmd.SetOut(&outBuf)
+			cmd.Cmd.SetErr(&errBuf)
+			args := make([]string, 0)
+			for _, arg := range cmd.Args {
+				i, found := in[arg.Name]
+				if !found {
+					logTrace(v, "CallTool "+cmd.Name+" error:", "missing argument: "+arg.Name)
+					return nil, nil, fmt.Errorf("missing argument: %s", arg.Name)
 				}
-			} else if c.Run != nil {
-				c.Run(c, c.Flags().Args())
+				args = append(args, i)
 			}
 
-			fmt.Printf("OUT: %s\n", outBuf.String())
-			fmt.Printf("ERR: %s\n", errBuf.String())
+			logTrace(v, "CallTool "+cmd.Name, fmt.Sprintf("Args: %+v", args))
 
-			logTrace(v, "CallTool "+c.Name(), outBuf.String())
-			return nil, map[string]any{}, nil
+			// Parser les flags avant l'exécution
+			if err := cmd.Cmd.ParseFlags([]string{"--format", "json"}); err != nil {
+				logTrace(v, "CallTool "+cmd.Name+" parse error:", err.Error())
+				return nil, nil, err
+			}
+
+			cmd.Cmd.Run(cmd.Cmd, args)
+
+			logTrace(v, "CallTool "+cmd.Name+" out:", outBuf.String())
+			logTrace(v, "CallTool "+cmd.Name+" err:", errBuf.String())
+
+			if outBuf.Len() == 0 {
+				if errBuf.Len() > 0 {
+					logTrace(v, "CallTool "+cmd.Name+" error:", errBuf.String())
+					return nil, nil, fmt.Errorf("command failed: %s", errBuf.String())
+				}
+				logTrace(v, "CallTool "+cmd.Name+" error:", "command produced no output")
+				return nil, nil, fmt.Errorf("command produced no output")
+			}
+
+			outpoutString := outBuf.String()
+			if strings.HasPrefix(outpoutString, "[") {
+				var out []any
+				if err := json.Unmarshal(outBuf.Bytes(), &out); err != nil {
+					return nil, nil, err
+				}
+				return nil, map[string]any{"values": out}, nil
+			} else {
+				var out map[string]any
+				if err := json.Unmarshal(outBuf.Bytes(), &out); err != nil {
+					return nil, nil, err
+				}
+				return nil, out, nil
+			}
+
 		})
 	}
 }
@@ -213,30 +243,54 @@ func runStdioMode(server *mcp.Server, v cli.Values) {
 
 }
 
-func FindCommandsByMCPAnnotation(root *cobra.Command, v cli.Values) []*cobra.Command {
+type MCPCommand struct {
+	Name   string
+	Cmd    *cobra.Command
+	Args   []cli.Arg
+	Inputs *jsonschema.Schema
+}
+
+func FindCommandsByMCPAnnotation(root *cobra.Command, v cli.Values) []MCPCommand {
 	logTrace(v, "FindCommandsByMCPAnnotation", "Start searching cmd")
 	defer logTrace(v, "FindCommandsByMCPAnnotation", "End searching cmd")
-	var result []*cobra.Command
-	var walk func(c *cobra.Command)
-	walk = func(c *cobra.Command) {
+	var result []MCPCommand
+	var walk func(c *cobra.Command, parentCommandPrefix string)
+	walk = func(c *cobra.Command, prefix string) {
 		for _, sub := range c.Commands() {
-			logTrace(v, "FindCommandsByMCPAnnotation", fmt.Sprintf("Checking command: %s - Ann: %+v\n", sub.Name(), sub.Annotations))
 			if sub.Annotations != nil {
-				output := sub.Annotations["mcp_output"]
+				output := sub.Annotations["mcp"]
 				if output != "" {
-					result = append(result, sub)
+					logTrace(v, "FindCommandsByMCPAnnotation", fmt.Sprintf("Adding command: %s-%s\n", prefix, sub.Name()))
+					mcpCommand := MCPCommand{
+						Name: prefix + "-" + sub.Name(),
+						Cmd:  sub,
+						Inputs: &jsonschema.Schema{
+							Type:       "object",
+							Properties: map[string]*jsonschema.Schema{},
+						},
+					}
+					_ = json.Unmarshal([]byte(output), &mcpCommand.Args)
+					for _, arg := range mcpCommand.Args {
+						mcpCommand.Inputs.Properties[arg.Name] = &jsonschema.Schema{Type: "string"}
+					}
+					result = append(result, mcpCommand)
 				}
 			}
-			walk(sub)
+			if prefix == "" {
+				walk(sub, sub.Name())
+			} else {
+				walk(sub, prefix+"-"+sub.Name())
+			}
 		}
 	}
-	walk(root)
+	walk(root, "")
 	logTrace(v, "FindCommandsByMCPAnnotation", fmt.Sprintf("Found %d commands\n", len(result)))
 	return result
 }
 
 func logTrace(v cli.Values, prefix string, data any) {
 	if !v.GetBool("trace") {
+		fmt.Printf("%s-%s\n", prefix, data)
 		return
 	}
 
