@@ -462,6 +462,8 @@ func workflowRestartFunc(v cli.Values) error {
 			if err := json.Unmarshal([]byte(v.GetString("inputs")), &inputs); err != nil {
 				return fmt.Errorf("unable to parse inputs: %v", err)
 			}
+			payload.JobInputs = inputs
+
 		} else if v.GetString("inputs-file") != "" {
 			bts, err := os.ReadFile(v.GetString("inputs-file"))
 			if err != nil {
