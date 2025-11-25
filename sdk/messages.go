@@ -60,6 +60,7 @@ var (
 	MsgEnvironmentDetached                  = &Message{"MsgEnvironmentDetached", trad{FR: "L'environnement %s est détaché du repository %s", EN: "The environment %s is detached from repository %s"}, nil, RunInfoTypInfo}
 	MsgWorkflowDetached                     = &Message{"MsgWorkflowDetached", trad{FR: "Le workflow %s est détaché du repository %s", EN: "The workflow %s is detached from repository %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryStarts              = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s a démarré le lancement du worker %s avec le modèle %s", EN: "Hatchery %s starts spawn worker %s with model %s"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoHatcheryStartsFlavor        = &Message{"MsgSpawnInfoHatcheryStartsFlavor", trad{FR: "Le worker %q utilisera la flavor %q", EN: "The worker %q will use the flavor %q"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryErrorSpawn          = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s a démarré un worker avec le modèle %s après %s, err: %s", EN: "Error while Hatchery %s spawns worker with model %s after %s, err: %s"}, nil, RunInfoTypeError}
 	MsgSpawnInfoHatcheryStartDockerPull     = &Message{"MsgSpawnInfoHatcheryStartDockerPull", trad{FR: "La Hatchery %s a démarré le docker pull de l'image %s...", EN: "Hatchery %s starts docker pull %s..."}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryEndDockerPull       = &Message{"MsgSpawnInfoHatcheryEndDockerPull", trad{FR: "La Hatchery %s a terminé le docker pull de l'image %s", EN: "Hatchery %s docker pull %s done"}, nil, RunInfoTypInfo}
@@ -148,6 +149,7 @@ var Messages = map[string]*Message{
 	MsgEnvironmentDetached.ID:                  MsgEnvironmentDetached,
 	MsgWorkflowDetached.ID:                     MsgWorkflowDetached,
 	MsgSpawnInfoHatcheryStarts.ID:              MsgSpawnInfoHatcheryStarts,
+	MsgSpawnInfoHatcheryStartsFlavor.ID:        MsgSpawnInfoHatcheryStartsFlavor,
 	MsgSpawnInfoHatcheryErrorSpawn.ID:          MsgSpawnInfoHatcheryErrorSpawn,
 	MsgSpawnInfoHatcheryStartDockerPull.ID:     MsgSpawnInfoHatcheryStartDockerPull,
 	MsgSpawnInfoHatcheryEndDockerPull.ID:       MsgSpawnInfoHatcheryEndDockerPull,
