@@ -148,7 +148,7 @@ func mcpStartRun(v cli.Values) error {
 	// Start HTTP server asynchronously
 	go func() {
 		modeInfo := fmt.Sprintf("mode=%s", v.GetString("mode"))
-		log.Printf("MCP HTTP server listening on http://%s (MCP on /mcp, health on /healthz) - %s\n", addr, modeInfo)
+		log.Printf("MCP HTTP server listening on http://%s (MCP on /mcp, health on /health) - %s\n", addr, modeInfo)
 
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("http server error: %v", err)
