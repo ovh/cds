@@ -235,7 +235,7 @@ func registerTools(server *mcp.Server, v cli.Values) {
 
 			mcpLog.logTrace("CallTool "+cmd.Name, fmt.Sprintf("Args: %+v", args))
 
-			// Parser les flags avant l'exécution
+			// Parse flag before execution
 			if err := cmd.Cmd.ParseFlags([]string{"--format", "json"}); err != nil {
 				mcpLog.logTrace("CallTool "+cmd.Name+" parse error:", err.Error())
 				return nil, nil, err
