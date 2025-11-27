@@ -21,6 +21,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var mcpLog *mcpLogger
+
 var mcpCmd = cli.Command{
 	Name:    "mcp",
 	Aliases: []string{""},
@@ -62,6 +64,11 @@ var mcpStartCmd = cli.Command{
 }
 
 func mcpStartRun(v cli.Values) error {
+	mcpLog = &mcpLogger{
+		traceEnabled: v.GetBool("trace"),
+		logFile:      v.GetString("logfile"),
+	}
+
 	// Create MCP server
 	server := mcp.NewServer(
 		&mcp.Implementation{
@@ -94,11 +101,10 @@ func mcpStartRun(v cli.Values) error {
 
 	// Main MCP handler
 	mcpHandler := func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("BEGIN %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
-
+		mcpLog.logTrace("Hander"+r.Method+" "+r.URL.Path, "BEGIN")
+		defer mcpLog.logTrace("Hander"+r.Method+" "+r.URL.Path, "END")
 		switch r.Method {
 		case "POST":
-			// Delegate completely to MCP SDK
 			if v.GetString("mode") == "sse" {
 				mcp.NewSSEHandler(
 					func(r *http.Request) *mcp.Server { return server },
@@ -118,19 +124,15 @@ func mcpStartRun(v cli.Values) error {
 			w.Header().Set("Allow", "POST")
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-
-		log.Printf("END %s %s", r.Method, r.URL.Path)
 	}
 
 	// HTTP mux
 	mux := http.NewServeMux()
-
 	// IMPORTANT: Register both /mcp and /mcp/ to avoid implicit ServeMux redirects
 	mux.HandleFunc("/mcp", mcpHandler)
 	mux.HandleFunc("/mcp/", mcpHandler)
-
 	// Health check
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok"))
 	})
@@ -146,7 +148,7 @@ func mcpStartRun(v cli.Values) error {
 	// Start HTTP server asynchronously
 	go func() {
 		modeInfo := fmt.Sprintf("mode=%s", v.GetString("mode"))
-		log.Printf("MCP HTTP server listening on http://%s (MCP on /mcp, health on /healthz) - %s", addr, modeInfo)
+		log.Printf("MCP HTTP server listening on http://%s (MCP on /mcp, health on /healthz) - %s\n", addr, modeInfo)
 
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("http server error: %v", err)
@@ -156,14 +158,58 @@ func mcpStartRun(v cli.Values) error {
 	return nil
 }
 
+type mcpLogger struct {
+	traceEnabled bool
+	logFile      string
+}
+
+func (ml *mcpLogger) logTrace(prefix string, data any) {
+	if !ml.traceEnabled {
+		return
+	}
+
+	var message string
+	switch v := data.(type) {
+	case string:
+		const max = 4096
+		if len(v) > max {
+			v = v[:max] + "...(truncated)"
+		}
+		message = fmt.Sprintf("TRACE %s: %s", prefix, v)
+	default:
+		jsonData, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			message = fmt.Sprintf("TRACE %s: [ERROR marshaling data: %v]", prefix, err)
+		} else {
+			message = fmt.Sprintf("TRACE %s: %s", prefix, string(jsonData))
+		}
+	}
+
+	// Log to file if specified, otherwise to standard log
+	if ml.logFile != "" {
+		f, err := os.OpenFile(ml.logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			log.Printf("ERROR opening log file %s: %v", ml.logFile, err)
+			log.Printf("%s", message) // fallback to standard log
+			return
+		}
+		defer f.Close()
+
+		timestamp := time.Now().Format("2006-01-02 15:04:05")
+		fmt.Fprintf(f, "[%s] %s\n", timestamp, message)
+	} else {
+		log.Printf("%s", message)
+	}
+}
+
 func registerTools(server *mcp.Server, v cli.Values) {
-	logTrace(v, "registerTools", "Registering MCP tools")
-	defer logTrace(v, "registerTools", "End Registering MCP tools")
+	mcpLog.logTrace("registerTools", "Registering MCP tools")
+	defer mcpLog.logTrace("registerTools", "End Registering MCP tools")
 
 	cmds := FindCommandsByMCPAnnotation(root, v)
 
 	for _, c := range cmds {
-		logTrace(v, "registerTools", fmt.Sprintf("Registering MCP tool for command: %s\n", c.Name))
+		mcpLog.logTrace("registerTools", fmt.Sprintf("Registering MCP tool for command: %s\n", c.Name))
 
 		cmd := c
 		mcp.AddTool(server, &mcp.Tool{
@@ -172,7 +218,8 @@ func registerTools(server *mcp.Server, v cli.Values) {
 			Description: cmd.Cmd.Short + "\n" + cmd.Cmd.Example,
 			InputSchema: cmd.Inputs,
 		}, func(ctx context.Context, req *mcp.CallToolRequest, in map[string]string) (*mcp.CallToolResult, map[string]any, error) {
-			logTrace(v, "CallTool "+cmd.Name, fmt.Sprintf("Inputs: %+v", in))
+			mcpLog.logTrace("CallTool "+cmd.Name, fmt.Sprintf("Inputs: %+v", in))
+
 			var outBuf, errBuf bytes.Buffer
 			cmd.Cmd.SetOut(&outBuf)
 			cmd.Cmd.SetErr(&errBuf)
@@ -180,31 +227,31 @@ func registerTools(server *mcp.Server, v cli.Values) {
 			for _, arg := range cmd.Args {
 				i, found := in[arg.Name]
 				if !found {
-					logTrace(v, "CallTool "+cmd.Name+" error:", "missing argument: "+arg.Name)
+					mcpLog.logTrace("CallTool "+cmd.Name+" error:", "missing argument: "+arg.Name)
 					return nil, nil, fmt.Errorf("missing argument: %s", arg.Name)
 				}
 				args = append(args, i)
 			}
 
-			logTrace(v, "CallTool "+cmd.Name, fmt.Sprintf("Args: %+v", args))
+			mcpLog.logTrace("CallTool "+cmd.Name, fmt.Sprintf("Args: %+v", args))
 
 			// Parser les flags avant l'exécution
 			if err := cmd.Cmd.ParseFlags([]string{"--format", "json"}); err != nil {
-				logTrace(v, "CallTool "+cmd.Name+" parse error:", err.Error())
+				mcpLog.logTrace("CallTool "+cmd.Name+" parse error:", err.Error())
 				return nil, nil, err
 			}
 
 			cmd.Cmd.Run(cmd.Cmd, args)
 
-			logTrace(v, "CallTool "+cmd.Name+" out:", outBuf.String())
-			logTrace(v, "CallTool "+cmd.Name+" err:", errBuf.String())
+			mcpLog.logTrace("CallTool "+cmd.Name+" out:", outBuf.String())
+			mcpLog.logTrace("CallTool "+cmd.Name+" err:", errBuf.String())
 
 			if outBuf.Len() == 0 {
 				if errBuf.Len() > 0 {
-					logTrace(v, "CallTool "+cmd.Name+" error:", errBuf.String())
+					mcpLog.logTrace("CallTool "+cmd.Name+" error:", errBuf.String())
 					return nil, nil, fmt.Errorf("command failed: %s", errBuf.String())
 				}
-				logTrace(v, "CallTool "+cmd.Name+" error:", "command produced no output")
+				mcpLog.logTrace("CallTool "+cmd.Name+" error:", "command produced no output")
 				return nil, nil, fmt.Errorf("command produced no output")
 			}
 
@@ -228,7 +275,7 @@ func registerTools(server *mcp.Server, v cli.Values) {
 }
 
 func runStdioMode(server *mcp.Server, v cli.Values) {
-	logTrace(v, "runStdioMode", "Starting MCP server in stdio mode")
+	mcpLog.logTrace("runStdioMode", "Starting MCP server in stdio mode")
 
 	// Graceful shutdown on SIGINT / SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -236,10 +283,10 @@ func runStdioMode(server *mcp.Server, v cli.Values) {
 
 	// MCP SDK automatically handles stdin/stdout
 	if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
-		logTrace(v, "runStdioMode", fmt.Sprintf("server error: %v", err))
+		mcpLog.logTrace("runStdioMode", fmt.Sprintf("server error: %v", err))
 	}
 
-	logTrace(v, "runStdioMode", "server stopped")
+	mcpLog.logTrace("runStdioMode", "server stopped")
 
 }
 
@@ -251,8 +298,8 @@ type MCPCommand struct {
 }
 
 func FindCommandsByMCPAnnotation(root *cobra.Command, v cli.Values) []MCPCommand {
-	logTrace(v, "FindCommandsByMCPAnnotation", "Start searching cmd")
-	defer logTrace(v, "FindCommandsByMCPAnnotation", "End searching cmd")
+	mcpLog.logTrace("FindCommandsByMCPAnnotation", "Start searching cmd")
+	defer mcpLog.logTrace("FindCommandsByMCPAnnotation", "End searching cmd")
 	var result []MCPCommand
 	var walk func(c *cobra.Command, parentCommandPrefix string)
 	walk = func(c *cobra.Command, prefix string) {
@@ -260,7 +307,7 @@ func FindCommandsByMCPAnnotation(root *cobra.Command, v cli.Values) []MCPCommand
 			if sub.Annotations != nil {
 				output := sub.Annotations["mcp"]
 				if output != "" {
-					logTrace(v, "FindCommandsByMCPAnnotation", fmt.Sprintf("Adding command: %s-%s\n", prefix, sub.Name()))
+					mcpLog.logTrace("FindCommandsByMCPAnnotation", fmt.Sprintf("Adding command: %s-%s\n", prefix, sub.Name()))
 					mcpCommand := MCPCommand{
 						Name: prefix + "-" + sub.Name(),
 						Cmd:  sub,
@@ -284,46 +331,6 @@ func FindCommandsByMCPAnnotation(root *cobra.Command, v cli.Values) []MCPCommand
 		}
 	}
 	walk(root, "")
-	logTrace(v, "FindCommandsByMCPAnnotation", fmt.Sprintf("Found %d commands\n", len(result)))
+	mcpLog.logTrace("FindCommandsByMCPAnnotation", fmt.Sprintf("Found %d commands\n", len(result)))
 	return result
-}
-
-func logTrace(v cli.Values, prefix string, data any) {
-	if !v.GetBool("trace") {
-		fmt.Printf("%s-%s\n", prefix, data)
-		return
-	}
-
-	var message string
-	switch v := data.(type) {
-	case string:
-		const max = 4096
-		if len(v) > max {
-			v = v[:max] + "...(truncated)"
-		}
-		message = fmt.Sprintf("TRACE %s: %s", prefix, v)
-	default:
-		jsonData, err := json.MarshalIndent(data, "", "  ")
-		if err != nil {
-			message = fmt.Sprintf("TRACE %s: [ERROR marshaling data: %v]", prefix, err)
-		} else {
-			message = fmt.Sprintf("TRACE %s: %s", prefix, string(jsonData))
-		}
-	}
-
-	// Log to file if specified, otherwise to standard log
-	if v.GetString("logfile") != "" {
-		f, err := os.OpenFile(v.GetString("logfile"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		if err != nil {
-			log.Printf("ERROR opening log file %s: %v", v.GetString("logfile"), err)
-			log.Printf("%s", message) // fallback to standard log
-			return
-		}
-		defer f.Close()
-
-		timestamp := time.Now().Format("2006-01-02 15:04:05")
-		fmt.Fprintf(f, "[%s] %s\n", timestamp, message)
-	} else {
-		log.Printf("%s", message)
-	}
 }
