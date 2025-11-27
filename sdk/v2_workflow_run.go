@@ -826,7 +826,7 @@ func CheckJobInputWithGate(wk V2Workflow, jobID string, inputs map[string]interf
 	// Retrieve job
 	job, exist := wk.Jobs[jobID]
 	if !exist {
-		return NewErrorFrom(ErrInvalidData, "job %q not found in workflow %q", jobID, wk)
+		return NewErrorFrom(ErrInvalidData, "job %q not found in workflow %q", jobID, wk.Name)
 	}
 	// Check gate
 	if job.Gate == "" {
