@@ -115,8 +115,12 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 						if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
 							return err
 						}
+						return nil
 					} else {
 						// return and wait
+						if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+							return err
+						}
 						return nil
 					}
 				}
