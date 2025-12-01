@@ -106,7 +106,10 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		vcsServer := vars["vcsServer"]
-		repo := vars["repoName"]
+		repo, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
 		uuid := vars["uuid"]
 
 		e, err := s.Dao.GetRepositoryEvent(ctx, vcsServer, repo, uuid)
