@@ -22,7 +22,27 @@ func adminHooksRepositoryEvents() *cobra.Command {
 		cli.NewListCommand(adminHooksRepoEventListCmd, adminHooksRepoEventListRun, nil),
 		cli.NewGetCommand(adminHooksRepoEventGetCmd, adminHooksRepoEventGetRun, nil),
 		cli.NewCommand(adminHookRepoEventRestartCmd, adminHookRepoEventRestartRun, nil),
+		cli.NewCommand(adminHookRepoEventStopCmd, adminHookRepoEventStopRun, nil),
 	})
+}
+
+var adminHookRepoEventStopCmd = cli.Command{
+	Name:    "stop",
+	Aliases: []string{"stop"},
+	Short:   "stop an event",
+	Args: []cli.Arg{
+		{Name: "vcs-server"},
+		{Name: "repository"},
+		{Name: "event-id"},
+	},
+}
+
+func adminHookRepoEventStopRun(v cli.Values) error {
+	path := fmt.Sprintf("/admin/repository/event/%s/%s/%s/stop", url.PathEscape(v.GetString("vcs-server")), url.PathEscape(v.GetString("repository")), v.GetString("event-id"))
+	if _, err := client.ServiceCallPOST("hooks", path, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 var adminHookRepoEventRestartCmd = cli.Command{

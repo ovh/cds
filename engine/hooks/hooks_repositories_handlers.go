@@ -102,6 +102,39 @@ func (s *Service) deleteRepositoryHandler() service.Handler {
 	}
 }
 
+func (s *Service) postStopRepositoryHookEventHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		vcsServer := vars["vcsServer"]
+		repo, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		uuid := vars["uuid"]
+
+		e, err := s.Dao.GetRepositoryEvent(ctx, vcsServer, repo, uuid)
+		if err != nil {
+			return err
+		}
+		if e.IsTerminated() {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "hook event is already ended")
+		}
+
+		e.Status = sdk.HookEventStatusError
+		e.LastError = "manually stopped"
+
+		if err := s.Dao.SaveRepositoryEvent(ctx, e); err != nil {
+			return err
+		}
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, e.UUID); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+}
+
 func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -135,6 +168,7 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		e.Analyses = nil
 		e.LastUpdate = time.Now().UnixNano()
 		e.Initiator = nil
+		e.SigningKeyOperationRetry = 0
 
 		if err := s.Dao.SaveRepositoryEvent(ctx, e); err != nil {
 			return err

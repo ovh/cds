@@ -33,6 +33,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.PostMiddlewares = append(r.PostMiddlewares, service.TracingPostMiddleware)
 
 	r.Handle("/admin/maintenance", nil, r.POST(s.postMaintenanceHandler))
+	r.Handle("/admin/repository/event/{vcsServer}/{repoName}/{uuid}/stop", nil, r.POST(s.postStopRepositoryHookEventHandler))
 	r.Handle("/admin/repository/event/{vcsServer}/{repoName}/{uuid}/restart", nil, r.POST(s.postRestartRepositoryHookEventHandler))
 	r.Handle("/admin/repository/{vcsServer}/{repoName}", nil, r.DELETE(s.deleteRepositoryHandler))
 	r.Handle("/admin/scheduler", nil, r.GET(s.getAllSchedulersHandler))
