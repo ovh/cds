@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"strings"
+
 	"github.com/sguiheux/jsonschema"
 )
 
@@ -194,4 +196,17 @@ func GetWorkflowTemplateJsonSchema() *jsonschema.Schema {
 	}
 
 	return templateSchema
+}
+
+func GetYamlFromJsonSchema(schema *jsonschema.Schema) (string, error) {
+	// Cette fonction utilise maintenant YAMLGenerator
+	var buf strings.Builder
+	gen := &YAMLGenerator{
+		indent:      "  ",
+		commentChar: "#",
+	}
+	if err := gen.Generate(&buf, schema); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }

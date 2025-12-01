@@ -42,26 +42,26 @@ const (
 )
 
 type V2Workflow struct {
-	Name          string                   `json:"name"`
-	Repository    *WorkflowRepository      `json:"repository,omitempty"`
-	OnRaw         json.RawMessage          `json:"on,omitempty"`
-	CommitStatus  *CommitStatus            `json:"commit-status,omitempty"`
+	Name          string                   `json:"name" jsonschema_description:"Workflow name"`
+	Repository    *WorkflowRepository      `json:"repository,omitempty" jsonschema_description:"Repository that will be use in the git context ( used by the action for example )"`
+	OnRaw         json.RawMessage          `json:"on,omitempty" jsonschema_description:"Specify the way to trigger the workflow"`
+	CommitStatus  *CommitStatus            `json:"commit-status,omitempty"  jsonschema_description:"Specify data send to the build status ( title and description )"`
 	On            *WorkflowOn              `json:"-" yaml:"-"`
-	Stages        map[string]WorkflowStage `json:"stages,omitempty"`
-	Gates         map[string]V2JobGate     `json:"gates,omitempty"`
-	Jobs          map[string]V2Job         `json:"jobs,omitempty" jsonschema:"oneof_required=jobs"`
-	Env           map[string]string        `json:"env,omitempty"`
-	Integrations  []string                 `json:"integrations,omitempty"`
-	VariableSets  []string                 `json:"vars,omitempty"`
-	Retention     int64                    `json:"retention,omitempty"`
-	Annotations   map[string]string        `json:"annotations,omitempty"`
-	Semver        *WorkflowSemver          `json:"semver,omitempty"`
-	Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty"`
-	Concurrency   string                   `json:"concurrency,omitempty"`
+	Stages        map[string]WorkflowStage `json:"stages,omitempty"  jsonschema_description:"Map of stages used in the workflow"`
+	Gates         map[string]V2JobGate     `json:"gates,omitempty" jsonschema_description:"Map of gates used in the workflow"`
+	Jobs          map[string]V2Job         `json:"jobs,omitempty" jsonschema:"oneof_required=jobs" jsonschema_description:"Map of jobs used in the workflow"`
+	Env           map[string]string        `json:"env,omitempty" jsonschema_description:"Environment variables available in all jobs of the workflow"`
+	Integrations  []string                 `json:"integrations,omitempty" jsonschema_description:"List of integrations available in all jobs of the workflow"`
+	VariableSets  []string                 `json:"vars,omitempty" jsonschema_description:"List of VariableSets available in all jobs of the workflow"`
+	Retention     int64                    `json:"retention,omitempty" jsonschema_extras:"order=99" jsonschema_description:"DEPRECATED:: not used anymore, please check project->retention"`
+	Annotations   map[string]string        `json:"annotations,omitempty" jsonschema_description:"Map of annotations. They are free text key/value pairs that can be attached to this workflow for storing additional information."`
+	Semver        *WorkflowSemver          `json:"semver,omitempty" jsonschema_description:"Define semver strategy to automatically bump version on each run"`
+	Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty" jsonschema_description:"Define concurrency groups that can be used on workflow or jobs to limit the number of concurrent executions"`
+	Concurrency   string                   `json:"concurrency,omitempty" jsonschema_description:"Define a concurrency group to use for the workflow execution"`
 
 	// Template fields
-	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from"`
-	Parameters map[string]string `json:"parameters,omitempty" jsonschema:"oneof_required=from"`
+	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from" jsonschema_description:"Template name used to create the workflow"`
+	Parameters map[string]string `json:"parameters,omitempty" jsonschema:"oneof_required=from" jsonschema_description:"Template parameters"`
 }
 
 type WorkflowSemver struct {
