@@ -112,8 +112,8 @@ type WorkflowOn struct {
 type WorkflowOnRun struct {
 	Workflow string   `json:"workflow" jsonschema_description:"Name of the workflow to watch"`
 	Status   []string `json:"status,omitempty" jsonschema_description:"List of workflow run status to watch"`
-	Branches []string `json:"branches,omitempty" jsonschema_description:"List of branches to filter"`
-	Tags     []string `json:"tags,omitempty" jsonschema_description:"List of tags to filter"`
+	Branches []string `json:"branches,omitempty" jsonschema_description:"Git branches that will trigger the workflow"`
+	Tags     []string `json:"tags,omitempty" jsonschema_description:"Git tags that will trigger the workflow"`
 }
 
 type WorkflowOnSchedule struct {
@@ -122,33 +122,33 @@ type WorkflowOnSchedule struct {
 }
 
 type WorkflowOnPush struct {
-	Branches []string `json:"branches,omitempty" jsonschema_description:"List of branches to filter"`
-	Tags     []string `json:"tags,omitempty" jsonschema_description:"List of tags to filter"`
-	Paths    []string `json:"paths,omitempty" jsonschema_description:"List of updated files to filter"`
-	Commit   string   `json:"commit,omitempty" jsonschema_description:"Commit message filter"`
+	Branches []string `json:"branches,omitempty" jsonschema_description:"Git branches that will trigger the workflow"`
+	Tags     []string `json:"tags,omitempty" jsonschema_description:"Git tags that will trigger the workflow"`
+	Paths    []string `json:"paths,omitempty" jsonschema_description:"File paths that will trigger the workflow when modified"`
+	Commit   string   `json:"commit,omitempty" jsonschema_description:"Commit message pattern that will trigger the workflow"`
 }
 
 type WorkflowOnPullRequest struct {
-	Branches []string                `json:"branches,omitempty" jsonschema_description:"Destination branch to filter"`
-	Comment  string                  `json:"comment,omitempty" jsonschema_description:"Comment message filter"`
-	Paths    []string                `json:"paths,omitempty" jsonschema_description:"List of updated files to filter"`
-	Types    []WorkflowHookEventType `json:"types,omitempty" jsonschema_description:"List of pull request event types to filter"`
+	Branches []string                `json:"branches,omitempty" jsonschema_description:"Destination branches that will trigger the workflow"`
+	Comment  string                  `json:"comment,omitempty" jsonschema_description:"Comment message pattern that will trigger the workflow"`
+	Paths    []string                `json:"paths,omitempty" jsonschema_description:"File paths that will trigger the workflow when modified"`
+	Types    []WorkflowHookEventType `json:"types,omitempty" jsonschema_description:"Pull request event types that will trigger the workflow"`
 }
 
 type WorkflowOnPullRequestComment struct {
-	Branches []string `json:"branches,omitempty" jsonschema_description:"Destination branch to filter"`
-	Comment  string   `json:"comment,omitempty"  jsonschema_description:"Comment message filter"`
-	Paths    []string `json:"paths,omitempty" jsonschema_description:"List of updated files to filter"`
-	Types    []string `json:"types,omitempty" jsonschema_description:"List of pull request event types to filter"`
+	Branches []string `json:"branches,omitempty" jsonschema_description:"Destination branches that will trigger the workflow"`
+	Comment  string   `json:"comment,omitempty"  jsonschema_description:"Comment message pattern that will trigger the workflow"`
+	Paths    []string `json:"paths,omitempty" jsonschema_description:"File paths that will trigger the workflow when modified"`
+	Types    []string `json:"types,omitempty" jsonschema_description:"Pull request event types that will trigger the workflow"`
 }
 
 type WorkflowOnModelUpdate struct {
-	Models       []string `json:"models,omitempty" jsonschema_description:"List of worker model names to filter"`
-	TargetBranch string   `json:"target_branch,omitempty" jsonschema_description:"Branch that will be used to trigger the workflow"`
+	Models       []string `json:"models,omitempty" jsonschema_description:"Worker model names that will trigger the workflow"`
+	TargetBranch string   `json:"target_branch,omitempty" jsonschema_description:"Git branch that will be used to trigger the workflow"`
 }
 
 type WorkflowOnWorkflowUpdate struct {
-	TargetBranch string `json:"target_branch,omitempty"  jsonschema_description:"Branch that will be used to trigger the workflow"`
+	TargetBranch string `json:"target_branch,omitempty"  jsonschema_description:"Git branch that will be used to trigger the workflow"`
 }
 
 type WorkflowRepository struct {
@@ -368,20 +368,20 @@ type V2JobGate struct {
 }
 
 type V2JobGateInput struct {
-	Type        string            `json:"type"`
-	Default     interface{}       `json:"default,omitempty"`
+	Type        string            `json:"type" jsonschema_description:"Type of the input: boolean | number (Default string)"`
+	Default     interface{}       `json:"default,omitempty" jsonschema_description:"Default value of the input"`
 	Options     *V2JobGateOptions `json:"options,omitempty"`
-	Description string            `json:"description,omitempty"`
+	Description string            `json:"description,omitempty" jsonschema_description:"Description of the input"`
 }
 
 type V2JobGateOptions struct {
-	Multiple bool          `json:"multiple"`
-	Values   []interface{} `json:"values"`
+	Multiple bool          `json:"multiple" jsonschema_description:"Allow multiple values selection"`
+	Values   []interface{} `json:"values" jsonschema_description:"List of allowed values"`
 }
 
 type V2JobGateReviewers struct {
-	Groups []string `json:"groups,omitempty"`
-	Users  []string `json:"users,omitempty"`
+	Groups []string `json:"groups,omitempty" jsonschema_description:Groups allowed to trigger the gate"`
+	Users  []string `json:"users,omitempty" jsonschema_description:Users allowed to trigger the gate"`
 }
 
 func (job *V2Job) Clean() {

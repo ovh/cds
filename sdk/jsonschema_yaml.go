@@ -24,7 +24,6 @@ func NewYAMLGenerator() *YAMLGenerator {
 
 // Generate writes the YAML example to the provided writer
 func (g *YAMLGenerator) Generate(w io.Writer, schema *jsonschema.Schema) error {
-	// Resolve root reference if present
 	resolved := g.resolveRef(schema, schema)
 	return g.generateSchema(w, resolved, schema, 0, "")
 }

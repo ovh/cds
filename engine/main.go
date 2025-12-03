@@ -19,7 +19,8 @@ func init() {
 	mainCmd.AddCommand(startCmd)
 	mainCmd.AddCommand(configCmd)
 	mainCmd.AddCommand(downloadCmd)
-	mainCmd.AddCommand(docCmd) // hidden command
+	mainCmd.AddCommand(docCmd)    // hidden command
+	mainCmd.AddCommand(schemaCmd) // hidden command TODO: use for doc generation
 }
 
 func main() {
@@ -64,6 +65,32 @@ var docCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if err := doc.GenerateDocumentation(mainCmd, args[0], args[1]); err != nil {
+			sdk.Exit(err.Error())
+		}
+	},
+}
+
+var schemaCmd = &cobra.Command{
+	Use:    "schema <directory>",
+	Short:  "generate CDS resources yaml file",
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		var directory string
+		if len(args) == 1 {
+			directory = args[0]
+		}
+
+		if err := sdk.GetYamlFromJsonSchema(sdk.EntityTypeWorkerModel, directory); err != nil {
+			sdk.Exit(err.Error())
+		}
+		if err := sdk.GetYamlFromJsonSchema(sdk.EntityTypeAction, directory); err != nil {
+			sdk.Exit(err.Error())
+		}
+		if err := sdk.GetYamlFromJsonSchema(sdk.EntityTypeWorkflow, directory); err != nil {
+			sdk.Exit(err.Error())
+		}
+		if err := sdk.GetYamlFromJsonSchema(sdk.EntityTypeWorkflowTemplate, directory); err != nil {
 			sdk.Exit(err.Error())
 		}
 	},

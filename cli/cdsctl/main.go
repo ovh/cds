@@ -32,7 +32,6 @@ func main() {
 		health(),
 		login(),
 		reset(),
-		schema(),
 		signup(),
 		pipeline(),
 		project(),
