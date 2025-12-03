@@ -82,6 +82,7 @@ var projectRepositoryAnalysisListCmd = cli.Command{
 		{Name: "vcs-name"},
 		{Name: "repository-name"},
 	},
+	Mcp: true,
 }
 
 func projectRepositoryAnalysisListFunc(v cli.Values) (cli.ListResult, error) {
@@ -103,6 +104,7 @@ var projectRepositoryAnalysisGetCmd = cli.Command{
 		{Name: "repository-name"},
 		{Name: "analysis-id"},
 	},
+	Mcp: true,
 }
 
 func projectRepositoryAnalysisGetFunc(v cli.Values) error {

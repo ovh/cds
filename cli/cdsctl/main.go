@@ -31,6 +31,7 @@ func main() {
 		group(),
 		health(),
 		login(),
+		mcpCommands(),
 		reset(),
 		signup(),
 		pipeline(),

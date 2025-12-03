@@ -20,14 +20,14 @@ import (
 // ShellMode will os.Exit if false, display only exit code if true
 var ShellMode bool
 
-//  If Verbose is set to true, ExitOnError will try to display more detail about the potential errors
+// If Verbose is set to true, ExitOnError will try to display more detail about the potential errors
 var Verbose bool
 
 type stackTracer interface {
 	StackTrace() string
 }
 
-//ExitOnError if the error is not nil; exit the process with printing help functions and the error
+// ExitOnError if the error is not nil; exit the process with printing help functions and the error
 func ExitOnError(err error, helpFunc ...func() error) {
 	if err == nil {
 		return
@@ -279,20 +279,12 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			case "json":
 				b, err := json.Marshal(i)
 				ExitOnError(err)
-				if ShellMode {
-					fmt.Fprint(cmd.OutOrStdout(), string(b))
-				} else {
-					fmt.Println(string(b))
-				}
+				fmt.Fprint(cmd.OutOrStdout(), string(b))
 
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
-				if ShellMode {
-					fmt.Fprint(cmd.OutOrStdout(), string(b))
-				} else {
-					fmt.Println(string(b))
-				}
+				fmt.Fprint(cmd.OutOrStdout(), string(b))
 
 			default:
 				if quiet {
@@ -398,14 +390,14 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			case "json":
 				b, err := json.Marshal(allResult)
 				ExitOnError(err)
-				fmt.Println(string(b))
+				fmt.Fprint(cmd.OutOrStdout(), string(b))
 			case "yaml":
 				b, err := yaml.Marshal(allResult)
 				ExitOnError(err)
-				fmt.Println(string(b))
+				fmt.Fprint(cmd.OutOrStdout(), string(b))
 			default:
 				if len(tableData) == 0 {
-					fmt.Println("nothing to display...")
+					fmt.Fprintf(cmd.OutOrStdout(), "nothing to display...")
 					return
 				}
 				table := tablewriter.NewWriter(cmd.OutOrStdout())
@@ -426,13 +418,13 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			force, _ := cmd.Flags().GetBool("force")
 
 			if !force && !AskConfirm("Are you sure to delete?") {
-				fmt.Println("Deletion aborted")
+				fmt.Fprintf(cmd.OutOrStdout(), "Deletion aborted\n")
 				OSExit(0)
 			}
 
 			err := f(vals)
 			if err == nil {
-				fmt.Println("Delete with success")
+				fmt.Fprint(cmd.OutOrStdout(), "Delete with success")
 			}
 			ExitOnError(err)
 			OSExit(0)
@@ -441,6 +433,16 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			panic(fmt.Errorf("Unknown function type: %T", f))
 		}
 
+	}
+	if cmd.Annotations == nil {
+		cmd.Annotations = make(map[string]string)
+	}
+	if c.Mcp {
+		args := make([]Arg, 0, len(c.Ctx)+len(c.Args))
+		args = append(args, c.Ctx...)
+		args = append(args, c.Args...)
+		bts, _ := json.Marshal(args)
+		cmd.Annotations["mcp"] = string(bts)
 	}
 
 	return cmd

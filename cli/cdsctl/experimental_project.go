@@ -15,6 +15,7 @@ var experimentalProjectCmd = cli.Command{
 
 func experimentalProject() *cobra.Command {
 	return cli.NewCommand(experimentalProjectCmd, nil, []*cobra.Command{
+		cli.NewListCommand(projectV2ListCmd, projectV2ListRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectDeleteRunCmd, projectDeleteRunCmdFunc, nil, withAllCommandModifiers()...),
 		projectRepository(),
 		projectRepositoryAnalysis(),
@@ -24,6 +25,33 @@ func experimentalProject() *cobra.Command {
 		projectWebHooks(),
 		projectRetention(),
 	})
+}
+
+var projectV2ListCmd = cli.Command{
+	Name:  "list",
+	Short: "List CDS projects",
+	Mcp:   true,
+}
+
+type CliProject struct {
+	Name string `json:"name" cli:"name"`
+	Key  string `json:"key" cli:"key"`
+}
+
+func projectV2ListRun(v cli.Values) (cli.ListResult, error) {
+	projs, err := client.ProjectV2List(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	cliProjects := make([]CliProject, 0, len(projs))
+	for _, p := range projs {
+		cliProj := CliProject{
+			Name: p.Name,
+			Key:  p.Key,
+		}
+		cliProjects = append(cliProjects, cliProj)
+	}
+	return cli.AsListResult(cliProjects), nil
 }
 
 var projectDeleteRunCmd = cli.Command{
