@@ -1,0 +1,48 @@
+@import '../../../../common.scss';
+
+:host {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.actions {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 200px);
+  grid-auto-rows: 200px;
+  gap: 30px;
+  justify-content: center;
+  align-content: center;
+
+  div, a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 16px;
+    height: 200px;
+    width: 200px;
+    border: 2px dashed black;
+    border-radius: 5px;
+		color: inherit;
+		transition: border-color 0.3s, color 0.3s;
+		cursor: pointer;
+
+    [nz-icon] {
+      font-size: 70px;
+      margin-top: 40px;
+      margin-bottom: 25px;
+    }
+
+    :host-context(.night) & {
+      border-color: $darkTheme_grey_6;
+    }
+
+    &:hover {
+      color: #177ddc;
+      border-color: #177ddc !important;
+    }
+  }
+}

@@ -14,6 +14,7 @@ import { ProjectV2State } from "app/store/project-v2.state";
 
 export class ProjectV2TriggerAnalysisComponentParams {
   repository: string;
+  ref: string;
 }
 
 @Component({
@@ -76,10 +77,24 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
   }
 
   async repositoryChange(value: string) {
+    if (!value) {
+      this.branches = [];
+      this.tags = [];
+      this.validateForm.controls.ref.reset();
+      return;
+    }
+
     const splitted = this.splitRepository(value);
     this.branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, splitted.vcs, splitted.repo, 50));
     this.tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, splitted.vcs, splitted.repo));
-    this.validateForm.controls.ref.setValue('refs/heads/' + this.branches.find(b => b.default).display_id);
+
+    const selectedRef = this.params.ref ?? null;
+    if (selectedRef && (this.branches.findIndex(b => `refs/heads/${b.display_id}` === selectedRef) !== -1 || this.tags.findIndex(t => `refs/tags/${t.tag}` === selectedRef) !== -1)) {
+      this.validateForm.controls.ref.setValue(selectedRef);
+    } else {
+      this.validateForm.controls.ref.setValue('refs/heads/' + this.branches.find(b => b.default).display_id);
+    }
+
     this._cd.markForCheck();
   }
 
@@ -133,7 +148,6 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
       await (new Promise(resolve => setTimeout(resolve, 1000)));
       retry++;
     }
-
   }
 
   clearForm(): void {

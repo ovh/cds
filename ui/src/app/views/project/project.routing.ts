@@ -9,9 +9,9 @@ import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.compon
 import { ProjectV2RunComponent } from '../projectv2/run/run.component';
 import { ProjectSettingsComponent } from './settings/settings.component';
 import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-entity.component';
-import { ProjectV2ExploreRepositoryAddComponent } from '../projectv2/explore/explore-repository-add.component';
 import { ProjectV2ExploreRepositoryComponent } from '../projectv2/explore/explore-repository.component';
 import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from 'app/views/project/project.guard';
+import { ProjectV2ExploreOverviewComponent } from '../projectv2/explore/explore-overview.component';
 
 const projectRoutes: Routes = [
     {
@@ -60,9 +60,9 @@ const projectRoutes: Routes = [
                         component: ProjectV2ExploreComponent,
                         children: [
                             {
-                                path: 'vcs/:vcsName/repository',
-                                component: ProjectV2ExploreRepositoryAddComponent,
-                                data: { title: 'Add • Repository' }
+                                path: '',
+                                component: ProjectV2ExploreOverviewComponent,
+                                data: { title: 'Explore' }
                             },
                             {
                                 path: 'vcs/:vcsName/repository/:repoName',

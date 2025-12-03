@@ -1,6 +1,11 @@
 #
 # PLEASE READ https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/
 #
+# ⚠️  WARNING: FOR DEVELOPMENT AND TESTING PURPOSES ONLY
+# 
+# This docker-compose.yml file is designed for local development and testing.
+# DO NOT use this configuration to deploy CDS in production environments.
+#
 
 version: '3'
 

@@ -1,9 +1,9 @@
 <div class="header">
-    <div class="title">
+    <a class="title" title="Show overview" [routerLink]="['/project', project.key, 'explore']">
         Workspace
-    </div>
+    </a>
     <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip
-        nzTooltipTitle="Click to refresh the workspace" (click)="clickRefresh()">
+        nzTooltipTitle="Click to refresh the workspace" (click)="load()">
         <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
     </button>
 </div>
@@ -12,18 +12,11 @@
         <div class="tree-node-header large" (click)="clickVCS(vcs)">
             <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
             <div class="name">{{vcs.name}}</div>
-            <button nz-button nzType="text" nzSize="small">
-                <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"
-                    (click)="$event.stopPropagation()"></i>
+            <button nz-button nzSize="small" title="Add a new Repository"
+                (click)="openRepositoryAddDrawer(vcs.name);$event.stopPropagation()">
+                <i nz-icon nzType="plus" nzTheme="outline"></i>
+                Repository
             </button>
-            <nz-dropdown-menu #menu="nzDropdownMenu">
-                <ul nz-menu>
-                    <li nz-menu-item
-                        [routerLink]="['/', 'project', project.key, 'explore', 'vcs', vcs.name, 'repository']">
-                        Add a repository
-                    </li>
-                </ul>
-            </nz-dropdown-menu>
         </div>
         <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name]">
             <nz-alert *ngIf="repositories[vcs.name].length === 0" nzType="info"
@@ -43,7 +36,15 @@
                 </div>
                 <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name+'/'+repo.name]">
                     <nz-alert *ngIf="!entities[vcs.name+'/'+repo.name] && !loadingEntities[vcs.name+'/'+repo.name]"
-                        nzType="info" nzMessage="No resource found"></nz-alert>
+                        nzType="info" [nzMessage]="noResource"></nz-alert>
+                    <ng-template #noResource>
+                        No resource found
+                        <button class="analyze" nz-button nzType="text" nzSize="small" nz-tooltip
+                            nzTooltipTitle="Click to trigger an analysis for the current ref"
+                            (click)="openTriggerAnalysisDrawer(vcs.name+'/'+repo.name, refSelectState[vcs.name+'/'+repo.name])">
+                            <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
+                        </button>
+                    </ng-template>
                     <nz-spin *ngIf="loadingEntities[vcs.name+'/'+repo.name]" nzSimple></nz-spin>
                     <ng-container *ngFor="let entity of entities[vcs.name+'/'+repo.name] | keyvalue">
                         <div class="tree-node-header" (click)="clickEntityType(vcs, repo, entity.key)">

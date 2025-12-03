@@ -1532,6 +1532,13 @@ func sortEntitiesFiles(filesContent map[string][]byte) []string {
 	return keys
 }
 
+var (
+	reWorkerModelsFilePath      = regexp.MustCompile(`^\.cds/worker-models/[^/]+\.ya?ml$`)
+	reActionsFilePath           = regexp.MustCompile(`^\.cds/actions/[^/]+\.ya?ml$`)
+	reWorkflowsFilePath         = regexp.MustCompile(`^\.cds/workflows/[^/]+\.ya?ml$`)
+	reWorkflowTemplatesFilePath = regexp.MustCompile(`^\.cds/workflow-templates/[^/]+\.ya?ml$`)
+)
+
 func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis) ([]sdk.EntityWithObject, []error) {
 	sortedKeys := sortEntitiesFiles(filesContent)
 
@@ -1543,16 +1550,16 @@ func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, files
 		var es []sdk.EntityWithObject
 		var err sdk.MultiError
 		switch {
-		case strings.HasPrefix(filePath, ".cds/worker-models/"):
+		case reWorkerModelsFilePath.MatchString(filePath):
 			var wms []sdk.V2WorkerModel
 			es, err = ReadEntityFile(ctx, api, dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis, ef)
-		case strings.HasPrefix(filePath, ".cds/actions/"):
+		case reActionsFilePath.MatchString(filePath):
 			var actions []sdk.V2Action
 			es, err = ReadEntityFile(ctx, api, dir, fileName, content, &actions, sdk.EntityTypeAction, *analysis, ef)
-		case strings.HasPrefix(filePath, ".cds/workflows/"):
+		case reWorkflowsFilePath.MatchString(filePath):
 			var w []sdk.V2Workflow
 			es, err = ReadEntityFile(ctx, api, dir, fileName, content, &w, sdk.EntityTypeWorkflow, *analysis, ef)
-		case strings.HasPrefix(filePath, ".cds/workflow-templates/"):
+		case reWorkflowTemplatesFilePath.MatchString(filePath):
 			var wt []sdk.V2WorkflowTemplate
 			es, err = ReadEntityFile(ctx, api, dir, fileName, content, &wt, sdk.EntityTypeWorkflowTemplate, *analysis, ef)
 		default:

@@ -1,17 +1,17 @@
+<nz-spin *ngIf="loading" nzTip="Loading entity"></nz-spin>
+
 <ng-container *ngIf="entity && !loading">
-	<app-entity-form *ngIf="entity.type !== 'Workflow' || isWorkflowFromTemplate" [path]="entity.file_path"
-		[name]="projectKey + '/' + vcs.name + '/' + repository.name + '/' + entity.name" [data]="entity.data" [schema]="jsonSchema"
-		[entityType]="entity.type" [parentType]="'V2'+entity.type"></app-entity-form>
-	<app-projectv2-explore-entity-workflow *ngIf="entity.type === 'Workflow' && !isWorkflowFromTemplate"
-		[parentType]="'V2'+entity.type" [schema]="jsonSchema" [data]="entity.data"
-		[path]="entity.file_path"></app-projectv2-explore-entity-workflow>
-	<div class="footer">
-		<div class="buttons">
-			<button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
-				Save
-			</button>
+	<div class="content">
+		<div class="leftPanel">
+			<nz-tabset nzType="card" nzSize="small">
+				<nz-tab [nzTitle]="entity.type + ' ' + entity.file_path"></nz-tab>
+			</nz-tabset>
+			<nz-code-editor #editor [ngModel]="entity.data" [nzEditorOption]="editorOption"
+				(nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
 		</div>
+		<app-resizable-panel *ngIf="showWorkflowPreview" minSize="400" [initialSize]="panelSize"
+			(onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
+			<app-graph [navigationDisabled]="true" [workflow]="entity.data"></app-graph>
+		</app-resizable-panel>
 	</div>
 </ng-container>
-<nz-alert *ngIf="error && !loading" nzType="warning" nzDescription="error" nzShowIcon></nz-alert>
-<nz-spin *ngIf="loading" nzTip="Loading entity"></nz-spin>

@@ -27,6 +27,12 @@ export class RepoManagerService {
         return this._http.get<Repository[]>('/project/' + key + '/repositories_manager/' + repoManName + '/repos', { params });
     }
 
+    getV2Repositories(key: string, repoManName: string, sync: boolean): Observable<Repository[]> {
+        let params = new HttpParams();
+        params = params.append('synchronize', sync.toString());
+        return this._http.get<Repository[]>('/v2/project/' + key + '/repositories_manager/' + repoManName + '/repos', { params });
+    }
+
     getDependencies(key: string, repoManName: string): Observable<IdName[]> {
         return this._http.get<IdName[]>('/project/' + key + '/repositories_manager/' + repoManName + '/applications');
     }

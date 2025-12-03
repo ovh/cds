@@ -15,29 +15,23 @@ import { RunContextsComponent } from './run/run-contexts.component';
 import { RunTestsComponent } from './run/run-tests.component';
 import { RunTestComponent } from './run/run-test.component';
 import { ProjectV2ExploreRepositoryComponent } from './explore/explore-repository.component';
-import { ProjectV2ExploreRepositoryAddComponent } from './explore/explore-repository-add.component';
-import { ProjectV2ExploreEntityWorkflowComponent } from './explore/explore-entity-workflow.component';
-import { EntityFormComponent } from './explore/entity/entity-form.component';
-import { EntityJSONFormComponent } from './explore/entity/entity-json-form.component';
-import { EntityJSONFormFieldComponent } from './explore/entity/entity-json-form-field.component';
+import { ProjectV2RepositoryAddComponent } from './explore/repository-add/repository-add.component';
 import { ProjectV2RunStartComponent } from './run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent } from './explore/trigger-analysis/trigger-analysis.component';
 import { RunResultsComponent } from './run/run-results.component';
 import { RunInfoComponent } from './run/run-info.component';
 import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
 import { RunGateComponent } from './run/run-gate.component';
+import { ProjectV2ExploreOverviewComponent } from './explore/explore-overview.component';
 
 @NgModule({
     declarations: [
-        EntityFormComponent,
-        EntityJSONFormComponent,
-        EntityJSONFormFieldComponent,
         ProjectV2ExploreComponent,
         ProjectV2ExploreEntityComponent,
-        ProjectV2ExploreEntityWorkflowComponent,
-        ProjectV2ExploreRepositoryAddComponent,
+        ProjectV2ExploreOverviewComponent,
         ProjectV2ExploreRepositoryComponent,
         ProjectV2ExploreSidebarComponent,
+        ProjectV2RepositoryAddComponent,
         ProjectV2RunComponent,
         ProjectV2RunListComponent,
         ProjectV2RunListSidebarComponent,

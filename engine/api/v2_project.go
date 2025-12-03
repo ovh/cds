@@ -3,15 +3,45 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) getReposFromRepositoriesManagerV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			projectKey := vars["projectKey"]
+			vcsServerName := vars["name"]
+			sync := service.FormBool(req, "synchronize")
+
+			proj, err := project.Load(ctx, api.mustDB(), projectKey)
+			if err != nil {
+				return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
+					"cannot get client got %s %s", projectKey, vcsServerName))
+			}
+
+			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, api.mustDB(), api.Cache, *proj, vcsServerName, repositoriesmanager.Options{
+				Sync: sync,
+			})
+			if err != nil {
+				return err
+			}
+			for i := range repos {
+				repos[i].Fullname = strings.ToLower(repos[i].Fullname)
+			}
+
+			return service.WriteJSON(w, repos, http.StatusOK)
+		}
+}
 
 func (api *API) getProjectsV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(),

@@ -329,5 +329,5 @@ func GetKeyIdFromSignature(signature string) (string, error) {
 	if !ok || key == nil {
 		return "", errors.Wrap(err, "unable to cast packet")
 	}
-	return fmt.Sprintf("%X", *key.IssuerKeyId), nil
+	return fmt.Sprintf("%016X", *key.IssuerKeyId), nil
 }

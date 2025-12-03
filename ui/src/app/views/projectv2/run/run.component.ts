@@ -8,26 +8,47 @@ import { Store } from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
 import { Tab } from "app/shared/tabs/tabs.component";
 import { Tests } from "../../../model/pipeline.model";
-import { concatMap } from "rxjs/operators";
+import { concatMap, map } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NavigationState } from "app/store/navigation.state";
-import { V2JobGate, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatus, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2JobGate, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { RouterService } from "app/service/services.module";
 import { ErrorUtils } from "app/shared/error.utils";
 import moment from "moment";
 import { NzDrawerService } from "ng-zorro-antd/drawer";
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "../run-start/run-start.component";
-import { HttpParams } from "@angular/common/http";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { ToastService } from "app/shared/toast/ToastService";
 import { Clipboard } from '@angular/cdk/clipboard';
 import { GraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { Title } from "@angular/platform-browser";
+import { WebsocketV2Filter, WebsocketV2FilterType } from "app/model/websocket-v2";
+import { EventV2Service } from "app/event-v2.service";
+import { EventV2Type } from "app/model/event-v2.model";
+import { EventV2State } from "app/store/event-v2.state";
+import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 
 @Component({
     selector: 'app-projectv2-run',
     templateUrl: './run.html',
     styleUrls: ['./run.scss'],
+    animations: [
+        trigger('appendToList', [
+            state('active', style({
+                opacity: 1
+            })),
+            state('append', style({
+                opacity: 1
+            })),
+            transition('append => active', animate('0ms')),
+            transition('active => append', animate('1000ms', keyframes([
+                style({ opacity: 1 }),
+                style({ opacity: 0.5 }),
+                style({ opacity: 1 })
+            ])))
+        ])
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
@@ -37,6 +58,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
     @ViewChild('shareLink') shareLink: any;
 
+    runs: Array<V2WorkflowRun>;
     workflowRun: V2WorkflowRun;
     workflowRunInfo: Array<WorkflowRunInfo>;
     selectedItemType: string;
@@ -59,6 +81,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         restart: false,
         stop: false
     };
+    animatedRuns: { [key: string]: boolean } = {};
 
     // Subs
     paramsSub: Subscription;
@@ -67,6 +90,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     resizingSubscription: Subscription;
     pollSubs: Subscription;
     pollRunJobInfosSubs: Subscription;
+    eventV2Subscription: Subscription;
 
     // Panels
     resizing: boolean;
@@ -92,7 +116,9 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         private _toast: ToastService,
         private _clipboard: Clipboard,
         private _toastService: ToastService,
-        private _titleService: Title
+        private _titleService: Title,
+        private _http: HttpClient,
+        private _eventV2Service: EventV2Service
     ) {
         this.paramsSub = this._route.params.subscribe(_ => {
             const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
@@ -123,6 +149,23 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         });
         this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunComponent.INFO_PANEL_KEY));
         this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunComponent.JOB_PANEL_KEY)) ?? '50%';
+
+        this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => {
+            if (!event || [EventV2Type.EventRunCrafted, EventV2Type.EventRunBuilding, EventV2Type.EventRunEnded, EventV2Type.EventRunRestart].indexOf(event.type) === -1) { return; }
+            const idx = this.runs.findIndex(run => run.id === event.workflow_run_id);
+            delete (this.animatedRuns[event.payload.id]);
+            this._cd.detectChanges();
+            if (idx !== -1) {
+                this.runs[idx] = event.payload;
+            } else {
+                this.runs = [event.payload].concat(...this.runs);
+                if (this.runs.length > 50) {
+                    this.runs.pop();
+                }
+            }
+            this.animatedRuns[event.payload.id] = true;
+            this._cd.markForCheck();
+        });
     }
 
     ngAfterViewInit(): void {
@@ -160,7 +203,40 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         this._cd.markForCheck();
 
+        await this.loadRuns();
+
+        this._cd.markForCheck();
+
         await this.loadJobsAndResults();
+    }
+
+    async loadRuns() {
+        let params = new HttpParams();
+        params = params.appendAll({
+            workflow: `${this.workflowRun.vcs_server}/${this.workflowRun.repository}/${this.workflowRun.workflow_name}`,
+            offset: 0,
+            limit: 50
+        });
+
+        this._eventV2Service.updateFilter(<WebsocketV2Filter>{
+            type: WebsocketV2FilterType.PROJECT_RUNS,
+            project_key: this.projectKey,
+            project_runs_params: params.toString()
+        });
+
+        try {
+            const res = await lastValueFrom(this._http.get(`/v2/project/${this.projectKey}/run`, { params, observe: 'response' })
+                .pipe(map(res => {
+                    let headers: HttpHeaders = res.headers;
+                    return {
+                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                        runs: res.body as Array<V2WorkflowRun>
+                    };
+                })));
+            this.runs = res.runs;
+        } catch (e) {
+            this._messageService.error(`Unable to list workflow runs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+        }
     }
 
     async loadRun(workflowRunID: string) {
@@ -456,7 +532,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     openRunStartDrawer(): void {
         const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
-            nzTitle: 'Start new workflow run',
+            nzTitle: 'Start new Workflow Run',
             nzContent: ProjectV2RunStartComponent,
             nzContentParams: {
                 params: <ProjectV2RunStartComponentParams>{
@@ -500,5 +576,14 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             return;
         }
         this.openPanel('gate', jobName);
+    }
+
+    onMouseEnterRun(id: string): void {
+        delete this.animatedRuns[id];
+        this._cd.markForCheck();
+    }
+
+    trackRunElement(index: number, run: V2WorkflowRun): any {
+        return run.id;
     }
 }

@@ -1,16 +1,24 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { Entity, EntityType, EntityTypeUtil } from "app/model/entity.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Schema } from 'app/model/json-schema.model';
 import { ActivatedRoute, Router } from "@angular/router";
 import { VCSProject } from "app/model/vcs.model";
 import { ProjectService } from "app/service/project/project.service";
-import { lastValueFrom } from "rxjs";
+import { lastValueFrom, Subscription } from "rxjs";
 import { RouterService } from "app/service/services.module";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { ProjectRepository } from "app/model/project.model";
-import { load } from "js-yaml";
 import { ErrorUtils } from "app/shared/error.utils";
+import { Store } from "@ngxs/store";
+import * as actionPreferences from 'app/store/preferences.action';
+import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
+import { JSONSchema } from "app/model/schema.model";
+import { PreferencesState } from "app/store/preferences.state";
+import { load } from "js-yaml";
+import { editor, } from 'monaco-editor';
+
+declare const monaco: any;
 
 @Component({
 	selector: 'app-projectv2-explore-entity',
@@ -20,23 +28,31 @@ import { ErrorUtils } from "app/shared/error.utils";
 })
 @AutoUnsubscribe()
 export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
-	loading: boolean;
-	error: string;
+	static PANEL_KEY = 'project-workflow-v2-entity';
+
+	@ViewChild('editor') editor: NzCodeEditorComponent;
+
 	currentRef: string;
-	projectKey: string;
-	vcs: VCSProject;
-	repository: ProjectRepository;
+	editorOption: EditorOptions;
 	entity: Entity;
 	jsonSchema: Schema;
-	isWorkflowFromTemplate: boolean;
+	loading: boolean;
+	panelSize: number | string;
+	projectKey: string;
+	repository: ProjectRepository;
+	resizing: boolean;
+	resizingSubscription: Subscription;
+	showWorkflowPreview: boolean;
+	vcs: VCSProject;
 
 	constructor(
-		private _cd: ChangeDetectorRef,
 		private _activatedRoute: ActivatedRoute,
+		private _cd: ChangeDetectorRef,
+		private _messageService: NzMessageService,
 		private _projectService: ProjectService,
-		private _routerService: RouterService,
 		private _router: Router,
-		private _messageService: NzMessageService
+		private _routerService: RouterService,
+		private _store: Store
 	) { }
 
 	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -70,6 +86,25 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 			const entityName = params['entityName'];
 			this.load(vcsName, repoName, entityType, entityName);
 		});
+
+		this.editorOption = {
+			language: 'yaml',
+			minimap: { enabled: false },
+			readOnly: true,
+			scrollBeyondLastLine: false
+		};
+
+		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ExploreEntityComponent.PANEL_KEY));
+
+		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
+			this.resizing = resizing;
+			if (!resizing) {
+				this.editor.layout();
+			}
+			this._cd.markForCheck();
+		});
+
+		this._cd.markForCheck();
 	}
 
 	async load(vcsName: string, repoName: string, entityType: EntityType, entityName: string) {
@@ -86,12 +121,10 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 			this.repository = results[1];
 			this.jsonSchema = results[2];
 			this.entity = await lastValueFrom(this._projectService.getRepoEntity(this.projectKey, this.vcs.name, this.repository.name, entityType, entityName, this.currentRef));
-			this.isWorkflowFromTemplate = false;
+			this.showWorkflowPreview = false;
 			if (this.entity.type === EntityType.Workflow) {
 				const wkf = load(this.entity.data);
-				if (wkf['from']) {
-					this.isWorkflowFromTemplate = true;
-				}
+				this.showWorkflowPreview = !wkf['from'];
 			}
 		} catch (e: any) {
 			this._messageService.error(`Unable to load entity: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
@@ -100,6 +133,28 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 
 		this.loading = false;
 		this._cd.markForCheck();
+	}
+
+	onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
+		monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+			schemas: [{
+				uri: '',
+				schema: JSONSchema.flat(this.jsonSchema)
+			}]
+		});
+		this.editor.layout();
+	}
+
+	panelStartResize(): void {
+		this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
+	}
+
+	panelEndResize(size: string): void {
+		this._store.dispatch(new actionPreferences.SavePanelSize({
+			panelKey: ProjectV2ExploreEntityComponent.PANEL_KEY,
+			size: size
+		}));
+		this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
 	}
 
 }	
