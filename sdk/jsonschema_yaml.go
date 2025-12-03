@@ -45,20 +45,13 @@ func (g *YAMLGenerator) generateSchema(w io.Writer, schema *jsonschema.Schema, r
 		return nil
 	}
 
-	// Note: description is now handled in generateObject on the key line
-	// We don't display it here to avoid duplicates
-
 	switch schema.Type {
 	case "object":
 		return g.generateObject(w, schema, root, level, parentKey)
 	case "array":
 		return g.generateArray(w, schema, root, level, parentKey)
-	case "string":
-		g.generateString(w, schema, level, parentKey)
-	case "number", "integer":
-		g.generateNumber(w, schema, level, parentKey)
-	case "boolean":
-		g.generateBoolean(w, schema, level, parentKey)
+	case "string", "number", "boolean":
+		g.generateValue(w, schema, level)
 	default:
 		// Unspecified type or anyOf/oneOf
 		if len(schema.AnyOf) > 0 || len(schema.OneOf) > 0 {
@@ -124,7 +117,7 @@ func (g *YAMLGenerator) resolveRef(schema *jsonschema.Schema, root *jsonschema.S
 func (g *YAMLGenerator) generateObject(w io.Writer, schema *jsonschema.Schema, root *jsonschema.Schema, level int, parentKey string) error {
 	// Check for AllOf with if/then conditions (for worker model spec variants)
 	if len(schema.AllOf) > 0 {
-		return g.generateAllOfVariants(w, schema, root, level, parentKey)
+		return g.generateAllOfVariants(w, schema, root, level)
 	}
 
 	// Special case: map with PatternProperties (dynamic keys)
@@ -314,27 +307,8 @@ func (g *YAMLGenerator) generateArray(w io.Writer, schema *jsonschema.Schema, ro
 	return nil
 }
 
-func (g *YAMLGenerator) generateString(w io.Writer, schema *jsonschema.Schema, level int, parentKey string) {
-	// <value> (no comment, as it's handled by parent on the key line)
-	value := g.exampleValue(schema)
-	if level > 0 {
-		fmt.Fprintf(w, "%s%s\n", g.indentStr(level), value)
-	} else {
-		fmt.Fprintf(w, "%s\n", value)
-	}
-}
-
-func (g *YAMLGenerator) generateNumber(w io.Writer, schema *jsonschema.Schema, level int, parentKey string) {
-	// <value> (no comment, as it's handled by parent on the key line)
-	value := g.exampleValue(schema)
-	if level > 0 {
-		fmt.Fprintf(w, "%s%s\n", g.indentStr(level), value)
-	} else {
-		fmt.Fprintf(w, "%s\n", value)
-	}
-}
-
-func (g *YAMLGenerator) generateBoolean(w io.Writer, schema *jsonschema.Schema, level int, parentKey string) {
+// generateValue Generate a value for string / Number /
+func (g *YAMLGenerator) generateValue(w io.Writer, schema *jsonschema.Schema, level int) {
 	// <value> (no comment, as it's handled by parent on the key line)
 	value := g.exampleValue(schema)
 	if level > 0 {
@@ -382,7 +356,7 @@ func (g *YAMLGenerator) generateUnion(w io.Writer, schema *jsonschema.Schema, ro
 
 // generateAllOfVariants handles AllOf schemas with if/then conditions
 // Used for worker model spec variants (docker, openstack, vsphere)
-func (g *YAMLGenerator) generateAllOfVariants(w io.Writer, schema *jsonschema.Schema, root *jsonschema.Schema, level int, parentKey string) error {
+func (g *YAMLGenerator) generateAllOfVariants(w io.Writer, schema *jsonschema.Schema, root *jsonschema.Schema, level int) error {
 	// First, generate the base properties (without spec)
 	if schema.Properties != nil {
 		keys := schema.Properties.Keys()
@@ -591,7 +565,7 @@ func (g *YAMLGenerator) toSchemaPtr(v interface{}) *jsonschema.Schema {
 }
 
 // extractIfConditionValue extracts the constant value from an if condition
-// Used to get "docker", "openstack", or "vsphere" from if/then conditions
+// Used to get "docker", "openstack", or "vsphere" from if/then conditions in worker-model json schema
 func (g *YAMLGenerator) extractIfConditionValue(ifSchema *jsonschema.Schema) string {
 	if ifSchema == nil || ifSchema.Properties == nil {
 		return ""
@@ -651,7 +625,6 @@ func (g *YAMLGenerator) generateAllOf(w io.Writer, schema *jsonschema.Schema, ro
 }
 
 // exampleValue generates an example value based on type and constraints
-// Don't include description here, it will be in the comment
 func (g *YAMLGenerator) exampleValue(schema *jsonschema.Schema) string {
 	// Default: use default value
 	if schema.Default != nil {
@@ -722,7 +695,7 @@ func (g *YAMLGenerator) exampleKeyFromPattern(pattern string, parentKey string) 
 	case strings.Contains(pattern, "output") || strings.Contains(pattern, "OUTPUT"):
 		return "my-output"
 	case strings.Contains(pattern, "var") || strings.Contains(pattern, "VAR"):
-		return "MY_VARIABLE"
+		return "my-variable"
 	case pattern == ".*":
 		return "example-key"
 	default:
@@ -732,69 +705,6 @@ func (g *YAMLGenerator) exampleKeyFromPattern(pattern string, parentKey string) 
 			return cleaned
 		}
 		return "key-example"
-	}
-}
-
-// exampleForFormat returns an example based on JSON Schema format
-func (g *YAMLGenerator) exampleForFormat(format string) string {
-	examples := map[string]string{
-		"date-time": `"2024-01-01T12:00:00Z"`,
-		"date":      `"2024-01-01"`,
-		"time":      `"12:00:00"`,
-		"email":     `"user@example.com"`,
-		"hostname":  `"example.com"`,
-		"ipv4":      `"192.168.1.1"`,
-		"ipv6":      `"::1"`,
-		"uri":       `"https://example.com"`,
-		"uuid":      `"550e8400-e29b-41d4-a716-446655440000"`,
-	}
-
-	if example, ok := examples[format]; ok {
-		return example
-	}
-	return fmt.Sprintf(`"<format: %s>"`, format)
-}
-
-// isRequired checks if a property is required
-func (g *YAMLGenerator) isRequired(schema *jsonschema.Schema, key string) bool {
-	for _, req := range schema.Required {
-		if req == key {
-			return true
-		}
-	}
-	return false
-}
-
-// writeComment writes a multi-line comment if necessary
-func (g *YAMLGenerator) writeComment(w io.Writer, comment string, level int) {
-	// Limit comment width
-	const maxWidth = 80
-	indent := g.indentStr(level)
-	prefix := indent + g.commentChar + " "
-
-	// Split into lines if too long
-	words := strings.Fields(comment)
-	if len(words) == 0 {
-		return
-	}
-
-	var line strings.Builder
-	line.WriteString(prefix)
-
-	for _, word := range words {
-		if line.Len()+len(word)+1 > maxWidth && line.Len() > len(prefix) {
-			fmt.Fprintln(w, line.String())
-			line.Reset()
-			line.WriteString(prefix)
-		}
-		if line.Len() > len(prefix) {
-			line.WriteString(" ")
-		}
-		line.WriteString(word)
-	}
-
-	if line.Len() > len(prefix) {
-		fmt.Fprintln(w, line.String())
 	}
 }
 
