@@ -380,8 +380,8 @@ type V2JobGateOptions struct {
 }
 
 type V2JobGateReviewers struct {
-	Groups []string `json:"groups,omitempty" jsonschema_description:Groups allowed to trigger the gate"`
-	Users  []string `json:"users,omitempty" jsonschema_description:Users allowed to trigger the gate"`
+	Groups []string `json:"groups,omitempty" jsonschema_description:"Groups allowed to trigger the gate"`
+	Users  []string `json:"users,omitempty" jsonschema_description:"Users allowed to trigger the gate"`
 }
 
 func (job *V2Job) Clean() {
