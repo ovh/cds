@@ -65,10 +65,10 @@ type V2Workflow struct {
 }
 
 type WorkflowSemver struct {
-	From        WorkflowSemverType `json:"from"`
-	Path        string             `json:"path"`
-	ReleaseRefs []string           `json:"release_refs,omitempty"`
-	Schema      map[string]string  `json:"schema,omitempty"`
+	From        WorkflowSemverType `json:"from" jsonschema_description:"Type of semver to use (git, helm, npm, yarn, file, cargo, poetry, debian)"`
+	Path        string             `json:"path" jsonschema_description:"Path to the file that contains the version"`
+	ReleaseRefs []string           `json:"release_refs,omitempty" jsonschema_description:"Git references (branches or tags) that will trigger a version bump"`
+	Schema      map[string]string  `json:"schema,omitempty" jsonschema_description:"Schema defining how to compute version for each ref"`
 }
 
 type WorkfowSemverSchema map[string]string
@@ -95,60 +95,60 @@ type V2WorkflowVersion struct {
 }
 
 type CommitStatus struct {
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
+	Title       string `json:"title,omitempty" jsonschema_description:"Title sent to the build status on the current commit"`
+	Description string `json:"description,omitempty" jsonschema_description:"Description sent to the build status on the current commit"`
 }
 
 type WorkflowOn struct {
-	Push               *WorkflowOnPush               `json:"push,omitempty"`
-	PullRequest        *WorkflowOnPullRequest        `json:"pull-request,omitempty"`
-	PullRequestComment *WorkflowOnPullRequestComment `json:"pull-request-comment,omitempty"`
-	ModelUpdate        *WorkflowOnModelUpdate        `json:"model-update,omitempty"`
-	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow-update,omitempty"`
-	Schedule           []WorkflowOnSchedule          `json:"schedule,omitempty"`
-	WorkflowRun        []WorkflowOnRun               `json:"workflow-run,omitempty"`
+	Push               *WorkflowOnPush               `json:"push,omitempty" jsonschema_description:"Trigger the workflow on git push event"`
+	PullRequest        *WorkflowOnPullRequest        `json:"pull-request,omitempty" jsonschema_description:"Trigger the workflow on pullrequest event"`
+	PullRequestComment *WorkflowOnPullRequestComment `json:"pull-request-comment,omitempty" jsonschema_description:"Trigger the workflow on git push event"`
+	ModelUpdate        *WorkflowOnModelUpdate        `json:"model-update,omitempty" jsonschema_description:"Trigger the workflow when a worker model is updated (for distant workflow only)"`
+	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow-update,omitempty" jsonschema_description:"Trigger the workflow when updated (for distant workflow only)"`
+	Schedule           []WorkflowOnSchedule          `json:"schedule,omitempty" jsonschema_description:"Trigger the workflow regarding a cron scheduler"`
+	WorkflowRun        []WorkflowOnRun               `json:"workflow-run,omitempty" jsonschema_description:"Trigger the workflow at the end of another workflow run"`
 }
 
 type WorkflowOnRun struct {
-	Workflow string   `json:"workflow"`
-	Status   []string `json:"status,omitempty"`
-	Branches []string `json:"branches,omitempty"`
-	Tags     []string `json:"tags,omitempty"`
+	Workflow string   `json:"workflow" jsonschema_description:"Name of the workflow to watch"`
+	Status   []string `json:"status,omitempty" jsonschema_description:"List of workflow run status to watch"`
+	Branches []string `json:"branches,omitempty" jsonschema_description:"List of branches to filter"`
+	Tags     []string `json:"tags,omitempty" jsonschema_description:"List of tags to filter"`
 }
 
 type WorkflowOnSchedule struct {
-	Cron     string `json:"cron"`
-	Timezone string `json:"timezone"`
+	Cron     string `json:"cron" jsonschema_description:"Cron expression defining the schedule"`
+	Timezone string `json:"timezone" jsonschema_description:"Timezone for the cron expression"`
 }
 
 type WorkflowOnPush struct {
-	Branches []string `json:"branches,omitempty"`
-	Tags     []string `json:"tags,omitempty"`
-	Paths    []string `json:"paths,omitempty"`
-	Commit   string   `json:"commit,omitempty"`
+	Branches []string `json:"branches,omitempty" jsonschema_description:"List of branches to filter"`
+	Tags     []string `json:"tags,omitempty" jsonschema_description:"List of tags to filter"`
+	Paths    []string `json:"paths,omitempty" jsonschema_description:"List of updated files to filter"`
+	Commit   string   `json:"commit,omitempty" jsonschema_description:"Commit message filter"`
 }
 
 type WorkflowOnPullRequest struct {
-	Branches []string                `json:"branches,omitempty"`
-	Comment  string                  `json:"comment,omitempty"`
-	Paths    []string                `json:"paths,omitempty"`
-	Types    []WorkflowHookEventType `json:"types,omitempty"`
+	Branches []string                `json:"branches,omitempty" jsonschema_description:"Destination branch to filter"`
+	Comment  string                  `json:"comment,omitempty" jsonschema_description:"Comment message filter"`
+	Paths    []string                `json:"paths,omitempty" jsonschema_description:"List of updated files to filter"`
+	Types    []WorkflowHookEventType `json:"types,omitempty" jsonschema_description:"List of pull request event types to filter"`
 }
 
 type WorkflowOnPullRequestComment struct {
-	Branches []string `json:"branches,omitempty"`
-	Comment  string   `json:"comment,omitempty"`
-	Paths    []string `json:"paths,omitempty"`
-	Types    []string `json:"types,omitempty"`
+	Branches []string `json:"branches,omitempty" jsonschema_description:"Destination branch to filter"`
+	Comment  string   `json:"comment,omitempty"  jsonschema_description:"Comment message filter"`
+	Paths    []string `json:"paths,omitempty" jsonschema_description:"List of updated files to filter"`
+	Types    []string `json:"types,omitempty" jsonschema_description:"List of pull request event types to filter"`
 }
 
 type WorkflowOnModelUpdate struct {
-	Models       []string `json:"models,omitempty"`
-	TargetBranch string   `json:"target_branch,omitempty"`
+	Models       []string `json:"models,omitempty" jsonschema_description:"List of worker model names to filter"`
+	TargetBranch string   `json:"target_branch,omitempty" jsonschema_description:"Branch that will be used to trigger the workflow"`
 }
 
 type WorkflowOnWorkflowUpdate struct {
-	TargetBranch string `json:"target_branch,omitempty"`
+	TargetBranch string `json:"target_branch,omitempty"  jsonschema_description:"Branch that will be used to trigger the workflow"`
 }
 
 type WorkflowRepository struct {
@@ -284,11 +284,11 @@ type WorkflowStage struct {
 }
 
 type WorkflowConcurrency struct {
-	Name             string           `json:"name"`
-	Order            ConcurrencyOrder `json:"order,omitempty"`
-	Pool             int64            `json:"pool,omitempty"`
-	CancelInProgress bool             `json:"cancel-in-progress"`
-	If               string           `json:"if"`
+	Name             string           `json:"name" jsonschema_description:"Name of the concurrency rule"`
+	Order            ConcurrencyOrder `json:"order,omitempty" jsonschema_description:"Resolving order of the rule: oldest_first | newest_first"`
+	Pool             int64            `json:"pool,omitempty" jsonschema_description:"Number of concurrent executions allowed for this concurrency rule"`
+	CancelInProgress bool             `json:"cancel-in-progress" jsonschema_description:"If true, when a new execution is triggered, and oldest in-progress executions are canceled"`
+	If               string           `json:"if" jsonschema_description:"Condition to apply the concurrency rule"`
 }
 
 type V2Job struct {
@@ -297,20 +297,20 @@ type V2Job struct {
 	Gate            string                  `json:"gate,omitempty" jsonschema_extras:"order=5" jsonschema_description:"Gate allows to trigger manually a job"`
 	Steps           []ActionStep            `json:"steps,omitempty" jsonschema:"oneof=steps" jsonschema_extras:"order=11" jsonschema_description:"List of steps"`
 	Needs           []string                `json:"needs,omitempty" jsonschema_extras:"order=6,mode=tags" jsonschema_description:"Job dependencies"`
-	Stage           string                  `json:"stage,omitempty" jsonschema_extras:"order=2"`
-	Region          string                  `json:"region,omitempty" jsonschema_extras:"order=3"`
-	ContinueOnError bool                    `json:"continue-on-error,omitempty" jsonschema_extras:"order=4"`
-	RunsOnRaw       json.RawMessage         `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split"`
+	Stage           string                  `json:"stage,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Stage where the job will be executed"`
+	Region          string                  `json:"region,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Region where the job will be executed"`
+	ContinueOnError bool                    `json:"continue-on-error,omitempty" jsonschema_extras:"order=4" jsonschema_description:"Allow the workflow to continue even if it fails"`
+	RunsOnRaw       json.RawMessage         `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split" jsonschema_description:"Worker model specification to run the job"`
 	RunsOn          V2JobRunsOn             `json:"-"`
-	Strategy        *V2JobStrategy          `json:"strategy,omitempty" jsonschema_extras:"order=7"`
+	Strategy        *V2JobStrategy          `json:"strategy,omitempty" jsonschema_extras:"order=7" jsonschema_description:"Define a matrix strategy to run multiple times the job with different parameters"`
 	Integrations    []string                `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
 	VariableSets    []string                `json:"vars,omitempty" jsonschema_extras:"required,order=10" jsonschema_description:"VariableSet linked to the job"`
 	Env             map[string]string       `json:"env,omitempty"  jsonschema_extras:"order=12,mode=edit" jsonschema_description:"Environment variable available in the job"`
-	Services        map[string]V2JobService `json:"services,omitempty"`
-	Outputs         map[string]ActionOutput `json:"outputs,omitempty"`
-	From            string                  `json:"from,omitempty" jsonschema:"oneof=from"`
-	Parameters      map[string]string       `json:"parameters,omitempty" jsonschema:"oneof=from"`
-	Concurrency     string                  `json:"concurrency,omitempty"`
+	Services        map[string]V2JobService `json:"services,omitempty" jsonschema_description:"Services that must be started and linked to the job"`
+	Outputs         map[string]ActionOutput `json:"outputs,omitempty" jsonschema_description:"Outputs exported by the job"`
+	From            string                  `json:"from,omitempty" jsonschema:"oneof=from" jsonschema_description:"Job template name used to create the job"`
+	Parameters      map[string]string       `json:"parameters,omitempty" jsonschema:"oneof=from" jsonschema_description:"Job template parameters"`
+	Concurrency     string                  `json:"concurrency,omitempty" jsonschema_description:"Concurrency rule to apply to the job"`
 }
 
 func (j V2Job) Copy() V2Job {
@@ -356,9 +356,9 @@ func (j V2Job) Copy() V2Job {
 }
 
 type V2JobRunsOn struct {
-	Model  string `json:"model"`
-	Memory string `json:"memory"`
-	Flavor string `json:"flavor"`
+	Model  string `json:"model" jsonschema_description:"Worker model name to use for the job"`
+	Memory string `json:"memory" jsonschema_description:"Amount of memory to use for the job"`
+	Flavor string `json:"flavor" jsonschema_description:"Worker flavor to use for the job"`
 }
 
 type V2JobGate struct {
@@ -551,7 +551,7 @@ func (w *V2WorkflowHookData) Scan(src interface{}) error {
 }
 
 type V2JobStrategy struct {
-	Matrix map[string]interface{} `json:"matrix"`
+	Matrix map[string]interface{} `json:"matrix" jsonschema_description:"Matrix values for the job"`
 }
 
 type V2JobConcurrency struct {

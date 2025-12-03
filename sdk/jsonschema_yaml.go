@@ -8,7 +8,7 @@ import (
 	"github.com/sguiheux/jsonschema"
 )
 
-// YAMLGenerator generate YAML output from a JSONSchema
+// YAMLGenerator generate a documented YAML output from a JSONSchema
 type YAMLGenerator struct {
 	indent      string
 	commentChar string

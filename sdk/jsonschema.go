@@ -198,8 +198,8 @@ func GetWorkflowTemplateJsonSchema() *jsonschema.Schema {
 	return templateSchema
 }
 
+// Generate documented yaml from jsonschema
 func GetYamlFromJsonSchema(schema *jsonschema.Schema) (string, error) {
-	// Cette fonction utilise maintenant YAMLGenerator
 	var buf strings.Builder
 	gen := &YAMLGenerator{
 		indent:      "  ",
