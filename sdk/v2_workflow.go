@@ -714,6 +714,9 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 				if jobNeed.Stage != j.Stage {
 					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: need %s must be in the same stage", w.Name, k, n))
 				}
+				if n == k {
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: a job cannot depend of itself", w.Name, k))
+				}
 			}
 		}
 	} else {
@@ -724,6 +727,9 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 			for _, n := range j.Needs {
 				if _, exist := w.Jobs[n]; !exist {
 					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: needs not found [%s]", w.Name, k, n))
+				}
+				if n == k {
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: a job cannot depend of itself", w.Name, k))
 				}
 			}
 		}

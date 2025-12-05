@@ -84,6 +84,9 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 						wh.Error = "unable to retrieve git info: exceeded max retry delay"
 						wh.Status = sdk.HookEventWorkflowStatusError
 					}
+					if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+						return err
+					}
 					continue
 				}
 				if err := s.manageRepositoryOperationCallback(ctx, ope, hre); err != nil {

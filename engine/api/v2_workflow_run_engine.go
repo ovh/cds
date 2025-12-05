@@ -401,16 +401,24 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			}
 		}
 		if rj.GateInputs != nil {
-			jobInfo := sdk.V2WorkflowRunJobInfo{
-				WorkflowRunID:    rj.WorkflowRunID,
-				Level:            sdk.WorkflowRunInfoLevelInfo,
-				IssuedAt:         time.Now(),
-				WorkflowRunJobID: rj.ID,
-				Message:          wrEnqueue.Initiator.Username() + " triggers manually this job",
+			for k, vl := range rj.GateInputs {
+				if k == "manual" {
+					b, ok := vl.(bool)
+					if ok && b {
+						jobInfo := sdk.V2WorkflowRunJobInfo{
+							WorkflowRunID:    rj.WorkflowRunID,
+							Level:            sdk.WorkflowRunInfoLevelInfo,
+							IssuedAt:         time.Now(),
+							WorkflowRunJobID: rj.ID,
+							Message:          wrEnqueue.Initiator.Username() + " triggers manually this job",
+						}
+						if err := workflow_v2.InsertRunJobInfo(ctx, tx, &jobInfo); err != nil {
+							return err
+						}
+					}
+				}
 			}
-			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &jobInfo); err != nil {
-				return err
-			}
+
 		}
 	}
 

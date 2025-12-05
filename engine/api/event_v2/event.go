@@ -172,6 +172,8 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	if buildStatus.RepositoryFullname == "" {
 		buildStatus.RepositoryFullname = event.Repository
 	}
+
+	log.Info(ctx, "send build status on repo %s for ref %s on commit %s", run.Contexts.Git.Repository, run.Contexts.Git.Ref, run.Contexts.Git.Sha)
 	if err := vcsClient.SetStatus(ctx, buildStatus); err != nil {
 		return sdk.WrapError(err, "can't send the build status for %v/%v", event.ProjectKey, event.VCSName)
 	}
