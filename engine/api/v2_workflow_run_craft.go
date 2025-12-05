@@ -664,7 +664,14 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 
 	if _, err := e.Template.Resolve(ctx, &tmpWorkflow); err != nil {
 		log.ErrorWithStackTrace(ctx, err)
-		return &e, nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to resolve workflow template %s: %s", j.From, err)
+		return &e, nil, []sdk.V2WorkflowRunInfo{
+			{
+				WorkflowRunID: wref.run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("unable to resolve workflow template %s: %s", j.From, err),
+			},
+		}, nil
 	}
 	tmpWorkflow.Name = e.Name
 
