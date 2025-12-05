@@ -13,9 +13,9 @@ const (
 
 type V2Action struct {
 	Name        string                  `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the action"`
-	Description string                  `json:"description,omitempty" jsonschema_extras:"order=2"`
-	Inputs      map[string]ActionInput  `json:"inputs,omitempty" jsonschema_extras:"order=3,mode=edit" jsonschema_description:"Inputs of the action"`
-	Outputs     map[string]ActionOutput `json:"outputs,omitempty" jsonschema_extras:"order=4,mode=edit" jsonschema_description:"Outputs compute by the action"`
+	Description string                  `json:"description,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Description of the action"`
+	Inputs      map[string]ActionInput  `json:"inputs,omitempty" jsonschema_extras:"order=3,mode=edit" jsonschema_description:"Map of the action's inputs"`
+	Outputs     map[string]ActionOutput `json:"outputs,omitempty" jsonschema_extras:"order=4,mode=edit" jsonschema_description:"Map of the action's outputs"`
 	Runs        ActionRuns              `json:"runs" jsonschema_extras:"order=5"`
 }
 
@@ -36,9 +36,9 @@ const (
 )
 
 type ActionOutput struct {
-	Description string           `json:"description,omitempty" jsonschema_extras:"order=2"`
-	Value       string           `json:"value" jsonschema_extras:"order=1"`
-	Type        ActionOutputType `json:"type,omitempty" jsonschema_extras:"order=3"`
+	Description string           `json:"description,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Description of the output"`
+	Value       string           `json:"value" jsonschema_extras:"order=1" jsonschema_description:"Value of the output"`
+	Type        ActionOutputType `json:"type,omitempty" jsonschema_extras:"order=3" jsonschema_description:"(Optional) Can be set to 'path' to add the value into the env variable PATH for the following steps"`
 }
 
 type ActionStep struct {

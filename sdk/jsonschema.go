@@ -1,6 +1,10 @@
 package sdk
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/sguiheux/jsonschema"
 )
 
@@ -194,4 +198,51 @@ func GetWorkflowTemplateJsonSchema() *jsonschema.Schema {
 	}
 
 	return templateSchema
+}
+
+// Generate documented yaml from jsonschema
+func GetYamlFromJsonSchema(entityType string, directory string) error {
+	var schema *jsonschema.Schema
+	var fileName string
+	switch entityType {
+	case EntityTypeAction:
+		schema = GetActionJsonSchema(nil)
+		if directory != "" {
+			fileName = "action.yml"
+		}
+	case EntityTypeWorkerModel:
+		schema = GetWorkerModelJsonSchema()
+		if directory != "" {
+			fileName = "worker-model.yml"
+		}
+	case EntityTypeWorkflow:
+		schema = GetWorkflowJsonSchema(nil, nil, nil)
+		if directory != "" {
+			fileName = "workflow.yml"
+		}
+	case EntityTypeWorkflowTemplate:
+		schema = GetWorkflowTemplateJsonSchema()
+		if directory != "" {
+			fileName = "workflow-template.yml"
+		}
+	default:
+		return fmt.Errorf("unsupported entity type: %s", entityType)
+	}
+
+	out := os.Stdout
+	if directory != "" && fileName != "" {
+		filePath := strings.TrimSuffix(directory, "/") + "/" + fileName
+		f, err := os.Create(filePath)
+		if err != nil {
+			return fmt.Errorf("Failed to create file %s: %v", filePath, err)
+		}
+		defer f.Close()
+		out = f
+	}
+
+	gen := &YAMLGenerator{
+		indent:      "  ",
+		commentChar: "#",
+	}
+	return gen.Generate(out, schema)
 }
