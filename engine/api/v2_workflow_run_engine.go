@@ -210,7 +210,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return nil
 	}
 
-	// Running Workflow
+	// Compute all run job contexts
 	runJobsContexts, runGatesContexts := computeExistingRunJobContexts(ctx, allRunJobs, runResults)
 
 	// Compute annotations
@@ -224,6 +224,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, runMsgs, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 	}
 
+	// Retrieve variables set to build vars context
 	vss := make([]sdk.ProjectVariableSet, 0, len(run.WorkflowData.Workflow.VariableSets))
 	for _, vs := range run.WorkflowData.Workflow.VariableSets {
 		vsDB, err := project.LoadVariableSetByName(ctx, api.mustDB(), run.ProjectKey, vs)
@@ -259,14 +260,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 	}
 
-	// Compute worker model / region on runJobs if needed
-	wref, err := NewWorkflowRunEntityFinder(ctx, api.mustDB(), *proj, *run, *repo, *vcsServer, run.WorkflowRef, run.WorkflowSha, api.Config.WorkflowV2.LibraryProjectKey, &wrEnqueue.Initiator)
-	if err != nil {
-		return err
-	}
-	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
-	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
-
 	// Enqueue JOB
 	hasTemplatedJob := false
 	for _, j := range jobsToQueue {
@@ -275,7 +268,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
-	// Retrieve all concurrency definitions for jobs to enqueue
+	// Retrieve all concurrency definitions + interpolate for jobs to enqueue
 	concurrenciesDef := make(map[string]sdk.V2RunConcurrency)
 	bts, err := json.Marshal(run.Contexts)
 	if err != nil {
@@ -357,6 +350,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 		defer api.Cache.Unlock(lockKey)
 	}
+
+	// Compute worker model / region on runJobs if needed
+	wref, err := NewWorkflowRunEntityFinder(ctx, api.mustDB(), *proj, *run, *repo, *vcsServer, run.WorkflowRef, run.WorkflowSha, api.Config.WorkflowV2.LibraryProjectKey, &wrEnqueue.Initiator)
+	if err != nil {
+		return err
+	}
+	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
+	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
 
 	// Prepare run jobs to be enqueued
 	runJobs, runObjectToCancel, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, proj, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, concurrenciesDef, api.Config.Workflow.JobDefaultRegion)
@@ -1182,6 +1183,41 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		}
 		rj.Job.RunsOn.Memory = mem
 		runUpdated = true
+	}
+
+	for k, s := range rj.Job.Services {
+		if strings.Contains(s.Image, "${{") {
+			img, err := ap.InterpolateToString(ctx, s.Image)
+			if err != nil {
+				rj.Status = sdk.V2WorkflowRunJobStatusFail
+				return &sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    run.ID,
+					Level:            sdk.WorkflowRunInfoLevelError,
+					WorkflowRunJobID: rj.ID,
+					IssuedAt:         time.Now(),
+					Message:          fmt.Sprintf("Job %s: unable to interpolate %q into a string: %v", rj.JobID, s.Image, err),
+				}, false
+			}
+			s.Image = img
+			rj.Job.Services[k] = s
+			runUpdated = true
+		}
+		if strings.Contains(s.Readiness.Command, "${{") {
+			cmd, err := ap.InterpolateToString(ctx, s.Readiness.Command)
+			if err != nil {
+				rj.Status = sdk.V2WorkflowRunJobStatusFail
+				return &sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    run.ID,
+					Level:            sdk.WorkflowRunInfoLevelError,
+					WorkflowRunJobID: rj.ID,
+					IssuedAt:         time.Now(),
+					Message:          fmt.Sprintf("Job %s: unable to interpolate %q into a string: %v", rj.JobID, s.Readiness.Command, err),
+				}, false
+			}
+			s.Readiness.Command = cmd
+			rj.Job.Services[k] = s
+			runUpdated = true
+		}
 	}
 
 	for _, def := range wref.ef.localWorkerModelCache {
@@ -2611,8 +2647,8 @@ func (api *API) workflowRunV2TriggerUnlocking(ctx context.Context, run *sdk.V2Wo
 
 	for _, c := range toCancel {
 		if c.ID == run.ID {
-			// update enqueue to force cancellation
-			wrEnqueue.Status = sdk.V2WorkflowRunStatusCancelled
+			// update run to force cancellation
+			run.Status = sdk.V2WorkflowRunStatusCancelled
 			break
 		}
 	}
