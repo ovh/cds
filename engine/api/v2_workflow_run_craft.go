@@ -156,7 +156,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// Build run context
-	runContext, mustSaveVersion, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, api.Config.URL.UI)
+	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, api.Config.URL.UI)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
@@ -258,6 +258,33 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			}
 			return stopRun(ctx, api.mustDB(), api.Cache, run, &wref.ef.initiator, msgs...)
 		}
+	}
+
+	mustSaveVersion := false
+	if run.WorkflowData.Workflow.Semver != nil {
+		var cdsVersion *semver.Version
+		vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, run.ProjectKey, run.Contexts.Git.Server)
+		if err != nil {
+			return err
+		}
+		vcsGitContext, err := vcs.LoadVCSByProject(ctx, api.mustDB(), run.ProjectKey, run.Contexts.Git.Server)
+		if err != nil {
+			return err
+		}
+		cdsVersion, mustSaveVersion, err = getCDSversion(ctx, api.mustDB(), vcsClient, vcsGitContext.Type, run.Contexts, run.WorkflowData.Workflow)
+		if err != nil {
+			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("unable to compute cds.version from semver: %v", err),
+			})
+		}
+		run.Contexts.CDS.Version = cdsVersion.String()
+		run.Contexts.CDS.VersionNext = cdsVersion.IncMinor().String()
+	} else {
+		run.Contexts.CDS.Version = run.Contexts.Git.SemverCurrent
+		run.Contexts.CDS.VersionNext = run.Contexts.Git.SemverNext
 	}
 
 	allVariableSets, err := project.LoadVariableSetsByProject(ctx, api.mustDB(), p.Key)
@@ -841,7 +868,9 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 	return nil
 }
 
-func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, uiURL string) (*sdk.WorkflowRunContext, bool, error) {
+func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, uiURL string) (*sdk.WorkflowRunContext, error) {
+	// CDS Version and VersionNext is computed after workflow template resolution
+
 	var runContext sdk.WorkflowRunContext
 
 	cdsContext := sdk.CDSContext{
@@ -910,7 +939,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	}
 	vcsTmp, err := vcs.LoadVCSByProject(ctx, db, wr.ProjectKey, vcsName, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	workflowVCSServer := *vcsTmp
 
@@ -950,11 +979,11 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 
 	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, wr.ProjectKey, workflowVCSServer.Name)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	vcsRepo, err := vcsClient.RepoByFullname(ctx, gitContext.Repository)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	gitContext.RepositoryWebURL = vcsRepo.URL
 
@@ -967,7 +996,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	if gitContext.Ref == "" {
 		defaultBranch, err := vcsClient.Branch(ctx, gitContext.Repository, sdk.VCSBranchFilters{Default: true})
 		if err != nil {
-			return nil, false, err
+			return nil, err
 		}
 		gitContext.Ref = defaultBranch.ID
 		gitContext.RefName = defaultBranch.DisplayID
@@ -982,13 +1011,13 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		case strings.HasPrefix(gitContext.Ref, sdk.GitRefBranchPrefix):
 			b, err := vcsClient.Branch(ctx, gitContext.Repository, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(gitContext.Ref, sdk.GitRefBranchPrefix)})
 			if err != nil {
-				return nil, false, err
+				return nil, err
 			}
 			gitContext.Sha = b.LatestCommit
 		case strings.HasPrefix(gitContext.Ref, sdk.GitRefTagPrefix):
 			t, err := vcsClient.Tag(ctx, gitContext.Repository, strings.TrimPrefix(gitContext.Ref, sdk.GitRefTagPrefix))
 			if err != nil {
-				return nil, false, err
+				return nil, err
 			}
 			gitContext.Sha = t.Hash
 		}
@@ -1015,21 +1044,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	runContext.Git = gitContext
 	runContext.Env = envs
 
-	mustSaveVersion := false
-	if wr.WorkflowData.Workflow.Semver != nil {
-		var cdsVersion *semver.Version
-		cdsVersion, mustSaveVersion, err = getCDSversion(ctx, db, vcsClient, workflowVCSServer.Type, runContext, wr.WorkflowData.Workflow)
-		if err != nil {
-			return nil, false, err
-		}
-		runContext.CDS.Version = cdsVersion.String()
-		runContext.CDS.VersionNext = cdsVersion.IncMinor().String()
-	} else {
-		runContext.CDS.Version = gitContext.SemverCurrent
-		runContext.CDS.VersionNext = gitContext.SemverNext
-	}
-
-	return &runContext, mustSaveVersion, nil
+	return &runContext, nil
 }
 
 func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAuthorizedClientService, typeVCS string, runContext sdk.WorkflowRunContext, workflowDef sdk.V2Workflow) (*semver.Version, bool, error) {
