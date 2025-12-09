@@ -31,6 +31,11 @@ parameters:
   default: mySuperDefaultValue
 - key: noDefault  
 spec: |-
+  semver:
+    from: git
+    schema:
+      "refs/heads/master": ${{ git.version }}-rc-${{cds.run_number}}
+      "**/*": ${{ git.version }}-snapshot-${{cds.run_number}} 
   on:
     push: {}
   jobs:
@@ -97,6 +102,8 @@ spec: |-
 	require.False(t, has)
 
 	require.Equal(t, 5, len(work.Jobs))
+
+	require.NotNil(t, work.Semver)
 }
 func TestOverrideWorkflowOnEmpty(t *testing.T) {
 	wk := `name: myworkflow

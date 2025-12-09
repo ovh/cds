@@ -80,6 +80,7 @@ func (wt V2WorkflowTemplate) GetName() string {
 
 func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, error) {
 	type innerWorkflow struct {
+		Semver       *WorkflowSemver          `json:"semver,omitempty"`
 		Stages       map[string]WorkflowStage `json:"stages,omitempty"`
 		Gates        map[string]V2JobGate     `json:"gates,omitempty"`
 		Jobs         map[string]V2Job         `json:"jobs"`
@@ -164,6 +165,9 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 	}
 	if in.VariableSets != nil {
 		w.VariableSets = in.VariableSets
+	}
+	if in.Semver != nil {
+		w.Semver = in.Semver
 	}
 	// Use workflow template annotations only if
 	// they are not already defined by the template
