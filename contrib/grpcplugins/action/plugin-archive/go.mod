@@ -2,7 +2,7 @@ module github.com/ovh/cds/contrib/grpcplugins/action/archive
 
 replace github.com/ovh/cds => ../../../../
 
-go 1.24.3
+go 1.25.1
 
 require (
 	github.com/golang/protobuf v1.5.4

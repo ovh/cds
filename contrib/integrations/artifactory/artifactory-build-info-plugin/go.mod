@@ -1,6 +1,6 @@
 module github.com/ovh/cds/contrib/integrations/artifactory/artifactory-build-info-plugin
 
-go 1.24.3
+go 1.25.1
 
 replace github.com/ovh/cds => ../../../../
 

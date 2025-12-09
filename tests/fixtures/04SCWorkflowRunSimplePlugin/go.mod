@@ -1,6 +1,6 @@
 module github.com/ovh/cds/tests/fixtures/04SCWorkflowRunSimplePlugin
 
-go 1.24.3
+go 1.25.1
 
 require (
 	github.com/golang/protobuf v1.5.4
