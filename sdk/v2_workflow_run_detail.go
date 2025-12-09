@@ -53,6 +53,7 @@ func init() {
 		&V2WorkflowRunResultMavenDetail{},
 		&V2WorkflowRunResultGradleDetail{},
 		&V2WorkflowRunResultSbtDetail{},
+		&V2WorkflowRunResultNugetDetail{},
 	)
 }
 
@@ -219,6 +220,7 @@ const (
 	V2WorkflowRunResultTypeMaven             V2WorkflowRunResultType = "maven"
 	V2WorkflowRunResultTypeGradle            V2WorkflowRunResultType = "gradle"
 	V2WorkflowRunResultTypeSbt               V2WorkflowRunResultType = "sbt"
+	V2WorkflowRunResultTypeNuget             V2WorkflowRunResultType = "nuget"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 
@@ -768,6 +770,48 @@ func (v *V2WorkflowRunResultMavenDetail) Cast(i any) error {
 
 // GetName implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultMavenDetail) GetName() string {
+	return v.Name
+}
+
+type V2WorkflowRunResultNugetDetail struct {
+	Name    string
+	Size    int64
+	Mode    os.FileMode `json:"mode" mapstructure:"mode"`
+	MD5     string      `json:"md5" mapstructure:"md5"`
+	SHA1    string      `json:"sha1" mapstructure:"sha1"`
+	SHA256  string      `json:"sha256" mapstructure:"sha256"`
+	ID      string      `json:"id" mapstructure:"id"`
+	Version string      `json:"version" mapstructure:"version"`
+}
+
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultNugetDetail) GetLabel() string {
+	return fmt.Sprintf("Filename: %s - Size: %s", v.Name, humanize.Bytes(uint64(v.Size)))
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultNugetDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Filename":     {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Size (bytes)": {Type: V2WorkflowRunResultDetailMetadataTypeNUMBER, Value: strconv.FormatInt(v.Size, 10)},
+		"MD5":          {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.MD5},
+		"SHA1":         {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.SHA1},
+		"SHA256":       {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.SHA256},
+		"ID":           {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.ID},
+		"Version":      {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
+	}
+}
+
+// Cast implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultNugetDetail) Cast(i any) error {
+	if err := castV2WorkflowRunResultDetailWithMapStructure(i, v); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetName implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultNugetDetail) GetName() string {
 	return v.Name
 }
 
