@@ -115,6 +115,8 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		repository += "-gradle"
 	case sdk.V2WorkflowRunResultTypeSbt:
 		repository += "-sbt"
+	case sdk.V2WorkflowRunResultTypeNuget:
+		repository += "-nuget"
 	}
 
 	// get file info
@@ -243,6 +245,10 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		}
 	case sdk.V2WorkflowRunResultTypeSbt:
 		if err := performSbt(&runResult, fileInfo, resultType, fileName); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypeNuget:
+		if err := performNuget(&runResult, fileInfo, fileProps, fileName); err != nil {
 			return true, err
 		}
 	default:
@@ -624,6 +630,35 @@ func performNpm(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.Artifa
 			MD5:      fileInfo.Checksums.Md5,
 			SHA1:     fileInfo.Checksums.Sha1,
 			SHA256:   fileInfo.Checksums.Sha256,
+		},
+	}
+	return nil
+}
+
+func performNuget(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.ArtifactoryFileInfo, props map[string][]string, fileName string) error {
+	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
+	if err != nil {
+		return err
+	}
+	nugetID, ok := props["nuget.id"]
+	if !ok || len(nugetID) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property nuget.id")
+	}
+	nugetVersion, ok := props["nuget.version"]
+	if !ok || len(nugetVersion) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property nuget.version")
+	}
+	runResult.Type = sdk.V2WorkflowRunResultTypeNuget
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultNugetDetail{
+			Name:    fileName,
+			Size:    size,
+			Mode:    os.FileMode(0755),
+			MD5:     fileInfo.Checksums.Md5,
+			SHA1:    fileInfo.Checksums.Sha1,
+			SHA256:  fileInfo.Checksums.Sha256,
+			ID:      nugetID[0],
+			Version: nugetVersion[0],
 		},
 	}
 	return nil
