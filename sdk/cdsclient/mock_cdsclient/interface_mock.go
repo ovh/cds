@@ -5978,6 +5978,26 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2JobStart(ctx, projectKey, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2JobStart", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2JobStart), varargs...)
 }
 
+// WorkflowV2JobsStart mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, projectKey, workflowRunID, payload}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2JobsStart", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2JobsStart indicates an expected call of WorkflowV2JobsStart.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2JobsStart(ctx, projectKey, workflowRunID, payload any, mods ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, projectKey, workflowRunID, payload}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2JobsStart", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2JobsStart), varargs...)
+}
+
 // WorkflowV2Restart mocks base method.
 func (m *MockWorkflowV2Client) WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
@@ -12571,6 +12591,26 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2JobStart(ctx, projectKey, workflo
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectKey, workflowRunID, jobIdentifier, payload}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2JobStart", reflect.TypeOf((*MockInterface)(nil).WorkflowV2JobStart), varargs...)
+}
+
+// WorkflowV2JobsStart mocks base method.
+func (m *MockInterface) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, projectKey, workflowRunID, payload}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2JobsStart", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2JobsStart indicates an expected call of WorkflowV2JobsStart.
+func (mr *MockInterfaceMockRecorder) WorkflowV2JobsStart(ctx, projectKey, workflowRunID, payload any, mods ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, projectKey, workflowRunID, payload}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2JobsStart", reflect.TypeOf((*MockInterface)(nil).WorkflowV2JobsStart), varargs...)
 }
 
 // WorkflowV2Restart mocks base method.
