@@ -32,10 +32,11 @@ func experimentalRbac() *cobra.Command {
 var rbacListCmd = cli.Command{
 	Name:    "list",
 	Aliases: []string{"ls"},
-	Short:   "List CDS permissions",
+	Short:   "List all permissions",
 	Example: "cdsctl rbac list ",
 	Ctx:     []cli.Arg{},
 	Args:    []cli.Arg{},
+	Mcp:     true,
 }
 
 func rbacListFunc(v cli.Values) (cli.ListResult, error) {
@@ -49,7 +50,7 @@ func rbacListFunc(v cli.Values) (cli.ListResult, error) {
 var rbacGetCmd = cli.Command{
 	Name:    "show",
 	Aliases: []string{"get"},
-	Short:   "GET a CDS permission",
+	Short:   "Retrieve the given permission",
 	Example: "cdsctl rbac get <permission identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
@@ -60,6 +61,7 @@ var rbacGetCmd = cli.Command{
 			Name: "format",
 		},
 	},
+	Mcp: true,
 }
 
 func rbacGetFunc(v cli.Values) error {

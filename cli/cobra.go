@@ -17,6 +17,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type mcpContextKey string
+
+const (
+	ContextMcp mcpContextKey = "mcp"
+)
+
 // ShellMode will os.Exit if false, display only exit code if true
 var ShellMode bool
 
@@ -262,9 +268,19 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				cmd.Help() // nolint
 				OSExit(0)
 			}
+
 			i, err := f(vals)
 			if err != nil {
 				ExitOnError(err)
+			}
+
+			// For MCP context, ignore fields filter and return the full object
+			mcpContext, ok := cmd.Context().Value(ContextMcp).(bool)
+			if ok && mcpContext {
+				b, err := json.Marshal(i)
+				ExitOnError(err)
+				fmt.Fprint(cmd.OutOrStdout(), string(b))
+				return
 			}
 
 			quiet, _ := cmd.Flags().GetBool("quiet")
@@ -280,7 +296,6 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				b, err := json.Marshal(i)
 				ExitOnError(err)
 				fmt.Fprint(cmd.OutOrStdout(), string(b))
-
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)

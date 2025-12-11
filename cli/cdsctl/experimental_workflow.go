@@ -91,13 +91,14 @@ func workflowLintFunc(v cli.Values) error {
 var workflowRunInfosListCmd = cli.Command{
 	Name:    "info",
 	Aliases: []string{"i", "infos"},
-	Short:   "List run information",
+	Short:   "Retrieve the list of workflow run information",
 	Example: "cdsctl experimental workflow info <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
 		{Name: "workflow_run_id"},
 	},
+	Mcp: true,
 }
 
 func workflowRunInfosListFunc(v cli.Values) (cli.ListResult, error) {
@@ -206,6 +207,7 @@ var workflowRunHistoryCmd = cli.Command{
 			Name: "commit",
 		},
 	},
+	Mcp: true,
 }
 
 func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
@@ -234,13 +236,14 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 var workflowRunStatusCmd = cli.Command{
 	Name:    "status",
 	Aliases: []string{"st"},
-	Short:   "Get the workflow run status",
+	Short:   "Retrieve the status of the given workflow run",
 	Example: "cdsctl experimental workflow status <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
 		{Name: "workflow_run_id"},
 	},
+	Mcp: true,
 }
 
 func workflowRunStatusFunc(v cli.Values) (interface{}, error) {

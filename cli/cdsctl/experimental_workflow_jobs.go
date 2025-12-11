@@ -65,13 +65,14 @@ func workflowRunStartJobFunc(v cli.Values) error {
 
 var workflowRunJobsCmd = cli.Command{
 	Name:    "status",
-	Short:   "Get the workflow run jobs status",
+	Short:   "Retrieve the status of all jobs that run on the given workflow run",
 	Example: "cdsctl experimental workflow run jobs status <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
 		{Name: "workflow_run_id"},
 	},
+	Mcp: true,
 }
 
 func workflowRunJobsFunc(v cli.Values) (cli.ListResult, error) {
@@ -87,7 +88,7 @@ func workflowRunJobsFunc(v cli.Values) (cli.ListResult, error) {
 var workflowRunJobCmd = cli.Command{
 	Name:    "show",
 	Aliases: []string{"get"},
-	Short:   "Get the workflow run job status",
+	Short:   "Retrieve the status of the job on the given workflow run",
 	Example: "cdsctl experimental workflow run jobs status <proj_key> <workflow_run_id> <job_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
@@ -95,6 +96,7 @@ var workflowRunJobCmd = cli.Command{
 		{Name: "workflow_run_id"},
 		{Name: "job_identifier"},
 	},
+	Mcp: true,
 }
 
 func workflowRunJobFunc(v cli.Values) (interface{}, error) {
@@ -126,7 +128,7 @@ func workflowRunJobFunc(v cli.Values) (interface{}, error) {
 var workflowRunJobInfoCmd = cli.Command{
 	Name:    "info",
 	Aliases: []string{"i", "infos"},
-	Short:   "Get the workflow run job infos",
+	Short:   "Retrieve the job information on the given workflow run",
 	Example: "cdsctl experimental workflow run jobs info <proj_key> <workflow_run_id> <job_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
@@ -134,6 +136,7 @@ var workflowRunJobInfoCmd = cli.Command{
 		{Name: "workflow_run_id"},
 		{Name: "job_identifier"},
 	},
+	Mcp: true,
 }
 
 func workflowRunJobInfoFunc(v cli.Values) (cli.ListResult, error) {

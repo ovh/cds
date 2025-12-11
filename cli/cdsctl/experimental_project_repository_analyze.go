@@ -22,6 +22,7 @@ func projectRepositoryAnalysis() *cobra.Command {
 	return cli.NewCommand(projectAnalysisCmd, nil, []*cobra.Command{
 		cli.NewListCommand(projectRepositoryAnalysisListCmd, projectRepositoryAnalysisListFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectRepositoryAnalysisGetCmd, projectRepositoryAnalysisGetFunc, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(projectRepositoryAnalysisMCPGetCmd, projectRepositoryAnalysisMCPGetFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectRepositoryAnalysisTriggerCmd, projectRepositoryAnalysisTriggerFunc, nil, withAllCommandModifiers()...),
 	})
 }
@@ -74,7 +75,7 @@ func projectRepositoryAnalysisTriggerFunc(v cli.Values) (interface{}, error) {
 
 var projectRepositoryAnalysisListCmd = cli.Command{
 	Name:  "list",
-	Short: "List all repository analysis",
+	Short: "List all analyses of the given repository",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -104,7 +105,6 @@ var projectRepositoryAnalysisGetCmd = cli.Command{
 		{Name: "repository-name"},
 		{Name: "analysis-id"},
 	},
-	Mcp: true,
 }
 
 func projectRepositoryAnalysisGetFunc(v cli.Values) error {
@@ -151,4 +151,27 @@ func projectRepositoryAnalysisGetFunc(v cli.Values) error {
 		fmt.Println(string(fileYaml))
 	}
 	return nil
+}
+
+var projectRepositoryAnalysisMCPGetCmd = cli.Command{
+	Name:  "show-mcp",
+	Short: "Retrieve the given analysis from the project key, the vcs-name, the repository name and the analysis ID",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "vcs-name"},
+		{Name: "repository-name"},
+		{Name: "analysis-id"},
+	},
+	Mcp:    true,
+	Hidden: true,
+}
+
+func projectRepositoryAnalysisMCPGetFunc(v cli.Values) (interface{}, error) {
+	analysis, err := client.ProjectRepositoryAnalysisGet(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"), v.GetString("analysis-id"))
+	if err != nil {
+		return nil, err
+	}
+	return analysis, nil
 }
