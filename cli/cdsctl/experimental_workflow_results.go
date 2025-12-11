@@ -183,13 +183,14 @@ func workflowV2RunResultDownloadFunc(v cli.Values) error {
 var workflowV2RunResultListCmd = cli.Command{
 	Name:    "list",
 	Aliases: []string{"ls"},
-	Short:   "List run result",
+	Short:   "List the run result created by the given workflow run",
 	Example: "cdsctl experimental workflow results list <project_key> <run_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
 		{Name: "run_identifier"},
 	},
+	Mcp: true,
 }
 
 func workflowV2RunResultListFunc(v cli.Values) (cli.ListResult, error) {

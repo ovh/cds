@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/cobra"
 
@@ -66,6 +67,7 @@ var regionListCmd = cli.Command{
 	Short:   "List all regions",
 	Example: "cdsctl region list",
 	Ctx:     []cli.Arg{},
+	Mcp:     true,
 }
 
 func regionListFunc(_ cli.Values) (cli.ListResult, error) {

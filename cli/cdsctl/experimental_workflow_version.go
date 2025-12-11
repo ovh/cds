@@ -48,7 +48,7 @@ func workflowV2VersionDeleteFunc(v cli.Values) error {
 var workflowV2VersionCmd = cli.Command{
 	Name:    "get",
 	Aliases: []string{"show"},
-	Short:   "Get the workflow version",
+	Short:   "Get the workflow release version",
 	Example: "cdsctl experimental workflow version get <project_key> <vcs_identifier> <repository_identifier> <workflow_name> <version>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
@@ -58,6 +58,7 @@ var workflowV2VersionCmd = cli.Command{
 		{Name: "workflow_name"},
 		{Name: "version"},
 	},
+	Mcp: true,
 }
 
 func workflowV2VersionFunc(v cli.Values) (interface{}, error) {
@@ -71,7 +72,7 @@ func workflowV2VersionFunc(v cli.Values) (interface{}, error) {
 var workflowV2VersionListCmd = cli.Command{
 	Name:    "list",
 	Aliases: []string{"ls"},
-	Short:   "List all version for the given workflow",
+	Short:   "List all release versions for the given workflow",
 	Example: "cdsctl experimental workflow version list <project_key> <vcs_identifier> <repository_identifier> <workflow_name>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
@@ -80,6 +81,7 @@ var workflowV2VersionListCmd = cli.Command{
 		{Name: "repository_identifier"},
 		{Name: "workflow_name"},
 	},
+	Mcp: true,
 }
 
 func workflowV2versionListFunc(v cli.Values) (cli.ListResult, error) {

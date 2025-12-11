@@ -38,6 +38,7 @@ var projectConcurrencyShowRunsCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "name"},
 	},
+	Mcp: true,
 }
 
 func projectConcurrencyShowRunsFunc(v cli.Values) (cli.ListResult, error) {
@@ -70,6 +71,7 @@ var projectConcurrencyListCmd = cli.Command{
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
+	Mcp: true,
 }
 
 func projectConcurrencyListFunc(v cli.Values) (cli.ListResult, error) {

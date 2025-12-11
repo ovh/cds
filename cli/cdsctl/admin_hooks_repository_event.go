@@ -21,6 +21,7 @@ func adminHooksRepositoryEvents() *cobra.Command {
 	return cli.NewCommand(adminHooksRepositoryEventCmd, nil, []*cobra.Command{
 		cli.NewListCommand(adminHooksRepoEventListCmd, adminHooksRepoEventListRun, nil),
 		cli.NewGetCommand(adminHooksRepoEventGetCmd, adminHooksRepoEventGetRun, nil),
+		cli.NewGetCommand(adminHooksRepoEventMCPGetCmd, adminHooksRepoEventMCPGetRun, nil),
 		cli.NewCommand(adminHookRepoEventRestartCmd, adminHookRepoEventRestartRun, nil),
 		cli.NewCommand(adminHookRepoEventStopCmd, adminHookRepoEventStopRun, nil),
 	})
@@ -133,6 +134,32 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 	return cli, nil
 }
 
+var adminHooksRepoEventMCPGetCmd = cli.Command{
+	Name:    "show-mcp",
+	Aliases: []string{"get"},
+	Short:   "Retrieve the given hook repository event",
+	Args: []cli.Arg{
+		{Name: "vcs-server"},
+		{Name: "repository"},
+		{Name: "event-id"},
+	},
+	Mcp:    true,
+	Hidden: true,
+}
+
+func adminHooksRepoEventMCPGetRun(v cli.Values) (interface{}, error) {
+	path := fmt.Sprintf("/v2/repository/event/%s/%s/%s", url.PathEscape(v.GetString("vcs-server")), url.PathEscape(v.GetString("repository")), v.GetString("event-id"))
+	btes, err := client.ServiceCallGET("hooks", path)
+	if err != nil {
+		return nil, err
+	}
+	var event sdk.HookRepositoryEvent
+	if err := sdk.JSONUnmarshal(btes, &event); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 var adminHooksRepoEventListCmd = cli.Command{
 	Name:    "list",
 	Aliases: []string{"l", "ls"},
@@ -141,6 +168,7 @@ var adminHooksRepoEventListCmd = cli.Command{
 		{Name: "vcs-server"},
 		{Name: "repository"},
 	},
+	Mcp: true,
 }
 
 func adminHooksRepoEventListRun(v cli.Values) (cli.ListResult, error) {
