@@ -32,7 +32,7 @@ func experimentalRbac() *cobra.Command {
 var rbacListCmd = cli.Command{
 	Name:    "list",
 	Aliases: []string{"ls"},
-	Short:   "List all cds permissions",
+	Short:   "List all permissions",
 	Example: "cdsctl rbac list ",
 	Ctx:     []cli.Arg{},
 	Args:    []cli.Arg{},

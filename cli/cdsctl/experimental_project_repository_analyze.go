@@ -75,7 +75,7 @@ func projectRepositoryAnalysisTriggerFunc(v cli.Values) (interface{}, error) {
 
 var projectRepositoryAnalysisListCmd = cli.Command{
 	Name:  "list",
-	Short: "List all alayses of the given repository",
+	Short: "List all analyses of the given repository",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
