@@ -170,6 +170,11 @@
                     width: 18px;
                     min-width: unset;
                     margin-left: 4px;
+                    box-shadow: 1px 1px 1px #a2a3a3ab;
+
+                    :host-context(.night) & {
+                        box-shadow: 1px 1px 2px #000000e6;
+                    }
                 }
             }
 

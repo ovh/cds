@@ -62,15 +62,16 @@ func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 
 func (c *gitlabClient) ToVCSRepo(p *gitlab.Project) sdk.VCSRepo {
 	return sdk.VCSRepo{
-		ID:              fmt.Sprintf("%d", p.ID),
-		Name:            p.NameWithNamespace,
-		Slug:            p.PathWithNamespace,
-		Fullname:        p.PathWithNamespace,
-		URL:             p.WebURL,
-		URLCommitFormat: p.WebURL + "/-/commit/%s",
-		URLTagFormat:    p.WebURL + "/-/tree/%s?ref_type=tags",
-		URLBranchFormat: p.WebURL + "/-/tree/%s?ref_type=heads",
-		HTTPCloneURL:    p.HTTPURLToRepo,
-		SSHCloneURL:     p.SSHURLToRepo,
+		ID:                   fmt.Sprintf("%d", p.ID),
+		Name:                 p.NameWithNamespace,
+		Slug:                 p.PathWithNamespace,
+		Fullname:             p.PathWithNamespace,
+		URL:                  p.WebURL,
+		URLCommitFormat:      p.WebURL + "/-/commit/%s",
+		URLTagFormat:         p.WebURL + "/-/tree/%s?ref_type=tags",
+		URLBranchFormat:      p.WebURL + "/-/tree/%s?ref_type=heads",
+		URLPullRequestFormat: p.WebURL + "/-/merge_requests/%d",
+		HTTPCloneURL:         p.HTTPURLToRepo,
+		SSHCloneURL:          p.SSHURLToRepo,
 	}
 }
