@@ -39,15 +39,16 @@ func (g *giteaClient) UserHasWritePermission(ctx context.Context, repo string) (
 
 func (g *giteaClient) ToVCSRepo(repo *gg.Repository) sdk.VCSRepo {
 	return sdk.VCSRepo{
-		URL:             repo.HTMLURL,
-		URLCommitFormat: repo.HTMLURL + "/commit/%s",
-		URLTagFormat:    repo.HTMLURL + "/commits/tag/%s",
-		URLBranchFormat: repo.HTMLURL + "/commits/branch/%s",
-		Name:            repo.Name,
-		ID:              fmt.Sprintf("%d", repo.ID),
-		Fullname:        repo.FullName,
-		HTTPCloneURL:    repo.CloneURL,
-		SSHCloneURL:     repo.SSHURL,
-		Slug:            repo.Name,
+		URL:                  repo.HTMLURL,
+		URLCommitFormat:      repo.HTMLURL + "/commit/%s",
+		URLTagFormat:         repo.HTMLURL + "/commits/tag/%s",
+		URLBranchFormat:      repo.HTMLURL + "/commits/branch/%s",
+		URLPullRequestFormat: repo.HTMLURL + "/pulls/%d",
+		Name:                 repo.Name,
+		ID:                   fmt.Sprintf("%d", repo.ID),
+		Fullname:             repo.FullName,
+		HTTPCloneURL:         repo.CloneURL,
+		SSHCloneURL:          repo.SSHURL,
+		Slug:                 repo.Name,
 	}
 }

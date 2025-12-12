@@ -171,15 +171,16 @@ func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname stri
 
 func (g *githubClient) ToVCSRepo(repo Repository) sdk.VCSRepo {
 	return sdk.VCSRepo{
-		ID:              strconv.Itoa(repo.ID),
-		Name:            repo.Name,
-		Slug:            strings.Split(repo.FullName, "/")[0],
-		Fullname:        repo.FullName,
-		URL:             repo.HTMLURL,
-		URLCommitFormat: repo.HTMLURL + "/commit/%s",
-		URLTagFormat:    repo.HTMLURL + "/commits/%s",
-		URLBranchFormat: repo.HTMLURL + "/commits/%s",
-		HTTPCloneURL:    repo.CloneURL,
-		SSHCloneURL:     repo.SSHURL,
+		ID:                   strconv.Itoa(repo.ID),
+		Name:                 repo.Name,
+		Slug:                 strings.Split(repo.FullName, "/")[0],
+		Fullname:             repo.FullName,
+		URL:                  repo.HTMLURL,
+		URLCommitFormat:      repo.HTMLURL + "/commit/%s",
+		URLTagFormat:         repo.HTMLURL + "/commits/%s",
+		URLBranchFormat:      repo.HTMLURL + "/commits/%s",
+		URLPullRequestFormat: repo.HTMLURL + "/pull/%d",
+		HTTPCloneURL:         repo.CloneURL,
+		SSHCloneURL:          repo.SSHURL,
 	}
 }

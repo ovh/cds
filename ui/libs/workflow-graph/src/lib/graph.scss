@@ -12,13 +12,17 @@
     width: 100%;
     display: block;
     height: 100%;
-}   
+}
 
 .svg-wrapper {
     width: 100%;
     display: block;
     height: 100%;
-    cursor: all-scroll;
+    cursor: grab;
+
+    &:active {
+        cursor: grabbing;
+    }
 
     ::ng-deep {
         .edgePath {

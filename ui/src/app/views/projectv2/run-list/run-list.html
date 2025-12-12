@@ -74,7 +74,7 @@
 					</div>
 				</ng-template>
 				<ng-template #runTitle>
-					<app-searchable [link]="['/project', project.key, 'run']"
+					<app-searchable [link]="['/project', project.key, 'run']" [fixed]="true"
 						[params]="{workflow: run.vcs_server+'/'+run.repository+'/'+run.workflow_name}" paramsHandling="merge">
 						<a [routerLink]="['/project', run.project_key, 'run', run.id]">{{run.vcs_server}}/{{run.repository}}/{{run.workflow_name}}
 							#{{run.run_number}}</a>
@@ -83,7 +83,7 @@
 				<ng-template #runDescription>
 					<ng-container *ngIf="run.contexts.git">
 						<span style="margin-right: 10px;">
-							<b>Repository:</b>&nbsp;<app-searchable [style]="{display:'unset'}"
+							<b>Repository:</b>&nbsp;<app-searchable [style]="{display:'unset'}" [fixed]="true"
 								[link]="['/project', project.key, 'run']"
 								[params]="{workflow_repository: run.contexts.git.server+'/'+run.contexts.git.repository}"
 								paramsHandling="merge">
@@ -91,9 +91,13 @@
 									rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
 							</app-searchable>
 						</span>
+						<span *ngIf="run.contexts.git.pullrequest_id" style="margin-right: 10px;">
+							<b>Pull&nbsp;Request:</b>&nbsp;<a class="dotted" href="{{run.contexts.git.pullrequest_web_url}}"
+								target="_blank" rel="noopener noreferrer">#{{run.contexts.git.pullrequest_id}}</a>
+						</span>
 						<span style="margin-right: 10px;">
-							<b>Ref:</b>&nbsp;<app-searchable [style]="{display:'unset'}" [link]="['/project', project.key, 'run']"
-								[params]="{ref:run.contexts.git.ref}" paramsHandling="merge">
+							<b>Ref:</b>&nbsp;<app-searchable [style]="{display:'unset'}" [fixed]="true"
+								[link]="['/project', project.key, 'run']" [params]="{ref:run.contexts.git.ref}" paramsHandling="merge">
 								<a class="dotted" href="{{run.contexts.git.ref_web_url}}" target="_blank" rel="noopener noreferrer"
 									[title]="run.contexts.git.ref">{{run.contexts.git.ref}}</a>
 							</app-searchable>
