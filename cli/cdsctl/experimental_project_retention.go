@@ -68,6 +68,7 @@ var projectRetentionShowCmd = cli.Command{
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
+	Mcp: true,
 }
 
 func projectRetentionShowFunc(v cli.Values) (interface{}, error) {

@@ -42,6 +42,7 @@ var projectVariableSetItemListCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "variableset-name"},
 	},
+	Mcp: true,
 }
 
 func projectVariableSetItemListFunc(v cli.Values) (cli.ListResult, error) {
@@ -60,6 +61,7 @@ var projectVariableSetItemShowCmd = cli.Command{
 		{Name: "variableset-name"},
 		{Name: "item-name"},
 	},
+	Mcp: true,
 }
 
 func projectVariableSetItemShowFunc(v cli.Values) (interface{}, error) {

@@ -23,6 +23,10 @@ import (
 
 var mcpLog *mcpLogger
 
+const (
+	MCPContextValue = "mcp"
+)
+
 var mcpCmd = cli.Command{
 	Name:    "mcp",
 	Aliases: []string{""},
@@ -208,10 +212,10 @@ func registerTools(server *mcp.Server, v cli.Values) {
 
 	cmds := FindCommandsByMCPAnnotation(root, v)
 
-	for _, c := range cmds {
-		mcpLog.logTrace("registerTools", fmt.Sprintf("Registering MCP tool for command: %s\n", c.Name))
-
-		cmd := c
+	for i := range cmds {
+		cmd := cmds[i]
+		cmd.Cmd.SetContext(context.WithValue(context.Background(), cli.ContextMcp, true))
+		mcpLog.logTrace("registerTools", fmt.Sprintf("Registering MCP tool for command: %s\n", cmd.Name))
 		mcp.AddTool(server, &mcp.Tool{
 			Name:        cmd.Name,
 			Title:       cmd.Cmd.Short,

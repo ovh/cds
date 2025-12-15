@@ -61,6 +61,7 @@ var projectWebHookListCmd = cli.Command{
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
+	Mcp: true,
 }
 
 func projectWebHookListFunc(v cli.Values) (cli.ListResult, error) {
