@@ -134,7 +134,7 @@ workflows:
 }
 
 func InsertWorker(t *testing.T, ctx context.Context, db gorpmapper.SqlExecutorWithTx, hatcheryConsumer *sdk.AuthHatcheryConsumer, hatch sdk.Hatchery, workerName string, jobRun sdk.V2WorkflowRunJob) (*sdk.V2Worker, string) {
-	workerConsumer, err := authentication.NewConsumerWorkerV2(ctx, db, workerName, hatcheryConsumer)
+	workerConsumer, err := authentication.NewConsumerWorkerV2(ctx, db, workerName, hatcheryConsumer, 12)
 	require.NoError(t, err)
 
 	spawnaargs := sdkhatch.SpawnArgumentsJWTV2{
