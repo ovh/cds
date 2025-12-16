@@ -52,7 +52,7 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 			Name:            name,
 			ParentID:        &hatcheryConsumer.ID,
 			Type:            sdk.ConsumerBuiltin,
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 12*time.Hour),
 		},
 		AuthConsumerUser: sdk.AuthUserConsumerData{
 			AuthentifiedUserID: hatcheryConsumer.AuthConsumerUser.AuthentifiedUserID,
@@ -76,7 +76,7 @@ func NewConsumerWorkerV2(ctx context.Context, db gorpmapper.SqlExecutorWithTx, n
 			Name:            name,
 			ParentID:        &hatcheryConsumer.ID,
 			Type:            sdk.ConsumerHatchery,
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 12*time.Hour),
 		},
 		AuthConsumerHatchery: sdk.AuthConsumerHatcheryData{
 			HatcheryID: hatcheryConsumer.AuthConsumerHatchery.HatcheryID,
