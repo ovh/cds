@@ -2,15 +2,20 @@ package openstack
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/rsa"
 	"testing"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
+
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"golang.org/x/crypto/ssh"
 )
 
 func TestHatcheryOpenstack_CanSpawn(t *testing.T) {
@@ -275,6 +280,67 @@ func TestHatcheryOpenstack_checkOverrideImagesUsername(t *testing.T) {
 			h := &HatcheryOpenstack{}
 			if err := h.checkOverrideImagesUsername(tt.overrides); (err != nil) != tt.wantErr {
 				t.Errorf("HatcheryOpenstack.checkOverrideImagesUsername() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHatcheryOpenstack_checkInjectSSHPublicKeys(t *testing.T) {
+	rsa, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+	publicRsa, err := ssh.NewPublicKey(&rsa.PublicKey)
+	require.NoError(t, err)
+	pubRsaBytes := ssh.MarshalAuthorizedKey(publicRsa)
+	ed, _, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+	publicEd, err := ssh.NewPublicKey(ed)
+	require.NoError(t, err)
+	publicEdBytes := ssh.MarshalAuthorizedKey(publicEd)
+
+	tests := []struct {
+		name       string
+		publicKeys []string
+		wantErr    bool
+	}{
+		{
+			name:       "empty",
+			publicKeys: []string{},
+			wantErr:    false,
+		},
+		{
+			name:       "nil",
+			publicKeys: nil,
+			wantErr:    false,
+		},
+		{
+			name: "valid-values",
+			publicKeys: []string{
+				"from=\"0.1.2.3\" " + string(pubRsaBytes),
+				"from=\"0.1.2.3\" " + string(publicEdBytes),
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid-key-missing-from-option",
+			publicKeys: []string{
+				string(pubRsaBytes),
+				string(publicEdBytes),
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid-key",
+			publicKeys: []string{
+				"invalid-ssh-key-format",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &HatcheryOpenstack{}
+			if err := h.checkInjectSSHPublicKeys(tt.publicKeys); (err != nil) != tt.wantErr {
+				t.Errorf("HatcheryOpenstack.checkInjectSSHPublicKeys() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
