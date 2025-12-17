@@ -118,15 +118,16 @@ func (client *bitbucketcloudClient) ToVCSRepo(repo Repository) sdk.VCSRepo {
 	webURL := repo.Links.HTML.Href
 
 	return sdk.VCSRepo{
-		ID:              repo.UUID,
-		Name:            repo.Name,
-		Slug:            repo.Slug,
-		Fullname:        repo.FullName,
-		URL:             repo.Links.HTML.Href,
-		URLCommitFormat: webURL + "/commits/%s",
-		URLTagFormat:    webURL + "/src/%s",
-		URLBranchFormat: webURL + "/src/%s",
-		HTTPCloneURL:    httpURL,
-		SSHCloneURL:     sshURL,
+		ID:                   repo.UUID,
+		Name:                 repo.Name,
+		Slug:                 repo.Slug,
+		Fullname:             repo.FullName,
+		URL:                  repo.Links.HTML.Href,
+		URLCommitFormat:      webURL + "/commits/%s",
+		URLTagFormat:         webURL + "/src/%s",
+		URLBranchFormat:      webURL + "/src/%s",
+		URLPullRequestFormat: webURL + "/pull-requests/%d",
+		HTTPCloneURL:         httpURL,
+		SSHCloneURL:          sshURL,
 	}
 }

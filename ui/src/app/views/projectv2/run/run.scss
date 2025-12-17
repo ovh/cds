@@ -162,6 +162,16 @@
             width: 100%;
             overflow: hidden;
 
+            .dotted {
+                color: inherit;
+                text-decoration: underline dotted;
+                white-space: nowrap;
+
+                &:hover {
+                    color: #177ddc;
+                }
+            }
+
             .title {
                 position: absolute;
                 top: 16px;
@@ -182,14 +192,13 @@
 
                     .ant-page-header-heading {
                         border-top-right-radius: 10px;
-                        border-bottom-right-radius: 10px;
-                        padding: 0 0 0 24px;
+                        padding: 0 24px 0 24px;
                     }
 
                     nz-page-header-content {
                         display: inline-block;
                         border-bottom-right-radius: 40px;
-                        padding: 0 0 0 56px;
+                        padding: 0 24px 0 56px;
                     }
                 }
 
@@ -278,16 +287,6 @@
 
                 .templateDetails {
                     margin-left: 5px;
-                }
-
-                a {
-                    color: inherit;
-                    text-decoration: underline dotted;
-                    white-space: nowrap;
-
-                    &:hover {
-                        color: #177ddc;
-                    }
                 }
             }
         }

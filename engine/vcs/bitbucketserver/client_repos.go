@@ -106,14 +106,15 @@ func (b *bitbucketClient) ToVCSRepo(repo Repo) sdk.VCSRepo {
 	}
 
 	return sdk.VCSRepo{
-		Name:            repo.Name,
-		Slug:            repo.Slug,
-		Fullname:        fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug),
-		URL:             webURL,
-		URLCommitFormat: strings.TrimSuffix(webURL, "/browse") + "/commits/%s",
-		URLTagFormat:    webURL + "?at=refs%%2Ftags%%2F%s",
-		URLBranchFormat: webURL + "?at=refs%%2Fheads%%2F%s",
-		HTTPCloneURL:    httpURL,
-		SSHCloneURL:     sshURL,
+		Name:                 repo.Name,
+		Slug:                 repo.Slug,
+		Fullname:             fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug),
+		URL:                  webURL,
+		URLCommitFormat:      strings.TrimSuffix(webURL, "/browse") + "/commits/%s",
+		URLTagFormat:         webURL + "?at=refs%%2Ftags%%2F%s",
+		URLBranchFormat:      webURL + "?at=refs%%2Fheads%%2F%s",
+		URLPullRequestFormat: strings.TrimSuffix(webURL, "/browse") + "/pull-requests/%d",
+		HTTPCloneURL:         httpURL,
+		SSHCloneURL:          sshURL,
 	}
 }

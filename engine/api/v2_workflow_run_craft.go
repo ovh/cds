@@ -987,6 +987,10 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	}
 	gitContext.RepositoryWebURL = vcsRepo.URL
 
+	if gitContext.PullRequestID > 0 {
+		gitContext.PullRequestWebURL = fmt.Sprintf(vcsRepo.URLPullRequestFormat, gitContext.PullRequestID)
+	}
+
 	if gitContext.SSHKey != "" {
 		gitContext.RepositoryURL = vcsRepo.SSHCloneURL
 	} else {
