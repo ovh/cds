@@ -46,13 +46,13 @@ func NewConsumerHatchery(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h
 	return &c, nil
 }
 
-func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthUserConsumer) (*sdk.AuthUserConsumer, error) {
+func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthUserConsumer, validityPeriod int64) (*sdk.AuthUserConsumer, error) {
 	c := sdk.AuthUserConsumer{
 		AuthConsumer: sdk.AuthConsumer{
 			Name:            name,
 			ParentID:        &hatcheryConsumer.ID,
 			Type:            sdk.ConsumerBuiltin,
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), time.Duration(validityPeriod)*time.Hour),
 		},
 		AuthConsumerUser: sdk.AuthUserConsumerData{
 			AuthentifiedUserID: hatcheryConsumer.AuthConsumerUser.AuthentifiedUserID,
@@ -70,13 +70,13 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 	return &c, nil
 }
 
-func NewConsumerWorkerV2(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthHatcheryConsumer) (*sdk.AuthHatcheryConsumer, error) {
+func NewConsumerWorkerV2(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthHatcheryConsumer, validityPeriod int64) (*sdk.AuthHatcheryConsumer, error) {
 	c := sdk.AuthHatcheryConsumer{
 		AuthConsumer: sdk.AuthConsumer{
 			Name:            name,
 			ParentID:        &hatcheryConsumer.ID,
 			Type:            sdk.ConsumerHatchery,
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), time.Duration(validityPeriod)*time.Hour),
 		},
 		AuthConsumerHatchery: sdk.AuthConsumerHatcheryData{
 			HatcheryID: hatcheryConsumer.AuthConsumerHatchery.HatcheryID,

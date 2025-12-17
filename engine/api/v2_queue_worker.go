@@ -550,7 +550,7 @@ func (api *API) postV2RegisterWorkerHandler() ([]service.RbacChecker, service.Ha
 		defer tx.Rollback() // nolint
 
 		// We have to issue a new consumer for the worker
-		workerConsumer, err := authentication.NewConsumerWorkerV2(ctx, tx, workerTokenFromHatchery.Subject, hatcheryConsumer)
+		workerConsumer, err := authentication.NewConsumerWorkerV2(ctx, tx, workerTokenFromHatchery.Subject, hatcheryConsumer, api.Config.Worker.ValidityPeriod)
 		if err != nil {
 			return err
 		}

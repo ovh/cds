@@ -61,7 +61,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// We have to issue a new consumer for the worker
-		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatcheryConsumer)
+		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatcheryConsumer, api.Config.Worker.ValidityPeriod)
 		if err != nil {
 			return err
 		}
