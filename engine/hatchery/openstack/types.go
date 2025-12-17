@@ -77,6 +77,9 @@ type HatcheryConfiguration struct {
 	// OverrideImagesBookDelay define the worker book delay to use for the specified image.
 	OverrideImagesBookDelay []ImageBookDelayOverride `mapstructure:"overrideImagesBookDelay" toml:"overrideImagesBookDelay" default:"" commented:"true" comment:"Override the book delay used for the images" json:"overrideImagesBookDelay"`
 
+	// InjectSSHPublicKeys define the list of SSH public keys to inject into spawned workers
+	InjectSSHPublicKeys []string `mapstructure:"injectSSHPublicKeys" toml:"injectSSHPublicKeys" default:"" commented:"true" comment:"List of SSH public keys to inject into spawned workers" json:"injectSSHPublicKeys"`
+
 	RequiredBinariesRequirement []string `mapstructure:"requiredBinariesRequirement" toml:"requiredBinariesRequirement" default:"" commented:"true" comment:"If a job don't have any model requirement, check if there is at least required binaries" json:"requiredBinariesRequirement"`
 }
 

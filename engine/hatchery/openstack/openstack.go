@@ -15,6 +15,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -152,6 +153,10 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("invalid image username override: %w", err)
 	}
 
+	if err := h.checkInjectSSHPublicKeys(hconfig.InjectSSHPublicKeys); err != nil {
+		return fmt.Errorf("invalid inject SSH public keys: %w", err)
+	}
+
 	return nil
 }
 
@@ -167,6 +172,20 @@ func (h *HatcheryOpenstack) checkOverrideImagesUsername(overrides []ImageUsernam
 
 		if !usernameRe.MatchString(override.Username) {
 			return fmt.Errorf("invalid username %q: must match %s", override.Username, usernameRe.String())
+		}
+	}
+
+	return nil
+}
+
+func (h *HatcheryOpenstack) checkInjectSSHPublicKeys(publicKeys []string) error {
+	for _, publicKey := range publicKeys {
+		_, _, options, _, err := ssh.ParseAuthorizedKey([]byte(publicKey))
+		if err != nil {
+			return fmt.Errorf("invalid public key %q: %w", publicKey, err)
+		}
+		if len(options) == 0 || !slices.ContainsFunc(options, func(o string) bool { return strings.HasPrefix(o, "from=") }) {
+			return fmt.Errorf("invalid public key %q: from option is missing", publicKey)
 		}
 	}
 

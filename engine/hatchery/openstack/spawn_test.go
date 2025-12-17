@@ -2,6 +2,7 @@ package openstack
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
@@ -9,8 +10,11 @@ import (
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 func TestHatcheryOpenstack_checkSpawnLimits_MaxWorker(t *testing.T) {
@@ -163,4 +167,66 @@ func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.
 	err = h.checkSpawnLimits(context.TODO(), h.flavors[0], sdk.WorkerStarterWorkerModel{ModelV1: &m1})
 	require.Error(t, err, "0 CPUs left to start new flavor")
 	assert.Contains(t, err.Error(), "MaxCPUs limit")
+}
+
+func TestHatcheryOpenstack_prepareUserData(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	h := &HatcheryOpenstack{
+		Config: HatcheryConfiguration{
+			InjectSSHPublicKeys: []string{
+				"from=\"0.1.2.3\" my-key",
+				"from=\"4.5.6.7\" my-key",
+			},
+			OverrideImagesUsername: []ImageUsernameOverride{{
+				Image:    "my-image",
+				Username: "debian",
+			}},
+		},
+	}
+
+	h.initImagesUsername(context.TODO())
+
+	ctrl := gomock.NewController(t)
+	mockClient := mock_cdsclient.NewMockHatcheryServiceClient(ctrl)
+	h.Clientv2 = mockClient
+	t.Cleanup(func() { ctrl.Finish() })
+
+	mockClient.EXPECT().V2QueuePushJobInfo(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error {
+			return nil
+		},
+	)
+
+	udata64, err := h.prepareUserData(context.TODO(), hatchery.SpawnArguments{
+		Model: sdk.WorkerStarterWorkerModel{
+			ModelV2: &sdk.V2WorkerModel{
+				Name: "my-model",
+			},
+			OpenstackSpec: sdk.V2WorkerModelOpenstackSpec{
+				Image: "my-image",
+			},
+			PreCmd:  "#!/bin/bash\necho pre",
+			PostCmd: "echo post",
+			Cmd:     "worker",
+		},
+	}, struct {
+		Config string
+	}{
+		Config: "my-config",
+	})
+	require.NoError(t, err)
+
+	expected := `#!/bin/bash
+echo pre
+mkdir -p /root/.ssh
+echo 'from="0.1.2.3" my-key' >> /root/.ssh/authorized_keys
+echo 'from="4.5.6.7" my-key' >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+sudo -u debian -i worker --config my-config
+echo post`
+	udata, err := base64.StdEncoding.DecodeString(udata64)
+	require.NoError(t, err)
+
+	require.Equal(t, expected, string(udata))
 }

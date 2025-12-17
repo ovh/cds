@@ -96,33 +96,6 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
-	var cmdPrefix string
-	if cmdUsername := h.GetImageUsername(ctx, spawnArgs.Model.GetOpenstackImage()); cmdUsername != "" {
-		cmdPrefix = fmt.Sprintf("sudo -u %s -i ", cmdUsername)
-		hatcheryTakeInfo := sdk.V2SendJobRunInfo{
-			Level:   sdk.WorkflowRunInfoLevelInfo,
-			Time:    time.Now(),
-			Message: fmt.Sprintf("Hatchery %q is configured to use the username '%s' for this worker", h.Name(), cmdUsername),
-		}
-		if err = h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, hatcheryTakeInfo); err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-		}
-	}
-
-	var cmdSuffix string
-	if spawnArgs.RegisterOnly {
-		cmdSuffix = fmt.Sprintf(" --config %s register", workerConfig.EncodeBase64())
-	} else {
-		cmdSuffix += fmt.Sprintf(" --config %s", workerConfig.EncodeBase64())
-	}
-
-	udata := spawnArgs.Model.GetPreCmd() + "\n" + cmdPrefix + spawnArgs.Model.GetCmd() + cmdSuffix + "\n" + spawnArgs.Model.GetPostCmd()
-	tmpl, err := template.New("udata").Parse(udata)
-	if err != nil {
-		return err
-	}
-
-	//workerConfig.Basedir =
 	udataParam := struct {
 		// All fields below are deprecated
 		API               string `json:"api"`
@@ -149,13 +122,10 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		Config:          workerConfig.EncodeBase64(),
 	}
 
-	var buffer bytes.Buffer
-	if err := tmpl.Execute(&buffer, udataParam); err != nil {
+	udata64, err := h.prepareUserData(ctx, spawnArgs, udataParam)
+	if err != nil {
 		return err
 	}
-
-	// Encode again
-	udata64 := base64.StdEncoding.EncodeToString(buffer.Bytes())
 
 	// Create openstack vm
 	meta := map[string]string{
@@ -262,4 +232,50 @@ func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors
 	}
 
 	return nil
+}
+
+func (h *HatcheryOpenstack) prepareUserData(ctx context.Context, spawnArgs hatchery.SpawnArguments, udataParam any) (string, error) {
+	var cmdPrefix string
+	if cmdUsername := h.GetImageUsername(ctx, spawnArgs.Model.GetOpenstackImage()); cmdUsername != "" {
+		cmdPrefix = fmt.Sprintf("sudo -u %s -i ", cmdUsername)
+		hatcheryTakeInfo := sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Time:    time.Now(),
+			Message: fmt.Sprintf("Hatchery %q is configured to use the username '%s' for this worker", h.Name(), cmdUsername),
+		}
+		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, hatcheryTakeInfo); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}
+
+	var cmdSuffix string
+	if spawnArgs.RegisterOnly {
+		cmdSuffix = " --config {{.Config}} register"
+	} else {
+		cmdSuffix += " --config {{.Config}}"
+	}
+
+	var keyInject string
+	if len(h.Config.InjectSSHPublicKeys) > 0 {
+		keyInject += "mkdir -p /root/.ssh\n"
+		for _, k := range h.Config.InjectSSHPublicKeys {
+			keyInject += "echo '" + k + "' >> /root/.ssh/authorized_keys\n"
+		}
+		keyInject += "chmod 600 /root/.ssh/authorized_keys\n"
+	}
+
+	udata := spawnArgs.Model.GetPreCmd() + "\n" + keyInject + cmdPrefix + spawnArgs.Model.GetCmd() + cmdSuffix + "\n" + spawnArgs.Model.GetPostCmd()
+	tmpl, err := template.New("udata").Parse(udata)
+	if err != nil {
+		return "", err
+	}
+
+	var buffer bytes.Buffer
+	if err := tmpl.Execute(&buffer, udataParam); err != nil {
+		return "", err
+	}
+
+	udata64 := base64.StdEncoding.EncodeToString(buffer.Bytes())
+
+	return udata64, nil
 }
