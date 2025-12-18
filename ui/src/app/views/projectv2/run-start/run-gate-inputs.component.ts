@@ -12,16 +12,21 @@ export class RunGateInputsComponent implements OnChanges {
     @Input() gates: { [gateName: string]: V2JobGate } = {};
     @Output() inputsChange = new EventEmitter<{ [jobName: string]: { [inputName: string]: any } }>();
 
-    groupGate: boolean = true;
+    spliJobs: boolean = false;
 
-    // Gate list
+    // Data for non split job form
     gateNames: Array<string>;
     jobsInGates: { [gateName: string]: Array<string> };
+    gateValues: { [gateName: string]: { [inputName: string]: any } } = {}; // Data use for the form
+
+    // Data for split job form
+    jobNames: Array<string>;
+    jobInputsValues: { [jobName: string]: { [inputName: string]: any } } = {}; // Data use for the form
+
     // Input by gates
     inputs : {[gateName: string]: Array<any> }
-    
-    // form values - group mode
-    gateValues: { [gateName: string]: { [inputName: string]: any } } = {};
+
+   
     
     constructor(private _cd: ChangeDetectorRef) { }
 
@@ -36,6 +41,8 @@ export class RunGateInputsComponent implements OnChanges {
         this.inputs = {};
         this.gateValues = {};
         this.jobsInGates = {};
+        this.jobNames = [];
+        this.jobInputsValues = {};
         if (this.gates) {
             Object.keys(this.gates).forEach( k => {
                 this.gateNames.push(k);
@@ -53,6 +60,14 @@ export class RunGateInputsComponent implements OnChanges {
         if (this.jobs) {
             Object.keys(this.jobs).forEach(j => {
                 this.jobsInGates[this.jobs[j].gate].push(j)
+                this.jobNames.push(j);
+                this.jobInputsValues[j] = {};
+
+                // Init data use by the form
+                Object.keys(this.gates[this.jobs[j].gate].inputs).forEach(v => {
+                    this.jobInputsValues[j][v] = undefined;
+                })
+                
             })
         }
         this.emitChange();
@@ -72,8 +87,10 @@ export class RunGateInputsComponent implements OnChanges {
         const result: { [jobName: string]: { [inputName: string]: any } } = {};
         if (this.jobs) {
             Object.keys(this.jobs).forEach(j => {
-                if (this.groupGate) {
+                if (!this.spliJobs) {
                     result[j] = this.gateValues[this.jobs[j].gate]
+                } else {
+                    result[j] = this.jobInputsValues[j];
                 }
             })
         }
