@@ -1,0 +1,46 @@
+<ng-container *ngIf="gateNames?.length > 0">
+    <nz-divider nzText="Gate Inputs"></nz-divider>
+
+    <!-- MODE GROUPÉ -->
+    <ng-container *ngIf="groupGate" ngForm>
+        <div *ngFor="let gate of gateNames">
+            <h4>Gate: {{gate + ' - Jobs: ' + jobsInGates[gate].join(', ') }}</h4>
+            <ng-container *ngFor="let input of inputs[gate]">
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6">{{input.name}}</nz-form-label>
+                    <nz-form-control [nzSpan]="14" [nzExtra]="input.data.description">
+                        <ng-container [ngSwitch]="input.data.type">
+
+                            <!-- Boolean inputs -->
+                            <ng-container *ngSwitchCase="'boolean'">
+                                <label nz-checkbox [(ngModel)]="gateValues[gate][input.name]" name="{{gate}}_{{input.name}}" (ngModelChange)="onValueChange()"></label>
+                            </ng-container>
+
+                            <!-- Select inputs -->
+                             <ng-container *ngSwitchCase="'choice'">
+                                <ng-container *ngIf="input.data.options.multiple">
+                                    <nz-select name="{{gate}}_{{input.name}}" nzMode="multiple"
+                                        [(ngModel)]="gateValues[gate][input.name]" (ngModelChange)="onValueChange()">
+                                        <nz-option *ngFor="let opt of input.data.options.values" [nzValue]="opt" [nzLabel]="opt"></nz-option>
+                                    </nz-select>
+                                </ng-container>
+                                 <ng-container *ngIf="!input.data.options.multiple">
+                                    <nz-select name="{{gate}}_{{input.name}}"
+                                        [(ngModel)]="gateValues[gate][input.name]" (ngModelChange)="onValueChange()">
+                                        <nz-option *ngFor="let opt of input.data.options.values" [nzValue]="opt" [nzLabel]="opt"></nz-option>
+                                    </nz-select>
+                                </ng-container>
+                             </ng-container>
+
+                             <!-- Default inputs -->
+                            <ng-container *ngSwitchDefault>
+                                <input nz-input name="{{gate}}_{{input.name}}"
+                                    [(ngModel)]="gateValues[gate][input.name]" (ngModelChange)="onValueChange()">
+                            </ng-container>
+                         </ng-container>
+                    </nz-form-control>
+                </nz-form-item>
+            </ng-container>
+        </div>
+    </ng-container>
+</ng-container>
