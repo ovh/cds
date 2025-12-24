@@ -1,17 +1,27 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
-import { V2Job, V2JobGate, V2JobGateInput } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { V2Job, V2JobGate } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
+import { OnChangeType, OnTouchedType } from "ng-zorro-antd/core/types";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 
 @Component({
     selector: 'app-run-gate-inputs',
     templateUrl: './run-gate-inputs.html',
     styleUrls: ['./run-gate-inputs.scss'],
+    providers: [
+            {
+                provide: NG_VALUE_ACCESSOR,
+                useExisting: forwardRef(() => RunGateInputsComponent),
+                multi: true
+            }
+        ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RunGateInputsComponent implements OnChanges {
+@AutoUnsubscribe()
+export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
     @Input() jobs: { [jobName: string]: V2Job } = {};
     @Input() gates: { [gateName: string]: V2JobGate } = {};
-    @Output() inputsChange = new EventEmitter<{ [jobName: string]: { [inputName: string]: any } }>();
-
+    
     spliJobs: boolean = false;
 
     // Data for non split job form
@@ -24,11 +34,24 @@ export class RunGateInputsComponent implements OnChanges {
     jobInputsValues: { [jobName: string]: { [inputName: string]: any } } = {}; // Data use for the form
 
     // Input by gates
-    inputs : {[gateName: string]: Array<any> }
+    inputs : {[gateName: string]: Array<any> };
 
-   
-    
+    onChange: OnChangeType = () => { };
+    onTouched: OnTouchedType = () => { };
+
     constructor(private _cd: ChangeDetectorRef) { }
+
+    writeValue(obj: any): void {}
+
+    registerOnChange(fn: OnChangeType): void {
+        this.onChange = fn;
+    }
+
+    registerOnTouched(fn: OnTouchedType): void {
+        this.onTouched = fn;
+    }
+
+    setDisabledState?(isDisabled: boolean): void {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.jobs || changes.gates) {
@@ -70,21 +93,27 @@ export class RunGateInputsComponent implements OnChanges {
                 
             })
         }
-        this.emitChange();
         this._cd.markForCheck();
-        
     }
 
-    onModeChange(): void {
+    onModeChange(event : boolean): void {
+        this.spliJobs = event;
+        this._cd.markForCheck();
         this.emitChange();
     }
 
-    onValueChange(): void {
+    onGateValueChange(gate: string, input: string, event: any): void {
+        this.gateValues[gate][input] = event;
+        this.emitChange();
+    }
+
+    onJobValueChange(jobName: string, input: string, event: any): void {
+        this.jobInputsValues[jobName][input] = event;
         this.emitChange();
     }
 
     emitChange(): void {
-        const result: { [jobName: string]: { [inputName: string]: any } } = {};
+        let result = {};
         if (this.jobs) {
             Object.keys(this.jobs).forEach(j => {
                 if (!this.spliJobs) {
@@ -94,6 +123,6 @@ export class RunGateInputsComponent implements OnChanges {
                 }
             })
         }
-        this.inputsChange.emit(result);
+        this.onChange(result);
     }
 }

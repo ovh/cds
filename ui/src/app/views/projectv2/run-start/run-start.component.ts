@@ -46,6 +46,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
+    jobInputs: FormControl< { [jobName: string]: { [inputName: string]: any } } | null>
   }>;
   event: RepositoryHookEvent;
   loaders: {
@@ -63,7 +64,6 @@ export class ProjectV2RunStartComponent implements OnInit {
 
   rootJobsWithGate: { [jobName: string]: V2Job } = {};
   rootGateDefs: { [gateName: string]: V2JobGate } = {};
-  manualJobInputs: { [jobName: string]: any } = {};
 
   constructor(
     private _drawerRef: NzDrawerRef<string>,
@@ -81,6 +81,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
+      jobInputs: this._fb.control< { [jobName: string]: { [inputName: string]: any } } | null>(null),
     });
   }
 
@@ -331,7 +332,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     if (this.noWorkflowFound) {
       req.workflow_branch = this.branches.find(b => b.default).display_id;
     }
-    req.job_inputs = this.manualJobInputs;
+    req.job_inputs = this.validateForm.value.jobInputs;
     let hookEventUUID: string;
 
     try {
@@ -369,9 +370,5 @@ export class ProjectV2RunStartComponent implements OnInit {
 
   isLoading(): boolean {
     return Object.keys(this.loaders).map(k => this.loaders[k]).reduce((p, c) => { return p || c });
-  }
-
-  onInputsChange(inputs: { [jobName: string]: any }) {
-    this.manualJobInputs = inputs;
   }
 }
