@@ -46,7 +46,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
-    jobInputs: FormControl< { [jobName: string]: { [inputName: string]: any } } | null>
+    jobInputs: FormControl<{ [jobName: string]: { [inputName: string]: any } } | null>
   }>;
   event: RepositoryHookEvent;
   loaders: {
@@ -81,7 +81,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
-      jobInputs: this._fb.control< { [jobName: string]: { [inputName: string]: any } } | null>(null),
+      jobInputs: this._fb.control<{ [jobName: string]: { [inputName: string]: any } } | null>(null),
     });
   }
 
@@ -210,51 +210,50 @@ export class ProjectV2RunStartComponent implements OnInit {
       return
     }
     // Reset gate related properties
-      this.rootGateDefs = {};
-      this.rootJobsWithGate = {};
+    this.rootGateDefs = {};
+    this.rootJobsWithGate = {};
 
+    if (wkf.jobs) {
+      Object.keys(wkf.jobs).forEach(jobName => {
+        const job = wkf.jobs[jobName];
 
-      if (wkf.jobs) {
-        Object.keys(wkf.jobs).forEach(jobName => {
-          const job = wkf.jobs[jobName];
+        // If not a root job, ignore it
+        if (job.needs && job.needs.length !== 0) {
+          return;
+        }
 
-          // If not a root job, ignore it
-          if (job.needs && job.needs.length !== 0 ) {
+        // If not a root stage ignore the job
+        if (job.stage && job.stage !== '') {
+          if (!wkf.stages) {
             return;
           }
-
-          // If not a root stage ignore the job
-          if (job.stage && job.stage !== '') {
-            if (!wkf.stages) {
-              return;
-            }
-            const stage = wkf.stages[job.stage];
-            if (!stage || stage.needs && stage.needs.length !== 0) {
-              return;
-            }
-          }
-
-          // If no gate, ignore the job
-          if (!job.gate || job.gate === '') {
+          const stage = wkf.stages[job.stage];
+          if (!stage || stage.needs && stage.needs.length !== 0) {
             return;
           }
+        }
 
-          if (!wkf.gates || !wkf.gates[job.gate]) {
-            return;
-          }
+        // If no gate, ignore the job
+        if (!job.gate || job.gate === '') {
+          return;
+        }
 
-          // Retrieve the gate
-          const gate = wkf.gates[job.gate];
+        if (!wkf.gates || !wkf.gates[job.gate]) {
+          return;
+        }
 
-          // If gate has no inputs, ignore the job
-          if (!gate.inputs || Object.keys(gate.inputs).length === 0) {
-            return;
-          }
-          this.rootGateDefs[job.gate] = gate
-          this.rootJobsWithGate[jobName] = job;
-        });
+        // Retrieve the gate
+        const gate = wkf.gates[job.gate];
 
-      }
+        // If gate has no inputs, ignore the job
+        if (!gate.inputs || Object.keys(gate.inputs).length === 0) {
+          return;
+        }
+        this.rootGateDefs[job.gate] = gate
+        this.rootJobsWithGate[jobName] = job;
+      });
+    }
+    
     if (wkf.repository) {
       this.validateForm.controls.sourceRepository.setValidators([Validators.required]);
       this.validateForm.controls.sourceRef.setValidators([Validators.required]);

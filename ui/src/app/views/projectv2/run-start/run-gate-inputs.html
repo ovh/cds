@@ -1,86 +1,98 @@
-<ng-container *ngIf="gateNames?.length > 0">
-    <nz-divider nzText="Gate Inputs"></nz-divider>
-    <nz-row>
-        <nz-col nzSpan="12" nzO style="text-align: right" nzOffset="12">
-             Split jobs <nz-switch [ngModel]="spliJobs" (ngModelChange)="onModeChange($event)"></nz-switch>
-        </nz-col>
-    </nz-row>
-   
-    <!-- MODE GROUPÉ -->
-    <ng-container *ngIf="!spliJobs" ngForm>
-        <div *ngFor="let gate of gateNames">
-            <h4>Gate: {{gate + ' - Jobs: ' + jobsInGates[gate].join(', ') }}</h4>
-            <ng-container *ngFor="let input of inputs[gate]">
-                <nz-form-item>
-                    <nz-form-label [nzSpan]="6">{{input.name}}</nz-form-label>
-                    <nz-form-control [nzSpan]="14" [nzExtra]="input.data.description">
-                        <ng-container [ngSwitch]="input.data.type">
-                            <!-- Boolean inputs -->
-                            <ng-container *ngSwitchCase="'boolean'">
-                                <label nz-checkbox [ngModel]="gateValues[gate][input.name]" name="{{gate}}_{{input.name}}" (ngModelChange)="onGateValueChange(gate, input.name, $event)"></label>
-                            </ng-container>
+<div *ngFor="let gate of gates | keyvalue">
+    <nz-divider nzText="Gate: {{gate.key}}" nzOrientation="left"></nz-divider>
 
-                            <!-- Select inputs -->
-                             <ng-container *ngSwitchCase="'choice'">
-                                <ng-container *ngIf="input.data.options.multiple">
-                                    <nz-select name="{{gate}}_{{input.name}}" nzMode="multiple" [ngModel]="gateValues[gate][input.name]"
-                                       (ngModelChange)="onGateValueChange(gate, input.name, $event)">
-                                        <nz-option *ngFor="let opt of input.data.options.values" [nzValue]="opt" [nzLabel]="opt"></nz-option>
-                                    </nz-select>
-                                </ng-container>
-                                 <ng-container *ngIf="!input.data.options.multiple">
-                                    <nz-select name="{{gate}}_{{input.name}}" [ngModel]="gateValues[gate][input.name]"
-                                    (ngModelChange)="onGateValueChange(gate, input.name, $event)">
-                                        <nz-option *ngFor="let opt of input.data.options.values" [nzValue]="opt" [nzLabel]="opt"></nz-option>
-                                    </nz-select>
-                                </ng-container>
-                             </ng-container>
+    <nz-form-item *ngFor="let input of gate.value.inputs | keyvalue">
+        <nz-form-label [nzSpan]="6">{{input.key}}</nz-form-label>
 
-                             <!-- Default inputs -->
-                            <ng-container *ngSwitchDefault>
-                                <input nz-input name="{{gate}}_{{input.name}}" [ngModel]="gateValues[gate][input.name]"
-                                   (ngModelChange)="onGateValueChange(gate, input.name, $event)">
-                            </ng-container>
-                         </ng-container>
-                    </nz-form-control>
-                </nz-form-item>
+        <nz-form-control [nzSpan]="14" [nzExtra]="input.value.description">
+            <ng-container [ngSwitch]="input.value.type">
+                <!-- Boolean inputs -->
+                <ng-container *ngSwitchCase="'boolean'">
+                    <label nz-checkbox [nzDisabled]="disabled || values[gate.key].withJobOverrides"
+                        [ngModel]="values[gate.key].global[input.key]"
+                        (ngModelChange)="onGateValueChange(gate.key, input.key, $event)"></label>
+                </ng-container>
+
+                <!-- Select inputs -->
+                <ng-container *ngSwitchCase="'choice'">
+                    <ng-container *ngIf="input.value.options.multiple">
+                        <nz-select nzMode="multiple" [nzDisabled]="disabled || values[gate.key].withJobOverrides"
+                            [ngModel]="values[gate.key].global[input.key]"
+                            (ngModelChange)="onGateValueChange(gate.key, input.key, $event)">
+                            <nz-option *ngFor="let opt of input.value.options.values" [nzValue]="opt"
+                                [nzLabel]="opt"></nz-option>
+                        </nz-select>
+                    </ng-container>
+                    <ng-container *ngIf="!input.value.options.multiple">
+                        <nz-select [nzDisabled]="disabled || values[gate.key].withJobOverrides"
+                            [ngModel]="values[gate.key].global[input.key]"
+                            (ngModelChange)="onGateValueChange(gate.key, input.key, $event)">
+                            <nz-option *ngFor="let opt of input.value.options.values" [nzValue]="opt"
+                                [nzLabel]="opt"></nz-option>
+                        </nz-select>
+                    </ng-container>
+                </ng-container>
+
+                <!-- Default inputs -->
+                <ng-container *ngSwitchDefault>
+                    <input nz-input [disabled]="disabled || values[gate.key].withJobOverrides"
+                        [ngModel]="values[gate.key].global[input.key]"
+                        (ngModelChange)="onGateValueChange(gate.key, input.key, $event)">
+                </ng-container>
             </ng-container>
-        </div>
+        </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+        <nz-form-control [nzSpan]="14" [nzOffset]="6">
+            <label nz-checkbox [nzDisabled]="disabled" [ngModel]="!values[gate.key].withJobOverrides"
+                (ngModelChange)="onGateWithJobOverridesChange(gate.key, !$event)">Apply to all jobs</label>
+        </nz-form-control>
+    </nz-form-item>
+
+    <ng-container *ngIf="values[gate.key].withJobOverrides">
+        <ng-container *ngFor="let input of gate.value.inputs | keyvalue">
+            <nz-form-item *ngFor="let job of values[gate.key].jobs | keyvalue">
+
+                <nz-form-label [nzSpan]="6">{{job.key}}.{{input.key}}</nz-form-label>
+
+                <nz-form-control [nzSpan]="14" [nzExtra]="input.value.description">
+                    <ng-container [ngSwitch]="input.value.type">
+                        <!-- Boolean inputs -->
+                        <ng-container *ngSwitchCase="'boolean'">
+                            <label nz-checkbox [nzDisabled]="disabled"
+                                [ngModel]="values[gate.key].jobs[job.key][input.key]"
+                                (ngModelChange)="onGateValueChange(gate.key, input.key, $event)"></label>
+                        </ng-container>
+
+                        <!-- Select inputs -->
+                        <ng-container *ngSwitchCase="'choice'">
+                            <ng-container *ngIf="input.value.options.multiple">
+                                <nz-select nzMode="multiple" [nzDisabled]="disabled"
+                                    [ngModel]="values[gate.key].jobs[job.key][input.key]"
+                                    (ngModelChange)="onJobValueChange(gate.key, job.key, input.key, $event)">
+                                    <nz-option *ngFor="let opt of input.value.options.values" [nzValue]="opt"
+                                        [nzLabel]="opt"></nz-option>
+                                </nz-select>
+                            </ng-container>
+                            <ng-container *ngIf="!input.value.options.multiple">
+                                <nz-select [nzDisabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key]"
+                                    (ngModelChange)="onJobValueChange(gate.key, job.key, input.key, $event)">
+                                    <nz-option *ngFor="let opt of input.value.options.values" [nzValue]="opt"
+                                        [nzLabel]="opt"></nz-option>
+                                </nz-select>
+                            </ng-container>
+                        </ng-container>
+
+                        <!-- Default inputs -->
+                        <ng-container *ngSwitchDefault>
+                            <input nz-input [disabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key]"
+                                (ngModelChange)="onJobValueChange(gate.key, job.key, input.key, $event)">
+                        </ng-container>
+                    </ng-container>
+                </nz-form-control>
+            </nz-form-item>
+        </ng-container>
     </ng-container>
-    <ng-container *ngIf="spliJobs" ngForm>
-        <div *ngFor="let jobName of jobNames">
-            <h4>Job: {{jobName + ' - Gate: ' + jobs[jobName].gate }}</h4>
-            <ng-container *ngFor="let input of inputs[jobs[jobName].gate]">
-                <nz-form-item>
-                    <nz-form-label [nzSpan]="6">{{input.name}}</nz-form-label>
-                    <nz-form-control [nzSpan]="14" [nzExtra]="input.data.description">
-                        <ng-container [ngSwitch]="input.data.type">
-                            <ng-container *ngSwitchCase="'boolean'">
-                                <label nz-checkbox name="{{jobName}}_{{input.name}}" [ngModel]="jobInputsValues[jobName][input.name]" (ngModelChange)="onJobValueChange(jobName, input.name, $event)"></label>
-                            </ng-container>
 
-                             <ng-container *ngSwitchCase="'choice'">
-                                <ng-container *ngIf="input.data.options.multiple">
-                                    <nz-select name="{{jobName}}_{{input.name}}" nzMode="multiple" [ngModel]="jobInputsValues[jobName][input.name]"
-                                       (ngModelChange)="onJobValueChange(jobName, input.name, $event)">
-                                        <nz-option *ngFor="let opt of input.data.options.values" [nzValue]="opt" [nzLabel]="opt"></nz-option>
-                                    </nz-select>
-                                </ng-container>
-                                 <ng-container *ngIf="!input.data.options.multiple">
-                                    <nz-select name="{{jobName}}_{{input.name}}" [ngModel]="jobInputsValues[jobName][input.name]"
-                                        (ngModelChange)="onJobValueChange(jobName, input.name, $event)">
-                                        <nz-option *ngFor="let opt of input.data.options.values" [nzValue]="opt" [nzLabel]="opt"></nz-option>
-                                    </nz-select>
-                                </ng-container>
-                             </ng-container>
-
-                            <ng-container *ngSwitchDefault>
-                                <input nz-input name="{{jobName}}_{{input.name}}" [ngModel]="jobInputsValues[jobName][input.name]"
-                                     (ngModelChange)="onJobValueChange(jobName, input.name, $event)">
-                            </ng-container>
-                         </ng-container>
-                    </nz-form-control>
-                </nz-form-item>
-            </ng-container>
-        </div>
-</ng-container>
+</div>

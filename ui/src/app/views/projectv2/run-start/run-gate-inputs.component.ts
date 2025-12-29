@@ -4,44 +4,42 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import { OnChangeType, OnTouchedType } from "ng-zorro-antd/core/types";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 
+export class GateValue {
+    global: { [inputName: string]: any }
+    withJobOverrides: boolean;
+    jobs: {
+        [jobName: string]: { [inputName: string]: any }
+    }
+}
 @Component({
     selector: 'app-run-gate-inputs',
     templateUrl: './run-gate-inputs.html',
     styleUrls: ['./run-gate-inputs.scss'],
     providers: [
-            {
-                provide: NG_VALUE_ACCESSOR,
-                useExisting: forwardRef(() => RunGateInputsComponent),
-                multi: true
-            }
-        ],
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RunGateInputsComponent),
+            multi: true
+        }
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
     @Input() jobs: { [jobName: string]: V2Job } = {};
     @Input() gates: { [gateName: string]: V2JobGate } = {};
-    
-    spliJobs: boolean = false;
 
-    // Data for non split job form
-    gateNames: Array<string>;
-    jobsInGates: { [gateName: string]: Array<string> };
-    gateValues: { [gateName: string]: { [inputName: string]: any } } = {}; // Data use for the form
-
-    // Data for split job form
-    jobNames: Array<string>;
-    jobInputsValues: { [jobName: string]: { [inputName: string]: any } } = {}; // Data use for the form
-
-    // Input by gates
-    inputs : {[gateName: string]: Array<any> };
+    disabled: boolean = false;
+    values: { [gateName: string]: GateValue } = {};
 
     onChange: OnChangeType = () => { };
     onTouched: OnTouchedType = () => { };
 
-    constructor(private _cd: ChangeDetectorRef) { }
+    constructor(
+        private _cd: ChangeDetectorRef
+    ) { }
 
-    writeValue(obj: any): void {}
+    writeValue(obj: any): void { }
 
     registerOnChange(fn: OnChangeType): void {
         this.onChange = fn;
@@ -51,75 +49,64 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
         this.onTouched = fn;
     }
 
-    setDisabledState?(isDisabled: boolean): void {}
+    setDisabledState?(isDisabled: boolean): void {
+        this.disabled = isDisabled;
+        this._cd.markForCheck();
+    }
+
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.jobs || changes.gates) {
+        if (this.jobs && this.gates) {
             this.init();
         }
     }
 
     init(): void {
-        this.gateNames = new Array<string>();
-        this.inputs = {};
-        this.gateValues = {};
-        this.jobsInGates = {};
-        this.jobNames = [];
-        this.jobInputsValues = {};
-        if (this.gates) {
-            Object.keys(this.gates).forEach( k => {
-                this.gateNames.push(k);
-                this.gateValues[k] = {};
-                this.inputs[k] = new Array<any>();
-                this.jobsInGates[k] = [];
-                if (this.gates[k].inputs) {
-                    Object.keys(this.gates[k].inputs).forEach(v => {
-                        this.inputs[k].push({"name": v, "data": this.gates[k].inputs[v]});
-                        this.gateValues[k][v] = undefined;
-                    });
-                }
+        this.values = {};
+
+        Object.keys(this.gates).forEach(k => {
+            this.values[k] = <GateValue>{
+                global: {},
+                jobs: {}
+            };
+            Object.keys(this.gates[k].inputs ?? {}).forEach(v => {
+                this.values[k].global[v] = this.gates[k].inputs[v].default || undefined;
             });
-        }
-        if (this.jobs) {
-            Object.keys(this.jobs).forEach(j => {
-                this.jobsInGates[this.jobs[j].gate].push(j)
-                this.jobNames.push(j);
-                this.jobInputsValues[j] = {};
+        });
 
-                // Init data use by the form
-                Object.keys(this.gates[this.jobs[j].gate].inputs).forEach(v => {
-                    this.jobInputsValues[j][v] = undefined;
-                })
-                
-            })
-        }
-        this._cd.markForCheck();
-    }
+        Object.keys(this.jobs).forEach(j => {
+            if (!this.jobs[j].gate) {
+                return;
+            }
+            this.values[this.jobs[j].gate].jobs[j] = { ...this.values[this.jobs[j].gate].global };
+        });
 
-    onModeChange(event : boolean): void {
-        this.spliJobs = event;
         this._cd.markForCheck();
-        this.emitChange();
     }
 
     onGateValueChange(gate: string, input: string, event: any): void {
-        this.gateValues[gate][input] = event;
+        this.values[gate].global[input] = event;
         this.emitChange();
     }
 
-    onJobValueChange(jobName: string, input: string, event: any): void {
-        this.jobInputsValues[jobName][input] = event;
+    onJobValueChange(gate: string, jobName: string, input: string, event: any): void {
+        this.values[gate].jobs[jobName][input] = event;
         this.emitChange();
+    }
+
+    onGateWithJobOverridesChange(gate: string, event: boolean): void {
+        this.values[gate].withJobOverrides = event;
+        this._cd.markForCheck();
     }
 
     emitChange(): void {
         let result = {};
         if (this.jobs) {
             Object.keys(this.jobs).forEach(j => {
-                if (!this.spliJobs) {
-                    result[j] = this.gateValues[this.jobs[j].gate]
+                if (!this.values[this.jobs[j].gate].withJobOverrides) {
+                    result[j] = this.values[this.jobs[j].gate].global;
                 } else {
-                    result[j] = this.jobInputsValues[j];
+                    result[j] = this.values[this.jobs[j].gate].jobs[j];
                 }
             })
         }
