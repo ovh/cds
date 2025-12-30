@@ -10,7 +10,22 @@ export class GateValue {
     jobs: {
         [jobName: string]: { [inputName: string]: any }
     }
+
+    constructor() {
+        this.withJobOverrides = false;
+        this.global = {};
+        this.jobs = {};
+    }
+
+    getJobsNames(): string {
+        return Object.keys(this.jobs).join(', ');
+    }
+
+    getJobsCount(): number {
+        return Object.keys(this.jobs).length;
+    }
 }
+
 @Component({
     selector: 'app-run-gate-inputs',
     templateUrl: './run-gate-inputs.html',
@@ -65,10 +80,7 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
         this.values = {};
 
         Object.keys(this.gates).forEach(k => {
-            this.values[k] = <GateValue>{
-                global: {},
-                jobs: {}
-            };
+            this.values[k] = new GateValue();
             Object.keys(this.gates[k].inputs ?? {}).forEach(v => {
                 this.values[k].global[v] = this.gates[k].inputs[v].default || undefined;
             });
@@ -79,6 +91,13 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
                 return;
             }
             this.values[this.jobs[j].gate].jobs[j] = { ...this.values[this.jobs[j].gate].global };
+        });
+
+        Object.keys(this.values).forEach(gateName => {
+            // If only one job uses this gate, enable job overrides by default
+            if (Object.keys(this.values[gateName].jobs).length === 1) {
+                this.values[gateName].withJobOverrides = true;
+            }
         });
 
         this._cd.markForCheck();
