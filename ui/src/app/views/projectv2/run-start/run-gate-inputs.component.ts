@@ -100,6 +100,8 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
             }
         });
 
+        this.emitChange();
+
         this._cd.markForCheck();
     }
 
