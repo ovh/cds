@@ -391,7 +391,7 @@ type UserClient interface {
 	UserUpdate(ctx context.Context, username string, user *sdk.AuthentifiedUser) error
 	UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error)
 	UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error)
-	UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error)
+	UserGetGroups(ctx context.Context, username string) (sdk.Groups, error)
 	UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error)
 	UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error)
 	UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error)

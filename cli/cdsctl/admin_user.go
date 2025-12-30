@@ -22,7 +22,31 @@ func adminUsers() *cobra.Command {
 		cli.NewCommand(adminUserRenameCmd, adminUserRenameRun, nil),
 		cli.NewCommand(adminUserCreateCmd, adminUserCreateRun, nil),
 		adminUserLink(),
+		adminUserGroupList(),
 	})
+}
+
+func adminUserGroupList() *cobra.Command {
+	return cli.NewListCommand(
+		cli.Command{
+			Name:  "group-list",
+			Short: "List groups of a given user",
+			Args: []cli.Arg{
+				{Name: "username"},
+			},
+		},
+		adminUserGroupListRun,
+		nil,
+	)
+}
+
+func adminUserGroupListRun(v cli.Values) (cli.ListResult, error) {
+	ctx := context.Background()
+	users, err := client.UserGetGroups(ctx, v.GetString("username"))
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(users), nil
 }
 
 var adminUserCreateCmd = cli.Command{
