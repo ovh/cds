@@ -127,6 +127,7 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
     @Output() onSelectJobRunRestart = new EventEmitter<string>();
     @Output() onSelectJobRunStop = new EventEmitter<string>();
     @Output() onSelectHook = new EventEmitter<string>();
+    @Output() onToggleSelection = new EventEmitter<{ jobRunID: string, selected: boolean }>();
 
     nodes: Array<GraphNode> = [];
     hooks: Array<any> = [];
@@ -429,12 +430,19 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
             case GraphNodeAction.ClickStop:
                 this.onSelectJobRunStop.emit(options['jobRunID']);
                 break;
+            case GraphNodeAction.ToggleSelection:
+                this.onToggleSelection.emit({ jobRunID: options['jobRunID'], selected: options['selected'] });
+                break;
         }
     }
 
     changeDirection(): void {
         this.direction = this.direction === GraphDirection.HORIZONTAL ? GraphDirection.VERTICAL : GraphDirection.HORIZONTAL;
         this.changeDisplay();
+    }
+
+    setSelectionModeActive(active: boolean): void {
+        this.graph.setSelectionModeActive(active);
     }
 }
 

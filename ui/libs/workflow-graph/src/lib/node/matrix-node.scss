@@ -240,3 +240,18 @@
         }
     }
 }
+
+.selection-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 123, 255, 0.3);
+    border: 2px dashed #007bff;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row-reverse;
+    padding: 1px 5px;
+}

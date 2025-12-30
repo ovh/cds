@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model';
 import { NodeStatus } from './model';
+import { WithHighlight } from '../graph.lib';
 
 @Component({
     selector: 'app-fork-join-node',
@@ -8,7 +9,7 @@ import { NodeStatus } from './model';
     styleUrls: ['./fork-join-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GraphForkJoinNodeComponent implements OnInit {
+export class GraphForkJoinNodeComponent implements OnInit, WithHighlight {
     @Input() nodes: Array<GraphNode>;
     @Input() type = 'fork';
     @Input() actionCallback: (type: string, node: GraphNode) => void = () => { };
@@ -52,4 +53,6 @@ export class GraphForkJoinNodeComponent implements OnInit {
     setRunActive(active: boolean): void { }
 
     match(navigationKey: string): boolean { return false; }
+
+    setSelectionModeActive(active: boolean): void { }
 }

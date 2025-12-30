@@ -4,6 +4,7 @@ import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
 import { concatMap, from, interval, Subscription } from 'rxjs';
 import { DurationService } from '../duration.service';
 import { GraphNodeAction } from './model';
+import { WithHighlight } from '../graph.lib';
 
 @Component({
     selector: 'app-matrix-node',
@@ -11,7 +12,7 @@ import { GraphNodeAction } from './model';
     styleUrls: ['./matrix-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
+export class GraphMatrixNodeComponent implements OnInit, OnDestroy, WithHighlight {
     @Input() node: GraphNode;
     @Input() actionCallback: (type: GraphNodeAction, node: GraphNode, options?: any) => void = () => { };
 
@@ -33,6 +34,8 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
     jobRunIDs: { [key: string]: string } = {};
     displayNames: { [key: string]: string } = {};
     runActive: boolean = false;
+    selectionModeActive: boolean = false;
+    selectionActive: boolean = false;
 
     constructor(
         private _cd: ChangeDetectorRef
@@ -199,5 +202,17 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
             }
         }
         return false;
+    }
+
+    setSelectionModeActive(active: boolean): void {
+        this.selectionModeActive = active;
+        this.selectionActive = false;
+        this._cd.markForCheck();
+    }
+
+    clickSelectionOverlay(event: Event): void {
+        this.selectionActive = !this.selectionActive;
+        event.preventDefault();
+        event.stopPropagation();
     }
 }

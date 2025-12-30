@@ -82,6 +82,8 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         stop: false
     };
     animatedRuns: { [key: string]: boolean } = {};
+    selectionModeActive: boolean = false;
+    selectedJobsToRestart: Array<string> = [];
 
     // Subs
     paramsSub: Subscription;
@@ -435,7 +437,28 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         await this.load(this.workflowRun.id, this.selectedRunAttempt);
     }
 
-    async clickRestartJobs() {
+    clickRestartJobs(): void {
+        this.selectedJobsToRestart = [];
+        this.graph.setSelectionModeActive(true);
+        this.selectionModeActive = true;
+        this._cd.markForCheck();
+    }
+
+    clickValidateRestartJobs(): void {
+        this.graph.setSelectionModeActive(false);
+        this.selectionModeActive = false;
+        this._cd.markForCheck();
+    }
+
+    onToggleSelection(event: { jobRunID: string, selected: boolean }): void {
+        this.selectedJobsToRestart = this.selectedJobsToRestart.filter(j => j !== event.jobRunID);
+        if (event.selected) {
+            this.selectedJobsToRestart.push(event.jobRunID);
+        }
+        this._cd.markForCheck();
+    }
+
+    async triggerRestartJobs() {
         this.loading.restart = true;
         this._cd.markForCheck();
         try {

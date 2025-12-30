@@ -72,3 +72,8 @@
         </div>
     </div>
 </div>
+
+<div *ngIf="selectionModeActive" class="selection-overlay" (click)="clickSelectionOverlay($event)"
+    (dblclick)="$event.stopPropagation();">
+    <label nz-checkbox [ngModel]="selectionActive"></label>
+</div>

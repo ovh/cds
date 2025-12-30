@@ -4,6 +4,7 @@ import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
 import { Subscription, concatMap, from, interval } from 'rxjs';
 import { DurationService } from '../duration.service';
 import { GraphNodeAction } from './model';
+import { WithHighlight } from '../graph.lib';
 
 @Component({
     selector: 'app-job-node',
@@ -11,7 +12,7 @@ import { GraphNodeAction } from './model';
     styleUrls: ['./job-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GraphJobNodeComponent implements OnInit, OnDestroy {
+export class GraphJobNodeComponent implements OnInit, OnDestroy, WithHighlight {
     @Input() node: GraphNode;
     @Input() actionCallback: (type: GraphNodeAction, node: GraphNode, options?: any) => void = () => { };
 
@@ -27,6 +28,8 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
         ended: Date;
     };
     runActive: boolean = false;
+    selectionModeActive: boolean = false;
+    selectionActive: boolean = false;
 
     constructor(
         private _cd: ChangeDetectorRef
@@ -144,5 +147,18 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
 
     match(navigationKey: string): boolean {
         return navigationKey === (this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name);
+    }
+
+    setSelectionModeActive(active: boolean): void { 
+        this.selectionModeActive = active;
+        this.selectionActive = false;
+        this._cd.markForCheck();
+    }
+
+    clickSelectionOverlay(event: Event): void {
+        this.selectionActive = !this.selectionActive;
+        this.actionCallback(GraphNodeAction.ToggleSelection, this.node, { jobRunID: this.node.run.id, selected: this.selectionModeActive });
+        event.preventDefault();
+        event.stopPropagation();
     }
 }

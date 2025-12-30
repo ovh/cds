@@ -9,7 +9,7 @@ import {
     ViewContainerRef
 } from '@angular/core';
 import { GraphNode, GraphNodeType } from '../graph.model';
-import { GraphDirection, NodeMouseEvent, WorkflowV2Graph } from '../graph.lib';
+import { GraphDirection, NodeMouseEvent, WithHighlight, WorkflowV2Graph } from '../graph.lib';
 import { GraphForkJoinNodeComponent } from './fork-join-node.components';
 import { GraphJobNodeComponent } from './job-node.component';
 import { GraphMatrixNodeComponent } from './matrix-node.component';
@@ -23,7 +23,7 @@ export type WorkflowV2JobsNodeOrMatrixComponent = GraphForkJoinNodeComponent | G
     styleUrls: ['./stage-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GraphStageNodeComponent implements AfterViewInit {
+export class GraphStageNodeComponent implements AfterViewInit, WithHighlight {
     node: GraphNode;
     nodes: Array<GraphNode> = [];
 
@@ -173,4 +173,8 @@ export class GraphStageNodeComponent implements AfterViewInit {
     }
 
     match(navigationKey: string): boolean { return false; }
+
+    setSelectionModeActive(active: boolean): void { 
+        this.graph.setSelectionModeActive(active);
+    }
 }

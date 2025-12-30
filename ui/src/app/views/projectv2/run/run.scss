@@ -236,11 +236,12 @@
                 flex-direction: row;
                 align-items: center;
 
-                button:not(:first-child) {
+                >button:not(:first-child),
+                nz-button-group:not(:first-child) {
                     margin-left: 10px;
                 }
 
-                button:not([nzDanger]) {
+                >button:not([nzDanger]) {
                     background-color: #fff;
 
                     :host-context(.night) & {

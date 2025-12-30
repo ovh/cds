@@ -53,7 +53,7 @@
         </div>
     </ng-template>
 
-    <div *ngIf="duration" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
+    <div *ngIf="duration && !selectionModeActive" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
         {{duration}}
         <ng-template #durationTooltip>
             <div class="durationTooltip">
@@ -64,7 +64,14 @@
             </div>
         </ng-template>
     </div>
-    <div *ngIf="node?.run?.status" class="status">
+    <div *ngIf="node?.run?.status && !selectionModeActive" class="status">
         {{node?.run?.status.toLowerCase()}}
+    </div>
+</div>
+
+<div *ngIf="selectionModeActive" class="selection-overlay" (click)="clickSelectionOverlay($event)"
+    (dblclick)="$event.stopPropagation();">
+    <div class="controls">
+        <label nz-checkbox [ngModel]="selectionActive"></label>
     </div>
 </div>

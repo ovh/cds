@@ -176,9 +176,25 @@
                 <div class="controls">
                     <button *ngIf="workflowRunIsTerminated" nz-button nzType="secondary" nzSize="large"
                         title="Start new run" (click)="openRunStartDrawer()">Start new run</button>
-                    <button *ngIf="workflowRunIsTerminated && hasJobsFailed" nz-button nzType="secondary" nzSize="large"
-                        title="Restart failed jobs" [nzLoading]="loading.restart" (click)="clickRestartJobs()">Restart
-                        failed jobs</button>
+                    <nz-button-group *ngIf="workflowRunIsTerminated">
+                        <button *ngIf="!selectionModeActive" nz-button nzSize="large" (click)="clickRestartJobs()"
+                            [nzLoading]="loading.restart" title="Restart jobs">Restart
+                            jobs</button>
+                        <button *ngIf="selectionModeActive" (click)="clickValidateRestartJobs()" nz-button
+                            nzSize="large" [nzLoading]="loading.restart" title="Validate selected jobs restart">Restart
+                            ({{selectedJobsToRestart.length}}) jobs
+                        </button>
+                        <button nz-button nzSize="large" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight"
+                            [nzLoading]="loading.restart">
+                            <span nz-icon nzType="ellipsis"></span>
+                            <nz-dropdown-menu #menu="nzDropdownMenu">
+                                <ul nz-menu>
+                                    <li *ngIf="hasJobsFailed" nz-menu-item>Select jobs failed</li>
+                                    <li nz-menu-item>Select jobs with gates</li>
+                                </ul>
+                            </nz-dropdown-menu>
+                        </button>
+                    </nz-button-group>
                     <button *ngIf="workflowRunIsActive" nz-button nzType="primary" nzSize="large" nzDanger
                         title="Stop workflow run" [nzLoading]="loading.stop" (click)="clickStopRun()">Stop workflow
                         run</button>
@@ -188,7 +204,8 @@
                     [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
                     (onConfirmJobGate)="confirmJobGate($event)" (onSelectJobRun)="openPanel('job', $event)"
                     (onSelectHook)="openPanel('hook', $event)" (onSelectJobRunRestart)="restartJob($event)"
-                    (onSelectJobRunStop)="stopJob($event)" #graph></app-graph>
+                    (onSelectJobRunStop)="stopJob($event)" (onToggleSelection)="onToggleSelection($event)"
+                    #graph></app-graph>
             </div>
         </div>
 

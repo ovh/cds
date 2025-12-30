@@ -27,6 +27,7 @@ export interface WithHighlight {
     activateNode(navigationKey: string): void;
     setRunActive(active: boolean): void;
     match(navigateKey: string): boolean;
+    setSelectionModeActive(active: boolean): void;
 }
 
 export type ComponentFactory<T> = (nodes: Array<GraphNode>, type: string) => ComponentRef<T>;
@@ -72,6 +73,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     currentScale: number = 1;
     currentWidth: number = 0;
     currentHeight: number = 0;
+    selectionModeActive: boolean = false;
 
     constructor(
         factory: ComponentFactory<T>,
@@ -638,5 +640,10 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                 this.nodesComponent.get(outName).instance.setHighlight(active, options);
             }
         }
+    }
+
+    setSelectionModeActive(active: boolean): void {
+        this.selectionModeActive = active;
+        this.nodesComponent.forEach(n => n.instance.setSelectionModeActive(active));
     }
 }
