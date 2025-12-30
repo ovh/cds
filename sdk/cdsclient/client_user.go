@@ -33,9 +33,9 @@ func (c *client) UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error) {
 	return &res, nil
 }
 
-func (c *client) UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error) {
-	res := map[string][]sdk.Group{}
-	if _, err := c.GetJSON(ctx, "/user/"+url.QueryEscape(username)+"/groups", &res); err != nil {
+func (c *client) UserGetGroups(ctx context.Context, username string) (sdk.Groups, error) {
+	res := sdk.Groups{}
+	if _, err := c.GetJSON(ctx, "/user/"+url.QueryEscape(username)+"/group", &res); err != nil {
 		return nil, err
 	}
 	return res, nil

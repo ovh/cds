@@ -33,7 +33,7 @@ func (api *API) getUserGroupsHandler() service.Handler {
 		}
 
 		// Load all groups for links and add role data
-		groups, err := group.LoadAllByIDs(ctx, api.mustDB(), links.ToGroupIDs())
+		groups, err := group.LoadAllByIDs(ctx, api.mustDB(), links.ToGroupIDs(), group.LoadOptions.WithOrganization)
 		if err != nil {
 			return err
 		}
