@@ -165,7 +165,8 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 	workflowSchema.Definitions["WorkflowOnSchedule"] = workflowOn.Definitions["WorkflowOnSchedule"]
 	workflowSchema.Definitions["WorkflowOnRun"] = workflowOn.Definitions["WorkflowOnRun"]
 
-	// Prop On
+	// Prop On - Get existing schema to preserve description and order from jsonschema_extras
+	existingOn, _ := workflowSchema.Definitions["V2Workflow"].Properties.Get("on")
 	propsOn := &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
 			{
@@ -178,6 +179,11 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 				},
 			},
 		},
+	}
+	// Preserve description and order from existing schema
+	if existingSchema, ok := existingOn.(*jsonschema.Schema); ok && existingSchema != nil {
+		propsOn.Description = existingSchema.Description
+		propsOn.Extras = existingSchema.Extras
 	}
 	workflowSchema.Definitions["V2Workflow"].Properties.Set("on", propsOn)
 
@@ -245,4 +251,43 @@ func GetYamlFromJsonSchema(entityType string, directory string) error {
 		commentChar: "#",
 	}
 	return gen.Generate(out, schema)
+}
+
+func GetYAMLKeywordsFromJsonSchema() []string {
+	schema := GetWorkflowJsonSchema(nil, nil, nil)
+	keywords := make([]string, 0)
+	// Maintenant il faut parcourir le schema de façon récursive pour extraire les keywords
+	var extractKeywords func(s *jsonschema.Schema, rootName string)
+	extractKeywords = func(s *jsonschema.Schema, rootName string) {
+		if s == nil {
+			return
+		}
+		if s.Properties != nil {
+			// Ajouter les propriétés du schéma actuel
+			for _, propName := range s.Properties.Keys() {
+				// Concaténer les noms des propriétés avec le keyword du parent + "."
+				keywords = append(keywords, rootName+"."+propName)
+			}
+		}
+		// Parcourir les définitions
+		for prop, def := range s.Definitions {
+			extractKeywords(def, rootName+"."+prop)
+		}
+		// Parcourir les éléments des tableaux
+		if s.Items != nil {
+			extractKeywords(s.Items, rootName)
+		}
+		// Parcourir les schémas dans OneOf, AnyOf, AllOf
+		for _, subschema := range s.OneOf {
+			extractKeywords(subschema, rootName)
+		}
+		for _, subschema := range s.AnyOf {
+			extractKeywords(subschema, rootName)
+		}
+		for _, subschema := range s.AllOf {
+			extractKeywords(subschema, rootName)
+		}
+	}
+	extractKeywords(schema, "")
+	return keywords
 }

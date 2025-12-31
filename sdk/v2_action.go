@@ -12,8 +12,8 @@ const (
 )
 
 type V2Action struct {
-	Name        string                  `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the action"`
-	Description string                  `json:"description,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Description of the action"`
+	Name        string                  `json:"name" jsonschema:"example=my-action" jsonschema_extras:"order=1" jsonschema_description:"Name of the action"`
+	Description string                  `json:"description,omitempty" jsonschema:"example=This action builds the project" jsonschema_extras:"order=2" jsonschema_description:"Description of the action"`
 	Inputs      map[string]ActionInput  `json:"inputs,omitempty" jsonschema_extras:"order=3,mode=edit" jsonschema_description:"Map of the action's inputs"`
 	Outputs     map[string]ActionOutput `json:"outputs,omitempty" jsonschema_extras:"order=4,mode=edit" jsonschema_description:"Map of the action's outputs"`
 	Runs        ActionRuns              `json:"runs" jsonschema_extras:"order=5"`
@@ -21,7 +21,7 @@ type V2Action struct {
 
 type ActionRuns struct {
 	Steps []ActionStep `json:"steps" jsonschema_description:"List of sequential steps executed by the action"`
-	Post  string       `json:"post,omitempty" jsonschema_description:"script that will be executed at the end of the job"`
+	Post  string       `json:"post,omitempty" jsonschema:"example=echo 'Cleanup done'" jsonschema_description:"script that will be executed at the end of the job"`
 }
 
 type ActionInput struct {
@@ -36,18 +36,18 @@ const (
 )
 
 type ActionOutput struct {
-	Description string           `json:"description,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Description of the output"`
-	Value       string           `json:"value" jsonschema_extras:"order=1" jsonschema_description:"Value of the output"`
-	Type        ActionOutputType `json:"type,omitempty" jsonschema_extras:"order=3" jsonschema_description:"(Optional) Can be set to 'path' to add the value into the env variable PATH for the following steps"`
+	Description string           `json:"description,omitempty" jsonschema:"example=The build artifact path" jsonschema_extras:"order=2" jsonschema_description:"Description of the output"`
+	Value       string           `json:"value" jsonschema:"example=${{ steps.build.outputs.artifact }}" jsonschema_extras:"order=1" jsonschema_description:"Value of the output"`
+	Type        ActionOutputType `json:"type,omitempty" jsonschema:"example=path" jsonschema_extras:"order=3" jsonschema_description:"(Optional) Can be set to 'path' to add the value into the env variable PATH for the following steps"`
 }
 
 type ActionStep struct {
-	ID              string                 `json:"id,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Identifier of the step"`
-	Uses            string                 `json:"uses,omitempty" jsonschema:"oneof_required=uses" jsonschema_extras:"order=4,onchange=loadentity,prefix=actions/" jsonschema_description:"Sub action to call"`
-	Run             string                 `json:"run,omitempty" jsonschema:"oneof_required=run" jsonschema_extras:"order=4,code=true" jsonschema_description:"Script to execute"`
+	ID              string                 `json:"id,omitempty" jsonschema:"example=build-step" jsonschema_extras:"order=2" jsonschema_description:"Identifier of the step"`
+	Uses            string                 `json:"uses,omitempty" jsonschema:"oneof_required=uses,example=actions/checkout" jsonschema_extras:"order=4,onchange=loadentity,prefix=actions/" jsonschema_description:"Sub action to call"`
+	Run             string                 `json:"run,omitempty" jsonschema:"oneof_required=run,example=echo 'Hello World'" jsonschema_extras:"order=4,code=true" jsonschema_description:"Script to execute"`
 	With            map[string]interface{} `json:"with,omitempty" jsonschema:"oneof_not_required=run" jsonschema_extras:"order=5,mode=use" jsonschema_description:"Action parameters"`
-	If              string                 `json:"if,omitempty" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute/skip the step"`
-	ContinueOnError bool                   `json:"continue-on-error,omitempty" jsonschema_extras:"order=2"  jsonschema_description:"Allow a job to continue when this step fails"`
+	If              string                 `json:"if,omitempty" jsonschema:"example=${{ git.branch == 'main' }}" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute/skip the step"`
+	ContinueOnError bool                   `json:"continue-on-error,omitempty" jsonschema:"example=false" jsonschema_extras:"order=2"  jsonschema_description:"Allow a job to continue when this step fails"`
 	Env             map[string]string      `json:"env,omitempty" jsonschema_extras:"order=3,mode=edit" jsonschema_description:"Environment variable available in the step"`
 }
 

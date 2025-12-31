@@ -42,26 +42,26 @@ const (
 )
 
 type V2Workflow struct {
-	Name          string                   `json:"name" jsonschema_description:"Workflow name"`
-	Repository    *WorkflowRepository      `json:"repository,omitempty" jsonschema_description:"Repository that will be use in the git context ( used by the action for example )"`
-	OnRaw         json.RawMessage          `json:"on,omitempty" jsonschema_description:"Specify the way to trigger the workflow"`
-	CommitStatus  *CommitStatus            `json:"commit-status,omitempty"  jsonschema_description:"Specify data send to the build status ( title and description )"`
+	Name          string                   `json:"name" jsonschema:"example=my-workflow" jsonschema_description:"Workflow name" jsonschema_extras:"order=1"`
+	Repository    *WorkflowRepository      `json:"repository,omitempty" jsonschema_description:"Repository that will be use in the git context ( used by the action for example )" jsonschema_extras:"order=99"`
+	OnRaw         json.RawMessage          `json:"on,omitempty" jsonschema_description:"Specify the way to trigger the workflow" jsonschema_extras:"order=2"`
+	CommitStatus  *CommitStatus            `json:"commit-status,omitempty"  jsonschema_description:"Specify data send to the build status ( title and description )" jsonschema_extras:"order=3"`
 	On            *WorkflowOn              `json:"-" yaml:"-"`
-	Stages        map[string]WorkflowStage `json:"stages,omitempty"  jsonschema_description:"Map of stages used in the workflow"`
-	Gates         map[string]V2JobGate     `json:"gates,omitempty" jsonschema_description:"Map of gates used in the workflow"`
-	Jobs          map[string]V2Job         `json:"jobs,omitempty" jsonschema:"oneof_required=jobs" jsonschema_description:"Map of jobs used in the workflow"`
-	Env           map[string]string        `json:"env,omitempty" jsonschema_description:"Environment variables available in all jobs of the workflow"`
-	Integrations  []string                 `json:"integrations,omitempty" jsonschema_description:"List of integrations available in all jobs of the workflow"`
-	VariableSets  []string                 `json:"vars,omitempty" jsonschema_description:"List of VariableSets available in all jobs of the workflow"`
+	Stages        map[string]WorkflowStage `json:"stages,omitempty"  jsonschema_description:"Map of stages used in the workflow" jsonschema_extras:"order=5"`
+	Gates         map[string]V2JobGate     `json:"gates,omitempty" jsonschema_description:"Map of gates used in the workflow" jsonschema_extras:"order=6"`
+	Jobs          map[string]V2Job         `json:"jobs,omitempty" jsonschema:"oneof_required=jobs" jsonschema_description:"Map of jobs used in the workflow" jsonschema_extras:"order=10"`
+	Env           map[string]string        `json:"env,omitempty" jsonschema_description:"Environment variables available in all jobs of the workflow" jsonschema_extras:"order=7"`
+	Integrations  []string                 `json:"integrations,omitempty" jsonschema_description:"List of integrations available in all jobs of the workflow" jsonschema_extras:"order=9"`
+	VariableSets  []string                 `json:"vars,omitempty" jsonschema_description:"List of VariableSets available in all jobs of the workflow" jsonschema_extras:"order=8"`
 	Retention     int64                    `json:"retention,omitempty" jsonschema_extras:"order=99" jsonschema_description:"DEPRECATED:: not used anymore, please check project->retention"`
-	Annotations   map[string]string        `json:"annotations,omitempty" jsonschema_description:"Map of annotations. They are free text key/value pairs that can be attached to this workflow for storing additional information."`
-	Semver        *WorkflowSemver          `json:"semver,omitempty" jsonschema_description:"Define semver strategy to automatically bump version on each run"`
-	Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty" jsonschema_description:"Define concurrency groups that can be used on workflow or jobs to limit the number of concurrent executions"`
-	Concurrency   string                   `json:"concurrency,omitempty" jsonschema_description:"Define a concurrency group to use for the workflow execution"`
+	Annotations   map[string]string        `json:"annotations,omitempty" jsonschema_description:"Map of annotations. They are free text key/value pairs that can be attached to this workflow for storing additional information." jsonschema_extras:"order=11"`
+	Semver        *WorkflowSemver          `json:"semver,omitempty" jsonschema_description:"Define semver strategy to automatically bump version on each run" jsonschema_extras:"order=12"`
+	Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty" jsonschema_description:"Define concurrency groups that can be used on workflow or jobs to limit the number of concurrent executions" jsonschema_extras:"order=13"`
+	Concurrency   string                   `json:"concurrency,omitempty" jsonschema:"example=my-concurrency-group" jsonschema_description:"Define a concurrency group to use for the workflow execution" jsonschema_extras:"order=14"`
 
 	// Template fields
-	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from" jsonschema_description:"Template name used to create the workflow"`
-	Parameters map[string]string `json:"parameters,omitempty" jsonschema:"oneof_required=from" jsonschema_description:"Template parameters"`
+	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from,example=my-template" jsonschema_description:"Template name used to create the workflow" jsonschema_extras:"order=15"`
+	Parameters map[string]string `json:"parameters,omitempty" jsonschema:"oneof_required=from" jsonschema_description:"Template parameters" jsonschema_extras:"order=16"`
 }
 
 type WorkflowSemver struct {
@@ -95,8 +95,8 @@ type V2WorkflowVersion struct {
 }
 
 type CommitStatus struct {
-	Title       string `json:"title,omitempty" jsonschema_description:"Title sent to the build status on the current commit"`
-	Description string `json:"description,omitempty" jsonschema_description:"Description sent to the build status on the current commit"`
+	Title       string `json:"title,omitempty" jsonschema:"example=Build ${{cds.version}}" jsonschema_description:"Title sent to the build status on the current commit"`
+	Description string `json:"description,omitempty" jsonschema:"example=Build triggered by ${{git.author}}" jsonschema_description:"Description sent to the build status on the current commit"`
 }
 
 type WorkflowOn struct {
@@ -117,8 +117,8 @@ type WorkflowOnRun struct {
 }
 
 type WorkflowOnSchedule struct {
-	Cron     string `json:"cron" jsonschema_description:"Cron expression defining the schedule"`
-	Timezone string `json:"timezone" jsonschema_description:"Timezone for the cron expression"`
+	Cron     string `json:"cron" jsonschema:"example=0 */2 * * *" jsonschema_description:"Cron expression defining the schedule"`
+	Timezone string `json:"timezone" jsonschema:"example=UTC" jsonschema_description:"Timezone for the cron expression"`
 }
 
 type WorkflowOnPush struct {
@@ -280,27 +280,27 @@ func (w *V2Workflow) UnmarshalJSON(data []byte) error {
 }
 
 type WorkflowStage struct {
-	Needs []string `json:"needs,omitempty" jsonschema_description:"Stage dependencies"`
+	Needs []string `json:"needs,omitempty" jsonschema_description:"Stage dependencies (e.g., [build, test])"`
 }
 
 type WorkflowConcurrency struct {
-	Name             string           `json:"name" jsonschema_description:"Name of the concurrency rule"`
-	Order            ConcurrencyOrder `json:"order,omitempty" jsonschema_description:"Resolving order of the rule: oldest_first | newest_first"`
-	Pool             int64            `json:"pool,omitempty" jsonschema_description:"Number of concurrent executions allowed for this concurrency rule"`
-	CancelInProgress bool             `json:"cancel-in-progress" jsonschema_description:"If true, when a new execution is triggered, and oldest in-progress executions are canceled"`
-	If               string           `json:"if" jsonschema_description:"Condition to apply the concurrency rule"`
+	Name             string           `json:"name" jsonschema:"example=deploy-production" jsonschema_description:"Name of the concurrency rule"`
+	Order            ConcurrencyOrder `json:"order,omitempty" jsonschema:"example=oldest_first" jsonschema_description:"Resolving order of the rule: oldest_first | newest_first"`
+	Pool             int64            `json:"pool,omitempty" jsonschema:"example=1" jsonschema_description:"Number of concurrent executions allowed for this concurrency rule"`
+	CancelInProgress bool             `json:"cancel-in-progress" jsonschema:"example=false" jsonschema_description:"If true, when a new execution is triggered, and oldest in-progress executions are canceled"`
+	If               string           `json:"if" jsonschema:"example=${{ git.branch == 'main' }}" jsonschema_description:"Condition to apply the concurrency rule"`
 }
 
 type V2Job struct {
-	Name            string                  `json:"name,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Name of the job"`
-	If              string                  `json:"if,omitempty" jsonschema_extras:"order=5,textarea=true" jsonschema_description:"Condition to execute the job"`
+	Name            string                  `json:"name,omitempty" jsonschema:"example=my-job" jsonschema_extras:"order=1" jsonschema_description:"Name of the job"`
+	If              string                  `json:"if,omitempty" jsonschema:"example=${{ git.branch == 'main' }}" jsonschema_extras:"order=5,textarea=true" jsonschema_description:"Condition to execute the job"`
 	Gate            string                  `json:"gate,omitempty" jsonschema_extras:"order=5" jsonschema_description:"Gate allows to trigger manually a job"`
 	Steps           []ActionStep            `json:"steps,omitempty" jsonschema:"oneof=steps" jsonschema_extras:"order=11" jsonschema_description:"List of steps"`
 	Needs           []string                `json:"needs,omitempty" jsonschema_extras:"order=6,mode=tags" jsonschema_description:"Job dependencies"`
 	Stage           string                  `json:"stage,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Stage where the job will be executed"`
-	Region          string                  `json:"region,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Region where the job will be executed"`
-	ContinueOnError bool                    `json:"continue-on-error,omitempty" jsonschema_extras:"order=4" jsonschema_description:"Allow the workflow to continue even if it fails"`
-	RunsOnRaw       json.RawMessage         `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split" jsonschema_description:"Worker model specification to run the job"`
+	Region          string                  `json:"region,omitempty" jsonschema:"example=eu-west-1" jsonschema_extras:"order=3" jsonschema_description:"Region where the job will be executed"`
+	ContinueOnError bool                    `json:"continue-on-error,omitempty" jsonschema:"example=false" jsonschema_extras:"order=4" jsonschema_description:"Allow the workflow to continue even if it fails"`
+	RunsOnRaw       json.RawMessage         `json:"runs-on,omitempty" jsonschema:"example=library/default-container" jsonschema_extras:"required,order=5,mode=split" jsonschema_description:"Worker model specification to run the job"`
 	RunsOn          V2JobRunsOn             `json:"-"`
 	Strategy        *V2JobStrategy          `json:"strategy,omitempty" jsonschema_extras:"order=7" jsonschema_description:"Define a matrix strategy to run multiple times the job with different parameters"`
 	Integrations    []string                `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
@@ -362,7 +362,7 @@ type V2JobRunsOn struct {
 }
 
 type V2JobGate struct {
-	If        string                    `json:"if,omitempty" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute the gate"`
+	If        string                    `json:"if,omitempty" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute the gate" jsonschema:"example=${{ success() && gate.manual }}"`
 	Inputs    map[string]V2JobGateInput `json:"inputs,omitempty" jsonschema_extras:"order=2,mode=edit" jsonschema_description:"Gate inputs to fill for manual triggering"`
 	Reviewers V2JobGateReviewers        `json:"reviewers,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Restrict the gate to a list of reviewers"`
 }
@@ -554,8 +554,7 @@ type V2JobStrategy struct {
 	Matrix map[string]interface{} `json:"matrix" jsonschema_description:"Matrix values for the job"`
 }
 
-type V2JobConcurrency struct {
-}
+type V2JobConcurrency struct{}
 
 func (w *V2Workflow) Clean() {
 	if w.CommitStatus != nil {
