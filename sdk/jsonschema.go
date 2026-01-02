@@ -206,6 +206,13 @@ func GetWorkflowTemplateJsonSchema() *jsonschema.Schema {
 	return templateSchema
 }
 
+func GetWorkflowRunJobsContextJsonSchema() *jsonschema.Schema {
+	reflector := jsonschema.Reflector{Anonymous: false}
+	contextSchema := reflector.Reflect(&WorkflowRunJobsContext{})
+
+	return contextSchema
+}
+
 // Generate documented yaml from jsonschema
 func GetYamlFromJsonSchema(entityType string, directory string) error {
 	var schema *jsonschema.Schema
