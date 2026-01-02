@@ -256,28 +256,25 @@ func GetYamlFromJsonSchema(entityType string, directory string) error {
 func GetYAMLKeywordsFromJsonSchema() []string {
 	schema := GetWorkflowJsonSchema(nil, nil, nil)
 	keywords := make([]string, 0)
-	// Maintenant il faut parcourir le schema de façon récursive pour extraire les keywords
+	// Now we need to traverse the schema recursively to extract the keywords
 	var extractKeywords func(s *jsonschema.Schema, rootName string)
 	extractKeywords = func(s *jsonschema.Schema, rootName string) {
 		if s == nil {
 			return
 		}
 		if s.Properties != nil {
-			// Ajouter les propriétés du schéma actuel
+			// Add properties from the current schema
 			for _, propName := range s.Properties.Keys() {
-				// Concaténer les noms des propriétés avec le keyword du parent + "."
+				// Concatenate property names with the parent keyword + "."
 				keywords = append(keywords, rootName+"."+propName)
 			}
 		}
-		// Parcourir les définitions
 		for prop, def := range s.Definitions {
 			extractKeywords(def, rootName+"."+prop)
 		}
-		// Parcourir les éléments des tableaux
 		if s.Items != nil {
 			extractKeywords(s.Items, rootName)
 		}
-		// Parcourir les schémas dans OneOf, AnyOf, AllOf
 		for _, subschema := range s.OneOf {
 			extractKeywords(subschema, rootName)
 		}
