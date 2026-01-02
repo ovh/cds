@@ -180,6 +180,7 @@ import {
     LinkOutline,
     LockOutline,
     MailOutline,
+    MenuFoldOutline,
     MinusOutline,
     MoreOutline,
     PauseCircleOutline,
