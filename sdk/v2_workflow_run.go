@@ -124,9 +124,9 @@ func (m *WorkflowRunAnnotations) Scan(src interface{}) error {
 }
 
 type WorkflowRunContext struct {
-	CDS CDSContext        `json:"cds,omitempty"`
-	Git GitContext        `json:"git,omitempty"`
-	Env map[string]string `json:"env,omitempty"`
+	CDS CDSContext        `json:"cds,omitempty" jsonschema_description:"CDS workflow run information and metadata"`
+	Git GitContext        `json:"git,omitempty" jsonschema_description:"Git repository information and commit details"`
+	Env map[string]string `json:"env,omitempty" jsonschema:"example=MY_VAR" jsonschema_description:"Environment variables available in the workflow run"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
@@ -147,14 +147,14 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
-	Inputs       map[string]interface{}   `json:"inputs,omitempty"`
-	Jobs         JobsResultContext        `json:"jobs"`
-	Needs        NeedsContext             `json:"needs"`
-	Steps        StepsContext             `json:"steps"`
-	Matrix       map[string]string        `json:"matrix"`
-	Integrations *JobIntegrationsContexts `json:"integrations,omitempty"`
-	Gate         map[string]interface{}   `json:"gate"`
-	Vars         map[string]interface{}   `json:"vars"`
+	Inputs       map[string]interface{}   `json:"inputs,omitempty" jsonschema:"example=my-param" jsonschema_description:"Input parameters defined for this job"`
+	Jobs         JobsResultContext        `json:"jobs" jsonschema_description:"Status and outputs of all jobs in the workflow run"`
+	Needs        NeedsContext             `json:"needs" jsonschema_description:"Status and outputs of jobs that this job depends on (specified in needs)"`
+	Steps        StepsContext             `json:"steps" jsonschema_description:"Status and outputs of previous steps in the current job"`
+	Matrix       map[string]string        `json:"matrix" jsonschema:"example=os" jsonschema_description:"Matrix values for the current job instance"`
+	Integrations *JobIntegrationsContexts `json:"integrations,omitempty" jsonschema_description:"Integration configurations (artifact_manager, deployment)"`
+	Gate         map[string]interface{}   `json:"gate" jsonschema:"example=approved" jsonschema_description:"Gate input parameters for manual approval"`
+	Vars         map[string]interface{}   `json:"vars" jsonschema:"example=my-var" jsonschema_description:"Variables defined in the workflow"`
 
 	// Parent path - internal worker
 	ParentPaths StringSlice `json:"-"`
@@ -343,8 +343,8 @@ func (s V2WorkflowRunJobStatus) IsTerminated() bool {
 }
 
 type JobIntegrationsContexts struct {
-	ArtifactManager JobIntegrationsContext `json:"artifact_manager,omitempty"`
-	Deployment      JobIntegrationsContext `json:"deployment,omitempty"`
+	ArtifactManager JobIntegrationsContext `json:"artifact_manager,omitempty" jsonschema_description:"Artifact manager integration configuration"`
+	Deployment      JobIntegrationsContext `json:"deployment,omitempty" jsonschema_description:"Deployment integration configuration"`
 }
 
 func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
@@ -359,9 +359,9 @@ func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
 }
 
 type JobIntegrationsContext struct {
-	Name      string                       `json:"name,omitempty"`
-	Config    JobIntegrationsContextConfig `json:"config,omitempty"`
-	ModelName string                       `json:"model_name,omitempty"`
+	Name      string                       `json:"name,omitempty" jsonschema:"example=my-artifactory" jsonschema_description:"Integration name"`
+	Config    JobIntegrationsContextConfig `json:"config,omitempty" jsonschema_description:"Integration configuration key-value pairs. For Artifactory: url, token, token.name, platform, project.key, cds.repository, build.info.prefix, repo.prefix, promotion.maturity.low, promotion.maturity.high"`
+	ModelName string                       `json:"model_name,omitempty" jsonschema:"example=Artifactory" jsonschema_description:"Integration model type (Artifactory, AWS, Openstack, Kafka, RabbitMQ)"`
 }
 
 type JobIntegrationsContextConfig map[string]interface{}
