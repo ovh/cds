@@ -2,6 +2,10 @@
     <a class="title" title="Show overview" [routerLink]="['/project', project.key, 'explore']">
         Workspace
     </a>
+    <button class="collapse" nz-button nzType="text" nzSize="small" nz-tooltip
+        nzTooltipTitle="Collapse folders" (click)="collapseAll()">
+        <i nz-icon nzType="menu-fold" nzTheme="outline"></i>
+    </button>
     <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip
         nzTooltipTitle="Click to refresh the workspace" (click)="load()">
         <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>

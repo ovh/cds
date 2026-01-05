@@ -213,6 +213,37 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         this._cd.markForCheck();
     }
 
+    collapseAll(): void {
+        // Check if any repository or entity type is expanded
+        const hasExpandedChildren = Object.keys(this.treeExpandState).some(key => {
+            return key.includes('/') && this.treeExpandState[key];
+        });
+
+        if (hasExpandedChildren) {
+            // First click: collapse all repositories and entity types
+            Object.keys(this.treeExpandState).forEach(key => {
+                if (key.includes('/')) {
+                    this.treeExpandState[key] = false;
+                }
+            });
+        } else {
+            // Second click: collapse all VCS
+            Object.keys(this.treeExpandState).forEach(key => {
+                this.treeExpandState[key] = false;
+            });
+        }
+
+        this.saveTreeExpandState();
+        
+        // Navigate to explore overview if we're currently viewing an entity
+        const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+        if (params['vcsName'] || params['repoName'] || params['entityType'] || params['entityName']) {
+            this._router.navigate(['/project', this.project.key, 'explore']);
+        }
+        
+        this._cd.markForCheck();
+    }
+
     async selectRepositoryRef(vcs: VCSProject, repo: ProjectRepository, ref: string) {
         this.refSelectState[vcs.name + '/' + repo.name] = ref;
         this.saveRefSelectState();
@@ -247,10 +278,11 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
             if (keys.indexOf(vcs.name) !== -1 && !this.treeExpandState[vcs.name]) {
                 state[vcs.name] = false;
             }
-            // Persist repositories that were opened
+            // Persist repositories that were opened or closed
             (this.repositories[vcs.name] ?? []).forEach(repo => {
-                if (this.treeExpandState[vcs.name + '/' + repo.name]) {
-                    state[vcs.name + '/' + repo.name] = true;
+                const repoKey = vcs.name + '/' + repo.name;
+                if (keys.indexOf(repoKey) !== -1) {
+                    state[repoKey] = this.treeExpandState[repoKey];
                 }
                 // Persist entity folder that were closed
                 Object.keys(this.entities[vcs.name + '/' + repo.name] ?? {}).forEach(entityType => {
