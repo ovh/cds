@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -327,6 +328,12 @@ var workflowRunCmd = cli.Command{
 		{
 			Name: "fork",
 		},
+		{
+			Name: "inputs",
+		},
+		{
+			Name: "inputs-file",
+		},
 	},
 }
 
@@ -357,6 +364,24 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		WorkflowBranch:   workflowBranch,
 		WorkflowTag:      workflowTag,
 		TargetRepository: targetRepo,
+	}
+
+	if v.GetString("inputs") != "" {
+		var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+		if err := json.Unmarshal([]byte(v.GetString("inputs")), &inputs); err != nil {
+			return nil, fmt.Errorf("unable to parse inputs: %v", err)
+		}
+		payload.JobInputs = inputs
+	} else if v.GetString("inputs-file") != "" {
+		bts, err := os.ReadFile(v.GetString("inputs-file"))
+		if err != nil {
+			return nil, fmt.Errorf("unable to read file %s: %v", v.GetString("inputs-file"), err)
+		}
+		var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+		if err := yaml.Unmarshal(bts, &inputs); err != nil {
+			return nil, fmt.Errorf("unable to parse inputs: %v", err)
+		}
+		payload.JobInputs = inputs
 	}
 
 	runResp, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload)
@@ -411,15 +436,51 @@ var workflowRestartCmd = cli.Command{
 		{Name: "proj_key"},
 		{Name: "workflow_run_id"},
 	},
+	Flags: []cli.Flag{
+		{
+			Name: "inputs",
+		},
+		{
+			Name: "inputs-file",
+		},
+	},
 }
 
 func workflowRestartFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
 	workflowRunID := v.GetString("workflow_run_id")
-	run, err := client.WorkflowV2Restart(context.Background(), projKey, workflowRunID)
-	if err != nil {
-		return err
+	if v.GetString("inputs") == "" && v.GetString("inputs-file") == "" {
+		run, err := client.WorkflowV2Restart(context.Background(), projKey, workflowRunID)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Worflow %s #%d.%d restarted", run.WorkflowName, run.RunNumber, run.RunAttempt)
+	} else {
+		payload := sdk.V2WorkflowRunJobsRequest{}
+		if v.GetString("inputs") != "" {
+			var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+			if err := json.Unmarshal([]byte(v.GetString("inputs")), &inputs); err != nil {
+				return fmt.Errorf("unable to parse inputs: %v", err)
+			}
+			payload.JobInputs = inputs
+
+		} else if v.GetString("inputs-file") != "" {
+			bts, err := os.ReadFile(v.GetString("inputs-file"))
+			if err != nil {
+				return fmt.Errorf("unable to read file %s: %v", v.GetString("inputs-file"), err)
+			}
+			var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+			if err := yaml.Unmarshal(bts, &inputs); err != nil {
+				return fmt.Errorf("unable to parse inputs: %v", err)
+			}
+			payload.JobInputs = inputs
+		}
+		run, err := client.WorkflowV2JobsStart(context.Background(), projKey, workflowRunID, payload)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Workflow %s #%d.%d restarted", run.WorkflowName, run.RunNumber, run.RunAttempt)
 	}
-	fmt.Printf("Worflow %s #%d.%d restarted", run.WorkflowName, run.RunNumber, run.RunAttempt)
+
 	return nil
 }

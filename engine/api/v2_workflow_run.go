@@ -931,6 +931,144 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 		}
 }
 
+func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.workflowTrigger),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			workflowRunID := vars["workflowRunID"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
+			if err != nil {
+				return err
+			}
+
+			if !wr.Status.IsTerminated() {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start jobs on a running workflow")
+			}
+
+			var jobsRequest sdk.V2WorkflowRunJobsRequest
+			if err := service.UnmarshalRequest(ctx, req, &jobsRequest); err != nil {
+				return err
+			}
+			if len(jobsRequest.JobInputs) == 0 {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "no job provided")
+			}
+
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			if err != nil {
+				return err
+			}
+
+			runJobsMap := make(map[string]sdk.V2WorkflowRunJob)
+			for _, rj := range runJobs {
+				runJobsMap[rj.ID] = rj
+			}
+
+			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
+			for jobID := range jobsRequest.JobInputs {
+				for _, rj := range runJobs {
+					if rj.JobID == jobID && rj.Status.IsTerminated() {
+						runJobToRestart[rj.ID] = rj
+						if len(rj.Matrix) == 0 {
+							break
+						}
+					}
+				}
+			}
+			if len(runJobToRestart) == 0 {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to find job that can be restarted")
+			}
+
+			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, runJobToRestart)
+
+			startJobs := make([]string, 0)
+
+			// Check job input
+			for jobID := range jobsRequest.JobInputs {
+				skipJob := false
+				for _, rj := range runJobsToKeep {
+					if rj.JobID == jobID {
+						skipJob = true
+						break
+					}
+				}
+				if skipJob {
+					continue
+				}
+				if err := sdk.CheckJobInputWithGate(wr.WorkflowData.Workflow, jobID, jobsRequest.JobInputs[jobID]); err != nil {
+					return err
+				}
+				jobsRequest.JobInputs[jobID]["manual"] = true
+
+				// Add run job event
+				wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
+					JobID:      jobID,
+					Inputs:     jobsRequest.JobInputs[jobID],
+					UserID:     u.AuthConsumerUser.AuthentifiedUserID,
+					Username:   u.GetUsername(),
+					RunAttempt: wr.RunAttempt + 1,
+				})
+				startJobs = append(startJobs, jobID)
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback() // nolint
+
+			if err := api.restartWorkflowRun(ctx, tx, wr, runJobsToKeep); err != nil {
+				return err
+			}
+
+			runInfo := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wr.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelInfo,
+				Message:       fmt.Sprintf("%s starts jobs: %v", u.GetFullname(), startJobs),
+			}
+			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
+				return err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+
+			initiator := sdk.V2Initiator{
+				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
+				IsAdminWithMFA: isAdmin(ctx),
+			}
+			usr, err := user.LoadByID(ctx, api.mustDB(), u.AuthConsumerUser.AuthentifiedUserID, user.LoadOptions.WithContacts)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			initiator.User = usr.Initiator()
+
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults, &initiator)
+
+			// Then continue the workflow
+			api.EnqueueWorkflowRun(ctx, wr.ID, initiator, wr.WorkflowName, wr.RunNumber)
+			return service.WriteJSON(w, wr, http.StatusOK)
+		}
+}
+
 func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -1365,6 +1503,30 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				}
 			}
 
+			// Check job inputs regarding workflow definition
+			if runRequest.JobInputs != nil {
+				var wk sdk.V2Workflow
+				if err := yaml.Unmarshal([]byte(workflowEntity.Data), &wk); err != nil {
+					return err
+				}
+				for jobID, inputs := range runRequest.JobInputs {
+					if err := sdk.CheckJobInputWithGate(wk, jobID, inputs); err != nil {
+						return err
+					}
+					// Specific check on job
+					job := wk.Jobs[jobID]
+					// - Check root job
+					if len(job.Needs) > 0 {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to send input to a non root job %q", jobID)
+					}
+					// - Check job in a root stage
+					if job.Stage != "" && len(wk.Stages[job.Stage].Needs) > 0 {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to send input to a non root job %q", jobID)
+					}
+					runRequest.JobInputs[jobID]["manual"] = true
+				}
+			}
+
 			hookRequest := sdk.HookManualWorkflowRun{
 				UserRequest:    runRequest,
 				Project:        proj.Key,
@@ -1466,6 +1628,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		DeprecatedUserID:   initiator.UserID,         // Deprecated
 		DeprecatedAdminMFA: initiator.IsAdminWithMFA, // Deprecated
 		DeprecatedUsername: initiator.Username(),     // Deprecated
+		RunJobEvent:        make([]sdk.V2WorkflowRunJobEvent, 0, len(runRequest.JobInputs)),
 	}
 
 	wrNumber, err := workflow_v2.WorkflowRunNextNumber(api.mustDB(), repo.ID, wk.Name)
@@ -1475,6 +1638,16 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	wr.RunNumber = wrNumber
 
 	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
+
+	for jobID, inputs := range runRequest.JobInputs {
+		wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
+			Inputs:     inputs,
+			UserID:     initiator.UserID,
+			Username:   initiator.Username(),
+			JobID:      jobID,
+			RunAttempt: 1,
+		})
+	}
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {

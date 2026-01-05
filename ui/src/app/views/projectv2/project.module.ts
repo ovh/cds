@@ -17,6 +17,7 @@ import { RunTestComponent } from './run/run-test.component';
 import { ProjectV2ExploreRepositoryComponent } from './explore/explore-repository.component';
 import { ProjectV2RepositoryAddComponent } from './explore/repository-add/repository-add.component';
 import { ProjectV2RunStartComponent } from './run-start/run-start.component';
+import { RunGateInputsComponent } from './run-start/run-gate-inputs.component';
 import { ProjectV2TriggerAnalysisComponent } from './explore/trigger-analysis/trigger-analysis.component';
 import { RunResultsComponent } from './run/run-results.component';
 import { RunInfoComponent } from './run/run-info.component';
@@ -36,6 +37,7 @@ import { ProjectV2ExploreOverviewComponent } from './explore/explore-overview.co
         ProjectV2RunListComponent,
         ProjectV2RunListSidebarComponent,
         ProjectV2RunStartComponent,
+        RunGateInputsComponent,
         ProjectV2TriggerAnalysisComponent,
         RunContextsComponent,
         RunGateComponent,

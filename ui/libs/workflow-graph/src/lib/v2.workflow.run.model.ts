@@ -71,7 +71,7 @@ export class V2Workflow {
     repository: WorkflowRepository;
     'commit-status': CommitStatus;
     on: WorkflowOn;
-    stages: { [key: string]: any };
+    stages: { [key: string]: V2Stage };
     gates: { [key: string]: V2JobGate };
     jobs: { [key: string]: V2Job };
     env: { [key: string]: string };
@@ -114,6 +114,10 @@ export class WorkflowOn {
     'workflow-update': {
         target_branch: string;
     };
+}
+
+export class V2Stage {
+    needs: Array<string>;
 }
 
 export class V2JobGate {
@@ -307,6 +311,7 @@ export class V2WorkflowRunManualRequest {
     workflow_branch: string;
     workflow_tag: string;
     payload: any;
+    job_inputs: { [key: string]: any };
 }
 
 export class V2WorkflowRunManualResponse {

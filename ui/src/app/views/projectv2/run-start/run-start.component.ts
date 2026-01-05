@@ -7,7 +7,7 @@ import { VCSProject } from "app/model/vcs.model";
 import { ProjectService } from "app/service/project/project.service";
 import { V2WorkflowRunService } from "app/service/services.module";
 import { lastValueFrom } from "rxjs";
-import { V2Workflow, V2WorkflowRunManualRequest } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2Workflow, V2WorkflowRunManualRequest, V2JobGate, V2Job } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzDrawerRef } from "ng-zorro-antd/drawer";
 import { LoadOptions, load } from "js-yaml";
@@ -46,6 +46,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
+    jobInputs: FormControl<{ [jobName: string]: { [inputName: string]: any } } | null>
   }>;
   event: RepositoryHookEvent;
   loaders: {
@@ -60,6 +61,9 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: false
     };
   noWorkflowFound: boolean = false;
+
+  rootJobsWithGate: { [jobName: string]: V2Job } = {};
+  rootGateDefs: { [gateName: string]: V2JobGate } = {};
 
   constructor(
     private _drawerRef: NzDrawerRef<string>,
@@ -77,6 +81,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
+      jobInputs: this._fb.control<{ [jobName: string]: { [inputName: string]: any } } | null>(null),
     });
   }
 
@@ -204,6 +209,51 @@ export class ProjectV2RunStartComponent implements OnInit {
       this._cd.markForCheck();
       return
     }
+    // Reset gate related properties
+    this.rootGateDefs = {};
+    this.rootJobsWithGate = {};
+
+    if (wkf.jobs) {
+      Object.keys(wkf.jobs).forEach(jobName => {
+        const job = wkf.jobs[jobName];
+
+        // If not a root job, ignore it
+        if (job.needs && job.needs.length !== 0) {
+          return;
+        }
+
+        // If not a root stage ignore the job
+        if (job.stage && job.stage !== '') {
+          if (!wkf.stages) {
+            return;
+          }
+          const stage = wkf.stages[job.stage];
+          if (!stage || stage.needs && stage.needs.length !== 0) {
+            return;
+          }
+        }
+
+        // If no gate, ignore the job
+        if (!job.gate || job.gate === '') {
+          return;
+        }
+
+        if (!wkf.gates || !wkf.gates[job.gate]) {
+          return;
+        }
+
+        // Retrieve the gate
+        const gate = wkf.gates[job.gate];
+
+        // If gate has no inputs, ignore the job
+        if (!gate.inputs || Object.keys(gate.inputs).length === 0) {
+          return;
+        }
+        this.rootGateDefs[job.gate] = gate
+        this.rootJobsWithGate[jobName] = job;
+      });
+    }
+    
     if (wkf.repository) {
       this.validateForm.controls.sourceRepository.setValidators([Validators.required]);
       this.validateForm.controls.sourceRef.setValidators([Validators.required]);
@@ -281,6 +331,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     if (this.noWorkflowFound) {
       req.workflow_branch = this.branches.find(b => b.default).display_id;
     }
+    req.job_inputs = this.validateForm.value.jobInputs;
     let hookEventUUID: string;
 
     try {

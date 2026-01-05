@@ -41,6 +41,10 @@
         placeHolder="Select a ref" id="sourceRef"></app-repository-ref-select>
     </nz-form-control>
   </nz-form-item>
+
+  <app-run-gate-inputs *ngIf="rootJobsWithGate && rootGateDefs" [jobs]="rootJobsWithGate" formControlName="jobInputs"
+    [gates]="rootGateDefs"></app-run-gate-inputs>
+
   <nz-form-item *ngIf="!event">
     <nz-form-control [nzSpan]="12" [nzOffset]="6">
       <button nz-button nzType="primary" [disabled]="!validateForm.valid" [nzLoading]="isLoading()">Start</button>
