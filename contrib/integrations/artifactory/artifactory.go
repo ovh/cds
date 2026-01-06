@@ -156,7 +156,17 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 	hasBeenPromoted := false
 	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
-	params := services.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
+
+	dockerImageSplit := strings.Split(data.Path, "/")
+
+	// Remove manifest part
+	tag := dockerImageSplit[len(dockerImageSplit)-1]
+	// Remove tag part
+	dockerImageSplit = dockerImageSplit[0 : len(dockerImageSplit)-1]
+	dockerImage := strings.TrimPrefix(strings.Join(dockerImageSplit, "/"), "/")
+	params := services.NewDockerPromoteParams(dockerImage, sourceRepo, targetRepo)
+	params.SourceTag = tag
+	params.TargetTag = tag
 
 	if lowMaturity == highMaturity {
 		fmt.Printf("%s has been already promoted\n", data.Name)
@@ -444,6 +454,43 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 				}
 				mod.Artifacts = append(mod.Artifacts, currentArtifact)
 			}
+
+			// Manage multi arch docker image
+			details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultDockerDetail](&r)
+			if err != nil {
+				return nil, err
+			}
+			for _, m := range details.Manifests {
+				manifestDir := strings.TrimPrefix(filepath.Dir(m.Path), "/")
+				query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, repoName+"-"+currentMaturity, manifestDir)
+				searchResults, err := artiClient.Search(ctx, query)
+				if err != nil {
+					return nil, err
+				}
+
+				for _, sr := range searchResults {
+					currentArtifact := buildinfo.Artifact{
+						Name: sr.Name,
+						Type: strings.TrimPrefix(filepath.Ext(sr.Name), "."),
+						Checksum: buildinfo.Checksum{
+							Md5: sr.ActualMD5,
+						},
+					}
+					mod.Artifacts = append(mod.Artifacts, currentArtifact)
+				}
+
+				// Add properties on multiarch layers
+				props := utils.NewProperties()
+				props.AddProperty("build.name", execContext.buildInfoName)
+				props.AddProperty("build.number", execContext.version)
+				props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
+
+				if err := SetPropertiesRecursive(ctx, artiClient, repoType, repoName, currentMaturity, manifestDir, props); err != nil {
+					return nil, err
+				}
+
+			}
+
 		default:
 			_, objectName := filepath.Split(path)
 			currentArtifact := buildinfo.Artifact{
