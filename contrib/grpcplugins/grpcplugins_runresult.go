@@ -213,6 +213,7 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 			ID:           imageStruct.ImageID,
 			HumanSize:    imageStruct.Size,
 			HumanCreated: imageStruct.Created,
+			Path:         rtFolderPath + "/manifest.json",
 		}
 		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
 			Name:      imageDestinationName,
