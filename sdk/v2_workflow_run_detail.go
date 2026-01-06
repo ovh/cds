@@ -417,7 +417,7 @@ type ArsenalDeploymentDetailAlternative struct {
 	Options map[string]interface{} `json:"options,omitempty" mapstructure:"options"`
 }
 
-type V2WorkflowRunResultDockerDetail struct { // DEPRECATED, use manifests instead
+type V2WorkflowRunResultDockerDetail struct {
 	Name      string                                 `json:"name" mapstructure:"name"`
 	Manifests []V2WorkflowRunResultDockerDetailImage `json:"manifests,omitempty" mapstructure:"manifests,omitempty"`
 }
