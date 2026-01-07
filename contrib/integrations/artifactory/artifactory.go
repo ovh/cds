@@ -24,6 +24,21 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+// DEPRECATED Only used by CDS V1
+type MultiArchManifests struct {
+	Manifests []DockerMultiArchManifestConfig `json:"manifests"`
+}
+
+// DEPRECATED Only used by CDS V1
+type DockerMultiArchManifestConfig struct {
+	Digest   string `json:"digest"`
+	Platform struct {
+		Architecture string `json:"architecture"`
+		OS           string `json:"os"`
+	} `json:"platform"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
 type DistribClient struct {
 	Dsm           *distribution.DistributionServicesManager
 	ServiceConfig config.Config
@@ -324,6 +339,17 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 			Dependencies: nil,
 		}
 
+		var currentMaturity string
+		if r.DataSync != nil {
+			latestPromotion := r.DataSync.LatestPromotionOrRelease()
+			if latestPromotion != nil {
+				currentMaturity = latestPromotion.ToMaturity
+			}
+		}
+		if currentMaturity == "" {
+			currentMaturity = execContext.defaultLowMaturitySuffix
+		}
+
 		switch data.FileType {
 		case "docker":
 			mod.Type = buildinfo.Docker
@@ -354,6 +380,52 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 					},
 				}
 				mod.Artifacts = append(mod.Artifacts, currentArtifact)
+
+				// Manage multi arch docker image
+				if sr.Name == "list.manifest.json" {
+					// Retrieve list.manifest.json to list all manifest.json
+					fileInfo, err := artiClient.GetFileInfo(sr.Repo, strings.TrimSuffix(data.Path, "/")+"/list.manifest.json")
+					if err != nil {
+						return nil, err
+					}
+					file, err := artiClient.GetFile(ctx, fileInfo.DownloadURI)
+					if err != nil {
+						return nil, err
+					}
+					var multiArchManifests MultiArchManifests
+					if err := sdk.JSONUnmarshal(file, &multiArchManifests); err != nil {
+						return nil, sdk.WrapError(err, "unable to unmarshal multi arch manifest")
+					}
+					// For each manifest, retrieve all layers
+					for _, m := range multiArchManifests.Manifests {
+						rootPath := filepath.Dir(strings.TrimSuffix(data.Path, "/"))
+						subManifestPath := strings.TrimPrefix(rootPath+"/"+m.Digest, "/")
+						querySubManifest := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, data.RepoName, subManifestPath)
+						searchResultsSubManifest, err := artiClient.Search(ctx, querySubManifest)
+						if err != nil {
+							return nil, err
+						}
+						for _, srSubManifest := range searchResultsSubManifest {
+							currentArtifact := buildinfo.Artifact{
+								Name: srSubManifest.Name,
+								Type: strings.TrimPrefix(filepath.Ext(srSubManifest.Name), "."),
+								Checksum: buildinfo.Checksum{
+									Md5: srSubManifest.ActualMD5,
+								},
+							}
+							mod.Artifacts = append(mod.Artifacts, currentArtifact)
+						}
+						props := utils.NewProperties()
+						props.AddProperty("build.name", execContext.buildInfoName)
+						props.AddProperty("build.number", execContext.version)
+						props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
+
+						if err := SetPropertiesRecursive(ctx, artiClient, data.RepoType, data.RepoName, currentMaturity, subManifestPath, props); err != nil {
+							return nil, err
+						}
+					}
+
+				}
 			}
 		default:
 			_, objectName := filepath.Split(data.Path)
@@ -368,16 +440,6 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 		}
 		modules = append(modules, mod)
 
-		var currentMaturity string
-		if r.DataSync != nil {
-			latestPromotion := r.DataSync.LatestPromotionOrRelease()
-			if latestPromotion != nil {
-				currentMaturity = latestPromotion.ToMaturity
-			}
-		}
-		if currentMaturity == "" {
-			currentMaturity = execContext.defaultLowMaturitySuffix
-		}
 		props := utils.NewProperties()
 		props.AddProperty("build.name", execContext.buildInfoName)
 		props.AddProperty("build.number", execContext.version)

@@ -28,7 +28,9 @@ type Img struct {
 func ComputeRunResultDockerDetail(name string, img Img) sdk.V2WorkflowRunResultDetail {
 	return sdk.V2WorkflowRunResultDetail{
 		Data: sdk.V2WorkflowRunResultDockerDetail{
-			Name: name,
+			Name:         name,
+			HumanSize:    img.Size,
+			HumanCreated: img.Created,
 		},
 	}
 }
