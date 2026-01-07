@@ -180,8 +180,6 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 				ID:           strings.TrimPrefix(m.Digest, "sha256:")[0:12],
 				OS:           m.Platform.OS,
 				Architecture: m.Platform.Architecture,
-				HumanSize:    "",
-				HumanCreated: "",
 			}
 			manifestPath := imageStruct.Repository + "/" + m.Digest + "/manifest.json"
 			manifestFileInfo, err = GetArtifactoryFileInfo(ctx, c, rtConfig, dockerRepo+"-"+maturity, manifestPath)
@@ -197,8 +195,10 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 			imagesStructs = append(imagesStructs, img)
 		}
 		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
-			Name:      imageDestinationName,
-			Manifests: imagesStructs,
+			Name:         imageDestinationName,
+			Manifests:    imagesStructs,
+			HumanSize:    imageStruct.Size,
+			HumanCreated: imageStruct.Created,
 		}
 	} else {
 		// Get the manifest file to get the ImageID and the date
@@ -210,14 +210,14 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 		imageStruct.Created = manifestFileInfo.Created.Format(time.RFC3339)
 
 		imgDetail := sdk.V2WorkflowRunResultDockerDetailImage{
-			ID:           imageStruct.ImageID,
-			HumanSize:    imageStruct.Size,
-			HumanCreated: imageStruct.Created,
-			Path:         rtFolderPath + "/manifest.json",
+			ID:   imageStruct.ImageID,
+			Path: rtFolderPath + "/manifest.json",
 		}
 		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
-			Name:      imageDestinationName,
-			Manifests: []sdk.V2WorkflowRunResultDockerDetailImage{imgDetail},
+			Name:         imageDestinationName,
+			Manifests:    []sdk.V2WorkflowRunResultDockerDetailImage{imgDetail},
+			HumanSize:    imageStruct.Size,
+			HumanCreated: imageStruct.Created,
 		}
 	}
 

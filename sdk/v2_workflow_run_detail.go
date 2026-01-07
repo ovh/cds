@@ -418,14 +418,14 @@ type ArsenalDeploymentDetailAlternative struct {
 }
 
 type V2WorkflowRunResultDockerDetail struct {
-	Name      string                                 `json:"name" mapstructure:"name"`
-	Manifests []V2WorkflowRunResultDockerDetailImage `json:"manifests,omitempty" mapstructure:"manifests,omitempty"`
+	Name         string                                 `json:"name" mapstructure:"name"`
+	Manifests    []V2WorkflowRunResultDockerDetailImage `json:"manifests,omitempty" mapstructure:"manifests,omitempty"`
+	HumanSize    string                                 `json:"human_size" mapstructure:"human_size"`
+	HumanCreated string                                 `json:"human_created" mapstructure:"human_created"`
 }
 
 type V2WorkflowRunResultDockerDetailImage struct {
 	ID              string `json:"id" mapstructure:"id"`
-	HumanSize       string `json:"human_size" mapstructure:"human_size"`
-	HumanCreated    string `json:"human_created" mapstructure:"human_created"`
 	ReferenceDigest string `json:"reference_digest,omitempty" mapstructure:"reference_digest,omitempty"`
 	ReferenceType   string `json:"reference_type,omitempty" mapstructure:"reference_type,omitempty"`
 	OS              string `json:"os,omitempty" mapstructure:"os,omitempty"`
