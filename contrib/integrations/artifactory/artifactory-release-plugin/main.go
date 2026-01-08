@@ -169,6 +169,9 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+latestPromotion.ToMaturity, err)
 			}
 			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
+
+			// Manage list.manifest.json
+			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/list.manifest.json", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
 		default:
 			if _, err := art.PromoteFile(artifactClient, art.FileToPromote{RepoType: rData.RepoType, RepoName: rData.RepoName, Name: rData.Name, Path: rData.Path}, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props, true); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
