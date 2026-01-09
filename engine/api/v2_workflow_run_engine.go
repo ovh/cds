@@ -200,6 +200,62 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return api.workflowRunV2TriggerUnlocking(ctx, run, wrEnqueue)
 	}
 
+	// Manage retrying job
+	hasRetryJob := false
+	for _, rj := range allRunJobs {
+		if rj.Status != sdk.V2WorkflowRunJobStatusRetrying {
+			continue
+		}
+		hasRetryJob = true
+		newRj := sdk.V2WorkflowRunJob{
+			ID:                 "",
+			JobID:              rj.JobID,
+			WorkflowRunID:      rj.WorkflowRunID,
+			ProjectKey:         rj.ProjectKey,
+			VCSServer:          rj.VCSServer,
+			Repository:         rj.Repository,
+			WorkflowName:       rj.WorkflowName,
+			RunNumber:          rj.RunNumber,
+			RunAttempt:         rj.RunAttempt,
+			Retry:              rj.Retry + 1,
+			Status:             sdk.V2WorkflowRunJobStatusWaiting,
+			Job:                rj.Job,
+			DeprecatedUserID:   rj.DeprecatedUserID,
+			DeprecatedUsername: rj.DeprecatedUsername,
+			DeprecatedAdminMFA: rj.DeprecatedAdminMFA,
+			Region:             rj.Region,
+			ModelType:          rj.ModelType,
+			Matrix:             rj.Matrix,
+			ModelOSArch:        rj.ModelOSArch,
+			GateInputs:         rj.GateInputs,
+			Initiator:          rj.Initiator,
+			Concurrency:        rj.Concurrency,
+		}
+
+		rj.Status = sdk.V2WorkflowRunJobStatusFail
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		if err := workflow_v2.InsertRunJob(ctx, tx, &newRj); err != nil {
+			return err
+		}
+		if err := workflow_v2.UpdateJobRun(ctx, tx, &rj); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+	if hasRetryJob {
+		api.EnqueueWorkflowRun(ctx, wrEnqueue.RunID, wrEnqueue.Initiator, run.WorkflowName, run.RunNumber)
+		return nil
+	}
+
 	// Force terminate a workflow
 	if wrEnqueue.Status != "" && wrEnqueue.Status.IsTerminated() {
 		updatedRunJobs, err := terminateWorkflowRun(ctx, api.mustDB(), run, wrEnqueue)

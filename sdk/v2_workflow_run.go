@@ -268,6 +268,7 @@ type V2WorkflowRunJob struct {
 	WorkflowName       string                 `json:"workflow_name" db:"workflow_name" action_metadata:"workflow-name"`
 	RunNumber          int64                  `json:"run_number" db:"run_number" action_metadata:"run-number"`
 	RunAttempt         int64                  `json:"run_attempt" db:"run_attempt"`
+	Retry              int64                  `json:"retry" db:"retry"`
 	Status             V2WorkflowRunJobStatus `json:"status" db:"status" cli:"status"`
 	Queued             time.Time              `json:"queued" db:"queued"`
 	Scheduled          *time.Time             `json:"scheduled,omitempty" db:"scheduled"`
@@ -308,7 +309,15 @@ const (
 	V2WorkflowRunJobStatusCancelled  V2WorkflowRunJobStatus = "Cancelled"
 	V2WorkflowRunJobStatusScheduling V2WorkflowRunJobStatus = "Scheduling"
 	V2WorkflowRunJobStatusSkipped    V2WorkflowRunJobStatus = "Skipped"
+	V2WorkflowRunJobStatusRetrying   V2WorkflowRunJobStatus = "Retrying"
 )
+
+var RunningStatusesV2WorkflowRunJob = []string{
+	string(V2WorkflowRunJobStatusWaiting),
+	string(V2WorkflowRunJobStatusScheduling),
+	string(V2WorkflowRunJobStatusBuilding),
+	string(V2WorkflowRunJobStatusRetrying),
+}
 
 func NewV2WorkflowRunJobStatusFromString(s string) (V2WorkflowRunJobStatus, error) {
 	switch s {
@@ -330,13 +339,15 @@ func NewV2WorkflowRunJobStatusFromString(s string) (V2WorkflowRunJobStatus, erro
 		return V2WorkflowRunJobStatusBlocked, nil
 	case StatusCancelled:
 		return V2WorkflowRunJobStatusCancelled, nil
+	case StatusRetrying:
+		return V2WorkflowRunJobStatusRetrying, nil
 	}
 	return V2WorkflowRunJobStatusUnknown, errors.Errorf("cannot convert given status value %q to workflow run job v2 status", s)
 }
 
 func (s V2WorkflowRunJobStatus) IsTerminated() bool {
 	switch s {
-	case V2WorkflowRunJobStatusUnknown, V2WorkflowRunJobStatusBlocked, V2WorkflowRunJobStatusBuilding, V2WorkflowRunJobStatusWaiting, V2WorkflowRunJobStatusScheduling:
+	case V2WorkflowRunJobStatusUnknown, V2WorkflowRunJobStatusBlocked, V2WorkflowRunJobStatusBuilding, V2WorkflowRunJobStatusWaiting, V2WorkflowRunJobStatusScheduling, V2WorkflowRunJobStatusRetrying:
 		return false
 	}
 	return true

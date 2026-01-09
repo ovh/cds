@@ -483,7 +483,7 @@ func (api *API) postV2RefreshWorkerHandler() ([]service.RbacChecker, service.Han
 		if err != nil {
 			return err
 		}
-		if jobRun.Status.IsTerminated() {
+		if jobRun.Status.IsTerminated() && jobRun.Status == sdk.V2WorkflowRunJobStatusRetrying {
 			return sdk.NewErrorFrom(sdk.ErrAlreadyEnded, "job ended: %s", jobRun.Status)
 		}
 

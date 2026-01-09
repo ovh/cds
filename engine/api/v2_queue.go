@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -292,6 +293,27 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			now := time.Now()
 			jobRun.Ended = &now
 
+			var runInfo *sdk.V2WorkflowRunInfo
+			if jobRun.Job.Retry > 0 {
+				if jobRun.Status == sdk.V2WorkflowRunJobStatusFail && jobRun.Retry < jobRun.Job.Retry {
+					jobRun.Status = sdk.V2WorkflowRunJobStatusRetrying
+					runInfo = &sdk.V2WorkflowRunInfo{
+						WorkflowRunID: jobRun.WorkflowRunID,
+						IssuedAt:      time.Now(),
+						Level:         sdk.WorkflowRunInfoLevelWarning,
+						Message:       fmt.Sprintf("Job %s failed. A new attempt will be made soon (attempt %d/%d)", jobRun.JobID, jobRun.Retry, jobRun.Job.Retry),
+					}
+				}
+				if jobRun.Status == sdk.V2WorkflowRunJobStatusFail && jobRun.Retry == jobRun.Job.Retry {
+					runInfo = &sdk.V2WorkflowRunInfo{
+						WorkflowRunID: jobRun.WorkflowRunID,
+						IssuedAt:      time.Now(),
+						Level:         sdk.WorkflowRunInfoLevelWarning,
+						Message:       fmt.Sprintf("Job %s failed (attempt %d/%d).", jobRun.JobID, jobRun.Retry, jobRun.Job.Retry),
+					}
+				}
+			}
+
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
@@ -313,12 +335,21 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
 				return err
 			}
+
+			if runInfo != nil {
+				if err := workflow_v2.InsertRunInfo(ctx, tx, runInfo); err != nil {
+					return err
+				}
+			}
+
 			if err := sdk.WithStack(tx.Commit()); err != nil {
 				return err
 			}
 			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.Initiator, jobRun.WorkflowName, jobRun.RunNumber)
 
-			api.manageEndConcurrency(jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.WorkflowRunID, jobRun.ID, jobRun.Concurrency)
+			if jobRun.Status.IsTerminated() {
+				api.manageEndConcurrency(jobRun.ProjectKey, jobRun.VCSServer, jobRun.Repository, jobRun.WorkflowName, jobRun.WorkflowRunID, jobRun.ID, jobRun.Concurrency)
+			}
 
 			api.GoRoutines.Exec(ctx, "postJobResultHandler.event", func(ctx context.Context) {
 				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)

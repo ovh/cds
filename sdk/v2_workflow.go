@@ -311,6 +311,7 @@ type V2Job struct {
 	From            string                  `json:"from,omitempty" jsonschema:"oneof=from" jsonschema_description:"Job template name used to create the job"`
 	Parameters      map[string]string       `json:"parameters,omitempty" jsonschema:"oneof=from" jsonschema_description:"Job template parameters"`
 	Concurrency     string                  `json:"concurrency,omitempty" jsonschema_description:"Concurrency rule to apply to the job"`
+	Retry           int64                   `json:"retry,omitempty" jsonschema_description:"The job retry in case of error"`
 }
 
 func (j V2Job) Copy() V2Job {
