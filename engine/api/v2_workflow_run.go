@@ -105,7 +105,17 @@ func (api *API) getWorkflowRunResultsV2Handler() ([]service.RbacChecker, service
 				}
 			}
 
-			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, attempt)
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			if err != nil {
+				return err
+			}
+
+			runJobIds := make([]string, 0, len(runJobs))
+			for _, rj := range runJobs {
+				runJobIds = append(runJobIds, rj.ID)
+			}
+
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, runJobIds, attempt)
 			if err != nil {
 				return err
 			}
@@ -1046,7 +1056,12 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				return sdk.WithStack(err)
 			}
 
-			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			runJobIds := make([]string, 0, len(runJobs))
+			for _, rj := range runJobs {
+				runJobIds = append(runJobIds, rj.ID)
+			}
+
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, runJobIds, wr.RunAttempt)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 			}
@@ -1138,7 +1153,12 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
-			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			runJobIds := make([]string, 0, len(runJobs))
+			for _, rj := range runJobs {
+				runJobIds = append(runJobIds, rj.ID)
+			}
+
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, runJobIds, wr.RunAttempt)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 			}
@@ -1263,7 +1283,13 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			if err != nil {
 				return err
 			}
-			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+
+			runJobIds := make([]string, 0, len(runJobs))
+			for _, rj := range runJobs {
+				runJobIds = append(runJobIds, rj.ID)
+			}
+
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, runJobIds, wr.RunAttempt)
 			if err != nil {
 				return err
 			}

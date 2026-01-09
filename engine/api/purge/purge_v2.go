@@ -317,7 +317,7 @@ func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExec
 		return err
 	}
 
-	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, run.ID)
+	runResults, err := workflow_v2.LoadRunResultsByRunIDForPurge(ctx, db, run.ID)
 	if err != nil {
 		return err
 	}

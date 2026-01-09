@@ -541,7 +541,16 @@ func (api *API) getJobRunResultsHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), runJob.WorkflowRunID, runJob.RunAttempt)
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), runJob.WorkflowRunID, runJob.RunAttempt)
+			if err != nil {
+				return err
+			}
+			runJobIds := make([]string, 0, len(runJobs))
+			for _, rj := range runJobs {
+				runJobIds = append(runJobIds, rj.ID)
+			}
+
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), runJob.WorkflowRunID, runJobIds, runJob.RunAttempt)
 			if err != nil {
 				return err
 			}
