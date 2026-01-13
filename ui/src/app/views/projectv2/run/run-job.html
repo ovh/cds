@@ -4,6 +4,11 @@
             <button *ngFor="let tab of tabs; let i = index" [class.active]="i === currentTabIndex"
                 (click)="selectTab(i);$event.stopPropagation();">{{tab.name}}</button>
         </ng-container>
+         <ng-container *ngIf="jobRun?.retry > 0">
+            <nz-select nzSize="small" [ngModel]="selectedRetry" (ngModelChange)="onRetryChange($event)" nzPlaceHolder="Select Retry" title="Job retry">
+                <nz-option *ngFor="let jobRetry of jobRetries" [nzValue]="jobRetry.retry" [nzLabel]="jobRetry.retry"></nz-option>
+            </nz-select>
+        </ng-container>
     </div>
     <div class="menu right">
         <button [class.active]="mode === displayModes.ANSI"

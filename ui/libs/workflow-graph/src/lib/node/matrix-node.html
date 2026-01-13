@@ -13,7 +13,9 @@
             <span nz-icon nzType="caret-right" style="margin-left: 2px;" nzTheme="fill"></span>
         </button>
     </ng-container>
-    <span class="name">{{node?.name}}</span>
+    <span class="name">
+        {{node?.name}}
+    </span>
 </div>
 <div class="node pointing">
     <div class="jobs">
@@ -46,6 +48,8 @@
 
 
             <div *ngIf="displayNames[key]" class="name" title="{{displayNames[key]}} - {{key}}">
+                <nz-badge nzStandalone [nzCount]="retries[key]" [nzSize]="'small'" [nzTitle]="'Number of retries'" /> 
+                <span *ngIf="warningSteps[key]" nz-icon [nzType]="'warning'" class="warning" title="There is at least 1 step failed"></span>
                 {{displayNames[key]}}
             </div>
 

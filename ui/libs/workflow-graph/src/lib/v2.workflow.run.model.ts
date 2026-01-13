@@ -168,6 +168,7 @@ export class V2WorkflowRunJob {
     model_type: string;
     matrix: { [key: string]: string };
     gate_inputs: { [key: string]: any };
+    retry: number;
 
     // UI infos for queue
     updating: boolean;

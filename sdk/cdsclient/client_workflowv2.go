@@ -209,3 +209,13 @@ func (c *client) WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdenti
 	}
 	return nil
 }
+
+func (c *client) WorkflowV2RunJobRetries(ctx context.Context, projectKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJob, error) {
+	var runJobs []sdk.V2WorkflowRunJob
+	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/retry", projectKey, workflowRunID, jobRunID)
+	_, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &runJobs)
+	if err != nil {
+		return nil, err
+	}
+	return runJobs, nil
+}

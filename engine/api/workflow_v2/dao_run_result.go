@@ -40,19 +40,19 @@ func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2
 	return gorpmapping.Update(db, &entity)
 }
 
-func LoadRunResultsByRunIDAttempt(ctx context.Context, db gorp.SqlExecutor, runID string, runAttempt int64) ([]sdk.V2WorkflowRunResult, error) {
+func LoadRunResultsByRunIDAttempt(ctx context.Context, db gorp.SqlExecutor, runID string, runJobIDs []string, runAttempt int64) ([]sdk.V2WorkflowRunResult, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRunResultsByRunIDAttempt")
 	defer next()
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM v2_workflow_run_result
-    WHERE workflow_run_id = $1 AND run_attempt = $2
+    WHERE workflow_run_id = $1 AND run_attempt = $2 AND workflow_run_job_id = ANY($3)
     ORDER BY issued_at ASC
-	`).Args(runID, runAttempt)
+	`).Args(runID, runAttempt, pq.StringArray(runJobIDs))
 	return getAllRunResults(ctx, db, query)
 }
 
-func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID string) ([]sdk.V2WorkflowRunResult, error) {
+func LoadRunResultsByRunIDForPurge(ctx context.Context, db gorp.SqlExecutor, runID string) ([]sdk.V2WorkflowRunResult, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRunResultsByRunID")
 	defer next()
 	query := gorpmapping.NewQuery(`

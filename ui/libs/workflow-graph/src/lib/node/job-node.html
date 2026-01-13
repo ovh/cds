@@ -49,10 +49,11 @@
     </div>
     <ng-template #jobID>
         <div *ngIf="node?.name" class="name" title="{{node?.name}}">
+            <nz-badge nzStandalone [nzCount]="node?.run?.retry" [nzSize]="'small'" [nzTitle]="'Number of retries'" />
+            <span *ngIf="warningStep" nz-icon [nzType]="'warning'" class="warning" title="There is at least 1 step failed"></span>
             {{node?.name}}
         </div>
     </ng-template>
-
     <div *ngIf="duration" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
         {{duration}}
         <ng-template #durationTooltip>

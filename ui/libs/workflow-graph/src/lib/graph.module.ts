@@ -8,13 +8,14 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { CommonModule } from '@angular/common';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline } from '@ant-design/icons-angular/icons';
+import {NzBadgeModule } from 'ng-zorro-antd/badge';
+import { AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline, WarningOutline } from '@ant-design/icons-angular/icons';
 import { IconDefinition } from '@ant-design/icons-angular';
 import { GraphMatrixNodeComponent } from './node/matrix-node.component';
 import { IsJobTerminatedPipe } from './is-job-terminated.pipe';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 
-const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline];
+const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline, WarningOutline];
 
 @NgModule({
   declarations: [
@@ -28,6 +29,7 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
   imports: [
     CommonModule,
     NzAvatarModule,
+    NzBadgeModule,
     NzButtonModule,
     NzIconModule.forRoot(icons),
     NzPopconfirmModule,

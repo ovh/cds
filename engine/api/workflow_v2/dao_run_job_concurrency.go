@@ -47,7 +47,7 @@ func CountRunningWithProjectConcurrency(ctx context.Context, db gorp.SqlExecutor
 	) 
 	SELECT jobs.nb + runs.nb
 	FROM jobs, runs`
-	nb, err := db.SelectInt(q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)})
+	nb, err := db.SelectInt(q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray(sdk.RunningStatusesV2WorkflowRunJob))
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
@@ -78,7 +78,7 @@ func CountRunningWithWorkflowConcurrency(ctx context.Context, db gorp.SqlExecuto
 			concurrency->>'scope' = $6 AND
 			status = ANY($7)
 	) SELECT jobs.nb + runs.nb FROM jobs, runs`
-	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)})
+	nb, err := db.SelectInt(q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray(sdk.RunningStatusesV2WorkflowRunJob))
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
@@ -162,7 +162,7 @@ func LoadProjectConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj 
 	`
 
 	var rules []ConcurrencyRule
-	if _, err := db.Select(&rules, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}); err != nil {
+	if _, err := db.Select(&rules, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray(append([]string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.RunningStatusesV2WorkflowRunJob...))); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -201,7 +201,7 @@ func LoadWorkflowConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj
 	`
 
 	var rules []ConcurrencyRule
-	if _, err := db.Select(&rules, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}); err != nil {
+	if _, err := db.Select(&rules, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray(append([]string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.RunningStatusesV2WorkflowRunJob...))); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -375,7 +375,7 @@ func LoadProjectConccurencyRunObjects(ctx context.Context, db gorp.SqlExecutor, 
 		SELECT * FROM runs
 	) tmp ORDER BY last_modified ASC`
 
-	jobStatus := []string{string(sdk.V2WorkflowRunJobStatusBlocked), string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}
+	jobStatus := append([]string{string(sdk.V2WorkflowRunJobStatusBlocked)}, sdk.RunningStatusesV2WorkflowRunJob...)
 	runStatus := []string{string(sdk.V2WorkflowRunStatusBlocked), string(sdk.V2WorkflowRunStatusBuilding)}
 	var pcr []sdk.ProjectConcurrencyRunObject
 	if _, err := db.Select(&pcr, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray(jobStatus), pq.StringArray(runStatus)); err != nil {
