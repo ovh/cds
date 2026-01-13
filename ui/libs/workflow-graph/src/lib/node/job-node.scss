@@ -61,6 +61,14 @@
         margin: 0 10px;
     }
 
+    nz-badge {
+        margin: 1px;
+    }
+
+    .warning {
+        color: $cds_color_orange;
+    }
+
     .duration {
         font-size: 0.8em;
         margin-right: 10px;

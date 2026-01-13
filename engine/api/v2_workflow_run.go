@@ -1648,6 +1648,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		WorkflowRunID:     runRequest.WorkflowRunID,
 		WebHookID:         runRequest.WebhookID,
 		RepositoryOrigin:  repoOrigin,
+		HookEventID:       runRequest.HookEventID,
 	}
 
 	var msg string

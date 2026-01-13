@@ -240,6 +240,7 @@ type V2WorkflowRunEvent struct {
 	WorkflowRun       string                 `json:"workflow_run"`
 	WorkflowRunID     string                 `json:"workflow_run_id"`
 	WebHookID         string                 `json:"webhook_id"`
+	HookEventID       string                 `json:"hook_event_id,omitempty"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {

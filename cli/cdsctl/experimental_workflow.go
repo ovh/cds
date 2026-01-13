@@ -254,7 +254,33 @@ func workflowRunStatusFunc(v cli.Values) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return run, nil
+
+	result := struct {
+		AdminMFA     bool                    `cli:"admin_mfa"`
+		ID           string                  `cli:"id"`
+		LastModified time.Time               `cli:"last_modified"`
+		ProjectKey   string                  `cli:"project_key"`
+		RunNumber    int64                   `cli:"run_number"`
+		Started      time.Time               `cli:"started"`
+		Status       sdk.V2WorkflowRunStatus `cli:"status"`
+		Username     string                  `cli:"username"`
+		WorkflowName string                  `cli:"workflow_name"`
+		HookEventID  string                  `cli:"hook_event_id"`
+	}{
+		ID:           run.ID,
+		LastModified: run.LastModified,
+		ProjectKey:   run.ProjectKey,
+		RunNumber:    run.RunNumber,
+		Started:      run.Started,
+		Status:       run.Status,
+		WorkflowName: run.WorkflowName,
+		HookEventID:  run.RunEvent.HookEventID,
+	}
+	if run.Initiator != nil {
+		result.AdminMFA = run.Initiator.IsAdminWithMFA
+		result.Username = run.Initiator.Username()
+	}
+	return result, nil
 }
 
 var workflowRunStopCmd = cli.Command{
