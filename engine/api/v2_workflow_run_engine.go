@@ -236,7 +236,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			Initiator:          rj.Initiator,
 			Concurrency:        rj.Concurrency,
 		}
-
 		rj.Status = sdk.V2WorkflowRunJobStatusFail
 
 		tx, err := api.mustDB().Begin()
@@ -255,6 +254,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, *run, newRj)
 	}
 	if hasRetryJob {
 		api.EnqueueWorkflowRun(ctx, wrEnqueue.RunID, wrEnqueue.Initiator, run.WorkflowName, run.RunNumber)
