@@ -259,7 +259,7 @@ func (w *V2WorkflowRunEvent) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunJob struct {
-	ID                 string                 `json:"id" db:"id"`
+	ID                 string                 `json:"id" db:"id" cli:"id"`
 	JobID              string                 `json:"job_id" db:"job_id" cli:"job_id"`
 	WorkflowRunID      string                 `json:"workflow_run_id" db:"workflow_run_id" action_metadata:"workflow-run-id"`
 	ProjectKey         string                 `json:"project_key" db:"project_key" action_metadata:"project-key"`
@@ -268,7 +268,7 @@ type V2WorkflowRunJob struct {
 	WorkflowName       string                 `json:"workflow_name" db:"workflow_name" action_metadata:"workflow-name"`
 	RunNumber          int64                  `json:"run_number" db:"run_number" action_metadata:"run-number"`
 	RunAttempt         int64                  `json:"run_attempt" db:"run_attempt"`
-	Retry              int64                  `json:"retry" db:"retry"`
+	Retry              int64                  `json:"retry" db:"retry" cli:"retry"`
 	Status             V2WorkflowRunJobStatus `json:"status" db:"status" cli:"status"`
 	Queued             time.Time              `json:"queued" db:"queued"`
 	Scheduled          *time.Time             `json:"scheduled,omitempty" db:"scheduled"`

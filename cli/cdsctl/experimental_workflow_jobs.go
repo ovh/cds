@@ -24,6 +24,7 @@ func experimentalWorkflowJob() *cobra.Command {
 		cli.NewGetCommand(workflowRunJobCmd, workflowRunJobFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowRunStartJobCmd, workflowRunStartJobFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunJobInfoCmd, workflowRunJobInfoFunc, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(workflowRunJobListRetriesCmd, workflowRunJobListRetriesFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -190,4 +191,33 @@ func workflowRunStopJobFunc(v cli.Values) error {
 	}
 	fmt.Printf("Workflow run %s job %s has been stopped\n", workflowRunID, jobIdentifier)
 	return nil
+}
+
+var workflowRunJobListRetriesCmd = cli.Command{
+	Name:    "retries",
+	Aliases: []string{"retry"},
+	Short:   "Retrieve retries job information on the given workflow run for the given run job",
+	Example: "cdsctl experimental workflow run jobs retries <proj_key> <workflow_run_id> <run_job_id>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "proj_key"},
+		{Name: "workflow_run_id"},
+		{Name: "run_job_id"},
+	},
+	Mcp: true,
+}
+
+func workflowRunJobListRetriesFunc(v cli.Values) (cli.ListResult, error) {
+	projKey := v.GetString("proj_key")
+	workflowRunID := v.GetString("workflow_run_id")
+	jobIdentifier := v.GetString("run_job_id")
+
+	if !sdk.IsValidUUID(jobIdentifier) {
+		return nil, fmt.Errorf("run_job_id must be a valid UUID")
+	}
+	retries, err := client.WorkflowV2RunJobRetries(context.Background(), projKey, workflowRunID, jobIdentifier)
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(retries), nil
 }
