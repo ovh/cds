@@ -43,3 +43,6 @@ inputs:
     type: text
     description: "The email used to sign git commits"
     default: ${{git.email}}
+  depth:
+    type: text
+    description: "Depth parameter for git clone --depth option"

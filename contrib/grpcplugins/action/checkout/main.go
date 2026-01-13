@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"strconv"
 	"strings"
 
 	"github.com/fsamin/go-repo"
@@ -44,15 +45,16 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	submodules := q.GetOptions()["submodules"]
 	gpgKey := q.GetOptions()["gpg-key"]
 	email := q.GetOptions()["email"]
+	depthS := q.GetOptions()["depth"]
 
 	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
 	var key *sdk.ProjectKey
-	var authOption repo.Option
+	var gitOptions []repo.Option
 	if sshKey == "" {
-		authOption = repo.WithHTTPAuth(authUsername, authToken)
+		gitOptions = append(gitOptions, repo.WithHTTPAuth(authUsername, authToken))
 	} else {
 		var err error
 		key, err = grpcplugins.GetProjectKey(ctx, &p.Common, sshKey)
@@ -61,7 +63,7 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 			res.Details = fmt.Sprintf("unable to retrieve sshkey %s: %v", sshKey, err)
 			return stream.Send(res)
 		}
-		authOption = repo.WithSSHAuth([]byte(key.Private))
+		gitOptions = append(gitOptions, repo.WithSSHAuth([]byte(key.Private)))
 	}
 
 	// Create directory
@@ -149,9 +151,22 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 		grpcplugins.Logf(&p.Common, "Can't install GPG Key %q, gpg/gpg2 is not available\n", gpgKey)
 	}
 
+	if depthS != "" {
+		d, err := strconv.Atoi(depthS)
+		if err != nil {
+			res := &actionplugin.StreamResult{
+				Status:  sdk.StatusFail,
+				Details: fmt.Sprintf("invalid depth value: %v", err),
+			}
+			return stream.Send(res)
+		}
+		grpcplugins.Logf(&p.Common, "Setting git clone depth to %d\n", d)
+		gitOptions = append(gitOptions, repo.WithDepth(d))
+	}
+
 	grpcplugins.Logf(&p.Common, "Start cloning %s\n", gitURL)
 
-	clonedRepo, err := repo.Clone(ctx, path, gitURL, authOption)
+	clonedRepo, err := repo.Clone(ctx, path, gitURL, gitOptions...)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = fmt.Sprintf("unable to clone the repository %s: %v", gitURL, err)
