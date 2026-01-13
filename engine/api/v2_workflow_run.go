@@ -161,6 +161,43 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 		}
 }
 
+func (api *API) getWorkflowRunJobRetryHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			workflowRunID := vars["workflowRunID"]
+			jobRunID := vars["jobRunID"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
+			if err != nil {
+				return err
+			}
+
+			runJob, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobRunID)
+			if err != nil {
+				return err
+			}
+
+			runJobs, err := workflow_v2.LoadRunJobRetries(ctx, api.mustDB(), *runJob)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, runJobs, http.StatusOK)
+
+		}
+}
+
 func (api *API) getWorkflowRunJobHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

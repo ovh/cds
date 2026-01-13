@@ -81,6 +81,10 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     jobRunInfos: Array<WorkflowRunInfo> = [];
     autoScrolling: boolean = true;
 
+    jobRetries: Array<V2WorkflowRunJob>;
+    selectedJobRetry: V2WorkflowRunJob;
+    selectedRetry: number = 0;
+
     constructor(
         private _cd: ChangeDetectorRef,
         private _workflowRunService: V2WorkflowRunService,
@@ -96,6 +100,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.selectedRetry = this.jobRun?.retry;
         this.change();
     }
 
@@ -117,6 +122,13 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         if (jobRunIDChanged) {
             this.reset();
         }
+        if (this.jobRun.retry > 0) {
+            await this.getRetry();
+            this.selectedJobRetry = this.jobRetries.find(r => r.retry === this.selectedRetry);
+            this._cd.markForCheck();
+        } else {
+            this.selectedJobRetry = this.jobRun;
+        }
         if (isInit || jobRunIDChanged) {
             await this.setInfos();
             this._cd.markForCheck();
@@ -129,17 +141,29 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
             this._cd.markForCheck();
             await this.loadStepsLogs();
         }
+       
+
         this._cd.detectChanges();
         this.autoScroll();
     }
 
+    async getRetry() {
+        this.jobRetries = [];
+         try {
+            this.jobRetries = await lastValueFrom(this._workflowRunService.getRetries(this.jobRun.project_key, this.jobRun.workflow_run_id, this.jobRun.id));
+        } catch (e) {
+            this._messageService.error(`Unable to get run job retries: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return;
+        }
+    }
+
     async setServices() {
         let promises = [];
-        Object.keys(this.jobRun.job.services ?? {}).forEach((serviceName, i) => {
+        Object.keys(this.selectedJobRetry.job.services ?? {}).forEach((serviceName, i) => {
             if (!this.tabs[i + 1]) {
                 this.tabs.push({ name: serviceName, logBlocks: [new LogBlock(serviceName)] });
             }
-            promises.push(lastValueFrom(this._workflowRunService.getRunJobServiceLogsLink(this.workflowRun, this.jobRun.id, serviceName)));
+            promises.push(lastValueFrom(this._workflowRunService.getRunJobServiceLogsLink(this.workflowRun, this.selectedJobRetry.id, serviceName)));
         });
         const res = await Promise.all(promises);
         res.forEach((link, i) => {
@@ -162,19 +186,19 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
 
     async setInfos() {
         try {
-            this.jobRunInfos = await lastValueFrom(this._workflowRunService.getRunJobInfos(this.workflowRun, this.jobRun.id));
+            this.jobRunInfos = await lastValueFrom(this._workflowRunService.getRunJobInfos(this.workflowRun, this.selectedJobRetry.id));
         } catch (e) {
             this._messageService.error(`Unable to get run job infos: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
             return;
         }
 
-        if (!V2WorkflowRunJobStatusIsTerminated(this.jobRun.status) && !this.pollRunJobInfosSubs) {
+        if (!V2WorkflowRunJobStatusIsTerminated(this.selectedJobRetry.status) && !this.pollRunJobInfosSubs) {
             this.pollRunJobInfosSubs = interval(5000)
                 .pipe(concatMap(_ => from(this.refreshInfos())))
                 .subscribe();
         }
 
-        if (V2WorkflowRunJobStatusIsTerminated(this.jobRun.status) && this.pollRunJobInfosSubs) {
+        if (V2WorkflowRunJobStatusIsTerminated(this.selectedJobRetry.status) && this.pollRunJobInfosSubs) {
             this.pollRunJobInfosSubs.unsubscribe();
         }
 
@@ -191,7 +215,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     async setSteps() {
         let blockIndex = 1;
 
-        const steps = this.jobRun.job.steps ?? [];
+        const steps = this.selectedJobRetry.job.steps ?? [];
 
         const setBlockData = (idx: number, stepStatus: StepStatus): void => {
             this.tabs[0].logBlocks[blockIndex].failed = PipelineStatus.FAIL === stepStatus.conclusion;
@@ -205,29 +229,29 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         // Create blocks for steps
         for (let i = 0; i < steps.length; i++) {
             const stepName = this.getJobStepName(steps[i].id, i);
-            if (!(this.jobRun.steps_status ?? {})[stepName]) {
+            if (!(this.selectedJobRetry.steps_status ?? {})[stepName]) {
                 break;
             }
             if (!this.tabs[0].logBlocks[blockIndex]) {
                 this.tabs[0].logBlocks.push(new LogBlock(stepName));
             }
-            setBlockData(blockIndex, this.jobRun.steps_status[stepName]);
+            setBlockData(blockIndex, this.selectedJobRetry.steps_status[stepName]);
             blockIndex++;
         }
 
         // Create blocks for post steps
         for (let i = steps.length - 1; i >= 0; i--) {
             const stepName = this.getJobStepName(steps[i].id, i)
-            if ((this.jobRun.steps_status ?? {})['Post-' + stepName]) {
+            if ((this.selectedJobRetry.steps_status ?? {})['Post-' + stepName]) {
                 if (!this.tabs[0].logBlocks[blockIndex]) {
                     this.tabs[0].logBlocks.push(new LogBlock('Post-' + stepName));
                 }
-                setBlockData(blockIndex, this.jobRun.steps_status[stepName]);
+                setBlockData(blockIndex, this.selectedJobRetry.steps_status[stepName]);
                 blockIndex++;
             }
         }
 
-        const links = await lastValueFrom(this._workflowRunService.getAllLogsLinks(this.workflowRun, this.jobRun.id));
+        const links = await lastValueFrom(this._workflowRunService.getAllLogsLinks(this.workflowRun, this.selectedJobRetry.id));
         links.datas.forEach((link, i) => {
             if (this.tabs[0].logBlocks[i + 1]) {
                 this.tabs[0].logBlocks[i + 1].link = link;
@@ -240,11 +264,11 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
             this.tabs[0].logBlocks[idx + 1].totalLinesCount = r.lines_count;
         });
 
-        if (!PipelineStatus.isDone(this.jobRun.status)) {
+        if (!PipelineStatus.isDone(this.selectedJobRetry.status)) {
             this.startStreamingLogsForJob();
         }
 
-        if (PipelineStatus.isDone(this.jobRun.status)) {
+        if (PipelineStatus.isDone(this.selectedJobRetry.status)) {
             this.stopStreamingLogsForJob();
         }
     }
@@ -366,7 +390,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
                 next: value => {
                     if (value.type === 'open') {
                         this.websocket.next(<CDNStreamFilter>{
-                            job_run_id: this.jobRun.id
+                            job_run_id: this.selectedJobRetry.id
                         });
                     }
                 }
@@ -409,6 +433,11 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
 
     autoScroll(): void {
         if (this.autoScrolling) { this.clickScroll(ScrollTarget.BOTTOM); }
+    }
+
+    onRetryChange(retry: number): void {
+        this.selectedRetry = retry;
+        this.change();
     }
 
 }

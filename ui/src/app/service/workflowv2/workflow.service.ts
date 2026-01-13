@@ -66,4 +66,8 @@ export class V2WorkflowRunService {
     triggerJob(projKey: string, workflowRunID: string, jobRunID: string, data?: any): Observable<V2WorkflowRun> {
         return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/job/${jobRunID}/run`, data);
     }
+
+    getRetries(projectKey: string, runID: string, runJobID: string): Observable<Array<V2WorkflowRunJob>> {
+        return this._http.get<Array<V2WorkflowRunJob>>(`/v2/project/${projectKey}/run/${runID}/job/${runJobID}/retry`);
+    }
 }

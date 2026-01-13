@@ -581,6 +581,12 @@ func (w V2Workflow) Lint() []error {
 
 	errs := w.CheckStageAndJobNeeds()
 
+	for _, j := range w.Jobs {
+		if j.Retry < 0 || j.Retry > 2 {
+			errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: retry must be 0, 1 or 2", w.Name, j.Name))
+		}
+	}
+
 	if err := w.CheckSemver(); err != nil {
 		errs = append(errs, err)
 	}
