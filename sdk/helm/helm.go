@@ -97,14 +97,15 @@ var (
 	settings   = cli.New()
 )
 
-func UpdateDependencies(c *Chart) error {
+func UpdateDependencies(c *Chart, skipUpdate bool) error {
 	if helm.HelmMajorVersionCurrent() == helm.HelmMajorVersion2 {
 		v2downloadManager := &v2downloader.Manager{
-			Out:       os.Stdout,
-			ChartPath: c.ChartPath(),
-			HelmHome:  v2settings.Home,
-			Getters:   v2getter.All(v2settings),
-			Debug:     v2settings.Debug,
+			Out:        os.Stdout,
+			ChartPath:  c.ChartPath(),
+			HelmHome:   v2settings.Home,
+			Getters:    v2getter.All(v2settings),
+			Debug:      v2settings.Debug,
+			SkipUpdate: skipUpdate,
 		}
 		if err := v2downloadManager.Update(); err != nil {
 			return err
