@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs';
 import { finalize, first, flatMap } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-application-add',
     templateUrl: './application.add.html',
     styleUrls: ['./application.add.scss'],

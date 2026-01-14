@@ -95,6 +95,7 @@ export interface WithKey {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-data-table',
     templateUrl: './data-table.html',
     styleUrls: ['./data-table.scss'],

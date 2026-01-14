@@ -7,6 +7,7 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom } from "rxjs";
 
 @Component({
+    standalone: false,
     selector: 'app-project-variable-sets',
     templateUrl: './variablesets.html',
     styleUrls: ['./variablesets.scss'],

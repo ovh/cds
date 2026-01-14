@@ -25,6 +25,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-hook-modal',
     templateUrl: './hook.modal.html',
     styleUrls: ['./hook.modal.scss'],

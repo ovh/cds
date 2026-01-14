@@ -9,6 +9,7 @@ import { Project } from '../../../model/project.model';
 import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-pipeline-add',
     templateUrl: './pipeline.add.html',
     styleUrls: ['./pipeline.add.scss'],

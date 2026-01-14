@@ -5,6 +5,7 @@ import { EnrichProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-project-applications',
     templateUrl: './application.list.html',
     styleUrls: ['./application.list.scss'],

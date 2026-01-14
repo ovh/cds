@@ -31,6 +31,7 @@ import { Tab } from 'app/shared/tabs/tabs.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow',
     templateUrl: './workflow.html',
     styleUrls: ['./workflow.scss'],

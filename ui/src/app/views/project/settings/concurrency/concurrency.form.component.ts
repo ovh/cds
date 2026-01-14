@@ -10,6 +10,7 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { finalize, lastValueFrom } from "rxjs";
 
 @Component({
+    standalone: false,
     selector: 'app-project-concurrency-form',
     templateUrl: './concurrency.form.component.html',
     styleUrls: ['./concurrency.form.component.scss'],

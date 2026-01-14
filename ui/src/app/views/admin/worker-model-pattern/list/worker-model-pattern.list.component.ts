@@ -6,6 +6,7 @@ import { Column, ColumnType, Filter } from 'app/shared/table/data-table.componen
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-worker-model-pattern-list',
     templateUrl: './worker-model-pattern.list.html',
     styleUrls: ['./worker-model-pattern.list.scss'],

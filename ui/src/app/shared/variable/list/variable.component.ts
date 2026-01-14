@@ -18,6 +18,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { VariableAuditComponent } from 'app/shared/variable/audit/audit.component';
 
 @Component({
+    standalone: false,
     selector: 'app-variable',
     templateUrl: './variable.html',
     styleUrls: ['./variable.scss'],

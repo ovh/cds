@@ -16,6 +16,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-action-edit',
     templateUrl: './action.edit.html',
     styleUrls: ['./action.edit.scss'],

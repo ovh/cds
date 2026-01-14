@@ -10,6 +10,7 @@ import { ProjectV2State } from "app/store/project-v2.state";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 
 @Component({
+    standalone: false,
 	selector: 'app-project-activity-bar',
 	templateUrl: './activity-bar.html',
 	styleUrls: ['./activity-bar.scss'],

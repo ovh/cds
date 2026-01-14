@@ -27,6 +27,7 @@ import { Observable, of as observableOf } from 'rxjs';
 import { filter, finalize, first, map, switchMap } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
   selector: 'app-workflow-node-add-wizard',
   templateUrl: './node.wizard.html',
   styleUrls: ['./node.wizard.scss'],

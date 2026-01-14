@@ -18,6 +18,7 @@ import { finalize } from 'rxjs/operators';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-delete-modal',
     templateUrl: './delete-modal.html',
     styleUrls: ['./delete-modal.scss'],

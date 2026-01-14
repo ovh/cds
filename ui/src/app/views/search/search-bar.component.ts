@@ -11,6 +11,7 @@ import { lastValueFrom } from "rxjs";
 import { DisplaySearchResult } from "./search.component";
 
 @Component({
+    standalone: false,
 	selector: 'app-search-bar',
 	templateUrl: './search-bar.html',
 	styleUrls: ['./search-bar.scss'],

@@ -9,6 +9,7 @@ import { AddEnvironmentKey, DeleteEnvironmentKey } from 'app/store/environment.a
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-environment-keys',
     templateUrl: './environment.keys.html',
     styleUrls: ['./environment.keys.scss'],

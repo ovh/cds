@@ -29,6 +29,7 @@ import { first } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-edit',
     templateUrl: './workflow-template.edit.html',
     styleUrls: ['./workflow-template.edit.scss']

@@ -23,6 +23,7 @@ import { EventV2State } from 'app/store/event-v2.state';
 import Debounce from 'app/shared/decorator/debounce';
 
 @Component({
+    standalone: false,
     selector: 'app-queue',
     templateUrl: './queue.component.html',
     styleUrls: ['./queue.component.scss'],

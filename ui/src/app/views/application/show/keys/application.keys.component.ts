@@ -9,6 +9,7 @@ import { AddApplicationKey, DeleteApplicationKey } from 'app/store/applications.
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-application-keys',
     templateUrl: './application.keys.html',
     styleUrls: ['./application.keys.scss'],

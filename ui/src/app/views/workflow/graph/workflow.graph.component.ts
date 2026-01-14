@@ -11,6 +11,7 @@ import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-graph',
     templateUrl: './workflow.graph.html',
     styleUrls: ['./workflow.graph.scss'],

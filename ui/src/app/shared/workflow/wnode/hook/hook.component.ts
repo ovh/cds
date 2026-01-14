@@ -13,6 +13,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-hook',
     templateUrl: './hook.html',
     styleUrls: ['./hook.scss'],

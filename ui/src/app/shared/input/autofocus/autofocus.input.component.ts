@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 
 @Component({
+    standalone: false,
     selector: 'app-input-autofocus',
     templateUrl: './autofocus.input.html',
     changeDetection: ChangeDetectionStrategy.OnPush

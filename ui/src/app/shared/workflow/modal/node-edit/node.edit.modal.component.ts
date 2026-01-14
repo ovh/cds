@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-node-edit-modal',
     templateUrl: './node.edit.modal.html',
     styleUrls: ['./node.edit.modal.scss'],

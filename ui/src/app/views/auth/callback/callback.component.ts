@@ -12,6 +12,7 @@ import {finalize, first} from 'rxjs/operators';
 import {Store} from "@ngxs/store";
 
 @Component({
+    standalone: false,
     selector: 'app-auth-callback',
     templateUrl: './callback.html',
     styleUrls: ['./callback.scss'],

@@ -21,6 +21,7 @@ import { editor, } from 'monaco-editor';
 declare const monaco: any;
 
 @Component({
+    standalone: false,
 	selector: 'app-projectv2-explore-entity',
 	templateUrl: './explore-entity.html',
 	styleUrls: ['./explore-entity.scss'],

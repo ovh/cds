@@ -43,6 +43,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-trigger',
     templateUrl: './workflow.trigger.html',
     styleUrls: ['workflow.trigger.scss'],

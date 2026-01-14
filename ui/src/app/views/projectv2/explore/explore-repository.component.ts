@@ -16,6 +16,7 @@ import { ErrorUtils } from 'app/shared/error.utils';
 import { ProjectV2State } from 'app/store/project-v2.state';
 
 @Component({
+    standalone: false,
     selector: 'app-projectv2-explore-repository',
     templateUrl: './explore-repository.html',
     styleUrls: ['./explore-repository.scss'],

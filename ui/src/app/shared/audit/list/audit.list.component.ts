@@ -4,6 +4,7 @@ import { Item } from 'app/shared/diff/list/diff.list.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
 
 @Component({
+    standalone: false,
     selector: 'app-audit-list',
     templateUrl: './audit.list.html',
     styleUrls: ['./audit.list.scss'],

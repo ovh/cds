@@ -16,6 +16,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-notifications-form',
     templateUrl: './workflow.notifications.form.html',
     styleUrls: ['./workflow.notifications.form.scss'],

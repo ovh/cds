@@ -15,6 +15,7 @@ import { lastValueFrom } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-application-admin',
     templateUrl: './application.admin.html',
     styleUrls: ['./application.admin.scss'],

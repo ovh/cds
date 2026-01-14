@@ -18,6 +18,7 @@ export class Tab {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-tabs',
     templateUrl: './tabs.html',
     styleUrls: ['./tabs.scss'],

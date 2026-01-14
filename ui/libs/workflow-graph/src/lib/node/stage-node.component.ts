@@ -18,6 +18,7 @@ import { GraphNodeAction } from './model';
 export type WorkflowV2JobsNodeOrMatrixComponent = GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphMatrixNodeComponent;
 
 @Component({
+    standalone: false,
     selector: 'app-stage-node',
     templateUrl: './stage-node.html',
     styleUrls: ['./stage-node.scss'],

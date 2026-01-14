@@ -9,6 +9,7 @@ import { ServiceService } from '../../../../service/service/service.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 
 @Component({
+    standalone: false,
     selector: 'app-service-list',
     templateUrl: './service.list.html',
     styleUrls: ['./service.list.scss'],

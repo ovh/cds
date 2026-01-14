@@ -6,6 +6,7 @@ import { PermissionService } from 'app/shared/permission/permission.service';
 import { Table } from 'app/shared/table/table';
 
 @Component({
+    standalone: false,
     selector: 'app-permission-list',
     templateUrl: './permission.list.html',
     styleUrls: ['./permission.list.scss'],

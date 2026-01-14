@@ -8,6 +8,7 @@ import { finalize } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
+    standalone: false,
     selector: 'app-project-workflows',
     templateUrl: './workflow.list.html',
     styleUrls: ['./workflow.list.scss'],

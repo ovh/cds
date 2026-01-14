@@ -7,6 +7,7 @@ import { jws } from 'jsrsasign';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-auth-verify',
     templateUrl: './verify.html',
     styleUrls: ['./verify.scss'],

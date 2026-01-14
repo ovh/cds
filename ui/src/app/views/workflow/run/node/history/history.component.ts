@@ -11,6 +11,7 @@ import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-run-history',
     templateUrl: './history.html',
     styleUrls: ['./history.scss'],

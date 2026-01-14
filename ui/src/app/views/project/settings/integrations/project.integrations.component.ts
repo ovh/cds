@@ -12,6 +12,7 @@ import { IntegrationService } from 'app/service/services.module';
 import { NsAutoHeightTableDirective } from 'app/shared/directives/ns-auto-height-table.directive';
 
 @Component({
+    standalone: false,
     selector: 'app-project-integrations',
     templateUrl: './project.integrations.html',
     styleUrls: ['./project.integrations.scss'],

@@ -16,6 +16,7 @@ import { PreferencesState } from 'app/store/preferences.state';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-editor',
     templateUrl: './workflow-template.editor.html',
     styleUrls: ['./workflow-template.editor.scss'],

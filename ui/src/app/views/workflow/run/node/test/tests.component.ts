@@ -6,6 +6,7 @@ import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-tests-result',
     templateUrl: './tests.result.html',
     styleUrls: ['./tests.result.scss'],

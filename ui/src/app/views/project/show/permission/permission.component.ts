@@ -10,6 +10,7 @@ import { finalize } from 'rxjs/operators';
 import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
+    standalone: false,
     selector: 'app-project-permissions',
     templateUrl: './permission.html',
     changeDetection: ChangeDetectionStrategy.OnPush

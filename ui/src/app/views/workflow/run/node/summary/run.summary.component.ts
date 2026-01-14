@@ -16,6 +16,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration.service';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-run-summary',
     templateUrl: './run.summary.html',
     styleUrls: ['./run.summary.scss'],

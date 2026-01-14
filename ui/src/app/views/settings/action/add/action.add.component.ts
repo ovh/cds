@@ -16,6 +16,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-action-add',
     templateUrl: './action.add.html',
     styleUrls: ['./action.add.scss'],

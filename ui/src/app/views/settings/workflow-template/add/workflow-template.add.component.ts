@@ -13,6 +13,7 @@ import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-add',
     templateUrl: './workflow-template.add.html',
     styleUrls: ['./workflow-template.add.scss'],

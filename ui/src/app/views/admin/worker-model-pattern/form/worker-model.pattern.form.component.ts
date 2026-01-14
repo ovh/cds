@@ -6,6 +6,7 @@ import omit from 'lodash-es/omit';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-worker-model-pattern-form',
     templateUrl: './worker-model-pattern.form.html',
     styleUrls: ['./worker-model-pattern.form.scss'],

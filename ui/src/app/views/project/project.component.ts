@@ -7,6 +7,7 @@ import { ProjectState } from 'app/store/project.state';
 import { ProjectV2State } from 'app/store/project-v2.state';
 
 @Component({
+    standalone: false,
     selector: 'app-project',
     templateUrl: './project.html',
     styleUrls: ['./project.scss'],

@@ -7,6 +7,7 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 import { Tab } from '../../../../shared/tabs/tabs.component';
 
 @Component({
+    standalone: false,
     selector: 'app-action-list',
     templateUrl: './action.list.html',
     styleUrls: ['./action.list.scss'],

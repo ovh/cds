@@ -31,6 +31,7 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from './trigger-analysis/trigger-analysis.component';
 
 @Component({
+    standalone: false,
     selector: 'app-projectv2-explore-sidebar',
     templateUrl: './explore-sidebar.html',
     styleUrls: ['./explore-sidebar.scss'],

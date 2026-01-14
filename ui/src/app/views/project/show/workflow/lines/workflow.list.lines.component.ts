@@ -6,6 +6,7 @@ import { AddLabelWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/sto
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-project-workflows-lines',
     templateUrl: './workflow.list.lines.html',
     styleUrls: ['./workflow.list.lines.scss'],

@@ -9,6 +9,7 @@ import { ConfigState } from 'app/store/config.state';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-project-repomanager-list',
     templateUrl: './project.repomanager.list.html',
     styleUrls: ['./project.repomanager.list.scss'],
