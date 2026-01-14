@@ -73,10 +73,10 @@
     "ng-event-source": "1.0.14",
     "ng-zorro-antd": "18.2.1",
     "ng2-completer": "2.0.8",
-    "ng2-dragula": "5.1.0",
+    "ng2-dragula": "6.0.0",
     "ngx-clipboard": "16.0.0",
     "ngx-infinite-scroll": "18.0.0",
-    "ngx-markdown": "18.1.0",
+    "ngx-markdown": "19.1.1",
     "ngx-moment": "6.0.2",
     "postcss": "8.4.49",
     "prismjs": "1.28.0",
@@ -89,7 +89,7 @@
     "ts-helpers": "1.1.2",
     "tslib": "2.3.1",
     "url": "0.11.4",
-    "zone.js": "0.14.10",
+    "zone.js": "0.15.1",
     "zxcvbn": "4.4.2"
   },
   "devDependencies": {
