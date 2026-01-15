@@ -5,10 +5,11 @@ import { AuthenticationService } from 'app/service/authentication/authentication
 import { finalize } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-auth-ask-reset',
-  templateUrl: './ask-reset.html',
-  styleUrls: ['./ask-reset.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-auth-ask-reset',
+    templateUrl: './ask-reset.html',
+    styleUrls: ['./ask-reset.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class AskResetComponent {
   loading: boolean;

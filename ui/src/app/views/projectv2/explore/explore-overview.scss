@@ -1,4 +1,4 @@
-@import '../../../../common.scss';
+@use '../../../../common' as common;
 
 :host {
   height: 100%;
@@ -37,7 +37,7 @@
     }
 
     :host-context(.night) & {
-      border-color: $darkTheme_grey_6;
+      border-color: common.$darkTheme_grey_6;
     }
 
     &:hover {

@@ -1,4 +1,4 @@
-@import '../../../common';
+@use '../../../common' as common;
 nz-row {
   margin-top: 10px;
   margin-bottom: 10px;
@@ -57,20 +57,20 @@ pre {
 }
 
 .green {
-  color: $cds_color_green;
+  color: common.$cds_color_green;
 }
 .red {
-  color: $cds_color_red;
+  color: common.$cds_color_red;
 }
 .blue {
-  color: $cds_color_teal;
+  color: common.$cds_color_teal;
 }
 .grey {
-  color: $cds_trigger_color;
+  color: common.$cds_trigger_color;
 }
 
 .orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }
 
 td {

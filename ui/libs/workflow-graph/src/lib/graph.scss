@@ -1,4 +1,4 @@
-@import "../../../../src/common.scss";
+@use "../../../../src/common.scss" as common;
 
 :host {
     display: block;
@@ -27,14 +27,14 @@
     ::ng-deep {
         .edgePath {
             path {
-                stroke: $polar_grey_3;
+                stroke: common.$polar_grey_3;
 
                 &.highlight {
-                    stroke: $polar_grey_0 !important;
+                    stroke: common.$polar_grey_0 !important;
                 }
 
                 :host-context(.night) & {
-                    stroke: $darkTheme_grey_5;
+                    stroke: common.$darkTheme_grey_5;
 
                     &.highlight {
                         stroke: white !important;
@@ -43,11 +43,11 @@
             }
 
             &.color-success path {
-                stroke: $cds_color_green;
+                stroke: common.$cds_color_green;
             }
 
             &.color-fail path {
-                stroke: $cds_color_red;
+                stroke: common.$cds_color_red;
             }
 
             &.color-inactive path {
@@ -56,11 +56,11 @@
 
             :host-context(.night) & {
                 &.color-success path {
-                    stroke: $darkTheme_green;
+                    stroke: common.$darkTheme_green;
                 }
 
                 &.color-fail path {
-                    stroke: $darkTheme_red;
+                    stroke: common.$darkTheme_red;
                 }
 
                 &.color-inactive path {
@@ -103,7 +103,7 @@
     .hook {
         background-color: white;
         border: 2px solid grey;
-        color: $polar_grey_1;
+        color: common.$polar_grey_1;
         width: auto;
         border-radius: 15px;
         height: 30px;
@@ -122,17 +122,17 @@
         }
 
         :host-context(.night) & {
-            background-color: $darkTheme_grey_1;
-            color: $darkTheme_grey_6;
+            background-color: common.$darkTheme_grey_1;
+            color: common.$darkTheme_grey_6;
         }
 
         &.active {
-            border-color: $cds_color_green;
-            background-color: $cds_color_light_green;
+            border-color: common.$cds_color_green;
+            background-color: common.$cds_color_light_green;
 
             :host-context(.night) & {
-                border-color: $darkTheme_green;
-                background-color: $darkTheme_night_green;
+                border-color: common.$darkTheme_green;
+                background-color: common.$darkTheme_night_green;
             }
         }
     }

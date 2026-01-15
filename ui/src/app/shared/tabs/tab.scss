@@ -1,14 +1,14 @@
-@import '../../../common';
+@use '../../../common' as common;
 
 .green {
-  color: $cds_color_green;
+  color: common.$cds_color_green;
 }
 .red {
-  color: $cds_color_red;
+  color: common.$cds_color_red;
 }
 .orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }
 .blue {
-  color: $cds_color_teal;
+  color: common.$cds_color_teal;
 }

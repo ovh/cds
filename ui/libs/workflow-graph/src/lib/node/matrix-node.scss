@@ -1,4 +1,4 @@
-@import "../../../../../src/common.scss";
+@use "../../../../../src/common.scss" as common;
 
 :host {
     display: flex;
@@ -9,8 +9,8 @@
 }
 
 [nzGhost] {
-    color: $polar_grey_1;
-    border-color: $polar_grey_1;
+    color: common.$polar_grey_1;
+    border-color: common.$polar_grey_1;
 
     &:hover {
         color: black !important;
@@ -18,8 +18,8 @@
     }
 
     :host-context(.night) & {
-        color: $darkTheme_grey_6;
-        border-color: $darkTheme_grey_6;
+        color: common.$darkTheme_grey_6;
+        border-color: common.$darkTheme_grey_6;
 
         &:hover {
             color: white !important;
@@ -60,8 +60,8 @@
     }
 
     .gate {
-        border: 2px solid $polar_grey_1;
-        color: $polar_grey_1;
+        border: 2px solid common.$polar_grey_1;
+        color: common.$polar_grey_1;
         border-radius: 50%;
         margin-left: 2px;
         margin-bottom: 4px;
@@ -73,8 +73,8 @@
         align-items: center;
 
         :host-context(.night) & {
-            color: $darkTheme_grey_6;
-            border-color: $darkTheme_grey_6;
+            color: common.$darkTheme_grey_6;
+            border-color: common.$darkTheme_grey_6;
         }
 
         [nz-icon] {
@@ -86,9 +86,9 @@
 .node {
     width: 100%;
     flex: 1;
-    border: 2px solid $polar_grey_3;
+    border: 2px solid common.$polar_grey_3;
     border-radius: 3px;
-    color: $polar_grey_1;
+    color: common.$polar_grey_1;
     padding: 2px;
     background-color: white;
     margin-bottom: 30px;
@@ -97,9 +97,9 @@
     align-items: center;
 
     :host-context(.night) & {
-        background-color: $darkTheme_grey_1;
-        border-color: $darkTheme_grey_5;
-        color: $darkTheme_grey_6;
+        background-color: common.$darkTheme_grey_1;
+        border-color: common.$darkTheme_grey_5;
+        color: common.$darkTheme_grey_6;
     }
 
     .jobs {
@@ -117,7 +117,7 @@
             flex-direction: row;
             background-color: white;
             align-items: center;
-            border: 2px solid $polar_grey_3;
+            border: 2px solid common.$polar_grey_3;
             border-radius: 3px;
             padding: 2px;
 
@@ -179,56 +179,56 @@
             }
 
             &.success {
-                background-color: $cds_color_light_green;
-                border-color: $cds_color_green;
+                background-color: common.$cds_color_light_green;
+                border-color: common.$cds_color_green;
             }
 
             &.fail {
-                background-color: $cds_color_light_red;
-                border-color: $cds_color_red;
+                background-color: common.$cds_color_light_red;
+                border-color: common.$cds_color_red;
             }
 
             &.building {
-                background-color: $cds_color_light_teal;
-                border-color: $cds_color_teal;
+                background-color: common.$cds_color_light_teal;
+                border-color: common.$cds_color_teal;
             }
 
             &.inactive {
-                background-color: $cds_color_light_grey;
+                background-color: common.$cds_color_light_grey;
                 border-color: grey;
             }
 
             &.active {
-                border: 3px solid $polar_grey_0;
+                border: 3px solid common.$polar_grey_0;
                 padding: 1px;
             }
 
             &.highlight {
-                border-color: $polar_grey_0;
+                border-color: common.$polar_grey_0;
             }
 
             :host-context(.night) & {
-                background-color: $darkTheme_grey_1;
-                border-color: $darkTheme_grey_5;
-                color: $darkTheme_grey_6;
+                background-color: common.$darkTheme_grey_1;
+                border-color: common.$darkTheme_grey_5;
+                color: common.$darkTheme_grey_6;
 
                 &.success {
-                    background-color: $darkTheme_night_green;
-                    border-color: $darkTheme_green;
+                    background-color: common.$darkTheme_night_green;
+                    border-color: common.$darkTheme_green;
                 }
 
                 &.fail {
-                    background-color: $darkTheme_night_red;
-                    border-color: $darkTheme_red;
+                    background-color: common.$darkTheme_night_red;
+                    border-color: common.$darkTheme_red;
                 }
 
                 &.building {
-                    background-color: $darkTheme_night_blue;
-                    border-color: $darkTheme_blue;
+                    background-color: common.$darkTheme_night_blue;
+                    border-color: common.$darkTheme_blue;
                 }
 
                 &.inactive {
-                    background-color: $darkTheme_night_grey;
+                    background-color: common.$darkTheme_night_grey;
                     border-color: grey;
                 }
 

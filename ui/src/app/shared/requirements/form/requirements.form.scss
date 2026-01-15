@@ -1,4 +1,4 @@
-@import '../../../../common.scss';
+@use '../../../../common' as common;
 
 nz-form-item {
   padding-left: 15px;
@@ -14,11 +14,11 @@ nz-form-item {
 }
 
 i.green {
-  color: $cds_color_green;
+  color: common.$cds_color_green;
 }
 i.red {
-  color: $cds_color_red;
+  color: common.$cds_color_red;
 }
 i.orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }

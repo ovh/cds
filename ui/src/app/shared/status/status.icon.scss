@@ -1,4 +1,4 @@
-@import '../../../common';
+@use '../../../common' as common;
 
 .status-icon {
   width: 30px;
@@ -20,20 +20,20 @@
   }
 }
 .green {
-  color: $cds_color_green;
+  color: common.$cds_color_green;
 }
 .red {
-  color: $cds_color_red;
+  color: common.$cds_color_red;
 }
 .orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }
 .grey {
-  color: $polar_grey_2
+  color: common.$polar_grey_2
 }
 .grey.fill {
-  background-color: $polar_grey_2;
+  background-color: common.$polar_grey_2;
 }
 .blue {
-  color: $cds_color_teal;
+  color: common.$cds_color_teal;
 }

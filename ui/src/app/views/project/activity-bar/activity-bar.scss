@@ -1,17 +1,17 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 
 :host {
   height: 100%;
   width: 50px;
   display: flex;
   flex-direction: column;
-  color: $polar_grey_1;
-  background-color: $greyBackground;
+  color: common.$polar_grey_1;
+  background-color: common.$greyBackground;
   border-right: 1px solid #f0f0f0;
 
   :host-context(.night) & {
-    background-color: $darkBackground;
-    color: $darkTheme_grey_6;
+    background-color: common.$darkBackground;
+    color: common.$darkTheme_grey_6;
     border-color: #303030;
   }
 
@@ -29,10 +29,10 @@
 
     &.active {
       [nz-button] {
-        border-left: 3px solid $polar_grey_1;
+        border-left: 3px solid common.$polar_grey_1;
 
         :host-context(.night) & {
-          border-left: 3px solid $greyBackground;
+          border-left: 3px solid common.$greyBackground;
         }
       }
     }
@@ -44,14 +44,14 @@
       width: 18px;
       height: 16px;
       font-size: 10px;
-      background-color: $polar_grey_1;
+      background-color: common.$polar_grey_1;
       text-align: center;
-      color: $darkTheme_grey_6;
+      color: common.$darkTheme_grey_6;
       border-radius: 10px;
 
       :host-context(.night) & {
-        background-color: $greyBackground;
-        color: $darkBackground;
+        background-color: common.$greyBackground;
+        color: common.$darkBackground;
       }
     }
   }

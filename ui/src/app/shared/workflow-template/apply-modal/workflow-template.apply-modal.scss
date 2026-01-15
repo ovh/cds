@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 .loading {
     height: 100px;
 }

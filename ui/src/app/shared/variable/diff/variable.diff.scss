@@ -1,4 +1,4 @@
-@import "../../../../common";
+@use "../../../../common" as common;
 .diff {
   font-family: monospace, monospace;
   font-size: 1em;

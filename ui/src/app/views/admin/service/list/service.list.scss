@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 .serviceList {
     display: flex;
     flex-direction: column;
@@ -18,13 +18,13 @@
 }
 
 .red {
-  color: $cds_color_red;
+  color: common.$cds_color_red;
 }
 .green {
-  color: $cds_color_green;
+  color: common.$cds_color_green;
 }
 .orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }
 
 .title {

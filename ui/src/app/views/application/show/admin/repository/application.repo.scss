@@ -1,4 +1,4 @@
-@import "../../../../../../common";
+@use "../../../../../../common" as common;
 form div {
   width: 100%;
 }
@@ -11,7 +11,7 @@ nz-alert {
     font-size: 2em;
   }
   i.orange {
-    color: $cds_color_orange
+    color: common.$cds_color_orange
   }
   .header {
     font-size: 1.15em;

@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 .nzSegment {
   padding: 20px 20px;
 }
@@ -16,16 +16,16 @@ i {
   &.ribbon-state {
     width: 5px;
     &.success {
-      background-color: $cds_color_green;
+      background-color: common.$cds_color_green;
     }
     &.running {
-      background-color: $cds_color_teal;
+      background-color: common.$cds_color_teal;
     }
     &.fail {
-      background-color: $cds_color_red;
+      background-color: common.$cds_color_red;
     }
     &.waiting {
-      background-color: $cds_color_teal;
+      background-color: common.$cds_color_teal;
     }
     &.never {
       background-color: grey;
@@ -44,7 +44,7 @@ nz-col {
 
   .status {
     width: 5px;
-    background-color: $cds_color_green;
+    background-color: common.$cds_color_green;
     margin-right: 10px;
     margin-bottom: 3px;
   }

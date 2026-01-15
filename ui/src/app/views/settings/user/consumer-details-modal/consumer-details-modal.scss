@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 
 nz-row {
   margin-top: 10px;
@@ -17,5 +17,5 @@ nz-form-label {
 }
 
 i.orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }

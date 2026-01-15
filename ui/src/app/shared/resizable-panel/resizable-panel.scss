@@ -1,4 +1,4 @@
-@import '../../../common';
+@use '../../../common';
 
 .panel {
     display: flex;
@@ -52,14 +52,14 @@
 
     .grabber {
         display: flex;
-        background-color: $greyBackground;
+        background-color: common.$greyBackground;
         align-items: center;
         z-index: 2;
-        color: $darkTheme_grey_6;
+        color: common.$darkTheme_grey_6;
         border-color: #f0f0f0 !important;
 
         :host-context(.night) & {
-            background-color: $darkBackground;
+            background-color: common.$darkBackground;
             border-color: #303030 !important;
         }
     }

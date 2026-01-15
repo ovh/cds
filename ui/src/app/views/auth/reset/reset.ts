@@ -9,7 +9,8 @@ import zxcvbn from 'zxcvbn';
     selector: 'app-auth-reset',
     templateUrl: './reset.html',
     styleUrls: ['./reset.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ResetComponent implements OnInit {
     loading: boolean;

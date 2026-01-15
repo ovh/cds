@@ -14,6 +14,7 @@ declare var CodeMirror: any;
         }
     ],
     template: `<textarea [placeholder]="placeholder" #host></textarea>`,
+    standalone: false
 })
 export class CodemirrorComponent implements AfterViewInit, OnDestroy {
     @ViewChild('host', { static: false }) host;

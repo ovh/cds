@@ -1,4 +1,4 @@
-@import '../../../../../common.scss';
+@use '../../../../../common' as common;
 
 :host {
   height: 100%;
@@ -29,5 +29,5 @@ i {
 }
 
 .green {
-  color: $cds_color_green;
+  color: common.$cds_color_green;
 }

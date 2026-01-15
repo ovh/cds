@@ -18,7 +18,8 @@ import { finalize } from 'rxjs/operators';
     selector: 'app-parameter-form',
     templateUrl: './parameter.form.html',
     styleUrls: ['./parameter.form.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ParameterFormComponent {
 

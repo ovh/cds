@@ -2,7 +2,10 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import * as AU from 'ansi_up';
 
-@Pipe({ name: 'ansi' })
+@Pipe({
+    name: 'ansi',
+    standalone: false
+})
 export class AnsiPipe implements PipeTransform {
     constructor(private sanitized: DomSanitizer) { }
     transform(value: string, disable: boolean): string {

@@ -1,12 +1,12 @@
 /* You can add global styles to this file, and also import other style files */
 
-@import "common";
+@use "common" as common;
 
-@import "@fontsource/lato";
-@import "@fontsource/lato/400.css";
-@import "@fontsource/lato/400-italic.css";
-@import "@fontsource/lato/700.css";
-@import "@fontsource/lato/700-italic.css";
+@use "@fontsource/lato";
+@use "@fontsource/lato/400.css" as lato400;
+@use "@fontsource/lato/400-italic.css" as lato400Italic;
+@use "@fontsource/lato/700.css" as lotaa700;
+@use "@fontsource/lato/700-italic.css" as lato700Italic;
 
 html,
 body {
@@ -63,7 +63,7 @@ nz-breadcrumb-item {
 }
 
 i.info {
-    color: $cds_color_teal;
+    color: common.$cds_color_teal;
 }
 
 nz-card.redTitle {
@@ -148,7 +148,7 @@ a.disabled:hover {
 }
 
 .CodeMirror-empty {
-    color: $polar_grey_2 !important;
+    color: common.$polar_grey_2 !important;
 }
 
 app-workflow-admin .CodeMirror-scroll {
@@ -234,34 +234,34 @@ app-workflow-admin .CodeMirror-scroll {
 
 // icon
 i.warning {
-    color: $cds_color_red !important;
+    color: common.$cds_color_red !important;
 }
 
 .ui {
     i.icon.blue {
-        color: $cds_color_teal !important;
+        color: common.$cds_color_teal !important;
     }
 
     i.icon.red {
-        color: $cds_color_red !important;
+        color: common.$cds_color_red !important;
     }
 
     i.icon.green {
-        color: $cds_color_green !important;
+        color: common.$cds_color_green !important;
     }
 }
 
 // Segment
 .ui.green.segment {
-    border-top-color: $cds_color_green !important;
+    border-top-color: common.$cds_color_green !important;
 }
 
 .ui.red.segment {
-    border-top-color: $cds_color_red !important;
+    border-top-color: common.$cds_color_red !important;
 }
 
 .ui.blue.segment {
-    border-top-color: $cds_color_teal !important;
+    border-top-color: common.$cds_color_teal !important;
 }
 
 // Button
@@ -282,7 +282,7 @@ i.warning {
 }
 
 .ui.red.button {
-    background-color: $cds_color_red !important;
+    background-color: common.$cds_color_red !important;
 }
 
 .ui.red.basic.button {
@@ -302,7 +302,7 @@ i.warning {
 }
 
 .ui.blue.button {
-    background-color: $cds_color_teal !important;
+    background-color: common.$cds_color_teal !important;
 }
 
 .ui.blue.basic.button {
@@ -330,28 +330,28 @@ i.warning {
 
 // Ribbon
 .ui.green.ribbon {
-    background-color: $cds_color_green !important;
+    background-color: common.$cds_color_green !important;
     color: black !important;
 }
 
 .ui.red.ribbon {
-    background-color: $cds_color_red !important;
+    background-color: common.$cds_color_red !important;
     color: black !important;
 }
 
 .ui.blue.ribbon {
-    background-color: $cds_color_teal !important;
+    background-color: common.$cds_color_teal !important;
     color: black !important;
 }
 
 // Circular Label
 .ui.blue.circular.label {
-    background-color: $cds_color_teal !important;
+    background-color: common.$cds_color_teal !important;
 }
 
 // Loader
 .ui.blue.loader:after {
-    border-top-color: $cds_color_teal;
+    border-top-color: common.$cds_color_teal;
     border-right-color: transparent;
     border-bottom-color: transparent;
     border-left-color: transparent;
@@ -434,7 +434,7 @@ i.warning {
 
 // Toast global settings
 .toast-top-right {
-    top: $navbarHeight + 10px;
+    top: common.$navbarHeight + 10px;
 }
 
 .ui.dropdown.nocaret {
@@ -506,7 +506,7 @@ foreignObject {
     background-color: #cdffd8;
 
     .night & {
-        background-color: $darkTheme_night_green;
+        background-color: common.$darkTheme_night_green;
     }
 }
 
@@ -514,7 +514,7 @@ foreignObject {
     background-color: #ffeef0;
 
     .night & {
-        background-color: $darkTheme_night_red;
+        background-color: common.$darkTheme_night_red;
     }
 }
 
