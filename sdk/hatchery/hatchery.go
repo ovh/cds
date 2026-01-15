@@ -488,6 +488,7 @@ func handleJobV2(ctx context.Context, h Interface, jobRunID string, cacheAttempt
 	if !checkCapacities(ctx, h) {
 		log.Info(ctx, "hatchery %s is not able to provision new worker", h.Name())
 		endTrace("no capacities", jobInfo.RunJob.ID)
+		return nil
 	}
 
 	workerRequest := workerStarterRequest{
