@@ -26,7 +26,7 @@ inputs:
     required: false
   skipUpdate:
     type: boolean
-    description: Skip dowloading remote chart versions
+    description: Skip downloading remote chart versions
     required: false
   registryURL:
     type: string
