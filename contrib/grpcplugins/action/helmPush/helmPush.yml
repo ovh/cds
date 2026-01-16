@@ -24,6 +24,10 @@ inputs:
     type: boolean
     description: Update dependencies from the chart before packaging
     required: false
+  skipUpdate:
+    type: boolean
+    description: Skip downloading remote chart versions
+    required: false
   registryURL:
     type: string
     description: |-
