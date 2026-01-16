@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "angular-cli": {},
   "engines": {
-    "node": ">= 16.0.0",
+    "node": ">= 22.0.0",
     "npm": ">= 8.5.0"
   },
   "scripts": {
@@ -26,7 +26,7 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "19.2.18",
-    "@angular/cdk": "18.2.14",
+    "@angular/cdk": "19.2.18",
     "@angular/common": "19.2.18",
     "@angular/compiler": "19.2.18",
     "@angular/core": "19.2.18",
@@ -99,7 +99,7 @@
     "@angular-eslint/eslint-plugin-template": "19.8.0",
     "@angular-eslint/schematics": "19.8.0",
     "@angular-eslint/template-parser": "19.8.0",
-    "@angular/build": "^19.2.19",
+    "@angular/build": "19.2.19",
     "@angular/cli": "19.2.19",
     "@angular/compiler-cli": "19.2.18",
     "@commitlint/cli": "19.2.2",
@@ -113,7 +113,7 @@
     "@types/jasmine": "3.6.11",
     "@types/jasminewd2": "2.0.13",
     "@types/lodash-es": "4.17.12",
-    "@types/node": "18.18.14",
+    "@types/node": "22.13.14",
     "@types/sanitize-html": "2.9.5",
     "@typescript-eslint/eslint-plugin": "7.2.0",
     "@typescript-eslint/parser": "7.2.0",
@@ -128,7 +128,7 @@
     "jasmine-core": "3.6.0",
     "jasmine-spec-reporter": "5.0.2",
     
-    "less": "^4.2.0",
+    "less": "4.2.0",
     "lint-staged": "12.0.3",
     "ng-packagr": "19.2.2",
     "style-loader": "3.3.4",
