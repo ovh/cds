@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-auth-ask-signin',
     templateUrl: './ask-signin.html',
     styleUrls: ['./ask-signin.scss'],

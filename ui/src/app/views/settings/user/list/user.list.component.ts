@@ -6,6 +6,7 @@ import { Column, ColumnType, DataTableComponent } from 'app/shared/table/data-ta
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-user-list',
     templateUrl: './user.list.html',
     styleUrls: ['./user.list.scss'],

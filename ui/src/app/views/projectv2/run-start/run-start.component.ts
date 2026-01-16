@@ -24,6 +24,7 @@ export class ProjectV2RunStartComponentParams {
 }
 
 @Component({
+    standalone: false,
   selector: 'app-projectv2-run-start',
   templateUrl: './run-start.html',
   styleUrls: ['./run-start.scss'],

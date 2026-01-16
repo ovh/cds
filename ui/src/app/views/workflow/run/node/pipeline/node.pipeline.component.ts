@@ -19,6 +19,7 @@ import { DurationService } from '../../../../../../../libs/workflow-graph/src/li
 import { CDNLine, CDNStreamFilter } from 'app/model/cdn.model';
 
 @Component({
+    standalone: false,
     selector: 'app-node-run-pipeline',
     templateUrl: './pipeline.html',
     styleUrls: ['./pipeline.scss'],

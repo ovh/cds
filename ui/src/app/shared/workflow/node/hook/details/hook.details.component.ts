@@ -23,6 +23,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-hook-details',
     templateUrl: './hook.details.component.html',
     styleUrls: ['./hook.details.component.scss'],

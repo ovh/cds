@@ -6,6 +6,7 @@ import { DurationService } from '../duration.service';
 import { GraphNodeAction } from './model';
 
 @Component({
+    standalone: false,
     selector: 'app-job-node',
     templateUrl: './job-node.html',
     styleUrls: ['./job-node.scss'],

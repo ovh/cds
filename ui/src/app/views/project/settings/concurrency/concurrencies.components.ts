@@ -11,7 +11,8 @@ import { lastValueFrom } from "rxjs";
     selector: 'app-project-concurrencies',
     templateUrl: './concurrencies.html',
     styleUrls: ['./concurrencies.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ProjectConcurrenciesComponent implements OnInit {
     @Input() project: Project;

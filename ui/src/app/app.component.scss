@@ -1,4 +1,4 @@
-@import "../common";
+@use "../common" as common;
 
 .app {
     height: 100%;
@@ -10,7 +10,7 @@
 
         .content {
             height: 100%;
-            margin-left: $sidebarCloseWidth;
+            margin-left: common.$sidebarCloseWidth;
             transition: all 0.4s ease 0s;
             padding-top: 0px;
         }
@@ -18,20 +18,20 @@
 
     .banner {
         height: 50px;
-        background-color: $cds_color_red;
+        background-color: common.$cds_color_red;
         text-align: center;
         line-height: 50px;
         color: white;
         font-weight: 600;
 
         &.update {
-            background-color: $cds_color_orange;
+            background-color: common.$cds_color_orange;
             cursor: pointer;
         }
     }
 
     .loading {
-        background-color: $darkBackground;
+        background-color: common.$darkBackground;
 
         .column {
             width: 600px;

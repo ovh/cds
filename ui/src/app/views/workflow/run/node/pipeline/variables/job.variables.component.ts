@@ -7,6 +7,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-run-job-variable',
     templateUrl: './job.variable.html',
     styleUrls: ['./job.variable.scss'],

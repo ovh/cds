@@ -9,6 +9,7 @@ import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor"
 import { Subscription } from "rxjs";
 
 @Component({
+    standalone: false,
 	selector: 'app-run-test',
 	templateUrl: './run-test.html',
 	styleUrls: ['./run-test.scss'],

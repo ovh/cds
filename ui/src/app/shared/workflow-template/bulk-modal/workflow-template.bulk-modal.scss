@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 .content {
     ::ng-deep {
         .ui.table {

@@ -13,6 +13,7 @@ import {
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-environment-advanced',
     templateUrl: './environment.advanced.html',
     styleUrls: ['./environment.advanced.scss'],

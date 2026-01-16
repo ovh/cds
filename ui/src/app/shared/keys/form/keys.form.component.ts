@@ -4,6 +4,7 @@ import { KeyEvent } from 'app/shared/keys/key.event';
 import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
+    standalone: false,
     selector: 'app-keys-form',
     templateUrl: './keys.form.html',
     styleUrls: ['./keys.form.scss'],

@@ -1,4 +1,4 @@
-@import '../../../../common.scss';
+@use '../../../../common' as common;
 
 td {
   word-break: initial;

@@ -13,6 +13,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
+    standalone: false,
     selector: 'app-project-advanced',
     templateUrl: './project.advanced.html',
     styleUrls: ['./project.advanced.scss'],

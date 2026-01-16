@@ -10,6 +10,7 @@ import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "..
 import { ProjectV2RepositoryAddComponent, ProjectV2RepositoryAddComponentParams } from "./repository-add/repository-add.component";
 
 @Component({
+    standalone: false,
 	selector: 'app-projectv2-explore-overview',
 	templateUrl: './explore-overview.html',
 	styleUrls: ['./explore-overview.scss'],

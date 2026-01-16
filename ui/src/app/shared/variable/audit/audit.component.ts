@@ -8,6 +8,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-variable-audit',
     templateUrl: './variable.audit.html',
     styleUrls: ['./variable.audit.scss'],

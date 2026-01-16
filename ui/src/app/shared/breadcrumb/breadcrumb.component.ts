@@ -11,6 +11,7 @@ export class PathItem {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-breadcrumb',
     templateUrl: './breadcrumb.html',
     styleUrls: ['./breadcrumb.scss'],

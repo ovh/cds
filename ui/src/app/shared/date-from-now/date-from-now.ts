@@ -4,9 +4,10 @@ import { AutoUnsubscribe } from "../decorator/autoUnsubscribe";
 import { interval, Subscription } from "rxjs";
 
 @Component({
-	selector: 'app-date-from-now',
-	templateUrl: './date-from-now.html',
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-date-from-now',
+    templateUrl: './date-from-now.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 @AutoUnsubscribe()
 export class DateFromNowComponent implements OnChanges, OnDestroy {

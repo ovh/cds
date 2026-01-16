@@ -6,6 +6,7 @@ import { Column, ColumnType, Filter } from 'app/shared/table/data-table.componen
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-hook-task-list',
     templateUrl: './hook-task.list.html',
     styleUrls: ['./hook-task.list.scss'],

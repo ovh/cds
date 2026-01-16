@@ -1,4 +1,4 @@
-@import '../../../common';
+@use '../../../common' as common;
 
 :host {
     display: flex;
@@ -21,7 +21,7 @@
         font-size: inherit;
 
         &.active {
-            color: $cds_favorite_color;
+            color: common.$cds_favorite_color;
         }
 
         &:hover {

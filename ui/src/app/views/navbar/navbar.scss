@@ -1,4 +1,4 @@
-@import "../../../common";
+@use "../../../common" as common;
 
 .not-dark {
     background-color: #24292e !important;

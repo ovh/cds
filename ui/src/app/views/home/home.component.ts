@@ -8,6 +8,7 @@ import { SearchBarComponent } from "../search/search-bar.component";
 import { Router } from "@angular/router";
 
 @Component({
+    standalone: false,
 	selector: 'app-home',
 	templateUrl: './home.html',
 	styleUrls: ['./home.scss'],

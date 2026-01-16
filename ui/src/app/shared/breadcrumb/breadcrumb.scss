@@ -1,4 +1,4 @@
-@import '../../../common';
+@use '../../../common';
 
 .breadcrumb {
     height: 46px;
@@ -8,7 +8,7 @@
     align-items: center;
 
     :host-context(.night) & {
-        border-color: $darkTheme_grey_4;
+        border-color: common.$darkTheme_grey_4;
     }
 
     nz-breadcrumb {

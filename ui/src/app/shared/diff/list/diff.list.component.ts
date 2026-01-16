@@ -12,6 +12,7 @@ export class Item {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-diff-list',
     templateUrl: './diff.list.html',
     styleUrls: ['./diff.list.scss'],

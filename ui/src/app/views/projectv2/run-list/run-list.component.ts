@@ -24,6 +24,7 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import { ToastService } from "app/shared/toast/ToastService";
 
 @Component({
+    standalone: false,
 	selector: 'app-projectv2-run-list',
 	templateUrl: './run-list.html',
 	styleUrls: ['./run-list.scss'],

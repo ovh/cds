@@ -7,6 +7,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-project-workflows-labels',
     templateUrl: './workflow.list.labels.html',
     styleUrls: ['./workflow.list.labels.scss'],

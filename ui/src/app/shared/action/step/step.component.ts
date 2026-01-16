@@ -5,6 +5,7 @@ import { Parameter } from 'app/model/parameter.model';
 import { StepEvent } from 'app/shared/action/step/step.event';
 
 @Component({
+    standalone: false,
     selector: 'app-action-step',
     templateUrl: './step.html',
     styleUrls: ['./step.scss'],

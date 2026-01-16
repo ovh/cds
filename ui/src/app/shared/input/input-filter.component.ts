@@ -20,6 +20,7 @@ export class Suggestion<T> {
 }
 
 @Component({
+    standalone: false,
 	selector: 'app-input-filter',
 	templateUrl: './input-filter.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,

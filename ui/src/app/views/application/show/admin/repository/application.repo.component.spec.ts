@@ -31,7 +31,8 @@ import { ApplicationRepositoryComponent } from './application.repo.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @Component({
-    template: ''
+    template: '',
+    standalone: false
 })
 class DummyComponent {
 }

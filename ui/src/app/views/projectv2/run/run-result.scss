@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 
 :host {
   height: 100%;
@@ -11,11 +11,11 @@
 app-tabs {
   ::ng-deep {
     .ant-menu {
-      background-color: $greyBackground !important;
+      background-color: common.$greyBackground !important;
       
       :host-context(.night) & {
-        background-color: $darkBackground !important;
-        color: $darkTheme_grey_6;
+        background-color: common.$darkBackground !important;
+        color: common.$darkTheme_grey_6;
       }
     }
   }

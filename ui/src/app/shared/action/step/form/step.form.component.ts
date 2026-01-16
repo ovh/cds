@@ -11,6 +11,7 @@ import { Action } from 'app/model/action.model';
 import { StepEvent } from 'app/shared/action/step/step.event';
 
 @Component({
+    standalone: false,
     selector: 'app-action-step-form',
     templateUrl: './step.form.html',
     styleUrls: ['./step.form.scss'],

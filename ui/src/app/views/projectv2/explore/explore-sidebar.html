@@ -23,7 +23,7 @@
             </button>
         </div>
         <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name]">
-            <nz-alert *ngIf="repositories[vcs.name].length === 0" nzType="info"
+            <nz-alert *ngIf="!repositories[vcs.name] || repositories[vcs.name].length === 0" nzType="info"
                 nzMessage="No repository found"></nz-alert>
             <ng-container *ngFor="let repo of repositories[vcs.name]">
                 <div class="tree-node-header large" (click)="clickRepository(vcs, repo)">

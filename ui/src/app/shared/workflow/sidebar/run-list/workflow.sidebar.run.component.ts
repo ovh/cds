@@ -26,6 +26,7 @@ import { DurationService } from '../../../../../../libs/workflow-graph/src/lib/d
 const limitWorkflowRun = 30;
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-sidebar-run-list',
     templateUrl: './workflow.sidebar.run.component.html',
     styleUrls: ['./workflow.sidebar.run.component.scss'],

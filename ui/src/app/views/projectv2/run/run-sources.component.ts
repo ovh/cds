@@ -9,6 +9,7 @@ import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.wor
 import { dump } from "js-yaml";
 
 @Component({
+    standalone: false,
 	selector: 'app-run-sources',
 	templateUrl: './run-sources.html',
 	styleUrls: ['./run-sources.scss'],

@@ -6,6 +6,7 @@ import {AfterContentInit, Directive, ElementRef, HostListener, Input, OnDestroy}
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
     selector: "[ngx-auto-scroll]",
+    standalone: false
 })
 export class NgxAutoScrollDirective implements AfterContentInit, OnDestroy {
 

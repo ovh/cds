@@ -12,6 +12,7 @@ export class ParamData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-ascode-save-form',
     templateUrl: './ascode.save-form.html',
     changeDetection: ChangeDetectionStrategy.OnPush

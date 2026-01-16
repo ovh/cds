@@ -14,6 +14,7 @@ import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-worker-model-add',
     templateUrl: './worker-model.add.html',
     styleUrls: ['./worker-model.add.scss'],

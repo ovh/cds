@@ -7,6 +7,7 @@ import { Project } from '../../../../../../model/project.model';
 import { Stage } from '../../../../../../model/stage.model';
 
 @Component({
+    standalone: false,
     selector: 'app-pipeline-stage-form',
     templateUrl: './pipeline.stage.form.html',
     styleUrls: ['./pipeline.stage.form.scss'],

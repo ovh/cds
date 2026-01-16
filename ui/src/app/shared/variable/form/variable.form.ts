@@ -8,7 +8,8 @@ import { finalize } from 'rxjs/operators';
     selector: 'app-variable-form',
     templateUrl: './variable.form.html',
     styleUrls: ['./variable.form.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class VariableFormComponent {
 

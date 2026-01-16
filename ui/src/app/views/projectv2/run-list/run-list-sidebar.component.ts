@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import * as actionPreferences from 'app/store/preferences.action';
 
 @Component({
+    standalone: false,
 	selector: 'app-projectv2-run-list-sidebar',
 	templateUrl: './run-list-sidebar.html',
 	styleUrls: ['./run-list-sidebar.scss'],

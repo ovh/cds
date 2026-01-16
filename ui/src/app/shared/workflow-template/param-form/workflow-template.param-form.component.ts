@@ -24,6 +24,7 @@ import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-param-form',
     templateUrl: './workflow-template.param-form.html',
     styleUrls: ['./workflow-template.param-form.scss'],

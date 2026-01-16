@@ -3,6 +3,7 @@ import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 
 @Component({
+    standalone: false,
     selector: 'app-usage-pipelines',
     templateUrl: './usage.pipelines.html',
     styleUrls: ['./usage.pipelines.scss'],

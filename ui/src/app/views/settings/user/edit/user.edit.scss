@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 
 nz-row {
   width: 100%;
@@ -72,7 +72,7 @@ nz-row {
       margin-left: 10px;
     }
     .green {
-      color: $cds_color_green;
+      color: common.$cds_color_green;
     }
   }
 }

@@ -18,6 +18,7 @@ import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-conditions',
     templateUrl: './wizard.conditions.html',
     styleUrls: ['./wizard.conditions.scss'],

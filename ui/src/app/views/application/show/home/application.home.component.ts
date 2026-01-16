@@ -13,6 +13,7 @@ import { FetchApplicationOverview } from '../../../../store/applications.action'
 import { ApplicationsState } from '../../../../store/applications.state';
 
 @Component({
+    standalone: false,
     selector: 'app-home',
     templateUrl: './application.home.html',
     styleUrls: ['./application.home.scss'],

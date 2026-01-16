@@ -4,6 +4,7 @@ import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { PermissionService } from 'app/shared/permission/permission.service';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-permission-form',
     templateUrl: './workflow-permission.form.html',
     styleUrls: ['./workflow-permission.form.scss'],

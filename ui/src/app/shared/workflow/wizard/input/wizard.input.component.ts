@@ -33,6 +33,7 @@ import { finalize, first } from 'rxjs/operators';
 declare let CodeMirror: any;
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-input',
     templateUrl: './wizard.input.html',
     styleUrls: ['./wizard.input.scss'],

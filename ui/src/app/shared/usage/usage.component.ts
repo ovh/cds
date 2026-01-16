@@ -6,6 +6,7 @@ import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 
 @Component({
+    standalone: false,
     selector: 'app-usage',
     templateUrl: './usage.component.html',
     styleUrls: ['./usage.component.scss'],

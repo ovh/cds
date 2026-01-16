@@ -14,6 +14,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-wnode-join',
     templateUrl: './node.join.html',
     styleUrls: ['./node.join.scss'],

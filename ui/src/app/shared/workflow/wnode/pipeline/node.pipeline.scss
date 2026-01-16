@@ -1,4 +1,4 @@
-@import '../workflow.node.common';
+@use '../workflow.node.common' as common;
 .workflowNode {
   display: flex;
   flex-direction: column;
@@ -40,7 +40,7 @@
 }
 
 .orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }
 
 .logs {

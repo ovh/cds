@@ -1,6 +1,9 @@
 import {Pipe, PipeTransform} from '@angular/core';
 
-@Pipe({name: 'ngForNumber'})
+@Pipe({
+    name: 'ngForNumber',
+    standalone: false
+})
 export class NgForNumber implements PipeTransform {
     transform(value): any {
         let res = [];

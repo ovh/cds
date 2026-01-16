@@ -6,7 +6,8 @@ import { NodeStatus } from './model';
     selector: 'app-fork-join-node',
     templateUrl: './fork-join-node.html',
     styleUrls: ['./fork-join-node.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class GraphForkJoinNodeComponent implements OnInit {
     @Input() nodes: Array<GraphNode>;

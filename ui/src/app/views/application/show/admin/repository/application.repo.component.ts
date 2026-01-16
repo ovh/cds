@@ -14,6 +14,7 @@ import { RepoManagerService } from 'app/service/repomanager/project.repomanager.
 import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-application-repo',
     templateUrl: './application.repo.html',
     styleUrls: ['./application.repo.scss'],

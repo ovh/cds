@@ -8,6 +8,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { lastValueFrom } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-project-keys',
     templateUrl: './project.keys.html',
     styleUrls: ['./project.keys.scss'],

@@ -24,6 +24,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-run-summary',
     templateUrl: './workflow.run.summary.html',
     styleUrls: ['./workflow.run.summary.scss'],

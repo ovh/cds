@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 @Component({
+    standalone: false,
     selector: 'app-card',
     templateUrl: './card.html',
     styleUrls: ['./card.scss'],

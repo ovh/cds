@@ -10,30 +10,30 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "18.2.13",
-    "@angular/common": "18.2.13",
-    "@angular/compiler": "18.2.13",
-    "@angular/core": "18.2.13",
-    "@angular/forms": "18.2.13",
-    "@angular/platform-browser": "18.2.13",
-    "@angular/platform-browser-dynamic": "18.2.13",
-    "@angular/router": "18.2.13",
+    "@angular/animations": "19.2.18",
+    "@angular/common": "19.2.18",
+    "@angular/compiler": "19.2.18",
+    "@angular/core": "19.2.18",
+    "@angular/forms": "19.2.18",
+    "@angular/platform-browser": "19.2.18",
+    "@angular/platform-browser-dynamic": "19.2.18",
+    "@angular/router": "19.2.18",
     "d3": "7.8.5",
     "d3-zoom": "3.0.0",
     "dagre-d3": "0.6.4",
     "js-yaml": "3.13.1",
     "normalize.css": "8.0.1",
     "rxjs": "7.5.0",
-    "tslib": "2.3.0",
+    "tslib": "2.8.1",
     "vscode-messenger-common": "0.4.5",
     "vscode-messenger-webview": "0.4.5",
     "workflow-graph": "file:/../../../../ui/dist/workflow-graph/workflow-graph-1.0.0.tgz",
-    "zone.js": "0.14.10"
+    "zone.js": "0.15.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "18.2.14",
-    "@angular/cli": "18.2.14",
-    "@angular/compiler-cli": "18.2.13",
+    "@angular-devkit/build-angular": "19.2.18",
+    "@angular/cli": "19.2.18",
+    "@angular/compiler-cli": "19.2.18",
     "@ctrl/tinycolor": "4.1.0",
     "@jridgewell/gen-mapping": "0.3.5",
     "@types/d3": "5.9.2",
@@ -50,6 +50,6 @@
     "karma-coverage": "2.1.0",
     "karma-jasmine": "4.0.0",
     "karma-jasmine-html-reporter": "1.7.0",
-    "typescript": "5.4.5"
+    "typescript": "5.8.3"
   }
 }

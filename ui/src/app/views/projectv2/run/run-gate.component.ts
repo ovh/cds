@@ -8,6 +8,7 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { ErrorUtils } from "app/shared/error.utils";
 
 @Component({
+    standalone: false,
     selector: 'app-run-gate',
     templateUrl: './run-gate.html',
     styleUrls: ['./run-gate.scss'],

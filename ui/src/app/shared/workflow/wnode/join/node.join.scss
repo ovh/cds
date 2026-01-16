@@ -1,4 +1,4 @@
-@import '../workflow.node.common';
+@use '../workflow.node.common' as common;
 .workflowJoin {
   width: 40px;
   height: 40px;

@@ -51,7 +51,10 @@ export class Column<T> {
     hidden: SelectorFlag<T>;
 }
 
-@Pipe({ name: 'selector' })
+@Pipe({
+    name: 'selector',
+    standalone: false
+})
 export class SelectorPipe<T> implements PipeTransform {
     transform(columns: Array<Column<T>>, data: T, index?: number): Array<any> {
         return columns.map(c => {
@@ -83,7 +86,10 @@ export class SelectorPipe<T> implements PipeTransform {
     }
 }
 
-@Pipe({ name: 'select' })
+@Pipe({
+    name: 'select',
+    standalone: false
+})
 export class SelectPipe<T extends WithKey> implements PipeTransform {
     transform(selected: Array<string>, data: T): boolean {
         return !!selected.find(s => s === data.key());
@@ -95,6 +101,7 @@ export interface WithKey {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-data-table',
     templateUrl: './data-table.html',
     styleUrls: ['./data-table.scss'],

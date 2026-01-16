@@ -27,6 +27,7 @@ export class GateValue {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-run-gate-inputs',
     templateUrl: './run-gate-inputs.html',
     styleUrls: ['./run-gate-inputs.scss'],

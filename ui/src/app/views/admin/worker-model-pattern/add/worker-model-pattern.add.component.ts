@@ -8,6 +8,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-worker-model-pattern-add',
     templateUrl: './worker-model-pattern.add.html',
     styleUrls: ['./worker-model-pattern.add.scss'],

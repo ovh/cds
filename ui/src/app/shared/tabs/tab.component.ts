@@ -12,6 +12,7 @@ import { AutoUnsubscribe } from '../decorator/autoUnsubscribe';
 import { Tab } from './tabs.component';
 
 @Component({
+    standalone: false,
     selector: 'app-tab',
     templateUrl: './tab.html',
     styleUrls: ['./tab.scss'],

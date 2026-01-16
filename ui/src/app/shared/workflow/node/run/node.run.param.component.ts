@@ -28,6 +28,7 @@ import { Subscription } from 'rxjs';
 declare let CodeMirror: any;
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-run-param',
     templateUrl: './node.run.param.html',
     styleUrls: ['./node.run.param.scss'],

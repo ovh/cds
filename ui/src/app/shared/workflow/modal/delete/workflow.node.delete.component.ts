@@ -20,6 +20,7 @@ interface IModalData {
     workflow: Workflow;
 }
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-delete',
     templateUrl: './workflow.node.delete.html',
     styleUrls: ['./workflow.node.delete.scss'],

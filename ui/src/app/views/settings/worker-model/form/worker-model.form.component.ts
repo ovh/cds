@@ -12,6 +12,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-worker-model-form',
     templateUrl: './worker-model.form.html',
     styleUrls: ['./worker-model.form.scss'],

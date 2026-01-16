@@ -17,6 +17,7 @@ import { EventV2Type } from "app/model/event-v2.model";
 declare const monaco: any;
 
 @Component({
+    standalone: false,
     selector: 'app-project-run-retention',
     templateUrl: './retention.html',
     styleUrls: ['./retention.scss'],

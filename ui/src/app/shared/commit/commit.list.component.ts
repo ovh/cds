@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { Column, ColumnType } from '../table/data-table.component';
 
 @Component({
+    standalone: false,
     selector: 'app-commit-list',
     templateUrl: './commit.list.html',
     styleUrls: ['./commit.list.scss'],

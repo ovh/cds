@@ -6,6 +6,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowState } from 'app/store/workflow.state';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-menu-hook-edit',
     templateUrl: './menu.edit.hook.html',
     styleUrls: ['./menu.edit.hook.scss'],

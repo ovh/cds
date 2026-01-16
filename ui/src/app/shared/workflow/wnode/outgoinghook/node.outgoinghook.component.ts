@@ -9,6 +9,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-wnode-outgoing-hook',
     templateUrl: './node.outgoing.html',
     styleUrls: ['./node.outgoing.scss'],

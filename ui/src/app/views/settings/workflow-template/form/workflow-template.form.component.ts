@@ -9,6 +9,7 @@ import { Base64 } from 'app/shared/base64.utils';
 import { SharedService } from 'app/shared/shared.service';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-form',
     templateUrl: './workflow-template.form.html',
     styleUrls: ['./workflow-template.form.scss'],

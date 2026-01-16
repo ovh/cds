@@ -6,6 +6,7 @@ import { AscodeService } from 'app/service/ascode/ascode.service';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-ascode-event',
     templateUrl: './ascode.event.html',
     styleUrls: ['./ascode.event.scss'],

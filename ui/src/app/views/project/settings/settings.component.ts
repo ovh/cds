@@ -7,6 +7,7 @@ import { ProjectV2State } from "app/store/project-v2.state";
 import { Subscription } from "rxjs";
 
 @Component({
+    standalone: false,
 	selector: 'app-project-settings',
 	templateUrl: './settings.html',
 	styleUrls: ['./settings.scss'],

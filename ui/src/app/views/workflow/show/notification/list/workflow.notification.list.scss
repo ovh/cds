@@ -1,4 +1,4 @@
-@import '../../../../../../common';
+@use '../../../../../../common' as common;
 
 .Notifications {
   padding: 20px;
@@ -46,7 +46,7 @@
     background-color: #eeeeee;
 
     :host-context(.night) & {
-      background-color: $darkTheme_grey_1;
+      background-color: common.$darkTheme_grey_1;
     }
   }
 

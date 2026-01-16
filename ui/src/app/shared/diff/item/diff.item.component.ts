@@ -21,6 +21,7 @@ export class Mode {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-diff-item',
     templateUrl: './diff.item.html',
     styleUrls: ['./diff.item.scss'],

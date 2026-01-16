@@ -33,6 +33,7 @@ import { ActionAsCodeService } from "../../service/action/actionAscode.service";
 import { EntityType, EntityFullName } from "../../model/entity.model";
 
 @Component({
+    standalone: false,
     selector: 'app-action',
     templateUrl: './action.html',
     styleUrls: ['./action.scss'],

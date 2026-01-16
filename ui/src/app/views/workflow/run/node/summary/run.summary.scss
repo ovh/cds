@@ -1,27 +1,27 @@
-@import '../../../../../../common';
+@use '../../../../../../common' as common;
 
 #summary {
     :host-context(.night) & {
         .success {
-            background-color: $darkTheme_night_green;
-            border: 2px solid $darkTheme_green;
+            background-color: common.$darkTheme_night_green;
+            border: 2px solid common.$darkTheme_green;
             border-top: none;
         }
 
         .fail {
-            background-color: $darkTheme_night_red;
-            border: 2px solid $darkTheme_red;
+            background-color: common.$darkTheme_night_red;
+            border: 2px solid common.$darkTheme_red;
             border-top: none;
         }
 
         .building {
-            background-color: $darkTheme_night_blue;
-            border: 2px solid $darkTheme_blue;
+            background-color: common.$darkTheme_night_blue;
+            border: 2px solid common.$darkTheme_blue;
             border-top: none;
         }
 
         .inactive {
-            background-color: $darkTheme_night_grey;
+            background-color: common.$darkTheme_night_grey;
             border: 2px solid grey;
             border-top: none;
         }
@@ -47,26 +47,26 @@
     }
 
     .success {
-        background-color: $cds_color_light_green;
-        border: 2px solid $cds_color_green;
+        background-color: common.$cds_color_light_green;
+        border: 2px solid common.$cds_color_green;
         border-top: none;
     }
 
     .fail {
-        background-color: $cds_color_light_red;
-        border: 2px solid $cds_color_red;
+        background-color: common.$cds_color_light_red;
+        border: 2px solid common.$cds_color_red;
         border-top: none;
     }
 
     .inactive {
-        background-color: $cds_color_light_grey;
+        background-color: common.$cds_color_light_grey;
         border: 2px solid grey;
         border-top: none;
     }
 
     .building {
-        background-color: $cds_color_light_teal;
-        border: 2px solid $cds_color_teal;
+        background-color: common.$cds_color_light_teal;
+        border: 2px solid common.$cds_color_teal;
         border-top: none;
     }
 

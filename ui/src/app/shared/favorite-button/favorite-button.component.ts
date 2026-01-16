@@ -6,6 +6,7 @@ import { AutoUnsubscribe } from "../decorator/autoUnsubscribe";
 import { BookmarkCreate, BookmarkDelete, BookmarkState, BookmarkStateModel } from "app/store/bookmark.state";
 
 @Component({
+    standalone: false,
     selector: 'app-favorite-button',
     templateUrl: './favorite-button.component.html',
     styleUrls: ['./favorite-button.component.scss'],

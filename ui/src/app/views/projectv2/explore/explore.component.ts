@@ -6,6 +6,7 @@ import { PreferencesState } from "app/store/preferences.state";
 import { ProjectV2State } from "app/store/project-v2.state";
 
 @Component({
+    standalone: false,
 	selector: 'app-projectv2-explore',
 	templateUrl: './explore.html',
 	styleUrls: ['./explore.scss'],

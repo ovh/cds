@@ -17,6 +17,7 @@ import { first } from 'rxjs/operators';
 export const OSArchitecture = 'os-architecture';
 
 @Component({
+    standalone: false,
     selector: 'app-requirements-list',
     templateUrl: './requirements.list.html',
     styleUrls: ['./requirements.list.scss'],

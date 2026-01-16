@@ -81,6 +81,7 @@ export class DisplaySearchResult {
 }
 
 @Component({
+    standalone: false,
 	selector: 'app-search',
 	templateUrl: './search.html',
 	styleUrls: ['./search.scss'],

@@ -19,6 +19,7 @@ import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-menu-wnode-edit',
     templateUrl: './menu.edit.node.html',
     styleUrls: ['./menu.edit.node.scss'],

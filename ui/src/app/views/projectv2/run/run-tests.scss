@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 
 :host {
   overflow: hidden;
@@ -15,12 +15,12 @@
     margin-left: 5px;
 
     &.active {
-      color: $cds_color_green;
-      border-color: $cds_color_green;
+      color: common.$cds_color_green;
+      border-color: common.$cds_color_green;
 
       :host-context(.night) & {
-        border-color: $darkTheme_green;
-        color: $darkTheme_green;
+        border-color: common.$darkTheme_green;
+        color: common.$darkTheme_green;
       }
     }
   }
@@ -37,15 +37,15 @@ nz-checkbox-group {
   overflow-y: auto;
 
   .ko {
-    color: $darkTheme_red;
+    color: common.$darkTheme_red;
   }
 
   .skipped {
-    color: $darkTheme_orange;
+    color: common.$darkTheme_orange;
   }
 
   .ok {
-    color: $darkTheme_green;
+    color: common.$darkTheme_green;
   }
 }
 

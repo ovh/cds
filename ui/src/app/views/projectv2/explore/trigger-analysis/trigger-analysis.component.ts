@@ -18,6 +18,7 @@ export class ProjectV2TriggerAnalysisComponentParams {
 }
 
 @Component({
+    standalone: false,
   selector: 'app-projectv2-trigger-analysis',
   templateUrl: './trigger-analysis.html',
   styleUrls: ['./trigger-analysis.scss'],

@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 #GroupEdit {
     display: flex;
     flex-direction: column;

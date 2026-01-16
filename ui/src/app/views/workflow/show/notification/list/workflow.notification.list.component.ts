@@ -13,6 +13,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-notification-list',
     templateUrl: './workflow.notification.list.html',
     styleUrls: ['./workflow.notification.list.scss'],

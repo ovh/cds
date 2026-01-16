@@ -9,6 +9,7 @@ import { Tab } from '../../../../shared/tabs/tabs.component';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-action-show',
     templateUrl: './action.show.html',
     styleUrls: ['./action.show.scss'],

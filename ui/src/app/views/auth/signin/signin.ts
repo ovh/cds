@@ -12,6 +12,7 @@ import zxcvbn from 'zxcvbn';
     templateUrl: './signin.html',
     styleUrls: ['./signin.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SigninComponent implements OnInit {
     loading: boolean;

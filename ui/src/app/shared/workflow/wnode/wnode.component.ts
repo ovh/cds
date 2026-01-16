@@ -28,6 +28,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-wnode',
     templateUrl: './workflow.node.html',
     styleUrls: ['./workflow.node.scss'],

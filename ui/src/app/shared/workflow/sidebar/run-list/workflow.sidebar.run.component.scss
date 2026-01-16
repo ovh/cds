@@ -1,4 +1,4 @@
-@import "../../../../../common";
+@use "../../../../../common" as common;
 
 :host {
     height: 100%;
@@ -16,12 +16,12 @@
     }
 
     .runs {
-        color: $polar_grey_1;
+        color: common.$polar_grey_1;
         flex: 1;
         overflow: hidden;
 
         .night & {
-            color: $darkTheme_grey_5;
+            color: common.$darkTheme_grey_5;
         }
 
         &:hover {
@@ -39,7 +39,7 @@
             margin: 0 0 6px 4px;
             padding: 0;
             border-left: 4px solid grey;
-            background-color: $polar_grey_5;
+            background-color: common.$polar_grey_5;
             display: flex;
             flex-direction: column;
 
@@ -68,15 +68,15 @@
                         a {
                             display: none;
                             text-decoration: none;
-                            color: $polar_grey_1;
+                            color: common.$polar_grey_1;
                             .night & {
-                                color: $darkTheme_grey_5;
+                                color: common.$darkTheme_grey_5;
                             }
 
                             &:hover {
-                                color: $polar_grey_3;
+                                color: common.$polar_grey_3;
                                 .night & {
-                                    color: $polar_grey_5;
+                                    color: common.$polar_grey_5;
                                 }
                             }
                         }
@@ -90,7 +90,7 @@
                             .hash {
                                 font-size: 1.2em;
                                 line-height: 1em;
-                                color: $polar_grey_3;
+                                color: common.$polar_grey_3;
                                 margin-right: 1px;
                             }
 
@@ -100,30 +100,30 @@
 
                                 .night & {
                                     &.success {
-                                        color: $darkTheme_green;
+                                        color: common.$darkTheme_green;
                                     }
                                     &.running {
-                                        color: $darkTheme_blue;
+                                        color: common.$darkTheme_blue;
                                     }
                                     &.fail {
-                                        color: $darkTheme_red;
+                                        color: common.$darkTheme_red;
                                     }
                                     &.waiting {
-                                        color: $darkTheme_blue;
+                                        color: common.$darkTheme_blue;
                                     }
                                 }
 
                                 &.success {
-                                    color: $cds_color_green;
+                                    color: common.$cds_color_green;
                                 }
                                 &.running {
-                                    color: $cds_color_teal;
+                                    color: common.$cds_color_teal;
                                 }
                                 &.fail {
-                                    color: $cds_color_red;
+                                    color: common.$cds_color_red;
                                 }
                                 &.waiting {
-                                    color: $cds_color_teal;
+                                    color: common.$cds_color_teal;
                                 }
                             }
                         }
@@ -157,7 +157,7 @@
             }
 
             &.active {
-                background-color: $cds_color_light_grey;
+                background-color: common.$cds_color_light_grey;
             }
 
             &:focus {
@@ -165,50 +165,50 @@
             }
 
             &:hover {
-                background-color: $cds_color_light_grey;
+                background-color: common.$cds_color_light_grey;
             }
 
             &.success {
-                border-color: $cds_color_green;
+                border-color: common.$cds_color_green;
             }
 
             &.running {
-                border-color: $cds_color_teal;
+                border-color: common.$cds_color_teal;
             }
 
             &.fail {
-                border-color: $cds_color_red;
+                border-color: common.$cds_color_red;
             }
 
             &.waiting {
-                border-color: $cds_color_teal;
+                border-color: common.$cds_color_teal;
             }
 
             .night & {
-                background-color: $darkTheme_grey_1;
+                background-color: common.$darkTheme_grey_1;
 
                 &.active {
-                    background-color: $darkTheme_grey_0;
+                    background-color: common.$darkTheme_grey_0;
                 }
 
                 &:hover {
-                    background-color: $darkTheme_grey_0;
+                    background-color: common.$darkTheme_grey_0;
                 }
 
                 &.success {
-                    border-color: $darkTheme_green;
+                    border-color: common.$darkTheme_green;
                 }
 
                 &.running {
-                    border-color: $darkTheme_blue;
+                    border-color: common.$darkTheme_blue;
                 }
 
                 &.fail {
-                    border-color: $darkTheme_red;
+                    border-color: common.$darkTheme_red;
                 }
 
                 &.waiting {
-                    border-color: $darkTheme_blue;
+                    border-color: common.$darkTheme_blue;
                 }
             }
         }

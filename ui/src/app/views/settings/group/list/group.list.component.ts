@@ -6,6 +6,7 @@ import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType, DataTableComponent } from '../../../../shared/table/data-table.component';
 
 @Component({
+    standalone: false,
     selector: 'app-group-list',
     templateUrl: './group.list.html',
     styleUrls: ['./group.list.scss'],

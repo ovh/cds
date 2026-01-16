@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 .validButton {
   width: 200px;
 }
@@ -12,5 +12,5 @@ nz-select {
 }
 
 i.orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }

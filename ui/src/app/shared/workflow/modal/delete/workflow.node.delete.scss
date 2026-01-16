@@ -1,6 +1,6 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 .red {
-  color: $cds_color_red;
+  color: common.$cds_color_red;
 }
 [nz-radio] {
   display: block;

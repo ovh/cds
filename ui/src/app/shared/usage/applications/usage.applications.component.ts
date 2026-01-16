@@ -3,6 +3,7 @@ import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
 
 @Component({
+    standalone: false,
     selector: 'app-usage-applications',
     templateUrl: './usage.applications.html',
     styleUrls: ['./usage.applications.scss'],

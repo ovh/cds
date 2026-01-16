@@ -4,6 +4,7 @@ import { DownloadService } from 'app/service/download/download.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 
 @Component({
+    standalone: false,
     selector: 'app-download',
     templateUrl: './download.html',
     styleUrls: ['./download.scss'],

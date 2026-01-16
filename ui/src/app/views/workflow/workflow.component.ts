@@ -33,6 +33,7 @@ import {
 import { RouterService } from 'app/service/services.module';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow',
     templateUrl: './workflow.html',
     styleUrls: ['./workflow.scss'],

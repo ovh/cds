@@ -9,6 +9,7 @@ import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-breadcrumb',
     templateUrl: './workflow.breadcrumb.html',
     styleUrls: ['./workflow.breadcrumb.scss'],

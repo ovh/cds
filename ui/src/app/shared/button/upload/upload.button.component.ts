@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { NzUploadFile } from 'ng-zorro-antd/upload';
 
 @Component({
+    standalone: false,
     selector: 'app-upload-button',
     templateUrl: './upload.button.html',
     styleUrls: ['./upload.button.scss'],

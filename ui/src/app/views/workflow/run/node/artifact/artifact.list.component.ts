@@ -12,6 +12,7 @@ import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-artifact-list',
     templateUrl: './artifact.list.html',
     styleUrls: ['./artifact.list.scss'],

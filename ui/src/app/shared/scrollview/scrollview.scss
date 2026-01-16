@@ -1,4 +1,4 @@
-@import '../../../common';
+@use '../../../common' as common;
 .container {
   display: flex;
   flex-direction: column;

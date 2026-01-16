@@ -4,6 +4,7 @@ import { KeyEvent } from 'app/shared/keys/key.event';
 import { Table } from 'app/shared/table/table';
 
 @Component({
+    standalone: false,
     selector: 'app-keys-list',
     templateUrl: './keys.list.html',
     styleUrls: ['./keys.list.scss'],

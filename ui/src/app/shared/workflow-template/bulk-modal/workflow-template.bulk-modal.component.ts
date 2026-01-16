@@ -31,6 +31,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-bulk-modal',
     templateUrl: './workflow-template.bulk-modal.html',
     styleUrls: ['./workflow-template.bulk-modal.scss'],

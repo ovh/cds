@@ -26,6 +26,7 @@ export enum PanelGrowDirection {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-resizable-panel',
     templateUrl: './resizable-panel.html',
     styleUrls: ['./resizable-panel.scss'],

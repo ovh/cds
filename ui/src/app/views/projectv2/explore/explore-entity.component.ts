@@ -21,6 +21,7 @@ import { editor, } from 'monaco-editor';
 declare const monaco: any;
 
 @Component({
+    standalone: false,
 	selector: 'app-projectv2-explore-entity',
 	templateUrl: './explore-entity.html',
 	styleUrls: ['./explore-entity.scss'],
@@ -98,7 +99,7 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
 			this.resizing = resizing;
-			if (!resizing) {
+			if (!resizing && this.editor) {
 				this.editor.layout();
 			}
 			this._cd.markForCheck();

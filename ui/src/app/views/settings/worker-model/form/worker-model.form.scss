@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 
 .content.error {
   overflow: auto;
@@ -38,9 +38,9 @@ nz-alert {
 }
 
 i.success {
-  color: $cds_color_green;
+  color: common.$cds_color_green;
 }
 i.fail {
-  color: $cds_color_red
+  color: common.$cds_color_red
 }
 

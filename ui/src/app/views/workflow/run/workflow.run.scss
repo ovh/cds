@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 
 i {
   margin-right: 5px;
@@ -54,7 +54,7 @@ nz-collapse {
 
                         &:before {
                             :host-context(.night) & {
-                                background-color: $darkTheme_blue;
+                                background-color: common.$darkTheme_blue;
                             }
                         }
                     }

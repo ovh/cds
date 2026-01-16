@@ -29,6 +29,7 @@ import { HelpState } from 'app/store/help.state';
 import { RouterService } from 'app/service/services.module';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-add',
     templateUrl: './workflow.add.html',
     styleUrls: ['./workflow.add.scss'],

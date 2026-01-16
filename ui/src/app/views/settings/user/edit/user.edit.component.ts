@@ -28,6 +28,7 @@ import { LinkService } from "../../../../service/link/link.service";
 const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
 @Component({
+    standalone: false,
     selector: 'app-user-edit',
     templateUrl: './user.edit.html',
     styleUrls: ['./user.edit.scss'],

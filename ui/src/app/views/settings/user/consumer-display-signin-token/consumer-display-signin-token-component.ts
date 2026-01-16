@@ -11,7 +11,8 @@ import { ToastService } from 'app/shared/toast/ToastService';
     selector: 'app-consumer-display-signin-token',
     templateUrl: './consumer-display-signin-token.html',
     styleUrls: ['./consumer-display-signin-token.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ConsumerDisplaySigninTokenComponent {
     @Input() signinToken: string;

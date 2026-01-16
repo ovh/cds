@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import {TestBed} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
@@ -83,6 +81,7 @@ describe('CDS: Usage Component', () => {
 
 @Component({
     template: '',
+    standalone: false
 })
 export class DummyComponent {
 }

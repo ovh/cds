@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
 
 @Component({
+    standalone: false,
 	selector: 'app-searchable',
 	templateUrl: './searchable.html',
 	styleUrls: ['./searchable.scss'],

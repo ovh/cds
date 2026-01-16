@@ -9,6 +9,7 @@ import { WorkflowRunResult } from "../../../../../libs/workflow-graph/src/lib/v2
 import { editor } from "monaco-editor";
 
 @Component({
+    standalone: false,
 	selector: 'app-run-result',
 	templateUrl: './run-result.html',
 	styleUrls: ['./run-result.scss'],

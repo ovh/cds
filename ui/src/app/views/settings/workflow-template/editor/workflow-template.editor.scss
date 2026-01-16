@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 .codeButton {
   position: absolute;
   top: 4px;

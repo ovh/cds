@@ -30,6 +30,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-ascode-save-modal',
     templateUrl: './ascode.save-modal.html',
     styleUrls: ['./ascode.save-modal.scss'],

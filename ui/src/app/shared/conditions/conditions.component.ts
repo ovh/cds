@@ -22,6 +22,7 @@ import { Subscription } from 'rxjs';
 declare let CodeMirror: any;
 
 @Component({
+    standalone: false,
     selector: 'app-conditions',
     templateUrl: './conditions.html',
     styleUrls: ['./conditions.scss'],

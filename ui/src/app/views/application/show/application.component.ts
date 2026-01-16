@@ -23,6 +23,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { RouterService } from 'app/service/services.module';
 
 @Component({
+    standalone: false,
     selector: 'app-application-show',
     templateUrl: './application.html',
     styleUrls: ['./application.scss'],
