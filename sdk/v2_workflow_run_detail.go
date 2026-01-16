@@ -418,10 +418,19 @@ type ArsenalDeploymentDetailAlternative struct {
 }
 
 type V2WorkflowRunResultDockerDetail struct {
-	Name         string `json:"name" mapstructure:"name"`
-	ID           string `json:"id" mapstructure:"id"`
-	HumanSize    string `json:"human_size" mapstructure:"human_size"`
-	HumanCreated string `json:"human_created" mapstructure:"human_created"`
+	Name         string                                 `json:"name" mapstructure:"name"`
+	Manifests    []V2WorkflowRunResultDockerDetailImage `json:"manifests,omitempty" mapstructure:"manifests,omitempty"`
+	HumanSize    string                                 `json:"human_size" mapstructure:"human_size"`
+	HumanCreated string                                 `json:"human_created" mapstructure:"human_created"`
+}
+
+type V2WorkflowRunResultDockerDetailImage struct {
+	ID              string `json:"id" mapstructure:"id"`
+	ReferenceDigest string `json:"reference_digest,omitempty" mapstructure:"reference_digest,omitempty"`
+	ReferenceType   string `json:"reference_type,omitempty" mapstructure:"reference_type,omitempty"`
+	OS              string `json:"os,omitempty" mapstructure:"os,omitempty"`
+	Architecture    string `json:"architecture,omitempty" mapstructure:"architecture,omitempty"`
+	Path            string `json:"path,omitempty" mapstructure:"path,omitempty"`
 }
 
 // GetLabel implements V2WorkflowRunResultDetailInterface.
@@ -433,7 +442,6 @@ func (x *V2WorkflowRunResultDockerDetail) GetLabel() string {
 func (x *V2WorkflowRunResultDockerDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
 	return map[string]V2WorkflowRunResultDetailMetadata{
 		"Image": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: x.Name},
-		"ID":    {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: x.ID},
 	}
 }
 

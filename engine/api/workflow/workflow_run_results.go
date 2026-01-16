@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -230,7 +231,16 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 
 	fileInfo, err := artifactClient.GetFileInfo(artNewResult.RepoName, filePath)
 	if err != nil {
-		return "", err
+		// Manage docker  multi arch
+		if strings.Contains(err.Error(), "404") && repoDetails.PackageType == "docker" {
+			filePath = path.Join(artNewResult.Path, "list.manifest.json")
+			fileInfo, err = artifactClient.GetFileInfo(artNewResult.RepoName, filePath)
+			if err != nil {
+				return "", err
+			}
+		} else {
+			return "", err
+		}
 	}
 	artNewResult.Size = fileInfo.Size
 	artNewResult.MD5 = fileInfo.Checksums.Md5
@@ -739,11 +749,41 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			filePath = path.Join(filePath, "manifest.json")
 		}
 
+		additionalDirectories := make([]string, 0)
 		fi, err := artifactClient.GetFileInfo(artifact.RepoName, filePath)
 		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
-			continue
+			// Manage docker  multi arch
+			if strings.Contains(err.Error(), "404") && repoDetails.PackageType == "docker" {
+				filePath = path.Join(artifact.Path, "list.manifest.json")
+				fi, err = artifactClient.GetFileInfo(artifact.RepoName, filePath)
+				if err != nil {
+					ctx := log.ContextWithStackTrace(ctx, err)
+					log.Error(ctx, "unable to list artifact info from result %s: %v", result.ID, err)
+					continue
+				}
+				// Retrieve list.manifest.json
+				f, err := artifactClient.GetFile(ctx, fi.DownloadURI)
+				if err != nil {
+					ctx := log.ContextWithStackTrace(ctx, err)
+					log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
+					continue
+				}
+				var multiArchManifests art.MultiArchManifests
+				if err := sdk.JSONUnmarshal(f, &multiArchManifests); err != nil {
+					ctx := log.ContextWithStackTrace(ctx, err)
+					log.Error(ctx, "unable to read multi arch manifest %s: %v", string(f), err)
+					continue
+				}
+				for _, m := range multiArchManifests.Manifests {
+					rootPath := filepath.Dir(strings.TrimSuffix(artifact.Path, "/"))
+					subManifestPath := strings.TrimPrefix(rootPath+"/"+m.Digest, "/")
+					additionalDirectories = append(additionalDirectories, subManifestPath)
+				}
+			} else {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
+				continue
+			}
 		}
 
 		existingProperties, err := artifactClient.GetProperties(localRepository, filePath)
@@ -821,6 +861,15 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
 			continue
+		}
+
+		// Manage multi arch docker run result
+		for _, dir := range additionalDirectories {
+			if err := artifactClient.SetProperties(localRepository, dir, props); err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
+				continue
+			}
 		}
 	}
 

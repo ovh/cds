@@ -36,6 +36,19 @@ func (c *Client) GetRepository(repoName string) (*services.RepositoryDetails, er
 	return &repoDetails, nil
 }
 
+func (c *Client) GetFile(ctx context.Context, fileURI string) ([]byte, error) {
+	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	re, body, _, err := c.Asm.Client().SendGet(fileURI, true, &httpDetails)
+	if err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory: %v", err)
+	}
+
+	if re.StatusCode >= 400 {
+		return nil, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileURI, string(body))
+	}
+	return body, nil
+}
+
 func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, error) {
 	fi := sdk.FileInfo{}
 

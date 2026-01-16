@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -937,6 +938,24 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
 			continue
+		}
+
+		// Check docker multi arch manifest
+		if result.Type == sdk.V2WorkflowRunResultTypeDocker {
+			details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultDockerDetail](result)
+			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
+				continue
+			}
+			for _, m := range details.Manifests {
+				manifestDir := filepath.Dir(m.Path)
+				if err := artifactClient.SetProperties(localRepository, manifestDir, props); err != nil {
+					ctx := log.ContextWithStackTrace(ctx, err)
+					log.Error(ctx, "unable to set artifact properties from result %s on sub layers %s: %v", result.ID, manifestDir, err)
+					continue
+				}
+			}
 		}
 	}
 
