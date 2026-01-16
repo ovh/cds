@@ -45,7 +45,10 @@ module.exports = {
                         "prefix": "app",
                         "style": "kebab-case"
                     }
-                ]
+                ],
+                 "@angular-eslint/prefer-standalone": [
+					"off"
+				]
             }
         },
         {

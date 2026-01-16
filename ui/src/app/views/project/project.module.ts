@@ -29,6 +29,29 @@ import { ProjectConcurrencyFormComponent } from './settings/concurrency/concurre
 import { ProjectWebhooksComponent } from './settings/webhooks/webhooks.component';
 import { ProjectRunRetentionComponent } from './settings/retention/retention.component';
 import { ProjectRunRetentionReportComponent } from './settings/retention/retention.report.component';
+import { ProjectV2ExploreComponent } from '../projectv2/explore/explore.component';
+import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-entity.component';
+import { ProjectV2ExploreOverviewComponent } from '../projectv2/explore/explore-overview.component';
+import { ProjectV2ExploreRepositoryComponent } from '../projectv2/explore/explore-repository.component';
+import { ProjectV2ExploreSidebarComponent } from '../projectv2/explore/explore-sidebar.component';
+import { ProjectV2RepositoryAddComponent } from '../projectv2/explore/repository-add/repository-add.component';
+import { ProjectV2RunComponent } from '../projectv2/run/run.component';
+import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.component';
+import { ProjectV2RunListSidebarComponent } from '../projectv2/run-list/run-list-sidebar.component';
+import { ProjectV2RunStartComponent } from '../projectv2/run-start/run-start.component';
+import { RunGateInputsComponent } from '../projectv2/run-start/run-gate-inputs.component';
+import { ProjectV2TriggerAnalysisComponent } from '../projectv2/explore/trigger-analysis/trigger-analysis.component';
+import { RunContextsComponent } from '../projectv2/run/run-contexts.component';
+import { RunGateComponent } from '../projectv2/run/run-gate.component';
+import { RunHookComponent } from '../projectv2/run/run-hook.component';
+import { RunInfoComponent } from '../projectv2/run/run-info.component';
+import { RunJobComponent } from '../projectv2/run/run-job.component';
+import { RunResultComponent } from '../projectv2/run/run-result.component';
+import { RunResultsComponent } from '../projectv2/run/run-results.component';
+import { RunSourcesComponent } from '../projectv2/run/run-sources.component';
+import { RunTestComponent } from '../projectv2/run/run-test.component';
+import { RunTestsComponent } from '../projectv2/run/run-tests.component';
+import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
 
 @NgModule({
     declarations: [
@@ -58,11 +81,35 @@ import { ProjectRunRetentionReportComponent } from './settings/retention/retenti
         ProjectWorkflowListBlocsComponent,
         ProjectWorkflowListComponent,
         ProjectWorkflowListLabelsComponent,
-        ProjectWorkflowListLinesComponent
+        ProjectWorkflowListLinesComponent,
+        ProjectV2ExploreComponent,
+        ProjectV2ExploreEntityComponent,
+        ProjectV2ExploreOverviewComponent,
+        ProjectV2ExploreRepositoryComponent,
+        ProjectV2ExploreSidebarComponent,
+        ProjectV2RepositoryAddComponent,
+        ProjectV2RunComponent,
+        ProjectV2RunListComponent,
+        ProjectV2RunListSidebarComponent,
+        ProjectV2RunStartComponent,
+        RunGateInputsComponent,
+        ProjectV2TriggerAnalysisComponent,
+        RunContextsComponent,
+        RunGateComponent,
+        RunHookComponent,
+        RunInfoComponent,
+        RunJobComponent,
+        RunResultComponent,
+        RunResultsComponent,
+        RunSourcesComponent,
+        RunTestComponent,
+        RunTestsComponent
     ],
+
     imports: [
         SharedModule,
         RouterModule,
+        GraphModule,
         projectRouting
     ],
     providers: [

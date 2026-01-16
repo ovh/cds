@@ -1,12 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddPipeline, ImportPipeline } from 'app/store/pipelines.action';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
 import { ToastService } from '../../../shared/toast/ToastService';
+import { PreferencesState } from 'app/store/preferences.state';
 
 @Component({
     standalone: false,
@@ -15,13 +17,14 @@ import { ToastService } from '../../../shared/toast/ToastService';
     styleUrls: ['./pipeline.add.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PipelineAddComponent {
+export class PipelineAddComponent implements OnInit, OnDestroy {
     loadingCreate = false;
     newPipeline = new Pipeline();
     asCode = false;
     updated = false;
 
     codeMirrorConfig: any;
+    themeSubscription: Subscription;
     pipToImport = `# Pipeline example
 version: v1.0
 name: root
@@ -53,9 +56,20 @@ jobs:
             lineWrapping: true,
             lineNumbers: true,
             autoRefresh: true,
-            theme: 'night' ? 'darcula' : 'default'
+            theme: 'default'
         };
+    }
 
+    ngOnInit(): void {
+        this.themeSubscription = this.store.select(PreferencesState.theme).subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+        });
+    }
+
+    ngOnDestroy(): void {
+        if (this.themeSubscription) {
+            this.themeSubscription.unsubscribe();
+        }
     }
 
     createPipeline(): void {
