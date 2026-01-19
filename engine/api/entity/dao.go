@@ -229,6 +229,19 @@ func LoadEntityByPathAndRefAndCommit(ctx context.Context, db gorp.SqlExecutor, r
 	return getEntity(ctx, db, q)
 }
 
+func LoadEntitiesByTypeUnsafeWithPagination(ctx context.Context, db gorp.SqlExecutor, entityType string, offset, limit int) ([]sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`SELECT * from entity WHERE type = $1 ORDER BY last_update ASC OFFSET $2 LIMIT $3`).Args(entityType, offset, limit)
+	var dbEntities []dbEntity
+	if err := gorpmapping.GetAll(ctx, db, query, &dbEntities); err != nil {
+		return nil, err
+	}
+	entities := make([]sdk.Entity, 0, len(dbEntities))
+	for _, dbEnt := range dbEntities {
+		entities = append(entities, dbEnt.Entity)
+	}
+	return entities, nil
+}
+
 func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, error) {
 	q := gorpmapping.NewQuery("SELECT * from entity")
 	var res []dbEntity
