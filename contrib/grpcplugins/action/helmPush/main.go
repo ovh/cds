@@ -63,6 +63,7 @@ func (p *helmPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	chartVersion := q.GetOptions()["chartVersion"]
 	appVersion := q.GetOptions()["appVersion"]
 	updateDependenciesS := q.GetOptions()["updateDependencies"]
+	skipUpdate := q.GetOptions()["skipUpdate"]
 	registryURL := q.GetOptions()["registryURL"]
 	registryUsername := q.GetOptions()["registryUsername"]
 	registryPassword := q.GetOptions()["registryPassword"]
@@ -87,7 +88,11 @@ func (p *helmPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 		registryAccessToken: registryAccessToken,
 		registryAuthHeader:  registryAuthHeader,
 	}
-	result, d, err := p.perform(ctx, chartFolder, chartVersion, appVersion, updateDependencies, registryOpts)
+	helmops := helmOpts{
+		updateDeps: updateDependencies,
+		skipUpdate: skipUpdate == "true",
+	}
+	result, d, err := p.perform(ctx, chartFolder, chartVersion, appVersion, helmops, registryOpts)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
@@ -112,8 +117,13 @@ type chartMuseumOptions struct {
 	registryAuthHeader  string
 }
 
+type helmOpts struct {
+	updateDeps bool
+	skipUpdate bool
+}
+
 func (p *helmPushPlugin) perform(
-	ctx context.Context, chartFolder string, chartVersion string, appVersion string, updateDependencies bool,
+	ctx context.Context, chartFolder string, chartVersion string, appVersion string, opts helmOpts,
 	registryOpts chartMuseumOptions,
 ) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
@@ -143,8 +153,8 @@ func (p *helmPushPlugin) perform(
 		return nil, time.Since(t0), errors.Errorf("unable to create chart package: %v", err)
 	}
 
-	if updateDependencies {
-		if err := helm.UpdateDependencies(chart); err != nil {
+	if opts.updateDeps {
+		if err := helm.UpdateDependencies(chart, opts.skipUpdate); err != nil {
 			return nil, time.Since(t0), errors.Errorf("unable to update chart dependencies: %v", err)
 		}
 	}
