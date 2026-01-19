@@ -395,9 +395,9 @@ func retrieveConcurrencyObjectToCancelled(ctx context.Context, db gorp.SqlExecut
 	var buildingObjects []workflow_v2.ConcurrencyObject
 	switch ruleToApply.Scope {
 	case sdk.V2RunConcurrencyScopeProject:
-		buildingObjects, err = workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}, sdk.V2WorkflowRunStatusBuilding, nbToCancelled)
+		buildingObjects, err = workflow_v2.LoadOldestRunJobWithProjectScopedConcurrency(ctx, db, projKey, ruleToApply.Name, sdk.RunningStatusesV2WorkflowRunJob, sdk.V2WorkflowRunStatusBuilding, nbToCancelled)
 	default:
-		buildingObjects, err = workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcs, repo, workflow, ruleToApply.Name, []string{string(sdk.V2WorkflowRunJobStatusWaiting), string(sdk.V2WorkflowRunJobStatusScheduling), string(sdk.V2WorkflowRunJobStatusBuilding)}, sdk.V2WorkflowRunStatusBuilding, nbToCancelled)
+		buildingObjects, err = workflow_v2.LoadOldestRunJobWithWorkflowScopedConcurrency(ctx, db, projKey, vcs, repo, workflow, ruleToApply.Name, sdk.RunningStatusesV2WorkflowRunJob, sdk.V2WorkflowRunStatusBuilding, nbToCancelled)
 	}
 	if err != nil {
 		return nil, err

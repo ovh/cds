@@ -121,10 +121,19 @@ func LoadRunJobsByRunID(ctx context.Context, db gorp.SqlExecutor, runID string, 
 	ctx, next := telemetry.Span(ctx, "LoadRunJobsByRunID")
 	defer next()
 	query := gorpmapping.NewQuery(`
-		SELECT *
+		WITH maxrunattemp AS (
+			SELECT DISTINCT (job_id, matrix), job_id, matrix, max(retry) as retry
+			FROM v2_workflow_run_job 
+			WHERE workflow_run_id = $1  AND run_attempt = $2
+			GROUP BY job_id, matrix
+		)
+		SELECT v2_workflow_run_job.*
 		FROM v2_workflow_run_job
-		WHERE workflow_run_id = $1 AND run_attempt = $2
-	`).Args(runID, runAttempt)
+        JOIN maxrunattemp ON 
+			maxrunattemp.job_id = v2_workflow_run_job.job_id AND 
+			maxrunattemp.matrix = v2_workflow_run_job.matrix AND 
+			maxrunattemp.retry = v2_workflow_run_job.retry
+        WHERE v2_workflow_run_job.workflow_run_id = $1 AND v2_workflow_run_job.run_attempt = $2`).Args(runID, runAttempt)
 	return getAllRunJobs(ctx, db, query)
 }
 
@@ -144,6 +153,17 @@ func LoadRunJobByID(ctx context.Context, db gorp.SqlExecutor, jobRunID string) (
 	return getRunJob(ctx, db, query)
 }
 
+func LoadRunJobRetries(ctx context.Context, db gorp.SqlExecutor, parentJob sdk.V2WorkflowRunJob) ([]sdk.V2WorkflowRunJob, error) {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByRunIDAndID")
+	defer next()
+	query := gorpmapping.NewQuery(`
+		SELECT * 
+		FROM v2_workflow_run_job 
+		WHERE workflow_run_id = $1 AND job_id = $2 AND matrix = $3 and run_attempt = $4
+	`).Args(parentJob.WorkflowRunID, parentJob.JobID, parentJob.Matrix, parentJob.RunAttempt)
+	return getAllRunJobs(ctx, db, query)
+}
+
 func LoadRunJobByRunIDAndID(ctx context.Context, db gorp.SqlExecutor, wrID, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByRunIDAndID")
 	defer next()
@@ -154,7 +174,21 @@ func LoadRunJobByRunIDAndID(ctx context.Context, db gorp.SqlExecutor, wrID, jobR
 func LoadRunJobsByName(ctx context.Context, db gorp.SqlExecutor, wrID string, jobName string, runAttempt int64) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobsByName")
 	defer next()
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND job_id = $2 AND run_attempt = $3").Args(wrID, jobName, runAttempt)
+	query := gorpmapping.NewQuery(`
+		WITH maxrunattemp AS (
+			SELECT DISTINCT (job_id, matrix), job_id, matrix, max(retry) as retry
+			FROM v2_workflow_run_job 
+			WHERE workflow_run_id = $1 AND job_id = $2 AND run_attempt = $3
+			GROUP BY job_id, matrix
+		)
+		SELECT v2_workflow_run_job.*
+		FROM v2_workflow_run_job
+        JOIN maxrunattemp ON 
+			maxrunattemp.job_id = v2_workflow_run_job.job_id AND 
+			maxrunattemp.matrix = v2_workflow_run_job.matrix AND 
+			maxrunattemp.retry = v2_workflow_run_job.retry
+        WHERE v2_workflow_run_job.workflow_run_id = $1 AND v2_workflow_run_job.job_id = $2 AND v2_workflow_run_job.run_attempt = $3`).
+		Args(wrID, jobName, runAttempt)
 	return getAllRunJobs(ctx, db, query)
 }
 
@@ -169,7 +203,20 @@ func LoadQueuedRunJobByModelTypeAndRegionAndModelOSArch(ctx context.Context, db 
 func LoadRunJobsByRunIDAndStatus(ctx context.Context, db gorp.SqlExecutor, runID string, status []string, runAttempt int64) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobsByRunIDAndStatus")
 	defer next()
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND status = ANY($2) AND run_attempt = $3").Args(runID, pq.StringArray(status), runAttempt)
+	query := gorpmapping.NewQuery(`
+		WITH maxrunattemp AS (
+			SELECT DISTINCT (job_id, matrix), job_id, matrix, max(retry) as retry
+			FROM v2_workflow_run_job 
+			WHERE workflow_run_id = $1  AND run_attempt = $3
+			GROUP BY job_id, matrix
+		)
+		SELECT v2_workflow_run_job.*
+		FROM v2_workflow_run_job
+        JOIN maxrunattemp ON 
+			maxrunattemp.job_id = v2_workflow_run_job.job_id AND 
+			maxrunattemp.matrix = v2_workflow_run_job.matrix AND 
+			maxrunattemp.retry = v2_workflow_run_job.retry
+        WHERE v2_workflow_run_job.workflow_run_id = $1 AND v2_workflow_run_job.status = ANY($2) AND v2_workflow_run_job.run_attempt = $3`).Args(runID, pq.StringArray(status), runAttempt)
 	return getAllRunJobs(ctx, db, query)
 }
 

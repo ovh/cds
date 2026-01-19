@@ -134,6 +134,15 @@
                 margin: 0 5px;
             }
 
+            nz-badge {
+                margin-left: 1px;
+                margin-bottom: 2px;
+            }
+            
+            .warning {
+                color: $cds_color_orange;
+            }
+
             .infos {
                 position: relative;
                 display: flex;

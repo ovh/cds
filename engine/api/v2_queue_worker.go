@@ -222,15 +222,21 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		contexts.Env[k] = v
 	}
 
-	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, db, run.ID, run.RunAttempt)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped}, run.RunAttempt)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	runJobIds := make([]string, 0, len(runJobs))
+	for _, rj := range runJobs {
+		runJobIds = append(runJobIds, rj.ID)
+	}
+
+	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, db, run.ID, runJobIds, run.RunAttempt)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	contexts.Jobs = sdk.JobsResultContext{}
 	for _, rj := range runJobs {
 		jobResult := sdk.JobResultContext{
@@ -483,7 +489,7 @@ func (api *API) postV2RefreshWorkerHandler() ([]service.RbacChecker, service.Han
 		if err != nil {
 			return err
 		}
-		if jobRun.Status.IsTerminated() {
+		if jobRun.Status.IsTerminated() && jobRun.Status == sdk.V2WorkflowRunJobStatusRetrying {
 			return sdk.NewErrorFrom(sdk.ErrAlreadyEnded, "job ended: %s", jobRun.Status)
 		}
 

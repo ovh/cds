@@ -124,6 +124,7 @@ const (
 	StatusStopped           = "Stopped"
 	StatusBlocked           = "Blocked"
 	StatusCancelled         = "Cancelled"
+	StatusRetrying          = "Retrying"
 	StatusWorkerPending     = "Pending"
 	StatusWorkerRegistering = "Registering"
 

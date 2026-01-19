@@ -26,6 +26,7 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
         started: Date;
         ended: Date;
     };
+    warningStep: boolean = false;
     runActive: boolean = false;
 
     constructor(
@@ -58,6 +59,16 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
             this.delaySubs = interval(1000)
                 .pipe(concatMap(_ => from(this.refreshDelay())))
                 .subscribe();
+        }
+        if (this.node.run.status === V2WorkflowRunJobStatus.Success) {
+            if (this.node.run.steps_status) {
+                Object.keys(this.node.run.steps_status).forEach(k => {
+                    const step = this.node.run.steps_status[k]
+                    if (step.outcome === V2WorkflowRunJobStatus.Fail && step.conclusion === V2WorkflowRunJobStatus.Success) {
+                        this.warningStep = true;
+                    }
+                });
+            }
         }
         this.refreshDelay();
     }
