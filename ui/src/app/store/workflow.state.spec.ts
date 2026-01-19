@@ -45,14 +45,14 @@ describe('Workflows', () => {
             ]
         }).compileComponents();
 
-        routerService = TestBed.get(RouterService);
-        store = TestBed.get(Store);
+        routerService = TestBed.inject(RouterService);
+        store = TestBed.inject(Store);
         let project = <Project>{
             key: testProjectKey,
             name: testProjectKey
         };
         store.dispatch(new AddProject(project));
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: testProjectKey,
             key: testProjectKey,
@@ -65,7 +65,7 @@ describe('Workflows', () => {
 
     it('fetch workflow', waitForAsync(() => {
         spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({ key: testProjectKey, workflowName: 'wf1' }));
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         store.dispatch(new workflowsActions.GetWorkflow({
             projectKey: testProjectKey,
             workflowName: 'wf1'
@@ -87,7 +87,7 @@ describe('Workflows', () => {
     }));
 
     it('add workflow', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
@@ -111,7 +111,7 @@ describe('Workflows', () => {
     }));
 
     it('update a workflow', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
@@ -148,7 +148,7 @@ describe('Workflows', () => {
     }));
 
     it('delete a workflow', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
@@ -182,7 +182,7 @@ describe('Workflows', () => {
     }));
 
     it('update a workflow icon', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
@@ -222,7 +222,7 @@ describe('Workflows', () => {
     }));
 
     it('delete a workflow icon', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
@@ -262,7 +262,7 @@ describe('Workflows', () => {
 
     it('fetch audits', waitForAsync(() => {
         spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({ key: testProjectKey, workflowName: 'wf1' }));
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
@@ -312,7 +312,7 @@ describe('Workflows', () => {
     }));
 
     it('rollback', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
@@ -351,7 +351,7 @@ describe('Workflows', () => {
     }));
 
     it('fetch as code', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
@@ -387,7 +387,7 @@ description: some description`;
     }));
 
     it('preview', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;

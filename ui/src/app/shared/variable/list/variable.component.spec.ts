@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
 import { TranslateService, TranslateLoader, TranslateParser, TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -46,7 +44,7 @@ describe('CDS: Variable List Component', () => {
 
 
     it('Load Component + update value', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
 
         let mock = ['string', 'password'];
 

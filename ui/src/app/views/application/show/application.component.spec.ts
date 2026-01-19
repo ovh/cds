@@ -125,7 +125,7 @@ describe('CDS: Application', () => {
     }));
 
     it('Load component + load application with error', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
 
         spyOn(router, 'navigate');
 

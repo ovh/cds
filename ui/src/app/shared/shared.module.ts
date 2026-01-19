@@ -108,7 +108,6 @@ import {
     NZ_CONFIG,
     NzConfig
 } from 'ng-zorro-antd/core/config';
-import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -404,7 +403,6 @@ const icons: IconDefinition[] = [
         NzListModule,
         NzMenuModule,
         NzModalModule,
-        NzNotificationModule,
         NzPageHeaderModule,
         NzPaginationModule,
         NzPopconfirmModule,
@@ -609,7 +607,6 @@ const icons: IconDefinition[] = [
         NzListModule,
         NzMenuModule,
         NzModalModule,
-        NzNotificationModule,
         NzPageHeaderModule,
         NzPaginationModule,
         NzPopconfirmModule,

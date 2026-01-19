@@ -1,6 +1,6 @@
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
-import { Component, NgZone, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, inject, NgZone, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,8 +20,7 @@ import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
 import { AddHelp } from './store/help.action';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { NzConfigService } from "ng-zorro-antd/core/config";
-import { CodeEditorConfig } from "ng-zorro-antd/core/config/config";
+import { CodeEditorConfig, NzConfigService } from "ng-zorro-antd/core/config";
 import { PreferencesState } from './store/preferences.state';
 import { Editor } from './model/editor.model';
 import { WebSocketSubject } from 'rxjs/webSocket';
@@ -37,6 +36,22 @@ declare const monaco: any;
 })
 @AutoUnsubscribe()
 export class AppComponent implements OnInit, OnDestroy {
+
+    _translate = inject(TranslateService);
+    _activatedRoute = inject(ActivatedRoute);
+    _titleService = inject(Title);
+    _router = inject (Router);
+    _notification = inject(NotificationService);
+    _appService = inject(AppService);
+    _toastService = inject(ToastService);
+    _store = inject(Store);
+    _eventService = inject(EventService);
+    _helpService = inject(HelpService);
+    _ngZone = inject(NgZone);
+    _monitoringService = inject(MonitoringService);
+    _nzNotificationService = inject(NzNotificationService);
+    _configService = inject(NzConfigService);
+    _eventV2Service = inject(EventV2Service)
 
     @ViewChild('templateRootToast') toastTemplate: TemplateRef<any>;
     toastSubs: Subscription;
@@ -63,23 +78,7 @@ export class AppComponent implements OnInit, OnDestroy {
     websocket: WebSocketSubject<any>;
     loading = true;
 
-    constructor(
-        private _translate: TranslateService,
-        private _activatedRoute: ActivatedRoute,
-        private _titleService: Title,
-        private _router: Router,
-        private _notification: NotificationService,
-        private _appService: AppService,
-        private _toastService: ToastService,
-        private _store: Store,
-        private _eventService: EventService,
-        private _helpService: HelpService,
-        private _ngZone: NgZone,
-        private _monitoringService: MonitoringService,
-        private _nzNotificationService: NzNotificationService,
-        private _configService: NzConfigService,
-        private _eventV2Service: EventV2Service
-    ) {
+    constructor() {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this._translate.addLangs(['en']);
         this._translate.setDefaultLang('en');

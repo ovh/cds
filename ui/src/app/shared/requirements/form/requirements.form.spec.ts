@@ -37,7 +37,7 @@ describe('CDS: Requirement Form Component', () => {
     });
 
     it('should create a new requirement and auto write name', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
 
 
         // Create component

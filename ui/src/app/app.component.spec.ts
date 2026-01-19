@@ -108,11 +108,11 @@ describe('App: CDS', () => {
 
         fixture.componentInstance.ngOnInit();
 
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
 
         http.expectOne((req: HttpRequest<any>) => req.url === '/mon/status').flush(<MonitoringStatus>{});
 
-        const store = TestBed.get(Store);
+        const store = TestBed.inject(Store);
         store.dispatch(new FetchCurrentAuth());
 
 

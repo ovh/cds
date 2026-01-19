@@ -37,7 +37,7 @@ describe('CDS: Permission From Component', () => {
 
 
     it('should create new permission', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
 
         let groupsMock = new Array<Group>();
 
