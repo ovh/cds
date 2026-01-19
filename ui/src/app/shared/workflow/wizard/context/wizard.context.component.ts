@@ -26,6 +26,7 @@ import { Subscription } from 'rxjs';
 import { filter, finalize, first, switchMap } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-context',
     templateUrl: './wizard.context.html',
     styleUrls: ['./wizard.context.scss'],

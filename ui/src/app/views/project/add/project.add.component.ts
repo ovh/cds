@@ -11,6 +11,7 @@ import { PermissionService } from 'app/shared/permission/permission.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-project-add',
     templateUrl: './project.add.html',
     styleUrls: ['./project.add.scss'],

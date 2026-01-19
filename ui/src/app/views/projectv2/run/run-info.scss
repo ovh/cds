@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 
 :host {
   overflow: hidden;
@@ -45,15 +45,15 @@
     }
 
     .error {
-      color: $darkTheme_red;
+      color: common.$darkTheme_red;
     }
 
     .warning {
-      color: $darkTheme_orange;
+      color: common.$darkTheme_orange;
     }
 
     .info {
-      color: $darkTheme_blue;
+      color: common.$darkTheme_blue;
     }
   }
 }

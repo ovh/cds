@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-run-node',
     templateUrl: './node.html',
     styleUrls: ['./node.scss'],

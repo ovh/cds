@@ -28,6 +28,7 @@ import { finalize, first } from 'rxjs/operators';
 declare let CodeMirror: any;
 
 @Component({
+    standalone: false,
     selector: 'app-pipeline-ascode-editor',
     templateUrl: './pipeline.ascode.editor.html',
     styleUrls: ['./pipeline.ascode.editor.scss'],

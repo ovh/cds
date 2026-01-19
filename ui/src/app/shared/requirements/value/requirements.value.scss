@@ -1,14 +1,14 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 .icon.status {
   font-size: 1.5em;
   margin-top: 5px;
 }
 .green {
-  color: $cds_color_green;
+  color: common.$cds_color_green;
 }
 .red {
-  color: $cds_color_red;
+  color: common.$cds_color_red;
 }
 .orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }

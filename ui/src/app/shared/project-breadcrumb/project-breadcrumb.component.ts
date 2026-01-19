@@ -6,6 +6,7 @@ import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 
 @Component({
+    standalone: false,
     selector: 'app-project-breadcrumb',
     templateUrl: './project-breadcrumb.html',
     styleUrls: ['./project-breadcrumb.scss'],

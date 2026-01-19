@@ -6,6 +6,7 @@ import { PermissionService } from 'app/shared/permission/permission.service';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-permission-form',
     templateUrl: './permission.form.html',
     styleUrls: ['./permission.form.scss'],

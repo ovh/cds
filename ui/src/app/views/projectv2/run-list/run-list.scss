@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 
 :host {
   display: flex;
@@ -115,34 +115,34 @@
         font-size: 25px;
 
         &.success {
-          color: $cds_color_green;
+          color: common.$cds_color_green;
         }
 
         &.fail {
-          color: $cds_color_red;
+          color: common.$cds_color_red;
         }
 
         &.cancelled {
-          color: $polar_grey_2;
+          color: common.$polar_grey_2;
         }
 
         &.building {
-          color: $cds_color_teal;
+          color: common.$cds_color_teal;
         }
 
         &.blocked {
-          color: $cds_color_teal;
+          color: common.$cds_color_teal;
         }
 
         &.skipped {
-          color: $polar_grey_2;
+          color: common.$polar_grey_2;
         }
 
         &.stopped {
           font-size: 21px;
-          border: 2px solid $cds_color_red;
+          border: 2px solid common.$cds_color_red;
           border-radius: 12px;
-          color: $cds_color_red;
+          color: common.$cds_color_red;
         }
       }
     }

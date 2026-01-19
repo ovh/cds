@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 
 .move.pointing {
   margin-right: 5px !important;
@@ -30,7 +30,7 @@ nz-row.stepParams {
   }
 
   .textOrange {
-    color: $cds_color_orange;
+    color: common.$cds_color_orange;
 
     i {
       margin-right: 5px;

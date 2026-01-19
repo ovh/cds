@@ -3,6 +3,7 @@ import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
 
 @Component({
+    standalone: false,
     selector: 'app-usage-environments',
     templateUrl: './usage.environments.html',
     styleUrls: ['./usage.environments.scss'],

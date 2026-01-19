@@ -31,6 +31,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { RouterService } from 'app/service/services.module';
 
 @Component({
+    standalone: false,
     selector: 'app-pipeline-show',
     templateUrl: './pipeline.show.html',
     styleUrls: ['./pipeline.show.scss'],

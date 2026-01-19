@@ -8,6 +8,7 @@ import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
 
 @Component({
+    standalone: false,
     selector: 'app-hook-task-show',
     templateUrl: './hook-task.show.html',
     styleUrls: ['./hook-task.show.scss'],

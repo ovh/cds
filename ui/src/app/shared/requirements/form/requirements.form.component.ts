@@ -10,6 +10,7 @@ import { finalize, first } from 'rxjs/operators';
 export const OSArchitecture = 'os-architecture';
 
 @Component({
+    standalone: false,
     selector: 'app-requirements-form',
     templateUrl: './requirements.form.html',
     styleUrls: ['./requirements.form.scss'],

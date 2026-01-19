@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
+    standalone: false,
     selector: 'app-bitbucket-icon-success',
     template: `
       <span nz-icon>

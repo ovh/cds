@@ -14,6 +14,7 @@ import { IconDefinition } from '@ant-design/icons-angular';
 import { GraphMatrixNodeComponent } from './node/matrix-node.component';
 import { IsJobTerminatedPipe } from './is-job-terminated.pipe';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { MomentModule } from 'ngx-moment';
 
 const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline, WarningOutline];
 
@@ -33,7 +34,8 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
     NzButtonModule,
     NzIconModule.forRoot(icons),
     NzPopconfirmModule,
-    NzToolTipModule
+    NzToolTipModule,
+    MomentModule
   ],
   exports: [
     GraphComponent,

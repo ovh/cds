@@ -13,6 +13,7 @@ import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-group-edit',
     templateUrl: './group.edit.html',
     styleUrls: ['./group.edit.scss'],

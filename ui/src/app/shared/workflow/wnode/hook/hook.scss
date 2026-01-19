@@ -1,7 +1,7 @@
-@import '../workflow.node.common';
+@use '../workflow.node.common' as common;
 .workflowHook {
   &.active {
-    color: $cds_color_teal;
+    color: common.$cds_color_teal;
   }
   i {
     font-size: 25px;
@@ -9,6 +9,6 @@
     margin: 0;
   }
   i.green {
-    color: $cds_color_green;
+    color: common.$cds_color_green;
   }
 }

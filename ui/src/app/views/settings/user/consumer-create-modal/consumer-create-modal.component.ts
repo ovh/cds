@@ -33,6 +33,7 @@ export enum FormStepName {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-consumer-create-modal',
     templateUrl: './consumer-create-modal.html',
     styleUrls: ['./consumer-create-modal.scss'],

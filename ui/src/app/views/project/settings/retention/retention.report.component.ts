@@ -5,6 +5,7 @@ import { dump} from "js-yaml";
 declare const monaco: any;
 
 @Component({
+    standalone: false,
     selector: 'app-project-run-retention-report',
     templateUrl: './retention.report.html',
     styleUrls: ['./retention.report.scss'],

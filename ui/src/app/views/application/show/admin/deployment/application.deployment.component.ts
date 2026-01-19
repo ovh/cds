@@ -13,6 +13,7 @@ import { Project } from 'app/model/project.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-application-deployment',
     templateUrl: './application.deployment.html',
     styleUrls: ['./application.deployment.scss'],

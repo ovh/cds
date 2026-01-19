@@ -26,6 +26,7 @@ import { first } from 'rxjs/operators';
 declare let CodeMirror: any;
 
 @Component({
+    standalone: false,
     selector: 'app-parameter-value',
     templateUrl: './parameter.value.html',
     styleUrls: ['./parameter.value.scss'],

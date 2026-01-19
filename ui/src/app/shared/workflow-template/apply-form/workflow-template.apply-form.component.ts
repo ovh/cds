@@ -31,6 +31,7 @@ import { filter, finalize, first, map } from 'rxjs/operators';
 import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-apply-form',
     templateUrl: './workflow-template.apply-form.html',
     styleUrls: ['./workflow-template.apply-form.scss'],

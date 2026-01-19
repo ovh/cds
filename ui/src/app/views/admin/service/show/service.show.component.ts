@@ -12,6 +12,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-service-show',
     templateUrl: './service.show.html',
     styleUrls: ['./service.show.scss'],

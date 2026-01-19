@@ -30,6 +30,7 @@ import { EventV2Service } from './event-v2.service';
 declare const monaco: any;
 
 @Component({
+    standalone: false,
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']

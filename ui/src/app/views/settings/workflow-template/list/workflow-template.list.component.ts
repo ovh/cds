@@ -6,6 +6,7 @@ import { Column, ColumnType, Filter } from 'app/shared/table/data-table.componen
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-list',
     templateUrl: './workflow-template.list.html',
     styleUrls: ['./workflow-template.list.scss'],

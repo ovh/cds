@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-cdsctl',
     templateUrl: './cdsctl.html',
     styleUrls: ['./cdsctl.scss'],

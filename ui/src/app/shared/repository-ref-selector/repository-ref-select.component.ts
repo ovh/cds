@@ -9,6 +9,7 @@ import { PreferencesState } from "app/store/preferences.state";
 import { NzSelectComponent } from "ng-zorro-antd/select";
 
 @Component({
+    standalone: false,
 	selector: 'app-repository-ref-select',
 	templateUrl: './repository-ref-select.html',
 	styleUrls: ['./repository-ref-select.scss'],

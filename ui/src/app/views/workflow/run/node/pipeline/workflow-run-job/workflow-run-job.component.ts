@@ -53,6 +53,7 @@ export class LogBlock {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-run-job',
     templateUrl: './workflow-run-job.html',
     styleUrls: ['workflow-run-job.scss'],

@@ -17,6 +17,7 @@ import { Table } from 'app/shared/table/table';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-parameter-list',
     templateUrl: './parameter.html',
     styleUrls: ['./parameter.scss'],

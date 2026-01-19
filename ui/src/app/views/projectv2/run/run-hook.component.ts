@@ -9,6 +9,7 @@ import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.wor
 import { editor } from "monaco-editor";
 
 @Component({
+    standalone: false,
 	selector: 'app-run-hook',
 	templateUrl: './run-hook.html',
 	styleUrls: ['./run-hook.scss'],

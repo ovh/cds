@@ -1,4 +1,4 @@
-@import '../workflow.node.common';
+@use '../workflow.node.common' as common;
 .workflowHook {
   .decoration {
     margin-right: 2px;

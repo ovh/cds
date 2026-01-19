@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, In
 import { AuthConsumerScopeDetail, AuthConsumerScopeEndpoint } from 'app/model/authentication.model';
 
 @Component({
+    standalone: false,
     selector: 'app-scope-detail',
     templateUrl: './scope-detail.html',
     styleUrls: ['./scope-detail.scss'],

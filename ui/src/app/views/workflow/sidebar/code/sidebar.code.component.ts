@@ -29,6 +29,7 @@ import { finalize, first } from 'rxjs/operators';
 declare let CodeMirror: any;
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-sidebar-code',
     templateUrl: './sidebar.code.html',
     styleUrls: ['./sidebar.code.scss'],

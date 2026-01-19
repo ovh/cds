@@ -24,6 +24,7 @@ import { DragulaService } from 'ng2-dragula';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-action-form',
     templateUrl: './action.form.html',
     styleUrls: ['./action.form.scss'],

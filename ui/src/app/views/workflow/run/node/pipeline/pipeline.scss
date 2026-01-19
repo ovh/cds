@@ -1,4 +1,4 @@
-@import '../../../../../../common';
+@use '../../../../../../common' as common;
 
 .pipeline {
     display: flex;
@@ -37,39 +37,39 @@
                         position: relative;
 
                         :host-context(.night) & {
-                            color: $darkTheme_grey_6;
+                            color: common.$darkTheme_grey_6;
 
                             .success.nzSegment {
-                                background-color: $darkTheme_night_green;
+                                background-color: common.$darkTheme_night_green;
                             }
 
                             .fail.nzSegment {
-                                background-color: $darkTheme_night_red;
+                                background-color: common.$darkTheme_night_red;
                             }
 
                             .inactive.nzSegment {
-                                background-color: $darkTheme_night_grey;
+                                background-color: common.$darkTheme_night_grey;
                             }
 
                             .building.nzSegment {
-                                background-color: $darkTheme_night_blue;
+                                background-color: common.$darkTheme_night_blue;
                             }
                         }
 
                         .success.nzSegment {
-                            background-color: $cds_color_light_green;
+                            background-color: common.$cds_color_light_green;
                         }
 
                         .fail.nzSegment {
-                            background-color: $cds_color_light_red;
+                            background-color: common.$cds_color_light_red;
                         }
 
                         .inactive.nzSegment {
-                            background-color: $cds_color_light_grey;
+                            background-color: common.$cds_color_light_grey;
                         }
 
                         .building.nzSegment {
-                            background-color: $cds_color_light_teal;
+                            background-color: common.$cds_color_light_teal;
                         }
 
                         .newspaper .icon {
@@ -90,8 +90,8 @@
                     li::before {
                         content: '';
                         top: -42px;
-                        border-bottom: 4px solid $cds_color_teal;
-                        border-left: 4px solid $cds_color_teal;
+                        border-bottom: 4px solid common.$cds_color_teal;
+                        border-left: 4px solid common.$cds_color_teal;
                         position: absolute;
                         width: 40px;
                         left: -40px;
@@ -101,8 +101,8 @@
                     li::after {
                         content: '';
                         top: -42px;
-                        border-bottom: 4px solid $cds_color_teal;
-                        border-right: 4px solid $cds_color_teal;
+                        border-bottom: 4px solid common.$cds_color_teal;
+                        border-right: 4px solid common.$cds_color_teal;
                         position: absolute;
                         width: 40px;
                         right: -40px;
@@ -148,7 +148,7 @@
                 }
 
                 .job.nzSegment.active {
-                    border: 2px solid $cds_color_teal;
+                    border: 2px solid common.$cds_color_teal;
                 }
             }
         }
@@ -220,5 +220,5 @@
 }
 
 .orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }

@@ -27,6 +27,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-template-apply-modal',
     templateUrl: './workflow-template.apply-modal.html',
     styleUrls: ['./workflow-template.apply-modal.scss'],

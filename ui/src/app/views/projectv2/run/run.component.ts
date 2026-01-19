@@ -30,6 +30,7 @@ import { EventV2State } from "app/store/event-v2.state";
 import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 
 @Component({
+    standalone: false,
     selector: 'app-projectv2-run',
     templateUrl: './run.html',
     styleUrls: ['./run.scss'],

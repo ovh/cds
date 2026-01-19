@@ -46,6 +46,7 @@ import { CodemirrorComponent } from 'app/shared/codemirror';
 declare let CodeMirror: any;
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-admin',
     templateUrl: 'workflow.admin.component.html',
     styleUrls: ['./workflow.admin.scss'],

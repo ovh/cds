@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output
 import { SharedService } from 'app/shared/shared.service';
 
 @Component({
+    standalone: false,
     selector: 'app-variable-value',
     templateUrl: './variable.value.html',
     styleUrls: ['./variable.value.scss'],

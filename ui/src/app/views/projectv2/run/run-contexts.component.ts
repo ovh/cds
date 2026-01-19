@@ -9,6 +9,7 @@ import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.wor
 import { editor } from "monaco-editor";
 
 @Component({
+    standalone: false,
 	selector: 'app-run-contexts',
 	templateUrl: './run-contexts.html',
 	styleUrls: ['./run-contexts.scss'],

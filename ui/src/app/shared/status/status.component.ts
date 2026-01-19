@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { PipelineStatus } from 'app/model/pipeline.model';
 
 @Component({
+    standalone: false,
     selector: 'app-status-icon',
     templateUrl: './status.icon.html',
     styleUrls: ['./status.icon.scss'],

@@ -1,4 +1,4 @@
-@import "../../../../../src/common.scss";
+@use "../../../../../src/common.scss" as common;
 
 :host {
     display: flex;
@@ -14,11 +14,11 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    border: dashed 4px $polar_grey_3;
+    border: dashed 4px common.$polar_grey_3;
     border-radius: 3px;
 
     :host-context(.night) & {
-        border-color: $darkTheme_grey_5;
+        border-color: common.$darkTheme_grey_5;
 
         &.highlight {
             border-color: white;
@@ -26,7 +26,7 @@
     }
 
     &.highlight {
-        border-color: $polar_grey_0;
+        border-color: common.$polar_grey_0;
     }
 
     .title {
@@ -50,7 +50,7 @@
 
         .controls {
             i {
-                color: $polar_grey_1;
+                color: common.$polar_grey_1;
                 cursor: pointer;
             }
 
@@ -70,14 +70,14 @@
         ::ng-deep {
             .edgePath {
                 path {
-                    stroke: $polar_grey_3;
+                    stroke: common.$polar_grey_3;
 
                     &.highlight {
-                        stroke: $polar_grey_0 !important;
+                        stroke: common.$polar_grey_0 !important;
                     }
 
                     :host-context(.night) & {
-                        stroke: $darkTheme_grey_5;
+                        stroke: common.$darkTheme_grey_5;
 
                         &.highlight {
                             stroke: white !important;
@@ -86,11 +86,11 @@
                 }
 
                 &.color-success path {
-                    stroke: $cds_color_green;
+                    stroke: common.$cds_color_green;
                 }
 
                 &.color-fail path {
-                    stroke: $cds_color_red;
+                    stroke: common.$cds_color_red;
                 }
 
                 &.color-inactive path {
@@ -99,11 +99,11 @@
 
                 :host-context(.night) & {
                     &.color-success path {
-                        stroke: $darkTheme_green;
+                        stroke: common.$darkTheme_green;
                     }
 
                     &.color-fail path {
-                        stroke: $darkTheme_red;
+                        stroke: common.$darkTheme_red;
                     }
 
                     &.color-inactive path {

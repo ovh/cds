@@ -1,4 +1,5 @@
-@import "theme";
+@forward "theme";
+@use "theme";
 $darkBackground: #1b1c1d;
 $greyBackground: rgba(249, 249, 249, 1);
 $darkGreyColor: rgba(34, 36, 38, 0.15);
@@ -96,7 +97,7 @@ pre {
         border-left: 1px solid $darkGreyColor;
 
         :host-context(.night) & {
-            border-color: $darkTheme_grey_3;
+            border-color: theme.$darkTheme_grey_3;
         }
     }
 
@@ -104,7 +105,7 @@ pre {
         border-right: 1px solid $darkGreyColor;
 
         :host-context(.night) & {
-            border-color: $darkTheme_grey_3;
+            border-color: theme.$darkTheme_grey_3;
         }
     }
 
@@ -112,7 +113,7 @@ pre {
         border-top: 1px solid $darkGreyColor;
 
         :host-context(.night) & {
-            border-color: $darkTheme_grey_3;
+            border-color: theme.$darkTheme_grey_3;
         }
     }
 
@@ -120,7 +121,7 @@ pre {
         border-bottom: 1px solid $darkGreyColor;
 
         :host-context(.night) & {
-            border-color: $darkTheme_grey_3;
+            border-color: theme.$darkTheme_grey_3;
         }
     }
 

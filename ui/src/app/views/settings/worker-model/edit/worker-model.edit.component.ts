@@ -17,6 +17,7 @@ import { Tab } from '../../../../shared/tabs/tabs.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-worker-model-edit',
     templateUrl: './worker-model.edit.html',
     styleUrls: ['./worker-model.edit.scss'],

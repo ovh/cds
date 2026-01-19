@@ -34,6 +34,7 @@ export class CloseEvent {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-consumer-details-modal',
     templateUrl: './consumer-details-modal.html',
     styleUrls: ['./consumer-details-modal.scss'],

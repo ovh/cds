@@ -3,6 +3,7 @@ import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { WorkflowRunInfo } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Component({
+    standalone: false,
 	selector: 'app-run-info',
 	templateUrl: './run-info.html',
 	styleUrls: ['./run-info.scss'],

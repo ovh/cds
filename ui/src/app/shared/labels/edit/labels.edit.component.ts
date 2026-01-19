@@ -11,6 +11,7 @@ interface IModalData {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-labels-edit',
     templateUrl: './labels.edit.component.html',
     styleUrls: ['./labels.edit.scss'],

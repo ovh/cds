@@ -18,6 +18,7 @@ export class ProjectV2RepositoryAddComponentParams {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-projectv2-repository-add',
     templateUrl: './repository-add.html',
     styleUrls: ['./repository-add.scss'],

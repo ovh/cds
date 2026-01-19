@@ -3,6 +3,7 @@ import { TestCase, Tests } from "app/model/pipeline.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 
 @Component({
+    standalone: false,
 	selector: 'app-run-tests',
 	templateUrl: './run-tests.html',
 	styleUrls: ['./run-tests.scss'],

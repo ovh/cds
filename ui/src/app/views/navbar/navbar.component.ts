@@ -23,6 +23,7 @@ import { Bookmark, BookmarkType } from 'app/model/bookmark.model';
 import { BookmarkLoad, BookmarkState } from 'app/store/bookmark.state';
 
 @Component({
+    standalone: false,
     selector: 'app-navbar',
     templateUrl: './navbar.html',
     styleUrls: ['./navbar.scss'],

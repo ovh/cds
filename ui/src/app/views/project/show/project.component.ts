@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-project-show',
     templateUrl: './project.html',
     styleUrls: ['./project.scss'],

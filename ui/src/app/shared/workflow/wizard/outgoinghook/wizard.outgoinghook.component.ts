@@ -27,6 +27,7 @@ import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-node-outgoinghook',
     templateUrl: './wizard.outgoinghook.html',
     styleUrls: ['./wizard.outgoinghook.scss'],

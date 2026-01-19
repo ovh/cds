@@ -15,6 +15,7 @@ import { Item } from '../../../../shared/diff/list/diff.list.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
+    standalone: false,
     selector: 'app-pipeline-audit',
     templateUrl: './pipeline.audit.html',
     styleUrls: ['./pipeline.audit.scss'],

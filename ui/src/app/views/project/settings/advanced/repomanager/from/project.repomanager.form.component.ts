@@ -12,6 +12,7 @@ import { lastValueFrom } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-project-repomanager-form',
     templateUrl: './project.repomanager.form.html',
     styleUrls: ['./project.repomanager.form.scss'],

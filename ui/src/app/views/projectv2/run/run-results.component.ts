@@ -9,6 +9,7 @@ export class WorkflowRunResultView {
 }
 
 @Component({
+    standalone: false,
 	selector: 'app-run-results',
 	templateUrl: './run-results.html',
 	styleUrls: ['./run-results.scss'],

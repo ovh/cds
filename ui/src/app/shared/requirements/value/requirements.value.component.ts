@@ -11,6 +11,7 @@ import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 
 @Component({
+    standalone: false,
     selector: 'app-requirements-value',
     templateUrl: './requirements.value.html',
     styleUrls: ['./requirements.value.scss'],

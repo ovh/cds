@@ -17,6 +17,7 @@ import { Subscription } from 'rxjs';
 import { ErrorMessageMap, WarningMessageMap } from './errors';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-run',
     templateUrl: './workflow.run.html',
     styleUrls: ['./workflow.run.scss'],

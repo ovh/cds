@@ -9,6 +9,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-pipeline-admin',
     templateUrl: './pipeline.admin.html',
     styleUrls: ['./pipeline.admin.scss'],

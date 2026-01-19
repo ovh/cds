@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common' as common;
 
 :host {
     height: 100%;
@@ -14,12 +14,12 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    background-color: $greyBackground !important;
+    background-color: common.$greyBackground !important;
     padding-left: 15px;
 
     :host-context(.night) & {
-        background-color: $darkBackground !important;
-        color: $darkTheme_grey_6;
+        background-color: common.$darkBackground !important;
+        color: common.$darkTheme_grey_6;
     }
 }
 
@@ -33,7 +33,7 @@
     cursor: pointer;
 
     &:hover {
-        color: $darkTheme_grey_5;
+        color: common.$darkTheme_grey_5;
 
         :host-context(.night) & {
             color: white;

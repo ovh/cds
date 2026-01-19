@@ -3,6 +3,7 @@ import { PipelineStatus } from 'app/model/pipeline.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-wnode-fork',
     templateUrl: './node.fork.html',
     styleUrls: ['./node.fork.scss'],

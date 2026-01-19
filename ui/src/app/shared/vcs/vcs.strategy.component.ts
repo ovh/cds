@@ -20,6 +20,7 @@ import { finalize } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
+    standalone: false,
     selector: 'app-vcs-strategy',
     templateUrl: './vcs.strategy.html',
     styleUrls: ['./vcs.strategy.scss'],

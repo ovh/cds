@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@use '../../../../../common' as common;
 
 ul {
   list-style: none;
@@ -28,20 +28,20 @@ ul {
 
           .job.nzSegment {
             height: 51px;
-            border: 1px solid $cds_color_light_grey;
+            border: 1px solid common.$cds_color_light_grey;
             display: flex;
             text-align: center;
             line-height: 50px;
           }
 
           .job.nzSegment.inactive {
-            background-color: $cds_color_light_grey;
+            background-color: common.$cds_color_light_grey;
             color: rgba(0, 0, 0, 0.5);
           }
 
           .job.nzSegment.active {
-            border: 2px solid $cds_color_teal;
-            background-color: $cds_color_teal;
+            border: 2px solid common.$cds_color_teal;
+            background-color: common.$cds_color_teal;
             color: white;
             font-weight: 600;
           }
@@ -73,8 +73,8 @@ ul {
         li::before {
           content: '';
           top: -42px;
-          border-bottom: 4px solid $cds_color_teal;
-          border-left: 4px solid $cds_color_teal;
+          border-bottom: 4px solid common.$cds_color_teal;
+          border-left: 4px solid common.$cds_color_teal;
           position: absolute;
           width: 40px;
           left: -40px;
@@ -88,8 +88,8 @@ ul {
         li::after {
           content: '';
           top: -42px;
-          border-bottom: 4px solid $cds_color_teal;
-          border-right: 4px solid $cds_color_teal;
+          border-bottom: 4px solid common.$cds_color_teal;
+          border-right: 4px solid common.$cds_color_teal;
           position: absolute;
           width: 40px;
           right: -40px;
@@ -181,7 +181,7 @@ nz-col {
 }
 
 .orange {
-  color: $cds_color_orange;
+  color: common.$cds_color_orange;
 }
 
 nz-col.center {

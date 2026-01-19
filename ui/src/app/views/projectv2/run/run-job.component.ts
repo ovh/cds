@@ -55,6 +55,7 @@ export class LogBlock {
 }
 
 @Component({
+    standalone: false,
     selector: 'app-run-job',
     templateUrl: './run-job.html',
     styleUrls: ['./run-job.scss'],

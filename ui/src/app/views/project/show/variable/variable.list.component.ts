@@ -13,6 +13,7 @@ import {
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-project-variables',
     templateUrl: './variable.list.html',
     styleUrls: ['./variable.list.scss'],

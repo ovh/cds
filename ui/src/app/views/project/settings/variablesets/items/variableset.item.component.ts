@@ -6,6 +6,7 @@ import { ToastService } from "app/shared/toast/ToastService";
 import { finalize } from "rxjs";
 
 @Component({
+    standalone: false,
     selector: 'app-project-variable-set-items',
     templateUrl: './variableset.item.html',
     styleUrls: ['./variableset.item.scss'],

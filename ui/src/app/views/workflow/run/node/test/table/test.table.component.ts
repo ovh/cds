@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
+    standalone: false,
     selector: 'app-workflow-test-table',
     templateUrl: './test.table.html',
     styleUrls: ['./test.table.scss'],

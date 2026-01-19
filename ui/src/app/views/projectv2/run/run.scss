@@ -1,4 +1,4 @@
-@import '../../../../common';
+@use '../../../../common';
 
 :host {
     display: flex;
@@ -21,34 +21,34 @@
             font-size: 25px;
 
             &.success {
-                color: $cds_color_green;
+                color: common.$cds_color_green;
             }
 
             &.fail {
-                color: $cds_color_red;
+                color: common.$cds_color_red;
             }
 
             &.cancelled {
-                color: $polar_grey_2;
+                color: common.$polar_grey_2;
             }
 
             &.building {
-                color: $cds_color_teal;
+                color: common.$cds_color_teal;
             }
 
             &.blocked {
-                color: $cds_color_teal;
+                color: common.$cds_color_teal;
             }
 
             &.skipped {
-                color: $polar_grey_2;
+                color: common.$polar_grey_2;
             }
 
             &.stopped {
                 font-size: 21px;
-                border: 2px solid $cds_color_red;
+                border: 2px solid common.$cds_color_red;
                 border-radius: 12px;
-                color: $cds_color_red;
+                color: common.$cds_color_red;
             }
         }
     }
@@ -100,18 +100,18 @@
                 }
 
                 &:hover {
-                    background-color: $greyBackground;
+                    background-color: common.$greyBackground;
 
                     :host-context(.night) & {
-                        background-color: $darkBackground;
+                        background-color: common.$darkBackground;
                     }
                 }
 
                 &.selected {
-                    border-left: 3px solid $polar_grey_1;
+                    border-left: 3px solid common.$polar_grey_1;
 
                     :host-context(.night) & {
-                        border-left: 3px solid $greyBackground;
+                        border-left: 3px solid common.$greyBackground;
                     }
                 }
 
@@ -124,22 +124,22 @@
                 }
 
                 .success {
-                    color: $cds_color_green;
+                    color: common.$cds_color_green;
                 }
 
                 .fail,
                 .stopped {
-                    color: $cds_color_red;
+                    color: common.$cds_color_red;
                 }
 
                 .cancelled,
                 .skipped {
-                    color: $polar_grey_2;
+                    color: common.$polar_grey_2;
                 }
 
                 .building,
                 .blocked {
-                    color: $cds_color_teal;
+                    color: common.$cds_color_teal;
                 }
 
                 span {
@@ -299,11 +299,11 @@
     app-tabs {
         ::ng-deep {
             .ant-menu {
-                background-color: $greyBackground !important;
+                background-color: common.$greyBackground !important;
 
                 :host-context(.night) & {
-                    background-color: $darkBackground !important;
-                    color: $darkTheme_grey_6;
+                    background-color: common.$darkBackground !important;
+                    color: common.$darkTheme_grey_6;
                 }
             }
         }
@@ -316,15 +316,15 @@
         }
 
         .ko {
-            color: $darkTheme_red;
+            color: common.$darkTheme_red;
         }
 
         .skipped {
-            color: $darkTheme_orange;
+            color: common.$darkTheme_orange;
         }
 
         .ok {
-            color: $darkTheme_green;
+            color: common.$darkTheme_green;
         }
     }
 
@@ -346,14 +346,14 @@ app-resizable-panel {
         flex-direction: column;
         top: 0;
         left: -37px;
-        background-color: $greyBackground;
+        background-color: common.$greyBackground;
         border-bottom-left-radius: 5px;
         border: 1px solid #f0f0f0;
         border-top: none;
         border-right: none;
 
         :host-context(.night) & {
-            background-color: $darkBackground;
+            background-color: common.$darkBackground;
             border-color: #303030;
         }
 
@@ -366,11 +366,11 @@ app-resizable-panel {
             line-height: 38px;
 
             :host-context(.night) & {
-                color: $darkTheme_grey_6;
+                color: common.$darkTheme_grey_6;
             }
 
             &:hover {
-                color: $darkTheme_grey_5;
+                color: common.$darkTheme_grey_5;
 
                 :host-context(.night) & {
                     color: white;

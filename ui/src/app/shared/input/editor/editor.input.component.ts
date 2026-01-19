@@ -5,6 +5,7 @@ import { NzConfigService } from "ng-zorro-antd/core/config";
 import { OnChangeType, OnTouchedType } from "ng-zorro-antd/core/types";
 
 @Component({
+    standalone: false,
     selector: 'app-editor-input',
     templateUrl: './editor.input.html',
     styleUrls: ['./editor.input.scss'],
