@@ -178,6 +178,10 @@ type V2WorkflowRunData struct {
 
 func (w V2WorkflowRunData) Value() (driver.Value, error) {
 	(&w.Workflow).Clean()
+	for k, a := range w.Actions {
+		(&a).Clean()
+		w.Actions[k] = a
+	}
 	j, err := yaml.Marshal(w)
 	return j, WrapError(err, "cannot marshal V2WorkflowRunData")
 }

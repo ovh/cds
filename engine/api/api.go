@@ -752,6 +752,9 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(ctx, sdk.Migration{Name: "MigrateWorkflowSerialization", Release: "0.56.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateRunSerialization(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
 	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrationRunWithActions", Release: "0.56.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrationRunWithActions(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
 	if err != nil {

@@ -57,6 +57,13 @@ func (a V2Action) GetName() string {
 	return a.Name
 }
 
+func (a *V2Action) Clean() {
+	for stepIndex := range a.Runs.Steps {
+		step := &a.Runs.Steps[stepIndex]
+		step.Run = CleanString(step.Run)
+	}
+}
+
 func (a V2Action) Lint() []error {
 	actionSchema := GetActionJsonSchema(nil)
 	actionSchemaS, err := actionSchema.MarshalJSON()
