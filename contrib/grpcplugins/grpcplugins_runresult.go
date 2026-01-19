@@ -29,7 +29,6 @@ func ComputeRunResultDockerDetail(name string, img Img) sdk.V2WorkflowRunResultD
 	return sdk.V2WorkflowRunResultDetail{
 		Data: sdk.V2WorkflowRunResultDockerDetail{
 			Name:         name,
-			ID:           img.ImageID,
 			HumanSize:    img.Size,
 			HumanCreated: img.Created,
 		},
@@ -74,6 +73,50 @@ func getDockerManifest(ctx context.Context, c *actionplugin.Common, rtConfig Art
 	return &manifest, nil
 }
 
+type multiArchManifests struct {
+	Manifests []dockerMultiArchManifestConfig `json:"manifests"`
+}
+
+type dockerMultiArchManifestConfig struct {
+	Digest   string `json:"digest"`
+	Platform struct {
+		Architecture string `json:"architecture"`
+		OS           string `json:"os"`
+	} `json:"platform"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+func getDockerMultiArchManifests(ctx context.Context, c *actionplugin.Common, rtConfig ArtifactoryConfig, manifestDownloadURI string) (*multiArchManifests, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", manifestDownloadURI, nil)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to create request to retrieve file docker manifest")
+	}
+
+	req.Header.Set("Authorization", "Bearer "+rtConfig.Token)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get docker manifest file")
+	}
+
+	if resp.StatusCode > 200 {
+		return nil, sdk.Errorf("unable to download file %s (HTTP %d)", manifestDownloadURI, resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	bts, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var manifests multiArchManifests
+	if err := json.Unmarshal(bts, &manifests); err != nil {
+		return nil, sdk.WrapError(err, "unable to read docker manifest")
+	}
+
+	return &manifests, nil
+}
+
 // FinalizeRunResultDockerDetail is computing the runResult Object for a docker image (imageDestinationName) push from local reference (imageStruct)
 // As result, the parameter result is updated
 // This function is used by addRunResult and dockerPush actions
@@ -105,8 +148,13 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 	var manifestFound bool
 	var manifestDownloadURI string
 	var manifestFileInfo *ArtifactoryFileInfo
+	multiArch := false
 	for _, child := range rtFolderPathInfo.Children {
 		if strings.HasSuffix(child.URI, "manifest.json") { // Can be manifest.json of list.manifest.json for multi-arch docker image
+			if strings.HasSuffix(child.URI, "list.manifest.json") {
+				multiArch = true
+			}
+
 			manifestFileInfo, err = GetArtifactoryFileInfo(ctx, c, rtConfig, dockerRepo+"-"+maturity, rtFolderPath+child.URI)
 			if err != nil {
 				return sdk.WrapError(err, "unable to get manifest %s/%s info", dockerRepo+"-"+maturity, rtFolderPath+child.URI)
@@ -119,24 +167,64 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 			break
 		}
 	}
-	// Get the manifest file to get the ImageID and the date
-	manifest, err := getDockerManifest(ctx, c, rtConfig, manifestDownloadURI)
-	if err != nil {
-		return sdk.WrapError(err, "unable to download manifest from %s", manifestDownloadURI)
-	}
-	imageStruct.ImageID = strings.TrimPrefix(manifest.Config.Digest, "sha256:")[0:12]
-	imageStruct.Created = manifestFileInfo.Created.Format(time.RFC3339)
-	result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
-		Name:         imageDestinationName,
-		ID:           imageStruct.ImageID,
-		HumanSize:    imageStruct.Size,
-		HumanCreated: imageStruct.Created,
-	}
-
-	result.ArtifactManagerMetadata.Set("dir", rtFolderPathInfo.Path)
 	if !manifestFound {
 		return errors.New("unable to get uploaded image manifest")
 	}
+
+	if multiArch {
+		manifestList, err := getDockerMultiArchManifests(ctx, c, rtConfig, manifestDownloadURI)
+		if err != nil {
+			return sdk.WrapError(err, "unable to download manifest from %s", manifestDownloadURI)
+		}
+		imagesStructs := make([]sdk.V2WorkflowRunResultDockerDetailImage, 0, len(manifestList.Manifests))
+		for _, m := range manifestList.Manifests {
+			img := sdk.V2WorkflowRunResultDockerDetailImage{
+				ID:           strings.TrimPrefix(m.Digest, "sha256:")[0:12],
+				OS:           m.Platform.OS,
+				Architecture: m.Platform.Architecture,
+			}
+			manifestPath := imageStruct.Repository + "/" + m.Digest + "/manifest.json"
+			manifestFileInfo, err = GetArtifactoryFileInfo(ctx, c, rtConfig, dockerRepo+"-"+maturity, manifestPath)
+			if err != nil {
+				return sdk.WrapError(err, "unable to get manifest %s/%s info", dockerRepo+"-"+maturity, manifestPath)
+			}
+			img.Path = manifestFileInfo.Path
+
+			if m.Annotations != nil {
+				img.ReferenceDigest = m.Annotations["vnd.docker.reference.digest"]
+				img.ReferenceType = m.Annotations["vnd.docker.reference.type"]
+			}
+			imagesStructs = append(imagesStructs, img)
+		}
+		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
+			Name:         imageDestinationName,
+			Manifests:    imagesStructs,
+			HumanSize:    imageStruct.Size,
+			HumanCreated: imageStruct.Created,
+		}
+	} else {
+		// Get the manifest file to get the ImageID and the date
+		manifest, err := getDockerManifest(ctx, c, rtConfig, manifestDownloadURI)
+		if err != nil {
+			return sdk.WrapError(err, "unable to download manifest from %s", manifestDownloadURI)
+		}
+		imageStruct.ImageID = strings.TrimPrefix(manifest.Config.Digest, "sha256:")[0:12]
+		imageStruct.Created = manifestFileInfo.Created.Format(time.RFC3339)
+
+		imgDetail := sdk.V2WorkflowRunResultDockerDetailImage{
+			ID:   imageStruct.ImageID,
+			Path: rtFolderPath + "/manifest.json",
+		}
+		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
+			Name:         imageDestinationName,
+			Manifests:    []sdk.V2WorkflowRunResultDockerDetailImage{imgDetail},
+			HumanSize:    imageStruct.Size,
+			HumanCreated: imageStruct.Created,
+		}
+	}
+
+	result.ArtifactManagerMetadata.Set("dir", rtFolderPathInfo.Path)
+
 	details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultDockerDetail](result)
 	if err != nil {
 		return err

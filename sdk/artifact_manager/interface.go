@@ -13,6 +13,7 @@ import (
 
 // mockgen -source=interface.go -package mock_artifact_manager -destination=mock_artifact_manager/interface_mock.go ArtifactManager
 type ArtifactManager interface {
+	GetFile(ctx context.Context, fileDownloadURI string) ([]byte, error)
 	GetFileInfo(repoName string, filePath string) (sdk.FileInfo, error)
 	GetRepository(repoName string) (*services.RepositoryDetails, error)
 	GetFolderInfo(repoName string, folderPath string) (*utils.FolderInfo, error)

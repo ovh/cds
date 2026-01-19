@@ -89,6 +89,21 @@ func (mr *MockArtifactManagerMockRecorder) DeleteBuild(project, buildName, build
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBuild", reflect.TypeOf((*MockArtifactManager)(nil).DeleteBuild), project, buildName, buildVersion)
 }
 
+// GetFile mocks base method.
+func (m *MockArtifactManager) GetFile(ctx context.Context, fileDownloadURI string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFile", ctx, fileDownloadURI)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFile indicates an expected call of GetFile.
+func (mr *MockArtifactManagerMockRecorder) GetFile(ctx, fileDownloadURI any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFile", reflect.TypeOf((*MockArtifactManager)(nil).GetFile), ctx, fileDownloadURI)
+}
+
 // GetFileInfo mocks base method.
 func (m *MockArtifactManager) GetFileInfo(repoName, filePath string) (sdk.FileInfo, error) {
 	m.ctrl.T.Helper()
