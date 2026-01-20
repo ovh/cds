@@ -317,8 +317,13 @@ func contains(ctx context.Context, _ *ActionParser, inputs ...interface{}) (inte
 	}
 
 	// If search is an array, inputToSearch must be an item of the array
+	g := glob.New(inputToSearch)
 	for _, i := range inputSearchArray {
-		if fmt.Sprintf("%v", i) == inputToSearch {
+		result, err := g.MatchString(fmt.Sprintf("%v", i))
+		if err != nil {
+			return nil, NewErrorFrom(err, "contains: unable check %s with pattern %s: %v", fmt.Sprintf("%v", i), inputToSearch, err)
+		}
+		if result != nil {
 			return true, nil
 		}
 	}
