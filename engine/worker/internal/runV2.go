@@ -302,6 +302,11 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		}
 
 		stepRes, pa := w.runActionStep(ctx, step, w.currentJobV2.currentStepNameForLog, *currentStepContext)
+
+		// If job is already failed, display error in job logs
+		if jobResult.Status == sdk.V2WorkflowRunJobStatusFail && stepRes.Status == sdk.V2WorkflowRunJobStatusFail {
+			w.SendLog(ctx, workerruntime.LevelError, stepRes.Error)
+		}
 		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, "")
 		w.gelfLogger.hook.Flush()
 		if pa != nil {
@@ -623,6 +628,12 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			if childPost != nil {
 				childPostAction = append(childPostAction, *childPost)
 			}
+
+			// If job is already failed, display error in job logs
+			if actionResult.Status == sdk.V2WorkflowRunJobStatusFail && stepRes.Status == sdk.V2WorkflowRunJobStatusFail {
+				w.SendLog(ctx, workerruntime.LevelError, stepRes.Error)
+			}
+
 			w.updateStepResult(&actionResult, stepRes, step.ContinueOnError, subStepName)
 			actionContext.Steps = w.GetCurrentStepsStatus().ToStepContext()
 		}
