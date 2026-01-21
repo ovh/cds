@@ -80,15 +80,16 @@ func (wt V2WorkflowTemplate) GetName() string {
 
 func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, error) {
 	type innerWorkflow struct {
-		Semver       *WorkflowSemver          `json:"semver,omitempty"`
-		Stages       map[string]WorkflowStage `json:"stages,omitempty"`
-		Gates        map[string]V2JobGate     `json:"gates,omitempty"`
-		Jobs         map[string]V2Job         `json:"jobs"`
-		Env          map[string]string        `json:"env,omitempty"`
-		Integrations []string                 `json:"integrations,omitempty"`
-		VariableSets []string                 `json:"vars,omitempty"`
-		Annotations  map[string]string        `json:"annotations,omitempty"`
-		On           *WorkflowOn              `json:"on,omitempty"`
+		Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty"`
+		Semver        *WorkflowSemver          `json:"semver,omitempty"`
+		Stages        map[string]WorkflowStage `json:"stages,omitempty"`
+		Gates         map[string]V2JobGate     `json:"gates,omitempty"`
+		Jobs          map[string]V2Job         `json:"jobs"`
+		Env           map[string]string        `json:"env,omitempty"`
+		Integrations  []string                 `json:"integrations,omitempty"`
+		VariableSets  []string                 `json:"vars,omitempty"`
+		Annotations   map[string]string        `json:"annotations,omitempty"`
+		On            *WorkflowOn              `json:"on,omitempty"`
 	}
 
 	if wt.Spec.tpl == nil {
@@ -165,6 +166,9 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 	}
 	if in.VariableSets != nil {
 		w.VariableSets = in.VariableSets
+	}
+	if len(in.Concurrencies) > 0 {
+		w.Concurrencies = in.Concurrencies
 	}
 	if in.Semver != nil {
 		w.Semver = in.Semver

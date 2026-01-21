@@ -1832,7 +1832,7 @@ func TestWorkflowIntegrationInterpoloated(t *testing.T) {
 
 }
 
-func TestCreateJobsFromTemplatedMatrix(t *testing.T) {
+func TestCreateJobsFromTemplatedMatrixAndConcurrencies(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	_, err := db.Exec("DELETE FROM rbac")
@@ -1905,8 +1905,12 @@ func TestCreateJobsFromTemplatedMatrix(t *testing.T) {
 parameters:
 - key: region
 spec: |-
+  concurrencies:
+  - name: mymatrixconcu
+    pool: 10
   jobs:
     deploy_[[.params.region]]:
+      concurrency: mymatrixconcu
       runs-on: .cds/worker-models/mymodel.yml
       steps:
       - run: echo "Deploy"
@@ -2063,6 +2067,8 @@ spec:
 	}
 	require.True(t, sm1)
 	require.True(t, sm2)
+	require.Len(t, wrDB.WorkflowData.Workflow.Concurrencies, 1)
+	require.Equal(t, "mymatrixconcu", wrDB.WorkflowData.Workflow.Concurrencies[0].Name)
 }
 
 func TestCreateJobsFromTemplatedMatrix_WithStage(t *testing.T) {

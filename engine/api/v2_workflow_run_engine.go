@@ -1173,6 +1173,27 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		runUpdated = true
 	}
 
+	if rj.Region == "" && len(rj.Job.Integrations) > 0 {
+	regionLoop:
+		for _, jobInt := range rj.Job.Integrations {
+
+			for _, integ := range wref.project.Integrations {
+				if integ.Name != jobInt {
+					continue
+				}
+				for _, v := range integ.Config {
+					if v.Type == sdk.IntegrationConfigTypeRegion {
+						rj.Job.Region = v.Value
+						rj.Region = v.Value
+						runUpdated = true
+						break regionLoop
+					}
+				}
+			}
+
+		}
+	}
+
 	// Check user region right.
 	if rj.Region == "" {
 		rj.Job.Region = defaultRegion
@@ -1603,7 +1624,7 @@ func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Sto
 
 	// If there is no matrix, compute the final workflow now. Else it will be done at runtime
 
-	msgs, err = handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplate, run, tmpWorkflow.Jobs, tmpWorkflow.Stages, tmpWorkflow.Gates, tmpWorkflow.Annotations, jobID, j, allVariableSets, defaultRegion)
+	msgs, err = handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplate, run, tmpWorkflow.Jobs, tmpWorkflow.Stages, tmpWorkflow.Gates, tmpWorkflow.Annotations, tmpWorkflow.Concurrencies, jobID, j, allVariableSets, defaultRegion)
 	if err != nil {
 		return nil, err
 	}
@@ -1648,7 +1669,7 @@ func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Sto
 	return msgsLint, nil
 }
 
-func handleTemplatedJobInWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, templateEntity *sdk.EntityWithObject, run *sdk.V2WorkflowRun, newJobs map[string]sdk.V2Job, newStages map[string]sdk.WorkflowStage, newGates map[string]sdk.V2JobGate, newAnnotations map[string]string, jobID string, j sdk.V2Job, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
+func handleTemplatedJobInWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, templateEntity *sdk.EntityWithObject, run *sdk.V2WorkflowRun, newJobs map[string]sdk.V2Job, newStages map[string]sdk.WorkflowStage, newGates map[string]sdk.V2JobGate, newAnnotations map[string]string, newConcurrencies []sdk.WorkflowConcurrency, jobID string, j sdk.V2Job, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
 	// Check duplication of jobID
 	// Retrieve root job
 	rootJobs := make([]string, 0)
@@ -1760,6 +1781,19 @@ loop:
 			run.WorkflowData.Workflow.Annotations[k] = v
 		}
 	}
+	// Set new concurrencies on workflow
+	for _, c := range newConcurrencies {
+		found := false
+		for _, existingC := range run.WorkflowData.Workflow.Concurrencies {
+			if c.Name == existingC.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			run.WorkflowData.Workflow.Concurrencies = append(run.WorkflowData.Workflow.Concurrencies, c)
+		}
+	}
 
 	if run.WorkflowData.Actions == nil {
 		run.WorkflowData.Actions = make(map[string]sdk.V2Action)
@@ -1802,6 +1836,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 	newStages := make(map[string]sdk.WorkflowStage)
 	newGates := make(map[string]sdk.V2JobGate)
 	newAnnotations := make(map[string]string)
+	newConcurrencies := make(map[string]sdk.WorkflowConcurrency)
 	var entityTemplateWithObj *sdk.EntityWithObject
 	for _, m := range matrixPermutation {
 		data.runJobContext.Matrix = make(map[string]string)
@@ -1879,9 +1914,22 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 				newAnnotations[k] = v
 			}
 		}
+
+		for _, c := range tmpWorkflow.Concurrencies {
+			if _, has := newConcurrencies[c.Name]; !has {
+				newConcurrencies[c.Name] = c
+			}
+		}
+
 	}
 
-	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, data.jobID, data.jobToTrigger.Job, data.allVariableSets, data.defaultRegion)
+	concurrencies := make([]sdk.WorkflowConcurrency, 0, len(newConcurrencies))
+	for _, c := range newConcurrencies {
+		concurrencies = append(concurrencies, c)
+	}
+
+	// Handle templated job in workflow
+	msgs, err := handleTemplatedJobInWorkflow(ctx, db, store, wref, entityTemplateWithObj, run, newJobs, newStages, newGates, newAnnotations, concurrencies, data.jobID, data.jobToTrigger.Job, data.allVariableSets, data.defaultRegion)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return []sdk.V2WorkflowRunInfo{{
