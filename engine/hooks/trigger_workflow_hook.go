@@ -88,10 +88,9 @@ func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEv
 	if err != nil {
 		return err
 	}
-	if e.UserID == nil {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve CDS user owner of workflow %s/%s/%s/%s", hre.ExtractData.Scheduler.TargetProject, hre.VCSServerName, hre.RepositoryName, hre.ExtractData.Scheduler.TargetWorkflow)
+	if e.UserID != nil {
+		wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 	}
-	wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
 	return nil
 }
@@ -103,10 +102,9 @@ func (s *Service) handleWorkflowRunHook(ctx context.Context, hre *sdk.HookReposi
 		if err != nil {
 			return err
 		}
-		if e.UserID == nil {
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve CDS user owner of workflow %s/%s/%s/%s", wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName)
+		if e.UserID != nil {
+			wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 		}
-		wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 	}
 	return nil
 }
@@ -182,10 +180,9 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 			if err != nil {
 				return err
 			}
-			if e.UserID == nil {
-				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve CDS user owner of workflow %s/%s/%s/%s on ref %s and commit %s", wh.ProjectKey, wh.VCSName, wh.RepositoryName, wh.WorkflowName, wh.Ref, wh.Commit)
+			if e.UserID != nil {
+				w.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 			}
-			w.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
 		}
 		hre.WorkflowHooks = append(hre.WorkflowHooks, w)
 	}
@@ -197,9 +194,6 @@ func (s *Service) handleWebhookHook(ctx context.Context, hre *sdk.HookRepository
 	e, err := s.Client.EntityGet(ctx, hre.ExtractData.WebHook.Project, hre.ExtractData.WebHook.VCS, hre.ExtractData.WebHook.Repository, sdk.EntityTypeWorkflow, hre.ExtractData.WebHook.Workflow)
 	if err != nil {
 		return err
-	}
-	if e.UserID == nil {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve CDS user owner of workflow %s/%s/%s/%s", hre.ExtractData.WebHook.Project, hre.ExtractData.WebHook.VCS, hre.ExtractData.WebHook.Repository, hre.ExtractData.WebHook.Workflow)
 	}
 	var wk sdk.V2Workflow
 	if err := yaml.Unmarshal([]byte(e.Data), &wk); err != nil {
