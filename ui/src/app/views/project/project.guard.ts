@@ -65,31 +65,14 @@ export class ProjectExistsGuard {
         private _routerService: RouterService
     ) { }
 
-    loadProject(state: RouterStateSnapshot): Observable<boolean> {
-        const params = this._routerService.getRouteSnapshotParams({}, state.root);
-        const opts = [
-            new LoadOpts('withApplicationNames', 'application_names'),
-            new LoadOpts('withPipelineNames', 'pipeline_names'),
-            new LoadOpts('withWorkflowNames', 'workflow_names'),
-            new LoadOpts('withEnvironmentNames', 'environment_names'),
-            new LoadOpts('withLabels', 'labels')
-        ];
-
-        return this._store.dispatch(new FetchProject({
-            projectKey: params['key'],
-            opts
-        })).pipe(
-            switchMap(() => this._store.selectOnce(ProjectState.projectSnapshot)),
-            map(p => {
-                if (!p) {
-                    this._router.navigate([`/project/${params['key']}/explore`]);
-                    return null;
-                }
-                return true;
-            }),
-            filter(exists => exists),
-            first()
-        );
+    loadProject(state: RouterStateSnapshot): boolean {
+        const p = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        if (!p) {
+            const params = this._routerService.getRouteSnapshotParams({}, state.root);
+            this._router.navigate([`/project/${params['key']}/explore`]);
+            return false;
+        }
+        return true;  // Always return true if project is loaded
     }
 
     canActivate(

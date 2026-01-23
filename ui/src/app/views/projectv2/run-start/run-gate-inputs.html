@@ -3,7 +3,7 @@
 
     <ng-container *ngIf="values[gate.key].getJobsCount() > 1">
         <nz-form-item *ngFor="let input of gate.value.inputs | keyvalue">
-            <nz-form-label [nzSpan]="6">{{input.key}}</nz-form-label>
+            <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
 
             <nz-form-control [nzSpan]="14" [nzExtra]="input.value.description">
                 <ng-container [ngSwitch]="input.value.type">
@@ -54,10 +54,11 @@
     </nz-form-item>
 
     <ng-container *ngIf="values[gate.key].withJobOverrides">
-        <ng-container *ngFor="let input of gate.value.inputs | keyvalue">
-            <nz-form-item *ngFor="let job of values[gate.key].jobs | keyvalue">
+        <ng-container *ngFor="let job of values[gate.key].jobs | keyvalue">
+            <nz-divider nzText="Job: {{job.key}}" nzOrientation="left" nzPlain nzSize="small" nzVariant="dashed"></nz-divider>
 
-                <nz-form-label [nzSpan]="6">{{job.key}}.{{input.key}}</nz-form-label>
+            <nz-form-item *ngFor="let input of gate.value.inputs | keyvalue">
+                <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
 
                 <nz-form-control [nzSpan]="14" [nzExtra]="input.value.description">
                     <ng-container [ngSwitch]="input.value.type">
