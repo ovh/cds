@@ -4,9 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -18,32 +16,6 @@ func (api *API) configUserHandler() service.Handler {
 			URLUI:  api.Config.URL.UI,
 			URLAPI: api.Config.URL.API,
 		}, http.StatusOK)
-	}
-}
-
-func (api *API) configVCSGerritHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !isHooks(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		vcsGerritConfigurationServers := make(map[string]sdk.VCSGerritConfiguration)
-
-		vcsGerritProjects, err := vcs.LoadAllVCSGerrit(ctx, api.mustDB(), gorpmapping.GetAllOptions.WithDecryption)
-		if err != nil {
-			return err
-		}
-
-		for _, v := range vcsGerritProjects {
-			vcsGerritConfigurationServers[v.Name] = sdk.VCSGerritConfiguration{
-				URL:           v.URL,
-				SSHUsername:   v.Auth.SSHUsername,
-				SSHPrivateKey: v.Auth.SSHPrivateKey,
-				SSHPort:       v.Auth.SSHPort,
-			}
-		}
-
-		return service.WriteJSON(w, vcsGerritConfigurationServers, http.StatusOK)
 	}
 }
 

@@ -246,51 +246,6 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		envName = env.Name
 	}
 
-	report, err := nodeRun.Report()
-	if err != nil {
-		return err
-	}
-
-	// Check if it's a gerrit or not
-	isGerrit, err := e.vcsClient.IsGerrit(ctx, db)
-	if err != nil {
-		return err
-	}
-	if isGerrit {
-		// Get gerrit variable
-		var project, changeID, branch, revision, url string
-		projectParam := sdk.ParameterFind(nodeRun.BuildParameters, "git.repository")
-		if projectParam != nil {
-			project = projectParam.Value
-		}
-		changeIDParam := sdk.ParameterFind(nodeRun.BuildParameters, "gerrit.change.id")
-		if changeIDParam != nil {
-			changeID = changeIDParam.Value
-		}
-		branchParam := sdk.ParameterFind(nodeRun.BuildParameters, "gerrit.change.branch")
-		if branchParam != nil {
-			branch = branchParam.Value
-		}
-		revisionParams := sdk.ParameterFind(nodeRun.BuildParameters, "git.hash")
-		if revisionParams != nil {
-			revision = revisionParams.Value
-		}
-		urlParams := sdk.ParameterFind(nodeRun.BuildParameters, "cds.ui.pipeline.run")
-		if urlParams != nil {
-			url = urlParams.Value
-		}
-		if changeID != "" {
-			eventWNR.GerritChange = &sdk.GerritChangeEvent{
-				ID:         changeID,
-				DestBranch: branch,
-				Project:    project,
-				Revision:   revision,
-				Report:     report,
-				URL:        url,
-			}
-		}
-	}
-
 	payload, _ := json.Marshal(eventWNR)
 
 	evt := sdk.Event{
@@ -317,7 +272,6 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		Status:             status,
 		RepositoryFullname: eventWNR.RepositoryFullName,
 		GitHash:            eventWNR.Hash,
-		GerritChange:       eventWNR.GerritChange,
 	}
 
 	if err := e.vcsClient.SetStatus(ctx, buildStatus); err != nil {
@@ -365,12 +319,6 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		return err
 	}
 
-	var changeID string
-	changeIDParam := sdk.ParameterFind(nodeRun.BuildParameters, "gerrit.change.id")
-	if changeIDParam != nil {
-		changeID = changeIDParam.Value
-	}
-
 	var revision string
 	revisionParams := sdk.ParameterFind(nodeRun.BuildParameters, "git.hash")
 	if revisionParams != nil {
@@ -380,40 +328,27 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 	reqComment := sdk.VCSPullRequestCommentRequest{Message: report}
 	reqComment.Revision = revision
 
-	isGerrit, err := e.vcsClient.IsGerrit(ctx, db)
+	//Check if this branch and this commit is a pullrequest
+	prs, err := e.vcsClient.PullRequests(ctx, app.RepositoryFullname)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return err
 	}
 
-	if changeID != "" && isGerrit {
-		reqComment.ChangeID = changeID
-		if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-			return err
-		}
-	} else if !isGerrit {
-		//Check if this branch and this commit is a pullrequest
-		prs, err := e.vcsClient.PullRequests(ctx, app.RepositoryFullname)
-		if err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-			return err
-		}
-
-		//Send comment on pull request
-		for _, pr := range prs {
-			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
-				reqComment.ID = pr.ID
-				log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", reqComment.Revision, reqComment.ID, app.RepositoryFullname)
-				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
-					log.ErrorWithStackTrace(ctx, err)
-					return err
-				}
-				break
-			} else {
-				log.Info(ctx, "nothing to do on pr %+v for branch %s", pr, nodeRun.VCSBranch)
+	//Send comment on pull request
+	for _, pr := range prs {
+		if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
+			reqComment.ID = pr.ID
+			log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", reqComment.Revision, reqComment.ID, app.RepositoryFullname)
+			if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				return err
 			}
+			break
+		} else {
+			log.Info(ctx, "nothing to do on pr %+v for branch %s", pr, nodeRun.VCSBranch)
 		}
 	}
+
 	return nil
 }

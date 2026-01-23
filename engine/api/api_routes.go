@@ -352,7 +352,6 @@ func (api *API) InitRouter() {
 
 	// Config
 	r.Handle("/config/user", ScopeNone(), r.GET(api.configUserHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/config/vcsgerrit", ScopeNone(), r.GET(api.configVCSGerritHandler))
 	r.Handle("/config/cdn", ScopeNone(), r.GET(api.configCDNHandler))
 	r.Handle("/config/api", ScopeNone(), r.GET(api.configAPIHandler))
 

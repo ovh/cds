@@ -23,11 +23,6 @@ export class VCSProjectAuth {
     username: string;
     token: string;
     sshKeyName: string;
-
-    // Use for gerrit
-    sshUsername:   string;
-    sshPort:       number;
-    sshPrivateKey: string;
 }
 
 export class VCSStrategy {

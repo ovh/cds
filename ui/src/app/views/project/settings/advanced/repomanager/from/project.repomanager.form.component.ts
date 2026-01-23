@@ -46,7 +46,7 @@ export class ProjectRepoManagerFormComponent implements OnInit {
         private _messageService: NzMessageService
     ) {
         this.askDeleting = false;
-        this.reposManagerList = ["bitbucketcloud", "bitbucketserver", "github", "gitlab", "gitea", "gerrit"];
+        this.reposManagerList = ["bitbucketcloud", "bitbucketserver", "github", "gitlab", "gitea"];
         if (!this.vcsProjectName) {
             this.vcsProject = new VCSProject();
             this.vcsProject.options = new VCSProjectOptions();
