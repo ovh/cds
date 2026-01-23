@@ -308,6 +308,13 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 		}).MaxTimes(1)
 
 	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/pullrequests",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/foo/myrepo/pullrequests/comments",
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
@@ -520,6 +527,13 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 			vcs := sdk.VCSConfiguration{Type: "github"}
 			*(out.(*sdk.VCSConfiguration)) = vcs
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/pullrequests",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 

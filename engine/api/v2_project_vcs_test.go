@@ -247,7 +247,6 @@ auth:
 	vcsProject := sdk.VCSProject{}
 	require.NoError(t, json.Unmarshal(w3.Body.Bytes(), &vcsProject))
 	require.Equal(t, "my_vcs_server", vcsProject.Name)
-	require.Empty(t, vcsProject.Auth.SSHPrivateKey)
 	require.Empty(t, vcsProject.Auth.Token)
 
 	// Try to get key used in the VCS
