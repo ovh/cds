@@ -291,7 +291,7 @@
                             <nz-col [nzSpan]="10">
                                 <input nz-input type="text" name="value-{{envName}}"
                                        [placeholder]="'common_value' | translate"
-                                       [(ngModel)]="workerModel.model_docker?.envs[envName]"
+                                       [(ngModel)]="workerModel.model_docker.envs[envName]"
                                        [readonly]="!workerModel.editable">
                             </nz-col>
                             <nz-col [nzSpan]="4">

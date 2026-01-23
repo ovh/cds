@@ -96,7 +96,7 @@ describe('CDS: Application Repo Component', () => {
     });
 
     it('Load component + select repository', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let mockResponse = [
             { name: 'repo1', fullname: 'frepo1' },
             { name: 'repo2', fullname: 'frepo2' },

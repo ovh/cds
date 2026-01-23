@@ -48,12 +48,12 @@ describe('Pipelines', () => {
             ]
         }).compileComponents();
 
-        store = TestBed.get(Store);
+        store = TestBed.inject(Store);
         let project = new Project();
         project.key = testProjectKey;
         project.name = testProjectKey;
         store.dispatch(new AddProject(project));
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: testProjectKey,
             key: testProjectKey,
@@ -65,7 +65,7 @@ describe('Pipelines', () => {
     }));
 
     it('fetch pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         store.dispatch(new pipelinesActions.FetchPipeline({
             projectKey: testProjectKey,
             pipelineName: 'pip1'
@@ -82,7 +82,7 @@ describe('Pipelines', () => {
     }));
 
     it('add pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -122,7 +122,7 @@ describe('Pipelines', () => {
     }));
 
     it('update a pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -165,7 +165,7 @@ describe('Pipelines', () => {
     }));
 
     it('delete a pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -197,7 +197,7 @@ describe('Pipelines', () => {
     }));
 
     it('fetch audits pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -238,7 +238,7 @@ describe('Pipelines', () => {
 
     //  ------- Parameters --------- //
     it('add a parameter on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -281,7 +281,7 @@ describe('Pipelines', () => {
     }));
 
     it('update a parameter on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -324,7 +324,7 @@ describe('Pipelines', () => {
     }));
 
     it('delete a parameter on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -367,7 +367,7 @@ describe('Pipelines', () => {
 
     //  ------- Workflow --------- //
     it('add a stage on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -413,7 +413,7 @@ describe('Pipelines', () => {
     }));
 
     it('update a stage on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -463,7 +463,7 @@ describe('Pipelines', () => {
     }));
 
     it('delete a stage on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -529,7 +529,7 @@ describe('Pipelines', () => {
 
 
     it('add a job on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -596,7 +596,7 @@ describe('Pipelines', () => {
     }));
 
     it('update a job on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;
@@ -675,7 +675,7 @@ describe('Pipelines', () => {
     }));
 
     it('delete a job on pipeline', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let pipeline = new Pipeline();
         pipeline.name = 'pip1';
         pipeline.projectKey = testProjectKey;

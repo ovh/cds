@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { HelpState } from 'app/store/help.state';
 import { filter } from 'rxjs/operators';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { NzNotificationDataOptions } from 'ng-zorro-antd/notification/typings';
+import { NzNotificationDataOptions } from 'ng-zorro-antd/notification';
 
 export class ToastHTTPErrorData {
     status: number;
@@ -18,11 +18,11 @@ export class ToastHTTPErrorData {
 @Injectable()
 export class ToastService {
     private _toastQueue: BehaviorSubject<NzNotificationDataOptions<ToastHTTPErrorData>> = new BehaviorSubject(null);
+   
+    _nzNotificationService = inject(NzNotificationService);
+    _store = inject(Store)
 
-    constructor(
-        private _nzNotificationService: NzNotificationService,
-        private _store: Store
-    ) {}
+    constructor() {}
 
     getObservable(): Observable<NzNotificationDataOptions<ToastHTTPErrorData>> {
         return new Observable<NzNotificationDataOptions<ToastHTTPErrorData>>(fn => this._toastQueue.subscribe(fn));
