@@ -27,7 +27,6 @@ github.com/ProtonMail/go-crypto; BSD-3-Clause
 github.com/SSSaaS/sssa-golang; MIT
 github.com/Shopify/sarama; MIT
 github.com/andybalholm/brotli; MIT
-github.com/andygrunwald/go-gerrit; MIT
 github.com/antlr/antlr4/runtime/Go/antlr/v4; BSD-3-Clause
 github.com/aokoli/goutils; Apache-2.0
 github.com/armon/go-metrics; MIT
