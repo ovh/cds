@@ -13,6 +13,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestContains(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	for _, tt := range []struct {
+		name   string
+		args   []interface{}
+		search string
+		result bool
+	}{
+		{
+			"String search",
+			[]interface{}{"item1", "item2", "item10"},
+			"item1",
+			true,
+		},
+		{
+			"Search false",
+			[]interface{}{"item1", "item2", "item10"},
+			"item",
+			false,
+		},
+		{
+			"Search glob",
+			[]interface{}{"item1", "item2", "item10", "mysuperItem"},
+			"my*",
+			true,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := contains(context.TODO(), nil, tt.args, tt.search)
+			require.NoError(t, err)
+			require.Equal(t, tt.result, result)
+		})
+	}
+}
+
 func Test_replace(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	a := ActionParser{}
