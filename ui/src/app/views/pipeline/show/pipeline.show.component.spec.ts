@@ -76,7 +76,7 @@ describe('CDS: Pipeline Show', () => {
     });
 
     it('should load component', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
 
         let pipelineMock = new Pipeline();
         pipelineMock.name = 'pip1';
@@ -86,7 +86,7 @@ describe('CDS: Pipeline Show', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        let store: Store = TestBed.get(Store);
+        let store: Store = TestBed.inject(Store);
         store.dispatch(new FetchPipeline({
             projectKey: 'key1',
             pipelineName: 'pip1'
@@ -129,7 +129,7 @@ describe('CDS: Pipeline Show', () => {
         // ADD
 
         let event: ParameterEvent = new ParameterEvent('add', param);
-        let store: Store = TestBed.get(Store);
+        let store: Store = TestBed.inject(Store);
         spyOn(store, 'dispatch').and.callFake(() => of());
         fixture.componentInstance.parameterEvent(event);
         expect(store.dispatch).toHaveBeenCalledWith(new AddPipelineParameter({

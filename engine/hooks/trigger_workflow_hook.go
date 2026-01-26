@@ -88,7 +88,9 @@ func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEv
 	if err != nil {
 		return err
 	}
-	wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+	if e.UserID != nil {
+		wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+	}
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
 	return nil
 }
@@ -100,7 +102,9 @@ func (s *Service) handleWorkflowRunHook(ctx context.Context, hre *sdk.HookReposi
 		if err != nil {
 			return err
 		}
-		wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+		if e.UserID != nil {
+			wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+		}
 	}
 	return nil
 }
@@ -176,7 +180,9 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 			if err != nil {
 				return err
 			}
-			w.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+			if e.UserID != nil {
+				w.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+			}
 		}
 		hre.WorkflowHooks = append(hre.WorkflowHooks, w)
 	}

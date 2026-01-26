@@ -47,12 +47,12 @@ describe('Applications', () => {
             ]
         }).compileComponents();
 
-        store = TestBed.get(Store);
+        store = TestBed.inject(Store);
         let project = new Project();
         project.key = testProjectKey;
         project.name = testProjectKey;
         store.dispatch(new AddProject(project));
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: testProjectKey,
             key: testProjectKey,
@@ -64,7 +64,7 @@ describe('Applications', () => {
     }));
 
     it('fetch application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         store.dispatch(new ActionApplication.FetchApplication({
             projectKey: testProjectKey,
             applicationName: 'app1'
@@ -82,7 +82,7 @@ describe('Applications', () => {
     }));
 
     it('add application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -120,7 +120,7 @@ describe('Applications', () => {
     }));
 
     it('update an application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -165,7 +165,7 @@ describe('Applications', () => {
     }));
 
     it('clone an application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -209,7 +209,7 @@ describe('Applications', () => {
     }));
 
     it('delete an application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -242,7 +242,7 @@ describe('Applications', () => {
     }));
 
     it('fetch an overview application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         store.dispatch(new ActionApplication.FetchApplicationOverview({
             projectKey: testProjectKey,
             applicationName: 'app1'
@@ -258,7 +258,7 @@ describe('Applications', () => {
 
     //  ------- Variables --------- //
     it('add a variable on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -300,7 +300,7 @@ describe('Applications', () => {
     }));
 
     it('update a variable on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -344,7 +344,7 @@ describe('Applications', () => {
     }));
 
     it('delete a variable on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -391,7 +391,7 @@ describe('Applications', () => {
 
     //  ------- Keys --------- //
     it('add a key on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -426,7 +426,7 @@ describe('Applications', () => {
     }));
 
     it('delete a key on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -476,7 +476,7 @@ describe('Applications', () => {
 
     //  ------- Deployment strategies --------- //
     it('add a deployment on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -521,7 +521,7 @@ describe('Applications', () => {
 
     //  ------- VCS strategies --------- //
     it('connect a repository on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -557,7 +557,7 @@ describe('Applications', () => {
     }));
 
     it('delete a repository on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -592,7 +592,7 @@ describe('Applications', () => {
 
     //  ------- Misc --------- //
     it('mark an external change on application', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -619,7 +619,7 @@ describe('Applications', () => {
     }));
 
     it('delete application from cache', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;
@@ -645,7 +645,7 @@ describe('Applications', () => {
     }));
 
     it('resync application from cache', waitForAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
         application.project_key = testProjectKey;

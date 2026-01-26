@@ -161,7 +161,7 @@ describe('CDS: Action Component', () => {
     }));
 
     it('should add and then remove a step', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
 
         let actionMock = <Action>{
             name: 'action1'

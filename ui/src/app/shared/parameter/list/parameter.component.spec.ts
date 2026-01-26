@@ -36,7 +36,7 @@ describe('CDS: Parameter List Component', () => {
 
 
     it('should load component + update description', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
 
         let typeMock = ['string', 'password'];
 

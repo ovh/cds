@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
 import { TestCase, Tests } from "app/model/pipeline.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 
@@ -23,9 +23,9 @@ export class RunTestsComponent implements OnChanges {
 	treeExpandState: { [key: string]: boolean } = {};
 	countDisplayedTests = 0;
 
-	constructor(
-		private _cd: ChangeDetectorRef
-	) {
+	_cd = inject(ChangeDetectorRef);
+
+	constructor() {
 		this.filterOptions = [
 			{ label: 'Success', value: 'success', checked: true },
 			{ label: 'Failed', value: 'failed', checked: true },
@@ -41,9 +41,9 @@ export class RunTestsComponent implements OnChanges {
 		if (!this.filterModified) {
 			if (this.tests.ko > 0 || this.tests.skipped > 0) {
 				this.filterOptions = [
-					{ label: 'Success', value: 'success', checked: false },
-					{ label: 'Failed', value: 'failed', checked: true },
-					{ label: 'Skipped', value: 'skipped', checked: true }
+					{ label: 'Success', value: 'success'},
+					{ label: 'Failed', value: 'failed' },
+					{ label: 'Skipped', value: 'skipped' }
 				];
 				this.filtered = true;
 				this.activeFilters = ['failed', 'skipped'];
@@ -157,9 +157,8 @@ export class RunTestsComponent implements OnChanges {
 
 	updateFilters(event): void {
 		this.filterModified = true;
-		this.filterOptions = event;
-		this.filtered = !this.filterOptions.map(o => o.checked).reduce((p, c) => p && c);
-		this.activeFilters = this.filterOptions.filter(o => o.checked).map(o => o.value);
+		this.activeFilters = event;
+		this.filtered = this.activeFilters.length !== this.filterOptions.length;
 		this.initTestTree();
 		this._cd.markForCheck();
 	}

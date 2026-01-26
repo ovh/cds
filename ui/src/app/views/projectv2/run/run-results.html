@@ -11,7 +11,7 @@
 		<span *ngIf="filtered && results?.length > 0">{{filteredResults?.length}}/{{results?.length}}</span>
 	</button>
 	<ng-template #contentFilter>
-		<nz-checkbox-group [ngModel]="filterOptions" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
+		<nz-checkbox-group [nzOptions]="filterOptions" [ngModel]="activeFilters" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
 	</ng-template>
 </div>
 <nz-list nzSize="small" [nzDataSource]="filteredResults">

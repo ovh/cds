@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -42,7 +40,7 @@ describe('CDS: Requirement List Component', () => {
 
 
     it('should load component + delete requirement', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+        const http = TestBed.inject(HttpTestingController);
         let mock = ['binary'];
 
 

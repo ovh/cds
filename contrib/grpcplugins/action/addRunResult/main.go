@@ -117,6 +117,8 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		repository += "-sbt"
 	case sdk.V2WorkflowRunResultTypeNuget:
 		repository += "-nuget"
+	case sdk.V2WorkflowRunResultTypePuppet:
+		repository += "-puppet"
 	}
 
 	// get file info
@@ -249,6 +251,10 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		}
 	case sdk.V2WorkflowRunResultTypeNuget:
 		if err := performNuget(&runResult, fileInfo, fileProps, fileName); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypePuppet:
+		if err := performPuppet(&runResult, fileInfo, fileProps, fileName); err != nil {
 			return true, err
 		}
 	default:
@@ -630,6 +636,34 @@ func performNpm(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.Artifa
 			MD5:      fileInfo.Checksums.Md5,
 			SHA1:     fileInfo.Checksums.Sha1,
 			SHA256:   fileInfo.Checksums.Sha256,
+		},
+	}
+	return nil
+}
+
+func performPuppet(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.ArtifactoryFileInfo, props map[string][]string, fileName string) error {
+	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
+	if err != nil {
+		return err
+	}
+	puppetName, ok := props["puppet.name"]
+	if !ok || len(puppetName) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property puppet.name")
+	}
+	puppetVersion, ok := props["puppet.version"]
+	if !ok || len(puppetVersion) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property puppet.version")
+	}
+	runResult.Type = sdk.V2WorkflowRunResultTypePuppet
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultPuppetDetail{
+			Name:    puppetName[0],
+			Size:    size,
+			Mode:    os.FileMode(0755),
+			MD5:     fileInfo.Checksums.Md5,
+			SHA1:    fileInfo.Checksums.Sha1,
+			SHA256:  fileInfo.Checksums.Sha256,
+			Version: puppetVersion[0],
 		},
 	}
 	return nil

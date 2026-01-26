@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { LoadOpts } from 'app/model/project.model';
@@ -14,10 +14,11 @@ import { map, filter, first, tap } from 'rxjs/operators';
 @Injectable()
 export class ProjectGuard {
 
-    constructor(
-        private _store: Store,
-        private _routerService: RouterService
-    ) { }
+    _store = inject(Store);
+    _routerService = inject(RouterService);
+
+
+    constructor() { }
 
     async loadProject(state: RouterStateSnapshot) {
         const params = this._routerService.getRouteSnapshotParams({}, state.root);
@@ -59,37 +60,20 @@ export class ProjectGuard {
 @Injectable()
 export class ProjectExistsGuard {
 
-    constructor(
-        private _store: Store,
-        private _router: Router,
-        private _routerService: RouterService
-    ) { }
+    _store = inject(Store);
+    _router = inject(Router);
+    _routerService = inject(RouterService)
 
-    loadProject(state: RouterStateSnapshot): Observable<boolean> {
-        const params = this._routerService.getRouteSnapshotParams({}, state.root);
-        const opts = [
-            new LoadOpts('withApplicationNames', 'application_names'),
-            new LoadOpts('withPipelineNames', 'pipeline_names'),
-            new LoadOpts('withWorkflowNames', 'workflow_names'),
-            new LoadOpts('withEnvironmentNames', 'environment_names'),
-            new LoadOpts('withLabels', 'labels')
-        ];
+    constructor() { }
 
-        return this._store.dispatch(new FetchProject({
-            projectKey: params['key'],
-            opts
-        })).pipe(
-            switchMap(() => this._store.selectOnce(ProjectState.projectSnapshot)),
-            map(p => {
-                if (!p) {
-                    this._router.navigate([`/project/${params['key']}/explore`]);
-                    return null;
-                }
-                return true;
-            }),
-            filter(exists => exists),
-            first()
-        );
+    loadProject(state: RouterStateSnapshot): boolean {
+        const p = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        if (!p) {
+            const params = this._routerService.getRouteSnapshotParams({}, state.root);
+            this._router.navigate([`/project/${params['key']}/explore`]);
+            return false;
+        }
+        return true;  // Always return true if project is loaded
     }
 
     canActivate(
@@ -110,11 +94,13 @@ export class ProjectExistsGuard {
 @Injectable()
 export class ProjectV2Guard {
 
+    _store = inject(Store);
+    _router = inject(Router);
+    _routerService = inject(RouterService);
+    _v2ProjectService = inject(V2ProjectService);
+
     constructor(
-        private _store: Store,
-        private _router: Router,
-        private _routerService: RouterService,
-        private _v2ProjectService: V2ProjectService
+        
     ) { }
 
     loadProject(state: RouterStateSnapshot): Observable<boolean> {
