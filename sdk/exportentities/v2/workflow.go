@@ -100,8 +100,7 @@ func (h HookEntry) IsDefault(model sdk.WorkflowHookModel) bool {
 					v != strings.Join(sdk.BitbucketCloudEventsDefault, ";") &&
 					v != strings.Join(sdk.BitbucketEventsDefault, ";") &&
 					v != strings.Join(sdk.GitHubEventsDefault, ";") &&
-					v != strings.Join(sdk.GitlabEventsDefault, ";") &&
-					v != strings.Join(sdk.GerritEventsDefault, ";") {
+					v != strings.Join(sdk.GitlabEventsDefault, ";") {
 					return false
 				}
 			}

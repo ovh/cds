@@ -5880,21 +5880,6 @@ func (mr *MockHookClientMockRecorder) RetrieveHookEventUser(ctx, req any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventUser", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventUser), ctx, req)
 }
 
-// VCSGerritConfiguration mocks base method.
-func (m *MockHookClient) VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VCSGerritConfiguration")
-	ret0, _ := ret[0].(map[string]sdk.VCSGerritConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VCSGerritConfiguration indicates an expected call of VCSGerritConfiguration.
-func (mr *MockHookClientMockRecorder) VCSGerritConfiguration() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSGerritConfiguration", reflect.TypeOf((*MockHookClient)(nil).VCSGerritConfiguration))
-}
-
 // MockServiceClient is a mock of ServiceClient interface.
 type MockServiceClient struct {
 	ctrl     *gomock.Controller
@@ -11602,21 +11587,6 @@ func (m *MockInterface) VCSGPGKey(ctx context.Context, gpgKeyID string) ([]sdk.V
 func (mr *MockInterfaceMockRecorder) VCSGPGKey(ctx, gpgKeyID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSGPGKey", reflect.TypeOf((*MockInterface)(nil).VCSGPGKey), ctx, gpgKeyID)
-}
-
-// VCSGerritConfiguration mocks base method.
-func (m *MockInterface) VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VCSGerritConfiguration")
-	ret0, _ := ret[0].(map[string]sdk.VCSGerritConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VCSGerritConfiguration indicates an expected call of VCSGerritConfiguration.
-func (mr *MockInterfaceMockRecorder) VCSGerritConfiguration() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSGerritConfiguration", reflect.TypeOf((*MockInterface)(nil).VCSGerritConfiguration))
 }
 
 // VariableEncrypt mocks base method.

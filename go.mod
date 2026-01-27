@@ -9,7 +9,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
 	github.com/Shopify/sarama v1.36.0
-	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230321174746-8dcc6526cfb1
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/blang/semver v3.5.1+incompatible
@@ -84,7 +83,6 @@ require (
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.0
-	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 	github.com/srerickson/checksum v0.10.0
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
@@ -286,6 +284,7 @@ require (
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/ulikunitz/xz v0.5.14 // indirect

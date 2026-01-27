@@ -537,8 +537,6 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
 		analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 		filesContent, err = api.getCdsFilesOnVCSDirectory(ctx, analysis, vcsProjectWithSecret.Name, repo.Name, analysis.Commit, ".cds")
-	case sdk.VCSTypeGerrit:
-		return sdk.WithStack(sdk.ErrNotImplemented)
 	}
 
 	if err != nil {
@@ -1348,7 +1346,6 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		var selectedVCS []sdk.VCSProject
 		for _, v := range allvcs {
 			v.Auth.Token = "" // we are sure we don't need this
-			v.Auth.SSHPrivateKey = ""
 
 			log.Debug(ctx, "%s = %s", v.Auth.GPGKeyName, k.Name)
 			if v.Auth.GPGKeyName == k.Name {
