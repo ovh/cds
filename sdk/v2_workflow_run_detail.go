@@ -55,6 +55,7 @@ func init() {
 		&V2WorkflowRunResultSbtDetail{},
 		&V2WorkflowRunResultNugetDetail{},
 		&V2WorkflowRunResultPuppetDetail{},
+		&V2WorkflowRunResultConanDetail{},
 	)
 }
 
@@ -223,6 +224,7 @@ const (
 	V2WorkflowRunResultTypeSbt               V2WorkflowRunResultType = "sbt"
 	V2WorkflowRunResultTypeNuget             V2WorkflowRunResultType = "nuget"
 	V2WorkflowRunResultTypePuppet            V2WorkflowRunResultType = "puppet"
+	V2WorkflowRunResultTypeConan             V2WorkflowRunResultType = "conan"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 
@@ -781,6 +783,49 @@ func (v *V2WorkflowRunResultMavenDetail) Cast(i any) error {
 // GetName implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultMavenDetail) GetName() string {
 	return v.Name
+}
+
+type V2WorkflowRunResultConanDetail struct {
+	Name      string
+	Version   string
+	PackageID string
+	Files     []V2WorkflowRunResultConanDetailFile
+}
+
+type V2WorkflowRunResultConanDetailFile struct {
+	FileName string
+	Path     string
+	Size     int64
+	MD5      string
+	SHA1     string
+	SHA256   string
+}
+
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultConanDetail) GetLabel() string {
+	return fmt.Sprintf("Package: %s - Version: %s", v.Name, v.Version)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultConanDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Name":      {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Version":   {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
+		"PackageID": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.PackageID},
+	}
+}
+
+// Cast implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultConanDetail) Cast(i any) error {
+	if err := castV2WorkflowRunResultDetailWithMapStructure(i, v); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetName implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultConanDetail) GetName() string {
+	return v.Name + ":" + v.Version
 }
 
 type V2WorkflowRunResultPuppetDetail struct {
