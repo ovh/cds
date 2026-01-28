@@ -6,7 +6,7 @@ replace github.com/ovh/cds => ../../../../
 
 require (
 	github.com/golang/protobuf v1.5.4
-	github.com/jfrog/jfrog-client-go v1.55.0
+	github.com/jfrog/jfrog-client-go v1.50.0
 	github.com/ovh/cds v0.53.0
 	github.com/rockbears/log v0.12.0
 )

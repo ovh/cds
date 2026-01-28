@@ -57,7 +57,7 @@ require (
 	github.com/jfrog/archiver/v3 v3.6.1 // indirect
 	github.com/jfrog/build-info-go v1.13.0 // indirect
 	github.com/jfrog/gofrog v1.7.6 // indirect
-	github.com/jfrog/jfrog-client-go v1.55.0 // indirect
+	github.com/jfrog/jfrog-client-go v1.50.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect

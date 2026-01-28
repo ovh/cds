@@ -8,7 +8,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/jfrog/jfrog-cli v1.52.0
 	github.com/jfrog/jfrog-cli-core/v2 v2.4.1
-	github.com/jfrog/jfrog-client-go v1.55.0
+	github.com/jfrog/jfrog-client-go v1.50.0
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000
 	github.com/pkg/errors v0.9.1
 	github.com/rockbears/yaml v0.4.0
