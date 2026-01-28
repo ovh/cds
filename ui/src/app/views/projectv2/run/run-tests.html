@@ -12,7 +12,7 @@
 			{{countDisplayedTests}}/{{(tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)}}</span>
 	</button>
 	<ng-template #contentFilter>
-		<nz-checkbox-group [ngModel]="filterOptions" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
+		<nz-checkbox-group [nzOptions]="filterOptions" [ngModel]="activeFilters" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
 	</ng-template>
 </div>
 <div class="content">

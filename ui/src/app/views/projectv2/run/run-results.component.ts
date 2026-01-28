@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
@@ -28,12 +28,12 @@ export class RunResultsComponent implements OnChanges {
 	filterOptions = [];
 	nodes = [];
 
-	constructor(
-		private _cd: ChangeDetectorRef
-	) {
-		this.filterOptions = Object.values(WorkflowRunResultType).map(t => ({ label: t, value: t, checked: t !== WorkflowRunResultType.tests })).sort();
+	_cd = inject(ChangeDetectorRef);
+
+	constructor() {
+		this.filterOptions = Object.values(WorkflowRunResultType).map(t => ({ label: t, value: t })).sort();
+		this.activeFilters = Object.values(WorkflowRunResultType).filter(t => t !== WorkflowRunResultType.tests);
 		this.filtered = true;
-		this.activeFilters = this.filterOptions.filter(o => o.checked).map(o => o.value);
 		this.initResults();
 	}
 
@@ -55,9 +55,8 @@ export class RunResultsComponent implements OnChanges {
 
 	updateFilters(event): void {
 		this.filterModified = true;
-		this.filterOptions = event;
-		this.filtered = !this.filterOptions.map(o => o.checked).reduce((p, c) => p && c);
-		this.activeFilters = this.filterOptions.filter(o => o.checked).map(o => o.value);
+		this.activeFilters = event;
+		this.filtered = this.activeFilters.length !== this.filterOptions.length;
 		this.initResults();
 		this._cd.markForCheck();
 	}
