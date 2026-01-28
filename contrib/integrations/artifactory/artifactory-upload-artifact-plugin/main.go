@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/jfrog/jfrog-client-go/artifactory"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
@@ -88,7 +89,7 @@ func (e *artifactoryUploadArtifactPlugin) Run(ctx context.Context, opts *integra
 	params.Flat = true
 	params.BuildProps = fmt.Sprintf("build.name=%s/%s/%s;build.number=%s;build.timestamp=%d", buildInfo, projectKey, workflowName, url.QueryEscape(version), time.Now().Unix())
 
-	summary, err := artiClient.UploadFilesWithSummary(params)
+	summary, err := artiClient.UploadFilesWithSummary(artifactory.UploadServiceOptions{}, params)
 	if err != nil || summary.TotalFailed > 0 {
 		return fail("unable to upload file %s into artifactory[%s] %s: %v", pathToUpload, artifactoryURL, params.Target, err)
 	}
