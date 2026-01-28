@@ -136,10 +136,10 @@ type WorkflowOnPullRequest struct {
 }
 
 type WorkflowOnPullRequestComment struct {
-	Branches []string `json:"branches,omitempty" jsonschema_description:"Destination branches that will trigger the workflow"`
-	Comment  string   `json:"comment,omitempty"  jsonschema_description:"Comment message pattern that will trigger the workflow"`
-	Paths    []string `json:"paths,omitempty" jsonschema_description:"File paths that will trigger the workflow when modified"`
-	Types    []string `json:"types,omitempty" jsonschema_description:"Pull request event types that will trigger the workflow"`
+	Branches []string                `json:"branches,omitempty" jsonschema_description:"Destination branches that will trigger the workflow"`
+	Comment  string                  `json:"comment,omitempty"  jsonschema_description:"Comment message pattern that will trigger the workflow"`
+	Paths    []string                `json:"paths,omitempty" jsonschema_description:"File paths that will trigger the workflow when modified"`
+	Types    []WorkflowHookEventType `json:"types,omitempty" jsonschema_description:"Pull request event types that will trigger the workflow"`
 }
 
 type WorkflowOnModelUpdate struct {
