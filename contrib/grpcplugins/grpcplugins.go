@@ -472,6 +472,17 @@ type SearchResult struct {
 	Path         string   `json:"path"`
 	Name         string   `json:"name"`
 	VirtualRepos []string `json:"virtual_repos"`
+
+	ActualMd5  string `json:"actual_md5"`
+	ActualSha1 string `json:"actual_sha1"`
+	Sha256     string `json:"sha256"`
+	Size       int64  `json:"size"`
+	Properties []SearchResultProperty
+}
+
+type SearchResultProperty struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type RepositoryInfo struct {

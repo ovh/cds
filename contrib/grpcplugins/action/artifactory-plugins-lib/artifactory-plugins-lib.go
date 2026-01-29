@@ -119,6 +119,24 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 			return promotedArtifact, errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
 		}
 		promotedArtifact = fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path"))
+	case "conan":
+		details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultConanDetail](&r)
+		if err != nil {
+			return promotedArtifact, errors.Errorf("unable to get conan detail: %v", err)
+		}
+		data := art.FileToPromote{
+			RepoType: r.ArtifactManagerMetadata.Get("type"),
+			RepoName: r.ArtifactManagerMetadata.Get("repository"),
+			Name:     r.ArtifactManagerMetadata.Get("name"),
+			Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"),
+		}
+		hasBeenPromoted, err = art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, skipExistingArtifacts)
+		if err != nil {
+			return promotedArtifact, errors.Errorf("unable to promote file: %s: %v", data.Name, err)
+		}
+		for _, f := range details.Files {
+			promotedArtifact = fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, f.Path+"/"+f.FileName)
+		}
 	default:
 		data := art.FileToPromote{
 			RepoType: r.ArtifactManagerMetadata.Get("type"),
@@ -236,6 +254,10 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		promotedArtifact, err := promoteRunResult(ctx, c, artifactClient, integration, results[i], maturity, props, sdk.V2WorkflowRunResultStatusReleased, futureReleaseName, releaseVersion)
 		if err != nil {
 			return err
+		}
+		if results[i].Type == sdk.V2WorkflowRunResultTypeConan {
+			grpcplugins.Warnf(c, "Please note that Conan artifacts will not be part of the release bundle.")
+			continue
 		}
 		promotedArtifacts = append(promotedArtifacts, promotedArtifact)
 	}
