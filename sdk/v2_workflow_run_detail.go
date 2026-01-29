@@ -786,10 +786,10 @@ func (v *V2WorkflowRunResultMavenDetail) GetName() string {
 }
 
 type V2WorkflowRunResultConanDetail struct {
-	Name      string
-	Version   string
-	PackageID string
-	Files     []V2WorkflowRunResultConanDetailFile
+	Name            string
+	Version         string
+	PackageRevision string
+	Files           []V2WorkflowRunResultConanDetailFile
 }
 
 type V2WorkflowRunResultConanDetailFile struct {
@@ -809,9 +809,9 @@ func (v *V2WorkflowRunResultConanDetail) GetLabel() string {
 // GetMetadata implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultConanDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
 	return map[string]V2WorkflowRunResultDetailMetadata{
-		"Name":      {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
-		"Version":   {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
-		"PackageID": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.PackageID},
+		"Name":            {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Version":         {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
+		"PackageRevision": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.PackageRevision},
 	}
 }
 

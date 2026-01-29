@@ -680,10 +680,10 @@ func performConan(runResult *sdk.V2WorkflowRunResult, aqlSearch *grpcplugins.Sea
 	runResult.Type = sdk.V2WorkflowRunResultTypeConan
 	runResult.Detail = sdk.V2WorkflowRunResultDetail{
 		Data: sdk.V2WorkflowRunResultConanDetail{
-			Name:      packageName,
-			Version:   packageVersion,
-			PackageID: pathSplit[len(pathSplit)-1],
-			Files:     files,
+			Name:            packageName,
+			Version:         packageVersion,
+			PackageRevision: pathSplit[len(pathSplit)-1],
+			Files:           files,
 		},
 	}
 
