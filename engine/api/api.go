@@ -344,6 +344,7 @@ type API struct {
 		nbWorkflowNodeRuns         *stats.Int64Measure
 		nbMaxWorkersBuilding       *stats.Int64Measure
 		queue                      *stats.Int64Measure
+		v2Queue                    *stats.Int64Measure
 		WorkflowRunsMarkToDelete   *stats.Int64Measure
 		WorkflowRunsDeleted        *stats.Int64Measure
 		DatabaseConns              *stats.Int64Measure

@@ -219,6 +219,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 	api.Metrics.nbWorkflowNodeRuns = stats.Int64("cds/cds-api/nb_workflow_node_runs", "nb_workflow_node_runs", stats.UnitDimensionless)
 	api.Metrics.nbMaxWorkersBuilding = stats.Int64("cds/cds-api/nb_max_workers_building", "nb_max_workers_building", stats.UnitDimensionless)
 	api.Metrics.queue = stats.Int64("cds/cds-api/queue", "queue", stats.UnitDimensionless)
+	api.Metrics.v2Queue = stats.Int64("cds/cds-api/v2_queue", "v2_queue", stats.UnitDimensionless)
 	api.Metrics.WorkflowRunsMarkToDelete = stats.Int64(
 		fmt.Sprintf("cds/cds-api/%s/workflow_runs_mark_to_delete", api.Name()),
 		"number of workflow runs mark to delete",
@@ -274,6 +275,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 		telemetry.NewViewLast("cds/nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, nil),
 		telemetry.NewViewLast("cds/nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, nil),
 		telemetry.NewViewLast("cds/queue", api.Metrics.queue, tagsRange),
+		telemetry.NewViewLast("cds/v2_queue", api.Metrics.v2Queue, tagsRange),
 		telemetry.NewViewCount("cds/workflow_runs_started", api.Metrics.WorkflowRunStarted, tagsService),
 		telemetry.NewViewCount("cds/workflow_runs_failed", api.Metrics.WorkflowRunFailed, tagsService),
 		telemetry.NewViewLast("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
@@ -306,46 +308,59 @@ func (api *API) computeMetrics(ctx context.Context) {
 					return
 				}
 			case <-tick:
+				// Common metrics
 				api.countMetric(ctx, api.Metrics.nbUsers, "SELECT COUNT(1) FROM \"authentified_user\"")
-				api.countMetric(ctx, api.Metrics.nbApplications, "SELECT COUNT(1) FROM application")
 				api.countMetric(ctx, api.Metrics.nbProjects, "SELECT COUNT(1) FROM project")
 				api.countMetric(ctx, api.Metrics.nbGroups, "SELECT COUNT(1) FROM \"group\"")
+				telemetry.Record(ctx, api.Metrics.DatabaseConns, int64(api.DBConnectionFactory.DB().Stats().OpenConnections))
+
+				// V1 metrics
+				api.countMetric(ctx, api.Metrics.nbApplications, "SELECT COUNT(1) FROM application")
 				api.countMetric(ctx, api.Metrics.nbPipelines, "SELECT COUNT(1) FROM pipeline")
 				api.countMetric(ctx, api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow")
-				api.countMetric(ctx, api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct(project_repository_id,name)) from entity where type = 'Workflow'")
 				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts")
 				api.countMetric(ctx, api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
 				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COUNT(1) FROM workflow_run")
 				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT COUNT(1) FROM workflow_node_run")
 				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
-
-				telemetry.Record(ctx, api.Metrics.DatabaseConns, int64(api.DBConnectionFactory.DB().Stats().OpenConnections))
-
 				api.countMetric(ctx, api.Metrics.RunResultSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NOT NULL")
 				api.countMetric(ctx, api.Metrics.RunResultToSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NULL")
 				api.countMetric(ctx, api.Metrics.RunResultSynchronizedError, "SELECT COUNT(1) FROM workflow_run_result where sync ? 'error'")
 
+				// V2 metrics
+				api.countMetric(ctx, api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct(project_repository_id,name)) from entity where type = 'Workflow'")
+
+				// Queue common
 				now := time.Now()
-				now10s := now.Add(-10 * time.Second)
-				now30s := now.Add(-30 * time.Second)
-				now1min := now.Add(-1 * time.Minute)
-				now2min := now.Add(-2 * time.Minute)
-				now5min := now.Add(-5 * time.Minute)
-				now10min := now.Add(-10 * time.Minute)
+				now10s, now30s, now1min, now2min, now5min, now10min := now.Add(-10*time.Second), now.Add(-30*time.Second), now.Add(-1*time.Minute), now.Add(-2*time.Minute), now.Add(-5*time.Minute), now.Add(-10*time.Minute)
 
-				queryBuilding := "SELECT COUNT(1) FROM workflow_node_run_job where status = 'Building'"
-				query := "select COUNT(1) from workflow_node_run_job where queued > $1 and queued <= $2 and status = 'Waiting'"
-				queryOld := "select COUNT(1) from workflow_node_run_job where queued < $1 and status = 'Waiting'"
-
+				// V1 queue metrics
+				queryBuilding := "SELECT COUNT(1) FROM workflow_node_run_job WHERE status = 'Building'"
+				queryInterval := "SELECT COUNT(1) FROM workflow_node_run_job WHERE queued > $1 AND queued <= $2 AND status = 'Waiting'"
+				queryOlder := "SELECT COUNT(1) FROM workflow_node_run_job WHERE queued < $1 AND status = 'Waiting'"
 				api.countMetricRange(ctx, "building", "all", api.Metrics.queue, queryBuilding)
-				api.countMetricRange(ctx, "waiting", "10_less_10s", api.Metrics.queue, query, now10s, now)
-				api.countMetricRange(ctx, "waiting", "20_more_10s_less_30s", api.Metrics.queue, query, now30s, now10s)
-				api.countMetricRange(ctx, "waiting", "30_more_30s_less_1min", api.Metrics.queue, query, now1min, now30s)
-				api.countMetricRange(ctx, "waiting", "40_more_1min_less_2min", api.Metrics.queue, query, now2min, now1min)
-				api.countMetricRange(ctx, "waiting", "50_more_2min_less_5min", api.Metrics.queue, query, now5min, now2min)
-				api.countMetricRange(ctx, "waiting", "60_more_5min_less_10min", api.Metrics.queue, query, now10min, now5min)
-				api.countMetricRange(ctx, "waiting", "70_more_10min", api.Metrics.queue, queryOld, now10min)
+				api.countMetricRange(ctx, "waiting", "10_less_10s", api.Metrics.queue, queryInterval, now10s, now)
+				api.countMetricRange(ctx, "waiting", "20_more_10s_less_30s", api.Metrics.queue, queryInterval, now30s, now10s)
+				api.countMetricRange(ctx, "waiting", "30_more_30s_less_1min", api.Metrics.queue, queryInterval, now1min, now30s)
+				api.countMetricRange(ctx, "waiting", "40_more_1min_less_2min", api.Metrics.queue, queryInterval, now2min, now1min)
+				api.countMetricRange(ctx, "waiting", "50_more_2min_less_5min", api.Metrics.queue, queryInterval, now5min, now2min)
+				api.countMetricRange(ctx, "waiting", "60_more_5min_less_10min", api.Metrics.queue, queryInterval, now10min, now5min)
+				api.countMetricRange(ctx, "waiting", "70_more_10min", api.Metrics.queue, queryOlder, now10min)
 
+				// V2 queue metrics
+				queryV2Scheduling := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE status = 'Scheduling'"
+				queryV2Building := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE status = 'Building'"
+				queryV2Interval := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE queued > $1 AND queued <= $2 AND status = 'Waiting'"
+				queryV2Older := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE queued < $1 AND status = 'Waiting'"
+				api.countMetricRange(ctx, "v2_scheduling", "all", api.Metrics.v2Queue, queryV2Scheduling)
+				api.countMetricRange(ctx, "v2_building", "all", api.Metrics.v2Queue, queryV2Building)
+				api.countMetricRange(ctx, "v2_waiting", "10_less_10s", api.Metrics.v2Queue, queryV2Interval, now10s, now)
+				api.countMetricRange(ctx, "v2_waiting", "20_more_10s_less_30s", api.Metrics.v2Queue, queryV2Interval, now30s, now10s)
+				api.countMetricRange(ctx, "v2_waiting", "30_more_30s_less_1min", api.Metrics.v2Queue, queryV2Interval, now1min, now30s)
+				api.countMetricRange(ctx, "v2_waiting", "40_more_1min_less_2min", api.Metrics.v2Queue, queryV2Interval, now2min, now1min)
+				api.countMetricRange(ctx, "v2_waiting", "50_more_2min_less_5min", api.Metrics.v2Queue, queryV2Interval, now5min, now2min)
+				api.countMetricRange(ctx, "v2_waiting", "60_more_5min_less_10min", api.Metrics.v2Queue, queryV2Interval, now10min, now5min)
+				api.countMetricRange(ctx, "v2_waiting", "70_more_10min", api.Metrics.v2Queue, queryV2Older, now10min)
 				api.processStatusMetrics(ctx)
 			}
 		}
