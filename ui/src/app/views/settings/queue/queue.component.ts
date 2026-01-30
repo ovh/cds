@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
@@ -30,7 +30,7 @@ import Debounce from 'app/shared/decorator/debounce';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class QueueComponent implements OnDestroy {
+export class QueueComponent implements OnInit, OnDestroy {
     eventV1Subscription: Subscription;
     eventV2Subscription: Subscription;
     currentAuthSummary: AuthSummary;
@@ -91,7 +91,11 @@ export class QueueComponent implements OnDestroy {
             ...f,
             byDefault: initialStatusV2.length > 0 ? initialStatusV2.indexOf(f.value) != -1 : f.byDefault
         }));
+    }
 
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+
+    ngOnInit(): void {
         this.eventV1Subscription = this._store.select(EventState.last).subscribe(e => {
             if (!e || e.type_event !== EventType.RUN_WORKFLOW_JOB) {
                 return;
@@ -133,8 +137,6 @@ export class QueueComponent implements OnDestroy {
         });
     }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
-
     async loadJobsV1() {
         this.loading.v1 = true;
         this._cd.markForCheck();
@@ -156,7 +158,7 @@ export class QueueComponent implements OnDestroy {
 
         try {
             let offset = (this.pageIndexV2 - 1) * 100;
-            const resp = await lastValueFrom(this._queueService.getV2Jobs(this.statusFiltersV2, null, offset, 100));
+            const resp = await lastValueFrom(this._queueService.getV2Jobs(this.statusFiltersV2, offset, 100));
             this.jobsV2totalCount = parseInt(resp.headers.get('X-Total-Count'), 10);
             this.jobsV2 = resp.body.map(this.mapJobV2);
         } catch (e) {
@@ -170,7 +172,7 @@ export class QueueComponent implements OnDestroy {
     @Debounce(500)
     async loadJobsV2TotalCount() {
         try {
-            const resp = await lastValueFrom(this._queueService.getV2Jobs(this.statusFiltersV2, null, 0, 1));
+            const resp = await lastValueFrom(this._queueService.getV2Jobs(this.statusFiltersV2, 0, 1));
             this.jobsV2totalCount = parseInt(resp.headers.get('X-Total-Count'), 10);
             this._cd.markForCheck();
         } catch (e) { }

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
-import { ToastService } from "app/shared/toast/ToastService";
 import { V2JobGate, V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { lastValueFrom } from "rxjs";
 import { NzMessageService } from "ng-zorro-antd/message";
@@ -27,7 +26,6 @@ export class RunGateComponent implements OnInit {
     constructor(
         private _cd: ChangeDetectorRef,
         private _workflowService: V2WorkflowRunService,
-        private _toastService: ToastService,
         private _messageService: NzMessageService
     ) { }
 
@@ -72,7 +70,7 @@ export class RunGateComponent implements OnInit {
         this._cd.markForCheck();
         try {
             await lastValueFrom(this._workflowService.triggerJob(this.run.project_key, this.run.id, this.job, this.request));
-            this._toastService.success('', `Job ${this.job} started`);
+            this._messageService.success(`Job ${this.job} started`);
             this.onSubmit.emit();
         } catch (e) {
             this._messageService.error(`Unable to get trigger job gate: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });

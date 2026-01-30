@@ -4,7 +4,7 @@ export class ErrorUtils {
     static print(e: any) {
         if (e instanceof HttpErrorResponse) {
             if (e.error) {
-                return e.error.message;
+                return `${e.error.message}${e.error.from ? ` (${e.error.from})` : ''}`;
             }
             return e.message;
         }

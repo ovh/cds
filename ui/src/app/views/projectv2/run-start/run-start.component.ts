@@ -337,7 +337,6 @@ export class ProjectV2RunStartComponent implements OnInit {
 
     try {
       const resp = await lastValueFrom(this._workflowRunService.start(this.project.key, splitted.vcs, splitted.repo, this.validateForm.value.workflow, req));
-      this._messageService.success('Workflow run started', { nzDuration: 2000 });
       hookEventUUID = resp.hook_event_uuid;
     } catch (e) {
       this._messageService.error(`Unable to start the workflow: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });

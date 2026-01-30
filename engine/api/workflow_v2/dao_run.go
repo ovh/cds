@@ -323,8 +323,7 @@ const runQueryFilters = `
 	AND (array_length(:authors::text[], 1) IS NULL OR contexts -> 'git' ->> 'author' = ANY(:authors))
 	AND (array_length(:commits::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY(:commits))
 	AND (array_length(:templates::text[], 1) IS NULL OR ((contexts -> 'cds' ->> 'workflow_template_vcs_server') || '/' || (contexts -> 'cds' ->> 'workflow_template_repository') || '/' || (contexts -> 'cds' ->> 'workflow_template')) = ANY(:templates))
-	AND (array_length(:annotation_keys::text[], 1) IS NULL OR annotation_keys @> :annotation_keys)
-	AND (array_length(:annotation_values::text[], 1) IS NULL OR annotation_values @> :annotation_values)
+	AND (array_length(:annotations::text[], 1) IS NULL OR annotation_strings @> :annotations)
 `
 
 func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters) (int64, error) {
@@ -334,7 +333,7 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFi
 	query := `SELECT COUNT(1)
 	FROM v2_workflow_run
 	LEFT JOIN (
-		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+		SELECT v2_workflow_run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
 		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
 	) v2_workflow_run_annotations
@@ -353,8 +352,7 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFi
 		"authors":               pq.StringArray(filters.Authors),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
-		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
-		"annotation_values":     pq.StringArray(filters.AnnotationValues),
+		"annotations":           pq.StringArray(filters.Annotations),
 	}
 
 	count, err := db.SelectInt(query, params)
@@ -368,7 +366,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	query := `SELECT COUNT(1)
 	FROM v2_workflow_run
 	LEFT JOIN (
-		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+		SELECT v2_workflow_run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
 		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
 	) v2_workflow_run_annotations
@@ -389,8 +387,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 		"authors":               pq.StringArray(filters.Authors),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
-		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
-		"annotation_values":     pq.StringArray(filters.AnnotationValues),
+		"annotations":           pq.StringArray(filters.Annotations),
 	}
 
 	count, err := db.SelectInt(query, params)
@@ -408,8 +405,7 @@ type SearchRunsFilters struct {
 	WorkflowRepositories []string
 	Commits              []string
 	Templates            []string
-	AnnotationKeys       []string
-	AnnotationValues     []string
+	Annotations          []string
 }
 
 func (s SearchRunsFilters) Lower() {
@@ -449,7 +445,7 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
     SELECT v2_workflow_run.*
     FROM v2_workflow_run
 		LEFT JOIN (
-			SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+			SELECT v2_workflow_run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
 			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 			GROUP BY v2_workflow_run.id
 		) v2_workflow_run_annotations
@@ -474,8 +470,7 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 			"authors":               pq.StringArray(filters.Authors),
 			"commits":               pq.StringArray(filters.Commits),
 			"templates":             pq.StringArray(filters.Templates),
-			"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
-			"annotation_values":     pq.StringArray(filters.AnnotationValues),
+			"annotations":           pq.StringArray(filters.Annotations),
 			"sort":                  sort,
 			"limit":                 limit,
 			"offset":                offset,
@@ -504,7 +499,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
     SELECT v2_workflow_run.*
     FROM v2_workflow_run
 		LEFT JOIN (
-			SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+			SELECT v2_workflow_run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
 			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 			GROUP BY v2_workflow_run.id
 		) v2_workflow_run_annotations
@@ -529,8 +524,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 		"authors":               pq.StringArray(filters.Authors),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
-		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
-		"annotation_values":     pq.StringArray(filters.AnnotationValues),
+		"annotations":           pq.StringArray(filters.Annotations),
 		"sort":                  sort,
 		"limit":                 limit,
 		"offset":                offset,

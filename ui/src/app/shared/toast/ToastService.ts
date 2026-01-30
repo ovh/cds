@@ -18,11 +18,11 @@ export class ToastHTTPErrorData {
 @Injectable()
 export class ToastService {
     private _toastQueue: BehaviorSubject<NzNotificationDataOptions<ToastHTTPErrorData>> = new BehaviorSubject(null);
-   
+
     _nzNotificationService = inject(NzNotificationService);
     _store = inject(Store)
 
-    constructor() {}
+    constructor() { }
 
     getObservable(): Observable<NzNotificationDataOptions<ToastHTTPErrorData>> {
         return new Observable<NzNotificationDataOptions<ToastHTTPErrorData>>(fn => this._toastQueue.subscribe(fn));
@@ -41,14 +41,12 @@ export class ToastService {
     }
 
     errorHTTP(status: number, message: string, from: string, request_id: string) {
-        this._store.select(HelpState.last)
-        .pipe(
+        this._store.select(HelpState.last).pipe(
             filter((help) => help != null),
-        )
-        .subscribe(help => {
-            this._toastQueue.next( {
+        ).subscribe(help => {
+            this._toastQueue.next({
                 nzPauseOnHover: true,
-                nzDuration: request_id != null && request_id !== '' ? 0: 3000,
+                nzDuration: status === 500 ? 0 : 3000,
                 nzData: {
                     status,
                     from,

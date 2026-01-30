@@ -19,12 +19,11 @@ import { EventV2Type } from "app/model/event-v2.model";
 import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 import { ErrorUtils } from "app/shared/error.utils";
 import { ProjectV2State } from "app/store/project-v2.state";
-import { Filter } from "../../../shared/input/input-filter.component";
+import { Filter, InputFilterComponent } from "../../../shared/input/input-filter.component";
 import { Clipboard } from '@angular/cdk/clipboard';
-import { ToastService } from "app/shared/toast/ToastService";
 
 @Component({
-    standalone: false,
+	standalone: false,
 	selector: 'app-projectv2-run-list',
 	templateUrl: './run-list.html',
 	styleUrls: ['./run-list.scss'],
@@ -77,8 +76,7 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		private _activatedRoute: ActivatedRoute,
 		private _drawerService: NzDrawerService,
 		private _eventV2Service: EventV2Service,
-		private _clipboard: Clipboard,
-		private _toast: ToastService
+		private _clipboard: Clipboard
 	) {
 		this.project = this._store.selectSnapshot(ProjectV2State.current);
 	}
@@ -91,7 +89,7 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		this._activatedRoute.queryParams.subscribe(values => {
 			this.filterText = Object.keys(values).filter(key => key !== 'page' && key !== 'sort').map(key => {
 				return (!Array.isArray(values[key]) ? [values[key]] : values[key]).map(f => {
-					return `${key}:${f}`;
+					return `${key.replace(' ', InputFilterComponent.spaceAlternative)}:${f.replace(' ', InputFilterComponent.spaceAlternative)}`;
 				}).join(' ');
 			}).join(' ');
 			this.pageIndex = values['page'] ?? 1;
@@ -147,11 +145,12 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		let mFilters = {};
 		this.filterText.split(' ').forEach(f => {
 			const s = f.split(':');
+			const key = s[0].replace(InputFilterComponent.spaceAlternative, ' ');
 			if (s.length === 2) {
-				if (!mFilters[s[0]]) {
-					mFilters[s[0]] = [];
+				if (!mFilters[key]) {
+					mFilters[key] = [];
 				}
-				mFilters[s[0]].push(decodeURI(s[1]));
+				mFilters[key].push(s[1].replace(InputFilterComponent.spaceAlternative, ' '));
 			}
 		});
 
@@ -194,11 +193,12 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		let mFilters = {};
 		this.filterText.split(' ').forEach(f => {
 			const s = f.split(':');
+			const key = s[0].replace(InputFilterComponent.spaceAlternative, ' ');
 			if (s.length === 2 && s[1] !== '') {
-				if (!mFilters[s[0]]) {
-					mFilters[s[0]] = [];
+				if (!mFilters[key]) {
+					mFilters[key] = [];
 				}
-				mFilters[s[0]].push(s[1]);
+				mFilters[key].push(s[1].replace(InputFilterComponent.spaceAlternative, ' '));
 			}
 		});
 
@@ -275,11 +275,12 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		let mFilters = {};
 		this.filterText.split(' ').forEach(f => {
 			const s = f.split(':');
+			const key = s[0].replace(InputFilterComponent.spaceAlternative, ' ');
 			if (s.length === 2) {
-				if (!mFilters[s[0]]) {
-					mFilters[s[0]] = [];
+				if (!mFilters[key]) {
+					mFilters[key] = [];
 				}
-				mFilters[s[0]].push(s[1]);
+				mFilters[key].push(s[1].replace(InputFilterComponent.spaceAlternative, ' '));
 			}
 		});
 		const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
@@ -301,7 +302,7 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 
 	generateAnnotationQueryParams(annotation: { key: string, value: string }): any {
 		let queryParams = {};
-		queryParams[annotation.key] = encodeURI(annotation.value);
+		queryParams[annotation.key] = annotation.value;
 		return queryParams;
 	}
 
@@ -327,6 +328,6 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		event.stopPropagation();
 		event.preventDefault();
 		this._clipboard.copy(value);
-		this._toast.success('', 'Annotation value copied!');
+		this._messageService.success('Annotation value copied!');
 	}
 }

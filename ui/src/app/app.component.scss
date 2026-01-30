@@ -82,6 +82,11 @@ nz-col.center {
 
 .toastTitle {
   font-size: 24px;
+  margin-bottom: 10px;
+
+  [nz-icon] {
+    margin-right: 5px;
+  }
 }
 
 @keyframes slidein {

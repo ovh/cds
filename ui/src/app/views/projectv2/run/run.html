@@ -55,8 +55,8 @@
                                     nzTheme="outline"></span>
                             </div>
                             <div class="run-info">
-                                <ng-container *ngIf="workflowRun.contexts.git.pullrequest_id">
-                                    <b>Pull&nbsp;Request:</b>&nbsp;#{{workflowRun.contexts.git.pullrequest_id}}<br />
+                                <ng-container *ngIf="run.contexts.git.pullrequest_id">
+                                    <b>Pull&nbsp;Request:</b>&nbsp;#{{run.contexts.git.pullrequest_id}}<br />
                                 </ng-container>
                                 <b>Ref:</b>&nbsp;{{run.contexts.git.ref}}<br />
                                 <b>Commit:</b>&nbsp;{{run.contexts.git.sha?.substring(0,8)}}<br />
