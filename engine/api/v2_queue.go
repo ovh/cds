@@ -158,7 +158,7 @@ func (api *API) getJobsQueuedRegionalizedHandler() ([]service.RbacChecker, servi
 }
 
 func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(),
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			u := getUserConsumer(ctx)
 

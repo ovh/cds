@@ -61,7 +61,7 @@ func TestReleaseAllFromHatchery(t *testing.T) {
 	workers, err = worker.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
 	require.Len(t, workers, 2)
-	sort.Slice(workers, func(i, j int) bool { return workers[i].Name < workers[i].Name })
+	sort.Slice(workers, func(i, j int) bool { return workers[i].Name < workers[j].Name })
 	assert.Equal(t, "worker-1", workers[0].Name)
 	assert.Nil(t, workers[0].HatcheryID)
 	assert.Equal(t, "worker-2", workers[1].Name)

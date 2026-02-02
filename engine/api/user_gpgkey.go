@@ -15,7 +15,7 @@ import (
 
 // getUserGPGKeysHandler Get all gpgkey for the given user
 func (api *API) getUserGPGKeysHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			username := vars["user"]
@@ -34,7 +34,7 @@ func (api *API) getUserGPGKeysHandler() ([]service.RbacChecker, service.Handler)
 
 // getUserGPGKeyHandler Get the given user gpg key
 func (api *API) getUserGPGKeyHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			gpgKeyID := vars["gpgKeyID"]

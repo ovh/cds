@@ -27,6 +27,10 @@ type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) e
 type RbacChecker func(ctx context.Context, vars map[string]string) error
 type RbacCheckers []RbacChecker
 
+func RBACNone() []RbacChecker {
+	return []RbacChecker{}
+}
+
 func RBAC(checkers ...RbacChecker) []RbacChecker {
 	return checkers
 }

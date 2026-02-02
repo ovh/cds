@@ -29,7 +29,7 @@ func (api *API) InitRouter() {
 	api.Router.SetHeaderFunc = service.DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.tracingMiddleware, api.jwtMiddleware)
 	api.Router.DefaultAuthMiddleware = api.authMiddleware
-	api.Router.PostAuthMiddlewares = append(api.Router.PostAuthMiddlewares, api.xsrfMiddleware, api.maintenanceMiddleware, api.rbacMiddleware)
+	api.Router.PostAuthMiddlewares = append(api.Router.PostAuthMiddlewares, api.xsrfMiddleware, api.maintenanceMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, service.TracingPostMiddleware)
 	api.Router.EnforceScopes = true
 

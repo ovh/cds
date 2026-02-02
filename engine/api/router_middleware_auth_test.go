@@ -15,6 +15,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -395,4 +397,59 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 	require.Error(t, err, "an error should be returned because the consumer is linked to a worker")
 	_, err = api.authMaintainerMiddleware(ctx, w, req, config)
 	require.Error(t, err, "an error should be returned because the consumer is linked to a worker")
+}
+
+func Test_authMiddlewareWithHatchery(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, jwtAdmin := assets.InsertAdminUser(t, db)
+
+	config := &service.HandlerConfig{}
+
+	// Admin create a new hatchery
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postHatcheryHandler, nil)
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, &sdk.Hatchery{
+		Name: sdk.RandomString(10),
+	})
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusCreated, rec.Code)
+	var hatcheryCreated sdk.HatcheryGetResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &hatcheryCreated))
+
+	// Create hatchery permissions
+	reg := sdk.Region{Name: sdk.RandomString(10)}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	require.NoError(t, rbac.Insert(context.TODO(), db, &sdk.RBAC{
+		Name: "perm-hatchery-" + hatcheryCreated.Name,
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				Role:         sdk.HatcheryRoleSpawn,
+				HatcheryName: hatcheryCreated.Name,
+				HatcheryID:   hatcheryCreated.ID,
+				RegionName:   reg.Name,
+				RegionID:     reg.ID,
+			},
+		},
+	}))
+
+	// Register a hatchery with the hatchery consumer
+	jwtHatchery := AuthentififyHatcheryConsumer(t, api, hatcheryCreated.Token, hatcheryCreated.Name)
+
+	// The hatchery token should not be able to pass the authAdminMiddleware or authMaintainerMiddleware
+	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodGet, "", nil)
+	rec = httptest.NewRecorder()
+	_, err := api.jwtMiddleware(t.Context(), rec, req, config)
+	require.NoError(t, err)
+
+	// The hatchery token should not be able to reach v1 routes
+	uri = api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
+		"permUsernamePublic": admin.Username,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodGet, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
 }

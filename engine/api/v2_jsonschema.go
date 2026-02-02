@@ -20,7 +20,7 @@ import (
 )
 
 func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			t := vars["type"]

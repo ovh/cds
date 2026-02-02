@@ -43,7 +43,7 @@ func parseSearchQuery(values url.Values) (search.SearchFilters, uint, uint) {
 }
 
 func (api *API) getSearchHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(),
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -109,7 +109,7 @@ func (api *API) getSearchHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) getSearchFiltersHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(),
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			u := getUserConsumer(ctx)
 			if u == nil {

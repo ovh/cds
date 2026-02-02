@@ -506,7 +506,7 @@ func (api *API) postV2RefreshWorkerHandler() ([]service.RbacChecker, service.Han
 }
 
 func (api *API) postV2RegisterWorkerHandler() ([]service.RbacChecker, service.Handler) {
-	return nil, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return service.RBACNone(), func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		jobRunID := vars["runJobID"]
 		regionName := vars["regionName"]

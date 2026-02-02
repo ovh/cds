@@ -7,6 +7,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -80,10 +81,26 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	// We should have a consumer in the context to validate the auth
-	var userConsumer = getUserConsumer(ctx)
-	var hatcheryConsumer = getHatcheryConsumer(ctx)
+	userConsumer := getUserConsumer(ctx)
+	hatcheryConsumer := getHatcheryConsumer(ctx)
 	if userConsumer == nil && hatcheryConsumer == nil {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+
+	// If permission level is defined, there should be a user consumer in the context to check permission
+	if rc.PermissionLevel > 0 {
+		if userConsumer == nil {
+			return ctx, sdk.NewErrorWithStack(errors.New("no user consumer in context to check permission"), sdk.ErrForbidden)
+		}
+		if err := api.checkPermission(ctx, w, mux.Vars(req), rc.PermissionLevel); err != nil {
+			return ctx, err
+		}
+	}
+
+	// RBAC check are done for both user and hatchery consumers
+	ctx, err = api.rbacMiddleware(ctx, w, req, rc)
+	if err != nil {
+		return ctx, err
 	}
 
 	return ctx, nil
@@ -267,11 +284,6 @@ func (api *API) handleAuthMiddlewareUserConsumer(ctx context.Context, w http.Res
 		if !found {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scopes doesn't match expected: %v", expectedScopes)
 		}
-	}
-
-	// Check that permission are valid for current route and consumer
-	if err := api.checkPermission(ctx, w, mux.Vars(req), rc.PermissionLevel); err != nil {
-		return ctx, err
 	}
 
 	return ctx, nil

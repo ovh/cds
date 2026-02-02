@@ -58,7 +58,7 @@ func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) getRegionsHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			consumer := getUserConsumer(ctx)
 

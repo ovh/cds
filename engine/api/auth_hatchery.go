@@ -23,7 +23,7 @@ import (
 )
 
 func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			// Extract and validate signin request
 			var req sdk.AuthConsumerHatcherySigninRequest
@@ -146,7 +146,7 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 // This has to be called by the signin handler
 func (api *API) hatcheryRegister(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, consumer sdk.AuthHatcheryConsumer, sessionID string, h *sdk.Hatchery, signInRequest sdk.AuthConsumerHatcherySigninRequest) error {
 	if signInRequest.Name != h.Name {
-		return sdk.NewError(sdk.ErrForbidden, errors.Errorf("wrong token. name (from hatchery configuration):%s != name (from token):%s", h.Name, signInRequest.Name))
+		return sdk.NewErrorWithStack(errors.Errorf("hatchery name mismatch with config %q != %q", h.Name, signInRequest.Name), sdk.ErrForbidden)
 	}
 	h.HTTPURL = signInRequest.HTTPURL
 	h.Config = signInRequest.Config
@@ -171,9 +171,5 @@ func (api *API) hatcheryRegister(ctx context.Context, tx gorpmapper.SqlExecutorW
 		log.Debug(ctx, "hatcheryRegister> hatchery %s registered with public key: %s", h.Name, string(h.PublicKey))
 	}
 
-	// TODO
-	//if err := worker.ReAttachAllToHatchery(ctx, tx, *srv); err != nil {
-	//	return err
-	//}
 	return nil
 }
