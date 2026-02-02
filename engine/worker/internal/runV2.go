@@ -1160,7 +1160,7 @@ func (w *CurrentWorker) setupHooksV2(ctx context.Context, currentJob CurrentJobV
 
 	for _, integ := range currentJob.runJobContext.Integrations.All() {
 		log.Info(ctx, "Getting integration %q hooks for project %q", integ.Name, currentJob.runJob.ProjectKey)
-		hook, err := w.clientV2.ProjectIntegrationWorkerHookGet(currentJob.runJob.ProjectKey, integ.Name)
+		hook, err := w.clientV2.ProjectV2IntegrationWorkerHookGet(currentJob.runJob.ProjectKey, integ.Name)
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			log.Info(ctx, "no hook found for integration %q", integ.Name)
 			continue

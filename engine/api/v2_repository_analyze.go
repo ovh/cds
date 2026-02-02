@@ -106,7 +106,9 @@ func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration
 }
 
 func (api *API) getProjectRepositoryAnalysesHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.analysisRead),
+	return service.RBAC(api.projectReadWithOpts(ProjectReadOptions{
+			AllowHooks: true,
+		})),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -138,7 +140,9 @@ func (api *API) getProjectRepositoryAnalysesHandler() ([]service.RbacChecker, se
 }
 
 func (api *API) getProjectRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.analysisRead),
+	return service.RBAC(api.projectReadWithOpts(ProjectReadOptions{
+			AllowHooks: true,
+		})),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -172,7 +176,9 @@ func (api *API) getProjectRepositoryAnalysisHandler() ([]service.RbacChecker, se
 
 // postRepositoryAnalysisHandler Trigger repository analysis
 func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.triggerAnalysis),
+	return service.RBAC(api.projectReadWithOpts(ProjectReadOptions{
+			AllowHooks: true,
+		})),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			projKey := vars["projectKey"]

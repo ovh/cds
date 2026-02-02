@@ -405,7 +405,6 @@ type V2WorkerClient interface {
 	V2WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm, region, runJobID string) (*sdk.V2Worker, error)
 	V2WorkerUnregister(ctx context.Context, region, runJobID string) error
 	V2WorkerRefresh(ctx context.Context, region, runJobID string) error
-
 	V2WorkerProjectGetKey(ctx context.Context, region, runJobID, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
@@ -591,8 +590,7 @@ type V2WorkerInterface interface {
 	V2WorkerClient
 	V2QueueClient
 	GRPCPluginsClient
-	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
-	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
+	ProjectV2IntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 }
 
 type WorkerInterface interface {

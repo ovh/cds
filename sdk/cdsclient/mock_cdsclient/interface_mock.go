@@ -13092,34 +13092,19 @@ func (mr *MockV2WorkerInterfaceMockRecorder) PluginsList() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsList", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginsList))
 }
 
-// ProjectIntegrationGet mocks base method.
-func (m *MockV2WorkerInterface) ProjectIntegrationGet(projectKey, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
+// ProjectV2IntegrationWorkerHookGet mocks base method.
+func (m *MockV2WorkerInterface) ProjectV2IntegrationWorkerHookGet(projectKey, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectIntegrationGet", projectKey, integrationName, clearPassword)
-	ret0, _ := ret[0].(sdk.ProjectIntegration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectIntegrationGet indicates an expected call of ProjectIntegrationGet.
-func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationGet(projectKey, integrationName, clearPassword any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectIntegrationGet), projectKey, integrationName, clearPassword)
-}
-
-// ProjectIntegrationWorkerHookGet mocks base method.
-func (m *MockV2WorkerInterface) ProjectIntegrationWorkerHookGet(projectKey, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHookGet", projectKey, integrationName)
+	ret := m.ctrl.Call(m, "ProjectV2IntegrationWorkerHookGet", projectKey, integrationName)
 	ret0, _ := ret[0].(*sdk.WorkerHookProjectIntegrationModel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ProjectIntegrationWorkerHookGet indicates an expected call of ProjectIntegrationWorkerHookGet.
-func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationWorkerHookGet(projectKey, integrationName any) *gomock.Call {
+// ProjectV2IntegrationWorkerHookGet indicates an expected call of ProjectV2IntegrationWorkerHookGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) ProjectV2IntegrationWorkerHookGet(projectKey, integrationName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHookGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectIntegrationWorkerHookGet), projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectV2IntegrationWorkerHookGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectV2IntegrationWorkerHookGet), projectKey, integrationName)
 }
 
 // V2QueueGetCacheLinks mocks base method.

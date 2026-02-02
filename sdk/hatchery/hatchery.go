@@ -115,7 +115,6 @@ func Create(ctx context.Context, h Interface) error {
 		} else {
 			log.Info(ctx, "V2 Queue polling is disabled")
 		}
-
 	}
 
 	if h.CDSClient() != nil {

@@ -12,7 +12,9 @@ import (
 )
 
 func (api *API) getV2ProjectIntegrationWorkerHookHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectRead),
+	return service.RBAC(api.projectReadWithOpts(ProjectReadOptions{
+			AllowWorkers: true,
+		})),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			projectKey := vars["projectKey"]
