@@ -119,6 +119,8 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		repository += "-nuget"
 	case sdk.V2WorkflowRunResultTypePuppet:
 		repository += "-puppet"
+	case sdk.V2WorkflowRunResultTypeConan:
+		repository += "-conan"
 	}
 
 	// get file info
@@ -143,7 +145,10 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	fileDir, fileName := filepath.Split(fileInfo.Path)
 	aqlPath := strings.TrimPrefix(strings.TrimSuffix(fileDir, "/"), "/")
 	var aqlSearch string
-	if aqlPath == "" {
+	if resultType == sdk.V2WorkflowRunResultTypeConan {
+		aqlPath := strings.TrimSuffix(strings.TrimPrefix(artifactPath, "/"), "/") + "/*"
+		aqlSearch = fmt.Sprintf(`items.find({"path" : {"$match": "%s"}, "repo": {"$eq":"%s"}}).include("repo","path","name","virtual_repos", "actual_md5", "actual_sha1", "sha256", "size", "property")`, aqlPath, repository)
+	} else if aqlPath == "" {
 		aqlSearch = fmt.Sprintf(`items.find({"name" : "%s"}).include("repo","path","name","virtual_repos")`, fileName)
 	} else {
 		aqlSearch = fmt.Sprintf(`items.find({"name" : "%s", "path" : "%s"}).include("repo","path","name","virtual_repos")`, fileName, aqlPath)
@@ -156,6 +161,7 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	if len(itemSearch.Results) == 0 {
 		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to find artifact %s in path %s", fileName, fileDir)
 	}
+
 	// retrieve localRepository
 	virtualRepo := repository
 	var localRepo string
@@ -255,6 +261,10 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		}
 	case sdk.V2WorkflowRunResultTypePuppet:
 		if err := performPuppet(&runResult, fileInfo, fileProps, fileName); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypeConan:
+		if err := performConan(&runResult, itemSearch, artifactPath); err != nil {
 			return true, err
 		}
 	default:
@@ -638,6 +648,45 @@ func performNpm(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.Artifa
 			SHA256:   fileInfo.Checksums.Sha256,
 		},
 	}
+	return nil
+}
+
+func performConan(runResult *sdk.V2WorkflowRunResult, aqlSearch *grpcplugins.SearchResultResponse, packagePath string) error {
+	var packageName, packageVersion string
+	files := make([]sdk.V2WorkflowRunResultConanDetailFile, 0)
+
+	for _, item := range aqlSearch.Results {
+		file := sdk.V2WorkflowRunResultConanDetailFile{
+			FileName: item.Name,
+			Path:     item.Path,
+			Size:     item.Size,
+			MD5:      item.ActualMd5,
+			SHA1:     item.ActualSha1,
+			SHA256:   item.Sha256,
+		}
+		files = append(files, file)
+
+		for _, prop := range item.Properties {
+			if prop.Key == "conan.package.name" {
+				packageName = prop.Value
+			}
+			if prop.Key == "conan.package.version" {
+				packageVersion = prop.Value
+			}
+		}
+	}
+	pathSplit := strings.Split(packagePath, "/")
+
+	runResult.Type = sdk.V2WorkflowRunResultTypeConan
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultConanDetail{
+			Name:            packageName,
+			Version:         packageVersion,
+			PackageRevision: pathSplit[len(pathSplit)-1],
+			Files:           files,
+		},
+	}
+
 	return nil
 }
 

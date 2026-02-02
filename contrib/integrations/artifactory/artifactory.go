@@ -550,9 +550,30 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 				if err := SetPropertiesRecursive(ctx, artiClient, repoType, repoName, currentMaturity, manifestDir, props); err != nil {
 					return nil, err
 				}
-
 			}
+		case "conan":
+			details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultConanDetail](&r)
+			if err != nil {
+				return nil, err
+			}
+			mod.Type = buildinfo.Conan
+			modProps := make(map[string]string)
+			modProps["conan.package.version"] = details.Version
+			modProps["conan.package.name"] = details.Name
+			mod.Properties = modProps
 
+			path = strings.TrimPrefix(strings.TrimSuffix(dir, "/"), "/")
+
+			for _, f := range details.Files {
+				currentArtifact := buildinfo.Artifact{
+					Name: f.FileName,
+					Type: strings.TrimPrefix(filepath.Ext(f.FileName), "."),
+					Checksum: buildinfo.Checksum{
+						Md5: f.MD5,
+					},
+				}
+				mod.Artifacts = append(mod.Artifacts, currentArtifact)
+			}
 		default:
 			_, objectName := filepath.Split(path)
 			currentArtifact := buildinfo.Artifact{
