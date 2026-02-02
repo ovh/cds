@@ -336,31 +336,44 @@ func (api *API) computeMetrics(ctx context.Context) {
 
 				// V1 queue metrics
 				queryBuilding := "SELECT COUNT(1) FROM workflow_node_run_job WHERE status = 'Building'"
-				queryInterval := "SELECT COUNT(1) FROM workflow_node_run_job WHERE queued > $1 AND queued <= $2 AND status = 'Waiting'"
-				queryOlder := "SELECT COUNT(1) FROM workflow_node_run_job WHERE queued < $1 AND status = 'Waiting'"
+				queryWaiting := "SELECT COUNT(1) FROM workflow_node_run_job WHERE status = 'Waiting'"
+				queryWaitingInterval := "SELECT COUNT(1) FROM workflow_node_run_job WHERE queued > $1 AND queued <= $2 AND status = 'Waiting'"
+				queryWaitingOlder := "SELECT COUNT(1) FROM workflow_node_run_job WHERE queued < $1 AND status = 'Waiting'"
 				api.countMetricRange(ctx, "building", "all", api.Metrics.queue, queryBuilding)
-				api.countMetricRange(ctx, "waiting", "10_less_10s", api.Metrics.queue, queryInterval, now10s, now)
-				api.countMetricRange(ctx, "waiting", "20_more_10s_less_30s", api.Metrics.queue, queryInterval, now30s, now10s)
-				api.countMetricRange(ctx, "waiting", "30_more_30s_less_1min", api.Metrics.queue, queryInterval, now1min, now30s)
-				api.countMetricRange(ctx, "waiting", "40_more_1min_less_2min", api.Metrics.queue, queryInterval, now2min, now1min)
-				api.countMetricRange(ctx, "waiting", "50_more_2min_less_5min", api.Metrics.queue, queryInterval, now5min, now2min)
-				api.countMetricRange(ctx, "waiting", "60_more_5min_less_10min", api.Metrics.queue, queryInterval, now10min, now5min)
-				api.countMetricRange(ctx, "waiting", "70_more_10min", api.Metrics.queue, queryOlder, now10min)
+				api.countMetricRange(ctx, "waiting", "all", api.Metrics.queue, queryWaiting)
+				api.countMetricRange(ctx, "waiting", "10_less_10s", api.Metrics.queue, queryWaitingInterval, now10s, now)
+				api.countMetricRange(ctx, "waiting", "20_more_10s_less_30s", api.Metrics.queue, queryWaitingInterval, now30s, now10s)
+				api.countMetricRange(ctx, "waiting", "30_more_30s_less_1min", api.Metrics.queue, queryWaitingInterval, now1min, now30s)
+				api.countMetricRange(ctx, "waiting", "40_more_1min_less_2min", api.Metrics.queue, queryWaitingInterval, now2min, now1min)
+				api.countMetricRange(ctx, "waiting", "50_more_2min_less_5min", api.Metrics.queue, queryWaitingInterval, now5min, now2min)
+				api.countMetricRange(ctx, "waiting", "60_more_5min_less_10min", api.Metrics.queue, queryWaitingInterval, now10min, now5min)
+				api.countMetricRange(ctx, "waiting", "70_more_10min", api.Metrics.queue, queryWaitingOlder, now10min)
 
 				// V2 queue metrics
-				queryV2Scheduling := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE status = 'Scheduling'"
 				queryV2Building := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE status = 'Building'"
-				queryV2Interval := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE queued > $1 AND queued <= $2 AND status = 'Waiting'"
-				queryV2Older := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE queued < $1 AND status = 'Waiting'"
-				api.countMetricRange(ctx, "v2_scheduling", "all", api.Metrics.v2Queue, queryV2Scheduling)
+				queryV2Scheduling := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE status = 'Scheduling'"
+				queryV2SchedulingInterval := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE scheduled > $1 AND scheduled <= $2 AND status = 'Scheduling'"
+				queryV2SchedulingOlder := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE scheduled < $1 AND status = 'Scheduling'"
+				queryV2Waiting := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE status = 'Waiting'"
+				queryV2WaitingInterval := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE queued > $1 AND queued <= $2 AND status = 'Waiting'"
+				queryV2WaitingOlder := "SELECT COUNT(1) FROM v2_workflow_run_job WHERE queued < $1 AND status = 'Waiting'"
 				api.countMetricRange(ctx, "v2_building", "all", api.Metrics.v2Queue, queryV2Building)
-				api.countMetricRange(ctx, "v2_waiting", "10_less_10s", api.Metrics.v2Queue, queryV2Interval, now10s, now)
-				api.countMetricRange(ctx, "v2_waiting", "20_more_10s_less_30s", api.Metrics.v2Queue, queryV2Interval, now30s, now10s)
-				api.countMetricRange(ctx, "v2_waiting", "30_more_30s_less_1min", api.Metrics.v2Queue, queryV2Interval, now1min, now30s)
-				api.countMetricRange(ctx, "v2_waiting", "40_more_1min_less_2min", api.Metrics.v2Queue, queryV2Interval, now2min, now1min)
-				api.countMetricRange(ctx, "v2_waiting", "50_more_2min_less_5min", api.Metrics.v2Queue, queryV2Interval, now5min, now2min)
-				api.countMetricRange(ctx, "v2_waiting", "60_more_5min_less_10min", api.Metrics.v2Queue, queryV2Interval, now10min, now5min)
-				api.countMetricRange(ctx, "v2_waiting", "70_more_10min", api.Metrics.v2Queue, queryV2Older, now10min)
+				api.countMetricRange(ctx, "v2_scheduling", "all", api.Metrics.v2Queue, queryV2Scheduling)
+				api.countMetricRange(ctx, "v2_scheduling", "10_less_10s", api.Metrics.v2Queue, queryV2SchedulingInterval, now10s, now)
+				api.countMetricRange(ctx, "v2_scheduling", "20_more_10s_less_30s", api.Metrics.v2Queue, queryV2SchedulingInterval, now30s, now10s)
+				api.countMetricRange(ctx, "v2_scheduling", "30_more_30s_less_1min", api.Metrics.v2Queue, queryV2SchedulingInterval, now1min, now30s)
+				api.countMetricRange(ctx, "v2_scheduling", "40_more_1min_less_2min", api.Metrics.v2Queue, queryV2SchedulingInterval, now2min, now1min)
+				api.countMetricRange(ctx, "v2_scheduling", "50_more_2min_less_5min", api.Metrics.v2Queue, queryV2SchedulingInterval, now5min, now2min)
+				api.countMetricRange(ctx, "v2_scheduling", "60_more_5min_less_10min", api.Metrics.v2Queue, queryV2SchedulingInterval, now10min, now5min)
+				api.countMetricRange(ctx, "v2_scheduling", "70_more_10min", api.Metrics.v2Queue, queryV2SchedulingOlder, now10min)
+				api.countMetricRange(ctx, "v2_waiting", "all", api.Metrics.v2Queue, queryV2Waiting, now10s, now)
+				api.countMetricRange(ctx, "v2_waiting", "10_less_10s", api.Metrics.v2Queue, queryV2WaitingInterval, now10s, now)
+				api.countMetricRange(ctx, "v2_waiting", "20_more_10s_less_30s", api.Metrics.v2Queue, queryV2WaitingInterval, now30s, now10s)
+				api.countMetricRange(ctx, "v2_waiting", "30_more_30s_less_1min", api.Metrics.v2Queue, queryV2WaitingInterval, now1min, now30s)
+				api.countMetricRange(ctx, "v2_waiting", "40_more_1min_less_2min", api.Metrics.v2Queue, queryV2WaitingInterval, now2min, now1min)
+				api.countMetricRange(ctx, "v2_waiting", "50_more_2min_less_5min", api.Metrics.v2Queue, queryV2WaitingInterval, now5min, now2min)
+				api.countMetricRange(ctx, "v2_waiting", "60_more_5min_less_10min", api.Metrics.v2Queue, queryV2WaitingInterval, now10min, now5min)
+				api.countMetricRange(ctx, "v2_waiting", "70_more_10min", api.Metrics.v2Queue, queryV2WaitingOlder, now10min)
 				api.processStatusMetrics(ctx)
 			}
 		}
