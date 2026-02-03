@@ -439,7 +439,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/entity/{entityType}", ScopeNone(), r.GETv2(api.getEntitiesHandler))
 	r.Handle("/v2/entity/{entityType}/check", ScopeNone(), r.POSTv2(api.postEntityCheckHandler))
 
-	r.Handle("/v2/hatchery", Scope(sdk.AuthConsumerScopeHatchery), r.GETv2(api.getHatcheriesHandler), r.POSTv2(api.postHatcheryHandler))
+	r.Handle("/v2/hatchery", Scopes(sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeService), r.GETv2(api.getHatcheriesHandler), r.POSTv2(api.postHatcheryHandler))
 	r.Handle("/v2/hatchery/ws", Scope(sdk.AuthConsumerScopeHatchery), r.GETv2(api.getHatcheryWebsocketHandler))
 	r.Handle("/v2/hatchery/heartbeat", Scope(sdk.AuthConsumerScopeHatchery), r.POSTv2(api.postHatcheryHeartbeatHandler))
 	r.Handle("/v2/hatchery/{hatcheryIdentifier}", Scope(sdk.AuthConsumerScopeHatchery), r.GETv2(api.getHatcheryHandler), r.DELETEv2(api.deleteHatcheryHandler))
