@@ -21,7 +21,7 @@ export class QueueService {
         return this._http.get<WorkflowNodeJobRun>(`/queue/workflows/${jobID}/infos`);
     }
 
-    getV2Jobs(statuses: string[], regions: string[], offset: number, limit: number): Observable<any> {
+    getV2Jobs(statuses: string[], offset: number, limit: number): Observable<any> {
         let params = new HttpParams();
         if (statuses) {
             statuses.forEach(s => {

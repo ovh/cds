@@ -713,8 +713,9 @@ func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchRunsFil
 		case "sort":
 			sort = v[0]
 		default:
-			filters.AnnotationKeys = append(filters.AnnotationKeys, k)
-			filters.AnnotationValues = append(filters.AnnotationValues, v...)
+			for i := range v {
+				filters.Annotations = append(filters.Annotations, k+":"+v[i])
+			}
 		}
 	}
 
@@ -1417,7 +1418,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 			if !booleanResult {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "gate conditions are not satisfied")
+				return sdk.WithStack(sdk.ErrConditionNotSatisfied)
 			}
 
 			runJobsMap := make(map[string]sdk.V2WorkflowRunJob)

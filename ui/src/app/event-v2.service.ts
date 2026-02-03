@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { ToastService } from 'app/shared/toast/ToastService';
 import { concatMap, delay, filter, retryWhen } from 'rxjs/operators';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { WebsocketV2Event, WebsocketV2Filter, WebsocketV2FilterType } from './model/websocket-v2';
 import { Store } from '@ngxs/store';
 import { AddEventV2 } from './store/event-v2.action';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Injectable()
 export class EventV2Service {
@@ -16,7 +16,7 @@ export class EventV2Service {
 
     constructor(
         private _router: Router,
-        private _toastService: ToastService,
+        private _messageService: NzMessageService,
         private _store: Store
     ) { }
 
@@ -51,7 +51,7 @@ export class EventV2Service {
                 filter((message: WebsocketV2Event): boolean => {
                     let ok = message.status === 'OK';
                     if (!ok) {
-                        this._toastService.error('', message.error);
+                        this._messageService.error(message.error);
                     }
                     return ok;
                 }),

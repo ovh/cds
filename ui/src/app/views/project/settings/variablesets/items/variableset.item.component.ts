@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges
 import { Project } from "app/model/project.model";
 import { VariableSet, VariableSetItem } from "app/model/variablesets.model";
 import { V2ProjectService } from "app/service/projectv2/project.service";
-import { ToastService } from "app/shared/toast/ToastService";
-import { finalize } from "rxjs";
+import { ErrorUtils } from "app/shared/error.utils";
+import { NzMessageService } from "ng-zorro-antd/message";
+import { lastValueFrom } from "rxjs";
 
 @Component({
     standalone: false,
@@ -26,12 +27,12 @@ export class ProjectVariableSetItemsComponent implements OnChanges {
 
     constructor(
         private _cd: ChangeDetectorRef,
-        private _toast: ToastService, 
+        private _messageService: NzMessageService,
         private _v2ProjectService: V2ProjectService
     ) {
         this.newItem = new VariableSetItem();
     }
-    
+
     ngOnChanges(changes: SimpleChanges): void {
         if (!this.variableSet || !this.project) {
             return
@@ -39,74 +40,87 @@ export class ProjectVariableSetItemsComponent implements OnChanges {
         this.loadVariableSet();
     }
 
-    loadVariableSet(): void {
+    async loadVariableSet() {
         this.loading = true;
         this._cd.markForCheck();
-        this._v2ProjectService.getVariableSet(this.project.key, this.variableSet.name)
-        .pipe(finalize(() => {
-            this.loading = false;
-            this.newItem = new VariableSetItem();
-            this._cd.markForCheck();
-        }))
-        .subscribe(vs => {
-            this.items = vs.items;
-        });
+
+        try {
+            const res = await lastValueFrom(this._v2ProjectService.getVariableSet(this.project.key, this.variableSet.name));
+            this.items = res.items
+        } catch (e) {
+            this._messageService.error(`Unable to load variable set: ${ErrorUtils.print(e)}`);
+        }
+
+        this.newItem = new VariableSetItem();
+        this.loading = false;
+        this._cd.markForCheck();
     }
 
-    createVariableSetItem(): void {
+    async createVariableSetItem() {
         if (!this.varsetItemPattern.test(this.newItem.name)) {
             this.errorItemName = true;
             this._cd.markForCheck();
             return;
-        } else {
-            this.errorItemName = false;
         }
+        this.errorItemName = false;
+
         if (this.newItem.value === '') {
             this.errorItemValue = true;
             this._cd.markForCheck()
             return;
-        } else {
-            this.errorItemValue = false;
         }
+        this.errorItemValue = false;
+
         this.itemFormLoading = true;
         this._cd.markForCheck();
-        this._v2ProjectService.postVariableSetItem(this.project.key, this.variableSet.name, this.newItem)
-        .pipe(finalize(() => {
+
+        try {
+            await lastValueFrom(this._v2ProjectService.postVariableSetItem(this.project.key, this.variableSet.name, this.newItem));
+            this._messageService.success(`Item ${this.newItem.name} created`);
+        } catch (e) {
+            this._messageService.error(`Unable to create item: ${ErrorUtils.print(e)}`);
+            return;
+        } finally {
             this.itemFormLoading = false;
             this._cd.markForCheck();
-        }))
-        .subscribe(() => {
-            this._toast.success('', `Item ${this.newItem.name} created`);
-            this.loadVariableSet();
-        });
-        
+        }
+
+        this.loadVariableSet();
     }
 
-    updateVariableSetItem(i: VariableSetItem): void {
+    async updateVariableSetItem(i: VariableSetItem) {
         this.loading = true;
         this._cd.markForCheck();
-        this._v2ProjectService.updateVariableSetItem(this.project.key, this.variableSet.name, i.name, i)
-        .pipe(finalize(() => {
+
+        try {
+            await lastValueFrom(this._v2ProjectService.updateVariableSetItem(this.project.key, this.variableSet.name, i.name, i));
+            this._messageService.success(`Item ${i.name} updated`);
+        } catch (e) {
+            this._messageService.error(`Unable to update item: ${ErrorUtils.print(e)}`);
+            return
+        } finally {
             this.loading = false;
             this._cd.markForCheck();
-        }))
-        .subscribe(() => {
-            this._toast.success('', `Item ${i.name} updated`);
-            this.loadVariableSet();
-        })
+        }
+
+        this.loadVariableSet();
     }
 
-    deleteVariableSetItem(i: VariableSetItem): void {
+    async deleteVariableSetItem(i: VariableSetItem) {
         this.loading = true;
         this._cd.markForCheck();
-        this._v2ProjectService.deleteVariableSetItem(this.project.key, this.variableSet.name, i.name)
-        .pipe(finalize(() => {
+
+        try {
+            await lastValueFrom(this._v2ProjectService.deleteVariableSetItem(this.project.key, this.variableSet.name, i.name));
+            this._messageService.success(`Item ${i.name} deleted`);
+        } catch (e) {
+            this._messageService.error(`Unable to delete item: ${ErrorUtils.print(e)}`);
+            return;
+        } finally {
             this.loading = false;
             this._cd.markForCheck();
-        }))
-        .subscribe(() => {
-            this._toast.success('', `Item ${i.name} deleted`);
-            this.loadVariableSet();
-        })
+        }
+
+        this.loadVariableSet();
     }
 }

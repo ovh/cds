@@ -6,10 +6,8 @@ import { VCSProject, VCSProjectAuth, VCSProjectOptions } from 'app/model/vcs.mod
 import { ProjectService } from 'app/service/project/project.service';
 import { V2ProjectService } from 'app/service/projectv2/project.service';
 import { ErrorUtils } from 'app/shared/error.utils';
-import { ToastService } from 'app/shared/toast/ToastService';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { lastValueFrom } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 
 @Component({
     standalone: false,
@@ -43,7 +41,6 @@ export class ProjectRepoManagerFormComponent implements OnInit {
     constructor(
         public _translate: TranslateService,
         private _v2ProjectService: V2ProjectService,
-        private _toastService: ToastService,
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
         private _messageService: NzMessageService
@@ -93,68 +90,88 @@ export class ProjectRepoManagerFormComponent implements OnInit {
         }
     }
 
-    addVCSProject(): void {
+    async addVCSProject() {
         if (!this.reposManagerList[this.selectedRepoId]) {
             return;
         }
+
         this.loading = true;
         this._cd.markForCheck();
-        this._projectService.addVCSProject(this.project.key, this.vcsProject).pipe(finalize(() => {
+
+        try {
+            await lastValueFrom(this._projectService.addVCSProject(this.project.key, this.vcsProject));
+            this._messageService.success('Repository Manager added');
+        } catch (e) {
+            this._messageService.error(`Unable to add repository manager: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return;
+        } finally {
             this.loading = false;
             this._cd.markForCheck();
-        })).subscribe(r => {
-            this._toastService.success('Repository Manager added', '');
-            this._projectService.listVCSProject(this.project.key).subscribe(vcsProjects => {
-                this.repoModalVisible = false;
-                this.project.vcs_servers = vcsProjects;
-                this._cd.markForCheck();
-            });
-        });
+        }
+
+        this.loadVCSProject();
     }
 
-    saveVCSProject(): void {
-        this.loading = true;
-        this._cd.markForCheck();
-        this._projectService.saveVCSProject(this.project.key, this.vcsProject).pipe(finalize(() => {
-            this.loading = false;
+    async loadVCSProject() {
+        try {
+            this.project.vcs_servers = await lastValueFrom(this._projectService.listVCSProject(this.project.key));
+        } catch (e) {
+            this._messageService.error(`Unable to load repository managers: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return;
+        } finally {
+            this.repoModalVisible = false;
             this._cd.markForCheck();
-        })).subscribe(r => {
-            this._toastService.success('Repository Manager updated', '');
-            this._projectService.listVCSProject(this.project.key).subscribe(vcsProjects => {
-                this.repoModalVisible = false;
-                this.project.vcs_servers = vcsProjects;
-                this._cd.markForCheck();
-            });
-        });
+        }
     }
 
-    deleteVCSProject(): void {
+    async saveVCSProject() {
         this.loading = true;
         this._cd.markForCheck();
-        this._projectService.deleteVCSProject(this.project.key, this.vcsProject.name).pipe(finalize(() => {
+
+        try {
+            await lastValueFrom(this._projectService.saveVCSProject(this.project.key, this.vcsProject));
+            this._messageService.success('Repository Manager updated');
+        } catch (e) {
+            this._messageService.error(`Unable to save repository manager: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return;
+        } finally {
             this.loading = false;
             this._cd.markForCheck();
-        })).subscribe(r => {
-            this._toastService.success('Repository Manager deleted', '');
-            this._projectService.listVCSProject(this.project.key).subscribe(vcsProjects => {
-                this.repoModalVisible = false;
-                this.project.vcs_servers = vcsProjects;
-                this._cd.markForCheck();
-            });
-        });
+        }
+
+        this.loadVCSProject();
+    }
+
+    async deleteVCSProject() {
+        this.loading = true;
+        this._cd.markForCheck();
+
+        try {
+            await lastValueFrom(this._projectService.deleteVCSProject(this.project.key, this.vcsProject.name));
+            this._messageService.success('Repository Manager deleted');
+        } catch (e) {
+            this._messageService.error(`Unable to delete repository manager: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return;
+        } finally {
+            this.loading = false;
+            this._cd.markForCheck();
+        }
+
+        this.loadVCSProject();
     }
 
     updatePublicKey(keyName: string): void {
-        if (this.keys) {
-            let key = this.keys.ssh.find(k => k.name === keyName);
-            if (key) {
-                this.selectedPublicKey = key.public;
-                this.vcsProject.auth.sshKeyName = key.name;
-            }
+        if (!this.keys) {
+            return;
+        }
+        let key = this.keys.ssh.find(k => k.name === keyName);
+        if (key) {
+            this.selectedPublicKey = key.public;
+            this.vcsProject.auth.sshKeyName = key.name;
         }
     }
 
     clickCopyKey() {
-        this._toastService.success('', this._translate.instant('key_copied'));
+        this._messageService.success(this._translate.instant('key_copied'));
     }
 }

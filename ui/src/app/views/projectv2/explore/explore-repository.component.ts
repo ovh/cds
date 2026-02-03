@@ -5,7 +5,6 @@ import { Store } from '@ngxs/store';
 import { forkJoin, lastValueFrom, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from 'app/service/project/project.service';
-import { ToastService } from 'app/shared/toast/ToastService';
 import { VCSProject } from 'app/model/vcs.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
@@ -50,7 +49,6 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         private _routeActivated: ActivatedRoute,
         private _projectService: ProjectService,
         private _cd: ChangeDetectorRef,
-        private _toastService: ToastService,
         private _router: Router,
         private _drawerService: NzDrawerService,
         private _messageService: NzMessageService
@@ -100,7 +98,7 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
 
         try {
             await lastValueFrom(this._projectService.deleteVCSRepository(this.project.key, this.vcsProject.name, this.repository.name));
-            this._toastService.success('Repository has been removed', '');
+            this._messageService.success('Repository has been removed');
             this._router.navigate(['/', 'project', this.project.key, 'explore']);
         } catch (e) {
             this._messageService.error(`Unable to remove repository: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });

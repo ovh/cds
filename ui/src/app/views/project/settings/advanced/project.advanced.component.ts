@@ -9,7 +9,6 @@ import { lastValueFrom } from 'rxjs';
 import { SetCurrentProjectV2 } from 'app/store/project-v2.action';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ErrorUtils } from 'app/shared/error.utils';
-import { ToastService } from 'app/shared/toast/ToastService';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
@@ -36,7 +35,6 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
         private _v2ProjectService: V2ProjectService,
         public _messageService: NzMessageService,
         private _router: Router,
-        private _toast: ToastService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
         private _fb: FormBuilder
@@ -86,7 +84,7 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
                 workflow_retention: this.validateForm.value.retention,
             }));
             this._store.dispatch(new SetCurrentProjectV2(p));
-            this._toast.success('', 'Project updated');
+            this._messageService.success('Project updated');
         } catch (e) {
             this._messageService.error(`Unable to update project: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
@@ -100,7 +98,7 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
         this._cd.markForCheck();
         try {
             await lastValueFrom(this._v2ProjectService.delete(this.project.key));
-            this._toast.success('', 'Project deleted');
+            this._messageService.success('Project deleted');
             this._router.navigate(['/']);
         } catch (e) {
             this._messageService.error(`Unable to delete project: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });

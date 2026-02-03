@@ -257,7 +257,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	require.Equal(t, 403, w.Code)
 
 	body := w.Body.String()
-	require.Contains(t, body, "gate conditions are not satisfied")
+	require.Contains(t, body, "Conditions are not satisfied")
 }
 
 func TestRunManualJob_WrongGateCondition(t *testing.T) {

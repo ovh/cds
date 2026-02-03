@@ -20,7 +20,7 @@ export class Suggestion<T> {
 }
 
 @Component({
-    standalone: false,
+	standalone: false,
 	selector: 'app-input-filter',
 	templateUrl: './input-filter.html',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +28,8 @@ export class Suggestion<T> {
 })
 @AutoUnsubscribe()
 export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked, OnDestroy {
+	static readonly spaceAlternative = '\u00A0';
+
 	@ViewChild('filterInput') filterInput: ElementRef;
 	@ViewChild('filterInputDirective') filterInputDirective: NzAutocompleteTriggerDirective;
 	@ViewChildren(NzAutocompleteOptionComponent) fromDataSourceOptions: QueryList<NzAutocompleteOptionComponent>;
@@ -137,9 +139,9 @@ export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked,
 		const splitted = this.textFilters[this.cursorTextFilterPosition].split(':');
 		if (splitted.length === 2) {
 			// Search for existing filter key to show options
-			this.selectedFilter = Object.assign({}, this.filters.find(f => f.key === splitted[0]));
+			this.selectedFilter = Object.assign({}, this.filters.find(f => f.key === splitted[0].replace(InputFilterComponent.spaceAlternative, ' ')));
 			if (this.selectedFilter) {
-				this.selectedFilter.options = (this.selectedFilter.options ?? []).filter(o => splitted[1] === '' || o.toLowerCase().indexOf(splitted[1].toLowerCase()) !== -1);
+				this.selectedFilter.options = (this.selectedFilter.options ?? []).filter(o => splitted[1] === '' || o.toLowerCase().indexOf(splitted[1].replace(InputFilterComponent.spaceAlternative, ' ').toLowerCase()) !== -1);
 			}
 			this.availableFilters = [];
 		} else {
@@ -157,7 +159,7 @@ export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked,
 
 	computeFilterValue(filter: Filter, option?: string): string {
 		const textFilters = [].concat(this.textFilters);
-		textFilters[this.cursorTextFilterPosition] = filter.key + ':' + (option ? encodeURI(option) : '');
+		textFilters[this.cursorTextFilterPosition] = filter.key.replace(' ', InputFilterComponent.spaceAlternative) + ':' + (option ? option.replace(' ', InputFilterComponent.spaceAlternative) : '');
 		return textFilters.join(' ');
 	}
 }

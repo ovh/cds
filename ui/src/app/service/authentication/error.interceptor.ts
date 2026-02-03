@@ -66,7 +66,10 @@ export class ErrorInterceptor implements HttpInterceptor {
                                 });
                             }
                         }
-                        this._toast.errorHTTP(e.status, e.error.message, e.error.from, e.error.request_id);
+                        if (req.url.indexOf('cdsapi/v2') === -1 || e.status >= 500) {
+                            // show a toast only for non v2 api errors
+                            this._toast.errorHTTP(e.status, e.error.message, e.error.from, e.error.request_id);
+                        }
                         return throwError(() => e);
                     }
 

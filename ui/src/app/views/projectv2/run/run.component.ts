@@ -19,7 +19,6 @@ import moment from "moment";
 import { NzDrawerService } from "ng-zorro-antd/drawer";
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "../run-start/run-start.component";
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
-import { ToastService } from "app/shared/toast/ToastService";
 import { Clipboard } from '@angular/cdk/clipboard';
 import { GraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { Title } from "@angular/platform-browser";
@@ -114,28 +113,29 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         private _messageService: NzMessageService,
         private _routerService: RouterService,
         private _drawerService: NzDrawerService,
-        private _toast: ToastService,
         private _clipboard: Clipboard,
-        private _toastService: ToastService,
         private _titleService: Title,
         private _http: HttpClient,
         private _eventV2Service: EventV2Service
     ) {
-        this.paramsSub = this._route.params.subscribe(_ => {
-            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-            const workflowRunID = params['workflowRunID'];
-            if (this.workflowRun && this.workflowRun.id === workflowRunID) {
-                return;
-            }
-            this.projectKey = params['key'];
-            this.load(workflowRunID).then(() => {
-                const params = this._route.snapshot.queryParams;
-                if (params['panel']) {
-                    const splitted = params['panel'].split(':');
-                    this.openPanel(splitted[0], decodeURI(splitted[1]) ?? null);
+        this.paramsSub = this._route.params.pipe(
+            concatMap(_ => {
+                const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+                const workflowRunID = params['workflowRunID'];
+                if (this.workflowRun && this.workflowRun.id === workflowRunID) {
+                    return from([]);
                 }
-            });
-        });
+                this.projectKey = params['key'];
+
+                return from(this.load(workflowRunID).then(() => {
+                    const params = this._route.snapshot.queryParams;
+                    if (params['panel']) {
+                        const splitted = params['panel'].split(':');
+                        this.openPanel(splitted[0], decodeURI(splitted[1]) ?? null);
+                    }
+                }));
+            })
+        ).subscribe(_ => { });
 
         this.queryParamsSub = this._route.queryParams.subscribe(params => {
             if (params['panel'] && this.workflowRun && this.jobs) {
@@ -386,7 +386,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this.selectedItemType = type;
 
         let params = new HttpParams();
-        params = params.append('panel', `${type}:${encodeURI(data)}`);
+        params = params.append('panel', `${type}:${encodeURIComponent(data)}`);
         this.selectedItemShareLink = `/project/${this.projectKey}/run/${this.workflowRun.id}?${params.toString()}`;
 
         this._cd.markForCheck();
@@ -510,7 +510,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         let queryParams = {
             'workflow': this.workflowRun.vcs_server + '/' + this.workflowRun.repository + '/' + this.workflowRun.workflow_name
         };
-        queryParams[annotation.key] = encodeURI(annotation.value);
+        queryParams[annotation.key] = annotation.value;
         return queryParams;
     }
 
@@ -553,14 +553,14 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         event.stopPropagation();
         event.preventDefault();
         this._clipboard.copy(this.shareLink.nativeElement.href);
-        this._toast.success('', 'Share link copied!');
+        this._messageService.success('Share link copied!');
     }
 
     confirmCopyAnnotationValue(event: any, value: string) {
         event.stopPropagation();
         event.preventDefault();
         this._clipboard.copy(value);
-        this._toast.success('', 'Annotation value copied!');
+        this._messageService.success('Annotation value copied!');
     }
 
     async confirmJobGate(jobName: any) {
@@ -569,7 +569,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         if (!currentGate.inputs) {
             try {
                 await lastValueFrom(this._workflowService.triggerJob(this.workflowRun.project_key, this.workflowRun.id, jobName));
-                this._toastService.success('', `Job ${jobName} started`);
+                this._messageService.success(`Job ${jobName} started`);
             } catch (e) {
                 this._messageService.error(`Unable to get trigger job gate: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
             }
