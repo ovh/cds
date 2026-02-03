@@ -132,7 +132,7 @@ func Test_helmPushPlugin(t *testing.T) {
 	mockWorker.EXPECT().V2AddRunResult(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
 			require.Equal(t, "buildachart", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
-			var s = "artifactory-integration"
+			s := "artifactory-integration"
 			req.RunResult.ArtifactManagerIntegrationName = &s
 			req.RunResult.ID = sdk.UUID()
 			return &workerruntime.V2AddResultResponse{
@@ -144,7 +144,7 @@ func Test_helmPushPlugin(t *testing.T) {
 	mockWorker.EXPECT().V2UpdateRunResult(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
 			require.Equal(t, "buildachart", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
-			var s = "artifactory-integration"
+			s := "artifactory-integration"
 			req.RunResult.ArtifactManagerIntegrationName = &s
 			req.RunResult.ID = sdk.UUID()
 			return &workerruntime.V2UpdateResultResponse{
@@ -153,7 +153,6 @@ func Test_helmPushPlugin(t *testing.T) {
 		},
 	)
 
-	_, _, err := p.perform(context.TODO(), "fixtures/chart", "", "", false, chartMuseumOptions{})
+	_, _, err := p.perform(context.TODO(), "fixtures/chart", "", "", helmOpts{}, chartMuseumOptions{})
 	require.NoError(t, err)
-
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
@@ -1589,7 +1590,6 @@ func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, files
 		})
 	}
 	return entities, nil
-
 }
 
 func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store, o T, ef *EntityFinder, wmDockerImageWhiteList []regexp.Regexp) []error {
@@ -1611,7 +1611,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 		}
 		// Verify the image if any whitelist is setup
 		if dockerSpec.Image != "" && len(wmDockerImageWhiteList) > 0 {
-			var allowedImage = false
+			var allowedImage bool
 			for _, r := range wmDockerImageWhiteList { // At least one regexp must match
 				if r.MatchString(dockerSpec.Image) {
 					allowedImage = true
@@ -1733,6 +1733,32 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 								}
 							}
 						}
+					}
+				}
+
+				// Check integration at job level
+				for i := range j.Integrations {
+					_, errI := integration.LoadProjectIntegrationByName(ctx, db, ef.currentProject, j.Integrations[i])
+					if errI != nil {
+						if sdk.ErrorIs(errI, sdk.ErrNotFound) {
+							err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s job %s: integration %s doesn't exist", x.Name, jobID, j.Integrations[i]))
+						} else {
+							log.ErrorWithStackTrace(ctx, errI)
+							err = append(err, sdk.NewErrorFrom(sdk.ErrUnknownError, "workflow %s job %s: unable to check if integration %s exists", x.Name, jobID, j.Integrations[i]))
+						}
+					}
+				}
+			}
+
+			// Check integration at workflow level
+			for i := range x.Integrations {
+				_, errI := integration.LoadProjectIntegrationByName(ctx, db, ef.currentProject, x.Integrations[i])
+				if errI != nil {
+					if sdk.ErrorIs(errI, sdk.ErrNotFound) {
+						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s: integration %s doesn't exist", x.Name, x.Integrations[i]))
+					} else {
+						log.ErrorWithStackTrace(ctx, errI)
+						err = append(err, sdk.NewErrorFrom(sdk.ErrUnknownError, "workflow %s: unable to check if integration %s exists", x.Name, x.Integrations[i]))
 					}
 				}
 			}
