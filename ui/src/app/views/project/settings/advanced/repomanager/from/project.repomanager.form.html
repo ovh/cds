@@ -81,19 +81,19 @@
                         <span>Disable polling. Polling is only supported by GitHub to let CDS use polling (instead of webhook) to be triggered.</span>
                     </label>
                 </nz-form-item>
-                <nz-form-item *ngIf="vcsProject.type !== 'gerrit'">
+                <nz-form-item>
                     <label nz-checkbox [(ngModel)]="vcsProject.options.disableWebhooks" name="disableWebhooks">
                         <span>Disable webhooks. You can disable webhooks you don't want to let CDS creating and using webhook to be triggered.</span>
                     </label>
                 </nz-form-item>
             </ng-container>
-            <ng-container *ngIf="vcsProject.type !== 'gerrit'">
+            <ng-container>
                 <nz-form-item>
                     <h3>Authentication</h3>
                     CDS needs to call VCS API (getting repos, commits, etc...). These fields are mandatory.
                 </nz-form-item>
             </ng-container>
-            <ng-container *ngIf="vcsProject.type !== 'gerrit'">
+            <ng-container>
                 <nz-form-item nz-rows>
                     <nz-form-label [nzSm]="6">Username</nz-form-label>
                     <nz-form-control [nzSm]="14">
@@ -120,38 +120,6 @@
                             <i nz-icon nzType="copy" nzTheme="outline"></i>
                         </button>
                     </ng-container>
-                </nz-form-item>
-            </ng-container>
-            <ng-container *ngIf="vcsProject.type === 'gerrit'">
-                <nz-form-item>
-                    <h3>Gerrit Authentication</h3>
-                    CDS needs to call Gerrit API. SSH Auth is used to access gerrit event stream. User and Token are used to add a review on Changes.
-                </nz-form-item>
-            </ng-container>
-            <ng-container *ngIf="vcsProject.type === 'gerrit'">
-                <nz-form-item nz-rows>
-                    <nz-form-label [nzSm]="6">SSH Username</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <input nz-input type="text" [(ngModel)]="vcsProject.auth.sshUsername" name="sshUsername">
-                    </nz-form-control>
-                </nz-form-item>
-                <nz-form-item>
-                    <nz-form-label [nzSm]="6">SSH Port</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <input nz-input type="text" [(ngModel)]="vcsProject.auth.sshPort" name="sshPort">
-                    </nz-form-control>
-                </nz-form-item>
-                <nz-form-item>
-                    <nz-form-label [nzSm]="6">Reviewer User</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <input nz-input type="text" [(ngModel)]="vcsProject.auth.username" name="username">
-                    </nz-form-control>
-                </nz-form-item>
-                <nz-form-item>
-                    <nz-form-label [nzSm]="6">Reviewer Token</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <input nz-input type="password" [(ngModel)]="vcsProject.auth.token" name="token">
-                    </nz-form-control>
                 </nz-form-item>
             </ng-container>
         </form>

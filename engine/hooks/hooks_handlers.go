@@ -943,11 +943,6 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 }
 
 func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
-	switch t.Type {
-	case TypeGerrit:
-		s.stopGerritHookTask(t)
-	}
-
 	//Delete the task
 	return s.Dao.DeleteTask(ctx, t)
 }

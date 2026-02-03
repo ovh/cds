@@ -8,7 +8,6 @@ export class RepositoriesManager {
 export class RepositoriesManagerAuth {
     username: string;
     sshKeyName: string;
-    sshUsername: string; // used for gerrit integration
 }
 
 export interface Repository {

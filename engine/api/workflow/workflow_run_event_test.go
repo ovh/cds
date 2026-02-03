@@ -29,8 +29,8 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
 	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
-		Name:      "gerrit",
-		Type:      sdk.VCSTypeGerrit,
+		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
 	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
@@ -39,7 +39,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
-		VCSServer:          "gerrit",
+		VCSServer:          "github",
 		RepositoryStrategy: sdk.RepositoryStrategy{
 			ConnectionType: "ssh",
 		},
@@ -106,7 +106,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/commits/6c3efde/statuses",
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
@@ -125,8 +125,8 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
 	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
-		Name:      "gerrit",
-		Type:      sdk.VCSTypeGerrit,
+		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
 	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
@@ -135,7 +135,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
-		VCSServer:          "gerrit",
+		VCSServer:          "github",
 		RepositoryStrategy: sdk.RepositoryStrategy{
 			ConnectionType: "ssh",
 		},
@@ -194,19 +194,19 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/commits/6c3efde/statuses", gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
-			vcs := sdk.VCSConfiguration{Type: "gerrit"}
+			vcs := sdk.VCSConfiguration{Type: "github"}
 			*(out.(*sdk.VCSConfiguration)) = vcs
 			return nil, 200, nil
 		}).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/status", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/status", gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
 	err := workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr, "")
@@ -224,8 +224,8 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
 	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
-		Name:      "gerrit",
-		Type:      sdk.VCSTypeGerrit,
+		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
 	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
@@ -234,7 +234,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
-		VCSServer:          "gerrit",
+		VCSServer:          "github",
 		RepositoryStrategy: sdk.RepositoryStrategy{
 			ConnectionType: "ssh",
 		},
@@ -253,13 +253,6 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 					Status:         sdk.StatusFail,
 					WorkflowNodeID: 1,
 					VCSHash:        "6c3efde",
-					BuildParameters: []sdk.Parameter{
-						{
-							Name:  "gerrit.change.id",
-							Type:  "string",
-							Value: "MyGerritChangeId",
-						},
-					},
 				},
 			},
 		},
@@ -303,22 +296,28 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/commits/6c3efde/statuses", gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
-			vcs := sdk.VCSConfiguration{Type: "gerrit"}
+			vcs := sdk.VCSConfiguration{Type: "github"}
 			*(out.(*sdk.VCSConfiguration)) = vcs
 			return nil, 200, nil
 		}).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/repos/foo/myrepo/pullrequests/comments",
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/pullrequests",
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).ChangeID, "MyGerritChangeId")
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/foo/myrepo/pullrequests/comments",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).Message, "MyTemplate")
 			return nil, 200, nil
 		}).MaxTimes(1)
@@ -338,8 +337,8 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
 	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
-		Name:      "gerrit",
-		Type:      sdk.VCSTypeGerrit,
+		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
 	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
@@ -348,7 +347,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
-		VCSServer:          "gerrit",
+		VCSServer:          "github",
 		RepositoryStrategy: sdk.RepositoryStrategy{
 			ConnectionType: "ssh",
 		},
@@ -367,13 +366,6 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 					Status:         sdk.StatusBuilding,
 					WorkflowNodeID: 1,
 					VCSHash:        "6c3efde",
-					BuildParameters: []sdk.Parameter{
-						{
-							Name:  "gerrit.change.id",
-							Type:  "string",
-							Value: "MyGerritChangeId",
-						},
-					},
 				},
 			},
 		},
@@ -417,15 +409,15 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/commits/6c3efde/statuses",
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit",
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github",
 			gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
-			vcs := sdk.VCSConfiguration{Type: "gerrit"}
+			vcs := sdk.VCSConfiguration{Type: "github"}
 			*(out.(*sdk.VCSConfiguration)) = vcs
 			return nil, 200, nil
 		}).MaxTimes(1)
@@ -445,8 +437,8 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
 	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
-		Name:      "gerrit",
-		Type:      sdk.VCSTypeGerrit,
+		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
 	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
@@ -455,7 +447,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
-		VCSServer:          "gerrit",
+		VCSServer:          "github",
 		RepositoryStrategy: sdk.RepositoryStrategy{
 			ConnectionType: "ssh",
 		},
@@ -474,13 +466,6 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 					Status:         sdk.StatusFail,
 					WorkflowNodeID: 1,
 					VCSHash:        "6c3efde",
-					BuildParameters: []sdk.Parameter{
-						{
-							Name:  "gerrit.change.id",
-							Type:  "string",
-							Value: "MyGerritChangeId",
-						},
-					},
 				},
 			},
 		},
@@ -524,7 +509,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/commits/6c3efde/statuses",
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, args ...interface{}) (http.Header, int, error) {
 			ss := []sdk.VCSCommitStatus{
@@ -538,18 +523,24 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 		}).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
-			vcs := sdk.VCSConfiguration{Type: "gerrit"}
+			vcs := sdk.VCSConfiguration{Type: "github"}
 			*(out.(*sdk.VCSConfiguration)) = vcs
 			return nil, 200, nil
 		}).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/repos/foo/myrepo/pullrequests/comments",
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/pullrequests",
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).ChangeID, "MyGerritChangeId")
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/foo/myrepo/pullrequests/comments",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).Message, "MyTemplate")
 			return nil, 200, nil
 		}).MaxTimes(1)

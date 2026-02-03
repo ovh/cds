@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/vcs/bitbucketcloud"
 	"github.com/ovh/cds/engine/vcs/bitbucketserver"
-	"github.com/ovh/cds/engine/vcs/gerrit"
 	"github.com/ovh/cds/engine/vcs/gitea"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/engine/vcs/gitlab"
@@ -107,15 +106,6 @@ func (s *Service) getConsumer(vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
 			s.UI.HTTP.URL,
 			s.Cfg.ProxyWebhook,
 			s.Cache,
-			vcsAuth.Username,
-			vcsAuth.Token,
-		), nil
-	case sdk.VCSTypeGerrit:
-		return gerrit.New(
-			vcsAuth.URL,
-			s.Cache,
-			vcsAuth.SSHUsername,
-			vcsAuth.SSHPort,
 			vcsAuth.Username,
 			vcsAuth.Token,
 		), nil

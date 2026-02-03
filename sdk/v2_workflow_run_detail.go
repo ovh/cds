@@ -840,7 +840,7 @@ type V2WorkflowRunResultPuppetDetail struct {
 
 // GetLabel implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultPuppetDetail) GetLabel() string {
-	return fmt.Sprintf("Filename: %s - Size: %s", v.Name, humanize.Bytes(uint64(v.Size)))
+	return fmt.Sprintf("ModuleName: %s - Version: %s", v.Name, v.Version)
 }
 
 // GetMetadata implements V2WorkflowRunResultDetailInterface.

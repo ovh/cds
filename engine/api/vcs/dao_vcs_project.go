@@ -120,8 +120,3 @@ func LoadVCSByIDAndProjectKey(ctx context.Context, db gorp.SqlExecutor, projectK
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.id = $2`).Args(projectKey, vcsID)
 	return getVCSProject(ctx, db, query, opts...)
 }
-
-func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.VCSProject, error) {
-	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.type = 'gerrit'`)
-	return getAllVCSProject(ctx, db, query, opts...)
-}
