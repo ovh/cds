@@ -202,7 +202,7 @@ func (api *API) postHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) getHatcheriesHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBAC(api.globalHatcheryManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			hatcheries, err := hatchery.LoadHatcheries(ctx, api.mustDB())
 			if err != nil {
@@ -227,7 +227,7 @@ func (api *API) getHatcheriesHandler() ([]service.RbacChecker, service.Handler) 
 }
 
 func (api *API) getHatcheryHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBAC(api.globalHatcheryManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			hatcheryIdentifier := vars["hatcheryIdentifier"]

@@ -253,7 +253,7 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 }
 
 func (api *API) GetVCSPGKeyHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			keyID := vars["gpgKeyID"]

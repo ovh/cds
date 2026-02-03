@@ -55,7 +55,7 @@ func (api *API) getEntityRefFromQueryParams(ctx context.Context, req *http.Reque
 }
 
 func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler) {
-	return nil, func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+	return service.RBACNone(), func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 		vars := mux.Vars(req)
 		entityType := vars["entityType"]
 
@@ -117,14 +117,14 @@ func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler
 }
 
 func (api *API) getEntitiesHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			entityType := vars["entityType"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
-				return sdk.ErrUnauthorized
+				return sdk.WithStack(sdk.ErrUnauthorized)
 			}
 
 			var entities []sdk.EntityFullName

@@ -12,7 +12,7 @@ import (
 
 // configVCSGPGKeysHandler return all gpg public keys for all vcs server
 func (api *API) configVCSGPGKeysHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			keys := make(map[string][]sdk.Key)
 			for vcsName, kSlice := range api.Config.VCS.GPGKeys {
@@ -28,7 +28,7 @@ func (api *API) configVCSGPGKeysHandler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) configV2CDNHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			tcpURL, tcpURLEnableTLS, err := services.GetCDNPublicTCPAdress(ctx, api.mustDB())
 			if err != nil {

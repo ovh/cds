@@ -10,7 +10,7 @@ import (
 )
 
 func (api *API) postGenerateWorkflowFromTemplateHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(),
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 
 			var tmplGen sdk.V2WorkflowTemplateGenerateRequest

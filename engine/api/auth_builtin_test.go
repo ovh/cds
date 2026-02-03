@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -17,19 +16,16 @@ import (
 )
 
 func AuthentififyBuiltinConsumer(t *testing.T, api *API, jwsToken string, srv *sdk.Service) string {
-	uri := api.Router.GetRoute("POST", api.postAuthBuiltinSigninHandler, nil)
+	uri := api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
 	require.NotEmpty(t, uri)
 	reqSignin := sdk.AuthConsumerSigninRequest{"token": jwsToken}
 	if srv != nil {
 		reqSignin["service"] = srv
 	}
-	btes, err := json.Marshal(reqSignin)
-	require.NoError(t, err)
 
 	t.Logf("signin with jws : %s", jwsToken)
 
-	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(btes))
-	require.NoError(t, err)
+	req := assets.NewRequest(t, http.MethodPost, uri, reqSignin)
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)

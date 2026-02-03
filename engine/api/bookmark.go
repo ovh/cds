@@ -19,7 +19,7 @@ import (
 )
 
 func (api *API) getBookmarksHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(),
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			consumer := getUserConsumer(ctx)
 			data, err := bookmark.LoadAll(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUser.ID)
@@ -31,7 +31,7 @@ func (api *API) getBookmarksHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) postBookmarkHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(),
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			var data sdk.Bookmark
 			if err := service.UnmarshalBody(r, &data); err != nil {
@@ -148,7 +148,7 @@ func (api *API) postBookmarkHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) deleteBookmarkHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(),
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			c := getUserConsumer(ctx)
 

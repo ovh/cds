@@ -44,7 +44,7 @@ func (api *API) getReposFromRepositoriesManagerV2Handler() ([]service.RbacChecke
 }
 
 func (api *API) getProjectsV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(),
+	return service.RBACNone(),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 			u := getUserConsumer(ctx)

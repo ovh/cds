@@ -5,6 +5,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -59,36 +60,34 @@ func (api *API) projectManageVariableSet(ctx context.Context, vars map[string]st
 	return api.hasRoleOnProject(ctx, vars, sdk.ProjectRoleManageVariableSet)
 }
 
+type ProjectReadOptions struct {
+	AllowWorkers bool
+	AllowHooks   bool
+}
+
 // ProjectRead return nil if the current AuthUserConsumer have the ProjectRoleRead on current project KEY
 func (api *API) projectRead(ctx context.Context, vars map[string]string) error {
-	entityType := vars["entityType"]
-	hatch := getHatcheryConsumer(ctx)
-
-	// hatchery can get every worker model
-	if hatch != nil && entityType == sdk.EntityTypeWorkerModel {
-		return nil
-	}
-
-	return api.hasRoleOnProject(ctx, vars, sdk.ProjectRoleRead)
+	return api.projectReadWithOpts(ProjectReadOptions{})(ctx, vars)
 }
 
-func (api *API) analysisRead(ctx context.Context, vars map[string]string) error {
-	if isHooks(ctx) {
-		return nil
-	}
-	return api.projectRead(ctx, vars)
-}
+func (api *API) projectReadWithOpts(opts ProjectReadOptions) func(ctx context.Context, vars map[string]string) error {
+	return func(ctx context.Context, vars map[string]string) error {
+		worker := getWorker(ctx)
 
-func (api *API) triggerAnalysis(ctx context.Context, vars map[string]string) error {
-	if isHooks(ctx) {
-		return nil
-	}
-	return api.projectRead(ctx, vars)
-}
+		if isHooks(ctx) && opts.AllowHooks {
+			return nil
+		}
 
-func (api *API) projectHookRead(ctx context.Context, vars map[string]string) error {
-	if isHooks(ctx) {
-		return nil
+		if worker != nil && opts.AllowWorkers {
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDBWithCtx(ctx), worker.JobRunID)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %q", worker.JobRunID)
+			}
+			if runJob.ProjectKey == vars["projectKey"] {
+				return nil
+			}
+		}
+
+		return api.hasRoleOnProject(ctx, vars, sdk.ProjectRoleRead)
 	}
-	return api.projectRead(ctx, vars)
 }

@@ -285,7 +285,7 @@ func TestCurrentWorker_executeHooksSetupV2(t *testing.T) {
 			return nil
 		},
 	)
-	mockClient.EXPECT().ProjectIntegrationWorkerHookGet(gomock.Any(), gomock.Any()).DoAndReturn(
+	mockClient.EXPECT().ProjectV2IntegrationWorkerHookGet(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
 			return nil, sdk.ErrNotFound
 		},

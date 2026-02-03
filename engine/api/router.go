@@ -64,6 +64,7 @@ type Router struct {
 	lastPanic             *time.Time
 	scopeDetails          []sdk.AuthConsumerScopeDetail
 	Config                service.HTTPRouterConfiguration
+	EnforceScopes         bool
 }
 
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
@@ -253,6 +254,10 @@ var uriActionMetadataRegex = regexp.MustCompile("({[A-Za-z]+})")
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) (map[string]*service.HandlerConfig, http.HandlerFunc) {
+	if r.EnforceScopes && scope == nil {
+		panic(fmt.Errorf("no scope defined for route %q", uri))
+	}
+
 	cfg := &service.RouterConfig{
 		Config: map[string]*service.HandlerConfig{},
 	}
@@ -263,6 +268,9 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 	cleanURL := doc.CleanURL(uri)
 	for i := range handlers {
+		if handlers[i].PermissionLevel == 0 && handlers[i].RbacCheckers == nil {
+			panic(fmt.Errorf("no permission level or rbac checkers defined for route %q", uri))
+		}
 		handlers[i].CleanURL = cleanURL
 		handlers[i].AllowedScopes = scope
 		name := sdk.GetFuncName(handlers[i].Handler)

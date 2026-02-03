@@ -6,12 +6,13 @@ import (
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/pkg/errors"
 )
 
 func (api *API) hasGlobalRole(ctx context.Context, role string) error {
 	auth := getUserConsumer(ctx)
 	if auth == nil {
-		return sdk.WithStack(sdk.ErrForbidden)
+		return sdk.NewErrorWithStack(errors.New("no user consumer found in context"), sdk.ErrForbidden)
 	}
 
 	hasRole, err := rbac.HasGlobalRole(ctx, api.mustDBWithCtx(ctx), role, auth.AuthConsumerUser.AuthentifiedUser.ID)
