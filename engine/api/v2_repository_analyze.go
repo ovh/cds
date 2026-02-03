@@ -1738,6 +1738,10 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 
 				// Check integration at job level
 				for i := range j.Integrations {
+					// Skip value with expression
+					if strings.Contains(j.Integrations[i], "${{") {
+						continue
+					}
 					_, errI := integration.LoadProjectIntegrationByName(ctx, db, ef.currentProject, j.Integrations[i])
 					if errI != nil {
 						if sdk.ErrorIs(errI, sdk.ErrNotFound) {
@@ -1752,6 +1756,10 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 
 			// Check integration at workflow level
 			for i := range x.Integrations {
+				// Skip value with expression
+				if strings.Contains(x.Integrations[i], "${{") {
+					continue
+				}
 				_, errI := integration.LoadProjectIntegrationByName(ctx, db, ef.currentProject, x.Integrations[i])
 				if errI != nil {
 					if sdk.ErrorIs(errI, sdk.ErrNotFound) {
