@@ -81,7 +81,7 @@
                                     </nz-select>
                                 }
                             }
-                            @default() {
+                            @default {
                                 <input nz-input [disabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
                                     (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
                             }
