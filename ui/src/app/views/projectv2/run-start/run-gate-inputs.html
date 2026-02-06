@@ -40,11 +40,14 @@
                 </nz-form-control>
             </nz-form-item>
          }
-        <nz-form-control [nzSpan]="14" [nzOffset]="6">
-            <label nz-checkbox [nzDisabled]="disabled" [ngModel]="!values[gate.key].withJobOverrides"
-                (ngModelChange)="onGateWithJobOverridesChange(gate.key, !$event)">Apply to all jobs
-                ({{values[gate.key].getJobsNames()}})</label>
-        </nz-form-control>
+        <nz-form-item>
+            <nz-form-control [nzSpan]="14" [nzOffset]="6">
+                <label nz-checkbox [nzDisabled]="disabled" [ngModel]="!values[gate.key].withJobOverrides"
+                    (ngModelChange)="onGateWithJobOverridesChange(gate.key, !$event)">Apply to all jobs
+                    ({{values[gate.key].getJobsNames()}})</label>
+            </nz-form-control>
+        </nz-form-item>
+
     }
 
     @if(values[gate.key].withJobOverrides) {
