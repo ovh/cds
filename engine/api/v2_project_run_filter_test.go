@@ -103,7 +103,7 @@ func Test_PostProjectRunFilter(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	require.Equal(t, 200, w.Code)
+	require.Equal(t, 201, w.Code)
 
 	var created sdk.ProjectRunFilter
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &created))
@@ -433,7 +433,7 @@ func Test_ProjectRunFilter_UTF8Support(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	require.Equal(t, 200, w.Code)
+	require.Equal(t, 201, w.Code)
 
 	var created sdk.ProjectRunFilter
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &created))
