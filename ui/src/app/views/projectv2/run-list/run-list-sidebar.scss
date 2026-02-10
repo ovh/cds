@@ -4,12 +4,25 @@
 
 [nz-menu-item] {
   margin: 0 !important;
+  position: relative;
+  display: flex;
+  align-items: center;
 
   ::ng-deep {
     .ant-menu-title-content {
       display: flex;
       flex-direction: row;
       align-items: center;
+    }
+  }
+
+  .drag-handle {
+    cursor: move;
+    margin-right: 8px;
+    color: #999;
+    
+    &:hover {
+      color: #666;
     }
   }
 
@@ -30,4 +43,17 @@
       display: block;
     }
   }
+}
+
+.cdk-drag-preview {
+  opacity: 0.8;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.5;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }

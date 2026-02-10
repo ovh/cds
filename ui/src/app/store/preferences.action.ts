@@ -33,6 +33,11 @@ export class DeleteProjectWorkflowRunFilter {
     constructor(public payload: { projectKey: string, name: string }) { }
 }
 
+export class ReorderProjectWorkflowRunFilters {
+    static readonly type = '[Preferences] Reorder project\'s workflow run filters';
+    constructor(public payload: { projectKey: string, filters: Array<{ name: string, value: string, sort: string, order: number }> }) { }
+}
+
 export class SaveMessageState {
     static readonly type = '[Preferences] Save message\'s state';
     constructor(public payload: { messageKey: string, value: boolean }) { }
