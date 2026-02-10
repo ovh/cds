@@ -205,7 +205,7 @@ func Test_PostProjectRunFilter_Conflict(t *testing.T) {
 	// Create first filter
 	filter1 := &sdk.ProjectRunFilter{
 		ProjectKey: proj.Key,
-		Name:       "My Filter",
+		Name:       "My_Filter",
 		Value:      "status:Success",
 		Sort:       "started:desc",
 		Order:      0,
@@ -214,7 +214,7 @@ func Test_PostProjectRunFilter_Conflict(t *testing.T) {
 
 	// Try to create duplicate
 	filter2 := sdk.ProjectRunFilter{
-		Name:  "My Filter",
+		Name:  "My_Filter",
 		Value: "status:Fail",
 		Sort:  "started:asc",
 	}
@@ -271,7 +271,7 @@ func Test_PutProjectRunFilter(t *testing.T) {
 	// Create filter
 	filter := &sdk.ProjectRunFilter{
 		ProjectKey: proj.Key,
-		Name:       "My Filter",
+		Name:       "My_Filter",
 		Value:      "status:Success",
 		Sort:       "started:desc",
 		Order:      0,
@@ -285,7 +285,7 @@ func Test_PutProjectRunFilter(t *testing.T) {
 
 	vars := map[string]string{
 		"projectKey": proj.Key,
-		"filterName": "My Filter",
+		"filterName": "My_Filter",
 	}
 	uri := api.Router.GetRouteV2("PUT", api.putProjectRunFilterHandler, vars)
 	test.NotEmpty(t, uri)
@@ -346,9 +346,9 @@ func Test_DeleteProjectRunFilter(t *testing.T) {
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManage, proj.Key, *user1)
 
 	// Create filters with order 0, 1, 2
-	filter0 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter 0", Value: "status:Success", Sort: "started:desc", Order: 0}
-	filter1 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter 1", Value: "status:Fail", Sort: "started:desc", Order: 1}
-	filter2 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter 2", Value: "branch:main", Sort: "started:desc", Order: 2}
+	filter0 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter_0", Value: "status:Success", Sort: "started:desc", Order: 0}
+	filter1 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter_1", Value: "status:Fail", Sort: "started:desc", Order: 1}
+	filter2 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter_2", Value: "branch:main", Sort: "started:desc", Order: 2}
 
 	require.NoError(t, project.InsertRunFilter(context.TODO(), db, filter0))
 	require.NoError(t, project.InsertRunFilter(context.TODO(), db, filter1))
@@ -357,7 +357,7 @@ func Test_DeleteProjectRunFilter(t *testing.T) {
 	// Delete filter with order 1
 	vars := map[string]string{
 		"projectKey": proj.Key,
-		"filterName": "Filter 1",
+		"filterName": "Filter_1",
 	}
 	uri := api.Router.GetRouteV2("DELETE", api.deleteProjectRunFilterHandler, vars)
 	test.NotEmpty(t, uri)
@@ -371,9 +371,9 @@ func Test_DeleteProjectRunFilter(t *testing.T) {
 	filters, err := project.LoadRunFiltersByProjectKey(context.TODO(), db, proj.Key)
 	require.NoError(t, err)
 	require.Len(t, filters, 2)
-	assert.Equal(t, "Filter 0", filters[0].Name)
+	assert.Equal(t, "Filter_0", filters[0].Name)
 	assert.Equal(t, int64(0), filters[0].Order)
-	assert.Equal(t, "Filter 2", filters[1].Name)
+	assert.Equal(t, "Filter_2", filters[1].Name)
 	assert.Equal(t, int64(1), filters[1].Order) // Should be recomputed from 2 to 1
 }
 
