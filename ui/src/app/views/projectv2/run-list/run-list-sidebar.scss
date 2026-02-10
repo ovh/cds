@@ -24,26 +24,18 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  cursor: pointer;
+  padding: 8px 16px 8px 24px;
   transition: background-color 0.3s;
+
+  &.draggable {
+    cursor: move;
+  }
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.04);
 
     button {
       display: inline-block;
-    }
-  }
-
-  .drag-handle {
-    cursor: move;
-    margin-right: 8px;
-    color: #999;
-    flex-shrink: 0;
-    
-    &:hover {
-      color: #666;
     }
   }
 
@@ -54,6 +46,7 @@
     white-space: nowrap;
     color: inherit;
     text-decoration: none;
+    cursor: pointer;
 
     &:hover {
       color: #1890ff;
@@ -64,6 +57,7 @@
     margin-left: 5px;
     flex-shrink: 0;
     display: none;
+    cursor: pointer;
   }
 }
 
