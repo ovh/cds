@@ -125,9 +125,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 	}
 
 	hasProjectManagePermission(): boolean {
-		// TODO: implémenter la vraie vérification RBAC
-		// Pour l'instant, simplifié
-		return true;
+		return this.project?.permissions?.writable ?? false;
 	}
 
 	// Partager un filtre personnel (le promouvoir en filtre projet)
