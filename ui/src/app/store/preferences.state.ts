@@ -66,7 +66,7 @@ export class PreferencesState {
         return createSelector(
             [PreferencesState],
             (state: PreferencesStateModel) => {
-                return state.projectRunFilters[projectKey] ?? [];
+                return state.projectRunFilters?.[projectKey] ?? [];
             }
         );
     }
@@ -127,7 +127,7 @@ export class PreferencesState {
     @Action(actionPreferences.SaveProjectWorkflowRunFilter)
     saveProjectWorkflowRunFilter(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveProjectWorkflowRunFilter) {
         const state = ctx.getState();
-        let projects = { ...state.projectRunFilters };
+        let projects = { ...(state.projectRunFilters || {}) };
         if (!projects[action.payload.projectKey]) { projects[action.payload.projectKey] = []; }
         let searches = (projects[action.payload.projectKey] ?? []).filter(s => s.name !== action.payload.name);
         
@@ -172,7 +172,7 @@ export class PreferencesState {
     @Action(actionPreferences.DeleteProjectWorkflowRunFilter)
     deleteWorkflowRunSearch(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.DeleteProjectWorkflowRunFilter) {
         const state = ctx.getState();
-        let projects = { ...state.projectRunFilters };
+        let projects = { ...(state.projectRunFilters || {}) };
         if (projects[action.payload.projectKey]) {
             projects[action.payload.projectKey] = projects[action.payload.projectKey].filter(s => s.name !== action.payload.name);
         }
@@ -185,7 +185,7 @@ export class PreferencesState {
     @Action(actionPreferences.ReorderProjectWorkflowRunFilters)
     reorderProjectWorkflowRunFilters(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.ReorderProjectWorkflowRunFilters) {
         const state = ctx.getState();
-        let projects = { ...state.projectRunFilters };
+        let projects = { ...(state.projectRunFilters || {}) };
         projects[action.payload.projectKey] = action.payload.filters;
         ctx.setState({
             ...state,
