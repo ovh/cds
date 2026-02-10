@@ -41,6 +41,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 	sharedFilters: Array<{
 		name: string
 		params: { [key: string]: any }
+		order: number
 	}> = [];
 	canManage: boolean = false;
 
@@ -62,8 +63,9 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		this._projectRunFilterService.list(this.project.key).subscribe(filters => {
 			this.sharedFilters = filters.map(f => ({
 				name: f.name,
-				params: this.parseFilterToParams(f)
-			}));
+				params: this.parseFilterToParams(f),
+				order: f.order
+			})).sort((a, b) => a.order - b.order); // Trier par order
 			this._cd.markForCheck();
 		}, err => {
 			console.error('Error loading shared filters:', err);
@@ -178,22 +180,22 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		// Réorganiser localement
 		moveItemInArray(this.sharedFilters, event.previousIndex, event.currentIndex);
 
-		// Appeler PUT pour chaque filtre avec son nouvel ordre
-		this._projectRunFilterService.list(this.project.key).subscribe(filters => {
-			const requests = filters.map((f, idx) =>
-				this._projectRunFilterService.update(this.project.key, f.name, { order: idx })
-			);
+		// Mettre à jour les order et envoyer les requêtes PUT
+		const requests = this.sharedFilters.map((f, idx) =>
+			this._projectRunFilterService.update(this.project.key, f.name, { order: idx })
+		);
 
-			forkJoin(requests).subscribe({
-				next: () => {
-					this._cd.markForCheck();
-				},
-				error: (err) => {
-					console.error('Error reordering shared filters:', err);
-					// En cas d'erreur, recharger depuis l'API
-					this.reloadSharedFilters();
-				}
-			});
+		forkJoin(requests).subscribe({
+			next: () => {
+				// Mettre à jour les order localement
+				this.sharedFilters.forEach((f, idx) => f.order = idx);
+				this._cd.markForCheck();
+			},
+			error: (err) => {
+				console.error('Error reordering shared filters:', err);
+				// En cas d'erreur, recharger depuis l'API
+				this.reloadSharedFilters();
+			}
 		});
 	}
 
@@ -227,8 +229,9 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		this._projectRunFilterService.list(this.project.key).subscribe(filters => {
 			this.sharedFilters = filters.map(f => ({
 				name: f.name,
-				params: this.parseFilterToParams(f)
-			}));
+				params: this.parseFilterToParams(f),
+				order: f.order
+			})).sort((a, b) => a.order - b.order); // Trier par order
 			this._cd.markForCheck();
 		});
 	}
