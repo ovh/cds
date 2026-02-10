@@ -157,6 +157,8 @@ func CleanURLParameter(u string) string {
 		u = "key-id"
 	case "concurrencyName":
 		u = "concurrency-name"
+	case "filterName":
+		u = "filter-name"
 	}
 	return u
 }
