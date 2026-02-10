@@ -1,56 +1,56 @@
-<ul *ngIf="project && authSummary" nz-menu nzMode="inline">
-	<!-- Entrées fixes -->
-	<li nz-menu-item nzMatchRouter nzMatchRouterExact>
-		<a [routerLink]="['/project', project.key, 'run']">All workflows</a>
-	</li>
-	<li nz-menu-item nzMatchRouter nzMatchRouterExact>
-		<a [routerLink]="['/project', project.key, 'run']" [queryParams]="{actor: authSummary.user.username}">
-			My workflows
-		</a>
-	</li>
+<div *ngIf="project && authSummary">
+	<ul nz-menu nzMode="inline">
+		<!-- Entrées fixes -->
+		<li nz-menu-item nzMatchRouter nzMatchRouterExact>
+			<a [routerLink]="['/project', project.key, 'run']">All workflows</a>
+		</li>
+		<li nz-menu-item nzMatchRouter nzMatchRouterExact>
+			<a [routerLink]="['/project', project.key, 'run']" [queryParams]="{actor: authSummary.user.username}">
+				My workflows
+			</a>
+		</li>
+	</ul>
 
 	<!-- Section: Filtres partagés projet -->
-	<li *ngIf="sharedFilters && sharedFilters.length > 0" nz-menu-group nzTitle="Project filters">
-		<ul cdkDropList (cdkDropListDropped)="onDropShared($event)" [cdkDropListDisabled]="!canManage">
-			<ng-container *ngFor="let f of sharedFilters">
-				<li nz-menu-item nzMatchRouter nzMatchRouterExact cdkDrag>
-					<span cdkDragHandle *ngIf="canManage" class="drag-handle" nz-icon nzType="drag"></span>
-					<a [title]="f.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="f.params">
-						{{ f.name }}
-					</a>
-					<button *ngIf="canManage" nz-button nzType="primary" nzDanger nzSize="small"
-						nz-tooltip nzTooltipTitle="Delete shared filter"
-						nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this shared filter?"
-						(nzOnConfirm)="deleteSharedFilter(f.name)">
-						<i nz-icon nzType="delete" nzTheme="outline"></i>
-					</button>
-				</li>
-			</ng-container>
-		</ul>
-	</li>
+	<div *ngIf="sharedFilters && sharedFilters.length > 0">
+		<div class="filter-section-title">Project filters</div>
+		<div cdkDropList (cdkDropListDropped)="onDropShared($event)" [cdkDropListDisabled]="!canManage" class="filter-list">
+			<div *ngFor="let f of sharedFilters" cdkDrag class="filter-item">
+				<span cdkDragHandle *ngIf="canManage" class="drag-handle" nz-icon nzType="drag"></span>
+				<a [title]="f.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="f.params" class="filter-link">
+					{{ f.name }}
+				</a>
+				<button *ngIf="canManage" nz-button nzType="primary" nzDanger nzSize="small"
+					nz-tooltip nzTooltipTitle="Delete shared filter"
+					nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this shared filter?"
+					(nzOnConfirm)="deleteSharedFilter(f.name)">
+					<i nz-icon nzType="delete" nzTheme="outline"></i>
+				</button>
+			</div>
+		</div>
+	</div>
 
 	<!-- Section: Filtres personnels -->
-	<li *ngIf="searches && searches.length > 0" nz-menu-group nzTitle="My filters">
-		<ul cdkDropList (cdkDropListDropped)="onDropPersonal($event)">
-			<ng-container *ngFor="let s of searches">
-				<li nz-menu-item nzMatchRouter nzMatchRouterExact cdkDrag>
-					<span cdkDragHandle class="drag-handle" nz-icon nzType="drag"></span>
-					<a [title]="s.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="s.params">
-						{{ s.name }}
-					</a>
-					<button *ngIf="canManage" nz-button nzType="default" nzSize="small"
-						nz-tooltip nzTooltipTitle="Share this filter with the project"
-						(click)="sharePersonalFilter(s)">
-						<i nz-icon nzType="share-alt" nzTheme="outline"></i>
-					</button>
-					<button nz-button nzType="primary" nzDanger nzSize="small"
-						nz-tooltip nzTooltipTitle="Delete my filter"
-						nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this filter?"
-						(nzOnConfirm)="deleteSearch(s.name)">
-						<i nz-icon nzType="delete" nzTheme="outline"></i>
-					</button>
-				</li>
-			</ng-container>
-		</ul>
-	</li>
-</ul>
+	<div *ngIf="searches && searches.length > 0">
+		<div class="filter-section-title">My filters</div>
+		<div cdkDropList (cdkDropListDropped)="onDropPersonal($event)" class="filter-list">
+			<div *ngFor="let s of searches" cdkDrag class="filter-item">
+				<span cdkDragHandle class="drag-handle" nz-icon nzType="drag"></span>
+				<a [title]="s.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="s.params" class="filter-link">
+					{{ s.name }}
+				</a>
+				<button *ngIf="canManage" nz-button nzType="default" nzSize="small"
+					nz-tooltip nzTooltipTitle="Share this filter with the project"
+					(click)="sharePersonalFilter(s)">
+					<i nz-icon nzType="share-alt" nzTheme="outline"></i>
+				</button>
+				<button nz-button nzType="primary" nzDanger nzSize="small"
+					nz-tooltip nzTooltipTitle="Delete my filter"
+					nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this filter?"
+					(nzOnConfirm)="deleteSearch(s.name)">
+					<i nz-icon nzType="delete" nzTheme="outline"></i>
+				</button>
+			</div>
+		</div>
+	</div>
+</div>

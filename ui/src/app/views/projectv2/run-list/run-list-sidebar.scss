@@ -4,15 +4,35 @@
 
 [nz-menu-item] {
   margin: 0 !important;
+}
+
+.filter-section-title {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+}
+
+.filter-list {
+  min-height: 20px;
+}
+
+.filter-item {
   position: relative;
   display: flex;
   align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 
-  ::ng-deep {
-    .ant-menu-title-content {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+
+    button {
+      display: inline-block;
     }
   }
 
@@ -20,38 +40,44 @@
     cursor: move;
     margin-right: 8px;
     color: #999;
+    flex-shrink: 0;
     
     &:hover {
       color: #666;
     }
   }
 
-  a {
+  .filter-link {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: #1890ff;
+    }
   }
 
   button {
     margin-left: 5px;
+    flex-shrink: 0;
     display: none;
-  }
-
-  &:hover {
-    button {
-      display: block;
-    }
   }
 }
 
 .cdk-drag-preview {
   opacity: 0.8;
   box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+  background: white;
+  padding: 8px 16px;
+  border-radius: 4px;
 }
 
 .cdk-drag-placeholder {
-  opacity: 0.5;
+  opacity: 0.3;
+  background: #f0f0f0;
 }
 
 .cdk-drag-animating {
