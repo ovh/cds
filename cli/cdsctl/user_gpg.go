@@ -58,7 +58,11 @@ func userGpgKeyShow(v cli.Values) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", k.PublicKey)
+	fmt.Printf("Key ID: %s\n", k.KeyID)
+	if len(k.SubKeys) > 0 {
+		fmt.Printf("Sub keys: %s\n", strings.Join(k.SubKeys, ", "))
+	}
+	fmt.Printf("Public key:\n%s\n", k.PublicKey)
 	return nil
 }
 
@@ -132,5 +136,8 @@ func userGpgKeyImport(v cli.Values) error {
 		return err
 	}
 	fmt.Printf("Gpg key %s created.\n", key.KeyID)
+	if len(key.SubKeys) > 0 {
+		fmt.Printf("Sub keys: %s\n", strings.Join(key.SubKeys, ", "))
+	}
 	return nil
 }

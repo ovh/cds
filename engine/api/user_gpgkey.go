@@ -70,6 +70,7 @@ func (api *API) postUserGPGGKeyHandler() ([]service.RbacChecker, service.Handler
 				return err
 			}
 			gpgKey.KeyID = publicKey.KeyShortID()
+			gpgKey.SubKeys = publicKey.SubKeyIDs()
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {

@@ -207,6 +207,9 @@ type StringSlice []string
 
 // Scan string slice.
 func (s *StringSlice) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))

@@ -269,14 +269,26 @@
                     <nz-table #gpgKeysTable [nzData]="gpgKeys">
                         <thead>
                           <tr>
-                            <th width="150px">Key ID</th>
+                            <th width="250px">Key ID</th>
                             <th>Public Key</th>
                             <th width="150px"></th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr *ngFor="let data of gpgKeysTable.data">
-                            <td>{{data.key_id}}</td>
+                            <td>
+                                {{data.key_id}}
+                                @if(data.sub_keys) {
+                                    <div>
+                                        <small>Sub keys:</small>
+                                        <ul>
+                                            @for (sk of data.sub_keys; track $index) {
+                                                <li><small>{{sk}}</small></li>
+                                            } 
+                                        </ul>
+                                    </div>
+                                }
+                            </td>
                             <td>
                                 <textarea nz-input [ngModel]="data.public_key" readonly rows="10"></textarea>
                             </td>
