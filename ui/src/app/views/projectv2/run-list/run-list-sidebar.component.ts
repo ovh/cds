@@ -17,6 +17,8 @@ import * as actionPreferences from 'app/store/preferences.action';
 import { ProjectRunFilter } from 'app/model/project-run-filter.model';
 import { ProjectRunFilterService } from 'app/service/project/project-run-filter.service';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { ErrorUtils } from 'app/shared/error.utils';
 
 @Component({
     standalone: false,
@@ -48,7 +50,8 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 	constructor(
 		private _cd: ChangeDetectorRef,
 		private _store: Store,
-		private _projectRunFilterService: ProjectRunFilterService
+		private _projectRunFilterService: ProjectRunFilterService,
+		private _messageService: NzMessageService
 	) { }
 
 	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -68,7 +71,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 			})).sort((a, b) => a.order - b.order); // Sort by order
 			this._cd.markForCheck();
 		}, err => {
-			console.error('Error loading shared filters:', err);
+			this._messageService.error(`Unable to load shared filters: ${ErrorUtils.print(err)}`, { nzDuration: 4000 });
 		});
 
 		// Load personal filters
@@ -147,7 +150,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 				this.reloadSharedFilters();
 			},
 			error: (err) => {
-				console.error('Error sharing filter:', err);
+				this._messageService.error(`Unable to share filter: ${ErrorUtils.print(err)}`, { nzDuration: 4000 });
 			}
 		});
 	}
@@ -159,7 +162,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 				this.reloadSharedFilters();
 			},
 			error: (err) => {
-				console.error('Error deleting shared filter:', err);
+				this._messageService.error(`Unable to delete filter: ${ErrorUtils.print(err)}`, { nzDuration: 4000 });
 			}
 		});
 	}
@@ -190,7 +193,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 				this._cd.markForCheck();
 			},
 			error: (err) => {
-				console.error('Error reordering shared filters:', err);
+				this._messageService.error(`Unable to reorder filters: ${ErrorUtils.print(err)}`, { nzDuration: 4000 });
 				// In case of error, reload from API
 				this.reloadSharedFilters();
 			}
