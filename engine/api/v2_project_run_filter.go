@@ -37,13 +37,13 @@ func (api *API) postProjectRunFilterHandler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 
-			filter.ProjectKey = projectKey // force depuis l'URL
+			filter.ProjectKey = projectKey // force from URL
 
 			if err := filter.Check(); err != nil {
 				return err
 			}
 
-			// Calculer le prochain order (max + 1)
+			// Calculate next order (max + 1)
 			existingFilters, err := project.LoadRunFiltersByProjectKey(ctx, api.mustDB(), projectKey)
 			if err != nil {
 				return err
@@ -86,7 +86,7 @@ func (api *API) putProjectRunFilterHandler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			// Charger le filtre existant
+			// Load existing filter
 			existingFilter, err := project.LoadRunFilterByNameAndProjectKey(ctx, api.mustDB(), projectKey, filterName)
 			if err != nil {
 				return err
@@ -98,7 +98,7 @@ func (api *API) putProjectRunFilterHandler() ([]service.RbacChecker, service.Han
 			}
 			defer tx.Rollback()
 
-			// Actuellement, seul le champ order est modifiable
+			// Currently, only the order field is modifiable
 			if err := project.UpdateRunFilterOrder(ctx, tx, projectKey, existingFilter.Name, filterUpdate.Order); err != nil {
 				return err
 			}
@@ -107,7 +107,7 @@ func (api *API) putProjectRunFilterHandler() ([]service.RbacChecker, service.Han
 				return sdk.WithStack(err)
 			}
 
-			// Recharger le filtre mis à jour
+			// Reload updated filter
 			updatedFilter, err := project.LoadRunFilterByNameAndProjectKey(ctx, api.mustDB(), projectKey, existingFilter.Name)
 			if err != nil {
 				return err
@@ -124,7 +124,7 @@ func (api *API) deleteProjectRunFilterHandler() ([]service.RbacChecker, service.
 			projectKey := vars["projectKey"]
 			filterName := vars["filterName"]
 
-			// Vérifier que le filtre existe
+			// Check that filter exists
 			filter, err := project.LoadRunFilterByNameAndProjectKey(ctx, api.mustDB(), projectKey, filterName)
 			if err != nil {
 				return err
@@ -140,7 +140,7 @@ func (api *API) deleteProjectRunFilterHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			// Recalculer les ordres des filtres restants
+			// Recompute orders of remaining filters
 			if err := project.RecomputeRunFilterOrder(ctx, tx, projectKey); err != nil {
 				return err
 			}

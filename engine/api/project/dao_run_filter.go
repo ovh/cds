@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// InsertRunFilter insère un nouveau filtre dans la base
+// InsertRunFilter inserts a new filter into the database
 func InsertRunFilter(ctx context.Context, db gorpmapper.SqlExecutorWithTx, filter *sdk.ProjectRunFilter) error {
 	filter.ID = sdk.UUID()
 	filter.LastModified = time.Now()
@@ -29,16 +29,16 @@ func InsertRunFilter(ctx context.Context, db gorpmapper.SqlExecutorWithTx, filte
 	return nil
 }
 
-// DeleteRunFilter supprime un filtre
+// DeleteRunFilter deletes a filter
 func DeleteRunFilter(db gorpmapper.SqlExecutorWithTx, projectKey string, filterID string) error {
 	query := "DELETE FROM project_run_filter WHERE id = $1 AND project_key = $2"
 	_, err := db.Exec(query, filterID, projectKey)
 	return sdk.WithStack(err)
 }
 
-// LoadRunFiltersByProjectKey charge tous les filtres d'un projet, triés par order puis par name
-// Le tri secondaire par name garantit un ordre déterministe pour les filtres
-// ayant le même order (cas typique : filtres migrés ayant tous order=0)
+// LoadRunFiltersByProjectKey loads all filters for a project, sorted by order then by name.
+// The secondary sort by name ensures deterministic order for filters
+// with the same order value (typical case: migrated filters all having order=0)
 func LoadRunFiltersByProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectRunFilter, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
@@ -50,7 +50,7 @@ func LoadRunFiltersByProjectKey(ctx context.Context, db gorp.SqlExecutor, projec
 	return getRunFilters(ctx, db, query)
 }
 
-// LoadRunFilterByNameAndProjectKey charge un filtre par son nom
+// LoadRunFilterByNameAndProjectKey loads a filter by its name
 func LoadRunFilterByNameAndProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string, name string) (*sdk.ProjectRunFilter, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
@@ -61,7 +61,7 @@ func LoadRunFilterByNameAndProjectKey(ctx context.Context, db gorp.SqlExecutor, 
 	return getRunFilter(ctx, db, query)
 }
 
-// UpdateRunFilterOrder met à jour uniquement le champ order d'un filtre
+// UpdateRunFilterOrder updates only the order field of a filter
 func UpdateRunFilterOrder(ctx context.Context, db gorpmapper.SqlExecutorWithTx, projectKey string, name string, order int64) error {
 	query := `
 		UPDATE project_run_filter
@@ -72,8 +72,8 @@ func UpdateRunFilterOrder(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 	return sdk.WithStack(err)
 }
 
-// RecomputeRunFilterOrder recalcule les ordres des filtres restants après suppression.
-// Les filtres sont rechargés triés par order ASC, name ASC, puis réassignés de 0 à N-1.
+// RecomputeRunFilterOrder recomputes the order values of remaining filters after deletion.
+// Filters are reloaded sorted by order ASC, name ASC, then reassigned from 0 to N-1.
 func RecomputeRunFilterOrder(ctx context.Context, db gorpmapper.SqlExecutorWithTx, projectKey string) error {
 	filters, err := LoadRunFiltersByProjectKey(ctx, db, projectKey)
 	if err != nil {
@@ -89,7 +89,7 @@ func RecomputeRunFilterOrder(ctx context.Context, db gorpmapper.SqlExecutorWithT
 	return nil
 }
 
-// Helper: getRunFilter charge un seul filtre
+// Helper: getRunFilter loads a single filter
 func getRunFilter(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (*sdk.ProjectRunFilter, error) {
 	var dbFilter dbProjectRunFilter
 	found, err := gorpmapping.Get(ctx, db, query, &dbFilter)
@@ -102,7 +102,7 @@ func getRunFilter(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Qu
 	return &dbFilter.ProjectRunFilter, nil
 }
 
-// Helper: getRunFilters charge plusieurs filtres
+// Helper: getRunFilters loads multiple filters
 func getRunFilters(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectRunFilter, error) {
 	var dbFilters []dbProjectRunFilter
 	if err := gorpmapping.GetAll(ctx, db, query, &dbFilters); err != nil {

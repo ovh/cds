@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// ProjectRunFilter représente un filtre de workflow run partagé au niveau d'un projet
+// ProjectRunFilter represents a workflow run filter shared at project level
 type ProjectRunFilter struct {
 	ID           string    `json:"id" db:"id" cli:"id"`
 	ProjectKey   string    `json:"project_key" db:"project_key" cli:"project_key"`
@@ -15,24 +15,24 @@ type ProjectRunFilter struct {
 	LastModified time.Time `json:"last_modified" db:"last_modified" cli:"last_modified"`
 }
 
-// Check valide la structure d'un ProjectRunFilter
+// Check validates the structure of a ProjectRunFilter
 func (f *ProjectRunFilter) Check() error {
-	// Validation du nom
+	// Name validation
 	if f.Name == "" {
 		return NewErrorFrom(ErrWrongRequest, "filter name is required")
 	}
 	if len(f.Name) > 100 {
 		return NewErrorFrom(ErrWrongRequest, "filter name must be less than 100 characters")
 	}
-	// Les noms peuvent contenir n'importe quel caractère UTF-8 (emojis, icônes, etc.)
-	// Pas de validation regex restrictive
+	// Names can contain any UTF-8 character (emojis, icons, etc.)
+	// No restrictive regex validation
 
-	// Validation de la valeur
+	// Value validation
 	if f.Value == "" {
 		return NewErrorFrom(ErrWrongRequest, "filter value is required")
 	}
 
-	// Validation du tri (optionnel)
+	// Sort validation (optional)
 	if f.Sort != "" {
 		validSorts := []string{"started:asc", "started:desc", "last_modified:asc", "last_modified:desc"}
 		valid := false
@@ -47,7 +47,7 @@ func (f *ProjectRunFilter) Check() error {
 		}
 	}
 
-	// Validation de l'ordre
+	// Order validation
 	if f.Order < 0 {
 		return NewErrorFrom(ErrWrongRequest, "order must be positive or zero")
 	}

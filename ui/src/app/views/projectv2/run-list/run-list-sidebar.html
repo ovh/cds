@@ -1,6 +1,6 @@
 <div *ngIf="project && authSummary">
 	<ul nz-menu nzMode="inline">
-		<!-- Entrées fixes -->
+		<!-- Fixed entries -->
 		<li nz-menu-item nzMatchRouter nzMatchRouterExact>
 			<a [routerLink]="['/project', project.key, 'run']">All workflows</a>
 		</li>
@@ -11,7 +11,7 @@
 		</li>
 	</ul>
 
-	<!-- Section: Filtres partagés projet -->
+	<!-- Section: Shared project filters -->
 	<div *ngIf="sharedFilters && sharedFilters.length > 0">
 		<div class="filter-section-title">Project filters</div>
 		<div cdkDropList (cdkDropListDropped)="onDropShared($event)" [cdkDropListDisabled]="!canManage" class="filter-list">
@@ -29,7 +29,7 @@
 		</div>
 	</div>
 
-	<!-- Section: Filtres personnels -->
+	<!-- Section: Personal filters -->
 	<div *ngIf="searches && searches.length > 0">
 		<div class="filter-section-title">My filters</div>
 		<div cdkDropList (cdkDropListDropped)="onDropPersonal($event)" class="filter-list">

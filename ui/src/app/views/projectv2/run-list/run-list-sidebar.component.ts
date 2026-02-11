@@ -56,22 +56,22 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		this.authSummary = this._store.selectSnapshot(AuthenticationState.summary);
 
-		// Vérifier les permissions (simplifié - à adapter selon RBAC existant)
+		// Check permissions
 		this.canManage = this.hasProjectManagePermission();
 
-		// Charger les filtres partagés
+		// Load shared filters
 		this._projectRunFilterService.list(this.project.key).subscribe(filters => {
 			this.sharedFilters = filters.map(f => ({
 				name: f.name,
 				params: this.parseFilterToParams(f),
 				order: f.order
-			})).sort((a, b) => a.order - b.order); // Trier par order
+			})).sort((a, b) => a.order - b.order); // Sort by order
 			this._cd.markForCheck();
 		}, err => {
 			console.error('Error loading shared filters:', err);
 		});
 
-		// Charger les filtres personnels
+		// Load personal filters
 		this.searchesSubscription = this._store.select(PreferencesState.selectProjectRunFilters(this.project.key)).subscribe(searches => {
 			this.searches = (searches ?? []).map(s => {
 				let params = {};
@@ -128,7 +128,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		return this.project?.permissions?.writable ?? false;
 	}
 
-	// Partager un filtre personnel (le promouvoir en filtre projet)
+	// Share a personal filter (promote it to shared filter)
 	sharePersonalFilter(personalFilter: any): void {
 		const newFilter: any = {
 			name: personalFilter.name,
@@ -138,12 +138,12 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 
 		this._projectRunFilterService.create(this.project.key, newFilter).subscribe({
 			next: (created) => {
-				// Succès : supprimer le filtre local
+				// Success: delete local filter
 				this._store.dispatch(new actionPreferences.DeleteProjectWorkflowRunFilter({
 					projectKey: this.project.key,
 					name: personalFilter.name
 				}));
-				// Recharger les filtres partagés
+				// Reload shared filters
 				this.reloadSharedFilters();
 			},
 			error: (err) => {
@@ -152,7 +152,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	// Supprimer un filtre partagé
+	// Delete a shared filter
 	deleteSharedFilter(filterName: string): void {
 		this._projectRunFilterService.delete(this.project.key, filterName).subscribe({
 			next: () => {
@@ -164,49 +164,49 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	// Existant inchangé
+	// Existing unchanged
 	deleteSearch(name: string): void {
 		this._store.dispatch(new actionPreferences.DeleteProjectWorkflowRunFilter({ projectKey: this.project.key, name }));
 	}
 
-	// Réordonner les filtres partagés
+	// Reorder shared filters
 	onDropShared(event: CdkDragDrop<any>): void {
 		if (event.previousIndex === event.currentIndex) {
-			return; // pas de changement
+			return; // no change
 		}
 
-		// Réorganiser localement
+		// Reorganize locally
 		moveItemInArray(this.sharedFilters, event.previousIndex, event.currentIndex);
 
-		// Mettre à jour les order et envoyer les requêtes PUT
+		// Update order and send PUT requests
 		const requests = this.sharedFilters.map((f, idx) =>
 			this._projectRunFilterService.update(this.project.key, f.name, { order: idx })
 		);
 
 		forkJoin(requests).subscribe({
 			next: () => {
-				// Mettre à jour les order localement
+				// Update orders locally
 				this.sharedFilters.forEach((f, idx) => f.order = idx);
 				this._cd.markForCheck();
 			},
 			error: (err) => {
 				console.error('Error reordering shared filters:', err);
-				// En cas d'erreur, recharger depuis l'API
+				// In case of error, reload from API
 				this.reloadSharedFilters();
 			}
 		});
 	}
 
-	// Réordonner les filtres personnels
+	// Reorder personal filters
 	onDropPersonal(event: CdkDragDrop<any>): void {
 		if (event.previousIndex === event.currentIndex) {
-			return; // pas de changement
+			return; // no change
 		}
 
-		// Réorganiser localement
+		// Reorganize locally
 		moveItemInArray(this.searches, event.previousIndex, event.currentIndex);
 
-		// Mettre à jour les order et sauvegarder dans NgXS
+		// Update order and save in NgXS
 		const updatedSearches = this.searches.map((s, idx) => ({
 			name: s.name,
 			value: s.value,
@@ -214,7 +214,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 			order: idx
 		}));
 
-		// Dispatch une action pour mettre à jour tous les filtres avec leur nouvel ordre
+		// Dispatch action to update all filters with their new order
 		this._store.dispatch(new actionPreferences.ReorderProjectWorkflowRunFilters({
 			projectKey: this.project.key,
 			filters: updatedSearches

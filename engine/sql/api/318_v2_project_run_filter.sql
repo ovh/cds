@@ -9,7 +9,7 @@ CREATE TABLE project_run_filter (
     "last_modified" TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP
 );
 
--- Création de la foreign key vers project avec cascade
+-- Create foreign key to project with cascade
 SELECT create_foreign_key_idx_cascade(
     'FK_v2_project_run_filter_project',
     'project_run_filter',
@@ -18,7 +18,7 @@ SELECT create_foreign_key_idx_cascade(
     'projectkey'
 );
 
--- Création de l'index unique sur (project_key, name)
+-- Create unique index on (project_key, name)
 SELECT create_unique_index(
     'project_run_filter',
     'idx_unq_project_run_filter',

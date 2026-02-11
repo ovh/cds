@@ -131,7 +131,7 @@ export class PreferencesState {
         if (!projects[action.payload.projectKey]) { projects[action.payload.projectKey] = []; }
         let searches = (projects[action.payload.projectKey] ?? []).filter(s => s.name !== action.payload.name);
         
-        // Calculer l'order pour le nouveau filtre
+        // Calculate order for new filter
         const maxOrder = searches.length > 0 ? Math.max(...searches.map(s => s.order || 0)) : -1;
         
         searches.push({

@@ -8,7 +8,7 @@ export class ProjectRunFilterService {
     constructor(private _http: HttpClient) {}
 
     /**
-     * Liste tous les filtres partagés d'un projet
+     * List all shared filters for a project
      */
     list(projectKey: string): Observable<Array<ProjectRunFilter>> {
         return this._http.get<Array<ProjectRunFilter>>(
@@ -17,7 +17,7 @@ export class ProjectRunFilterService {
     }
 
     /**
-     * Crée un nouveau filtre partagé
+     * Create a new shared filter
      */
     create(projectKey: string, filter: ProjectRunFilter): Observable<ProjectRunFilter> {
         return this._http.post<ProjectRunFilter>(
@@ -27,7 +27,7 @@ export class ProjectRunFilterService {
     }
 
     /**
-     * Modifie un filtre partagé (actuellement : uniquement le champ order)
+     * Update a shared filter (currently: only the order field)
      */
     update(projectKey: string, filterName: string, filter: Partial<ProjectRunFilter>): Observable<ProjectRunFilter> {
         return this._http.put<ProjectRunFilter>(
@@ -37,7 +37,7 @@ export class ProjectRunFilterService {
     }
 
     /**
-     * Supprime un filtre partagé
+     * Delete a shared filter
      */
     delete(projectKey: string, filterName: string): Observable<void> {
         return this._http.delete<void>(
