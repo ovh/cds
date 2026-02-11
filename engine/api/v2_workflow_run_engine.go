@@ -1471,7 +1471,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					// For templated job, we only create new jobs on the parent worklow
 					// With hasToUpdateRun the workflow run will be saved to update his definition
 					// With previous computed flag `hasTemplatedJob` the workflow will be retriggered in the workflow engine
-					msgs, err := computeJobFromTemplate(ctx, db, store, wref, jobID, jobDef, run, projectVariableSets, defaultRegion)
+					msgs, err := computeJobFromTemplate(ctx, db, store, wref, runJobContext, jobID, jobDef, run, projectVariableSets, defaultRegion)
 					if err != nil {
 						return nil, nil, nil, nil, hasToUpdateRun, err
 					}
@@ -1609,12 +1609,41 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 	return runJobs, runObjectsToCancelled, runJobsInfo, nil, hasToUpdateRun, nil
 }
 
-func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, jobID string, j sdk.V2Job, run *sdk.V2WorkflowRun, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
+func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, runJobContext sdk.WorkflowRunJobsContext, jobID string, j sdk.V2Job, run *sdk.V2WorkflowRun, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
 	ctx, end := telemetry.Span(ctx, "computeJobFromTemplate")
 	defer end()
 
+	bts, _ := json.Marshal(runJobContext)
+	var mapContexts map[string]interface{}
+	if err := json.Unmarshal(bts, &mapContexts); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return []sdk.V2WorkflowRunInfo{{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			IssuedAt:      time.Now(),
+			Message:       fmt.Sprintf("Job %s: unable to build context to compute job template: %v", jobID, err),
+		}}, nil
+	}
+	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+
+	// Interpolate template parameters in case of matrix variable usage
+	interpolatedParams := make(map[string]string)
+	for k, p := range j.Parameters {
+		value, err := ap.InterpolateToString(ctx, p)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return []sdk.V2WorkflowRunInfo{{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				IssuedAt:      time.Now(),
+				Message:       fmt.Sprintf("Job %s: unable to interpolate into a string job parameter %s: %v", jobID, p, err),
+			}}, nil
+		}
+		interpolatedParams[k] = value
+	}
+
 	// Retrieve Template and Lint
-	entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, j, run, j.Parameters)
+	entityTemplate, tmpWorkflow, msgs, err := checkJobTemplate(ctx, db, store, wref, j, run, interpolatedParams)
 	if err != nil {
 		return nil, err
 	}
