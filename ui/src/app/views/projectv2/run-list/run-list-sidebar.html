@@ -16,7 +16,8 @@
 		<div class="filter-section-title">Project filters</div>
 		<div cdkDropList (cdkDropListDropped)="onDropShared($event)" [cdkDropListDisabled]="!canManage" class="filter-list">
 			<div *ngFor="let f of sharedFilters" cdkDrag class="filter-item" [class.draggable]="canManage">
-				<a [title]="f.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="f.params" class="filter-link">
+				<a [title]="f.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="f.params" 
+				   routerLinkActive="filter-item-selected" [routerLinkActiveOptions]="{exact: false}" class="filter-link">
 					{{ f.name }}
 				</a>
 				<button *ngIf="canManage" nz-button nzType="primary" nzDanger nzSize="small"
@@ -34,7 +35,8 @@
 		<div class="filter-section-title">My filters</div>
 		<div cdkDropList (cdkDropListDropped)="onDropPersonal($event)" class="filter-list">
 			<div *ngFor="let s of searches" cdkDrag class="filter-item draggable">
-				<a [title]="s.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="s.params" class="filter-link">
+				<a [title]="s.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="s.params"
+				   routerLinkActive="filter-item-selected" [routerLinkActiveOptions]="{exact: false}" class="filter-link">
 					{{ s.name }}
 				</a>
 				<button *ngIf="canManage" nz-button nzType="default" nzSize="small"

@@ -39,6 +39,12 @@
     }
   }
 
+  // Selected state matching ant-menu-item-selected
+  &:has(.filter-item-selected) {
+    background-color: #e6f7ff;
+    border-right: 3px solid #1890ff;
+  }
+
   .filter-link {
     flex: 1;
     overflow: hidden;
@@ -50,6 +56,11 @@
 
     &:hover {
       color: #1890ff;
+    }
+
+    &.filter-item-selected {
+      color: #1890ff;
+      font-weight: 600;
     }
   }
 
