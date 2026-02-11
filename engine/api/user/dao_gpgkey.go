@@ -70,7 +70,7 @@ func LoadGPGKeyByKeyID(ctx context.Context, db gorp.SqlExecutor, keyID string) (
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM user_gpg_key
-    WHERE key_id = $1
+    WHERE key_id = $1 OR sub_keys @> to_jsonb($1::text)
   `).Args(keyID)
 	return getGPGKey(ctx, db, query)
 }
