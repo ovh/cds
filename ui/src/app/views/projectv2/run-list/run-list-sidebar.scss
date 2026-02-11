@@ -14,6 +14,10 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 8px;
+
+  :host-context(.night) & {
+    color: rgba(255, 255, 255, 0.65);
+  }
 }
 
 .filter-list {
