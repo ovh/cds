@@ -292,6 +292,15 @@ func (k PublicKey) KeyShortID() string {
 	return fmt.Sprintf("%s", k.Entity.PrimaryKey.KeyIdString())
 }
 
+// SubKeyIDs returns the short key IDs of all subkeys.
+func (k PublicKey) SubKeyIDs() []string {
+	ids := make([]string, 0, len(k.Entity.Subkeys))
+	for _, sub := range k.Entity.Subkeys {
+		ids = append(ids, sub.PublicKey.KeyIdString())
+	}
+	return ids
+}
+
 func (k PublicKey) Serialize() ([]byte, error) {
 	var out bytes.Buffer
 	err := k.Entity.Serialize(&out)
