@@ -46,6 +46,10 @@
   &:has(.filter-item-selected) {
     background-color: #e6f7ff;
     border-right: 3px solid #1890ff;
+
+    :host-context(.night) & {
+      background-color: #111b26;
+    }
   }
 
   .filter-link {
