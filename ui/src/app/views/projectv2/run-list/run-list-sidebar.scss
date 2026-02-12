@@ -43,7 +43,7 @@
   }
 
   // Selected state matching ant-menu-item-selected
-  &:has(.filter-item-selected) {
+  &.filter-item-active {
     background-color: #e6f7ff;
     border-right: 3px solid #1890ff;
 

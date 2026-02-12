@@ -6,6 +6,7 @@ import {
 	OnDestroy,
 	OnInit,
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { AuthSummary } from 'app/model/user.model';
@@ -51,7 +52,8 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		private _cd: ChangeDetectorRef,
 		private _store: Store,
 		private _projectRunFilterService: ProjectRunFilterService,
-		private _messageService: NzMessageService
+		private _messageService: NzMessageService,
+		private _route: ActivatedRoute
 	) { }
 
 	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -224,6 +226,21 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		}));
 
 		this._cd.markForCheck();
+	}
+
+	// Check if filter matches current route query params
+	isFilterActive(filterParams: { [key: string]: any }): boolean {
+		const currentParams = this._route.snapshot.queryParams;
+		const filterKeys = Object.keys(filterParams);
+		const currentKeys = Object.keys(currentParams);
+
+		// Must have same number of params
+		if (filterKeys.length !== currentKeys.length) {
+			return false;
+		}
+
+		// All filter params must match current params exactly
+		return filterKeys.every(key => currentParams[key] === filterParams[key]);
 	}
 
 	private reloadSharedFilters(): void {
