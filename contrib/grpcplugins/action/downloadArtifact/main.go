@@ -65,6 +65,9 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 	if err != nil {
 		return err
 	}
+	if workDirs == nil {
+		return errors.New("unable to retrieve worker directories")
+	}
 
 	response, err := grpcplugins.GetV2RunResults(ctx, &actPlugin.Common, workerruntime.V2FilterRunResult{Pattern: name, Type: []sdk.V2WorkflowRunResultType{sdk.V2WorkflowRunResultTypeCoverage, sdk.V2WorkflowRunResultTypeGeneric}})
 	if err != nil {
@@ -99,15 +102,25 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 
 	grpcplugins.Logf(&actPlugin.Common, "Total number of files that will be downloaded: %d", len(response.RunResults))
 
-	for _, r := range filteredRunResults {
+	for i, r := range filteredRunResults {
 		t0 := time.Now()
+
+		grpcplugins.Logf(&actPlugin.Common, "Processing artifact %d/%d: %q (type: %s, integration: %v)", i+1, len(filteredRunResults), r.Name(), r.Type, r.ArtifactManagerIntegrationName != nil)
 
 		if r.Detail.Type != "V2WorkflowRunResultGenericDetail" {
 			return sdk.Errorf("unsupported run result")
 		}
-		x, _ := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultGenericDetail](&r)
+		x, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultGenericDetail](&r)
+		if err != nil || x == nil {
+			grpcplugins.Errorf(&actPlugin.Common, "unable to read artifact detail for %q: %v", r.Name(), err)
+			hasError = true
+			continue
+		}
 		switch {
 		case r.ArtifactManagerIntegrationName == nil: // download from CDN
+			if r.ArtifactManagerMetadata == nil {
+				return sdk.Errorf("unable to download artifact %q (caused by: missing artifact manager metadata)", r.Name())
+			}
 
 			cdnApirefhash, has := (*r.ArtifactManagerMetadata)["cdn_api_ref_hash"]
 			if !has {

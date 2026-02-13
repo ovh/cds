@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, Input, OnChanges, SimpleChanges } from "@angular/core";
-import { V2Job, V2JobGate } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { V2Job, V2JobGate, V2JobGateInput } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import { OnChangeType, OnTouchedType } from "ng-zorro-antd/core/types";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
@@ -51,9 +51,9 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
     onChange: OnChangeType = () => { };
     onTouched: OnTouchedType = () => { };
 
-    constructor(
-        private _cd: ChangeDetectorRef
-    ) { }
+    _cd = inject(ChangeDetectorRef);
+
+    constructor() { }
 
     writeValue(obj: any): void { }
 
@@ -83,7 +83,11 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
         Object.keys(this.gates).forEach(k => {
             this.values[k] = new GateValue();
             Object.keys(this.gates[k].inputs ?? {}).forEach(v => {
-                this.values[k].global[v] = this.gates[k].inputs[v].default || undefined;
+                if (this.gates[k].inputs[v].default === false ) {
+                    this.values[k].global[v] = false;
+                } else {
+                    this.values[k].global[v] = this.gates[k].inputs[v].default || undefined;
+                }
             });
         });
 
@@ -133,5 +137,9 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
             })
         }
         this.onChange(result);
+    }
+
+    asGateInput(value: any): V2JobGateInput {
+        return value as V2JobGateInput;
     }
 }

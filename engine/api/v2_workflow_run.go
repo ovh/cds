@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -1154,18 +1155,43 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 			}
 
 			runJobsMap := make(map[string]sdk.V2WorkflowRunJob)
-			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
+			failedRunJob := make(map[string]sdk.V2WorkflowRunJob)
 			for _, rj := range runJobs {
 				runJobsMap[rj.ID] = rj
 				if rj.Status == sdk.V2WorkflowRunJobStatusFail || rj.Status == sdk.V2WorkflowRunJobStatusStopped {
-					runJobToRestart[rj.ID] = rj
+					failedRunJob[rj.ID] = rj
 				}
 			}
-			if len(runJobToRestart) == 0 {
+			if len(failedRunJob) == 0 {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow doesn't contains failed or stopped jobs")
 			}
 
-			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, runJobToRestart)
+			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, failedRunJob)
+
+			// Only retrieve parent failed job to restart
+			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
+			for _, rj := range failedRunJob {
+				if _, has := runJobsToKeep[rj.JobID]; has {
+					continue
+				}
+
+				// Retrieve parents
+				parentJobs := sdk.WorkflowJobParents(wr.WorkflowData.Workflow, rj.JobID)
+				// Check if there is a parent in the failed job list
+				keepJob := true
+				for _, rjParent := range failedRunJob {
+					if rjParent.JobID == rj.JobID {
+						continue
+					}
+					if slices.Contains(parentJobs, rjParent.JobID) {
+						keepJob = false
+						break
+					}
+				}
+				if keepJob {
+					runJobToRestart[rj.JobID] = rj
+				}
+			}
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -1185,6 +1211,27 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 			}
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
 				return err
+			}
+
+			// For each job to restart, if there is a gate, add gate.manual
+			updateRun := false
+			for _, rj := range runJobToRestart {
+				if rj.Job.Gate != "" {
+					updateRun = true
+					runJobEvent := sdk.V2WorkflowRunJobEvent{
+						Inputs:     map[string]interface{}{"manual": true},
+						UserID:     u.AuthConsumerUser.AuthentifiedUserID,
+						Username:   u.GetUsername(),
+						JobID:      rj.JobID,
+						RunAttempt: wr.RunAttempt,
+					}
+					wr.RunJobEvent = append(wr.RunJobEvent, runJobEvent)
+				}
+			}
+			if updateRun {
+				if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
+					return err
+				}
 			}
 
 			if err := tx.Commit(); err != nil {
