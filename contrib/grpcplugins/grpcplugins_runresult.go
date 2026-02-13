@@ -189,6 +189,7 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 				return sdk.WrapError(err, "unable to get manifest %s/%s info", dockerRepo+"-"+maturity, manifestPath)
 			}
 			img.Path = manifestFileInfo.Path
+			img.MD5 = manifestFileInfo.Checksums.Md5
 
 			if m.Annotations != nil {
 				img.ReferenceDigest = m.Annotations["vnd.docker.reference.digest"]
@@ -214,6 +215,7 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 		imgDetail := sdk.V2WorkflowRunResultDockerDetailImage{
 			ID:   imageStruct.ImageID,
 			Path: rtFolderPath + "/manifest.json",
+			MD5:  manifestFileInfo.Checksums.Md5,
 		}
 		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
 			Name:         imageDestinationName,

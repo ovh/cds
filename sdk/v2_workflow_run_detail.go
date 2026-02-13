@@ -435,6 +435,7 @@ type V2WorkflowRunResultDockerDetailImage struct {
 	OS              string `json:"os,omitempty" mapstructure:"os,omitempty"`
 	Architecture    string `json:"architecture,omitempty" mapstructure:"architecture,omitempty"`
 	Path            string `json:"path,omitempty" mapstructure:"path,omitempty"`
+	MD5             string `json:"md5,omitempty" mapstructure:"md5,omitempty"`
 }
 
 // GetLabel implements V2WorkflowRunResultDetailInterface.
