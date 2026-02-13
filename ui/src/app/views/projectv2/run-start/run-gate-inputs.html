@@ -1,102 +1,94 @@
 <div *ngFor="let gate of gates | keyvalue">
     <nz-divider nzText="Gate: {{gate.key}}" nzOrientation="left"></nz-divider>
-
-    <ng-container *ngIf="values[gate.key].getJobsCount() > 1">
-        <nz-form-item *ngFor="let input of gate.value.inputs | keyvalue">
-            <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
-
-            <nz-form-control [nzSpan]="14" [nzExtra]="input.value.description">
-                <ng-container [ngSwitch]="input.value.type">
-                    <!-- Boolean inputs -->
-                    <ng-container *ngSwitchCase="'boolean'">
-                        <label nz-checkbox [nzDisabled]="disabled || values[gate.key].withJobOverrides"
-                            [ngModel]="values[gate.key].global[input.key]"
-                            (ngModelChange)="onGateValueChange(gate.key, input.key, $event)"></label>
-                    </ng-container>
-
-                    <!-- Select inputs -->
-                    <ng-container *ngSwitchCase="'choice'">
-                        <ng-container *ngIf="input.value.options.multiple">
-                            <nz-select nzMode="multiple" [nzDisabled]="disabled || values[gate.key].withJobOverrides"
-                                [ngModel]="values[gate.key].global[input.key]"
-                                (ngModelChange)="onGateValueChange(gate.key, input.key, $event)">
-                                <nz-option *ngFor="let opt of input.value.options.values" [nzValue]="opt"
-                                    [nzLabel]="opt"></nz-option>
-                            </nz-select>
-                        </ng-container>
-                        <ng-container *ngIf="!input.value.options.multiple">
-                            <nz-select [nzDisabled]="disabled || values[gate.key].withJobOverrides"
-                                [ngModel]="values[gate.key].global[input.key]"
-                                (ngModelChange)="onGateValueChange(gate.key, input.key, $event)">
-                                <nz-option *ngFor="let opt of input.value.options.values" [nzValue]="opt"
-                                    [nzLabel]="opt"></nz-option>
-                            </nz-select>
-                        </ng-container>
-                    </ng-container>
-
-                    <!-- Default inputs -->
-                    <ng-container *ngSwitchDefault>
-                        <input nz-input [disabled]="disabled || values[gate.key].withJobOverrides"
-                            [ngModel]="values[gate.key].global[input.key]"
-                            (ngModelChange)="onGateValueChange(gate.key, input.key, $event)">
-                    </ng-container>
-                </ng-container>
-            </nz-form-control>
-        </nz-form-item>
-    </ng-container>
-
-    <nz-form-item *ngIf="values[gate.key].getJobsCount() > 1">
-        <nz-form-control [nzSpan]="14" [nzOffset]="6">
-            <label nz-checkbox [nzDisabled]="disabled" [ngModel]="!values[gate.key].withJobOverrides"
-                (ngModelChange)="onGateWithJobOverridesChange(gate.key, !$event)">Apply to all jobs
-                ({{values[gate.key].getJobsNames()}})</label>
-        </nz-form-control>
-    </nz-form-item>
-
-    <ng-container *ngIf="values[gate.key].withJobOverrides">
-        <ng-container *ngFor="let job of values[gate.key].jobs | keyvalue">
-            <nz-divider nzText="Job: {{job.key}}" nzOrientation="left" nzPlain nzSize="small" nzVariant="dashed"></nz-divider>
-
-            <nz-form-item *ngFor="let input of gate.value.inputs | keyvalue">
+    @if (values[gate.key].getJobsCount() > 1) {
+         @for (input of gate.value.inputs | keyvalue; track input.key) {
+            <nz-form-item>
                 <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
-
-                <nz-form-control [nzSpan]="14" [nzExtra]="input.value.description">
-                    <ng-container [ngSwitch]="input.value.type">
-                        <!-- Boolean inputs -->
-                        <ng-container *ngSwitchCase="'boolean'">
-                            <label nz-checkbox [nzDisabled]="disabled"
-                                [ngModel]="values[gate.key].jobs[job.key][input.key]"
-                                (ngModelChange)="onJobValueChange(gate.key, job.key, input.key, $event)"></label>
-                        </ng-container>
-
-                        <!-- Select inputs -->
-                        <ng-container *ngSwitchCase="'choice'">
-                            <ng-container *ngIf="input.value.options.multiple">
-                                <nz-select nzMode="multiple" [nzDisabled]="disabled"
-                                    [ngModel]="values[gate.key].jobs[job.key][input.key]"
-                                    (ngModelChange)="onJobValueChange(gate.key, job.key, input.key, $event)">
-                                    <nz-option *ngFor="let opt of input.value.options.values" [nzValue]="opt"
-                                        [nzLabel]="opt"></nz-option>
+                <nz-form-control [nzSpan]="14" [nzExtra]="asGateInput(input.value).description">
+                    @switch(asGateInput(input.value).type) {
+                        @case('boolean') {
+                            <label nz-checkbox [nzDisabled]="disabled || values[gate.key].withJobOverrides"
+                                [ngModel]="values[gate.key].global[input.key.toString()]"
+                                (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)"></label>
+                        }
+                        @case('choice') {
+                            @if (asGateInput(input.value).options.multiple) {
+                                <nz-select nzMode="multiple" [nzDisabled]="disabled || values[gate.key].withJobOverrides"
+                                    [ngModel]="values[gate.key].global[input.key.toString()]"
+                                    (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
+                                    @for(opt of asGateInput(input.value).options.values; track opt) {
+                                        <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
+                                    }
+                                   
                                 </nz-select>
-                            </ng-container>
-                            <ng-container *ngIf="!input.value.options.multiple">
-                                <nz-select [nzDisabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key]"
-                                    (ngModelChange)="onJobValueChange(gate.key, job.key, input.key, $event)">
-                                    <nz-option *ngFor="let opt of input.value.options.values" [nzValue]="opt"
-                                        [nzLabel]="opt"></nz-option>
+                            } @else {
+                                <nz-select [nzDisabled]="disabled || values[gate.key].withJobOverrides"
+                                    [ngModel]="values[gate.key].global[input.key.toString()]"
+                                    (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
+                                    @for(opt of asGateInput(input.value).options.values; track opt) {
+                                        <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
+                                    }
                                 </nz-select>
-                            </ng-container>
-                        </ng-container>
-
-                        <!-- Default inputs -->
-                        <ng-container *ngSwitchDefault>
-                            <input nz-input [disabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key]"
-                                (ngModelChange)="onJobValueChange(gate.key, job.key, input.key, $event)">
-                        </ng-container>
-                    </ng-container>
+                            }   
+                        }
+                        @default {
+                            <input nz-input [disabled]="disabled || values[gate.key].withJobOverrides"
+                                [ngModel]="values[gate.key].global[input.key.toString()]"
+                                (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
+                        }
+                    }
                 </nz-form-control>
             </nz-form-item>
-        </ng-container>
-    </ng-container>
+         }
+        <nz-form-item>
+            <nz-form-control [nzSpan]="14" [nzOffset]="6">
+                <label nz-checkbox [nzDisabled]="disabled" [ngModel]="!values[gate.key].withJobOverrides"
+                    (ngModelChange)="onGateWithJobOverridesChange(gate.key, !$event)">Apply to all jobs
+                    ({{values[gate.key].getJobsNames()}})</label>
+            </nz-form-control>
+        </nz-form-item>
 
+    }
+
+    @if(values[gate.key].withJobOverrides) {
+        @for (job of values[gate.key].jobs | keyvalue; track job.key) {
+            <nz-divider nzText="Job: {{job.key}}" nzOrientation="left" nzPlain nzSize="small" nzVariant="dashed"></nz-divider>
+            @for (input of gate.value.inputs | keyvalue; track input.key) {
+                <nz-form-item>
+                    <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
+                    <nz-form-control [nzSpan]="14" [nzExtra]="asGateInput(input.value).description">
+                        @switch (asGateInput(input.value).type) {
+                            @case ('boolean') {
+                                 <label nz-checkbox [nzDisabled]="disabled"
+                                    [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
+                                    (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)"></label>
+                            }
+                            @case ('choice') {
+                                @if (asGateInput(input.value).options.multiple) {
+                                     <nz-select nzMode="multiple" [nzDisabled]="disabled"
+                                        [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
+                                        (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
+                                        @for(opt of asGateInput(input.value).options.values; track opt) {
+                                            <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
+                                        }
+                                    </nz-select>
+                                } @else {
+                                    <nz-select [nzDisabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
+                                        (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
+                                        @for(opt of asGateInput(input.value).options.values; track opt) {
+                                            <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
+                                        }
+                                    </nz-select>
+                                }
+                            }
+                            @default {
+                                <input nz-input [disabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
+                                    (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
+                            }
+                        }
+                    </nz-form-control>
+                </nz-form-item>
+            }
+        }
+    }
 </div>
