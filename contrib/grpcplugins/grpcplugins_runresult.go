@@ -190,6 +190,8 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 			}
 			img.Path = manifestFileInfo.Path
 			img.MD5 = manifestFileInfo.Checksums.Md5
+			img.SHA1 = manifestFileInfo.Checksums.Sha1
+			img.SHA256 = manifestFileInfo.Checksums.Sha256
 
 			if m.Annotations != nil {
 				img.ReferenceDigest = m.Annotations["vnd.docker.reference.digest"]
@@ -213,9 +215,11 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 		imageStruct.Created = manifestFileInfo.Created.Format(time.RFC3339)
 
 		imgDetail := sdk.V2WorkflowRunResultDockerDetailImage{
-			ID:   imageStruct.ImageID,
-			Path: rtFolderPath + "/manifest.json",
-			MD5:  manifestFileInfo.Checksums.Md5,
+			ID:     imageStruct.ImageID,
+			Path:   rtFolderPath + "/manifest.json",
+			MD5:    manifestFileInfo.Checksums.Md5,
+			SHA1:   manifestFileInfo.Checksums.Sha1,
+			SHA256: manifestFileInfo.Checksums.Sha256,
 		}
 		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
 			Name:         imageDestinationName,
