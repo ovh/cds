@@ -45,7 +45,7 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
-	if jobContext.Integrations == nil && jobContext.Integrations.ArtifactManager.Name == "" {
+	if jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager.Name == "" {
 		return errors.New("unable to find artifactory integration")
 	}
 
@@ -77,11 +77,115 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 	return nil
 }
 
+func checkRunResultIntegrity(_ context.Context, c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, r sdk.V2WorkflowRunResult) error {
+	// Only check integrity for artifacts uploaded on Artifactory
+	if r.ArtifactManagerIntegrationName == nil {
+		return errors.Errorf("integrity check failed for %s: no Artifactory integration found", r.Name())
+	}
+
+	localRepo := r.ArtifactManagerMetadata.Get("localRepository")
+
+	switch r.Type {
+	case sdk.V2WorkflowRunResultTypeDocker:
+		return checkDockerIntegrity(c, artifactClient, r, localRepo)
+	case sdk.V2WorkflowRunResultTypeConan:
+		return checkConanIntegrity(c, artifactClient, r, localRepo)
+	default:
+		return checkSingleFileIntegrity(c, artifactClient, r, localRepo)
+	}
+}
+
+// verifyFileChecksums retrieves file info from Artifactory and compares the expected checksums.
+// resultName and fileLabel are used for error messages.
+func verifyFileChecksums(artifactClient artifact_manager.ArtifactManager, localRepo, filePath, expectedMD5, expectedSHA1, expectedSHA256, resultName, fileLabel string) error {
+	if expectedMD5 == "" && expectedSHA1 == "" && expectedSHA256 == "" {
+		return errors.Errorf("integrity check failed for %s: %s has no checksum", resultName, fileLabel)
+	}
+
+	fileInfo, err := artifactClient.GetFileInfo(localRepo, filePath)
+	if err != nil {
+		return errors.Errorf("integrity check failed for %s: unable to get file info for %s: %v", resultName, fileLabel, err)
+	}
+
+	if fileInfo.Checksums == nil {
+		return errors.Errorf("integrity check failed for %s: no checksums returned by Artifactory for %s", resultName, fileLabel)
+	}
+
+	if expectedMD5 != "" && !strings.EqualFold(expectedMD5, fileInfo.Checksums.Md5) {
+		return errors.Errorf("integrity check failed for %s: %s MD5 mismatch (expected: %s, actual: %s)", resultName, fileLabel, expectedMD5, fileInfo.Checksums.Md5)
+	}
+	if expectedSHA1 != "" && !strings.EqualFold(expectedSHA1, fileInfo.Checksums.Sha1) {
+		return errors.Errorf("integrity check failed for %s: %s SHA1 mismatch (expected: %s, actual: %s)", resultName, fileLabel, expectedSHA1, fileInfo.Checksums.Sha1)
+	}
+	if expectedSHA256 != "" && !strings.EqualFold(expectedSHA256, fileInfo.Checksums.Sha256) {
+		return errors.Errorf("integrity check failed for %s: %s SHA256 mismatch (expected: %s, actual: %s)", resultName, fileLabel, expectedSHA256, fileInfo.Checksums.Sha256)
+	}
+
+	return nil
+}
+
+func checkSingleFileIntegrity(c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, r sdk.V2WorkflowRunResult, localRepo string) error {
+	filePath := r.ArtifactManagerMetadata.Get("path")
+	if err := verifyFileChecksums(artifactClient, localRepo, filePath,
+		r.ArtifactManagerMetadata.Get("md5"), r.ArtifactManagerMetadata.Get("sha1"), r.ArtifactManagerMetadata.Get("sha256"),
+		r.Name(), filePath); err != nil {
+		return err
+	}
+	grpcplugins.Successf(c, "Integrity check passed for %s", r.Name())
+	return nil
+}
+
+func checkDockerIntegrity(c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, r sdk.V2WorkflowRunResult, localRepo string) error {
+	details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultDockerDetail](&r)
+	if err != nil {
+		return errors.Errorf("integrity check failed for %s: unable to get docker detail: %v", r.Name(), err)
+	}
+
+	for _, manifest := range details.Manifests {
+		if manifest.Path == "" {
+			return errors.Errorf("integrity check failed for %s: manifest %s has no path", r.Name(), manifest.ID)
+		}
+		label := fmt.Sprintf("manifest %s", manifest.ID)
+		if err := verifyFileChecksums(artifactClient, localRepo, manifest.Path,
+			manifest.MD5, manifest.SHA1, manifest.SHA256,
+			r.Name(), label); err != nil {
+			return err
+		}
+	}
+
+	grpcplugins.Successf(c, "Integrity check passed for docker image %s (%d manifest(s) verified)", r.Name(), len(details.Manifests))
+	return nil
+}
+
+func checkConanIntegrity(c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, r sdk.V2WorkflowRunResult, localRepo string) error {
+	details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultConanDetail](&r)
+	if err != nil {
+		return errors.Errorf("integrity check failed for %s: unable to get conan detail: %v", r.Name(), err)
+	}
+
+	for _, f := range details.Files {
+		filePath := f.Path + "/" + f.FileName
+		if err := verifyFileChecksums(artifactClient, localRepo, filePath,
+			f.MD5, f.SHA1, f.SHA256,
+			r.Name(), filePath); err != nil {
+			return err
+		}
+	}
+
+	grpcplugins.Successf(c, "Integrity check passed for conan package %s (%d file(s) verified)", r.Name(), len(details.Files))
+	return nil
+}
+
 func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, integration sdk.JobIntegrationsContext, r sdk.V2WorkflowRunResult, maturity string, props *utils.Properties, status string, futureReleaseName, futureReleaseVersion string) (string, error) {
 	var (
 		promotedArtifact      string
 		skipExistingArtifacts bool
 	)
+
+	// Check integrity before promoting
+	if err := checkRunResultIntegrity(ctx, c, artifactClient, r); err != nil {
+		return "", err
+	}
 
 	if r.DataSync == nil {
 		r.DataSync = &sdk.WorkflowRunResultSync{}
