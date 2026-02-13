@@ -45,7 +45,7 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
-	if jobContext.Integrations == nil && jobContext.Integrations.ArtifactManager.Name == "" {
+	if jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager.Name == "" {
 		return errors.New("unable to find artifactory integration")
 	}
 
@@ -77,11 +77,58 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 	return nil
 }
 
+func checkRunResultIntegrity(_ context.Context, c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, r sdk.V2WorkflowRunResult) error {
+	// Only check integrity for artifacts uploaded on Artifactory
+	if r.ArtifactManagerIntegrationName == nil {
+		return errors.Errorf("integrity check failed for %s: no Artifactory integration found", r.Name())
+	}
+
+	localRepo := r.ArtifactManagerMetadata.Get("localRepository")
+	filePath := r.ArtifactManagerMetadata.Get("path")
+
+	switch r.Type {
+	case sdk.V2WorkflowRunResultTypeDocker:
+		// TODO: Docker images are composed of multiple manifests/layers, integrity check must be handled specifically
+		grpcplugins.Logf(c, "Skipping integrity check for docker image %s (not supported yet)", r.Name())
+		return nil
+	case sdk.V2WorkflowRunResultTypeConan:
+		// TODO: Conan packages contain multiple files, integrity check must be handled specifically for each file
+		grpcplugins.Logf(c, "Skipping integrity check for conan package %s (not supported yet)", r.Name())
+		return nil
+	}
+
+	expectedMD5 := r.ArtifactManagerMetadata.Get("md5")
+	if expectedMD5 == "" {
+		return errors.Errorf("integrity check failed for %s: no MD5 checksum found in run result metadata", r.Name())
+	}
+
+	fileInfo, err := artifactClient.GetFileInfo(localRepo, filePath)
+	if err != nil {
+		return errors.Errorf("integrity check failed for %s: unable to get file info from Artifactory: %v", r.Name(), err)
+	}
+
+	if fileInfo.Checksums == nil {
+		return errors.Errorf("integrity check failed for %s: no checksums returned by Artifactory", r.Name())
+	}
+
+	if !strings.EqualFold(expectedMD5, fileInfo.Checksums.Md5) {
+		return errors.Errorf("integrity check failed for %s: MD5 mismatch (run result: %s, artifactory: %s)", r.Name(), expectedMD5, fileInfo.Checksums.Md5)
+	}
+
+	grpcplugins.Successf(c, "Integrity check passed for %s (MD5: %s)", r.Name(), expectedMD5)
+	return nil
+}
+
 func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, integration sdk.JobIntegrationsContext, r sdk.V2WorkflowRunResult, maturity string, props *utils.Properties, status string, futureReleaseName, futureReleaseVersion string) (string, error) {
 	var (
 		promotedArtifact      string
 		skipExistingArtifacts bool
 	)
+
+	// Check integrity before promoting
+	if err := checkRunResultIntegrity(ctx, c, artifactClient, r); err != nil {
+		return "", err
+	}
 
 	if r.DataSync == nil {
 		r.DataSync = &sdk.WorkflowRunResultSync{}
