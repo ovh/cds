@@ -1,5 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SharedModule } from 'app/shared/shared.module';
 import { ProjectAddComponent } from './add/project.add.component';
 import { projectRouting } from './project.routing';
@@ -109,6 +110,7 @@ import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
     imports: [
         SharedModule,
         RouterModule,
+        DragDropModule,
         GraphModule,
         projectRouting
     ],

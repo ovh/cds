@@ -43,6 +43,7 @@ import {
     ProjectResolver
 } from './project/project.resolver';
 import { ProjectService } from './project/project.service';
+import { ProjectRunFilterService } from './project/project-run-filter.service';
 import { ProjectStore } from './project/project.store';
 import { QueueService } from './queue/queue.service';
 import { RepoManagerService } from './repomanager/project.repomanager.service';
@@ -117,6 +118,7 @@ export class ServicesModule {
                 ProjectForApplicationResolver,
                 ProjectForWorkflowResolver,
                 ProjectResolver,
+                ProjectRunFilterService,
                 ProjectService,
                 ProjectStore,
                 QueueService,

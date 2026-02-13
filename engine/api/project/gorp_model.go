@@ -20,6 +20,10 @@ type dbProjectWebHook struct {
 	sdk.ProjectWebHook
 }
 
+type dbProjectRunFilter struct {
+	sdk.ProjectRunFilter
+}
+
 type dbProjectConcurrency struct {
 	sdk.ProjectConcurrency
 }
@@ -195,6 +199,7 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbProjectConcurrency{}, "project_concurrency", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectWebHook{}, "project_webhook", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectRunRetention{}, "project_run_retention", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectRunFilter{}, "project_run_filter", false, "id"))
 
 }
 

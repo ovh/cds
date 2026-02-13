@@ -1,20 +1,66 @@
-<ul *ngIf="project && authSummary" nz-menu nzMode="inline">
-	<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/project', project.key, 'run']">All
-			workflows</a></li>
-	<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/project', project.key, 'run']"
-			[queryParams]="{actor: authSummary.user.username}">My workflows</a></li>
-	<li *ngIf="searches && searches.length> 0" nz-menu-group nzTitle="Saved filters">
-		<ul>
-			<ng-container *ngFor="let s of searches">
-				<li nz-menu-item nzMatchRouter nzMatchRouterExact>
-					<a [title]="s.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="s.params">{{s.name}}</a>
-					<button nz-button nzType="primary" nzDanger nzSize="small" nz-tooltip
-						nzTooltipTitle="Click to delete saved filter" nz-popconfirm
-						nzPopconfirmTitle="Are you sure you want to delete this filter ?" (nzOnConfirm)="deleteSearch(s.name)">
+@if (project && authSummary) {
+	<ul nz-menu nzMode="inline">
+		<!-- Fixed entries -->
+		<li nz-menu-item nzMatchRouter nzMatchRouterExact>
+			<a [routerLink]="['/project', project.key, 'run']">All workflows</a>
+		</li>
+		<li nz-menu-item nzMatchRouter nzMatchRouterExact>
+			<a [routerLink]="['/project', project.key, 'run']" [queryParams]="{actor: authSummary.user.username}">
+				My workflows
+			</a>
+		</li>
+	</ul>
+
+	<!-- Section: Shared project filters -->
+	@if (sharedFilters && sharedFilters.length > 0) {
+		<div class="filter-section-title">Project filters</div>
+		<div cdkDropList (cdkDropListDropped)="onDropShared($event)" [cdkDropListDisabled]="!canManage" class="filter-list">
+			@for (f of sharedFilters; track f.name) {
+				<div cdkDrag class="filter-item" [class.draggable]="canManage"
+					 [class.filter-item-active]="isFilterActive(f.params)">
+					<a [title]="f.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="f.params" 
+					   class="filter-link" [class.filter-item-selected]="isFilterActive(f.params)">
+						{{ f.name }}
+					</a>
+					@if (canManage) {
+						<button nz-button nzType="primary" nzDanger nzSize="small"
+							nz-tooltip nzTooltipTitle="Delete shared filter"
+							nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this shared filter?"
+							(nzOnConfirm)="deleteSharedFilter(f.name)" (click)="$event.stopPropagation()">
+							<i nz-icon nzType="delete" nzTheme="outline"></i>
+						</button>
+					}
+				</div>
+			}
+		</div>
+	}
+
+	<!-- Section: Personal filters -->
+	@if (searches && searches.length > 0) {
+		<div class="filter-section-title">My filters</div>
+		<div cdkDropList (cdkDropListDropped)="onDropPersonal($event)" class="filter-list">
+			@for (s of searches; track s.name) {
+				<div cdkDrag class="filter-item draggable"
+					 [class.filter-item-active]="isFilterActive(s.params)">
+					<a [title]="s.name" [routerLink]="['/project', project.key, 'run']" [queryParams]="s.params"
+					   class="filter-link" [class.filter-item-selected]="isFilterActive(s.params)">
+						{{ s.name }}
+					</a>
+					@if (canManage) {
+						<button nz-button nzType="default" nzSize="small"
+							nz-tooltip nzTooltipTitle="Share this filter with the project"
+							(click)="sharePersonalFilter(s); $event.stopPropagation()">
+							<i nz-icon nzType="share-alt" nzTheme="outline"></i>
+						</button>
+					}
+					<button nz-button nzType="primary" nzDanger nzSize="small"
+						nz-tooltip nzTooltipTitle="Delete my filter"
+						nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this filter?"
+						(nzOnConfirm)="deleteSearch(s.name)" (click)="$event.stopPropagation()">
 						<i nz-icon nzType="delete" nzTheme="outline"></i>
 					</button>
-				</li>
-			</ng-container>
-		</ul>
-	</li>
-</ul>
+				</div>
+			}
+		</div>
+	}
+}
