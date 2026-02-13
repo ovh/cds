@@ -34,6 +34,7 @@ The hatchery implements the `hatchery.InterfaceWithModels` interface and support
 | `vsphere.go` | `VSphereClient` interface and govmomi SDK wrapper implementation |
 | `init.go` | Hatchery initialization, govmomi client creation, background goroutines setup |
 | `ip.go` | IP address management (allocation, reservation, availability) |
+| `monitoring.go` | Prometheus metrics: vSphere resource consumption at per-worker, hatchery, and pool levels |
 
 ## 3. Configuration
 
@@ -615,6 +616,119 @@ The hatchery maintains several in-memory caches protected by mutexes:
 5. **Single datacenter**: The hatchery operates on a single vSphere datacenter.
 6. **No V2 model registration**: V2 templates must be pre-created in vSphere manually.
 
+## 12. Prometheus Metrics for vSphere Resource Consumption
+
+The hatchery exposes vSphere-specific Prometheus metrics on the existing `/mon/metrics` endpoint
+via the OpenCensus/Prometheus exporter. These metrics provide visibility into resource consumption
+at three observation levels: per-worker, hatchery-aggregate, and global pool.
+
+Operators can use this data to:
+- Monitor infrastructure utilization trends over time
+- Set up Prometheus alerts (e.g. "Resource Pool memory > 80%")
+- Correlate resource usage with job throughput
+- Capacity plan based on historical data rather than guesswork
+
+A background goroutine (`startVSphereMetricsRoutine`) collects metrics every 30 seconds by
+iterating all VMs returned by `ListVirtualMachines()` (entire datacenter) and reading the
+Resource Pool runtime properties.
+
+### 12.1 Per-Worker Resource Gauges (Level 1: Individual VMs)
+
+| Metric Name | Type | Unit | Description |
+|-------------|------|------|-------------|
+| `cds/hatchery/vsphere/worker_vcpus` | Gauge | vCPUs | Number of vCPUs for a worker VM |
+| `cds/hatchery/vsphere/worker_memory_mb` | Gauge | MB | Memory allocated to a worker VM |
+
+**Tags**: `service_name`, `service_type`, `worker_name`, `worker_model`
+
+Per-worker views are unregistered and re-registered each collection cycle to drop stale workers
+that no longer exist (same pattern as the Swarm hatchery).
+
+### 12.2 Hatchery-Level Aggregate Gauges (Level 2: This Hatchery)
+
+Resources consumed by VMs managed by **this hatchery instance** only (identified by CDS annotation
+with matching `HatcheryName`). Includes workers and pre-provisioned VMs. Excludes template VMs.
+
+| Metric Name | Type | Unit | Description |
+|-------------|------|------|-------------|
+| `cds/hatchery/vsphere/allocated_vcpus` | Gauge | vCPUs | Total vCPUs allocated by this hatchery's VMs |
+| `cds/hatchery/vsphere/allocated_memory_mb` | Gauge | MB | Total memory allocated by this hatchery's VMs |
+| `cds/hatchery/vsphere/vm_count` | Gauge | count | Total number of VMs managed by this hatchery (workers + provisioned) |
+| `cds/hatchery/vsphere/provisioned_vm_count` | Gauge | count | Number of pre-provisioned (idle) VMs |
+| `cds/hatchery/vsphere/template_vcpus` | Gauge | vCPUs | Total vCPUs defined by template VMs (annotation `Model=true`) |
+| `cds/hatchery/vsphere/template_memory_mb` | Gauge | MB | Total memory defined by template VMs |
+| `cds/hatchery/vsphere/template_count` | Gauge | count | Number of template VMs managed by this hatchery |
+
+**Tags**: `service_name`, `service_type`
+
+### 12.3 Global Pool-Level Gauges (Level 3: Entire vSphere Pool)
+
+Resources consumed by **ALL VMs** visible in the datacenter, regardless of whether they are
+managed by CDS. This gives operators visibility into the total infrastructure load, including
+non-CDS workloads and VMs from other hatchery instances sharing the same vSphere infrastructure.
+
+| Metric Name | Type | Unit | Description |
+|-------------|------|------|-------------|
+| `cds/hatchery/vsphere/pool_total_vcpus` | Gauge | vCPUs | Total vCPUs across ALL VMs in the datacenter |
+| `cds/hatchery/vsphere/pool_total_memory_mb` | Gauge | MB | Total memory across ALL VMs in the datacenter |
+| `cds/hatchery/vsphere/pool_total_vm_count` | Gauge | count | Total number of VMs in the datacenter |
+
+**Tags**: `service_name`, `service_type`
+
+### 12.4 Resource Pool Runtime Gauges (Level 3: Infrastructure Capacity)
+
+Direct readings from the vSphere Resource Pool runtime, representing the infrastructure-level
+capacity and usage as reported by vSphere itself.
+
+| Metric Name | Type | Unit | Description |
+|-------------|------|------|-------------|
+| `cds/hatchery/vsphere/resource_pool_cpu_max_mhz` | Gauge | MHz | Resource Pool maximum CPU capacity |
+| `cds/hatchery/vsphere/resource_pool_cpu_usage_mhz` | Gauge | MHz | Resource Pool current CPU usage |
+| `cds/hatchery/vsphere/resource_pool_cpu_unreserved_mhz` | Gauge | MHz | Resource Pool CPU unreserved for VMs |
+| `cds/hatchery/vsphere/resource_pool_memory_max_bytes` | Gauge | bytes | Resource Pool maximum memory capacity |
+| `cds/hatchery/vsphere/resource_pool_memory_usage_bytes` | Gauge | bytes | Resource Pool current memory usage |
+| `cds/hatchery/vsphere/resource_pool_memory_unreserved_bytes` | Gauge | bytes | Resource Pool memory unreserved for VMs |
+
+**Tags**: `service_name`, `service_type`
+
+If the Resource Pool cannot be loaded (e.g. permissions issue), a warning is logged and these
+metrics are simply not recorded for that cycle. Other metrics are unaffected.
+
+### 12.5 Source Files
+
+| File | Responsibility |
+|------|----------------|
+| `monitoring.go` | `vsphereMetrics` struct, `initVSphereMetrics()`, `collectVSphereMetrics()`, `startVSphereMetricsRoutine()` |
+| `monitoring_test.go` | Unit tests for metrics collection |
+
+### 12.6 Example Prometheus Queries
+
+```promql
+# --- Level 2: Hatchery utilization ---
+
+# Number of active (non-provisioned) workers
+cds_hatchery_vsphere_vm_count - cds_hatchery_vsphere_provisioned_vm_count
+
+# --- Level 3: Global pool visibility ---
+
+# What fraction of the datacenter's VMs belong to this hatchery?
+cds_hatchery_vsphere_vm_count / cds_hatchery_vsphere_pool_total_vm_count
+
+# What fraction of datacenter vCPUs are consumed by this hatchery?
+cds_hatchery_vsphere_allocated_vcpus / cds_hatchery_vsphere_pool_total_vcpus
+
+# Non-CDS vCPU consumption (other workloads on same infrastructure)
+cds_hatchery_vsphere_pool_total_vcpus - cds_hatchery_vsphere_allocated_vcpus
+  - cds_hatchery_vsphere_template_vcpus
+
+# Resource Pool memory utilization percentage
+cds_hatchery_vsphere_resource_pool_memory_usage_bytes
+  / cds_hatchery_vsphere_resource_pool_memory_max_bytes * 100
+
+# Alert: Resource Pool memory > 80%
+cds_hatchery_vsphere_resource_pool_memory_unreserved_bytes
+  / cds_hatchery_vsphere_resource_pool_memory_max_bytes < 0.2
+```
 
 ---
 
@@ -622,6 +736,5 @@ The hatchery maintains several in-memory caches protected by mutexes:
 
 The following amendments extend this specification. Each is in a separate file:
 
-- **[Amendment A: Prometheus Metrics for vSphere Resource Consumption](amendment-A-prometheus-metrics.md)** — Observability first. Adds vSphere-specific Prometheus metrics at three levels: per-worker, hatchery-aggregate, and global pool. No behavioral change. Recommended first step.
 - **[Amendment B: Resource-Based Capacity Management](amendment-B-resource-capacity.md)** — Replaces the `CanAllocateResources()` stub with real Resource Pool and CPU/memory checks. Makes `MaxWorker` optional (`0` = unlimited).
 - **[Amendment C: VM Flavor Support (CPU/RAM Resize)](amendment-C-flavor-resize.md)** — Adds flavor-based VM resize at clone time (CPU/RAM overrides). Builds on Amendment B.
