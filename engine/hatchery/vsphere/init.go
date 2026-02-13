@@ -27,6 +27,10 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	log.Info(ctx, "connecting datacenter %s...", h.Config.VSphereDatacenterString)
 	h.vSphereClient = NewVSphereClient(c, h.Config.VSphereDatacenterString)
 
+	if err := h.initVSphereMetrics(ctx); err != nil {
+		return fmt.Errorf("unable to init vsphere metrics: %v", err)
+	}
+
 	if h.Config.IPRange != "" {
 		h.availableIPAddresses, err = sdk.IPinRanges(ctx, h.Config.IPRange)
 		if err != nil {
@@ -87,6 +91,12 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 					h.killDisabledWorkers(ctx)
 				}
 			}
+		},
+	)
+
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-metrics",
+		func(ctx context.Context) {
+			h.startVSphereMetricsRoutine(ctx, 30)
 		},
 	)
 

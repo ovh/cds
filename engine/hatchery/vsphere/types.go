@@ -63,6 +63,7 @@ type HatcheryVSphere struct {
 	hatcheryCommon.Common
 	Config               HatcheryConfiguration
 	vSphereClient        VSphereClient
+	metrics              vsphereMetrics
 	IpAddressesMutex     sync.Mutex
 	availableIPAddresses []string
 	reservedIPAddresses  []string
