@@ -13,8 +13,24 @@ import (
 	"github.com/rockbears/log"
 )
 
+// pendingPoolWorker represents a worker that has been started by the hatchery
+// but is not yet registered on the CDS API.
+type pendingPoolWorker struct {
+	name   string `json:"name"`
+	status string `json:"status"`
+}
+
+func (w pendingPoolWorker) GetName() string   { return w.name }
+func (w pendingPoolWorker) GetStatus() string { return w.status }
+func (w pendingPoolWorker) GetID() string     { return "" }
+
+// MarshalJSON implements json.Marshaler for proper JSON serialization.
+func (w pendingPoolWorker) MarshalJSON() ([]byte, error) {
+	return []byte(`{"name":"` + w.name + `","status":"` + w.status + `"}`), nil
+}
+
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
-func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk.Worker, error) {
+func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk.PoolWorker, error) {
 	ctx, end := telemetry.Span(ctx, "hatchery.WorkerPool")
 	defer end()
 
@@ -23,15 +39,29 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 		telemetry.TagServiceType, h.Type(),
 	)
 
-	// First: call API
+	// First: call API to get registered workers (v1 and v2)
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	var registeredWorkers []sdk.Worker
+
+	var registeredWorkers []sdk.PoolWorker
+
 	if h.CDSClient() != nil {
-		var err error
-		registeredWorkers, err = h.CDSClient().WorkerList(ctx)
+		workers, err := h.CDSClient().WorkerList(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get registered workers: %v", err)
+			return nil, fmt.Errorf("unable to get registered v1 workers: %v", err)
+		}
+		for i := range workers {
+			registeredWorkers = append(registeredWorkers, &workers[i])
+		}
+	}
+
+	if h.CDSClientV2() != nil {
+		v2Workers, err := h.CDSClientV2().V2WorkerList(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get registered v2 workers: %v", err)
+		}
+		for i := range v2Workers {
+			registeredWorkers = append(registeredWorkers, &v2Workers[i])
 		}
 	}
 
@@ -42,42 +72,42 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 	}
 
 	// Make the union of the two slices
-	allWorkers := make([]sdk.Worker, 0, len(startedWorkers)+len(registeredWorkers))
+	allWorkers := make([]sdk.PoolWorker, 0, len(startedWorkers)+len(registeredWorkers))
 
-	// Consider the registered worker
-	for k, w := range registeredWorkers {
+	// Consider the registered workers
+	for _, w := range registeredWorkers {
 		var found bool
 		for i := range startedWorkers {
-			if startedWorkers[i] == w.Name {
+			if startedWorkers[i] == w.GetName() {
 				startedWorkers = append(startedWorkers[:i], startedWorkers[i+1:]...)
 				found = true
-
-				if strings.HasPrefix(w.Name, "register-") {
-					registeredWorkers[k].Status = sdk.StatusWorkerRegistering
-				}
-
 				break
 			}
 		}
-		if !found && w.Status != sdk.StatusDisabled {
-			log.Error(ctx, "Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", w.Name, w.Status)
-			if err := h.CDSClient().WorkerDisable(ctx, w.ID); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "Hatchery > WorkerPool> Unable to disable worker [%s]%s: %v", w.ID, w.Name, err)
+		if !found {
+			if w.GetStatus() != sdk.StatusDisabled {
+				// Worker is registered on API but not found in the orchestrator
+				switch v := w.(type) {
+				case *sdk.Worker:
+					log.Error(ctx, "Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", v.Name, v.Status)
+					if err := h.CDSClient().WorkerDisable(ctx, v.ID); err != nil {
+						ctx = sdk.ContextWithStacktrace(ctx, err)
+						log.Error(ctx, "Hatchery > WorkerPool> Unable to disable worker [%s]%s: %v", v.ID, v.Name, err)
+					}
+					v.Status = sdk.StatusDisabled
+				case *sdk.V2Worker:
+					log.Warn(ctx, "Hatchery > WorkerPool> V2 Worker %s (status = %s) inconsistency - no V2WorkerDisable available", v.Name, v.Status)
+				}
 			}
-			registeredWorkers[k].Status = sdk.StatusDisabled
 		}
-		allWorkers = append(allWorkers, registeredWorkers[k])
+		allWorkers = append(allWorkers, w)
 	}
 
-	// And add the other worker with status pending of registering
+	// And add the other workers with status pending or registering
 	for _, w := range startedWorkers {
-		name := w
-		var status string
-
 		var found bool
 		for _, wr := range registeredWorkers {
-			if wr.Name == name {
+			if wr.GetName() == w {
 				found = true
 				break
 			}
@@ -86,27 +116,25 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 			continue // worker is registered
 		}
 
+		status := sdk.StatusWorkerPending
 		if strings.HasPrefix(w, "register-") {
 			status = sdk.StatusWorkerRegistering
 		}
 
-		if status == "" {
-			status = sdk.StatusWorkerPending
-		}
-		allWorkers = append(allWorkers, sdk.Worker{
-			Name:   name,
-			Status: status,
+		allWorkers = append(allWorkers, pendingPoolWorker{
+			name:   w,
+			status: status,
 		})
 	}
 
 	nbPerStatus := map[string]int{}
 	for _, w := range allWorkers {
-		nbPerStatus[w.Status] = nbPerStatus[w.Status] + 1
+		nbPerStatus[w.GetStatus()] = nbPerStatus[w.GetStatus()] + 1
 	}
 
 	measures := []stats.Measurement{
 		GetMetrics().PendingWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
-		GetMetrics().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		GetMetrics().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerRegistering])),
 		GetMetrics().WaitingWorkers.M(int64(nbPerStatus[sdk.StatusWaiting])),
 		GetMetrics().CheckingWorkers.M(int64(nbPerStatus[sdk.StatusChecking])),
 		GetMetrics().BuildingWorkers.M(int64(nbPerStatus[sdk.StatusBuilding])),
@@ -120,10 +148,10 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 	}
 
 	// return workers list filtered by status
-	res := make([]sdk.Worker, 0, len(allWorkers))
+	res := make([]sdk.PoolWorker, 0, len(allWorkers))
 	for _, w := range allWorkers {
 		for _, s := range statusFilter {
-			if s == w.Status {
+			if s == w.GetStatus() {
 				res = append(res, w)
 				break
 			}

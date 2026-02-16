@@ -74,36 +74,12 @@ func (c *Common) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreatio
 	return c.mapPendingWorkerCreation
 }
 
-type WorkerInterface interface {
-	Name() string
-	Status() string
-}
-
-type workerImpl struct {
-	eitherV1 *sdk.Worker
-	eitherV2 *sdk.V2Worker
-}
-
-func (w workerImpl) Name() string {
-	if w.eitherV1 != nil {
-		return w.eitherV1.Name
-	}
-	return w.eitherV2.Name
-}
-
-func (w workerImpl) Status() string {
-	if w.eitherV1 != nil {
-		return w.eitherV1.Status
-	}
-	return w.eitherV2.Status
-}
-
-func (c *Common) WorkerList(ctx context.Context) ([]WorkerInterface, error) {
+func (c *Common) WorkerList(ctx context.Context) ([]sdk.PoolWorker, error) {
 	var (
 		v1Workers  []sdk.Worker
 		v2Workers  []sdk.V2Worker
 		err        error
-		allWorkers []WorkerInterface
+		allWorkers []sdk.PoolWorker
 	)
 
 	if c.Client != nil {
@@ -120,10 +96,10 @@ func (c *Common) WorkerList(ctx context.Context) ([]WorkerInterface, error) {
 	}
 
 	for i := range v1Workers {
-		allWorkers = append(allWorkers, workerImpl{eitherV1: &v1Workers[i]})
+		allWorkers = append(allWorkers, &v1Workers[i])
 	}
 	for i := range v2Workers {
-		allWorkers = append(allWorkers, workerImpl{eitherV2: &v2Workers[i]})
+		allWorkers = append(allWorkers, &v2Workers[i])
 	}
 
 	return allWorkers, nil
