@@ -359,14 +359,22 @@ hatchery's started list, it is flagged as inconsistent and disabled via `WorkerD
 Provision.MaxWorker (default: 10)
 ```
 
-If the size of the worker pool (see above) is **greater than or equal to** `MaxWorker`, no new
-worker can be spawned. The check returns `false` and the job is skipped for this scheduling cycle.
+The `MaxWorker` configuration sets a ceiling on the number of concurrent workers. Its behavior is:
+
+- **`MaxWorker > 0`**: Hard limit. If the worker pool size (registered + pending) is **greater than or equal**
+  to `MaxWorker`, no new worker can be spawned. The check returns `false` and the job is skipped.
+  
+- **`MaxWorker = 0`**: **Unlimited**. No worker count limit is enforced, and capacity management
+  relies entirely on resource-based checks (see Section 12).
 
 ```go
-if len(workerPool) >= h.Configuration().Provision.MaxWorker {
+// Framework logic (sdk/hatchery/provisionning.go)
+if h.Configuration().Provision.MaxWorker > 0 && len(workerPool) >= h.Configuration().Provision.MaxWorker {
     return false  // capacity reached
 }
 ```
+
+**Status Display**: When `MaxWorker = 0`, the hatchery status displays "N/unlimited" instead of "N/0".
 
 This limit applies uniformly to:
 - **Job V1 processing** (`processJobV1QueueV1`)
@@ -403,9 +411,11 @@ spawning a registration-only worker.
 
 #### 6.4.5 Configuration Validation
 
-At startup, the hatchery validates that:
+At startup, the hatchery validates that (if `MaxWorker > 0`):
 - `MaxConcurrentProvisioning <= MaxWorker`
 - `MaxConcurrentRegistering <= MaxWorker`
+
+When `MaxWorker = 0`, these validations are skipped (unlimited mode).
 
 #### 6.4.6 Interaction with vSphere Pre-Provisioning
 
@@ -427,8 +437,23 @@ The `MaxWorker` limit and the vSphere-specific `WorkerProvisioning` (pre-provisi
 
 The `Status()` method reports the current worker count vs. MaxWorker:
 ```
-Workers: <current>/<maxWorker>
+Workers: <current>/<maxWorker>   (or "<current>/unlimited" if MaxWorker=0)
 ```
+
+#### 6.4.8 Resource-Based Capacity (`CanAllocateResources`)
+
+In addition to the count-based checks (MaxWorker, MaxConcurrentProvisioning, MaxConcurrentRegistering),
+the hatchery also performs **resource-based capacity checks** to ensure the vSphere infrastructure can
+handle the next worker.
+
+See **Section 12 (Resource-Based Capacity Management)** for full details.
+
+Quick summary:
+- Queries Resource Pool runtime (`UnreservedForVm`) to check available CPU and memory
+- Optionally enforces static `maxCpus` and `maxMemoryMB` configuration limits
+- Graceful degradation if Resource Pool query fails (continues with static limits only)
+
+This resource-aware check happens **before** every `SpawnWorker()` call.
 
 ### 6.5 Spawn Eligibility (`CanSpawn`)
 
@@ -606,17 +631,81 @@ The hatchery maintains several in-memory caches protected by mutexes:
 
 ## 11. Limitations
 
-1. **No VM resource customization**: CPU, RAM, and disk size are inherited from the template.
-   There is no flavor or sizing mechanism.
-2. **No resource limit enforcement**: `CanAllocateResources()` always returns `true`.
-   The hatchery has no awareness of available vSphere resources.
-3. **Unsupported job requirements**: Service, Memory, Hostname, and Flavor requirements
-   cause the hatchery to reject the job.
-4. **Linux only**: Customization assumes Linux guests (`CustomizationLinuxPrep`).
-5. **Single datacenter**: The hatchery operates on a single vSphere datacenter.
-6. **No V2 model registration**: V2 templates must be pre-created in vSphere manually.
+1. **No VM resource customization at spawn time**: CPU, RAM, and disk size are inherited from the template.
+   Amendment C (VM Flavor Support) will address this.
+2. **Unsupported job requirements**: Service, Memory, Hostname requirements
+   cause the hatchery to reject the job. FlavorRequirement is reserved for Amendment C.
+3. **Linux only**: Customization assumes Linux guests (`CustomizationLinuxPrep`).
+4. **Single datacenter**: The hatchery operates on a single vSphere datacenter.
+5. **No V2 model registration**: V2 templates must be pre-created in vSphere manually.
 
-## 12. Prometheus Metrics for vSphere Resource Consumption
+## 12. Resource-Based Capacity Management
+
+The hatchery implements **resource-aware capacity management** that goes beyond simple worker counts.
+Instead of relying solely on `MaxWorker` (a fixed count limit), the hatchery can check actual
+vSphere infrastructure capacity before spawning workers.
+
+### 14.1 Capacity Management Mechanisms
+
+The hatchery uses a **layered approach** with three capacity checks (in order of priority):
+
+1. **MaxWorker count** (optional) — Simple worker count ceiling. Set to `0` for unlimited.
+2. **Resource Pool runtime** (primary, always enabled) — Queries vSphere Resource Pool's
+   `UnreservedForVm` capacity for CPU and memory to ensure infrastructure can handle the next worker.
+3. **Static resource limits** (supplementary, optional) — `maxCpus` and `maxMemoryMB` configuration
+   fields provide explicit hatchery-level ceilings.
+
+The effective capacity is: `min(MaxWorker (if >0), Resource Pool capacity, static limits (if >0))`
+
+### 14.2 Configuration
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `maxWorker` | `int` | `10` | Maximum worker count. Set to `0` for unlimited (rely on resource-based capacity only) |
+| `maxCpus` | `int` | `0` (unlimited) | Optional. Maximum total vCPUs this hatchery may allocate. `0` means no static CPU limit |
+| `maxMemoryMB` | `int64` | `0` (unlimited) | Optional. Maximum total RAM (MB) this hatchery may allocate. `0` means no static memory limit |
+
+**Example configuration:**
+
+```toml
+[hatchery.vsphere]
+  user = "admin@vsphere.local"
+  endpoint = "pcc-11-222-333-444.ovh.com"
+  password = "secret"
+  datacenterString = "pcc-11-222-333-444_datacenter1234"
+  
+  # Optional static resource limits (0 = no static limit, vSphere-specific)
+  maxCpus = 64
+  maxMemoryMB = 131072    # 128 GB
+
+  [hatchery.vsphere.commonConfiguration.provision]
+    # MaxWorker = 0 means unlimited — rely on resource-based capacity
+    maxWorker = 0
+```
+
+### 14.3 Capacity Strategy Matrix
+
+Operators can choose their strategy:
+
+| MaxWorker | maxCpus/maxMemoryMB | Strategy |
+|-----------|---------------------|----------|
+| `10` (default) | `0` / `0` | **Count-based only** — Resource Pool is a safety net |
+| `0` | `0` / `0` | **Resource Pool only** — rely entirely on vSphere infrastructure limits |
+| `0` | set | **Resource-based** — static limits + Resource Pool checks |
+| `20` | set | **Belt and suspenders** — count ceiling + resource precision + infrastructure guardrail |
+
+### 14.4 Implementation Details
+
+- `countAllocatedResources()` — Iterates all VMs owned by this hatchery (annotation filter),
+  sums `summary.Config.NumCpu` and `summary.Config.MemorySizeMB`. Excludes template VMs.
+- `getTemplateResources()` — Reads CPU/RAM from a vSphere template to estimate the footprint
+  of the next worker.
+- `checkResourcePoolCapacity()` — Queries `ResourcePool.Runtime.Cpu.UnreservedForVm` and
+  `Memory.UnreservedForVm` to verify infrastructure can handle the next worker.
+- `CanAllocateResources()` — Combines all three checks with graceful degradation (if Resource Pool
+  query fails, falls back to static limits only).
+
+## 13. Prometheus Metrics for vSphere Resource Consumption
 
 The hatchery exposes vSphere-specific Prometheus metrics on the existing `/mon/metrics` endpoint
 via the OpenCensus/Prometheus exporter. These metrics provide visibility into resource consumption
@@ -632,7 +721,7 @@ A background goroutine (`startVSphereMetricsRoutine`) collects metrics every 30 
 iterating all VMs returned by `ListVirtualMachines()` (entire datacenter) and reading the
 Resource Pool runtime properties.
 
-### 12.1 Per-Worker Resource Gauges (Level 1: Individual VMs)
+### 14.1 Per-Worker Resource Gauges (Level 1: Individual VMs)
 
 | Metric Name | Type | Unit | Description |
 |-------------|------|------|-------------|
@@ -644,7 +733,7 @@ Resource Pool runtime properties.
 Per-worker views are unregistered and re-registered each collection cycle to drop stale workers
 that no longer exist (same pattern as the Swarm hatchery).
 
-### 12.2 Hatchery-Level Aggregate Gauges (Level 2: This Hatchery)
+### 14.2 Hatchery-Level Aggregate Gauges (Level 2: This Hatchery)
 
 Resources consumed by VMs managed by **this hatchery instance** only (identified by CDS annotation
 with matching `HatcheryName`). Includes workers and pre-provisioned VMs. Excludes template VMs.
@@ -661,7 +750,7 @@ with matching `HatcheryName`). Includes workers and pre-provisioned VMs. Exclude
 
 **Tags**: `service_name`, `service_type`
 
-### 12.3 Global Pool-Level Gauges (Level 3: Entire vSphere Pool)
+### 14.3 Global Pool-Level Gauges (Level 3: Entire vSphere Pool)
 
 Resources consumed by **ALL VMs** visible in the datacenter, regardless of whether they are
 managed by CDS. This gives operators visibility into the total infrastructure load, including
@@ -675,7 +764,7 @@ non-CDS workloads and VMs from other hatchery instances sharing the same vSphere
 
 **Tags**: `service_name`, `service_type`
 
-### 12.4 Resource Pool Runtime Gauges (Level 3: Infrastructure Capacity)
+### 14.4 Resource Pool Runtime Gauges (Level 3: Infrastructure Capacity)
 
 Direct readings from the vSphere Resource Pool runtime, representing the infrastructure-level
 capacity and usage as reported by vSphere itself.
@@ -694,7 +783,7 @@ capacity and usage as reported by vSphere itself.
 If the Resource Pool cannot be loaded (e.g. permissions issue), a warning is logged and these
 metrics are simply not recorded for that cycle. Other metrics are unaffected.
 
-### 12.5 IP Address Tracking Gauges (Level 2: This Hatchery)
+### 14.5 IP Address Tracking Gauges (Level 2: This Hatchery)
 
 When an IP range is configured (`iprange`), these metrics track IP address pool utilization.
 
@@ -709,14 +798,14 @@ An IP is considered "in use" if it appears in any VM's CDS annotation (`IPAddres
 the VM's guest network info (`Guest.Net[].IpAddress`). These metrics are only emitted when
 `iprange` is configured (i.e. `availableIPAddresses` is non-empty).
 
-### 12.7 Source Files
+### 14.7 Source Files
 
 | File | Responsibility |
 |------|----------------|
 | `monitoring.go` | `vsphereMetrics` struct, `initVSphereMetrics()`, `collectVSphereMetrics()`, `startVSphereMetricsRoutine()` |
 | `monitoring_test.go` | Unit tests for metrics collection |
 
-### 12.8 Example Prometheus Queries
+### 14.8 Example Prometheus Queries
 
 ```promql
 # --- Level 2: Hatchery utilization ---

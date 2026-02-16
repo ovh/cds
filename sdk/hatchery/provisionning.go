@@ -28,7 +28,8 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 		return false
 	}
 
-	if len(workerPool) >= h.Configuration().Provision.MaxWorker {
+	// MaxWorker=0 means unlimited (Amendment B for vSphere hatchery)
+	if h.Configuration().Provision.MaxWorker > 0 && len(workerPool) >= h.Configuration().Provision.MaxWorker {
 		log.Debug(ctx, "hatchery> checkCapacities> %s has reached the max worker: %d (max: %d)", h.Name(), len(workerPool), h.Configuration().Provision.MaxWorker)
 		if len(workerPool) > h.Configuration().Provision.MaxWorker {
 			for _, w := range workerPool {
