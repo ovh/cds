@@ -694,14 +694,29 @@ capacity and usage as reported by vSphere itself.
 If the Resource Pool cannot be loaded (e.g. permissions issue), a warning is logged and these
 metrics are simply not recorded for that cycle. Other metrics are unaffected.
 
-### 12.5 Source Files
+### 12.5 IP Address Tracking Gauges (Level 2: This Hatchery)
+
+When an IP range is configured (`iprange`), these metrics track IP address pool utilization.
+
+| Metric Name | Type | Unit | Description |
+|-------------|------|------|-------------|
+| `cds/hatchery/vsphere/ip_used_count` | Gauge | count | Number of IP addresses from the configured range currently in use |
+| `cds/hatchery/vsphere/ip_total_count` | Gauge | count | Total number of IP addresses in the configured range |
+
+**Tags**: `service_name`, `service_type`
+
+An IP is considered "in use" if it appears in any VM's CDS annotation (`IPAddress` field) or in
+the VM's guest network info (`Guest.Net[].IpAddress`). These metrics are only emitted when
+`iprange` is configured (i.e. `availableIPAddresses` is non-empty).
+
+### 12.7 Source Files
 
 | File | Responsibility |
 |------|----------------|
 | `monitoring.go` | `vsphereMetrics` struct, `initVSphereMetrics()`, `collectVSphereMetrics()`, `startVSphereMetricsRoutine()` |
 | `monitoring_test.go` | Unit tests for metrics collection |
 
-### 12.6 Example Prometheus Queries
+### 12.8 Example Prometheus Queries
 
 ```promql
 # --- Level 2: Hatchery utilization ---
@@ -728,6 +743,17 @@ cds_hatchery_vsphere_resource_pool_memory_usage_bytes
 # Alert: Resource Pool memory > 80%
 cds_hatchery_vsphere_resource_pool_memory_unreserved_bytes
   / cds_hatchery_vsphere_resource_pool_memory_max_bytes < 0.2
+
+# --- IP address utilization ---
+
+# IP address utilization percentage
+cds_hatchery_vsphere_ip_used_count / cds_hatchery_vsphere_ip_total_count * 100
+
+# Remaining available IPs
+cds_hatchery_vsphere_ip_total_count - cds_hatchery_vsphere_ip_used_count
+
+# Alert: IP pool > 90% used
+cds_hatchery_vsphere_ip_used_count / cds_hatchery_vsphere_ip_total_count > 0.9
 ```
 
 ---

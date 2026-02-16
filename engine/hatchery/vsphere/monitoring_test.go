@@ -39,10 +39,12 @@ func TestCollectVSphereMetrics(t *testing.T) {
 		HatcheryName:    "test-hatchery",
 		WorkerName:      "worker-abc",
 		WorkerModelPath: "myorg/mymodel",
+		IPAddress:       "192.168.1.10",
 	})
 	provisionAnnot, _ := json.Marshal(annotation{
 		HatcheryName: "test-hatchery",
 		Provisioning: true,
+		IPAddress:    "192.168.1.11",
 	})
 	templateAnnot, _ := json.Marshal(annotation{
 		HatcheryName: "test-hatchery",
@@ -129,6 +131,9 @@ func TestCollectVSphereMetrics(t *testing.T) {
 		return nil, assert.AnError
 	}).AnyTimes()
 
+	// Set up IP address pool: 5 IPs total, 2 used by our VMs
+	h.availableIPAddresses = []string{"192.168.1.10", "192.168.1.11", "192.168.1.12", "192.168.1.13", "192.168.1.14"}
+
 	// Run collection (Resource Pool will fail gracefully)
 	h.collectVSphereMetrics(ctx)
 
@@ -152,6 +157,10 @@ func TestCollectVSphereMetrics(t *testing.T) {
 	assertLastMetricValue(t, "cds/hatchery/vsphere/template_vcpus", 2)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/template_memory_mb", 4096)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/template_count", 1)
+
+	// Verify IP address tracking: 2 used (192.168.1.10, 192.168.1.11), 5 total
+	assertLastMetricValue(t, "cds/hatchery/vsphere/ip_used_count", 2)
+	assertLastMetricValue(t, "cds/hatchery/vsphere/ip_total_count", 5)
 }
 
 func assertLastMetricValue(t *testing.T, metricName string, expected int64) {

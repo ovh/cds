@@ -41,6 +41,10 @@ type vsphereMetrics struct {
 	ResourcePoolMemUsage      *stats.Int64Measure
 	ResourcePoolMemUnreserved *stats.Int64Measure
 
+	// IP address tracking
+	IPUsedCount  *stats.Int64Measure
+	IPTotalCount *stats.Int64Measure
+
 	// Views (kept for re-registration of per-worker views)
 	workerViews    []*view.View
 	aggregateViews []*view.View
@@ -114,6 +118,14 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 		"cds/hatchery/vsphere/resource_pool_memory_unreserved_bytes",
 		"Resource Pool memory unreserved for VMs in bytes", stats.UnitDimensionless)
 
+	// IP address tracking
+	h.metrics.IPUsedCount = stats.Int64(
+		"cds/hatchery/vsphere/ip_used_count",
+		"Number of IP addresses currently in use", stats.UnitDimensionless)
+	h.metrics.IPTotalCount = stats.Int64(
+		"cds/hatchery/vsphere/ip_total_count",
+		"Total number of IP addresses in configured range", stats.UnitDimensionless)
+
 	// Build views
 	baseTags := []tag.Key{
 		telemetry.MustNewKey(telemetry.TagServiceName),
@@ -151,6 +163,9 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 		telemetry.NewViewLast("cds/hatchery/vsphere/resource_pool_memory_max_bytes", h.metrics.ResourcePoolMemMax, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/resource_pool_memory_usage_bytes", h.metrics.ResourcePoolMemUsage, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/resource_pool_memory_unreserved_bytes", h.metrics.ResourcePoolMemUnreserved, baseTags),
+		// IP address tracking
+		telemetry.NewViewLast("cds/hatchery/vsphere/ip_used_count", h.metrics.IPUsedCount, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/ip_total_count", h.metrics.IPTotalCount, baseTags),
 	}
 }
 
@@ -254,6 +269,34 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 		h.metrics.PoolTotalMemoryMB.M(poolMemMB),
 		h.metrics.PoolTotalVMCount.M(poolVMCount),
 	)
+
+	// IP address tracking
+	if len(h.availableIPAddresses) > 0 {
+		usedIPs := make(map[string]struct{})
+		for _, s := range srvs {
+			annot := getVirtualMachineCDSAnnotation(ctx, s)
+			if annot != nil && annot.IPAddress != "" {
+				usedIPs[annot.IPAddress] = struct{}{}
+			}
+			if s.Guest != nil {
+				for _, n := range s.Guest.Net {
+					for _, ip := range n.IpAddress {
+						usedIPs[ip] = struct{}{}
+					}
+				}
+			}
+		}
+		var ipUsed int64
+		for _, ip := range h.availableIPAddresses {
+			if _, ok := usedIPs[ip]; ok {
+				ipUsed++
+			}
+		}
+		stats.Record(ctx,
+			h.metrics.IPUsedCount.M(ipUsed),
+			h.metrics.IPTotalCount.M(int64(len(h.availableIPAddresses))),
+		)
+	}
 
 	// Level 3: Resource Pool runtime
 	pool, err := h.vSphereClient.LoadResourcePool(ctx)
