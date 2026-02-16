@@ -32,7 +32,7 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 		log.Debug(ctx, "hatchery> checkCapacities> %s has reached the max worker: %d (max: %d)", h.Name(), len(workerPool), h.Configuration().Provision.MaxWorker)
 		if len(workerPool) > h.Configuration().Provision.MaxWorker {
 			for _, w := range workerPool {
-				log.Debug(ctx, "hatchery> checkCapacities> %s > pool > %s (status=%v)", h.Name(), w.Name, w.Status)
+				log.Debug(ctx, "hatchery> checkCapacities> %s > pool > %s (status=%v)", h.Name(), w.GetName(), w.GetStatus())
 			}
 		}
 		return false
@@ -40,7 +40,7 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 
 	var nbPending int
 	for _, w := range workerPool {
-		if w.Status == sdk.StatusWorkerPending {
+		if w.GetStatus() == sdk.StatusWorkerPending {
 			nbPending++
 		}
 	}

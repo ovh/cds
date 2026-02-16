@@ -4,6 +4,14 @@ import (
 	"time"
 )
 
+// PoolWorker is an interface implemented by both Worker (v1) and V2Worker,
+// used by WorkerPool to handle both types uniformly.
+type PoolWorker interface {
+	GetName() string
+	GetStatus() string
+	GetID() string
+}
+
 type WorkerDirectories struct {
 	WorkingDir string
 	BaseDir    string
@@ -27,6 +35,10 @@ type Worker struct {
 	Arch         string    `json:"arch" cli:"arch"  db:"arch"`
 	PrivateKey   []byte    `json:"private_key,omitempty" cli:"-" db:"cypher_private_key" gorpmapping:"encrypted,ID,Name,JobRunID"`
 }
+
+func (w Worker) GetName() string   { return w.Name }
+func (w Worker) GetStatus() string { return w.Status }
+func (w Worker) GetID() string     { return w.ID }
 
 // WorkerRegistrationForm represents the arguments needed to register a worker
 type WorkerRegistrationForm struct {

@@ -21,6 +21,10 @@ type V2Worker struct {
 	PrivateKey   []byte    `json:"cypher_private_key,omitempty" cli:"-" db:"cypher_private_key" gorpmapping:"encrypted,ID,JobRunID,HatcheryID,ConsumerID"`
 }
 
+func (w V2Worker) GetName() string   { return w.Name }
+func (w V2Worker) GetStatus() string { return w.Status }
+func (w V2Worker) GetID() string     { return w.ID }
+
 type V2TakeJobResponse struct {
 	RunJob         V2WorkflowRunJob       `json:"run_job"`
 	AsCodeActions  map[string]V2Action    `json:"actions"`

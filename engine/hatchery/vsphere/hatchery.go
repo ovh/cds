@@ -361,7 +361,7 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 	srvs := h.getVirtualMachines(ctx)
 	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
-			if s.Name == w.Name {
+			if s.Name == w.GetName() {
 				log.Info(ctx, " killDisabledWorkers markToDelete %v", s.Name)
 				h.markToDelete(ctx, s.Name)
 				break
@@ -516,7 +516,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
 		var existsOnAPISide bool
 		for _, w := range allWorkers {
-			if w.Name() == s.Name {
+			if w.GetName() == s.Name {
 				existsOnAPISide = true
 				break
 			}

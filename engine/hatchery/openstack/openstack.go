@@ -399,14 +399,14 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 
 		var inWorkersList bool
 		for _, w := range workers {
-			if _, ok := workersAlive[w.Name()]; !ok {
-				log.Debug(ctx, "killAwolServers> add %s to map workersAlive", w.Name)
-				workersAlive[w.Name()] = now
+			if _, ok := workersAlive[w.GetName()]; !ok {
+				log.Debug(ctx, "killAwolServers> add %s to map workersAlive", w.GetName())
+				workersAlive[w.GetName()] = now
 			}
 
-			if w.Name() == s.Name {
+			if w.GetName() == s.Name {
 				inWorkersList = true
-				workersAlive[w.Name()] = now
+				workersAlive[w.GetName()] = now
 				break
 			}
 		}
@@ -555,7 +555,7 @@ func (h *HatcheryOpenstack) killDisabledWorkers() {
 
 	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
-			if s.Name == w.Name {
+			if s.Name == w.GetName() {
 				log.Info(ctx, "killDisabledWorkers> killDisabledWorkers %v", s.Name)
 				_ = h.deleteServer(ctx, s)
 				break
