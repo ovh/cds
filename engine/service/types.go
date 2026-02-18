@@ -57,7 +57,7 @@ type HatcheryCommonConfiguration struct {
 	Provision struct {
 		DisableV2QueuePolling     bool     `toml:"disableV2QueuePolling" commented:"true" comment:"Disable V2 queue polling" json:"-" mapstructure:"disableV2QueuePolling"`
 		InjectEnvVars             []string `toml:"injectEnvVars" commented:"true" comment:"Inject env variables in workers" json:"-" mapstructure:"injectEnvVars"`
-		MaxWorker                 int      `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers" json:"maxWorker"`
+		MaxWorker                 int      `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers. Set to 0 for unlimited (rely on resource-based capacity only)" json:"maxWorker"`
 		MaxConcurrentProvisioning int      `toml:"maxConcurrentProvisioning" default:"10" comment:"Maximum allowed simultaneous workers provisioning" json:"maxConcurrentProvisioning"`
 		MaxConcurrentRegistering  int      `toml:"maxConcurrentRegistering" default:"2" comment:"Maximum allowed simultaneous workers registering. -1 to disable registering on this hatchery" json:"maxConcurrentRegistering"`
 		RegisterFrequency         int      `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds" json:"registerFrequency"`
@@ -102,12 +102,13 @@ type HatcheryCommonConfiguration struct {
 }
 
 func (hcc HatcheryCommonConfiguration) Check() error {
-	if hcc.Provision.MaxConcurrentProvisioning > hcc.Provision.MaxWorker {
+	// Skip validation when MaxWorker=0 (unlimited, Amendment B for vSphere hatchery)
+	if hcc.Provision.MaxWorker > 0 && hcc.Provision.MaxConcurrentProvisioning > hcc.Provision.MaxWorker {
 		return fmt.Errorf("maxConcurrentProvisioning (value: %d) cannot be less than maxWorker (value: %d) ",
 			hcc.Provision.MaxConcurrentProvisioning, hcc.Provision.MaxWorker)
 	}
 
-	if hcc.Provision.MaxConcurrentRegistering > hcc.Provision.MaxWorker {
+	if hcc.Provision.MaxWorker > 0 && hcc.Provision.MaxConcurrentRegistering > hcc.Provision.MaxWorker {
 		return fmt.Errorf("maxConcurrentRegistering (value: %d) cannot be less than maxWorker (value: %d) ",
 			hcc.Provision.MaxConcurrentRegistering, hcc.Provision.MaxWorker)
 	}

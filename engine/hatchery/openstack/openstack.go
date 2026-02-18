@@ -104,7 +104,11 @@ func (h *HatcheryOpenstack) Status(ctx context.Context) *sdk.MonitoringStatus {
 		ctx = log.ContextWithStackTrace(ctx, err)
 		log.Warn(ctx, err.Error())
 	}
-	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	maxWorkerDisplay := fmt.Sprintf("%d", h.Config.Provision.MaxWorker)
+	if h.Config.Provision.MaxWorker == 0 {
+		maxWorkerDisplay = "unlimited"
+	}
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%s", len(ws), maxWorkerDisplay), Status: sdk.MonitoringStatusOK})
 	return m
 }
 

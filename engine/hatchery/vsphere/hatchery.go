@@ -94,7 +94,11 @@ func (h *HatcheryVSphere) Status(ctx context.Context) *sdk.MonitoringStatus {
 		ctx = log.ContextWithStackTrace(ctx, err)
 		log.Warn(ctx, err.Error())
 	}
-	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	maxWorkerDisplay := fmt.Sprintf("%d", h.Config.Provision.MaxWorker)
+	if h.Config.Provision.MaxWorker == 0 {
+		maxWorkerDisplay = "unlimited"
+	}
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%s", len(ws), maxWorkerDisplay), Status: sdk.MonitoringStatusOK})
 
 	vms, err := h.vSphereClient.ListVirtualMachines(ctx)
 	if err != nil {
@@ -228,6 +232,116 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 }
 
 func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
+	// Determine the resource footprint of the next worker by reading template resources
+	templateName := model.GetVSphereImage()
+	if templateName == "" {
+		log.Warn(ctx, "CanAllocateResources> model has no vSphere image defined")
+		return true, nil
+	}
+
+	nextCPUs, nextMemoryMB, err := h.getTemplateResources(ctx, templateName)
+	if err != nil {
+		log.Warn(ctx, "CanAllocateResources> unable to determine resource footprint for template %q: %v", templateName, err)
+		return true, nil // Graceful degradation: allow spawning if template resources can't be read
+	}
+
+	// Primary check: Resource Pool capacity (always enabled, Amendment B)
+	canFit, err := h.checkResourcePoolCapacity(ctx, nextCPUs, nextMemoryMB)
+	if err != nil {
+		log.Warn(ctx, "CanAllocateResources> Resource Pool check failed: %v", err)
+		// Graceful degradation: continue to static limits if Resource Pool check fails
+	} else if !canFit {
+		log.Info(ctx, "CanAllocateResources> Resource Pool capacity insufficient for %d vCPUs, %d MB", nextCPUs, nextMemoryMB)
+		return false, nil
+	}
+
+	// Supplementary checks: static limits (if configured)
+	usedCPUs, usedMemoryMB := h.countAllocatedResources(ctx)
+
+	// Check CPU limit
+	if h.Config.MaxCPUs > 0 {
+		if int(usedCPUs)+int(nextCPUs) > h.Config.MaxCPUs {
+			log.Info(ctx, "CanAllocateResources> CPU limit reached: %d + %d > %d",
+				usedCPUs, nextCPUs, h.Config.MaxCPUs)
+			return false, nil
+		}
+	}
+
+	// Check memory limit
+	if h.Config.MaxMemoryMB > 0 {
+		if int64(usedMemoryMB)+int64(nextMemoryMB) > h.Config.MaxMemoryMB {
+			log.Info(ctx, "CanAllocateResources> Memory limit reached: %d + %d > %d",
+				usedMemoryMB, nextMemoryMB, h.Config.MaxMemoryMB)
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// countAllocatedResources returns the total vCPUs and memory (MB) currently allocated
+// by VMs managed by this hatchery (excluding template VMs).
+func (h *HatcheryVSphere) countAllocatedResources(ctx context.Context) (int32, int32) {
+	srvs := h.getRawVMs(ctx)
+
+	var totalCPUs int32
+	var totalMemoryMB int32
+
+	for _, s := range srvs {
+		annot := getVirtualMachineCDSAnnotation(ctx, s)
+		if annot == nil || annot.HatcheryName != h.Name() {
+			continue
+		}
+		// Exclude template VMs
+		if annot.Model {
+			continue
+		}
+
+		totalCPUs += int32(s.Summary.Config.NumCpu)
+		totalMemoryMB += int32(s.Summary.Config.MemorySizeMB)
+	}
+
+	return totalCPUs, totalMemoryMB
+}
+
+// getTemplateResources returns the vCPUs and memory (MB) of a vSphere template.
+func (h *HatcheryVSphere) getTemplateResources(ctx context.Context, templateName string) (int32, int32, error) {
+	vm, err := h.getVirtualMachineTemplateByName(ctx, templateName)
+	if err != nil {
+		return 0, 0, sdk.WithStack(err)
+	}
+
+	return int32(vm.Summary.Config.NumCpu), int32(vm.Summary.Config.MemorySizeMB), nil
+}
+
+// checkResourcePoolCapacity verifies if the Resource Pool has enough unreserved CPU and memory
+// to accommodate a VM with the specified resource requirements.
+func (h *HatcheryVSphere) checkResourcePoolCapacity(ctx context.Context, requiredCPUs int32, requiredMemoryMB int32) (bool, error) {
+	pool, err := h.vSphereClient.LoadResourcePool(ctx)
+	if err != nil {
+		return false, sdk.WithStack(err)
+	}
+
+	var poolMo mo.ResourcePool
+	if err := pool.Properties(ctx, pool.Reference(), []string{"runtime"}, &poolMo); err != nil {
+		return false, sdk.WithStack(err)
+	}
+
+	// CPU is in MHz, not vCPUs — this is imprecise but it's what vSphere provides
+	// We can't accurately convert MHz to vCPUs, so we check if there's *any* unreserved capacity
+	if poolMo.Runtime.Cpu.UnreservedForVm <= 0 {
+		log.Info(ctx, "checkResourcePoolCapacity> no unreserved CPU in Resource Pool")
+		return false, nil
+	}
+
+	// Memory is in bytes
+	requiredMemoryBytes := int64(requiredMemoryMB) * 1024 * 1024
+	if poolMo.Runtime.Memory.UnreservedForVm < requiredMemoryBytes {
+		log.Info(ctx, "checkResourcePoolCapacity> insufficient memory: need %d MB, available %d MB",
+			requiredMemoryMB, poolMo.Runtime.Memory.UnreservedForVm/(1024*1024))
+		return false, nil
+	}
+
 	return true, nil
 }
 

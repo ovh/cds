@@ -28,6 +28,8 @@ type HatcheryConfiguration struct {
 	WorkerProvisioning                  []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
 	GuestCredentials                    []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"List of Guest credentials" json:"-"`
 	DefaultWorkerModelsV2               []DefaultWorkerModelsV2    `mapstructure:"defaultWorkerModelsV2" toml:"defaultWorkerModelsV2" commented:"true" comment:"List of default worker models v2 for declared binaries - used by workflow v1" json:"-"`
+	MaxCPUs                             int                        `mapstructure:"maxCpus" toml:"maxCpus" default:"0" commented:"true" comment:"Optional. Maximum total vCPUs this hatchery may allocate. 0 means no static CPU limit (Resource Pool limits still apply)." json:"maxCpus"`
+	MaxMemoryMB                         int64                      `mapstructure:"maxMemoryMB" toml:"maxMemoryMB" default:"0" commented:"true" comment:"Optional. Maximum total RAM (MB) this hatchery may allocate. 0 means no static memory limit (Resource Pool limits still apply)." json:"maxMemoryMB"`
 }
 
 type WorkerProvisioningConfig struct {
