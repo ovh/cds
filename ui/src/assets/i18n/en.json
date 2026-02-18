@@ -240,7 +240,6 @@
   "project_permission_form_title": "Add a permission: ",
   "project_permission_form_wizard_title": "Use an existing group or let empty to create automatically a new group: ",
   "project_permission_form_wizard_new": "(or create a new group by choosing the name)",
-  "project_repoman_created_by": "Link created by ",
   "project_variable_list_title": "List of project variables: ",
   "project_variable_form_title": "Add a new variable: ",
   "project_vcs_no": "The project is not linked to a repository manager",
