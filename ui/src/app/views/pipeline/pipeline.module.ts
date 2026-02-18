@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { PipelineAddComponent } from './add/pipeline.add.component';
 import { pipelineRouting } from './pipeline.routing';
@@ -21,9 +21,6 @@ import { PipelineStageFormComponent } from './show/workflow/stage/form/pipeline.
     imports: [
         SharedModule,
         pipelineRouting,
-    ],
-    schemas: [
-        CUSTOM_ELEMENTS_SCHEMA
     ]
 })
 export class PipelineModule {

@@ -107,7 +107,7 @@ export interface WithKey {
     styleUrls: ['./data-table.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DataTableComponent<T extends WithKey> extends Table<T> implements OnChanges {
+export class DataTableComponent<T> extends Table<T> implements OnChanges {
     @Input() columns: Array<Column<T>>;
     @Output() sortChange = new EventEmitter<string>();
     @Output() dataChange = new EventEmitter<number>();
@@ -165,9 +165,9 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
 
         if (this.allData) {
             if (this.withSelect) {
-                this.allData.forEach(d => this.selected[d.key()] = false);
+                this.allData.forEach(d => this.selected[(d as any).key()] = false);
                 if (typeof this.withSelect === 'function') {
-                    this.allData.filter(this.withSelect).forEach(d => this.selected[d.key()] = true);
+                    this.allData.filter(this.withSelect).forEach(d => this.selected[(d as any).key()] = true);
                     this.emitSelectChange();
                 }
             }
@@ -249,7 +249,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
 
     onSelectAllChange(e: any) {
         this.selectedAll = !this.selectedAll;
-        this.allData.forEach(d => this.selected[d.key()] = this.selectedAll);
+        this.allData.forEach(d => this.selected[(d as any).key()] = this.selectedAll);
         this.emitSelectChange();
     }
 

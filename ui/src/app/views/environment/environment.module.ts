@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { SharedModule } from 'app/shared/shared.module';
 import { EnvironmentAddComponent } from './add/environment.add.component';
 import { environmentRouting } from './environment.routing';
@@ -17,9 +17,6 @@ import { EnvironmentKeysComponent } from './show/keys/environment.keys.component
     imports: [
         SharedModule,
         environmentRouting,
-    ],
-    schemas: [
-        CUSTOM_ELEMENTS_SCHEMA
     ]
 })
 export class EnvironmentModule {

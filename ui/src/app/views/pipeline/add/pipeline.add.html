@@ -4,7 +4,7 @@
             <h2>Create a pipeline</h2>
             <nz-row class="header">
                 <nz-col nzOffset="2" nzSpan="20">
-                    <nz-button-group>
+                    <nz-space-compact>
                         <button nz-button type="button" [nzType]="!asCode?'primary':'default'" (click)="asCode = false">
                             Create
                         </button>
@@ -12,7 +12,7 @@
                                 (click)="asCode = true">
                            Import
                         </button>
-                    </nz-button-group>
+                    </nz-space-compact>
                 </nz-col>
             </nz-row>
             <nz-row *ngIf="asCode">

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
@@ -54,17 +54,17 @@ export class QueueComponent implements OnInit, OnDestroy {
     statusFilterListV1: NzTableFilterList = [];
     statusFilterListV2: NzTableFilterList = [];
 
-    constructor(
-        private _activatedRoute: ActivatedRoute,
-        private _cd: ChangeDetectorRef,
-        private _messageService: NzMessageService,
-        private _queueService: QueueService,
-        private _router: Router,
-        private _store: Store,
-        private _toast: ToastService,
-        private _wfRunService: WorkflowRunService,
-        private _workflowService: V2WorkflowRunService
-    ) {
+    private _activatedRoute = inject(ActivatedRoute);
+    private _cd = inject(ChangeDetectorRef);
+    private _messageService = inject(NzMessageService);
+    private _queueService = inject(QueueService);
+    private _router = inject(Router);
+    private _store = inject(Store);
+    private _toast = inject(ToastService);
+    private _wfRunService = inject(WorkflowRunService);
+    private _workflowService = inject(V2WorkflowRunService);
+
+    constructor() {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
 
         this.path = [<PathItem>{
@@ -305,7 +305,7 @@ export class QueueComponent implements OnInit, OnDestroy {
 
     sortJobsV2(a: V2WorkflowRunJob, b: V2WorkflowRunJob) { return moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1; }
 
-    filterJobsV1(statuses: string[], job: WorkflowNodeJobRun) { return statuses.find(s => s === job.status); }
+    filterJobsV1(statuses: string[], job: WorkflowNodeJobRun) { return !!statuses.find(s => s === job.status); }
 
     filterJobsV2(job: V2WorkflowRunJob) { return this.statusFiltersV2.find(s => s === job.status); }
 }

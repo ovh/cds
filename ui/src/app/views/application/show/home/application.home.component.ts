@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Subscription } from 'rxjs';
@@ -11,6 +11,7 @@ import { Project } from '../../../../model/project.model';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { FetchApplicationOverview } from '../../../../store/applications.action';
 import { ApplicationsState } from '../../../../store/applications.state';
+import { Color } from '@swimlane/ngx-charts';
 
 @Component({
     standalone: false,
@@ -28,11 +29,9 @@ export class ApplicationHomeComponent implements OnInit, OnDestroy {
     overview: Overview;
     overviewSubscription: Subscription;
 
-    constructor(
-        private _translate: TranslateService,
-        private store: Store,
-        private _cd: ChangeDetectorRef
-    ) { }
+    private _translate = inject(TranslateService);
+    private store = inject(Store);
+    private _cd = inject(ChangeDetectorRef);
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
@@ -65,7 +64,7 @@ export class ApplicationHomeComponent implements OnInit, OnDestroy {
     createUnitTestDashboard(metrics: Array<Metric>): void {
         let cc = new GraphConfiguration(GraphType.AREA_STACKED);
         cc.title = this._translate.instant('graph_unittest_title');
-        cc.colorScheme = { domain: [] };
+        cc.colorScheme = <Color>{ domain: [] };
         cc.gradient = false;
         cc.showXAxis = true;
         cc.showYAxis = true;

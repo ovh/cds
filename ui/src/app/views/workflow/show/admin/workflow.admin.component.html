@@ -4,7 +4,7 @@
             <nz-form-item>
                 <nz-form-label [nzSpan]="3">Select icon</nz-form-label>
                 <nz-form-control>
-                    <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
+                    <app-upload-button accept=".png,.jpg,.jpeg" [image]="true" (event)="fileEvent($event)">
                     </app-upload-button>
                 </nz-form-control>
             </nz-form-item>
@@ -186,7 +186,7 @@
                         <ng-container *ngIf="dryRunDatas?.length > 0">
                             <div class="dryrun">
                                 <h4>{{'workflow_retention_result_title' | translate }}</h4>
-                                <app-data-table [withFilter]="" [columns]="dryRunColumns" [data]="dryRunDatas"
+                                <app-data-table [columns]="dryRunColumns" [data]="dryRunDatas"
                                                 [withPagination]="10"></app-data-table>
                             </div>
                         </ng-container>

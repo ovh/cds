@@ -26,7 +26,7 @@
                                 <div *ngIf="!fileTooLarge && img">
                                     <img class="app-icon" [src]="img" alt="icon" />
                                 </div>
-                                <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
+                                <app-upload-button accept=".png,.jpg,.jpeg" [image]="true" (event)="fileEvent($event)">
                                 </app-upload-button>
                             </nz-form-control>
                         </nz-form-item>

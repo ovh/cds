@@ -5,10 +5,10 @@ import { GroupPermission } from './group.model';
 import { ProjectIntegration } from './integration.model';
 import { Key } from './keys.model';
 import { Pipeline } from './pipeline.model';
-import { RepositoriesManager } from './repositories.model';
 import { Variable } from './variable.model';
 import { Workflow } from './workflow.model';
 import { VariableSet } from './variablesets.model';
+import { VCSProject } from './vcs.model';
 
 export class Project {
   key: string;
@@ -28,7 +28,7 @@ export class Project {
   environment_names: Array<IdName>;
   permissions: Permission;
   last_modified: string;
-  vcs_servers: Array<RepositoriesManager>;
+  vcs_servers: Array<VCSProject>;
   keys: Array<Key>;
   integrations: Array<ProjectIntegration>;
   features: {};
@@ -140,6 +140,8 @@ export class RepositoryHookWorkflow {
   type: string;
   status: string;
   run_id: string;
+  run_number: string;
+  error: string;
 }
 
 export class StartPurgeResponse {

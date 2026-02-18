@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from "@angular/core";
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { Bookmark, BookmarkType } from "app/model/bookmark.model";
 import { Subscription } from "rxjs";
@@ -14,16 +14,14 @@ import { BookmarkCreate, BookmarkDelete, BookmarkState, BookmarkStateModel } fro
 })
 @AutoUnsubscribe()
 export class FavoriteButtonComponent implements OnInit, OnChanges, OnDestroy {
-    @Input() type: BookmarkType;
+    @Input() type: BookmarkType | string;
     @Input() id: string;
     loading: boolean;
     bookmark: Bookmark;
     sub: Subscription;
 
-    constructor(
-        private _cd: ChangeDetectorRef,
-        private _store: Store
-    ) { }
+    private _cd = inject(ChangeDetectorRef);
+    private _store = inject(Store);
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 

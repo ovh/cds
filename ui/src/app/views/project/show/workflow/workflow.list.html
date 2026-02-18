@@ -6,7 +6,7 @@
     </nz-row>
     <nz-row>
         <nz-col [nzSpan]="8">
-            <nz-button-group>
+            <nz-space-compact>
                 <button nz-button [nzType]="viewMode === 'blocs'?'primary':'default'" (click)="setViewMode('blocs')">
                     <i nz-icon nzType="table" nzTheme="outline"></i>
                 </button>
@@ -16,7 +16,7 @@
                 <button nz-button [nzType]="viewMode === 'lines'?'primary':'default'" (click)="setViewMode('lines')">
                     <i nz-icon nzType="unordered-list" nzTheme="outline"></i>
                 </button>
-            </nz-button-group>
+            </nz-space-compact>
         </nz-col>
         <nz-col class="center" [nzSpan]="8">
             <button nz-button nzType="primary" [routerLink]="['./workflow']" [disabled]="!project.permissions.writable">

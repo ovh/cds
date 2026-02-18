@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { AllKeys, Key } from 'app/model/keys.model';
+import { AllKeys } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
 import { VCSProject, VCSProjectAuth, VCSProjectOptions } from 'app/model/vcs.model';
 import { ProjectService } from 'app/service/project/project.service';
@@ -16,49 +16,44 @@ import { lastValueFrom } from 'rxjs';
     styleUrls: ['./project.repomanager.form.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectRepoManagerFormComponent implements OnInit {
-    @Input() vcsProjectName: string;
+export class ProjectRepoManagerFormComponent implements OnChanges {
+    @Input() vcsProject: VCSProject;
     @Input() project: Project;
+    @Input() visible: boolean;
+    @Output() closed = new EventEmitter<boolean>();
 
     loading: boolean;
-    public ready = false;
-    public connectLoading = false;
-    public verificationLoading = false;
-
-    // Repo manager form data
-    reposManagerList: string[];
-    selectedRepoId: number;
-    selectedRepoType: string;
     selectedPublicKey: string;
-
-    repoModalVisible: boolean;
-    addingVCSProject: boolean;
-    askDeleting: boolean;
     keys: AllKeys;
 
-    vcsProject: VCSProject;
+    reposManagerList: string[] = ['bitbucketcloud', 'bitbucketserver', 'github', 'gitlab', 'gitea', 'gerrit'];
 
-    constructor(
-        public _translate: TranslateService,
-        private _v2ProjectService: V2ProjectService,
-        private _cd: ChangeDetectorRef,
-        private _projectService: ProjectService,
-        private _messageService: NzMessageService
-    ) {
-        this.askDeleting = false;
-        this.reposManagerList = ["bitbucketcloud", "bitbucketserver", "github", "gitlab", "gitea", "gerrit"];
-        if (!this.vcsProjectName) {
-            this.vcsProject = new VCSProject();
-            this.vcsProject.options = new VCSProjectOptions();
-            this.vcsProject.auth = new VCSProjectAuth();
+    get isEditing(): boolean {
+        return !!(this.vcsProject && this.vcsProject.id);
+    }
+
+    public _translate = inject(TranslateService);
+    private _v2ProjectService = inject(V2ProjectService);
+    private _cd = inject(ChangeDetectorRef);
+    private _projectService = inject(ProjectService);
+    private _messageService = inject(NzMessageService);
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['vcsProject'] && this.vcsProject) {
+            if (!this.vcsProject.auth) {
+                this.vcsProject.auth = new VCSProjectAuth();
+            }
+            if (!this.vcsProject.options) {
+                this.vcsProject.options = new VCSProjectOptions();
+            }
+        }
+        if (changes['visible'] && this.visible) {
+            this.selectedPublicKey = null;
+            this.loadKeys();
         }
     }
 
-    ngOnInit(): void {
-        this.load();
-    }
-
-    async load() {
+    async loadKeys() {
         this.loading = true;
         this._cd.markForCheck();
         try {
@@ -66,105 +61,56 @@ export class ProjectRepoManagerFormComponent implements OnInit {
             this.keys = new AllKeys();
             this.keys.ssh = keys.filter(k => k.type === 'ssh');
         } catch (e) {
-            this._messageService.error(`Unable to load integrations: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to load keys: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
         this.loading = false;
         this._cd.markForCheck();
     }
 
-    create(): void {
-        if (this.reposManagerList[this.selectedRepoId]) {
-            this.repoModalVisible = true;
-            this.selectedRepoType = this.reposManagerList[this.selectedRepoId];
-            this.vcsProject.type = this.reposManagerList[this.selectedRepoId];
-        }
-    }
-
-    view(): void {
-        if (this.vcsProjectName) {
-            this._projectService.getVCSProject(this.project.key, this.vcsProjectName).subscribe(vcsProject => {
-                this.vcsProject = vcsProject;
-                this.repoModalVisible = true;
-                this._cd.markForCheck();
-            });
-        }
-    }
-
-    async addVCSProject() {
-        if (!this.reposManagerList[this.selectedRepoId]) {
-            return;
-        }
-
+    async save() {
         this.loading = true;
         this._cd.markForCheck();
-
         try {
-            await lastValueFrom(this._projectService.addVCSProject(this.project.key, this.vcsProject));
-            this._messageService.success('Repository Manager added');
-        } catch (e) {
-            this._messageService.error(`Unable to add repository manager: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-            return;
-        } finally {
-            this.loading = false;
-            this._cd.markForCheck();
-        }
-
-        this.loadVCSProject();
-    }
-
-    async loadVCSProject() {
-        try {
-            this.project.vcs_servers = await lastValueFrom(this._projectService.listVCSProject(this.project.key));
-        } catch (e) {
-            this._messageService.error(`Unable to load repository managers: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-            return;
-        } finally {
-            this.repoModalVisible = false;
-            this._cd.markForCheck();
-        }
-    }
-
-    async saveVCSProject() {
-        this.loading = true;
-        this._cd.markForCheck();
-
-        try {
-            await lastValueFrom(this._projectService.saveVCSProject(this.project.key, this.vcsProject));
-            this._messageService.success('Repository Manager updated');
+            if (this.isEditing) {
+                await lastValueFrom(this._projectService.saveVCSProject(this.project.key, this.vcsProject));
+                this._messageService.success('Repository Manager updated');
+            } else {
+                await lastValueFrom(this._projectService.addVCSProject(this.project.key, this.vcsProject));
+                this._messageService.success('Repository Manager added');
+            }
+            this.closed.emit(true);
         } catch (e) {
             this._messageService.error(`Unable to save repository manager: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-            return;
         } finally {
             this.loading = false;
             this._cd.markForCheck();
         }
-
-        this.loadVCSProject();
     }
 
-    async deleteVCSProject() {
+    async delete() {
         this.loading = true;
         this._cd.markForCheck();
-
         try {
             await lastValueFrom(this._projectService.deleteVCSProject(this.project.key, this.vcsProject.name));
             this._messageService.success('Repository Manager deleted');
+            this.closed.emit(true);
         } catch (e) {
             this._messageService.error(`Unable to delete repository manager: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-            return;
         } finally {
             this.loading = false;
             this._cd.markForCheck();
         }
-
-        this.loadVCSProject();
     }
 
-    updatePublicKey(keyName: string): void {
+    cancel(): void {
+        this.closed.emit(false);
+    }
+
+    updatePublicKey(keyName: any): void {
         if (!this.keys) {
             return;
         }
-        let key = this.keys.ssh.find(k => k.name === keyName);
+        const key = this.keys.ssh.find(k => k.name === keyName);
         if (key) {
             this.selectedPublicKey = key.public;
             this.vcsProject.auth.sshKeyName = key.name;
@@ -175,3 +121,4 @@ export class ProjectRepoManagerFormComponent implements OnInit {
         this._messageService.success(this._translate.instant('key_copied'));
     }
 }
+

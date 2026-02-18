@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SharedModule } from 'app/shared/shared.module';
@@ -118,9 +118,6 @@ import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
         ProjectExistsGuard,
         ProjectGuard,
         ProjectV2Guard
-    ],
-    schemas: [
-        CUSTOM_ELEMENTS_SCHEMA
     ]
 })
 export class ProjectModule { }
