@@ -166,6 +166,9 @@ func (w WorkerStarterWorkerModel) GetFlavor(reqs RequirementList, defaultFlavor 
 		if w.OpenstackSpec.Flavor != "" {
 			return w.OpenstackSpec.Flavor
 		}
+		if w.VSphereSpec.Flavor != "" {
+			return w.VSphereSpec.Flavor
+		}
 		for _, r := range reqs {
 			if r.Type == FlavorRequirement && r.Value != "" {
 				return r.Value

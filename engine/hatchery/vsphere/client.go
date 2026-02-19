@@ -15,6 +15,47 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
+// reconfigureVM changes the CPU and RAM of a powered-off VM to match the requested flavor
+func (h *HatcheryVSphere) reconfigureVM(ctx context.Context, vm *object.VirtualMachine, flavor *VSphereFlavorConfig) error {
+	if flavor == nil {
+		return nil
+	}
+
+	// Ensure VM is powered off
+	powerState, err := vm.PowerState(ctx)
+	if err != nil {
+		return sdk.WrapError(err, "reconfigureVM> cannot get power state")
+	}
+	if powerState != types.VirtualMachinePowerStatePoweredOff {
+		return fmt.Errorf("reconfigureVM> VM must be powered off to reconfigure (current state: %s)", powerState)
+	}
+
+	// Prepare reconfigure spec
+	spec := types.VirtualMachineConfigSpec{}
+	if flavor.CPUs > 0 {
+		spec.NumCPUs = flavor.CPUs
+	}
+	if flavor.MemoryMB > 0 {
+		spec.MemoryMB = flavor.MemoryMB
+	}
+
+	log.Info(ctx, "reconfigureVM> reconfiguring VM to %d vCPUs, %d MB RAM", flavor.CPUs, flavor.MemoryMB)
+
+	// Apply reconfiguration
+	task, err := vm.Reconfigure(ctx, spec)
+	if err != nil {
+		return sdk.WrapError(err, "reconfigureVM> cannot reconfigure VM")
+	}
+
+	if err := task.Wait(ctx); err != nil {
+		return sdk.WrapError(err, "reconfigureVM> VM reconfiguration task failed")
+	}
+
+	log.Info(ctx, "reconfigureVM> VM successfully reconfigured to %d vCPUs, %d MB RAM", flavor.CPUs, flavor.MemoryMB)
+	return nil
+}
+
+
 // get all servers on our host
 func (h *HatcheryVSphere) getRawVMs(ctx context.Context) []mo.VirtualMachine {
 	vms, err := h.vSphereClient.ListVirtualMachines(ctx)
@@ -182,7 +223,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 }
 
 // prepareCloneSpec create a basic configuration in order to create a vm
-func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation) (*types.VirtualMachineCloneSpec, error) {
+func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation, flavor *VSphereFlavorConfig) (*types.VirtualMachineCloneSpec, error) {
 	devices, err := h.vSphereClient.LoadVirtualMachineDevices(ctx, vm)
 	if err != nil {
 		return nil, err
@@ -289,6 +330,18 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 				AfterPowerOn: &sdk.True,
 			},
 		},
+	}
+
+	// Apply flavor overrides for fresh clones
+	// (provisioned VMs are reconfigured separately via reconfigureVM)
+	if flavor != nil {
+		if flavor.CPUs > 0 {
+			cloneSpec.Config.NumCPUs = flavor.CPUs
+		}
+		if flavor.MemoryMB > 0 {
+			cloneSpec.Config.MemoryMB = flavor.MemoryMB
+		}
+		log.Info(ctx, "prepareCloneSpec: applying flavor with %d vCPUs, %d MB RAM", flavor.CPUs, flavor.MemoryMB)
 	}
 
 	cloneSpec.Customization = customSpec

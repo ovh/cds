@@ -847,9 +847,181 @@ cds_hatchery_vsphere_ip_used_count / cds_hatchery_vsphere_ip_total_count > 0.9
 
 ---
 
+# 13. VM Flavor Support (CPU/RAM Sizing)
+
+The hatchery supports **flavors** for flexible CPU and RAM sizing without requiring multiple vSphere templates. This feature allows worker models to specify resource profiles that are applied dynamically.
+
+## 13.1 Overview
+
+Flavors map abstract size names (e.g., `small`, `medium`, `large`) to explicit CPU and RAM values. When a worker is spawned with a flavor:
+
+- **For pre-provisioned VMs**: The VM is reconfigured (while powered off) to match the flavor before power-on
+- **For fresh clones**: The flavor is applied at clone time via `VirtualMachineConfigSpec`
+
+This approach enables a single vSphere template + single pool of provisioned VMs to serve jobs with different resource requirements.
+
+## 13.2 Configuration
+
+### Flavor Definition
+
+```toml
+[commonConfiguration.provision]
+maxWorker = 0  # unlimited — rely on resource-based capacity
+
+# Optional static resource limits (see Section 12)
+maxCpus = 64
+maxMemoryMB = 131072
+
+# Flavor definitions
+defaultFlavor = "medium"
+countSmallerFlavorToKeep = 2
+
+[flavors.small]
+cpus = 2
+memoryMB = 4096
+
+[flavors.medium]
+cpus = 4
+memoryMB = 8192
+
+[flavors.large]
+cpus = 8
+memoryMB = 16384
+```
+
+### Configuration Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `flavors` | `map[string]` | `{}` | Map of flavor name → CPU/RAM config |
+| `defaultFlavor` | `string` | `""` | Default flavor when none specified |
+| `countSmallerFlavorToKeep` | `int` | `0` | Reserve capacity for N smaller flavor workers (starvation prevention) |
+
+## 13.3 Flavor Usage
+
+Flavors can be specified in two ways:
+
+### Option 1: In the Worker Model
+
+Define the flavor directly in the worker model spec:
+
+```yaml
+name: my-worker-large
+type: vsphere
+osarch: linux/amd64
+spec:
+  image: "debian12"
+  flavor: "large"  # 8 vCPUs, 16GB RAM
+  username: "admin"
+  password: "${{ secrets.VM_PASSWORD }}"
+```
+
+### Option 2: In Job Requirements (Recommended)
+
+Use a **generic worker model** and specify the flavor per job:
+
+```yaml
+# Worker model (generic, no flavor)
+name: debian12-generic
+type: vsphere
+osarch: linux/amd64
+spec:
+  image: "debian12"
+  username: "admin"
+  password: "${{ secrets.VM_PASSWORD }}"
+```
+
+```yaml
+# Workflow: different jobs use different flavors
+jobs:
+  build-small:
+    runs-on: vsphere/debian12-generic
+    requirements:
+      - flavor: small  # 2 vCPUs, 4GB
+
+  build-large:
+    runs-on: vsphere/debian12-generic
+    requirements:
+      - flavor: large  # 8 vCPUs, 16GB
+```
+
+**Advantage**: Single worker model serves multiple resource profiles, reducing model duplication.
+
+### Flavor Resolution Priority
+
+1. **V1 model**: `Model.ModelVirtualMachine.Flavor`
+2. **V2 model**: `V2WorkerModelVSphereSpec.Flavor`
+3. **Job requirement**: `FlavorRequirement` value (from `runs-on` requirements)
+4. **Default**: `HatcheryConfiguration.DefaultFlavor`
+5. **None**: Template resources used (no resize)
+
+## 13.4 Capacity Management Integration
+
+`CanAllocateResources()` (from Section 12) automatically uses flavor resources instead of template resources when a flavor is requested:
+
+```
+Job requests flavor "large" (8 vCPUs, 16GB RAM)
+  ↓
+CanAllocateResources validates:
+  - Resource Pool has 8 vCPUs + 16GB unreserved
+  - MaxCPUs: current + 8 ≤ limit
+  - MaxMemoryMB: current + 16GB ≤ limit
+  ↓
+If capacity available → spawn proceeds
+```
+
+This ensures the Resource Pool and static limits are checked **before** attempting to spawn/reconfigure VMs.
+
+## 13.5 Starvation Prevention
+
+The `countSmallerFlavorToKeep` setting reserves capacity for smaller flavors when spawning large ones:
+
+```toml
+countSmallerFlavorToKeep = 2
+```
+
+**Example**: When spawning a `large` worker (8 vCPUs) with this setting:
+
+- Required capacity = 8 vCPUs (large) + 2 × 2 vCPUs (small reserve) = 12 vCPUs
+- The spawn is rejected if less than 12 vCPUs are available
+- This ensures at least 2 `small` workers can still be spawned after the `large` one
+
+The reserved flavor is always the **smallest** defined flavor (by CPU count).
+
+## 13.6 Pre-Provisioning with Flavors
+
+Pre-provisioned VMs are created **without flavor applied** — they inherit template resources and remain in a "neutral" state. When assigned to a job:
+
+1. `FindProvisionnedWorker()` returns any available provisioned VM (no flavor matching)
+2. If flavor requested → VM is reconfigured (CPU/RAM) while powered off
+3. VM is renamed and powered on with target resources
+
+**Flow**:
+
+```
+Provisioned VM (2 vCPUs, 4GB from template)
+  ↓
+Job requests "large" flavor
+  ↓
+reconfigureVM(vm, "large")  →  VM now has 8 vCPUs, 16GB (powered off)
+  ↓
+Power on VM
+  ↓
+Worker starts with 8 vCPUs, 16GB
+```
+
+If no provisioned VM available, a fresh clone is created with the flavor applied at clone time.
+
+## 13.7 Backward Compatibility
+
+- If `flavors` map is empty/not configured → no resizing occurs, VMs inherit template resources
+- If worker model has no flavor and no `defaultFlavor` configured → template resources used
+- Resource counting (Section 12) reads actual VM hardware → automatically handles resized VMs
+
+---
+
 # Amendments
 
 The following amendments extend this specification. Each is in a separate file:
 
-- **[Amendment B: Resource-Based Capacity Management](amendment-B-resource-capacity.md)** — Replaces the `CanAllocateResources()` stub with real Resource Pool and CPU/memory checks. Makes `MaxWorker` optional (`0` = unlimited).
-- **[Amendment C: VM Flavor Support (CPU/RAM Resize)](amendment-C-flavor-resize.md)** — Adds flavor-based VM resize at clone time (CPU/RAM overrides). Builds on Amendment B.
+- **[Amendment B: Resource-Based Capacity Management](amendment-B-resource-capacity.md)** — Replaces the `CanAllocateResources()` stub with real Resource Pool and CPU/memory checks. Makes `MaxWorker` optional (`0` = unlimited). **Status: Implemented.**

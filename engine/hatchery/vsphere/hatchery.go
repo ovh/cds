@@ -166,7 +166,6 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		if r.Type == sdk.ServiceRequirement ||
 			r.Type == sdk.MemoryRequirement ||
 			r.Type == sdk.HostnameRequirement ||
-			r.Type == sdk.FlavorRequirement ||
 			model.GetCmd() == "" {
 			return false
 		}
@@ -232,17 +231,38 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 }
 
 func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
-	// Determine the resource footprint of the next worker by reading template resources
-	templateName := model.GetVSphereImage()
-	if templateName == "" {
-		log.Warn(ctx, "CanAllocateResources> model has no vSphere image defined")
-		return true, nil
+	// Determine the resource footprint of the next worker
+	var nextCPUs int32
+	var nextMemoryMB int32
+
+	// Amendment C: prefer flavor-defined resources over template resources
+	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
+	if flavorName != "" {
+		// Use flavor-defined resources
+		flavor, ok := h.Config.Flavors[strings.ToLower(flavorName)]
+		if !ok {
+			log.Warn(ctx, "CanAllocateResources> unknown flavor %q, falling back to template resources", flavorName)
+		} else {
+			nextCPUs = flavor.CPUs
+			nextMemoryMB = int32(flavor.MemoryMB)
+			log.Debug(ctx, "CanAllocateResources> using flavor %q: %d vCPUs, %d MB", flavorName, nextCPUs, nextMemoryMB)
+		}
 	}
 
-	nextCPUs, nextMemoryMB, err := h.getTemplateResources(ctx, templateName)
-	if err != nil {
-		log.Warn(ctx, "CanAllocateResources> unable to determine resource footprint for template %q: %v", templateName, err)
-		return true, nil // Graceful degradation: allow spawning if template resources can't be read
+	// Fallback: read template resources if no flavor or flavor not found
+	if nextCPUs == 0 || nextMemoryMB == 0 {
+		templateName := model.GetVSphereImage()
+		if templateName == "" {
+			log.Warn(ctx, "CanAllocateResources> model has no vSphere image defined")
+			return true, nil
+		}
+
+		var err error
+		nextCPUs, nextMemoryMB, err = h.getTemplateResources(ctx, templateName)
+		if err != nil {
+			log.Warn(ctx, "CanAllocateResources> unable to determine resource footprint for template %q: %v", templateName, err)
+			return true, nil // Graceful degradation: allow spawning if template resources can't be read
+		}
 	}
 
 	// Primary check: Resource Pool capacity (always enabled, Amendment B)
@@ -264,6 +284,20 @@ func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.Wo
 			log.Info(ctx, "CanAllocateResources> CPU limit reached: %d + %d > %d",
 				usedCPUs, nextCPUs, h.Config.MaxCPUs)
 			return false, nil
+		}
+
+		// Amendment C: Flavor starvation prevention
+		if flavorName != "" && h.Config.CountSmallerFlavorToKeep > 0 {
+			smallerCPUs := h.getSmallerFlavorCPUs(flavorName)
+			if smallerCPUs > 0 && smallerCPUs != nextCPUs {
+				needed := int(nextCPUs) + h.Config.CountSmallerFlavorToKeep*int(smallerCPUs)
+				available := h.Config.MaxCPUs - int(usedCPUs)
+				if needed > available {
+					log.Info(ctx, "CanAllocateResources> starvation prevention: need %d CPUs (%d + %d×%d reserve) but only %d available",
+						needed, nextCPUs, h.Config.CountSmallerFlavorToKeep, smallerCPUs, available)
+					return false, nil
+				}
+			}
 		}
 	}
 
@@ -313,6 +347,30 @@ func (h *HatcheryVSphere) getTemplateResources(ctx context.Context, templateName
 
 	return int32(vm.Summary.Config.NumCpu), int32(vm.Summary.Config.MemorySizeMB), nil
 }
+
+// getSmallerFlavorCPUs returns the smallest flavor CPU count that is smaller than the current flavor.
+// Used for starvation prevention: reserve capacity for smaller flavors when spawning large flavors.
+// Returns 0 if no smaller flavor exists.
+func (h *HatcheryVSphere) getSmallerFlavorCPUs(currentFlavorName string) int32 {
+	currentFlavor, ok := h.Config.Flavors[strings.ToLower(currentFlavorName)]
+	if !ok {
+		return 0
+	}
+
+	var smallestCPUs int32
+	for name, f := range h.Config.Flavors {
+		if strings.ToLower(name) == strings.ToLower(currentFlavorName) {
+			continue
+		}
+		if f.CPUs < currentFlavor.CPUs {
+			if smallestCPUs == 0 || f.CPUs < smallestCPUs {
+				smallestCPUs = f.CPUs
+			}
+		}
+	}
+	return smallestCPUs
+}
+
 
 // checkResourcePoolCapacity verifies if the Resource Pool has enough unreserved CPU and memory
 // to accommodate a VM with the specified resource requirements.
