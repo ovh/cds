@@ -30,15 +30,16 @@ type HatcheryConfiguration struct {
 	DefaultWorkerModelsV2               []DefaultWorkerModelsV2         `mapstructure:"defaultWorkerModelsV2" toml:"defaultWorkerModelsV2" commented:"true" comment:"List of default worker models v2 for declared binaries - used by workflow v1" json:"-"`
 	MaxCPUs                             int                             `mapstructure:"maxCpus" toml:"maxCpus" default:"0" commented:"true" comment:"Optional. Maximum total vCPUs this hatchery may allocate. 0 means no static CPU limit (Resource Pool limits still apply)." json:"maxCpus"`
 	MaxMemoryMB                         int64                           `mapstructure:"maxMemoryMB" toml:"maxMemoryMB" default:"0" commented:"true" comment:"Optional. Maximum total RAM (MB) this hatchery may allocate. 0 means no static memory limit (Resource Pool limits still apply)." json:"maxMemoryMB"`
-	Flavors                             map[string]VSphereFlavorConfig  `mapstructure:"flavors" toml:"flavors" commented:"true" comment:"Optional. VM flavors for CPU/RAM sizing. Map of flavor name to resource configuration." json:"flavors,omitempty"`
+	Flavors                             []VSphereFlavorConfig           `mapstructure:"flavor" toml:"flavor" commented:"true" comment:"Optional. VM flavors for CPU/RAM sizing. List of available flavors." json:"flavor,omitempty"`
 	DefaultFlavor                       string                          `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"" commented:"true" comment:"Optional. Default flavor to use when no flavor is specified in worker model or job requirements." json:"defaultFlavor,omitempty"`
 	CountSmallerFlavorToKeep            int                             `mapstructure:"countSmallerFlavorToKeep" toml:"countSmallerFlavorToKeep" default:"0" commented:"true" comment:"Optional. Reserve capacity for N smaller flavor workers when spawning large flavors. 0 disables starvation prevention." json:"countSmallerFlavorToKeep"`
 }
 
 // VSphereFlavorConfig defines CPU and RAM resources for a flavor
 type VSphereFlavorConfig struct {
-	CPUs     int32 `mapstructure:"cpus" toml:"cpus" json:"cpus"`
-	MemoryMB int64 `mapstructure:"memoryMB" toml:"memoryMB" json:"memoryMB"`
+	Name     string `mapstructure:"name" toml:"name" json:"name"`
+	CPUs     int32  `mapstructure:"cpus" toml:"cpus" json:"cpus"`
+	MemoryMB int64  `mapstructure:"memoryMB" toml:"memoryMB" json:"memoryMB"`
 }
 
 type WorkerProvisioningConfig struct {

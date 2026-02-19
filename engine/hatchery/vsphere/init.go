@@ -103,8 +103,8 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	// Log flavor configuration
 	if len(h.Config.Flavors) > 0 {
 		log.Info(ctx, "VM flavors configured: %d flavor(s)", len(h.Config.Flavors))
-		for name, flavor := range h.Config.Flavors {
-			log.Info(ctx, "  - %s: %d vCPUs, %d MB RAM", name, flavor.CPUs, flavor.MemoryMB)
+		for _, flavor := range h.Config.Flavors {
+			log.Info(ctx, "  - %s: %d vCPUs, %d MB RAM", flavor.Name, flavor.CPUs, flavor.MemoryMB)
 		}
 		if h.Config.DefaultFlavor != "" {
 			log.Info(ctx, "Default flavor: %s", h.Config.DefaultFlavor)

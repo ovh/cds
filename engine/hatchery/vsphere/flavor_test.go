@@ -101,23 +101,11 @@ func TestPrepareCloneSpecWithoutFlavor(t *testing.T) {
 func TestGetSmallerFlavorCPUs(t *testing.T) {
 	h := &HatcheryVSphere{
 		Config: HatcheryConfiguration{
-			Flavors: map[string]VSphereFlavorConfig{
-				"small": {
-					CPUs:     2,
-					MemoryMB: 4096,
-				},
-				"medium": {
-					CPUs:     4,
-					MemoryMB: 8192,
-				},
-				"large": {
-					CPUs:     8,
-					MemoryMB: 16384,
-				},
-				"xlarge": {
-					CPUs:     16,
-					MemoryMB: 32768,
-				},
+			Flavors: []VSphereFlavorConfig{
+				{Name: "small", CPUs: 2, MemoryMB: 4096},
+				{Name: "medium", CPUs: 4, MemoryMB: 8192},
+				{Name: "large", CPUs: 8, MemoryMB: 16384},
+				{Name: "xlarge", CPUs: 16, MemoryMB: 32768},
 			},
 		},
 	}

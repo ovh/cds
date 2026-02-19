@@ -869,11 +869,25 @@ This approach enables a single vSphere template + single pool of provisioned VMs
 defaultFlavor = "medium"
 countSmallerFlavorToKeep = 2
 
-[flavors]
-small = { cpus = 2, memoryMB = 4096 }
-medium = { cpus = 4, memoryMB = 8192 }
-large = { cpus = 8, memoryMB = 16384 }
-xlarge = { cpus = 16, memoryMB = 32768 }
+[[flavor]]
+  name = "small"
+  cpus = 2
+  memoryMB = 4096
+
+[[flavor]]
+  name = "medium"
+  cpus = 4
+  memoryMB = 8192
+
+[[flavor]]
+  name = "large"
+  cpus = 8
+  memoryMB = 16384
+
+[[flavor]]
+  name = "xlarge"
+  cpus = 16
+  memoryMB = 32768
 ```
 
 **Note**: Flavors work seamlessly with Amendment B's resource limits (`maxCpus`, `maxMemoryMB`). When a job requests a flavor, capacity validation uses the flavor's resources instead of the template's.

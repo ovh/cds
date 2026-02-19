@@ -110,12 +110,11 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	var flavor *VSphereFlavorConfig
 	flavorName := spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor)
 	if flavorName != "" {
-		if f, ok := h.Config.Flavors[strings.ToLower(flavorName)]; ok {
-			flavor = &f
-			log.Info(ctx, "SpawnWorker> using flavor %q (%d vCPUs, %d MB RAM)", flavorName, f.CPUs, f.MemoryMB)
-		} else {
+		flavor = h.getFlavor(flavorName)
+		if flavor == nil {
 			return sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery configuration", flavorName))
 		}
+		log.Info(ctx, "SpawnWorker> using flavor %q (%d vCPUs, %d MB RAM)", flavorName, flavor.CPUs, flavor.MemoryMB)
 	}
 
 	if checkProvision {

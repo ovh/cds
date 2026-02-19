@@ -239,8 +239,8 @@ func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.Wo
 	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
 	if flavorName != "" {
 		// Use flavor-defined resources
-		flavor, ok := h.Config.Flavors[strings.ToLower(flavorName)]
-		if !ok {
+		flavor := h.getFlavor(flavorName)
+		if flavor == nil {
 			log.Warn(ctx, "CanAllocateResources> unknown flavor %q, falling back to template resources", flavorName)
 		} else {
 			nextCPUs = flavor.CPUs
@@ -348,18 +348,30 @@ func (h *HatcheryVSphere) getTemplateResources(ctx context.Context, templateName
 	return int32(vm.Summary.Config.NumCpu), int32(vm.Summary.Config.MemorySizeMB), nil
 }
 
+// getFlavor returns the flavor configuration for a given flavor name.
+// Returns nil if the flavor is not found.
+func (h *HatcheryVSphere) getFlavor(name string) *VSphereFlavorConfig {
+	for i := range h.Config.Flavors {
+		if strings.EqualFold(h.Config.Flavors[i].Name, name) {
+			return &h.Config.Flavors[i]
+		}
+	}
+	return nil
+}
+
 // getSmallerFlavorCPUs returns the smallest flavor CPU count that is smaller than the current flavor.
 // Used for starvation prevention: reserve capacity for smaller flavors when spawning large flavors.
 // Returns 0 if no smaller flavor exists.
 func (h *HatcheryVSphere) getSmallerFlavorCPUs(currentFlavorName string) int32 {
-	currentFlavor, ok := h.Config.Flavors[strings.ToLower(currentFlavorName)]
-	if !ok {
+	currentFlavor := h.getFlavor(currentFlavorName)
+	if currentFlavor == nil {
 		return 0
 	}
 
 	var smallestCPUs int32
-	for name, f := range h.Config.Flavors {
-		if strings.ToLower(name) == strings.ToLower(currentFlavorName) {
+	for i := range h.Config.Flavors {
+		f := &h.Config.Flavors[i]
+		if strings.EqualFold(f.Name, currentFlavorName) {
 			continue
 		}
 		if f.CPUs < currentFlavor.CPUs {
