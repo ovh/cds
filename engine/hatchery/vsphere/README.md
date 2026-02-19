@@ -862,32 +862,21 @@ This approach enables a single vSphere template + single pool of provisioned VMs
 
 ## 13.2 Configuration
 
-### Flavor Definition
+### Flavor Definition Example
 
 ```toml
-[commonConfiguration.provision]
-maxWorker = 0  # unlimited — rely on resource-based capacity
-
-# Optional static resource limits (see Section 12)
-maxCpus = 64
-maxMemoryMB = 131072
-
 # Flavor definitions
 defaultFlavor = "medium"
 countSmallerFlavorToKeep = 2
 
-[flavors.small]
-cpus = 2
-memoryMB = 4096
-
-[flavors.medium]
-cpus = 4
-memoryMB = 8192
-
-[flavors.large]
-cpus = 8
-memoryMB = 16384
+[flavors]
+small = { cpus = 2, memoryMB = 4096 }
+medium = { cpus = 4, memoryMB = 8192 }
+large = { cpus = 8, memoryMB = 16384 }
+xlarge = { cpus = 16, memoryMB = 32768 }
 ```
+
+**Note**: Flavors work seamlessly with Amendment B's resource limits (`maxCpus`, `maxMemoryMB`). When a job requests a flavor, capacity validation uses the flavor's resources instead of the template's.
 
 ### Configuration Fields
 
