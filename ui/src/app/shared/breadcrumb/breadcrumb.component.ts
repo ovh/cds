@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ThemeType } from '@ant-design/icons-angular';
 
 export class PathItem {
     icon: string;
-    iconTheme: string;
+    iconTheme: ThemeType;
     translate: string;
     text: string;
     active: boolean;

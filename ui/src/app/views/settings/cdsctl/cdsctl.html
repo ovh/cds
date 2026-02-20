@@ -15,7 +15,7 @@
             </ng-template>
 
             <h1>1 - Download cdsctl</h1>
-            <nz-form>
+            <div nz-form>
                 <nz-row>
                     <nz-col [nzSpan]="6">
                         <h3>Choose your OS</h3>
@@ -38,7 +38,7 @@
                         <label nz-checkbox [(ngModel)]="withKeychain" (ngModelChange)="buildData()">With OS keychain enabled</label>
                     </nz-col>
                 </nz-row>
-            </nz-form>
+            </div>
             <codemirror [(ngModel)]="tutorials['part1']" [config]="codeMirrorConfig" #codemirror1>
             </codemirror>
 

@@ -38,7 +38,7 @@
     "../node_modules/angular2-prettyjson/**/*.ts"
   ],
   "angularCompilerOptions": {
-    "fullTemplateTypeCheck": true,
+    "strictTemplates": true,
     "strictInjectionParameters": true
   }
 }

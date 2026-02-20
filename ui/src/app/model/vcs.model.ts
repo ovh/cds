@@ -1,14 +1,14 @@
 export class VCSProject {
     id: string;
     name: string;
-    auth: VCSProjectAuth;
-    options: VCSProjectOptions;
     type: string;
 	created: string;
-	lastModified: string;
-	createdBy: string;
+	last_modified: string;
+	created_by: string;
 	description: string;
 	url: string;
+    auth: VCSProjectAuth;
+    options: VCSProjectOptions;
 }
 
 export class VCSProjectOptions {
@@ -23,6 +23,8 @@ export class VCSProjectAuth {
     username: string;
     token: string;
     sshKeyName: string;
+    gpgKeyName: string;
+    emailAddress: string;
 
     // Use for gerrit
     sshUsername:   string;

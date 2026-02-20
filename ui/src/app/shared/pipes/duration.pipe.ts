@@ -6,7 +6,10 @@ import { DurationService } from '../../../../libs/workflow-graph/src/lib/duratio
     standalone: false
 })
 export class DurationMsPipe implements PipeTransform {
-    transform(value: number): string {
+    transform(value: number | Date): string {
+        if (value instanceof Date) {
+            return DurationService.durationMs(Date.now() - value.getTime());
+        }
         return DurationService.durationMs(value);
     }
 }

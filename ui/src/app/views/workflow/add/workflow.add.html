@@ -31,7 +31,7 @@
                             <div *ngSwitchCase="0">
                                 <nz-row>
                                     <nz-col [nzSpan]="18" [nzOffset]="5">
-                                        <nz-button-group>
+                                        <nz-space-compact>
                                             <button nz-button (click)="creationMode = 'graphical'"
                                                 [nzType]="creationMode==='graphical'?'primary':'default'">Create</button>
                                             <button nz-button (click)="creationMode = 'text'"
@@ -39,7 +39,7 @@
                                             <button nz-button (click)="creationMode = 'template'"
                                                 [nzType]="creationMode==='template'?'primary':'default'">From
                                                 template</button>
-                                        </nz-button-group>
+                                        </nz-space-compact>
                                     </nz-col>
                                 </nz-row>
                                 <nz-row *ngIf="creationMode === 'graphical'">
@@ -69,7 +69,7 @@
                                                 <div *ngIf="!fileTooLarge && workflow.icon">
                                                     <img width="32" class="app-icon" [src]="workflow.icon" alt="icon" />
                                                 </div>
-                                                <app-upload-button accept=".png,.jpg,.jpeg" image="true"
+                                                <app-upload-button accept=".png,.jpg,.jpeg" [image]="true"
                                                     (event)="fileEventIcon($event)">
                                                 </app-upload-button>
                                             </nz-form-control>

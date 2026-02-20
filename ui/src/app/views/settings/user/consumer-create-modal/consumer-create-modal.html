@@ -55,7 +55,7 @@
                                        (click)="clickOpenStep(formStepName.SCOPES)"
                                        nzHeader="Scopes">
                         <div content class="scope-list">
-                            <nz-table [nzData]="scopes" #scopeTable nzPageSize="50" nzShowPagination="false">
+                            <nz-table [nzData]="scopes" #scopeTable [nzPageSize]="50" [nzShowPagination]="false">
                                 <tbody>
                                 <tr *ngFor="let scope of scopeTable.data" >
                                     <td class="wide">

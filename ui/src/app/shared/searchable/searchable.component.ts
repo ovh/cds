@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
+import { QueryParamsHandling } from "@angular/router";
 
 @Component({
     standalone: false,
@@ -10,7 +11,7 @@ import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
 export class SearchableComponent {
 	@Input() link: Array<string>;
 	@Input() params: any;
-	@Input() paramsHandling: string;
+	@Input() paramsHandling: QueryParamsHandling = '';
 	@Input() fixed: boolean;
 	@Input() title: string;
 }

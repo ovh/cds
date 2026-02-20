@@ -17,7 +17,7 @@
             <nz-form-label [nzSpan]="6" nzFor="icon">Icon</nz-form-label>
             <nz-form-control>
                 <img class="icon" [src]="validateForm.value.icon" alt="Project icon" *ngIf="validateForm.value.icon">
-                <app-upload-button accept=".png,.jpg,.jpeg" image="true"
+                <app-upload-button accept=".png,.jpg,.jpeg" [image]="true"
                     (event)="fileEvent($event)"></app-upload-button>
                 <input type="hidden" nz-input formControlName="icon" id="icon">
                 <div *ngIf="fileTooLarge" class="ant-form-item-explain">
@@ -43,10 +43,10 @@
 </nz-card>
 
 <nz-card nzTitle="Link to a repository manager" class="coloredTitle">
-    <app-project-repomanager-form *ngIf="project && apiConfig && !apiConfig.project_vcs_management_disabled"
-        [project]="project"></app-project-repomanager-form>
-    <app-project-repomanager-list *ngIf="project && project.vcs_servers && project.vcs_servers.length > 0"
-        [project]="project" [reposmanagers]="project.vcs_servers"></app-project-repomanager-list>
+    <app-project-repomanager-list *ngIf="project"
+        [project]="project"
+        [canAdd]="!!apiConfig && !apiConfig.project_vcs_management_disabled">
+    </app-project-repomanager-list>
 </nz-card>
 
 <nz-card nzTitle="Danger zone" class="redTitle">

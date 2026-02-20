@@ -6,6 +6,7 @@ import {
     ElementRef,
     EventEmitter,
     HostListener,
+    inject,
     Input,
     OnChanges,
     Output,
@@ -37,8 +38,8 @@ export class ResizablePanelComponent implements AfterViewInit, OnChanges {
     @ViewChild('grabber') grabber: ElementRef;
     @ViewChild('content') content: ElementRef;
 
-    @Input() direction = PanelDirection.HORIZONTAL;
-    @Input() growDirection = PanelGrowDirection.BEFORE;
+    @Input() direction: PanelDirection | string = PanelDirection.HORIZONTAL;
+    @Input() growDirection: PanelGrowDirection | string = PanelGrowDirection.BEFORE;
     @Input() minSize: number = null;
     @Input() initialSize: number | string = null;
 
@@ -49,11 +50,9 @@ export class ResizablePanelComponent implements AfterViewInit, OnChanges {
     sizePixels: number;
     sizePercents: number;
 
-    constructor(
-        private _cd: ChangeDetectorRef,
-        private _renderer: Renderer2,
-        private _elementRef: ElementRef
-    ) { }
+    private _cd = inject(ChangeDetectorRef);
+    private _renderer = inject(Renderer2);
+    private _elementRef = inject(ElementRef);
 
     ngOnChanges(changes: SimpleChanges): void {
         this.init();

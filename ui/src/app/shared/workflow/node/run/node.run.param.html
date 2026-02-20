@@ -32,7 +32,7 @@
 </div>
 <div *nzModalFooter>
     <button nz-button [disabled]="loading" (click)="close()">Cancel</button>
-    <nz-button-group>
+    <nz-space-compact>
         <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading"
                 (click)="run(false, false)" autofocus>Run
         </button>
@@ -50,5 +50,5 @@
                 </li>
             </ul>
         </nz-dropdown-menu>
-    </nz-button-group>
+    </nz-space-compact>
 </div>
