@@ -902,25 +902,6 @@ countSmallerFlavorToKeep = 2
 
 ## 13.3 Flavor Usage
 
-Flavors can be specified in two ways:
-
-### Option 1: In the Worker Model
-
-Define the flavor directly in the worker model spec:
-
-```yaml
-name: my-worker-large
-type: vsphere
-osarch: linux/amd64
-spec:
-  image: "debian12"
-  flavor: "large"  # 8 vCPUs, 16GB RAM
-  username: "admin"
-  password: "${{ secrets.VM_PASSWORD }}"
-```
-
-### Option 2: In Job Requirements (Recommended)
-
 Use a **generic worker model** and specify the flavor per job:
 
 ```yaml
@@ -930,33 +911,29 @@ type: vsphere
 osarch: linux/amd64
 spec:
   image: "debian12"
-  username: "admin"
-  password: "${{ secrets.VM_PASSWORD }}"
 ```
 
 ```yaml
 # Workflow: different jobs use different flavors
 jobs:
   build-small:
-    runs-on: vsphere/debian12-generic
-    requirements:
-      - flavor: small  # 2 vCPUs, 4GB
+    runs-on: 
+      model: vsphere/debian12-generic
+      flavor: small
 
   build-large:
-    runs-on: vsphere/debian12-generic
-    requirements:
-      - flavor: large  # 8 vCPUs, 16GB
+    runs-on: 
+      model: vsphere/debian12-generic
+      flavor: large
 ```
 
 **Advantage**: Single worker model serves multiple resource profiles, reducing model duplication.
 
 ### Flavor Resolution Priority
 
-1. **V1 model**: `Model.ModelVirtualMachine.Flavor`
-2. **V2 model**: `V2WorkerModelVSphereSpec.Flavor`
-3. **Job requirement**: `FlavorRequirement` value (from `runs-on` requirements)
-4. **Default**: `HatcheryConfiguration.DefaultFlavor`
-5. **None**: Template resources used (no resize)
+1. **Job requirement**: `FlavorRequirement` value (from `runs-on` requirements)
+2. **Default**: `HatcheryConfiguration.DefaultFlavor`
+3. **None**: Template resources used (no resize)
 
 ## 13.4 Capacity Management Integration
 
@@ -1020,11 +997,3 @@ If no provisioned VM available, a fresh clone is created with the flavor applied
 - If `flavors` map is empty/not configured → no resizing occurs, VMs inherit template resources
 - If worker model has no flavor and no `defaultFlavor` configured → template resources used
 - Resource counting (Section 12) reads actual VM hardware → automatically handles resized VMs
-
----
-
-# Amendments
-
-The following amendments extend this specification. Each is in a separate file:
-
-- **[Amendment B: Resource-Based Capacity Management](amendment-B-resource-capacity.md)** — Replaces the `CanAllocateResources()` stub with real Resource Pool and CPU/memory checks. Makes `MaxWorker` optional (`0` = unlimited). **Status: Implemented.**
