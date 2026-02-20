@@ -63,12 +63,6 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		return sdk.WithStack(fmt.Errorf("Invalid configuration"))
 	}
 
-	// DEBUG: Log raw config to see what's loaded
-	log.Info(context.Background(), "ApplyConfiguration> Loaded config with %d flavors", len(h.Config.Flavors))
-	for i, f := range h.Config.Flavors {
-		log.Info(context.Background(), "ApplyConfiguration> Flavor[%d]: Name=%q CPUs=%d MemoryMB=%d", i, f.Name, f.CPUs, f.MemoryMB)
-	}
-
 	h.Common.Common.ServiceName = h.Config.Name
 	h.Common.Common.ServiceType = sdk.TypeHatchery
 	h.HTTPURL = h.Config.URL

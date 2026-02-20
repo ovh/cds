@@ -869,22 +869,22 @@ This approach enables a single vSphere template + single pool of provisioned VMs
 defaultFlavor = "medium"
 countSmallerFlavorToKeep = 2
 
-[[flavor]]
+[[hatchery.vsphere.flavors]]
   name = "small"
   cpus = 2
   memoryMB = 4096
 
-[[flavor]]
+[[hatchery.vsphere.flavors]]
   name = "medium"
   cpus = 4
   memoryMB = 8192
 
-[[flavor]]
+[[hatchery.vsphere.flavors]]
   name = "large"
   cpus = 8
   memoryMB = 16384
 
-[[flavor]]
+[[hatchery.vsphere.flavors]]
   name = "xlarge"
   cpus = 16
   memoryMB = 32768
