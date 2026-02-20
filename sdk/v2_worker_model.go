@@ -34,6 +34,7 @@ type V2WorkerModelOpenstackSpec struct {
 
 type V2WorkerModelVSphereSpec struct {
 	Image    string `json:"image" jsonschema:"example=my-vsphere-template" jsonschema_description:"Name of the vsphere template"`
+	Flavor   string `json:"flavor,omitempty" jsonschema:"example=large" jsonschema_description:"Flavor to use for CPU/RAM sizing"`
 	Username string `json:"username,omitempty" jsonschema:"example=admin" jsonschema_description:"Username to connect to the VM"`
 	Password string `json:"password,omitempty" jsonschema:"example=${{ secrets.VSPHERE_PASSWORD }}" jsonschema_description:"Username password to connect to the VM"`
 }
