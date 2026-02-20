@@ -6,7 +6,7 @@
 		<span nz-icon nzType="search"></span>
 	</ng-template>
 	<button [class.active]="filtered" nz-button nzType="default" nz-popover [nzPopoverContent]="contentFilter"
-		nzPopoverTrigger="bottomRight" nzPopoverTrigger="click">
+		nzPopoverPlacement="bottomRight" nzPopoverTrigger="click">
 		<span nz-icon nzType="filter" nzTheme="outline"></span>
 		<span *ngIf="filtered && ((tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)) > 0">
 			{{countDisplayedTests}}/{{(tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)}}</span>

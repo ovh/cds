@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from '../../shared/shared.module';
 import { ActionAddComponent } from './action/add/action.add.component';
@@ -70,9 +70,6 @@ import { WorkflowTemplateListComponent } from './workflow-template/list/workflow
         SharedModule,
         RouterModule,
         SettingsRouting
-    ],
-    schemas: [
-        CUSTOM_ELEMENTS_SCHEMA
     ]
 })
 export class SettingsModule {

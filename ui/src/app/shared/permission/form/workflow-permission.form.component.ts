@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { GroupPermission } from 'app/model/group.model';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { PermissionService } from 'app/shared/permission/permission.service';
@@ -11,7 +11,7 @@ import { PermissionService } from 'app/shared/permission/permission.service';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowPermissionFormComponent {
-    permissionList: {};
+    permissionList: Array<{name: string, value: number}>;
     newGroupPermission: GroupPermission = new GroupPermission();
 
     @Input() loading = false;
@@ -22,9 +22,9 @@ export class WorkflowPermissionFormComponent {
 
     @Output() createGroupPermissionEvent = new EventEmitter<PermissionEvent>();
 
-    constructor(
-        private _permService: PermissionService
-    ) {
+    private _permService = inject(PermissionService);
+
+    constructor() {
         this.permissionList = this._permService.getPermissions();
     }
 

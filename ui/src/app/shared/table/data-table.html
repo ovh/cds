@@ -24,7 +24,7 @@
     <tr *ngFor="let d of table.data; let i = index" (click)="lineClick(i, d)"
         [class.pointing]="withLineClick" [class.active]="withLineClick && indexSelected === i">
         <td *ngIf="withSelect" class="wide">
-            <label nz-checkbox [ngModel]="selected[d.key()]" (ngModelChange)="onSelectChange($event, d.key())"></label>
+            <label nz-checkbox [ngModel]="selected[$any(d).key()]" (ngModelChange)="onSelectChange($event, $any(d).key())"></label>
         </td>
         <ng-container *ngFor="let c of (columns | selector:d:i)">
             <td *ngIf="!c.disabled && c.hidden"></td>
@@ -32,7 +32,7 @@
                 <ng-container *ngSwitchCase="'text-pre'">
                     <pre>{{c.selector}}</pre>
                 </ng-container>
-                <i *ngSwitchCase="'icon'" nz-icon nzType="{{c.selector.iconType}}" nzTheme="{{c.selector.iconTheme}}" class="{{c.selector.iconColor}}"></i>
+                <i *ngSwitchCase="'icon'" nz-icon [nzType]="c.selector.iconType" [nzTheme]="c.selector.iconTheme" [class]="c.selector.iconColor"></i>
                 <div *ngSwitchCase="'img-text'" class="vcenter">
                     <img *ngIf="c.selector.img" [src]="c.selector.img">
                     <div class="{{c.selector.valueclass}}">
@@ -51,7 +51,7 @@
                 <ng-container *ngSwitchCase="'router-link-with-icons'">
                     <a [routerLink]="c.selector.link">{{c.selector.value}}</a>
                     <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate">
-                            {{' '}}<i nz-icon nzType="{{i.iconType}}" nzTheme="{{i.iconTheme}}" class="{{i.iconColor}}"></i>
+                            {{' '}}<i nz-icon [nzType]="i.iconType" [nzTheme]="i.iconTheme" [class]="i.iconColor"></i>
                         </span>
                 </ng-container>
                 <ng-container *ngSwitchCase="'router-link-with-labels'">
@@ -59,16 +59,16 @@
                     {{' '}}<nz-tag *ngFor="let l of c.selector.labels" nzColor="{{l.color}}">{{l.title | translate}}</nz-tag>
                 </ng-container>
                 <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
-                <button *ngSwitchCase="'button'" nz-button nzType="{{c.selector.buttonType}}" [nzDanger]="c.selector.buttonDanger" class="{{c.class}}"
+                <button *ngSwitchCase="'button'" nz-button [nzType]="c.selector.buttonType" [nzDanger]="c.selector.buttonDanger" [class]="c.class"
                         (click)="c.selector.click()">
-                    <i nz-icon nzType="{{c.selector.iconType}}" nzTheme="{{c.selector.iconTheme}}" class="{{c.selector.iconColor}}"></i>
+                    <i nz-icon [nzType]="c.selector.iconType" [nzTheme]="c.selector.iconTheme" [class]="c.selector.iconColor"></i>
                     {{c.selector.title | translate}}
 
                 </button>
-                <button *ngSwitchCase="'confirm-button'" class="{{c.class}}"
-                        nz-button nzType="{{c.selector.buttonType}}" [nzDanger]="c.selector.buttonDanger"
+                <button *ngSwitchCase="'confirm-button'" [class]="c.class"
+                        nz-button [nzType]="c.selector.buttonType" [nzDanger]="c.selector.buttonDanger"
                         nz-popconfirm nzPopconfirmTitle="{{c.selector.buttonConfirmationMessage}}" (nzOnConfirm)="c.selector.click()">{{c.selector.title}}</button>
-                <nz-tag nzColor="{{c.selector.class}}" *ngSwitchCase="'label'" class="{{c.class}}" >{{c.selector.value | translate}}</nz-tag>
+                <nz-tag nzColor="{{c.selector.class}}" *ngSwitchCase="'label'" [class]="c.class" >{{c.selector.value | translate}}</nz-tag>
                 <div *ngSwitchCase="'text-copy'">
                     <ng-container *ngIf="c.selector">
                         <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
@@ -86,8 +86,8 @@
                 </span>
                 <span *ngSwitchCase="'text-icons'">
                         {{c.selector.value | translate}}
-                    <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate" nzTooltipTrigger="{{i.trigger ? i.trigger : 'hover'}}">
-                            {{' '}}<i *ngIf="i.type" nz-icon nzType="{{i.type}}" nzTheme="{{i.theme}}" class="{{i.class}}"></i>
+                    <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate" [nzTooltipTrigger]="i.trigger ? i.trigger : 'hover'">
+                            {{' '}}<i *ngIf="i.type" nz-icon [nzType]="i.type" [nzTheme]="i.theme" [class]="i.class"></i>
                         </span>
                 </span>
                 <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>

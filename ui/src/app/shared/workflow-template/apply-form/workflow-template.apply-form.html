@@ -4,7 +4,7 @@
             <nz-form-label>Workflow name*</nz-form-label>
             <nz-form-control>
                 <input nz-input type="text" name="workflow_name" [(ngModel)]="parameterName"
-                       [disabled]="workflowTemplateInstance">
+                       [disabled]="!!workflowTemplateInstance">
             </nz-form-control>
         </nz-form-item>
     </nz-col>

@@ -1,16 +1,3 @@
-export class RepositoriesManager {
-    name: string;
-    type: string;
-    description: string;
-    auth: RepositoriesManagerAuth;
-}
-
-export class RepositoriesManagerAuth {
-    username: string;
-    sshKeyName: string;
-    sshUsername: string; // used for gerrit integration
-}
-
 export interface Repository {
     id: number;
     name: string;

@@ -1,7 +1,7 @@
-<nz-button-group>
+<nz-space-compact>
     <button nz-button (click)="setUnified()" [class.active]="mode === 'unified'">Unified</button>
     <button nz-button (click)="setSplit()" [class.active]="mode === 'split'">Split</button>
-</nz-button-group>
+</nz-space-compact>
 
 <ng-container *ngFor="let i of items;let idx = index">
     <nz-card [nzTitle]="getTitle(i)" class="coloredTitle">

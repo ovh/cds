@@ -3,6 +3,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     EventEmitter,
+    inject,
     Input,
     OnChanges,
     OnDestroy,
@@ -14,7 +15,8 @@ import { Store } from '@ngxs/store';
 import { AllKeys, Key } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
-import { RepositoriesManager, Repository } from 'app/model/repositories.model';
+import { Repository } from 'app/model/repositories.model';
+import { VCSProject } from 'app/model/vcs.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
@@ -69,7 +71,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
 
     @Input()
     set project(data: Project) {
-        this.repositoriesManager = new Array<RepositoriesManager>();
+        this.repositoriesManager = new Array<VCSProject>();
         if (data && data.vcs_servers) {
             this.repositoriesManager.push(...cloneDeep(data.vcs_servers));
         }
@@ -85,9 +87,9 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
     @ViewChild('codeMirror') codemirror: any;
 
     codeMirrorConfig: any;
-    repositoriesManager: Array<RepositoriesManager>;
+    repositoriesManager: Array<VCSProject>;
     repositories: Array<Repository>;
-    selectedRepoManager: RepositoriesManager;
+    selectedRepoManager: VCSProject;
     selectedRepo: string;
     loadingRepos: boolean;
     alreadyRefreshed: boolean;
@@ -97,11 +99,11 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
     allKeys: Key[];
     suggestFiltered: string[];
 
-    constructor(
-        private _repoManagerService: RepoManagerService,
-        private _store: Store,
-        public _sharedService: SharedService // used in html
-    ) {
+    private _repoManagerService = inject(RepoManagerService);
+    private _store = inject(Store);
+    public _sharedService = inject(SharedService); // used in html
+
+    constructor() {
         this.codeMirrorConfig = {
             mode: 'shell',
             lineWrapping: true,

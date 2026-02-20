@@ -28,14 +28,14 @@
         </app-project-breadcrumb>
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <ng-container *ngIf="editMode && !readOnly">
-            <nz-button-group class="ascodeButton">
+            <nz-space-compact class="ascodeButton">
                 <ng-container *ngIf="pipeline.editModeChanged">
                     <button nz-button nzType="default" (click)="cancelPipeline()">{{'common_cancel' | translate
                         }}</button>
                 </ng-container>
                 <button nz-button nzType="primary" [disabled]="!pipeline.editModeChanged"
                     (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
-            </nz-button-group>
+            </nz-space-compact>
         </ng-container>
 
         <div class="scrollingContent">

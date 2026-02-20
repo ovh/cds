@@ -3,21 +3,18 @@ import {
     ChangeDetectorRef,
     Component,
     EventEmitter,
+    inject,
     Input,
     OnInit,
-    Output,
-    ViewChild
+    Output
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
 import { AllKeys } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
 import { VCSConnections, VCSStrategy } from 'app/model/vcs.model';
 import { KeyService } from 'app/service/keys/keys.service';
-import { KeyEvent } from 'app/shared/keys/key.event';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators';
-import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     standalone: false,
@@ -53,14 +50,10 @@ export class VCSStrategyComponent implements OnInit {
     keys: AllKeys;
     connectionType = VCSConnections;
 
-    constructor(
-        private store: Store,
-        private _keyService: KeyService,
-        private _toast: ToastService,
-        private _translate: TranslateService,
-        private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService
-    ) { }
+    private _keyService = inject(KeyService);
+    private _toast = inject(ToastService);
+    private _translate = inject(TranslateService);
+    private _cd = inject(ChangeDetectorRef);
 
     ngOnInit() {
         if (!this.strategy) {
@@ -95,7 +88,7 @@ export class VCSStrategyComponent implements OnInit {
         this.strategyChange.emit(this.strategy);
     }
 
-    updatePublicKey(keyName: string): void {
+    updatePublicKey(keyName: any): void {
         if (this.keys) {
             let key = this.keys.ssh.find(k => k.name === keyName);
             if (key) {

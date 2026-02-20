@@ -1,4 +1,4 @@
-<app-resizable-panel growDirection="after" minSize="250" [initialSize]="panelSize"
+<app-resizable-panel growDirection="after" [minSize]="250" [initialSize]="panelSize"
 	(onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
 	<app-projectv2-explore-sidebar class="sidebar" [project]="project"></app-projectv2-explore-sidebar>
 </app-resizable-panel>

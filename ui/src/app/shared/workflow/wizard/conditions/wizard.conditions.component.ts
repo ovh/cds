@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -51,13 +51,13 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     themeSubscription: Subscription;
     triggerConditions: WorkflowTriggerConditionCache;
 
-    constructor(
-        private _store: Store,
-        private _workflowService: WorkflowService,
-        private _toast: ToastService,
-        private _translate: TranslateService,
-        private _cd: ChangeDetectorRef
-    ) {
+    private _store = inject(Store);
+    private _workflowService = inject(WorkflowService);
+    private _toast = inject(ToastService);
+    private _translate = inject(TranslateService);
+    private _cd = inject(ChangeDetectorRef);
+
+    constructor() {
         super();
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.editMode = this._store.selectSnapshot(WorkflowState.current).editMode;
@@ -254,7 +254,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             });
     }
 
-    pushChange(event: string, e?: string): void {
+    pushChange(event: any, e?: string): void {
         if (event !== 'codemirror') {
             this.conditionsChange.emit(true);
             return;
