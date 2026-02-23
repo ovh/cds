@@ -102,6 +102,6 @@ func TestCountAllocatedResources(t *testing.T) {
 	cpus, mem := h.countAllocatedResources(ctx)
 
 	// Only worker-abc (4 vCPUs, 8192 MB) + provision-v2-xxx (2 vCPUs, 4096 MB)
-	assert.Equal(t, int32(6), cpus, "expected 6 vCPUs")
-	assert.Equal(t, int32(12288), mem, "expected 12288 MB")
+	assert.Equal(t, 6, cpus, "expected 6 vCPUs")
+	assert.Equal(t, 12288, mem, "expected 12288 MB")
 }

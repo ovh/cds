@@ -33,10 +33,10 @@ func (h *HatcheryVSphere) reconfigureVM(ctx context.Context, vm *object.VirtualM
 	// Prepare reconfigure spec
 	spec := types.VirtualMachineConfigSpec{}
 	if flavor.CPUs > 0 {
-		spec.NumCPUs = flavor.CPUs
+		spec.NumCPUs = int32(flavor.CPUs)
 	}
 	if flavor.MemoryMB > 0 {
-		spec.MemoryMB = flavor.MemoryMB
+		spec.MemoryMB = int64(flavor.MemoryMB)
 	}
 
 	log.Info(ctx, "reconfigureVM> reconfiguring VM to %d vCPUs, %d MB RAM", flavor.CPUs, flavor.MemoryMB)
@@ -55,7 +55,6 @@ func (h *HatcheryVSphere) reconfigureVM(ctx context.Context, vm *object.VirtualM
 	return nil
 }
 
-
 // get all servers on our host
 func (h *HatcheryVSphere) getRawVMs(ctx context.Context) []mo.VirtualMachine {
 	vms, err := h.vSphereClient.ListVirtualMachines(ctx)
@@ -69,7 +68,7 @@ func (h *HatcheryVSphere) getRawVMs(ctx context.Context) []mo.VirtualMachine {
 
 func (h *HatcheryVSphere) getVirtualMachines(ctx context.Context) []mo.VirtualMachine {
 	vms := h.getRawVMs(ctx)
-	var result = make([]mo.VirtualMachine, 0, len(vms))
+	result := make([]mo.VirtualMachine, 0, len(vms))
 	for i := range vms {
 		isNotTemplate := !vms[i].Summary.Config.Template
 		if isNotTemplate {
@@ -81,7 +80,7 @@ func (h *HatcheryVSphere) getVirtualMachines(ctx context.Context) []mo.VirtualMa
 
 func (h *HatcheryVSphere) getRawTemplates(ctx context.Context) []mo.VirtualMachine {
 	vms := h.getRawVMs(ctx)
-	var result = make([]mo.VirtualMachine, 0, len(vms))
+	result := make([]mo.VirtualMachine, 0, len(vms))
 	for i := range vms {
 		isTemplate := vms[i].Summary.Config.Template
 		if isTemplate {
@@ -107,7 +106,7 @@ func (h *HatcheryVSphere) getVirtualMachineTemplates(ctx context.Context) []mo.V
 			log.Warn(ctx, "getModels> config or annotation are empty for server %s", srv.Name)
 			continue
 		}
-		var annot = getVirtualMachineCDSAnnotation(ctx, srv)
+		annot := getVirtualMachineCDSAnnotation(ctx, srv)
 		if annot != nil {
 			if annot.Model {
 				models = append(models, srv)
@@ -139,7 +138,7 @@ func (h *HatcheryVSphere) getVirtualMachineByName(ctx context.Context, name stri
 		return nil, sdk.WrapError(err, "unable to get virtual machine")
 	}
 
-	var annot = getVirtualMachineCDSAnnotation(ctx, *vmRef)
+	annot := getVirtualMachineCDSAnnotation(ctx, *vmRef)
 	if annot == nil {
 		err := sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", name))
 		return nil, sdk.WrapError(err, "unable to get virtual machine")
@@ -162,7 +161,7 @@ func (h *HatcheryVSphere) getVirtualMachineTemplateByName(ctx context.Context, n
 			continue
 		}
 
-		var annot = getVirtualMachineCDSAnnotation(ctx, m)
+		annot := getVirtualMachineCDSAnnotation(ctx, m)
 		if annot == nil {
 			continue
 		}
@@ -183,14 +182,14 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 		return err
 	}
 
-	var annot = getVirtualMachineCDSAnnotation(ctx, s)
+	annot := getVirtualMachineCDSAnnotation(ctx, s)
 	if annot == nil {
 		return nil
 	}
 
 	if strings.HasPrefix(s.Name, "register-") {
 		if err := hatchery.CheckWorkerModelRegister(ctx, h, annot.WorkerModelPath); err != nil {
-			var spawnErr = sdk.SpawnErrorForm{
+			spawnErr := sdk.SpawnErrorForm{
 				Error: err.Error(),
 			}
 			log.Error(ctx, "failed check worker model register: %v", err)
@@ -201,7 +200,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 		}
 	}
 
-	var isPoweredOn = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff
+	isPoweredOn := s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff
 
 	if isPoweredOn {
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
@@ -294,11 +293,13 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 			return nil, err
 		}
 
-		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{{
-			Adapter: types.CustomizationIPSettings{
-				Ip:         &types.CustomizationFixedIp{IpAddress: ip},
-				SubnetMask: h.Config.SubnetMask,
-			}},
+		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{
+			{
+				Adapter: types.CustomizationIPSettings{
+					Ip:         &types.CustomizationFixedIp{IpAddress: ip},
+					SubnetMask: h.Config.SubnetMask,
+				},
+			},
 		}
 		if h.Config.Gateway != "" {
 			customSpec.NicSettingMap[0].Adapter.Gateway = []string{h.Config.Gateway}
@@ -336,10 +337,10 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 	// (provisioned VMs are reconfigured separately via reconfigureVM)
 	if flavor != nil {
 		if flavor.CPUs > 0 {
-			cloneSpec.Config.NumCPUs = flavor.CPUs
+			cloneSpec.Config.NumCPUs = int32(flavor.CPUs)
 		}
 		if flavor.MemoryMB > 0 {
-			cloneSpec.Config.MemoryMB = flavor.MemoryMB
+			cloneSpec.Config.MemoryMB = int64(flavor.MemoryMB)
 		}
 		log.Info(ctx, "prepareCloneSpec: applying flavor with %d vCPUs, %d MB RAM", flavor.CPUs, flavor.MemoryMB)
 	}

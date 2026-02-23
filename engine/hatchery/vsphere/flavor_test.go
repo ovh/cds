@@ -112,21 +112,21 @@ func TestGetSmallerFlavorCPUs(t *testing.T) {
 
 	// Test smallest flavor for large (should return 2, not 4)
 	smallestCPUs := h.getSmallerFlavorCPUs("large")
-	assert.Equal(t, int32(2), smallestCPUs, "should return smallest flavor (small=2), not largest smaller (medium=4)")
+	assert.Equal(t, 2, smallestCPUs, "should return smallest flavor (small=2), not largest smaller (medium=4)")
 
 	// Test smallest flavor for xlarge (should return 2)
 	smallestCPUs = h.getSmallerFlavorCPUs("xlarge")
-	assert.Equal(t, int32(2), smallestCPUs)
+	assert.Equal(t, 2, smallestCPUs)
 
 	// Test smallest flavor for medium (should return 2)
 	smallestCPUs = h.getSmallerFlavorCPUs("medium")
-	assert.Equal(t, int32(2), smallestCPUs)
+	assert.Equal(t, 2, smallestCPUs)
 
 	// Test smallest flavor for small (no smaller flavor exists)
 	smallestCPUs = h.getSmallerFlavorCPUs("small")
-	assert.Equal(t, int32(0), smallestCPUs, "should return 0 when no smaller flavor exists")
+	assert.Equal(t, 0, smallestCPUs, "should return 0 when no smaller flavor exists")
 
 	// Test unknown flavor
 	smallestCPUs = h.getSmallerFlavorCPUs("unknown")
-	assert.Equal(t, int32(0), smallestCPUs)
+	assert.Equal(t, 0, smallestCPUs)
 }
