@@ -260,6 +260,29 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 	}
 }
 
+func (api *API) getWorkflowRunExistsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isCDN(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		}
+
+		id, err := requestVarInt(r, "id")
+		if err != nil {
+			return err
+		}
+
+		exists, err := workflow.ExistRunByID(api.mustDB(), id)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

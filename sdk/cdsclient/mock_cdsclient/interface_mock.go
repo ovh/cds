@@ -6347,6 +6347,21 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowAccess(ctx, projectKey, workfl
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
 }
 
+// WorkflowRunExist mocks base method.
+func (m *MockWorkflowClient) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunExist", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowRunExist indicates an expected call of WorkflowRunExist.
+func (mr *MockWorkflowClientMockRecorder) WorkflowRunExist(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunExist", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunExist), ctx, id)
+}
+
 // WorkflowAllHooksExecutions mocks base method.
 func (m *MockWorkflowClient) WorkflowAllHooksExecutions() ([]string, error) {
 	m.ctrl.T.Helper()
@@ -11981,6 +11996,21 @@ func (m *MockInterface) WorkflowAccess(ctx context.Context, projectKey string, w
 func (mr *MockInterfaceMockRecorder) WorkflowAccess(ctx, projectKey, workflowID, sessionID, itemType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockInterface)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
+}
+
+// WorkflowRunExist mocks base method.
+func (m *MockInterface) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunExist", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowRunExist indicates an expected call of WorkflowRunExist.
+func (mr *MockInterfaceMockRecorder) WorkflowRunExist(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunExist", reflect.TypeOf((*MockInterface)(nil).WorkflowRunExist), ctx, id)
 }
 
 // WorkflowAllHooksExecutions mocks base method.

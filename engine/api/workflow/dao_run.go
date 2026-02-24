@@ -223,6 +223,16 @@ func LoadRunByIDAndProjectKey(ctx context.Context, db gorp.SqlExecutor, projectk
 	return loadRun(ctx, db, loadOpts, query, projectkey, id)
 }
 
+// ExistRunByID checks if a workflow run exists by its ID
+func ExistRunByID(db gorp.SqlExecutor, id int64) (bool, error) {
+	query := `SELECT COUNT(1) FROM workflow_run WHERE id = $1 AND to_delete = false`
+	count, err := db.SelectInt(query, id)
+	if err != nil {
+		return false, sdk.WithStack(err)
+	}
+	return count > 0, nil
+}
+
 // LoadRunByID loads run by ID
 func LoadRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.LoadRunByID")
