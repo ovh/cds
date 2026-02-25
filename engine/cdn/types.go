@@ -87,6 +87,7 @@ type Configuration struct {
 		Enable           bool `toml:"enable" default:"true" json:"enable" comment:"Enable orphan items cleanup for workflow v1"`
 		FrequencySeconds int  `toml:"frequencySeconds" default:"60" json:"frequencySeconds" comment:"Frequency in seconds between each cleanup batch"`
 		BatchSize        int  `toml:"batchSize" default:"100" json:"batchSize" comment:"Number of items to check per batch per instance"`
+		GracePeriodDays  int  `toml:"gracePeriodDays" default:"180" json:"gracePeriodDays" comment:"Only check items older than this number of days (default: 180 ~ 6 months)"`
 	} `toml:"orphanCleanup" comment:"######################\n Orphan items cleanup settings \n######################" json:"orphanCleanup"`
 }
 

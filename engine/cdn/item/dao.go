@@ -386,19 +386,20 @@ type ItemForOrphanCleanup struct {
 // LoadOldestItemIDsForOrphanCleanupV1 selects a batch of the oldest v1 items (step-log, service-log, run-result)
 // that are not marked as to_delete, using FOR UPDATE SKIP LOCKED to allow concurrent processing
 // across multiple CDN instances. Must be called within a transaction.
-func LoadOldestItemIDsForOrphanCleanupV1(db gorpmapper.SqlExecutorWithTx, limit int) ([]ItemForOrphanCleanup, error) {
+func LoadOldestItemIDsForOrphanCleanupV1(db gorpmapper.SqlExecutorWithTx, limit int, gracePeriodDays int) ([]ItemForOrphanCleanup, error) {
 	query := `
 		SELECT id, (api_ref->>'run_id')::bigint AS run_id
 		FROM item
 		WHERE type IN ($1, $2, $3)
 		  AND to_delete = false
 		  AND (api_ref->>'run_id') IS NOT NULL
+		  AND created < NOW() - $4 * INTERVAL '1 day'
 		ORDER BY created ASC
-		LIMIT $4
+		LIMIT $5
 		FOR UPDATE SKIP LOCKED
 	`
 	var items []ItemForOrphanCleanup
-	if _, err := db.Select(&items, query, sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemRunResult, limit); err != nil {
+	if _, err := db.Select(&items, query, sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemRunResult, gracePeriodDays, limit); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return items, nil

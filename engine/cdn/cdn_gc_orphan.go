@@ -51,6 +51,11 @@ func (s *Service) cleanOrphanItemsV1(ctx context.Context) error {
 		batchSize = 100
 	}
 
+	gracePeriodDays := s.Cfg.OrphanCleanup.GracePeriodDays
+	if gracePeriodDays <= 0 {
+		gracePeriodDays = 180
+	}
+
 	tx, err := s.mustDBWithCtx(ctx).Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -59,7 +64,7 @@ func (s *Service) cleanOrphanItemsV1(ctx context.Context) error {
 
 	// Lock a batch of the oldest v1 items. Other CDN instances will skip
 	// these rows and pick the next ones.
-	items, err := item.LoadOldestItemIDsForOrphanCleanupV1(tx, batchSize)
+	items, err := item.LoadOldestItemIDsForOrphanCleanupV1(tx, batchSize, gracePeriodDays)
 	if err != nil {
 		return err
 	}
