@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -20,7 +19,6 @@ func (api *API) rbacMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				trackSudo(ctx, w)
 				return ctx, nil
 			}
-			log.ErrorWithStackTrace(ctx, err)
 			return ctx, err
 		}
 	}
