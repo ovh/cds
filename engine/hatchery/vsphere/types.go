@@ -29,7 +29,17 @@ type HatcheryConfiguration struct {
 	GuestCredentials                    []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"List of Guest credentials" json:"-"`
 	DefaultWorkerModelsV2               []DefaultWorkerModelsV2    `mapstructure:"defaultWorkerModelsV2" toml:"defaultWorkerModelsV2" commented:"true" comment:"List of default worker models v2 for declared binaries - used by workflow v1" json:"-"`
 	MaxCPUs                             int                        `mapstructure:"maxCpus" toml:"maxCpus" default:"0" commented:"true" comment:"Optional. Maximum total vCPUs this hatchery may allocate. 0 means no static CPU limit (Resource Pool limits still apply)." json:"maxCpus"`
-	MaxMemoryMB                         int64                      `mapstructure:"maxMemoryMB" toml:"maxMemoryMB" default:"0" commented:"true" comment:"Optional. Maximum total RAM (MB) this hatchery may allocate. 0 means no static memory limit (Resource Pool limits still apply)." json:"maxMemoryMB"`
+	MaxMemoryMB                         int                        `mapstructure:"maxMemoryMB" toml:"maxMemoryMB" default:"0" commented:"true" comment:"Optional. Maximum total RAM (MB) this hatchery may allocate. 0 means no static memory limit (Resource Pool limits still apply)." json:"maxMemoryMB"`
+	Flavors                             []VSphereFlavorConfig      `mapstructure:"flavors" toml:"flavors" commented:"true" comment:"Optional. VM flavors for CPU/RAM sizing. List of available flavors." json:"flavors,omitempty"`
+	DefaultFlavor                       string                     `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"" commented:"true" comment:"Optional. Default flavor to use when no flavor is specified in worker model or job requirements." json:"defaultFlavor,omitempty"`
+	CountSmallerFlavorToKeep            int                        `mapstructure:"countSmallerFlavorToKeep" toml:"countSmallerFlavorToKeep" default:"0" commented:"true" comment:"Optional. Reserve capacity for N smaller flavor workers when spawning large flavors. 0 disables starvation prevention." json:"countSmallerFlavorToKeep"`
+}
+
+// VSphereFlavorConfig defines CPU and RAM resources for a flavor
+type VSphereFlavorConfig struct {
+	Name     string `mapstructure:"name" toml:"name" json:"name"`
+	CPUs     int    `mapstructure:"cpus" toml:"cpus" json:"cpus"`
+	MemoryMB int    `mapstructure:"memoryMB" toml:"memoryMB" json:"memoryMB"`
 }
 
 type WorkerProvisioningConfig struct {

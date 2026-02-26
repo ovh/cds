@@ -166,7 +166,6 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		if r.Type == sdk.ServiceRequirement ||
 			r.Type == sdk.MemoryRequirement ||
 			r.Type == sdk.HostnameRequirement ||
-			r.Type == sdk.FlavorRequirement ||
 			model.GetCmd() == "" {
 			return false
 		}
@@ -178,7 +177,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		// ie. virtual machine with name "<model>-tmp" or "register-<model>"
 
 		for _, vm := range h.getVirtualMachines(ctx) {
-			var vmAnnotation = getVirtualMachineCDSAnnotation(ctx, vm)
+			vmAnnotation := getVirtualMachineCDSAnnotation(ctx, vm)
 			if vmAnnotation == nil {
 				continue
 			}
@@ -202,7 +201,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 
 	// Check if there is a pending virtual machine with the same jobId in annotation - we want to avoid duplicates
 	for _, vm := range h.getVirtualMachines(ctx) {
-		var annot = getVirtualMachineCDSAnnotation(ctx, vm)
+		annot := getVirtualMachineCDSAnnotation(ctx, vm)
 		if annot == nil {
 			continue
 		}
@@ -232,17 +231,38 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 }
 
 func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
-	// Determine the resource footprint of the next worker by reading template resources
-	templateName := model.GetVSphereImage()
-	if templateName == "" {
-		log.Warn(ctx, "CanAllocateResources> model has no vSphere image defined")
-		return true, nil
+	// Determine the resource footprint of the next worker
+	var nextCPUs int
+	var nextMemoryMB int
+
+	// Amendment C: prefer flavor-defined resources over template resources
+	flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor)
+	if flavorName != "" {
+		// Use flavor-defined resources
+		flavor := h.getFlavor(flavorName)
+		if flavor == nil {
+			log.Warn(ctx, "CanAllocateResources> unknown flavor %q, falling back to template resources", flavorName)
+		} else {
+			nextCPUs = flavor.CPUs
+			nextMemoryMB = int(flavor.MemoryMB)
+			log.Debug(ctx, "CanAllocateResources> using flavor %q: %d vCPUs, %d MB", flavorName, nextCPUs, nextMemoryMB)
+		}
 	}
 
-	nextCPUs, nextMemoryMB, err := h.getTemplateResources(ctx, templateName)
-	if err != nil {
-		log.Warn(ctx, "CanAllocateResources> unable to determine resource footprint for template %q: %v", templateName, err)
-		return true, nil // Graceful degradation: allow spawning if template resources can't be read
+	// Fallback: read template resources if no flavor or flavor not found
+	if nextCPUs == 0 || nextMemoryMB == 0 {
+		templateName := model.GetVSphereImage()
+		if templateName == "" {
+			log.Warn(ctx, "CanAllocateResources> model has no vSphere image defined")
+			return true, nil
+		}
+
+		var err error
+		nextCPUs, nextMemoryMB, err = h.getTemplateResources(ctx, templateName)
+		if err != nil {
+			log.Warn(ctx, "CanAllocateResources> unable to determine resource footprint for template %q: %v", templateName, err)
+			return true, nil // Graceful degradation: allow spawning if template resources can't be read
+		}
 	}
 
 	// Primary check: Resource Pool capacity (always enabled, Amendment B)
@@ -260,16 +280,30 @@ func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.Wo
 
 	// Check CPU limit
 	if h.Config.MaxCPUs > 0 {
-		if int(usedCPUs)+int(nextCPUs) > h.Config.MaxCPUs {
+		if usedCPUs+nextCPUs > h.Config.MaxCPUs {
 			log.Info(ctx, "CanAllocateResources> CPU limit reached: %d + %d > %d",
 				usedCPUs, nextCPUs, h.Config.MaxCPUs)
 			return false, nil
+		}
+
+		// Amendment C: Flavor starvation prevention
+		if flavorName != "" && h.Config.CountSmallerFlavorToKeep > 0 {
+			smallerCPUs := h.getSmallerFlavorCPUs(flavorName)
+			if smallerCPUs > 0 && smallerCPUs != nextCPUs {
+				needed := nextCPUs + h.Config.CountSmallerFlavorToKeep*smallerCPUs
+				available := h.Config.MaxCPUs - usedCPUs
+				if needed > available {
+					log.Info(ctx, "CanAllocateResources> starvation prevention: need %d CPUs (%d + %d×%d reserve) but only %d available",
+						needed, nextCPUs, h.Config.CountSmallerFlavorToKeep, smallerCPUs, available)
+					return false, nil
+				}
+			}
 		}
 	}
 
 	// Check memory limit
 	if h.Config.MaxMemoryMB > 0 {
-		if int64(usedMemoryMB)+int64(nextMemoryMB) > h.Config.MaxMemoryMB {
+		if usedMemoryMB+nextMemoryMB > h.Config.MaxMemoryMB {
 			log.Info(ctx, "CanAllocateResources> Memory limit reached: %d + %d > %d",
 				usedMemoryMB, nextMemoryMB, h.Config.MaxMemoryMB)
 			return false, nil
@@ -281,11 +315,11 @@ func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.Wo
 
 // countAllocatedResources returns the total vCPUs and memory (MB) currently allocated
 // by VMs managed by this hatchery (excluding template VMs).
-func (h *HatcheryVSphere) countAllocatedResources(ctx context.Context) (int32, int32) {
+func (h *HatcheryVSphere) countAllocatedResources(ctx context.Context) (int, int) {
 	srvs := h.getRawVMs(ctx)
 
-	var totalCPUs int32
-	var totalMemoryMB int32
+	var totalCPUs int
+	var totalMemoryMB int
 
 	for _, s := range srvs {
 		annot := getVirtualMachineCDSAnnotation(ctx, s)
@@ -297,26 +331,61 @@ func (h *HatcheryVSphere) countAllocatedResources(ctx context.Context) (int32, i
 			continue
 		}
 
-		totalCPUs += int32(s.Summary.Config.NumCpu)
-		totalMemoryMB += int32(s.Summary.Config.MemorySizeMB)
+		totalCPUs += int(s.Summary.Config.NumCpu)
+		totalMemoryMB += int(s.Summary.Config.MemorySizeMB)
 	}
 
 	return totalCPUs, totalMemoryMB
 }
 
 // getTemplateResources returns the vCPUs and memory (MB) of a vSphere template.
-func (h *HatcheryVSphere) getTemplateResources(ctx context.Context, templateName string) (int32, int32, error) {
+func (h *HatcheryVSphere) getTemplateResources(ctx context.Context, templateName string) (int, int, error) {
 	vm, err := h.getVirtualMachineTemplateByName(ctx, templateName)
 	if err != nil {
 		return 0, 0, sdk.WithStack(err)
 	}
 
-	return int32(vm.Summary.Config.NumCpu), int32(vm.Summary.Config.MemorySizeMB), nil
+	return int(vm.Summary.Config.NumCpu), int(vm.Summary.Config.MemorySizeMB), nil
+}
+
+// getFlavor returns the flavor configuration for a given flavor name.
+// Returns nil if the flavor is not found.
+func (h *HatcheryVSphere) getFlavor(name string) *VSphereFlavorConfig {
+	for i := range h.Config.Flavors {
+		if strings.EqualFold(h.Config.Flavors[i].Name, name) {
+			return &h.Config.Flavors[i]
+		}
+	}
+	return nil
+}
+
+// getSmallerFlavorCPUs returns the smallest flavor CPU count that is smaller than the current flavor.
+// Used for starvation prevention: reserve capacity for smaller flavors when spawning large flavors.
+// Returns 0 if no smaller flavor exists.
+func (h *HatcheryVSphere) getSmallerFlavorCPUs(currentFlavorName string) int {
+	currentFlavor := h.getFlavor(currentFlavorName)
+	if currentFlavor == nil {
+		return 0
+	}
+
+	var smallestCPUs int
+	for i := range h.Config.Flavors {
+		f := &h.Config.Flavors[i]
+		if strings.EqualFold(f.Name, currentFlavorName) {
+			continue
+		}
+		if f.CPUs < currentFlavor.CPUs {
+			if smallestCPUs == 0 || f.CPUs < smallestCPUs {
+				smallestCPUs = f.CPUs
+			}
+		}
+	}
+	return smallestCPUs
 }
 
 // checkResourcePoolCapacity verifies if the Resource Pool has enough unreserved CPU and memory
 // to accommodate a VM with the specified resource requirements.
-func (h *HatcheryVSphere) checkResourcePoolCapacity(ctx context.Context, requiredCPUs int32, requiredMemoryMB int32) (bool, error) {
+func (h *HatcheryVSphere) checkResourcePoolCapacity(ctx context.Context, requiredCPUs int, requiredMemoryMB int) (bool, error) {
 	pool, err := h.vSphereClient.LoadResourcePool(ctx)
 	if err != nil {
 		return false, sdk.WithStack(err)
@@ -393,7 +462,7 @@ func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bo
 		return true
 	}
 
-	var annot = getVirtualMachineCDSAnnotation(ctx, model)
+	annot := getVirtualMachineCDSAnnotation(ctx, model)
 	if annot == nil {
 		return true
 	}
@@ -486,7 +555,7 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 
 func (h *HatcheryVSphere) isMarkedToDelete(s mo.VirtualMachine) bool {
 	h.cacheToDelete.mu.Lock()
-	var isMarkToDelete = sdk.IsInArray(s.Name, h.cacheToDelete.list)
+	isMarkToDelete := sdk.IsInArray(s.Name, h.cacheToDelete.list)
 	h.cacheToDelete.mu.Unlock()
 	return isMarkToDelete
 }
@@ -505,7 +574,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	for _, s := range srvs {
 		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, s.Name)
 
-		var annot = getVirtualMachineCDSAnnotation(ctx, s)
+		annot := getVirtualMachineCDSAnnotation(ctx, s)
 		if annot == nil {
 			continue
 		}
@@ -692,7 +761,7 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
 	// Count exiting provisionned machine for each vmware model
-	var mapAlreadyProvisionned = make(map[string]int)
+	mapAlreadyProvisionned := make(map[string]int)
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
 		if !strings.HasPrefix(machine.Name, "provision-v2") {
@@ -770,7 +839,7 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
 	// Count exiting provisionned machine for each model
-	var mapAlreadyProvisionned = make(map[string]int)
+	mapAlreadyProvisionned := make(map[string]int)
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
 		if !strings.HasPrefix(machine.Name, "provision-v1") {
