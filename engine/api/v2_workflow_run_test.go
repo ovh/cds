@@ -110,6 +110,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 			User:   lambda.Initiator(),
 		},
 		Contexts: sdk.WorkflowRunContext{
+			CDS: sdk.CDSContext{
+				WorkflowVCSServer:  vcsServer.Name,
+				WorkflowRepository: repo.Name,
+			},
 			Git: sdk.GitContext{
 				Server:     vcsServer.Name,
 				Repository: repo.Name,
@@ -462,6 +466,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 			User:   lambda.Initiator(),
 		},
 		Contexts: sdk.WorkflowRunContext{
+			CDS: sdk.CDSContext{
+				WorkflowVCSServer:  vcsServer.Name,
+				WorkflowRepository: repo.Name,
+			},
 			Git: sdk.GitContext{
 				Server:     vcsServer.Name,
 				Repository: repo.Name,
