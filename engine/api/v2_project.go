@@ -11,8 +11,11 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 func (api *API) getReposFromRepositoriesManagerV2Handler() ([]service.RbacChecker, service.Handler) {
@@ -103,7 +106,12 @@ func (api *API) deleteProjectV2Handler() ([]service.RbacChecker, service.Handler
 			if len(p.Applications) > 0 {
 				return sdk.WrapError(sdk.ErrProjectHasApplication, "project '%s' still used by %d applications", key, len(p.Applications))
 			}
-			//
+
+			// Load scheduler hooks before deleting the project (cascade will remove them from DB)
+			schedulerKeys, err := workflow_v2.LoadDistinctSchedulerWorkflowKeysByProjectKey(ctx, api.mustDB(), key)
+			if err != nil {
+				return err
+			}
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -116,6 +124,19 @@ func (api *API) deleteProjectV2Handler() ([]service.RbacChecker, service.Handler
 			}
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
+			}
+
+			// Clean scheduler hooks on hooks service after project deletion
+			hookServices, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+			if err != nil {
+				return err
+			}
+			if len(hookServices) > 0 {
+				for _, k := range schedulerKeys {
+					if err := DeleteAllEntitySchedulerHook(ctx, nil, k.VCSName, k.RepositoryName, k.WorkflowName, hookServices); err != nil {
+						log.Error(ctx, "unable to delete scheduler hooks for project %s: %v", key, err)
+					}
+				}
 			}
 
 			event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectDeleted, *p, *u.AuthConsumerUser.AuthentifiedUser)
