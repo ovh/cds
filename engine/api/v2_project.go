@@ -137,6 +137,10 @@ func (api *API) deleteProjectV2Handler() ([]service.RbacChecker, service.Handler
 						log.Error(ctx, "unable to delete scheduler hooks for project %s: %v", key, err)
 					}
 				}
+				// Clean outgoing events on hooks service
+				if err := DeleteAllOutgoingEventsByProject(ctx, key, hookServices); err != nil {
+					log.Error(ctx, "unable to delete outgoing events for project %s: %v", key, err)
+				}
 			}
 
 			event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectDeleted, *p, *u.AuthConsumerUser.AuthentifiedUser)

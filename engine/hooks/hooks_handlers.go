@@ -294,6 +294,17 @@ func (s *Service) workflowRunOutgoingEventHandler() service.Handler {
 	}
 }
 
+func (s *Service) deleteOutgoingEventsByProjectHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["projectKey"]
+		if err := s.Dao.DeleteAllOutgoingEventsByProject(ctx, projectKey); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 func (s *Service) handleWorkflowRunOutgoingEvent(ctx context.Context, runRequest sdk.HookWorkflowRunEvent) (*sdk.HookWorkflowRunOutgoingEvent, error) {
 	event := &sdk.HookWorkflowRunOutgoingEvent{
 		UUID:    sdk.UUID(),

@@ -150,11 +150,22 @@ func Test_deleteProjectV2Handler_CleanSchedulerHooks(t *testing.T) {
 
 	// Expect the DELETE call to hooks service for the scheduler
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), http.MethodDelete, gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), http.MethodDelete,
+			gomock.Cond(func(x any) bool { return strings.HasPrefix(x.(string), "/v2/workflow/scheduler/") }),
+			gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
-			require.True(t, strings.HasPrefix(path, "/v2/workflow/scheduler/"))
 			require.Contains(t, path, "vcs")
 			require.Contains(t, path, "my-workflow")
+			return nil, 200, nil
+		}).Times(1)
+
+	// Expect the DELETE call to hooks service for outgoing events
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), http.MethodDelete,
+			gomock.Cond(func(x any) bool { return strings.HasPrefix(x.(string), "/v2/workflow/outgoing/") }),
+			gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
+			require.Contains(t, path, proj.Key)
 			return nil, 200, nil
 		}).Times(1)
 

@@ -116,3 +116,18 @@ func (d *dao) ListWorkflowRunOutgoingEvents(ctx context.Context, proj, vcsServer
 func (d *dao) OutgoingEventCallbackBalance() (int64, int64) {
 	return d.enqueuedWorkflowRunOutgoingEvents, d.dequeuedWorkflowRunOutgoingEvents
 }
+
+func (d *dao) DeleteAllOutgoingEventsByProject(ctx context.Context, projectKey string) error {
+	pattern := strings.ToLower(cache.Key(workflowRunOutgoingEventRootKey, projectKey+"-*"))
+	keys, err := d.store.Keys(pattern)
+	if err != nil {
+		return err
+	}
+	for _, k := range keys {
+		log.Info(ctx, "deleting outgoing event key %s", k)
+		if err := d.store.Delete(k); err != nil {
+			return err
+		}
+	}
+	return nil
+}

@@ -437,3 +437,11 @@ func DeleteAllEntitySchedulerHook(ctx context.Context, tx gorpmapper.SqlExecutor
 	}
 	return nil
 }
+
+func DeleteAllOutgoingEventsByProject(ctx context.Context, projectKey string, srvs []sdk.Service) error {
+	path := fmt.Sprintf("/v2/workflow/outgoing/%s", projectKey)
+	if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodDelete, path, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
