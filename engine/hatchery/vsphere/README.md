@@ -697,13 +697,16 @@ Operators can choose their strategy:
 ### 14.4 Implementation Details
 
 - `countAllocatedResources()` — Iterates all VMs owned by this hatchery (annotation filter),
-  sums `summary.Config.NumCpu` and `summary.Config.MemorySizeMB`. Excludes template VMs.
+  sums `summary.Config.NumCpu` and `summary.Config.MemorySizeMB`. Excludes template VMs and
+  **powered-off VMs** (provisioned workers waiting for a job do not consume CPU/RAM in vSphere
+  Resource Pools, so they are not counted toward static limits).
 - `getTemplateResources()` — Reads CPU/RAM from a vSphere template to estimate the footprint
-  of the next worker.
+  of the next worker. Used as fallback when no flavor is specified.
 - `checkResourcePoolCapacity()` — Queries `ResourcePool.Runtime.Cpu.UnreservedForVm` and
   `Memory.UnreservedForVm` to verify infrastructure can handle the next worker.
 - `CanAllocateResources()` — Combines all three checks with graceful degradation (if Resource Pool
-  query fails, falls back to static limits only).
+  query fails, falls back to static limits only). When a flavor is requested, **flavor resources
+  are used** (not template resources) for an accurate capacity estimate.
 
 ## 13. Prometheus Metrics for vSphere Resource Consumption
 
@@ -944,13 +947,16 @@ Job requests flavor "large" (8 vCPUs, 16GB RAM)
   ↓
 CanAllocateResources validates:
   - Resource Pool has 8 vCPUs + 16GB unreserved
-  - MaxCPUs: current + 8 ≤ limit
-  - MaxMemoryMB: current + 16GB ≤ limit
+  - MaxCPUs: current (powered-on workers only) + 8 ≤ limit
+  - MaxMemoryMB: current (powered-on workers only) + 16GB ≤ limit
   ↓
 If capacity available → spawn proceeds
 ```
 
 This ensures the Resource Pool and static limits are checked **before** attempting to spawn/reconfigure VMs.
+
+> **Note**: Powered-off provisioned VMs are **not counted** in the static limits check.
+> They do not consume CPU/RAM in vSphere while powered off, so they never block a flavor job.
 
 ## 13.5 Starvation Prevention
 

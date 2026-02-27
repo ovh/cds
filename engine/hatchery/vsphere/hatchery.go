@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -314,7 +315,9 @@ func (h *HatcheryVSphere) CanAllocateResources(ctx context.Context, model sdk.Wo
 }
 
 // countAllocatedResources returns the total vCPUs and memory (MB) currently allocated
-// by VMs managed by this hatchery (excluding template VMs).
+// by VMs managed by this hatchery (excluding template VMs and powered-off VMs).
+// Powered-off VMs (e.g. provisioned workers waiting for a job) do not consume CPU or RAM
+// in vSphere Resource Pools and are therefore excluded from the count.
 func (h *HatcheryVSphere) countAllocatedResources(ctx context.Context) (int, int) {
 	srvs := h.getRawVMs(ctx)
 
@@ -328,6 +331,10 @@ func (h *HatcheryVSphere) countAllocatedResources(ctx context.Context) (int, int
 		}
 		// Exclude template VMs
 		if annot.Model {
+			continue
+		}
+		// Exclude powered-off VMs: they don't consume CPU/RAM in vSphere Resource Pools
+		if s.Summary.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
 			continue
 		}
 
