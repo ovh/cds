@@ -165,9 +165,12 @@ func (s *Service) sendStepLog(ctx context.Context, wsClient websocket.Client, ws
 
 	log.Debug(ctx, "getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
 	oldNextLineToSend := data.scoreNextLineToSend
+	var linesSent int
 	for i := range lines {
 		if data.scoreNextLineToSend > 0 && data.scoreNextLineToSend != lines[i].Number {
-			break
+			// Skip lines that don't match expected sequence instead of breaking,
+			// to avoid stalling the stream when lines arrive out of order.
+			continue
 		}
 
 		if err := wsClient.Send(WSLine{
@@ -178,6 +181,7 @@ func (s *Service) sendStepLog(ctx context.Context, wsClient websocket.Client, ws
 		}); err != nil {
 			return err
 		}
+		linesSent++
 		if data.scoreNextLineToSend < 0 {
 			data.scoreNextLineToSend = lines[i].Number + 1
 		} else {
@@ -185,8 +189,16 @@ func (s *Service) sendStepLog(ctx context.Context, wsClient websocket.Client, ws
 		}
 	}
 	wsClientData.itemUnitsData[mapIndex] = data
-	// If all the lines were sent, we can trigger another update, if only one line was send do not trigger an update wait for next event from broker
-	if len(lines) > 1 && (oldNextLineToSend > 0 || int(data.scoreNextLineToSend-oldNextLineToSend) == len(lines)) {
+	// Trigger another update if there are potentially more lines to read.
+	// Also trigger if lines were available but none matched (gap detection),
+	// so we retry on next tick rather than stalling forever.
+	if linesSent > 1 && (oldNextLineToSend > 0 || int(data.scoreNextLineToSend-oldNextLineToSend) == linesSent) {
+		wsClientData.TriggerUpdate()
+	} else if len(lines) > 0 && linesSent == 0 {
+		// Lines existed in buffer but none matched scoreNextLineToSend.
+		// Jump to the first available line to recover from gaps.
+		data.scoreNextLineToSend = lines[0].Number
+		wsClientData.itemUnitsData[mapIndex] = data
 		wsClientData.TriggerUpdate()
 	}
 	return nil
