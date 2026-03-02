@@ -44,10 +44,13 @@ func TestCountAllocatedResources(t *testing.T) {
 
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
-			// Worker owned by this hatchery: 4 vCPUs, 8192 MB
+			// Worker owned by this hatchery: 4 vCPUs, 8192 MB — powered ON → counted
 			{
 				ManagedEntity: mo.ManagedEntity{Name: "worker-abc"},
 				Summary: types.VirtualMachineSummary{
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOn,
+					},
 					Config: types.VirtualMachineConfigSummary{
 						NumCpu:       4,
 						MemorySizeMB: 8192,
@@ -57,10 +60,14 @@ func TestCountAllocatedResources(t *testing.T) {
 					Annotation: string(workerAnnot),
 				},
 			},
-			// Provisioned VM owned by this hatchery: 2 vCPUs, 4096 MB
+			// Provisioned VM owned by this hatchery: 2 vCPUs, 4096 MB — powered OFF → EXCLUDED
+			// Powered-off VMs don't consume CPU/RAM in vSphere Resource Pools
 			{
 				ManagedEntity: mo.ManagedEntity{Name: "provision-v2-xxx"},
 				Summary: types.VirtualMachineSummary{
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOff,
+					},
 					Config: types.VirtualMachineConfigSummary{
 						NumCpu:       2,
 						MemorySizeMB: 4096,
@@ -70,10 +77,13 @@ func TestCountAllocatedResources(t *testing.T) {
 					Annotation: string(provisionAnnot),
 				},
 			},
-			// Template VM owned by this hatchery: 2 vCPUs, 4096 MB (EXCLUDED)
+			// Template VM owned by this hatchery: 2 vCPUs, 4096 MB — EXCLUDED (model=true)
 			{
 				ManagedEntity: mo.ManagedEntity{Name: "model-debian12"},
 				Summary: types.VirtualMachineSummary{
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOff,
+					},
 					Config: types.VirtualMachineConfigSummary{
 						NumCpu:       2,
 						MemorySizeMB: 4096,
@@ -83,10 +93,13 @@ func TestCountAllocatedResources(t *testing.T) {
 					Annotation: string(templateAnnot),
 				},
 			},
-			// VM owned by another hatchery: 8 vCPUs, 16384 MB (EXCLUDED)
+			// VM owned by another hatchery: 8 vCPUs, 16384 MB — EXCLUDED (other hatchery)
 			{
 				ManagedEntity: mo.ManagedEntity{Name: "worker-xyz"},
 				Summary: types.VirtualMachineSummary{
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOn,
+					},
 					Config: types.VirtualMachineConfigSummary{
 						NumCpu:       8,
 						MemorySizeMB: 16384,
@@ -101,7 +114,7 @@ func TestCountAllocatedResources(t *testing.T) {
 
 	cpus, mem := h.countAllocatedResources(ctx)
 
-	// Only worker-abc (4 vCPUs, 8192 MB) + provision-v2-xxx (2 vCPUs, 4096 MB)
-	assert.Equal(t, 6, cpus, "expected 6 vCPUs")
-	assert.Equal(t, 12288, mem, "expected 12288 MB")
+	// Only worker-abc (4 vCPUs, 8192 MB) — provision-v2-xxx is powered-off, excluded
+	assert.Equal(t, 4, cpus, "expected 4 vCPUs")
+	assert.Equal(t, 8192, mem, "expected 8192 MB")
 }
