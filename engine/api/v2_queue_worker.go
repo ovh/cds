@@ -260,7 +260,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 				if jobResult.JobRunResults == nil {
 					jobResult.JobRunResults = sdk.JobRunResults{}
 				}
-				jobResult.JobRunResults[r.Name()], _ = r.GetDetail()
+				jobResult.JobRunResults[r.Name()], _ = r.GetDetailLightForContext()
 			}
 		}
 		contexts.Jobs[rj.JobID] = jobResult

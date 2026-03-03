@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 )
@@ -70,6 +71,84 @@ func (s JUnitTestsSuites) ComputeStats() TestsStats {
 		stats.TotalOK += ts.Total - (ts.Failures + ts.Errors + ts.Skipped)
 	}
 	return stats
+}
+
+const jUnitTestsSuitesMaxSizeBytes = 1024 * 1024 // 1MB
+
+// Trim truncates heavy text fields (systemout, systemerr, failure/error/skipped values)
+// proportionally when the serialized size exceeds 1MB.
+func (s JUnitTestsSuites) Trim() JUnitTestsSuites {
+	bts, _ := json.Marshal(s)
+	totalSize := len(bts)
+	if totalSize <= jUnitTestsSuitesMaxSizeBytes {
+		return s
+	}
+
+	// Collect all trimmable strings and their total size
+	type fieldRef struct {
+		ptr *string
+		len int
+	}
+	var fields []fieldRef
+	var trimmableSize int
+
+	trimmed := s
+	for i := range trimmed.TestSuites {
+		for j := range trimmed.TestSuites[i].TestCases {
+			tc := &trimmed.TestSuites[i].TestCases[j]
+			if l := len(tc.Systemout.Value); l > 0 {
+				fields = append(fields, fieldRef{&tc.Systemout.Value, l})
+				trimmableSize += l
+			}
+			if l := len(tc.Systemerr.Value); l > 0 {
+				fields = append(fields, fieldRef{&tc.Systemerr.Value, l})
+				trimmableSize += l
+			}
+			for k := range tc.Failures {
+				if l := len(tc.Failures[k].Value); l > 0 {
+					fields = append(fields, fieldRef{&tc.Failures[k].Value, l})
+					trimmableSize += l
+				}
+			}
+			for k := range tc.Errors {
+				if l := len(tc.Errors[k].Value); l > 0 {
+					fields = append(fields, fieldRef{&tc.Errors[k].Value, l})
+					trimmableSize += l
+				}
+			}
+			for k := range tc.Skipped {
+				if l := len(tc.Skipped[k].Value); l > 0 {
+					fields = append(fields, fieldRef{&tc.Skipped[k].Value, l})
+					trimmableSize += l
+				}
+			}
+		}
+	}
+
+	if trimmableSize == 0 {
+		return trimmed
+	}
+
+	// Compute how much we need to remove
+	excess := totalSize - jUnitTestsSuitesMaxSizeBytes
+	// ratio of each field to keep (proportional trimming)
+	keepRatio := 1.0 - float64(excess)/float64(trimmableSize)
+	if keepRatio < 0 {
+		keepRatio = 0
+	}
+
+	const truncatedPrefix = "[truncated]\n"
+	for _, f := range fields {
+		maxLen := int(float64(f.len) * keepRatio)
+		if maxLen < 0 {
+			maxLen = 0
+		}
+		if maxLen < f.len {
+			*f.ptr = truncatedPrefix + (*f.ptr)[f.len-maxLen:]
+		}
+	}
+
+	return trimmed
 }
 
 type JUnitTestSuite struct {
