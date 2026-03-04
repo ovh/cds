@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model'
 import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
 import { concatMap, from, interval, Subscription } from 'rxjs';
 import { DurationService } from '../duration.service';
 import { GraphNodeAction } from './model';
+import { SelectionMode, InteractiveNode } from '../graph.lib';
 
 @Component({
     standalone: false,
@@ -12,7 +13,7 @@ import { GraphNodeAction } from './model';
     styleUrls: ['./matrix-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
+export class GraphMatrixNodeComponent implements OnInit, OnDestroy, InteractiveNode {
     @Input() node: GraphNode;
     @Input() actionCallback: (type: GraphNodeAction, node: GraphNode, options?: any) => void = () => { };
 
@@ -30,16 +31,20 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
         }
     } = {};
     keys: Array<string> = [];
-    retries: { [key: string]: number} = {};
+    retries: { [key: string]: number } = {};
     status: { [key: string]: V2WorkflowRunJobStatus } = {};
     jobRunIDs: { [key: string]: string } = {};
     displayNames: { [key: string]: string } = {};
-    warningSteps: { [key: string]: boolean} = {};
+    warningSteps: { [key: string]: boolean } = {};
     runActive: boolean = false;
+    selectionMode: SelectionMode = SelectionMode.Disabled;
+    selectionActive: boolean = false;
+    selectedMatrixKeys: Array<string> = [];
+    allMatrixSelected: boolean = false;
 
-    constructor(
-        private _cd: ChangeDetectorRef
-    ) {
+    private _cd = inject(ChangeDetectorRef);
+
+    constructor() {
         this.setHighlight.bind(this);
         this.selectNode.bind(this);
     }
@@ -179,7 +184,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
     }
 
     clickGate(event: Event): void {
-        this.actionCallback(GraphNodeAction.Click, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickGate, this.node, { gateName: this.node.gate });
         event.preventDefault();
         event.stopPropagation();
     }
@@ -211,5 +216,96 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
             }
         }
         return false;
+    }
+
+    setSelectionMode(navigationKey: string, mode: SelectionMode): void {
+        if (this.match(navigationKey)) {
+            this.selectionMode = mode;
+            if (mode === SelectionMode.Disabled) {
+                this.selectionActive = false;
+                this.selectedMatrixKeys = [];
+                this.allMatrixSelected = false;
+            }
+            this._cd.markForCheck();
+        }
+    }
+
+    setSelected(selectedRunJobIds: Array<string>): void {
+        this.selectedMatrixKeys = [];
+        for (const key of this.keys) {
+            if (this.jobRunIDs[key] && selectedRunJobIds.includes(this.jobRunIDs[key])) {
+                this.selectedMatrixKeys.push(key);
+            }
+        }
+        this.updateMatrixSelectionState();
+        this._cd.markForCheck();
+    }
+
+    /** Update indeterminate/all state from current selectedMatrixKeys. */
+    private updateMatrixSelectionState(): void {
+        const count = this.selectedMatrixKeys.length;
+        const total = this.keys.length;
+        this.allMatrixSelected = count === total && total > 0;
+        this.selectionActive = count > 0;
+    }
+
+    /** Toggle the select-all checkbox: if all selected → deselect all, otherwise → select all. */
+    clickSelectionOverlay(event: Event = null): void {
+        if (this.selectionMode !== SelectionMode.Blocked) {
+            if (this.allMatrixSelected) {
+                // All are selected → deselect all
+                this.selectedMatrixKeys = [];
+            } else {
+                // None or some selected → select all
+                this.selectedMatrixKeys = [...this.keys];
+            }
+            this.updateMatrixSelectionState();
+            // Emit a toggle for each variant
+            this.emitPerVariantToggle();
+        }
+        if (!event) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    /** Toggle a single matrix job checkbox. */
+    clickMatrixJobCheckbox(key: string, event: Event = null): void {
+        if (this.selectionMode !== SelectionMode.Blocked) {
+            if (this.selectedMatrixKeys.includes(key)) {
+                this.selectedMatrixKeys = this.selectedMatrixKeys.filter(k => k !== key);
+            } else {
+                this.selectedMatrixKeys.push(key);
+            }
+            this.updateMatrixSelectionState();
+            this.emitPerVariantToggle();
+        }
+        if (!event) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    /** Get the list of run job UUIDs for currently selected matrix keys. */
+    getSelectedRunJobIds(): string[] {
+        return this.selectedMatrixKeys
+            .map(key => this.jobRunIDs[key])
+            .filter(id => !!id);
+    }
+
+    /** Emit one ToggleSelection callback per variant, reflecting each variant's current selection state. */
+    emitPerVariantToggle(): void {
+        const selectedIds = this.getSelectedRunJobIds();
+        for (const key of this.keys) {
+            const id = this.jobRunIDs[key];
+            if (id) {
+                this.actionCallback(GraphNodeAction.ToggleSelection, this.node, {
+                    runJobId: id,
+                    selected: selectedIds.includes(id)
+                });
+            }
+        }
     }
 }

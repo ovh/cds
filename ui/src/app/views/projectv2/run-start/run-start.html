@@ -46,8 +46,8 @@
     [gates]="rootGateDefs"></app-run-gate-inputs>
 
   <nz-form-item *ngIf="!event">
-    <nz-form-control [nzSpan]="12" [nzOffset]="6">
-      <button nz-button nzType="primary" [disabled]="!validateForm.valid" [nzLoading]="isLoading()">Start</button>
+    <nz-form-control>
+      <button nz-button nzBlock nzType="primary" [disabled]="!validateForm.valid" [nzLoading]="isLoading()">Start</button>
     </nz-form-control>
   </nz-form-item>
 </form>

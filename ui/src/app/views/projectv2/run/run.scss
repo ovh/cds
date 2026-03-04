@@ -236,15 +236,33 @@
                 flex-direction: row;
                 align-items: center;
 
-                button:not(:first-child) {
+                >button:not(:first-child),
+                >nz-space-compact:not(:first-child) {
                     margin-left: 10px;
                 }
 
-                button:not([nzDanger]) {
+                button:not([nzDanger], [nzType="primary"]) {
                     background-color: #fff;
 
                     :host-context(.night) & {
                         background-color: #141414;
+                    }
+                }
+
+                .help {
+                    margin-left: 10px;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: help;
+                    font-size: 20px;
+                    opacity: 0.45;
+                    transition: opacity 0.2s;
+
+                    &:hover {
+                        opacity: 0.85;
                     }
                 }
             }
@@ -389,5 +407,36 @@ app-resizable-panel {
                 }
             }
         }
+    }
+}
+
+.shortcuts-tooltip {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+
+    div:first-child {
+        margin-bottom: 3px;
+    }
+
+    div:not(:first-child) {
+        margin-top: 6px;
+    }
+
+    kbd {
+        display: inline-block;
+        min-width: 20px;
+        padding: 2px 6px;
+        font-family: inherit;
+        font-size: 11px;
+        line-height: 16px;
+        text-align: center;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+        margin-right: 4px;
     }
 }

@@ -1,7 +1,11 @@
-<div *ngFor="let gate of gates | keyvalue">
-    <nz-divider nzText="Gate: {{gate.key}}" nzOrientation="left"></nz-divider>
+@for (gate of gates | keyvalue; track gate.key) {
+    <nz-divider [nzText]="gateTitle" nzOrientation="left">
+        <ng-template #gateTitle>
+            <span>Gate: <i>{{gate.key}}</i></span>
+        </ng-template>
+    </nz-divider>
     @if (values[gate.key].getJobsCount() > 1) {
-         @for (input of gate.value.inputs | keyvalue; track input.key) {
+        @for (input of gate.value.inputs | keyvalue; track input.key) {
             <nz-form-item>
                 <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
                 <nz-form-control [nzSpan]="14" [nzExtra]="asGateInput(input.value).description">
@@ -18,8 +22,7 @@
                                     (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
                                     @for(opt of asGateInput(input.value).options.values; track opt) {
                                         <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
-                                    }
-                                   
+                                    }                                   
                                 </nz-select>
                             } @else {
                                 <nz-select [nzDisabled]="disabled || values[gate.key].withJobOverrides"
@@ -47,12 +50,14 @@
                     ({{values[gate.key].getJobsNames()}})</label>
             </nz-form-control>
         </nz-form-item>
-
     }
 
     @if(values[gate.key].withJobOverrides) {
         @for (job of values[gate.key].jobs | keyvalue; track job.key) {
-            <nz-divider nzText="Job: {{job.key}}" nzOrientation="left" nzPlain nzSize="small" nzVariant="dashed"></nz-divider>
+            <nz-divider [nzText]="jobTitle" nzOrientation="left" nzPlain nzSize="small" nzVariant="dashed"></nz-divider>
+            <ng-template #jobTitle>
+                <span>Job: <i>{{job.key}}</i></span>
+            </ng-template>
             @for (input of gate.value.inputs | keyvalue; track input.key) {
                 <nz-form-item>
                     <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
@@ -91,4 +96,4 @@
             }
         }
     }
-</div>
+}

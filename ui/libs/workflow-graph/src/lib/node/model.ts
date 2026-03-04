@@ -46,4 +46,5 @@ export enum GraphNodeAction {
     ClickConfirmGate = 'click-confirm-gate',
     ClickRestart = 'click-restart',
     ClickStop = 'click-stop',
+    ToggleSelection = 'toggle-selection',
 }

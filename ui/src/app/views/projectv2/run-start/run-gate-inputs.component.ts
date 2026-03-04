@@ -44,6 +44,7 @@ export class GateValue {
 export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
     @Input() jobs: { [jobName: string]: V2Job } = {};
     @Input() gates: { [gateName: string]: V2JobGate } = {};
+    @Input() initialValues: { [jobName: string]: { [inputName: string]: any } } = {};
 
     disabled: boolean = false;
     values: { [gateName: string]: GateValue } = {};
@@ -96,12 +97,37 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
                 return;
             }
             this.values[this.jobs[j].gate].jobs[j] = { ...this.values[this.jobs[j].gate].global };
+
+            // Apply initial values (e.g. from previous run attempt) if provided
+            if (this.initialValues && this.initialValues[j]) {
+                Object.keys(this.initialValues[j]).forEach(k => {
+                    if (this.values[this.jobs[j].gate].global.hasOwnProperty(k)) {
+                        this.values[this.jobs[j].gate].jobs[j][k] = this.initialValues[j][k];
+                    }
+                });
+            }
         });
 
         Object.keys(this.values).forEach(gateName => {
             // If only one job uses this gate, enable job overrides by default
             if (Object.keys(this.values[gateName].jobs).length === 1) {
                 this.values[gateName].withJobOverrides = true;
+            }
+
+            // Synchronize global values with initial values when all jobs sharing
+            // the same gate have identical initial values for an input
+            if (this.initialValues) {
+                const jobNames = Object.keys(this.values[gateName].jobs);
+                const globalInputKeys = Object.keys(this.values[gateName].global);
+                globalInputKeys.forEach(k => {
+                    const firstVal = this.values[gateName].jobs[jobNames[0]]?.[k];
+                    const allSame = jobNames.every(j =>
+                        JSON.stringify(this.values[gateName].jobs[j]?.[k]) === JSON.stringify(firstVal)
+                    );
+                    if (allSame && firstVal !== undefined) {
+                        this.values[gateName].global[k] = firstVal;
+                    }
+                });
             }
         });
 
