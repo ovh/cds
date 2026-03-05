@@ -12,7 +12,7 @@ import { concatMap, map } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NavigationState } from "app/store/navigation.state";
-import { V2Job, V2JobGate, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatus, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunStatus, V2WorkflowRunStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType, areAllJobVariantsSelected, groupRunJobSelectionsByJobId } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2JobGate, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatus, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunStatus, V2WorkflowRunStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType, areAllJobVariantsSelected, groupRunJobSelectionsByJobId } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { RunTriggerComponent } from "./run-trigger.component";
 import { RouterService } from "app/service/services.module";
 import { ErrorUtils } from "app/shared/error.utils";
@@ -600,38 +600,13 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             return;
         }
 
-        const workflowJobs = this.workflowRun.workflow_data.workflow.jobs;
-        const selectionsByJobId = groupRunJobSelectionsByJobId(this.selectedRunJobIds, this.jobs);
-
-        // Collect all jobs that require gates and their gate definitions.
-        // Only fully-selected jobs can have gate inputs edited.
-        // Partially-selected matrix jobs skip gate input — the API handler
-        // reuses previous event inputs for UUID-keyed jobs.
-        const gateJobs: { [jobId: string]: V2Job } = {};
-        const gateDefinitions: { [gateName: string]: V2JobGate } = {};
-
-        for (const [jobId] of selectionsByJobId) {
-            if (!areAllJobVariantsSelected(jobId, this.selectedRunJobIds, this.jobs)) {
-                continue;
-            }
-            const jobDef = workflowJobs[jobId];
-            if (jobDef && jobDef.gate) {
-                const gate = this.workflowRun.workflow_data.workflow.gates[jobDef.gate];
-                if (gate && gate.inputs && Object.keys(gate.inputs).length > 0) {
-                    gateJobs[jobId] = jobDef;
-                    gateDefinitions[jobDef.gate] = gate;
-                }
-            }
+        if (this.selectionRequiresGate) {
+            this.openRunTriggerDrawer(this.selectedRunJobIds);
+            return;
         }
 
-        // If gates are needed, open a drawer; selection is preserved so the
-        // user can dismiss the drawer, adjust the selection, and retry.
-        if (Object.keys(gateJobs).length > 0) {
-            this.openRestartGateDrawer(gateJobs, gateDefinitions);
-        } else {
-            // No gates needed, restart jobs directly
-            await this.triggerRestartJobs();
-        }
+        // No gates needed, restart jobs directly
+        await this.triggerRestartJobs();
     }
 
     /** Receive the latest selection from the graph component. */
@@ -698,7 +673,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
                 }
             }
 
-            await lastValueFrom(this._workflowService.startJobs(
+            await lastValueFrom(this._workflowService.triggerJobs(
                 this.projectKey,
                 this.workflowRun.id,
                 { job_inputs: jobInputs }
@@ -793,7 +768,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     async restartJob(runJobId: string) {
         try {
-            await lastValueFrom(this._workflowService.triggerJob(this.projectKey, this.workflowRun.id, runJobId));
+            await lastValueFrom(this._workflowService.triggerJobs(this.projectKey, this.workflowRun.id, { job_inputs: { [runJobId]: {} } }));
             this._messageService.success('Workflow run job restarted', { nzDuration: 2000 });
             await this.load(this.workflowRun.id);
         } catch (e) {
@@ -811,62 +786,24 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    openGateDrawer(
-        jobs: { [jobId: string]: V2Job },
-        gates: { [gateName: string]: V2JobGate },
-        additionalJobInputs: { [jobId: string]: { [inputName: string]: any } } | null,
-        onSuccess?: () => Promise<void>
-    ): void {
+    openRunTriggerDrawer(jobRunIDs: Array<string>): void {
         this.gateDrawerOpen = true;
         const drawerRef = this._drawerService.create<RunTriggerComponent, { value: string }, boolean>({
-            nzTitle: 'Start Workflow Run Job' + (Object.keys(jobs).length > 1 ? 's' : ''),
+            nzTitle: 'Trigger Workflow Run Job' + (jobRunIDs.length > 1 ? 's' : ''),
             nzContent: RunTriggerComponent,
             nzContentParams: {
                 run: this.workflowRun,
-                jobs: jobs,
-                gates: gates,
-                additionalJobInputs: additionalJobInputs,
-                runJobs: this.jobs
+                runJobs: this.jobs,
+                jobRunIDs
             },
             nzSize: 'large'
         });
         drawerRef.afterClose.subscribe(async (success) => {
             this.gateDrawerOpen = false;
-            if (success && onSuccess) {
-                await onSuccess();
-            }
-        });
-    }
-
-    openRestartGateDrawer(
-        gateJobs: { [jobId: string]: V2Job },
-        gateDefinitions: { [gateName: string]: V2JobGate }
-    ): void {
-        const additionalJobInputs: { [id: string]: { [inputName: string]: any } } = {};
-        const selectionsByJobId = groupRunJobSelectionsByJobId(this.selectedRunJobIds, this.jobs);
-
-        for (const [jobId, selectedIds] of selectionsByJobId) {
-            if (gateJobs[jobId]) {
-                // This job has gate inputs → handled by the gate form
-                continue;
-            }
-            if (areAllJobVariantsSelected(jobId, this.selectedRunJobIds, this.jobs)) {
-                additionalJobInputs[jobId] = {};
-            } else {
-                selectedIds.forEach(runJobId => {
-                    additionalJobInputs[runJobId] = {};
-                });
-            }
-        }
-
-        this.openGateDrawer(
-            gateJobs,
-            gateDefinitions,
-            additionalJobInputs,
-            async () => {
+            if (success) {
                 await this.load(this.workflowRun.id);
             }
-        );
+        });
     }
 
     openRunStartDrawer(): void {
@@ -916,7 +853,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         const currentGate = <V2JobGate>this.workflowRun.workflow_data.workflow.gates[job.gate];
         if (!currentGate.inputs) {
             try {
-                await lastValueFrom(this._workflowService.triggerJob(this.workflowRun.project_key, this.workflowRun.id, jobId));
+                await lastValueFrom(this._workflowService.triggerJobs(this.workflowRun.project_key, this.workflowRun.id, { job_inputs: { [jobId]: {} } }));
                 this._messageService.success(`Job ${jobId} started`);
             } catch (e) {
                 this._messageService.error(`Unable to get trigger job gate: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
@@ -924,14 +861,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             await this.load(this.workflowRun.id);
             return;
         }
-        this.openGateDrawer(
-            { [jobId]: job },
-            { [job.gate]: currentGate },
-            null,
-            async () => {
-                await this.load(this.workflowRun.id);
-            }
-        );
+        this.openRunTriggerDrawer(this.jobs.filter(j => j.job_id === jobId).map(j => j.id));
     }
 
     onMouseEnterRun(id: string): void {

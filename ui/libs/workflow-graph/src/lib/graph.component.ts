@@ -458,9 +458,7 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
                 }
                 break;
             case GraphNodeAction.ClickGate:
-                if (options && options['gateName']) {
-                    this.onSelectJobGate.emit(n.name);
-                }
+                this.onSelectJobGate.emit(n.name);
                 break;
             case GraphNodeAction.ClickConfirmGate:
                 this.onConfirmJobGate.emit(n.name);

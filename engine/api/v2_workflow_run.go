@@ -1006,7 +1006,7 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start jobs on a running workflow")
 			}
 
-			var jobsRequest sdk.V2WorkflowRunJobsRequest
+			var jobsRequest sdk.V2WorkflowRunTriggerJobsRequest
 			if err := service.UnmarshalRequest(ctx, req, &jobsRequest); err != nil {
 				return err
 			}
@@ -1040,15 +1040,10 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				} else {
 					// Key is a job_id (workflow definition name): restart all matching run jobs
 					// (includes every matrix variant).
-					var found bool
 					for _, rj := range runJobs {
 						if rj.JobID == key && rj.Status.IsTerminated() {
 							runJobToRestart[rj.ID] = rj
-							found = true
 						}
-					}
-					if !found {
-						return sdk.NewErrorFrom(sdk.ErrInvalidData, "no terminated run job found for job_id %q", key)
 					}
 				}
 			}
@@ -1100,6 +1095,9 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 							return err
 						}
 					}
+				}
+				if inputs == nil {
+					inputs = make(map[string]interface{})
 				}
 				inputs["manual"] = true
 
@@ -1474,6 +1472,9 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			if inputs == nil {
 				inputs = jobToRuns[0].GateInputs
+			}
+			if inputs == nil {
+				inputs = make(map[string]interface{})
 			}
 			inputs["manual"] = true
 

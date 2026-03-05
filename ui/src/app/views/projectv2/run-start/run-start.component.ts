@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
-import { FormBuilder, FormControl, FormGroup, Validators, ValidationErrors } from "@angular/forms";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnInit } from "@angular/core";
+import { FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
 import { Store } from "@ngxs/store";
 import { EntityType } from "app/model/entity.model";
 import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent } from "app/model/project.model";
@@ -47,7 +47,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
-    jobInputs: FormControl<{ [jobName: string]: { [inputName: string]: any } } | null>
+    jobInputs: FormControl<{ [jobIdentifier: string]: { [inputName: string]: any } } | null>
   }>;
   event: RepositoryHookEvent;
   loaders: {
@@ -66,15 +66,15 @@ export class ProjectV2RunStartComponent implements OnInit {
   rootJobsWithGate: { [jobName: string]: V2Job } = {};
   rootGateDefs: { [gateName: string]: V2JobGate } = {};
 
-  constructor(
-    private _drawerRef: NzDrawerRef<string>,
-    private _messageService: NzMessageService,
-    private _store: Store,
-    private _projectService: ProjectService,
-    private _fb: FormBuilder,
-    private _cd: ChangeDetectorRef,
-    private _workflowRunService: V2WorkflowRunService,
-  ) {
+  private _drawerRef = inject<NzDrawerRef<string>>(NzDrawerRef);
+  private _messageService = inject(NzMessageService);
+  private _store = inject(Store);
+  private _projectService = inject(ProjectService);
+  private _fb = inject(FormBuilder);
+  private _cd = inject(ChangeDetectorRef);
+  private _workflowRunService = inject(V2WorkflowRunService);
+
+  constructor() {
     this.project = this._store.selectSnapshot(ProjectV2State.current);
     this.validateForm = this._fb.group({
       repository: this._fb.control<string | null>(null, Validators.required),
@@ -82,7 +82,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
-      jobInputs: this._fb.control<{ [jobName: string]: { [inputName: string]: any } } | null>(null),
+      jobInputs: this._fb.control<{ [jobIdentifier: string]: { [inputName: string]: any } } | null>(null),
     });
   }
 

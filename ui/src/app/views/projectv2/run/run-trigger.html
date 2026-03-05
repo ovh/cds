@@ -1,24 +1,24 @@
-@if (allJobEntries.length > 1) {
+@if (allJobLabels.length > 1) {
     <nz-alert nzType="info" [nzMessage]="jobSummaryTpl"></nz-alert>
     <ng-template #jobSummaryTpl>
         <div>The following jobs were selected for restart:</div>
         <ul>
-            @for (entry of allJobEntries; track entry.id) {
-                <li>{{ entry.label }}</li>
+            @for (label of allJobLabels; track label) {
+                <li>{{ label }}</li>
             }
         </ul>
-        @if (gatedJobNames.length > 0) {
+        @if (gatedJobLabels.length > 0) {
             <div>Some jobs use gates whose inputs can be modified below:</div>
             <ul>
-                @for (name of gatedJobNames; track name) {
-                    <li>{{ name }}</li>
+                @for (label of gatedJobLabels; track label) {
+                    <li>{{ label }}</li>
                 }
             </ul>
         }
     </ng-template>
 }
 <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
-    <app-run-gate-inputs [jobs]="jobs" [gates]="gates" [initialValues]="initialValues"
+    <app-run-gate-inputs [jobs]="gatedJobs" [gates]="gates" [initialValues]="initialValues"
         formControlName="jobInputs"></app-run-gate-inputs>
 
     @if (!error) {

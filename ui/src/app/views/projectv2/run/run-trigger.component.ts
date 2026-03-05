@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnInit } from "@angular/core";
 import { FormBuilder, FormControl, FormGroup } from "@angular/forms";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
-import { V2Job, V2JobGate, V2WorkflowRun, V2WorkflowRunJob } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { areAllJobVariantsSelected, V2Job, V2JobGate, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunTriggerJobsRequest } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { NzDrawerRef } from "ng-zorro-antd/drawer";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { ErrorUtils } from "app/shared/error.utils";
@@ -18,21 +18,21 @@ import { lastValueFrom } from "rxjs";
 @AutoUnsubscribe()
 export class RunTriggerComponent implements OnInit {
     @Input() run: V2WorkflowRun;
-    @Input() jobs: { [jobName: string]: V2Job };
-    @Input() gates: { [gateName: string]: V2JobGate };
-    // Non-gated and matrix job inputs to include in a restart batch call.
-    // When set, the component uses startJobs API; otherwise triggerJob API.
-    @Input() additionalJobInputs: { [jobId: string]: { [inputName: string]: any } };
     @Input() runJobs: Array<V2WorkflowRunJob>;
+    @Input() jobRunIDs: Array<string>;
 
     validateForm: FormGroup<{
-        jobInputs: FormControl<{ [jobName: string]: { [inputName: string]: any } } | null>
+        jobInputs: FormControl<{ [jobIdentifier: string]: { [inputName: string]: any } } | null>
     }>;
-    initialValues: { [jobName: string]: { [inputName: string]: any } } = {};
-    allJobEntries: { id: string, label: string }[];
-    gatedJobNames: string[];
-    loading: boolean;
+    initialValues: { [jobIdentifier: string]: { [inputName: string]: any } } = {};
+    allJobLabels: Array<string> = [];
+    gatedJobLabels: Array<string> = [];
+    loading: boolean = false;
     error: string;
+
+    // Variables for app-gate-inputs component
+    gatedJobs: { [jobID: string]: V2Job } = {};
+    gates: { [gateName: string]: V2JobGate } = {};
 
     private _cd = inject(ChangeDetectorRef);
     private _fb = inject(FormBuilder);
@@ -40,115 +40,109 @@ export class RunTriggerComponent implements OnInit {
     private _workflowService = inject(V2WorkflowRunService);
     private _messageService = inject(NzMessageService);
 
-    ngOnInit(): void {
+    constructor() {
         this.validateForm = this._fb.group({
-            jobInputs: this._fb.control<{ [jobName: string]: { [inputName: string]: any } } | null>(null),
+            jobInputs: this._fb.control<{ [jobIdentifier: string]: { [inputName: string]: any } } | null>(null)
         });
+    }
+
+    ngOnInit(): void {
         this.init();
     }
 
     init(): void {
-        this.loading = false;
-        this.error = null;
-
-        this.allJobEntries = [
-            ...Object.keys(this.jobs).map(id => ({ id, label: id })),
-            ...Object.keys(this.additionalJobInputs ?? {}).map(id => ({
-                id,
-                label: this.buildJobLabel(id)
-            }))
-        ];
-
-        this.gatedJobNames = Object.keys(this.jobs).filter(id => {
-            const job = this.jobs[id];
-            return job.gate && this.gates[job.gate];
-        });
-
-        // Compute initial values from previous job_events
+        this.gatedJobs = {};
+        this.gates = {};
         this.initialValues = {};
-        if (this.run.job_events) {
-            Object.keys(this.jobs).forEach(jobName => {
-                const jobEvent = this.run.job_events.find(
-                    je => je.job_id === jobName && je.run_attempt === this.run.run_attempt
-                );
-                if (jobEvent && jobEvent.inputs) {
-                    this.initialValues[jobName] = { ...jobEvent.inputs };
+
+        // Determine all job labels and gated job labels, and initialize gate inputs values
+        for (const jobRunID of this.jobRunIDs) {
+            const runJob = this.runJobs.find(j => j.id === jobRunID);
+            const isPartialMatrixSelection = runJob.matrix && !areAllJobVariantsSelected(runJob.job_id, this.jobRunIDs, this.runJobs);
+            if (isPartialMatrixSelection) {
+                const matrixLabel = Object.entries(runJob.matrix).map(([k, v]) => `${k}:${v}`).join(', ');
+                this.allJobLabels.push(`${runJob.job_id} (${matrixLabel})`);
+                continue;
+            }
+            if (this.allJobLabels.find(j => j === runJob.job_id)) {
+                continue;
+            }
+
+            // For gated jobs, prepare data for gate inputs form
+            if (runJob.job.gate) {
+                this.gatedJobLabels.push(runJob.job_id);
+                this.gatedJobs[runJob.job_id] = runJob.job;
+                const gateName = this.gatedJobs[runJob.job_id].gate;
+                const gate = this.run.workflow_data.workflow.gates[gateName]
+                this.gates[gateName] = gate;
+                this.initialValues[runJob.job_id] = {};
+
+                // Compute initial value for each job based on previous run gate inputs
+                for (const inputName in gate.inputs || {}) {
+                    const jobValue = runJob.gate_inputs ? runJob.gate_inputs[inputName] : undefined;
+                    this.initialValues[runJob.job_id][inputName] = jobValue;
                 }
-            });
+            }
+
+            this.allJobLabels.push(runJob.job_id);
         }
 
         this._cd.markForCheck();
     }
 
     async submitForm() {
+        if (!this.validateForm.valid) {
+            Object.values(this.validateForm.controls).forEach(control => {
+                if (control.invalid) {
+                    control.markAsDirty();
+                    control.updateValueAndValidity({ onlySelf: true });
+                }
+            });
+            return;
+        }
+
         this.loading = true;
         this.error = null;
         this.validateForm.disable();
         this._cd.markForCheck();
 
-        try {
-            if (this.additionalJobInputs) {
-                await this.startJobs();
-            } else {
-                await this.triggerSingleJob();
+        let payload = { job_inputs: {} };
+        for (const jobRunID of this.jobRunIDs) {
+            const runJob = this.runJobs.find(j => j.id === jobRunID);
+            const isPartialMatrixSelection = runJob.matrix && !areAllJobVariantsSelected(runJob.job_id, this.jobRunIDs, this.runJobs);
+            if (isPartialMatrixSelection) {
+                payload.job_inputs[jobRunID] = {};
+                continue;
             }
+            if (payload.job_inputs[runJob.job_id]) {
+                continue;
+            }
+            payload.job_inputs[runJob.job_id] = this.validateForm.value.jobInputs?.[runJob.job_id] || {};
+        }
+
+        try {
+            await lastValueFrom(this._workflowService.triggerJobs(
+                this.run.project_key, this.run.id,
+                payload
+            ));
+            const count = Object.keys(payload.job_inputs).length;
+            this._messageService.success(
+                `${count} job${count > 1 ? 's' : ''} restarted successfully`,
+                { nzDuration: 2000 }
+            );
             this._drawerRef.close(true);
         } catch (e) {
             this.error = ErrorUtils.print(e);
+            return;
+        } finally {
             this.loading = false;
             this._cd.markForCheck();
-            return;
         }
-
-        this.validateForm.enable();
-        this.loading = false;
-        this._cd.markForCheck();
     }
 
     clearError(): void {
         this.error = null;
         this.validateForm.enable();
         this._cd.markForCheck();
-    }
-
-    async triggerSingleJob(): Promise<void> {
-        const jobId = Object.keys(this.jobs)[0];
-        const inputs = this.validateForm.value.jobInputs?.[jobId] || {};
-        await lastValueFrom(this._workflowService.triggerJob(
-            this.run.project_key, this.run.id, jobId, inputs
-        ));
-        this._messageService.success(`Job ${jobId} started`);
-    }
-
-    async startJobs(): Promise<void> {
-        const jobInputs: { [id: string]: { [inputName: string]: any } } = {};
-        const formInputs = this.validateForm.value.jobInputs ?? {};
-
-        for (const jobId of Object.keys(this.jobs)) {
-            jobInputs[jobId] = formInputs[jobId] ?? {};
-        }
-        for (const [id, inputs] of Object.entries(this.additionalJobInputs)) {
-            jobInputs[id] = inputs;
-        }
-
-        await lastValueFrom(this._workflowService.startJobs(
-            this.run.project_key, this.run.id,
-            { job_inputs: jobInputs }
-        ));
-
-        const count = Object.keys(jobInputs).length;
-        this._messageService.success(
-            `${count} job${count > 1 ? 's' : ''} restarted successfully`,
-            { nzDuration: 2000 }
-        );
-    }
-
-    buildJobLabel(id: string): string {
-        const runJob = this.runJobs?.find(j => j.id === id);
-        if (runJob?.matrix) {
-            const matrixLabel = Object.entries(runJob.matrix).map(([k, v]) => `${k}:${v}`).join(', ');
-            return `${runJob.job_id} (${matrixLabel})`;
-        }
-        return id;
     }
 }

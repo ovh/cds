@@ -324,8 +324,8 @@ export class V2WorkflowRunManualResponse {
     ui_url: string;
 }
 
-export class V2WorkflowRunJobsRequest {
-    job_inputs: { [jobId: string]: { [inputName: string]: any } };
+export class V2WorkflowRunTriggerJobsRequest {
+    job_inputs: { [jobIdentifier: string]: { [inputName: string]: any } };
 }
 
 /**

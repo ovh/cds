@@ -20,7 +20,7 @@
   </nz-form-item>
   <nz-form-item>
     <nz-form-label [nzSpan]="6" nzFor="workflow">Workflow</nz-form-label>
-    <nz-form-control [nzSpan]="14" [nzValidateStatus]="noWorkflowFound ? 'warning' : null"
+    <nz-form-control [nzSpan]="14" [nzValidateStatus]="noWorkflowFound ? 'warning' : ''"
       nzWarningTip="No workflow found for the current branch, fallback on the default one.">
       <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a workflow" formControlName="workflow" id="workflow"
         (ngModelChange)="workflowChange($event)">

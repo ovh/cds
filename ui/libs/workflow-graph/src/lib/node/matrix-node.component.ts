@@ -184,7 +184,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy, InteractiveN
     }
 
     clickGate(event: Event): void {
-        this.actionCallback(GraphNodeAction.ClickGate, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickGate, this.node);
         event.preventDefault();
         event.stopPropagation();
     }
@@ -202,7 +202,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy, InteractiveN
     }
 
     confirmRunGate(): void {
-        this.actionCallback(GraphNodeAction.ClickConfirmGate, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickConfirmGate, this.node);
     }
 
     match(navigationKey: string): boolean {

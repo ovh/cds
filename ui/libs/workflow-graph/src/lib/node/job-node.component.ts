@@ -146,7 +146,7 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy, InteractiveNode
     }
 
     clickGate(event: Event): void {
-        this.actionCallback(GraphNodeAction.ClickGate, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickGate, this.node);
         event.preventDefault();
         event.stopPropagation();
     }
@@ -164,7 +164,7 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy, InteractiveNode
     }
 
     confirmRunGate(): void {
-        this.actionCallback(GraphNodeAction.ClickConfirmGate, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickConfirmGate, this.node);
     }
 
     match(navigationKey: string): boolean {

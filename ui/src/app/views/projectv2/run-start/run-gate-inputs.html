@@ -8,19 +8,19 @@
         @for (input of gate.value.inputs | keyvalue; track input.key) {
             <nz-form-item>
                 <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
-                <nz-form-control [nzSpan]="14" [nzExtra]="asGateInput(input.value).description">
-                    @switch(asGateInput(input.value).type) {
+                <nz-form-control [nzSpan]="14" [nzExtra]="input.value.description">
+                    @switch(input.value.type) {
                         @case('boolean') {
                             <label nz-checkbox [nzDisabled]="disabled || values[gate.key].withJobOverrides"
                                 [ngModel]="values[gate.key].global[input.key.toString()]"
                                 (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)"></label>
                         }
                         @case('choice') {
-                            @if (asGateInput(input.value).options.multiple) {
+                            @if (input.value.options.multiple) {
                                 <nz-select nzMode="multiple" [nzDisabled]="disabled || values[gate.key].withJobOverrides"
                                     [ngModel]="values[gate.key].global[input.key.toString()]"
                                     (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
-                                    @for(opt of asGateInput(input.value).options.values; track opt) {
+                                    @for(opt of input.value.options.values; track opt) {
                                         <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
                                     }                                   
                                 </nz-select>
@@ -28,7 +28,7 @@
                                 <nz-select [nzDisabled]="disabled || values[gate.key].withJobOverrides"
                                     [ngModel]="values[gate.key].global[input.key.toString()]"
                                     (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
-                                    @for(opt of asGateInput(input.value).options.values; track opt) {
+                                    @for(opt of input.value.options.values; track opt) {
                                         <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
                                     }
                                 </nz-select>
@@ -61,26 +61,26 @@
             @for (input of gate.value.inputs | keyvalue; track input.key) {
                 <nz-form-item>
                     <nz-form-label [nzLabelWrap]="true" [title]="input.key" [nzSpan]="6">{{input.key}}</nz-form-label>
-                    <nz-form-control [nzSpan]="14" [nzExtra]="asGateInput(input.value).description">
-                        @switch (asGateInput(input.value).type) {
+                    <nz-form-control [nzSpan]="14" [nzExtra]="input.value.description">
+                        @switch (input.value.type) {
                             @case ('boolean') {
                                  <label nz-checkbox [nzDisabled]="disabled"
                                     [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
                                     (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)"></label>
                             }
                             @case ('choice') {
-                                @if (asGateInput(input.value).options.multiple) {
+                                @if (input.value.options.multiple) {
                                      <nz-select nzMode="multiple" [nzDisabled]="disabled"
                                         [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
                                         (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
-                                        @for(opt of asGateInput(input.value).options.values; track opt) {
+                                        @for(opt of input.value.options.values; track opt) {
                                             <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
                                         }
                                     </nz-select>
                                 } @else {
                                     <nz-select [nzDisabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
                                         (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
-                                        @for(opt of asGateInput(input.value).options.values; track opt) {
+                                        @for(opt of input.value.options.values; track opt) {
                                             <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
                                         }
                                     </nz-select>
