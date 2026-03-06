@@ -24,6 +24,14 @@
         cursor: grabbing;
     }
 
+    &.lasso-active {
+        cursor: crosshair;
+
+        &:active {
+            cursor: crosshair;
+        }
+    }
+
     ::ng-deep {
         .edgePath {
             path {

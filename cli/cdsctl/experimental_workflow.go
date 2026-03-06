@@ -393,7 +393,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 	}
 
 	if v.GetString("inputs") != "" {
-		var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+		var inputs sdk.V2WorkflowRunJobInputs
 		if err := json.Unmarshal([]byte(v.GetString("inputs")), &inputs); err != nil {
 			return nil, fmt.Errorf("unable to parse inputs: %v", err)
 		}
@@ -403,7 +403,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to read file %s: %v", v.GetString("inputs-file"), err)
 		}
-		var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+		var inputs sdk.V2WorkflowRunJobInputs
 		if err := yaml.Unmarshal(bts, &inputs); err != nil {
 			return nil, fmt.Errorf("unable to parse inputs: %v", err)
 		}
@@ -482,9 +482,9 @@ func workflowRestartFunc(v cli.Values) error {
 		}
 		fmt.Printf("Worflow %s #%d.%d restarted", run.WorkflowName, run.RunNumber, run.RunAttempt)
 	} else {
-		payload := sdk.V2WorkflowRunJobsRequest{}
+		payload := sdk.V2WorkflowRunTriggerJobsRequest{}
 		if v.GetString("inputs") != "" {
-			var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+			var inputs sdk.V2WorkflowRunJobInputs
 			if err := json.Unmarshal([]byte(v.GetString("inputs")), &inputs); err != nil {
 				return fmt.Errorf("unable to parse inputs: %v", err)
 			}
@@ -495,7 +495,7 @@ func workflowRestartFunc(v cli.Values) error {
 			if err != nil {
 				return fmt.Errorf("unable to read file %s: %v", v.GetString("inputs-file"), err)
 			}
-			var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+			var inputs sdk.V2WorkflowRunJobInputs
 			if err := yaml.Unmarshal(bts, &inputs); err != nil {
 				return fmt.Errorf("unable to parse inputs: %v", err)
 			}
