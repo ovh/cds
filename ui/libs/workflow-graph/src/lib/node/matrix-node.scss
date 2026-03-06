@@ -99,6 +99,11 @@
 
             transform: scale(1.2);
         }
+
+        &.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
     }
 }
 

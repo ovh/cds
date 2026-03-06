@@ -70,11 +70,14 @@ export class RunTriggerComponent implements OnInit {
 
             // For gated jobs, prepare data for gate inputs form
             if (runJob.job.gate) {
+                const gate = this.run.workflow_data.workflow.gates[runJob.job.gate]
+                if (!gate.inputs || Object.keys(gate.inputs).length === 0) {
+                    this.allJobLabels.push(runJob.job_id);
+                    continue;
+                }
                 this.gatedJobLabels.push(runJob.job_id);
                 this.gatedJobs[runJob.job_id] = runJob.job;
-                const gateName = this.gatedJobs[runJob.job_id].gate;
-                const gate = this.run.workflow_data.workflow.gates[gateName]
-                this.gates[gateName] = gate;
+                this.gates[runJob.job.gate] = gate;
                 this.initialValues[runJob.job_id] = {};
 
                 // Compute initial value for each job based on previous run gate inputs

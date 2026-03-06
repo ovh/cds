@@ -41,6 +41,7 @@ export class GraphStageNodeComponent implements AfterViewInit, InteractiveNode {
 
     ready: boolean;
     highlight = false;
+    disabled = false;
 
     // workflow graph
     @ViewChild('svgSubGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
@@ -53,10 +54,16 @@ export class GraphStageNodeComponent implements AfterViewInit, InteractiveNode {
     }
 
     onMouseEnter(): void {
+        if (this.disabled) {
+            return;
+        }
         this.actionCallback('enter', this.node);
     }
 
     onMouseOut(): void {
+        if (this.disabled) {
+            return;
+        }
         this.actionCallback('out', this.node);
     }
 
@@ -167,6 +174,9 @@ export class GraphStageNodeComponent implements AfterViewInit, InteractiveNode {
     }
 
     clickCenter(): void {
+        if (this.disabled) {
+            return;
+        }
         if (this.centerCallback) {
             this.centerCallback(this.node);
         }
@@ -176,6 +186,10 @@ export class GraphStageNodeComponent implements AfterViewInit, InteractiveNode {
 
     setSelectionMode(navigationKey: string, mode: SelectionMode): void {
         this.graph.setNodeSelectionMode(navigationKey, mode);
+        this.disabled = mode !== SelectionMode.Disabled;
+        if (this.disabled) {
+            this.setHighlight(false);
+        }
     }
 
     setSelected(selectedRunJobIds: Array<string>): void {

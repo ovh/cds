@@ -1,7 +1,7 @@
 @if (allJobLabels.length > 1) {
     <nz-alert nzType="info" [nzMessage]="jobSummaryTpl"></nz-alert>
     <ng-template #jobSummaryTpl>
-        <div>The following jobs were selected for restart:</div>
+        <div>The following jobs were selected to be triggered:</div>
         <ul>
             @for (label of allJobLabels; track label) {
                 <li>{{ label }}</li>

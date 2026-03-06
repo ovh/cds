@@ -796,7 +796,8 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
                 runJobs: this.jobs,
                 jobRunIDs
             },
-            nzSize: 'large'
+            nzSize: 'large',
+            nzBodyStyle: { 'padding': '0' }
         });
         drawerRef.afterClose.subscribe(async (success) => {
             this.gateDrawerOpen = false;
@@ -819,7 +820,8 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
                     workflow: this.workflowRun.contexts.cds.workflow_vcs_server + '/' + this.workflowRun.contexts.cds.workflow_repository + '/' + this.workflowRun.contexts.cds.workflow
                 }
             },
-            nzSize: 'large'
+            nzSize: 'large',
+            nzBodyStyle: { 'padding': '0' }
         });
         drawerRef.afterClose.subscribe(data => { });
     }

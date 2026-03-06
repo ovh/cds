@@ -2,7 +2,8 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    padding: 24px;
 }
 
 nz-alert {

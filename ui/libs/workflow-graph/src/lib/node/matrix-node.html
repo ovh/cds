@@ -19,9 +19,11 @@
             {{node?.name}}
         </span>
     </div>
-    <div *ngIf="selectionMode === 'active'" class="label-selection-overlay" (click)="clickSelectionOverlay($event)"
+    <div *ngIf="selectionMode !== 'disabled'" class="label-selection-overlay"
+        [class.disabled]="selectionMode === 'blocked'" (click)="clickSelectionOverlay($event)"
         (dblclick)="$event.stopPropagation();">
-        <label nz-checkbox [ngModel]="allMatrixSelected" (ngModelChange)="clickSelectionOverlay()">
+        <label *ngIf="selectionMode === 'active'" nz-checkbox [ngModel]="allMatrixSelected"
+            (ngModelChange)="clickSelectionOverlay()">
         </label>
     </div>
 </div>
