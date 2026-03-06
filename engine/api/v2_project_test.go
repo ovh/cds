@@ -2,15 +2,22 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
+	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -82,6 +89,95 @@ func Test_updateGetDeleteProjectV2Handler(t *testing.T) {
 	test.NoError(t, err)
 	assets.AuthentifyRequest(t, reqDel, u, pass)
 	// Do the request
+	wDel := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wDel, reqDel)
+	require.Equal(t, 204, wDel.Code)
+}
+
+func Test_deleteProjectV2Handler_CleanSchedulerHooks(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	u, pass := assets.InsertAdminUser(t, db)
+
+	vcsProj := assets.InsertTestVCSProject(t, db, proj.ID, "vcs", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProj.ID, "org/myrepo")
+
+	// Create an entity for the workflow
+	e := sdk.Entity{
+		ID:                  sdk.UUID(),
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkflow,
+		Name:                "my-workflow",
+		Ref:                 "refs/heads/master",
+		Commit:              "123456",
+		Head:                true,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &e))
+
+	// Insert scheduler hooks for this project
+	wh1 := sdk.V2WorkflowHook{
+		ProjectKey:     proj.Key,
+		VCSName:        vcsProj.Name,
+		RepositoryName: repo.Name,
+		EntityID:       e.ID,
+		WorkflowName:   "my-workflow",
+		Ref:            "refs/heads/master",
+		Commit:         "123456",
+		Type:           sdk.WorkflowHookTypeScheduler,
+		Data:           sdk.V2WorkflowHookData{},
+	}
+	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &wh1))
+
+	// Verify the hook exists
+	hooks, err := workflow_v2.LoadDistinctSchedulerWorkflowKeysByProjectKey(context.TODO(), db, proj.Key)
+	require.NoError(t, err)
+	require.Len(t, hooks, 1)
+
+	// Setup hooks service mock
+	sHook, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, sHook)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Expect the DELETE call to hooks service for the scheduler
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), http.MethodDelete,
+			gomock.Cond(func(x any) bool { return strings.HasPrefix(x.(string), "/v2/workflow/scheduler/") }),
+			gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
+			require.Contains(t, path, "vcs")
+			require.Contains(t, path, "my-workflow")
+			return nil, 200, nil
+		}).Times(1)
+
+	// Expect the DELETE call to hooks service for outgoing events
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), http.MethodDelete,
+			gomock.Cond(func(x any) bool { return strings.HasPrefix(x.(string), "/v2/workflow/outgoing/") }),
+			gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
+			require.Contains(t, path, proj.Key)
+			return nil, 200, nil
+		}).Times(1)
+
+	// DELETE the project
+	vars := map[string]string{
+		"projectKey": proj.Key,
+	}
+	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteProjectV2Handler, vars)
+	reqDel, err := http.NewRequest("DELETE", uriDelete, nil)
+	require.NoError(t, err)
+	assets.AuthentifyRequest(t, reqDel, u, pass)
+
 	wDel := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(wDel, reqDel)
 	require.Equal(t, 204, wDel.Code)
