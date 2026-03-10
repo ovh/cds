@@ -223,9 +223,15 @@ func LoadRunByIDAndProjectKey(ctx context.Context, db gorp.SqlExecutor, projectk
 	return loadRun(ctx, db, loadOpts, query, projectkey, id)
 }
 
-// ExistRunByID checks if a workflow run exists by its ID
+// ExistRunByID checks if a workflow run exists by its ID.
+// It also verifies that the parent project still exists, so that
+// orphaned workflow_run rows (left behind after a project deletion)
+// are correctly reported as non-existent.
 func ExistRunByID(db gorp.SqlExecutor, id int64) (bool, error) {
-	query := `SELECT COUNT(1) FROM workflow_run WHERE id = $1 AND to_delete = false`
+	query := `SELECT COUNT(1)
+		FROM workflow_run
+		JOIN project ON project.id = workflow_run.project_id
+		WHERE workflow_run.id = $1 AND workflow_run.to_delete = false`
 	count, err := db.SelectInt(query, id)
 	if err != nil {
 		return false, sdk.WithStack(err)
