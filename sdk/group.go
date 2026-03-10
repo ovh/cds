@@ -31,6 +31,12 @@ type Group struct {
 	Organization string       `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization" db:"-"`
 }
 
+// AdminCreateGroup is used by cdsctl admin group create command.
+type AdminCreateGroup struct {
+	Name                string `json:"name"`
+	FirstMemberUsername string `json:"first_member_username"`
+}
+
 // IsValid returns an error if given group is not valid.
 func (g Group) IsValid() error {
 	rx := NamePatternRegex
