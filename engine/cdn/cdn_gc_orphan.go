@@ -23,6 +23,10 @@ func (s *Service) itemOrphanCleanup(ctx context.Context) {
 	tick := time.NewTicker(time.Duration(frequency) * time.Second)
 	defer tick.Stop()
 
+	// Pagination cursor: the creation date of the last processed item.
+	// Advances through items across batches, resets to zero when the end is reached.
+	var createdCursor time.Time
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -31,21 +35,26 @@ func (s *Service) itemOrphanCleanup(ctx context.Context) {
 			}
 			return
 		case <-tick.C:
-			if err := s.cleanOrphanItemsV1(ctx); err != nil {
+			nextCursor, err := s.cleanOrphanItemsV1(ctx, createdCursor)
+			if err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "cdn:orphan-cleanup: error: %v", err)
+				continue
 			}
+			createdCursor = nextCursor
 		}
 	}
 }
 
-// cleanOrphanItemsV1 processes one batch of the oldest v1 items, checking whether
-// their associated workflow_run still exists via the CDS API. Items whose run
-// no longer exists are marked as to_delete.
+// cleanOrphanItemsV1 processes one batch of v1 items created after the given cursor,
+// checking whether their associated workflow_run still exists via the CDS API.
+// Items whose run no longer exists are marked as to_delete.
+// Returns the creation date of the last item processed as cursor for the next batch,
+// or zero time when the end is reached to restart scanning.
 //
 // The SELECT FOR UPDATE SKIP LOCKED ensures that multiple CDN instances
 // work on different items concurrently without overlap.
-func (s *Service) cleanOrphanItemsV1(ctx context.Context) error {
+func (s *Service) cleanOrphanItemsV1(ctx context.Context, createdCursor time.Time) (time.Time, error) {
 	batchSize := s.Cfg.OrphanCleanup.BatchSize
 	if batchSize <= 0 {
 		batchSize = 100
@@ -58,22 +67,23 @@ func (s *Service) cleanOrphanItemsV1(ctx context.Context) error {
 
 	tx, err := s.mustDBWithCtx(ctx).Begin()
 	if err != nil {
-		return sdk.WithStack(err)
+		return createdCursor, sdk.WithStack(err)
 	}
 	defer tx.Rollback() // nolint
 
-	// Lock a batch of the oldest v1 items. Other CDN instances will skip
-	// these rows and pick the next ones.
-	items, err := item.LoadOldestItemIDsForOrphanCleanupV1(tx, batchSize, gracePeriodDays)
+	// Lock a batch of v1 items created after the cursor. Other CDN instances
+	// will skip these rows and pick the next ones.
+	items, err := item.LoadOldestItemIDsForOrphanCleanupV1(tx, createdCursor, batchSize, gracePeriodDays)
 	if err != nil {
-		return err
+		return createdCursor, err
 	}
 
+	// No more items after cursor: reset to scan from the beginning
 	if len(items) == 0 {
-		return sdk.WithStack(tx.Commit())
+		return time.Time{}, sdk.WithStack(tx.Commit())
 	}
 
-	log.Info(ctx, "cdn:orphan-cleanup: checking %d items", len(items))
+	log.Info(ctx, "cdn:orphan-cleanup: checking %d items (cursor=%v)", len(items), createdCursor)
 
 	// Deduplicate run IDs to minimize API calls. A single workflow run
 	// typically has many associated items (logs, artifacts...).
@@ -110,12 +120,17 @@ func (s *Service) cleanOrphanItemsV1(ctx context.Context) error {
 
 	if len(orphanIDs) > 0 {
 		if err := item.MarkItemsAsToDelete(tx, orphanIDs); err != nil {
-			return err
+			return createdCursor, err
 		}
 		log.Info(ctx, "cdn:orphan-cleanup: marked %d items as to_delete (out of %d checked)", len(orphanIDs), len(items))
 	} else {
 		log.Debug(ctx, "cdn:orphan-cleanup: no orphan items found in this batch of %d", len(items))
 	}
 
-	return sdk.WithStack(tx.Commit())
+	if err := tx.Commit(); err != nil {
+		return createdCursor, sdk.WithStack(err)
+	}
+
+	// Advance cursor to the creation date of the last item in this batch
+	return items[len(items)-1].Created, nil
 }
