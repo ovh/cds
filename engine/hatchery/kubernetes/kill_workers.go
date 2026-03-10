@@ -58,7 +58,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		if !toDelete {
 			var found bool
 			for _, w := range workers {
-				if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.Name() {
+				if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.GetName() {
 					found = true
 					break
 				}

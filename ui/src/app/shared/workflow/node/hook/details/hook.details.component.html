@@ -27,7 +27,7 @@
                     <h3>Hook configuration</h3>
                     <ng-container *ngIf="task.config">
                         <nz-form-item *ngFor="let k of task.config | keys">
-                            <nz-form-label [nzSpan]="4" name="{{k}}">{{k}}</nz-form-label>
+                            <nz-form-label [nzSpan]="4">{{k}}</nz-form-label>
                             <nz-form-control [nzSpan]="20">
                                 <input nz-input type="text" name="value-{{k}}" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
                                 <ng-container *ngIf="k === 'payload'">

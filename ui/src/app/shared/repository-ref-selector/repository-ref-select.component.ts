@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import { Store } from "@ngxs/store";
 import { Branch, Tag } from "app/model/repositories.model";
@@ -6,7 +6,7 @@ import { OnChangeType, OnTouchedType } from "ng-zorro-antd/core/types";
 import { AutoUnsubscribe } from "../decorator/autoUnsubscribe";
 import { Subscription } from "rxjs";
 import { PreferencesState } from "app/store/preferences.state";
-import { NzSelectComponent } from "ng-zorro-antd/select";
+import { NzSelectComponent, NzSelectSizeType } from "ng-zorro-antd/select";
 
 @Component({
     standalone: false,
@@ -26,7 +26,7 @@ import { NzSelectComponent } from "ng-zorro-antd/select";
 export class RepositoryRefSelectComponent implements OnInit, OnChanges, ControlValueAccessor {
 	@ViewChild('select') select: NzSelectComponent;
 
-	@Input() size: string = '';
+	@Input() size: NzSelectSizeType = 'default';
 	@Input() branches: Array<Branch>;
 	@Input() tags: Array<Tag>;
 	@Input() placeHolder: string = '';
@@ -42,10 +42,8 @@ export class RepositoryRefSelectComponent implements OnInit, OnChanges, ControlV
 	filter: string;
 	disabled: boolean;
 
-	constructor(
-		private _cd: ChangeDetectorRef,
-		private _store: Store
-	) { }
+	private _cd = inject(ChangeDetectorRef);
+	private _store = inject(Store);
 
 	ngOnInit(): void {
 		this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {

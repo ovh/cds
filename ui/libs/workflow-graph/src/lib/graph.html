@@ -30,13 +30,13 @@
 </div>
 
 <div class="controls">
-    <button nz-button (click)="changeDirection()" nzSize="medium">
+    <button nz-button (click)="changeDirection()" nzSize="default">
         <span *ngIf="direction === 'horizontal'" nz-icon nzType="rotate-right" nzTheme="outline"
             title="Rotate graph right"></span>
         <span *ngIf="direction === 'vertical'" nz-icon nzType="rotate-left" nzTheme="outline"
             title="Rotate graph left"></span>
     </button>
-    <button nz-button (click)="clickOrigin()" nzSize="medium" title="Center graph">
+    <button nz-button (click)="clickOrigin()" nzSize="default" title="Center graph">
         <span nz-icon nzType="aim" nzTheme="outline"></span>
     </button>
 </div>

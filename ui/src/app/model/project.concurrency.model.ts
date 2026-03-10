@@ -20,6 +20,8 @@ export class ProjectConcurrencyRuns {
     type: string;
     job_name: string;
     last_modified: string;
+    run_number: string;
+    status: string;
 }
 
 export class ConcurrencyOrder {

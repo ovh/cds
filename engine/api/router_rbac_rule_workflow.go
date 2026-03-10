@@ -38,8 +38,8 @@ func (api *API) hasRoleOnWorkflow(ctx context.Context, vars map[string]string, r
 		if err != nil {
 			return err
 		}
-		vcsName = run.Contexts.Git.Server
-		repoName = run.Contexts.Git.Repository
+		vcsName = run.Contexts.CDS.WorkflowVCSServer
+		repoName = run.Contexts.CDS.WorkflowRepository
 		workflowName = run.WorkflowName
 	} else {
 		// Retrieve VCSName
@@ -75,7 +75,7 @@ func (api *API) hasRoleOnWorkflow(ctx context.Context, vars map[string]string, r
 	}
 
 	if !hasRole {
-		return sdk.WithStack(sdk.ErrForbidden)
+		return sdk.WrapError(sdk.ErrForbidden, "user %s does not have %s role on workflow %s/%s/%s for project %s", auth.AuthConsumerUser.AuthentifiedUser.Username, role, vcsName, repoName, workflowName, projectKey)
 	}
 
 	return nil

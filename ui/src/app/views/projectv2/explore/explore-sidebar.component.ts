@@ -3,6 +3,7 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
+    inject,
     Input,
     OnDestroy,
     OnInit
@@ -45,7 +46,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     loadingEntities: { [repositoryPath: string]: boolean } = {};
     vcss: Array<VCSProject> = [];
     repositories: { [vcs: string]: Array<ProjectRepository> } = {};
-    entities: { [repositoryPath: string]: { [entityType: string]: Array<Entity> } } = {};
+    entities: { [repositoryPath: string]: Map<EntityType, Array<Entity>> } = {};
     treeExpandState: { [key: string]: boolean } = {};
     branches: { [repositoryPath: string]: Array<Branch> } = {};
     tags: { [repositoryPath: string]: Array<Tag> } = {};
@@ -54,17 +55,15 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     routerSub: Subscription;
     eventV2Subscription: Subscription;
 
-    constructor(
-        private _cd: ChangeDetectorRef,
-        private _projectService: ProjectService,
-        private _analysisService: AnalysisService,
-        private _messageService: NzMessageService,
-        private _store: Store,
-        private _router: Router,
-        private _routerService: RouterService,
-        private _activatedRoute: ActivatedRoute,
-        private _drawerService: NzDrawerService
-    ) { }
+    private _cd = inject(ChangeDetectorRef);
+    private _projectService = inject(ProjectService);
+    private _analysisService = inject(AnalysisService);
+    private _messageService = inject(NzMessageService);
+    private _store = inject(Store);
+    private _router = inject(Router);
+    private _routerService = inject(RouterService);
+    private _activatedRoute = inject(ActivatedRoute);
+    private _drawerService = inject(NzDrawerService);
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
@@ -194,10 +193,12 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
             this.entities[vcs.name + '/' + repo.name] = null;
             return
         }
-        let m = {};
+        let m = new Map<EntityType, Array<Entity>>();
         resp.forEach(entity => {
-            if (!m[entity.type]) { m[entity.type] = []; }
-            m[entity.type].push(entity);
+            if (!m.has(entity.type)) { m.set(entity.type, []); }
+            let entities = m.get(entity.type);
+            entities.push(entity);
+            m.set(entity.type, entities);
         });
         Object.keys(m).forEach(key => {
             m[key].sort((a, b) => { a.name < b.name ? -1 : 1 });

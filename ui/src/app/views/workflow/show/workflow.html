@@ -3,12 +3,12 @@
     <div class="workflowShow">
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <ng-container *ngIf="editMode && !isReadOnly">
-            <nz-button-group class="ascodeButton">
+            <nz-space-compact class="ascodeButton">
                 <ng-container *ngIf="editModeWorkflowChanged">
                     <button nz-button nzType="default" (click)="rollbackWorkflow()">{{'common_cancel' | translate }}</button>
                 </ng-container>
                     <button nz-button nzType="primary" [disabled]="!editModeWorkflowChanged" (click)="saveWorkflow()">{{'btn_save_workflow' | translate }}</button>
-            </nz-button-group>
+            </nz-space-compact>
         </ng-container>
         <div *ngIf="selectedTab.key === 'workflows'" class="workflowShowGraph">
             <nz-row>

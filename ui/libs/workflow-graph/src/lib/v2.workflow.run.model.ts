@@ -26,6 +26,8 @@ export class V2WorkflowRun {
 export enum V2WorkflowRunStatus {
     Crafting = "Crafting",
     Building = "Building",
+    Blocked = "Blocked",
+    Cancelled = "Cancelled",
     Fail = "Fail",
     Stopped = "Stopped",
     Success = "Success",
@@ -149,6 +151,8 @@ export class V2WorkflowRunJob {
     job_id: string;
     workflow_run_id: string;
     project_key: string;
+    vcs_server: string;
+    repository: string;
     workflow_name: string;
     run_number: number
     run_attempt: number;

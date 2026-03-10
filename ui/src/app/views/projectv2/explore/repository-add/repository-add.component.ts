@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
@@ -6,7 +6,7 @@ import { lastValueFrom } from 'rxjs';
 import { Project, ProjectRepository } from 'app/model/project.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { RepositoriesManager, Repository } from 'app/model/repositories.model';
+import { Repository } from 'app/model/repositories.model';
 import { VCSProject } from 'app/model/vcs.model';
 import { ProjectV2State } from 'app/store/project-v2.state';
 import { ErrorUtils } from 'app/shared/error.utils';
@@ -39,7 +39,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy, OnInit {
         };
 
     project: Project;
-    vcsProject: RepositoriesManager;
+    vcsProject: VCSProject;
     vcss: VCSProject[] = [];
     repositories: Repository[];
     validateForm: FormGroup<{
@@ -49,15 +49,15 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy, OnInit {
     result: ProjectRepository;
     error: string;
 
-    constructor(
-        private _drawerRef: NzDrawerRef<string>,
-        private _store: Store,
-        private _cd: ChangeDetectorRef,
-        private _projectService: ProjectService,
-        private _messageService: NzMessageService,
-        private _repoManagerService: RepoManagerService,
-        private _fb: FormBuilder
-    ) {
+    private _drawerRef = inject(NzDrawerRef<string>);
+    private _store = inject(Store);
+    private _cd = inject(ChangeDetectorRef);
+    private _projectService = inject(ProjectService);
+    private _messageService = inject(NzMessageService);
+    private _repoManagerService = inject(RepoManagerService);
+    private _fb = inject(FormBuilder);
+
+    constructor() {
         this.project = this._store.selectSnapshot(ProjectV2State.current);
         this.validateForm = this._fb.group({
             vcs: this._fb.control<string | null>(null, Validators.required),

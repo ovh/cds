@@ -52,7 +52,7 @@ func (c *Client) GetFile(ctx context.Context, fileURI string) ([]byte, error) {
 func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, error) {
 	fi := sdk.FileInfo{}
 
-	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath)
+	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, strings.TrimPrefix(filePath, "/"))
 	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
 	re, body, _, err := c.Asm.Client().SendGet(fileInfoURL, true, &httpDetails)
 	if err != nil {

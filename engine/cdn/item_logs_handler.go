@@ -88,6 +88,9 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 					}
 					if err := s.sendLogsToWSClient(ctx, wsClient, wsClientData); err != nil {
 						log.Warn(ctx, "getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
+						// Close the underlying connection so that Listen/ReadMessage unblocks
+						// and the client can detect the disconnection and reconnect.
+						c.Close() // nolint
 						return
 					}
 				}

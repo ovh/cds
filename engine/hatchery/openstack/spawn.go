@@ -195,7 +195,8 @@ func (h *HatcheryOpenstack) getFlavorName(flavorFromJob string) string {
 
 func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, flavor flavors.Flavor, model sdk.WorkerStarterWorkerModel) error {
 	existingServers := h.getServers(ctx)
-	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
+	// MaxWorker=0 means unlimited (Amendment B for vSphere hatchery)
+	if h.Configuration().Provision.MaxWorker > 0 && len(existingServers) >= h.Configuration().Provision.MaxWorker {
 		return sdk.WithStack(fmt.Errorf("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker))
 	}
 

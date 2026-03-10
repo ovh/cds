@@ -732,6 +732,21 @@ func (r *V2WorkflowRunResult) GetDetail() (V2WorkflowRunResultDetailInterface, e
 	}
 }
 
+// GetDetailLightForContext returns the detail without heavy data (e.g. JUnit test suites)
+// suitable for inclusion in the interpolation context without causing OOM.
+func (r *V2WorkflowRunResult) GetDetailLightForContext() (V2WorkflowRunResultDetailInterface, error) {
+	detail, err := r.GetDetail()
+	if err != nil {
+		return nil, err
+	}
+	if testDetail, ok := detail.(*V2WorkflowRunResultTestDetail); ok {
+		lightCopy := *testDetail
+		lightCopy.TestsSuites = JUnitTestsSuites{}
+		return &lightCopy, nil
+	}
+	return detail, nil
+}
+
 func (r *V2WorkflowRunResult) Name() string {
 	detailData, err := r.GetDetail()
 	if err != nil {

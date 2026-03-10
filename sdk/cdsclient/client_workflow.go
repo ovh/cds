@@ -232,6 +232,18 @@ func (c *client) WorkflowAccess(ctx context.Context, projectKey string, workflow
 	return nil
 }
 
+func (c *client) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
+	url := fmt.Sprintf("/workflow/run/%d/exists", id)
+	_, err := c.GetJSON(ctx, url, nil)
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func (c *client) WorkflowLogDownload(ctx context.Context, link sdk.CDNLogLink) ([]byte, error) {
 	cdnURL, err := c.CDNURL()
 	if err != nil {

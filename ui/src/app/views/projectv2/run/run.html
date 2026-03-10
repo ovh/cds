@@ -174,9 +174,9 @@
                 </nz-page-header>
 
                 <div class="controls">
-                    <button *ngIf="workflowRunIsTerminated" nz-button nzType="secondary" nzSize="large"
+                    <button *ngIf="workflowRunIsTerminated" nz-button nzType="default" nzSize="large"
                         title="Start new run" (click)="openRunStartDrawer()">Start new run</button>
-                    <button *ngIf="workflowRunIsTerminated && hasJobsFailed" nz-button nzType="secondary" nzSize="large"
+                    <button *ngIf="workflowRunIsTerminated && hasJobsFailed" nz-button nzType="default" nzSize="large"
                         title="Restart failed jobs" [nzLoading]="loading.restart" (click)="clickRestartJobs()">Restart
                         failed jobs</button>
                     <button *ngIf="workflowRunIsActive" nz-button nzType="primary" nzSize="large" nzDanger
@@ -193,7 +193,7 @@
         </div>
 
         <!--  BOTTOM PANELS -->
-        <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
+        <app-resizable-panel [direction]="'vertical'" [minSize]="200" [initialSize]="infoPanelSize"
             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
             <div class="bottom-panel">
                 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
@@ -207,7 +207,7 @@
     </div>
 
     <!--  RIGHT PANELS -->
-    <app-resizable-panel *ngIf="selectedItemType" minSize="400" [initialSize]="jobPanelSize"
+    <app-resizable-panel *ngIf="selectedItemType" [minSize]="400" [initialSize]="jobPanelSize"
         (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)"
         (dblclick)="$event.stopPropagation(); dblClickOnPanel()">
         <div class="controls">

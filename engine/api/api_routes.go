@@ -19,9 +19,7 @@ func Scopes(s ...sdk.AuthConsumerScope) HandlerScope {
 	return HandlerScope(s)
 }
 
-var (
-	ScopeNone = func() HandlerScope { return []sdk.AuthConsumerScope{} }
-)
+var ScopeNone = func() HandlerScope { return []sdk.AuthConsumerScope{} }
 
 // InitRouter initializes the router and all the routes
 func (api *API) InitRouter() {
@@ -311,7 +309,7 @@ func (api *API) InitRouter() {
 	// Export Environment
 	r.Handle("/project/{permProjectKey}/export/environment/{environmentName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getEnvironmentExportHandler))
 
-	//Workflow queue
+	// Workflow queue
 	r.Handle("/queue/workflows", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowJobQueueHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/count", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.countWorkflowJobQueueHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/take", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postTakeWorkflowJobHandler, MaintenanceAware()))
@@ -333,6 +331,9 @@ func (api *API) InitRouter() {
 	r.Handle("/parameter/type", ScopeNone(), r.GET(api.getParameterTypeHandler))
 	r.Handle("/notification/type", ScopeNone(), r.GET(api.getUserNotificationTypeHandler))
 	r.Handle("/notification/state", ScopeNone(), r.GET(api.getUserNotificationStateValueHandler))
+
+	// Used by CDN to identify if a workflow exists or not, to be able to delete orphan artifacts
+	r.Handle("/workflow/run/{id}/exists", Scope(sdk.AuthConsumerScopeService), r.GET(api.getWorkflowRunExistsHandler))
 
 	// RepositoriesManager for projects
 	r.Handle("/project/{permProjectKey}/repositories_manager", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerForProjectHandler))
@@ -577,7 +578,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/ws", ScopeNone(), r.GET(api.getWebsocketV2Handler))
 
-	//Not Found handler
+	// Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 
 	r.computeScopeDetails()

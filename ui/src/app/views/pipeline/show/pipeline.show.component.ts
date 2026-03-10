@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -59,8 +59,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     // optional application data
     workflowName: string;
     application: Application;
-    version: string;
-    buildNumber: string;
+    version: number;
+    buildNumber: number;
     envName: string;
     branch: string;
     remote: string;
@@ -79,24 +79,24 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
 
     readOnly: boolean;
 
-    constructor(
-        private _store: Store,
-        private _routeActivated: ActivatedRoute,
-        private _router: Router,
-        private _toast: ToastService,
-        public _translate: TranslateService,
-        private _keyService: KeyService,
-        private _pipCoreService: PipelineCoreService,
-        private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService,
-        private _routerService: RouterService
-    ) {
+    private _store = inject(Store);
+    private _routeActivated = inject(ActivatedRoute);
+    private _router = inject(Router);
+    private _toast = inject(ToastService);
+    public _translate = inject(TranslateService);
+    private _keyService = inject(KeyService);
+    private _pipCoreService = inject(PipelineCoreService);
+    private _cd = inject(ChangeDetectorRef);
+    private _modalService = inject(NzModalService);
+    private _routerService = inject(RouterService);
+
+    constructor() {
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
         this.workflowName = this._routeActivated.snapshot.queryParams['workflow'];
 
-        this.buildNumber = this.getQueryParam('buildNumber');
-        this.version = this.getQueryParam('version');
+        this.buildNumber = Number(this.getQueryParam('buildNumber'));
+        this.version = Number(this.getQueryParam('version'));
         this.envName = this.getQueryParam('envName');
         this.branch = this.getQueryParam('branch');
         this.remote = this.getQueryParam('remote');

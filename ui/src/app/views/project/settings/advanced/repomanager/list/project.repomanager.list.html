@@ -1,29 +1,39 @@
 <div id="projectRepoManagers">
-    <nz-table [nzData]="reposmanagers" nzSize="small" #listrepos>
+    <div class="list-header">
+        <button *ngIf="canAdd" nz-button nzType="primary" (click)="openCreate()">
+            <i nz-icon nzType="plus"></i> Add
+        </button>
+    </div>
+    <nz-table [nzData]="vcsProjects" nzSize="small" [nzLoading]="loading" #listrepos>
         <thead>
             <tr>
-                <th nzWidth="400px">Name</th>
-                <th nzWidth="50px"></th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>URL</th>
+                <th nzWidth="80px"></th>
             </tr>
         </thead>
         <tbody>
             <tr *ngFor="let r of listrepos.data">
                 <td>
                     {{r.name}}
-                    <span *ngIf="r.created_by !== ''"> - {{ 'project_repoman_created_by' | translate
-                        }}{{r.created_by}}</span>
-                    <span *ngIf="r.auth && r.auth.username && r.auth.username !== ''"> - User:
-                        {{r.auth.username}}</span>
-                    <span *ngIf="r.auth && r.auth.sshUsername && r.auth.sshUsername !== ''"> - SSH User:
-                        {{r.auth.sshUsername}}</span>
-                    <span *ngIf="r.auth && r.auth.sshKeyName && r.auth.sshKeyName !== ''"> - SSH Key:
-                        {{r.auth.sshKeyName}}</span>
+                    <span *ngIf="r.created_by && r.created_by !== ''"> - Created by {{r.created_by}}</span>
                 </td>
+                <td>{{r.type}}</td>
+                <td>{{r.url}}</td>
                 <td class="rightAlign">
-                    <app-project-repomanager-form [vcsProjectName]="r.name"
-                        [project]="project"></app-project-repomanager-form>
+                    <button nz-button nzType="text" (click)="openEdit(r)" title="Edit">
+                        <i nz-icon nzType="edit"></i>
+                    </button>
                 </td>
             </tr>
         </tbody>
     </nz-table>
+    <app-project-repomanager-form
+        *ngIf="selectedVCSProject"
+        [project]="project"
+        [vcsProject]="selectedVCSProject"
+        [visible]="modalVisible"
+        (closed)="onModalClose($event)">
+    </app-project-repomanager-form>
 </div>

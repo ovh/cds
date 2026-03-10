@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { ApplicationAddComponent } from './add/application.add.component';
 import { applicationRouting } from './application.routing';
@@ -23,9 +23,6 @@ import { ApplicationKeysComponent } from './show/keys/application.keys.component
     imports: [
         SharedModule,
         applicationRouting,
-    ],
-    schemas: [
-        CUSTOM_ELEMENTS_SCHEMA
     ]
 })
 export class ApplicationModule {

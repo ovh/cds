@@ -277,6 +277,7 @@ func ComputeRunResultTestsDetail(c *actionplugin.Common, filePath string, fileCo
 		Log(c, l)
 	}
 	ftests = ftests.EnsureData()
+	ftests = ftests.Trim()
 	stats := ftests.ComputeStats()
 
 	_, fileName := filepath.Split(filePath)

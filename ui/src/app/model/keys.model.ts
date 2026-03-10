@@ -24,6 +24,7 @@ export class Key {
     type: string;
     application_id: number;
     pipeline_id: number;
+    disabled: boolean;
 
     constructor() {
         this.name = '';

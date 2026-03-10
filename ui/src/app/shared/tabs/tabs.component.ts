@@ -1,12 +1,13 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, TemplateRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs';
+import { ThemeType } from '@ant-design/icons-angular';
 
 export class Tab {
     title: string;
     icon: string;
-    iconTheme: string;
+    iconTheme: ThemeType;
     iconClassColor: string;
     key: string;
     default: boolean;
@@ -34,11 +35,9 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     selected: Tab;
     queryParamsSub: Subscription;
 
-    constructor(
-        private _route: ActivatedRoute,
-        private _router: Router,
-        private _cd: ChangeDetectorRef
-    ) { }
+    private _route = inject(ActivatedRoute);
+    private _router = inject(Router);
+    private _cd = inject(ChangeDetectorRef);
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
