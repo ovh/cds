@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
@@ -35,7 +36,7 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	ctx := context.Background()
 	p.StreamServer = stream
 
-	gitURL := q.GetOptions()["git-url"]
+	gitURL := sanitizeGitURL(q.GetOptions()["git-url"])
 	ref := q.GetOptions()["ref"]
 	sha := q.GetOptions()["sha"]
 	sshKey := q.GetOptions()["ssh-key"]
@@ -257,6 +258,51 @@ func (p *checkoutPlugin) Exec(ctx context.Context, workDirs *sdk.WorkerDirectori
 
 func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	return nil, sdk.ErrNotImplemented
+}
+
+// sanitizeGitURL fixes hybrid SSH URLs that mix the ssh:// scheme with the
+// SCP-like host:path syntax. For example GitHub returns "git@github.com:ovh/cds.git"
+// but some code paths prepend "ssh://" producing "ssh://git@github.com:ovh/cds.git".
+// In the ssh:// scheme the colon is interpreted as a port separator, so ":ovh" is
+// an invalid port. This function converts such URLs to the correct form:
+//
+//	ssh://git@github.com:ovh/cds.git  →  ssh://git@github.com/ovh/cds.git
+//
+// URLs that already have a valid numeric port (e.g. ssh://git@host:7999/path)
+// or that don't use the ssh:// scheme are returned unchanged.
+func sanitizeGitURL(raw string) string {
+	if !strings.HasPrefix(raw, "ssh://") {
+		return raw
+	}
+
+	u, err := url.Parse(raw)
+	if err == nil && u.Port() != "" {
+		// url.Parse succeeded and found a port – if it's numeric the URL is
+		// already well-formed (e.g. ssh://git@host:7999/repo).
+		return raw
+	}
+
+	// url.Parse failed (invalid port like ":ovh") or returned an empty port.
+	// Try to detect the SCP-inside-ssh pattern: ssh://[user@]host:path
+	withoutScheme := strings.TrimPrefix(raw, "ssh://")
+
+	// Find host (possibly with user@)
+	colonIdx := strings.Index(withoutScheme, ":")
+	slashIdx := strings.Index(withoutScheme, "/")
+
+	if colonIdx == -1 {
+		// No colon at all – nothing to fix.
+		return raw
+	}
+
+	if slashIdx != -1 && slashIdx < colonIdx {
+		// Slash comes before colon (ssh://user@host/path:rest) – not the hybrid case.
+		return raw
+	}
+
+	// We have ssh://something:rest where rest does NOT start with a digit
+	// (otherwise url.Parse would have been fine). Replace the colon with a slash.
+	return "ssh://" + withoutScheme[:colonIdx] + "/" + withoutScheme[colonIdx+1:]
 }
 
 func main() {

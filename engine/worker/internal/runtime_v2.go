@@ -115,7 +115,7 @@ func (wk *CurrentWorker) addRunResultToCurrentJobContext(_ context.Context, newR
 		if jobContext.JobRunResults == nil {
 			jobContext.JobRunResults = sdk.JobRunResults{}
 		}
-		jobContext.JobRunResults[newRunResult.Name()], _ = newRunResult.GetDetail()
+		jobContext.JobRunResults[newRunResult.Name()], _ = newRunResult.GetDetailLightForContext()
 	}
 	wk.currentJobV2.runJobContext.Jobs[wk.currentJobV2.runJob.JobID] = jobContext
 	return nil

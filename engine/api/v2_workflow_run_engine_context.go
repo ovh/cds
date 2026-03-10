@@ -43,7 +43,7 @@ func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2Workflow
 						if result.JobRunResults == nil {
 							result.JobRunResults = sdk.JobRunResults{}
 						}
-						result.JobRunResults[r.Name()], _ = r.GetDetail()
+						result.JobRunResults[r.Name()], _ = r.GetDetailLightForContext()
 					}
 				}
 			}
@@ -75,7 +75,7 @@ func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2Workflow
 						if jobResultContext.JobRunResults == nil {
 							jobResultContext.JobRunResults = sdk.JobRunResults{}
 						}
-						jobResultContext.JobRunResults[r.Name()], _ = r.GetDetail()
+						jobResultContext.JobRunResults[r.Name()], _ = r.GetDetailLightForContext()
 					}
 				}
 			}
