@@ -218,6 +218,27 @@ func LoadAllHooksUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2Workf
 	return runs, nil
 }
 
+func LoadDistinctSchedulerWorkflowKeysByProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.V2WorkflowHookShort, error) {
+	var rows []struct {
+		VCSName        string `db:"vcs_name"`
+		RepositoryName string `db:"repository_name"`
+		WorkflowName   string `db:"workflow_name"`
+	}
+	_, err := db.Select(&rows, `SELECT DISTINCT vcs_name, repository_name, workflow_name FROM v2_workflow_hook WHERE project_key = $1 AND type = $2`, projectKey, sdk.WorkflowHookTypeScheduler)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	results := make([]sdk.V2WorkflowHookShort, 0, len(rows))
+	for _, r := range rows {
+		results = append(results, sdk.V2WorkflowHookShort{
+			VCSName:        r.VCSName,
+			RepositoryName: r.RepositoryName,
+			WorkflowName:   r.WorkflowName,
+		})
+	}
+	return results, nil
+}
+
 // Deprecated
 func LoadHeadHookToMigrate(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowHook, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE type != 'RepositoryWebHook'`)

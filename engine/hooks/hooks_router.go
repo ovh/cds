@@ -58,6 +58,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/v2/workflow/key/{projectKey}/{vcsServer}/{repoName}/{workflowName}", nil, r.POST(s.postGenerateWorkflowWebHookSecretHandler))
 	r.Handle("/v2/workflow/manual", nil, r.POST(s.workflowManualHandler))
 	r.Handle("/v2/workflow/outgoing", nil, r.POST(s.workflowRunOutgoingEventHandler))
+	r.Handle("/v2/workflow/outgoing/{projectKey}", nil, r.DELETE(s.deleteOutgoingEventsByProjectHandler))
 
 	r.Handle("/v2/workflow/scheduler", nil, r.POST(s.postInstantiateSchedulerHandler))
 	r.Handle("/v2/workflow/scheduler/{vcsServer}/{repoName}/{workflowName}", nil, r.DELETE(s.deleteSchedulerByWorkflowHandler))
