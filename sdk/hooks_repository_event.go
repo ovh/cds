@@ -401,6 +401,7 @@ type HookRetrieveUserRequest struct {
 	ProjectKey     string `json:"projectKey"`
 	VCSServerName  string `json:"vcs_server_name"`
 	RepositoryName string `json:"repository_name"`
+	Ref            string `json:"ref"`
 	Commit         string `json:"commit"`
 	SignKey        string `json:"sign_key"`
 	HookEventUUID  string `json:"hook_event_uuid"`

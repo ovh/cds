@@ -494,7 +494,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			analysis.Data.CommitCheck = true
 
 			// retrieve the committer
-			commitInitiator, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), analysis.Commit, analysis.Data.SignKeyID, analysis.ProjectKey, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
+			commitInitiator, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), analysis.Ref, analysis.Commit, analysis.Data.SignKeyID, analysis.ProjectKey, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
 			}
@@ -1282,7 +1282,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 	return nil
 }
 
-func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2Initiator, string, string, error) {
+func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2Initiator, string, string, error) {
 	ctx, next := telemetry.Span(ctx, "findCommitter", trace.StringAttribute(telemetry.TagProjectKey, projKey), trace.StringAttribute(telemetry.TagVCSServer, vcsProjectWithSecret.Name), trace.StringAttribute(telemetry.TagRepository, repoName))
 	defer next()
 
@@ -1422,33 +1422,77 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}
 
 	case sdk.VCSTypeGithub:
-		commit, err := client.Commit(ctx, repoName, sha)
-		if err != nil {
-			return nil, sdk.RepositoryAnalysisStatusError, "", err
+		var committerID, committerName string
+		if strings.HasPrefix(ref, "refs/tags/") {
+			tagName := strings.TrimPrefix(ref, sdk.GitRefTagPrefix)
+			tag, err := client.Tag(ctx, repoName, tagName)
+			if err != nil {
+				return nil, sdk.RepositoryAnalysisStatusError, "", err
+			}
+			if tag.Signature != "" {
+				keyID, err := gpg.GetKeyIdFromSignature(tag.Signature)
+				if err != nil {
+					return nil, sdk.RepositoryAnalysisStatusError, "", err
+				}
+				// Get user by its gpg key id
+				tagGPGKey, err := user.LoadGPGKeyByKeyID(ctx, db, keyID)
+				if err != nil {
+					if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+						return nil, sdk.RepositoryAnalysisStatusError, "", sdk.NewErrorFrom(err, "unable get gpg key: %s", keyID)
+					}
+					return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("tagger gpg key %s not found in CDS", keyID), nil
+				}
+				tagUser, err := user.LoadByID(ctx, db, tagGPGKey.AuthentifiedUserID, user.LoadOptions.WithContacts)
+				if err != nil {
+					if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+						return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to load user %s", tagGPGKey.AuthentifiedUserID))
+					}
+					return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("tagger user %s not found for gpg key %s", tagGPGKey.AuthentifiedUserID, tagGPGKey.KeyID), nil
+				}
+				return &sdk.V2Initiator{
+					UserID: tagUser.ID,
+					User:   tagUser.Initiator(),
+				}, "", "", nil
+			} else {
+				// Tag not signed: get the committer from the commit pointed by the tag
+				commit, err := client.Commit(ctx, repoName, tag.Hash)
+				if err != nil {
+					return nil, sdk.RepositoryAnalysisStatusError, "", err
+				}
+				committerName = commit.Committer.Name
+				committerID = commit.Committer.ID
+			}
+		} else {
+			commit, err := client.Commit(ctx, repoName, sha)
+			if err != nil {
+				return nil, sdk.RepositoryAnalysisStatusError, "", err
+			}
+			committerName = commit.Committer.Name
+			committerID = commit.Committer.ID
 		}
 
-		if commit.Committer.ID == "" {
+		if committerID == "" {
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
 		}
 
 		// Retrieve user link by external ID
-		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, vcsProjectWithSecret.Type, commit.Committer.ID)
+		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, vcsProjectWithSecret.Type, committerID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, commit.Committer.Name), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, committerName), nil
 		}
 
 		// Check if username changed
-		if userLink.Username != commit.Committer.Name {
+		if userLink.Username != committerName {
 			// Update user link
-			userLink.Username = commit.Committer.Name
+			userLink.Username = committerName
 			if err := link.Update(ctx, tx, userLink); err != nil {
 				return nil, "", "", err
 			}
 		}
-		committer = commit.Committer.Name
+		committer = committerName
 
 		// Load user
 		cdsUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
