@@ -154,6 +154,7 @@ type Configuration struct {
 	SyncNbElements  int64                           `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
 	PurgeSeconds    int                             `toml:"purgeSeconds" default:"5" json:"purgeSeconds" comment:"each n seconds, all storage backends will have to start to delete storage unit item with deleted flag"`
 	PurgeNbElements int                             `toml:"purgeNbElements" default:"1000" json:"purgeNbElements" comment:"nb items to delete in each purge loop"`
+	PurgeNbWorkers  int                             `toml:"purgeNbWorkers" default:"10" json:"purgeNbWorkers" comment:"nb parallel workers to process purge items within each storage unit"`
 }
 
 type BufferConfiguration struct {
