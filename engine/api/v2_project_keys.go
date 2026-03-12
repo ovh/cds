@@ -136,6 +136,7 @@ func (api *API) addKeyInProjectV2Handler() ([]service.RbacChecker, service.Handl
 			newKey.Private = k.Private
 			newKey.Public = k.Public
 			newKey.KeyID = k.KeyID
+			newKey.LongKeyID = k.LongKeyID
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
