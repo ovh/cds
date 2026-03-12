@@ -102,3 +102,51 @@ func TestWorkflowJsonSchema_StepIDAlphanumeric_JobWithoutHyphen(t *testing.T) {
 	errs := validateWorkflowSchema(t, w)
 	assert.Empty(t, errs, "alphanumeric step.id should be accepted with alphanumeric job name")
 }
+
+func TestWorkflowJsonSchema_InvalidJobKey_WithSpace(t *testing.T) {
+	w := sdk.V2Workflow{
+		Name: "test-workflow",
+		Jobs: map[string]sdk.V2Job{
+			"my job": {
+				RunsOnRaw: json.RawMessage(`"my-model"`),
+				Steps: []sdk.ActionStep{
+					{Run: "echo hello"},
+				},
+			},
+		},
+	}
+	errs := validateWorkflowSchema(t, w)
+	assert.NotEmpty(t, errs, "job key with a space should be rejected by the schema (must match ^[a-zA-Z0-9_-]{1,}$)")
+}
+
+func TestWorkflowJsonSchema_InvalidJobKey_WithDot(t *testing.T) {
+	w := sdk.V2Workflow{
+		Name: "test-workflow",
+		Jobs: map[string]sdk.V2Job{
+			"my.job": {
+				RunsOnRaw: json.RawMessage(`"my-model"`),
+				Steps: []sdk.ActionStep{
+					{Run: "echo hello"},
+				},
+			},
+		},
+	}
+	errs := validateWorkflowSchema(t, w)
+	assert.NotEmpty(t, errs, "job key with a dot should be rejected by the schema (must match ^[a-zA-Z0-9_-]{1,}$)")
+}
+
+func TestWorkflowJsonSchema_ValidJobKey(t *testing.T) {
+	w := sdk.V2Workflow{
+		Name: "test-workflow",
+		Jobs: map[string]sdk.V2Job{
+			"my_valid-Job1": {
+				RunsOnRaw: json.RawMessage(`"my-model"`),
+				Steps: []sdk.ActionStep{
+					{Run: "echo hello"},
+				},
+			},
+		},
+	}
+	errs := validateWorkflowSchema(t, w)
+	assert.Empty(t, errs, "valid job key should be accepted")
+}
