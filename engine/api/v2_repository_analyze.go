@@ -1423,6 +1423,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 
 	case sdk.VCSTypeGithub:
 		var committerID, committerName string
+		commitSha := sha
 		if strings.HasPrefix(ref, "refs/tags/") {
 			tagName := strings.TrimPrefix(ref, sdk.GitRefTagPrefix)
 			tag, err := client.Tag(ctx, repoName, tagName)
@@ -1454,22 +1455,16 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 					User:   tagUser.Initiator(),
 				}, "", "", nil
 			} else {
-				// Tag not signed: get the committer from the commit pointed by the tag
-				commit, err := client.Commit(ctx, repoName, tag.Hash)
-				if err != nil {
-					return nil, sdk.RepositoryAnalysisStatusError, "", err
-				}
-				committerName = commit.Committer.Name
-				committerID = commit.Committer.ID
+				// unsigned annotated tag: sha is the tag object sha, tag.Hash is the commit sha
+				commitSha = tag.Hash
 			}
-		} else {
-			commit, err := client.Commit(ctx, repoName, sha)
-			if err != nil {
-				return nil, sdk.RepositoryAnalysisStatusError, "", err
-			}
-			committerName = commit.Committer.Name
-			committerID = commit.Committer.ID
 		}
+		commit, err := client.Commit(ctx, repoName, commitSha)
+		if err != nil {
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
+		}
+		committerName = commit.Committer.Name
+		committerID = commit.Committer.ID
 
 		if committerID == "" {
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil

@@ -4004,7 +4004,8 @@ func TestFindCommitter_GithubUnsignedTag_CommitterFound(t *testing.T) {
 		}).Times(1)
 
 	vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
-	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+	// sha="tagsha" = SHA de l'objet tag, tag.Hash="commitsha" = SHA du commit → vérifie que tag.Hash est bien utilisé
+	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "tagsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
 
 	require.NoError(t, err)
 	require.Empty(t, status)
@@ -4053,7 +4054,8 @@ func TestFindCommitter_GithubUnsignedTag_CommitterNotFound(t *testing.T) {
 		}).Times(1)
 
 	vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
-	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+	// sha="tagsha" = SHA de l'objet tag, tag.Hash="commitsha" = SHA du commit → vérifie que tag.Hash est bien utilisé
+	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "tagsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
 
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
