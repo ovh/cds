@@ -11,7 +11,7 @@ version: '3'
 
 services:
   cds-db:
-    image: postgres:${PG_VERSION:-18.0}
+    image: postgres:${PG_VERSION:-14.0}
     environment:
       POSTGRES_PASSWORD: cds
       POSTGRES_USER: cds
@@ -20,7 +20,7 @@ services:
       - cds-postgres-volume:/var/lib/postgresql/data
 
   cds-db-init:
-    image: postgres:${PG_VERSION:-18.0}
+    image: postgres:${PG_VERSION:-14.0}
     command: >
         sh -exc "PGPASSWORD=cds psql -h cds-db -p 5432 -U cds -d cds -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;\";"
     links:
@@ -39,6 +39,7 @@ services:
       - discovery.type=single-node
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
       - "DISABLE_SECURITY_PLUGIN=true"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=C0mpl3xP@ssw0rd!"
     ulimits:
       memlock:
         soft: -1
