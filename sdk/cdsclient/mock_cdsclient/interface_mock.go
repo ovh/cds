@@ -493,6 +493,20 @@ func (mr *MockAdminMockRecorder) AdminUserCreate(ctx, user any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminUserCreate", reflect.TypeOf((*MockAdmin)(nil).AdminUserCreate), ctx, user)
 }
 
+// AdminGroupCreate mocks base method.
+func (m *MockAdmin) AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminGroupCreate", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminGroupCreate indicates an expected call of AdminGroupCreate.
+func (mr *MockAdminMockRecorder) AdminGroupCreate(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminGroupCreate", reflect.TypeOf((*MockAdmin)(nil).AdminGroupCreate), ctx, req)
+}
+
 // AdminUserLinkCreate mocks base method.
 func (m *MockAdmin) AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error {
 	m.ctrl.T.Helper()
@@ -5061,6 +5075,20 @@ func (mr *MockUserClientMockRecorder) UserGet(ctx, username any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGet", reflect.TypeOf((*MockUserClient)(nil).UserGet), ctx, username)
 }
 
+// UserDelete mocks base method.
+func (m *MockUserClient) UserDelete(ctx context.Context, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserDelete", ctx, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserDelete indicates an expected call of UserDelete.
+func (mr *MockUserClientMockRecorder) UserDelete(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserDelete", reflect.TypeOf((*MockUserClient)(nil).UserDelete), ctx, username)
+}
+
 // UserGetGroups mocks base method.
 func (m *MockUserClient) UserGetGroups(ctx context.Context, username string) (sdk.Groups, error) {
 	m.ctrl.T.Helper()
@@ -7412,6 +7440,20 @@ func (m *MockInterface) AdminUserCreate(ctx context.Context, user sdk.CreateUser
 func (mr *MockInterfaceMockRecorder) AdminUserCreate(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminUserCreate", reflect.TypeOf((*MockInterface)(nil).AdminUserCreate), ctx, user)
+}
+
+// AdminGroupCreate mocks base method.
+func (m *MockInterface) AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminGroupCreate", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminGroupCreate indicates an expected call of AdminGroupCreate.
+func (mr *MockInterfaceMockRecorder) AdminGroupCreate(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminGroupCreate", reflect.TypeOf((*MockInterface)(nil).AdminGroupCreate), ctx, req)
 }
 
 // AdminUserLinkCreate mocks base method.
@@ -11197,6 +11239,20 @@ func (m *MockInterface) UserGet(ctx context.Context, username string) (*sdk.Auth
 func (mr *MockInterfaceMockRecorder) UserGet(ctx, username any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGet", reflect.TypeOf((*MockInterface)(nil).UserGet), ctx, username)
+}
+
+// UserDelete mocks base method.
+func (m *MockInterface) UserDelete(ctx context.Context, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserDelete", ctx, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserDelete indicates an expected call of UserDelete.
+func (mr *MockInterfaceMockRecorder) UserDelete(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserDelete", reflect.TypeOf((*MockInterface)(nil).UserDelete), ctx, username)
 }
 
 // UserGetGroups mocks base method.

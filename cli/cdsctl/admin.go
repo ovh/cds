@@ -28,6 +28,7 @@ func adminCommands() []*cobra.Command {
 		adminFeatures(),
 		adminWorkflows(),
 		adminUsers(),
+		adminGroups(),
 	}
 }
 
