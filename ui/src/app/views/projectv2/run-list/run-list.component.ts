@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom, map, Subscription } from "rxjs";
 import { Project } from "app/model/project.model";
@@ -67,17 +67,17 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 	eventV2Subscription: Subscription;
 	animatedRuns: { [key: string]: boolean } = {};
 
-	constructor(
-		private _http: HttpClient,
-		private _messageService: NzMessageService,
-		private _cd: ChangeDetectorRef,
-		private _store: Store,
-		private _router: Router,
-		private _activatedRoute: ActivatedRoute,
-		private _drawerService: NzDrawerService,
-		private _eventV2Service: EventV2Service,
-		private _clipboard: Clipboard
-	) {
+	private _http = inject(HttpClient);
+	private _messageService = inject(NzMessageService);
+	private _cd = inject(ChangeDetectorRef);
+	private _store = inject(Store);
+	private _router = inject(Router);
+	private _activatedRoute = inject(ActivatedRoute);
+	private _drawerService = inject(NzDrawerService);
+	private _eventV2Service = inject(EventV2Service);
+	private _clipboard = inject(Clipboard);
+
+	constructor() {
 		this.project = this._store.selectSnapshot(ProjectV2State.current);
 	}
 
@@ -295,7 +295,8 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 					workflow: mFilters['workflow'] ? mFilters['workflow'][0] : null
 				}
 			},
-			nzSize: 'large'
+			nzSize: 'large',
+			nzBodyStyle: { 'padding': '0' }
 		});
 		drawerRef.afterClose.subscribe(data => { });
 	}

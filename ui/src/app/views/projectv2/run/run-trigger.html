@@ -1,0 +1,45 @@
+@if (allJobLabels.length > 1) {
+    <nz-alert nzType="info" [nzMessage]="jobSummaryTpl"></nz-alert>
+    <ng-template #jobSummaryTpl>
+        <div>The following jobs were selected to be triggered:</div>
+        <ul>
+            @for (label of allJobLabels; track label) {
+                <li>{{ label }}</li>
+            }
+        </ul>
+        @if (gatedJobLabels.length > 0) {
+            <div>Some jobs use gates whose inputs can be modified below:</div>
+            <ul>
+                @for (label of gatedJobLabels; track label) {
+                    <li>{{ label }}</li>
+                }
+            </ul>
+        }
+    </ng-template>
+}
+<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
+    <app-run-gate-inputs [jobs]="gatedJobs" [gates]="gates" [initialValues]="initialValues"
+        formControlName="jobInputs"></app-run-gate-inputs>
+
+    @if (!error) {
+        <nz-form-item>
+            <nz-form-control>
+                <button nz-button nzBlock nzType="primary" [nzLoading]="loading">Start</button>
+            </nz-form-control>
+        </nz-form-item>
+    }
+</form>
+
+@if (error) {
+    <nz-result nzStatus="error" [nzSubTitle]="subTitle">
+        <ng-template #subTitle>
+            <div class="message">
+                <b>Error:</b>
+                <pre>{{ error }}</pre>
+            </div>
+        </ng-template>
+        <div nz-result-extra>
+            <button nz-button (click)="clearError()">Clear</button>
+        </div>
+    </nz-result>
+}

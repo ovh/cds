@@ -5979,7 +5979,7 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2JobStart(ctx, projectKey, 
 }
 
 // WorkflowV2JobsStart mocks base method.
-func (m *MockWorkflowV2Client) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockWorkflowV2Client) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunTriggerJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectKey, workflowRunID, payload}
 	for _, a := range mods {
@@ -12639,7 +12639,7 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2JobStart(ctx, projectKey, workflo
 }
 
 // WorkflowV2JobsStart mocks base method.
-func (m *MockInterface) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockInterface) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunTriggerJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectKey, workflowRunID, payload}
 	for _, a := range mods {
