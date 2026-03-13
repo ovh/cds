@@ -230,9 +230,6 @@ func (api *API) updateProjectHandler() service.Handler {
 		// Update in DB is made given the primary key
 		proj.ID = p.ID
 		proj.VCSServers = p.VCSServers
-		if proj.Icon == "" {
-			p.Icon = proj.Icon
-		}
 		if errUp := project.Update(api.mustDB(), proj); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
@@ -311,8 +308,12 @@ func (api *API) getProjectHandler() service.Handler {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
 
-		p.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getProjectHandler, map[string]string{"permProjectKey": key})
-		p.URLs.UIURL = api.Config.URL.UI + "/project/" + key
+		if p.URLs == nil {
+			p.URLs = &sdk.URL{
+				APIURL: api.Config.URL.API + api.Router.GetRoute("GET", api.getProjectHandler, map[string]string{"permProjectKey": key}),
+				UIURL:  api.Config.URL.UI + "/project/" + key,
+			}
+		}
 
 		if isAdmin(ctx) {
 			p.Permissions.Writable = true

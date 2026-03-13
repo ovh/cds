@@ -182,9 +182,6 @@ func (api *API) updateProjectV2Handler() ([]service.RbacChecker, service.Handler
 			// Update in DB is made given the primary key
 			proj.ID = p.ID
 			proj.VCSServers = p.VCSServers
-			if proj.Icon == "" {
-				p.Icon = proj.Icon
-			}
 			if err := project.Update(api.mustDB(), proj); err != nil {
 				return sdk.WrapError(err, "cannot update project %s", key)
 			}
