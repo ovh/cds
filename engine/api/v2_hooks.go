@@ -75,7 +75,7 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 			}
 
 			resp := sdk.HookRetrieveUserResponse{}
-			initiator, _, _, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
+			initiator, _, _, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Ref, r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
 			if err != nil {
 				return err
 			}
