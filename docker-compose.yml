@@ -34,16 +34,17 @@ services:
       - cds-redis-volume:/data
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
+    image: opensearchproject/opensearch:latest
     environment:
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_SECURITY_PLUGIN=true"
     ulimits:
       memlock:
         soft: -1
         hard: -1
     volumes:
-      - cds-elasticsearch-volume:/usr/share/elasticsearch/data
+      - cds-elasticsearch-volume:/usr/share/opensearch/data
     restart: always
 
   cds-migrate:
