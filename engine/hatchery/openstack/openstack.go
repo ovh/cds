@@ -378,7 +378,7 @@ func (h *HatcheryOpenstack) main(ctx context.Context) {
 }
 
 func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	workers, err := h.WorkerList(ctx)
 	now := time.Now().Unix()
