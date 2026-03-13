@@ -17,7 +17,7 @@ services:
       POSTGRES_USER: cds
       POSTGRES_DB: cds
     volumes:
-      - cds-postgres-volume:/var/lib/postgresql/data
+      - cds-postgres-volume:/var/lib/postgresql
 
   cds-db-init:
     image: postgres:${PG_VERSION:-14.0}
