@@ -9,6 +9,7 @@ import (
 const (
 	EntityActionInputKey = "^[a-zA-Z0-9]*$"
 	EntityActionStepID   = "^[a-zA-Z0-9]*$"
+	EntityJobKey         = "^[a-zA-Z0-9_-]{1,}$"
 )
 
 type V2Action struct {

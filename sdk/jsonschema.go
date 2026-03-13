@@ -52,11 +52,13 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	input := propInput.(*jsonschema.Schema)
 	input.PatternProperties[EntityActionInputKey] = input.PatternProperties[".*"]
 	delete(input.PatternProperties, ".*")
+	input.PropertyNames = &jsonschema.Schema{Pattern: EntityActionInputKey}
 
 	propOutput, _ := actionSchema.Definitions["V2Action"].Properties.Get("outputs")
 	output := propOutput.(*jsonschema.Schema)
 	output.PatternProperties[EntityActionInputKey] = output.PatternProperties[".*"]
 	delete(output.PatternProperties, ".*")
+	output.PropertyNames = &jsonschema.Schema{Pattern: EntityActionInputKey}
 
 	// Pattern on step id
 	propId, _ := actionSchema.Definitions["ActionStep"].Properties.Get("id")
@@ -151,8 +153,9 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 	// Pattern jobs key
 	propsJobs, _ := workflowSchema.Definitions["V2Workflow"].Properties.Get("jobs")
 	jobs := propsJobs.(*jsonschema.Schema)
-	jobs.PatternProperties[EntityActionInputKey] = jobs.PatternProperties[".*"]
+	jobs.PatternProperties[EntityJobKey] = jobs.PatternProperties[".*"]
 	delete(jobs.PatternProperties, ".*")
+	jobs.PropertyNames = &jsonschema.Schema{Pattern: EntityJobKey}
 
 	workflowSchema.Definitions["ActionStep"] = actionStepSchema.Definitions["ActionStep"]
 	workflowSchema.Definitions["V2Job"] = jobSchema.Definitions["V2Job"]
