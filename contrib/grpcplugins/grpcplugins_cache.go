@@ -25,6 +25,7 @@ func PerformGetCache(ctx context.Context, c *actionplugin.Common, jobCtx sdk.Wor
 			return fmt.Errorf("unable to compute absolute path: %v", err)
 		}
 	}
+	// coucou
 
 	// Check if file or directory exist
 	cacheFound := false

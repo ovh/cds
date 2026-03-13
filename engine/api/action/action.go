@@ -24,6 +24,7 @@ func Insert(db gorp.SqlExecutor, a *sdk.Action) error {
 			return err
 		}
 	}
+	// coucou
 
 	for i := range a.Parameters {
 		if err := insertParameter(db, &actionParameter{
