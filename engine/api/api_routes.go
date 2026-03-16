@@ -109,6 +109,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/organization/{organizationIdentifier}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/organization/{organizationIdentifier}/migrate-user", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postOrganizationMigrateUserHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
+	// Admin group
+	r.Handle("/admin/group", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminGroupHandler, service.OverrideAuth(api.authAdminMiddleware)))
+
 	// Feature flipping
 	r.Handle("/admin/features", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/features/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlippingByName, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))

@@ -70,10 +70,9 @@ func (api *API) postUserHandler() service.Handler {
 
 		// Prepare new user
 		newUser := sdk.AuthentifiedUser{
-			Ring:         sdk.UserRingUser,
-			Username:     reqUser.Username,
-			Fullname:     reqUser.Fullname,
-			Organization: reqUser.Organization,
+			Ring:     sdk.UserRingUser,
+			Username: reqUser.Username,
+			Fullname: reqUser.Fullname,
 		}
 
 		// Insert the new user in database
@@ -101,6 +100,8 @@ func (api *API) postUserHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		newUser.Organization = reqUser.Organization
 
 		return service.WriteJSON(w, newUser, http.StatusCreated)
 	}

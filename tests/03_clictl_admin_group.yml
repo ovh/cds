@@ -1,0 +1,28 @@
+name: Admin Group Commands TestSuite
+testcases:
+- name: Create admin user for group tests
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin user create admin-grp-test-user admin-grp-test-fullname admin-grp-test-user@test.com default
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} user show admin-grp-test-user --format json
+    assertions:
+    - result.systemoutjson.username ShouldEqual admin-grp-test-user
+    - result.systemoutjson.organization ShouldEqual default
+- name: Create a group with admin command
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin group create admin-test-group admin-grp-test-user
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group show admin-test-group --format json
+    assertions:
+    - result.systemoutjson.name ShouldEqual admin-test-group
+    - result.systemoutjson.organization ShouldEqual default
+- name: List group members
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group member list admin-test-group --format json
+    assertions:
+    - result.systemoutjson ShouldHaveLength 1
+    - result.systemoutjson.systemoutjson0.username ShouldEqual admin-grp-test-user
+- name: Delete the group
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete admin-test-group --force
+- name: Delete the admin user
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin user delete admin-grp-test-user --force
