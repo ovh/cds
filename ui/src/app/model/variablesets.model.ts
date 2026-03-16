@@ -13,6 +13,9 @@ export class VariableSetItem {
     type: string
     value: string
 
+    // UI field to know if the value has been modified
+    changed: boolean
+
     constructor() {
         this.name = '';
         this.type = 'string';

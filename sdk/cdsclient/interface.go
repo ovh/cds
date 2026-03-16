@@ -57,6 +57,7 @@ type Admin interface {
 	AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error
 	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
 	AdminUserCreate(ctx context.Context, user sdk.CreateUser) error
+	AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error
 	AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error
 	AdminUserLinkDelete(ctx context.Context, username string, link sdk.UserLink) error
 	HasProjectRole(ctx context.Context, projectKey, sessionID string, role string) error
@@ -388,6 +389,7 @@ type QueueClient interface {
 type UserClient interface {
 	UserList(ctx context.Context) ([]sdk.AuthentifiedUser, error)
 	UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error)
+	UserDelete(ctx context.Context, username string) error
 	UserUpdate(ctx context.Context, username string, user *sdk.AuthentifiedUser) error
 	UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error)
 	UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error)
@@ -463,7 +465,7 @@ type WorkflowV2Client interface {
 	WorkflowV2RunDelete(ctx context.Context, projectKey, runIdentifier string) error
 	WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
 	WorkflowV2JobStart(ctx context.Context, projectKey, workflowRunID, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
-	WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunTriggerJobsRequest, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
 	WorkflowV2RunSearchAllProjects(ctx context.Context, offset, limit int64, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)
 	WorkflowV2RunSearch(ctx context.Context, projectKey string, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)
 	WorkflowV2RunInfoList(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) ([]sdk.V2WorkflowRunInfo, error)
@@ -510,6 +512,7 @@ type WorkflowClient interface {
 	WorkflowNodeRunJobStepLink(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogLink, error)
 	WorkflowNodeRunJobServiceLink(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogLink, error)
 	WorkflowAccess(ctx context.Context, projectKey string, workflowID int64, sessionID string, itemType sdk.CDNItemType) error
+	WorkflowRunExist(ctx context.Context, id int64) (bool, error)
 	WorkflowLogDownload(ctx context.Context, link sdk.CDNLogLink) ([]byte, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.NodeHook, error)

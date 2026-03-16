@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { WorkflowAddComponent } from './add/workflow.add.component';
 import { WorkflowBreadCrumbComponent } from './breadcrumb/workflow.breadcrumb.component';
@@ -46,10 +46,6 @@ import { WorkflowDeleteModalComponent } from './show/admin/delete-modal/delete-m
     imports: [
         SharedModule,
         workflowRouting
-    ],
-    schemas: [
-        CUSTOM_ELEMENTS_SCHEMA,
-        NO_ERRORS_SCHEMA
     ]
 })
 export class WorkflowModule {

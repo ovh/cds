@@ -376,3 +376,41 @@ func LoadRunResultByRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.Sql
 	`).Args(runID, sdk.CDNTypeItemRunResult)
 	return getItems(ctx, m, db, query)
 }
+
+// ItemForOrphanCleanup represents an item with its associated workflow run ID for orphan cleanup.
+type ItemForOrphanCleanup struct {
+	ID      string    `db:"id"`
+	RunID   int64     `db:"run_id"`
+	Created time.Time `db:"created"`
+}
+
+// LoadOldestItemIDsForOrphanCleanupV1 selects a batch of the oldest v1 items (step-log, service-log, run-result)
+// that are not marked as to_delete, using FOR UPDATE SKIP LOCKED to allow concurrent processing
+// across multiple CDN instances. Must be called within a transaction.
+// The createdAfter cursor allows paginating through items across successive calls.
+func LoadOldestItemIDsForOrphanCleanupV1(db gorpmapper.SqlExecutorWithTx, createdAfter time.Time, limit int, gracePeriodDays int) ([]ItemForOrphanCleanup, error) {
+	query := `
+		SELECT id, (api_ref->>'run_id')::bigint AS run_id, created
+		FROM item
+		WHERE type IN ($1, $2, $3)
+		  AND to_delete = false
+		  AND (api_ref->>'run_id') IS NOT NULL
+		  AND created > $4
+		  AND created < NOW() - $5 * INTERVAL '1 day'
+		ORDER BY created ASC
+		LIMIT $6
+		FOR UPDATE SKIP LOCKED
+	`
+	var items []ItemForOrphanCleanup
+	if _, err := db.Select(&items, query, sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemRunResult, createdAfter, gracePeriodDays, limit); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return items, nil
+}
+
+// MarkItemsAsToDelete marks a list of items as to_delete by their IDs.
+func MarkItemsAsToDelete(db gorpmapper.SqlExecutorWithTx, ids []string) error {
+	query := `UPDATE item SET to_delete = true WHERE id = ANY($1)`
+	_, err := db.Exec(query, pq.StringArray(ids))
+	return sdk.WithStack(err)
+}

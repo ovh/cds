@@ -336,13 +336,13 @@ type HookRepositoryEventExtractedDataWebHook struct {
 }
 
 type HookRepositoryEventExtractedDataManual struct {
-	Project          string                                        `json:"project,omitempty"`
-	Workflow         string                                        `json:"workflow,omitempty"`
-	TargetCommit     string                                        `json:"target_commit,omitempty"`
-	TargetBranch     string                                        `json:"target_branch,omitempty"`
-	TargetTag        string                                        `json:"target_tag,omitempty"`
-	TargetRepository string                                        `json:"target_repository,omitempty"`
-	JobInputs        map[string]V2WorkflowRunManualRequestJobInput `json:"job_inputs,omitempty"`
+	Project          string                 `json:"project,omitempty"`
+	Workflow         string                 `json:"workflow,omitempty"`
+	TargetCommit     string                 `json:"target_commit,omitempty"`
+	TargetBranch     string                 `json:"target_branch,omitempty"`
+	TargetTag        string                 `json:"target_tag,omitempty"`
+	TargetRepository string                 `json:"target_repository,omitempty"`
+	JobInputs        V2WorkflowRunJobInputs `json:"job_inputs,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWorkflowRun struct {
@@ -401,6 +401,7 @@ type HookRetrieveUserRequest struct {
 	ProjectKey     string `json:"projectKey"`
 	VCSServerName  string `json:"vcs_server_name"`
 	RepositoryName string `json:"repository_name"`
+	Ref            string `json:"ref"`
 	Commit         string `json:"commit"`
 	SignKey        string `json:"sign_key"`
 	HookEventUUID  string `json:"hook_event_uuid"`

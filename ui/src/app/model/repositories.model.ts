@@ -1,15 +1,3 @@
-export class RepositoriesManager {
-    name: string;
-    type: string;
-    description: string;
-    auth: RepositoriesManagerAuth;
-}
-
-export class RepositoriesManagerAuth {
-    username: string;
-    sshKeyName: string;
-}
-
 export interface Repository {
     id: number;
     name: string;

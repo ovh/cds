@@ -17,7 +17,7 @@ import (
 )
 
 func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	apiWorkers, err := h.CDSClient().WorkerList(ctx)

@@ -493,6 +493,20 @@ func (mr *MockAdminMockRecorder) AdminUserCreate(ctx, user any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminUserCreate", reflect.TypeOf((*MockAdmin)(nil).AdminUserCreate), ctx, user)
 }
 
+// AdminGroupCreate mocks base method.
+func (m *MockAdmin) AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminGroupCreate", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminGroupCreate indicates an expected call of AdminGroupCreate.
+func (mr *MockAdminMockRecorder) AdminGroupCreate(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminGroupCreate", reflect.TypeOf((*MockAdmin)(nil).AdminGroupCreate), ctx, req)
+}
+
 // AdminUserLinkCreate mocks base method.
 func (m *MockAdmin) AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error {
 	m.ctrl.T.Helper()
@@ -5061,6 +5075,20 @@ func (mr *MockUserClientMockRecorder) UserGet(ctx, username any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGet", reflect.TypeOf((*MockUserClient)(nil).UserGet), ctx, username)
 }
 
+// UserDelete mocks base method.
+func (m *MockUserClient) UserDelete(ctx context.Context, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserDelete", ctx, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserDelete indicates an expected call of UserDelete.
+func (mr *MockUserClientMockRecorder) UserDelete(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserDelete", reflect.TypeOf((*MockUserClient)(nil).UserDelete), ctx, username)
+}
+
 // UserGetGroups mocks base method.
 func (m *MockUserClient) UserGetGroups(ctx context.Context, username string) (sdk.Groups, error) {
 	m.ctrl.T.Helper()
@@ -5964,7 +5992,7 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2JobStart(ctx, projectKey, 
 }
 
 // WorkflowV2JobsStart mocks base method.
-func (m *MockWorkflowV2Client) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockWorkflowV2Client) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunTriggerJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectKey, workflowRunID, payload}
 	for _, a := range mods {
@@ -6330,6 +6358,21 @@ func (m *MockWorkflowClient) WorkflowAccess(ctx context.Context, projectKey stri
 func (mr *MockWorkflowClientMockRecorder) WorkflowAccess(ctx, projectKey, workflowID, sessionID, itemType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
+}
+
+// WorkflowRunExist mocks base method.
+func (m *MockWorkflowClient) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunExist", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowRunExist indicates an expected call of WorkflowRunExist.
+func (mr *MockWorkflowClientMockRecorder) WorkflowRunExist(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunExist", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunExist), ctx, id)
 }
 
 // WorkflowAllHooksExecutions mocks base method.
@@ -7382,6 +7425,20 @@ func (m *MockInterface) AdminUserCreate(ctx context.Context, user sdk.CreateUser
 func (mr *MockInterfaceMockRecorder) AdminUserCreate(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminUserCreate", reflect.TypeOf((*MockInterface)(nil).AdminUserCreate), ctx, user)
+}
+
+// AdminGroupCreate mocks base method.
+func (m *MockInterface) AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminGroupCreate", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminGroupCreate indicates an expected call of AdminGroupCreate.
+func (mr *MockInterfaceMockRecorder) AdminGroupCreate(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminGroupCreate", reflect.TypeOf((*MockInterface)(nil).AdminGroupCreate), ctx, req)
 }
 
 // AdminUserLinkCreate mocks base method.
@@ -11169,6 +11226,20 @@ func (mr *MockInterfaceMockRecorder) UserGet(ctx, username any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGet", reflect.TypeOf((*MockInterface)(nil).UserGet), ctx, username)
 }
 
+// UserDelete mocks base method.
+func (m *MockInterface) UserDelete(ctx context.Context, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserDelete", ctx, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserDelete indicates an expected call of UserDelete.
+func (mr *MockInterfaceMockRecorder) UserDelete(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserDelete", reflect.TypeOf((*MockInterface)(nil).UserDelete), ctx, username)
+}
+
 // UserGetGroups mocks base method.
 func (m *MockInterface) UserGetGroups(ctx context.Context, username string) (sdk.Groups, error) {
 	m.ctrl.T.Helper()
@@ -11953,6 +12024,21 @@ func (mr *MockInterfaceMockRecorder) WorkflowAccess(ctx, projectKey, workflowID,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockInterface)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
 }
 
+// WorkflowRunExist mocks base method.
+func (m *MockInterface) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunExist", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowRunExist indicates an expected call of WorkflowRunExist.
+func (mr *MockInterfaceMockRecorder) WorkflowRunExist(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunExist", reflect.TypeOf((*MockInterface)(nil).WorkflowRunExist), ctx, id)
+}
+
 // WorkflowAllHooksExecutions mocks base method.
 func (m *MockInterface) WorkflowAllHooksExecutions() ([]string, error) {
 	m.ctrl.T.Helper()
@@ -12579,7 +12665,7 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2JobStart(ctx, projectKey, workflo
 }
 
 // WorkflowV2JobsStart mocks base method.
-func (m *MockInterface) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockInterface) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunTriggerJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectKey, workflowRunID, payload}
 	for _, a := range mods {

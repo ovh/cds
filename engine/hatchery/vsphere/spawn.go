@@ -106,6 +106,34 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		checkProvision = true
 	}
 
+	// Amendment C: Resolve flavor before spawning
+	var flavor *VSphereFlavorConfig
+	flavorName := spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor)
+	if flavorName != "" {
+		flavor = h.getFlavor(flavorName)
+		if flavor == nil {
+			return sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery configuration", flavorName))
+		}
+		log.Info(ctx, "SpawnWorker> using flavor %q (%d vCPUs, %d MB RAM)", flavorName, flavor.CPUs, flavor.MemoryMB)
+	}
+
+	// Send spawn info for V2 jobs
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		var flavorInfo sdk.V2SendJobRunInfo
+		flavorInfo.Level = sdk.WorkflowRunInfoLevelInfo
+		flavorInfo.Time = time.Now()
+
+		if flavor != nil {
+			flavorInfo.Message = fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MB RAM)", spawnArgs.WorkerName, flavorName, flavor.CPUs, flavor.MemoryMB)
+		} else {
+			flavorInfo.Message = fmt.Sprintf("Worker %q will use template resources (no flavor)", spawnArgs.WorkerName)
+		}
+
+		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, flavorInfo); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}
+
 	if checkProvision {
 		provisionnedVMWorker, err := h.FindProvisionnedWorker(ctx, spawnArgs.Model)
 		if err != nil {
@@ -114,6 +142,17 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 		if provisionnedVMWorker != nil {
 			log.Info(ctx, "starting worker %q with provisionned machine %q", spawnArgs.Model.GetName(), provisionnedVMWorker.Name())
+
+			// Amendment C: Reconfigure VM to flavor before starting (if flavor requested)
+			if flavor != nil {
+				log.Info(ctx, "reconfiguring provisioned VM %q to flavor %q", provisionnedVMWorker.Name(), flavorName)
+				if err := h.reconfigureVM(ctx, provisionnedVMWorker, flavor); err != nil {
+					h.cacheProvisioning.mu.Lock()
+					h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
+					h.cacheProvisioning.mu.Unlock()
+					return sdk.WrapError(err, "unable to reconfigure VM %q to flavor %q", provisionnedVMWorker.Name(), flavorName)
+				}
+			}
 
 			if err := h.vSphereClient.RenameVirtualMachine(ctx, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
 				h.cacheProvisioning.mu.Lock()
@@ -141,7 +180,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			if err != nil {
 				return sdk.WrapError(err, "unable to find VM %q", spawnArgs.WorkerName)
 			}
-			var annot = getVirtualMachineCDSAnnotation(ctx, *moProvisionnedVMWorker)
+			annot := getVirtualMachineCDSAnnotation(ctx, *moProvisionnedVMWorker)
 
 			if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, provisionnedVMWorker, &annot.IPAddress, spawnArgs.WorkerName); err != nil {
 				h.cacheProvisioning.mu.Lock()
@@ -163,6 +202,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		}
 	}
 
+	// No provisioned VM available: create fresh clone with flavor applied
 	annot := annotation{
 		HatcheryName:            h.Name(),
 		WorkerName:              spawnArgs.WorkerName,
@@ -174,7 +214,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		JobID:                   spawnArgs.JobID,
 	}
 
-	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot)
+	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, flavor)
 	if err != nil {
 		if sdk.Cause(err).Error() == "no IP address available" {
 			log.Warn(ctx, "unable to create worker: %v", err)
@@ -245,7 +285,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 		Created:                 time.Now(),
 	}
 
-	cloneSpec, err := h.prepareCloneSpec(ctx, vm, &annot)
+	cloneSpec, err := h.prepareCloneSpec(ctx, vm, &annot, nil)
 	if err != nil {
 		return nil, sdk.WrapError(err, "createVMModel> cannot create VM configuration")
 	}
@@ -449,7 +489,7 @@ func (h *HatcheryVSphere) markToDelete(ctx context.Context, vmName string) {
 		return
 	}
 
-	var annot = getVirtualMachineCDSAnnotation(ctx, *vmRef)
+	annot := getVirtualMachineCDSAnnotation(ctx, *vmRef)
 	if annot == nil {
 		return
 	}
@@ -495,7 +535,7 @@ func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel str
 }
 
 func (h *HatcheryVSphere) provisionWorker(ctx context.Context, vmTemplate *object.VirtualMachine, annot annotation, workerName string) (err error) {
-	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot)
+	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, nil)
 	if err != nil {
 		return err
 	}
@@ -532,7 +572,6 @@ func (h *HatcheryVSphere) provisionWorker(ctx context.Context, vmTemplate *objec
 }
 
 func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.WorkerStarterWorkerModel) (*object.VirtualMachine, error) {
-
 	var expectedModelPath string
 
 	var isModelV2 bool

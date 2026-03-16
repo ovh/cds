@@ -243,6 +243,9 @@ type Configuration struct {
 		JobDefaultBookDelay             int64            `toml:"jobDefaultBookDelay" comment:"The default book delay for a job in queue (in seconds)" json:"jobDefaultBookDelay" default:"120"`
 		CustomServiceJobBookDelay       map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery (in seconds)" json:"customServiceJobBookDelay" commented:"true"`
 		WorkerModelDockerImageWhiteList []string         `toml:"workerModelDockerImageWhiteList" comment:"White list for docker image worker model " json:"workerModelDockerImageWhiteList" commented:"true"`
+		MaxRetentionDays               int64            `toml:"maxRetentionDays" comment:"Max retention in days for workflow v1 runs. Runs older than this (based on last_modified) are marked to_delete. Set 0 to disable." json:"maxRetentionDays" default:"365"`
+		RetentionSchedulingSeconds     int64            `toml:"retentionSchedulingSeconds" comment:"Frequency in seconds between each age-based retention cleanup batch" json:"retentionSchedulingSeconds" default:"60"`
+		RetentionBatchSize             int64            `toml:"retentionBatchSize" comment:"Number of workflow v1 runs to mark to_delete per batch" json:"retentionBatchSize" default:"100"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	WorkflowV2 struct {
 		JobWaitingTimeout                int64  `toml:"jobWaitingTimeout" comment:"Timeout delay for waiting job (in seconds)" json:"jobWaitingTimeout" default:"3600"`
@@ -1102,6 +1105,10 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.Run(ctx, "Purge-Runs-V2",
 		func(ctx context.Context) {
 			purge.PurgeWorkflowRunsV2(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.WorkflowV2.RunRetentionScheduling, a.GoRoutines)
+		})
+	a.GoRoutines.Run(ctx, "Purge-OldRunsV1",
+		func(ctx context.Context) {
+			purge.MarkOldWorkflowRunsV1(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Config.Workflow.MaxRetentionDays, a.Config.Workflow.RetentionSchedulingSeconds, a.Config.Workflow.RetentionBatchSize)
 		})
 
 	// Check maintenance on redis

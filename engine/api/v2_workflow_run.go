@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -271,7 +272,7 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				}
 				runJobs = []sdk.V2WorkflowRunJob{*runJob}
 			} else {
-				runJobs, err = workflow_v2.LoadRunJobsByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
+				runJobs, err = workflow_v2.LoadRunJobsByJobID(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
 				if err != nil {
 					return err
 				}
@@ -1005,7 +1006,7 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start jobs on a running workflow")
 			}
 
-			var jobsRequest sdk.V2WorkflowRunJobsRequest
+			var jobsRequest sdk.V2WorkflowRunTriggerJobsRequest
 			if err := service.UnmarshalRequest(ctx, req, &jobsRequest); err != nil {
 				return err
 			}
@@ -1023,13 +1024,25 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 				runJobsMap[rj.ID] = rj
 			}
 
+			// Resolve each key in JobInputs.
+			// - UUID key  → restart that single run job, ignore gate inputs (reuse previous event inputs).
+			// - job_id key → restart all run jobs with that JobID (all matrix variants), apply gate inputs.
 			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
-			for jobID := range jobsRequest.JobInputs {
-				for _, rj := range runJobs {
-					if rj.JobID == jobID && rj.Status.IsTerminated() {
-						runJobToRestart[rj.ID] = rj
-						if len(rj.Matrix) == 0 {
-							break
+
+			for key := range jobsRequest.JobInputs {
+				if sdk.IsValidUUID(key) {
+					// Key is a run-job UUID: restart only that specific run job.
+					rj, ok := runJobsMap[key]
+					if !ok || !rj.Status.IsTerminated() {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "run job %q not found or not terminated", key)
+					}
+					runJobToRestart[rj.ID] = rj
+				} else {
+					// Key is a job_id (workflow definition name): restart all matching run jobs
+					// (includes every matrix variant).
+					for _, rj := range runJobs {
+						if rj.JobID == key && rj.Status.IsTerminated() {
+							runJobToRestart[rj.ID] = rj
 						}
 					}
 				}
@@ -1042,27 +1055,61 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 
 			startJobs := make([]string, 0)
 
-			// Check job input
-			for jobID := range jobsRequest.JobInputs {
-				skipJob := false
+			// Validate inputs and build run-job events.
+			for key := range jobsRequest.JobInputs {
+
+				// Skip jobs that ended up in the "keep" set (ancestor constraints).
+				var skipJob bool
 				for _, rj := range runJobsToKeep {
-					if rj.JobID == jobID {
-						skipJob = true
-						break
+					if sdk.IsValidUUID(key) {
+						if rj.ID == key {
+							skipJob = true
+							break
+						}
+					} else {
+						if rj.JobID == key {
+							skipJob = true
+							break
+						}
 					}
 				}
 				if skipJob {
 					continue
 				}
-				if err := sdk.CheckJobInputWithGate(wr.WorkflowData.Workflow, jobID, jobsRequest.JobInputs[jobID]); err != nil {
-					return err
+
+				var inputs map[string]interface{}
+				if sdk.IsValidUUID(key) {
+					// UUID-identified job: ignore request gate inputs.
+					// Reuse inputs from the previous run job.
+					inputs = runJobsMap[key].GateInputs
+				} else {
+					// job_id-identified job: validate and apply gate inputs from the request.
+					inputs = jobsRequest.JobInputs[key]
+					if inputs == nil {
+						inputs = make(map[string]interface{})
+					}
+					// Only validate gate inputs when the job actually defines a gate.
+					jobDef := wr.WorkflowData.Workflow.Jobs[key]
+					if jobDef.Gate != "" {
+						if err := sdk.CheckJobInputWithGate(wr.WorkflowData.Workflow, key, inputs); err != nil {
+							return err
+						}
+					}
 				}
-				jobsRequest.JobInputs[jobID]["manual"] = true
+				if inputs == nil {
+					inputs = make(map[string]interface{})
+				}
+				inputs["manual"] = true
+
+				jobID := key
+				if sdk.IsValidUUID(key) {
+					jobID = runJobsMap[key].JobID
+				}
 
 				// Add run job event
 				wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
 					JobID:      jobID,
-					Inputs:     jobsRequest.JobInputs[jobID],
+					Inputs:     inputs,
 					UserID:     u.AuthConsumerUser.AuthentifiedUserID,
 					Username:   u.GetUsername(),
 					RunAttempt: wr.RunAttempt + 1,
@@ -1154,18 +1201,43 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 			}
 
 			runJobsMap := make(map[string]sdk.V2WorkflowRunJob)
-			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
+			failedRunJob := make(map[string]sdk.V2WorkflowRunJob)
 			for _, rj := range runJobs {
 				runJobsMap[rj.ID] = rj
 				if rj.Status == sdk.V2WorkflowRunJobStatusFail || rj.Status == sdk.V2WorkflowRunJobStatusStopped {
-					runJobToRestart[rj.ID] = rj
+					failedRunJob[rj.ID] = rj
 				}
 			}
-			if len(runJobToRestart) == 0 {
+			if len(failedRunJob) == 0 {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow doesn't contains failed or stopped jobs")
 			}
 
-			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, runJobToRestart)
+			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, failedRunJob)
+
+			// Only retrieve parent failed job to restart
+			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
+			for _, rj := range failedRunJob {
+				if _, has := runJobsToKeep[rj.JobID]; has {
+					continue
+				}
+
+				// Retrieve parents
+				parentJobs := sdk.WorkflowJobParents(wr.WorkflowData.Workflow, rj.JobID)
+				// Check if there is a parent in the failed job list
+				keepJob := true
+				for _, rjParent := range failedRunJob {
+					if rjParent.JobID == rj.JobID {
+						continue
+					}
+					if slices.Contains(parentJobs, rjParent.JobID) {
+						keepJob = false
+						break
+					}
+				}
+				if keepJob {
+					runJobToRestart[rj.JobID] = rj
+				}
+			}
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -1185,6 +1257,27 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 			}
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
 				return err
+			}
+
+			// For each job to restart, if there is a gate, add gate.manual
+			updateRun := false
+			for _, rj := range runJobToRestart {
+				if rj.Job.Gate != "" {
+					updateRun = true
+					runJobEvent := sdk.V2WorkflowRunJobEvent{
+						Inputs:     map[string]interface{}{"manual": true},
+						UserID:     u.AuthConsumerUser.AuthentifiedUserID,
+						Username:   u.GetUsername(),
+						JobID:      rj.JobID,
+						RunAttempt: wr.RunAttempt,
+					}
+					wr.RunJobEvent = append(wr.RunJobEvent, runJobEvent)
+				}
+			}
+			if updateRun {
+				if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
+					return err
+				}
 			}
 
 			if err := tx.Commit(); err != nil {
@@ -1344,7 +1437,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				}
 				jobToRuns = []sdk.V2WorkflowRunJob{*jobToRun}
 			} else {
-				jobToRuns, err = workflow_v2.LoadRunJobsByName(ctx, api.mustDB(), wr.ID, jobIdentifier, wr.RunAttempt)
+				jobToRuns, err = workflow_v2.LoadRunJobsByJobID(ctx, api.mustDB(), wr.ID, jobIdentifier, wr.RunAttempt)
 				if err != nil {
 					return err
 				}
@@ -1359,9 +1452,8 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				}
 			}
 
-			// If all run are skipped, check gate inputs
+			// For job matrix, make sure that all job run contains the same gate definition
 			if jobToRuns[0].Job.Gate != "" {
-				// For job matrix, make sure that all job run contains the same gate definition
 				var gateName string
 				for _, j := range jobToRuns {
 					if gateName == "" {
@@ -1379,14 +1471,10 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 			if inputs == nil {
+				inputs = jobToRuns[0].GateInputs
+			}
+			if inputs == nil {
 				inputs = make(map[string]interface{})
-				// Retrieve inputs from last run if exists
-				for _, je := range wr.RunJobEvent {
-					if je.RunAttempt == wr.RunAttempt && je.JobID == jobToRuns[0].JobID {
-						inputs = je.Inputs
-						break
-					}
-				}
 			}
 			inputs["manual"] = true
 

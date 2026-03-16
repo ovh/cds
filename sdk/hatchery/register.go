@@ -101,8 +101,8 @@ loopModels:
 
 		// Check if there is a pending registering worker
 		for _, w := range currentRegistering {
-			if strings.Contains(w.Name, ms[k].Name) {
-				log.Info(ctx, "model %q is already registering (%s)", ms[k].Name, w.Name)
+			if strings.Contains(w.GetName(), ms[k].Name) {
+				log.Info(ctx, "model %q is already registering (%s)", ms[k].Name, w.GetName())
 				continue loopModels
 			}
 		}

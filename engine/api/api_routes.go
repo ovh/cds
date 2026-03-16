@@ -19,9 +19,7 @@ func Scopes(s ...sdk.AuthConsumerScope) HandlerScope {
 	return HandlerScope(s)
 }
 
-var (
-	ScopeNone = func() HandlerScope { return []sdk.AuthConsumerScope{} }
-)
+var ScopeNone = func() HandlerScope { return []sdk.AuthConsumerScope{} }
 
 // InitRouter initializes the router and all the routes
 func (api *API) InitRouter() {
@@ -110,6 +108,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/organization", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminOrganizationHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/organization/{organizationIdentifier}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/organization/{organizationIdentifier}/migrate-user", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postOrganizationMigrateUserHandler, service.OverrideAuth(api.authAdminMiddleware)))
+
+	// Admin group
+	r.Handle("/admin/group", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminGroupHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Feature flipping
 	r.Handle("/admin/features", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
@@ -311,7 +312,7 @@ func (api *API) InitRouter() {
 	// Export Environment
 	r.Handle("/project/{permProjectKey}/export/environment/{environmentName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getEnvironmentExportHandler))
 
-	//Workflow queue
+	// Workflow queue
 	r.Handle("/queue/workflows", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowJobQueueHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/count", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.countWorkflowJobQueueHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/take", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postTakeWorkflowJobHandler, MaintenanceAware()))
@@ -333,6 +334,9 @@ func (api *API) InitRouter() {
 	r.Handle("/parameter/type", ScopeNone(), r.GET(api.getParameterTypeHandler))
 	r.Handle("/notification/type", ScopeNone(), r.GET(api.getUserNotificationTypeHandler))
 	r.Handle("/notification/state", ScopeNone(), r.GET(api.getUserNotificationStateValueHandler))
+
+	// Used by CDN to identify if a workflow exists or not, to be able to delete orphan artifacts
+	r.Handle("/workflow/run/{id}/exists", Scope(sdk.AuthConsumerScopeService), r.GET(api.getWorkflowRunExistsHandler))
 
 	// RepositoriesManager for projects
 	r.Handle("/project/{permProjectKey}/repositories_manager", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerForProjectHandler))
@@ -522,6 +526,9 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/run/retention", Scope(sdk.AuthConsumerScopeRun), r.GETv2(api.getWorkflowRunRetentionHandler), r.PUTv2(api.putWorkflowRunRetentionHandler))
 	r.Handle("/v2/project/{projectKey}/run/retention/dryrun", Scope(sdk.AuthConsumerScopeRun), r.POSTv2(api.postWorkflowRunRetentionDryRunHandler))
 	r.Handle("/v2/project/{projectKey}/run/retention/start", Scope(sdk.AuthConsumerScopeRun), r.POSTv2(api.postWorkflowRunRetentionStartHandler))
+	// Project run filters (shared filters)
+	r.Handle("/v2/project/{projectKey}/run-filter", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRunFiltersHandler), r.POSTv2(api.postProjectRunFilterHandler))
+	r.Handle("/v2/project/{projectKey}/run-filter/{filterName}", Scope(sdk.AuthConsumerScopeProject), r.PUTv2(api.putProjectRunFilterHandler), r.DELETEv2(api.deleteProjectRunFilterHandler))
 	r.Handle("/v2/project/{projectKey}/run/retention/schema", Scope(sdk.AuthConsumerScopeRun), r.GETv2(api.getWorkflowRunRetentionSchemaHandler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}", Scope(sdk.AuthConsumerScopeRun), r.GETv2(api.getWorkflowRunV2Handler), r.DELETEv2(api.deleteWorkflowRunV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/restart", Scope(sdk.AuthConsumerScopeRun), r.POSTv2(api.postRestartWorkflowRunHandler))
@@ -573,7 +580,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/ws", ScopeNone(), r.GET(api.getWebsocketV2Handler))
 
-	//Not Found handler
+	// Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 
 	r.computeScopeDetails()

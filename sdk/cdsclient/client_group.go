@@ -17,6 +17,16 @@ func (c *client) GroupCreate(group *sdk.Group) error {
 	return err
 }
 
+func (c *client) AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error {
+	code, err := c.PostJSON(ctx, "/admin/group", req, nil)
+	if code != 201 {
+		if err == nil {
+			return newAPIError(fmt.Errorf("HTTP Code %d", code))
+		}
+	}
+	return err
+}
+
 func (c *client) GroupDelete(name string) error {
 	_, err := c.DeleteJSON(context.Background(), "/group/"+name, nil, nil)
 	return err

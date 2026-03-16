@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -32,6 +33,7 @@ var (
 	globalBroker           Broker
 	jobSummaryBroker       Broker
 	subscribers            []chan<- sdk.Event
+	subscribersMutex       sync.RWMutex
 )
 
 func init() {
@@ -153,6 +155,8 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store, config *Config
 
 // Subscribe to CDS events
 func Subscribe(ch chan<- sdk.Event) {
+	subscribersMutex.Lock()
+	defer subscribersMutex.Unlock()
 	subscribers = append(subscribers, ch)
 }
 
@@ -174,7 +178,11 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 
 		// Filter "EventJobSummary" for globalKafka Broker
 		if e.EventType != "sdk.EventJobSummary" {
-			for _, s := range subscribers {
+			subscribersMutex.RLock()
+			subs := make([]chan<- sdk.Event, len(subscribers))
+			copy(subs, subscribers)
+			subscribersMutex.RUnlock()
+			for _, s := range subs {
 				s <- e
 			}
 			if globalBroker != nil {

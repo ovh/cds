@@ -1,7 +1,9 @@
+import { Color } from "@swimlane/ngx-charts";
+
 export class GraphConfiguration {
     type: string;
     title: string;
-    colorScheme: {};
+    colorScheme: Color;
     gradient = false;
     showXAxis = true;
     showYAxis = true;

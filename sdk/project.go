@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	json "encoding/json"
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -28,8 +27,7 @@ type Project struct {
 	ID           int64     `json:"-" yaml:"-" db:"id" cli:"-"`
 	Key          string    `json:"key" yaml:"key" db:"projectkey" cli:"key,key" action_metadata:"project-key"`
 	Name         string    `json:"name" yaml:"name" db:"name" cli:"name"`
-	Description  string    `json:"description" yaml:"description" db:"description" cli:"description"`
-	Icon         string    `json:"icon" yaml:"icon" db:"icon" cli:"-"`
+	Description  string    `json:"description,omitempty" yaml:"description" db:"description" cli:"description"`
 	Created      time.Time `json:"created" yaml:"created" db:"created" `
 	LastModified time.Time `json:"last_modified" yaml:"last_modified" db:"last_modified"`
 	// aggregates
@@ -44,13 +42,13 @@ type Project struct {
 	Environments     []Environment        `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
 	EnvironmentNames IDNames              `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
 	Labels           []Label              `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Metadata         Metadata             `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
+	Metadata         Metadata             `json:"metadata,omitempty" yaml:"metadata,omitempty" db:"metadata" cli:"-"`
 	Keys             []ProjectKey         `json:"keys,omitempty" yaml:"keys" db:"-" cli:"-"`
-	VCSServers       []VCSProject         `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
-	Integrations     []ProjectIntegration `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
-	Features         map[string]bool      `json:"features" yaml:"features" db:"-" cli:"-"`
-	URLs             URL                  `json:"urls" yaml:"-" db:"-" cli:"-"`
-	Organization     string               `json:"organization" yaml:"-" db:"-" cli:"-"`
+	VCSServers       []VCSProject         `json:"vcs_servers,omitempty" yaml:"vcs_servers" db:"-" cli:"-"`
+	Integrations     []ProjectIntegration `json:"integrations,omitempty" yaml:"integrations" db:"-" cli:"-"`
+	Features         map[string]bool      `json:"features,omitempty" yaml:"features" db:"-" cli:"-"`
+	URLs             *URL                 `json:"urls,omitempty" yaml:"-" db:"-" cli:"-"`
+	Organization     string               `json:"organization,omitempty" yaml:"-" db:"-" cli:"-"`
 	// fields used by UI
 	Permissions struct {
 		Writable bool `json:"writable"`
@@ -164,15 +162,6 @@ func (proj *Project) SetPipeline(pip Pipeline) {
 func (proj Project) IsValid() error {
 	if !NamePatternRegex.MatchString(proj.Key) {
 		return NewError(ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", NamePattern))
-	}
-
-	if proj.Icon != "" {
-		if !strings.HasPrefix(proj.Icon, IconFormat) {
-			return ErrIconBadFormat
-		}
-		if len(proj.Icon) > MaxIconSize {
-			return ErrIconBadSize
-		}
 	}
 
 	return nil

@@ -1,8 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-    CUSTOM_ELEMENTS_SCHEMA,
-    NgModule
-} from '@angular/core';
+import { NgModule } from '@angular/core';
 import {
     FormsModule,
     ReactiveFormsModule
@@ -261,6 +258,7 @@ import { NzTreeModule } from 'ng-zorro-antd/tree';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { SearchableComponent } from './searchable/searchable.component';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { RepositoryRefSelectComponent } from './repository-ref-selector/repository-ref-select.component';
 import { InputFilterComponent } from './input/input-filter.component';
 
@@ -411,6 +409,7 @@ const icons: IconDefinition[] = [
         NzRadioModule,
         NzResultModule,
         NzSelectModule,
+        NzSpaceModule,
         NzSpinModule,
         NzStepsModule,
         NzSwitchModule,
@@ -538,9 +537,6 @@ const icons: IconDefinition[] = [
             useValue: en_US
         }
     ],
-    schemas: [
-        CUSTOM_ELEMENTS_SCHEMA
-    ],
     exports: [
         ActionComponent,
         ActionStepComponent,
@@ -615,6 +611,7 @@ const icons: IconDefinition[] = [
         NzRadioModule,
         NzResultModule,
         NzSelectModule,
+        NzSpaceModule,
         NzSpinModule,
         NzStepsModule,
         NzSwitchModule,

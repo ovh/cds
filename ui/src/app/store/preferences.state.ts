@@ -13,6 +13,7 @@ export class PreferencesStateModel {
             name: string;
             value: string;
             sort: string;
+            order: number;
         }>
     };
     projectTreeExpandState: {
@@ -65,7 +66,7 @@ export class PreferencesState {
         return createSelector(
             [PreferencesState],
             (state: PreferencesStateModel) => {
-                return state.projectRunFilters[projectKey] ?? [];
+                return state.projectRunFilters?.[projectKey] ?? [];
             }
         );
     }
@@ -126,13 +127,18 @@ export class PreferencesState {
     @Action(actionPreferences.SaveProjectWorkflowRunFilter)
     saveProjectWorkflowRunFilter(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveProjectWorkflowRunFilter) {
         const state = ctx.getState();
-        let projects = { ...state.projectRunFilters };
+        let projects = { ...(state.projectRunFilters || {}) };
         if (!projects[action.payload.projectKey]) { projects[action.payload.projectKey] = []; }
         let searches = (projects[action.payload.projectKey] ?? []).filter(s => s.name !== action.payload.name);
+        
+        // Calculate order for new filter
+        const maxOrder = searches.length > 0 ? Math.max(...searches.map(s => s.order || 0)) : -1;
+        
         searches.push({
             name: action.payload.name,
             value: action.payload.value,
-            sort: action.payload.sort
+            sort: action.payload.sort,
+            order: maxOrder + 1
         });
         projects[action.payload.projectKey] = searches;
         ctx.setState({
@@ -166,10 +172,21 @@ export class PreferencesState {
     @Action(actionPreferences.DeleteProjectWorkflowRunFilter)
     deleteWorkflowRunSearch(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.DeleteProjectWorkflowRunFilter) {
         const state = ctx.getState();
-        let projects = { ...state.projectRunFilters };
+        let projects = { ...(state.projectRunFilters || {}) };
         if (projects[action.payload.projectKey]) {
             projects[action.payload.projectKey] = projects[action.payload.projectKey].filter(s => s.name !== action.payload.name);
         }
+        ctx.setState({
+            ...state,
+            projectRunFilters: projects
+        });
+    }
+
+    @Action(actionPreferences.ReorderProjectWorkflowRunFilters)
+    reorderProjectWorkflowRunFilters(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.ReorderProjectWorkflowRunFilters) {
+        const state = ctx.getState();
+        let projects = { ...(state.projectRunFilters || {}) };
+        projects[action.payload.projectKey] = action.payload.filters;
         ctx.setState({
             ...state,
             projectRunFilters: projects

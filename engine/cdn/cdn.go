@@ -165,6 +165,12 @@ func (s *Service) Start(ctx context.Context) error {
 		s.LogCache.Evict(ctx)
 	})
 
+	if s.Cfg.OrphanCleanup.Enable {
+		s.GoRoutines.Run(ctx, "service.cdn-orphan-cleanup", func(ctx context.Context) {
+			s.itemOrphanCleanup(ctx)
+		})
+	}
+
 	return nil
 }
 

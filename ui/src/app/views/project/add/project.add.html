@@ -29,7 +29,7 @@
                         <div *ngIf="!fileTooLarge && project.icon">
                             <img class="proj-icon" [src]="project.icon" alt="icon"/>
                         </div>
-                        <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)"></app-upload-button>
+                        <app-upload-button accept=".png,.jpg,.jpeg" [image]="true" (event)="fileEvent($event)"></app-upload-button>
                     </nz-form-control>
                 </nz-form-item>
                 <nz-alert *ngIf="fileTooLarge" nzType="error" nzMessage="Your file is too large (max 100Ko)"></nz-alert>

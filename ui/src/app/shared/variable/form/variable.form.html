@@ -22,7 +22,8 @@
             <nz-form-item>
                 <nz-form-label>Value</nz-form-label>
                 <nz-form-control>
-                    <app-variable-value [type]="newVariable.type" [(value)]="newVariable.value" [disabled]="loading" (valueUpdated)="newVariable.value = $event" ></app-variable-value>
+                    <app-variable-value [type]="newVariable.type" [(value)]="newVariable.value"
+                        [disabled]="loading"></app-variable-value>
                 </nz-form-control>
             </nz-form-item>
         </nz-col>

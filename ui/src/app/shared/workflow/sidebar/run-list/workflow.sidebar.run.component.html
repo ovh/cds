@@ -1,5 +1,6 @@
 <ng-container *ngIf="ready">
-    <nz-select nzShowSearch nzMode="multiple" [(ngModel)]="selectedTags" (ngModelChange)="filterRuns()" nzPlaceHolder="Filter...">
+    <nz-select nzShowSearch nzMode="multiple" [(ngModel)]="selectedTags" (ngModelChange)="filterRuns()"
+        nzPlaceHolder="Filter...">
         <nz-option *ngFor="let o of tagsSelectable" [nzLabel]="o" [nzValue]="o"></nz-option>
     </nz-select>
     <div class="runs" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
@@ -23,8 +24,9 @@
                                     [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.version
                                     ? r.version : r.num}}</span>
                             </div>
-                            <a title="Copy version" ngxClipboard [cbContent]="r.version ? r.version : r.num"
-                                (click)="confirmCopy();$event.stopPropagation();"> <i nz-icon nzType="copy" nzTheme="outline"></i></a>
+                            <a title="Copy version" ngxClipboard [cbContent]="r.version ? r.version : '' + r.num"
+                                (click)="confirmCopy();$event.stopPropagation();"> <i nz-icon nzType="copy"
+                                    nzTheme="outline"></i></a>
                         </div>
                         <ng-template #popupTemplate>
                             <ul>

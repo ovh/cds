@@ -8,4 +8,5 @@ export * from './lib/node/fork-join-node.components';
 export * from './lib/node/job-node.component';
 export * from './lib/node/matrix-node.component';
 export * from './lib/graph.component';
+export * from './lib/graph.lib';
 export * from './lib/graph.module';

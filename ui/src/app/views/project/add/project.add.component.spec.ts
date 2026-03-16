@@ -1,5 +1,5 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
+import { Injector } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -70,9 +70,6 @@ describe('CDS: Project Show Component', () => {
                 NgxsStoreModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([])
-            ],
-            schemas: [
-                CUSTOM_ELEMENTS_SCHEMA
             ]
         }).compileComponents();
         injector = getTestBed();

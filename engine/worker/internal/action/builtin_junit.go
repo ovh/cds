@@ -84,6 +84,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 	}
 
 	tests = tests.EnsureData()
+	tests = tests.Trim()
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("%d", len(tests.TestSuites))+" Total Testsuite(s)")
 	reasons := ComputeTestsReasons(tests)

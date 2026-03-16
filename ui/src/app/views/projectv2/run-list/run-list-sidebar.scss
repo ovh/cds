@@ -4,30 +4,94 @@
 
 [nz-menu-item] {
   margin: 0 !important;
+}
 
-  ::ng-deep {
-    .ant-menu-title-content {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-    }
+.filter-section-title {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+
+  :host-context(.night) & {
+    color: rgba(255, 255, 255, 0.65);
   }
+}
 
-  a {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.filter-list {
+  min-height: 20px;
+}
 
-  button {
-    margin-left: 5px;
-    display: none;
+.filter-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px 8px 24px;
+  min-height: 40px;
+  transition: background-color 0.3s;
+
+  &.draggable {
+    cursor: move;
   }
 
   &:hover {
     button {
-      display: block;
+      display: inline-block;
     }
   }
+
+  // Selected state matching ant-menu-item-selected
+  &.filter-item-active {
+    background-color: #e6f7ff;
+    border-right: 3px solid #1890ff;
+
+    :host-context(.night) & {
+      background-color: #111b26;
+    }
+  }
+
+  .filter-link {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      color: #1890ff;
+    }
+
+    &.filter-item-selected {
+      color: #1890ff;
+      font-weight: 600;
+    }
+  }
+
+  button {
+    margin-left: 5px;
+    flex-shrink: 0;
+    display: none;
+    cursor: pointer;
+  }
+}
+
+.cdk-drag-preview {
+  opacity: 0.8;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+  background: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+  background: #f0f0f0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }

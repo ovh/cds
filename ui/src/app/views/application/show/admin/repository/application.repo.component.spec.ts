@@ -8,7 +8,6 @@ import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } f
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
-import { RepositoriesManager, RepositoriesManagerAuth } from 'app/model/repositories.model';
 import { ApplicationService } from 'app/service/application/application.service';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
@@ -29,6 +28,7 @@ import { ProjectModule } from 'app/views/project/project.module';
 import { of } from 'rxjs';
 import { ApplicationRepositoryComponent } from './application.repo.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { VCSProject, VCSProjectAuth } from 'app/model/vcs.model';
 
 @Component({
     template: '',
@@ -115,8 +115,8 @@ describe('CDS: Application Repo Component', () => {
         p.key = 'key1';
         p.name = 'proj1';
 
-        let repoMan: RepositoriesManager = { name: 'RepoManager', type: '', auth: new (RepositoriesManagerAuth), description: '' };
-        p.vcs_servers = new Array<RepositoriesManager>();
+        let repoMan = <VCSProject>{ name: 'RepoManager', type: '', auth: <VCSProjectAuth>{}, description: '' };
+        p.vcs_servers = new Array<VCSProject>();
         p.vcs_servers.push(repoMan);
 
         fixture.componentInstance.application = app;

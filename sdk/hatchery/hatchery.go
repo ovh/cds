@@ -873,9 +873,9 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			return false
 		}
 
-		// flavor requirement is only supported by openstack model
-		if model.Type != sdk.Openstack && r.Type == sdk.FlavorRequirement {
-			log.Debug(ctx, "job with flavor requirement: only for model openstack. current model: %s", model.Type)
+		// flavor requirement is only supported by openstack and vsphere models
+		if model.Type != sdk.Openstack && model.Type != sdk.VSphere && r.Type == sdk.FlavorRequirement {
+			log.Debug(ctx, "job with flavor requirement: only for model openstack and vsphere. current model: %s", model.Type)
 			return false
 		}
 

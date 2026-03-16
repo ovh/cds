@@ -1,0 +1,29 @@
+:host {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+nz-alert {
+    margin-bottom: 16px;
+}
+
+nz-result {
+    .message {
+        width: 100%;
+        text-align: center;
+    }
+
+    [nz-result-extra] {
+        [nz-button] {
+            color: inherit;
+        }
+    }
+
+    pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+}

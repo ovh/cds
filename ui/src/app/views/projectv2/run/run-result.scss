@@ -34,3 +34,13 @@ nz-code-editor {
 nz-descriptions {
   margin: 20px;
 }
+
+.descriptions {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+
+  .items {
+    overflow: auto;
+  }
+}

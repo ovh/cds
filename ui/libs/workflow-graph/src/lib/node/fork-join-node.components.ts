@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model';
 import { NodeStatus } from './model';
+import { SelectionMode, InteractiveNode } from '../graph.lib';
 
 @Component({
     selector: 'app-fork-join-node',
@@ -9,7 +10,7 @@ import { NodeStatus } from './model';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class GraphForkJoinNodeComponent implements OnInit {
+export class GraphForkJoinNodeComponent implements OnInit, InteractiveNode {
     @Input() nodes: Array<GraphNode>;
     @Input() type = 'fork';
     @Input() actionCallback: (type: string, node: GraphNode) => void = () => { };
@@ -18,9 +19,9 @@ export class GraphForkJoinNodeComponent implements OnInit {
     status: string;
     nodeStatusEnum = NodeStatus;
 
-    constructor(
-        private _cd: ChangeDetectorRef
-    ) {
+    private _cd = inject(ChangeDetectorRef);
+
+    constructor() {
         this.setHighlight.bind(this);
         this.selectNode.bind(this);
     }
@@ -53,4 +54,8 @@ export class GraphForkJoinNodeComponent implements OnInit {
     setRunActive(active: boolean): void { }
 
     match(navigationKey: string): boolean { return false; }
+
+    setSelectionMode(navigationKey: string, mode: SelectionMode): void { }
+
+    setSelected(selectedRunJobIds: Array<string>): void { }
 }

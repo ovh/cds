@@ -423,21 +423,25 @@ func fromJSON(ctx context.Context, _ *ActionParser, inputs ...interface{}) (inte
 	if len(inputs) != 1 {
 		return nil, NewErrorFrom(ErrInvalidData, "fromJSON: you must have one argument")
 	}
-	if strings.HasPrefix(inputs[0].(string), "[{") {
+	inputString, ok := inputs[0].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "fromJSON: argument must be a string, got %T", inputs[0])
+	}
+	if strings.HasPrefix(inputString, "[{") {
 		var result []map[string]interface{}
-		if err := json.Unmarshal([]byte(inputs[0].(string)), &result); err != nil {
+		if err := json.Unmarshal([]byte(inputString), &result); err != nil {
 			return nil, NewErrorFrom(ErrInvalidData, "fromJSON: given input is not a valid json")
 		}
 		return result, nil
-	} else if strings.HasPrefix(inputs[0].(string), "[") {
+	} else if strings.HasPrefix(inputString, "[") {
 		var result []interface{}
-		if err := json.Unmarshal([]byte(inputs[0].(string)), &result); err != nil {
+		if err := json.Unmarshal([]byte(inputString), &result); err != nil {
 			return nil, NewErrorFrom(ErrInvalidData, "fromJSON: given input is not a valid json")
 		}
 		return result, nil
 	} else {
 		var result map[string]interface{}
-		if err := json.Unmarshal([]byte(inputs[0].(string)), &result); err != nil {
+		if err := json.Unmarshal([]byte(inputString), &result); err != nil {
 			return nil, NewErrorFrom(ErrInvalidData, "fromJSON: given input is not a valid json")
 		}
 		return result, nil

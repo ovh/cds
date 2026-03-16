@@ -21,6 +21,7 @@ func adminUsers() *cobra.Command {
 		cli.NewCommand(adminUserSetOrganizationCmd, adminUserSetOrganizationRun, nil),
 		cli.NewCommand(adminUserRenameCmd, adminUserRenameRun, nil),
 		cli.NewCommand(adminUserCreateCmd, adminUserCreateRun, nil),
+		cli.NewDeleteCommand(adminUserDeleteCmd, adminUserDeleteRun, nil),
 		adminUserLink(),
 		adminUserGroupList(),
 	})
@@ -84,6 +85,18 @@ func adminUserCreateRun(v cli.Values) error {
 
 	fmt.Println("User has been created")
 	return nil
+}
+
+var adminUserDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete a user",
+	Args: []cli.Arg{
+		{Name: "username"},
+	},
+}
+
+func adminUserDeleteRun(v cli.Values) error {
+	return client.UserDelete(context.Background(), v.GetString("username"))
 }
 
 var adminUserRenameCmd = cli.Command{

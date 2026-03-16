@@ -18,7 +18,6 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
-	ehatchery "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -335,9 +334,9 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		return err
 	}
 
-	mAPIWorkers := make(map[string]ehatchery.WorkerInterface, len(apiWorkers))
+	mAPIWorkers := make(map[string]sdk.PoolWorker, len(apiWorkers))
 	for _, w := range apiWorkers {
-		mAPIWorkers[w.Name()] = w
+		mAPIWorkers[w.GetName()] = w
 	}
 
 	killedWorkers := []string{}
@@ -352,8 +351,8 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 			}
 			log.Info(ctx, "Killing AWOL worker %s", name)
 			kill = true
-		} else if w.Status() == sdk.StatusDisabled {
-			log.Info(ctx, "Killing disabled worker %s", w.Name)
+		} else if w.GetStatus() == sdk.StatusDisabled {
+			log.Info(ctx, "Killing disabled worker %s", w.GetName())
 			kill = true
 		}
 

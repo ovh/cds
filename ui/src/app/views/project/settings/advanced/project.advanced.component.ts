@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { APIConfig } from 'app/model/config.service';
@@ -27,22 +27,20 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
     validateForm: FormGroup<{
         name: FormControl<string | null>;
         description: FormControl<string | null>;
-        icon: FormControl<string | null>;
         retention: FormControl<number | null>;
     }>;
 
-    constructor(
-        private _v2ProjectService: V2ProjectService,
-        public _messageService: NzMessageService,
-        private _router: Router,
-        private _store: Store,
-        private _cd: ChangeDetectorRef,
-        private _fb: FormBuilder
-    ) {
+    private _v2ProjectService = inject(V2ProjectService)
+    public _messageService = inject(NzMessageService)
+    private _router = inject(Router)
+    private _store = inject(Store)
+    private _cd = inject(ChangeDetectorRef)
+    private _fb = inject(FormBuilder)
+
+    constructor() {
         this.validateForm = this._fb.group({
             name: this._fb.control<string | null>(null, Validators.required),
             description: this._fb.control<string | null>(null),
-            icon: this._fb.control<string | null>(null),
             retention: this._fb.control<number | null>(null, Validators.required)
         });
     }
@@ -57,7 +55,6 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         this.validateForm.controls.name.setValue(this.project.name);
         this.validateForm.controls.description.setValue(this.project.description);
-        this.validateForm.controls.icon.setValue(this.project.icon);
         this.validateForm.controls.retention.setValue(this.project.workflow_retention);
     }
 
@@ -80,7 +77,6 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
                 ...this.project,
                 name: this.validateForm.value.name,
                 description: this.validateForm.value.description,
-                icon: this.validateForm.value.icon,
                 workflow_retention: this.validateForm.value.retention,
             }));
             this._store.dispatch(new SetCurrentProjectV2(p));
@@ -105,14 +101,5 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
         }
         this.loading = false;
         this._cd.markForCheck();
-    }
-
-    fileEvent(event: { content: string, file: File }) {
-        this.fileTooLarge = event.file.size > 100000;
-        this._cd.markForCheck();
-        if (this.fileTooLarge) {
-            return;
-        }
-        this.validateForm.controls.icon.setValue(event.content);
     }
 }

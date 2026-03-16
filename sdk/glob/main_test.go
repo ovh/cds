@@ -390,3 +390,64 @@ func TestSquareBracket(t *testing.T) {
 	require.Equal(t, "artifact/foo", result.String())
 	t.Logf("result= %s", result.String())
 }
+
+func TestGlobDoubleStarFooDoubleStarPanic_PathEndingWithFoo(t *testing.T) {
+	glob.DebugEnabled = true
+	glob.DebugFunc = func(a ...any) (n int, err error) {
+		t.Log(a...)
+		return len(a), nil
+	}
+	log.Factory = log.NewTestingWrapper(t)
+
+	// Pattern from workflow: **/foo/**
+	// Content is a file path that ends with "foo" — no trailing segments after the second **
+	// This should NOT panic.
+	g := glob.New("**/foo/**")
+	r, e := g.MatchString("some/path/foo")
+	require.NoError(t, e)
+	require.Nil(t, r)
+}
+
+func TestGlobDoubleStarFooDoubleStarPanic_JustFoo(t *testing.T) {
+	glob.DebugEnabled = true
+	glob.DebugFunc = func(a ...any) (n int, err error) {
+		t.Log(a...)
+		return len(a), nil
+	}
+	log.Factory = log.NewTestingWrapper(t)
+
+	g := glob.New("**/foo/**")
+	r, e := g.MatchString("foo")
+	require.NoError(t, e)
+	require.Nil(t, r)
+}
+
+func TestGlobDoubleStarFooDoubleStarPanic_DeepPath(t *testing.T) {
+	glob.DebugEnabled = true
+	glob.DebugFunc = func(a ...any) (n int, err error) {
+		t.Log(a...)
+		return len(a), nil
+	}
+	log.Factory = log.NewTestingWrapper(t)
+
+	g := glob.New("**/foo/**")
+	r, e := g.MatchString("a/very/deep/path/to/foo")
+	require.NoError(t, e)
+	require.Nil(t, r)
+}
+
+func TestGlobDoubleStarFooDoubleStarPanic_ShouldStillMatch(t *testing.T) {
+	glob.DebugEnabled = true
+	glob.DebugFunc = func(a ...any) (n int, err error) {
+		t.Log(a...)
+		return len(a), nil
+	}
+	log.Factory = log.NewTestingWrapper(t)
+
+	// Sanity check: a path that SHOULD match **/foo/**
+	g := glob.New("**/foo/**")
+	r, e := g.MatchString("foo/foo/bar/file.txt")
+	require.NoError(t, e)
+	require.NotNil(t, r)
+	require.Equal(t, "foo/foo/bar/file.txt", r.Result)
+}

@@ -110,6 +110,10 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 			User:   lambda.Initiator(),
 		},
 		Contexts: sdk.WorkflowRunContext{
+			CDS: sdk.CDSContext{
+				WorkflowVCSServer:  vcsServer.Name,
+				WorkflowRepository: repo.Name,
+			},
 			Git: sdk.GitContext{
 				Server:     vcsServer.Name,
 				Repository: repo.Name,
@@ -462,6 +466,10 @@ func TestRunManualSkippedJob(t *testing.T) {
 			User:   lambda.Initiator(),
 		},
 		Contexts: sdk.WorkflowRunContext{
+			CDS: sdk.CDSContext{
+				WorkflowVCSServer:  vcsServer.Name,
+				WorkflowRepository: repo.Name,
+			},
 			Git: sdk.GitContext{
 				Server:     vcsServer.Name,
 				Repository: repo.Name,
@@ -2402,12 +2410,12 @@ jobs:
 
 	tests := []struct {
 		name   string
-		inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+		inputs map[string]sdk.GateInputs
 		err    string
 	}{
 		{
 			name: "Job with no gate",
-			inputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+			inputs: map[string]sdk.GateInputs{
 				"jobNoGate": {
 					"zone": "zone1",
 				},
@@ -2416,7 +2424,7 @@ jobs:
 		},
 		{
 			name: "Non root job",
-			inputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+			inputs: map[string]sdk.GateInputs{
 				"jobWithNeeds": {
 					"zone": "zone1",
 				},
@@ -2425,7 +2433,7 @@ jobs:
 		},
 		{
 			name: "Non existing job",
-			inputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+			inputs: map[string]sdk.GateInputs{
 				"unknown": {
 					"zone": "zone1",
 				},
@@ -2434,7 +2442,7 @@ jobs:
 		},
 		{
 			name: "wrong inputs",
-			inputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+			inputs: map[string]sdk.GateInputs{
 				"jobWithGate": {
 					"zaune": "zone1",
 				},
@@ -2498,8 +2506,8 @@ func TestPostStartJobWorkflowRunHandler_RunningWorkflow(t *testing.T) {
 		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uri)
-	payload := sdk.V2WorkflowRunJobsRequest{
-		JobInputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+	payload := sdk.V2WorkflowRunTriggerJobsRequest{
+		JobInputs: map[string]sdk.GateInputs{
 			"job1": {},
 		},
 	}
@@ -2551,8 +2559,8 @@ func TestPostStartJobWorkflowRunHandler_NoJobProvided(t *testing.T) {
 	})
 	test.NotEmpty(t, uri)
 
-	payload := sdk.V2WorkflowRunJobsRequest{
-		JobInputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{},
+	payload := sdk.V2WorkflowRunTriggerJobsRequest{
+		JobInputs: map[string]sdk.GateInputs{},
 	}
 	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, payload)
 	w := httptest.NewRecorder()
@@ -2622,8 +2630,8 @@ func TestPostStartJobWorkflowRunHandler_NoTerminatedRunJobs(t *testing.T) {
 		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uri)
-	payload := sdk.V2WorkflowRunJobsRequest{
-		JobInputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+	payload := sdk.V2WorkflowRunTriggerJobsRequest{
+		JobInputs: map[string]sdk.GateInputs{
 			"job1": map[string]interface{}{
 				"environment": "prod",
 			},
@@ -2719,8 +2727,8 @@ func TestPostStartJobWorkflowRunHandler_Success(t *testing.T) {
 		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uri)
-	payload := sdk.V2WorkflowRunJobsRequest{
-		JobInputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+	payload := sdk.V2WorkflowRunTriggerJobsRequest{
+		JobInputs: map[string]sdk.GateInputs{
 			"job1": map[string]interface{}{
 				"environment": "prod",
 			},
@@ -2837,8 +2845,8 @@ func TestPostStartJobWorkflowRunHandler_WithGate(t *testing.T) {
 		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uri)
-	payload := sdk.V2WorkflowRunJobsRequest{
-		JobInputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+	payload := sdk.V2WorkflowRunTriggerJobsRequest{
+		JobInputs: map[string]sdk.GateInputs{
 			"job1": map[string]interface{}{
 				"environment": "production",
 			},
@@ -2920,8 +2928,8 @@ func TestPostStartJobWorkflowRunHandler_InvalidGateInput(t *testing.T) {
 	})
 	test.NotEmpty(t, uri)
 
-	payload := sdk.V2WorkflowRunJobsRequest{
-		JobInputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+	payload := sdk.V2WorkflowRunTriggerJobsRequest{
+		JobInputs: map[string]sdk.GateInputs{
 			"job1": map[string]interface{}{
 				"wrong_input": "production",
 			},
@@ -3039,8 +3047,8 @@ func TestPostStartJobWorkflowRunHandler_MultipleJobs(t *testing.T) {
 		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uri)
-	payload := sdk.V2WorkflowRunJobsRequest{
-		JobInputs: map[string]sdk.V2WorkflowRunManualRequestJobInput{
+	payload := sdk.V2WorkflowRunTriggerJobsRequest{
+		JobInputs: map[string]sdk.GateInputs{
 			"job1": map[string]interface{}{
 				"environment": "prod",
 			},

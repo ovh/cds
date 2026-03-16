@@ -171,8 +171,8 @@ func LoadRunJobByRunIDAndID(ctx context.Context, db gorp.SqlExecutor, wrID, jobR
 	return getRunJob(ctx, db, query)
 }
 
-func LoadRunJobsByName(ctx context.Context, db gorp.SqlExecutor, wrID string, jobName string, runAttempt int64) ([]sdk.V2WorkflowRunJob, error) {
-	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobsByName")
+func LoadRunJobsByJobID(ctx context.Context, db gorp.SqlExecutor, wrID string, jobID string, runAttempt int64) ([]sdk.V2WorkflowRunJob, error) {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobsByJobID")
 	defer next()
 	query := gorpmapping.NewQuery(`
 		WITH maxrunattemp AS (
@@ -188,7 +188,7 @@ func LoadRunJobsByName(ctx context.Context, db gorp.SqlExecutor, wrID string, jo
 			maxrunattemp.matrix = v2_workflow_run_job.matrix AND 
 			maxrunattemp.retry = v2_workflow_run_job.retry
         WHERE v2_workflow_run_job.workflow_run_id = $1 AND v2_workflow_run_job.job_id = $2 AND v2_workflow_run_job.run_attempt = $3`).
-		Args(wrID, jobName, runAttempt)
+		Args(wrID, jobID, runAttempt)
 	return getAllRunJobs(ctx, db, query)
 }
 

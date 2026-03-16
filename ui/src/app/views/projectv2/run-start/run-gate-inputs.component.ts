@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
 import { V2Job, V2JobGate } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import { OnChangeType, OnTouchedType } from "ng-zorro-antd/core/types";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 
 export class GateValue {
+    default: { [inputName: string]: any }
     global: { [inputName: string]: any }
     withJobOverrides: boolean;
     jobs: {
@@ -13,6 +14,7 @@ export class GateValue {
 
     constructor() {
         this.withJobOverrides = false;
+        this.default = {};
         this.global = {};
         this.jobs = {};
     }
@@ -44,6 +46,7 @@ export class GateValue {
 export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
     @Input() jobs: { [jobName: string]: V2Job } = {};
     @Input() gates: { [gateName: string]: V2JobGate } = {};
+    @Input() initialValues: { [jobName: string]: { [inputName: string]: any } } = {};
 
     disabled: boolean = false;
     values: { [gateName: string]: GateValue } = {};
@@ -51,25 +54,26 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
     onChange: OnChangeType = () => { };
     onTouched: OnTouchedType = () => { };
 
-    constructor(
-        private _cd: ChangeDetectorRef
-    ) { }
+    _cd = inject(ChangeDetectorRef);
+
+    constructor() { }
 
     writeValue(obj: any): void { }
 
     registerOnChange(fn: OnChangeType): void {
         this.onChange = fn;
+        // Emit current value now that the form control is connected.
+        // init() may have already been called from ngOnChanges before
+        // registerOnChange, so the initial emitChange() was a no-op.
+        this.emitChange();
     }
 
-    registerOnTouched(fn: OnTouchedType): void {
-        this.onTouched = fn;
-    }
+    registerOnTouched(fn: OnTouchedType): void { this.onTouched = fn; }
 
     setDisabledState?(isDisabled: boolean): void {
         this.disabled = isDisabled;
         this._cd.markForCheck();
     }
-
 
     ngOnChanges(changes: SimpleChanges): void {
         if (this.jobs && this.gates) {
@@ -80,26 +84,61 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
     init(): void {
         this.values = {};
 
-        Object.keys(this.gates).forEach(k => {
-            this.values[k] = new GateValue();
-            Object.keys(this.gates[k].inputs ?? {}).forEach(v => {
-                this.values[k].global[v] = this.gates[k].inputs[v].default || undefined;
-            });
-        });
-
-        Object.keys(this.jobs).forEach(j => {
-            if (!this.jobs[j].gate) {
-                return;
+        // Initialize gate default values
+        for (const gateName of Object.keys(this.gates)) {
+            this.values[gateName] = new GateValue();
+            for (const v of Object.keys(this.gates[gateName].inputs ?? {})) {
+                if (this.gates[gateName].inputs[v].default === false) {
+                    this.values[gateName].default[v] = false;
+                } else {
+                    this.values[gateName].default[v] = this.gates[gateName].inputs[v].default || undefined;
+                }
             }
-            this.values[this.jobs[j].gate].jobs[j] = { ...this.values[this.jobs[j].gate].global };
-        });
+        }
 
-        Object.keys(this.values).forEach(gateName => {
-            // If only one job uses this gate, enable job overrides by default
+        // Apply initial values for each job input or fallback to gate default values
+        for (const j of Object.keys(this.jobs)) {
+            if (!this.jobs[j].gate) {
+                continue
+            }
+            if (this.initialValues && this.initialValues[j]) {
+                this.values[this.jobs[j].gate].jobs[j] = { ...this.initialValues[j] };
+            } else {
+                this.values[this.jobs[j].gate].jobs[j] = { ...this.values[this.jobs[j].gate].default };
+            }
+        }
+
+        // Determine if job overrides should be enabled by default based on initial values
+        for (const gateName of Object.keys(this.values)) {
+            // If only one job uses this gate, enable job overrides by default and init global values with the job values
             if (Object.keys(this.values[gateName].jobs).length === 1) {
                 this.values[gateName].withJobOverrides = true;
+                this.values[gateName].global = { ...this.values[gateName].jobs[Object.keys(this.values[gateName].jobs)[0]] };
+                continue;
             }
-        });
+
+            // For gates with multiple jobs, check if all jobs have the same initial values for each input. If so, disable job overrides by default and init global values with the common value
+            let allJobsHaveSameInitialValue = true;
+            let commonValues: { [inputName: string]: any } = null;
+            for (const jobIdentifier of Object.keys(this.values[gateName].jobs)) {
+                if (!commonValues) {
+                    commonValues = { ...this.values[gateName].jobs[jobIdentifier] };
+                    continue
+                }
+                const jobValues = this.values[gateName].jobs[jobIdentifier];
+                allJobsHaveSameInitialValue = JSON.stringify(commonValues) === JSON.stringify(jobValues);
+                if (!allJobsHaveSameInitialValue) {
+                    break;
+                }
+            }
+            if (allJobsHaveSameInitialValue) {
+                this.values[gateName].withJobOverrides = false;
+                this.values[gateName].global = { ...commonValues };
+            } else {
+                this.values[gateName].withJobOverrides = true;
+                this.values[gateName].global = { ...this.values[gateName].default };
+            }
+        }
 
         this.emitChange();
 
@@ -124,13 +163,13 @@ export class RunGateInputsComponent implements ControlValueAccessor, OnChanges {
     emitChange(): void {
         let result = {};
         if (this.jobs) {
-            Object.keys(this.jobs).forEach(j => {
+            for (const j of Object.keys(this.jobs)) {
                 if (!this.values[this.jobs[j].gate].withJobOverrides) {
                     result[j] = this.values[this.jobs[j].gate].global;
                 } else {
                     result[j] = this.values[this.jobs[j].gate].jobs[j];
                 }
-            })
+            }
         }
         this.onChange(result);
     }

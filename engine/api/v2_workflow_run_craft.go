@@ -1127,7 +1127,7 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		firsLine := strings.Split(fileContent, "\n")[0]
 		r, _ := regexp.Compile(`.*\((.*)\).*`) // format: package (version) distribution; urgency=low
 		result := r.FindStringSubmatch(firsLine)
-		if r.NumSubexp() == 0 {
+		if len(result) < 2 {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to extract version from [%s]", firsLine)
 		}
 		fileVersion = result[1]

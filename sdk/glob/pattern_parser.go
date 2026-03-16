@@ -275,6 +275,7 @@ func (p *innerParser) parseAndMatch(s string) (result string, err error) {
 			}
 		case DOUBLESTAR:
 			var accumulator = new(strings.Builder)
+			var enteredWithContent = contentParser.leftover() != ""
 
 			for {
 				inDoubleStar = true
@@ -302,6 +303,14 @@ func (p *innerParser) parseAndMatch(s string) (result string, err error) {
 					Debug("#### Stop globbing because %s match with %v", subP.s.f.raw, leftover)
 					break
 				}
+			}
+
+			// If DOUBLESTAR was entered with no content remaining (e.g. after
+			// a SLASH handler consumed the last token and continued), the
+			// trailing /** should NOT match zero segments — the explicit /
+			// before ** requires at least one more path element.
+			if !enteredWithContent {
+				return "", nil
 			}
 
 			buf.WriteString(accumulator.String())
@@ -479,5 +488,8 @@ func (p *contentParser) rewindTo(r int) {
 }
 
 func (p *contentParser) leftover() string {
+	if p.index >= len(p.raw) {
+		return ""
+	}
 	return p.raw[p.index:]
 }
