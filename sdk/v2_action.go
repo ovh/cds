@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	EntityActionInputKey = "^[a-zA-Z0-9]*$"
+	EntityActionInputKey = "^[a-zA-Z0-9_-]*$"
 	EntityActionStepID   = "^[a-zA-Z0-9]*$"
 	EntityJobKey         = "^[a-zA-Z0-9_-]{1,}$"
 )
