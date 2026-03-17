@@ -2,12 +2,12 @@ package sdk
 
 import (
 	"archive/tar"
-	"compress/gzip"
 	"errors"
 	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/klauspost/pgzip"
 	"github.com/spf13/afero"
 )
 
@@ -28,7 +28,7 @@ func IsGz(buf []byte) bool {
 // UntarGz takes a destination path and a reader; a tar.gz reader loops over the tarfile
 // creating the file structure at 'dst' along the way, and writing any files
 func UntarGz(fs afero.Fs, dst string, r io.Reader) error {
-	gzr, err := gzip.NewReader(r)
+	gzr, err := pgzip.NewReader(r)
 	if err != nil {
 		return err
 	}

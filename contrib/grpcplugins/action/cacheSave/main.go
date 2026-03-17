@@ -1,14 +1,16 @@
 package main
 
 import (
+	"archive/tar"
 	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/mholt/archiver/v3"
+	"github.com/klauspost/pgzip"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/sdk"
@@ -105,26 +107,24 @@ func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJob
 			return sdk.Errorf("unable to remove previous cache: %s: %v", archivePath, err)
 		}
 	}
-	if err := archiver.Archive(itemsToArchive, archivePath); err != nil {
+
+	t0 := time.Now()
+	if err := createTarGz(itemsToArchive, archivePath); err != nil {
 		return fmt.Errorf("unable to create cache archive: %v", err)
 	}
+	grpcplugins.Logf(&p.Common, "Cache archive created in %.3fs", time.Since(t0).Seconds())
 
-	dirFS := os.DirFS(workDirs.WorkingDir)
-	f, err := dirFS.Open("cache.tar.gz")
+	f, err := os.Open(archivePath)
 	if err != nil {
 		return fmt.Errorf("unable to open cache archive: %v", err)
 	}
-	reader, ok := f.(io.ReadSeeker)
-	if !ok {
-		// unable to cast the file
-		return fmt.Errorf("unable to cast reader")
-	}
+	defer f.Close()
 
 	// Check if file or directory exist
 	if jobCtx.Integrations != nil && jobCtx.Integrations.ArtifactManager.Name != "" {
-		return p.performFromArtifactory(ctx, jobCtx, cacheKey, reader)
+		return p.performFromArtifactory(ctx, jobCtx, cacheKey, f)
 	} else {
-		return p.performFromCDN(ctx, cacheKey, reader)
+		return p.performFromCDN(ctx, cacheKey, f)
 	}
 }
 
@@ -156,6 +156,82 @@ func (p *cacheSavePlugin) performFromCDN(ctx context.Context, cacheKey string, r
 
 func (actPlugin *cacheSavePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	return nil, sdk.ErrNotImplemented
+}
+
+// createTarGz creates a tar.gz archive using parallel gzip compression.
+func createTarGz(sources []string, dest string) error {
+	f, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	gzw := pgzip.NewWriter(f)
+	defer gzw.Close()
+
+	tw := tar.NewWriter(gzw)
+	defer tw.Close()
+
+	for _, source := range sources {
+		info, err := os.Stat(source)
+		if err != nil {
+			return fmt.Errorf("unable to stat %s: %v", source, err)
+		}
+
+		var baseDir string
+		if info.IsDir() {
+			baseDir = filepath.Dir(source)
+		} else {
+			baseDir = filepath.Dir(source)
+		}
+
+		err = filepath.Walk(source, func(path string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			header, err := tar.FileInfoHeader(fi, "")
+			if err != nil {
+				return err
+			}
+
+			relPath, err := filepath.Rel(baseDir, path)
+			if err != nil {
+				return err
+			}
+			header.Name = relPath
+
+			if fi.Mode()&os.ModeSymlink != 0 {
+				link, err := os.Readlink(path)
+				if err != nil {
+					return err
+				}
+				header.Linkname = link
+				header.Typeflag = tar.TypeSymlink
+			}
+
+			if err := tw.WriteHeader(header); err != nil {
+				return err
+			}
+
+			if !fi.Mode().IsRegular() {
+				return nil
+			}
+
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			_, err = io.Copy(tw, file)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func main() {
