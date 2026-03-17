@@ -173,7 +173,7 @@ func createTarGz(sources []string, dest string) error {
 	defer tw.Close()
 
 	for _, source := range sources {
-		info, err := os.Stat(source)
+		info, err := os.Lstat(source)
 		if err != nil {
 			return fmt.Errorf("unable to stat %s: %v", source, err)
 		}
@@ -190,7 +190,13 @@ func createTarGz(sources []string, dest string) error {
 				return err
 			}
 
-			header, err := tar.FileInfoHeader(fi, "")
+			// Use Lstat to detect symlinks (Walk follows them)
+			lfi, err := os.Lstat(path)
+			if err != nil {
+				return err
+			}
+
+			header, err := tar.FileInfoHeader(lfi, "")
 			if err != nil {
 				return err
 			}
@@ -201,20 +207,21 @@ func createTarGz(sources []string, dest string) error {
 			}
 			header.Name = relPath
 
-			if fi.Mode()&os.ModeSymlink != 0 {
+			if lfi.Mode()&os.ModeSymlink != 0 {
 				link, err := os.Readlink(path)
 				if err != nil {
 					return err
 				}
 				header.Linkname = link
 				header.Typeflag = tar.TypeSymlink
+				return tw.WriteHeader(header)
 			}
 
 			if err := tw.WriteHeader(header); err != nil {
 				return err
 			}
 
-			if !fi.Mode().IsRegular() {
+			if !lfi.Mode().IsRegular() {
 				return nil
 			}
 
