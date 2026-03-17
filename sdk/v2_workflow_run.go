@@ -853,6 +853,16 @@ type HookWorkflowRunEventJob struct {
 	Conclusion string `json:"conclusion"`
 }
 
+// MergeGateDefaultInputs completes inputs with the gate's default values for any key not already
+// present. Must be called after user inputs are validated, before saving a RunJobEvent.
+func MergeGateDefaultInputs(gate V2JobGate, inputs map[string]interface{}) {
+	for k, def := range gate.Inputs {
+		if _, has := inputs[k]; !has && def.Default != nil {
+			inputs[k] = def.Default
+		}
+	}
+}
+
 func CheckJobInputWithGate(wk V2Workflow, jobID string, inputs map[string]interface{}) error {
 	// Retrieve job
 	job, exist := wk.Jobs[jobID]

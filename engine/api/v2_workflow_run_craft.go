@@ -191,6 +191,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			})
 		}
 
+		// Merge env vars brought by the template into the run context
+		if run.Contexts.Env == nil {
+			run.Contexts.Env = make(map[string]string)
+		}
+		for k, v := range run.WorkflowData.Workflow.Env {
+			run.Contexts.Env[k] = v
+		}
+
 		// Build context for workflow
 		repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), e.Entity.ProjectRepositoryID)
 		if err != nil {
@@ -258,6 +266,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			}
 			return stopRun(ctx, api.mustDB(), api.Cache, run, &wref.ef.initiator, msgs...)
 		}
+
 	}
 
 	mustSaveVersion := false
