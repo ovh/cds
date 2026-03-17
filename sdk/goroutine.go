@@ -108,6 +108,7 @@ func (m *GoRoutines) runRestartGoRoutines(ctx context.Context) {
 
 // Run runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
 func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Context)) {
+	log.Info(c, "Running goroutine %s", name)
 	ctx, cancel := context.WithCancel(c)
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -126,6 +127,7 @@ func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Con
 // RunWithRestart runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
 // if the goroutine is stopped, it will ne restarted
 func (m *GoRoutines) RunWithRestart(c context.Context, name string, fn func(ctx context.Context)) {
+	log.Info(c, "Running goroutine %s with restart", name)
 	ctx, cancel := context.WithCancel(c)
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
