@@ -27,6 +27,8 @@ func MarkOldWorkflowRunsV1(ctx context.Context, DBFunc func() *gorp.DbMap, maxRe
 		batchSize = 100
 	}
 
+	log.Info(ctx, "purge> MarkOldWorkflowRunsV1 enabled (maxRetentionDays=%d, schedulingSeconds=%d, batchSize=%d)", maxRetentionDays, tickDuration.Seconds(), batchSize)
+
 	ticker := time.NewTicker(tickDuration)
 	defer ticker.Stop()
 
