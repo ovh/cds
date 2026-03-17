@@ -266,8 +266,8 @@ admin_tests() {
 cds_v2_tests() {
     echo "Check if gitea is running"
     curl --fail -I -X GET ${GITEA_HOST}/api/swagger
-    echo "Running CDS v2 tests:"
-    for f in $(ls -1 08_*.yml); do
+    echo "Running CDS v2 tests (excluding concurrency):"
+    for f in $(ls -1 08_*.yml | grep -v concurrency); do
         run_cds_v2_tests $f &
         local my_pid=$$
         local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
@@ -277,6 +277,15 @@ cds_v2_tests() {
         fi
     done
     wait
+}
+
+cds_v2_concurrency_tests() {
+    echo "Check if gitea is running"
+    curl --fail -I -X GET ${GITEA_HOST}/api/swagger
+    echo "Running CDS v2 concurrency tests (sequential):"
+    for f in $(ls -1 08_*concurrency*.yml); do
+        run_cds_v2_tests $f
+    done
 }
 
 run_cds_v2_tests() {
@@ -327,6 +336,8 @@ for target in $@; do
             admin_tests;;
         v2)
             cds_v2_tests;;
+        v2_concurrency)
+            cds_v2_concurrency_tests;;
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
             usage
             exit 1;;
