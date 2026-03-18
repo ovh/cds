@@ -2,14 +2,17 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/pgzip"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
@@ -166,11 +169,25 @@ func createTarGz(sources []string, dest string) error {
 	}
 	defer f.Close()
 
-	gzw := pgzip.NewWriter(f)
+	// Buffer disk writes to reduce syscalls
+	bw := bufio.NewWriterSize(f, 1<<20) // 1MB buffer
+	defer bw.Flush()
+
+	gzw, err := pgzip.NewWriterLevel(bw, gzip.BestSpeed)
+	if err != nil {
+		return err
+	}
 	defer gzw.Close()
+
+	// Use 1MB blocks for better parallelization across all CPUs
+	if err := gzw.SetConcurrency(1<<20, runtime.GOMAXPROCS(0)); err != nil {
+		return err
+	}
 
 	tw := tar.NewWriter(gzw)
 	defer tw.Close()
+
+	copyBuf := make([]byte, 256*1024) // reusable 256KB copy buffer
 
 	for _, source := range sources {
 		info, err := os.Lstat(source)
@@ -231,7 +248,7 @@ func createTarGz(sources []string, dest string) error {
 			}
 			defer file.Close()
 
-			_, err = io.Copy(tw, file)
+			_, err = io.CopyBuffer(tw, file, copyBuf)
 			return err
 		})
 		if err != nil {
