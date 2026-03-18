@@ -115,7 +115,7 @@ func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJob
 	if err := createTarGz(itemsToArchive, archivePath); err != nil {
 		return fmt.Errorf("unable to create cache archive: %v", err)
 	}
-	grpcplugins.Logf(&p.Common, "Cache archive created in %.3fs", time.Since(t0).Seconds())
+	grpcplugins.Successf(&p.Common, "Cache archive created in %.3fs", time.Since(t0).Seconds())
 
 	f, err := os.Open(archivePath)
 	if err != nil {
@@ -190,19 +190,9 @@ func createTarGz(sources []string, dest string) error {
 	copyBuf := make([]byte, 256*1024) // reusable 256KB copy buffer
 
 	for _, source := range sources {
-		info, err := os.Lstat(source)
-		if err != nil {
-			return fmt.Errorf("unable to stat %s: %v", source, err)
-		}
+		baseDir := filepath.Dir(source)
 
-		var baseDir string
-		if info.IsDir() {
-			baseDir = filepath.Dir(source)
-		} else {
-			baseDir = filepath.Dir(source)
-		}
-
-		err = filepath.Walk(source, func(path string, fi os.FileInfo, err error) error {
+		err := filepath.Walk(source, func(path string, fi os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}

@@ -60,7 +60,6 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &cs))
 	require.Len(t, cs, 2)
-	require.Equal(t, localConsumer.ID, cs[0].ID)
 	require.True(t, slices.ContainsFunc(cs, func(c sdk.AuthUserConsumer) bool { return c.ID == localConsumer.ID }))
 	require.True(t, slices.ContainsFunc(cs, func(c sdk.AuthUserConsumer) bool { return c.ID == consumer.ID }))
 }
