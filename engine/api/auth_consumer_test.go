@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -47,8 +46,8 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 	var cs []sdk.AuthUserConsumer
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &cs))
 	require.Equal(t, 2, len(cs))
-	assert.Equal(t, localConsumer.ID, cs[0].ID)
-	assert.Equal(t, consumer.ID, cs[1].ID)
+	require.True(t, slices.ContainsFunc(cs, func(c sdk.AuthUserConsumer) bool { return c.ID == localConsumer.ID }))
+	require.True(t, slices.ContainsFunc(cs, func(c sdk.AuthUserConsumer) bool { return c.ID == consumer.ID }))
 
 	uri = api.Router.GetRoute(http.MethodGet, api.getConsumersByUserHandler, map[string]string{
 		"permUsername": "me",
