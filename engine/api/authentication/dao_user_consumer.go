@@ -75,7 +75,7 @@ func LoadUserConsumersByUserID(ctx context.Context, db gorp.SqlExecutor, id stri
 		consumerIDs = append(consumerIDs, cu.AuthConsumerID)
 	}
 
-	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE id = ANY($1) ORDER BY created ASC").Args(pq.StringArray(consumerIDs))
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE id = ANY($1) ORDER BY created ASC, id ASC").Args(pq.StringArray(consumerIDs))
 	consumers, err := getUserConsumers(ctx, db, query, opts...)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func LoadUserConsumersByGroupID(ctx context.Context, db gorp.SqlExecutor, groupI
 		consumerIDs = append(consumerIDs, cu.AuthConsumerID)
 	}
 
-	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE id = ANY($1) ORDER BY created ASC").Args(pq.StringArray(consumerIDs))
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE id = ANY($1) ORDER BY created ASC, id ASC").Args(pq.StringArray(consumerIDs))
 	consumers, err := getUserConsumers(ctx, db, query, opts...)
 	if err != nil {
 		return nil, err
