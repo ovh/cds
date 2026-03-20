@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/user"
+	"path/filepath"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
@@ -71,15 +72,15 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 				return fmt.Errorf("unable to get current user: %v", err)
 			}
 			if u != nil && u.HomeDir != "" {
-				filePath = u.HomeDir + "/.ssh/id_rsa-" + keyName
+				filePath = filepath.Join(u.HomeDir, ".ssh", "id_rsa-"+keyName)
 			}
 		}
-		filePath, err := grpcplugins.InstallSSHKey(ctx, &actPlugin.Common, workDirs, keyName, filePath, key.Private)
+		installedPath, err := grpcplugins.InstallSSHKey(ctx, &actPlugin.Common, workDirs, keyName, filePath, key.Private)
 		if err != nil {
 			return err
 		}
 		grpcplugins.Logf(&actPlugin.Common, "To be able to use git command in a further step, you must run this command first:")
-		grpcplugins.Successf(&actPlugin.Common, "export GIT_SSH_COMMAND=\"ssh -i %s -o StrictHostKeyChecking=no\"", filePath)
+		grpcplugins.Successf(&actPlugin.Common, "export GIT_SSH_COMMAND=\"ssh -i %s -o StrictHostKeyChecking=no\"", filepath.ToSlash(installedPath))
 		return nil
 	case sdk.KeyTypePGP:
 		if _, _, err := sdk.ImportGPGKey("", key.Name, []byte(key.Private)); err != nil {
