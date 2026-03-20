@@ -218,6 +218,44 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	wkfName := v.GetString("workflow_name")
 	commit := v.GetString("commit")
 
+	// If vcsId looks like a UUID, resolve it to the VCS name.
+	if sdk.IsValidUUID(vcsId) {
+		vcsList, err := client.ProjectVCSList(context.Background(), projKey)
+		if err != nil {
+			return nil, err
+		}
+		found := false
+		for _, vcs := range vcsList {
+			if vcs.ID == vcsId {
+				vcsId = vcs.Name
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("VCS with ID %q not found in project %s", vcsId, projKey)
+		}
+	}
+
+	// If repoId looks like a UUID, resolve it to the repository name.
+	if sdk.IsValidUUID(repoId) {
+		repos, err := client.ProjectVCSRepositoryList(context.Background(), projKey, vcsId)
+		if err != nil {
+			return nil, err
+		}
+		found := false
+		for _, r := range repos {
+			if r.ID == repoId {
+				repoId = r.Name
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("repository with ID %q not found in VCS %s/%s", repoId, projKey, vcsId)
+		}
+	}
+
 	wkfIdentifier := vcsId + "/" + repoId + "/" + wkfName
 
 	mods := make([]cdsclient.RequestModifier, 0)
