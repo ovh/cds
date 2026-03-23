@@ -1,14 +1,19 @@
 package main
 
 import (
+	"archive/tar"
+	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/mholt/archiver/v3"
+	"github.com/klauspost/compress/gzip"
+	"github.com/klauspost/pgzip"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/sdk"
@@ -105,26 +110,24 @@ func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJob
 			return sdk.Errorf("unable to remove previous cache: %s: %v", archivePath, err)
 		}
 	}
-	if err := archiver.Archive(itemsToArchive, archivePath); err != nil {
+
+	t0 := time.Now()
+	if err := createTarGz(itemsToArchive, archivePath); err != nil {
 		return fmt.Errorf("unable to create cache archive: %v", err)
 	}
+	grpcplugins.Successf(&p.Common, "Cache archive created in %.3fs", time.Since(t0).Seconds())
 
-	dirFS := os.DirFS(workDirs.WorkingDir)
-	f, err := dirFS.Open("cache.tar.gz")
+	f, err := os.Open(archivePath)
 	if err != nil {
 		return fmt.Errorf("unable to open cache archive: %v", err)
 	}
-	reader, ok := f.(io.ReadSeeker)
-	if !ok {
-		// unable to cast the file
-		return fmt.Errorf("unable to cast reader")
-	}
+	defer f.Close()
 
 	// Check if file or directory exist
 	if jobCtx.Integrations != nil && jobCtx.Integrations.ArtifactManager.Name != "" {
-		return p.performFromArtifactory(ctx, jobCtx, cacheKey, reader)
+		return p.performFromArtifactory(ctx, jobCtx, cacheKey, f)
 	} else {
-		return p.performFromCDN(ctx, cacheKey, reader)
+		return p.performFromCDN(ctx, cacheKey, f)
 	}
 }
 
@@ -156,6 +159,93 @@ func (p *cacheSavePlugin) performFromCDN(ctx context.Context, cacheKey string, r
 
 func (actPlugin *cacheSavePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	return nil, sdk.ErrNotImplemented
+}
+
+// createTarGz creates a tar.gz archive using parallel gzip compression.
+func createTarGz(sources []string, dest string) error {
+	f, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Buffer disk writes to reduce syscalls
+	bw := bufio.NewWriterSize(f, 1<<20) // 1MB buffer
+	defer bw.Flush()
+
+	gzw, err := pgzip.NewWriterLevel(bw, gzip.BestSpeed)
+	if err != nil {
+		return err
+	}
+	defer gzw.Close()
+
+	// Use 1MB blocks for better parallelization across all CPUs
+	if err := gzw.SetConcurrency(1<<20, runtime.GOMAXPROCS(0)); err != nil {
+		return err
+	}
+
+	tw := tar.NewWriter(gzw)
+	defer tw.Close()
+
+	copyBuf := make([]byte, 256*1024) // reusable 256KB copy buffer
+
+	for _, source := range sources {
+		baseDir := filepath.Dir(source)
+
+		err := filepath.Walk(source, func(path string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			// Use Lstat to detect symlinks (Walk follows them)
+			lfi, err := os.Lstat(path)
+			if err != nil {
+				return err
+			}
+
+			header, err := tar.FileInfoHeader(lfi, "")
+			if err != nil {
+				return err
+			}
+
+			relPath, err := filepath.Rel(baseDir, path)
+			if err != nil {
+				return err
+			}
+			header.Name = relPath
+
+			if lfi.Mode()&os.ModeSymlink != 0 {
+				link, err := os.Readlink(path)
+				if err != nil {
+					return err
+				}
+				header.Linkname = link
+				header.Typeflag = tar.TypeSymlink
+				return tw.WriteHeader(header)
+			}
+
+			if err := tw.WriteHeader(header); err != nil {
+				return err
+			}
+
+			if !lfi.Mode().IsRegular() {
+				return nil
+			}
+
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			_, err = io.CopyBuffer(tw, file, copyBuf)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func main() {

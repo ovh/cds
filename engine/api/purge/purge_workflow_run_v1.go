@@ -27,7 +27,7 @@ func MarkOldWorkflowRunsV1(ctx context.Context, DBFunc func() *gorp.DbMap, maxRe
 		batchSize = 100
 	}
 
-	log.Info(ctx, "purge> MarkOldWorkflowRunsV1 enabled (maxRetentionDays=%d, schedulingSeconds=%d, batchSize=%d)", maxRetentionDays, tickDuration.Seconds(), batchSize)
+	log.Info(ctx, "purge> MarkOldWorkflowRunsV1 enabled (maxRetentionDays=%d, schedulingSeconds=%f, batchSize=%d)", maxRetentionDays, tickDuration.Seconds(), batchSize)
 
 	ticker := time.NewTicker(tickDuration)
 	defer ticker.Stop()
@@ -93,12 +93,14 @@ func markOldWorkflowRunsV1Batch(ctx context.Context, db *gorp.DbMap, maxRetentio
 	}
 
 	if len(rows) == 0 {
+		log.Info(ctx, "purge> MarkOldWorkflowRunsV1 found no runs to mark as to_delete (cursor: %v)", cursor)
 		_ = tx.Commit()
 		return time.Time{}, nil
 	}
 
 	ids := make([]int64, len(rows))
 	for i := range rows {
+		log.Info(ctx, "purge> MarkOldWorkflowRunsV1: marking run %d as to_delete (last_modified: %v)", rows[i].ID, rows[i].LastModified)
 		ids[i] = rows[i].ID
 	}
 
