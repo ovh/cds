@@ -27,6 +27,7 @@ func init() {
 	databaseCmd.AddCommand(databaseUpgradeCmd)
 	databaseCmd.AddCommand(databaseDowngradeCmd)
 	databaseCmd.AddCommand(databaseStatusCmd)
+	databaseCmd.AddCommand(databaseCreateAdminCmd)
 
 	setCommonFlags := func(cmd *cobra.Command) {
 		pflags := cmd.Flags()
@@ -53,6 +54,12 @@ func init() {
 	databaseDowngradeCmd.Flags().IntVarP(&sqlMigrateLimitDown, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
 
 	setCommonFlags(databaseStatusCmd)
+
+	// create-admin reads DB config from the config file instead of individual flags
+	databaseCreateAdminCmd.Flags().StringVar(&flagCreateAdminConfigFile, "config", "", "CDS configuration file")
+	databaseCreateAdminCmd.Flags().StringVar(&flagCreateAdminUsername, "username", "", "Admin username")
+	databaseCreateAdminCmd.Flags().StringVar(&flagCreateAdminPassword, "password", "", "Admin password")
+	databaseCreateAdminCmd.Flags().StringVar(&flagCreateAdminEmail, "email", "", "Admin email (default: <username>@localhost.local)")
 }
 
 var (
