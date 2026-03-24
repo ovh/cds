@@ -94,3 +94,8 @@ func loadConsumerUserDataByUserExternalID(ctx context.Context, db gorp.SqlExecut
 	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer_user WHERE (data->>'external_id')::text = $1").Args(userExternalID)
 	return getAllConsumerUserData(ctx, db, query)
 }
+
+func loadConsumerUserDataByServiceName(ctx context.Context, db gorp.SqlExecutor, serviceName string) ([]sdk.AuthUserConsumerData, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer_user WHERE service_name = $1").Args(serviceName)
+	return getAllConsumerUserData(ctx, db, query)
+}

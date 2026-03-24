@@ -144,6 +144,43 @@ func LoadUserConsumerByTypeAndUserExternalID(ctx context.Context, db gorp.SqlExe
 	return consumer, nil
 }
 
+// LoadUserConsumerByServiceName returns a user consumer for a service by its name.
+func LoadUserConsumerByServiceName(ctx context.Context, db gorp.SqlExecutor, serviceName string, opts ...LoadUserConsumerOptionFunc) (*sdk.AuthUserConsumer, error) {
+	consumerUsers, err := loadConsumerUserDataByServiceName(ctx, db, serviceName)
+	if err != nil {
+		return nil, err
+	}
+	if len(consumerUsers) == 0 {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	consumerIDs := make([]string, 0, len(consumerUsers))
+	for _, cu := range consumerUsers {
+		consumerIDs = append(consumerIDs, cu.AuthConsumerID)
+	}
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND id = ANY($2)").Args(sdk.ConsumerBuiltin, pq.StringArray(consumerIDs))
+	consumer, err := getUserConsumer(ctx, db, query, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return consumer, nil
+}
+
+// LoadAdminUserConsumer returns the first admin user consumer found in the database.
+// Used for local service registration when we need a parent consumer.
+func LoadAdminUserConsumer(ctx context.Context, db gorp.SqlExecutor) (*sdk.AuthUserConsumer, error) {
+	// Find an admin user
+	var adminUserID string
+	if err := db.SelectOne(&adminUserID, "SELECT id FROM authentified_user WHERE ring = 'ADMIN' LIMIT 1"); err != nil {
+		return nil, sdk.WrapError(sdk.ErrNotFound, "no admin user found for local service registration")
+	}
+	// Find a builtin consumer for this admin
+	consumer, err := LoadUserConsumerByTypeAndUserID(ctx, db, sdk.ConsumerBuiltin, adminUserID, LoadUserConsumerOptions.WithAuthentifiedUser)
+	if err != nil {
+		return nil, sdk.WrapError(err, "no builtin consumer found for admin user %s", adminUserID)
+	}
+	return consumer, nil
+}
+
 // InsertUserConsumer in database.
 func InsertUserConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sdk.AuthUserConsumer) error {
 	if err := insertConsumer(ctx, db, &ac.AuthConsumer); err != nil {
