@@ -3287,3 +3287,107 @@ spec: |-
 	require.Equal(t, "0.1.0-rc-1", wrDB.Contexts.CDS.Version)
 
 }
+
+func TestCraftWorkflowFromTemplateWithEnv(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
+
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
+
+	// Create template with env vars in its spec
+	e := sdk.Entity{
+		ProjectKey:          proj.Key,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/mytmpl.yml",
+		Name:                "myTemplate",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		ProjectRepositoryID: repo.ID,
+		UserID:              &admin.ID,
+		Data: `name: my-template
+spec: |-
+  env:
+    TEMPLATE_ENV_VAR: hello_from_template
+    ANOTHER_VAR: "42"
+  jobs:
+    build: {}`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &e))
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	t.Cleanup(func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	})
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				b := &sdk.VCSRepo{}
+				*(out.(*sdk.VCSRepo)) = *b
+				return nil, 200, nil
+			},
+		).Times(2)
+
+	wkName := sdk.RandomString(10)
+	wr := sdk.V2WorkflowRun{
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: sdk.V2Workflow{
+				Name: wkName,
+				From: fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsProject.Name, repo.Name, "myTemplate"),
+				// Workflow itself has no env at this point
+			},
+		},
+		Initiator: &sdk.V2Initiator{
+			UserID:         admin.ID,
+			IsAdminWithMFA: true,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "refs/heads/main",
+			Sha:       "123456789",
+			EventName: sdk.WorkflowHookEventNamePush,
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
+
+	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
+	require.NoError(t, err)
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(runInfos), "unexpected run infos: %v", runInfos)
+
+	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status)
+
+	// Env vars from the template must be present in the run context
+	require.Equal(t, "hello_from_template", wrDB.Contexts.Env["TEMPLATE_ENV_VAR"])
+	require.Equal(t, "42", wrDB.Contexts.Env["ANOTHER_VAR"])
+}

@@ -78,12 +78,14 @@ export class RunTriggerComponent implements OnInit {
                 this.gatedJobLabels.push(runJob.job_id);
                 this.gatedJobs[runJob.job_id] = runJob.job;
                 this.gates[runJob.job.gate] = gate;
-                this.initialValues[runJob.job_id] = {};
 
-                // Compute initial value for each job based on previous run gate inputs
-                for (const inputName in gate.inputs || {}) {
-                    const jobValue = runJob.gate_inputs ? runJob.gate_inputs[inputName] : undefined;
-                    this.initialValues[runJob.job_id][inputName] = jobValue;
+                // Only populate initialValues if gate_inputs actually exists (gate was triggered before).
+                // An empty object {} is truthy and would mask the gate default values in RunGateInputsComponent.
+                if (runJob.gate_inputs) {
+                    this.initialValues[runJob.job_id] = {};
+                    for (const inputName in gate.inputs || {}) {
+                        this.initialValues[runJob.job_id][inputName] = runJob.gate_inputs[inputName];
+                    }
                 }
             }
 

@@ -1094,6 +1094,7 @@ func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service
 						if err := sdk.CheckJobInputWithGate(wr.WorkflowData.Workflow, key, inputs); err != nil {
 							return err
 						}
+						sdk.MergeGateDefaultInputs(wr.WorkflowData.Workflow.Gates[jobDef.Gate], inputs)
 					}
 				}
 				if inputs == nil {
@@ -1259,13 +1260,19 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			// For each job to restart, if there is a gate, add gate.manual
+			// For each job to restart that has a gate, reuse the previous GateInputs as-is
+			// (they are already complete) and just ensure manual=true.
 			updateRun := false
 			for _, rj := range runJobToRestart {
 				if rj.Job.Gate != "" {
 					updateRun = true
+					inputs := make(map[string]interface{})
+					for k, v := range rj.GateInputs {
+						inputs[k] = v
+					}
+					inputs["manual"] = true
 					runJobEvent := sdk.V2WorkflowRunJobEvent{
-						Inputs:     map[string]interface{}{"manual": true},
+						Inputs:     inputs,
 						UserID:     u.AuthConsumerUser.AuthentifiedUserID,
 						Username:   u.GetUsername(),
 						JobID:      rj.JobID,
@@ -1475,6 +1482,9 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			if inputs == nil {
 				inputs = make(map[string]interface{})
+			}
+			if jobToRuns[0].Job.Gate != "" {
+				sdk.MergeGateDefaultInputs(wr.WorkflowData.Workflow.Gates[jobToRuns[0].Job.Gate], inputs)
 			}
 			inputs["manual"] = true
 
@@ -1793,6 +1803,14 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
 
 	for jobID, inputs := range runRequest.JobInputs {
+		if inputs == nil {
+			inputs = make(map[string]interface{})
+		}
+		if jobDef, ok := wk.Jobs[jobID]; ok && jobDef.Gate != "" {
+			if gate, ok := wk.Gates[jobDef.Gate]; ok {
+				sdk.MergeGateDefaultInputs(gate, inputs)
+			}
+		}
 		wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
 			Inputs:     inputs,
 			UserID:     initiator.UserID,
