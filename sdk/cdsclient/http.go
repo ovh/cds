@@ -170,40 +170,43 @@ func extractBodyErrorFromResponse(r *http.Response) error {
 }
 
 func (c *client) StreamNoRetry(ctx context.Context, httpClient HTTPClient, method string, path string, body io.Reader, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
-	// Checks that current session_token is still valid
-	// If not, challenge a new one against the authenticationToken
-	var checkToken = !strings.Contains(path, "/auth/consumer/builtin/signin") &&
-		!strings.Contains(path, "/auth/consumer/local/signin") &&
-		!strings.Contains(path, "/auth/consumer/local/signup") &&
-		!strings.Contains(path, "/auth/consumer/local/verify") &&
-		!strings.Contains(path, "/auth/consumer/worker/signin") &&
-		!strings.Contains(path, "/v2/auth/consumer/hatchery/signin")
+	// Skip token refresh for local in-process clients
+	if !c.isLocal {
+		// Checks that current session_token is still valid
+		// If not, challenge a new one against the authenticationToken
+		var checkToken = !strings.Contains(path, "/auth/consumer/builtin/signin") &&
+			!strings.Contains(path, "/auth/consumer/local/signin") &&
+			!strings.Contains(path, "/auth/consumer/local/signup") &&
+			!strings.Contains(path, "/auth/consumer/local/verify") &&
+			!strings.Contains(path, "/auth/consumer/worker/signin") &&
+			!strings.Contains(path, "/v2/auth/consumer/hatchery/signin")
 
-	if checkToken && !c.config.HasValidSessionToken() && c.config.BuiltinConsumerAuthenticationToken != "" {
-		if c.config.Verbose {
-			log.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
-		}
-		var req interface{}
-		if c.signinRequest != nil {
-			req = c.signinRequest
-		} else {
-			switch c.GetConsumerType() {
-			case sdk.ConsumerHatchery:
-				req = sdk.AuthConsumerHatcherySigninRequest{
-					Token: c.config.BuiltinConsumerAuthenticationToken,
-				}
-			default:
-				req = sdk.AuthConsumerSigninRequest{"token": c.config.BuiltinConsumerAuthenticationToken}
+		if checkToken && !c.config.HasValidSessionToken() && c.config.BuiltinConsumerAuthenticationToken != "" {
+			if c.config.Verbose {
+				log.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
 			}
+			var req interface{}
+			if c.signinRequest != nil {
+				req = c.signinRequest
+			} else {
+				switch c.GetConsumerType() {
+				case sdk.ConsumerHatchery:
+					req = sdk.AuthConsumerHatcherySigninRequest{
+						Token: c.config.BuiltinConsumerAuthenticationToken,
+					}
+				default:
+					req = sdk.AuthConsumerSigninRequest{"token": c.config.BuiltinConsumerAuthenticationToken}
+				}
+			}
+			resp, err := c.AuthConsumerSignin(c.GetConsumerType(), req)
+			if err != nil {
+				return nil, nil, -1, err
+			}
+			if c.config.Verbose {
+				log.Println("jwt: ", sdk.StringFirstN(resp.Token, 12))
+			}
+			c.config.SessionToken = resp.Token
 		}
-		resp, err := c.AuthConsumerSignin(c.GetConsumerType(), req)
-		if err != nil {
-			return nil, nil, -1, err
-		}
-		if c.config.Verbose {
-			log.Println("jwt: ", sdk.StringFirstN(resp.Token, 12))
-		}
-		c.config.SessionToken = resp.Token
 	}
 	labels := pprof.Labels("path", path, "method", method)
 	ctx = pprof.WithLabels(ctx, labels)

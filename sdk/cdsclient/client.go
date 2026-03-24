@@ -34,6 +34,7 @@ type client struct {
 	name                string
 	consumerType        sdk.AuthConsumerType
 	signinRequest       interface{}
+	isLocal             bool // true when using in-process transport (no token refresh)
 }
 
 type hatcheryClient struct {
