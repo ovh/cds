@@ -297,7 +297,33 @@ const permProjectKey = "permProjectKey"
 
 // New instanciates a new API object
 func New() *API {
-	return &API{}
+	return &API{
+		readyChan: make(chan struct{}),
+	}
+}
+
+// Handler returns the API's HTTP handler for in-process communication.
+// Must be called after Serve() has initialized the router.
+func (a *API) Handler() http.Handler {
+	if a.Router == nil || a.Router.Mux == nil {
+		return nil
+	}
+	return a.Router.Mux
+}
+
+// WaitForReady blocks until the API router is initialized, or the context is cancelled.
+func (a *API) WaitForReady(ctx context.Context) error {
+	select {
+	case <-a.readyChan:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// GetHandler implements service.HandlerProvider for the gateway.
+func (a *API) GetHandler() http.Handler {
+	return a.Handler()
 }
 
 func (*API) Init(i interface{}) (cdsclient.ServiceConfig, error) {
@@ -360,6 +386,7 @@ type API struct {
 	AuthenticationDrivers           map[sdk.AuthConsumerType]sdk.AuthDriver
 	LinkDrivers                     map[sdk.AuthConsumerType]link.LinkDriver
 	WorkerModelDockerImageWhiteList []regexp.Regexp
+	readyChan                       chan struct{} // closed when the router is initialized
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -807,6 +834,9 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
 
+	// Signal that the API router is ready for local services
+	close(a.readyChan)
+
 	log.Info(ctx, "Initializing Metrics")
 	if err := a.initMetrics(ctx); err != nil {
 		log.Error(ctx, "unable to init api metrics: %v", err)
@@ -1157,7 +1187,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}()
 
 	log.Info(ctx, "Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
-	if err := s.ListenAndServe(); err != nil {
+	if err := service.ListenAndServeOrWait(ctx, &a.Common, s); err != nil {
 		return fmt.Errorf("Cannot start HTTP server: %v", err)
 	}
 

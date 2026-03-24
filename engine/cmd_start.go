@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
@@ -271,6 +272,34 @@ See $ engine config command for more details.
 			return serviceConfs[i].arg < serviceConfs[j].arg
 		})
 
+		// Detect if the API is co-located with other services
+		var localAPI service.LocalAPIProvider
+		hasNonAPIService := false
+		for _, s := range serviceConfs {
+			if apiProvider, ok := s.service.(service.LocalAPIProvider); ok {
+				localAPI = apiProvider
+			} else {
+				hasNonAPIService = true
+			}
+		}
+
+		// Enable gateway mode if the API is co-located with other services
+		gatewayMode := localAPI != nil && hasNonAPIService && len(serviceConfs) > 1
+		var gw *gateway
+		if gatewayMode {
+			// Determine gateway port: use the API's HTTP port
+			apiPort := conf.API.HTTP.Port
+			apiAddr := conf.API.HTTP.Addr
+			gatewayBaseURL := fmt.Sprintf("http://%s:%d", apiAddr, apiPort)
+			if apiAddr == "" || apiAddr == "0.0.0.0" {
+				gatewayBaseURL = fmt.Sprintf("http://localhost:%d", apiPort)
+			}
+
+			gw = newGateway(ctx, apiAddr, apiPort)
+			setGatewayMode(serviceConfs, gatewayBaseURL)
+			log.Info(ctx, "Gateway mode enabled: all services on port %d", apiPort)
+		}
+
 		var wg sync.WaitGroup
 		//Configure the services
 		for i := range serviceConfs {
@@ -295,18 +324,66 @@ See $ engine config command for more details.
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
 
+			// For the API, use standard start; for other co-located services, pass localAPI
+			sLocalAPI := localAPI
+			if s.service.Type() == sdk.TypeAPI {
+				sLocalAPI = nil // API does not need local signin
+			}
+
 			wg.Add(1)
-			go func(srv serviceConf) {
-				if err := start(serviceCtx, srv.service, srv.arg, srv.cfg); err != nil {
+			go func(srv serviceConf, localProvider service.LocalAPIProvider) {
+				if err := startWithOpts(serviceCtx, srv.service, srv.arg, srv.cfg, localProvider); err != nil {
 					log.Error(ctx, "%s> service has been stopped: %+v", srv.arg, err)
 				}
 				wg.Done()
-			}(s)
+			}(s, sLocalAPI)
 
-			// Stupid trick: when API is starting wait a bit before start the other
+			// When API is starting, wait for it to be ready before starting other services
 			if s.arg == "API" || s.arg == "api" {
-				time.Sleep(2 * time.Second)
+				if localAPI != nil {
+					log.Info(ctx, "Waiting for API router to be ready...")
+					waitCtx, waitCancel := context.WithTimeout(ctx, 120*time.Second)
+					if err := localAPI.WaitForReady(waitCtx); err != nil {
+						waitCancel()
+						sdk.Exit("API did not become ready: %v", err)
+					}
+					waitCancel()
+					log.Info(ctx, "API router is ready")
+				} else {
+					time.Sleep(2 * time.Second)
+				}
 			}
+
+			// Register the service in the gateway
+			if gw != nil {
+				gw.register(s.service)
+			}
+		}
+
+		// Start the gateway HTTP server if enabled
+		if gw != nil {
+			// Wait for services to initialize their routers (Serve runs in goroutine)
+			time.Sleep(3 * time.Second)
+			gw.build()
+
+			// Register local handlers for API→service in-process communication
+			for _, s := range serviceConfs {
+				if hp, ok := s.service.(service.HandlerProvider); ok {
+					h := hp.GetHandler()
+					if h != nil {
+						services.RegisterLocalHandler(s.service.Type(), h, "")
+						log.Info(ctx, "Registered local handler for %s", s.service.Type())
+					}
+				}
+			}
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := gw.serve(); err != nil {
+					log.Error(ctx, "gateway> %+v", err)
+				}
+			}()
 		}
 
 		// Wait for all services to stop
@@ -330,6 +407,10 @@ func unregisterServices(ctx context.Context, serviceConfs []serviceConf) {
 }
 
 func start(ctx context.Context, s service.Service, serviceName string, cfg interface{}) error {
+	return startWithOpts(ctx, s, serviceName, cfg, nil)
+}
+
+func startWithOpts(ctx context.Context, s service.Service, serviceName string, cfg interface{}, localAPI service.LocalAPIProvider) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -338,17 +419,33 @@ func start(ctx context.Context, s service.Service, serviceName string, cfg inter
 		return err
 	}
 
-	// Signin and register to CDS api
-	if err := s.Signin(ctx, srvConfig, cfg); err != nil {
-		return sdk.WrapError(err, "unable to signin: %s", serviceName)
+	// If a local API provider is available and this is not the API itself, use local signin
+	if localAPI != nil && s.Type() != sdk.TypeAPI {
+		apiHandler := localAPI.Handler()
+		if apiHandler != nil {
+			if sc, ok := s.(service.ServiceCommon); ok {
+				if err := sc.GetCommon().LocalSignin(ctx, apiHandler, localAPI.RegisterLocalService, cfg); err != nil {
+					return sdk.WrapError(err, "unable to local signin: %s", serviceName)
+				}
+				log.Info(ctx, "%s> Service signed in locally (in-process)", serviceName)
+			}
+		}
 	}
-	log.Info(ctx, "%s> Service signed in", serviceName)
+
+	// Fall back to regular signin if local signin was not performed
+	if !isLocallySignedIn(s) {
+		if err := s.Signin(ctx, srvConfig, cfg); err != nil {
+			return sdk.WrapError(err, "unable to signin: %s", serviceName)
+		}
+		log.Info(ctx, "%s> Service signed in", serviceName)
+	}
+
 	if err := s.Start(ctx); err != nil {
 		return sdk.WrapError(err, "unable to start service: %s", serviceName)
 	}
 
 	go func() {
-		if err := s.Serve(ctx); err != nil {
+		if err := s.Serve(ctx); err != nil && ctx.Err() == nil {
 			log.Error(ctx, "%s> Error serve: %+v", serviceName, err)
 			cancel()
 		}
@@ -356,18 +453,22 @@ func start(ctx context.Context, s service.Service, serviceName string, cfg inter
 
 	// finally start the heartbeat goroutine
 	go func() {
-		if err := s.Heartbeat(ctx, s.Status); err != nil {
+		if err := s.Heartbeat(ctx, s.Status); err != nil && ctx.Err() == nil {
 			log.Error(ctx, "%s> Error heartbeat: %+v", serviceName, err)
 			cancel()
 		}
 	}()
 
 	<-ctx.Done()
+	log.Info(ctx, "%s> Service exiting", serviceName)
+	return nil
+}
 
-	if ctx.Err() != nil {
-		log.Error(ctx, "%s> Service exiting with err: %+v", serviceName, ctx.Err())
-	} else {
-		log.Info(ctx, "%s> Service exiting", serviceName)
+// isLocallySignedIn checks if a service has already been signed in locally
+// by verifying if its Client is set (LocalSignin sets Client).
+func isLocallySignedIn(s service.Service) bool {
+	if sc, ok := s.(service.ServiceCommon); ok {
+		return sc.GetCommon().Client != nil
 	}
-	return ctx.Err()
+	return false
 }
