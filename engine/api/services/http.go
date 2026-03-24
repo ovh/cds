@@ -241,6 +241,29 @@ func PostBinary(ctx context.Context, srvs []sdk.Service, path string, r io.Reade
 	seed := rand.NewSource(time.Now().UnixNano())
 	ra := rand.New(seed)
 	srv := &srvs[ra.Intn(len(srvs))]
+
+	// Check if the target service has a local in-process handler
+	if handler, _, ok := GetLocalHandler(srv.Type); ok {
+		modFuncs := make([]RequestModifierFunc, len(mods))
+		for i, m := range mods {
+			modFuncs[i] = RequestModifierFunc(m)
+		}
+		reader, _, code, err := doLocalRequest(ctx, handler, "cds-api", "POST", path, r, modFuncs...)
+		if err != nil {
+			return code, err
+		}
+		if out != nil {
+			b, err := io.ReadAll(reader)
+			if err != nil {
+				return code, sdk.WithStack(err)
+			}
+			if err := sdk.JSONUnmarshal(b, out); err != nil {
+				return code, sdk.WithStack(err)
+			}
+		}
+		return code, nil
+	}
+
 	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
 	if err != nil {
 		return 0, sdk.WithStack(err)
@@ -282,6 +305,24 @@ func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, arg
 
 // doRequest performs an http request on service
 func doRequest(ctx context.Context, srv *sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
+	// Check if the target service has a local in-process handler
+	if handler, _, ok := GetLocalHandler(srv.Type); ok {
+		modFuncs := make([]RequestModifierFunc, len(mods))
+		for i, m := range mods {
+			modFuncs[i] = RequestModifierFunc(m)
+		}
+		var r io.Reader
+		if args != nil {
+			r = bytes.NewReader(args)
+		}
+		reader, headers, code, err := doLocalRequest(ctx, handler, "cds-api", method, path, r, modFuncs...)
+		if err != nil {
+			return nil, headers, code, err
+		}
+		b, err := io.ReadAll(reader)
+		return b, headers, code, sdk.WithStack(err)
+	}
+
 	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
 	if err != nil {
 		return nil, nil, 0, sdk.WithStack(err)
@@ -294,6 +335,15 @@ func doRequest(ctx context.Context, srv *sdk.Service, method, path string, args 
 }
 
 func doStreamFromURL(ctx context.Context, srv *sdk.Service, method string, path string, reader io.Reader, mods ...cdsclient.RequestModifier) (io.Reader, http.Header, int, error) {
+	// Check if the target service has a local in-process handler
+	if handler, consumerID, ok := GetLocalHandler(srv.Type); ok {
+		modFuncs := make([]RequestModifierFunc, len(mods))
+		for i, m := range mods {
+			modFuncs[i] = RequestModifierFunc(m)
+		}
+		return doLocalRequest(ctx, handler, consumerID, method, path, reader, modFuncs...)
+	}
+
 	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
 	if err != nil {
 		return nil, nil, 0, sdk.WithStack(err)
