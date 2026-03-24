@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	hatch "github.com/ovh/cds/engine/api/authentication/hatchery"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
@@ -110,8 +111,13 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	ctx, end := telemetry.Span(ctx, "router.authOptionalMiddleware")
 	defer end()
 
+	// Check for local in-process service identity (set by LocalRoundTripper).
+	// This bypasses JWT parsing entirely — context values cannot be forged by external HTTP requests.
+	if serviceName, serviceType, ok := sdk.LocalServiceFromContext(ctx); ok {
+		return api.handleAuthMiddlewareLocalService(ctx, w, req, rc, serviceName, serviceType)
+	}
+
 	// Check for a JWT in current request and add it to the context
-	// If a JWT is given, we also checks that there are a valid session and consumer for it
 	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
 	if !ok {
 		log.Debug(ctx, "api.authOptionalMiddleware> no jwt token found in context")
@@ -190,6 +196,44 @@ func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http
 	service.SetTracker(w, cdslog.AuthServiceName, currentHatchery.Name)
 	ctx = context.WithValue(ctx, cdslog.AuthServiceType, sdk.ConsumerHatchery)
 	service.SetTracker(w, cdslog.AuthServiceType, sdk.ConsumerHatchery)
+
+	return ctx, nil
+}
+
+// handleAuthMiddlewareLocalService handles authentication for co-located services
+// communicating via the in-process LocalRoundTripper. It builds a synthetic
+// AuthUserConsumer from the service record in DB, bypassing consumer/session lookup.
+func (api *API) handleAuthMiddlewareLocalService(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig, serviceName, serviceType string) (context.Context, error) {
+	// Load the service record from DB by name and type
+	srv, err := services.LoadByNameAndType(ctx, api.mustDB(), serviceName, serviceType)
+	if err != nil {
+		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "local service %s/%s not found: %v", serviceName, serviceType, err)
+	}
+
+	ctx = context.WithValue(ctx, cdslog.AuthServiceName, srv.Name)
+	service.SetTracker(w, cdslog.AuthServiceName, srv.Name)
+	ctx = context.WithValue(ctx, cdslog.AuthServiceType, srv.Type)
+	service.SetTracker(w, cdslog.AuthServiceType, srv.Type)
+
+	// Build a synthetic consumer so that isService(), isCDN(), isHooks() etc. work
+	syntheticConsumer := &sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			ID:   "local-" + srv.Name,
+			Name: "local-" + srv.Name,
+			Type: sdk.ConsumerBuiltin,
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			ServiceName: &srv.Name,
+			ServiceType: &srv.Type,
+			Service:     srv,
+			GroupIDs:    sdk.Int64Slice{group.SharedInfraGroup.ID},
+			ScopeDetails: sdk.AuthConsumerScopeDetails{
+				// Wildcard scope: empty list means all scopes are allowed
+			},
+		},
+	}
+
+	ctx = context.WithValue(ctx, contextUserConsumer, syntheticConsumer)
 
 	return ctx, nil
 }

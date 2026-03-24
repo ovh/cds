@@ -263,6 +263,11 @@ func CheckRequestSignatureMiddleware(pubKey *rsa.PublicKey) Middleware {
 	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date"})
 
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+		// Skip RSA signature verification for local in-process calls.
+		// Context values cannot be set by external HTTP requests.
+		if _, _, ok := sdk.LocalServiceFromContext(ctx); ok {
+			return ctx, nil
+		}
 		if err := verifier.Verify(req); err != nil {
 			return ctx, sdk.NewError(sdk.ErrUnauthorized, err)
 		}
