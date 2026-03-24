@@ -96,6 +96,10 @@ func (m *GoRoutines) runRestartGoRoutines(ctx context.Context) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	for _, g := range m.status {
+		// Don't restart if the parent context is done
+		if g.ctx.Err() != nil {
+			continue
+		}
 		g.mutex.RLock()
 		active := g.Active
 		g.mutex.RUnlock()

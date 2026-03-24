@@ -12,6 +12,13 @@ import (
 )
 
 func (c *client) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanFilterToSend <-chan []sdk.WebsocketFilter, chanEventReceived chan<- sdk.WebsocketEvent, chanErrorReceived chan<- error) {
+	// In local mode, websockets cannot work (no real TCP connection).
+	// The hatchery falls back to HTTP polling which works via LocalRoundTripper.
+	if c.isLocal {
+		<-ctx.Done()
+		return
+	}
+
 	chanMsgReceived := make(chan json.RawMessage)
 	chanMsgToSend := make(chan json.RawMessage)
 

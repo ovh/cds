@@ -66,9 +66,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 		for {
 			select {
 			case <-ctx.Done():
-				if ctx.Err() != nil {
-					log.ErrorWithStackTrace(ctx, ctx.Err())
-				}
+				return
 			case e := <-chanWsError:
 				if strings.Contains(e.Error(), "websocket: close "+strconv.Itoa(websocket.CloseGoingAway)) || strings.Contains(e.Error(), "websocket: close "+strconv.Itoa(websocket.CloseAbnormalClosure)) {
 					log.ErrorWithStackTrace(ctx, e)
