@@ -72,3 +72,6 @@ docs/content/cli/api/*
 # contrib vscode-cds
 contrib/vscode-cds/node_modules/
 contrib/vscode-cds/out/
+# Embedded UI static files (populated during build)
+engine/ui/dist/*
+!engine/ui/dist/.gitkeep

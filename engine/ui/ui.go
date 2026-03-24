@@ -97,25 +97,38 @@ func (s *Service) BeforeStart(ctx context.Context) error {
 	log.Info(ctx, "ui> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
-	fromTmpl, err := s.prepareIndexHTML()
-	if err != nil {
-		return err
-	}
+	// Try to use embedded static files first, fall back to filesystem
+	embeddedFS := s.embeddedHTTPFS()
+	if embeddedFS != nil {
+		log.Info(ctx, "ui> Using embedded static files")
+		s.useEmbedded = true
+	} else if s.Common.GatewayServiceMode {
+		// In gateway mode without embedded files, don't block with interactive prompts.
+		// The UI will serve a minimal response until static files are available.
+		log.Warn(ctx, "ui> Gateway mode: no embedded static files and no files on disk — UI will not serve frontend")
+	} else {
+		log.Info(ctx, "ui> No embedded static files, using filesystem at %s", s.HTMLDir)
 
-	if err := s.checkStaticFiles(ctx); err != nil {
-		return err
-	}
-
-	if fromTmpl {
-		// if we have a index.tmpl, it's from a ui.tar.gz
-		// we can check the checksum or files based on FILES_UI
-		if err := s.checkChecksumFiles(); err != nil {
+		fromTmpl, err := s.prepareIndexHTML()
+		if err != nil {
 			return err
 		}
-	}
 
-	if err := s.indexHTMLReplaceVar(); err != nil {
-		return err
+		if err := s.checkStaticFiles(ctx); err != nil {
+			return err
+		}
+
+		if fromTmpl {
+			// if we have a index.tmpl, it's from a ui.tar.gz
+			// we can check the checksum or files based on FILES_UI
+			if err := s.checkChecksumFiles(); err != nil {
+				return err
+			}
+		}
+
+		if err := s.indexHTMLReplaceVar(); err != nil {
+			return err
+		}
 	}
 
 	//Init the http server
@@ -129,12 +142,16 @@ func (s *Service) BeforeStart(ctx context.Context) error {
 	}
 
 	// Start the http server
-	s.GoRoutines.Run(ctx, "ui-http-serve", func(ctx context.Context) {
-		log.Info(ctx, "ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
-		if err := s.Server.ListenAndServe(); err != nil {
-			log.Error(ctx, "ui> Listen and serve failed: %s", err)
-		}
-	})
+	if !s.Common.GatewayServiceMode {
+		s.GoRoutines.Run(ctx, "ui-http-serve", func(ctx context.Context) {
+			log.Info(ctx, "ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+			if err := s.Server.ListenAndServe(); err != nil {
+				log.Error(ctx, "ui> Listen and serve failed: %s", err)
+			}
+		})
+	} else {
+		log.Info(ctx, "ui> Gateway mode: skipping HTTP listener")
+	}
 
 	return nil
 }

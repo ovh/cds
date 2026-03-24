@@ -46,8 +46,13 @@ func (s *Service) initRouter(ctx context.Context) {
 	}
 
 	// serve static UI files
-	r.Mux.PathPrefix("/docs").Handler(s.uiServe(http.Dir(s.DocsDir), s.DocsDir))
-	r.Mux.PathPrefix("/").Handler(s.uiServe(http.Dir(s.HTMLDir), s.HTMLDir))
+	if s.useEmbedded {
+		embFS := s.embeddedHTTPFS()
+		r.Mux.PathPrefix("/").Handler(s.uiServeFromFS(embFS))
+	} else {
+		r.Mux.PathPrefix("/docs").Handler(s.uiServe(http.Dir(s.DocsDir), s.DocsDir))
+		r.Mux.PathPrefix("/").Handler(s.uiServe(http.Dir(s.HTMLDir), s.HTMLDir))
+	}
 }
 
 func (s *Service) getReverseProxy(ctx context.Context, path, urlRemote string) http.Handler {
@@ -134,6 +139,30 @@ func (s *Service) uiServe(fs http.FileSystem, dir string) http.Handler {
 		_, err := fs.Open(filePath)
 		if os.IsNotExist(err) {
 			http.ServeFile(w, r, filepath.Join(dir, "index.html"))
+			return
+		}
+		fsh.ServeHTTP(w, r)
+	})
+}
+
+// uiServeFromFS serves files from an http.FileSystem (used for embedded files).
+// For SPA routing, missing files fall back to index.html served from the FS.
+func (s *Service) uiServeFromFS(fs http.FileSystem) http.Handler {
+	fsh := http.FileServer(uiFileSystem{fs})
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, s.Cfg.DeployURL)
+		filePath := path.Clean(r.URL.Path)
+		_, err := fs.Open(filePath)
+		if os.IsNotExist(err) {
+			// SPA fallback: serve index.html from the embedded FS
+			f, openErr := fs.Open("/index.html")
+			if openErr != nil {
+				http.NotFound(w, r)
+				return
+			}
+			defer f.Close()
+			stat, _ := f.Stat()
+			http.ServeContent(w, r, "index.html", stat.ModTime(), f)
 			return
 		}
 		fsh.ServeHTTP(w, r)

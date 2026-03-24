@@ -10,11 +10,12 @@ import (
 // Service is the stuct representing a ui µService
 type Service struct {
 	service.Common
-	Cfg     Configuration
-	Router  *api.Router
-	Server  *http.Server
-	HTMLDir string
-	DocsDir string
+	Cfg         Configuration
+	Router      *api.Router
+	Server      *http.Server
+	HTMLDir     string
+	DocsDir     string
+	useEmbedded bool // true when serving from go:embed instead of filesystem
 }
 
 // Configuration is the ui configuration structure
