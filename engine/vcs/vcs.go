@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/vcs/gitea"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/engine/vcs/gitlab"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -173,7 +174,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Start the http server
 	log.Info(c, "VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
-	if err := server.ListenAndServe(); err != nil {
+	if err := service.ListenAndServeOrWait(c, &s.Common, server); err != nil {
 		log.Error(c, "VCS> Listen and serve failed: %s", err)
 	}
 

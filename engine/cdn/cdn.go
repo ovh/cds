@@ -21,6 +21,7 @@ import (
 	_ "github.com/ovh/cds/engine/cdn/storage/swift"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -207,7 +208,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	// Start the http server
 	log.Info(ctx, "CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
-	if err := server.ListenAndServe(); err != nil {
+	if err := service.ListenAndServeOrWait(ctx, &s.Common, server); err != nil {
 		log.Error(ctx, "CDN> Cannot start cds-cdn: %v", err)
 	}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -113,7 +114,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Start the http server
 	log.Info(ctx, "ElasticSearch> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
-	if err := server.ListenAndServe(); err != nil {
+	if err := service.ListenAndServeOrWait(ctx, &s.Common, server); err != nil {
 		log.Error(ctx, "ElasticSearch> Listen and serve failed: %v", err)
 	}
 

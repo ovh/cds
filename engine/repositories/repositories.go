@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -121,14 +122,14 @@ func (s *Service) Serve(c context.Context) error {
 
 	log.Info(ctx, "Initializing processor...")
 	s.GoRoutines.RunWithRestart(ctx, "processor", func(ctx context.Context) {
-		if err := s.processor(ctx); err != nil {
+		if err := s.processor(ctx); err != nil && ctx.Err() == nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
 	})
 
 	log.Info(ctx, "Initializing vacuumCleaner...")
 	s.GoRoutines.RunWithRestart(ctx, "vacuumCleaner", func(ctx context.Context) {
-		if err := s.vacuumCleaner(ctx); err != nil {
+		if err := s.vacuumCleaner(ctx); err != nil && ctx.Err() == nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
 	})
@@ -149,7 +150,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Start the http server
 	log.Info(ctx, "Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
-	if err := server.ListenAndServe(); err != nil {
+	if err := service.ListenAndServeOrWait(ctx, &s.Common, server); err != nil {
 		log.Error(ctx, "Listen and serve failed: %s", err)
 	}
 

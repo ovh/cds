@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -14,6 +15,23 @@ import (
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/telemetry"
 )
+
+// GetCommon returns a pointer to the Common struct.
+// This is automatically available on all services that embed Common.
+func (c *Common) GetCommon() *Common {
+	return c
+}
+
+// ListenAndServeOrWait starts the HTTP server, or if the service is in gateway
+// mode, simply waits for ctx cancellation without starting a listener.
+func ListenAndServeOrWait(ctx context.Context, c *Common, server *http.Server) error {
+	if c.GatewayServiceMode {
+		log.Info(ctx, "%s> Gateway mode: skipping HTTP listener on %s", c.ServiceType, server.Addr)
+		<-ctx.Done()
+		return ctx.Err()
+	}
+	return server.ListenAndServe()
+}
 
 // NewMonitoringStatus returns a MonitoringStatus for the current service
 func (c *Common) NewMonitoringStatus() *sdk.MonitoringStatus {
@@ -154,6 +172,64 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 		return sdk.WithStack(err)
 	}
 
+	return nil
+}
+
+// LocalSigninRegisterFunc is the function signature for registering a local service.
+// It is provided by the API when services are co-located in the same process.
+type LocalSigninRegisterFunc func(ctx context.Context, srv sdk.Service) error
+
+// LocalSignin registers a co-located service directly with the API in-process,
+// without HTTP calls or authentication tokens. The apiHandler is the API's
+// http.Handler used for in-process communication. The registerFunc creates
+// the consumer and service entries in the database.
+func (c *Common) LocalSignin(ctx context.Context, apiHandler http.Handler, registerFunc LocalSigninRegisterFunc, srvConfig interface{}) error {
+	if c.ServiceType == "api" {
+		return nil
+	}
+
+	log.Info(ctx, "LocalSignin> registering local service %s(%s)", c.Name(), c.Type())
+
+	serviceConfig, err := ParseServiceConfig(srvConfig)
+	if err != nil {
+		return err
+	}
+
+	// Build service payload
+	var pubKey []byte
+	if c.PrivateKey != nil {
+		pubKey, err = jws.ExportPublicKey(c.PrivateKey)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+
+	registerPayload := sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:      c.Name(),
+			Type:      c.Type(),
+			HTTPURL:   c.HTTPURL,
+			Config:    serviceConfig,
+			PublicKey: pubKey,
+		},
+	}
+	if c.Region != "" {
+		registerPayload.CanonicalService.Region = &c.Region
+	}
+	if c.IgnoreJobWithNoRegion {
+		registerPayload.CanonicalService.IgnoreJobWithNoRegion = &c.IgnoreJobWithNoRegion
+	}
+
+	// Register directly in DB via the API
+	err = registerFunc(ctx, registerPayload)
+	if err != nil {
+		return sdk.WrapError(err, "LocalSignin> cannot register service %s", c.Name())
+	}
+
+	// Create the local cdsclient that calls the API handler in-process
+	c.Client = cdsclient.NewLocalServiceClient(apiHandler, c.Name(), c.Type())
+
+	log.Info(ctx, "LocalSignin> local service %s registered", c.Name())
 	return nil
 }
 

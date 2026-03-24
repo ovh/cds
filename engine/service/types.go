@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -147,6 +148,7 @@ type Common struct {
 	Region                string
 	IgnoreJobWithNoRegion bool
 	ModelType             string
+	GatewayServiceMode    bool // When true, the service should not start its own HTTP listener
 }
 
 // Service is the interface for a engine service
@@ -167,4 +169,24 @@ type Service interface {
 // BeforeStart has to be implemented if you want to run some code after the ApplyConfiguration and before the Serve of a Service
 type BeforeStart interface {
 	BeforeStart(ctx context.Context) error
+}
+
+// LocalAPIProvider is implemented by the API service to support co-located services.
+// It provides the HTTP handler and the registration function for local services.
+type LocalAPIProvider interface {
+	Handler() http.Handler
+	RegisterLocalService(ctx context.Context, data sdk.Service) error
+	WaitForReady(ctx context.Context) error
+}
+
+// ServiceCommon is implemented by services that embed the Common struct.
+type ServiceCommon interface {
+	GetCommon() *Common
+}
+
+// HandlerProvider is implemented by services that can expose their HTTP handler
+// for use in the gateway. Services implement this to allow the gateway to mount
+// their routes on a unified HTTP server.
+type HandlerProvider interface {
+	GetHandler() http.Handler
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
@@ -212,7 +213,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Start the http server
 	log.Info(ctx, "Hooks> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
-	if err := server.ListenAndServe(); err != nil {
+	if err := service.ListenAndServeOrWait(ctx, &s.Common, server); err != nil {
 		log.Error(ctx, "Hooks> Cannot start cds-hooks: %s", err)
 	}
 
