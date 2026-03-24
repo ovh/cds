@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -93,21 +94,25 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 		}
 		// Install id_rsa priv key
 		if u != nil && u.HomeDir != "" {
-			sshFilePath := u.HomeDir + "/.ssh/id_rsa"
+			sshFilePath := filepath.Join(u.HomeDir, ".ssh", "id_rsa")
 			if _, err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, sshFilePath, key.Private); err != nil {
 				err := fmt.Errorf("unable to install sshkey on worker: %v", err)
 				res.Status = sdk.StatusFail
 				res.Details = err.Error()
 				return stream.Send(res)
 			}
-			os.Setenv("GIT_SSH_COMMAND", fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no", sshFilePath))
+			os.Setenv("GIT_SSH_COMMAND", fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no", filepath.ToSlash(sshFilePath)))
 		}
 	}
 
 	if email != "" {
 		grpcplugins.Logf(&p.Common, "Setting up git config (user.name=%s, user.email=%s)\n", authUsername, email)
-		scriptContent := fmt.Sprintf(`git config --global user.email "%s" && git config --global user.name "%s"`, email, authUsername)
-		if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
+		if err := p.Exec(ctx, workDirs, fmt.Sprintf(`git config --global user.email "%s"`, email)); err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = err.Error()
+			return stream.Send(res)
+		}
+		if err := p.Exec(ctx, workDirs, fmt.Sprintf(`git config --global user.name "%s"`, authUsername)); err != nil {
 			res.Status = sdk.StatusFail
 			res.Details = err.Error()
 			return stream.Send(res)
@@ -140,8 +145,12 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 				return stream.Send(res)
 			}
 			grpcplugins.Logf(&p.Common, "Setting up git config (user.signingkey=%s)...\n", k.KeyID)
-			scriptContent := fmt.Sprintf(`git config --global user.signingkey "%s" && git config --global commit.gpgsign true`, k.KeyID)
-			if err := p.Exec(ctx, workDirs, scriptContent); err != nil {
+			if err := p.Exec(ctx, workDirs, fmt.Sprintf(`git config --global user.signingkey "%s"`, k.KeyID)); err != nil {
+				res.Status = sdk.StatusFail
+				res.Details = err.Error()
+				return stream.Send(res)
+			}
+			if err := p.Exec(ctx, workDirs, `git config --global commit.gpgsign true`); err != nil {
 				res.Status = sdk.StatusFail
 				res.Details = err.Error()
 				return stream.Send(res)
