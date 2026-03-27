@@ -25,11 +25,6 @@ export class VCSProjectAuth {
     sshKeyName: string;
     gpgKeyName: string;
     emailAddress: string;
-
-    // Use for gerrit
-    sshUsername:   string;
-    sshPort:       number;
-    sshPrivateKey: string;
 }
 
 export class VCSStrategy {
