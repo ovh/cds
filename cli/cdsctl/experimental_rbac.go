@@ -26,6 +26,8 @@ func experimentalRbac() *cobra.Command {
 		cli.NewDeleteCommand(rbacDeleteCmd, rbacDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(rbacGetCmd, rbacGetFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(rbacListCmd, rbacListFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(rbacUserCmd, rbacUserPermissionFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(rbacGroupCmd, rbacGroupPermissionFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -135,5 +137,49 @@ func rbacDeleteFunc(v cli.Values) error {
 			os.Exit(0)
 		}
 	}
+	return nil
+}
+
+var rbacUserCmd = cli.Command{
+	Name:    "user",
+	Aliases: []string{},
+	Short:   "Show permissions for a user",
+	Example: "cdsctl X rbac user <username>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "username"},
+	},
+	Mcp: true,
+}
+
+func rbacUserPermissionFunc(v cli.Values) error {
+	summary, err := client.RBACUserPermission(context.Background(), v.GetString("username"))
+	if err != nil {
+		return err
+	}
+	result, _ := yaml.Marshal(summary)
+	fmt.Printf("%s", string(result))
+	return nil
+}
+
+var rbacGroupCmd = cli.Command{
+	Name:    "group",
+	Aliases: []string{},
+	Short:   "Show permissions for a group",
+	Example: "cdsctl X rbac group <group-name>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "groupName"},
+	},
+	Mcp: true,
+}
+
+func rbacGroupPermissionFunc(v cli.Values) error {
+	summary, err := client.RBACGroupPermission(context.Background(), v.GetString("groupName"))
+	if err != nil {
+		return err
+	}
+	result, _ := yaml.Marshal(summary)
+	fmt.Printf("%s", string(result))
 	return nil
 }

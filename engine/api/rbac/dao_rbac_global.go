@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+
 	"github.com/lib/pq"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
@@ -107,4 +108,9 @@ func getAllRBACGlobal(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Qu
 		rbacGlobal = append(rbacGlobal, rg)
 	}
 	return rbacGlobal, nil
+}
+
+func loadRBACGlobalsByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) ([]rbacGlobal, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM rbac_global WHERE id = ANY($1)`).Args(pq.Int64Array(ids))
+	return getAllRBACGlobal(ctx, db, q)
 }

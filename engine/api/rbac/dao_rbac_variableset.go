@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -192,6 +193,11 @@ func LoadAllVariableSetsAllowed(ctx context.Context, db gorp.SqlExecutor, role s
 		}
 	}
 	return variableSets, false, nil
+}
+
+func loadRBACVariableSetsByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) ([]rbacVariableSet, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM rbac_variableset WHERE id = ANY($1)`).Args(pq.Int64Array(ids))
+	return getAllRBACVariableSets(ctx, db, q)
 }
 
 func loadRBACVariableSetsByProjectAndRole(ctx context.Context, db gorp.SqlExecutor, projectKey string, role string) ([]rbacVariableSet, error) {

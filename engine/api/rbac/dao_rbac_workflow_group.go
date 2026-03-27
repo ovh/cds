@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -42,4 +44,21 @@ func getAllRBACWorkflowGroups(ctx context.Context, db gorp.SqlExecutor, q gorpma
 		groupsFiltered = append(groupsFiltered, rbacGroups)
 	}
 	return groupsFiltered, nil
+}
+
+func loadRBACWorkflowGroupsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]rbacWorkflowGroup, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_workflow_groups WHERE group_id = ANY ($1)").Args(pq.Int64Array(groupIDs))
+	return getAllRBACWorkflowGroups(ctx, db, q)
+}
+
+func loadRBACWorkflowGroupsByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacWorkflowGroup, error) {
+	groups, err := group.LoadAllByUserID(ctx, db, userID)
+	if err != nil {
+		return nil, err
+	}
+	groupIDs := make([]int64, 0, len(groups))
+	for _, g := range groups {
+		groupIDs = append(groupIDs, g.ID)
+	}
+	return loadRBACWorkflowGroupsByGroupIDs(ctx, db, groupIDs)
 }

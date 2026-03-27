@@ -43,3 +43,8 @@ func getAllRBACWorkflowUsers(ctx context.Context, db gorp.SqlExecutor, q gorpmap
 	}
 	return usersFiltered, nil
 }
+
+func loadRBACWorkflowUsersByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacWorkflowUser, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_workflow_users WHERE user_id = $1").Args(userID)
+	return getAllRBACWorkflowUsers(ctx, db, q)
+}
