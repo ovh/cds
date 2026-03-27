@@ -31,3 +31,17 @@ func (c *client) RBACDelete(ctx context.Context, permissionName string) error {
 	_, err := c.DeleteJSON(ctx, path, nil)
 	return err
 }
+
+func (c *client) RBACUserPermission(ctx context.Context, username string) (sdk.PermissionSummary, error) {
+	path := "/v2/user/" + username + "/permissions"
+	var summary sdk.PermissionSummary
+	_, err := c.GetJSON(ctx, path, &summary)
+	return summary, err
+}
+
+func (c *client) RBACGroupPermission(ctx context.Context, groupName string) (sdk.PermissionSummary, error) {
+	path := "/v2/group/" + groupName + "/permission"
+	var summary sdk.PermissionSummary
+	_, err := c.GetJSON(ctx, path, &summary)
+	return summary, err
+}

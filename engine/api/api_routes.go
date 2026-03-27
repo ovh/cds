@@ -443,6 +443,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/entity/{entityType}", ScopeNone(), r.GETv2(api.getEntitiesHandler))
 	r.Handle("/v2/entity/{entityType}/check", ScopeNone(), r.POSTv2(api.postEntityCheckHandler))
 
+	r.Handle("/v2/group/{name}/permission", Scope(sdk.AuthConsumerScopeGroup), r.GETv2(api.getGroupPermissionHandler))
+
 	r.Handle("/v2/hatchery", Scopes(sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeService), r.GETv2(api.getHatcheriesHandler), r.POSTv2(api.postHatcheryHandler))
 	r.Handle("/v2/hatchery/ws", Scope(sdk.AuthConsumerScopeHatchery), r.GETv2(api.getHatcheryWebsocketHandler))
 	r.Handle("/v2/hatchery/heartbeat", Scope(sdk.AuthConsumerScopeHatchery), r.POSTv2(api.postHatcheryHeartbeatHandler))
@@ -574,6 +576,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/worker/{workerName}", ScopeNone(), r.GETv2(api.getWorkerV2Handler))
 
 	r.Handle("/v2/user/{user}/gpgkey", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))
+	r.Handle("/v2/user/{user}/permissions", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserPermissionHandler))
 	r.Handle("/v2/user/{user}/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.DELETEv2(api.deleteUserGPGKey))
 
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", ScopeNone(), r.GETv2(api.getUserGPGKeyHandler))

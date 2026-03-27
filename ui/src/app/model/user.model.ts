@@ -1,5 +1,17 @@
 import { AuthConsumer, AuthDriverManifest, AuthSession } from './authentication.model';
 
+export class PermissionSummaryProject {
+    roles: string[];
+    workflows: { [name: string]: string[] };
+    variable_sets: { [name: string]: string[] };
+}
+
+export class PermissionSummary {
+    global: string[];
+    regions: { [region: string]: string[] };
+    projects: { [key: string]: PermissionSummaryProject };
+}
+
 export class AuthSummary {
     user: AuthentifiedUser;
     consumer: AuthConsumer;

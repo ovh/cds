@@ -324,6 +324,8 @@ type RBACClient interface {
 	RBACDelete(ctx context.Context, permissionIdentifier string) error
 	RBACGet(ctx context.Context, permissionIdentifier string) (sdk.RBAC, error)
 	RBACList(ctx context.Context) ([]sdk.RBAC, error)
+	RBACUserPermission(ctx context.Context, username string) (sdk.PermissionSummary, error)
+	RBACGroupPermission(ctx context.Context, groupName string) (sdk.PermissionSummary, error)
 }
 
 // ProjectKeysClient exposes project keys related functions

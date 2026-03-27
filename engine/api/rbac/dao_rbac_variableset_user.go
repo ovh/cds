@@ -43,3 +43,8 @@ func getAllRBACVariableSetUsers(ctx context.Context, db gorp.SqlExecutor, q gorp
 	}
 	return usersFiltered, nil
 }
+
+func loadRBACVariableSetUsersByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacVariableSetUser, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_variableset_users WHERE user_id = $1").Args(userID)
+	return getAllRBACVariableSetUsers(ctx, db, q)
+}

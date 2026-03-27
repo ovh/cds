@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Group, GroupMember } from 'app/model/group.model';
+import { PermissionSummary } from 'app/model/user.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IdName, Project } from 'app/model/project.model';
@@ -8,9 +9,7 @@ import { IdName, Project } from 'app/model/project.model';
 @Injectable()
 export class GroupService {
 
-    constructor(
-        private _http: HttpClient
-    ) { }
+    private _http = inject(HttpClient);
 
     getByName(name: string): Observable<Group> {
         return this._http.get<Group>('/group/' + name);
@@ -50,5 +49,9 @@ export class GroupService {
 
     getProjectsInGroup(name: string): Observable<Array<Project>> {
         return this._http.get<Array<Project>>(`/group/${name}/project`);
+    }
+
+    getPermissions(name: string): Observable<PermissionSummary> {
+        return this._http.get<PermissionSummary>(`/v2/group/${name}/permission`);
     }
 }
