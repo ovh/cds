@@ -51,6 +51,12 @@ func Test_CrudProjectVariableSetItemText(t *testing.T) {
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)
 
+	var postItem sdk.ProjectVariableSetItem
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &postItem))
+	require.Equal(t, it.Name, postItem.Name)
+	require.Equal(t, it.Value, postItem.Value)
+	require.Equal(t, it.Type, postItem.Type)
+
 	// Update variable set item
 
 	itUpdate := sdk.ProjectVariableSetItem{
@@ -72,6 +78,12 @@ func Test_CrudProjectVariableSetItemText(t *testing.T) {
 	wUpdate := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(wUpdate, reqUpdate)
 	require.Equal(t, 200, wUpdate.Code)
+
+	var putItem sdk.ProjectVariableSetItem
+	require.NoError(t, json.Unmarshal(wUpdate.Body.Bytes(), &putItem))
+	require.Equal(t, itUpdate.Name, putItem.Name)
+	require.Equal(t, itUpdate.Value, putItem.Value)
+	require.Equal(t, itUpdate.Type, putItem.Type)
 
 	// Get variable set item
 	varsGet1 := map[string]string{
@@ -147,6 +159,12 @@ func Test_CrudProjectVariableSetItemSecret(t *testing.T) {
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)
 
+	var postItem sdk.ProjectVariableSetItem
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &postItem))
+	require.Equal(t, it.Name, postItem.Name)
+	require.Equal(t, sdk.PasswordPlaceholder, postItem.Value)
+	require.Equal(t, it.Type, postItem.Type)
+
 	// Update variable set item
 	itUpdate := sdk.ProjectVariableSetItem{
 		Name:  "MyTextVar",
@@ -167,6 +185,12 @@ func Test_CrudProjectVariableSetItemSecret(t *testing.T) {
 	wUpdate := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(wUpdate, reqUpdate)
 	require.Equal(t, 200, wUpdate.Code)
+
+	var putItem sdk.ProjectVariableSetItem
+	require.NoError(t, json.Unmarshal(wUpdate.Body.Bytes(), &putItem))
+	require.Equal(t, itUpdate.Name, putItem.Name)
+	require.Equal(t, sdk.PasswordPlaceholder, putItem.Value)
+	require.Equal(t, itUpdate.Type, putItem.Type)
 
 	// Get variable set item
 	varsGet1 := map[string]string{
