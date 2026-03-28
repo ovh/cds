@@ -53,6 +53,10 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		config.PurgeNbElements = 1000
 	}
 
+	if config.PurgeNbWorkers <= 0 {
+		config.PurgeNbWorkers = 10
+	}
+
 	if len(config.HashLocatorSalt) < 8 {
 		return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. HashLocatorSalt is too short"))
 	}
