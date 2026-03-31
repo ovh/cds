@@ -114,16 +114,21 @@ func (hcc HatcheryCommonConfiguration) Check() error {
 			hcc.Provision.MaxConcurrentRegistering, hcc.Provision.MaxWorker)
 	}
 
+	if hcc.Name == "" {
+		return fmt.Errorf("please enter a name in your hatchery configuration")
+	}
+
+	return nil
+}
+
+// CheckRemote validates fields required for remote (non-gateway) hatchery operation.
+func (hcc HatcheryCommonConfiguration) CheckRemote() error {
 	if hcc.API.HTTP.URL == "" {
 		return fmt.Errorf("API HTTP(s) URL is mandatory")
 	}
 
 	if hcc.API.Token == "" && hcc.API.TokenV2 == "" {
 		return fmt.Errorf("API Token is mandatory")
-	}
-
-	if hcc.Name == "" {
-		return fmt.Errorf("please enter a name in your hatchery configuration")
 	}
 
 	return nil
@@ -177,11 +182,23 @@ type LocalAPIProvider interface {
 	Handler() http.Handler
 	RegisterLocalService(ctx context.Context, data sdk.Service) error
 	WaitForReady(ctx context.Context) error
+	// APIPublicKey returns the API's public signing key in PEM format.
+	APIPublicKey() ([]byte, error)
+	// RegisterLocalHatchery creates the hatchery, region, RBAC, and consumer
+	// directly in the database and returns the region name and API public key.
+	// This is used by co-located hatcheries for v2 signin without HTTP/tokens.
+	RegisterLocalHatchery(ctx context.Context, hatcheryName, regionName, modelType string) (region string, apiPubKey []byte, err error)
 }
 
 // ServiceCommon is implemented by services that embed the Common struct.
 type ServiceCommon interface {
 	GetCommon() *Common
+}
+
+// LocalV2Signer is implemented by hatcheries that support local v2 signin
+// (creating a v2 client without HTTP calls or tokens).
+type LocalV2Signer interface {
+	LocalSigninV2(ctx context.Context, apiHandler http.Handler, localAPI LocalAPIProvider) error
 }
 
 // HandlerProvider is implemented by services that can expose their HTTP handler

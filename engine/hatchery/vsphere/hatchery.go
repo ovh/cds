@@ -122,6 +122,9 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	if err := hconfig.Check(); err != nil {
 		return sdk.WithStack(fmt.Errorf("invalid hatchery vsphere configuration: %v", err))
 	}
+	if err := hconfig.CheckRemote(); err != nil {
+		return sdk.WithStack(fmt.Errorf("invalid hatchery vsphere configuration: %v", err))
+	}
 
 	if hconfig.VSphereUser == "" {
 		return sdk.WithStack(fmt.Errorf("vsphere-user is mandatory"))

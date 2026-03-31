@@ -235,6 +235,19 @@ func (api *API) handleAuthMiddlewareLocalService(ctx context.Context, w http.Res
 
 	ctx = context.WithValue(ctx, contextUserConsumer, syntheticConsumer)
 
+	// For hatchery services, also load the hatchery consumer so that
+	// v2 RBAC checks (isHatchery, hatcheryHasRoleOnRegion) work.
+	if serviceType == sdk.TypeHatchery {
+		hatcheryConsumer, err := authentication.LoadHatcheryConsumerByName(ctx, api.mustDB(), serviceName)
+		if err != nil {
+			log.Warn(ctx, "handleAuthMiddlewareLocalService> hatchery consumer not found for %s: %v", serviceName, err)
+		} else {
+			ctx = context.WithValue(ctx, contextHatcheryConsumer, hatcheryConsumer)
+			ctx = context.WithValue(ctx, cdslog.AuthConsumerID, hatcheryConsumer.ID)
+			service.SetTracker(w, cdslog.AuthConsumerID, hatcheryConsumer.ID)
+		}
+	}
+
 	return ctx, nil
 }
 

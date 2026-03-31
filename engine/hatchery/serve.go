@@ -244,6 +244,39 @@ func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceCon
 	return nil
 }
 
+// LocalSigninV2 sets up the v2 hatchery client for co-located hatcheries
+// without HTTP calls or tokens. The localAPI registers the hatchery, region,
+// and RBAC directly in the database and returns the region + API public key.
+func (c *Common) LocalSigninV2(ctx context.Context, apiHandler http.Handler, localAPI service.LocalAPIProvider) error {
+	hatcheryName := c.Name()
+	regionName := c.Region
+	if regionName == "" {
+		regionName = "local"
+	}
+
+	log.Info(ctx, "LocalSigninV2> setting up local v2 client for hatchery %s on region %s", hatcheryName, regionName)
+
+	region, apiPubKey, err := localAPI.RegisterLocalHatchery(ctx, hatcheryName, regionName, c.ModelType)
+	if err != nil {
+		return sdk.WrapError(err, "LocalSigninV2> cannot register local hatchery")
+	}
+
+	c.Region = region
+	c.APIPublicKey = apiPubKey
+	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(apiPubKey)
+	if err != nil {
+		return sdk.WrapError(err, "LocalSigninV2> cannot parse API public key")
+	}
+
+	c.Clientv2, err = cdsclient.NewLocalHatcheryServiceClient(apiHandler, hatcheryName)
+	if err != nil {
+		return sdk.WrapError(err, "LocalSigninV2> cannot create local v2 client")
+	}
+
+	log.Info(ctx, "LocalSigninV2> hatchery %s ready (region: %s)", hatcheryName, region)
+	return nil
+}
+
 func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {
 	c.CDNConfig.HTTPURL = h.Configuration().CDN.URL
 	c.CDNConfig.TCPURL = h.Configuration().CDN.TCP.URL

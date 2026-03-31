@@ -122,6 +122,9 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 	if err := hconfig.Check(); err != nil {
 		return fmt.Errorf("Invalid hatchery openstack configuration: %v", err)
 	}
+	if err := hconfig.CheckRemote(); err != nil {
+		return fmt.Errorf("Invalid hatchery openstack configuration: %v", err)
+	}
 
 	if hconfig.Tenant == "" && hconfig.Domain == "" {
 		return fmt.Errorf("One of Openstack-tenant (auth v2) or Openstack-domain (auth v3) is mandatory")

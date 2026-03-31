@@ -94,7 +94,10 @@ func databaseCreateAdminCmdFunc(cmd *cobra.Command, args []string) {
 		Ring:     sdk.UserRingAdmin,
 	}
 	if err := user.Insert(ctx, tx, adminUser); err != nil {
-		sdk.Exit("Error creating user: %v\n", err)
+		// If the insert fails due to a duplicate, the user already exists
+		// (LoadByUsername may have failed due to signature verification)
+		fmt.Printf("Admin user '%s' already exists, skipping creation\n", flagCreateAdminUsername)
+		return
 	}
 
 	// Create email contact

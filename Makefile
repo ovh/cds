@@ -1,4 +1,4 @@
-.PHONY: clean doc modclean mod goinstall build dist deb watch watch-deps watch-init watch-conf watch-db watch-ui watch-ui-rebuild watch-plugins watch-setup-forgejo
+.PHONY: clean doc modclean mod goinstall build dist deb watch watch-deps watch-init watch-conf watch-db watch-ui watch-ui-rebuild watch-plugins watch-setup-forgejo watch-setup-demo
 
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm64)
@@ -247,17 +247,19 @@ watch-db:
 
 # Generate dev config if it doesn't exist
 watch-conf:
-	@mkdir -p $(DEV_DIR)/artifacts $(DEV_DIR)/repositories $(DEV_DIR)/hatchery-local \
+	@mkdir -p $(DEV_DIR)/artifacts $(DEV_DIR)/repositories \
 		$(DEV_DIR)/cdn-buffer $(DEV_DIR)/cdn-storage $(dir $(DEV_CONF))
 	@if [ ! -f $(DEV_CONF) ]; then \
 		echo "▶ Generating config at $(DEV_CONF)..."; \
-		$(ENGINE_BIN) config new api cdn ui hooks repositories vcs elasticsearch hatchery:local > $(DEV_CONF); \
+		$(ENGINE_BIN) config new api cdn ui hooks repositories vcs elasticsearch hatchery:swarm > $(DEV_CONF); \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) api.name=cds-api; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) api.cache.redis.host=$(DEV_DB_HOST):$(DEV_REDIS_PORT); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) api.cache.redis.password=$(DEV_REDIS_PASS); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) api.database.host=$(DEV_DB_HOST); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) api.database.port=$(DEV_DB_PORT); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) api.download.directory=$(DEV_DIR); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) api.artifact.local.baseDirectory=$(DEV_DIR)/artifacts; \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) cdn.name=cds-cdn; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) cdn.cache.redis.host=$(DEV_DB_HOST):$(DEV_REDIS_PORT); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) cdn.cache.redis.password=$(DEV_REDIS_PASS); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) cdn.database.host=$(DEV_DB_HOST); \
@@ -266,18 +268,25 @@ watch-conf:
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) cdn.storageUnits.buffers.redis.redis.host=$(DEV_DB_HOST):$(DEV_REDIS_PORT); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) cdn.storageUnits.buffers.redis.redis.password=$(DEV_REDIS_PASS); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) cdn.storageUnits.storages.local.local.path=$(DEV_DIR)/cdn-storage; \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) elasticsearch.name=cds-elasticsearch; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) elasticsearch.elasticsearch.url=http://$(DEV_DB_HOST):$(DEV_OS_PORT); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) elasticsearch.elasticsearch.indexEvents=cds-index-events; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) elasticsearch.elasticsearch.indexEventsV2=cds-index-events-v2; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) elasticsearch.elasticsearch.indexMetrics=cds-index-metrics; \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) hooks.name=cds-hooks; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) hooks.cache.redis.host=$(DEV_DB_HOST):$(DEV_REDIS_PORT); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) hooks.cache.redis.password=$(DEV_REDIS_PASS); \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) repositories.name=cds-repositories; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) repositories.basedir=$(DEV_DIR)/repositories; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) repositories.cache.redis.host=$(DEV_DB_HOST):$(DEV_REDIS_PORT); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) repositories.cache.redis.password=$(DEV_REDIS_PASS); \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) vcs.name=cds-vcs; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) vcs.cache.redis.host=$(DEV_DB_HOST):$(DEV_REDIS_PORT); \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) vcs.cache.redis.password=$(DEV_REDIS_PASS); \
-		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) hatchery.local.basedir=$(DEV_DIR)/hatchery-local; \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) api.workflow.jobDefaultRegion=$(DEV_HATCHERY_REGION); \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) hatchery.swarm.maxContainers=5; \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) hatchery.swarm.commonConfiguration.name=$(DEV_HATCHERY_NAME); \
+		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) ui.name=cds-ui; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) ui.enableServiceProxy=true; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) ui.url=http://localhost:8081; \
 		$(ENGINE_BIN) config edit $(DEV_CONF) --output $(DEV_CONF) ui.http.port=8081; \
@@ -354,6 +363,8 @@ watch-install-binaries:
 # Default admin credentials for make watch
 DEV_ADMIN_USER ?= $(shell whoami)
 DEV_ADMIN_PASS ?= admin
+DEV_HATCHERY_NAME ?= cds-hatchery-local
+DEV_HATCHERY_REGION ?= local
 
 # Build and run all services in a single process
 watch: watch-ui watch-build watch-install-binaries watch-db
@@ -373,9 +384,11 @@ watch: watch-ui watch-build watch-install-binaries watch-db
 	PATH="$(CURDIR)/cli/cdsctl/dist:$$PATH" $(MAKE) watch-plugins --no-print-directory || \
 		echo "✗ watch-plugins failed"; \
 	PATH="$(CURDIR)/cli/cdsctl/dist:$$PATH" $(MAKE) watch-setup-forgejo --no-print-directory || \
-		echo "✗ watch-setup-forgejo failed" ) &
+		echo "✗ watch-setup-forgejo failed"; \
+	PATH="$(CURDIR)/cli/cdsctl/dist:$$PATH" $(MAKE) watch-setup-demo --no-print-directory || \
+		echo "✗ watch-setup-demo failed" ) &
 	@echo "▶ Starting CDS (all services)..."
-	@$(ENGINE_BIN) start api cdn ui hooks repositories vcs elasticsearch hatchery:local --config $(DEV_CONF)
+	@$(ENGINE_BIN) start api cdn ui hooks repositories vcs elasticsearch hatchery:swarm --config $(DEV_CONF)
 
 # Build and publish v2 action plugins. Can also be run standalone when CDS is running.
 watch-plugins:
@@ -425,3 +438,49 @@ watch-setup-forgejo:
 		&& echo "✓ Forgejo VCS configured on project DEMO" \
 		|| echo "  Forgejo VCS already configured or import failed"; \
 	rm -f "$$TMP"
+
+# Create a DEMO organisation in Forgejo with a sample repository containing CDS v2 files.
+# Idempotent: skips steps that are already done.
+watch-setup-demo:
+	@echo "▶ Setting up demo repository..."
+	@FORGEJO_URL="http://localhost:$(DEV_FORGEJO_PORT)"; \
+	FORGEJO_AUTH="-u $(DEV_ADMIN_USER):$(DEV_ADMIN_PASS)"; \
+	echo "  creating Forgejo organisation DEMO..."; \
+	curl -sf $$FORGEJO_AUTH -H "Content-Type: application/json" \
+		-d '{"username":"DEMO","visibility":"public","full_name":"Demo Organisation"}' \
+		"$$FORGEJO_URL/api/v1/orgs" >/dev/null 2>&1 \
+		&& echo "  ✓ org DEMO created" \
+		|| echo "  org DEMO already exists"; \
+	echo "  creating repository DEMO/hello-world..."; \
+	curl -sf $$FORGEJO_AUTH -H "Content-Type: application/json" \
+		-d '{"auto_init":true,"default_branch":"main","name":"hello-world","description":"CDS demo repository","private":false}' \
+		"$$FORGEJO_URL/api/v1/orgs/DEMO/repos" >/dev/null 2>&1 \
+		&& echo "  ✓ repo DEMO/hello-world created" \
+		|| echo "  repo DEMO/hello-world already exists"; \
+	echo "  pushing CDS v2 files..."; \
+	EXISTING=$$(curl -sf $$FORGEJO_AUTH "$$FORGEJO_URL/api/v1/repos/DEMO/hello-world/contents/.cds%2Fworkflows%2Fbuild.yaml?ref=main" 2>/dev/null | grep -o '"sha":"[^"]*"' | head -1 | cut -d'"' -f4); \
+	if [ -n "$$EXISTING" ]; then \
+		echo "  .cds files already exist — skipping"; \
+	else \
+		WM_CONTENT=$$(printf 'name: docker-debian\ndescription: Generic Debian worker model\nosarch: linux/amd64\ntype: docker\nspec:\n  image: buildpack-deps:bookworm\n' | base64); \
+		curl -sf $$FORGEJO_AUTH -H "Content-Type: application/json" \
+			-d "{\"content\":\"$$WM_CONTENT\",\"message\":\"chore: add worker model\"}" \
+			"$$FORGEJO_URL/api/v1/repos/DEMO/hello-world/contents/.cds/worker-models/debian.yaml" >/dev/null 2>&1 \
+			&& echo "  ✓ worker model pushed"; \
+		WF_CONTENT=$$(printf 'name: build\non: [push]\njobs:\n  build:\n    runs-on: .cds/worker-models/debian.yaml\n    steps:\n      - id: checkout\n        uses: actions/checkout\n      - id: build\n        run: |\n          #!/bin/bash\n          set -ex\n          echo \"Hello from CDS!\"\n          echo \"Repository: $${{ git.repository }}\"\n          echo \"Branch: $${{ git.ref }}\"\n          ls -la\n' | base64); \
+		curl -sf $$FORGEJO_AUTH -H "Content-Type: application/json" \
+			-d "{\"content\":\"$$WF_CONTENT\",\"message\":\"chore: add build workflow\"}" \
+			"$$FORGEJO_URL/api/v1/repos/DEMO/hello-world/contents/.cds/workflows/build.yaml" >/dev/null 2>&1 \
+			&& echo "  ✓ build workflow pushed"; \
+	fi; \
+	echo "  importing RBAC region permission..."; \
+	TMP_RBAC=$$(mktemp); \
+	printf 'name: perm-region-%s\nregion_projects:\n  - role: execute\n    region: %s\n    all_projects: true\nregions:\n  - role: execute\n    region: %s\n    all_users: true\n    organizations: [default]\n' "$(DEV_HATCHERY_REGION)" "$(DEV_HATCHERY_REGION)" "$(DEV_HATCHERY_REGION)" > "$$TMP_RBAC"; \
+	cdsctl X rbac import "$$TMP_RBAC" --force 2>/dev/null \
+		&& echo "  ✓ RBAC perm-region-$(DEV_HATCHERY_REGION) imported" \
+		|| echo "  RBAC import failed"; \
+	rm -f "$$TMP_RBAC"; \
+	echo "  adding repository DEMO/hello-world to CDS project..."; \
+	cdsctl X project repository add DEMO forgejo DEMO/hello-world 2>/dev/null \
+		&& echo "✓ Demo repository configured" \
+		|| echo "  repository already linked or add failed"

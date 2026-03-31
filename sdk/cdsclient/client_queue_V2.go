@@ -214,6 +214,13 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, osarch [
 }
 
 func (c *client) WebsocketHatcheryJobQueuedListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanEventReceived chan<- sdk.WebsocketJobQueueEvent, chanErrorReceived chan<- error) {
+	// In local mode, websockets cannot work (no real TCP connection).
+	// The hatchery falls back to HTTP polling which works via LocalRoundTripper.
+	if c.isLocal {
+		<-ctx.Done()
+		return
+	}
+
 	chanMsgReceived := make(chan json.RawMessage)
 	goRoutines.Exec(ctx, "WebsocketHatcheryJobQueuedListen", func(ctx context.Context) {
 		for {

@@ -424,10 +424,17 @@ func startWithOpts(ctx context.Context, s service.Service, serviceName string, c
 		apiHandler := localAPI.Handler()
 		if apiHandler != nil {
 			if sc, ok := s.(service.ServiceCommon); ok {
-				if err := sc.GetCommon().LocalSignin(ctx, apiHandler, localAPI.RegisterLocalService, cfg); err != nil {
+				if err := sc.GetCommon().LocalSignin(ctx, apiHandler, localAPI, cfg); err != nil {
 					return sdk.WrapError(err, "unable to local signin: %s", serviceName)
 				}
 				log.Info(ctx, "%s> Service signed in locally (in-process)", serviceName)
+			}
+			// For hatcheries, also set up the v2 client locally
+			if v2, ok := s.(service.LocalV2Signer); ok {
+				if err := v2.LocalSigninV2(ctx, apiHandler, localAPI); err != nil {
+					return sdk.WrapError(err, "unable to local signin v2: %s", serviceName)
+				}
+				log.Info(ctx, "%s> Hatchery v2 signed in locally", serviceName)
 			}
 		}
 	}

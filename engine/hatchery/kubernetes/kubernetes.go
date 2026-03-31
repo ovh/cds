@@ -159,6 +159,9 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 	if err := hconfig.Check(); err != nil {
 		return sdk.WithStack(fmt.Errorf("invalid hatchery kubernetes configuration: %v", err))
 	}
+	if err := hconfig.CheckRemote(); err != nil {
+		return sdk.WithStack(fmt.Errorf("invalid hatchery kubernetes configuration: %v", err))
+	}
 
 	if hconfig.Namespace == "" {
 		return sdk.WithStack(fmt.Errorf("missing valid kubernetes namespace"))

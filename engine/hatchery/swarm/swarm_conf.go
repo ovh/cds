@@ -51,10 +51,14 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = h.Config.Name
 	h.Common.Common.ServiceType = sdk.TypeHatchery
-	var err error
-	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
-	if err != nil {
-		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+	if h.Config.RSAPrivateKey != "" {
+		var err error
+		h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
+		if err != nil {
+			return fmt.Errorf("unable to parse RSA private Key: %v", err)
+		}
+	} else if !h.Common.Common.GatewayServiceMode {
+		return fmt.Errorf("RSA private key is mandatory")
 	}
 	h.Common.Common.Region = h.Config.Provision.Region
 	h.Common.Common.IgnoreJobWithNoRegion = h.Config.Provision.IgnoreJobWithNoRegion
@@ -124,6 +128,13 @@ func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 
 	if err := hconfig.Check(); err != nil {
 		return fmt.Errorf("Invalid hatchery swarm configuration: %v", err)
+	}
+
+	// Skip API URL/token validation in gateway mode (local transport is used)
+	if !h.Common.Common.GatewayServiceMode {
+		if err := hconfig.CheckRemote(); err != nil {
+			return fmt.Errorf("Invalid hatchery swarm configuration: %v", err)
+		}
 	}
 
 	if hconfig.DefaultMemory <= 1 {

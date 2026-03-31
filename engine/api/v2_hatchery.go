@@ -123,13 +123,17 @@ func (api *API) postHatcheryHeartbeatHandler() ([]service.RbacChecker, service.H
 			if a := getAuthSession(ctx); a != nil {
 				sessionID = a.ID
 			}
-			hs := sdk.HatcheryStatus{
-				HatcheryID: h.ID,
-				SessionID:  sessionID,
-				Status:     mon,
-			}
-			if err := hatchery.UpsertStatus(ctx, tx, h.ID, &hs); err != nil {
-				return err
+			// In local/gateway mode there is no auth session, skip hatchery_status
+			// upsert since it has a FK on auth_session.
+			if sessionID != "" {
+				hs := sdk.HatcheryStatus{
+					HatcheryID: h.ID,
+					SessionID:  sessionID,
+					Status:     mon,
+				}
+				if err := hatchery.UpsertStatus(ctx, tx, h.ID, &hs); err != nil {
+					return err
+				}
 			}
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)

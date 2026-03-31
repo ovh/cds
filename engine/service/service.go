@@ -175,15 +175,11 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 	return nil
 }
 
-// LocalSigninRegisterFunc is the function signature for registering a local service.
-// It is provided by the API when services are co-located in the same process.
-type LocalSigninRegisterFunc func(ctx context.Context, srv sdk.Service) error
-
 // LocalSignin registers a co-located service directly with the API in-process,
 // without HTTP calls or authentication tokens. The apiHandler is the API's
 // http.Handler used for in-process communication. The registerFunc creates
 // the consumer and service entries in the database.
-func (c *Common) LocalSignin(ctx context.Context, apiHandler http.Handler, registerFunc LocalSigninRegisterFunc, srvConfig interface{}) error {
+func (c *Common) LocalSignin(ctx context.Context, apiHandler http.Handler, localAPI LocalAPIProvider, srvConfig interface{}) error {
 	if c.ServiceType == "api" {
 		return nil
 	}
@@ -221,13 +217,23 @@ func (c *Common) LocalSignin(ctx context.Context, apiHandler http.Handler, regis
 	}
 
 	// Register directly in DB via the API
-	err = registerFunc(ctx, registerPayload)
+	err = localAPI.RegisterLocalService(ctx, registerPayload)
 	if err != nil {
 		return sdk.WrapError(err, "LocalSignin> cannot register service %s", c.Name())
 	}
 
 	// Create the local cdsclient that calls the API handler in-process
 	c.Client = cdsclient.NewLocalServiceClient(apiHandler, c.Name(), c.Type())
+
+	// Retrieve and parse the API's public signing key
+	c.APIPublicKey, err = localAPI.APIPublicKey()
+	if err != nil {
+		return sdk.WrapError(err, "LocalSignin> cannot get API public key")
+	}
+	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
+	if err != nil {
+		return sdk.WrapError(err, "LocalSignin> cannot parse API public key")
+	}
 
 	log.Info(ctx, "LocalSignin> local service %s registered", c.Name())
 	return nil

@@ -110,6 +110,9 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	if err := hconfig.Check(); err != nil {
 		return fmt.Errorf("Invalid hatchery local configuration: %v", err)
 	}
+	if err := hconfig.CheckRemote(); err != nil {
+		return fmt.Errorf("Invalid hatchery local configuration: %v", err)
+	}
 
 	if hconfig.Basedir == "" {
 		return fmt.Errorf("Invalid basedir directory")
