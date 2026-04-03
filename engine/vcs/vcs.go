@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/vcs/bitbucketcloud"
 	"github.com/ovh/cds/engine/vcs/bitbucketserver"
+	"github.com/ovh/cds/engine/vcs/forgejo"
 	"github.com/ovh/cds/engine/vcs/gerrit"
 	"github.com/ovh/cds/engine/vcs/gitea"
 	"github.com/ovh/cds/engine/vcs/github"
@@ -84,6 +85,11 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 
 func (s *Service) getConsumer(vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
 	switch vcsAuth.Type {
+	case sdk.VCSTypeForgejo:
+		return forgejo.New(strings.TrimSuffix(vcsAuth.URL, "/"),
+			vcsAuth.Username,
+			vcsAuth.Token,
+		), nil
 	case sdk.VCSTypeGitea:
 		return gitea.New(strings.TrimSuffix(vcsAuth.URL, "/"),
 			s.Cfg.API.HTTP.URL,

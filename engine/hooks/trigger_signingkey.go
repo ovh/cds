@@ -17,7 +17,8 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 	ctx, next := telemetry.Span(ctx, "s.triggerGetSigningKey")
 	defer next()
 
-	if hre.EventName != sdk.WorkflowHookEventNamePush {
+	// If received event already contains the signKey, skip this step
+	if hre.EventName != sdk.WorkflowHookEventNamePush || hre.SignKey != "" {
 		hre.Status = sdk.HookEventStatusGitInfo
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
@@ -25,7 +26,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		return s.executeEvent(ctx, hre)
 	}
 
-	log.Info(ctx, "triggering get git signing key for event [%s] %s", hre.EventName, hre.GetFullName())
+	log.Info(ctx, "triggering get git signing key for event [%s] on vcs %s: %s", hre.EventName, hre.VCSServerName, hre.GetFullName())
 
 	// If operation not started and not manual hook => run repository operation to get signinkey
 	if hre.EventName != sdk.WorkflowHookEventNameManual && hre.SigningKeyOperation == "" {

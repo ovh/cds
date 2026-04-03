@@ -332,6 +332,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 		vcsName := r.Header.Get(sdk.SignHeaderVCSName)
 		vcsType := r.Header.Get(sdk.SignHeaderVCSType)
 		eventName := r.Header.Get(sdk.SignHeaderEventName)
+		eventType := r.Header.Get(sdk.SignHeaderEventType)
 
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
@@ -339,7 +340,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		repoName, extractData, err := s.extractDataFromPayload(r.Header, vcsType, body, eventName)
+		repoName, extractData, err := s.extractDataFromPayload(ctx, r.Header, vcsType, body, eventName, eventType)
 		if err != nil {
 			return err
 		}
@@ -405,12 +406,12 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		eventName, err := s.extractEventFromHeader(ctx, vcsServerType, r.Header)
+		eventName, eventType, err := s.extractEventFromHeader(ctx, vcsServerType, r.Header)
 		if err != nil {
 			return err
 		}
 
-		repoName, extractedData, err := s.extractDataFromPayload(r.Header, vcsServerType, body, eventName)
+		repoName, extractedData, err := s.extractDataFromPayload(ctx, r.Header, vcsServerType, body, eventName, eventType)
 		if err != nil {
 			return err
 		}
@@ -443,6 +444,7 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerName strin
 		Created:        time.Now().UnixNano(),
 		Status:         sdk.HookEventStatusScheduled,
 		ExtractData:    extractedData,
+		SignKey:        extractedData.CommitGpgKeyID,
 	}
 
 	// Save event
@@ -458,8 +460,9 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerName strin
 	return exec, nil
 }
 
-func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType string, header http.Header) (string, error) {
+func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType string, header http.Header) (string, string, error) {
 	var eventName string
+	var eventType string
 	var headerName string
 	switch vcsServerType {
 	case sdk.VCSTypeBitbucketServer:
@@ -468,19 +471,27 @@ func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType stri
 		headerName = GithubHeader
 	case sdk.VCSTypeGitea:
 		headerName = GiteaHeader
+	case sdk.VCSTypeForgejo:
+		headerName = ForgejoHeader
+		eventType = ForgejoEventTypeHeader
 	case sdk.VCSTypeGitlab:
 		headerName = GitlabHeader
 	default:
 		log.Warn(ctx, "invalid vcs server of type %s", vcsServerType)
-		return "", sdk.WithStack(sdk.ErrNotImplemented)
+		return "", "", sdk.WithStack(sdk.ErrNotImplemented)
 	}
 	if v, has := header[headerName]; has && len(v) > 0 {
 		eventName = v[0]
 	}
 	if eventName == "" {
-		return "", sdk.WrapError(sdk.ErrNotFound, "unable to found event from header")
+		return "", "", sdk.WrapError(sdk.ErrNotFound, "unable to found event from header")
 	}
-	return eventName, nil
+	if eventType != "" {
+		if v, has := header[eventType]; has && len(v) > 0 {
+			eventType = v[0]
+		}
+	}
+	return eventName, eventType, nil
 }
 
 func (s *Service) webhookHandler() service.Handler {

@@ -38,6 +38,7 @@ const (
 	SignHeaderRepoName  = "X-Cds-Hooks-Repo-Name"
 	SignHeaderVCSType   = "X-Cds-Hooks-Vcs-Type"
 	SignHeaderEventName = "X-Cds-Hooks-Event-Name"
+	SignHeaderEventType = "X-Cds-Hooks-Event-Type"
 
 	WorkflowHookEventNameWorkflowUpdate WorkflowHookEventName = "workflow-update"
 	WorkflowHookEventNameModelUpdate    WorkflowHookEventName = "model-update"
@@ -325,6 +326,8 @@ type HookRepositoryEventExtractData struct {
 	WorkflowRun        *HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run,omitempty"`
 	WebHook            *HookRepositoryEventExtractedDataWebHook     `json:"workflow_hook,omitempty"`
 	HookProjectKey     string                                       `json:"hook_project_key,omitempty"` // force the hook to only trigger from the given CDS project
+	CommitVerified     bool                                         `json:"commit_verified,omitempty"`
+	CommitGpgKeyID     string                                       `json:"commit_gpg_key_id,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWebHook struct {

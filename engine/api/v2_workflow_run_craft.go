@@ -1083,7 +1083,7 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 
 	var fileContent string
 	switch typeVCS {
-	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
+	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea, sdk.VCSTypeForgejo:
 		contentBts, err := base64.StdEncoding.DecodeString(content.Content)
 		if err != nil {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to decode file at path %s", workflowDef.Semver.Path)

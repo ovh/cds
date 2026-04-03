@@ -23,8 +23,9 @@ func (c *giteaClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, 
 	ret := make([]sdk.VCSTag, 0, len(tags))
 	for _, tag := range tags {
 		ret = append(ret, sdk.VCSTag{
-			Tag: tag.Name,
-			Sha: tag.Commit.SHA,
+			Tag:  tag.Name,
+			Sha:  tag.ID,
+			Hash: tag.Commit.SHA,
 		})
 	}
 
@@ -42,6 +43,7 @@ func (c *giteaClient) Tag(ctx context.Context, fullname string, tagName string) 
 	}
 	return sdk.VCSTag{
 		Tag:  tag.Name,
+		Sha:  tag.ID,
 		Hash: tag.Commit.SHA,
 	}, nil
 }
