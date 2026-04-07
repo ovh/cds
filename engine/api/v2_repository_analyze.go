@@ -1454,7 +1454,6 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 				return nil, sdk.RepositoryAnalysisStatusError, "", err
 			}
 			commitSha = tag.Hash
-
 		}
 		commit, err := client.Commit(ctx, repoName, commitSha)
 		if err != nil {
