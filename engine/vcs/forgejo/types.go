@@ -212,6 +212,24 @@ type Tag struct {
 	TarballURL string      `json:"tarball_url"`
 }
 
+// AnnotatedTag represents a git annotated tag object.
+type AnnotatedTag struct {
+	Tag          string                     `json:"tag"`
+	SHA          string                     `json:"sha"`
+	URL          string                     `json:"url"`
+	Message      string                     `json:"message"`
+	Tagger       *CommitUser                `json:"tagger"`
+	Object       *AnnotatedTagObject        `json:"object"`
+	Verification *PayloadCommitVerification `json:"verification"`
+}
+
+// AnnotatedTagObject represents the object targeted by an annotated tag.
+type AnnotatedTagObject struct {
+	SHA  string `json:"sha"`
+	Type string `json:"type"`
+	URL  string `json:"url"`
+}
+
 // --- Pull Request ---
 
 // PRBranchInfo information about a branch in the context of a PR.

@@ -65,7 +65,6 @@ const (
 	HookEventStatusAnalysis      = "Analyzing"
 	HookEventStatusCheckAnalysis = "CheckAnalyzing"
 	HookEventStatusWorkflowHooks = "WorkflowHooks"
-	HookEventStatusSignKey       = "SignKey"
 	HookEventStatusGitInfo       = "GitInfo"
 	HookEventStatusWorkflow      = "Workflow"
 	HookEventStatusDone          = "Done"
@@ -98,6 +97,7 @@ type HookAnalysisCallback struct {
 	DeprecatedUsername string           `json:"username"`
 	DeprecatedUserID   string           `json:"user_id"`
 	Initiator          *V2Initiator     `json:"initiator"`
+	SignKey            string           `json:"sign_key"`
 }
 
 type HookRepository struct {
@@ -131,32 +131,29 @@ func (h *HookWorkflowRunOutgoingEvent) GetFullName() string {
 }
 
 type HookRepositoryEvent struct {
-	UUID                      string                         `json:"uuid"`
-	Created                   int64                          `json:"created"`
-	EventName                 WorkflowHookEventName          `json:"event_name"`           // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
-	EventType                 WorkflowHookEventType          `json:"event_type,omitempty"` // created, deleted, edited, opened
-	VCSServerName             string                         `json:"vcs_server_name"`
-	RepositoryName            string                         `json:"repository_name"`
-	Body                      []byte                         `json:"body"`
-	ExtractData               HookRepositoryEventExtractData `json:"extracted_data"`
-	Status                    string                         `json:"status"`
-	ProcessingTimestamp       int64                          `json:"processing_timestamp"`
-	LastUpdate                int64                          `json:"last_update"`
-	LastError                 string                         `json:"last_error,omitempty"`
-	NbErrors                  int64                          `json:"nb_errors,omitempty"`
-	Analyses                  []HookRepositoryEventAnalysis  `json:"analyses,omitempty"`
-	ModelUpdated              EntityFullNames                `json:"model_updated,omitempty"`
-	WorkflowUpdated           EntityFullNames                `json:"workflow_updated,omitempty"`
-	SkippedWorkflows          EntityFullNames                `json:"skipped_workflows,omitempty"`
-	SkippedHooks              []V2WorkflowHook               `json:"skipped_hooks,omitempty"`
-	WorkflowHooks             []HookRepositoryEventWorkflow  `json:"workflows"`
-	DeprecatedUserID          string                         `json:"user_id"`  // Deprecated
-	DeprecatedUsername        string                         `json:"username"` // Deprecated
-	SignKey                   string                         `json:"sign_key"`
-	SigningKeyOperation       string                         `json:"signing_key_operation"`
-	SigningKeyOperationStatus OperationStatus                `json:"signing_key_operation_status"`
-	SigningKeyOperationRetry  int64                          `json:"signing_key_operation_retry,omitempty"`
-	Initiator                 *V2Initiator                   `json:"initiator"`
+	UUID                string                         `json:"uuid"`
+	Created             int64                          `json:"created"`
+	EventName           WorkflowHookEventName          `json:"event_name"`           // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
+	EventType           WorkflowHookEventType          `json:"event_type,omitempty"` // created, deleted, edited, opened
+	VCSServerName       string                         `json:"vcs_server_name"`
+	RepositoryName      string                         `json:"repository_name"`
+	Body                []byte                         `json:"body"`
+	ExtractData         HookRepositoryEventExtractData `json:"extracted_data"`
+	Status              string                         `json:"status"`
+	ProcessingTimestamp int64                          `json:"processing_timestamp"`
+	LastUpdate          int64                          `json:"last_update"`
+	LastError           string                         `json:"last_error,omitempty"`
+	NbErrors            int64                          `json:"nb_errors,omitempty"`
+	Analyses            []HookRepositoryEventAnalysis  `json:"analyses,omitempty"`
+	ModelUpdated        EntityFullNames                `json:"model_updated,omitempty"`
+	WorkflowUpdated     EntityFullNames                `json:"workflow_updated,omitempty"`
+	SkippedWorkflows    EntityFullNames                `json:"skipped_workflows,omitempty"`
+	SkippedHooks        []V2WorkflowHook               `json:"skipped_hooks,omitempty"`
+	WorkflowHooks       []HookRepositoryEventWorkflow  `json:"workflows"`
+	DeprecatedUserID    string                         `json:"user_id"`  // Deprecated
+	DeprecatedUsername  string                         `json:"username"` // Deprecated
+	SignKey             string                         `json:"sign_key"`
+	Initiator           *V2Initiator                   `json:"initiator"`
 }
 
 func (h *HookRepositoryEvent) IsTerminated() bool {
@@ -414,6 +411,7 @@ type HookRetrieveUserResponse struct {
 	DeprecatedUserID   string       `json:"user_id"`  // Deprecated
 	DeprecatedUsername string       `json:"username"` // Deprecated
 	Initiator          *V2Initiator `json:"initiator"`
+	SignKey            string       `json:"sign_key"`
 }
 
 type AnalysisRequest struct {

@@ -21,7 +21,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	log.Info(ctx, "triggering workflow for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// Check if we know the user that trigger the event
-	if hre.SignKey != "" && (hre.Initiator == nil || (hre.Initiator.UserID == "" && hre.Initiator.VCSUsername == "")) {
+	isPushOnWorkflowDistant := hre.SignKey == "" && (hre.EventName == sdk.WorkflowHookEventNamePush)
+	if isPushOnWorkflowDistant || (hre.SignKey != "" && (hre.Initiator == nil || (hre.Initiator.UserID == "" && hre.Initiator.VCSUsername == ""))) {
 		var req sdk.HookRetrieveUserRequest
 		switch {
 		case hre.ExtractData.WorkflowRun != nil && hre.ExtractData.WorkflowRun.OutgoingHookEventUUID != "":
@@ -50,9 +51,19 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		if err != nil {
 			return err
 		}
+		hre.SignKey = r.SignKey
 		if r.Initiator == nil || (r.Initiator.UserID == "" && r.Initiator.VCSUsername == "") {
 			hre.Status = sdk.HookEventStatusSkipped
+			if hre.SignKey == "" {
+				hre.LastError = "Commit not signed"
+			}
 			hre.LastError = fmt.Sprintf("User with key %s not found", hre.SignKey)
+
+			for i := range hre.WorkflowHooks {
+				wh := &hre.WorkflowHooks[i]
+				wh.Status = sdk.HookEventWorkflowStatusSkipped
+				wh.Error = hre.LastError
+			}
 		}
 
 		hre.Initiator = r.Initiator

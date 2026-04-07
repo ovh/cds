@@ -157,7 +157,6 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		e.DeprecatedUserID = ""
 		e.DeprecatedUsername = ""
 		e.SignKey = ""
-		e.SigningKeyOperation = ""
 		e.LastError = ""
 		e.NbErrors = 0
 		e.ModelUpdated = nil
@@ -168,7 +167,6 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		e.Analyses = nil
 		e.LastUpdate = time.Now().UnixNano()
 		e.Initiator = nil
-		e.SigningKeyOperationRetry = 0
 
 		if err := s.Dao.SaveRepositoryEvent(ctx, e); err != nil {
 			return err

@@ -52,12 +52,7 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 		return nil
 	}
 
-	switch hre.EventName {
-	case sdk.WorkflowHookEventNameWebHook:
-		hre.Status = sdk.HookEventStatusGitInfo
-	default:
-		hre.Status = sdk.HookEventStatusSignKey
-	}
+	hre.Status = sdk.HookEventStatusGitInfo
 
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 		return err
@@ -167,7 +162,11 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 		if wh.Type == sdk.WorkflowHookTypeRepository {
 			w.TargetCommit = hre.ExtractData.Commit
 			// force target branch as we may have fallback on another workflow hook definition
-			w.Data.TargetBranch = strings.TrimPrefix(hre.ExtractData.Ref, sdk.GitRefBranchPrefix)
+			if strings.HasPrefix(hre.ExtractData.Ref, sdk.GitRefBranchPrefix) {
+				w.Data.TargetBranch = strings.TrimPrefix(hre.ExtractData.Ref, sdk.GitRefBranchPrefix)
+			} else {
+				w.Data.TargetTag = strings.TrimPrefix(hre.ExtractData.Ref, sdk.GitRefTagPrefix)
+			}
 		}
 
 		if hre.EventName != sdk.WorkflowHookEventNamePush {

@@ -74,14 +74,24 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
-			resp := sdk.HookRetrieveUserResponse{}
+			resp := sdk.HookRetrieveUserResponse{
+				SignKey: r.SignKey,
+			}
+			if r.SignKey == "" {
+				keyID, err := retrieveSigninKey(ctx, api.mustDB(), api.Cache, r.ProjectKey, vcsProjectWithSecret.Name, vcsProjectWithSecret.Type, r.RepositoryName, r.Ref, r.Commit)
+				if err != nil {
+					return err
+				}
+				r.SignKey = keyID
+				resp.SignKey = keyID
+			}
 			initiator, _, _, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Ref, r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
 			if err != nil {
 				return err
 			}
 			resp.Initiator = initiator
 
-			log.Debug(ctx, "postRetrieveEventUserHandler:  vcs: %s, repo: %s, commit: %s => intiator: %+v", vcsProjectWithSecret.Name, r.RepositoryName, r.Commit, initiator)
+			log.Debug(ctx, "postRetrieveEventUserHandler: key: %s vcs: %s, repo: %s, commit: %s => intiator: %+v", resp.SignKey, vcsProjectWithSecret.Name, r.RepositoryName, r.Commit, initiator)
 
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
@@ -484,7 +494,7 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 	}
 
 	// For PullRequest event, skipped hooks are always empty
-	if len(hookRequest.SkippedHooks) == 0 && hookRequest.RepositoryEventName == sdk.WorkflowHookEventNamePullRequest {
+	if len(hookRequest.SkippedHooks) == 0 && (hookRequest.RepositoryEventName == sdk.WorkflowHookEventNamePullRequest || hookRequest.RepositoryEventName == sdk.WorkflowHookEventNamePullRequestComment) {
 
 		hooks, err := workflow_v2.LoadHookHeadPullRequestHookByWorkflowAndEvent(ctx, db, hookRequest.VCSName, hookRequest.RepositoryName)
 		if err != nil {
