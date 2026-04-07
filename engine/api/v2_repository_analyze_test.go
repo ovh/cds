@@ -3127,6 +3127,7 @@ func TestAnalyzeWorkflowWithConcurrency(t *testing.T) {
 	ctx := context.TODO()
 
 	_, _ = db.Exec("DELETE FROM service")
+	_, _ = db.Exec("DELETE FROM rbac")
 
 	// Create project
 	key1 := sdk.RandomString(10)
@@ -3547,6 +3548,12 @@ jobs:
 				commit := &sdk.VCSCommit{
 					Hash: "abcdef",
 					Committer: sdk.VCSAuthor{
+						Name:        u.Username,
+						Slug:        u.Username,
+						DisplayName: u.Username,
+						Email:       u.GetEmail(),
+					},
+					Author: sdk.VCSAuthor{
 						Name:        u.Username,
 						Slug:        u.Username,
 						DisplayName: u.Username,

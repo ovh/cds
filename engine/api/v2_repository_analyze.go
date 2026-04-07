@@ -503,7 +503,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				analysis.Data.Error = analysisError
 			} else {
 				analysis.Data.Initiator = commitInitiator
+				log.Debug(ctx, "analyzeRepository - findCommitter result: initiator: %q", analysis.Data.Initiator.Username())
 			}
+
 		}
 	}
 
