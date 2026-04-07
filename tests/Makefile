@@ -10,6 +10,8 @@ endef
 MINIO_CONTAINER_ID = $(shell docker ps -f name=minio1 -q)
 GITEA_CONTAINER_ID = $(shell docker ps -f name=gitea -q)
 GITEA_VERSION = 1.21
+FORGEJO_CONTAINER_ID = $(shell docker ps -f name=forgejo -q)
+FORGEJO_VERSION = 14
 
 UNAME_S := $(shell uname -s| tr A-Z a-z)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
@@ -20,12 +22,19 @@ GITEA_PASSWORD := $(if ${GITEA_PASSWORD},${GITEA_PASSWORD},gitpassword)
 GITEA_DOMAIN := $(if ${GITEA_DOMAIN},${GITEA_DOMAIN},localhost)
 GITEA_SSH_PORT := $(if ${GITEA_SSH_PORT},${GITEA_SSH_PORT},2222)
 
+FORGEJO_USER := $(if ${FORGEJO_USER},${FORGEJO_USER},gituser)
+FORGEJO_USER_FORK := $(if ${FORGEJO_USER_FORK},${FORGEJO_USER_FORK},gituserfork)
+FORGEJO_PASSWORD := $(if ${FORGEJO_PASSWORD},${FORGEJO_PASSWORD},gitpassword)
+FORGEJO_DOMAIN := $(if ${FORGEJO_DOMAIN},${FORGEJO_DOMAIN},localhost)
+FORGEJO_SSH_PORT := $(if ${FORGEJO_SSH_PORT},${FORGEJO_SSH_PORT},2222)
+
 COVER_FILES = $(shell find . -name "*.coverprofile")
 
 clean:
 	@rm -f $(MINIO_CONTAINER_ID) $(MINIO_RC)
 	@docker kill minio1 || true && docker rm minio1 || true
 	@docker kill gitea || true && docker rm gitea || true
+	@docker kill forgejo || true && docker rm forgejo || true
 
 minio_start: $(MINIO_RC)
 	@if [ -z "$(MINIO_CONTAINER_ID)" ]; then \
@@ -56,6 +65,16 @@ gitea_start:
   		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER) --password $(GITEA_PASSWORD) --email $(GITEA_USER)@gitea.eu --config /data/gitea/conf/app.ini; \
 		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER_FORK) --password $(GITEA_PASSWORD) --email $(GITEA_USER_FORK)@gitea.eu --must-change-password=false --config /data/gitea/conf/app.ini; \
 		echo "Gitea started"; \
+  	fi
+
+forgejo_start:
+	@if [ -z "$(FORGEJO_CONTAINER_ID)" ]; then \
+  		docker run -d -p 3000:3000 -p ${FORGEJO_SSH_PORT}:${FORGEJO_SSH_PORT} -e INSTALL_LOCK=true -e SSH_PORT=${FORGEJO_SSH_PORT} -e FORGEJO__server__SSH_DOMAIN=$(FORGEJO_DOMAIN) -e FORGEJO__webhook__ALLOWED_HOST_LIST=* --name forgejo forgejo/forgejo:$(FORGEJO_VERSION); \
+  		echo "Starting forgejo..."; \
+  		sleep 5; \
+  		docker exec forgejo su-exec git /app/gitea/forgejo-cli admin user create --username $(FORGEJO_USER) --password $(FORGEJO_PASSWORD) --email $(FORGEJO_USER)@gforgejo.eu --config /data/gitea/conf/app.ini; \
+		docker exec forgejo su-exec git /app/gitea/forgejo-cli admin user create --username $(FORGEJO_USER_FORK) --password $(FORGEJO_PASSWORD) --email $(FORGEJO_USER_FORK)@gitea.eu --must-change-password=false --config /data/gitea/conf/app.ini; \
+		echo "Forgejo started"; \
   	fi
 
 test-docker-compose:

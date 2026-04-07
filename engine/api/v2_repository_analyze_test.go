@@ -3128,6 +3128,7 @@ func TestAnalyzeWorkflowWithConcurrency(t *testing.T) {
 
 	_, _ = db.Exec("DELETE FROM service")
 	_, _ = db.Exec("DELETE FROM rbac")
+	_, _ = db.Exec("DELETE FROM user_gpg_key")
 
 	// Create project
 	key1 := sdk.RandomString(10)
@@ -3379,6 +3380,7 @@ func TestAnalyzeWorkflowWithConcurrencyNotFound(t *testing.T) {
 	ctx := context.TODO()
 
 	_, _ = db.Exec("DELETE FROM service")
+	_, _ = db.Exec("DELETE FROM user_gpg_key")
 
 	// Create project
 	key1 := sdk.RandomString(10)
