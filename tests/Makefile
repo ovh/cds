@@ -69,7 +69,7 @@ gitea_start:
 
 forgejo_start:
 	@if [ -z "$(FORGEJO_CONTAINER_ID)" ]; then \
-  		docker run -d -p 3000:3000 -p ${FORGEJO_SSH_PORT}:${FORGEJO_SSH_PORT} -e INSTALL_LOCK=true -e SSH_PORT=${FORGEJO_SSH_PORT} -e FORGEJO__server__SSH_DOMAIN=$(FORGEJO_DOMAIN) -e FORGEJO__webhook__ALLOWED_HOST_LIST=* --name forgejo forgejo/forgejo:$(FORGEJO_VERSION); \
+  		docker run -d -p 3000:3000 -p ${FORGEJO_SSH_PORT}:${FORGEJO_SSH_PORT} -e INSTALL_LOCK=true -e SSH_PORT=${FORGEJO_SSH_PORT} -e FORGEJO__server__SSH_DOMAIN=$(FORGEJO_DOMAIN) -e FORGEJO__webhook__ALLOWED_HOST_LIST=* --name forgejo codeberg.org/forgejo/forgejo:$(FORGEJO_VERSION); \
   		echo "Starting forgejo..."; \
   		sleep 5; \
   		docker exec forgejo su-exec git /app/gitea/forgejo-cli admin user create --username $(FORGEJO_USER) --password $(FORGEJO_PASSWORD) --email $(FORGEJO_USER)@gforgejo.eu --config /data/gitea/conf/app.ini; \

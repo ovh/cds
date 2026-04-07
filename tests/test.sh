@@ -50,6 +50,14 @@ GITEA_EMAIL="${GITEA_EMAIL:-}"
 GITEA_PASSWORD="${GITEA_PASSWORD:-gitpassword}"
 GITEA_HOST="${GITEA_HOST:-http://localhost:3000}"
 GITEA_CDS_HOOKS_URL="${GITEA_CDS_HOOKS_URL:-http://localhost:8083}"
+
+FORGEJO_USER="${FORGEJO_USER:-gituser}"
+FORGEJO_USER_FORK="${FORGEJO_USER_FORK:-gituserfork}"
+FORGEJO_EMAIL="${FORGEJO_EMAIL:-}"
+FORGEJO_PASSWORD="${FORGEJO_PASSWORD:-gitpassword}"
+FORGEJO_HOST="${FORGEJO_HOST:-http://localhost:3000}"
+FORGEJO_CDS_HOOKS_URL="${FORGEJO_CDS_HOOKS_URL:-http://localhost:8083}"
+
 GPG_KEY_ID="${GPG_KEY_ID:-`gpg --list-secret-keys | grep --only-matching --extended-regexp "[[:xdigit:]]{40}" | head -n 1`}"
 
 PLUGINS_DIRECTORY="${PLUGINS_DIRECTORY:-dist}"
@@ -291,7 +299,7 @@ cds_v2_concurrency_tests() {
 run_cds_v2_tests() {
     f=$1
     rm -rf ./results/${f} && mkdir -p ./results/${f}
-    CMD="${VENOM} run ${VENOM_OPTS} --output-dir ./results/${f} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user.fork=${GITEA_USER_FORK} --var git.user=${GITEA_USER} --var git.emailAddress=${GITEA_EMAIL} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME} --var gpg.key_id=${GPG_KEY_ID} --var cds.region=${CDS_REGION}"
+    CMD="${VENOM} run ${VENOM_OPTS} --output-dir ./results/${f} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${FORGEJO_CDS_HOOKS_URL} --var git.host=${FORGEJO_HOST} --var git.user.fork=${FORGEJO_USER_FORK} --var git.user=${FORGEJO_USER} --var git.emailAddress=${FORGEJO_EMAIL} --var git.password=${FORGEJO_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME} --var gpg.key_id=${GPG_KEY_ID} --var cds.region=${CDS_REGION}"
     echo -e "  ${YELLOW}${f} ${BLUE}STARTING ${DARKGRAY}cmd: ${CMD}${NOCOLOR}"
     START="$(date +%s)"
     ${CMD} > ./results/${f}/${f}.output 2>&1
