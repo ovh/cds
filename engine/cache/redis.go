@@ -440,12 +440,14 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 			return fmt.Errorf("redis mget error: %v", err)
 		}
 
+		hasError := false
 		for i := range members {
 			if i >= len(values) {
 				break
 			}
 
 			if res[i] == nil {
+				hasError = true
 				//If the member is not found, return an error because the members are inconsistents
 				// but try to delete the member from the Redis ZSET
 				log.Error(ctx, "redis>SetScan member %s not found", keys[i])
@@ -453,12 +455,18 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 					return sdk.WrapError(err, "redis>SetScan unable to delete member %s", keys[i])
 				}
 				log.Info(ctx, "redis> member %s deleted", keys[i])
-				return sdk.WithStack(fmt.Errorf("SetScan member %s not found", keys[i]))
 			}
 
+			if hasError {
+				// In case of error, continue to find all xrong data
+				continue
+			}
 			if err := sdk.JSONUnmarshal([]byte(res[i].(string)), members[i]); err != nil {
 				return sdk.WrapError(err, "redis> cannot unmarshal %s", keys[i])
 			}
+		}
+		if hasError {
+			return sdk.WithStack(fmt.Errorf("SetScan member error, corrupted data found"))
 		}
 	}
 	return nil
