@@ -1177,13 +1177,8 @@ func (w *CurrentWorker) setupHooksV2(ctx context.Context, currentJob CurrentJobV
 			}
 		}
 
-		for capa, hookConfig := range hook.Configuration.ByCapabilities {
-			// check is the capabilities exist on the current worker
-			if _, err := exec.LookPath(capa); err != nil {
-				// The error contains 'Executable file not found', the capa is not on the worker
-				continue
-			}
-
+		for i := range hook.Configuration.ByCapabilities {
+			hookConfig := hook.Configuration.ByCapabilities[i]
 			hookFilename := fmt.Sprintf("%d-%s-%s", hookConfig.Priority, integ.Name, slug.Convert(hookConfig.Label))
 
 			w.hooks = append(w.hooks, workerHook{
