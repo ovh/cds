@@ -41,7 +41,7 @@ steps:
       /bin/bash -c cat <<- EOF > /tmp/project_vcs_{{.input.cds_project}}.yml
       version: v1.0
       name: my_vcs_server
-      type: gitea
+      type: forgejo
       description: "it's the test vcs server on project"
       url: "{{.input.git_host}}"
       auth:
@@ -168,7 +168,7 @@ steps:
     assertions:
     - result.statuscode ShouldEqual 204
 
-  # Add the project ssh key as SSH Key on gitea
+  # Add the project ssh key as SSH Key on forgejo
   - type: http
     method: POST
     url: "{{.input.git_host}}/api/v1/user/keys"
