@@ -68,7 +68,7 @@ func (s *Service) extractDataFromForgejoPullRequestCommentEvent(body []byte) (st
 	return repoName, extractedData, nil
 }
 
-func (s *Service) extractDataFromForgejoPullRequestEvent(body []byte) (string, sdk.HookRepositoryEventExtractData, error) {
+func (s *Service) extractDataFromForgejoPullRequestEvent(body []byte, eventType string) (string, sdk.HookRepositoryEventExtractData, error) {
 	extractedData := sdk.HookRepositoryEventExtractData{}
 	var request ForgejoPullRequestPayload
 	if err := sdk.JSONUnmarshal(body, &request); err != nil {
@@ -79,20 +79,27 @@ func (s *Service) extractDataFromForgejoPullRequestEvent(body []byte) (string, s
 	// X-Forgejo-Event-Type: pull_request
 
 	repoName := request.Repository.FullName
-	// opened reopened closed edited
+	// opened reopened closed
 	extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
-	switch request.Action {
-	case HookIssueOpened:
-		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestOpened
-	case HookIssueEdited:
+
+	if eventType == string(ForgejoEventTypePullRequest) {
+		switch request.Action {
+		case HookIssueOpened:
+			extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestOpened
+		case HookIssueClosed:
+			extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestClosed
+		case HookIssueReOpened:
+			extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestReopened
+		default:
+			// HookIssueEdited not managed as it's for update title/description of the PR
+			return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q and type %q", extractedData.CDSEventType, extractedData.CDSEventName, eventType)
+		}
+	} else if eventType == string(ForgejoEventTypePullRequestSync) && request.Action == HookIssueSynchronized {
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestEdited
-	case HookIssueClosed:
-		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestClosed
-	case HookIssueReOpened:
-		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestReopened
-	default:
-		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)
+	} else {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q and type %q", extractedData.CDSEventType, extractedData.CDSEventName, eventType)
 	}
+
 	extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 	extractedData.Commit = request.PullRequest.Head.Sha
 	extractedData.CommitFrom = request.PullRequest.Base.Sha

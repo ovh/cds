@@ -52,7 +52,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			return err
 		}
 		hre.SignKey = r.SignKey
-		if r.Initiator == nil || (r.Initiator.UserID == "" && r.Initiator.VCSUsername == "") {
+
+		if hre.SignKey != "" && (r.Initiator == nil || (r.Initiator.UserID == "" && r.Initiator.VCSUsername == "")) {
 			hre.Status = sdk.HookEventStatusSkipped
 			if hre.SignKey == "" {
 				hre.LastError = "Commit not signed"

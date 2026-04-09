@@ -34,7 +34,7 @@ func (s *Service) extractDataFromForgejoRequest(ctx context.Context, body []byte
 	case string(ForgejoEventPush):
 		return s.extractDataFromForgejoPushEvent(ctx, body)
 	case string(ForgejoEventPullRequest):
-		return s.extractDataFromForgejoPullRequestEvent(body)
+		return s.extractDataFromForgejoPullRequestEvent(body, eventType)
 	case string(ForgejoEventPullRequestComment): // Signle comment during a review
 		return s.extractDataFromForgejoPullRequestCommentEvent(body)
 	case string(ForgejoEventIssueComment): // Comment on a pull request or issue
