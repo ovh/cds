@@ -1190,16 +1190,6 @@ func (w *CurrentWorker) setupHooksV2(ctx context.Context, currentJob CurrentJobV
 	}
 
 	for _, h := range w.hooks {
-		info := sdk.V2SendJobRunInfo{
-			Message: fmt.Sprintf("Setting up worker hook %q", h.Config.Label),
-			Level:   sdk.WorkflowRunInfoLevelInfo,
-			Time:    time.Now(),
-		}
-
-		if err := w.ClientV2().V2QueuePushJobInfo(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, info); err != nil {
-			log.Error(ctx, "runJobServiceReadiness> Unable to send spawn info: %v", err)
-		}
-
 		log.Info(ctx, "setting up hook at %q", h.SetupPath)
 
 		hookFile, err := fs.Create(h.SetupPath)
