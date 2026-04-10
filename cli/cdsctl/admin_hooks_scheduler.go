@@ -22,6 +22,7 @@ func adminHooksSchedulers() *cobra.Command {
 		cli.NewListCommand(adminHooksSchedulersListAllCmd, adminHooksSchedulersListAllRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(adminHooksGetSchedulerCmd, adminHooksGetSchedulerRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(adminHookSchedulerDeleteCmd, adminHookSchedulerDeleteRun, nil),
+		cli.NewCommand(adminHookSchedulerResyncCmd, adminHookSchedulerResyncRun, nil),
 	})
 }
 
@@ -191,4 +192,18 @@ func adminHooksSchedulersListAllRun(v cli.Values) (cli.ListResult, error) {
 		}
 		return cli.AsListResult(hookSchedulers), nil
 	}
+}
+
+var adminHookSchedulerResyncCmd = cli.Command{
+	Name:    "resync",
+	Aliases: []string{"sync"},
+	Short:   "Trigger a full resynchronization of scheduler definitions from the database to Redis",
+}
+
+func adminHookSchedulerResyncRun(v cli.Values) error {
+	if _, err := client.ServiceCallPOST("hooks", "/admin/scheduler/resync", nil); err != nil {
+		return err
+	}
+	fmt.Println("Scheduler resync triggered successfully")
+	return nil
 }

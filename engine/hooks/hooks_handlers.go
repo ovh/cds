@@ -87,6 +87,17 @@ func (s *Service) deleteSchedulerByWorkflowHandler() service.Handler {
 	}
 }
 
+func (s *Service) postResyncSchedulersHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		s.GoRoutines.Run(ctx, "scheduler-resync-admin", func(ctx context.Context) {
+			if err := s.resyncSchedulers(ctx); err != nil {
+				log.Error(ctx, "admin scheduler resync failed: %v", err)
+			}
+		})
+		return service.WriteJSON(w, nil, http.StatusAccepted)
+	}
+}
+
 func (s *Service) deleteSchedulerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

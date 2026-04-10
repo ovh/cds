@@ -38,6 +38,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/admin/repository/{vcsServer}/{repoName}", nil, r.DELETE(s.deleteRepositoryHandler))
 	r.Handle("/admin/scheduler", nil, r.GET(s.getAllSchedulersHandler))
 	r.Handle("/admin/scheduler/{vcsServer}/{repoName}/{workflowName}", nil, r.GET(s.getWorkflowSchedulersHandler))
+	r.Handle("/admin/scheduler/resync", nil, r.POST(s.postResyncSchedulersHandler))
 	r.Handle("/admin/scheduler/execution/{hookID}", nil, r.GET(s.geSchedulerExecutionHandler), r.DELETE(s.deleteSchedulerHandler))
 	r.Handle("/admin/outgoing/{projectKey}/{vcsServer}/{repoName}/{workflowName}", nil, r.GET(s.getOutgoingHooksExecutionsByWorkflowHandler))
 	r.Handle("/admin/outgoing/{projectKey}/{vcsServer}/{repoName}/{workflowName}/{hookID}", nil, r.GET(s.getOutgoingHookExecutionHandler))
