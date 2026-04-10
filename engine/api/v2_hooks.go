@@ -228,6 +228,17 @@ func (api *API) getV2WorkflowHookHandler() ([]service.RbacChecker, service.Handl
 		}
 }
 
+func (api *API) getV2AllSchedulerHooksHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.isHookService),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			hooks, err := workflow_v2.LoadAllSchedulerHooks(ctx, api.mustDB())
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, hooks, http.StatusOK)
+		}
+}
+
 func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.isHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

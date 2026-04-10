@@ -218,6 +218,11 @@ func LoadAllHooksUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2Workf
 	return runs, nil
 }
 
+func LoadAllSchedulerHooks(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowHook, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE type = $1 AND head = true`).Args(sdk.WorkflowHookTypeScheduler)
+	return getAllHooks(ctx, db, q)
+}
+
 func LoadDistinctSchedulerWorkflowKeysByProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.V2WorkflowHookShort, error) {
 	var rows []struct {
 		VCSName        string `db:"vcs_name"`

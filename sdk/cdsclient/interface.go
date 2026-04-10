@@ -446,6 +446,7 @@ type HookClient interface {
 	VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error)
 
 	HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V2WorkflowHook, error)
+	HookListAllSchedulerHooks(ctx context.Context) ([]sdk.V2WorkflowHook, error)
 	HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error)
 	ListWorkflowToTrigger(ctx context.Context, req sdk.HookListWorkflowRequest) ([]sdk.V2WorkflowHook, error)
 	RetrieveHookEventSigningKey(ctx context.Context, req sdk.HookRetrieveSignKeyRequest) (sdk.Operation, error)

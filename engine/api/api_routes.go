@@ -451,6 +451,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/hooks/workflows", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRetrieveWorkflowToTriggerHandler))
 	r.Handle("/v2/hooks/workflows/hook/{hookID}", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getV2WorkflowHookHandler))
+	r.Handle("/v2/hooks/workflows/hooks/schedulers", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getV2AllSchedulerHooksHandler))
 	r.Handle("/v2/hooks/event/signKey", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postHookEventRetrieveSignKeyHandler))
 	r.Handle("/v2/hooks/event/signKey/{uuid}", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getRetrieveSignKeyOperationHandler))
 	r.Handle("/v2/hooks/event/user", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRetrieveEventUserHandler))
