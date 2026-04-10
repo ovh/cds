@@ -28,7 +28,7 @@ type Configuration struct {
 	Name                  string                          `toml:"name" comment:"Name of this CDS Repositories Service\n Enter a name to enable this service" json:"name"`
 	Basedir               string                          `toml:"basedir" comment:"Root directory where the service will store all checked-out repositories" json:"basedir"`
 	OperationRetention    int                             `toml:"operationRetention" comment:"Operation retention in redis store (in days)" default:"5" json:"operationRetention"`
-	RepositoriesRetention int                             `toml:"repositoriesRetention" comment:"Re retention on the filesystem (in days)" default:"10" json:"repositoriesRetention"`
+	RepositoriesRetention string                          `toml:"repositoriesRetention" comment:"Repositories retention on the filesystem as a Go duration (e.g. 240h, 72h30m)" default:"24h" json:"repositoriesRetention"`
 	HTTP                  service.HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS Repositories HTTP Configuration \n######################" json:"http"`
 	URL                   string                          `default:"http://localhost:8085" json:"url"`
 	API                   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`

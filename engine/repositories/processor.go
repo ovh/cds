@@ -68,8 +68,13 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	r := s.Repo(op)
 	defer func() {
 		s.localCache.Delete(r.ID())
-		ttl := 3600 * 24 * s.Cfg.RepositoriesRetention
-		ttlTime := time.Now().Add(time.Duration(ttl) * time.Second)
+		ttlDuration, err := time.ParseDuration(s.Cfg.RepositoriesRetention)
+		if err != nil {
+			log.Error(ctx, "invalid repositoriesRetention duration %q: %v, falling back to 24h", s.Cfg.RepositoriesRetention, err)
+			ttlDuration = 24 * time.Hour
+		}
+		ttl := int(ttlDuration.Seconds())
+		ttlTime := time.Now().Add(ttlDuration)
 		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())
 		s.dao.store.SetWithTTL(cache.Key(lastAccessKey, r.ID()), ttlTime, ttl)
 	}()
