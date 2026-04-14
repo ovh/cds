@@ -129,7 +129,7 @@ func (ac *Client) Deploy(deployRequest *DeployRequest) (*DeployResponse, error) 
 		if statusCode == http.StatusOK {
 			return &deployResult, lastErr
 		}
-		if statusCode == http.StatusMethodNotAllowed {
+		if statusCode == http.StatusMethodNotAllowed || statusCode == http.StatusUnprocessableEntity {
 			lastErr = &RequestError{fmt.Sprintf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)}
 			time.Sleep(100 * time.Millisecond)
 			continue
