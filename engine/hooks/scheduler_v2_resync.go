@@ -44,6 +44,11 @@ func (s *Service) resyncSchedulers(ctx context.Context) error {
 		return err
 	}
 
+	// Step 2.5: Ensure repositories referenced by schedulers exist in Redis.
+	// When a scheduler fires, the resulting event requires the repository to be present in Redis.
+	// If the repository was lost (e.g. Redis flush), the event would fail with "Repository not found".
+	s.resyncEnsureRepositories(ctx, dbHooksByID)
+
 	// Step 3: Add missing schedulers and update those whose configuration has changed
 	nbAdded, nbUpdated := s.resyncAddAndUpdateSchedulers(ctx, dbHooksByID, redisKeysByHookID)
 
@@ -219,6 +224,30 @@ func (s *Service) resyncCleanOrphanExecutions(ctx context.Context, dbHooksByID m
 		log.Info(ctx, "resyncSchedulers> removing orphan execution for hook %s", exec.SchedulerDef.ID)
 		if err := s.Dao.RemoveSchedulerExecution(ctx, exec.SchedulerDef.ID); err != nil {
 			log.Error(ctx, "resyncSchedulers> unable to remove orphan execution %s: %v", exec.SchedulerDef.ID, err)
+		}
+	}
+}
+
+// resyncEnsureRepositories checks that every repository referenced by a scheduler hook exists in Redis.
+// When a scheduler fires, its event is processed through the repository event pipeline which requires
+// the repository to be registered (FindRepository). If the repository is missing (e.g. after a Redis flush),
+// the event fails with "Repository not found". This step recreates any missing repositories.
+func (s *Service) resyncEnsureRepositories(ctx context.Context, dbHooksByID map[string]sdk.V2WorkflowHook) {
+	// Collect unique VCS/repo pairs
+	type repoIdent struct{ vcs, repo string }
+	seen := make(map[repoIdent]struct{})
+	for _, h := range dbHooksByID {
+		seen[repoIdent{h.VCSName, h.RepositoryName}] = struct{}{}
+	}
+
+	for id := range seen {
+		repoKey := s.Dao.GetRepositoryMemberKey(id.vcs, id.repo)
+		if existing := s.Dao.FindRepository(ctx, repoKey); existing != nil {
+			continue
+		}
+		log.Info(ctx, "resyncSchedulers> recreating missing repository %s/%s", id.vcs, id.repo)
+		if _, err := s.Dao.CreateRepository(ctx, id.vcs, id.repo); err != nil {
+			log.Error(ctx, "resyncSchedulers> unable to recreate repository %s/%s: %v", id.vcs, id.repo, err)
 		}
 	}
 }

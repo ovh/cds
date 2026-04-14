@@ -280,6 +280,43 @@ func TestResyncEnsurePendingExecutions(t *testing.T) {
 	require.NoError(t, s.Dao.RemoveScheduler(ctx, hook.VCSName, hook.RepositoryName, hook.WorkflowName, hook.ID))
 }
 
+// TestResyncEnsureRepositories verifies that repositories referenced by schedulers
+// are recreated in Redis if they are missing.
+func TestResyncEnsureRepositories(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	cleanRedisSchedulerKeys(t, s.Dao.store)
+	ctx := context.TODO()
+
+	hook := newTestHook("hook-repo-1", "github", "myorg/myrepo", "my-workflow", "0 */5 * * *", "UTC")
+
+	// Ensure repository does NOT exist in Redis initially
+	require.NoError(t, s.Dao.DeleteRepository(ctx, hook.VCSName, hook.RepositoryName))
+	repoKey := s.Dao.GetRepositoryMemberKey(hook.VCSName, hook.RepositoryName)
+	repo := s.Dao.FindRepository(ctx, repoKey)
+	require.Nil(t, repo, "repository should not exist before resync")
+
+	// Mock: API returns the hook
+	mockClient := s.Client.(*mock_cdsclient.MockInterface)
+	mockClient.EXPECT().HookListAllSchedulerHooks(gomock.Any()).Return([]sdk.V2WorkflowHook{hook}, nil)
+	// Step 3 reload for comparison
+	mockClient.EXPECT().HookGetWorkflowHook(gomock.Any(), hook.ID).Return(&hook, nil).AnyTimes()
+
+	err := s.resyncSchedulers(ctx)
+	require.NoError(t, err)
+
+	// Verify the repository was recreated in Redis
+	repo = s.Dao.FindRepository(ctx, repoKey)
+	require.NotNil(t, repo, "repository should have been recreated by resync")
+	require.Equal(t, hook.VCSName, repo.VCSServerName)
+	require.Equal(t, hook.RepositoryName, repo.RepositoryName)
+
+	// Cleanup
+	require.NoError(t, s.Dao.DeleteRepository(ctx, hook.VCSName, hook.RepositoryName))
+	require.NoError(t, s.Dao.RemoveScheduler(ctx, hook.VCSName, hook.RepositoryName, hook.WorkflowName, hook.ID))
+}
+
 // TestResyncCleanOrphanExecutions verifies that executions for hooks that no longer exist
 // in the DB are cleaned up.
 func TestResyncCleanOrphanExecutions(t *testing.T) {
