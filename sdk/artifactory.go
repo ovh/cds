@@ -50,6 +50,9 @@ func (l artifactoryLogger) Error(a ...interface{}) {
 func (l artifactoryLogger) Output(a ...interface{}) {
 	log.Info(context.Background(), l.BuildMsg(a...))
 }
+func (l artifactoryLogger) Verbose(a ...interface{}) {
+	log.Debug(context.Background(), l.BuildMsg(a))
+}
 
 func (l artifactoryLogger) BuildMsg(a ...interface{}) string {
 	msg := make([]string, 0, len(a))

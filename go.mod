@@ -43,7 +43,7 @@ require (
 	github.com/iancoleman/orderedmap v0.3.0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/jfrog/build-info-go v1.13.0
-	github.com/jfrog/jfrog-client-go v1.50.0
+	github.com/jfrog/jfrog-client-go v1.55.0
 	github.com/jordan-wright/email v4.0.1-0.20200917010138-e1c00e156980+incompatible
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/keybase/go-crypto v0.0.0-20181127160227-255a5089e85a

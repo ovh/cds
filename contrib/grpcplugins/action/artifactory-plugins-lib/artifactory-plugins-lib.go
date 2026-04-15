@@ -30,8 +30,9 @@ const (
 
 type logger struct{}
 
-func (*logger) Debug(a ...interface{}) {}
-func (*logger) Error(a ...interface{}) {}
+func (*logger) Debug(a ...interface{})   {}
+func (*logger) Verbose(a ...interface{}) {}
+func (*logger) Error(a ...interface{})   {}
 func (*logger) GetLogLevel() jfroglog.LevelType {
 	return jfroglog.INFO
 }
