@@ -81,7 +81,6 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 		Status:             status,
 		RepositoryFullname: eventWNR.RepositoryFullName,
 		GitHash:            eventWNR.Hash,
-		GerritChange:       eventWNR.GerritChange,
 	}
 
 	if err := c.SetStatus(ctx, buildStatus); err != nil {

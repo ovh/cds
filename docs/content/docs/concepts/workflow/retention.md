@@ -32,9 +32,6 @@ You will be able to use these variables in conditions:
   * **has_git_branch** (string: true|false): True if a *git.branch* variable is set **(added in 0.48.1)**.
   * **git_branch_exist** (string: true|false): True if a *git.branch* variable is set and branch still exists on the git repository.
   * **run_status** (string: Success|Fail|...): the Workflow Run status.
-  * **gerrit_change_merged** (string: true|false): to identify if the gerrit change has been merged.
-  * **gerrit_change_abandoned** (string: true|false): to identify if the gerrit change has been abandoned.
-  * **gerrit_change_days_before** (number): to identify gerrit change older than x days.
   * All other variables from the Workflow Run payload (ex: cds_triggered_by_username, git_branch...).
 
 Examples:

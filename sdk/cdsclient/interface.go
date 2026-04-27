@@ -445,7 +445,6 @@ type CDNClient interface {
 // HookClient exposes functions used for hooks services
 type HookClient interface {
 	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
-	VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error)
 
 	HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V2WorkflowHook, error)
 	HookListAllSchedulerHooks(ctx context.Context) ([]sdk.V2WorkflowHook, error)

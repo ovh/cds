@@ -246,8 +246,6 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			vcsProject.Auth.SSHKeyName = vcsClear.Auth.SSHKeyName
 			vcsProject.Auth.GPGKeyName = vcsClear.Auth.GPGKeyName
 			vcsProject.Auth.EmailAddress = vcsClear.Auth.EmailAddress
-			vcsProject.Auth.SSHUsername = vcsClear.Auth.SSHUsername
-			vcsProject.Auth.SSHPort = vcsClear.Auth.SSHPort
 			return service.WriteMarshal(w, r, vcsProject, http.StatusOK)
 		}
 }
@@ -276,8 +274,6 @@ func (api *API) GetVCSPGKeyHandler() ([]service.RbacChecker, service.Handler) {
 			var selectedVCS []sdk.VCSProject
 			for _, v := range allvcs {
 				v.Auth.Token = "" // we are sure we don't need this
-				v.Auth.SSHPrivateKey = ""
-
 				log.Debug(ctx, "%s = %s", v.Auth.GPGKeyName, k.Name)
 				if v.Auth.GPGKeyName == k.Name {
 					selectedVCS = append(selectedVCS, v)

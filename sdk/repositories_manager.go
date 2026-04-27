@@ -159,7 +159,6 @@ func (s VCSPullRequestState) IsValid() bool {
 
 type VCSPullRequestCommentRequest struct {
 	ID       int    `json:"id"`
-	ChangeID string `json:"change_id"` // gerrit only
 	Revision string `json:"revision"`
 	Message  string `json:"message"`
 }

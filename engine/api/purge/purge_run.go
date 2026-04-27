@@ -29,18 +29,14 @@ type MarkAsDeleteOptions struct {
 }
 
 const (
-	RunStatus          = "run_status"
-	RunDaysBefore      = "run_days_before"
-	RunHasGitBranch    = "has_git_branch"
-	RunGitBranchExist  = "git_branch_exist"
-	RunChangeExist     = "gerrit_change_exist"
-	RunChangeMerged    = "gerrit_change_merged"
-	RunChangeAbandoned = "gerrit_change_abandoned"
-	RunChangeDayBefore = "gerrit_change_days_before"
+	RunStatus         = "run_status"
+	RunDaysBefore     = "run_days_before"
+	RunHasGitBranch   = "has_git_branch"
+	RunGitBranchExist = "git_branch_exist"
 )
 
 func GetRetentionPolicyVariables() []string {
-	return []string{RunDaysBefore, RunStatus, RunHasGitBranch, RunGitBranchExist, RunChangeMerged, RunChangeAbandoned, RunChangeDayBefore, RunChangeExist}
+	return []string{RunDaysBefore, RunStatus, RunHasGitBranch, RunGitBranchExist}
 }
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
@@ -275,22 +271,6 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run sdk.WorkflowRunSummary, payload map[string]string, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService) error {
 	vars := payload
 	varsFloats := make(map[string]float64)
-
-	// If we have gerrit change id, check status
-	if changeID, ok := vars["gerrit.change.id"]; ok && vcsClient != nil {
-		ch, err := vcsClient.PullRequest(ctx, app.RepositoryFullname, changeID)
-		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return err
-			}
-			vars[RunChangeExist] = "false"
-		} else {
-			vars[RunChangeExist] = "true"
-			vars[RunChangeMerged] = strconv.FormatBool(ch.Merged)
-			vars[RunChangeAbandoned] = strconv.FormatBool(ch.Closed)
-			varsFloats[RunChangeDayBefore] = math.Floor(time.Now().Sub(ch.Updated).Hours())
-		}
-	}
 
 	// If we have a branch in payload, check if it exists on repository branches list
 	b, has := vars["git.branch"]

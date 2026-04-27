@@ -21,7 +21,6 @@ const (
 	TypeScheduler          = "Scheduler"
 	TypeRepoPoller         = "RepoPoller"
 	TypeKafka              = "Kafka"
-	TypeGerrit             = "Gerrit"
 	TypeRabbitMQ           = "RabbitMQ"
 	TypeWorkflowHook       = "Workflow"
 	TypeOutgoingWebHook    = "OutgoingWebhook"
@@ -43,8 +42,6 @@ var (
 	rootKey           = cache.Key("hooks", "tasks")
 	executionRootKey  = cache.Key("hooks", "tasks", "executions")
 	schedulerQueueKey = cache.Key("hooks", "scheduler", "queue")
-	gerritRepoKey     = cache.Key("hooks", "gerrit", "repo")
-	gerritRepoHooks   = make(map[string]bool)
 )
 
 // runTasks should run as a long-running goroutine
@@ -131,58 +128,11 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		}
 	}
 
-	// Start listening to gerrit event stream
-	vcsGerritConfig, err := s.Client.VCSGerritConfiguration()
-	if err != nil {
-		return sdk.WrapError(err, "unable to get vcs configuration")
-	}
-
-	for k, v := range vcsGerritConfig {
-		if v.SSHUsername != "" && v.SSHPrivateKey != "" && v.SSHPort != 0 {
-			s.initGerritStreamEvent(ctx, k, vcsGerritConfig)
-		}
-	}
-
 	return nil
-}
-
-func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcsGerritConfig map[string]sdk.VCSGerritConfiguration) {
-	// Create channel to store gerrit event
-	gerritEventChan := make(chan GerritEvent, 20)
-	// Listen to gerrit event stream
-	s.GoRoutines.Run(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
-		for {
-			select {
-			case <-ctx.Done():
-				if ctx.Err() != nil {
-					log.Error(ctx, "hook:initGerritStreamEvent: %v", ctx.Err())
-				}
-				return
-			default:
-				if err := ListenGerritStreamEvent(ctx, s.Cache, s.GoRoutines, vcsGerritConfig[vcsName], gerritEventChan); err != nil {
-					log.Error(ctx, "hook:initGerritStreamEvent: failed listening gerrit event stream: %v", err)
-				}
-				time.Sleep(10 * time.Second)
-			}
-		}
-
-	})
-	// Listen to gerrit event stream
-	s.GoRoutines.Run(ctx, "gerrit.EventStreamCompute."+vcsName, func(ctx context.Context) {
-		s.ComputeGerritStreamEvent(ctx, vcsName, gerritEventChan)
-	})
-	// Save the fact that we are listen the event stream for this gerrit
-	gerritRepoHooks[vcsName] = true
 }
 
 func (s *Service) nodeHookToTask(h *sdk.NodeHook) (*sdk.Task, error) {
 	switch h.HookModelName {
-	case sdk.GerritHookModelName:
-		return &sdk.Task{
-			UUID:   h.UUID,
-			Type:   TypeGerrit,
-			Config: h.Config,
-		}, nil
 	case sdk.KafkaHookModelName:
 		return &sdk.Task{
 			UUID:   h.UUID,
@@ -297,8 +247,6 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 		return s.startOutgoingWebHookTask(t)
 	case TypeOutgoingWorkflow:
 		return s.startOutgoingWorkflowTask(t)
-	case TypeGerrit:
-		return nil, s.startGerritHookTask(t)
 	default:
 		return nil, fmt.Errorf("Unsupported task type %s", t.Type)
 	}
@@ -389,10 +337,6 @@ func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
 		s.stopKafkaHook(t)
 		log.Debug(ctx, "Hooks> Kafka Task %s has been stopped", t.UUID)
 		return nil
-	case TypeGerrit:
-		s.stopGerritHookTask(t)
-		log.Debug(ctx, "Hooks> Gerrit Task %s has been stopped", t.UUID)
-		return nil
 	default:
 		return fmt.Errorf("unsupported task type %s", t.Type)
 	}
@@ -410,8 +354,6 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 
 	var doRestart = false
 	switch {
-	case e.GerritEvent != nil:
-		h, err = s.doGerritExecution(e)
 	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
 		err = s.doOutgoingWebHookExecution(ctx, e)
 	case e.Type == TypeOutgoingWorkflow:

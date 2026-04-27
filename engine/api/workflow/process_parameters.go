@@ -242,10 +242,6 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 				parentParams = append(parentParams, param)
 				continue
 			}
-			if strings.HasPrefix(param.Name, "gerrit.") {
-				parentParams = append(parentParams, param)
-				continue
-			}
 
 			if param.Name == "payload" || strings.HasPrefix(param.Name, "cds.triggered") || strings.HasPrefix(param.Name, "cds.release") {
 				// keep p.Name as is

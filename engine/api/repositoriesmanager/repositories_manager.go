@@ -31,13 +31,6 @@ func (c *vcsClient) IsBitbucketCloud() bool {
 	return false
 }
 
-func (c *vcsClient) IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, error) {
-	if c.vcsProject != nil {
-		return c.vcsProject.Type == "gerrit", nil
-	}
-	return false, nil
-}
-
 type vcsClient struct {
 	name       string
 	projectKey string
@@ -119,10 +112,6 @@ func (c *vcsClient) setAuthHeader(ctx context.Context, req *http.Request) {
 	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.Username)))
 	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.Token)))
 	req.Header.Set(sdk.HeaderXVCSURLApi, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Options.URLAPI)))
-
-	req.Header.Set(sdk.HeaderXVCSSSHUsername, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.SSHUsername)))
-	req.Header.Set(sdk.HeaderXVCSSSHPort, base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(c.vcsProject.Auth.SSHPort))))
-	req.Header.Set(sdk.HeaderXVCSSSHPrivateKey, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.SSHPrivateKey)))
 }
 
 func (c *vcsClient) doStreamRequest(ctx context.Context, method, path string, in interface{}) (io.Reader, http.Header, error) {
@@ -562,11 +551,10 @@ func (c *vcsClient) GetArchive(ctx context.Context, repo string, dir string, for
 
 // WebhooksInfos is a set of info about webhooks
 type WebhooksInfos struct {
-	WebhooksSupported  bool     `json:"webhooks_supported"`
-	WebhooksDisabled   bool     `json:"webhooks_disabled"`
-	GerritHookDisabled bool     `json:"gerrithook_disabled"`
-	Icon               string   `json:"webhooks_icon"`
-	Events             []string `json:"events"`
+	WebhooksSupported bool     `json:"webhooks_supported"`
+	WebhooksDisabled  bool     `json:"webhooks_disabled"`
+	Icon              string   `json:"webhooks_icon"`
+	Events            []string `json:"events"`
 }
 
 // GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server
@@ -612,11 +600,6 @@ func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClientService) (We
 			string(gitlab.EventTypePipeline),
 			"Job Hook", // TODO update gitlab sdk
 		}
-	case client.vcsProject.Type == sdk.VCSTypeGerrit:
-		res.WebhooksSupported = false
-		res.Icon = sdk.GerritIcon
-		// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
-		res.Events = sdk.GerritEvents
 	}
 
 	return res, nil

@@ -871,9 +871,8 @@ func Test_postAdminDatabaseRollEncryptedEntityForProject(t *testing.T) {
 		CreatedBy: "sgu",
 		ProjectID: proj.ID,
 		Auth: sdk.VCSAuthProject{
-			Username:      "myuser",
-			Token:         "mytoken",
-			SSHPrivateKey: "myprivatekey",
+			Username: "myuser",
+			Token:    "mytoken",
 		},
 	}
 	require.NoError(t, vcs.Insert(context.TODO(), db, vcsProject))
@@ -889,7 +888,6 @@ func Test_postAdminDatabaseRollEncryptedEntityForProject(t *testing.T) {
 	vcsProject2, err := vcs.LoadVCSByIDAndProjectKey(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	require.Equal(t, vcsProject.Auth.SSHPrivateKey, vcsProject2.Auth.SSHPrivateKey)
 	require.Equal(t, vcsProject.Auth.Token, vcsProject2.Auth.Token)
 	require.Equal(t, vcsProject.Auth.Username, vcsProject2.Auth.Username)
 

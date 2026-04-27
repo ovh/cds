@@ -26,7 +26,7 @@ export class ProjectRepoManagerFormComponent implements OnChanges {
     selectedPublicKey: string;
     keys: AllKeys;
 
-    reposManagerList: string[] = ['bitbucketcloud', 'bitbucketserver', 'github', 'gitlab', 'gitea', 'gerrit'];
+    reposManagerList: string[] = ['bitbucketcloud', 'bitbucketserver', 'github', 'gitlab', 'gitea'];
 
     get isEditing(): boolean {
         return !!(this.vcsProject && this.vcsProject.id);
