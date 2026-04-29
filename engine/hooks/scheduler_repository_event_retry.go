@@ -29,12 +29,6 @@ func (s *Service) manageOldRepositoryEvent(ctx context.Context) {
 			}
 			return
 		case <-tick:
-			if s.Maintenance {
-				log.Info(ctx, "Maintenance enable, wait 1 minute")
-				time.Sleep(1 * time.Minute)
-				continue
-			}
-
 			repositoryEventKeys, err := s.Dao.ListInProgressRepositoryEvent(ctx)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
@@ -101,6 +95,13 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 	queueLen, err := s.Dao.RepositoryEventQueueLen()
 	if err != nil {
 		return err
+	}
+
+	// During maintenance, only retry events that are flagged as manual maintenance events
+	if s.Maintenance {
+		if hre.ExtractData.Manual == nil || !hre.ExtractData.Manual.IsInMaintenance {
+			return nil
+		}
 	}
 
 	// Check last update time
