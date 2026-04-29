@@ -150,6 +150,14 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 
 			if !canTriggerWithChangeSet || !canTriggerWithCommitMessage {
 				wh.Status = sdk.HookEventWorkflowStatusSkipped
+				switch {
+				case !canTriggerWithChangeSet && !canTriggerWithCommitMessage:
+					wh.Error = "no file matches path filters and commit message does not match commit filter"
+				case !canTriggerWithChangeSet:
+					wh.Error = "no file matches path filters"
+				case !canTriggerWithCommitMessage:
+					wh.Error = "commit message does not match commit filter or contains a skip CI directive"
+				}
 			} else {
 				// Query params to select the right workflow version to run
 				mods := make([]cdsclient.RequestModifier, 0, 2)

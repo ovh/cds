@@ -35,4 +35,5 @@ func TestTriggerWorkflow(t *testing.T) {
 
 	require.NoError(t, s.triggerWorkflows(ctx, &hre))
 	require.Equal(t, sdk.HookEventWorkflowStatusSkipped, hre.WorkflowHooks[0].Status)
+	require.Equal(t, "no file matches path filters", hre.WorkflowHooks[0].Error)
 }
