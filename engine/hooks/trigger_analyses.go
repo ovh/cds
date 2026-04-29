@@ -97,7 +97,7 @@ func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookReposit
 		// If there is still analysis to check, wait and renqueue
 		s.GoRoutines.Exec(ctx, "hook-repository-event-"+hre.UUID, func(ctx context.Context) {
 			time.Sleep(10 * time.Second)
-			if err := s.Dao.EnqueueRepositoryEvent(ctx, hre, s.Maintenance); err != nil {
+			if err := s.Dao.EnqueueRepositoryEvent(ctx, hre); err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 			}
 		})

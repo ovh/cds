@@ -343,6 +343,7 @@ type HookRepositoryEventExtractedDataManual struct {
 	TargetTag        string                 `json:"target_tag,omitempty"`
 	TargetRepository string                 `json:"target_repository,omitempty"`
 	JobInputs        V2WorkflowRunJobInputs `json:"job_inputs,omitempty"`
+	IsInMaintenance  bool                   `json:"is_in_maintenance,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWorkflowRun struct {

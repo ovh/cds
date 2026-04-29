@@ -211,6 +211,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 			TargetBranch:     runRequest.UserRequest.Branch,
 			TargetTag:        runRequest.UserRequest.Tag,
 			JobInputs:        runRequest.UserRequest.JobInputs,
+			IsInMaintenance:  s.Maintenance,
 		},
 		DeprecatedAdminMFA: runRequest.AdminMFA,
 	}
@@ -238,7 +239,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 	}
 
 	// Enqueue event
-	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec, s.Maintenance); err != nil {
+	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec); err != nil {
 		return exec, sdk.WrapError(err, "unable to enqueue repository event %s", exec.GetFullName())
 	}
 
@@ -464,7 +465,7 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerName strin
 	}
 
 	// Enqueue event
-	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec, s.Maintenance); err != nil {
+	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec); err != nil {
 		return exec, sdk.WrapError(err, "unable to enqueue repository event %s", exec.GetFullName())
 	}
 

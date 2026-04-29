@@ -240,7 +240,7 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 		}
 
 		// Enqueue event
-		if err := s.Dao.EnqueueRepositoryEvent(ctx, hre, s.Maintenance); err != nil {
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, hre); err != nil {
 			wh.Error = fmt.Sprintf("unable to enqueue repository event %s", hre.GetFullName())
 			allDone = false
 			log.ErrorWithStackTrace(ctx, err)
