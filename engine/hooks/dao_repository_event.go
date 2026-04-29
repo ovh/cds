@@ -46,7 +46,7 @@ func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, event
 	return d.store.SetRemove(repositoryEventInProgressKey, eventUUID, nil)
 }
 
-func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
+func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent, maintenance bool) error {
 	// Use to identify event in progress:
 	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerName, e.RepositoryName), e.UUID))
 	log.Debug(ctx, "enqueue event: %s", k)
@@ -58,7 +58,12 @@ func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryE
 		return err
 	}
 
-	if err := d.store.Enqueue(repositoryEventQueue, k); err != nil {
+	queueName := repositoryEventQueue
+	if maintenance && e.EventName == sdk.WorkflowHookEventNameManual {
+		queueName = repositoryEventMaintenanceQueue
+	}
+
+	if err := d.store.Enqueue(queueName, k); err != nil {
 		return err
 	}
 	d.enqueuedRepositoryEventIncr()

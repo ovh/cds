@@ -93,7 +93,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 
 	if !b {
 		// reenqueue
-		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre, s.Maintenance); err != nil {
 			return sdk.WrapError(err, "unable to reenqueue repository event")
 		}
 	}
@@ -155,7 +155,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 			return sdk.WrapError(err, "unable to save repository event %s", hre.GetFullName())
 		}
-		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre, s.Maintenance); err != nil {
 			return sdk.WrapError(err, "unable to enqueue repository event %s", hre.GetFullName())
 		}
 	}

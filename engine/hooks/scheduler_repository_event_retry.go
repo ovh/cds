@@ -106,7 +106,7 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 	// Check last update time
 	if time.Now().UnixMilli()-hre.LastUpdate > RetryDelayMilli && queueLen < s.Cfg.OldRepositoryEventQueueLen {
 		log.Info(ctx, "re-enqueue event %s", hre.GetFullName())
-		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre, s.Maintenance); err != nil {
 			return err
 		}
 	}

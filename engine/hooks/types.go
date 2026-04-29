@@ -22,9 +22,10 @@ const (
 	repositoryEventLockRootKey   = "hooks:events:lock"
 	repositoryLock               = "hooks:lock:repository"
 	repositoryRootKey            = "hooks:repository"
-	repositoryEventQueue         = "hooks:queue:repository:event"
-	repositoryEventCallbackQueue = "hooks:queue:repository:event:callback"
-	repositoryEventInProgressKey = "hooks:queue:repository:event:inprogress"
+	repositoryEventQueue              = "hooks:queue:repository:event"
+	repositoryEventMaintenanceQueue   = "hooks:queue:repository:event:maintenance"
+	repositoryEventCallbackQueue      = "hooks:queue:repository:event:callback"
+	repositoryEventInProgressKey      = "hooks:queue:repository:event:inprogress"
 
 	workflowRunOutgoingEventRootKey       = "hooks:outgoing:repository"
 	workflowRunOutgoingEventLockRootKey   = "hooks:outgoing:lock"

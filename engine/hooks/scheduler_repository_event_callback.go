@@ -130,7 +130,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			return err
 		}
 	} else {
-		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre, s.Maintenance); err != nil {
 			return err
 		}
 	}
