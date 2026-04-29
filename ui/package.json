@@ -78,7 +78,7 @@
     "ngx-infinite-scroll": "20.0.0",
     "ngx-markdown": "20.1.0",
     "ngx-moment": "6.0.2",
-    "postcss": "8.5.8",
+    "postcss": "8.5.10",
     "prismjs": "1.30.0",
     "raven-js": "3.27.2",
     "rxjs": "7.8.2",
