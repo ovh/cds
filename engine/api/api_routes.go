@@ -561,7 +561,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postJobRunStepHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/take", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2WorkerTakeJobHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/refresh", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2RefreshWorkerHandler))
-	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signin", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2RegisterWorkerHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signin", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2RegisterWorkerHandler, service.OverrideAuth(service.NoAuthMiddleware), MaintenanceAware()))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signout", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2UnregisterWorkerHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/hatchery/take", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postHatcheryTakeJobRunHandler), r.DELETEv2(api.deleteHatcheryReleaseJobRunHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postJobResultHandler))
