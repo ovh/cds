@@ -1075,6 +1075,60 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	return nil
 }
 
+// buildJobIntegrationsContext builds a JobIntegrationsContexts from project integrations
+// and the integration names declared at job and workflow level.
+// Job-level integrations take priority over workflow-level integrations.
+func buildJobIntegrationsContext(projectIntegrations []sdk.ProjectIntegration, jobIntegrations, workflowIntegrations []string) *sdk.JobIntegrationsContexts {
+	result := &sdk.JobIntegrationsContexts{}
+
+	matchIntegration := func(name string) {
+		if strings.Contains(name, "${{") {
+			return // skip unresolved dynamic names
+		}
+		var integ *sdk.ProjectIntegration
+		for i := range projectIntegrations {
+			if projectIntegrations[i].Name == name {
+				integ = &projectIntegrations[i]
+				break
+			}
+		}
+		if integ == nil {
+			return
+		}
+		switch {
+		case integ.Model.ArtifactManager:
+			if result.ArtifactManager.Name != "" {
+				return // already set by job integration
+			}
+			result.ArtifactManager = sdk.JobIntegrationsContext{
+				Name:      integ.Name,
+				Config:    integ.ToJobRunContextConfig(),
+				ModelName: integ.Model.Name,
+			}
+		case integ.Model.Deployment:
+			if result.Deployment.Name != "" {
+				return // already set by job integration
+			}
+			result.Deployment = sdk.JobIntegrationsContext{
+				Name:      integ.Name,
+				Config:    integ.ToJobRunContextConfig(),
+				ModelName: integ.Model.Name,
+			}
+		}
+	}
+
+	// Job integrations first (take priority)
+	for _, name := range jobIntegrations {
+		matchIntegration(name)
+	}
+	// Then workflow integrations
+	for _, name := range workflowIntegrations {
+		matchIntegration(name)
+	}
+
+	return result
+}
+
 func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, rj *sdk.V2WorkflowRunJob, defaultRegion string, regionPermCache map[string]*sdk.V2WorkflowRunJobInfo, jobContext sdk.WorkflowRunJobsContext, wrEnqueue sdk.V2WorkflowRunEnqueue) (*sdk.V2WorkflowRunJobInfo, bool) {
 	runUpdated := false
 	if rj.Status.IsTerminated() {
@@ -1135,6 +1189,15 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 					Message:          fmt.Sprintf("Job %s: unable to find integration %s: %v", rj.JobID, integName, err),
 				}, false
 			}
+
+			// Rebuild integrations context after resolving a dynamic integration name,
+			// so that the integrations.* context is available for subsequent interpolations (runs-on, etc.).
+			newIntegCtx := buildJobIntegrationsContext(wref.project.Integrations, rj.Job.Integrations, run.WorkflowData.Workflow.Integrations)
+			integBts, _ := json.Marshal(newIntegCtx)
+			var integMap interface{}
+			_ = json.Unmarshal(integBts, &integMap)
+			mapContexts["integrations"] = integMap
+			ap = sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 		}
 	}
 
@@ -1373,9 +1436,10 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				Git: run.Contexts.Git,
 				Env: run.Contexts.Env,
 			},
-			Jobs:  runJobsContexts,
-			Vars:  make(map[string]interface{}),
-			Needs: sdk.NeedsContext{},
+			Jobs:         runJobsContexts,
+			Vars:         make(map[string]interface{}),
+			Needs:        sdk.NeedsContext{},
+			Integrations: buildJobIntegrationsContext(proj.Integrations, jobDef.Integrations, run.WorkflowData.Workflow.Integrations),
 		}
 
 		// Add vars context
