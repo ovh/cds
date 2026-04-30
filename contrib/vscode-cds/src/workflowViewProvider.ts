@@ -1,0 +1,352 @@
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
+import { CdsService, CdsRepository, CdsWorkflowRun } from "./cdsService";
+
+// ─── Tree item classes ───────────────────────────────────────────────────────
+
+export class RepoItem extends vscode.TreeItem {
+  readonly kind = "repo" as const;
+  constructor(
+    public readonly displayName: string,
+    public readonly cdsDir: string | undefined,
+    public readonly repoRoot: string | undefined,
+    public readonly cdsRepo: CdsRepository | undefined,
+  ) {
+    super(displayName, vscode.TreeItemCollapsibleState.Collapsed);
+    this.id = `repo:${cdsRepo?.id ?? repoRoot ?? displayName}`;
+    this.description = cdsRepo
+      ? `${cdsRepo.repoName}  •  ${cdsRepo.vcsName}`
+      : cdsDir
+        ? "local only"
+        : undefined;
+    this.tooltip = cdsRepo
+      ? `${cdsRepo.repoName} (${cdsRepo.vcsName})\nProject: ${cdsRepo.projectKey}`
+      : (repoRoot ?? displayName);
+    this.iconPath = new vscode.ThemeIcon(
+      cdsRepo && cdsDir ? "repo-forked" : cdsRepo ? "cloud" : "folder-opened",
+    );
+    this.contextValue =
+      cdsRepo && cdsDir
+        ? "cdsRepoWorkspace"
+        : cdsRepo
+          ? "cdsRepoCds"
+          : "cdsRepoLocal";
+  }
+}
+
+export class WorkflowItem extends vscode.TreeItem {
+  readonly kind = "workflow" as const;
+  constructor(
+    public readonly displayLabel: string,
+    public readonly cdsWorkflowName: string,
+    public readonly filePath: string | undefined,
+    public readonly repo: RepoItem,
+  ) {
+    super(displayLabel, vscode.TreeItemCollapsibleState.Collapsed);
+    this.id = `wf:${repo.id}:${cdsWorkflowName}`;
+    this.description = filePath
+      ? path.relative(repo.repoRoot ?? "", filePath)
+      : undefined;
+    this.tooltip = filePath ?? cdsWorkflowName;
+    this.iconPath = new vscode.ThemeIcon(
+      filePath ? "file-code" : "symbol-event",
+    );
+    this.contextValue = repo.cdsRepo ? "cdsWorkflow" : "cdsWorkflowLocal";
+    if (filePath) {
+      this.command = {
+        command: "vscode.open",
+        title: "Open Workflow File",
+        arguments: [vscode.Uri.file(filePath)],
+      };
+    }
+  }
+}
+
+const STATUS_ICONS: Record<string, string> = {
+  success: "pass-filled",
+  fail: "error",
+  failed: "error",
+  building: "sync~spin",
+  pending: "clock",
+  waiting: "clock",
+  skipped: "circle-slash",
+  stopped: "circle-slash",
+  cancelled: "circle-slash",
+};
+
+function statusIcon(status: string): vscode.ThemeIcon {
+  const lc = status.toLowerCase();
+  return new vscode.ThemeIcon(STATUS_ICONS[lc] ?? "circle-outline");
+}
+
+function runContextValue(status: string): string {
+  const lc = status.toLowerCase();
+  if (lc === "building" || lc === "pending" || lc === "waiting") {
+    return "cdsRunBuilding";
+  }
+  if (lc === "fail" || lc === "failed") {
+    return "cdsRunFailed";
+  }
+  if (lc === "success") {
+    return "cdsRunSuccess";
+  }
+  return "cdsRunDone";
+}
+
+function relativeTime(iso: string): string {
+  if (!iso) {
+    return "";
+  }
+  const diff = Date.now() - new Date(iso).getTime();
+  if (isNaN(diff)) {
+    return iso;
+  }
+  const s = Math.floor(diff / 1000);
+  if (s < 60) {
+    return `${s}s ago`;
+  }
+  const m = Math.floor(s / 60);
+  if (m < 60) {
+    return `${m}m ago`;
+  }
+  const h = Math.floor(m / 60);
+  if (h < 24) {
+    return `${h}h ago`;
+  }
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+export class RunItem extends vscode.TreeItem {
+  readonly kind = "run" as const;
+  constructor(
+    public readonly run: CdsWorkflowRun,
+    public readonly workflow: WorkflowItem,
+  ) {
+    const ago = run.started ? `  ${relativeTime(run.started)}` : "";
+    super(`#${run.runNumber}${ago}`, vscode.TreeItemCollapsibleState.None);
+    this.id = `run:${run.id || run.runNumber}:${run.workflowName}`;
+    this.description = run.status;
+    this.tooltip = [
+      `Run #${run.runNumber}`,
+      `Status: ${run.status}`,
+      run.username ? `By: ${run.username}` : "",
+      run.started ? `Started: ${run.started}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    this.iconPath = statusIcon(run.status);
+    this.contextValue = runContextValue(run.status);
+  }
+}
+
+// ─── Provider ────────────────────────────────────────────────────────────────
+
+type TreeNode = RepoItem | WorkflowItem | RunItem;
+
+export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
+  private readonly _onDidChangeTreeData = new vscode.EventEmitter<
+    TreeNode | undefined | null | void
+  >();
+  readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
+  private readonly svc = new CdsService();
+
+  // Promise-based caches — undefined = not started yet
+  private repoPromise: Promise<RepoItem[]> | undefined;
+  private workflowPromises = new Map<string, Promise<WorkflowItem[]>>();
+  private runPromises = new Map<string, Promise<RunItem[]>>();
+
+  // Workflow names discovered per CDS repo (projectKey:repoId -> Set<workflowName>)
+  private discoveredWorkflows = new Map<string, Promise<string[]>>();
+
+  constructor(_workspaceRoot: string) {
+    /* initial load on first getChildren */
+  }
+
+  getTreeItem(element: TreeNode): vscode.TreeItem {
+    return element;
+  }
+
+  getChildren(element?: TreeNode): vscode.ProviderResult<TreeNode[]> {
+    if (!element) {
+      if (!this.repoPromise) {
+        this.repoPromise = this.buildRepoList();
+      }
+      return this.repoPromise;
+    }
+    if (element instanceof RepoItem) {
+      if (!this.workflowPromises.has(element.id!)) {
+        this.workflowPromises.set(element.id!, this.buildWorkflowList(element));
+      }
+      return this.workflowPromises.get(element.id!)!;
+    }
+    if (element instanceof WorkflowItem) {
+      if (!this.runPromises.has(element.id!)) {
+        this.runPromises.set(element.id!, this.buildRunList(element));
+      }
+      return this.runPromises.get(element.id!)!;
+    }
+    return [];
+  }
+
+  refresh(): void {
+    this.repoPromise = undefined;
+    this.workflowPromises.clear();
+    this.runPromises.clear();
+    this.discoveredWorkflows.clear();
+    this._onDidChangeTreeData.fire();
+  }
+
+  /** Refresh only a single workflow's run list (after stop / restart). */
+  refreshRuns(wf: WorkflowItem): void {
+    this.runPromises.delete(wf.id!);
+    this._onDidChangeTreeData.fire(wf);
+  }
+
+  // ─── Private helpers ──────────────────────────────────────────────────────
+
+  private async buildRepoList(): Promise<RepoItem[]> {
+    // 1. Scan workspace folders for .cds directories
+    const cdsDirs: Array<{ cdsDir: string; repoRoot: string }> = [];
+    for (const folder of vscode.workspace.workspaceFolders ?? []) {
+      for (const d of this.findCdsDirs(folder.uri.fsPath)) {
+        cdsDirs.push({ cdsDir: d, repoRoot: path.dirname(d) });
+      }
+    }
+
+    // 2. Get all CDS repos from cdsctl (v2)
+    const cdsRepos = await this.svc.listRepositories();
+
+    // 4. Match workspace dirs to CDS repos by basename
+    const matchedIds = new Set<string>();
+    const workspaceItems: RepoItem[] = [];
+    for (const { cdsDir, repoRoot } of cdsDirs) {
+      const dirName = path.basename(repoRoot);
+      const cdsRepo = cdsRepos.find(
+        (r) => r.repoName === dirName || r.repoName.endsWith("/" + dirName),
+      );
+      if (cdsRepo) {
+        matchedIds.add(cdsRepo.id);
+      }
+      workspaceItems.push(new RepoItem(dirName, cdsDir, repoRoot, cdsRepo));
+    }
+    // Matched workspace repos first
+    workspaceItems.sort((a, b) =>
+      !!a.cdsRepo === !!b.cdsRepo ? 0 : a.cdsRepo ? -1 : 1,
+    );
+
+    // 5. CDS repos not found in workspace
+    const cdsOnlyItems = cdsRepos
+      .filter((r) => !matchedIds.has(r.id))
+      .map((r) => new RepoItem(r.repoName, undefined, undefined, r));
+
+    return [...workspaceItems, ...cdsOnlyItems];
+  }
+
+  private async buildWorkflowList(repo: RepoItem): Promise<WorkflowItem[]> {
+    const workflows: WorkflowItem[] = [];
+    const seen = new Set<string>();
+
+    // Local .cds/ YAML files take priority
+    if (repo.cdsDir) {
+      for (const filePath of this.scanYamlFiles(repo.cdsDir)) {
+        const wfName = path.basename(filePath).replace(/\.(yaml|yml)$/, "");
+        if (!seen.has(wfName)) {
+          seen.add(wfName);
+          workflows.push(
+            new WorkflowItem(path.basename(filePath), wfName, filePath, repo),
+          );
+        }
+      }
+    }
+
+    // For CDS-only repos (not in workspace): discover workflows scoped to this
+    // specific repo. Workspace repos use local YAML files as the source of truth.
+    if (repo.cdsRepo && !repo.cdsDir) {
+      const { projectKey, vcsName, repoName, id: repoId } = repo.cdsRepo;
+      const cacheKey = `${projectKey}:${repoId}`;
+      if (!this.discoveredWorkflows.has(cacheKey)) {
+        this.discoveredWorkflows.set(
+          cacheKey,
+          this.svc.discoverRepoWorkflowNames(projectKey, vcsName, repoName),
+        );
+      }
+      const names = await this.discoveredWorkflows.get(cacheKey)!;
+      for (const name of names) {
+        if (!seen.has(name)) {
+          seen.add(name);
+          workflows.push(new WorkflowItem(name, name, undefined, repo));
+        }
+      }
+    }
+
+    return workflows;
+  }
+
+  private async buildRunList(wf: WorkflowItem): Promise<RunItem[]> {
+    if (!wf.repo.cdsRepo) {
+      return [];
+    }
+    const { projectKey, vcsName, id: repoId, repoName } = wf.repo.cdsRepo;
+
+    // Use the repo UUID to avoid shell-quoting issues with slash-names
+    const runs = await this.svc.getWorkflowHistory(
+      projectKey,
+      vcsName,
+      repoId,
+      wf.cdsWorkflowName,
+      15,
+      wf.repo.repoRoot,
+    );
+
+    return runs.map((r) => new RunItem(r, wf));
+  }
+
+  private findCdsDirs(dir: string, depth = 0): string[] {
+    if (depth > 3) {
+      return [];
+    }
+    const found: string[] = [];
+    try {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) {
+          continue;
+        }
+        const full = path.join(dir, entry.name);
+        if (entry.name === ".cds") {
+          found.push(full);
+        } else if (
+          !entry.name.startsWith(".") &&
+          entry.name !== "node_modules"
+        ) {
+          found.push(...this.findCdsDirs(full, depth + 1));
+        }
+      }
+    } catch {
+      /* skip unreadable dirs */
+    }
+    return found;
+  }
+
+  private scanYamlFiles(dir: string): string[] {
+    const results: string[] = [];
+    try {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          results.push(...this.scanYamlFiles(full));
+        } else if (
+          entry.isFile() &&
+          !entry.name.startsWith(".") &&
+          (entry.name.endsWith(".yaml") || entry.name.endsWith(".yml"))
+        ) {
+          results.push(full);
+        }
+      }
+    } catch {
+      /* skip */
+    }
+    return results;
+  }
+}
