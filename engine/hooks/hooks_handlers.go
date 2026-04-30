@@ -1038,6 +1038,19 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	}
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceOutgoingEvent", Value: fmt.Sprintf("%d/%d", hookOutgoingEventIn, hookOutgoingEventOut), Status: status})
 
+	// Maintenance queue size
+	maintenanceQueueSize, errMQ := s.Dao.RepositoryEventMaintenanceQueueLen()
+	if errMQ != nil {
+		log.Error(ctx, "Status> Unable to retrieve maintenance queue len: %v", errMQ)
+	}
+	status = sdk.MonitoringStatusOK
+	if maintenanceQueueSize >= 100 {
+		status = sdk.MonitoringStatusAlert
+	} else if maintenanceQueueSize >= 10 {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "MaintenanceQueue", Value: fmt.Sprintf("%d", maintenanceQueueSize), Status: status})
+
 	var nbHooksKafkaTotal int64
 
 	tasks, err := s.Dao.FindAllTasks(ctx)
