@@ -171,6 +171,10 @@ func (s *Service) Start(ctx context.Context) error {
 		})
 	}
 
+	s.GoRoutines.Run(ctx, "service.cdn-worker-cache-purge", func(ctx context.Context) {
+		s.workerCacheExpiredPurge(ctx)
+	})
+
 	return nil
 }
 
