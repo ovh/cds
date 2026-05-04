@@ -4,7 +4,7 @@ import { window, workspace } from "vscode";
 import { Journal } from "../utils/journal";
 import { isActiveEditorValid } from "../utils/editor";
 import { Property } from "../utils/property";
-import { Context, Project } from "./models";
+import { Context, Project, CdsRepository, CdsWorkflowRun } from "./models";
 import { getGitLocalConfig, getGitRepositoryPath, setGitLocalConfig } from "../utils/git";
 import { Cache } from "../utils/cache";
 import { WorkflowGenerateRequest, WorkflowGenerateResponse } from "./models/WorkflowGenerated";
@@ -126,6 +126,136 @@ export class CDS {
 
     static async downloadSchemas(): Promise<void> {
         await CDS.getInstance().runCtl("tools", "yaml-schema", "vscode");
+    }
+
+    // ── V2 Repository & Workflow methods ─────────────────────────────────
+
+    /**
+     * List CDS v2 repositories for a given project.
+     */
+    static async listRepositories(projectKey: string): Promise<CdsRepository[]> {
+        const out = await CDS.getInstance().runCtl(
+            "experimental", "project", "repository", "list", projectKey, "--format", "json",
+        );
+        const items: Record<string, string>[] = JSON.parse(out);
+        return items
+            .filter((r) => r["repoName"] || r["repo_name"])
+            .map((r) => ({
+                id: r["id"] ?? "",
+                vcsName: r["vcsName"] ?? r["vcs_name"] ?? "",
+                repoName: r["repoName"] ?? r["repo_name"] ?? "",
+                projectKey,
+            }));
+    }
+
+    /**
+     * Get run history for a specific v2 workflow.
+     */
+    static async getWorkflowHistory(
+        projectKey: string,
+        vcsName: string,
+        repoId: string,
+        workflowName: string,
+        limit = 15,
+    ): Promise<CdsWorkflowRun[]> {
+        const out = await CDS.getInstance().runCtl(
+            "experimental", "workflow", "history",
+            projectKey, vcsName, repoId, workflowName,
+            "--format", "json",
+        );
+        const items: Record<string, string>[] = JSON.parse(out);
+        return items.slice(0, limit).map((r) => ({
+            id: r["id"] ?? "",
+            runNumber: parseInt(r["run_number"] ?? r["runnumber"] ?? "0", 10),
+            status: r["status"] ?? "",
+            started: r["started"] ?? r["start"] ?? r["last_modified"] ?? "",
+            workflowName: r["workflow_name"] ?? r["workflowname"] ?? workflowName,
+            projectKey: r["project_key"] ?? r["projectkey"] ?? projectKey,
+            username: r["username"] ?? "",
+        }));
+    }
+
+    /**
+     * Search v2 workflows in a project (optionally scoped to a vcs/repo/name).
+     */
+    static async searchWorkflows(
+        projectKey: string,
+        workflow?: string,
+        limit = 200,
+    ): Promise<CdsWorkflowRun[]> {
+        const args = ["experimental", "workflow", "search", "--project", projectKey, "--limit", String(limit), "--format", "json"];
+        if (workflow) {
+            args.push("--workflow", workflow);
+        }
+        const out = await CDS.getInstance().runCtl(...args);
+        return JSON.parse(out);
+    }
+
+    /**
+     * Discover workflow names scoped to a specific repository.
+     */
+    static async discoverRepoWorkflowNames(
+        projectKey: string,
+        vcsName: string,
+        repoName: string,
+    ): Promise<string[]> {
+        // Collect candidate names project-wide
+        let candidates: string[] = [];
+        try {
+            const items = await CDS.searchWorkflows(projectKey);
+            const names = new Set<string>();
+            for (const r of items as unknown as Record<string, string>[]) {
+                const n = r["workflow_name"] ?? r["workflowname"] ?? "";
+                if (n) { names.add(n); }
+            }
+            candidates = [...names];
+        } catch {
+            return [];
+        }
+
+        // Verify each candidate belongs to this specific repo
+        const verified: string[] = [];
+        await Promise.all(
+            candidates.map(async (name) => {
+                try {
+                    const items = await CDS.searchWorkflows(projectKey, `${vcsName}/${repoName}/${name}`, 1);
+                    if (items.length > 0) {
+                        verified.push(name);
+                    }
+                } catch { /* not in this repo */ }
+            }),
+        );
+        return verified;
+    }
+
+    /** Stop a running v2 workflow run. */
+    static async stopRun(projectKey: string, runId: string): Promise<void> {
+        await CDS.getInstance().runCtl("experimental", "workflow", "stop", projectKey, runId);
+    }
+
+    /** Restart failed/stopped jobs in a v2 workflow run. */
+    static async restartRun(projectKey: string, runId: string): Promise<void> {
+        await CDS.getInstance().runCtl("experimental", "workflow", "restart", projectKey, runId);
+    }
+
+    /** Build the cdsctl command to trigger a v2 workflow run (to run in a terminal). */
+    static buildTriggerV2Command(
+        projectKey: string,
+        vcsName: string,
+        repoId: string,
+        workflowName: string,
+        branch?: string,
+        tag?: string,
+    ): string {
+        let cmd = `cdsctl -f ${CDS.getConfigFile()} -n experimental workflow run ${projectKey} ${vcsName} ${repoId} ${workflowName}`;
+        if (branch) { cmd += ` --branch ${branch}`; }
+        if (tag) { cmd += ` --tag ${tag}`; }
+        return cmd;
+    }
+
+    /** Build the command to download run logs (to run in a terminal). */
+    static buildLogsCommand(projectKey: string, runId: string): string {
+        return `cdsctl -f ${CDS.getConfigFile()} -n experimental workflow logs download ${projectKey} ${runId}`;
     }
 
     static getInstance(): CDS {
