@@ -1430,11 +1430,20 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 	for jobID, jobToTrigger := range jobsToQueue {
 		jobDef := jobToTrigger.Job
 
+		// Build env context: workflow-level env merged with job-level env (job takes priority)
+		envCtx := make(map[string]string)
+		for k, v := range run.Contexts.Env {
+			envCtx[k] = v
+		}
+		for k, v := range jobDef.Env {
+			envCtx[k] = v
+		}
+
 		runJobContext := sdk.WorkflowRunJobsContext{
 			WorkflowRunContext: sdk.WorkflowRunContext{
 				CDS: run.Contexts.CDS,
 				Git: run.Contexts.Git,
-				Env: run.Contexts.Env,
+				Env: envCtx,
 			},
 			Jobs:         runJobsContexts,
 			Vars:         make(map[string]interface{}),
