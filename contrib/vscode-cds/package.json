@@ -138,7 +138,7 @@
       "view/item/context": [
         {
           "command": "vscode-cds.triggerWorkflow",
-          "when": "view == vscode-cds-workflows && viewItem =~ /cdsRepoWorkspace|cdsRepoCds|cdsWorkflow/",
+          "when": "view == vscode-cds-workflows && viewItem == cdsWorkflow",
           "group": "inline@1"
         },
         {

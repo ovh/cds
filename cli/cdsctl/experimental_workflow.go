@@ -122,6 +122,7 @@ var workflowRunSearchCmd = cli.Command{
 	Flags: []cli.Flag{
 		{Name: "commit"},
 		{Name: "workflow", Usage: "<vcs>/<repo>/<workflow_name>"},
+		{Name: "repository", Usage: "<vcs>/<repo>"},
 		{Name: "project"},
 		{Name: "branch"},
 		{Name: "status"},
@@ -134,6 +135,7 @@ var workflowRunSearchCmd = cli.Command{
 func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
 	commit := v.GetString("commit")
 	workflow := v.GetString("workflow")
+	repository := v.GetString("repository")
 	projKey := v.GetString("project")
 	branch := v.GetString("branch")
 	status := v.GetString("status")
@@ -172,6 +174,9 @@ func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
 	}
 	if status != "" {
 		mods = append(mods, cdsclient.WithQueryParameter("status", status))
+	}
+	if repository != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("repository", repository))
 	}
 
 	var runs []sdk.V2WorkflowRun

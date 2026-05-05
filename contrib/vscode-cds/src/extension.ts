@@ -113,8 +113,17 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     // Refresh workflow view when CDS project or context changes
-    context.subscriptions.push(onProjectChanged(() => workflowViewProvider.refresh()));
+    context.subscriptions.push(onProjectChanged((project) => {
+        workflowViewProvider.setProjectKey(project?.key);
+    }));
     context.subscriptions.push(onContextChanged(() => workflowViewProvider.refresh()));
+
+    // Initialize the workflow view with the current project (event may have fired before listener was registered)
+    CDS.getCurrentProject().then((project) => {
+        if (project) {
+            workflowViewProvider.setProjectKey(project.key);
+        }
+    }).catch(() => { /* ignore */ });
 
     context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.refreshWorkflowView', () => {
         workflowViewProvider.refresh();

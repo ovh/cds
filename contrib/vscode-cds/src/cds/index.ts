@@ -176,16 +176,19 @@ export class CDS {
     }
 
     /**
-     * Search v2 workflows in a project (optionally scoped to a vcs/repo/name).
+     * Search v2 workflow runs in a project with optional filters.
      */
     static async searchWorkflows(
         projectKey: string,
-        workflow?: string,
-        limit = 200,
+        opts?: { workflow?: string; repository?: string; limit?: number },
     ): Promise<CdsWorkflowRun[]> {
+        const limit = opts?.limit ?? 200;
         const args = ["experimental", "workflow", "search", "--project", projectKey, "--limit", String(limit), "--format", "json"];
-        if (workflow) {
-            args.push("--workflow", workflow);
+        if (opts?.workflow) {
+            args.push("--workflow", opts.workflow);
+        }
+        if (opts?.repository) {
+            args.push("--repository", opts.repository);
         }
         const out = await CDS.getInstance().runCtl(...args);
         return JSON.parse(out);
@@ -193,39 +196,27 @@ export class CDS {
 
     /**
      * Discover workflow names scoped to a specific repository.
+     * Uses the repository filter to make a single API call.
      */
     static async discoverRepoWorkflowNames(
         projectKey: string,
         vcsName: string,
         repoName: string,
     ): Promise<string[]> {
-        // Collect candidate names project-wide
-        let candidates: string[] = [];
         try {
-            const items = await CDS.searchWorkflows(projectKey);
+            const items = await CDS.searchWorkflows(projectKey, {
+                repository: `${vcsName}/${repoName}`,
+                limit: 200,
+            });
             const names = new Set<string>();
             for (const r of items as unknown as Record<string, string>[]) {
-                const n = r["workflow_name"] ?? r["workflowname"] ?? "";
+                const n = r["workflow_name"] ?? r["workflowname"] ?? r["workflow"] ?? "";
                 if (n) { names.add(n); }
             }
-            candidates = [...names];
+            return [...names];
         } catch {
             return [];
         }
-
-        // Verify each candidate belongs to this specific repo
-        const verified: string[] = [];
-        await Promise.all(
-            candidates.map(async (name) => {
-                try {
-                    const items = await CDS.searchWorkflows(projectKey, `${vcsName}/${repoName}/${name}`, 1);
-                    if (items.length > 0) {
-                        verified.push(name);
-                    }
-                } catch { /* not in this repo */ }
-            }),
-        );
-        return verified;
     }
 
     /** Stop a running v2 workflow run. */

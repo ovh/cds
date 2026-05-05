@@ -143,7 +143,17 @@ export class RunItem extends vscode.TreeItem {
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 
-type TreeNode = RepoItem | WorkflowItem | RunItem;
+type TreeNode = RepoItem | WorkflowItem | RunItem | SeparatorItem;
+
+/** Visual separator in the tree view. */
+class SeparatorItem extends vscode.TreeItem {
+  constructor(label = "────────────────") {
+    super(label, vscode.TreeItemCollapsibleState.None);
+    this.id = `separator:${Date.now()}`;
+    this.description = "other workspace repos";
+    this.iconPath = new vscode.ThemeIcon("dash");
+  }
+}
 
 /** Placeholder item shown when no CDS project is selected. */
 class NoProjectItem extends vscode.TreeItem {
@@ -163,6 +173,9 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
   >();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
+  // Current project key (set externally via setProjectKey)
+  private projectKey: string | undefined;
+
   // Promise-based caches — undefined = not started yet
   private repoPromise: Promise<RepoItem[]> | undefined;
   private workflowPromises = new Map<string, Promise<WorkflowItem[]>>();
@@ -173,6 +186,14 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
 
   constructor() {
     /* initial load on first getChildren */
+  }
+
+  /** Update the active project and refresh the tree. */
+  setProjectKey(projectKey: string | undefined): void {
+    if (this.projectKey !== projectKey) {
+      this.projectKey = projectKey;
+      this.refresh();
+    }
   }
 
   getTreeItem(element: TreeNode): vscode.TreeItem {
@@ -220,12 +241,11 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
   // ─── Private helpers ──────────────────────────────────────────────────────
 
   private async buildRepoList(): Promise<RepoItem[]> {
-    // Get the current project from the CDS context
-    const project = await CDS.getCurrentProject();
-    if (!project) {
+    // Use the cached project key (set by onProjectChanged event)
+    const projectKey = this.projectKey;
+    if (!projectKey) {
       return [];
     }
-    const projectKey = project.key;
 
     // 1. Scan workspace folders for .cds directories
     const cdsDirs: Array<{ cdsDir: string; repoRoot: string }> = [];
@@ -243,33 +263,39 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
       // cdsctl may not be available — continue with local-only items
     }
 
-    // 3. Match workspace dirs to CDS repos by basename
+    // 3. Match workspace dirs to CDS repos by git remote URL
     // A single CDS repo can only be matched once to avoid duplicate tree IDs.
     const matchedIds = new Set<string>();
-    const workspaceItems: RepoItem[] = [];
+    const inProjectWorkspace: RepoItem[] = [];  // repos in workspace AND in project
+    const localOnly: RepoItem[] = [];           // repos in workspace but NOT in project
     for (const { cdsDir, repoRoot } of cdsDirs) {
       const dirName = path.basename(repoRoot);
+      const remoteSlug = this.getGitRemoteSlug(repoRoot);
       const cdsRepo = cdsRepos.find(
         (r) =>
           !matchedIds.has(r.id) &&
-          (r.repoName === dirName || r.repoName.endsWith("/" + dirName)),
+          this.matchesRepo(r, dirName, remoteSlug),
       );
       if (cdsRepo) {
         matchedIds.add(cdsRepo.id);
+        inProjectWorkspace.push(new RepoItem(dirName, cdsDir, repoRoot, cdsRepo));
+      } else {
+        localOnly.push(new RepoItem(dirName, cdsDir, repoRoot, undefined));
       }
-      workspaceItems.push(new RepoItem(dirName, cdsDir, repoRoot, cdsRepo));
     }
-    // Matched workspace repos first
-    workspaceItems.sort((a, b) =>
-      !!a.cdsRepo === !!b.cdsRepo ? 0 : a.cdsRepo ? -1 : 1,
-    );
 
-    // 4. CDS repos not found in workspace
+    // 4. CDS repos not found in workspace (remote only)
     const cdsOnlyItems = cdsRepos
       .filter((r) => !matchedIds.has(r.id))
       .map((r) => new RepoItem(r.repoName, undefined, undefined, r));
 
-    return [...workspaceItems, ...cdsOnlyItems];
+    // Order: 1) project repos in workspace, 2) project repos remote, 3) separator + local-only
+    const result: TreeNode[] = [...inProjectWorkspace, ...cdsOnlyItems];
+    if (localOnly.length > 0) {
+      result.push(new SeparatorItem());
+      result.push(...localOnly);
+    }
+    return result as RepoItem[];
   }
 
   private async buildWorkflowList(repo: RepoItem): Promise<WorkflowItem[]> {
@@ -375,5 +401,60 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
       /* skip */
     }
     return results;
+  }
+
+  /**
+   * Extract the "org/repo" slug from the git remote origin URL.
+   * Handles SSH (git@host:org/repo.git) and HTTPS (https://host/org/repo.git).
+   * Returns undefined if it cannot be determined.
+   */
+  private getGitRemoteSlug(repoRoot: string): string | undefined {
+    try {
+      const gitConfigPath = path.join(repoRoot, ".git", "config");
+      const content = fs.readFileSync(gitConfigPath, "utf-8");
+      // Find [remote "origin"] section and extract url
+      const originMatch = content.match(
+        /\[remote\s+"origin"\][^\[]*url\s*=\s*(.+)/m,
+      );
+      if (!originMatch) { return undefined; }
+      const url = originMatch[1].trim();
+      // SSH: git@host:org/repo.git or ssh://git@host/org/repo.git
+      const sshMatch = url.match(/[:\/]([^/:]+\/[^/]+?)(?:\.git)?\s*$/);
+      if (sshMatch) { return sshMatch[1]; }
+      // HTTPS: https://host/org/repo.git
+      const httpsMatch = url.match(/\/([^/]+\/[^/]+?)(?:\.git)?\s*$/);
+      if (httpsMatch) { return httpsMatch[1]; }
+    } catch {
+      /* .git/config not readable */
+    }
+    return undefined;
+  }
+
+  /**
+   * Match a CDS repository against a local directory.
+   * Priority: git remote slug (exact match) > basename fallback.
+   */
+  private matchesRepo(
+    cdsRepo: CdsRepository,
+    dirName: string,
+    remoteSlug: string | undefined,
+  ): boolean {
+    // If we have a git remote slug, use it for precise matching
+    if (remoteSlug) {
+      // cdsRepo.repoName is typically "org/repo" — compare with slug
+      if (cdsRepo.repoName === remoteSlug) {
+        return true;
+      }
+      // Some VCS store with a different prefix, try suffix match
+      if (cdsRepo.repoName.endsWith("/" + remoteSlug.split("/").pop())) {
+        // Only match if the org part also aligns
+        return cdsRepo.repoName === remoteSlug;
+      }
+    }
+    // Fallback to basename matching (only if no remote slug available)
+    if (!remoteSlug) {
+      return cdsRepo.repoName === dirName || cdsRepo.repoName.endsWith("/" + dirName);
+    }
+    return false;
   }
 }
