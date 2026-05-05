@@ -106,7 +106,10 @@ export async function activate(context: vscode.ExtensionContext) {
     // ── Workflow Explorer ────────────────────────────────────────────────────
     const workflowViewProvider = new WorkflowViewProvider();
 
-    vscode.window.registerTreeDataProvider('vscode-cds-workflows', workflowViewProvider);
+    context.subscriptions.push(workflowViewProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('vscode-cds-workflows', workflowViewProvider)
+    );
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeWorkspaceFolders(() => workflowViewProvider.refresh())
@@ -249,9 +252,13 @@ function onRequestSchemaContent(schemaUri: string): string | undefined {
     return getSchemaContent(parsedUri.path);
 }
 
-function getSchemaContent(name: string) {
+function getSchemaContent(name: string): string | undefined {
     const schemaPath = path.join(os.homedir(), '.cds-schema', name + '.v2.schema.json');
-    return fs.readFileSync(schemaPath, 'utf-8');
+    try {
+        return fs.readFileSync(schemaPath, 'utf-8');
+    } catch {
+        return undefined;
+    }
 }
 
 function updateVscodeContext(editor?: vscode.TextEditor) {

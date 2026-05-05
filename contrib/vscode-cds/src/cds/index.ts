@@ -137,7 +137,13 @@ export class CDS {
         const out = await CDS.getInstance().runCtl(
             "experimental", "project", "repository", "list", projectKey, "--format", "json",
         );
-        const items: Record<string, string>[] = JSON.parse(out);
+        let items: Record<string, string>[];
+        try {
+            items = JSON.parse(out);
+        } catch {
+            Journal.logError(new Error(`listRepositories: failed to parse JSON output`));
+            return [];
+        }
         return items
             .filter((r) => r["repoName"] || r["repo_name"])
             .map((r) => ({
@@ -163,7 +169,13 @@ export class CDS {
             projectKey, vcsName, repoId, workflowName,
             "--format", "json",
         );
-        const items: Record<string, any>[] = JSON.parse(out);
+        let items: Record<string, any>[];
+        try {
+            items = JSON.parse(out);
+        } catch {
+            Journal.logError(new Error(`getWorkflowHistory: failed to parse JSON output`));
+            return [];
+        }
         return items.slice(0, limit).map((r) => ({
             id: r["id"] ?? "",
             runNumber: parseInt(r["run_number"] ?? r["runnumber"] ?? "0", 10),
@@ -193,7 +205,12 @@ export class CDS {
             args.push("--repository", opts.repository);
         }
         const out = await CDS.getInstance().runCtl(...args);
-        return JSON.parse(out);
+        try {
+            return JSON.parse(out);
+        } catch {
+            Journal.logError(new Error(`searchWorkflows: failed to parse JSON output`));
+            return [];
+        }
     }
 
     /**
@@ -240,9 +257,10 @@ export class CDS {
         branch?: string,
         tag?: string,
     ): string {
-        let cmd = `cdsctl -f ${CDS.getConfigFile()} -n experimental workflow run ${projectKey} ${vcsName} ${repoId} ${workflowName}`;
-        if (branch) { cmd += ` --branch ${branch}`; }
-        if (tag) { cmd += ` --tag ${tag}`; }
+        const esc = (s: string) => `'${s.replace(/'/g, "'\\''")}'`;
+        let cmd = `cdsctl -f ${esc(CDS.getConfigFile())} -n experimental workflow run ${esc(projectKey)} ${esc(vcsName)} ${esc(repoId)} ${esc(workflowName)}`;
+        if (branch) { cmd += ` --branch ${esc(branch)}`; }
+        if (tag) { cmd += ` --tag ${esc(tag)}`; }
         return cmd;
     }
 
@@ -272,6 +290,7 @@ export class CDS {
             exec(cmd,
                 {
                     cwd: pwd,
+                    timeout: 30_000,
                 },
                 (error, stdout, stderr) => {
                     Journal.logInfo(stdout)
@@ -280,10 +299,10 @@ export class CDS {
 
                     if (error) {
                         Journal.logError(error);
-                        reject(error);
+                        return reject(error);
                     }
                     if (stderr) {
-                        reject(stderr);
+                        return reject(stderr);
                     }
                     resolve(stdout);
                 });

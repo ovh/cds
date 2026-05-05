@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
+import * as fsp from "fs/promises";
 import * as path from "path";
 import { CDS } from "./cds";
 import { CdsRepository, CdsWorkflowRun } from "./cds/models";
@@ -106,8 +107,8 @@ function relativeTime(iso: string): string {
     return "";
   }
   const diff = Date.now() - new Date(iso).getTime();
-  if (isNaN(diff)) {
-    return iso;
+  if (isNaN(diff) || diff < 0) {
+    return "just now";
   }
   const s = Math.floor(diff / 1000);
   if (s < 60) {
@@ -136,7 +137,7 @@ export class RunItem extends vscode.TreeItem {
 
     // Label: #number  ago
     super(`#${run.runNumber}  ${ago}`, vscode.TreeItemCollapsibleState.None);
-    this.id = `run:${run.id || run.runNumber}:${run.workflowName}`;
+    this.id = `run:${run.id}`;
 
     // Description: branch:ref  commit:sha
     const descParts: string[] = [];
@@ -167,7 +168,7 @@ type TreeNode = RepoItem | WorkflowItem | RunItem | SeparatorItem;
 class SeparatorItem extends vscode.TreeItem {
   constructor(label = "────────────────") {
     super(label, vscode.TreeItemCollapsibleState.None);
-    this.id = `separator:${Date.now()}`;
+    this.id = "separator:local-repos";
     this.description = "other workspace repos";
     this.iconPath = new vscode.ThemeIcon("dash");
   }
@@ -185,7 +186,7 @@ class NoProjectItem extends vscode.TreeItem {
   }
 }
 
-export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
+export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, vscode.Disposable {
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<
     TreeNode | undefined | null | void
   >();
@@ -195,7 +196,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
   private projectKey: string | undefined;
 
   // Promise-based caches — undefined = not started yet
-  private repoPromise: Promise<RepoItem[]> | undefined;
+  private repoPromise: Promise<TreeNode[]> | undefined;
   private workflowPromises = new Map<string, Promise<WorkflowItem[]>>();
   private runPromises = new Map<string, Promise<RunItem[]>>();
 
@@ -204,6 +205,10 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
 
   constructor() {
     /* initial load on first getChildren */
+  }
+
+  dispose(): void {
+    this._onDidChangeTreeData.dispose();
   }
 
   /** Update the active project and refresh the tree. */
@@ -224,7 +229,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
         this.repoPromise = this.buildRepoList();
       }
       return this.repoPromise.then((items) =>
-        items.length > 0 ? items : [new NoProjectItem() as unknown as TreeNode],
+        items.length > 0 ? items : [new NoProjectItem()],
       );
     }
     if (element instanceof RepoItem) {
@@ -258,7 +263,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
 
   // ─── Private helpers ──────────────────────────────────────────────────────
 
-  private async buildRepoList(): Promise<RepoItem[]> {
+  private async buildRepoList(): Promise<TreeNode[]> {
     // Use the cached project key (set by onProjectChanged event)
     const projectKey = this.projectKey;
     if (!projectKey) {
@@ -268,7 +273,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
     // 1. Scan workspace folders for .cds directories
     const cdsDirs: Array<{ cdsDir: string; repoRoot: string }> = [];
     for (const folder of vscode.workspace.workspaceFolders ?? []) {
-      for (const d of this.findCdsDirs(folder.uri.fsPath)) {
+      for (const d of await this.findCdsDirs(folder.uri.fsPath)) {
         cdsDirs.push({ cdsDir: d, repoRoot: path.dirname(d) });
       }
     }
@@ -288,7 +293,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
     const localOnly: RepoItem[] = [];           // repos in workspace but NOT in project
     for (const { cdsDir, repoRoot } of cdsDirs) {
       const dirName = path.basename(repoRoot);
-      const remoteSlug = this.getGitRemoteSlug(repoRoot);
+      const remoteSlug = await this.getGitRemoteSlug(repoRoot);
       const cdsRepo = cdsRepos.find(
         (r) =>
           !matchedIds.has(r.id) &&
@@ -313,7 +318,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
       result.push(new SeparatorItem());
       result.push(...localOnly);
     }
-    return result as RepoItem[];
+    return result;
   }
 
   private async buildWorkflowList(repo: RepoItem): Promise<WorkflowItem[]> {
@@ -322,7 +327,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
 
     // Local .cds/ YAML files take priority
     if (repo.cdsDir) {
-      for (const filePath of this.scanYamlFiles(repo.cdsDir)) {
+      for (const filePath of await this.scanYamlFiles(repo.cdsDir)) {
         const wfName = path.basename(filePath).replace(/\.(yaml|yml)$/, "");
         if (!seen.has(wfName)) {
           seen.add(wfName);
@@ -374,13 +379,14 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
     return runs.map((r) => new RunItem(r, wf));
   }
 
-  private findCdsDirs(dir: string, depth = 0): string[] {
+  private async findCdsDirs(dir: string, depth = 0): Promise<string[]> {
     if (depth > 3) {
       return [];
     }
     const found: string[] = [];
     try {
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entries = await fsp.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
         if (!entry.isDirectory()) {
           continue;
         }
@@ -391,7 +397,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
           !entry.name.startsWith(".") &&
           entry.name !== "node_modules"
         ) {
-          found.push(...this.findCdsDirs(full, depth + 1));
+          found.push(...await this.findCdsDirs(full, depth + 1));
         }
       }
     } catch {
@@ -400,13 +406,14 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
     return found;
   }
 
-  private scanYamlFiles(dir: string): string[] {
+  private async scanYamlFiles(dir: string): Promise<string[]> {
     const results: string[] = [];
     try {
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entries = await fsp.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) {
-          results.push(...this.scanYamlFiles(full));
+          results.push(...await this.scanYamlFiles(full));
         } else if (
           entry.isFile() &&
           !entry.name.startsWith(".") &&
@@ -426,10 +433,10 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
    * Handles SSH (git@host:org/repo.git) and HTTPS (https://host/org/repo.git).
    * Returns undefined if it cannot be determined.
    */
-  private getGitRemoteSlug(repoRoot: string): string | undefined {
+  private async getGitRemoteSlug(repoRoot: string): Promise<string | undefined> {
     try {
       const gitConfigPath = path.join(repoRoot, ".git", "config");
-      const content = fs.readFileSync(gitConfigPath, "utf-8");
+      const content = await fsp.readFile(gitConfigPath, "utf-8");
       // Find [remote "origin"] section and extract url
       const originMatch = content.match(
         /\[remote\s+"origin"\][^\[]*url\s*=\s*(.+)/m,
