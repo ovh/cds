@@ -22,7 +22,12 @@ export class CDS {
 
     static async getAvailableContexts(): Promise<Context[]> {
         const stdout = await CDS.getInstance().runCtl("context", "list", "--format", "json");
-        return JSON.parse(stdout);
+        try {
+            return JSON.parse(stdout);
+        } catch {
+            Journal.logError(new Error(`getAvailableContexts: failed to parse JSON output`));
+            return [];
+        }
     }
 
     static async setCurrentContext(context: string): Promise<void> {
@@ -54,8 +59,12 @@ export class CDS {
         args.push("--format", "json");
 
         const resp = (await CDS.getInstance().runCtl(...args));
-        const generatedWorkflow = JSON.parse(resp);
-        return generatedWorkflow;
+        try {
+            return JSON.parse(resp);
+        } catch {
+            Journal.logError(new Error(`generateWorkflowFromTemplate: failed to parse JSON output`));
+            throw new Error("Failed to parse workflow generation response");
+        }
     }
 
 
@@ -71,7 +80,13 @@ export class CDS {
         }
 
         const projectsJson = (await CDS.getInstance().runCtl("project", "list", "--format", "json"));
-        const projects = JSON.parse(projectsJson);
+        let projects: Project[];
+        try {
+            projects = JSON.parse(projectsJson);
+        } catch {
+            Journal.logError(new Error(`getProjects: failed to parse JSON output`));
+            return [];
+        }
 
         if (context) {
             Cache.set(`${context.context}.projects`, projects, Cache.TTL_HOUR * 24);
@@ -228,9 +243,9 @@ export class CDS {
                 limit: 200,
             });
             const names = new Set<string>();
-            for (const r of items as unknown as Record<string, string>[]) {
-                const n = r["workflow_name"] ?? r["workflowname"] ?? r["workflow"] ?? "";
-                if (n) { names.add(n); }
+            for (const r of items) {
+                const name = r.workflowName;
+                if (name) { names.add(name); }
             }
             return [...names];
         } catch {

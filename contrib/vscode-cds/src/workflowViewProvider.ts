@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
 import * as fsp from "fs/promises";
 import * as path from "path";
 import { CDS } from "./cds";
@@ -226,7 +225,10 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
   getChildren(element?: TreeNode): vscode.ProviderResult<TreeNode[]> {
     if (!element) {
       if (!this.repoPromise) {
-        this.repoPromise = this.buildRepoList();
+        this.repoPromise = this.buildRepoList().catch((err) => {
+          this.repoPromise = undefined;
+          throw err;
+        });
       }
       return this.repoPromise.then((items) =>
         items.length > 0 ? items : [new NoProjectItem()],
@@ -234,7 +236,11 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
     }
     if (element instanceof RepoItem) {
       if (!this.workflowPromises.has(element.id!)) {
-        this.workflowPromises.set(element.id!, this.buildWorkflowList(element));
+        const p = this.buildWorkflowList(element).catch((err) => {
+          this.workflowPromises.delete(element.id!);
+          throw err;
+        });
+        this.workflowPromises.set(element.id!, p);
       }
       return this.workflowPromises.get(element.id!)!;
     }
@@ -325,9 +331,10 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
     const workflows: WorkflowItem[] = [];
     const seen = new Set<string>();
 
-    // Local .cds/ YAML files take priority
+    // Local .cds/workflows/ YAML files take priority
     if (repo.cdsDir) {
-      for (const filePath of await this.scanYamlFiles(repo.cdsDir)) {
+      const workflowsDir = path.join(repo.cdsDir, "workflows");
+      for (const filePath of await this.scanYamlFiles(workflowsDir)) {
         const wfName = path.basename(filePath).replace(/\.(yaml|yml)$/, "");
         if (!seen.has(wfName)) {
           seen.add(wfName);
