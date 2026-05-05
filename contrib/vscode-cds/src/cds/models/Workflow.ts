@@ -6,6 +6,8 @@ export interface CdsWorkflowRun {
   workflowName: string;
   projectKey: string;
   username?: string;
+  ref?: string;
+  commit?: string;
 }
 
 export interface CDSWorkflow {

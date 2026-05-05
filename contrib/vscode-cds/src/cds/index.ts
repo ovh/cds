@@ -163,7 +163,7 @@ export class CDS {
             projectKey, vcsName, repoId, workflowName,
             "--format", "json",
         );
-        const items: Record<string, string>[] = JSON.parse(out);
+        const items: Record<string, any>[] = JSON.parse(out);
         return items.slice(0, limit).map((r) => ({
             id: r["id"] ?? "",
             runNumber: parseInt(r["run_number"] ?? r["runnumber"] ?? "0", 10),
@@ -171,7 +171,9 @@ export class CDS {
             started: r["started"] ?? r["start"] ?? r["last_modified"] ?? "",
             workflowName: r["workflow_name"] ?? r["workflowname"] ?? workflowName,
             projectKey: r["project_key"] ?? r["projectkey"] ?? projectKey,
-            username: r["username"] ?? "",
+            username: r["user"] ?? r["username"] ?? "",
+            ref: r["ref_name"] ?? "",
+            commit: r["commit"] ?? "",
         }));
     }
 

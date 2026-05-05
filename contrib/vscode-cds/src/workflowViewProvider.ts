@@ -64,21 +64,27 @@ export class WorkflowItem extends vscode.TreeItem {
   }
 }
 
-const STATUS_ICONS: Record<string, string> = {
-  success: "pass-filled",
-  fail: "error",
-  failed: "error",
-  building: "sync~spin",
-  pending: "clock",
-  waiting: "clock",
-  skipped: "circle-slash",
-  stopped: "circle-slash",
-  cancelled: "circle-slash",
+const STATUS_ICONS: Record<string, { icon: string; color: string }> = {
+  success: { icon: "pass-filled", color: "charts.green" },
+  fail: { icon: "error", color: "charts.red" },
+  failed: { icon: "error", color: "charts.red" },
+  building: { icon: "sync~spin", color: "charts.blue" },
+  crafting: { icon: "sync~spin", color: "charts.blue" },
+  pending: { icon: "clock", color: "charts.yellow" },
+  waiting: { icon: "clock", color: "charts.yellow" },
+  blocked: { icon: "lock", color: "charts.yellow" },
+  skipped: { icon: "circle-slash", color: "disabledForeground" },
+  stopped: { icon: "circle-slash", color: "charts.orange" },
+  cancelled: { icon: "circle-slash", color: "disabledForeground" },
 };
 
 function statusIcon(status: string): vscode.ThemeIcon {
   const lc = status.toLowerCase();
-  return new vscode.ThemeIcon(STATUS_ICONS[lc] ?? "circle-outline");
+  const entry = STATUS_ICONS[lc];
+  if (entry) {
+    return new vscode.ThemeIcon(entry.icon, new vscode.ThemeColor(entry.color));
+  }
+  return new vscode.ThemeIcon("circle-outline");
 }
 
 function runContextValue(status: string): string {
@@ -124,13 +130,25 @@ export class RunItem extends vscode.TreeItem {
     public readonly run: CdsWorkflowRun,
     public readonly workflow: WorkflowItem,
   ) {
-    const ago = run.started ? `  ${relativeTime(run.started)}` : "";
-    super(`#${run.runNumber}${ago}`, vscode.TreeItemCollapsibleState.None);
+    const refName = run.ref || "";
+    const shortCommit = run.commit ? run.commit.substring(0, 7) : "";
+    const ago = run.started ? relativeTime(run.started) : "";
+
+    // Label: #number  ago
+    super(`#${run.runNumber}  ${ago}`, vscode.TreeItemCollapsibleState.None);
     this.id = `run:${run.id || run.runNumber}:${run.workflowName}`;
-    this.description = run.status;
+
+    // Description: branch:ref  commit:sha
+    const descParts: string[] = [];
+    if (refName) { descParts.push(`branch:${refName}`); }
+    if (shortCommit) { descParts.push(`commit:${shortCommit}`); }
+    this.description = descParts.join("  ");
+
     this.tooltip = [
       `Run #${run.runNumber}`,
       `Status: ${run.status}`,
+      refName ? `Ref: ${refName}` : "",
+      run.commit ? `Commit: ${run.commit}` : "",
       run.username ? `By: ${run.username}` : "",
       run.started ? `Started: ${run.started}` : "",
     ]
