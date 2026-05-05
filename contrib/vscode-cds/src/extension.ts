@@ -203,10 +203,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.viewRunLogs', async (item?: RunItem) => {
         if (!item?.run.id) { vscode.window.showErrorMessage('No run selected.'); return; }
+        const repoRoot = item.workflow.repo.repoRoot;
+        const logsDir = repoRoot ? path.join(repoRoot, '.logs') : undefined;
+        if (logsDir) {
+            await fs.promises.mkdir(logsDir, { recursive: true });
+        }
         const cmd = CDS.buildLogsCommand(item.run.projectKey, item.run.id);
         const terminal = vscode.window.createTerminal({
             name: `CDS logs: #${item.run.runNumber} ${item.run.workflowName}`,
-            cwd: item.workflow.repo.repoRoot,
+            cwd: logsDir ?? repoRoot,
         });
         terminal.show();
         terminal.sendText(cmd);
