@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import { CdsService, CdsRepository, CdsWorkflowRun } from "./cdsService";
+import { CDS } from "./cds";
+import { CdsRepository, CdsWorkflowRun } from "./cds/models";
 
 // ─── Tree item classes ───────────────────────────────────────────────────────
 
@@ -14,7 +15,7 @@ export class RepoItem extends vscode.TreeItem {
     public readonly cdsRepo: CdsRepository | undefined,
   ) {
     super(displayName, vscode.TreeItemCollapsibleState.Collapsed);
-    this.id = `repo:${cdsRepo?.id ?? repoRoot ?? displayName}`;
+    this.id = `repo:${cdsRepo?.id ?? repoRoot ?? displayName}:${repoRoot ?? "remote"}`;
     this.description = cdsRepo
       ? `${cdsRepo.repoName}  •  ${cdsRepo.vcsName}`
       : cdsDir
@@ -144,13 +145,23 @@ export class RunItem extends vscode.TreeItem {
 
 type TreeNode = RepoItem | WorkflowItem | RunItem;
 
+/** Placeholder item shown when no CDS project is selected. */
+class NoProjectItem extends vscode.TreeItem {
+  constructor() {
+    super("Select a CDS project to browse workflows", vscode.TreeItemCollapsibleState.None);
+    this.iconPath = new vscode.ThemeIcon("info");
+    this.command = {
+      command: "vscode-cds.setCurrentProject",
+      title: "Select CDS project",
+    };
+  }
+}
+
 export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<
     TreeNode | undefined | null | void
   >();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
-
-  private readonly svc = new CdsService();
 
   // Promise-based caches — undefined = not started yet
   private repoPromise: Promise<RepoItem[]> | undefined;
@@ -160,7 +171,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
   // Workflow names discovered per CDS repo (projectKey:repoId -> Set<workflowName>)
   private discoveredWorkflows = new Map<string, Promise<string[]>>();
 
-  constructor(_workspaceRoot: string) {
+  constructor() {
     /* initial load on first getChildren */
   }
 
@@ -173,7 +184,9 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
       if (!this.repoPromise) {
         this.repoPromise = this.buildRepoList();
       }
-      return this.repoPromise;
+      return this.repoPromise.then((items) =>
+        items.length > 0 ? items : [new NoProjectItem() as unknown as TreeNode],
+      );
     }
     if (element instanceof RepoItem) {
       if (!this.workflowPromises.has(element.id!)) {
@@ -207,6 +220,13 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
   // ─── Private helpers ──────────────────────────────────────────────────────
 
   private async buildRepoList(): Promise<RepoItem[]> {
+    // Get the current project from the CDS context
+    const project = await CDS.getCurrentProject();
+    if (!project) {
+      return [];
+    }
+    const projectKey = project.key;
+
     // 1. Scan workspace folders for .cds directories
     const cdsDirs: Array<{ cdsDir: string; repoRoot: string }> = [];
     for (const folder of vscode.workspace.workspaceFolders ?? []) {
@@ -215,16 +235,24 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
       }
     }
 
-    // 2. Get all CDS repos from cdsctl (v2)
-    const cdsRepos = await this.svc.listRepositories();
+    // 2. Get CDS repos for the selected project
+    let cdsRepos: CdsRepository[] = [];
+    try {
+      cdsRepos = await CDS.listRepositories(projectKey);
+    } catch {
+      // cdsctl may not be available — continue with local-only items
+    }
 
-    // 4. Match workspace dirs to CDS repos by basename
+    // 3. Match workspace dirs to CDS repos by basename
+    // A single CDS repo can only be matched once to avoid duplicate tree IDs.
     const matchedIds = new Set<string>();
     const workspaceItems: RepoItem[] = [];
     for (const { cdsDir, repoRoot } of cdsDirs) {
       const dirName = path.basename(repoRoot);
       const cdsRepo = cdsRepos.find(
-        (r) => r.repoName === dirName || r.repoName.endsWith("/" + dirName),
+        (r) =>
+          !matchedIds.has(r.id) &&
+          (r.repoName === dirName || r.repoName.endsWith("/" + dirName)),
       );
       if (cdsRepo) {
         matchedIds.add(cdsRepo.id);
@@ -236,7 +264,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
       !!a.cdsRepo === !!b.cdsRepo ? 0 : a.cdsRepo ? -1 : 1,
     );
 
-    // 5. CDS repos not found in workspace
+    // 4. CDS repos not found in workspace
     const cdsOnlyItems = cdsRepos
       .filter((r) => !matchedIds.has(r.id))
       .map((r) => new RepoItem(r.repoName, undefined, undefined, r));
@@ -269,7 +297,7 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
       if (!this.discoveredWorkflows.has(cacheKey)) {
         this.discoveredWorkflows.set(
           cacheKey,
-          this.svc.discoverRepoWorkflowNames(projectKey, vcsName, repoName),
+          CDS.discoverRepoWorkflowNames(projectKey, vcsName, repoName),
         );
       }
       const names = await this.discoveredWorkflows.get(cacheKey)!;
@@ -288,16 +316,15 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode> {
     if (!wf.repo.cdsRepo) {
       return [];
     }
-    const { projectKey, vcsName, id: repoId, repoName } = wf.repo.cdsRepo;
+    const { projectKey, vcsName, id: repoId } = wf.repo.cdsRepo;
 
     // Use the repo UUID to avoid shell-quoting issues with slash-names
-    const runs = await this.svc.getWorkflowHistory(
+    const runs = await CDS.getWorkflowHistory(
       projectKey,
       vcsName,
       repoId,
       wf.cdsWorkflowName,
       15,
-      wf.repo.repoRoot,
     );
 
     return runs.map((r) => new RunItem(r, wf));
