@@ -205,10 +205,13 @@ func Glob(cwd string, pattern string) (*FileResults, error) {
 		} else {
 			retaliveExpressions = append(retaliveExpressions, s)
 		}
+		// filepath.Clean uses OS-specific separators (backslash on Windows),
+		// but io/fs and the pattern parser only work with forward slashes.
+		cleaned := filepath.ToSlash(filepath.Clean(s))
 		if strings.HasPrefix(expression, "!") {
-			splittedExpression[i] = "!" + filepath.Clean(s)
+			splittedExpression[i] = "!" + cleaned
 		} else {
-			splittedExpression[i] = filepath.Clean(s)
+			splittedExpression[i] = cleaned
 		}
 
 	}
@@ -250,7 +253,7 @@ func LongestCommonPathPrefix(strs []string) string {
 		for i := 0; i < len(first); i++ {
 			if !endPrefix && string(last[i]) == string(first[i]) {
 				longestPrefix += string(last[i])
-				if _, err := os.ReadDir(longestPrefix); last[i] == '/' && err == nil {
+				if _, err := os.ReadDir(longestPrefix); (last[i] == '/' || last[i] == filepath.Separator) && err == nil {
 					lastPath = longestPrefix
 				}
 			} else {
