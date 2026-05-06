@@ -100,7 +100,7 @@
     "@angular-eslint/schematics": "20.7.0",
     "@angular-eslint/template-parser": "20.7.0",
     "@angular/build": "20.3.19",
-    "@angular/cli": "20.3.19",
+    "@angular/cli": "21.1.2",
     "@angular/compiler-cli": "20.3.17",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "13.2.0",
