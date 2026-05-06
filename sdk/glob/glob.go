@@ -3,6 +3,7 @@ package glob
 import (
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -194,6 +195,11 @@ func (g *Globber) walkdirFunc(target *[]string) func(path string, d fs.DirEntry,
 }
 
 func Glob(cwd string, pattern string) (*FileResults, error) {
+	// Normalize separators to forward slashes once. io/fs and the pattern
+	// parser only recognize '/'. On Linux this is a no-op; on Windows it
+	// converts '\' (produced by CDS workspace expansion and filepath.Join)
+	// into '/'.
+	pattern = filepath.ToSlash(pattern)
 	splittedExpression := splitListExpression(pattern)
 	var absoluteExpressions []string
 	var retaliveExpressions []string
@@ -205,9 +211,7 @@ func Glob(cwd string, pattern string) (*FileResults, error) {
 		} else {
 			retaliveExpressions = append(retaliveExpressions, s)
 		}
-		// filepath.Clean uses OS-specific separators (backslash on Windows),
-		// but io/fs and the pattern parser only work with forward slashes.
-		cleaned := filepath.ToSlash(filepath.Clean(s))
+		cleaned := path.Clean(s)
 		if strings.HasPrefix(expression, "!") {
 			splittedExpression[i] = "!" + cleaned
 		} else {
@@ -253,7 +257,7 @@ func LongestCommonPathPrefix(strs []string) string {
 		for i := 0; i < len(first); i++ {
 			if !endPrefix && string(last[i]) == string(first[i]) {
 				longestPrefix += string(last[i])
-				if _, err := os.ReadDir(longestPrefix); (last[i] == '/' || last[i] == filepath.Separator) && err == nil {
+				if _, err := os.ReadDir(longestPrefix); last[i] == '/' && err == nil {
 					lastPath = longestPrefix
 				}
 			} else {

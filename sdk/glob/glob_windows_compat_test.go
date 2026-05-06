@@ -495,3 +495,68 @@ func TestGlob_PatternToSlashIdempotentOnLinux(t *testing.T) {
 	input := "path/to/artifact/*.zip"
 	require.Equal(t, input, filepath.ToSlash(filepath.Clean(input)))
 }
+
+// TestGlob_RelativeBackslashPatternNormalized verifies that a relative pattern
+// containing literal backslashes (as produced by CDS expansion of
+// ${{ cds.workspace }} on Windows) is normalized at the Glob() entry point and
+// matches files emitted by io/fs in forward-slash form. filepath.ToSlash is a
+// no-op on Linux (backslash is a valid filename character), so the test is
+// Windows-only.
+func TestGlob_RelativeBackslashPatternNormalized(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("filepath.ToSlash is a no-op on non-Windows; backslash stays literal")
+	}
+	tmpDir := t.TempDir()
+	distDir := filepath.Join(tmpDir, "dist")
+	require.NoError(t, os.MkdirAll(distDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(distDir, "foo.zip"), []byte("x"), 0644))
+
+	// Pattern as produced by CDS workspace expansion on Windows
+	pattern := `dist\foo.zip`
+	result, err := Glob(tmpDir, pattern)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result.Results), "got: %s", result.String())
+	require.Equal(t, "dist/foo.zip", result.Results[0].Path)
+}
+
+// TestGlob_AbsoluteBackslashPattern reproduces the original bug report:
+// ${{ cds.workspace }}\dist\foo.zip expanded by CDS on a Windows worker
+// produces an absolute path with backslashes. After normalization at the
+// Glob() entry point, the pattern must still match the file.
+func TestGlob_AbsoluteBackslashPattern(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("absolute backslash patterns are Windows-specific")
+	}
+	tmpDir := t.TempDir()
+	distDir := filepath.Join(tmpDir, "dist")
+	require.NoError(t, os.MkdirAll(distDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(distDir, "foo.zip"), []byte("x"), 0644))
+
+	// filepath.Join produces backslashes on Windows
+	pattern := filepath.Join(tmpDir, "dist", "foo.zip")
+	require.Contains(t, pattern, `\`, "precondition: pattern must contain backslashes on Windows")
+
+	result, err := Glob(tmpDir, pattern)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result.Results), "got: %s", result.String())
+}
+
+// TestGlob_AbsoluteBackslashPatternWithStar covers the wildcard variant of the
+// absolute Windows path scenario (e.g. ${{ cds.workspace }}\dist\*.zip), which
+// is a common usage in workflows.
+func TestGlob_AbsoluteBackslashPatternWithStar(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Windows-specific")
+	}
+	tmpDir := t.TempDir()
+	distDir := filepath.Join(tmpDir, "dist")
+	require.NoError(t, os.MkdirAll(distDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(distDir, "a.zip"), []byte("x"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(distDir, "b.zip"), []byte("x"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(distDir, "c.txt"), []byte("x"), 0644))
+
+	pattern := filepath.Join(tmpDir, "dist") + `\*.zip`
+	result, err := Glob(tmpDir, pattern)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(result.Results), "got: %s", result.String())
+}
