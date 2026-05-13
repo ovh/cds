@@ -263,7 +263,11 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 			// try to get tag
 			t, err := client.Tag(ctx, entityRepo.Name, branchOrTag)
 			if err != nil {
-				return nil, "", err
+				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return nil, "", err
+				} else {
+					return nil, fmt.Sprintf("unable to find branch or tag %s for repository %s on vcs %s", branchOrTag, repoName, vcsName), nil
+				}
 			}
 			ref = sdk.GitRefTagPrefix + t.Tag
 		} else {
