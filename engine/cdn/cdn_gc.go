@@ -241,3 +241,61 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 	}
 	return nil
 }
+
+// workerCacheExpiredPurge periodically marks expired worker-cache items as to_delete.
+func (s *Service) workerCacheExpiredPurge(ctx context.Context) {
+	frequency := s.Cfg.WorkerCachePurge.FrequencySeconds
+	if frequency <= 0 {
+		frequency = 3600
+	}
+	batchSize := s.Cfg.WorkerCachePurge.BatchSize
+	if batchSize <= 0 {
+		batchSize = 1000
+	}
+	gracePeriodDays := s.Cfg.WorkerCachePurge.GracePeriodDays
+	if gracePeriodDays <= 0 {
+		gracePeriodDays = 730
+	}
+
+	tick := time.NewTicker(time.Duration(frequency) * time.Second)
+	defer tick.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "cdn:worker-cache-purge: %v", ctx.Err())
+			}
+			return
+		case <-tick.C:
+			if err := s.purgeExpiredWorkerCacheItems(ctx, batchSize, gracePeriodDays); err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, "cdn:worker-cache-purge: %v", err)
+			}
+		}
+	}
+}
+
+func (s *Service) purgeExpiredWorkerCacheItems(ctx context.Context, batchSize int, gracePeriodDays int) error {
+	ids, err := item.LoadExpiredWorkerCacheItemIDs(s.mustDBWithCtx(ctx), batchSize, gracePeriodDays)
+	if err != nil {
+		return err
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+
+	log.Info(ctx, "cdn:worker-cache-purge: %d expired items to mark for deletion", len(ids))
+
+	tx, err := s.mustDBWithCtx(ctx).Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
+
+	if err := item.MarkItemsAsToDelete(tx, ids); err != nil {
+		return err
+	}
+
+	return sdk.WithStack(tx.Commit())
+}
