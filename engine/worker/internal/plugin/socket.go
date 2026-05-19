@@ -172,7 +172,7 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 
 	log.Debug(ctx, "runScriptAction> Worker binary path: %s", path.Dir(workerpath))
 	for i := range envs {
-		if strings.HasPrefix(envs[i], "PATH") {
+		if strings.HasPrefix(envs[i], "PATH=") {
 			envs[i] = fmt.Sprintf("%s:%s", envs[i], path.Dir(workerpath))
 			break
 		}

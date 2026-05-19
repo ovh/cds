@@ -225,7 +225,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 
 		log.Debug(ctx, "runScriptAction> Worker binary path: %s", path.Dir(workerpath))
 		for i := range cmd.Env {
-			if strings.HasPrefix(cmd.Env[i], "PATH") {
+			if strings.HasPrefix(cmd.Env[i], "PATH=") {
 				cmd.Env[i] = fmt.Sprintf("%s:%s", cmd.Env[i], path.Dir(workerpath))
 				break
 			}
