@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	HelmInstallURL = "https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz"
+	HelmInstallURL = "https://get.helm.sh/helm-v3.20.1-linux-amd64.tar.gz"
 )
 
 type helmPushPlugin struct {
@@ -128,10 +128,15 @@ func (p *helmPushPlugin) perform(
 ) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
 
-	// Prepare teh chart package
 	chart, err := helm.GetChartByName(chartFolder)
 	if err != nil {
 		return nil, time.Since(t0), errors.Errorf("unable to get chart: %v", err)
+	}
+
+	if opts.updateDeps {
+		if err := helm.UpdateDependencies(chartFolder, chart, opts.skipUpdate); err != nil {
+			return nil, time.Since(t0), errors.Errorf("unable to update chart dependencies: %v", err)
+		}
 	}
 
 	if chartVersion != "" {
@@ -151,12 +156,6 @@ func (p *helmPushPlugin) perform(
 	chartPackagePath, err := helm.CreateChartPackage(chart, tmp)
 	if err != nil {
 		return nil, time.Since(t0), errors.Errorf("unable to create chart package: %v", err)
-	}
-
-	if opts.updateDeps {
-		if err := helm.UpdateDependencies(chart, opts.skipUpdate); err != nil {
-			return nil, time.Since(t0), errors.Errorf("unable to update chart dependencies: %v", err)
-		}
 	}
 
 	// Create run result at status "pending"
@@ -233,7 +232,7 @@ func (p *helmPushPlugin) pushChartMuseum(ctx context.Context, result *sdk.V2Work
 	}
 	client.Option(cm.ContextPath(index.ServerInfo.ContextPath))
 
-	grpcplugins.Logf(&p.Common, "Pushing %s to %s...", filepath.Base(chartPackagePath), repo.Config.URL)
+	grpcplugins.Logf(&p.Common, "Pushing %s to %s...", filepath.Base(chartPackagePath), repo.GetConfigURL())
 	resp, err := client.UploadChartPackage(chartPackagePath, true)
 	if err != nil {
 		return err
@@ -248,7 +247,7 @@ func (p *helmPushPlugin) pushChartMuseum(ctx context.Context, result *sdk.V2Work
 	grpcplugins.Logf(&p.Common, "Done.")
 
 	result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
-	result.ArtifactManagerMetadata.Set("repository", repo.Config.URL) // This is the virtual repository
+	result.ArtifactManagerMetadata.Set("repository", repo.GetConfigURL()) // This is the virtual repository
 	result.ArtifactManagerMetadata.Set("name", chart.Metadata.Name)
 	result.ArtifactManagerMetadata.Set("chartVersion", chart.Metadata.Version)
 	result.ArtifactManagerMetadata.Set("appVersion", chart.Metadata.AppVersion)
