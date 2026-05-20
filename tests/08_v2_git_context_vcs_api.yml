@@ -1,0 +1,166 @@
+name: Git context VCS API
+vars:
+  cds_project: "ITV2GITCTXAPI"
+  git_repo: "it_v2_git_context_vcs_api"
+  cds_workflow: "WorkflowGitContextVcsApi"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+
+testcases:
+- name: Prepare test
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+    - name: "Display username"
+      info: "Connected CDS user is {{.cdsUser}}"
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+      git_emailAddress: "{{.emailaddress}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+
+- name: Push workflow file
+  steps:
+    - type: v2_push_cds_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        worker-models/debian.yml:
+          name: docker-debian
+          osarch: linux/amd64
+          type: docker
+          spec:
+            image: buildpack-deps:bookworm
+        workflows/git_context_vcs_api.yaml:
+          name: "{{.cds_workflow}}"
+          on:
+            push:
+              branches:
+                - master
+          jobs:
+            check-git-context:
+              runs-on:
+                model: "{{.worker_model}}"
+                memory: "2048"
+              steps:
+                - id: check-env-vars
+                  run: |-
+                    #!/bin/bash -x
+                    set -e
+                    echo "=== GIT env vars ==="
+                    env | grep GIT_ | sort
+                    echo "=== Checking GIT_SERVER_URL ==="
+                    test -n "$GIT_SERVER_URL" || (echo "ERROR: GIT_SERVER_URL is empty" && exit 1)
+                    echo "GIT_SERVER_URL=$GIT_SERVER_URL"
+                    echo "=== Checking GIT_SERVER_TYPE ==="
+                    test -n "$GIT_SERVER_TYPE" || (echo "ERROR: GIT_SERVER_TYPE is empty" && exit 1)
+                    echo "GIT_SERVER_TYPE=$GIT_SERVER_TYPE"
+                    echo "=== Checking GIT_USERNAME ==="
+                    test -n "$GIT_USERNAME" || (echo "ERROR: GIT_USERNAME is empty" && exit 1)
+                    echo "GIT_USERNAME=$GIT_USERNAME"
+                - id: call-vcs-api
+                  run: |-
+                    #!/bin/bash -x
+                    set -e
+                    echo "=== Calling VCS API using git context ==="
+                    RESPONSE=$(curl -sf -u "${{ git.username }}:${{ git.token }}" "${{ git.server_url }}/api/v1/repos/${{ git.repository }}")
+                    REPO_ID=$(echo "$RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+                    echo "REPO_ID=$REPO_ID"
+                    if [ -z "$REPO_ID" ]; then
+                      echo "ERROR: could not get repo id from API response"
+                      exit 1
+                    fi
+                    echo "=== VCS API call successful ==="
+
+    - name: Trigger manually an analysis
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis trigger {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson.status ShouldEqual "InProgress"
+
+    - name: Check CDS project analyses status
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 3
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
+      retry: 100
+      delay: 1
+
+    - name: Check that the CDS workflow has at least one execution and is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - or:
+          - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+          - result.systemoutjson.systemoutjson0.status ShouldEqual "Fail"
+      retry: 150
+      delay: 1
+      vars:
+        workflowRunID:
+          from: result.systemoutjson.systemoutjson0.id
+        workflowRunStatus:
+          from: result.systemoutjson.systemoutjson0.status
+
+    - name: Get workflow run info
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"
+
+    - name: Get workflow jobs status
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"
+
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/{{.workflowRunID}}
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        echo "=== All log files ==="
+        ls -la
+        echo "=== Dumping all logs for diagnosis ==="
+        for f in *; do echo "--- $f ---"; cat "$f"; echo; done
+        # Check GIT_SERVER_URL is present and correct
+        cat {{.cds_workflow}}-*-check-git-context-check-env-vars | grep "GIT_SERVER_URL={{.git.host}}"
+        # Check GIT_SERVER_TYPE is gitea
+        cat {{.cds_workflow}}-*-check-git-context-check-env-vars | grep "GIT_SERVER_TYPE=gitea"
+        # Check GIT_USERNAME is correct
+        cat {{.cds_workflow}}-*-check-git-context-check-env-vars | grep "GIT_USERNAME={{.git.user}}"
+        # Check VCS API call succeeded
+        cat {{.cds_workflow}}-*-check-git-context-call-vcs-api | grep "REPO_ID="
+        cat {{.cds_workflow}}-*-check-git-context-call-vcs-api | grep "VCS API call successful"
+      retry: 60
+      delay: 1
+
+    - name: Workflow should be Success
+      script: echo "{{.workflowRunStatus}}"
+      assertions:
+        - result.systemout ShouldEqual "Success"

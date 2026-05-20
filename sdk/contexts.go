@@ -95,6 +95,8 @@ type CDSContext struct {
 
 type GitContext struct {
 	Server               string   `json:"server,omitempty" jsonschema:"example=github" jsonschema_description:"VCS server name"`
+	ServerURL            string   `json:"server_url,omitempty" jsonschema:"example=https://github.com" jsonschema_description:"VCS server base URL"`
+	ServerType           string   `json:"server_type,omitempty" jsonschema:"example=gitea" jsonschema_description:"VCS server type (github, gitlab, bitbucketserver, bitbucketcloud, gitea, forgejo, gerrit)"`
 	Repository           string   `json:"repository,omitempty" jsonschema:"example=ovh/cds" jsonschema_description:"Repository identifier"`
 	RepositoryOrigin     string   `json:"repository_origin",omitempty jsonschema:"example=fork-user/cds" jsonschema_description:"Origin repository for pull requests"`
 	RepositoryURL        string   `json:"repositoryUrl,omitempty" jsonschema:"example=https://github.com/ovh/cds.git" jsonschema_description:"Git clone URL"`
