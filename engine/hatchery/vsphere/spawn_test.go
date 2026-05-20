@@ -42,6 +42,10 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
 	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.availableNetworks = []availableNetwork{{
+		config:      NetworkConfig{IPRange: "192.168.0.0/24", Gateway: "192.168.0.254", SubnetMask: "255.255.255.0"},
+		ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
+	}}
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
 
@@ -386,6 +390,10 @@ func TestHatcheryVSphere_SpawnWorkerv1(t *testing.T) {
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
 	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.availableNetworks = []availableNetwork{{
+		config:      NetworkConfig{IPRange: "192.168.0.0/24", Gateway: "192.168.0.254", SubnetMask: "255.255.255.0"},
+		ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
+	}}
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
 
@@ -577,6 +585,10 @@ func TestHatcheryVSphere_SpawnWorkerv2(t *testing.T) {
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
 	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.availableNetworks = []availableNetwork{{
+		config:      NetworkConfig{IPRange: "192.168.0.0/24", Gateway: "192.168.0.254", SubnetMask: "255.255.255.0"},
+		ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
+	}}
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
 
@@ -776,6 +788,10 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
 	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.availableNetworks = []availableNetwork{{
+		config:      NetworkConfig{IPRange: "192.168.0.0/24", Gateway: "192.168.0.254", SubnetMask: "255.255.255.0"},
+		ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
+	}}
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
 
@@ -982,6 +998,10 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
 	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.availableNetworks = []availableNetwork{{
+		config:      NetworkConfig{IPRange: "192.168.0.0/24", Gateway: "192.168.0.254", SubnetMask: "255.255.255.0"},
+		ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
+	}}
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
 

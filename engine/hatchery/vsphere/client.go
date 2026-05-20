@@ -281,36 +281,35 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 	}
 
 	if len(h.availableIPAddresses) > 0 {
-		var err error
-		ip, err := h.findAvailableIP(ctx)
+		ipRes, err := h.findAvailableIP(ctx)
 		if err != nil {
 			return nil, err
 		}
-		log.Debug(ctx, "Found %s as available IP", ip)
+		log.Debug(ctx, "Found %s as available IP (gw=%s, mask=%s)", ipRes.ip, ipRes.gateway, ipRes.subnetMask)
 		// Once we found an IP Address, we have to reserve this IP in local memory
 		// because the IP address won't be used directly on the server
-		if err := h.reserveIPAddress(ctx, ip); err != nil {
+		if err := h.reserveIPAddress(ctx, ipRes.ip); err != nil {
 			return nil, err
 		}
 
 		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{
 			{
 				Adapter: types.CustomizationIPSettings{
-					Ip:         &types.CustomizationFixedIp{IpAddress: ip},
-					SubnetMask: h.Config.SubnetMask,
+					Ip:         &types.CustomizationFixedIp{IpAddress: ipRes.ip},
+					SubnetMask: ipRes.subnetMask,
 				},
 			},
 		}
-		if h.Config.Gateway != "" {
-			customSpec.NicSettingMap[0].Adapter.Gateway = []string{h.Config.Gateway}
+		if ipRes.gateway != "" {
+			customSpec.NicSettingMap[0].Adapter.Gateway = []string{ipRes.gateway}
 		}
 		if h.Config.DNS != "" {
 			customSpec.GlobalIPSettings = types.CustomizationGlobalIPSettings{DnsServerList: []string{h.Config.DNS}}
 		}
 
-		annot.IPAddress = ip
+		annot.IPAddress = ipRes.ip
 
-		log.Debug(ctx, "IP: %s; Gateway: %v; DNS: %v", ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.GlobalIPSettings.DnsServerList)
+		log.Debug(ctx, "IP: %s; Gateway: %v; DNS: %v", ipRes.ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.GlobalIPSettings.DnsServerList)
 	}
 
 	annotStr, err := json.Marshal(annot)

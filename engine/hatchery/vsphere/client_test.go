@@ -237,6 +237,16 @@ func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
 	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.availableNetworks = []availableNetwork{
+		{
+			config: NetworkConfig{
+				IPRange:    "192.168.0.0/24",
+				Gateway:    "192.168.0.254",
+				SubnetMask: "255.255.255.0",
+			},
+			ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
+		},
+	}
 	h.reservedIPAddresses = []string{"192.168.0.1", "192.168.0.2"}
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"

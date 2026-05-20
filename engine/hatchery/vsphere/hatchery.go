@@ -145,6 +145,16 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 			return sdk.WithStack(fmt.Errorf("flag or environment variable ip-range error: %v", err))
 		}
 	}
+
+	for i, netCfg := range hconfig.Networks {
+		if netCfg.IPRange == "" {
+			return sdk.WithStack(fmt.Errorf("networks[%d]: iprange is required", i))
+		}
+		_, err := sdk.IPinRanges(context.Background(), netCfg.IPRange)
+		if err != nil {
+			return sdk.WithStack(fmt.Errorf("networks[%d] ip-range error: %v", i, err))
+		}
+	}
 	return nil
 }
 
@@ -769,6 +779,7 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 
 	// Count exiting provisionned machine for each vmware model
 	mapAlreadyProvisionned := make(map[string]int)
+	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
 		if !strings.HasPrefix(machine.Name, "provision-v2") {
@@ -783,9 +794,31 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 		}
 		if annot.Provisioning {
 			mapAlreadyProvisionned[annot.VMwareModelPath] = mapAlreadyProvisionned[annot.VMwareModelPath] + 1
+			mapProvisionedMachines[annot.VMwareModelPath] = append(mapProvisionedMachines[annot.VMwareModelPath], machine)
 		}
 	}
 	h.cacheProvisioning.mu.Unlock()
+
+	// Build a map of configured provisioning counts
+	configuredCounts := make(map[string]int)
+	for i := range h.Config.WorkerProvisioning {
+		modelVMware := h.Config.WorkerProvisioning[i].ModelVMWare
+		if modelVMware != "" {
+			configuredCounts[modelVMware] = h.Config.WorkerProvisioning[i].Number
+		}
+	}
+
+	// Remove excess provisioned VMs when config is decreased or model removed
+	for modelPath, provisionedMachines := range mapProvisionedMachines {
+		desired := configuredCounts[modelPath]
+		excess := len(provisionedMachines) - desired
+		if excess > 0 {
+			log.Info(ctx, "model vmware %q deprovisioning: removing %d excess (have %d, want %d)", modelPath, excess, len(provisionedMachines), desired)
+			for i := 0; i < excess; i++ {
+				h.markToDelete(ctx, provisionedMachines[i].Name)
+			}
+		}
+	}
 
 	var toProvisionVMWareModelNames []string
 	for i := range h.Config.WorkerProvisioning {
@@ -798,7 +831,7 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 		log.Info(ctx, "model vmware %q provisioning: %d/%d", modelVMware, mapAlreadyProvisionned[modelVMware], number)
 
 		nbToProvision := int(number) - mapAlreadyProvisionned[modelVMware]
-		if nbToProvision == 0 {
+		if nbToProvision <= 0 {
 			continue
 		}
 		for i = 1; i <= nbToProvision; i++ {
@@ -847,6 +880,7 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 
 	// Count exiting provisionned machine for each model
 	mapAlreadyProvisionned := make(map[string]int)
+	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
 		if !strings.HasPrefix(machine.Name, "provision-v1") {
@@ -861,9 +895,31 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 		}
 		if annot.Provisioning {
 			mapAlreadyProvisionned[annot.WorkerModelPath] = mapAlreadyProvisionned[annot.WorkerModelPath] + 1
+			mapProvisionedMachines[annot.WorkerModelPath] = append(mapProvisionedMachines[annot.WorkerModelPath], machine)
 		}
 	}
 	h.cacheProvisioning.mu.Unlock()
+
+	// Build a map of configured provisioning counts
+	configuredCounts := make(map[string]int)
+	for i := range h.Config.WorkerProvisioning {
+		modelPath := h.Config.WorkerProvisioning[i].ModelPath
+		if modelPath != "" {
+			configuredCounts[modelPath] = h.Config.WorkerProvisioning[i].Number
+		}
+	}
+
+	// Remove excess provisioned VMs when config is decreased or model removed
+	for modelPath, provisionedMachines := range mapProvisionedMachines {
+		desired := configuredCounts[modelPath]
+		excess := len(provisionedMachines) - desired
+		if excess > 0 {
+			log.Info(ctx, "model %q deprovisioning: removing %d excess (have %d, want %d)", modelPath, excess, len(provisionedMachines), desired)
+			for i := 0; i < excess; i++ {
+				h.markToDelete(ctx, provisionedMachines[i].Name)
+			}
+		}
+	}
 
 	// Count provision to create for each model
 	mapToProvision := make(map[string]int)

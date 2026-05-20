@@ -31,11 +31,8 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 		return fmt.Errorf("unable to init vsphere metrics: %v", err)
 	}
 
-	if h.Config.IPRange != "" {
-		h.availableIPAddresses, err = sdk.IPinRanges(ctx, h.Config.IPRange)
-		if err != nil {
-			return err
-		}
+	if err := h.initNetworks(ctx); err != nil {
+		return err
 	}
 
 	killAwolServersTick := time.NewTicker(2 * time.Minute)

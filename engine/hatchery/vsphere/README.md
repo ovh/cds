@@ -34,6 +34,7 @@ The hatchery implements the `hatchery.InterfaceWithModels` interface and support
 | `vsphere.go` | `VSphereClient` interface and govmomi SDK wrapper implementation |
 | `init.go` | Hatchery initialization, govmomi client creation, background goroutines setup |
 | `ip.go` | IP address management (allocation, reservation, availability) |
+| `networks.go` | Multi-network initialization (parses networks config, builds IP pools per network) |
 | `monitoring.go` | Prometheus metrics: vSphere resource consumption at per-worker, hatchery, and pool levels |
 
 ## 3. Configuration
@@ -52,10 +53,11 @@ The hatchery is configured via `HatcheryConfiguration`, serialized as TOML.
 | `datastoreString` | `string` | — | No | vSphere datastore name (uses default if empty) |
 | `networkString` | `string` | — | No | vSphere network name (uses default if empty) |
 | `cardName` | `string` | `e1000` | No | Virtual ethernet card type |
-| `iprange` | `string` | — | No | IP range for static IP assignment (format: `a.a.a.a/b,c.c.c.c/e`) |
-| `gateway` | `string` | — | No | Gateway IP for spawned workers |
+| `iprange` | `string` | — | No | **Deprecated**: use `networks` instead. IP range for static IP assignment (format: `a.a.a.a/b,c.c.c.c/e`) |
+| `gateway` | `string` | — | No | **Deprecated**: use `networks` instead. Gateway IP for spawned workers |
 | `dns` | `string` | — | No | DNS server IP |
-| `subnetMask` | `string` | `255.255.255.0` | No | Subnet mask |
+| `subnetMask` | `string` | `255.255.255.0` | No | **Deprecated**: use `networks` instead. Subnet mask |
+| `networks` | `[]NetworkConfig` | — | No | List of network configurations (see section 3.1.2) |
 | `workerTTL` | `int` | `120` | No | Worker time-to-live in minutes |
 | `workerRegistrationTTL` | `int` | `10` | No | Worker registration timeout in minutes |
 | `workerProvisioningInterval` | `int` | `120` (2 min) | No | Provisioning loop interval in seconds |
@@ -63,6 +65,21 @@ The hatchery is configured via `HatcheryConfiguration`, serialized as TOML.
 | `workerProvisioning` | `[]WorkerProvisioningConfig` | — | No | List of models to pre-provision |
 | `guestCredentials` | `[]GuestCredential` | — | No | Guest OS credentials per model |
 | `defaultWorkerModelsV2` | `[]DefaultWorkerModelsV2` | — | No | Default V2 models for V1 jobs (binary matching) |
+
+### 3.1.2 Networks Configuration
+
+The `networks` field allows configuring multiple IP ranges, each with its own gateway and subnet mask.
+When a VM is spawned, the hatchery picks the first available IP across all configured networks and
+applies the corresponding gateway and subnet mask.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `iprange` | `string` | — | IP range in CIDR notation (format: `a.a.a.a/b,c.c.c.c/e`) |
+| `gateway` | `string` | — | Gateway IP for this network |
+| `subnetMask` | `string` | `255.255.255.0` | Subnet mask for this network |
+
+If `networks` is set, the legacy `iprange`, `gateway`, and `subnetMask` fields are ignored.
+If `networks` is empty and the legacy `iprange` is set, it is treated as a single-entry networks list.
 
 ### 3.1.1 Common Provision Configuration
 
@@ -278,11 +295,12 @@ Pre-provisioning creates idle VMs ahead of time so that job assignment is faster
 
 1. Lock the provisioning cache
 2. List all VMs prefixed with `provision-v2`, count per VMware model path
-3. For each model in `WorkerProvisioning` config with a `ModelVMWare`:
+3. **Deprovisioning**: for each model with more provisioned VMs than configured (or models removed from config), mark excess VMs for deletion
+4. For each model in `WorkerProvisioning` config with a `ModelVMWare`:
    - Calculate deficit: `config.Number - currentCount`
    - Queue provisioning tasks for the deficit
-4. Execute up to `WorkerProvisioningPoolSize` concurrent provisioning goroutines
-5. Each provisioning operation:
+5. Execute up to `WorkerProvisioningPoolSize` concurrent provisioning goroutines
+6. Each provisioning operation:
    - Generates a worker name: `provision-v2-<random>`
    - Adds name to `cacheProvisioning.pending`
    - Calls `ProvisionWorkerV2()`: clone → wait for IP → shutdown
@@ -291,10 +309,11 @@ Pre-provisioning creates idle VMs ahead of time so that job assignment is faster
 #### 6.3.2 V1 Provisioning (`provisioningV1`)
 
 1. Same counting logic as V2 but with `provision-v1` prefix and `WorkerModelPath`
-2. Additionally fetches the model from the CDS API to verify it doesn't need registration
-3. Distributes models in a round-robin provision queue
-4. Executes up to `WorkerProvisioningPoolSize` concurrent provisioning goroutines
-5. Each provisioning operation:
+2. **Deprovisioning**: same as V2 — excess VMs are marked for deletion when config count is decreased or model is removed
+3. Additionally fetches the model from the CDS API to verify it doesn't need registration
+4. Distributes models in a round-robin provision queue
+5. Executes up to `WorkerProvisioningPoolSize` concurrent provisioning goroutines
+6. Each provisioning operation:
    - Generates a worker name: `provision-v1-<random>`
    - Calls `ProvisionWorkerV1()`: clone → wait for IP → shutdown
 
