@@ -414,3 +414,22 @@ func MarkItemsAsToDelete(db gorpmapper.SqlExecutorWithTx, ids []string) error {
 	_, err := db.Exec(query, pq.StringArray(ids))
 	return sdk.WithStack(err)
 }
+
+// LoadExpiredWorkerCacheItemIDs returns IDs of worker-cache items whose expire_at date
+// has passed by at least gracePeriodDays.
+func LoadExpiredWorkerCacheItemIDs(db gorp.SqlExecutor, limit int, gracePeriodDays int) ([]string, error) {
+	query := `
+		SELECT id
+		FROM item
+		WHERE type IN ($1, $2)
+		  AND to_delete = false
+		  AND (api_ref->>'expire_at')::timestamptz < NOW() - $3 * INTERVAL '1 day'
+		ORDER BY created ASC
+		LIMIT $4
+	`
+	var ids []string
+	if _, err := db.Select(&ids, query, sdk.CDNTypeItemWorkerCache, sdk.CDNTypeItemWorkerCacheV2, gracePeriodDays, limit); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return ids, nil
+}
