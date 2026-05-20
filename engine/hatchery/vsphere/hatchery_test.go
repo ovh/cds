@@ -561,7 +561,10 @@ func TestHatcheryVSphere_provisioning_v1_do_nothing(t *testing.T) {
 		},
 	)
 
-	h.provisioningV1(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV1(ctx)
 }
 
 func TestHatcheryVSphere_provisioning_v2_do_nothing(t *testing.T) {
@@ -613,7 +616,10 @@ func TestHatcheryVSphere_provisioning_v2_do_nothing(t *testing.T) {
 		},
 	)
 
-	h.provisioningV2(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV2(ctx)
 }
 
 func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
@@ -769,6 +775,14 @@ func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
 		},
 	)
 
+	// finishProvisioning loads the VM by name, then waits for IP and shuts down
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
+			assert.True(t, strings.HasPrefix(name, "provision-"))
+			return &workerVM, nil
+		},
+	)
+
 	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
 			return nil
@@ -781,7 +795,10 @@ func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
 		},
 	)
 
-	h.provisioningV1(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV1(ctx)
 }
 
 func TestHatcheryVSphere_GetDetaultModelV2Name(t *testing.T) {
@@ -868,7 +885,10 @@ func TestHatcheryVSphere_provisioning_v2_deprovision_excess(t *testing.T) {
 		},
 	).AnyTimes()
 
-	h.provisioningV2(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV2(ctx)
 
 	// 2 excess VMs should be marked for deletion (3 exist - 1 configured = 2 excess)
 	h.cacheToDelete.mu.Lock()
@@ -920,7 +940,10 @@ func TestHatcheryVSphere_provisioning_v2_deprovision_removed_model(t *testing.T)
 		},
 	).AnyTimes()
 
-	h.provisioningV2(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV2(ctx)
 
 	// Both VMs should be marked for deletion since model is removed from config
 	h.cacheToDelete.mu.Lock()

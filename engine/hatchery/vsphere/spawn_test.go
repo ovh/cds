@@ -1114,18 +1114,6 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
-			return nil
-		},
-	)
-
-	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &workerVM).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
-			return nil
-		},
-	)
-
 	err := h.ProvisionWorkerV1(ctx, validModel, "provisionned-worker")
 	require.NoError(t, err)
 }

@@ -28,8 +28,9 @@ The hatchery implements the `hatchery.InterfaceWithModels` interface and support
 | File | Responsibility |
 |------|----------------|
 | `types.go` | Configuration structs and `HatcheryVSphere` struct definition |
-| `hatchery.go` | Hatchery lifecycle (init, config, CanSpawn), worker cleanup, provisioning loops |
-| `spawn.go` | VM spawning logic, template creation (V1), provisioning, worker bootstrap |
+| `hatchery.go` | Hatchery lifecycle (init, config, CanSpawn), worker cleanup, provisioning scheduler |
+| `spawn.go` | VM spawning logic, template creation (V1), provisioning clone, worker bootstrap |
+| `provision_cleanup.go` | Provisioning worker pool, task execution, reconciliation, `finishProvisioning` |
 | `client.go` | VM listing/filtering, clone spec preparation, guest operations |
 | `vsphere.go` | `VSphereClient` interface and govmomi SDK wrapper implementation |
 | `init.go` | Hatchery initialization, govmomi client creation, background goroutines setup |
@@ -221,7 +222,8 @@ On startup (`InitHatchery`), the hatchery:
 3. Instantiates the `VSphereClient` wrapper bound to the configured datacenter
 4. Parses the IP range (if configured) into a list of available IP addresses
 5. Starts background goroutines:
-   - **Provisioning loop** (if `workerProvisioning` is configured): runs every `workerProvisioningInterval` seconds, executes `provisioningV2()` then `provisioningV1()`
+   - **Provisioning worker pool** (if `workerProvisioning` is configured): `WorkerProvisioningPoolSize` long-lived workers that pull tasks from a shared channel
+   - **Provisioning scheduler** (if `workerProvisioning` is configured): runs every `workerProvisioningInterval` seconds, computes deficit, submits tasks to the pool, waits for batch completion
    - **Kill awol servers loop**: runs every 2 minutes, removes stale/expired VMs
    - **Kill disabled workers loop**: runs every 2 minutes, removes disabled workers
 
@@ -296,14 +298,15 @@ Pre-provisioning creates idle VMs ahead of time so that job assignment is faster
 1. Lock the provisioning cache
 2. List all VMs prefixed with `provision-v2`, count per VMware model path
 3. **Deprovisioning**: for each model with more provisioned VMs than configured (or models removed from config), mark excess VMs for deletion
-4. For each model in `WorkerProvisioning` config with a `ModelVMWare`:
+4. **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.4)
+5. For each model in `WorkerProvisioning` config with a `ModelVMWare`:
    - Calculate deficit: `config.Number - currentCount`
-   - Queue provisioning tasks for the deficit
-5. Execute up to `WorkerProvisioningPoolSize` concurrent provisioning goroutines
-6. Each provisioning operation:
+   - Submit "clone" tasks to the provisioning pool for the deficit
+6. Wait for the entire batch (reconciliation + new clones) to complete
+7. Each task executed by a pool worker:
    - Generates a worker name: `provision-v2-<random>`
    - Adds name to `cacheProvisioning.pending`
-   - Calls `ProvisionWorkerV2()`: clone → wait for IP → shutdown
+   - Calls `ProvisionWorkerV2()` (clone only), then `finishProvisioning()` (wait IP → shutdown)
    - Removes name from pending cache
 
 #### 6.3.2 V1 Provisioning (`provisioningV1`)
@@ -311,11 +314,12 @@ Pre-provisioning creates idle VMs ahead of time so that job assignment is faster
 1. Same counting logic as V2 but with `provision-v1` prefix and `WorkerModelPath`
 2. **Deprovisioning**: same as V2 — excess VMs are marked for deletion when config count is decreased or model is removed
 3. Additionally fetches the model from the CDS API to verify it doesn't need registration
-4. Distributes models in a round-robin provision queue
-5. Executes up to `WorkerProvisioningPoolSize` concurrent provisioning goroutines
-6. Each provisioning operation:
+4. **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.4)
+5. Distributes models in a round-robin provision queue and submits "clone" tasks
+6. Wait for the entire batch to complete
+7. Each task executed by a pool worker:
    - Generates a worker name: `provision-v1-<random>`
-   - Calls `ProvisionWorkerV1()`: clone → wait for IP → shutdown
+   - Calls `ProvisionWorkerV1()` (clone only), then `finishProvisioning()` (wait IP → shutdown)
 
 #### 6.3.3 Provisioned VM Lifecycle
 
@@ -324,7 +328,7 @@ A provisioned VM follows this lifecycle:
 ```
 Template ──clone──► Provisioned VM (powered on)
                     │
-                    ├── Wait for IP
+                    ├── Wait for IP (3 min timeout)
                     ├── Shutdown (stays in powered-off state)
                     │
                     └── On job assignment (FindProvisionnedWorker):
@@ -333,6 +337,35 @@ Template ──clone──► Provisioned VM (powered on)
                         ├── Wait for IP
                         └── Launch worker script
 ```
+
+#### 6.3.4 Provisioning State Reconciliation
+
+The `cacheProvisioning.pending` list is in-memory only. If the hatchery restarts while a VM is
+being provisioned (between clone and shutdown), that VM becomes orphaned: it stays powered on
+indefinitely and is never picked up by `FindProvisionnedWorker` (which requires a
+`VmPoweredOffEvent`).
+
+To handle this, each provisioning tick calls `reconcileProvisionedVMs()` which reconstructs the
+pending state by scanning all VMs:
+
+1. List all powered-on VMs with `provision-` prefix, `Provisioning: true` annotation, and
+   matching `HatcheryName`
+2. Skip VMs already in `cacheProvisioning.pending` (actively being provisioned this run)
+3. For each orphaned VM, re-inject it into the provisioning pipeline:
+   - Add the VM name to `cacheProvisioning.pending`
+   - Submit a "finish" task to the provisioning worker pool
+   - The pool worker runs `finishProvisioning`: `WaitForVirtualMachineIP` → `ShutdownVirtualMachine`
+   - If the VM already has an IP, `WaitForVirtualMachineIP` returns immediately and the VM is
+     shut down — completing its provisioning
+   - If the VM has no IP, the 3-minute timeout applies. On timeout, the VM is marked for deletion
+   - On completion (success or failure), the VM is removed from `cacheProvisioning.pending`
+
+Since reconciliation tasks are part of the same batch as new clone tasks, the scheduler waits
+for all work to complete before the next tick re-evaluates. This prevents double-counting and
+ensures a consistent snapshot between ticks.
+
+This mechanism also covers VMs where `ShutdownVirtualMachine` failed during normal operation
+(not just restarts), since the provisioning scheduler periodically re-runs reconciliation.
 
 #### 6.3.4 Finding a Provisioned Worker (`FindProvisionnedWorker`)
 
@@ -445,9 +478,10 @@ The `MaxWorker` limit and the vSphere-specific `WorkerProvisioning` (pre-provisi
   **do not count** against `MaxWorker`.
 - When a provisioned VM is assigned to a job, it is renamed (e.g. `provision-v2-xxx` →
   `worker-abc`). From that point, it **counts** against `MaxWorker`.
-- The `WorkerProvisioningPoolSize` config controls how many provisioning operations run in
-  parallel in the vSphere provisioning loop, but this is separate from
-  `MaxConcurrentProvisioning` which governs the common framework's capacity check.
+- The `WorkerProvisioningPoolSize` config controls how many persistent workers handle
+  provisioning tasks (clone + finish). The provisioning scheduler submits all tasks to the pool
+  and waits for the batch to complete. This is separate from `MaxConcurrentProvisioning` which
+  governs the common framework's capacity check.
 - There is **no global coordination** between the provisioning pool and `MaxWorker`. It is the
   operator's responsibility to ensure that `WorkerProvisioning[].Number` (total pre-provisioned
   VMs) plus expected active workers stays within the infrastructure's capacity.
@@ -555,7 +589,7 @@ template-defined network settings.
 For each VM with a CDS annotation belonging to this hatchery:
 
 1. **Marked for deletion**: Delete immediately
-2. **Provisioned VMs** (`provision-` prefix): Skip (managed by provisioning loop)
+2. **Provisioned VMs** (`provision-` prefix): Skip (managed by provisioning loop reconciliation, see §6.3.4)
 3. **Model templates** (`Model: true`): Skip (never delete)
 4. **Event analysis**: Load VM events (`VmStartingEvent`, `VmPoweredOffEvent`, `VmRenamedEvent`)
    - Filter out events related to provisioning (`provision-` in message)

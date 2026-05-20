@@ -103,6 +103,7 @@ type HatcheryVSphere struct {
 	availableIPAddresses []string // flat list kept for backward-compat checks (e.g. CanSpawn)
 	availableNetworks    []availableNetwork
 	reservedIPAddresses  []string
+	provisioningPool     *provisioningPool
 	cachePendingJobID    struct {
 		mu   sync.Mutex
 		list []string

@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -783,7 +782,10 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
-	// Count exiting provisionned machine for each vmware model
+	// Count exiting provisionned machine for each vmware model.
+	// This counts ALL VMs with Provisioning annotation regardless of power state,
+	// so orphaned VMs (powered on, stuck) are included in the count. This ensures
+	// that reconciled VMs don't cause additional clones in the deficit calculation.
 	mapAlreadyProvisionned := make(map[string]int)
 	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
 	machines := h.getVirtualMachines(ctx)
@@ -826,7 +828,13 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 		}
 	}
 
-	var toProvisionVMWareModelNames []string
+	// Batch: reconcile orphaned VMs + provision new ones
+	var batch sync.WaitGroup
+
+	// Reconcile stuck provisioned VMs (powered on but not in pending cache)
+	h.reconcileProvisionedVMs(ctx, machines, "provision-v2", &batch)
+
+	// Compute deficit and submit clone tasks
 	for i := range h.Config.WorkerProvisioning {
 		modelVMware := h.Config.WorkerProvisioning[i].ModelVMWare
 		number := h.Config.WorkerProvisioning[i].Number
@@ -837,54 +845,25 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 		log.Info(ctx, "model vmware %q provisioning: %d/%d", modelVMware, mapAlreadyProvisionned[modelVMware], number)
 
 		nbToProvision := int(number) - mapAlreadyProvisionned[modelVMware]
-		if nbToProvision <= 0 {
-			continue
-		}
-		for i = 1; i <= nbToProvision; i++ {
-			toProvisionVMWareModelNames = append(toProvisionVMWareModelNames, modelVMware)
-		}
-	}
-
-	if len(toProvisionVMWareModelNames) == 0 {
-		return
-	}
-
-	poolSize := h.Config.WorkerProvisioningPoolSize
-	if poolSize == 0 {
-		poolSize = 1
-	}
-
-	// Provision workers
-	wg := new(sync.WaitGroup)
-	for i := 0; i < len(toProvisionVMWareModelNames) && i < poolSize; i++ {
-		wg.Add(1)
-		go func(modelVMware string) {
-			defer wg.Done()
-
-			workerName := namesgenerator.GenerateWorkerName("provision-v2")
-
-			h.cacheProvisioning.mu.Lock()
-			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
-			h.cacheProvisioning.mu.Unlock()
-
-			if err := h.ProvisionWorkerV2(ctx, modelVMware, workerName); err != nil {
-				ctx = log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "unable to provision vmware worker v2 %q model %q: %v", workerName, modelVMware, err)
-				h.markToDelete(ctx, workerName)
+		for j := 0; j < nbToProvision; j++ {
+			batch.Add(1)
+			h.provisioningPool.tasks <- provisionTask{
+				cloneV2: modelVMware,
+				wg:      &batch,
 			}
-
-			h.cacheProvisioning.mu.Lock()
-			h.cacheProvisioning.pending = sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
-			h.cacheProvisioning.mu.Unlock()
-		}(toProvisionVMWareModelNames[i])
+		}
 	}
-	wg.Wait()
+
+	batch.Wait()
 }
 
 func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
-	// Count exiting provisionned machine for each model
+	// Count exiting provisionned machine for each model.
+	// This counts ALL VMs with Provisioning annotation regardless of power state,
+	// so orphaned VMs (powered on, stuck) are included in the count. This ensures
+	// that reconciled VMs don't cause additional clones in the deficit calculation.
 	mapAlreadyProvisionned := make(map[string]int)
 	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
 	machines := h.getVirtualMachines(ctx)
@@ -964,15 +943,17 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 		}
 	}
 
-	// Distribute models in provision queue
-	countModelToProvision := len(mapToProvision)
-	if countModelToProvision == 0 {
+	if len(mapToProvision) == 0 {
 		return
 	}
-	poolSize := h.Config.WorkerProvisioningPoolSize
-	if poolSize == 0 {
-		poolSize = 1
-	}
+
+	// Batch: reconcile orphaned VMs + provision new ones
+	var batch sync.WaitGroup
+
+	// Reconcile stuck provisioned VMs (powered on but not in pending cache)
+	h.reconcileProvisionedVMs(ctx, machines, "provision-v1", &batch)
+
+	// Distribute models in provision queue (round-robin) and submit tasks
 	var provisionQueue []string
 	for len(mapToProvision) > 0 {
 		for i := range h.Config.WorkerProvisioning {
@@ -990,30 +971,14 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 		}
 	}
 
-	// Provision workers
-	wg := new(sync.WaitGroup)
-	for i := 0; i < len(provisionQueue) && i < poolSize; i++ {
-		modelPath := provisionQueue[i]
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			workerName := namesgenerator.GenerateWorkerName("provision-v1")
-
-			h.cacheProvisioning.mu.Lock()
-			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
-			h.cacheProvisioning.mu.Unlock()
-
-			if err := h.ProvisionWorkerV1(ctx, mapModels[modelPath], workerName); err != nil {
-				ctx = log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "unable to provision vmware worker v1 %q model %q: %v", workerName, mapModels[modelPath], err)
-				h.markToDelete(ctx, workerName)
-			}
-
-			h.cacheProvisioning.mu.Lock()
-			h.cacheProvisioning.pending = sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
-			h.cacheProvisioning.mu.Unlock()
-		}()
+	for _, modelPath := range provisionQueue {
+		model := mapModels[modelPath]
+		batch.Add(1)
+		h.provisioningPool.tasks <- provisionTask{
+			cloneV1: &model,
+			wg:      &batch,
+		}
 	}
-	wg.Wait()
+
+	batch.Wait()
 }

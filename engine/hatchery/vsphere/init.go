@@ -41,6 +41,9 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	if len(h.Config.WorkerProvisioning) > 0 {
 		log.Debug(ctx, "provisioning is enabled")
 
+		// Start the provisioning worker pool
+		h.startProvisioningPool(ctx)
+
 		provisioningInterval := 2 * time.Minute
 		if h.Config.WorkerProvisioningInterval > 0 {
 			provisioningInterval = time.Duration(h.Config.WorkerProvisioningInterval) * time.Second
