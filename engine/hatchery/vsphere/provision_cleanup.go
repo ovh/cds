@@ -128,7 +128,7 @@ func (h *HatcheryVSphere) reconcileProvisionedVMs(ctx context.Context, machines 
 			continue
 		}
 
-		if machine.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
+		if machine.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
 			continue
 		}
 

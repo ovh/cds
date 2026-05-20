@@ -53,7 +53,9 @@ func TestHatcheryVSphere_reconcileProvisionedVMs_completesProvisioning(t *testin
 		{
 			// Powered on, provisioning annotation — should be reconciled
 			ManagedEntity: mo.ManagedEntity{Name: "provision-v2-orphan"},
-			Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOn},
+			Summary: types.VirtualMachineSummary{
+				Runtime: types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOn},
+			},
 			Config: &types.VirtualMachineConfigInfo{
 				Annotation: fmt.Sprintf(`{"provisioning": true, "vmware_model_path": "model-a", "created": "%s"}`, stuckCreatedAt.Format(time.RFC3339)),
 			},
@@ -61,7 +63,9 @@ func TestHatcheryVSphere_reconcileProvisionedVMs_completesProvisioning(t *testin
 		{
 			// Already powered off → ignored
 			ManagedEntity: mo.ManagedEntity{Name: "provision-v2-ready"},
-			Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+			Summary: types.VirtualMachineSummary{
+				Runtime: types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+			},
 			Config: &types.VirtualMachineConfigInfo{
 				Annotation: fmt.Sprintf(`{"provisioning": true, "vmware_model_path": "model-a", "created": "%s"}`, stuckCreatedAt.Format(time.RFC3339)),
 			},
@@ -69,7 +73,9 @@ func TestHatcheryVSphere_reconcileProvisionedVMs_completesProvisioning(t *testin
 		{
 			// In pending cache → ignored
 			ManagedEntity: mo.ManagedEntity{Name: "provision-v2-pending"},
-			Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOn},
+			Summary: types.VirtualMachineSummary{
+				Runtime: types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOn},
+			},
 			Config: &types.VirtualMachineConfigInfo{
 				Annotation: fmt.Sprintf(`{"provisioning": true, "vmware_model_path": "model-a", "created": "%s"}`, stuckCreatedAt.Format(time.RFC3339)),
 			},
@@ -117,7 +123,9 @@ func TestHatcheryVSphere_reconcileProvisionedVMs_deletesOnIPTimeout(t *testing.T
 		{
 			// No IP, WaitForVirtualMachineIP will fail → marked for deletion
 			ManagedEntity: mo.ManagedEntity{Name: "provision-v2-stuck"},
-			Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOn},
+			Summary: types.VirtualMachineSummary{
+				Runtime: types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOn},
+			},
 			Config: &types.VirtualMachineConfigInfo{
 				Annotation: fmt.Sprintf(`{"provisioning": true, "vmware_model_path": "model-a", "created": "%s"}`, stuckCreatedAt.Format(time.RFC3339)),
 			},
