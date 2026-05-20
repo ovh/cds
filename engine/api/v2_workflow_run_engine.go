@@ -538,20 +538,7 @@ func getConcurrencyUniqueKey(concu sdk.V2RunConcurrency, projKey, vcs, repo, wor
 }
 
 func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun, allrunJobsMap map[string]sdk.V2WorkflowRunJob, updatedRunJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult, wrEnqueue sdk.V2WorkflowRunEnqueue, reEnqueue bool) {
-
-	// Synchronize run result in a separate transaction
-	api.GoRoutines.Exec(ctx, "api.synchronizeRunResults", func(ctx context.Context) {
-		if err := api.synchronizeRunResults(ctx, api.mustDBWithCtx(ctx), run.ID); err != nil {
-			if sdk.ErrorIs(err, sdk.ErrLocked) {
-				log.Info(ctx, "synchronizeRunResults already lock for run "+run.ID)
-			} else {
-				log.ErrorWithStackTrace(ctx, err)
-			}
-		}
-	})
-
 	conccurencyTriggered := make(map[string]struct{})
-
 	for _, rj := range updatedRunJobs {
 		if rj.Concurrency != nil {
 			concurrencyKey := getConcurrencyUniqueKey(*rj.Concurrency, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName)
@@ -564,11 +551,32 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 		}
 	}
 
+	// Synchronize run result in a separate transaction
+	if !run.Status.IsTerminated() {
+		api.GoRoutines.Exec(ctx, "api.synchronizeRunResults", func(ctx context.Context) {
+			if err := api.synchronizeRunResultsNoWait(ctx, api.mustDBWithCtx(ctx), run.ID); err != nil {
+				if sdk.ErrorIs(err, sdk.ErrLocked) {
+					log.Info(ctx, "synchronizeRunResults already lock for run "+run.ID)
+				} else {
+					log.ErrorWithStackTrace(ctx, err)
+				}
+			}
+		})
+	}
+
 	// On workflow end
 	// * Publish end event
 	// * Try to unlocked workflow or jobs  # concurrency
 	// * Send hook event # workflow-run trigger
 	if run.Status.IsTerminated() {
+		// Final synchronization of run results to ensure the build info is complete.
+		// At this point all jobs are terminated so all run results are committed in DB.
+		api.GoRoutines.Exec(ctx, "api.synchronizeRunResults.final", func(ctx context.Context) {
+			if err := api.synchronizeRunResultsWait(ctx, api.mustDBWithCtx(ctx), run.ID); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+		})
+
 		// Send event
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, &wrEnqueue.Initiator)
 
@@ -808,8 +816,10 @@ synchronizeRunResults : for a runID, this func:
 - get the integration ArtifactManager on the workflow if exist
 - for each run results, add properties and signed properties
 - delete build, then create build info.
+
+This version tries to acquire the lock without waiting. If the lock is already held, it returns ErrLocked.
 */
-func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) error {
+func (api *API) synchronizeRunResultsNoWait(ctx context.Context, db gorp.SqlExecutor, runID string) error {
 	lockKey := cache.Key("api:workflow:sync:results:run", runID)
 	b, err := api.Cache.Lock(lockKey, 1*time.Minute, 0, 1)
 	if err != nil {
@@ -821,7 +831,30 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	defer func() {
 		_ = api.Cache.Unlock(lockKey)
 	}()
+	return api.synchronizeRunResults(ctx, db, runID)
+}
 
+/*
+synchronizeRunResultsFinal : same as synchronizeRunResults but waits for the lock.
+Used when the workflow run is terminated to ensure a final complete build info.
+*/
+func (api *API) synchronizeRunResultsWait(ctx context.Context, db gorp.SqlExecutor, runID string) error {
+	lockKey := cache.Key("api:workflow:sync:results:run", runID)
+	// Wait up to 2 minutes to acquire the lock (retry every 500ms, 240 attempts)
+	b, err := api.Cache.Lock(lockKey, 1*time.Minute, 500, 240)
+	if err != nil {
+		return err
+	}
+	if !b {
+		return sdk.WithStack(sdk.ErrLocked)
+	}
+	defer func() {
+		_ = api.Cache.Unlock(lockKey)
+	}()
+	return api.synchronizeRunResults(ctx, db, runID)
+}
+
+func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) error {
 	run, err := workflow_v2.LoadRunByID(ctx, db, runID)
 	if err != nil {
 		return err

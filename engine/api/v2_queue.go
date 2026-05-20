@@ -418,7 +418,7 @@ func (api *API) putJobRunResultSynchronizeHandler() ([]service.RbacChecker, serv
 				return err
 			}
 
-			if err := api.synchronizeRunResults(ctx, api.mustDB(), runJob.WorkflowRunID); err != nil {
+			if err := api.synchronizeRunResultsNoWait(ctx, api.mustDB(), runJob.WorkflowRunID); err != nil {
 				return err
 			}
 
