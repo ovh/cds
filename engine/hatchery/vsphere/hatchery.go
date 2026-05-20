@@ -150,6 +150,12 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 		if netCfg.IPRange == "" {
 			return sdk.WithStack(fmt.Errorf("networks[%d]: iprange is required", i))
 		}
+		if netCfg.Gateway == "" {
+			return sdk.WithStack(fmt.Errorf("networks[%d]: gateway is required", i))
+		}
+		if netCfg.SubnetMask == "" {
+			return sdk.WithStack(fmt.Errorf("networks[%d]: subnetMask is required", i))
+		}
 		_, err := sdk.IPinRanges(context.Background(), netCfg.IPRange)
 		if err != nil {
 			return sdk.WithStack(fmt.Errorf("networks[%d] ip-range error: %v", i, err))

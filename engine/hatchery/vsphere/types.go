@@ -42,7 +42,7 @@ type HatcheryConfiguration struct {
 type NetworkConfig struct {
 	IPRange    string `mapstructure:"iprange" toml:"iprange" default:"" commented:"false" comment:"IP Range in CIDR notation. Format: a.a.a.a/b,c.c.c.c/e" json:"iprange"`
 	Gateway    string `mapstructure:"gateway" toml:"gateway" default:"" commented:"false" comment:"Gateway IP for this network" json:"gateway"`
-	SubnetMask string `mapstructure:"subnetMask" toml:"subnetMask" default:"255.255.255.0" commented:"false" comment:"Subnet mask for this network" json:"subnetMask"`
+	SubnetMask string `mapstructure:"subnetMask" toml:"subnetMask" default:"" commented:"false" comment:"Subnet mask for this network" json:"subnetMask"`
 }
 
 // VSphereFlavorConfig defines CPU and RAM resources for a flavor

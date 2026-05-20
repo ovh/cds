@@ -32,8 +32,11 @@ func (h *HatcheryVSphere) initNetworks(ctx context.Context) error {
 		if netCfg.IPRange == "" {
 			continue
 		}
+		if netCfg.Gateway == "" {
+			return fmt.Errorf("networks[%d]: gateway is required", i)
+		}
 		if netCfg.SubnetMask == "" {
-			netCfg.SubnetMask = "255.255.255.0"
+			return fmt.Errorf("networks[%d]: subnetMask is required", i)
 		}
 
 		ips, err := sdk.IPinRanges(ctx, netCfg.IPRange)
@@ -46,9 +49,15 @@ func (h *HatcheryVSphere) initNetworks(ctx context.Context) error {
 			ipAddresses: ips,
 		})
 		h.availableIPAddresses = append(h.availableIPAddresses, ips...)
+	}
 
-		log.Info(ctx, "network[%d]: %d IPs from %s (gw=%s, mask=%s)",
-			i, len(ips), netCfg.IPRange, netCfg.Gateway, netCfg.SubnetMask)
+	if len(h.availableNetworks) > 0 {
+		totalIPs := len(h.availableIPAddresses)
+		log.Info(ctx, "network configuration: %d network(s), %d total IPs available", len(h.availableNetworks), totalIPs)
+		for i, net := range h.availableNetworks {
+			log.Info(ctx, "  network[%d] gw=%s: %d IPs (mask=%s)",
+				i, net.config.Gateway, len(net.ipAddresses), net.config.SubnetMask)
+		}
 	}
 
 	return nil
