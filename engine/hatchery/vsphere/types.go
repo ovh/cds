@@ -29,7 +29,8 @@ type HatcheryConfiguration struct {
 	WorkerProvisioningInterval int                        `mapstructure:"workerProvisioningInterval" toml:"workerProvisioningInterval" commented:"true" comment:"Worker Provisioning interval (seconds)" json:"workerProvisioningInterval"`
 	WorkerProvisioningPoolSize int                        `mapstructure:"workerProvisioningPoolSize" toml:"workerProvisioningPoolSize" commented:"true" comment:"Worker Provisioning pool size" json:"workerProvisioningPoolSize"`
 	WorkerProvisioning         []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
-	GuestCredentials           []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"List of Guest credentials" json:"-"`
+	GuestCredentials           []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"Deprecated: use [[models]] instead. List of Guest credentials" json:"-"`
+	Models                     []ModelConfig              `mapstructure:"models" toml:"models" commented:"true" comment:"Per-model configuration (credentials, resize script)" json:"models,omitempty"`
 	DefaultWorkerModelsV2      []DefaultWorkerModelsV2    `mapstructure:"defaultWorkerModelsV2" toml:"defaultWorkerModelsV2" commented:"true" comment:"List of default worker models v2 for declared binaries - used by workflow v1" json:"-"`
 	MaxCPUs                    int                        `mapstructure:"maxCpus" toml:"maxCpus" default:"0" commented:"true" comment:"Optional. Maximum total vCPUs this hatchery may allocate. 0 means no static CPU limit (Resource Pool limits still apply)." json:"maxCpus"`
 	MaxMemoryMB                int                        `mapstructure:"maxMemoryMB" toml:"maxMemoryMB" default:"0" commented:"true" comment:"Optional. Maximum total RAM (MB) this hatchery may allocate. 0 means no static memory limit (Resource Pool limits still apply)." json:"maxMemoryMB"`
@@ -45,11 +46,12 @@ type NetworkConfig struct {
 	SubnetMask string `mapstructure:"subnetMask" toml:"subnetMask" default:"" commented:"false" comment:"Subnet mask for this network" json:"subnetMask"`
 }
 
-// VSphereFlavorConfig defines CPU and RAM resources for a flavor
+// VSphereFlavorConfig defines CPU, RAM and disk resources for a flavor
 type VSphereFlavorConfig struct {
-	Name     string `mapstructure:"name" toml:"name" json:"name"`
-	CPUs     int    `mapstructure:"cpus" toml:"cpus" json:"cpus"`
-	MemoryMB int    `mapstructure:"memoryMB" toml:"memoryMB" json:"memoryMB"`
+	Name       string `mapstructure:"name" toml:"name" json:"name"`
+	CPUs       int    `mapstructure:"cpus" toml:"cpus" json:"cpus"`
+	MemoryMB   int    `mapstructure:"memoryMB" toml:"memoryMB" json:"memoryMB"`
+	DiskSizeGB int    `mapstructure:"diskSizeGB" toml:"diskSizeGB" commented:"true" comment:"Disk size in GB. If set, the first disk is resized at clone time." json:"diskSizeGB,omitempty"`
 }
 
 type WorkerProvisioningConfig struct {
@@ -72,6 +74,23 @@ type GuestCredential struct {
 
 	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
 	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
+}
+
+// ModelConfig holds per-model configuration: guest credentials and optional
+// pre-start script. It is matched to a VM by ModelPath (v1) or ModelVMWare (v2).
+type ModelConfig struct {
+	// ModelPath is the CDS worker model name (group/name), used only by CDS Worker Model v1
+	ModelPath string `mapstructure:"modelPath" default:"" commented:"true" toml:"modelPath" json:"modelPath"`
+
+	// ModelVMWare is the VMware template name, used only by CDS Worker Model v2
+	ModelVMWare string `mapstructure:"modelVMWare" default:"" commented:"true" toml:"modelVMWare" json:"modelVMWare"`
+
+	// Guest credentials for executing scripts inside the VM
+	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
+	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
+
+	// Script executed inside the VM after boot but before the CDS worker starts
+	PreStartScript string `mapstructure:"preStartScript" toml:"preStartScript" commented:"true" comment:"Shell script executed inside the VM before the worker starts" json:"preStartScript"`
 }
 
 // this is used to run worker model v2 in a job v1

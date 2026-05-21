@@ -779,13 +779,42 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	}
 }
 
+// roundRobinInterleave takes an ordered list of model keys and a deficit count
+// per model, and returns a flat queue where models are interleaved one task at
+// a time in config order. E.g. with deficits A=3, B=1, C=2 the result is
+// [A, B, C, A, C, A].
+func roundRobinInterleave(modelOrder []string, deficits map[string]int) []string {
+	total := 0
+	for _, c := range deficits {
+		total += c
+	}
+	queue := make([]string, 0, total)
+	remaining := make(map[string]int, len(deficits))
+	for k, v := range deficits {
+		remaining[k] = v
+	}
+	for len(remaining) > 0 {
+		for _, model := range modelOrder {
+			if remaining[model] <= 0 {
+				continue
+			}
+			queue = append(queue, model)
+			remaining[model]--
+			if remaining[model] == 0 {
+				delete(remaining, model)
+			}
+		}
+	}
+	return queue
+}
+
 func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
-	// Count exiting provisionned machine for each vmware model.
-	// This counts ALL VMs with Provisioning annotation regardless of power state,
-	// so orphaned VMs (powered on, stuck) are included in the count. This ensures
-	// that reconciled VMs don't cause additional clones in the deficit calculation.
+	// --- Step 1: compute current state and deficit per model ---
+	// Count ALL VMs with Provisioning annotation regardless of power state,
+	// so orphaned VMs (powered on, stuck) are included. This ensures that
+	// reconciled VMs don't cause additional clones in the deficit calculation.
 	mapAlreadyProvisionned := make(map[string]int)
 	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
 	machines := h.getVirtualMachines(ctx)
@@ -801,56 +830,80 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 			continue
 		}
 		if annot.Provisioning {
-			mapAlreadyProvisionned[annot.VMwareModelPath] = mapAlreadyProvisionned[annot.VMwareModelPath] + 1
-			mapProvisionedMachines[annot.VMwareModelPath] = append(mapProvisionedMachines[annot.VMwareModelPath], machine)
+			mapAlreadyProvisionned[annot.VMwareModelPath]++
+			mapProvisionedMachines[annot.VMwareModelPath] = append(
+				mapProvisionedMachines[annot.VMwareModelPath], machine)
 		}
 	}
 	h.cacheProvisioning.mu.Unlock()
 
-	// Build a map of configured provisioning counts
+	// Build configured counts and compute deficit for each model
 	configuredCounts := make(map[string]int)
+	deficits := make(map[string]int)
 	for i := range h.Config.WorkerProvisioning {
 		modelVMware := h.Config.WorkerProvisioning[i].ModelVMWare
-		if modelVMware != "" {
-			configuredCounts[modelVMware] = h.Config.WorkerProvisioning[i].Number
+		number := h.Config.WorkerProvisioning[i].Number
+		if modelVMware == "" {
+			continue
+		}
+		configuredCounts[modelVMware] = number
+		if number == 0 {
+			continue
+		}
+		existing := mapAlreadyProvisionned[modelVMware]
+		log.Info(ctx, "model vmware %q provisioning: %d/%d",
+			modelVMware, existing, number)
+		if delta := number - existing; delta > 0 {
+			deficits[modelVMware] = delta
 		}
 	}
 
 	// Remove excess provisioned VMs when config is decreased or model removed
 	for modelPath, provisionedMachines := range mapProvisionedMachines {
 		desired := configuredCounts[modelPath]
-		excess := len(provisionedMachines) - desired
-		if excess > 0 {
-			log.Info(ctx, "model vmware %q deprovisioning: removing %d excess (have %d, want %d)", modelPath, excess, len(provisionedMachines), desired)
+		if excess := len(provisionedMachines) - desired; excess > 0 {
+			log.Info(ctx, "model vmware %q deprovisioning: removing %d excess (have %d, want %d)",
+				modelPath, excess, len(provisionedMachines), desired)
 			for i := 0; i < excess; i++ {
 				h.markToDelete(ctx, provisionedMachines[i].Name)
 			}
 		}
 	}
 
-	// Batch: reconcile orphaned VMs + provision new ones
-	var batch sync.WaitGroup
+	// --- Step 2: interleave models using round-robin ---
+	// Produces a fair ordering so that models with larger counts don't
+	// monopolize the provisioning queue.
+	modelOrder := make([]string, 0, len(h.Config.WorkerProvisioning))
+	for i := range h.Config.WorkerProvisioning {
+		m := h.Config.WorkerProvisioning[i].ModelVMWare
+		if _, ok := deficits[m]; ok {
+			modelOrder = append(modelOrder, m)
+		}
+	}
+	provisionQueue := roundRobinInterleave(modelOrder, deficits)
 
-	// Reconcile stuck provisioned VMs (powered on but not in pending cache)
+	// --- Step 3: cap by available IPs and enqueue tasks ---
+	ipBudget := -1
+	if len(h.availableIPAddresses) > 0 {
+		ipBudget = h.countAvailableIPs(ctx)
+		log.Info(ctx, "provisioning IP budget: %d available", ipBudget)
+	}
+	if ipBudget == 0 {
+		log.Warn(ctx, "provisioning stopped: no IPs available")
+		provisionQueue = nil
+	} else if ipBudget > 0 && len(provisionQueue) > ipBudget {
+		log.Warn(ctx, "provisioning capped to %d tasks (IP budget)", ipBudget)
+		provisionQueue = provisionQueue[:ipBudget]
+	}
+
+	var batch sync.WaitGroup
 	h.reconcileProvisionedVMs(ctx, machines, "provision-v2", &batch)
 
-	// Compute deficit and submit clone tasks
-	for i := range h.Config.WorkerProvisioning {
-		modelVMware := h.Config.WorkerProvisioning[i].ModelVMWare
-		number := h.Config.WorkerProvisioning[i].Number
-		if modelVMware == "" || number == 0 {
-			continue
-		}
-
-		log.Info(ctx, "model vmware %q provisioning: %d/%d", modelVMware, mapAlreadyProvisionned[modelVMware], number)
-
-		nbToProvision := int(number) - mapAlreadyProvisionned[modelVMware]
-		for j := 0; j < nbToProvision; j++ {
-			batch.Add(1)
-			h.provisioningPool.tasks <- provisionTask{
-				cloneV2: modelVMware,
-				wg:      &batch,
-			}
+	for _, modelVMware := range provisionQueue {
+		batch.Add(1)
+		h.provisioningPool.tasks <- provisionTask{
+			cloneV2: modelVMware,
+			wg:      &batch,
 		}
 	}
 
@@ -860,10 +913,10 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
-	// Count exiting provisionned machine for each model.
-	// This counts ALL VMs with Provisioning annotation regardless of power state,
-	// so orphaned VMs (powered on, stuck) are included in the count. This ensures
-	// that reconciled VMs don't cause additional clones in the deficit calculation.
+	// --- Step 1: compute current state and deficit per model ---
+	// Count ALL VMs with Provisioning annotation regardless of power state,
+	// so orphaned VMs (powered on, stuck) are included. This ensures that
+	// reconciled VMs don't cause additional clones in the deficit calculation.
 	mapAlreadyProvisionned := make(map[string]int)
 	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
 	machines := h.getVirtualMachines(ctx)
@@ -879,40 +932,25 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 			continue
 		}
 		if annot.Provisioning {
-			mapAlreadyProvisionned[annot.WorkerModelPath] = mapAlreadyProvisionned[annot.WorkerModelPath] + 1
-			mapProvisionedMachines[annot.WorkerModelPath] = append(mapProvisionedMachines[annot.WorkerModelPath], machine)
+			mapAlreadyProvisionned[annot.WorkerModelPath]++
+			mapProvisionedMachines[annot.WorkerModelPath] = append(
+				mapProvisionedMachines[annot.WorkerModelPath], machine)
 		}
 	}
 	h.cacheProvisioning.mu.Unlock()
 
-	// Build a map of configured provisioning counts
+	// Build configured counts, resolve models, compute deficit
 	configuredCounts := make(map[string]int)
-	for i := range h.Config.WorkerProvisioning {
-		modelPath := h.Config.WorkerProvisioning[i].ModelPath
-		if modelPath != "" {
-			configuredCounts[modelPath] = h.Config.WorkerProvisioning[i].Number
-		}
-	}
-
-	// Remove excess provisioned VMs when config is decreased or model removed
-	for modelPath, provisionedMachines := range mapProvisionedMachines {
-		desired := configuredCounts[modelPath]
-		excess := len(provisionedMachines) - desired
-		if excess > 0 {
-			log.Info(ctx, "model %q deprovisioning: removing %d excess (have %d, want %d)", modelPath, excess, len(provisionedMachines), desired)
-			for i := 0; i < excess; i++ {
-				h.markToDelete(ctx, provisionedMachines[i].Name)
-			}
-		}
-	}
-
-	// Count provision to create for each model
-	mapToProvision := make(map[string]int)
+	deficits := make(map[string]int)
 	mapModels := make(map[string]sdk.Model)
 	for i := range h.Config.WorkerProvisioning {
 		modelPath := h.Config.WorkerProvisioning[i].ModelPath
 		number := h.Config.WorkerProvisioning[i].Number
-		if modelPath == "" || number == 0 {
+		if modelPath == "" {
+			continue
+		}
+		configuredCounts[modelPath] = number
+		if number == 0 {
 			continue
 		}
 
@@ -921,55 +959,67 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 			log.Error(ctx, "invalid model name %q", modelPath)
 			continue
 		}
-
 		model, err := h.Client.WorkerModelGet(tuple[0], tuple[1])
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Warn(ctx, "unable to get model name %q: %v", modelPath, err)
 			continue
 		}
-
 		if model.CheckRegistration || model.NeedRegistration {
 			log.Info(ctx, "model %q needs registration. skip provisioning.", modelPath)
 			continue
 		}
 
-		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
-
+		existing := mapAlreadyProvisionned[modelPath]
+		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, existing, number)
 		mapModels[modelPath] = model
-		count := int(number) - mapAlreadyProvisionned[modelPath]
-		if count > 0 {
-			mapToProvision[modelPath] = count
+		if delta := number - existing; delta > 0 {
+			deficits[modelPath] = delta
 		}
 	}
 
-	if len(mapToProvision) == 0 {
+	// Remove excess provisioned VMs when config is decreased or model removed
+	for modelPath, provisionedMachines := range mapProvisionedMachines {
+		desired := configuredCounts[modelPath]
+		if excess := len(provisionedMachines) - desired; excess > 0 {
+			log.Info(ctx, "model %q deprovisioning: removing %d excess (have %d, want %d)",
+				modelPath, excess, len(provisionedMachines), desired)
+			for i := 0; i < excess; i++ {
+				h.markToDelete(ctx, provisionedMachines[i].Name)
+			}
+		}
+	}
+
+	if len(deficits) == 0 {
 		return
 	}
 
-	// Batch: reconcile orphaned VMs + provision new ones
-	var batch sync.WaitGroup
-
-	// Reconcile stuck provisioned VMs (powered on but not in pending cache)
-	h.reconcileProvisionedVMs(ctx, machines, "provision-v1", &batch)
-
-	// Distribute models in provision queue (round-robin) and submit tasks
-	var provisionQueue []string
-	for len(mapToProvision) > 0 {
-		for i := range h.Config.WorkerProvisioning {
-			modelPath := h.Config.WorkerProvisioning[i].ModelPath
-			count, ok := mapToProvision[modelPath]
-			if !ok {
-				continue
-			}
-			if count == 0 {
-				delete(mapToProvision, modelPath)
-				continue
-			}
-			provisionQueue = append(provisionQueue, modelPath)
-			mapToProvision[modelPath] = mapToProvision[modelPath] - 1
+	// --- Step 2: interleave models using round-robin ---
+	modelOrder := make([]string, 0, len(h.Config.WorkerProvisioning))
+	for i := range h.Config.WorkerProvisioning {
+		m := h.Config.WorkerProvisioning[i].ModelPath
+		if _, ok := deficits[m]; ok {
+			modelOrder = append(modelOrder, m)
 		}
 	}
+	provisionQueue := roundRobinInterleave(modelOrder, deficits)
+
+	// --- Step 3: cap by available IPs and enqueue tasks ---
+	ipBudget := -1
+	if len(h.availableIPAddresses) > 0 {
+		ipBudget = h.countAvailableIPs(ctx)
+		log.Info(ctx, "provisioning IP budget: %d available", ipBudget)
+	}
+	if ipBudget == 0 {
+		log.Warn(ctx, "provisioning stopped: no IPs available")
+		provisionQueue = nil
+	} else if ipBudget > 0 && len(provisionQueue) > ipBudget {
+		log.Warn(ctx, "provisioning capped to %d tasks (IP budget)", ipBudget)
+		provisionQueue = provisionQueue[:ipBudget]
+	}
+
+	var batch sync.WaitGroup
+	h.reconcileProvisionedVMs(ctx, machines, "provision-v1", &batch)
 
 	for _, modelPath := range provisionQueue {
 		model := mapModels[modelPath]

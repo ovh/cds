@@ -7,6 +7,7 @@ import (
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -18,10 +19,12 @@ type vsphereMetrics struct {
 	// Level 1: Per-worker
 	WorkerVCPUs    *stats.Int64Measure
 	WorkerMemoryMB *stats.Int64Measure
+	WorkerDiskGB   *stats.Int64Measure
 
 	// Level 2: Hatchery-level aggregate
 	AllocatedVCPUs     *stats.Int64Measure
 	AllocatedMemoryMB  *stats.Int64Measure
+	AllocatedDiskGB    *stats.Int64Measure
 	VMCount            *stats.Int64Measure
 	ProvisionedVMCount *stats.Int64Measure
 	TemplateVCPUs      *stats.Int64Measure
@@ -42,8 +45,9 @@ type vsphereMetrics struct {
 	ResourcePoolMemUnreserved *stats.Int64Measure
 
 	// IP address tracking
-	IPUsedCount  *stats.Int64Measure
-	IPTotalCount *stats.Int64Measure
+	IPActiveCount   *stats.Int64Measure
+	IPReservedCount *stats.Int64Measure
+	IPTotalCount    *stats.Int64Measure
 
 	// Views (kept for re-registration of per-worker views)
 	workerViews    []*view.View
@@ -63,6 +67,9 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 	h.metrics.WorkerMemoryMB = stats.Int64(
 		"cds/hatchery/vsphere/worker_memory_mb",
 		"memory (MB) for a worker VM", stats.UnitDimensionless)
+	h.metrics.WorkerDiskGB = stats.Int64(
+		"cds/hatchery/vsphere/worker_disk_gb",
+		"disk capacity (GB) for a worker VM", stats.UnitDimensionless)
 
 	// Level 2: Hatchery-level aggregate
 	h.metrics.AllocatedVCPUs = stats.Int64(
@@ -71,6 +78,9 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 	h.metrics.AllocatedMemoryMB = stats.Int64(
 		"cds/hatchery/vsphere/allocated_memory_mb",
 		"total memory (MB) allocated by this hatchery's VMs", stats.UnitDimensionless)
+	h.metrics.AllocatedDiskGB = stats.Int64(
+		"cds/hatchery/vsphere/allocated_disk_gb",
+		"total disk capacity (GB) allocated by this hatchery's VMs", stats.UnitDimensionless)
 	h.metrics.VMCount = stats.Int64(
 		"cds/hatchery/vsphere/vm_count",
 		"total VMs managed by this hatchery", stats.UnitDimensionless)
@@ -119,9 +129,12 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 		"Resource Pool memory unreserved for VMs in bytes", stats.UnitDimensionless)
 
 	// IP address tracking
-	h.metrics.IPUsedCount = stats.Int64(
-		"cds/hatchery/vsphere/ip_used_count",
-		"Number of IP addresses currently in use", stats.UnitDimensionless)
+	h.metrics.IPActiveCount = stats.Int64(
+		"cds/hatchery/vsphere/ip_active_count",
+		"Number of IP addresses active on running VMs", stats.UnitDimensionless)
+	h.metrics.IPReservedCount = stats.Int64(
+		"cds/hatchery/vsphere/ip_reserved_count",
+		"Number of IP addresses held by VMs (any power state)", stats.UnitDimensionless)
 	h.metrics.IPTotalCount = stats.Int64(
 		"cds/hatchery/vsphere/ip_total_count",
 		"Total number of IP addresses in configured range", stats.UnitDimensionless)
@@ -141,12 +154,14 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 	h.metrics.workerViews = []*view.View{
 		telemetry.NewViewLast("cds/hatchery/vsphere/worker_vcpus", h.metrics.WorkerVCPUs, workerTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/worker_memory_mb", h.metrics.WorkerMemoryMB, workerTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/worker_disk_gb", h.metrics.WorkerDiskGB, workerTags),
 	}
 
 	h.metrics.aggregateViews = []*view.View{
 		// Level 2: Hatchery aggregate
 		telemetry.NewViewLast("cds/hatchery/vsphere/allocated_vcpus", h.metrics.AllocatedVCPUs, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/allocated_memory_mb", h.metrics.AllocatedMemoryMB, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/allocated_disk_gb", h.metrics.AllocatedDiskGB, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/vm_count", h.metrics.VMCount, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/provisioned_vm_count", h.metrics.ProvisionedVMCount, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/template_vcpus", h.metrics.TemplateVCPUs, baseTags),
@@ -164,7 +179,8 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 		telemetry.NewViewLast("cds/hatchery/vsphere/resource_pool_memory_usage_bytes", h.metrics.ResourcePoolMemUsage, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/resource_pool_memory_unreserved_bytes", h.metrics.ResourcePoolMemUnreserved, baseTags),
 		// IP address tracking
-		telemetry.NewViewLast("cds/hatchery/vsphere/ip_used_count", h.metrics.IPUsedCount, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/ip_active_count", h.metrics.IPActiveCount, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/ip_reserved_count", h.metrics.IPReservedCount, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/ip_total_count", h.metrics.IPTotalCount, baseTags),
 	}
 }
@@ -200,7 +216,7 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 	srvs := h.getRawVMs(ctx)
 
 	// Level 2: Hatchery-level counters
-	var hatcheryCPUs, hatcheryMemMB int64
+	var hatcheryCPUs, hatcheryMemMB, hatcheryDiskGB int64
 	var vmCount, provisionedCount int64
 	var templateCPUs, templateMemMB, templateCount int64
 
@@ -216,6 +232,7 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 	for _, s := range srvs {
 		cpus := int64(s.Summary.Config.NumCpu)
 		memMB := int64(s.Summary.Config.MemorySizeMB)
+		diskGB := vmDiskCapacityGB(s)
 
 		// Level 3: count ALL VMs unconditionally
 		poolCPUs += cpus
@@ -237,6 +254,7 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 
 		hatcheryCPUs += cpus
 		hatcheryMemMB += memMB
+		hatcheryDiskGB += diskGB
 		vmCount++
 
 		if strings.HasPrefix(s.Name, "provision-") {
@@ -249,6 +267,7 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 		stats.Record(wCtx,
 			h.metrics.WorkerVCPUs.M(cpus),
 			h.metrics.WorkerMemoryMB.M(memMB),
+			h.metrics.WorkerDiskGB.M(diskGB),
 		)
 	}
 
@@ -256,6 +275,7 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 	stats.Record(ctx,
 		h.metrics.AllocatedVCPUs.M(hatcheryCPUs),
 		h.metrics.AllocatedMemoryMB.M(hatcheryMemMB),
+		h.metrics.AllocatedDiskGB.M(hatcheryDiskGB),
 		h.metrics.VMCount.M(vmCount),
 		h.metrics.ProvisionedVMCount.M(provisionedCount),
 		h.metrics.TemplateVCPUs.M(templateCPUs),
@@ -272,28 +292,35 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 
 	// IP address tracking
 	if len(h.availableIPAddresses) > 0 {
-		usedIPs := make(map[string]struct{})
+		// Reserved: IPs held by any VM via annotation (includes powered-off provisioned VMs)
+		reservedIPs := make(map[string]struct{})
+		// Active: IPs visible on running VMs via guest network info
+		activeIPs := make(map[string]struct{})
 		for _, s := range srvs {
 			annot := getVirtualMachineCDSAnnotation(ctx, s)
 			if annot != nil && annot.IPAddress != "" {
-				usedIPs[annot.IPAddress] = struct{}{}
+				reservedIPs[annot.IPAddress] = struct{}{}
 			}
 			if s.Guest != nil {
 				for _, n := range s.Guest.Net {
 					for _, ip := range n.IpAddress {
-						usedIPs[ip] = struct{}{}
+						activeIPs[ip] = struct{}{}
 					}
 				}
 			}
 		}
-		var ipUsed int64
+		var ipReserved, ipActive int64
 		for _, ip := range h.availableIPAddresses {
-			if _, ok := usedIPs[ip]; ok {
-				ipUsed++
+			if _, ok := reservedIPs[ip]; ok {
+				ipReserved++
+			}
+			if _, ok := activeIPs[ip]; ok {
+				ipActive++
 			}
 		}
 		stats.Record(ctx,
-			h.metrics.IPUsedCount.M(ipUsed),
+			h.metrics.IPActiveCount.M(ipActive),
+			h.metrics.IPReservedCount.M(ipReserved),
 			h.metrics.IPTotalCount.M(int64(len(h.availableIPAddresses))),
 		)
 	}
@@ -319,4 +346,19 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 		h.metrics.ResourcePoolMemUsage.M(poolMo.Runtime.Memory.OverallUsage),
 		h.metrics.ResourcePoolMemUnreserved.M(poolMo.Runtime.Memory.UnreservedForVm),
 	)
+}
+
+// vmDiskCapacityGB returns the total disk capacity in GB for a VM by summing
+// all VirtualDisk devices found in Config.Hardware.Device.
+func vmDiskCapacityGB(vm mo.VirtualMachine) int64 {
+	if vm.Config == nil {
+		return 0
+	}
+	var totalKB int64
+	for _, dev := range vm.Config.Hardware.Device {
+		if disk, ok := dev.(*types.VirtualDisk); ok {
+			totalKB += disk.CapacityInKB
+		}
+	}
+	return totalKB / (1024 * 1024)
 }

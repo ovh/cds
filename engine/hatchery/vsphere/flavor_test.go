@@ -51,11 +51,10 @@ func TestPrepareCloneSpecWithFlavor(t *testing.T) {
 	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{}, flavor)
 	require.NoError(t, err)
 	require.NotNil(t, cloneSpec)
-	require.NotNil(t, cloneSpec.Config)
 
-	// Assert flavor was applied
-	assert.Equal(t, int32(8), cloneSpec.Config.NumCPUs)
-	assert.Equal(t, int64(16384), cloneSpec.Config.MemoryMB)
+	// When a flavor is provided, the VM should be cloned powered off
+	// (reconfigureVM handles CPU/RAM/disk on the powered-off clone)
+	assert.False(t, cloneSpec.PowerOn)
 }
 
 func TestPrepareCloneSpecWithoutFlavor(t *testing.T) {
@@ -91,11 +90,9 @@ func TestPrepareCloneSpecWithoutFlavor(t *testing.T) {
 	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cloneSpec)
-	require.NotNil(t, cloneSpec.Config)
 
-	// Assert no flavor was applied (NumCPUs/MemoryMB should be zero/unset)
-	assert.Equal(t, int32(0), cloneSpec.Config.NumCPUs)
-	assert.Equal(t, int64(0), cloneSpec.Config.MemoryMB)
+	// Without a flavor, the VM should be cloned powered on
+	assert.True(t, cloneSpec.PowerOn)
 }
 
 func TestGetSmallerFlavorCPUs(t *testing.T) {
