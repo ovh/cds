@@ -8,8 +8,9 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// For each IPs in the range, look for the first free ones
-func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (string, error) {
+// findAvailableIP looks for the first free IP across all configured networks
+// and returns the IP along with its associated network configuration.
+func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (ipResult, error) {
 	h.IpAddressesMutex.Lock()
 	defer h.IpAddressesMutex.Unlock()
 
@@ -38,15 +39,21 @@ func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (string, error) {
 		}
 	}
 
-	for _, ip := range h.availableIPAddresses {
-		_, isUsed := usedIPAddresses[ip]
-		isReserved := sdk.IsInArray(ip, h.reservedIPAddresses)
-		if !isUsed && !isReserved {
-			return ip, nil
+	for _, network := range h.availableNetworks {
+		for _, ip := range network.ipAddresses {
+			_, isUsed := usedIPAddresses[ip]
+			isReserved := sdk.IsInArray(ip, h.reservedIPAddresses)
+			if !isUsed && !isReserved {
+				return ipResult{
+					ip:         ip,
+					gateway:    network.config.Gateway,
+					subnetMask: network.config.SubnetMask,
+				}, nil
+			}
 		}
 	}
 
-	return "", sdk.WithStack(errors.New("no IP address available"))
+	return ipResult{}, sdk.WithStack(errors.New("no IP address available"))
 }
 
 func (h *HatcheryVSphere) reserveIPAddress(ctx context.Context, ip string) error {

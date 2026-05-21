@@ -513,7 +513,7 @@ func (h *HatcheryVSphere) ProvisionWorkerV1(ctx context.Context, m sdk.Model, wo
 		Created:                 time.Now(),
 	}
 
-	return h.provisionWorker(ctx, vmTemplate, annot, workerName)
+	return h.cloneProvisionedWorker(ctx, vmTemplate, annot, workerName)
 }
 
 func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel string, workerName string) error {
@@ -531,10 +531,13 @@ func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel str
 		Created:         time.Now(),
 	}
 
-	return h.provisionWorker(ctx, vmTemplate, annot, workerName)
+	return h.cloneProvisionedWorker(ctx, vmTemplate, annot, workerName)
 }
 
-func (h *HatcheryVSphere) provisionWorker(ctx context.Context, vmTemplate *object.VirtualMachine, annot annotation, workerName string) (err error) {
+// cloneProvisionedWorker clones a VM template for provisioning. After the clone
+// the VM is powered on but not yet shut down — the caller is responsible for
+// completing provisioning via finishProvisioning.
+func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate *object.VirtualMachine, annot annotation, workerName string) error {
 	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, nil)
 	if err != nil {
 		return err
@@ -552,21 +555,9 @@ func (h *HatcheryVSphere) provisionWorker(ctx context.Context, vmTemplate *objec
 		return err
 	}
 
-	clonedVM, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, workerName)
-	if err != nil {
+	if _, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, workerName); err != nil {
 		return err
 	}
-
-	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, clonedVM, &annot.IPAddress, workerName); err != nil {
-		return err
-	}
-
-	// the provisionned workers are shutdown when they are created
-	if err := h.vSphereClient.ShutdownVirtualMachine(ctx, clonedVM); err != nil {
-		return err
-	}
-
-	log.Info(ctx, "vm %q has been provisionned", workerName)
 
 	return nil
 }

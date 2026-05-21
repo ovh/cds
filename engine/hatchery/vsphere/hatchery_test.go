@@ -561,7 +561,10 @@ func TestHatcheryVSphere_provisioning_v1_do_nothing(t *testing.T) {
 		},
 	)
 
-	h.provisioningV1(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV1(ctx)
 }
 
 func TestHatcheryVSphere_provisioning_v2_do_nothing(t *testing.T) {
@@ -613,7 +616,10 @@ func TestHatcheryVSphere_provisioning_v2_do_nothing(t *testing.T) {
 		},
 	)
 
-	h.provisioningV2(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV2(ctx)
 }
 
 func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
@@ -659,6 +665,10 @@ func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
 	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.availableNetworks = []availableNetwork{{
+		config:      NetworkConfig{IPRange: "192.168.0.0/24", Gateway: "192.168.0.254", SubnetMask: "255.255.255.0"},
+		ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
+	}}
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
 
@@ -765,6 +775,14 @@ func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
 		},
 	)
 
+	// finishProvisioning loads the VM by name, then waits for IP and shuts down
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
+			assert.True(t, strings.HasPrefix(name, "provision-"))
+			return &workerVM, nil
+		},
+	)
+
 	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
 			return nil
@@ -777,7 +795,10 @@ func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
 		},
 	)
 
-	h.provisioningV1(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV1(ctx)
 }
 
 func TestHatcheryVSphere_GetDetaultModelV2Name(t *testing.T) {
@@ -810,4 +831,122 @@ func TestHatcheryVSphere_GetDetaultModelV2Name(t *testing.T) {
 
 	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{{Name: "foo", Value: "bar", Type: sdk.BinaryRequirement}})
 	require.Equal(t, "", got)
+}
+
+func TestHatcheryVSphere_provisioning_v2_deprovision_excess(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	cdsclient := mock_cdsclient.NewMockInterface(ctrl)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{
+				GoRoutines: sdk.NewGoRoutines(context.Background()),
+				Client:     cdsclient,
+			},
+		},
+		Config: HatcheryConfiguration{
+			WorkerProvisioning: []WorkerProvisioningConfig{
+				{
+					ModelVMWare: "the-model",
+					Number:      1, // decreased from 3 to 1
+				},
+			},
+		},
+	}
+
+	// 3 provisioned VMs exist, but config says only 1
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{Name: "provision-v2-worker-1"},
+					Summary:       types.VirtualMachineSummary{Config: types.VirtualMachineConfigSummary{Template: false}},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: `{"model": false, "vmware_model_path": "the-model", "provisioning": true}`},
+					Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+				},
+				{
+					ManagedEntity: mo.ManagedEntity{Name: "provision-v2-worker-2"},
+					Summary:       types.VirtualMachineSummary{Config: types.VirtualMachineConfigSummary{Template: false}},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: `{"model": false, "vmware_model_path": "the-model", "provisioning": true}`},
+					Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+				},
+				{
+					ManagedEntity: mo.ManagedEntity{Name: "provision-v2-worker-3"},
+					Summary:       types.VirtualMachineSummary{Config: types.VirtualMachineConfigSummary{Template: false}},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: `{"model": false, "vmware_model_path": "the-model", "provisioning": true}`},
+					Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+				},
+			}, nil
+		},
+	).AnyTimes()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV2(ctx)
+
+	// 2 excess VMs should be marked for deletion (3 exist - 1 configured = 2 excess)
+	h.cacheToDelete.mu.Lock()
+	defer h.cacheToDelete.mu.Unlock()
+	assert.Len(t, h.cacheToDelete.list, 2)
+	assert.Contains(t, h.cacheToDelete.list, "provision-v2-worker-1")
+	assert.Contains(t, h.cacheToDelete.list, "provision-v2-worker-2")
+}
+
+func TestHatcheryVSphere_provisioning_v2_deprovision_removed_model(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	cdsclient := mock_cdsclient.NewMockInterface(ctrl)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{
+				GoRoutines: sdk.NewGoRoutines(context.Background()),
+				Client:     cdsclient,
+			},
+		},
+		Config: HatcheryConfiguration{
+			// No models configured - all should be removed
+			WorkerProvisioning: []WorkerProvisioningConfig{},
+		},
+	}
+
+	// 2 provisioned VMs exist for a model that's no longer in config
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{Name: "provision-v2-worker-1"},
+					Summary:       types.VirtualMachineSummary{Config: types.VirtualMachineConfigSummary{Template: false}},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: `{"model": false, "vmware_model_path": "removed-model", "provisioning": true}`},
+					Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+				},
+				{
+					ManagedEntity: mo.ManagedEntity{Name: "provision-v2-worker-2"},
+					Summary:       types.VirtualMachineSummary{Config: types.VirtualMachineConfigSummary{Template: false}},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: `{"model": false, "vmware_model_path": "removed-model", "provisioning": true}`},
+					Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+				},
+			}, nil
+		},
+	).AnyTimes()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	setupTestPool(ctx, &h)
+	h.provisioningV2(ctx)
+
+	// Both VMs should be marked for deletion since model is removed from config
+	h.cacheToDelete.mu.Lock()
+	defer h.cacheToDelete.mu.Unlock()
+	assert.Len(t, h.cacheToDelete.list, 2)
 }
