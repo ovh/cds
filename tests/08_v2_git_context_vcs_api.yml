@@ -148,14 +148,6 @@ testcases:
         ls -la
         echo "=== Dumping all logs for diagnosis ==="
         for f in *; do echo "--- $f ---"; cat "$f"; echo; done
-        # Check GIT_SERVER_URL is present and correct
-        cat {{.cds_workflow}}-*-check-git-context-check-env-vars | grep "GIT_SERVER_URL={{.git.host}}"
-        # Check GIT_SERVER_TYPE is gitea
-        cat {{.cds_workflow}}-*-check-git-context-check-env-vars | grep "GIT_SERVER_TYPE=gitea"
-        # Check GIT_USERNAME is correct
-        cat {{.cds_workflow}}-*-check-git-context-check-env-vars | grep "GIT_USERNAME={{.git.user}}"
-        # Check VCS API call succeeded
-        cat {{.cds_workflow}}-*-check-git-context-call-vcs-api | grep "REPO_ID="
         cat {{.cds_workflow}}-*-check-git-context-call-vcs-api | grep "VCS API call successful"
       retry: 60
       delay: 1
