@@ -1,4 +1,4 @@
-name: Checkout plugin
+name: Checkout and Git Context
 vars:
   cds_project: "ITV2CHECKOUT"
   git_repo: "it_v2_checkout"
@@ -76,6 +76,34 @@ testcases:
               steps:
                 - id: checkout
                   uses: actions/checkout
+                - id: check-env-vars
+                  run: |-
+                    #!/bin/bash -x
+                    set -e
+                    echo "=== GIT env vars ==="
+                    env | grep GIT_ | sort
+                    echo "=== Checking GIT_SERVER_URL ==="
+                    test -n "$GIT_SERVER_URL" || (echo "ERROR: GIT_SERVER_URL is empty" && exit 1)
+                    echo "GIT_SERVER_URL=$GIT_SERVER_URL"
+                    echo "=== Checking GIT_SERVER_TYPE ==="
+                    test -n "$GIT_SERVER_TYPE" || (echo "ERROR: GIT_SERVER_TYPE is empty" && exit 1)
+                    echo "GIT_SERVER_TYPE=$GIT_SERVER_TYPE"
+                    echo "=== Checking GIT_USERNAME ==="
+                    test -n "$GIT_USERNAME" || (echo "ERROR: GIT_USERNAME is empty" && exit 1)
+                    echo "GIT_USERNAME=$GIT_USERNAME"
+                - id: call-vcs-api
+                  run: |-
+                    #!/bin/bash -x
+                    set -e
+                    echo "=== Calling VCS API using git context ==="
+                    RESPONSE=$(curl -sf -u "${{ git.username }}:${{ git.token }}" "${{ git.server_url }}/api/v1/repos/${{ git.repository }}")
+                    REPO_ID=$(echo "$RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+                    echo "REPO_ID=$REPO_ID"
+                    if [ -z "$REPO_ID" ]; then
+                      echo "ERROR: could not get repo id from API response"
+                      exit 1
+                    fi
+                    echo "=== VCS API call successful ==="
                 - id: gitvariables
                   run: |-
                     #!/bin/bash -x
@@ -118,6 +146,10 @@ testcases:
         cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout completed"
         # Check checkout log content 2
         cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout branch master"
+        # Check env vars log content
+        cat {{.cds_workflow}}-1-1-init-check-env-vars && cat {{.cds_workflow}}-1-1-init-check-env-vars | grep GIT_SERVER_URL
+        # Check VCS API call log content
+        cat {{.cds_workflow}}-1-1-init-call-vcs-api && cat {{.cds_workflow}}-1-1-init-call-vcs-api | grep "VCS API call successful"
         # Check gitvariables log content to check SEMVER variables are available
         cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep SEMVER
         cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep GIT_AUTHOR={{.git.user}}
@@ -158,5 +190,7 @@ testcases:
         cat {{.cds_workflow}}-2-1-init-checkout && cat {{.cds_workflow}}-2-1-init-checkout | grep "Checkout completed"
         # Check checkout tag log content 2
         cat {{.cds_workflow}}-2-1-init-checkout && cat {{.cds_workflow}}-2-1-init-checkout | grep "Checkout tag v0.1.0"
+        # Check VCS API call log content for tag run
+        cat {{.cds_workflow}}-2-1-init-call-vcs-api && cat {{.cds_workflow}}-2-1-init-call-vcs-api | grep "VCS API call successful"
       retry: 60
       delay: 1
