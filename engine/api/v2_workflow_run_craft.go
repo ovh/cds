@@ -954,6 +954,8 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 
 	gitContext := sdk.GitContext{
 		Server:               workflowVCSServer.Name,
+		ServerURL:            workflowVCSServer.URL,
+		ServerType:           workflowVCSServer.Type,
 		RepositoryOrigin:     wr.RunEvent.RepositoryOrigin,
 		SSHKey:               workflowVCSServer.Auth.SSHKeyName,
 		GPGKey:               workflowVCSServer.Auth.GPGKeyName,
