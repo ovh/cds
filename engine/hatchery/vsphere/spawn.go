@@ -124,7 +124,11 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		flavorInfo.Time = time.Now()
 
 		if flavor != nil {
-			flavorInfo.Message = fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MB RAM)", spawnArgs.WorkerName, flavorName, flavor.CPUs, flavor.MemoryMB)
+			if flavor.DiskSizeGB > 0 {
+				flavorInfo.Message = fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MB RAM, %d GB disk)", spawnArgs.WorkerName, flavorName, flavor.CPUs, flavor.MemoryMB, flavor.DiskSizeGB)
+			} else {
+				flavorInfo.Message = fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MB RAM)", spawnArgs.WorkerName, flavorName, flavor.CPUs, flavor.MemoryMB)
+			}
 		} else {
 			flavorInfo.Message = fmt.Sprintf("Worker %q will use template resources (no flavor)", spawnArgs.WorkerName)
 		}
@@ -239,6 +243,18 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	vmWorker, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, spawnArgs.WorkerName)
 	if err != nil {
 		return err
+	}
+
+	// When a flavor is set the VM was cloned powered off — reconfigure then start
+	if flavor != nil {
+		if err := h.reconfigureVM(ctx, vmWorker, flavor); err != nil {
+			h.markToDelete(ctx, spawnArgs.WorkerName)
+			return sdk.WrapError(err, "unable to reconfigure fresh clone %q", spawnArgs.WorkerName)
+		}
+		if err := h.vSphereClient.StartVirtualMachine(ctx, vmWorker); err != nil {
+			h.markToDelete(ctx, spawnArgs.WorkerName)
+			return sdk.WrapError(err, "unable to start fresh clone %q", spawnArgs.WorkerName)
+		}
 	}
 
 	return h.launchScriptWorker(ctx, spawnArgs, vmWorker, spawnArgs.WorkerName)
@@ -437,6 +453,16 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 		}
 		h.markToDelete(ctx, spawnArgs.WorkerName)
 		return err
+	}
+
+	// Execute pre-start script if configured for this model
+	if modelCfg := h.getModelConfig(spawnArgs.Model); modelCfg != nil && modelCfg.PreStartScript != "" {
+		log.Info(ctx, "launchScriptWorker: executing pre-start script on %q", spawnArgs.WorkerName)
+		if err := h.launchClientOp(ctx, vm, spawnArgs.Model, modelCfg.PreStartScript, nil); err != nil {
+			log.Error(ctx, "launchScriptWorker: pre-start script failed on %q: %v", spawnArgs.WorkerName, err)
+			h.markToDelete(ctx, spawnArgs.WorkerName)
+			return err
+		}
 	}
 
 	env := []string{

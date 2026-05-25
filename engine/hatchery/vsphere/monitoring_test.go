@@ -57,7 +57,7 @@ func TestCollectVSphereMetrics(t *testing.T) {
 
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
-			// Worker owned by this hatchery: 4 vCPUs, 8192 MB
+			// Worker owned by this hatchery: 4 vCPUs, 8192 MB, 50GB disk
 			{
 				ManagedEntity: mo.ManagedEntity{Name: "worker-abc"},
 				Summary: types.VirtualMachineSummary{
@@ -69,9 +69,19 @@ func TestCollectVSphereMetrics(t *testing.T) {
 				},
 				Config: &types.VirtualMachineConfigInfo{
 					Annotation: string(workerAnnot),
+					Hardware: types.VirtualHardware{
+						Device: []types.BaseVirtualDevice{
+							&types.VirtualDisk{CapacityInKB: 50 * 1024 * 1024},
+						},
+					},
+				},
+				Guest: &types.GuestInfo{
+					Net: []types.GuestNicInfo{
+						{IpAddress: []string{"192.168.1.10"}},
+					},
 				},
 			},
-			// Provisioned VM owned by this hatchery: 2 vCPUs, 4096 MB
+			// Provisioned VM owned by this hatchery: 2 vCPUs, 4096 MB, 20GB disk
 			{
 				ManagedEntity: mo.ManagedEntity{Name: "provision-v2-xxx"},
 				Summary: types.VirtualMachineSummary{
@@ -83,6 +93,11 @@ func TestCollectVSphereMetrics(t *testing.T) {
 				},
 				Config: &types.VirtualMachineConfigInfo{
 					Annotation: string(provisionAnnot),
+					Hardware: types.VirtualHardware{
+						Device: []types.BaseVirtualDevice{
+							&types.VirtualDisk{CapacityInKB: 20 * 1024 * 1024},
+						},
+					},
 				},
 			},
 			// Template VM owned by this hatchery: 2 vCPUs, 4096 MB
@@ -148,8 +163,10 @@ func TestCollectVSphereMetrics(t *testing.T) {
 	// Verify Level 2: Hatchery aggregate (only this hatchery, excludes templates)
 	// worker-abc(4) + provision-v2-xxx(2) = 6 vCPUs
 	// worker-abc(8192) + provision-v2-xxx(4096) = 12288 MB
+	// worker-abc(50GB) + provision-v2-xxx(20GB) = 70 GB disk
 	assertLastMetricValue(t, "cds/hatchery/vsphere/allocated_vcpus", 6)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/allocated_memory_mb", 12288)
+	assertLastMetricValue(t, "cds/hatchery/vsphere/allocated_disk_gb", 70)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/vm_count", 2)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/provisioned_vm_count", 1)
 
@@ -158,8 +175,12 @@ func TestCollectVSphereMetrics(t *testing.T) {
 	assertLastMetricValue(t, "cds/hatchery/vsphere/template_memory_mb", 4096)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/template_count", 1)
 
-	// Verify IP address tracking: 2 used (192.168.1.10, 192.168.1.11), 5 total
-	assertLastMetricValue(t, "cds/hatchery/vsphere/ip_used_count", 2)
+	// Verify IP address tracking:
+	// Reserved: 2 IPs held via annotations (192.168.1.10 on worker, 192.168.1.11 on provisioned)
+	// Active: 1 IP visible in guest network (192.168.1.10 on running worker)
+	// Total: 5 IPs in configured range
+	assertLastMetricValue(t, "cds/hatchery/vsphere/ip_reserved_count", 2)
+	assertLastMetricValue(t, "cds/hatchery/vsphere/ip_active_count", 1)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/ip_total_count", 5)
 }
 
