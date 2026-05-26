@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -165,7 +166,7 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
-	require.Equal(t, "unable to check the commit signature", analysisUpdated.Data.Error)
+	require.Equal(t, "unable to check the commit signature, commit abcdef not found", analysisUpdated.Data.Error)
 	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
 }
 
@@ -958,7 +959,7 @@ GDFkaTe3nUJdYV4=
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			commit := &sdk.VCSCommit{
-				Committer: sdk.VCSAuthor{
+				Author: sdk.VCSAuthor{
 					Name: githubUsername,
 					ID:   "1234",
 				},
@@ -1127,7 +1128,7 @@ spec:
 					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
 					Verified:  true,
 					Hash:      "abcdef",
-					Committer: sdk.VCSAuthor{
+					Author: sdk.VCSAuthor{
 						Name: githubUsername,
 						ID:   ul.ExternalID,
 					},
@@ -2881,6 +2882,7 @@ func TestAnalyzeWorkflowWithProjectConcurrency(t *testing.T) {
 	ctx := context.TODO()
 
 	_, _ = db.Exec("DELETE FROM service")
+	_, _ = db.Exec("DELETE FROM user_gpg_key")
 
 	// Create project
 	key1 := sdk.RandomString(10)
@@ -3126,6 +3128,8 @@ func TestAnalyzeWorkflowWithConcurrency(t *testing.T) {
 	ctx := context.TODO()
 
 	_, _ = db.Exec("DELETE FROM service")
+	_, _ = db.Exec("DELETE FROM rbac")
+	_, _ = db.Exec("DELETE FROM user_gpg_key")
 
 	// Create project
 	key1 := sdk.RandomString(10)
@@ -3303,6 +3307,12 @@ jobs:
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
 					Hash: "abcdef",
+					Author: sdk.VCSAuthor{
+						Name:        u.Username,
+						Slug:        u.Username,
+						DisplayName: u.Username,
+						Email:       u.GetEmail(),
+					},
 					Committer: sdk.VCSAuthor{
 						Name:        u.Username,
 						Slug:        u.Username,
@@ -3371,6 +3381,7 @@ func TestAnalyzeWorkflowWithConcurrencyNotFound(t *testing.T) {
 	ctx := context.TODO()
 
 	_, _ = db.Exec("DELETE FROM service")
+	_, _ = db.Exec("DELETE FROM user_gpg_key")
 
 	// Create project
 	key1 := sdk.RandomString(10)
@@ -3540,6 +3551,12 @@ jobs:
 				commit := &sdk.VCSCommit{
 					Hash: "abcdef",
 					Committer: sdk.VCSAuthor{
+						Name:        u.Username,
+						Slug:        u.Username,
+						DisplayName: u.Username,
+						Email:       u.GetEmail(),
+					},
+					Author: sdk.VCSAuthor{
 						Name:        u.Username,
 						Slug:        u.Username,
 						DisplayName: u.Username,
@@ -3824,4 +3841,239 @@ GDFkaTe3nUJdYV4=
 	e, err := entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian", "abcdef")
 	require.NoError(t, err)
 	require.Equal(t, "MyModel", e.Data)
+}
+
+const testGPGKeyID = "F344BDDCE15F17D7"
+const testGPGSignature = "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----"
+
+func setupFindCommitterTest(t *testing.T) (api *API, db *test.FakeTransaction, vcsProjectWithSecret sdk.VCSProject, projKey string, repoName string, cleanup func()) {
+	t.Helper()
+	apiInstance, dbInstance, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	// Configure VCS public GPG key so publicKeyFound=true → bypass early project-key checks
+	apiInstance.Config.VCS.GPGKeys = map[string][]GPGKey{
+		"vcs-server": {{ID: testGPGKeyID}},
+	}
+
+	key1 := sdk.RandomString(10)
+	proj1 := assets.InsertTestProject(t, dbInstance, apiInstance.Cache, key1, key1)
+	vcsProject := assets.InsertTestVCSProject(t, dbInstance, proj1.ID, "vcs-server", "github")
+
+	repo := sdk.ProjectRepository{
+		Name:         "myrepo",
+		Created:      time.Now(),
+		VCSProjectID: vcsProject.ID,
+		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
+	}
+	require.NoError(t, repository.Insert(ctx, dbInstance, &repo))
+
+	s, _ := assets.InsertService(t, dbInstance, t.Name()+"_VCS", sdk.TypeVCS)
+	cleanup = func() {
+		_ = services.Delete(dbInstance, s)
+		services.NewClient = services.NewDefaultClient
+	}
+
+	return apiInstance, dbInstance, *vcsProject, proj1.Key, "myrepo", cleanup
+}
+
+// TestFindCommitter_GithubSignedTag_TaggerGPGKeyFound: tag annoté signé, l'utilisateur CDS possède la clé GPG du tagger
+func TestFindCommitter_GithubSignedTag_TaggerGPGKeyFound(t *testing.T) {
+	api, db, vcsProject, projKey, repoName, cleanup := setupFindCommitterTest(t)
+	defer cleanup()
+	ctx := context.TODO()
+
+	// Ensure the GPG key is absent then insert it for our user
+	uk, err := user.LoadGPGKeyByKeyID(ctx, db, testGPGKeyID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		require.NoError(t, err)
+	}
+	if uk != nil {
+		require.NoError(t, user.DeleteGPGKey(db, *uk))
+	}
+	u, _ := assets.InsertLambdaUser(t, db)
+	userKey := &sdk.UserGPGKey{
+		KeyID:              testGPGKeyID,
+		AuthentifiedUserID: u.ID,
+	}
+	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
+
+	// Mock VCS: return a signed tag
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
+
+	vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
+	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+
+	require.NoError(t, err)
+	require.Empty(t, status)
+	require.Empty(t, errMsg)
+	require.NotNil(t, initiator)
+	require.Equal(t, u.ID, initiator.UserID)
+}
+
+// TestFindCommitter_GithubTag_VCSUser_UnknownAuthor: tag annoté signé, mais la clé GPG n'est pas connue de CDS
+func TestFindCommitter_GithubTag_VCSUser_UnknownAuthor(t *testing.T) {
+	api, db, vcsProject, projKey, repoName, cleanup := setupFindCommitterTest(t)
+	defer cleanup()
+	ctx := context.TODO()
+
+	// Make sure the GPG key is absent from CDS
+	uk, err := user.LoadGPGKeyByKeyID(ctx, db, testGPGKeyID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		require.NoError(t, err)
+	}
+	if uk != nil {
+		require.NoError(t, user.DeleteGPGKey(db, *uk))
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/tags/v1.0", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			tag := &sdk.VCSTag{
+				Tag:       "v1.0",
+				Sha:       "tagsha",
+				Hash:      "commitsha",
+				Signature: testGPGSignature,
+			}
+			*(out.(*sdk.VCSTag)) = *tag
+			return nil, 200, nil
+		}).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/commitsha", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			c := &sdk.VCSCommit{
+				Author:    sdk.VCSAuthor{},
+				Committer: sdk.VCSAuthor{},
+				Hash:      "commitsha",
+				Signature: testGPGSignature,
+			}
+			*(out.(*sdk.VCSCommit)) = *c
+			return nil, 200, nil
+		}).Times(1)
+
+	vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
+	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+
+	require.NoError(t, err)
+	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
+	require.Contains(t, errMsg, "unable to find commiter for commit commitsha")
+	require.Nil(t, initiator)
+}
+
+// TestFindCommitter_GithubUnsignedTag_CommitterFound: tag léger (pas de signature), le committer a un user link Github dans CDS
+func TestFindCommitter_GithubUnsignedTag_CommitterFound(t *testing.T) {
+	api, db, vcsProject, projKey, repoName, cleanup := setupFindCommitterTest(t)
+	defer cleanup()
+	ctx := context.TODO()
+
+	u, _ := assets.InsertLambdaUser(t, db)
+	githubID := sdk.RandomString(8)
+	githubUsername := sdk.RandomString(10)
+	ul := sdk.UserLink{
+		Type:               "github",
+		AuthentifiedUserID: u.ID,
+		Username:           githubUsername,
+		ExternalID:         githubID,
+	}
+	require.NoError(t, link.Insert(ctx, db, &ul))
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
+
+	// Tag sans signature → branche else → appel au commit pointé par le tag
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/tags/v1.0", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			tag := &sdk.VCSTag{
+				Tag:  "v1.0",
+				Sha:  "tagsha",
+				Hash: "commitsha",
+			}
+			*(out.(*sdk.VCSTag)) = *tag
+			return nil, 200, nil
+		}).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/commitsha", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			commit := &sdk.VCSCommit{
+				Author: sdk.VCSAuthor{
+					Name: githubUsername,
+					ID:   githubID,
+				},
+			}
+			*(out.(*sdk.VCSCommit)) = *commit
+			return nil, 200, nil
+		}).Times(1)
+
+	vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
+	// sha="tagsha" = SHA de l'objet tag, tag.Hash="commitsha" = SHA du commit → vérifie que tag.Hash est bien utilisé
+	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "tagsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+
+	require.NoError(t, err)
+	require.Empty(t, status)
+	require.Empty(t, errMsg)
+	require.NotNil(t, initiator)
+	require.Equal(t, u.ID, initiator.UserID)
+}
+
+// TestFindCommitter_GithubUnsignedTag_CommitterNotFound: tag léger, le committer n'a pas de user link Github dans CDS
+func TestFindCommitter_GithubUnsignedTag_CommitterNotFound(t *testing.T) {
+	api, db, vcsProject, projKey, repoName, cleanup := setupFindCommitterTest(t)
+	defer cleanup()
+	ctx := context.TODO()
+
+	unknownGithubID := sdk.RandomString(8)
+	unknownGithubUsername := sdk.RandomString(10)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/tags/v1.0", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			tag := &sdk.VCSTag{
+				Tag:  "v1.0",
+				Sha:  "tagsha",
+				Hash: "commitsha",
+			}
+			*(out.(*sdk.VCSTag)) = *tag
+			return nil, 200, nil
+		}).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/commitsha", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			commit := &sdk.VCSCommit{
+				Author: sdk.VCSAuthor{
+					Name: unknownGithubUsername,
+					ID:   unknownGithubID,
+				},
+			}
+			*(out.(*sdk.VCSCommit)) = *commit
+			return nil, 200, nil
+		}).Times(1)
+
+	vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
+	// sha="tagsha" = SHA de l'objet tag, tag.Hash="commitsha" = SHA du commit → vérifie que tag.Hash est bien utilisé
+	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "tagsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+
+	require.NoError(t, err)
+	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
+	require.Contains(t, errMsg, unknownGithubUsername)
+	require.Nil(t, initiator)
 }

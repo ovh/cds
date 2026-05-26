@@ -28,12 +28,14 @@ The hatchery implements the `hatchery.InterfaceWithModels` interface and support
 | File | Responsibility |
 |------|----------------|
 | `types.go` | Configuration structs and `HatcheryVSphere` struct definition |
-| `hatchery.go` | Hatchery lifecycle (init, config, CanSpawn), worker cleanup, provisioning loops |
-| `spawn.go` | VM spawning logic, template creation (V1), provisioning, worker bootstrap |
+| `hatchery.go` | Hatchery lifecycle (init, config, CanSpawn), worker cleanup, provisioning scheduler |
+| `spawn.go` | VM spawning logic, template creation (V1), provisioning clone, worker bootstrap |
+| `provision.go` | Provisioning worker pool, task execution, reconciliation, `finishProvisioning` |
 | `client.go` | VM listing/filtering, clone spec preparation, guest operations |
 | `vsphere.go` | `VSphereClient` interface and govmomi SDK wrapper implementation |
 | `init.go` | Hatchery initialization, govmomi client creation, background goroutines setup |
 | `ip.go` | IP address management (allocation, reservation, availability) |
+| `networks.go` | Multi-network initialization (parses networks config, builds IP pools per network) |
 | `monitoring.go` | Prometheus metrics: vSphere resource consumption at per-worker, hatchery, and pool levels |
 
 ## 3. Configuration
@@ -52,17 +54,34 @@ The hatchery is configured via `HatcheryConfiguration`, serialized as TOML.
 | `datastoreString` | `string` | — | No | vSphere datastore name (uses default if empty) |
 | `networkString` | `string` | — | No | vSphere network name (uses default if empty) |
 | `cardName` | `string` | `e1000` | No | Virtual ethernet card type |
-| `iprange` | `string` | — | No | IP range for static IP assignment (format: `a.a.a.a/b,c.c.c.c/e`) |
-| `gateway` | `string` | — | No | Gateway IP for spawned workers |
+| `iprange` | `string` | — | No | **Deprecated**: use `networks` instead. IP range for static IP assignment (format: `a.a.a.a/b,c.c.c.c/e`) |
+| `gateway` | `string` | — | No | **Deprecated**: use `networks` instead. Gateway IP for spawned workers |
 | `dns` | `string` | — | No | DNS server IP |
-| `subnetMask` | `string` | `255.255.255.0` | No | Subnet mask |
+| `subnetMask` | `string` | `255.255.255.0` | No | **Deprecated**: use `networks` instead. Subnet mask |
+| `networks` | `[]NetworkConfig` | — | No | List of network configurations (see section 3.1.2) |
 | `workerTTL` | `int` | `120` | No | Worker time-to-live in minutes |
 | `workerRegistrationTTL` | `int` | `10` | No | Worker registration timeout in minutes |
 | `workerProvisioningInterval` | `int` | `120` (2 min) | No | Provisioning loop interval in seconds |
 | `workerProvisioningPoolSize` | `int` | `1` | No | Max concurrent provisioning operations |
 | `workerProvisioning` | `[]WorkerProvisioningConfig` | — | No | List of models to pre-provision |
-| `guestCredentials` | `[]GuestCredential` | — | No | Guest OS credentials per model |
+| `guestCredentials` | `[]GuestCredential` | — | No | **Deprecated**: use `models` instead. Guest OS credentials per model |
+| `models` | `[]ModelConfig` | — | No | Per-model configuration (credentials, pre-start script) |
 | `defaultWorkerModelsV2` | `[]DefaultWorkerModelsV2` | — | No | Default V2 models for V1 jobs (binary matching) |
+
+### 3.1.2 Networks Configuration
+
+The `networks` field allows configuring multiple IP ranges, each with its own gateway and subnet mask.
+When a VM is spawned, the hatchery picks the first available IP across all configured networks and
+applies the corresponding gateway and subnet mask.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `iprange` | `string` | — | IP range in CIDR notation (format: `a.a.a.a/b,c.c.c.c/e`) |
+| `gateway` | `string` | — | Gateway IP for this network |
+| `subnetMask` | `string` | `255.255.255.0` | Subnet mask for this network |
+
+If `networks` is set, the legacy `iprange`, `gateway`, and `subnetMask` fields are ignored.
+If `networks` is empty and the legacy `iprange` is set, it is treated as a single-entry networks list.
 
 ### 3.1.1 Common Provision Configuration
 
@@ -93,7 +112,28 @@ type WorkerProvisioningConfig struct {
 }
 ```
 
-### 3.3 Guest Credentials
+### 3.3 Model Configuration
+
+```go
+type ModelConfig struct {
+    ModelPath      string  // CDS worker model path (V1 only, e.g. "group/model")
+    ModelVMWare    string  // VMware template name (V2 only, e.g. "debian12")
+    Username       string  // Guest OS username
+    Password       string  // Guest OS password
+    PreStartScript string  // Shell script executed inside the VM before the worker starts
+}
+```
+
+The `models` configuration replaces the deprecated `guestCredentials` and adds support for a
+pre-start script that runs inside the VM after boot but before the CDS worker starts. This can
+be used for filesystem resizing, environment setup, or any other initialization.
+
+**Credential resolution order**:
+1. `models` config, matched by `ModelVMWare` (V2) or `ModelPath` (V1)
+2. Deprecated `guestCredentials` config (fallback)
+3. Worker model spec (`Username`/`Password`)
+
+#### 3.3.1 Guest Credentials (Deprecated)
 
 ```go
 type GuestCredential struct {
@@ -103,6 +143,8 @@ type GuestCredential struct {
     Password    string  // Guest OS password
 }
 ```
+
+Kept for backward compatibility. Prefer `models` for new configurations.
 
 ### 3.4 Default Worker Models V2
 
@@ -167,7 +209,7 @@ type V2WorkerModelVSphereSpec struct {
 
 For V2, the template must already exist in vSphere. The hatchery does **not** create or manage templates
 for V2 models. Guest credentials can be specified either in the model spec or in the hatchery
-`GuestCredentials` configuration (which takes precedence).
+`models` configuration (which takes precedence over the model spec).
 
 ## 5. VM Annotations
 
@@ -204,7 +246,8 @@ On startup (`InitHatchery`), the hatchery:
 3. Instantiates the `VSphereClient` wrapper bound to the configured datacenter
 4. Parses the IP range (if configured) into a list of available IP addresses
 5. Starts background goroutines:
-   - **Provisioning loop** (if `workerProvisioning` is configured): runs every `workerProvisioningInterval` seconds, executes `provisioningV2()` then `provisioningV1()`
+   - **Provisioning worker pool** (if `workerProvisioning` is configured): `WorkerProvisioningPoolSize` long-lived workers that pull tasks from a shared channel
+   - **Provisioning scheduler** (if `workerProvisioning` is configured): runs every `workerProvisioningInterval` seconds, computes deficit, submits tasks to the pool, waits for batch completion
    - **Kill awol servers loop**: runs every 2 minutes, removes stale/expired VMs
    - **Kill disabled workers loop**: runs every 2 minutes, removes disabled workers
 
@@ -220,14 +263,17 @@ SpawnWorker(spawnArgs)
 │   └── V1: Load template by model name, or create it if NeedRegistration
 │
 ├── 2. Try to find a pre-provisioned VM (if not register-only)
-│   ├── Found: rename → start → wait for IP → launch worker script → DONE
+│   ├── Found: rename → reconfigure (flavor) → start → wait for IP
+│   │         → pre-start script → launch worker script → DONE
 │   └── Not found: continue to fresh clone
 │
 ├── 3. Fresh clone path
 │   ├── Build annotation
 │   ├── prepareCloneSpec() → clone specification (network, IP, datastore)
 │   ├── Clone template VM into datacenter folder
+│   ├── If flavor: reconfigure (CPU/RAM/disk) → power on
 │   ├── Wait for guest operations readiness
+│   ├── Execute pre-start script (if configured)
 │   └── Launch worker script via guest operations → DONE
 │
 └── 4. Error handling: shutdown + mark for deletion on any failure
@@ -245,28 +291,32 @@ The clone specification defines how the VM is created:
 - **Customization**: Linux prep with auto-generated hostname. If IP range is configured, assigns
   a static IP with subnet mask, gateway, and DNS
 - **Annotation**: Serializes the `annotation` struct as JSON into `VirtualMachineConfigSpec.Annotation`
-- **Power On**: The clone is powered on immediately (`PowerOn: true`)
+- **Power On**: `PowerOn: true` when no flavor is needed (VM boots immediately). `PowerOn: false`
+  when a flavor is provided (the caller must reconfigure and start the VM explicitly)
 - **VM Tools**: Configured to run after power on
 
-**Important**: CPU, RAM, and disk size are **not** specified in the clone spec. The cloned VM inherits
-all resource settings from the source template.
+**Important**: CPU, RAM, and disk size are **not** specified in the clone spec. All hardware
+reconfiguration (CPU, RAM, disk) is handled by `reconfigureVM` on the powered-off clone.
 
 #### 6.2.2 Worker Script Launch (`launchScriptWorker`)
 
 After the VM is cloned and has obtained an IP:
 
 1. Wait for the VM IP address to be available
-2. Generate worker configuration (API endpoint, tokens, etc.)
-3. Build the launch script: `PreCmd + Cmd + PostCmd`, templated with worker config
-4. Check VM readiness by running `env` command via guest operations
-5. Execute the launch script via `StartProgramInGuest` with guest credentials
-6. The script is run as: `/bin/echo -n ;<script>`, with `CDS_CONFIG` passed as environment variable
+2. Check VM readiness by running `env` command via guest operations
+3. Execute the **pre-start script** (if configured in `models` for this model) — runs inside the
+   guest before the worker starts, useful for filesystem resizing or environment preparation
+4. Generate worker configuration (API endpoint, tokens, etc.)
+5. Build the launch script: `PreCmd + Cmd + PostCmd`, templated with worker config
+6. Execute the launch script via `StartProgramInGuest` with guest credentials
+7. The script is run as: `/bin/echo -n ;<script>`, with `CDS_CONFIG` passed as environment variable
 
 #### 6.2.3 Guest Operations Authentication
 
 Guest OS credentials are resolved in order:
-1. From `GuestCredentials` config, matched by `ModelVMWare` (V2) or `ModelPath` (V1)
-2. If not found in config, from the worker model spec (`Username`/`Password`)
+1. From `models` config, matched by `ModelVMWare` (V2) or `ModelPath` (V1)
+2. From deprecated `guestCredentials` config (fallback)
+3. If not found in config, from the worker model spec (`Username`/`Password`)
 
 If neither provides valid credentials, spawning fails.
 
@@ -276,27 +326,52 @@ Pre-provisioning creates idle VMs ahead of time so that job assignment is faster
 
 #### 6.3.1 V2 Provisioning (`provisioningV2`)
 
+The provisioning scheduler runs a three-step process:
+
+**Step 1 — Compute current state and deficit:**
 1. Lock the provisioning cache
-2. List all VMs prefixed with `provision-v2`, count per VMware model path
-3. For each model in `WorkerProvisioning` config with a `ModelVMWare`:
-   - Calculate deficit: `config.Number - currentCount`
-   - Queue provisioning tasks for the deficit
-4. Execute up to `WorkerProvisioningPoolSize` concurrent provisioning goroutines
-5. Each provisioning operation:
-   - Generates a worker name: `provision-v2-<random>`
-   - Adds name to `cacheProvisioning.pending`
-   - Calls `ProvisionWorkerV2()`: clone → wait for IP → shutdown
-   - Removes name from pending cache
+2. List all VMs prefixed with `provision-v2`, count per VMware model path (includes all power states to account for orphans)
+3. Build configured counts and compute deficit (`desired - existing`) for each model
+4. **Deprovisioning**: for each model with more provisioned VMs than configured (or models removed from config), mark excess VMs for deletion
+
+**Step 2 — Interleave models using round-robin:**
+- Uses `roundRobinInterleave()` to produce a fair ordering where models are picked one task at a time in config order
+- Prevents models with larger counts from monopolizing the provisioning queue
+- Example: deficits A=3, B=1, C=2 → queue `[A, B, C, A, C, A]`
+
+**Step 3 — Cap by available IPs and enqueue tasks:**
+- If IP ranges are configured, compute available IP count
+- Truncate the queue to the IP budget (prevents submitting work that would fail at clone time)
+- **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.4)
+- Submit clone tasks from the queue to the provisioning pool
+- Wait for the entire batch (reconciliation + new clones) to complete
+
+Each task executed by a pool worker:
+- Generates a worker name: `provision-v2-<random>`
+- Adds name to `cacheProvisioning.pending`
+- Calls `ProvisionWorkerV2()` (clone only), then `finishProvisioning()` (wait IP → shutdown)
+- Removes name from pending cache
 
 #### 6.3.2 V1 Provisioning (`provisioningV1`)
 
+Same three-step process as V2:
+
+**Step 1 — Compute current state and deficit:**
 1. Same counting logic as V2 but with `provision-v1` prefix and `WorkerModelPath`
 2. Additionally fetches the model from the CDS API to verify it doesn't need registration
-3. Distributes models in a round-robin provision queue
-4. Executes up to `WorkerProvisioningPoolSize` concurrent provisioning goroutines
-5. Each provisioning operation:
-   - Generates a worker name: `provision-v1-<random>`
-   - Calls `ProvisionWorkerV1()`: clone → wait for IP → shutdown
+3. **Deprovisioning**: same as V2 — excess VMs are marked for deletion when config count is decreased or model is removed
+
+**Step 2 — Interleave models using round-robin:**
+- Same fair ordering as V2
+
+**Step 3 — Cap by available IPs and enqueue tasks:**
+- Same IP budget enforcement as V2
+- **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.4)
+- Submit clone tasks and wait for the batch to complete
+
+Each task executed by a pool worker:
+- Generates a worker name: `provision-v1-<random>`
+- Calls `ProvisionWorkerV1()` (clone only), then `finishProvisioning()` (wait IP → shutdown)
 
 #### 6.3.3 Provisioned VM Lifecycle
 
@@ -305,7 +380,7 @@ A provisioned VM follows this lifecycle:
 ```
 Template ──clone──► Provisioned VM (powered on)
                     │
-                    ├── Wait for IP
+                    ├── Wait for IP (3 min timeout)
                     ├── Shutdown (stays in powered-off state)
                     │
                     └── On job assignment (FindProvisionnedWorker):
@@ -314,6 +389,35 @@ Template ──clone──► Provisioned VM (powered on)
                         ├── Wait for IP
                         └── Launch worker script
 ```
+
+#### 6.3.4 Provisioning State Reconciliation
+
+The `cacheProvisioning.pending` list is in-memory only. If the hatchery restarts while a VM is
+being provisioned (between clone and shutdown), that VM becomes orphaned: it stays powered on
+indefinitely and is never picked up by `FindProvisionnedWorker` (which requires a
+`VmPoweredOffEvent`).
+
+To handle this, each provisioning tick calls `reconcileProvisionedVMs()` which reconstructs the
+pending state by scanning all VMs:
+
+1. List all powered-on VMs with `provision-` prefix, `Provisioning: true` annotation, and
+   matching `HatcheryName`
+2. Skip VMs already in `cacheProvisioning.pending` (actively being provisioned this run)
+3. For each orphaned VM, re-inject it into the provisioning pipeline:
+   - Add the VM name to `cacheProvisioning.pending`
+   - Submit a "finish" task to the provisioning worker pool
+   - The pool worker runs `finishProvisioning`: `WaitForVirtualMachineIP` → `ShutdownVirtualMachine`
+   - If the VM already has an IP, `WaitForVirtualMachineIP` returns immediately and the VM is
+     shut down — completing its provisioning
+   - If the VM has no IP, the 3-minute timeout applies. On timeout, the VM is marked for deletion
+   - On completion (success or failure), the VM is removed from `cacheProvisioning.pending`
+
+Since reconciliation tasks are part of the same batch as new clone tasks, the scheduler waits
+for all work to complete before the next tick re-evaluates. This prevents double-counting and
+ensures a consistent snapshot between ticks.
+
+This mechanism also covers VMs where `ShutdownVirtualMachine` failed during normal operation
+(not just restarts), since the provisioning scheduler periodically re-runs reconciliation.
 
 #### 6.3.4 Finding a Provisioned Worker (`FindProvisionnedWorker`)
 
@@ -426,9 +530,10 @@ The `MaxWorker` limit and the vSphere-specific `WorkerProvisioning` (pre-provisi
   **do not count** against `MaxWorker`.
 - When a provisioned VM is assigned to a job, it is renamed (e.g. `provision-v2-xxx` →
   `worker-abc`). From that point, it **counts** against `MaxWorker`.
-- The `WorkerProvisioningPoolSize` config controls how many provisioning operations run in
-  parallel in the vSphere provisioning loop, but this is separate from
-  `MaxConcurrentProvisioning` which governs the common framework's capacity check.
+- The `WorkerProvisioningPoolSize` config controls how many persistent workers handle
+  provisioning tasks (clone + finish). The provisioning scheduler submits all tasks to the pool
+  and waits for the batch to complete. This is separate from `MaxConcurrentProvisioning` which
+  governs the common framework's capacity check.
 - There is **no global coordination** between the provisioning pool and `MaxWorker`. It is the
   operator's responsibility to ensure that `WorkerProvisioning[].Number` (total pre-provisioned
   VMs) plus expected active workers stays within the infrastructure's capacity.
@@ -505,29 +610,63 @@ For V1 jobs that need to run on a V2 model (`GetDetaultModelV2Name`):
 
 ## 7. IP Address Management
 
-### 7.1 IP Allocation
+### 7.1 IP Lifecycle
 
-When `iprange` is configured, the hatchery manages a pool of static IP addresses.
+When IP ranges are configured (via `networks` or legacy `iprange`), each VM is assigned a static
+IP at clone time through vSphere guest customization. This IP is:
 
-#### Finding an available IP (`findAvailableIP`):
+1. **Allocated** during `prepareCloneSpec`: `findAvailableIP` picks the first free IP
+2. **Reserved** in local memory (`reservedIPAddresses`) with a 5-minute TTL to prevent races
+3. **Stored** in the VM annotation (`annot.IPAddress`) as part of the clone specification
+4. **Applied** by vSphere guest customization when the VM first boots
+
+The IP persists for the entire VM lifetime. When a provisioned VM is powered off and later
+restarted for a job, it comes back up with the **same IP** (baked into the guest OS via
+customization). The spawn flow verifies this by calling `WaitForVirtualMachineIP` with the
+expected IP from the annotation.
+
+### 7.2 IP Ownership and Counting
+
+An IP is considered "in use" if it appears in **any** non-template VM, regardless of power state.
+The `getUsedIPs` function scans all VMs and collects IPs from two sources:
+
+- **VM annotations** (`annot.IPAddress`): covers all VMs including powered-off provisioned VMs
+  and freshly cloned VMs where guest tools have not yet reported the IP
+- **Guest network info** (`Guest.Net[].IpAddress`): covers running VMs where the OS has the IP
+  active on an interface
+
+This means powered-off provisioned VMs **hold their IP** — they are counted as "in use" and
+prevent that IP from being allocated to another VM. This is correct because the same IP will be
+reused when the VM powers on for a job.
+
+### 7.3 IP Budget in Provisioning
+
+The provisioning scheduler uses `countAvailableIPs` to determine how many new VMs can be cloned.
+Since powered-off provisioned VMs already hold IPs (via their annotations), they are naturally
+subtracted from the available pool. The IP budget only reflects IPs that are truly unassigned.
+
+### 7.4 Finding an Available IP (`findAvailableIP`)
 
 1. Acquire IP mutex
-2. List all VMs, collect used IPs from:
-   - VM annotations (`annot.IPAddress`)
-   - Guest network info (`Guest.Net[].IpAddress`)
-3. Additionally track IPs that have been reserved locally but not yet assigned to a VM
+2. List all VMs, collect used IPs via `getUsedIPs` (annotations + guest network)
+3. Clean up stale reservations for IPs that are now confirmed in guest network
 4. Return the first IP from the configured range that is neither used nor reserved
 
-#### Reserving an IP (`reserveIPAddress`):
+### 7.5 Reserving an IP (`reserveIPAddress`)
 
 1. Check the IP is not already reserved
 2. Add to `reservedIPAddresses` list
 3. Start a goroutine that removes the reservation after 5 minutes (safety timeout)
 
-### 7.2 IP-less Mode
+The reservation bridges the gap between `findAvailableIP` (which picks an IP) and the VM
+actually being created with that IP in its annotation. Without it, concurrent clones could
+pick the same IP.
 
-When `iprange` is not configured, no static IP assignment occurs. VMs rely on DHCP or
-template-defined network settings.
+### 7.6 IP-less Mode (DHCP)
+
+When no IP range is configured, no static IP assignment occurs. VMs rely on DHCP or
+template-defined network settings. In this mode, `countAvailableIPs` returns -1 (unlimited)
+and the provisioning scheduler does not cap tasks by IP budget.
 
 ## 8. Cleanup and Garbage Collection
 
@@ -536,7 +675,7 @@ template-defined network settings.
 For each VM with a CDS annotation belonging to this hatchery:
 
 1. **Marked for deletion**: Delete immediately
-2. **Provisioned VMs** (`provision-` prefix): Skip (managed by provisioning loop)
+2. **Provisioned VMs** (`provision-` prefix): Skip (managed by provisioning loop reconciliation, see §6.3.4)
 3. **Model templates** (`Model: true`): Skip (never delete)
 4. **Event analysis**: Load VM events (`VmStartingEvent`, `VmPoweredOffEvent`, `VmRenamedEvent`)
    - Filter out events related to provisioning (`provision-` in message)
@@ -631,13 +770,11 @@ The hatchery maintains several in-memory caches protected by mutexes:
 
 ## 11. Limitations
 
-1. **No VM resource customization at spawn time**: CPU, RAM, and disk size are inherited from the template.
-   Amendment C (VM Flavor Support) will address this.
-2. **Unsupported job requirements**: Service, Memory, Hostname requirements
-   cause the hatchery to reject the job. FlavorRequirement is reserved for Amendment C.
-3. **Linux only**: Customization assumes Linux guests (`CustomizationLinuxPrep`).
-4. **Single datacenter**: The hatchery operates on a single vSphere datacenter.
-5. **No V2 model registration**: V2 templates must be pre-created in vSphere manually.
+1. **Unsupported job requirements**: Service, Memory, Hostname requirements
+   cause the hatchery to reject the job.
+2. **Linux only**: Customization assumes Linux guests (`CustomizationLinuxPrep`).
+3. **Single datacenter**: The hatchery operates on a single vSphere datacenter.
+4. **No V2 model registration**: V2 templates must be pre-created in vSphere manually.
 
 ## 12. Resource-Based Capacity Management
 
@@ -730,6 +867,7 @@ Resource Pool runtime properties.
 |-------------|------|------|-------------|
 | `cds/hatchery/vsphere/worker_vcpus` | Gauge | vCPUs | Number of vCPUs for a worker VM |
 | `cds/hatchery/vsphere/worker_memory_mb` | Gauge | MB | Memory allocated to a worker VM |
+| `cds/hatchery/vsphere/worker_disk_gb` | Gauge | GB | Total disk capacity for a worker VM |
 
 **Tags**: `service_name`, `service_type`, `worker_name`, `worker_model`
 
@@ -850,18 +988,18 @@ cds_hatchery_vsphere_ip_used_count / cds_hatchery_vsphere_ip_total_count > 0.9
 
 ---
 
-# 13. VM Flavor Support (CPU/RAM Sizing)
+# 13. VM Flavor Support (CPU/RAM/Disk Sizing)
 
-The hatchery supports **flavors** for flexible CPU and RAM sizing without requiring multiple vSphere templates. This feature allows worker models to specify resource profiles that are applied dynamically.
+The hatchery supports **flavors** for flexible CPU, RAM, and disk sizing without requiring multiple vSphere templates. This feature allows worker models to specify resource profiles that are applied dynamically via `reconfigureVM`.
 
 ## 13.1 Overview
 
-Flavors map abstract size names (e.g., `small`, `medium`, `large`) to explicit CPU and RAM values. When a worker is spawned with a flavor:
+Flavors map abstract size names (e.g., `small`, `medium`, `large`) to explicit CPU, RAM, and disk values. When a worker is spawned with a flavor:
 
 - **For pre-provisioned VMs**: The VM is reconfigured (while powered off) to match the flavor before power-on
-- **For fresh clones**: The flavor is applied at clone time via `VirtualMachineConfigSpec`
+- **For fresh clones**: The VM is cloned powered off, then reconfigured via `reconfigureVM`, then powered on
 
-This approach enables a single vSphere template + single pool of provisioned VMs to serve jobs with different resource requirements.
+In both cases, `reconfigureVM` is the single entry point for all hardware configuration (CPU, RAM, disk). This consolidation ensures consistent behavior regardless of the spawn path.
 
 ## 13.2 Configuration
 
@@ -881,25 +1019,29 @@ countSmallerFlavorToKeep = 2
   name = "medium"
   cpus = 4
   memoryMB = 8192
+  diskSizeGB = 50
 
 [[hatchery.vsphere.flavors]]
   name = "large"
   cpus = 8
   memoryMB = 16384
+  diskSizeGB = 100
 
 [[hatchery.vsphere.flavors]]
   name = "xlarge"
   cpus = 16
   memoryMB = 32768
+  diskSizeGB = 200
 ```
 
-**Note**: Flavors work seamlessly with Amendment B's resource limits (`maxCpus`, `maxMemoryMB`). When a job requests a flavor, capacity validation uses the flavor's resources instead of the template's.
+**Note**: Flavors work seamlessly with resource limits (`maxCpus`, `maxMemoryMB`). When a job requests a flavor, capacity validation uses the flavor's resources instead of the template's.
 
 ### Configuration Fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `flavors` | `map[string]` | `{}` | Map of flavor name → CPU/RAM config |
+| `flavors` | `map[string]` | `{}` | Map of flavor name → CPU/RAM/disk config |
+| `flavors[].diskSizeGB` | `int` | `0` | Disk size in GB. `0` means no disk resize (inherit template disk) |
 | `defaultFlavor` | `string` | `""` | Default flavor when none specified |
 | `countSmallerFlavorToKeep` | `int` | `0` | Reserve capacity for N smaller flavor workers (starvation prevention) |
 
@@ -979,27 +1121,42 @@ The reserved flavor is always the **smallest** defined flavor (by CPU count).
 Pre-provisioned VMs are created **without flavor applied** — they inherit template resources and remain in a "neutral" state. When assigned to a job:
 
 1. `FindProvisionnedWorker()` returns any available provisioned VM (no flavor matching)
-2. If flavor requested → VM is reconfigured (CPU/RAM) while powered off
+2. If flavor requested → `reconfigureVM` adjusts CPU, RAM, and disk while VM is powered off
 3. VM is renamed and powered on with target resources
 
 **Flow**:
 
 ```
-Provisioned VM (2 vCPUs, 4GB from template)
+Provisioned VM (2 vCPUs, 4GB, 20GB disk — from template)
   ↓
 Job requests "large" flavor
   ↓
-reconfigureVM(vm, "large")  →  VM now has 8 vCPUs, 16GB (powered off)
+reconfigureVM(vm, "large")  →  VM now has 8 vCPUs, 16GB RAM, 100GB disk (powered off)
   ↓
 Power on VM
   ↓
-Worker starts with 8 vCPUs, 16GB
+Pre-start script (e.g. filesystem resize) runs inside guest
+  ↓
+Worker starts with 8 vCPUs, 16GB RAM, 100GB disk
 ```
 
-If no provisioned VM available, a fresh clone is created with the flavor applied at clone time.
+For fresh clones with a flavor, the same `reconfigureVM` function is used:
+
+```
+Template ──clone (powered off)──► New VM (template resources)
+  ↓
+reconfigureVM(vm, "large")  →  VM reconfigured (powered off)
+  ↓
+Power on VM
+  ↓
+Pre-start script runs inside guest
+  ↓
+Worker starts
+```
 
 ## 13.7 Backward Compatibility
 
-- If `flavors` map is empty/not configured → no resizing occurs, VMs inherit template resources
+- If `flavors` map is empty/not configured → no resizing occurs, VMs inherit template resources and are cloned powered on (legacy behavior)
 - If worker model has no flavor and no `defaultFlavor` configured → template resources used
+- If `diskSizeGB` is `0` or unset → disk is not resized, template disk size is inherited
 - Resource counting (Section 12) reads actual VM hardware → automatically handles resized VMs

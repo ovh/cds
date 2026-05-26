@@ -135,6 +135,21 @@
                         </ng-container>
                     </nz-col>
                 </nz-row>
+                <nz-row style="margin-top: 24px;">
+                    <nz-col [nzSpan]="24">
+                        <h3>Permissions</h3>
+                        <nz-spin *ngIf="loadingPermissions" nzTip="Loading permissions..."></nz-spin>
+                        <nz-alert *ngIf="!loadingPermissions && permissionEmpty"
+                            nzType="info" nzMessage="No permissions found for this group."
+                            nzShowIcon></nz-alert>
+                        <nz-code-editor
+                            *ngIf="!loadingPermissions && permissionYaml"
+                            [ngModel]="permissionYaml"
+                            [nzEditorOption]="permissionEditorOptions"
+                            style="height: 50vh; display: block;">
+                        </nz-code-editor>
+                    </nz-col>
+                </nz-row>
             </div>
         </ng-template>
         <ng-template #loadGroup>

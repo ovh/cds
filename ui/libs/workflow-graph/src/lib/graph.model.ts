@@ -58,6 +58,13 @@ export enum GraphNodeType {
 export class NavigationGraph {
     nodes: { [key: string]: NavigationGraphNode } = {};
     links: Array<NavigationGraphLink> = [];
+    // Maps run job UUID → navigation key
+    runJobIdToKey: Map<string, string> = new Map();
+
+    registerRunJob(navigationKey: string, runJobId: string): void {
+        if (!runJobId) { return; }
+        this.runJobIdToKey.set(runJobId, navigationKey);
+    }
 
     constructor(nodes: Array<GraphNode>, direction: GraphDirection) {
         // Create root join
@@ -99,27 +106,37 @@ export class NavigationGraph {
                             case GraphNodeType.Matrix:
                                 const alls = GraphNode.generateMatrixOptions(sub.job.strategy.matrix);
                                 const keys = alls.map(option => Array.from(option.keys()).sort().map(key => `${key}: ${option.get(key)}`).join(', '));
+                                // Build run job ID mapping for stage-nested matrix variants
+                                const stageMatrixRunMap: { [matrixKey: string]: string } = {};
+                                (sub.runs ?? []).forEach(r => {
+                                    const mk = Object.keys(r.matrix).sort().map(k => `${k}: ${r.matrix[k]}`).join(', ');
+                                    stageMatrixRunMap[mk] = r.id;
+                                });
                                 keys.forEach((k, i) => {
-                                    this.nodes[`${n.name}-${sub.name}-${k}`] = new NavigationGraphNode(NavigationGraphNodeType.Job);
+                                    const navKey = `${n.name}-${sub.name}-${k}`;
+                                    this.nodes[navKey] = new NavigationGraphNode(NavigationGraphNodeType.Job);
+                                    this.registerRunJob(navKey, stageMatrixRunMap[k]);
                                     if (direction === GraphDirection.HORIZONTAL) {
-                                        this.links.push(new NavigationGraphLink(`in-${n.name}-${sub.name}`, `${n.name}-${sub.name}-${k}`, i));
-                                        this.links.push(new NavigationGraphLink(`${n.name}-${sub.name}-${k}`, `out-${n.name}-${sub.name}`, i));
+                                        this.links.push(new NavigationGraphLink(`in-${n.name}-${sub.name}`, navKey, i));
+                                        this.links.push(new NavigationGraphLink(navKey, `out-${n.name}-${sub.name}`, i));
                                     } else {
                                         if (i === 0) {
-                                            this.links.push(new NavigationGraphLink(`in-${n.name}-${sub.name}`, `${n.name}-${sub.name}-${k}`, 0));
+                                            this.links.push(new NavigationGraphLink(`in-${n.name}-${sub.name}`, navKey, 0));
                                         } else {
-                                            this.links.push(new NavigationGraphLink(`${n.name}-${sub.name}-${keys[i - 1]}`, `${n.name}-${sub.name}-${k}`, 0));
+                                            this.links.push(new NavigationGraphLink(`${n.name}-${sub.name}-${keys[i - 1]}`, navKey, 0));
                                         }
                                         if (i === keys.length - 1) {
-                                            this.links.push(new NavigationGraphLink(`${n.name}-${sub.name}-${k}`, `out-${n.name}-${sub.name}`, 0));
+                                            this.links.push(new NavigationGraphLink(navKey, `out-${n.name}-${sub.name}`, 0));
                                         }
                                     }
                                 });
                                 break;
                             default:
-                                this.nodes[`${n.name}-${sub.name}`] = new NavigationGraphNode(NavigationGraphNodeType.Job);
-                                this.links.push(new NavigationGraphLink(`in-${n.name}-${sub.name}`, `${n.name}-${sub.name}`, 0));
-                                this.links.push(new NavigationGraphLink(`${n.name}-${sub.name}`, `out-${n.name}-${sub.name}`, 0));
+                                const stageJobNavKey = `${n.name}-${sub.name}`;
+                                this.nodes[stageJobNavKey] = new NavigationGraphNode(NavigationGraphNodeType.Job);
+                                this.registerRunJob(stageJobNavKey, sub.run?.id);
+                                this.links.push(new NavigationGraphLink(`in-${n.name}-${sub.name}`, stageJobNavKey, 0));
+                                this.links.push(new NavigationGraphLink(stageJobNavKey, `out-${n.name}-${sub.name}`, 0));
                                 break;
                         }
                     });
@@ -136,25 +153,34 @@ export class NavigationGraph {
                 case GraphNodeType.Matrix:
                     const alls = GraphNode.generateMatrixOptions(n.job.strategy.matrix);
                     const keys = alls.map(option => Array.from(option.keys()).sort().map(key => `${key}: ${option.get(key)}`).join(', '));
+                    // Build run job ID mapping for top-level matrix variants
+                    const matrixRunMap: { [matrixKey: string]: string } = {};
+                    (n.runs ?? []).forEach(r => {
+                        const mk = Object.keys(r.matrix).sort().map(k => `${k}: ${r.matrix[k]}`).join(', ');
+                        matrixRunMap[mk] = r.id;
+                    });
                     keys.forEach((k, i) => {
-                        this.nodes[`${n.name}-${k}`] = new NavigationGraphNode(NavigationGraphNodeType.Job);
+                        const navKey = `${n.name}-${k}`;
+                        this.nodes[navKey] = new NavigationGraphNode(NavigationGraphNodeType.Job);
+                        this.registerRunJob(navKey, matrixRunMap[k]);
                         if (direction === GraphDirection.HORIZONTAL) {
-                            this.links.push(new NavigationGraphLink(`in-${n.name}`, `${n.name}-${k}`, i));
-                            this.links.push(new NavigationGraphLink(`${n.name}-${k}`, `out-${n.name}`, i));
+                            this.links.push(new NavigationGraphLink(`in-${n.name}`, navKey, i));
+                            this.links.push(new NavigationGraphLink(navKey, `out-${n.name}`, i));
                         } else {
                             if (i === 0) {
-                                this.links.push(new NavigationGraphLink(`in-${n.name}`, `${n.name}-${k}`, 0));
+                                this.links.push(new NavigationGraphLink(`in-${n.name}`, navKey, 0));
                             } else {
-                                this.links.push(new NavigationGraphLink(`${n.name}-${keys[i - 1]}`, `${n.name}-${k}`, 0));
+                                this.links.push(new NavigationGraphLink(`${n.name}-${keys[i - 1]}`, navKey, 0));
                             }
                             if (i === keys.length - 1) {
-                                this.links.push(new NavigationGraphLink(`${n.name}-${k}`, `out-${n.name}`, 0));
+                                this.links.push(new NavigationGraphLink(navKey, `out-${n.name}`, 0));
                             }
                         }
                     });
                     break;
                 default:
                     this.nodes[`${n.name}`] = new NavigationGraphNode(NavigationGraphNodeType.Job);
+                    this.registerRunJob(n.name, n.run?.id);
                     this.links.push(new NavigationGraphLink(`in-${n.name}`, n.name, 0));
                     this.links.push(new NavigationGraphLink(n.name, `out-${n.name}`, 0));
                     break;
@@ -299,6 +325,45 @@ export class NavigationGraph {
             return key
         }
         return this.getNext(key);
+    }
+
+    /**
+     * Get all descendant navigation keys reachable from a given run job ID.
+     * Uses BFS through the reduced navigation graph, collecting only Job-type nodes.
+     * Returns navigation keys (not job names) so callers can work directly with them.
+     */
+    getDescendantNavigationKeys(runJobId: string): Array<string> {
+        const startKey = this.runJobIdToKey.get(runJobId);
+        if (!startKey) { return []; }
+
+        const result: Array<string> = [];
+        const visited: Array<string> = [startKey];
+        const queue: string[] = [startKey];
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            const children = this.getChildren(current);
+            for (const child of children) {
+                if (visited.includes(child)) { continue; }
+                visited.push(child);
+                if (this.nodes[child]?.type === NavigationGraphNodeType.Job) {
+                    result.push(child);
+                }
+                queue.push(child);
+            }
+        }
+
+        return result;
+    }
+
+    /** Look up the navigation key for a given run job UUID. */
+    getNavigationKey(runJobId: string): string | undefined {
+        return this.runJobIdToKey.get(runJobId);
+    }
+
+    /** Get all navigation keys for nodes of type Job. */
+    getAllJobNavigationKeys(): Array<string> {
+        return Object.keys(this.nodes).filter(k => this.nodes[k].type === NavigationGraphNodeType.Job);
     }
 }
 

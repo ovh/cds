@@ -110,22 +110,21 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 	}
 
 	cli := HookEventCLI{
-		ID:                  event.UUID,
-		Created:             time.Unix(0, event.Created),
-		LastUpdate:          time.UnixMilli(event.LastUpdate),
-		EventName:           event.EventName,
-		VCSServerName:       event.VCSServerName,
-		RepositoryName:      event.RepositoryName,
-		Ref:                 event.ExtractData.Ref,
-		Commit:              event.ExtractData.Commit,
-		Path:                event.ExtractData.Paths,
-		Event:               string(event.Body),
-		Status:              event.Status,
-		Error:               event.LastError,
-		NbErrors:            event.NbErrors,
-		Analyses:            event.Analyses,
-		SignKey:             event.SignKey,
-		SigningKeyOperation: event.SigningKeyOperation,
+		ID:             event.UUID,
+		Created:        time.Unix(0, event.Created),
+		LastUpdate:     time.UnixMilli(event.LastUpdate),
+		EventName:      event.EventName,
+		VCSServerName:  event.VCSServerName,
+		RepositoryName: event.RepositoryName,
+		Ref:            event.ExtractData.Ref,
+		Commit:         event.ExtractData.Commit,
+		Path:           event.ExtractData.Paths,
+		Event:          string(event.Body),
+		Status:         event.Status,
+		Error:          event.LastError,
+		NbErrors:       event.NbErrors,
+		Analyses:       event.Analyses,
+		SignKey:        event.SignKey,
 	}
 	if event.Initiator != nil {
 		cli.UserID = event.Initiator.UserID

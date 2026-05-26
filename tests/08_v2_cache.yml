@@ -148,7 +148,7 @@ testcases:
         # Check log cache upload
         cat {{.cds_workflow}}-1-1-init-Post-cacheGet | grep "Cache uploaded"
         # Check log restore cache
-        cat {{.cds_workflow}}-1-1-getCache-restore | grep "Cache was downloaded"
+        cat {{.cds_workflow}}-1-1-getCache-restore | grep "Cache restored"
         # Check cache hit
         cat {{.cds_workflow}}-1-1-getCache-checkHit | grep "true"
         # Check cache content

@@ -127,3 +127,69 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 	}
 	return s.triggerWorkflows(ctx, hre)
 }
+
+func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk.Operation, hre *sdk.HookRepositoryEvent) error {
+	log.Info(ctx, "receive operation callback %s", ope.UUID)
+	var opeError string
+	if ope.Status == sdk.OperationStatusError {
+		opeError = ope.Error.ToError().Error()
+	}
+	// Get computed changesets
+	computeChangeSets := make([]string, 0, len(ope.Setup.Checkout.Result.Files))
+	for _, v := range ope.Setup.Checkout.Result.Files {
+		computeChangeSets = append(computeChangeSets, v.Filename)
+	}
+	if hre.ExtractData.CommitMessage == "" {
+		hre.ExtractData.CommitMessage = ope.Setup.Checkout.Result.CommitMessage
+	}
+	if hre.ExtractData.CommitAuthor == "" {
+		hre.ExtractData.CommitAuthor = ope.Setup.Checkout.Result.Author
+	}
+	if hre.ExtractData.CommitAuthorEmail == "" {
+		hre.ExtractData.CommitAuthorEmail = ope.Setup.Checkout.Result.AuthorEmail
+	}
+
+	// Update repository hook status
+	for i := range hre.WorkflowHooks {
+		wh := &hre.WorkflowHooks[i]
+
+		// Check if callback is for the current workflow hook
+		if wh.OperationUUID != ope.UUID {
+			continue
+		}
+
+		// Update workflow hook status
+		if ope.Status == sdk.OperationStatusError {
+			wh.Status = sdk.HookEventWorkflowStatusError
+			wh.Error = ope.Error.ToError().Error()
+		}
+
+		// Add gitinfo for repositorywebhook
+		if wh.OperationUUID == ope.UUID {
+			wh.OperationStatus = ope.Status
+			wh.OperationError = opeError
+			wh.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
+			wh.SemverNext = ope.Setup.Checkout.Result.Semver.Next
+			wh.Data.TargetBranch = ope.Setup.Checkout.Branch
+			wh.TargetCommit = ope.Setup.Checkout.Commit
+			// Set changeset on workflow hooks
+			if len(hre.ExtractData.Paths) > 0 {
+				wh.UpdatedFiles = hre.ExtractData.Paths
+			} else {
+				wh.UpdatedFiles = computeChangeSets
+			}
+		}
+	}
+
+	allHooksSkipped := true
+	for _, wh := range hre.WorkflowHooks {
+		if wh.Status != sdk.HookEventWorkflowStatusSkipped {
+			allHooksSkipped = false
+		}
+	}
+	if allHooksSkipped {
+		hre.Status = sdk.HookEventStatusSkipped
+		hre.LastError = ope.Setup.Checkout.Result.Msg + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
+	}
+	return nil
+}

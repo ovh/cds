@@ -19,7 +19,9 @@ func Test_postBookmarkHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	wkf := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
 
-	_, jwt := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
+	u, jwt := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
+
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *u)
 
 	favProject := sdk.Bookmark{
 		Type: sdk.ProjectBookmarkType,

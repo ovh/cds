@@ -43,8 +43,10 @@ func adminUserLinkCreateRun(v cli.Values) error {
 		Username:   v.GetString("externalUsername"),
 	}
 
-	if link.Type != string(sdk.ConsumerBitbucketServer) {
-		return fmt.Errorf("unsupported consumer type: %s. Only %s is managed", link.Type, string(sdk.ConsumerBitbucketServer))
+	switch link.Type {
+	case string(sdk.ConsumerBitbucketServer), string(sdk.ConsumerForgejo):
+	default:
+		return fmt.Errorf("unsupported consumer type: %s", link.Type)
 	}
 
 	if err := client.AdminUserLinkCreate(ctx, username, link); err != nil {

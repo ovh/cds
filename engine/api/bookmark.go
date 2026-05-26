@@ -75,12 +75,11 @@ func (api *API) postBookmarkHandler() ([]service.RbacChecker, service.Handler) {
 				}, http.StatusOK)
 			case sdk.ProjectBookmarkType:
 				projectKey := data.ID
-				perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, c.GetGroupIDs())
+				hasRole, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDBWithCtx(ctx), sdk.ProjectRoleRead, c.AuthConsumerUser.AuthentifiedUser.ID, projectKey)
 				if err != nil {
 					return err
 				}
-				maxLevelPermission := perms.Level(projectKey)
-				if maxLevelPermission < sdk.PermissionRead {
+				if !hasRole {
 					return sdk.WithStack(sdk.ErrForbidden)
 				}
 				p, err := project.Load(ctx, api.mustDB(), projectKey)

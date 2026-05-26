@@ -26,6 +26,7 @@ func Test_getWorkflowNodeRunJobLinkHandler(t *testing.T) {
 	for _, f := range all {
 		require.NoError(t, featureflipping.Delete(db, f.ID))
 	}
+	featureflipping.InvalidateAllCache()
 
 	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
 
@@ -33,6 +34,7 @@ func Test_getWorkflowNodeRunJobLinkHandler(t *testing.T) {
 		Name: "cdn-job-logs",
 		Rule: fmt.Sprintf("return project_key == \"%s\"", proj.Key),
 	}))
+	featureflipping.InvalidateCache(context.TODO(), "cdn-job-logs")
 
 	mockCDNService, _, _ := assets.InitCDNService(t, db)
 

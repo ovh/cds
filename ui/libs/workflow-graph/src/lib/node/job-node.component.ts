@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model'
 import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
 import { Subscription, concatMap, from, interval } from 'rxjs';
 import { DurationService } from '../duration.service';
 import { GraphNodeAction } from './model';
+import { SelectionMode, InteractiveNode } from '../graph.lib';
 
 @Component({
     standalone: false,
@@ -12,7 +13,7 @@ import { GraphNodeAction } from './model';
     styleUrls: ['./job-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GraphJobNodeComponent implements OnInit, OnDestroy {
+export class GraphJobNodeComponent implements OnInit, OnDestroy, InteractiveNode {
     @Input() node: GraphNode;
     @Input() actionCallback: (type: GraphNodeAction, node: GraphNode, options?: any) => void = () => { };
 
@@ -29,10 +30,13 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
     };
     warningStep: boolean = false;
     runActive: boolean = false;
+    selectionMode: SelectionMode = SelectionMode.Disabled;
+    selectionActive: boolean = false;
+    conditionTooltip: string = '';
 
-    constructor(
-        private _cd: ChangeDetectorRef
-    ) {
+    private _cd = inject(ChangeDetectorRef);
+
+    constructor() {
         this.setHighlight.bind(this);
         this.selectNode.bind(this);
     }
@@ -44,6 +48,15 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        if (this.node.job.gate || this.node.job.if) {
+            this.conditionTooltip = ', with conditions:';
+        }
+        if (this.node.job.gate) {
+            this.conditionTooltip += `\n - gate: ${this.node.gate.if}`;
+        }
+        if (this.node.job.if) {
+            this.conditionTooltip += `\n - if: ${this.node.job.if}`;
+        }
         if (!this.node.run) {
             return;
         }
@@ -87,7 +100,7 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
             case V2WorkflowRunJobStatus.Fail:
             case V2WorkflowRunJobStatus.Stopped:
             case V2WorkflowRunJobStatus.Success:
-                this.duration = DurationService.duration(this.dates.started ?? this.dates.queued, this.dates.ended);
+                this.duration = DurationService.duration(this.dates.started ?? this.dates.queued, this.dates.ended ?? this.dates.scheduled ?? this.dates.queued);
                 break;
             default:
                 break;
@@ -133,7 +146,7 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
     }
 
     clickGate(event: Event): void {
-        this.actionCallback(GraphNodeAction.ClickGate, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickGate, this.node);
         event.preventDefault();
         event.stopPropagation();
     }
@@ -151,10 +164,44 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
     }
 
     confirmRunGate(): void {
-        this.actionCallback(GraphNodeAction.ClickConfirmGate, this.node, { gateName: this.node.gate });
+        this.actionCallback(GraphNodeAction.ClickConfirmGate, this.node);
     }
 
     match(navigationKey: string): boolean {
         return navigationKey === (this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name);
+    }
+
+    setSelectionMode(navigationKey: string, mode: SelectionMode): void {
+        if (!this.match(navigationKey)) {
+            return;
+        }
+        this.selectionMode = mode;
+        if (mode === SelectionMode.Disabled) {
+            this.selectionActive = false;
+        }
+        this._cd.markForCheck();
+    }
+
+    setSelected(selectedRunJobIds: Array<string>): void {
+        this.selectionActive = !!this.node.run?.id && selectedRunJobIds.includes(this.node.run.id);
+        this._cd.markForCheck();
+    }
+
+    clickSelectionOverlay(event: Event = null): void {
+        if (this.selectionMode !== SelectionMode.Blocked) {
+            this.selectionActive = !this.selectionActive;
+            const runJobId = this.node.run?.id;
+            if (runJobId) {
+                this.actionCallback(GraphNodeAction.ToggleSelection, this.node, {
+                    runJobId,
+                    selected: this.selectionActive
+                });
+            }
+        }
+        if (!event) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
     }
 }

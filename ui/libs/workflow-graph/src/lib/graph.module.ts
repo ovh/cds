@@ -15,6 +15,8 @@ import { GraphMatrixNodeComponent } from './node/matrix-node.component';
 import { IsJobTerminatedPipe } from './is-job-terminated.pipe';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { MomentModule } from 'ngx-moment';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
+import { FormsModule } from '@angular/forms';
 
 const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline, WarningOutline];
 
@@ -29,9 +31,11 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
   ],
   imports: [
     CommonModule,
+    FormsModule,
     NzAvatarModule,
     NzBadgeModule,
     NzButtonModule,
+    NzCheckboxModule,
     NzIconModule.forRoot(icons),
     NzPopconfirmModule,
     NzToolTipModule,

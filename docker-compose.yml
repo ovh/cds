@@ -11,16 +11,16 @@ version: '3'
 
 services:
   cds-db:
-    image: postgres:14.0
+    image: postgres:${PG_VERSION:-14.0}
     environment:
       POSTGRES_PASSWORD: cds
       POSTGRES_USER: cds
       POSTGRES_DB: cds
     volumes:
-      - cds-postgres-volume:/var/lib/postgresql/data
+      - cds-postgres-volume:/var/lib/postgresql
 
   cds-db-init:
-    image: postgres:14.0
+    image: postgres:${PG_VERSION:-14.0}
     command: >
         sh -exc "PGPASSWORD=cds psql -h cds-db -p 5432 -U cds -d cds -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;\";"
     links:
@@ -34,16 +34,18 @@ services:
       - cds-redis-volume:/data
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
+    image: opensearchproject/opensearch:latest
     environment:
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=C0mpl3xP@ssw0rd!"
     ulimits:
       memlock:
         soft: -1
         hard: -1
     volumes:
-      - cds-elasticsearch-volume:/usr/share/elasticsearch/data
+      - cds-elasticsearch-volume:/usr/share/opensearch/data
     restart: always
 
   cds-migrate:
@@ -280,19 +282,12 @@ services:
       - cds-conf-volume:/app/conf
 
   dockerhost:
-    image: bobrik/socat
+    image: alpine/socat:latest
     command: TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "127.0.0.1:2375:2375"
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana-oss:6.7.2
-    ports:
-      - "127.0.0.1:5601:5601"
-    links:
-       - elasticsearch
 
 volumes:
   cds-postgres-volume:

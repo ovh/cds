@@ -323,3 +323,43 @@ export class V2WorkflowRunManualResponse {
     hook_event_uuid: string;
     ui_url: string;
 }
+
+export class V2WorkflowRunTriggerJobsRequest {
+    job_inputs: { [jobIdentifier: string]: { [inputName: string]: any } };
+}
+
+/**
+ * Group a set of selected run job IDs by their workflow job definition name (job_id).
+ * Returns a map of job_id → set of selected run job IDs for that job.
+ */
+export function groupRunJobSelectionsByJobId(
+    selectedRunJobIds: Array<string>,
+    allRunJobs: V2WorkflowRunJob[]
+): Map<string, Array<string>> {
+    const byJobId = new Map<string, Array<string>>();
+    for (const runJobId of selectedRunJobIds) {
+        const job = allRunJobs.find(j => j.id === runJobId);
+        if (job) {
+            if (!byJobId.has(job.job_id)) {
+                byJobId.set(job.job_id, []);
+            }
+            byJobId.get(job.job_id).push(runJobId);
+        }
+    }
+    return byJobId;
+}
+
+/**
+ * Check whether all run job variants of a workflow job definition are selected.
+ * For non-matrix jobs this means the single run job is selected.
+ * For matrix jobs this means every variant is selected.
+ */
+export function areAllJobVariantsSelected(
+    jobId: string,
+    selectedRunJobIds: Array<string>,
+    allRunJobs: V2WorkflowRunJob[]
+): boolean {
+    const variants = allRunJobs.filter(j => j.job_id === jobId);
+    if (variants.length === 0) { return false; }
+    return variants.every(j => selectedRunJobIds.includes(j.id));
+}

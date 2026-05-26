@@ -478,7 +478,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check the commit signature"))
 			}
-		case sdk.VCSTypeGitea, sdk.VCSTypeGithub, sdk.VCSTypeBitbucketServer:
+		case sdk.VCSTypeGitea, sdk.VCSTypeGithub, sdk.VCSTypeBitbucketServer, sdk.VCSTypeForgejo:
 			keyID, analysisError, err = api.analyzeCommitSignatureThroughVcsAPI(ctx, *analysis, *vcsProjectWithSecret, *repo)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check the commit signature"))
@@ -494,7 +494,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			analysis.Data.CommitCheck = true
 
 			// retrieve the committer
-			commitInitiator, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), analysis.Commit, analysis.Data.SignKeyID, analysis.ProjectKey, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
+			commitInitiator, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), analysis.Ref, analysis.Commit, analysis.Data.SignKeyID, analysis.ProjectKey, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
 			}
@@ -503,7 +503,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				analysis.Data.Error = analysisError
 			} else {
 				analysis.Data.Initiator = commitInitiator
+				log.Debug(ctx, "analyzeRepository - findCommitter result: initiator: %q", analysis.Data.Initiator.Username())
 			}
+
 		}
 	}
 
@@ -541,7 +543,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud:
 		// get archive
 		filesContent, err = api.getCdsArchiveFileOnRepo(ctx, *repo, analysis, vcsProjectWithSecret.Name)
-	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
+	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea, sdk.VCSTypeForgejo:
 		analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 		filesContent, err = api.getCdsFilesOnVCSDirectory(ctx, analysis, vcsProjectWithSecret.Name, repo.Name, analysis.Commit, ".cds")
 	case sdk.VCSTypeGerrit:
@@ -1237,6 +1239,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 			Error:          analysis.Data.Error,
 			Models:         make([]sdk.EntityFullName, 0),
 			Workflows:      make([]sdk.EntityFullName, 0),
+			SignKey:        analysis.Data.SignKeyID,
 		},
 	}
 
@@ -1282,40 +1285,21 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 	return nil
 }
 
-func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2Initiator, string, string, error) {
+func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.V2Initiator, string, string, error) {
 	ctx, next := telemetry.Span(ctx, "findCommitter", trace.StringAttribute(telemetry.TagProjectKey, projKey), trace.StringAttribute(telemetry.TagVCSServer, vcsProjectWithSecret.Name), trace.StringAttribute(telemetry.TagRepository, repoName))
 	defer next()
 
-	publicKeyFound := false
-
-	// Checking known public gpg keys from vcs server (from configuration)
-	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Name]
-	if has {
-		for _, k := range publicKeys {
-			if signKeyID == k.ID {
-				publicKeyFound = true
-				break
-			}
+	// Search if gpg key is owned by a CDS suer
+	userGPGKey, err := user.LoadGPGKeyByKeyID(ctx, db, signKeyID)
+	if err != nil {
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, sdk.RepositoryAnalysisStatusError, "", sdk.NewErrorFrom(err, "unable get gpg key: %s", signKeyID)
 		}
 	}
 
-	// Checking CDS users public gpg keys
-	var userGPGKey *sdk.UserGPGKey
-	if !publicKeyFound {
-		var err error
-		userGPGKey, err = user.LoadGPGKeyByKeyID(ctx, db, signKeyID)
-		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, sdk.RepositoryAnalysisStatusError, "", sdk.NewErrorFrom(err, "unable get gpg key: %s", signKeyID)
-			}
-		}
-	}
-
-	// Is the GPG Key matches a CDS User, load the User
-	var cdsUser *sdk.AuthentifiedUser
 	if userGPGKey != nil {
 		var err error
-		cdsUser, err = user.LoadByID(ctx, db, userGPGKey.AuthentifiedUserID, user.LoadOptions.WithContacts)
+		cdsUser, err := user.LoadByID(ctx, db, userGPGKey.AuthentifiedUserID, user.LoadOptions.WithContacts)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to load user %s", userGPGKey.AuthentifiedUserID))
@@ -1329,11 +1313,23 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}, "", "", nil
 	}
 
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, cache, projKey, vcsProjectWithSecret.Name)
-	if err != nil {
-		return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(err)
+	// GPG can be owned by a VCS user or linked to a VCS in CDS configuration
+	// In both case, we will need to retrieve the commit/tag to retrieve the real committer username
+
+	//   Check if key is owner by Public VCS ( CDS Configuration )
+	publicKeyFound := false
+	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Name]
+	if has {
+		for _, k := range publicKeys {
+			if signKeyID == k.ID {
+				log.Info(ctx, "GPGKey is owned by %s", vcsProjectWithSecret.Name)
+				publicKeyFound = true
+				break
+			}
+		}
 	}
 
+	// 		Check if GPGKey is owned by a VCS User
 	var possibleVCSGPGUSers []sdk.VCSUserGPGKey
 	if !publicKeyFound {
 		k, _ := project.LoadKeyByLongKeyID(ctx, db, signKeyID)
@@ -1375,15 +1371,14 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}
 	}
 
-	// Get commit
-	tx, err := db.Begin()
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, cache, projKey, vcsProjectWithSecret.Name)
 	if err != nil {
 		return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(err)
 	}
-	defer tx.Rollback() // nolint
 
+	// Retrieve the committer
+	var cdsUser *sdk.AuthentifiedUser
 	var committer string
-
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeGitea:
 		commit, err := client.Commit(ctx, repoName, sha)
@@ -1415,43 +1410,100 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}
 
 		if userLink != nil {
-			cdsUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
+			cdsUser, err = user.LoadByID(ctx, db, userLink.AuthentifiedUserID)
 			if err != nil {
 				return nil, sdk.RepositoryAnalysisStatusError, "", err
 			}
 		}
-
-	case sdk.VCSTypeGithub:
+	case sdk.VCSTypeForgejo:
+		// tag sha are compatible with get commit
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
 			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 
-		if commit.Committer.ID == "" {
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
+		// Is forgejo commit, the user is the author of the commit
+		if publicKeyFound {
+			committer = commit.Author.Slug
+		} else {
+			committer = commit.Committer.Slug
 		}
 
 		// Retrieve user link by external ID
-		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, vcsProjectWithSecret.Type, commit.Committer.ID)
+		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, string(sdk.ConsumerForgejo), committer)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, commit.Committer.Name), nil
+			// Keep fallback to committer slug and  not return an error if no link found
+			log.Info(ctx, "%s user %s not found in CDS", string(sdk.ConsumerForgejo), committer)
+		}
+
+		if userLink != nil {
+			cdsUser, err = user.LoadByID(ctx, db, userLink.AuthentifiedUserID)
+			if err != nil {
+				return nil, sdk.RepositoryAnalysisStatusError, "", err
+			}
+		}
+	case sdk.VCSTypeGithub:
+		var committerID, committerName string
+		commitSha := sha
+
+		if strings.HasPrefix(ref, "refs/tags/") {
+			tagName := strings.TrimPrefix(ref, sdk.GitRefTagPrefix)
+			tag, err := client.Tag(ctx, repoName, tagName)
+			if err != nil {
+				return nil, sdk.RepositoryAnalysisStatusError, "", err
+			}
+			commitSha = tag.Hash
+		}
+		commit, err := client.Commit(ctx, repoName, commitSha)
+		if err != nil {
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
+		}
+
+		if publicKeyFound {
+			committerName = commit.Author.Name
+			committerID = commit.Author.ID
+		} else {
+			committerName = commit.Committer.Name
+			committerID = commit.Committer.ID
+		}
+
+		if committerID == "" {
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
+		}
+
+		// Retrieve user link by external ID
+		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, vcsProjectWithSecret.Type, committerID)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, "", "", err
+			}
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, committerName), nil
 		}
 
 		// Check if username changed
-		if userLink.Username != commit.Committer.Name {
+		if userLink.Username != committerName {
 			// Update user link
-			userLink.Username = commit.Committer.Name
+			userLink.Username = committerName
+
+			tx, err := db.Begin()
+			if err != nil {
+				return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(err)
+			}
+			defer tx.Rollback() // nolint
 			if err := link.Update(ctx, tx, userLink); err != nil {
 				return nil, "", "", err
 			}
+			if err := tx.Commit(); err != nil {
+				return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(err)
+			}
 		}
-		committer = commit.Committer.Name
+		committer = committerName
 
 		// Load user
-		cdsUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
+		cdsUser, err = user.LoadByID(ctx, db, userLink.AuthentifiedUserID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, sdk.RepositoryAnalysisStatusError, "", err
@@ -1459,11 +1511,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.RepositoryAnalysisStatusError, "", sdk.WithStack(err)
-	}
-
-	// First search among possibleVCSGPGUSers
+	// Try to match committer and possible vcs user
 	for _, VCSGPGUser := range possibleVCSGPGUSers {
 		if VCSGPGUser.Username == committer {
 			return &sdk.V2Initiator{
@@ -1491,7 +1539,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	}
 
 	// This error should not happen
-	return nil, sdk.RepositoryAnalysisStatusSkipped, "Unknown committer", nil
+	return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("Unknown committer: %q", committer), nil
 }
 
 func sortEntitiesFiles(filesContent map[string][]byte) []string {
@@ -1834,46 +1882,64 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 
 // analyzeCommitSignatureThroughVcsAPI analyzes commit.
 func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysis sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) (string, string, error) {
-	var keyID, signature, analyzesError string
+	var analyzesError string
 	ctx, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughVcsAPI")
 	defer next()
 
-	// Check commit signature
-	client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsProject.Name)
+	keyID, err := retrieveSigninKey(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsProject.Name, vcsProject.Type, repoWithSecret.Name, analysis.Ref, analysis.Commit)
 	if err != nil {
 		return keyID, analyzesError, err
 	}
-
-	switch {
-	case strings.HasPrefix(analysis.Ref, sdk.GitRefTagPrefix) && (vcsProject.Type == sdk.VCSTypeGithub):
-		tag, err := client.Tag(ctx, repoWithSecret.Name, strings.TrimPrefix(analysis.Ref, sdk.GitRefTagPrefix))
-		if err != nil {
-			return keyID, analyzesError, err
-		}
-		signature = tag.Signature
-	default:
-		vcsCommit, err := client.Commit(ctx, repoWithSecret.Name, analysis.Commit)
-		if err != nil {
-			return keyID, analyzesError, err
-		}
-		if vcsCommit.Hash == "" {
-			return keyID, analyzesError, sdk.WithStack(fmt.Errorf("commit %s not found", analysis.Commit))
-		}
-		keyID = vcsCommit.KeyID
-		signature = vcsCommit.Signature
-	}
-
 	if keyID == "" {
-		if signature != "" {
-			keyID, err = gpg.GetKeyIdFromSignature(signature)
-			if err != nil {
-				return keyID, analyzesError, fmt.Errorf("unable to extract keyID from signature: %v", err)
-			}
-		} else {
-			analyzesError = fmt.Sprintf("commit %s is not signed", analysis.Commit)
-		}
+		analyzesError = fmt.Sprintf("commit %s is not signed", analysis.Commit)
 	}
 	return keyID, analyzesError, nil
+}
+
+func retrieveSigninKey(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, projKey, vcsName, vcsType, repoName, ref, sha string) (string, error) {
+	var keyID string
+	ctx, next := telemetry.Span(ctx, "api.retrieveSigninKey")
+	defer next()
+
+	// Check commit signature
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, cache, projKey, vcsName)
+	if err != nil {
+		return keyID, err
+	}
+
+	switch {
+	case strings.HasPrefix(ref, sdk.GitRefTagPrefix) && (vcsType == sdk.VCSTypeGithub || vcsType == sdk.VCSTypeForgejo):
+		tag, err := client.Tag(ctx, repoName, strings.TrimPrefix(ref, sdk.GitRefTagPrefix))
+		if err != nil {
+			return keyID, err
+		}
+		if tag.Signature == "" {
+			return keyID, sdk.NewErrorFrom(sdk.ErrInvalidData, "tag not signed or from an unsigned commit")
+		}
+		keyID, err = gpg.GetKeyIdFromSignature(tag.Signature)
+		if err != nil {
+			return keyID, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to extract keyID from signature: %v", err)
+		}
+	default:
+		vcsCommit, err := client.Commit(ctx, repoName, sha)
+		if err != nil {
+			return keyID, err
+		}
+		if vcsCommit.Hash == "" {
+			return keyID, sdk.NewErrorFrom(sdk.ErrNotFound, "commit %s not found", sha)
+		}
+		if vcsCommit.KeyID == "" && vcsCommit.Signature != "" {
+			keyID, err = gpg.GetKeyIdFromSignature(vcsCommit.Signature)
+			if err != nil {
+				return keyID, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to extract keyID from vcsCommit %q signature: %v", sha, err)
+			}
+			vcsCommit.KeyID = keyID
+		}
+		keyID = vcsCommit.KeyID
+	}
+
+	return keyID, nil
+
 }
 
 func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) (string, string, error) {

@@ -214,11 +214,6 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		if err := s.triggerGetWorkflowHooks(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger workflow hooks")
 		}
-		// Retrieve signing key if we don't have it
-	case sdk.HookEventStatusSignKey:
-		if err := s.triggerGetSigningKey(ctx, hre); err != nil {
-			return sdk.WrapError(err, "unable to get signing key")
-		}
 		// Compute git info ( semver )
 	case sdk.HookEventStatusGitInfo:
 		if err := s.triggerGetGitInfo(ctx, hre); err != nil {

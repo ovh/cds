@@ -43,7 +43,7 @@ import { ProjectV2RunStartComponent } from '../projectv2/run-start/run-start.com
 import { RunGateInputsComponent } from '../projectv2/run-start/run-gate-inputs.component';
 import { ProjectV2TriggerAnalysisComponent } from '../projectv2/explore/trigger-analysis/trigger-analysis.component';
 import { RunContextsComponent } from '../projectv2/run/run-contexts.component';
-import { RunGateComponent } from '../projectv2/run/run-gate.component';
+import { RunTriggerComponent } from '../projectv2/run/run-trigger.component';
 import { RunHookComponent } from '../projectv2/run/run-hook.component';
 import { RunInfoComponent } from '../projectv2/run/run-info.component';
 import { RunJobComponent } from '../projectv2/run/run-job.component';
@@ -75,14 +75,6 @@ import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
         ProjectRunRetentionReportComponent,
         ProjectSettingsComponent,
         ProjectShowComponent,
-        ProjectVariablesComponent,
-        ProjectVariableSetItemsComponent,
-        ProjectVariableSetsComponent,
-        ProjectWebhooksComponent,
-        ProjectWorkflowListBlocsComponent,
-        ProjectWorkflowListComponent,
-        ProjectWorkflowListLabelsComponent,
-        ProjectWorkflowListLinesComponent,
         ProjectV2ExploreComponent,
         ProjectV2ExploreEntityComponent,
         ProjectV2ExploreOverviewComponent,
@@ -93,10 +85,17 @@ import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
         ProjectV2RunListComponent,
         ProjectV2RunListSidebarComponent,
         ProjectV2RunStartComponent,
-        RunGateInputsComponent,
         ProjectV2TriggerAnalysisComponent,
+        ProjectVariablesComponent,
+        ProjectVariableSetItemsComponent,
+        ProjectVariableSetsComponent,
+        ProjectWebhooksComponent,
+        ProjectWorkflowListBlocsComponent,
+        ProjectWorkflowListComponent,
+        ProjectWorkflowListLabelsComponent,
+        ProjectWorkflowListLinesComponent,
         RunContextsComponent,
-        RunGateComponent,
+        RunGateInputsComponent,
         RunHookComponent,
         RunInfoComponent,
         RunJobComponent,
@@ -104,7 +103,8 @@ import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
         RunResultsComponent,
         RunSourcesComponent,
         RunTestComponent,
-        RunTestsComponent
+        RunTestsComponent,
+        RunTriggerComponent
     ],
 
     imports: [

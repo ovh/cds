@@ -422,6 +422,20 @@ func (mr *MockAdminMockRecorder) AdminDatabaseMigrationUnlock(service, id any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseMigrationUnlock", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseMigrationUnlock), service, id)
 }
 
+// AdminGroupCreate mocks base method.
+func (m *MockAdmin) AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminGroupCreate", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminGroupCreate indicates an expected call of AdminGroupCreate.
+func (mr *MockAdminMockRecorder) AdminGroupCreate(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminGroupCreate", reflect.TypeOf((*MockAdmin)(nil).AdminGroupCreate), ctx, req)
+}
+
 // AdminOrganizationCreate mocks base method.
 func (m *MockAdmin) AdminOrganizationCreate(ctx context.Context, orga sdk.Organization) error {
 	m.ctrl.T.Helper()
@@ -4229,6 +4243,21 @@ func (mr *MockRBACClientMockRecorder) RBACGet(ctx, permissionIdentifier any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACGet", reflect.TypeOf((*MockRBACClient)(nil).RBACGet), ctx, permissionIdentifier)
 }
 
+// RBACGroupPermission mocks base method.
+func (m *MockRBACClient) RBACGroupPermission(ctx context.Context, groupName string) (sdk.PermissionSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACGroupPermission", ctx, groupName)
+	ret0, _ := ret[0].(sdk.PermissionSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACGroupPermission indicates an expected call of RBACGroupPermission.
+func (mr *MockRBACClientMockRecorder) RBACGroupPermission(ctx, groupName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACGroupPermission", reflect.TypeOf((*MockRBACClient)(nil).RBACGroupPermission), ctx, groupName)
+}
+
 // RBACImport mocks base method.
 func (m *MockRBACClient) RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
@@ -4262,6 +4291,21 @@ func (m *MockRBACClient) RBACList(ctx context.Context) ([]sdk.RBAC, error) {
 func (mr *MockRBACClientMockRecorder) RBACList(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACList", reflect.TypeOf((*MockRBACClient)(nil).RBACList), ctx)
+}
+
+// RBACUserPermission mocks base method.
+func (m *MockRBACClient) RBACUserPermission(ctx context.Context, username string) (sdk.PermissionSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACUserPermission", ctx, username)
+	ret0, _ := ret[0].(sdk.PermissionSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACUserPermission indicates an expected call of RBACUserPermission.
+func (mr *MockRBACClientMockRecorder) RBACUserPermission(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACUserPermission", reflect.TypeOf((*MockRBACClient)(nil).RBACUserPermission), ctx, username)
 }
 
 // MockProjectKeysClient is a mock of ProjectKeysClient interface.
@@ -5046,6 +5090,20 @@ func (mr *MockUserClientMockRecorder) UserContacts(ctx, username any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserContacts", reflect.TypeOf((*MockUserClient)(nil).UserContacts), ctx, username)
 }
 
+// UserDelete mocks base method.
+func (m *MockUserClient) UserDelete(ctx context.Context, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserDelete", ctx, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserDelete indicates an expected call of UserDelete.
+func (mr *MockUserClientMockRecorder) UserDelete(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserDelete", reflect.TypeOf((*MockUserClient)(nil).UserDelete), ctx, username)
+}
+
 // UserGet mocks base method.
 func (m *MockUserClient) UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
@@ -5789,6 +5847,21 @@ func (mr *MockHookClientMockRecorder) HookGetWorkflowHook(ctx, hookID any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookGetWorkflowHook", reflect.TypeOf((*MockHookClient)(nil).HookGetWorkflowHook), ctx, hookID)
 }
 
+// HookListAllSchedulerHooks mocks base method.
+func (m *MockHookClient) HookListAllSchedulerHooks(ctx context.Context) ([]sdk.V2WorkflowHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HookListAllSchedulerHooks", ctx)
+	ret0, _ := ret[0].([]sdk.V2WorkflowHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HookListAllSchedulerHooks indicates an expected call of HookListAllSchedulerHooks.
+func (mr *MockHookClientMockRecorder) HookListAllSchedulerHooks(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookListAllSchedulerHooks", reflect.TypeOf((*MockHookClient)(nil).HookListAllSchedulerHooks), ctx)
+}
+
 // HookRepositoriesList mocks base method.
 func (m *MockHookClient) HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error) {
 	m.ctrl.T.Helper()
@@ -5979,7 +6052,7 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2JobStart(ctx, projectKey, 
 }
 
 // WorkflowV2JobsStart mocks base method.
-func (m *MockWorkflowV2Client) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockWorkflowV2Client) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunTriggerJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectKey, workflowRunID, payload}
 	for _, a := range mods {
@@ -6347,21 +6420,6 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowAccess(ctx, projectKey, workfl
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
 }
 
-// WorkflowRunExist mocks base method.
-func (m *MockWorkflowClient) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunExist", ctx, id)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowRunExist indicates an expected call of WorkflowRunExist.
-func (mr *MockWorkflowClientMockRecorder) WorkflowRunExist(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunExist", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunExist), ctx, id)
-}
-
 // WorkflowAllHooksExecutions mocks base method.
 func (m *MockWorkflowClient) WorkflowAllHooksExecutions() ([]string, error) {
 	m.ctrl.T.Helper()
@@ -6638,6 +6696,21 @@ func (m *MockWorkflowClient) WorkflowRunDelete(projectKey, workflowName string, 
 func (mr *MockWorkflowClientMockRecorder) WorkflowRunDelete(projectKey, workflowName, runNumber any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunDelete", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunDelete), projectKey, workflowName, runNumber)
+}
+
+// WorkflowRunExist mocks base method.
+func (m *MockWorkflowClient) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunExist", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowRunExist indicates an expected call of WorkflowRunExist.
+func (mr *MockWorkflowClientMockRecorder) WorkflowRunExist(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunExist", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunExist), ctx, id)
 }
 
 // WorkflowRunFromHook mocks base method.
@@ -7341,6 +7414,20 @@ func (m *MockInterface) AdminDatabaseMigrationUnlock(service, id string) error {
 func (mr *MockInterfaceMockRecorder) AdminDatabaseMigrationUnlock(service, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseMigrationUnlock", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseMigrationUnlock), service, id)
+}
+
+// AdminGroupCreate mocks base method.
+func (m *MockInterface) AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminGroupCreate", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminGroupCreate indicates an expected call of AdminGroupCreate.
+func (mr *MockInterfaceMockRecorder) AdminGroupCreate(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminGroupCreate", reflect.TypeOf((*MockInterface)(nil).AdminGroupCreate), ctx, req)
 }
 
 // AdminOrganizationCreate mocks base method.
@@ -8728,6 +8815,21 @@ func (m *MockInterface) HookGetWorkflowHook(ctx context.Context, hookID string) 
 func (mr *MockInterfaceMockRecorder) HookGetWorkflowHook(ctx, hookID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookGetWorkflowHook", reflect.TypeOf((*MockInterface)(nil).HookGetWorkflowHook), ctx, hookID)
+}
+
+// HookListAllSchedulerHooks mocks base method.
+func (m *MockInterface) HookListAllSchedulerHooks(ctx context.Context) ([]sdk.V2WorkflowHook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HookListAllSchedulerHooks", ctx)
+	ret0, _ := ret[0].([]sdk.V2WorkflowHook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HookListAllSchedulerHooks indicates an expected call of HookListAllSchedulerHooks.
+func (mr *MockInterfaceMockRecorder) HookListAllSchedulerHooks(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookListAllSchedulerHooks", reflect.TypeOf((*MockInterface)(nil).HookListAllSchedulerHooks), ctx)
 }
 
 // HookRepositoriesList mocks base method.
@@ -10590,6 +10692,21 @@ func (mr *MockInterfaceMockRecorder) RBACGet(ctx, permissionIdentifier any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACGet", reflect.TypeOf((*MockInterface)(nil).RBACGet), ctx, permissionIdentifier)
 }
 
+// RBACGroupPermission mocks base method.
+func (m *MockInterface) RBACGroupPermission(ctx context.Context, groupName string) (sdk.PermissionSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACGroupPermission", ctx, groupName)
+	ret0, _ := ret[0].(sdk.PermissionSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACGroupPermission indicates an expected call of RBACGroupPermission.
+func (mr *MockInterfaceMockRecorder) RBACGroupPermission(ctx, groupName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACGroupPermission", reflect.TypeOf((*MockInterface)(nil).RBACGroupPermission), ctx, groupName)
+}
+
 // RBACImport mocks base method.
 func (m *MockInterface) RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
@@ -10623,6 +10740,21 @@ func (m *MockInterface) RBACList(ctx context.Context) ([]sdk.RBAC, error) {
 func (mr *MockInterfaceMockRecorder) RBACList(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACList", reflect.TypeOf((*MockInterface)(nil).RBACList), ctx)
+}
+
+// RBACUserPermission mocks base method.
+func (m *MockInterface) RBACUserPermission(ctx context.Context, username string) (sdk.PermissionSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACUserPermission", ctx, username)
+	ret0, _ := ret[0].(sdk.PermissionSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACUserPermission indicates an expected call of RBACUserPermission.
+func (mr *MockInterfaceMockRecorder) RBACUserPermission(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACUserPermission", reflect.TypeOf((*MockInterface)(nil).RBACUserPermission), ctx, username)
 }
 
 // RegionAdd mocks base method.
@@ -11182,6 +11314,20 @@ func (m *MockInterface) UserContacts(ctx context.Context, username string) ([]sd
 func (mr *MockInterfaceMockRecorder) UserContacts(ctx, username any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserContacts", reflect.TypeOf((*MockInterface)(nil).UserContacts), ctx, username)
+}
+
+// UserDelete mocks base method.
+func (m *MockInterface) UserDelete(ctx context.Context, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserDelete", ctx, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserDelete indicates an expected call of UserDelete.
+func (mr *MockInterfaceMockRecorder) UserDelete(ctx, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserDelete", reflect.TypeOf((*MockInterface)(nil).UserDelete), ctx, username)
 }
 
 // UserGet mocks base method.
@@ -11998,21 +12144,6 @@ func (mr *MockInterfaceMockRecorder) WorkflowAccess(ctx, projectKey, workflowID,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockInterface)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
 }
 
-// WorkflowRunExist mocks base method.
-func (m *MockInterface) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunExist", ctx, id)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowRunExist indicates an expected call of WorkflowRunExist.
-func (mr *MockInterfaceMockRecorder) WorkflowRunExist(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunExist", reflect.TypeOf((*MockInterface)(nil).WorkflowRunExist), ctx, id)
-}
-
 // WorkflowAllHooksExecutions mocks base method.
 func (m *MockInterface) WorkflowAllHooksExecutions() ([]string, error) {
 	m.ctrl.T.Helper()
@@ -12417,6 +12548,21 @@ func (mr *MockInterfaceMockRecorder) WorkflowRunDelete(projectKey, workflowName,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunDelete", reflect.TypeOf((*MockInterface)(nil).WorkflowRunDelete), projectKey, workflowName, runNumber)
 }
 
+// WorkflowRunExist mocks base method.
+func (m *MockInterface) WorkflowRunExist(ctx context.Context, id int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunExist", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowRunExist indicates an expected call of WorkflowRunExist.
+func (mr *MockInterfaceMockRecorder) WorkflowRunExist(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunExist", reflect.TypeOf((*MockInterface)(nil).WorkflowRunExist), ctx, id)
+}
+
 // WorkflowRunFromHook mocks base method.
 func (m *MockInterface) WorkflowRunFromHook(projectKey, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
 	m.ctrl.T.Helper()
@@ -12639,7 +12785,7 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2JobStart(ctx, projectKey, workflo
 }
 
 // WorkflowV2JobsStart mocks base method.
-func (m *MockInterface) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockInterface) WorkflowV2JobsStart(ctx context.Context, projectKey, workflowRunID string, payload sdk.V2WorkflowRunTriggerJobsRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectKey, workflowRunID, payload}
 	for _, a := range mods {

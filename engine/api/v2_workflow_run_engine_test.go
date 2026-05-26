@@ -4815,3 +4815,71 @@ spec:
 	require.Len(t, jobs, 2)
 	require.Equal(t, sdk.V2WorkflowRunStatusSkipped, wrDB.Status)
 }
+
+func TestBuildJobIntegrationsContext(t *testing.T) {
+	projectIntegrations := []sdk.ProjectIntegration{
+		{
+			Name: "my-artifactory",
+			Model: sdk.IntegrationModel{
+				Name:            "Artifactory",
+				ArtifactManager: true,
+			},
+			Config: sdk.IntegrationConfig{
+				"url": {Value: "https://artifactory.example.com", Type: sdk.IntegrationConfigTypeString},
+			},
+		},
+		{
+			Name: "my-deploy",
+			Model: sdk.IntegrationModel{
+				Name:       "Kubernetes",
+				Deployment: true,
+			},
+			Config: sdk.IntegrationConfig{
+				"host": {Value: "https://k8s.example.com", Type: sdk.IntegrationConfigTypeString},
+			},
+		},
+		{
+			Name: "my-deploy-2",
+			Model: sdk.IntegrationModel{
+				Name:       "Kubernetes2",
+				Deployment: true,
+			},
+			Config: sdk.IntegrationConfig{
+				"host": {Value: "https://k8s2.example.com", Type: sdk.IntegrationConfigTypeString},
+			},
+		},
+	}
+
+	t.Run("static job integrations", func(t *testing.T) {
+		result := buildJobIntegrationsContext(projectIntegrations, []string{"my-artifactory", "my-deploy"}, nil)
+		require.Equal(t, "my-artifactory", result.ArtifactManager.Name)
+		require.Equal(t, "Artifactory", result.ArtifactManager.ModelName)
+		require.Equal(t, "my-deploy", result.Deployment.Name)
+		require.Equal(t, "Kubernetes", result.Deployment.ModelName)
+	})
+
+	t.Run("workflow integrations used as fallback", func(t *testing.T) {
+		result := buildJobIntegrationsContext(projectIntegrations, nil, []string{"my-artifactory", "my-deploy"})
+		require.Equal(t, "my-artifactory", result.ArtifactManager.Name)
+		require.Equal(t, "my-deploy", result.Deployment.Name)
+	})
+
+	t.Run("job integrations take priority over workflow integrations", func(t *testing.T) {
+		result := buildJobIntegrationsContext(projectIntegrations, []string{"my-deploy"}, []string{"my-deploy-2"})
+		require.Equal(t, "my-deploy", result.Deployment.Name)
+		require.Equal(t, "Kubernetes", result.Deployment.ModelName)
+	})
+
+	t.Run("dynamic names are skipped", func(t *testing.T) {
+		result := buildJobIntegrationsContext(projectIntegrations, []string{"${{ vars.integ }}"}, []string{"my-deploy"})
+		// Dynamic name skipped, only workflow-level deploy is resolved
+		require.Equal(t, "my-deploy", result.Deployment.Name)
+		require.Equal(t, "", result.ArtifactManager.Name)
+	})
+
+	t.Run("unknown integration name is ignored", func(t *testing.T) {
+		result := buildJobIntegrationsContext(projectIntegrations, []string{"nonexistent"}, nil)
+		require.Equal(t, "", result.ArtifactManager.Name)
+		require.Equal(t, "", result.Deployment.Name)
+	})
+}

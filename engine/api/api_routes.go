@@ -109,6 +109,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/organization/{organizationIdentifier}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/organization/{organizationIdentifier}/migrate-user", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postOrganizationMigrateUserHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
+	// Admin group
+	r.Handle("/admin/group", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminGroupHandler, service.OverrideAuth(api.authAdminMiddleware)))
+
 	// Feature flipping
 	r.Handle("/admin/features", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/features/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlippingByName, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
@@ -440,6 +443,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/entity/{entityType}", ScopeNone(), r.GETv2(api.getEntitiesHandler))
 	r.Handle("/v2/entity/{entityType}/check", ScopeNone(), r.POSTv2(api.postEntityCheckHandler))
 
+	r.Handle("/v2/group/{name}/permission", Scope(sdk.AuthConsumerScopeGroup), r.GETv2(api.getGroupPermissionHandler))
+
 	r.Handle("/v2/hatchery", Scopes(sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeService), r.GETv2(api.getHatcheriesHandler), r.POSTv2(api.postHatcheryHandler))
 	r.Handle("/v2/hatchery/ws", Scope(sdk.AuthConsumerScopeHatchery), r.GETv2(api.getHatcheryWebsocketHandler))
 	r.Handle("/v2/hatchery/heartbeat", Scope(sdk.AuthConsumerScopeHatchery), r.POSTv2(api.postHatcheryHeartbeatHandler))
@@ -448,6 +453,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/hooks/workflows", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRetrieveWorkflowToTriggerHandler))
 	r.Handle("/v2/hooks/workflows/hook/{hookID}", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getV2WorkflowHookHandler))
+	r.Handle("/v2/hooks/workflows/hooks/schedulers", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getV2AllSchedulerHooksHandler))
 	r.Handle("/v2/hooks/event/signKey", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postHookEventRetrieveSignKeyHandler))
 	r.Handle("/v2/hooks/event/signKey/{uuid}", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getRetrieveSignKeyOperationHandler))
 	r.Handle("/v2/hooks/event/user", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRetrieveEventUserHandler))
@@ -555,7 +561,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postJobRunStepHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/take", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2WorkerTakeJobHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/refresh", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2RefreshWorkerHandler))
-	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signin", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2RegisterWorkerHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signin", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2RegisterWorkerHandler, service.OverrideAuth(service.NoAuthMiddleware), MaintenanceAware()))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signout", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postV2UnregisterWorkerHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/hatchery/take", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postHatcheryTakeJobRunHandler), r.DELETEv2(api.deleteHatcheryReleaseJobRunHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTv2(api.postJobResultHandler))
@@ -571,6 +577,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/worker/{workerName}", ScopeNone(), r.GETv2(api.getWorkerV2Handler))
 
 	r.Handle("/v2/user/{user}/gpgkey", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))
+	r.Handle("/v2/user/{user}/permissions", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserPermissionHandler))
 	r.Handle("/v2/user/{user}/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.DELETEv2(api.deleteUserGPGKey))
 
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", ScopeNone(), r.GETv2(api.getUserGPGKeyHandler))

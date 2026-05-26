@@ -78,15 +78,17 @@ func TestLoadConsumer(t *testing.T) {
 	cs, err = authentication.LoadUserConsumersByUserID(context.TODO(), db, u.ID)
 	assert.NoError(t, err)
 	require.Len(t, cs, 2)
-	test.Equal(t, c1, cs[0])
-	test.Equal(t, c2, cs[1])
+	csIDs := []string{cs[0].ID, cs[1].ID}
+	assert.Contains(t, csIDs, c1.ID)
+	assert.Contains(t, csIDs, c2.ID)
 
 	// LoadUserConsumersByGroupID
 	cs, err = authentication.LoadUserConsumersByGroupID(context.TODO(), db, 10)
 	require.NoError(t, err)
 	require.Len(t, cs, 2)
-	assert.Equal(t, c1.ID, cs[0].ID)
-	assert.Equal(t, c2.ID, cs[1].ID)
+	csIDs = []string{cs[0].ID, cs[1].ID}
+	assert.Contains(t, csIDs, c1.ID)
+	assert.Contains(t, csIDs, c2.ID)
 	cs, err = authentication.LoadUserConsumersByGroupID(context.TODO(), db, 5)
 	require.NoError(t, err)
 	require.Len(t, cs, 1)

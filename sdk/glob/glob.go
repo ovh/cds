@@ -3,6 +3,7 @@ package glob
 import (
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -194,6 +195,11 @@ func (g *Globber) walkdirFunc(target *[]string) func(path string, d fs.DirEntry,
 }
 
 func Glob(cwd string, pattern string) (*FileResults, error) {
+	// Normalize separators to forward slashes once. io/fs and the pattern
+	// parser only recognize '/'. On Linux this is a no-op; on Windows it
+	// converts '\' (produced by CDS workspace expansion and filepath.Join)
+	// into '/'.
+	pattern = filepath.ToSlash(pattern)
 	splittedExpression := splitListExpression(pattern)
 	var absoluteExpressions []string
 	var retaliveExpressions []string
@@ -205,10 +211,11 @@ func Glob(cwd string, pattern string) (*FileResults, error) {
 		} else {
 			retaliveExpressions = append(retaliveExpressions, s)
 		}
+		cleaned := path.Clean(s)
 		if strings.HasPrefix(expression, "!") {
-			splittedExpression[i] = "!" + filepath.Clean(s)
+			splittedExpression[i] = "!" + cleaned
 		} else {
-			splittedExpression[i] = filepath.Clean(s)
+			splittedExpression[i] = cleaned
 		}
 
 	}

@@ -99,7 +99,6 @@ var (
 	MsgSpawnErrorHatcheryRetryAttempt       = &Message{"MsgSpawnErrorHatcheryRetryAttempt", trad{EN: "Job execution failed by hatchery %s. Reason: %s"}, nil, RunInfoTypeError}
 	MsgSpawnInfoDisableSecretInjection      = &Message{"MsgSpawnInfoDisableSecretInjection", trad{EN: "⚠ Project's secrets were not automatically injected for this job because of a region prerequisite: %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoManualSecretInjection       = &Message{"MsgSpawnInfoManualSecretInjection", trad{EN: "Prerequisites of type secret matched %s secret(s)"}, nil, RunInfoTypInfo}
-	MsgSpawnInfoWorkerHookSetup             = &Message{"MsgSpawnInfoWorkerHookSetup", trad{EN: "Setting up worker hook %q"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerHookRun               = &Message{"MsgSpawnInfoWorkerHookRun", trad{EN: "Running worker hook %q"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerHookRunTeardown       = &Message{"MsgSpawnInfoWorkerHookRunTeardown", trad{EN: "Running worker hook %q teardown"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerDisabledByHatchery    = &Message{"MsgSpawnInfoWorkerDisabledByHatchery", trad{EN: "The worker (not responding) %s was disabled by hatchery"}, nil, RunInfoTypeWarning}
@@ -188,7 +187,6 @@ var Messages = map[string]*Message{
 	MsgSpawnErrorHatcheryRetryAttempt.ID:       MsgSpawnErrorHatcheryRetryAttempt,
 	MsgSpawnInfoDisableSecretInjection.ID:      MsgSpawnInfoDisableSecretInjection,
 	MsgSpawnInfoManualSecretInjection.ID:       MsgSpawnInfoManualSecretInjection,
-	MsgSpawnInfoWorkerHookSetup.ID:             MsgSpawnInfoWorkerHookSetup,
 	MsgSpawnInfoWorkerHookRun.ID:               MsgSpawnInfoWorkerHookRun,
 	MsgSpawnInfoWorkerHookRunTeardown.ID:       MsgSpawnInfoWorkerHookRunTeardown,
 	MsgSpawnInfoWorkerDisabledByHatchery.ID:    MsgSpawnInfoWorkerDisabledByHatchery,

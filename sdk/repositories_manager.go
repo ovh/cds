@@ -84,7 +84,6 @@ type VCSTag struct {
 	Hash      string    `json:"hash"` // Represent hash of commit
 	Verified  bool      `json:"verified"`
 	Signature string    `json:"signature"`
-	KeyID     string    `json:"key_id"`
 }
 
 type VCSSearch struct {

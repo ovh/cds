@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -6,11 +6,13 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { finalize } from 'rxjs/operators';
 import { Project } from 'app/model/project.model';
 import { Group, GroupMember } from '../../../../model/group.model';
-import { AuthentifiedUser, AuthSummary, User } from '../../../../model/user.model';
+import { AuthentifiedUser, AuthSummary, PermissionSummary, User } from '../../../../model/user.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
+import { EditorOptions } from 'ng-zorro-antd/code-editor';
+import * as jsyaml from 'js-yaml';
 
 @Component({
     standalone: false,
@@ -36,17 +38,27 @@ export class GroupEditComponent implements OnInit {
     displayedMembers: User[] = [];
     usernameFilterVisible: boolean;
     usernameFilter: string = '';
+    loadingPermissions = false;
+    permissionYaml: string;
+    permissionEmpty: boolean;
+    permissionEditorOptions: EditorOptions = {
+        language: 'yaml',
+        readOnly: true,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        scrollbar: { alwaysConsumeMouseWheel: false }
+    };
 
-    constructor(
-        private _userService: UserService,
-        private _groupService: GroupService,
-        private _toast: ToastService,
-        private _translate: TranslateService,
-        private _route: ActivatedRoute,
-        private _router: Router,
-        private _store: Store,
-        private _cd: ChangeDetectorRef
-    ) {
+    private _userService = inject(UserService);
+    private _groupService = inject(GroupService);
+    private _toast = inject(ToastService);
+    private _translate = inject(TranslateService);
+    private _route = inject(ActivatedRoute);
+    private _router = inject(Router);
+    private _store = inject(Store);
+    private _cd = inject(ChangeDetectorRef);
+
+    constructor() {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
     }
 
@@ -85,6 +97,7 @@ export class GroupEditComponent implements OnInit {
             this.projects = projs;
             this._cd.markForCheck();
         });
+        this.getPermissions();
     }
 
     updateDataFromGroup(): void {
@@ -272,5 +285,27 @@ export class GroupEditComponent implements OnInit {
             this.displayedMembers = this.group.members.filter((mu: User) => mu.username.indexOf(this.usernameFilter) !== -1);
         }
         this._cd.markForCheck();
+    }
+
+    getPermissions(): void {
+        this.loadingPermissions = true;
+        this.permissionYaml = null;
+        this.permissionEmpty = false;
+        this._cd.markForCheck();
+        this._groupService.getPermissions(this.groupName)
+            .pipe(finalize(() => {
+                this.loadingPermissions = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(p => {
+                const isEmpty = (!p.global || p.global.length === 0) &&
+                    (!p.regions || Object.keys(p.regions).length === 0) &&
+                    (!p.projects || Object.keys(p.projects).length === 0);
+                this.permissionEmpty = isEmpty;
+                if (!isEmpty) {
+                    this.permissionYaml = jsyaml.dump(p, { sortKeys: true, lineWidth: -1 });
+                }
+                this._cd.markForCheck();
+            });
     }
 }

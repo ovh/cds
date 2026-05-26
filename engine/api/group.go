@@ -5,10 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
@@ -73,6 +75,85 @@ func (api *API) getGroupHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, g, http.StatusOK)
+	}
+}
+
+func (api *API) postAdminGroupHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var req sdk.AdminCreateGroup
+		if err := service.UnmarshalBody(r, &req); err != nil {
+			return err
+		}
+
+		trackSudo(ctx, w)
+
+		if req.Name == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
+		}
+		if req.FirstMemberUsername == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing first member username")
+		}
+
+		newGroup := sdk.Group{Name: req.Name}
+		if err := newGroup.IsValid(); err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot begin tx")
+		}
+		defer tx.Rollback() // nolint
+
+		// Load user outside the transaction
+		firstMember, err := user.LoadByUsername(ctx, tx, req.FirstMemberUsername, user.LoadOptions.WithOrganization)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "user %q not found", req.FirstMemberUsername)
+		}
+
+		org, err := organization.LoadOrganizationByName(ctx, tx, firstMember.Organization)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "organization %q not found", firstMember.Organization)
+		}
+
+		log.Debug(ctx, "postAdminGroupHandler> user %q organization: %q (ID: %s)", req.FirstMemberUsername, org.Name, org.ID)
+
+		existingGroup, err := group.LoadByName(ctx, tx, newGroup.Name)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if existingGroup != nil {
+			return sdk.WithStack(sdk.ErrGroupPresent)
+		}
+
+		if err := group.Insert(ctx, tx, &newGroup); err != nil {
+			return err
+		}
+
+		if err := group.InsertLinkGroupUser(ctx, tx, &group.LinkGroupUser{
+			GroupID:            newGroup.ID,
+			AuthentifiedUserID: firstMember.ID,
+			Admin:              true,
+		}); err != nil {
+			return err
+		}
+
+		if err := group.InsertGroupOrganization(ctx, tx, &group.GroupOrganization{
+			GroupID:        newGroup.ID,
+			OrganizationID: org.ID,
+		}); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "cannot commit tx")
+		}
+
+		if err := group.LoadOptions.Default(ctx, api.mustDB(), &newGroup); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, &newGroup, http.StatusCreated)
 	}
 }
 

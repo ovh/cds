@@ -236,13 +236,13 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         }
 
         this.saveTreeExpandState();
-        
+
         // Navigate to explore overview if we're currently viewing an entity
         const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
         if (params['vcsName'] || params['repoName'] || params['entityType'] || params['entityName']) {
             this._router.navigate(['/project', this.project.key, 'explore']);
         }
-        
+
         this._cd.markForCheck();
     }
 
@@ -361,7 +361,8 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
                     workflow_ref: ref
                 }
             },
-            nzSize: 'large'
+            nzSize: 'large',
+            nzBodyStyle: { 'padding': '0' }
         });
         drawerRef.afterClose.subscribe(data => { });
     }

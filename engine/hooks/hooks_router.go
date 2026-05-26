@@ -38,6 +38,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/admin/repository/{vcsServer}/{repoName}", nil, r.DELETE(s.deleteRepositoryHandler))
 	r.Handle("/admin/scheduler", nil, r.GET(s.getAllSchedulersHandler))
 	r.Handle("/admin/scheduler/{vcsServer}/{repoName}/{workflowName}", nil, r.GET(s.getWorkflowSchedulersHandler))
+	r.Handle("/admin/scheduler/resync", nil, r.POST(s.postResyncSchedulersHandler))
 	r.Handle("/admin/scheduler/execution/{hookID}", nil, r.GET(s.geSchedulerExecutionHandler), r.DELETE(s.deleteSchedulerHandler))
 	r.Handle("/admin/outgoing/{projectKey}/{vcsServer}/{repoName}/{workflowName}", nil, r.GET(s.getOutgoingHooksExecutionsByWorkflowHandler))
 	r.Handle("/admin/outgoing/{projectKey}/{vcsServer}/{repoName}/{workflowName}/{hookID}", nil, r.GET(s.getOutgoingHookExecutionHandler))
@@ -58,6 +59,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/v2/workflow/key/{projectKey}/{vcsServer}/{repoName}/{workflowName}", nil, r.POST(s.postGenerateWorkflowWebHookSecretHandler))
 	r.Handle("/v2/workflow/manual", nil, r.POST(s.workflowManualHandler))
 	r.Handle("/v2/workflow/outgoing", nil, r.POST(s.workflowRunOutgoingEventHandler))
+	r.Handle("/v2/workflow/outgoing/{projectKey}", nil, r.DELETE(s.deleteOutgoingEventsByProjectHandler))
 
 	r.Handle("/v2/workflow/scheduler", nil, r.POST(s.postInstantiateSchedulerHandler))
 	r.Handle("/v2/workflow/scheduler/{vcsServer}/{repoName}/{workflowName}", nil, r.DELETE(s.deleteSchedulerByWorkflowHandler))
@@ -130,13 +132,13 @@ func (s *Service) CheckRepositoryHmac256Signature(headerName string) service.Mid
 			return ctx, sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		eventName, err := s.extractEventFromHeader(ctx, vcsType, req.Header)
+		eventName, eventType, err := s.extractEventFromHeader(ctx, vcsType, req.Header)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return ctx, sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		repoName, _, err := s.extractDataFromPayload(req.Header, vcsType, body, eventName)
+		repoName, _, err := s.extractDataFromPayload(ctx, req.Header, vcsType, body, eventName, eventType)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return ctx, sdk.WithStack(sdk.ErrForbidden)
@@ -199,13 +201,12 @@ func CheckWebhookRequestSignatureMiddleware(pubKey *rsa.PublicKey) service.Middl
 	webhookHTTPVerifier.SetKey(pubKey)
 
 	verifier := httpsig.NewVerifier(webhookHTTPVerifier)
-	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date", sdk.SignHeaderVCSType, sdk.SignHeaderVCSName, sdk.SignHeaderRepoName, sdk.SignHeaderEventName})
+	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date", sdk.SignHeaderVCSType, sdk.SignHeaderVCSName, sdk.SignHeaderRepoName, sdk.SignHeaderEventName, sdk.SignHeaderEventType})
 
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 		if err := verifier.Verify(req); err != nil {
 			return ctx, sdk.NewError(sdk.ErrUnauthorized, err)
 		}
-
 		log.Debug(ctx, "Request has been successfully verified")
 		return ctx, nil
 	}

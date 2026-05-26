@@ -87,6 +87,17 @@ func (s *Service) deleteSchedulerByWorkflowHandler() service.Handler {
 	}
 }
 
+func (s *Service) postResyncSchedulersHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		s.GoRoutines.Run(ctx, "scheduler-resync-admin", func(ctx context.Context) {
+			if err := s.resyncSchedulers(ctx); err != nil {
+				log.Error(ctx, "admin scheduler resync failed: %v", err)
+			}
+		})
+		return service.WriteJSON(w, nil, http.StatusAccepted)
+	}
+}
+
 func (s *Service) deleteSchedulerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -200,6 +211,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 			TargetBranch:     runRequest.UserRequest.Branch,
 			TargetTag:        runRequest.UserRequest.Tag,
 			JobInputs:        runRequest.UserRequest.JobInputs,
+			IsInMaintenance:  s.Maintenance,
 		},
 		DeprecatedAdminMFA: runRequest.AdminMFA,
 	}
@@ -294,6 +306,17 @@ func (s *Service) workflowRunOutgoingEventHandler() service.Handler {
 	}
 }
 
+func (s *Service) deleteOutgoingEventsByProjectHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["projectKey"]
+		if err := s.Dao.DeleteAllOutgoingEventsByProject(ctx, projectKey); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 func (s *Service) handleWorkflowRunOutgoingEvent(ctx context.Context, runRequest sdk.HookWorkflowRunEvent) (*sdk.HookWorkflowRunOutgoingEvent, error) {
 	event := &sdk.HookWorkflowRunOutgoingEvent{
 		UUID:    sdk.UUID(),
@@ -321,6 +344,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 		vcsName := r.Header.Get(sdk.SignHeaderVCSName)
 		vcsType := r.Header.Get(sdk.SignHeaderVCSType)
 		eventName := r.Header.Get(sdk.SignHeaderEventName)
+		eventType := r.Header.Get(sdk.SignHeaderEventType)
 
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
@@ -328,7 +352,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		repoName, extractData, err := s.extractDataFromPayload(r.Header, vcsType, body, eventName)
+		repoName, extractData, err := s.extractDataFromPayload(ctx, r.Header, vcsType, body, eventName, eventType)
 		if err != nil {
 			return err
 		}
@@ -394,12 +418,12 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		eventName, err := s.extractEventFromHeader(ctx, vcsServerType, r.Header)
+		eventName, eventType, err := s.extractEventFromHeader(ctx, vcsServerType, r.Header)
 		if err != nil {
 			return err
 		}
 
-		repoName, extractedData, err := s.extractDataFromPayload(r.Header, vcsServerType, body, eventName)
+		repoName, extractedData, err := s.extractDataFromPayload(ctx, r.Header, vcsServerType, body, eventName, eventType)
 		if err != nil {
 			return err
 		}
@@ -432,6 +456,7 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerName strin
 		Created:        time.Now().UnixNano(),
 		Status:         sdk.HookEventStatusScheduled,
 		ExtractData:    extractedData,
+		SignKey:        extractedData.CommitGpgKeyID,
 	}
 
 	// Save event
@@ -447,8 +472,9 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerName strin
 	return exec, nil
 }
 
-func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType string, header http.Header) (string, error) {
+func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType string, header http.Header) (string, string, error) {
 	var eventName string
+	var eventType string
 	var headerName string
 	switch vcsServerType {
 	case sdk.VCSTypeBitbucketServer:
@@ -457,19 +483,27 @@ func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType stri
 		headerName = GithubHeader
 	case sdk.VCSTypeGitea:
 		headerName = GiteaHeader
+	case sdk.VCSTypeForgejo:
+		headerName = ForgejoHeader
+		eventType = ForgejoEventTypeHeader
 	case sdk.VCSTypeGitlab:
 		headerName = GitlabHeader
 	default:
 		log.Warn(ctx, "invalid vcs server of type %s", vcsServerType)
-		return "", sdk.WithStack(sdk.ErrNotImplemented)
+		return "", "", sdk.WithStack(sdk.ErrNotImplemented)
 	}
 	if v, has := header[headerName]; has && len(v) > 0 {
 		eventName = v[0]
 	}
 	if eventName == "" {
-		return "", sdk.WrapError(sdk.ErrNotFound, "unable to found event from header")
+		return "", "", sdk.WrapError(sdk.ErrNotFound, "unable to found event from header")
 	}
-	return eventName, nil
+	if eventType != "" {
+		if v, has := header[eventType]; has && len(v) > 0 {
+			eventType = v[0]
+		}
+	}
+	return eventName, eventType, nil
 }
 
 func (s *Service) webhookHandler() service.Handler {
@@ -1003,6 +1037,19 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 		status = sdk.MonitoringStatusWarn
 	}
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceOutgoingEvent", Value: fmt.Sprintf("%d/%d", hookOutgoingEventIn, hookOutgoingEventOut), Status: status})
+
+	// Maintenance queue size
+	maintenanceQueueSize, errMQ := s.Dao.RepositoryEventMaintenanceQueueLen()
+	if errMQ != nil {
+		log.Error(ctx, "Status> Unable to retrieve maintenance queue len: %v", errMQ)
+	}
+	status = sdk.MonitoringStatusOK
+	if maintenanceQueueSize >= 100 {
+		status = sdk.MonitoringStatusAlert
+	} else if maintenanceQueueSize >= 10 {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "MaintenanceQueue", Value: fmt.Sprintf("%d", maintenanceQueueSize), Status: status})
 
 	var nbHooksKafkaTotal int64
 

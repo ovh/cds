@@ -93,8 +93,10 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 		Description: proj.Description,
 		NbWorkflows: len(proj.WorkflowNames),
 		Workflows:   cli.Ellipsis(strings.Join(proj.WorkflowNames.Names(), ","), 70),
-		URL:         proj.URLs.UIURL,
-		API:         proj.URLs.APIURL,
+	}
+	if proj.URLs != nil {
+		p.URL = proj.URLs.UIURL
+		p.API = proj.URLs.APIURL
 	}
 
 	var integrations []string

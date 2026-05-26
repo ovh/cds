@@ -16,6 +16,23 @@ import (
 )
 
 // reconfigureVM changes the CPU and RAM of a powered-off VM to match the requested flavor
+//
+// getModelConfig returns the ModelConfig for the given model, or nil if not configured.
+func (h *HatcheryVSphere) getModelConfig(model sdk.WorkerStarterWorkerModel) *ModelConfig {
+	for i := range h.Config.Models {
+		if model.ModelV2 != nil {
+			if h.Config.Models[i].ModelVMWare == model.GetVSphereImage() {
+				return &h.Config.Models[i]
+			}
+		} else {
+			if h.Config.Models[i].ModelPath == model.GetFullPath() {
+				return &h.Config.Models[i]
+			}
+		}
+	}
+	return nil
+}
+
 func (h *HatcheryVSphere) reconfigureVM(ctx context.Context, vm *object.VirtualMachine, flavor *VSphereFlavorConfig) error {
 	if flavor == nil {
 		return nil
@@ -39,7 +56,29 @@ func (h *HatcheryVSphere) reconfigureVM(ctx context.Context, vm *object.VirtualM
 		spec.MemoryMB = int64(flavor.MemoryMB)
 	}
 
-	log.Info(ctx, "reconfigureVM> reconfiguring VM to %d vCPUs, %d MB RAM", flavor.CPUs, flavor.MemoryMB)
+	// Resize the first disk if DiskSizeGB is configured
+	if flavor.DiskSizeGB > 0 {
+		devices, err := h.vSphereClient.LoadVirtualMachineDevices(ctx, vm)
+		if err != nil {
+			return sdk.WrapError(err, "reconfigureVM> cannot load VM devices")
+		}
+		for _, device := range devices {
+			if disk, ok := device.(*types.VirtualDisk); ok {
+				newCapacityKB := int64(flavor.DiskSizeGB) * 1024 * 1024
+				if newCapacityKB > disk.CapacityInKB {
+					disk.CapacityInKB = newCapacityKB
+					spec.DeviceChange = append(spec.DeviceChange, &types.VirtualDeviceConfigSpec{
+						Operation: types.VirtualDeviceConfigSpecOperationEdit,
+						Device:    disk,
+					})
+					log.Info(ctx, "reconfigureVM> resizing disk to %d GB", flavor.DiskSizeGB)
+				}
+				break
+			}
+		}
+	}
+
+	log.Info(ctx, "reconfigureVM> reconfiguring VM to %d vCPUs, %d MB RAM, disk %d GB", flavor.CPUs, flavor.MemoryMB, flavor.DiskSizeGB)
 
 	// Apply reconfiguration
 	task, err := vm.Reconfigure(ctx, spec)
@@ -51,7 +90,7 @@ func (h *HatcheryVSphere) reconfigureVM(ctx context.Context, vm *object.VirtualM
 		return sdk.WrapError(err, "reconfigureVM> VM reconfiguration task failed")
 	}
 
-	log.Info(ctx, "reconfigureVM> VM successfully reconfigured to %d vCPUs, %d MB RAM", flavor.CPUs, flavor.MemoryMB)
+	log.Info(ctx, "reconfigureVM> VM successfully reconfigured")
 	return nil
 }
 
@@ -250,7 +289,7 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 	}
 
 	// prepare virtual device config spec for network card
-	configSpecs := []types.BaseVirtualDeviceConfigSpec{
+	networkConfigSpecs := []types.BaseVirtualDeviceConfigSpec{
 		&types.VirtualDeviceConfigSpec{
 			Operation: types.VirtualDeviceConfigSpecOperationEdit,
 			Device:    card,
@@ -263,7 +302,7 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 	}
 
 	relocateSpec := types.VirtualMachineRelocateSpec{
-		DeviceChange: configSpecs,
+		DeviceChange: networkConfigSpecs,
 		DiskMoveType: string(types.VirtualMachineRelocateDiskMoveOptionsMoveChildMostDiskBacking),
 		Pool:         types.NewReference(resPool.Reference()),
 	}
@@ -281,36 +320,35 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 	}
 
 	if len(h.availableIPAddresses) > 0 {
-		var err error
-		ip, err := h.findAvailableIP(ctx)
+		ipRes, err := h.findAvailableIP(ctx)
 		if err != nil {
 			return nil, err
 		}
-		log.Debug(ctx, "Found %s as available IP", ip)
+		log.Debug(ctx, "Found %s as available IP (gw=%s, mask=%s)", ipRes.ip, ipRes.gateway, ipRes.subnetMask)
 		// Once we found an IP Address, we have to reserve this IP in local memory
 		// because the IP address won't be used directly on the server
-		if err := h.reserveIPAddress(ctx, ip); err != nil {
+		if err := h.reserveIPAddress(ctx, ipRes.ip); err != nil {
 			return nil, err
 		}
 
 		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{
 			{
 				Adapter: types.CustomizationIPSettings{
-					Ip:         &types.CustomizationFixedIp{IpAddress: ip},
-					SubnetMask: h.Config.SubnetMask,
+					Ip:         &types.CustomizationFixedIp{IpAddress: ipRes.ip},
+					SubnetMask: ipRes.subnetMask,
 				},
 			},
 		}
-		if h.Config.Gateway != "" {
-			customSpec.NicSettingMap[0].Adapter.Gateway = []string{h.Config.Gateway}
+		if ipRes.gateway != "" {
+			customSpec.NicSettingMap[0].Adapter.Gateway = []string{ipRes.gateway}
 		}
 		if h.Config.DNS != "" {
 			customSpec.GlobalIPSettings = types.CustomizationGlobalIPSettings{DnsServerList: []string{h.Config.DNS}}
 		}
 
-		annot.IPAddress = ip
+		annot.IPAddress = ipRes.ip
 
-		log.Debug(ctx, "IP: %s; Gateway: %v; DNS: %v", ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.GlobalIPSettings.DnsServerList)
+		log.Debug(ctx, "IP: %s; Gateway: %v; DNS: %v", ipRes.ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.GlobalIPSettings.DnsServerList)
 	}
 
 	annotStr, err := json.Marshal(annot)
@@ -320,7 +358,7 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 
 	cloneSpec := &types.VirtualMachineCloneSpec{
 		Location: relocateSpec,
-		PowerOn:  true,
+		PowerOn:  flavor == nil, // When a flavor is set, clone powered off then reconfigureVM handles CPU/RAM/disk
 		Template: false,
 		Config: &types.VirtualMachineConfigSpec{
 			RepConfig: &types.ReplicationConfigSpec{
@@ -331,18 +369,6 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 				AfterPowerOn: &sdk.True,
 			},
 		},
-	}
-
-	// Apply flavor overrides for fresh clones
-	// (provisioned VMs are reconfigured separately via reconfigureVM)
-	if flavor != nil {
-		if flavor.CPUs > 0 {
-			cloneSpec.Config.NumCPUs = int32(flavor.CPUs)
-		}
-		if flavor.MemoryMB > 0 {
-			cloneSpec.Config.MemoryMB = int64(flavor.MemoryMB)
-		}
-		log.Info(ctx, "prepareCloneSpec: applying flavor with %d vCPUs, %d MB RAM", flavor.CPUs, flavor.MemoryMB)
 	}
 
 	cloneSpec.Customization = customSpec
@@ -361,22 +387,29 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 
 	var auth types.NamePasswordAuthentication
 
-	if model.ModelV2 != nil {
-		// For model v2, we search the credentials from the VM Model name
-		for i := range h.Config.GuestCredentials {
-			if h.Config.GuestCredentials[i].ModelVMWare == model.GetVSphereImage() {
-				auth.Username = h.Config.GuestCredentials[i].Username
-				auth.Password = h.Config.GuestCredentials[i].Password
-				break
+	// Look up credentials from Models config first
+	if modelCfg := h.getModelConfig(model); modelCfg != nil {
+		auth.Username = modelCfg.Username
+		auth.Password = modelCfg.Password
+	}
+
+	// Fallback to deprecated GuestCredentials if not found in Models
+	if auth.Username == "" || auth.Password == "" {
+		if model.ModelV2 != nil {
+			for i := range h.Config.GuestCredentials {
+				if h.Config.GuestCredentials[i].ModelVMWare == model.GetVSphereImage() {
+					auth.Username = h.Config.GuestCredentials[i].Username
+					auth.Password = h.Config.GuestCredentials[i].Password
+					break
+				}
 			}
-		}
-	} else {
-		// For model v1, we search the credentials from the CDS Worker model name
-		for i := range h.Config.GuestCredentials {
-			if h.Config.GuestCredentials[i].ModelPath == model.GetFullPath() {
-				auth.Username = h.Config.GuestCredentials[i].Username
-				auth.Password = h.Config.GuestCredentials[i].Password
-				break
+		} else {
+			for i := range h.Config.GuestCredentials {
+				if h.Config.GuestCredentials[i].ModelPath == model.GetFullPath() {
+					auth.Username = h.Config.GuestCredentials[i].Username
+					auth.Password = h.Config.GuestCredentials[i].Password
+					break
+				}
 			}
 		}
 	}

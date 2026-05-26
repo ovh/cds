@@ -4,12 +4,13 @@ import {
     ChangeDetectorRef,
     Component,
     ComponentRef,
+    inject,
     Input,
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
 import { GraphNode, GraphNodeType } from '../graph.model';
-import { GraphDirection, NodeMouseEvent, WorkflowV2Graph } from '../graph.lib';
+import { GraphDirection, NodeMouseEvent, SelectionMode, InteractiveNode, WorkflowV2Graph } from '../graph.lib';
 import { GraphForkJoinNodeComponent } from './fork-join-node.components';
 import { GraphJobNodeComponent } from './job-node.component';
 import { GraphMatrixNodeComponent } from './matrix-node.component';
@@ -24,7 +25,7 @@ export type WorkflowV2JobsNodeOrMatrixComponent = GraphForkJoinNodeComponent | G
     styleUrls: ['./stage-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GraphStageNodeComponent implements AfterViewInit {
+export class GraphStageNodeComponent implements AfterViewInit, InteractiveNode {
     node: GraphNode;
     nodes: Array<GraphNode> = [];
 
@@ -40,24 +41,29 @@ export class GraphStageNodeComponent implements AfterViewInit {
 
     ready: boolean;
     highlight = false;
+    disabled = false;
 
     // workflow graph
     @ViewChild('svgSubGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
     graph: WorkflowV2Graph<WorkflowV2JobsNodeOrMatrixComponent>;
 
-    constructor(
-        private _cd: ChangeDetectorRef
-    ) { }
+    private _cd = inject(ChangeDetectorRef);
 
     getNodes() {
         return [this.node];
     }
 
     onMouseEnter(): void {
+        if (this.disabled) {
+            return;
+        }
         this.actionCallback('enter', this.node);
     }
 
     onMouseOut(): void {
+        if (this.disabled) {
+            return;
+        }
         this.actionCallback('out', this.node);
     }
 
@@ -168,10 +174,25 @@ export class GraphStageNodeComponent implements AfterViewInit {
     }
 
     clickCenter(): void {
+        if (this.disabled) {
+            return;
+        }
         if (this.centerCallback) {
             this.centerCallback(this.node);
         }
     }
 
     match(navigationKey: string): boolean { return false; }
+
+    setSelectionMode(navigationKey: string, mode: SelectionMode): void {
+        this.graph.setNodeSelectionMode(navigationKey, mode);
+        this.disabled = mode !== SelectionMode.Disabled;
+        if (this.disabled) {
+            this.setHighlight(false);
+        }
+    }
+
+    setSelected(selectedRunJobIds: Array<string>): void {
+        this.graph.updateSelection(selectedRunJobIds);
+    }
 }

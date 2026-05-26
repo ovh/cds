@@ -1167,6 +1167,7 @@ func Test_workflowRunCraft(t *testing.T) {
 	for _, f := range features {
 		_ = featureflipping.Delete(db, f.ID)
 	}
+	featureflipping.InvalidateAllCache()
 
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	wf := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
@@ -1190,6 +1191,7 @@ func Test_workflowRunCraft(t *testing.T) {
 		Rule: "return project_key == \"" + proj.Key + "\"",
 	}
 	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, api.mustDB(), &f))
+	featureflipping.InvalidateCache(context.TODO(), sdk.FeaturePurgeMaxRuns)
 
 	require.NoError(t, api.workflowRunCraft(context.TODO(), wrPending.ID))
 
@@ -3000,13 +3002,16 @@ func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
 
 	existingFeat, _ := featureflipping.LoadByName(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion)
 	featureflipping.Delete(db, existingFeat.ID)
+	featureflipping.InvalidateCache(ctx, sdk.FeatureRegion)
 	f := &sdk.Feature{
 		Name: sdk.FeatureRegion,
 		Rule: "return false",
 	}
 	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, db, f))
+	featureflipping.InvalidateCache(ctx, sdk.FeatureRegion)
 	t.Cleanup(func() {
 		featureflipping.Delete(db, f.ID)
+		featureflipping.InvalidateCache(ctx, sdk.FeatureRegion)
 	})
 
 	u, pass := assets.InsertAdminUser(t, db)

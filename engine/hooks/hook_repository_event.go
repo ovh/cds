@@ -12,7 +12,7 @@ const (
 	NoCommit = "0000000000000000000000000000000000000000"
 )
 
-func (s *Service) extractDataFromPayload(_ http.Header, vcsServerType string, body []byte, eventName string) (string, sdk.HookRepositoryEventExtractData, error) {
+func (s *Service) extractDataFromPayload(ctx context.Context, _ http.Header, vcsServerType string, body []byte, eventName, eventType string) (string, sdk.HookRepositoryEventExtractData, error) {
 	switch vcsServerType {
 	case sdk.VCSTypeBitbucketServer:
 		return s.extractDataFromBitbucketRequest(body)
@@ -22,8 +22,30 @@ func (s *Service) extractDataFromPayload(_ http.Header, vcsServerType string, bo
 		return s.extractDataFromGitlabRequest(body, eventName)
 	case sdk.VCSTypeGitea:
 		return s.extractDataFromGiteaRequest(body, eventName)
+	case sdk.VCSTypeForgejo:
+		return s.extractDataFromForgejoRequest(ctx, body, eventName, eventType)
 	default:
 		return "", sdk.HookRepositoryEventExtractData{}, sdk.WithStack(sdk.ErrNotImplemented)
+	}
+}
+
+func (s *Service) extractDataFromForgejoRequest(ctx context.Context, body []byte, eventName string, eventType string) (string, sdk.HookRepositoryEventExtractData, error) {
+	switch eventName {
+	case string(ForgejoEventPush):
+		return s.extractDataFromForgejoPushEvent(ctx, body)
+	case string(ForgejoEventPullRequest):
+		return s.extractDataFromForgejoPullRequestEvent(body, eventType)
+	case string(ForgejoEventPullRequestComment): // Signle comment during a review
+		return s.extractDataFromForgejoPullRequestCommentEvent(body)
+	case string(ForgejoEventIssueComment): // Comment on a pull request or issue
+		switch eventType {
+		case string(ForgejoEventTypePullRequestComment):
+			return s.extractDataFromForgejoIssueCommentPREvent(body)
+		default:
+			return "", sdk.HookRepositoryEventExtractData{}, sdk.WrapError(sdk.ErrNotImplemented, "event %q type %q not implemented", eventName, eventType)
+		}
+	default:
+		return "", sdk.HookRepositoryEventExtractData{}, sdk.WrapError(sdk.ErrNotImplemented, "event %q type %q not implemented", eventName, eventType)
 	}
 }
 

@@ -124,7 +124,11 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		flavorInfo.Time = time.Now()
 
 		if flavor != nil {
-			flavorInfo.Message = fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MB RAM)", spawnArgs.WorkerName, flavorName, flavor.CPUs, flavor.MemoryMB)
+			if flavor.DiskSizeGB > 0 {
+				flavorInfo.Message = fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MB RAM, %d GB disk)", spawnArgs.WorkerName, flavorName, flavor.CPUs, flavor.MemoryMB, flavor.DiskSizeGB)
+			} else {
+				flavorInfo.Message = fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MB RAM)", spawnArgs.WorkerName, flavorName, flavor.CPUs, flavor.MemoryMB)
+			}
 		} else {
 			flavorInfo.Message = fmt.Sprintf("Worker %q will use template resources (no flavor)", spawnArgs.WorkerName)
 		}
@@ -239,6 +243,18 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	vmWorker, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, spawnArgs.WorkerName)
 	if err != nil {
 		return err
+	}
+
+	// When a flavor is set the VM was cloned powered off — reconfigure then start
+	if flavor != nil {
+		if err := h.reconfigureVM(ctx, vmWorker, flavor); err != nil {
+			h.markToDelete(ctx, spawnArgs.WorkerName)
+			return sdk.WrapError(err, "unable to reconfigure fresh clone %q", spawnArgs.WorkerName)
+		}
+		if err := h.vSphereClient.StartVirtualMachine(ctx, vmWorker); err != nil {
+			h.markToDelete(ctx, spawnArgs.WorkerName)
+			return sdk.WrapError(err, "unable to start fresh clone %q", spawnArgs.WorkerName)
+		}
 	}
 
 	return h.launchScriptWorker(ctx, spawnArgs, vmWorker, spawnArgs.WorkerName)
@@ -439,6 +455,16 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 		return err
 	}
 
+	// Execute pre-start script if configured for this model
+	if modelCfg := h.getModelConfig(spawnArgs.Model); modelCfg != nil && modelCfg.PreStartScript != "" {
+		log.Info(ctx, "launchScriptWorker: executing pre-start script on %q", spawnArgs.WorkerName)
+		if err := h.launchClientOp(ctx, vm, spawnArgs.Model, modelCfg.PreStartScript, nil); err != nil {
+			log.Error(ctx, "launchScriptWorker: pre-start script failed on %q: %v", spawnArgs.WorkerName, err)
+			h.markToDelete(ctx, spawnArgs.WorkerName)
+			return err
+		}
+	}
+
 	env := []string{
 		"CDS_CONFIG=" + workerConfig.EncodeBase64(),
 	}
@@ -513,7 +539,7 @@ func (h *HatcheryVSphere) ProvisionWorkerV1(ctx context.Context, m sdk.Model, wo
 		Created:                 time.Now(),
 	}
 
-	return h.provisionWorker(ctx, vmTemplate, annot, workerName)
+	return h.cloneProvisionedWorker(ctx, vmTemplate, annot, workerName)
 }
 
 func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel string, workerName string) error {
@@ -531,10 +557,13 @@ func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel str
 		Created:         time.Now(),
 	}
 
-	return h.provisionWorker(ctx, vmTemplate, annot, workerName)
+	return h.cloneProvisionedWorker(ctx, vmTemplate, annot, workerName)
 }
 
-func (h *HatcheryVSphere) provisionWorker(ctx context.Context, vmTemplate *object.VirtualMachine, annot annotation, workerName string) (err error) {
+// cloneProvisionedWorker clones a VM template for provisioning. After the clone
+// the VM is powered on but not yet shut down — the caller is responsible for
+// completing provisioning via finishProvisioning.
+func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate *object.VirtualMachine, annot annotation, workerName string) error {
 	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, nil)
 	if err != nil {
 		return err
@@ -552,21 +581,9 @@ func (h *HatcheryVSphere) provisionWorker(ctx context.Context, vmTemplate *objec
 		return err
 	}
 
-	clonedVM, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, workerName)
-	if err != nil {
+	if _, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, workerName); err != nil {
 		return err
 	}
-
-	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, clonedVM, &annot.IPAddress, workerName); err != nil {
-		return err
-	}
-
-	// the provisionned workers are shutdown when they are created
-	if err := h.vSphereClient.ShutdownVirtualMachine(ctx, clonedVM); err != nil {
-		return err
-	}
-
-	log.Info(ctx, "vm %q has been provisionned", workerName)
 
 	return nil
 }

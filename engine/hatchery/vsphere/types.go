@@ -17,29 +17,41 @@ type HatcheryConfiguration struct {
 	VSphereDatastoreString              string                     `mapstructure:"datastoreString" toml:"datastoreString" default:"" commented:"false" comment:"VSphere Datastore" json:"datastoreString"`
 	VSphereNetworkString                string                     `mapstructure:"networkString" toml:"networkString" default:"" commented:"false" comment:"VShpere Network" json:"networkString"`
 	VSphereCardName                     string                     `mapstructure:"cardName" toml:"cardName" default:"e1000" commented:"false" comment:"Name of the virtual ethernet card" json:"cardName"`
-	IPRange                             string                     `mapstructure:"iprange" toml:"iprange" default:"" commented:"false" comment:"Optional. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, you have to set it in your worker model template" json:"iprange,omitempty"`
-	Gateway                             string                     `mapstructure:"gateway" toml:"gateway" default:"" commented:"false" comment:"Optional. Gateway IP for spawned workers." json:"gateway,omitempty"`
-	DNS                                 string                     `mapstructure:"dns" toml:"dns" default:"" commented:"false" comment:"Optional. DNS IP" json:"dns,omitempty"`
-	SubnetMask                          string                     `mapstructure:"subnetMask" toml:"subnetMask" default:"255.255.255.0" commented:"false" comment:"Subnet Mask" json:"subnetMask"`
-	WorkerTTL                           int                        `mapstructure:"workerTTL" toml:"workerTTL" default:"120" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
-	WorkerRegistrationTTL               int                        `mapstructure:"workerRegistrationTTL" toml:"workerRegistrationTTL" commented:"false" comment:"Worker Registration TTL (minutes)" json:"workerRegistrationTTL"`
-	WorkerProvisioningInterval          int                        `mapstructure:"workerProvisioningInterval" toml:"workerProvisioningInterval" commented:"true" comment:"Worker Provisioning interval (seconds)" json:"workerProvisioningInterval"`
-	WorkerProvisioningPoolSize          int                        `mapstructure:"workerProvisioningPoolSize" toml:"workerProvisioningPoolSize" commented:"true" comment:"Worker Provisioning pool size" json:"workerProvisioningPoolSize"`
-	WorkerProvisioning                  []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
-	GuestCredentials                    []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"List of Guest credentials" json:"-"`
-	DefaultWorkerModelsV2               []DefaultWorkerModelsV2    `mapstructure:"defaultWorkerModelsV2" toml:"defaultWorkerModelsV2" commented:"true" comment:"List of default worker models v2 for declared binaries - used by workflow v1" json:"-"`
-	MaxCPUs                             int                        `mapstructure:"maxCpus" toml:"maxCpus" default:"0" commented:"true" comment:"Optional. Maximum total vCPUs this hatchery may allocate. 0 means no static CPU limit (Resource Pool limits still apply)." json:"maxCpus"`
-	MaxMemoryMB                         int                        `mapstructure:"maxMemoryMB" toml:"maxMemoryMB" default:"0" commented:"true" comment:"Optional. Maximum total RAM (MB) this hatchery may allocate. 0 means no static memory limit (Resource Pool limits still apply)." json:"maxMemoryMB"`
-	Flavors                             []VSphereFlavorConfig      `mapstructure:"flavors" toml:"flavors" commented:"true" comment:"Optional. VM flavors for CPU/RAM sizing. List of available flavors." json:"flavors,omitempty"`
-	DefaultFlavor                       string                     `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"" commented:"true" comment:"Optional. Default flavor to use when no flavor is specified in worker model or job requirements." json:"defaultFlavor,omitempty"`
-	CountSmallerFlavorToKeep            int                        `mapstructure:"countSmallerFlavorToKeep" toml:"countSmallerFlavorToKeep" default:"0" commented:"true" comment:"Optional. Reserve capacity for N smaller flavor workers when spawning large flavors. 0 disables starvation prevention." json:"countSmallerFlavorToKeep"`
+	// Deprecated: Use Networks instead. Kept for backward compatibility.
+	IPRange    string `mapstructure:"iprange" toml:"iprange" default:"" commented:"false" comment:"Deprecated: use [[networks]] instead. Optional. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, you have to set it in your worker model template" json:"iprange,omitempty"`
+	Gateway    string `mapstructure:"gateway" toml:"gateway" default:"" commented:"false" comment:"Deprecated: use [[networks]] instead. Optional. Gateway IP for spawned workers." json:"gateway,omitempty"`
+	DNS        string `mapstructure:"dns" toml:"dns" default:"" commented:"false" comment:"Optional. DNS IP" json:"dns,omitempty"`
+	SubnetMask string `mapstructure:"subnetMask" toml:"subnetMask" default:"255.255.255.0" commented:"false" comment:"Deprecated: use [[networks]] instead. Subnet Mask" json:"subnetMask"`
+	// Networks defines multiple IP ranges, each associated with its own gateway and subnet mask.
+	Networks                   []NetworkConfig            `mapstructure:"networks" toml:"networks" commented:"true" comment:"Optional. List of network configurations. Each entry defines an IP range with its associated gateway and subnet mask." json:"networks,omitempty"`
+	WorkerTTL                  int                        `mapstructure:"workerTTL" toml:"workerTTL" default:"120" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
+	WorkerRegistrationTTL      int                        `mapstructure:"workerRegistrationTTL" toml:"workerRegistrationTTL" commented:"false" comment:"Worker Registration TTL (minutes)" json:"workerRegistrationTTL"`
+	WorkerProvisioningInterval int                        `mapstructure:"workerProvisioningInterval" toml:"workerProvisioningInterval" commented:"true" comment:"Worker Provisioning interval (seconds)" json:"workerProvisioningInterval"`
+	WorkerProvisioningPoolSize int                        `mapstructure:"workerProvisioningPoolSize" toml:"workerProvisioningPoolSize" commented:"true" comment:"Worker Provisioning pool size" json:"workerProvisioningPoolSize"`
+	WorkerProvisioning         []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
+	GuestCredentials           []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"Deprecated: use [[models]] instead. List of Guest credentials" json:"-"`
+	Models                     []ModelConfig              `mapstructure:"models" toml:"models" commented:"true" comment:"Per-model configuration (credentials, resize script)" json:"models,omitempty"`
+	DefaultWorkerModelsV2      []DefaultWorkerModelsV2    `mapstructure:"defaultWorkerModelsV2" toml:"defaultWorkerModelsV2" commented:"true" comment:"List of default worker models v2 for declared binaries - used by workflow v1" json:"-"`
+	MaxCPUs                    int                        `mapstructure:"maxCpus" toml:"maxCpus" default:"0" commented:"true" comment:"Optional. Maximum total vCPUs this hatchery may allocate. 0 means no static CPU limit (Resource Pool limits still apply)." json:"maxCpus"`
+	MaxMemoryMB                int                        `mapstructure:"maxMemoryMB" toml:"maxMemoryMB" default:"0" commented:"true" comment:"Optional. Maximum total RAM (MB) this hatchery may allocate. 0 means no static memory limit (Resource Pool limits still apply)." json:"maxMemoryMB"`
+	Flavors                    []VSphereFlavorConfig      `mapstructure:"flavors" toml:"flavors" commented:"true" comment:"Optional. VM flavors for CPU/RAM sizing. List of available flavors." json:"flavors,omitempty"`
+	DefaultFlavor              string                     `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"" commented:"true" comment:"Optional. Default flavor to use when no flavor is specified in worker model or job requirements." json:"defaultFlavor,omitempty"`
+	CountSmallerFlavorToKeep   int                        `mapstructure:"countSmallerFlavorToKeep" toml:"countSmallerFlavorToKeep" default:"0" commented:"true" comment:"Optional. Reserve capacity for N smaller flavor workers when spawning large flavors. 0 disables starvation prevention." json:"countSmallerFlavorToKeep"`
 }
 
-// VSphereFlavorConfig defines CPU and RAM resources for a flavor
+// NetworkConfig defines a network with an IP range, gateway and subnet mask.
+type NetworkConfig struct {
+	IPRange    string `mapstructure:"iprange" toml:"iprange" default:"" commented:"false" comment:"IP Range in CIDR notation. Format: a.a.a.a/b,c.c.c.c/e" json:"iprange"`
+	Gateway    string `mapstructure:"gateway" toml:"gateway" default:"" commented:"false" comment:"Gateway IP for this network" json:"gateway"`
+	SubnetMask string `mapstructure:"subnetMask" toml:"subnetMask" default:"" commented:"false" comment:"Subnet mask for this network" json:"subnetMask"`
+}
+
+// VSphereFlavorConfig defines CPU, RAM and disk resources for a flavor
 type VSphereFlavorConfig struct {
-	Name     string `mapstructure:"name" toml:"name" json:"name"`
-	CPUs     int    `mapstructure:"cpus" toml:"cpus" json:"cpus"`
-	MemoryMB int    `mapstructure:"memoryMB" toml:"memoryMB" json:"memoryMB"`
+	Name       string `mapstructure:"name" toml:"name" json:"name"`
+	CPUs       int    `mapstructure:"cpus" toml:"cpus" json:"cpus"`
+	MemoryMB   int    `mapstructure:"memoryMB" toml:"memoryMB" json:"memoryMB"`
+	DiskSizeGB int    `mapstructure:"diskSizeGB" toml:"diskSizeGB" commented:"true" comment:"Disk size in GB. If set, the first disk is resized at clone time." json:"diskSizeGB,omitempty"`
 }
 
 type WorkerProvisioningConfig struct {
@@ -64,10 +76,40 @@ type GuestCredential struct {
 	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
 }
 
+// ModelConfig holds per-model configuration: guest credentials and optional
+// pre-start script. It is matched to a VM by ModelPath (v1) or ModelVMWare (v2).
+type ModelConfig struct {
+	// ModelPath is the CDS worker model name (group/name), used only by CDS Worker Model v1
+	ModelPath string `mapstructure:"modelPath" default:"" commented:"true" toml:"modelPath" json:"modelPath"`
+
+	// ModelVMWare is the VMware template name, used only by CDS Worker Model v2
+	ModelVMWare string `mapstructure:"modelVMWare" default:"" commented:"true" toml:"modelVMWare" json:"modelVMWare"`
+
+	// Guest credentials for executing scripts inside the VM
+	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
+	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
+
+	// Script executed inside the VM after boot but before the CDS worker starts
+	PreStartScript string `mapstructure:"preStartScript" toml:"preStartScript" commented:"true" comment:"Shell script executed inside the VM before the worker starts" json:"preStartScript"`
+}
+
 // this is used to run worker model v2 in a job v1
 type DefaultWorkerModelsV2 struct {
 	WorkerModelV2 string   `mapstructure:"workerModelV2" default:"" commented:"true" toml:"workerModelV2" json:"workerModelV2"`
 	Binaries      []string `mapstructure:"binaries" toml:"binaries" default:"" commented:"true" comment:"If one binary is matching this list, the default model associated is used." json:"binaries"`
+}
+
+// availableNetwork holds an IP range with its associated network configuration.
+type availableNetwork struct {
+	config      NetworkConfig
+	ipAddresses []string
+}
+
+// ipResult is returned by findAvailableIP with the IP and its network context.
+type ipResult struct {
+	ip         string
+	gateway    string
+	subnetMask string
 }
 
 // HatcheryVSphere spawns vm
@@ -77,8 +119,10 @@ type HatcheryVSphere struct {
 	vSphereClient        VSphereClient
 	metrics              vsphereMetrics
 	IpAddressesMutex     sync.Mutex
-	availableIPAddresses []string
+	availableIPAddresses []string // flat list kept for backward-compat checks (e.g. CanSpawn)
+	availableNetworks    []availableNetwork
 	reservedIPAddresses  []string
+	provisioningPool     *provisioningPool
 	cachePendingJobID    struct {
 		mu   sync.Mutex
 		list []string

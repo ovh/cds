@@ -24,6 +24,7 @@ const (
 	HeaderXVCSSSHPrivateKey = "X-CDS-VCS-SSH-PRIVATE-KEY"
 
 	VCSTypeGitea           = "gitea"
+	VCSTypeForgejo         = "forgejo"
 	VCSTypeGerrit          = "gerrit"
 	VCSTypeGitlab          = "gitlab"
 	VCSTypeBitbucketServer = "bitbucketserver"

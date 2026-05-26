@@ -164,6 +164,11 @@ func HasRoleOnRegion(ctx context.Context, db gorp.SqlExecutor, role string, regi
 	return false, nil
 }
 
+func loadRBACRegionsByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) ([]sdk.RBACRegion, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM rbac_region WHERE id = ANY($1)`).Args(pq.Int64Array(ids))
+	return getAllRBACRegions(ctx, db, q)
+}
+
 func HasVCSUserRoleOnRegion(ctx context.Context, db gorp.SqlExecutor, role string, regionID string, vcsuser sdk.RBACVCSUser) (bool, error) {
 	// Load also rbac_region with all users allowed
 	rbacRegionsAllVCSUsers, err := loadRBACRegionOnAllVCSUsers(ctx, db, role)

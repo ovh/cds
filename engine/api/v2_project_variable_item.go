@@ -43,7 +43,6 @@ func (api *API) postProjectVariableSetItemHandler() ([]service.RbacChecker, serv
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 			vsName := vars["variableSetName"]
-
 			u := getUserConsumer(ctx)
 			if u == nil {
 				return sdk.WithStack(sdk.ErrForbidden)
@@ -103,7 +102,10 @@ func (api *API) postProjectVariableSetItemHandler() ([]service.RbacChecker, serv
 				return err
 			}
 			event_v2.PublishProjectVariableSetItemEvent(ctx, api.Cache, sdk.EventVariableSetItemCreated, pKey, vs.Name, item, *u.AuthConsumerUser.AuthentifiedUser)
-			return service.WriteJSON(w, vs, http.StatusOK)
+			if item.Type == sdk.ProjectVariableTypeSecret {
+				item.Value = sdk.PasswordPlaceholder
+			}
+			return service.WriteJSON(w, item, http.StatusOK)
 		}
 }
 
@@ -164,7 +166,10 @@ func (api *API) putProjectVariableSetItemHandler() ([]service.RbacChecker, servi
 				return err
 			}
 			event_v2.PublishProjectVariableSetItemEvent(ctx, api.Cache, sdk.EventVariableSetItemUpdated, pKey, vs.Name, item, *u.AuthConsumerUser.AuthentifiedUser)
-			return service.WriteJSON(w, vs, http.StatusOK)
+			if item.Type == sdk.ProjectVariableTypeSecret {
+				item.Value = sdk.PasswordPlaceholder
+			}
+			return service.WriteJSON(w, item, http.StatusOK)
 		}
 }
 

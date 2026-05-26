@@ -1,3 +1,4 @@
+import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -18,6 +19,8 @@ import { onGitRepositoryChanged, updateGitRepository } from './events/git-reposi
 import { PreviewWorkflowCommand } from './commands/preview-workflow';
 import { isCDSActionFile, isCDSWorkerModelFile, isCDSWorkflowFile } from './cds/file_utils';
 import { ClearCacheCommand } from './commands/clear-cache';
+import { WorkflowViewProvider, WorkflowItem, RunItem, RepoItem } from './workflowViewProvider';
+import { onProjectChanged } from './events/project';
 
 const CDS_SCHEMA = 'cds';
 
@@ -99,6 +102,132 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // init the vscode context
     updateVscodeContext(vscode.window.activeTextEditor);
+
+    // ── Workflow Explorer ────────────────────────────────────────────────────
+    const workflowViewProvider = new WorkflowViewProvider();
+
+    context.subscriptions.push(workflowViewProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('vscode-cds-workflows', workflowViewProvider)
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeWorkspaceFolders(() => workflowViewProvider.refresh())
+    );
+
+    // Refresh workflow view when CDS project or context changes
+    context.subscriptions.push(onProjectChanged((project) => {
+        workflowViewProvider.setProjectKey(project?.key);
+    }));
+    context.subscriptions.push(onContextChanged(() => workflowViewProvider.refresh()));
+
+    // Initialize the workflow view with the current project (event may have fired before listener was registered)
+    CDS.getCurrentProject().then((project) => {
+        if (project) {
+            workflowViewProvider.setProjectKey(project.key);
+        }
+    }).catch(() => { /* ignore */ });
+
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.refreshWorkflowView', () => {
+        workflowViewProvider.refresh();
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.triggerWorkflow', async (item?: WorkflowItem | RepoItem) => {
+        let projKey: string | undefined;
+        let vcsName: string | undefined;
+        let repoId: string | undefined;
+        let workflowName: string | undefined;
+        let repoRoot: string | undefined;
+
+        if (item instanceof WorkflowItem && item.repo.cdsRepo) {
+            projKey = item.repo.cdsRepo.projectKey;
+            vcsName = item.repo.cdsRepo.vcsName;
+            repoId = item.repo.cdsRepo.id;
+            workflowName = item.cdsWorkflowName;
+            repoRoot = item.repo.repoRoot;
+        } else if (item instanceof RepoItem && item.cdsRepo) {
+            projKey = item.cdsRepo.projectKey;
+            vcsName = item.cdsRepo.vcsName;
+            repoId = item.cdsRepo.id;
+            repoRoot = item.repoRoot;
+            workflowName = await vscode.window.showInputBox({
+                title: 'Workflow name',
+                prompt: 'Enter the CDS v2 workflow name (filename without .yaml)',
+            });
+            if (!workflowName) { return; }
+        }
+
+        if (!projKey || !vcsName || !repoId || !workflowName) {
+            vscode.window.showErrorMessage('No CDS repository data associated with this item.');
+            return;
+        }
+
+        const branch = await vscode.window.showInputBox({
+            title: 'Branch',
+            prompt: 'Branch to run on (leave empty for default)',
+            value: await currentGitBranch(repoRoot),
+        });
+        if (branch === undefined) { return; }
+
+        const cmd = CDS.buildTriggerV2Command(projKey, vcsName, repoId, workflowName, branch || undefined);
+        const terminal = vscode.window.createTerminal({ name: `CDS run: ${workflowName}`, cwd: repoRoot });
+        terminal.show();
+        terminal.sendText(cmd);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.stopRun', async (item?: RunItem) => {
+        if (!item?.run.id) { vscode.window.showErrorMessage('No run selected.'); return; }
+        const confirmed = await vscode.window.showWarningMessage(
+            `Stop run #${item.run.runNumber} of ${item.run.workflowName}?`, { modal: true }, 'Stop'
+        );
+        if (confirmed !== 'Stop') { return; }
+        try {
+            await CDS.stopRun(item.run.projectKey, item.run.id);
+            vscode.window.showInformationMessage(`Run #${item.run.runNumber} stopped.`);
+            workflowViewProvider.refreshRuns(item.workflow);
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to stop run: ${(e as Error).message}`);
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.restartRun', async (item?: RunItem) => {
+        if (!item?.run.id) { vscode.window.showErrorMessage('No run selected.'); return; }
+        try {
+            await CDS.restartRun(item.run.projectKey, item.run.id);
+            vscode.window.showInformationMessage(`Run #${item.run.runNumber} restarted.`);
+            workflowViewProvider.refreshRuns(item.workflow);
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to restart run: ${(e as Error).message}`);
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.viewRunLogs', async (item?: RunItem) => {
+        if (!item?.run.id) { vscode.window.showErrorMessage('No run selected.'); return; }
+        const repoRoot = item.workflow.repo.repoRoot;
+        const logsDir = repoRoot ? path.join(repoRoot, '.logs') : undefined;
+        if (logsDir) {
+            await fs.promises.mkdir(logsDir, { recursive: true });
+        }
+        const cmd = CDS.buildLogsCommand(item.run.projectKey, item.run.id);
+        const terminal = vscode.window.createTerminal({
+            name: `CDS logs: #${item.run.runNumber} ${item.run.workflowName}`,
+            cwd: logsDir ?? repoRoot,
+        });
+        terminal.show();
+        terminal.sendText(cmd);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.refreshRuns', (item?: WorkflowItem) => {
+        if (item) { workflowViewProvider.refreshRuns(item); }
+    }));
+}
+
+async function currentGitBranch(cwd?: string): Promise<string> {
+    return new Promise((resolve) => {
+        cp.exec('git rev-parse --abbrev-ref HEAD', { cwd }, (_err, stdout) => {
+            resolve(stdout.trim() || '');
+        });
+    });
 }
 
 async function updateSchema(context: Context) {
@@ -128,9 +257,13 @@ function onRequestSchemaContent(schemaUri: string): string | undefined {
     return getSchemaContent(parsedUri.path);
 }
 
-function getSchemaContent(name: string) {
+function getSchemaContent(name: string): string | undefined {
     const schemaPath = path.join(os.homedir(), '.cds-schema', name + '.v2.schema.json');
-    return fs.readFileSync(schemaPath, 'utf-8');
+    try {
+        return fs.readFileSync(schemaPath, 'utf-8');
+    } catch {
+        return undefined;
+    }
 }
 
 function updateVscodeContext(editor?: vscode.TextEditor) {

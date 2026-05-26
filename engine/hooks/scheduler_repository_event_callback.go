@@ -95,6 +95,8 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 						hre.Initiator = callback.AnalysisCallback.Initiator
 						hre.SkippedWorkflows = append(hre.SkippedWorkflows, callback.AnalysisCallback.SkippedWorkflows...)
 						hre.SkippedHooks = append(hre.SkippedHooks, callback.AnalysisCallback.SkippedHooks...)
+						hre.SignKey = callback.AnalysisCallback.SignKey
+
 						if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 							return err
 						}
@@ -106,7 +108,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			return sdk.Errorf("missing analysis callback data")
 		}
 
-	case sdk.HookEventStatusSignKey, sdk.HookEventStatusGitInfo:
+	case sdk.HookEventStatusGitInfo:
 		if callback.SigningKeyCallback != nil {
 			if err := s.manageRepositoryOperationCallback(ctx, *callback.SigningKeyCallback, &hre); err != nil {
 				return err

@@ -139,6 +139,10 @@ func (s *Service) Serve(c context.Context) error {
 			s.dequeueRepositoryEvent(ctx)
 		})
 
+		s.GoRoutines.RunWithRestart(ctx, "dequeueMaintenanceRepositoryEvent", func(ctx context.Context) {
+			s.dequeueMaintenanceRepositoryEvent(ctx)
+		})
+
 		s.GoRoutines.RunWithRestart(ctx, "dequeueWorkflowRunOutgoingEvent", func(ctx context.Context) {
 			s.dequeueWorkflowRunOutgoingEvent(ctx)
 		})
@@ -177,6 +181,13 @@ func (s *Service) Serve(c context.Context) error {
 				cancel()
 			}
 		}()
+
+		// Run an initial resync of scheduler definitions from DB to Redis
+		s.GoRoutines.Run(ctx, "scheduler-resync-init", func(ctx context.Context) {
+			if err := s.resyncSchedulers(ctx); err != nil {
+				log.Error(ctx, "initial scheduler resync failed: %v", err)
+			}
+		})
 
 		s.GoRoutines.RunWithRestart(ctx, "schedulerv2", func(ctx context.Context) {
 			s.schedulerExecutionRoutine(ctx)

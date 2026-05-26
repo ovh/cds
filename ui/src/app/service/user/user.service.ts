@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
     AuthConsumer,
     AuthConsumerCreateResponse,
@@ -7,15 +7,13 @@ import {
 } from 'app/model/authentication.model';
 import { Bookmark } from 'app/model/bookmark.model';
 import { Group } from 'app/model/group.model';
-import { AuthentifiedUser, Schema, UserContact, UserGPGKey, UserLink } from 'app/model/user.model';
+import { AuthentifiedUser, PermissionSummary, Schema, UserContact, UserGPGKey, UserLink } from 'app/model/user.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Injectable()
 export class UserService {
-    constructor(
-        private _http: HttpClient
-    ) { }
+    private _http = inject(HttpClient);
 
     getMe(): Observable<AuthentifiedUser> {
         return this._http.get<AuthentifiedUser>('/user/me').pipe(map(u => Object.assign(new AuthentifiedUser(), u)));
@@ -86,6 +84,10 @@ export class UserService {
 
     getGPGKeys(username: string): Observable<Array<UserGPGKey>> {
         return this._http.get<Array<UserGPGKey>>(`/v2/user/${username}/gpgkey`);
+    }
+
+    getPermissions(username: string): Observable<PermissionSummary> {
+        return this._http.get<PermissionSummary>(`/v2/user/${username}/permissions`);
     }
 
     deleteGPGKey(username: string, keyID: string): Observable<any> {

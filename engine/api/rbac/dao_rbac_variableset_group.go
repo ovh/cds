@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -42,4 +44,21 @@ func getAllRBACVariableSetGroups(ctx context.Context, db gorp.SqlExecutor, q gor
 		groupsFiltered = append(groupsFiltered, rbacGroups)
 	}
 	return groupsFiltered, nil
+}
+
+func loadRBACVariableSetGroupsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]rbacVariableSetGroup, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_variableset_groups WHERE group_id = ANY ($1)").Args(pq.Int64Array(groupIDs))
+	return getAllRBACVariableSetGroups(ctx, db, q)
+}
+
+func loadRBACVariableSetGroupsByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacVariableSetGroup, error) {
+	groups, err := group.LoadAllByUserID(ctx, db, userID)
+	if err != nil {
+		return nil, err
+	}
+	groupIDs := make([]int64, 0, len(groups))
+	for _, g := range groups {
+		groupIDs = append(groupIDs, g.ID)
+	}
+	return loadRBACVariableSetGroupsByGroupIDs(ctx, db, groupIDs)
 }

@@ -89,6 +89,11 @@ type Configuration struct {
 		BatchSize        int  `toml:"batchSize" default:"100" json:"batchSize" comment:"Number of items to check per batch per instance"`
 		GracePeriodDays  int  `toml:"gracePeriodDays" default:"180" json:"gracePeriodDays" comment:"Only check items older than this number of days (default: 180 ~ 6 months)"`
 	} `toml:"orphanCleanup" comment:"######################\n Orphan items cleanup settings \n######################" json:"orphanCleanup"`
+	WorkerCachePurge struct {
+		FrequencySeconds int `toml:"frequencySeconds" default:"3600" json:"frequencySeconds" comment:"Frequency in seconds between each worker cache purge batch"`
+		BatchSize        int `toml:"batchSize" default:"1000" json:"batchSize" comment:"Number of expired worker cache items to mark for deletion per batch"`
+		GracePeriodDays  int `toml:"gracePeriodDays" default:"730" json:"gracePeriodDays" comment:"Only delete items expired for longer than this number of days (default: 730 ~ 2 years)"`
+	} `toml:"workerCachePurge" comment:"######################\n Worker cache purge settings \n######################" json:"workerCachePurge"`
 }
 
 type rateLimiter struct {

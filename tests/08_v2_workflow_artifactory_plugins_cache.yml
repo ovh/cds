@@ -228,6 +228,6 @@ testcases:
     script: "cat {{.cds_workflow}}-1-1-pluginCache-Post-cacheGet | grep \"Cache uploaded\""
 
   - name: Check pluginCache log - cache restore
-    script: "cat {{.cds_workflow}}-1-1-getCache-restore | grep \"Cache was downloaded\""  
+    script: "cat {{.cds_workflow}}-1-1-getCache-restore | grep \"Cache restored\""  
   - name: Check pluginCache log - retore-hit
     script: "cat {{.cds_workflow}}-1-1-getCache-checkHit | grep \"true\""

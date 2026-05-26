@@ -66,3 +66,7 @@ func InvalidateCache(ctx context.Context, name sdk.FeatureName) {
 	cacheFeature.Delete(string(name))
 	log.Debug(ctx, "featureflipping.InvalidateCache> clear cache for '%s' feature", name)
 }
+
+func InvalidateAllCache() {
+	cacheFeature.Flush()
+}

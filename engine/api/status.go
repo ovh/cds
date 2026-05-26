@@ -366,7 +366,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetricRange(ctx, "v2_scheduling", "50_more_2min_less_5min", api.Metrics.v2Queue, queryV2SchedulingInterval, now5min, now2min)
 				api.countMetricRange(ctx, "v2_scheduling", "60_more_5min_less_10min", api.Metrics.v2Queue, queryV2SchedulingInterval, now10min, now5min)
 				api.countMetricRange(ctx, "v2_scheduling", "70_more_10min", api.Metrics.v2Queue, queryV2SchedulingOlder, now10min)
-				api.countMetricRange(ctx, "v2_waiting", "all", api.Metrics.v2Queue, queryV2Waiting, now10s, now)
+				api.countMetricRange(ctx, "v2_waiting", "all", api.Metrics.v2Queue, queryV2Waiting)
 				api.countMetricRange(ctx, "v2_waiting", "10_less_10s", api.Metrics.v2Queue, queryV2WaitingInterval, now10s, now)
 				api.countMetricRange(ctx, "v2_waiting", "20_more_10s_less_30s", api.Metrics.v2Queue, queryV2WaitingInterval, now30s, now10s)
 				api.countMetricRange(ctx, "v2_waiting", "30_more_30s_less_1min", api.Metrics.v2Queue, queryV2WaitingInterval, now1min, now30s)

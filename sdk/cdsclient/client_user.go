@@ -70,6 +70,13 @@ func (c *client) UserUpdate(ctx context.Context, username string, u *sdk.Authent
 	return nil
 }
 
+func (c *client) UserDelete(ctx context.Context, username string) error {
+	if _, err := c.DeleteJSON(ctx, "/user/"+url.QueryEscape(username), nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error) {
 	var res []sdk.UserContact
 	if _, err := c.GetJSON(ctx, "/user/"+url.QueryEscape(username)+"/contact", &res); err != nil {

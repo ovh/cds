@@ -1,13 +1,13 @@
 package grpcplugins
 
 import (
-	"bufio"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -30,7 +30,7 @@ func PerformGetCache(ctx context.Context, c *actionplugin.Common, jobCtx sdk.Wor
 	cacheFound := false
 	var err error
 	if jobCtx.Integrations != nil && jobCtx.Integrations.ArtifactManager.Name != "" {
-		cacheFound, err = performFromArtifactory(ctx, c, jobCtx, cacheKey, workDirs, path, failOnMiss)
+		cacheFound, err = performFromArtifactory(ctx, c, jobCtx, cacheKey, workDirs, absPath, failOnMiss)
 	} else {
 		cacheFound, err = performFromCDN(ctx, c, cacheKey, workDirs, absPath)
 	}
@@ -45,28 +45,54 @@ func PerformGetCache(ctx context.Context, c *actionplugin.Common, jobCtx sdk.Wor
 }
 
 func performFromArtifactory(ctx context.Context, c *actionplugin.Common, jobCtx sdk.WorkflowRunJobsContext, cacheKey string, workDirs *sdk.WorkerDirectories, absPath string, failOnMiss bool) (bool, error) {
-	t0 := time.Now()
 	downloadURI := BuildCacheURL(jobCtx.Integrations.ArtifactManager, jobCtx.CDS.ProjectKey, cacheKey)
-	destinationTarFile, n, err := DownloadFromArtifactory(ctx, c, jobCtx.Integrations.ArtifactManager, *workDirs, absPath, "cache.tar.gz", os.FileMode(0755), downloadURI)
+	if downloadURI == "" {
+		return false, sdk.Errorf("no downloadURI specified")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", downloadURI, nil)
 	if err != nil {
-		if !strings.Contains(err.Error(), "(HTTP 404)") || failOnMiss {
-			return false, err
+		return false, err
+	}
+	rtToken := jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigToken)
+	req.Header.Set("Authorization", "Bearer "+rtToken)
+
+	Logf(c, "Downloading cache from %s...", downloadURI)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		if failOnMiss {
+			return false, sdk.Errorf("cache not found (HTTP 404)")
 		}
 		Warn(c, "no cache found")
 		return false, nil
 	}
-	if err := Untar(absPath, destinationTarFile); err != nil {
-		return false, err
+	if resp.StatusCode > 200 {
+		return false, sdk.Errorf("unable to download cache (HTTP %d)", resp.StatusCode)
 	}
-	if err := afero.NewOsFs().Remove(destinationTarFile); err != nil {
-		return false, fmt.Errorf("unable to remove archive cache file %v", err)
+
+	if err := os.MkdirAll(absPath, os.FileMode(0744)); err != nil {
+		return false, fmt.Errorf("unable to create destination directory: %v", err)
 	}
-	Successf(c, "Cache was downloaded to %s (%d bytes downloaded in %.3f seconds).", absPath, n, time.Since(t0).Seconds())
+
+	// Stream directly: HTTP body → gzip → tar → filesystem (no intermediate file)
+	countReader := &countingReader{r: resp.Body}
+	t0 := time.Now()
+	if err := sdk.UntarGz(afero.NewOsFs(), absPath, countReader); err != nil {
+		return false, fmt.Errorf("unable to extract cache: %v", err)
+	}
+	elapsed := time.Since(t0)
+
+	Successf(c, "Cache restored to %s (%d bytes downloaded and extracted in %.3f seconds).", absPath, countReader.n, elapsed.Seconds())
 	return true, nil
 }
 
 func performFromCDN(ctx context.Context, c *actionplugin.Common, cacheKey string, workDirs *sdk.WorkerDirectories, absPath string) (bool, error) {
-	t0 := time.Now()
 	items, err := GetV2CacheLink(ctx, c, cacheKey)
 	if err != nil {
 		return false, err
@@ -84,25 +110,46 @@ func performFromCDN(ctx context.Context, c *actionplugin.Common, cacheKey string
 		return false, err
 	}
 
-	destinationTarFile, n, err := DownloadFromCDN(ctx, c, cdnSig.Signature, *workDirs, items.Items[0].APIRefHash, string(items.Items[0].Type), items.CDNHttpURL, absPath, "cache.tar.gz", os.FileMode(0755))
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/item/%s/%s/download", items.CDNHttpURL, string(items.Items[0].Type), items.Items[0].APIRefHash), nil)
 	if err != nil {
 		return false, err
 	}
+	req.Header.Set("X-CDS-WORKER-SIGNATURE", cdnSig.Signature)
 
-	if err := Untar(absPath, destinationTarFile); err != nil {
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
 		return false, err
 	}
-	if err := afero.NewOsFs().Remove(destinationTarFile); err != nil {
-		return false, fmt.Errorf("unable to remove archive cache file %v", err)
+	defer resp.Body.Close()
+
+	if resp.StatusCode > 200 {
+		return false, sdk.Errorf("unable to download cache (HTTP %d)", resp.StatusCode)
 	}
-	Successf(c, "Cache was downloaded to %s (%d bytes downloaded in %.3f seconds).", absPath, n, time.Since(t0).Seconds())
+
+	if err := os.MkdirAll(absPath, os.FileMode(0744)); err != nil {
+		return false, fmt.Errorf("unable to create destination directory: %v", err)
+	}
+
+	// Stream directly: HTTP body → gzip → tar → filesystem (no intermediate file)
+	countReader := &countingReader{r: resp.Body}
+	t0 := time.Now()
+	if err := sdk.UntarGz(afero.NewOsFs(), absPath, countReader); err != nil {
+		return false, fmt.Errorf("unable to extract cache: %v", err)
+	}
+	elapsed := time.Since(t0)
+
+	Successf(c, "Cache restored to %s (%d bytes downloaded and extracted in %.3f seconds).", absPath, countReader.n, elapsed.Seconds())
 	return true, nil
 }
 
-func Untar(dst string, filePath string) error {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
-	return sdk.UntarGz(afero.NewOsFs(), dst, bufio.NewReader(file))
+// countingReader wraps an io.Reader and counts bytes read.
+type countingReader struct {
+	r io.Reader
+	n int64
+}
+
+func (cr *countingReader) Read(p []byte) (int, error) {
+	n, err := cr.r.Read(p)
+	cr.n += int64(n)
+	return n, err
 }

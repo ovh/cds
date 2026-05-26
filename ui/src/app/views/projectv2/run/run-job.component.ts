@@ -247,7 +247,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
                 if (!this.tabs[0].logBlocks[blockIndex]) {
                     this.tabs[0].logBlocks.push(new LogBlock('Post-' + stepName));
                 }
-                setBlockData(blockIndex, this.selectedJobRetry.steps_status[stepName]);
+                setBlockData(blockIndex, this.selectedJobRetry.steps_status['Post-' + stepName]);
                 blockIndex++;
             }
         }

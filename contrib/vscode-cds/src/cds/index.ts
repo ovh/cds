@@ -4,7 +4,7 @@ import { window, workspace } from "vscode";
 import { Journal } from "../utils/journal";
 import { isActiveEditorValid } from "../utils/editor";
 import { Property } from "../utils/property";
-import { Context, Project } from "./models";
+import { Context, Project, CdsRepository, CdsWorkflowRun } from "./models";
 import { getGitLocalConfig, getGitRepositoryPath, setGitLocalConfig } from "../utils/git";
 import { Cache } from "../utils/cache";
 import { WorkflowGenerateRequest, WorkflowGenerateResponse } from "./models/WorkflowGenerated";
@@ -22,7 +22,12 @@ export class CDS {
 
     static async getAvailableContexts(): Promise<Context[]> {
         const stdout = await CDS.getInstance().runCtl("context", "list", "--format", "json");
-        return JSON.parse(stdout);
+        try {
+            return JSON.parse(stdout);
+        } catch {
+            Journal.logError(new Error(`getAvailableContexts: failed to parse JSON output`));
+            return [];
+        }
     }
 
     static async setCurrentContext(context: string): Promise<void> {
@@ -54,8 +59,12 @@ export class CDS {
         args.push("--format", "json");
 
         const resp = (await CDS.getInstance().runCtl(...args));
-        const generatedWorkflow = JSON.parse(resp);
-        return generatedWorkflow;
+        try {
+            return JSON.parse(resp);
+        } catch {
+            Journal.logError(new Error(`generateWorkflowFromTemplate: failed to parse JSON output`));
+            throw new Error("Failed to parse workflow generation response");
+        }
     }
 
 
@@ -71,7 +80,13 @@ export class CDS {
         }
 
         const projectsJson = (await CDS.getInstance().runCtl("project", "list", "--format", "json"));
-        const projects = JSON.parse(projectsJson);
+        let projects: Project[];
+        try {
+            projects = JSON.parse(projectsJson);
+        } catch {
+            Journal.logError(new Error(`getProjects: failed to parse JSON output`));
+            return [];
+        }
 
         if (context) {
             Cache.set(`${context.context}.projects`, projects, Cache.TTL_HOUR * 24);
@@ -128,6 +143,147 @@ export class CDS {
         await CDS.getInstance().runCtl("tools", "yaml-schema", "vscode");
     }
 
+    // ── V2 Repository & Workflow methods ─────────────────────────────────
+
+    /**
+     * List CDS v2 repositories for a given project.
+     */
+    static async listRepositories(projectKey: string): Promise<CdsRepository[]> {
+        const out = await CDS.getInstance().runCtl(
+            "experimental", "project", "repository", "list", projectKey, "--format", "json",
+        );
+        let items: Record<string, string>[];
+        try {
+            items = JSON.parse(out);
+        } catch {
+            Journal.logError(new Error(`listRepositories: failed to parse JSON output`));
+            return [];
+        }
+        return items
+            .filter((r) => r["repoName"] || r["repo_name"])
+            .map((r) => ({
+                id: r["id"] ?? "",
+                vcsName: r["vcsName"] ?? r["vcs_name"] ?? "",
+                repoName: r["repoName"] ?? r["repo_name"] ?? "",
+                projectKey,
+            }));
+    }
+
+    /**
+     * Get run history for a specific v2 workflow.
+     */
+    static async getWorkflowHistory(
+        projectKey: string,
+        vcsName: string,
+        repoId: string,
+        workflowName: string,
+        limit = 15,
+    ): Promise<CdsWorkflowRun[]> {
+        const out = await CDS.getInstance().runCtl(
+            "experimental", "workflow", "history",
+            projectKey, vcsName, repoId, workflowName,
+            "--format", "json",
+        );
+        let items: Record<string, any>[];
+        try {
+            items = JSON.parse(out);
+        } catch {
+            Journal.logError(new Error(`getWorkflowHistory: failed to parse JSON output`));
+            return [];
+        }
+        return items.slice(0, limit).map((r) => ({
+            id: r["id"] ?? "",
+            runNumber: parseInt(r["run_number"] ?? r["runnumber"] ?? "0", 10),
+            status: r["status"] ?? "",
+            started: r["started"] ?? r["start"] ?? r["last_modified"] ?? "",
+            workflowName: r["workflow_name"] ?? r["workflowname"] ?? workflowName,
+            projectKey: r["project_key"] ?? r["projectkey"] ?? projectKey,
+            username: r["user"] ?? r["username"] ?? "",
+            ref: r["ref_name"] ?? "",
+            commit: r["commit"] ?? "",
+        }));
+    }
+
+    /**
+     * Search v2 workflow runs in a project with optional filters.
+     */
+    static async searchWorkflows(
+        projectKey: string,
+        opts?: { workflow?: string; repository?: string; limit?: number },
+    ): Promise<CdsWorkflowRun[]> {
+        const limit = opts?.limit ?? 200;
+        const args = ["experimental", "workflow", "search", "--project", projectKey, "--limit", String(limit), "--format", "json"];
+        if (opts?.workflow) {
+            args.push("--workflow", opts.workflow);
+        }
+        if (opts?.repository) {
+            args.push("--repository", opts.repository);
+        }
+        const out = await CDS.getInstance().runCtl(...args);
+        try {
+            return JSON.parse(out);
+        } catch {
+            Journal.logError(new Error(`searchWorkflows: failed to parse JSON output`));
+            return [];
+        }
+    }
+
+    /**
+     * Discover workflow names scoped to a specific repository.
+     * Uses the repository filter to make a single API call.
+     */
+    static async discoverRepoWorkflowNames(
+        projectKey: string,
+        vcsName: string,
+        repoName: string,
+    ): Promise<string[]> {
+        try {
+            const items = await CDS.searchWorkflows(projectKey, {
+                repository: `${vcsName}/${repoName}`,
+                limit: 200,
+            });
+            const names = new Set<string>();
+            for (const r of items) {
+                const name = r.workflowName;
+                if (name) { names.add(name); }
+            }
+            return [...names];
+        } catch {
+            return [];
+        }
+    }
+
+    /** Stop a running v2 workflow run. */
+    static async stopRun(projectKey: string, runId: string): Promise<void> {
+        await CDS.getInstance().runCtl("experimental", "workflow", "stop", projectKey, runId);
+    }
+
+    /** Restart failed/stopped jobs in a v2 workflow run. */
+    static async restartRun(projectKey: string, runId: string): Promise<void> {
+        await CDS.getInstance().runCtl("experimental", "workflow", "restart", projectKey, runId);
+    }
+
+    /** Build the cdsctl command to trigger a v2 workflow run (to run in a terminal). */
+    static buildTriggerV2Command(
+        projectKey: string,
+        vcsName: string,
+        repoId: string,
+        workflowName: string,
+        branch?: string,
+        tag?: string,
+    ): string {
+        const esc = (s: string) => `'${s.replace(/'/g, "'\\''")}'`;
+        let cmd = `cdsctl -f ${esc(CDS.getConfigFile())} -n experimental workflow run ${esc(projectKey)} ${esc(vcsName)} ${esc(repoId)} ${esc(workflowName)}`;
+        if (branch) { cmd += ` --branch ${esc(branch)}`; }
+        if (tag) { cmd += ` --tag ${esc(tag)}`; }
+        return cmd;
+    }
+
+    /** Build the command to download run logs (to run in a terminal). */
+    static buildLogsCommand(projectKey: string, runId: string): string {
+        return `cdsctl -f ${CDS.getConfigFile()} -n experimental workflow logs download ${projectKey} ${runId}`;
+    }
+
     static getInstance(): CDS {
         if (!CDS.instance) {
             CDS.instance = new CDS();
@@ -149,6 +305,7 @@ export class CDS {
             exec(cmd,
                 {
                     cwd: pwd,
+                    timeout: 30_000,
                 },
                 (error, stdout, stderr) => {
                     Journal.logInfo(stdout)
@@ -157,10 +314,10 @@ export class CDS {
 
                     if (error) {
                         Journal.logError(error);
-                        reject(error);
+                        return reject(error);
                     }
                     if (stderr) {
-                        reject(stderr);
+                        return reject(stderr);
                     }
                     resolve(stdout);
                 });

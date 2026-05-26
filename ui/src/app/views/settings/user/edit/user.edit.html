@@ -241,6 +241,18 @@
                     </nz-col>
                 </nz-row>
             </div>
+            <div *ngSwitchCase="'permissions'">
+                <nz-spin *ngIf="loadingPermissions" nzTip="Loading permissions..."></nz-spin>
+                <nz-alert *ngIf="!loadingPermissions && permissionEmpty"
+                    nzType="info" nzMessage="No permissions found for this user."
+                    nzShowIcon></nz-alert>
+                <nz-code-editor
+                    *ngIf="!loadingPermissions && permissionYaml"
+                    [ngModel]="permissionYaml"
+                    [nzEditorOption]="permissionEditorOptions"
+                    style="height: 70vh; display: block;">
+                </nz-code-editor>
+            </div>
             <div *ngSwitchCase="'gpgkeys'">
                 <div class="wide column">
                     <h2>Add a GPG Key</h2>

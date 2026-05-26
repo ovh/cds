@@ -36,6 +36,10 @@ func (d *dao) RepositoryEventQueueLen() (int, error) {
 	return d.store.QueueLen(repositoryEventQueue)
 }
 
+func (d *dao) RepositoryEventMaintenanceQueueLen() (int, error) {
+	return d.store.QueueLen(repositoryEventMaintenanceQueue)
+}
+
 func (d *dao) SaveRepositoryEvent(_ context.Context, e *sdk.HookRepositoryEvent) error {
 	e.LastUpdate = time.Now().UnixMilli()
 	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerName, e.RepositoryName)))
@@ -58,7 +62,12 @@ func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryE
 		return err
 	}
 
-	if err := d.store.Enqueue(repositoryEventQueue, k); err != nil {
+	queueName := repositoryEventQueue
+	if e.ExtractData.Manual != nil && e.ExtractData.Manual.IsInMaintenance {
+		queueName = repositoryEventMaintenanceQueue
+	}
+
+	if err := d.store.Enqueue(queueName, k); err != nil {
 		return err
 	}
 	d.enqueuedRepositoryEventIncr()

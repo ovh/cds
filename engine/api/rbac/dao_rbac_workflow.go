@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -206,6 +207,11 @@ func LoadAllWorkflowsAllowed(ctx context.Context, db gorp.SqlExecutor, role stri
 
 	}
 	return workflows, false, nil
+}
+
+func loadRBACWorkflowsByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) ([]rbacWorkflow, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM rbac_workflow WHERE id = ANY($1)`).Args(pq.Int64Array(ids))
+	return getAllRBACWorkflows(ctx, db, q)
 }
 
 func loadRBACWorkflowsByProjectAndRole(ctx context.Context, db gorp.SqlExecutor, projectKey string, role string) ([]rbacWorkflow, error) {

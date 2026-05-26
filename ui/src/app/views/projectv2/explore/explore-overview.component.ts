@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { Project } from "app/model/project.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
@@ -10,7 +10,7 @@ import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "..
 import { ProjectV2RepositoryAddComponent, ProjectV2RepositoryAddComponentParams } from "./repository-add/repository-add.component";
 
 @Component({
-    standalone: false,
+	standalone: false,
 	selector: 'app-projectv2-explore-overview',
 	templateUrl: './explore-overview.html',
 	styleUrls: ['./explore-overview.scss'],
@@ -23,11 +23,11 @@ export class ProjectV2ExploreOverviewComponent implements OnInit {
 	themeSubscription: Subscription;
 	isNight: boolean;
 
-	constructor(
-		private _store: Store,
-		private _cd: ChangeDetectorRef,
-		private _drawerService: NzDrawerService
-	) {
+	private _store = inject(Store);
+	private _cd = inject(ChangeDetectorRef);
+	private _drawerService = inject(NzDrawerService);
+
+	constructor() {
 		this.project = this._store.selectSnapshot(ProjectV2State.current);
 	}
 
@@ -48,7 +48,8 @@ export class ProjectV2ExploreOverviewComponent implements OnInit {
 			nzContentParams: {
 				params: <ProjectV2RunStartComponentParams>{}
 			},
-			nzSize: 'large'
+			nzSize: 'large',
+			nzBodyStyle: { 'padding': '0' }
 		});
 		drawerRef.afterClose.subscribe(data => { });
 	}

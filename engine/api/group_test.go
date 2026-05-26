@@ -331,3 +331,48 @@ func Test_deleteGroupUserHandler(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, "null", rec.Body.String())
 }
+
+func Test_postAdminGroupHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
+	targetUser, _ := assets.InsertLambdaUser(t, db)
+
+	data := sdk.AdminCreateGroup{
+		Name:                sdk.RandomString(10),
+		FirstMemberUsername: targetUser.Username,
+	}
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postAdminGroupHandler, nil)
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, data)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusCreated, rec.Code)
+
+	var created sdk.Group
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
+	assert.Equal(t, data.Name, created.Name)
+	require.Equal(t, 1, len(created.Members))
+	assert.Equal(t, targetUser.ID, created.Members[0].ID)
+	assert.Equal(t, targetUser.Username, created.Members[0].Username)
+	assert.True(t, created.Members[0].Admin)
+}
+
+func Test_postAdminGroupHandler_NonAdmin(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, jwtLambda := assets.InsertLambdaUser(t, db)
+
+	data := sdk.AdminCreateGroup{
+		Name:                sdk.RandomString(10),
+		FirstMemberUsername: "someone",
+	}
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postAdminGroupHandler, nil)
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, data)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+}

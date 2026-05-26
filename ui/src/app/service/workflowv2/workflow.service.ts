@@ -1,14 +1,12 @@
-import { Injectable } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
-import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunManualRequest, V2WorkflowRunManualResponse, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunTriggerJobsRequest, V2WorkflowRunManualRequest, V2WorkflowRunManualResponse, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { CDNLogLink, CDNLogLinks } from "app/model/cdn.model";
 
 @Injectable()
 export class V2WorkflowRunService {
-    constructor(
-        private _http: HttpClient
-    ) { }
+    private _http = inject(HttpClient);
 
     getRun(projKey: string, workflowRunID: string): Observable<V2WorkflowRun> {
         return this._http.get<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}`);
@@ -63,8 +61,13 @@ export class V2WorkflowRunService {
         return this._http.get<CDNLogLink>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobRunID}/service/${serviceName}/link`);
     }
 
-    triggerJob(projKey: string, workflowRunID: string, jobRunID: string, data?: any): Observable<V2WorkflowRun> {
-        return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/job/${jobRunID}/run`, data);
+    /**
+     * Trigger multiple jobs in a single batch call.
+     * Maps to POST /v2/project/{projectKey}/run/{workflowRunID}/job
+     * with body { job_inputs: { [jobIdentifier]: { [inputName]: value } } }.
+     */
+    triggerJobs(projKey: string, workflowRunID: string, request: V2WorkflowRunTriggerJobsRequest): Observable<V2WorkflowRun> {
+        return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/job`, request);
     }
 
     getRetries(projectKey: string, runID: string, runJobID: string): Observable<Array<V2WorkflowRunJob>> {

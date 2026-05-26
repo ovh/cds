@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
-import { FormBuilder, FormControl, FormGroup, Validators, ValidationErrors } from "@angular/forms";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, Input, OnInit, ViewChild } from "@angular/core";
+import { FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
 import { Store } from "@ngxs/store";
 import { EntityType } from "app/model/entity.model";
 import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent } from "app/model/project.model";
@@ -24,7 +24,7 @@ export class ProjectV2RunStartComponentParams {
 }
 
 @Component({
-    standalone: false,
+  standalone: false,
   selector: 'app-projectv2-run-start',
   templateUrl: './run-start.html',
   styleUrls: ['./run-start.scss'],
@@ -47,7 +47,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
-    jobInputs: FormControl<{ [jobName: string]: { [inputName: string]: any } } | null>
+    jobInputs: FormControl<{ [jobIdentifier: string]: { [inputName: string]: any } } | null>
   }>;
   event: RepositoryHookEvent;
   loaders: {
@@ -66,15 +66,16 @@ export class ProjectV2RunStartComponent implements OnInit {
   rootJobsWithGate: { [jobName: string]: V2Job } = {};
   rootGateDefs: { [gateName: string]: V2JobGate } = {};
 
-  constructor(
-    private _drawerRef: NzDrawerRef<string>,
-    private _messageService: NzMessageService,
-    private _store: Store,
-    private _projectService: ProjectService,
-    private _fb: FormBuilder,
-    private _cd: ChangeDetectorRef,
-    private _workflowRunService: V2WorkflowRunService,
-  ) {
+  private _drawerRef = inject<NzDrawerRef<string>>(NzDrawerRef);
+  private _messageService = inject(NzMessageService);
+  private _store = inject(Store);
+  private _projectService = inject(ProjectService);
+  private _fb = inject(FormBuilder);
+  private _cd = inject(ChangeDetectorRef);
+  private _workflowRunService = inject(V2WorkflowRunService);
+  private _elementRef = inject(ElementRef);
+
+  constructor() {
     this.project = this._store.selectSnapshot(ProjectV2State.current);
     this.validateForm = this._fb.group({
       repository: this._fb.control<string | null>(null, Validators.required),
@@ -82,7 +83,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
-      jobInputs: this._fb.control<{ [jobName: string]: { [inputName: string]: any } } | null>(null),
+      jobInputs: this._fb.control<{ [jobIdentifier: string]: { [inputName: string]: any } } | null>(null),
     });
   }
 
@@ -254,7 +255,7 @@ export class ProjectV2RunStartComponent implements OnInit {
         this.rootJobsWithGate[jobName] = job;
       });
     }
-    
+
     if (wkf.repository) {
       this.validateForm.controls.sourceRepository.setValidators([Validators.required]);
       this.validateForm.controls.sourceRef.setValidators([Validators.required]);
@@ -350,13 +351,18 @@ export class ProjectV2RunStartComponent implements OnInit {
       try {
         this.event = await lastValueFrom(this._projectService.getRepositoryEvent(this.project.key, splitted.vcs, splitted.repo, hookEventUUID));
         this._cd.markForCheck();
-        if (this.event.status === HookEventWorkflowStatus.Done || this.event.status === HookEventWorkflowStatus.Error || this.event.status === HookEventWorkflowStatus.Skipped) {
+        const ended = this.event.status === HookEventWorkflowStatus.Done || this.event.status === HookEventWorkflowStatus.Error || this.event.status === HookEventWorkflowStatus.Skipped;
+        if (retry === 0 || ended) {
+          this._cd.detectChanges();
+          this.scrollDown();
+        }
+        if (ended) {
           break;
         }
       } catch (e) {
         this._messageService.error(`Unable to get repository event: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
       }
-      await (new Promise(resolve => setTimeout(resolve, 1000)));
+      await (new Promise(resolve => setTimeout(resolve, 1000))); // Wait for 1 second before retrying
       retry++;
     }
   }
@@ -369,5 +375,9 @@ export class ProjectV2RunStartComponent implements OnInit {
 
   isLoading(): boolean {
     return Object.keys(this.loaders).map(k => this.loaders[k]).reduce((p, c) => { return p || c });
+  }
+
+  scrollDown(): void {
+    this._elementRef.nativeElement.scrollTop = this._elementRef.nativeElement.scrollHeight;
   }
 }

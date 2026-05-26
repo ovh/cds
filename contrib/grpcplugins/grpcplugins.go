@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	pathpkg "path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -507,7 +508,7 @@ func GetArtifactoryFileProperties(ctx context.Context, c *actionplugin.Common, c
 	if !strings.HasSuffix(config.URL, "/") {
 		config.URL = config.URL + "/"
 	}
-	uri := config.URL + "api/storage/" + filepath.Join(repo, path) + "?properties"
+	uri := config.URL + "api/storage/" + pathpkg.Join(repo, path) + "?properties"
 	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
 	if err != nil {
 		return nil, err
@@ -545,7 +546,7 @@ func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config 
 	if !strings.HasSuffix(config.URL, "/") {
 		config.URL = config.URL + "/"
 	}
-	uri := config.URL + "api/storage/" + filepath.Join(repo, path)
+	uri := config.URL + "api/storage/" + pathpkg.Join(repo, path)
 	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
 	if err != nil {
 		return nil, err
@@ -653,7 +654,7 @@ func GetArtifactoryFolderInfo(ctx context.Context, c *actionplugin.Common, confi
 	if !strings.HasSuffix(config.URL, "/") {
 		config.URL = config.URL + "/"
 	}
-	uri := config.URL + "api/storage/" + filepath.Join(repo, path)
+	uri := config.URL + "api/storage/" + pathpkg.Join(repo, path)
 	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
 	if err != nil {
 		return nil, err
@@ -840,7 +841,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, output
 
 		repository := integ.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-cds"
 		maturity := integ.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
-		path := filepath.Join(
+		path := pathpkg.Join(
 			strings.ToLower(jobContext.Git.Server),
 			strings.ToLower(jobContext.Git.Repository),
 			jobContext.CDS.ProjectKey,
@@ -938,8 +939,15 @@ func ArtifactoryItemUploadRunResult(ctx context.Context, c *actionplugin.Common,
 	headers["X-Checksum-Sha256"] = runResult.ArtifactManagerMetadata.Get("sha256")
 	headers["X-Checksum-MD5"] = runResult.ArtifactManagerMetadata.Get("md5")
 
-	uploadURL := rtURL + filepath.Join(repo, path, filename)
+	uploadURL := rtURL + pathpkg.Join(repo, path, filename)
 	return ArtifactoryItemUpload(ctx, c, integ, reader, headers, uploadURL)
+}
+
+// noCloseReadSeeker wraps an io.ReadSeeker to hide its Close method (if any),
+// preventing http.Client from closing the underlying file after the first
+// request. Required so retry loops can re-read the body on a subsequent attempt.
+type noCloseReadSeeker struct {
+	io.ReadSeeker
 }
 
 func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, integ sdk.JobIntegrationsContext, reader io.ReadSeeker, headers map[string]string, uploadURL string) (*ArtifactoryUploadResult, time.Duration, error) {
@@ -949,10 +957,11 @@ func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, integ sd
 	defer cancel()
 
 	rtToken := integ.Get(sdk.ArtifactoryConfigToken)
+	body := noCloseReadSeeker{reader}
 
 	for i := 0; i < 3; i++ {
 		reader.Seek(0, io.SeekStart)
-		req, err := http.NewRequestWithContext(ctx, "PUT", uploadURL, reader)
+		req, err := http.NewRequestWithContext(ctx, "PUT", uploadURL, body)
 		if err != nil {
 			return nil, time.Since(t0), err
 		}
@@ -994,11 +1003,12 @@ func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, integ sd
 
 func CDNItemUpload(ctx context.Context, c *actionplugin.Common, cdnAddr string, signature string, reader io.ReadSeeker) (*sdk.CDNItem, time.Duration, error) {
 	t0 := time.Now()
+	body := noCloseReadSeeker{reader}
 
 	for i := 0; i < 3; i++ {
 		reader.Seek(0, io.SeekStart)
 
-		req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/item/upload", cdnAddr), reader)
+		req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/item/upload", cdnAddr), body)
 		if err != nil {
 			return nil, time.Since(t0), errors.Errorf("unable to prepare HTTP request: %v", err)
 		}

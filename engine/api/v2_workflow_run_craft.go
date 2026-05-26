@@ -191,6 +191,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			})
 		}
 
+		// Merge env vars brought by the template into the run context
+		if run.Contexts.Env == nil {
+			run.Contexts.Env = make(map[string]string)
+		}
+		for k, v := range run.WorkflowData.Workflow.Env {
+			run.Contexts.Env[k] = v
+		}
+
 		// Build context for workflow
 		repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), e.Entity.ProjectRepositoryID)
 		if err != nil {
@@ -258,6 +266,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			}
 			return stopRun(ctx, api.mustDB(), api.Cache, run, &wref.ef.initiator, msgs...)
 		}
+
 	}
 
 	mustSaveVersion := false
@@ -945,6 +954,8 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 
 	gitContext := sdk.GitContext{
 		Server:               workflowVCSServer.Name,
+		ServerURL:            workflowVCSServer.URL,
+		ServerType:           workflowVCSServer.Type,
 		RepositoryOrigin:     wr.RunEvent.RepositoryOrigin,
 		SSHKey:               workflowVCSServer.Auth.SSHKeyName,
 		GPGKey:               workflowVCSServer.Auth.GPGKeyName,
@@ -1074,7 +1085,7 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 
 	var fileContent string
 	switch typeVCS {
-	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
+	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea, sdk.VCSTypeForgejo:
 		contentBts, err := base64.StdEncoding.DecodeString(content.Content)
 		if err != nil {
 			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to decode file at path %s", workflowDef.Semver.Path)

@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/telemetry"
 
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -257,10 +256,10 @@ func (c *client) StreamNoRetry(ctx context.Context, httpClient HTTPClient, metho
 	}
 
 	if c.config.Verbose {
-		log.Println(cli.Green("********REQUEST**********"))
+		log.Println("********REQUEST**********")
 		dmp, _ := httputil.DumpRequestOut(req, true)
 		log.Printf("%s", string(dmp))
-		log.Println(cli.Green("**************************"))
+		log.Println("**************************")
 	}
 
 	resp, err := httpClient.Do(req)
@@ -268,10 +267,10 @@ func (c *client) StreamNoRetry(ctx context.Context, httpClient HTTPClient, metho
 		return nil, nil, 500, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to execute request: %v", err)
 	}
 	if c.config.Verbose {
-		log.Println(cli.Yellow("********RESPONSE**********"))
+		log.Println("********RESPONSE**********")
 		dmp, _ := httputil.DumpResponse(resp, true)
 		log.Printf("%s", string(dmp))
-		log.Println(cli.Yellow("**************************"))
+		log.Println("**************************")
 	}
 
 	if resp.StatusCode == 401 {
@@ -414,10 +413,10 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		}
 
 		if c.config.Verbose {
-			log.Println(cli.Green("********REQUEST**********"))
+			log.Println("********REQUEST**********")
 			dmp, _ := httputil.DumpRequestOut(req, true)
 			log.Printf("%s", string(dmp))
-			log.Println(cli.Green("**************************"))
+			log.Println("**************************")
 		}
 
 		resp, err := httpClient.Do(req)
@@ -430,10 +429,10 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		savedCodeError = resp.StatusCode
 
 		if c.config.Verbose {
-			log.Println(cli.Yellow("********RESPONSE**********"))
+			log.Println("********RESPONSE**********")
 			dmp, _ := httputil.DumpResponse(resp, true)
 			log.Printf("%s", string(dmp))
-			log.Println(cli.Yellow("**************************"))
+			log.Println("**************************")
 		}
 
 		if resp.StatusCode == 401 {

@@ -2,13 +2,7 @@ import { ComponentRef } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import { GraphNode, GraphNodeType } from './graph.model';
-import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
-import { GraphJobNodeComponent } from './node/job-node.component';
 import { NodeStatus } from './node/model';
-
-export type WorkflowNodeComponent =
-    GraphForkJoinNodeComponent
-    | GraphJobNodeComponent;
 
 export enum GraphDirection {
     HORIZONTAL = 'horizontal',
@@ -20,13 +14,21 @@ export enum NodeMouseEvent {
     Out = 'out'
 }
 
-export interface WithHighlight {
+export enum SelectionMode {
+    Disabled = 'disabled',
+    Active = 'active',
+    Blocked = 'blocked'
+}
+
+export interface InteractiveNode {
     getNodes(): Array<GraphNode>;
     setHighlight(active: boolean, options?: any): void;
     selectNode(navigationKey: string): void;
     activateNode(navigationKey: string): void;
     setRunActive(active: boolean): void;
     match(navigateKey: string): boolean;
+    setSelectionMode(navigationKey: string, mode: SelectionMode): void;
+    setSelected(selectedRunJobIds: Array<string>): void;
 }
 
 export type ComponentFactory<T> = (nodes: Array<GraphNode>, type: string) => ComponentRef<T>;
@@ -44,7 +46,7 @@ export class Edge {
     options: {};
 }
 
-export class WorkflowV2Graph<T extends WithHighlight> {
+export class WorkflowV2Graph<T extends InteractiveNode> {
     static margin = 40; // let 40px on top and bottom of the graph
     static marginSubGraph = 20; // let 20px on top and bottom of the sub graph
     static maxOriginScale = 1;
@@ -72,6 +74,14 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     currentScale: number = 1;
     currentWidth: number = 0;
     currentHeight: number = 0;
+    lassoEnabled: boolean = false;
+    lassoRect: d3.Selection<any, any, any, any> = null;
+    lassoStart: { x: number, y: number } = null;
+    lassoMouseHandlers: { mousedown: any, mousemove: any, mouseup: any } = null;
+    lassoSelectionCallback: (diff: {
+        added: string[], removed: string[], covered: Array<string>
+    }) => void = null;
+    lassoCurrentSelection: Array<string> = [];
 
     constructor(
         factory: ComponentFactory<T>,
@@ -83,8 +93,8 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         this.direction = direction;
         this.graph = new dagreD3.graphlib.Graph().setGraph({
             rankdir: this.direction === GraphDirection.VERTICAL ? 'TB' : 'LR',
-            nodesep: 10,
-            ranksep: 10,
+            nodesep: 10,  // minimum separation (px) between nodes on the same rank
+            ranksep: 10,  // minimum separation (px) between ranks
             edgesep: 0
         });
         this.minScale = minScale;
@@ -257,6 +267,12 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         }
     }
 
+    /**
+     * Reset the viewport to show the entire graph centered at optimal scale.
+     * Scale is capped at maxOriginScale (1 = 100%) so the graph never appears zoomed in.
+     * Clears centeredNode, transformed, and previousTransformed state.
+     * Without zoom (sub-graphs inside stages), applies the transform directly.
+     */
     center(): void {
         if (!this.zoom) {
             const w = this.currentWidth - WorkflowV2Graph.marginSubGraph * 2;
@@ -287,6 +303,11 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         this.previousTransformed = null;
     }
 
+    /**
+     * Center and zoom the viewport on a specific stage node.
+     * Computes optimal scale for the stage bounding box, capped at maxOriginScale.
+     * Clears centeredNode so the stage won't persist as focus target on resize.
+     */
     centerStage(nodeName: string): void {
         if (!this.zoom) {
             return;
@@ -303,6 +324,11 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         this.centeredNode = null;
     }
 
+    /**
+     * Resolve a navigation key to dagre node coordinates.
+     * For top-level nodes, matches directly. For stage-nested nodes, iterates stage
+     * sub-graphs and returns coordinates offset by the stage's top-left corner.
+     */
     getSVGNodeForNavigationKey(navigationKey: string): any {
         let node;
         for (let i = 0; i < this.nodes.length; i++) {
@@ -330,6 +356,16 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         return node;
     }
 
+    /**
+     * Center the viewport on a specific node, preserving current zoom scale.
+     * Resolves node coordinates via getSVGNodeForNavigationKey (handles stage-nested nodes).
+     *
+     * @param transform If true (hard reset): clears centeredNode and previousTransformed.
+     *   Used by keyboard navigation — no return-to-previous position.
+     *   If false (default, soft center): saves the current transform for future restore,
+     *   sets centeredNode so the node stays centered on resize.
+     *   Used by node click — allows returning to previous viewport.
+     */
     centerNode(navigationKey: string, transform: boolean = false): void {
         if (!this.zoom) {
             return;
@@ -525,6 +561,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     }
 
     createNode(key: string, node: GraphNode, componentRef: ComponentRef<T>, h?: number, w?: number): void {
+        // Default dimensions for a standard job node (200 × 60 px)
         let width = 200
         let height = 60;
         switch (node.type) {
@@ -533,9 +570,10 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                 height = h;
                 break;
             case GraphNodeType.Matrix:
+                // Matrix node: 240 px wide, height = 30 per variant row + 10 px gap between rows + 40 header + 40 footer + 20 padding
                 width = 240;
                 const alls = GraphNode.generateMatrixOptions(node.job.strategy.matrix);
-                height = 30 * alls.length + 10 * (alls.length - 1) + 60 + 20;
+                height = 30 * alls.length + 10 * (alls.length - 1) + 40 + 40 + 20;
                 break;
         }
         this.nodes.push(<Node>{ type: node.type, key, width, height });
@@ -557,6 +595,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         });
     }
 
+    /** Creates a fork node — a small circle (60 × 60 px) inserted where edges diverge. */
     createGFork(key: string, componentRef: ComponentRef<T>, options: {}): void {
         this.nodesComponent.set(`fork-${key}`, componentRef);
         this.createGNode(`fork-${key}`, componentRef, 20, 20, {
@@ -567,6 +606,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         });
     }
 
+    /** Creates a join node — a small circle (60 × 60 px) inserted where edges converge. */
     createGJoin(key: string, componentRef: ComponentRef<T>, options: {}): void {
         this.nodesComponent.set(`join-${key}`, componentRef);
         this.createGNode(`join-${key}`, componentRef, 20, 20, {
@@ -577,7 +617,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         });
     }
 
-    createEdge(from: string, to: string, opts?): void {
+    createEdge(from: string, to: string): void {
         this.edges.push(<Edge>{ from, to });
     }
 
@@ -637,6 +677,237 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             if (this.nodesComponent.has(outName)) {
                 this.nodesComponent.get(outName).instance.setHighlight(active, options);
             }
+        }
+    }
+
+    /** Broadcast the selection mode to every node. */
+    setNodeSelectionMode(navigationKey: string, mode: SelectionMode): void {
+        this.nodesComponent.forEach(n => n.instance.setSelectionMode(navigationKey, mode));
+    }
+
+    /**
+     * Broadcast the full set of selected run job IDs to every node.
+     * Each node self-determines its selection state from its own run job ID(s).
+     * Stage nodes forward to their sub-graph automatically.
+     */
+    updateSelection(selectedRunJobIds: Array<string>): void {
+        this.nodesComponent.forEach(n => n.instance.setSelected(selectedRunJobIds));
+    }
+
+    /**
+     * Compute which nodes/matrix rows intersect a lasso rectangle.
+     * Uses DOM getBoundingClientRect() on the actual rendered elements, which
+     * inherently accounts for all SVG transforms (zoom, pan, sub-graph scale).
+     * No manual coordinate math or layout-constant assumptions needed.
+     *
+     * @param lx1,ly1,lx2,ly2 Lasso rectangle in SVG-local pixel coords.
+     */
+    computeLassoHits(lx1: number, ly1: number, lx2: number, ly2: number): Array<string> {
+        const hitRunJobIds: Array<string> = [];
+
+        // Convert lasso SVG-local coords to viewport coords
+        const svgEl = this.svg.node() as SVGSVGElement;
+        const svgRect = svgEl.getBoundingClientRect();
+        const vLx1 = lx1 + svgRect.left;
+        const vLy1 = ly1 + svgRect.top;
+        const vLx2 = lx2 + svgRect.left;
+        const vLy2 = ly2 + svgRect.top;
+
+        const rectsIntersect = (r: DOMRect) =>
+            r.width > 0 && r.height > 0 &&
+            r.left < vLx2 && r.right > vLx1 &&
+            r.top < vLy2 && r.bottom > vLy1;
+
+        /**
+         * Check a single node component against the lasso.
+         * For matrix nodes, drills into individual .job-wrapper rows.
+         * For simple jobs, uses the node's run job ID.
+         * All hits are collected as run job IDs uniformly.
+         */
+        const checkNode = (node: Node, comp: ComponentRef<T>) => {
+            const el = comp.location.nativeElement as HTMLElement;
+            const rect = el.getBoundingClientRect();
+            if (!rectsIntersect(rect)) { return; }
+
+            if (node.type === 'matrix') {
+                const matrixComp = comp.instance as any;
+                const keys: string[] = matrixComp.keys || [];
+                const jobRunIDs: { [key: string]: string } = matrixComp.jobRunIDs || {};
+                const rowEls = el.querySelectorAll('.job-wrapper');
+                rowEls.forEach((rowEl, i) => {
+                    if (i < keys.length && rectsIntersect(rowEl.getBoundingClientRect())) {
+                        const uuid = jobRunIDs[keys[i]];
+                        if (uuid) { hitRunJobIds.push(uuid); }
+                    }
+                });
+            } else {
+                const runJobId = (comp.instance as any).node?.run?.id;
+                if (runJobId) { hitRunJobIds.push(runJobId); }
+            }
+        };
+
+        // Check all nodes (top-level + stage sub-graphs)
+        this.nodes.forEach(n => {
+            if (n.type === 'stage') {
+                // Iterate sub-graph nodes
+                const stageComp = this.nodesComponent.get(`node-${n.key}`);
+                if (!stageComp) { return; }
+                const subGraph = (stageComp.instance as any).graph as WorkflowV2Graph<T>;
+                if (!subGraph) { return; }
+                const stagePrefix = n.key + '-';
+                subGraph.nodes.forEach(sn => {
+                    if (sn.type === 'stage') { return; }
+                    if (!sn.key.startsWith(stagePrefix)) { return; }
+                    const comp = subGraph.nodesComponent.get(`node-${sn.key}`);
+                    if (!comp) { return; }
+                    checkNode(sn, comp);
+                });
+                return;
+            }
+            const comp = this.nodesComponent.get(`node-${n.key}`);
+            if (!comp) { return; }
+            checkNode(n, comp);
+        });
+
+        return hitRunJobIds;
+    }
+
+    /**
+     * Enable rectangular lasso selection on the graph.
+     *
+     * Visual: dashed blue rectangle with semi-transparent fill, crosshair cursor.
+     * Disables all d3 zoom interactions (pan and scroll-wheel zoom) during lasso.
+     *
+     * On mousemove, performs live hit-testing via computeLassoHits() and emits
+     * incremental diffs (added, removed, covered) to the callback. The parent
+     * component uses these diffs to manage selection state with descendant constraints.
+     */
+    enableLasso(callback: (diff: {
+        added: string[], removed: string[], covered: Array<string>
+    }) => void): void {
+        if (!this.svg || this.lassoEnabled) return;
+        this.lassoEnabled = true;
+        this.lassoSelectionCallback = callback;
+        this.lassoCurrentSelection = [];
+
+        // Add crosshair cursor class to the SVG wrapper
+        const svgEl = this.svg.node() as SVGSVGElement;
+        if (svgEl?.parentElement) {
+            svgEl.parentElement.classList.add('lasso-active');
+        }
+
+        // Disable d3 zoom pan (keep scroll-wheel zoom)
+        this.svg.on('.zoom', null);
+
+        const self = this;
+
+        this.lassoMouseHandlers = {
+            mousedown(event: MouseEvent) {
+                if (event.button !== 0) return; // left-click only
+                event.preventDefault();
+                event.stopPropagation();
+                const svgEl = self.svg.node() as SVGSVGElement;
+                const rect = svgEl.getBoundingClientRect();
+                self.lassoStart = {
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top
+                };
+                self.lassoCurrentSelection = [];
+                // Create the lasso rectangle in SVG screen space (on top of the <g> transform)
+                self.lassoRect = self.svg.append('rect')
+                    .attr('class', 'lasso-selection')
+                    .attr('x', self.lassoStart.x)
+                    .attr('y', self.lassoStart.y)
+                    .attr('width', 0)
+                    .attr('height', 0)
+                    .attr('fill', 'rgba(24, 144, 255, 0.1)')
+                    .attr('stroke', '#1890ff')
+                    .attr('stroke-width', 1)
+                    .attr('stroke-dasharray', '4,2');
+            },
+            mousemove(event: MouseEvent) {
+                if (!self.lassoStart || !self.lassoRect) return;
+                event.preventDefault();
+                const svgEl = self.svg.node() as SVGSVGElement;
+                const rect = svgEl.getBoundingClientRect();
+                const currentX = event.clientX - rect.left;
+                const currentY = event.clientY - rect.top;
+                const x = Math.min(self.lassoStart.x, currentX);
+                const y = Math.min(self.lassoStart.y, currentY);
+                const w = Math.abs(currentX - self.lassoStart.x);
+                const h = Math.abs(currentY - self.lassoStart.y);
+                self.lassoRect
+                    .attr('x', x)
+                    .attr('y', y)
+                    .attr('width', w)
+                    .attr('height', h);
+
+                // Live hit-testing: compute intersecting nodes and emit diffs
+                if (w > 5 || h > 5) {
+                    const hits = self.computeLassoHits(x, y, x + w, y + h);
+                    const added = hits.filter(id => !self.lassoCurrentSelection.includes(id));
+                    const removed = self.lassoCurrentSelection.filter(id => !hits.includes(id));
+
+                    if (added.length > 0 || removed.length > 0) {
+                        self.lassoCurrentSelection = hits;
+                        if (self.lassoSelectionCallback) {
+                            self.lassoSelectionCallback({
+                                added, removed, covered: [...hits]
+                            });
+                        }
+                    }
+                }
+            },
+            mouseup(event: MouseEvent) {
+                if (!self.lassoStart || !self.lassoRect) return;
+                event.preventDefault();
+
+                // Remove lasso rect
+                self.lassoRect.remove();
+                self.lassoRect = null;
+                self.lassoStart = null;
+                self.lassoCurrentSelection = [];
+            }
+        };
+
+        const svgNode = this.svg.node() as SVGSVGElement;
+        svgNode.addEventListener('mousedown', this.lassoMouseHandlers.mousedown);
+        window.addEventListener('mousemove', this.lassoMouseHandlers.mousemove);
+        window.addEventListener('mouseup', this.lassoMouseHandlers.mouseup);
+    }
+
+    disableLasso(): void {
+        if (!this.lassoEnabled) return;
+        this.lassoEnabled = false;
+        this.lassoSelectionCallback = null;
+
+        // Remove crosshair cursor class from the SVG wrapper
+        const svgEl = this.svg?.node() as SVGSVGElement;
+        if (svgEl?.parentElement) {
+            svgEl.parentElement.classList.remove('lasso-active');
+        }
+
+        // Clean up lasso rect if in progress
+        if (this.lassoRect) {
+            this.lassoRect.remove();
+            this.lassoRect = null;
+            this.lassoStart = null;
+        }
+
+        // Remove event listeners
+        if (this.lassoMouseHandlers) {
+            const svgNode = this.svg?.node() as SVGSVGElement;
+            if (svgNode) {
+                svgNode.removeEventListener('mousedown', this.lassoMouseHandlers.mousedown);
+            }
+            window.removeEventListener('mousemove', this.lassoMouseHandlers.mousemove);
+            window.removeEventListener('mouseup', this.lassoMouseHandlers.mouseup);
+            this.lassoMouseHandlers = null;
+        }
+
+        // Re-enable d3 zoom
+        if (this.zoom && this.svg) {
+            this.svg.call(this.zoom);
         }
     }
 }

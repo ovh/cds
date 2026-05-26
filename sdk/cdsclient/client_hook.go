@@ -74,3 +74,11 @@ func (c *client) HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V
 	}
 	return &h, nil
 }
+
+func (c *client) HookListAllSchedulerHooks(ctx context.Context) ([]sdk.V2WorkflowHook, error) {
+	var hooks []sdk.V2WorkflowHook
+	if _, err := c.GetJSON(ctx, "/v2/hooks/workflows/hooks/schedulers", &hooks); err != nil {
+		return nil, err
+	}
+	return hooks, nil
+}

@@ -31,11 +31,10 @@ steps:
       - result.bodyjson.message ShouldContainSubstring "Email address has been used"
 
   # Export the gpg public key in armor format and save it in a variable
-  - script: gpg --export --armor {{.input.gpg_key_id}} | awk '{printf "%s\\n", $0}'
+  - script: gpg --export --armor {{.input.gpg_key_id}} | awk '{printf "%s\\\\n", $0}'
     vars:
       gpgPubKey:
         from: result.systemout
-
   # Add the user gpg on gitea  
   - type: http
     method: POST

@@ -38,6 +38,7 @@ const (
 	SignHeaderRepoName  = "X-Cds-Hooks-Repo-Name"
 	SignHeaderVCSType   = "X-Cds-Hooks-Vcs-Type"
 	SignHeaderEventName = "X-Cds-Hooks-Event-Name"
+	SignHeaderEventType = "X-Cds-Hooks-Event-Type"
 
 	WorkflowHookEventNameWorkflowUpdate WorkflowHookEventName = "workflow-update"
 	WorkflowHookEventNameModelUpdate    WorkflowHookEventName = "model-update"
@@ -64,7 +65,6 @@ const (
 	HookEventStatusAnalysis      = "Analyzing"
 	HookEventStatusCheckAnalysis = "CheckAnalyzing"
 	HookEventStatusWorkflowHooks = "WorkflowHooks"
-	HookEventStatusSignKey       = "SignKey"
 	HookEventStatusGitInfo       = "GitInfo"
 	HookEventStatusWorkflow      = "Workflow"
 	HookEventStatusDone          = "Done"
@@ -97,6 +97,7 @@ type HookAnalysisCallback struct {
 	DeprecatedUsername string           `json:"username"`
 	DeprecatedUserID   string           `json:"user_id"`
 	Initiator          *V2Initiator     `json:"initiator"`
+	SignKey            string           `json:"sign_key"`
 }
 
 type HookRepository struct {
@@ -130,32 +131,29 @@ func (h *HookWorkflowRunOutgoingEvent) GetFullName() string {
 }
 
 type HookRepositoryEvent struct {
-	UUID                      string                         `json:"uuid"`
-	Created                   int64                          `json:"created"`
-	EventName                 WorkflowHookEventName          `json:"event_name"`           // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
-	EventType                 WorkflowHookEventType          `json:"event_type,omitempty"` // created, deleted, edited, opened
-	VCSServerName             string                         `json:"vcs_server_name"`
-	RepositoryName            string                         `json:"repository_name"`
-	Body                      []byte                         `json:"body"`
-	ExtractData               HookRepositoryEventExtractData `json:"extracted_data"`
-	Status                    string                         `json:"status"`
-	ProcessingTimestamp       int64                          `json:"processing_timestamp"`
-	LastUpdate                int64                          `json:"last_update"`
-	LastError                 string                         `json:"last_error,omitempty"`
-	NbErrors                  int64                          `json:"nb_errors,omitempty"`
-	Analyses                  []HookRepositoryEventAnalysis  `json:"analyses,omitempty"`
-	ModelUpdated              EntityFullNames                `json:"model_updated,omitempty"`
-	WorkflowUpdated           EntityFullNames                `json:"workflow_updated,omitempty"`
-	SkippedWorkflows          EntityFullNames                `json:"skipped_workflows,omitempty"`
-	SkippedHooks              []V2WorkflowHook               `json:"skipped_hooks,omitempty"`
-	WorkflowHooks             []HookRepositoryEventWorkflow  `json:"workflows"`
-	DeprecatedUserID          string                         `json:"user_id"`  // Deprecated
-	DeprecatedUsername        string                         `json:"username"` // Deprecated
-	SignKey                   string                         `json:"sign_key"`
-	SigningKeyOperation       string                         `json:"signing_key_operation"`
-	SigningKeyOperationStatus OperationStatus                `json:"signing_key_operation_status"`
-	SigningKeyOperationRetry  int64                          `json:"signing_key_operation_retry,omitempty"`
-	Initiator                 *V2Initiator                   `json:"initiator"`
+	UUID                string                         `json:"uuid"`
+	Created             int64                          `json:"created"`
+	EventName           WorkflowHookEventName          `json:"event_name"`           // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
+	EventType           WorkflowHookEventType          `json:"event_type,omitempty"` // created, deleted, edited, opened
+	VCSServerName       string                         `json:"vcs_server_name"`
+	RepositoryName      string                         `json:"repository_name"`
+	Body                []byte                         `json:"body"`
+	ExtractData         HookRepositoryEventExtractData `json:"extracted_data"`
+	Status              string                         `json:"status"`
+	ProcessingTimestamp int64                          `json:"processing_timestamp"`
+	LastUpdate          int64                          `json:"last_update"`
+	LastError           string                         `json:"last_error,omitempty"`
+	NbErrors            int64                          `json:"nb_errors,omitempty"`
+	Analyses            []HookRepositoryEventAnalysis  `json:"analyses,omitempty"`
+	ModelUpdated        EntityFullNames                `json:"model_updated,omitempty"`
+	WorkflowUpdated     EntityFullNames                `json:"workflow_updated,omitempty"`
+	SkippedWorkflows    EntityFullNames                `json:"skipped_workflows,omitempty"`
+	SkippedHooks        []V2WorkflowHook               `json:"skipped_hooks,omitempty"`
+	WorkflowHooks       []HookRepositoryEventWorkflow  `json:"workflows"`
+	DeprecatedUserID    string                         `json:"user_id"`  // Deprecated
+	DeprecatedUsername  string                         `json:"username"` // Deprecated
+	SignKey             string                         `json:"sign_key"`
+	Initiator           *V2Initiator                   `json:"initiator"`
 }
 
 func (h *HookRepositoryEvent) IsTerminated() bool {
@@ -325,6 +323,8 @@ type HookRepositoryEventExtractData struct {
 	WorkflowRun        *HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run,omitempty"`
 	WebHook            *HookRepositoryEventExtractedDataWebHook     `json:"workflow_hook,omitempty"`
 	HookProjectKey     string                                       `json:"hook_project_key,omitempty"` // force the hook to only trigger from the given CDS project
+	CommitVerified     bool                                         `json:"commit_verified,omitempty"`
+	CommitGpgKeyID     string                                       `json:"commit_gpg_key_id,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWebHook struct {
@@ -336,13 +336,14 @@ type HookRepositoryEventExtractedDataWebHook struct {
 }
 
 type HookRepositoryEventExtractedDataManual struct {
-	Project          string                                        `json:"project,omitempty"`
-	Workflow         string                                        `json:"workflow,omitempty"`
-	TargetCommit     string                                        `json:"target_commit,omitempty"`
-	TargetBranch     string                                        `json:"target_branch,omitempty"`
-	TargetTag        string                                        `json:"target_tag,omitempty"`
-	TargetRepository string                                        `json:"target_repository,omitempty"`
-	JobInputs        map[string]V2WorkflowRunManualRequestJobInput `json:"job_inputs,omitempty"`
+	Project          string                 `json:"project,omitempty"`
+	Workflow         string                 `json:"workflow,omitempty"`
+	TargetCommit     string                 `json:"target_commit,omitempty"`
+	TargetBranch     string                 `json:"target_branch,omitempty"`
+	TargetTag        string                 `json:"target_tag,omitempty"`
+	TargetRepository string                 `json:"target_repository,omitempty"`
+	JobInputs        V2WorkflowRunJobInputs `json:"job_inputs,omitempty"`
+	IsInMaintenance  bool                   `json:"is_in_maintenance,omitempty"`
 }
 
 type HookRepositoryEventExtractedDataWorkflowRun struct {
@@ -401,6 +402,7 @@ type HookRetrieveUserRequest struct {
 	ProjectKey     string `json:"projectKey"`
 	VCSServerName  string `json:"vcs_server_name"`
 	RepositoryName string `json:"repository_name"`
+	Ref            string `json:"ref"`
 	Commit         string `json:"commit"`
 	SignKey        string `json:"sign_key"`
 	HookEventUUID  string `json:"hook_event_uuid"`
@@ -410,6 +412,7 @@ type HookRetrieveUserResponse struct {
 	DeprecatedUserID   string       `json:"user_id"`  // Deprecated
 	DeprecatedUsername string       `json:"username"` // Deprecated
 	Initiator          *V2Initiator `json:"initiator"`
+	SignKey            string       `json:"sign_key"`
 }
 
 type AnalysisRequest struct {

@@ -22,6 +22,23 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vscode-cds-explorer",
+          "title": "CDS",
+          "icon": "assets/images/cds.svg"
+        }
+      ]
+    },
+    "views": {
+      "vscode-cds-explorer": [
+        {
+          "id": "vscode-cds-workflows",
+          "name": "Workflow Explorer"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "vscode-cds.clearCache",
@@ -43,6 +60,42 @@
         "title": "Preview the CDS workflow",
         "category": "CDS",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "vscode-cds.refreshWorkflowView",
+        "title": "Refresh",
+        "category": "CDS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "vscode-cds.triggerWorkflow",
+        "title": "Trigger Workflow Run",
+        "category": "CDS",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vscode-cds.stopRun",
+        "title": "Stop Run",
+        "category": "CDS",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "vscode-cds.restartRun",
+        "title": "Restart Run",
+        "category": "CDS",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "vscode-cds.viewRunLogs",
+        "title": "Download Run Logs",
+        "category": "CDS",
+        "icon": "$(output)"
+      },
+      {
+        "command": "vscode-cds.refreshRuns",
+        "title": "Refresh Runs",
+        "category": "CDS",
+        "icon": "$(sync)"
       }
     ],
     "configuration": {
@@ -73,6 +126,40 @@
           "when": "isCDSWorkflowFile",
           "alt": "vscode-cds.previewWorkflow",
           "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "vscode-cds.refreshWorkflowView",
+          "when": "view == vscode-cds-workflows",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "vscode-cds.triggerWorkflow",
+          "when": "view == vscode-cds-workflows && viewItem == cdsWorkflow",
+          "group": "inline@1"
+        },
+        {
+          "command": "vscode-cds.stopRun",
+          "when": "view == vscode-cds-workflows && viewItem == cdsRunBuilding",
+          "group": "inline@1"
+        },
+        {
+          "command": "vscode-cds.restartRun",
+          "when": "view == vscode-cds-workflows && viewItem =~ /cdsRunFailed|cdsRunDone/",
+          "group": "inline@2"
+        },
+        {
+          "command": "vscode-cds.viewRunLogs",
+          "when": "view == vscode-cds-workflows && viewItem =~ /cdsRun/",
+          "group": "inline@3"
+        },
+        {
+          "command": "vscode-cds.refreshRuns",
+          "when": "view == vscode-cds-workflows && viewItem == cdsWorkflow",
+          "group": "inline@4"
         }
       ]
     },

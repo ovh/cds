@@ -531,13 +531,8 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 			}
 		}
 
-		for capa, hookConfig := range hook.Configuration.ByCapabilities {
-			// check is the capabilities exist on the current worker
-			if _, err := exec.LookPath(capa); err != nil {
-				// The error contains 'Executable file not found', the capa is not on the worker
-				continue
-			}
-
+		for i := range hook.Configuration.ByCapabilities {
+			hookConfig := hook.Configuration.ByCapabilities[i]
 			hookFilename := fmt.Sprintf("%d-%s-%s", hookConfig.Priority, integrationName, slug.Convert(hookConfig.Label))
 
 			w.hooks = append(w.hooks, workerHook{
@@ -548,14 +543,6 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 		}
 
 		for _, h := range w.hooks {
-			infos := []sdk.SpawnInfo{{
-				RemoteTime: time.Now(),
-				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookSetup.ID, Args: []interface{}{h.Config.Label}},
-			}}
-			if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(w.currentJob.wJob.ID, 10), infos); err != nil {
-				return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
-			}
-
 			log.Info(ctx, "setting up hook at %q", h.SetupPath)
 
 			hookFile, err := fs.Create(h.SetupPath)

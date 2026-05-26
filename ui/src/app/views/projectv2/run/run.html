@@ -1,5 +1,7 @@
 <ng-template #tabResultsTemplate>
-    Results{{ results?.length > 0 ? ' ('+results.length+')' : '' }}
+    <ng-container *ngIf="results">
+        Results{{ results.length > 0 ? ' ('+results.length+')' : '' }}
+    </ng-container>
 </ng-template>
 
 <ng-template #tabTestsTemplate>
@@ -176,19 +178,65 @@
                 <div class="controls">
                     <button *ngIf="workflowRunIsTerminated" nz-button nzType="default" nzSize="large"
                         title="Start new run" (click)="openRunStartDrawer()">Start new run</button>
-                    <button *ngIf="workflowRunIsTerminated && hasJobsFailed" nz-button nzType="default" nzSize="large"
-                        title="Restart failed jobs" [nzLoading]="loading.restart" (click)="clickRestartJobs()">Restart
-                        failed jobs</button>
+                    <nz-space-compact nzSize="large" *ngIf="workflowRunIsTerminated">
+                        <button *ngIf="!selectionModeActive" nz-button nzSize="large" (click)="clickRestartJobs()"
+                            [nzLoading]="loading.restart" title="Restart jobs">Trigger
+                            jobs</button>
+                        <button *ngIf="selectionModeActive && selectionRequiresGate"
+                            (click)="clickValidateRestartJobs()" nz-button nzSize="large" [nzLoading]="loading.restart"
+                            title="Validate selected jobs restart" [disabled]="selectedRunJobIds.length === 0">Trigger
+                            ({{selectedRunJobIds.length}}) job{{selectedRunJobIds.length > 1 ? 's' : ''}}
+                        </button>
+                        <button *ngIf="selectionModeActive && !selectionRequiresGate"
+                            (click)="clickValidateRestartJobs()" nzType="primary" nz-button nzSize="large"
+                            [nzLoading]="loading.restart" title="Validate selected jobs restart"
+                            [disabled]="selectedRunJobIds.length === 0">Trigger
+                            ({{selectedRunJobIds.length}}) job{{selectedRunJobIds.length > 1 ? 's' : ''}}
+                        </button>
+                        <button *ngIf="selectionModeActive" (click)="clickCancelSelection()" nz-button nzType="default"
+                            nzSize="large" title="Cancel selection">Cancel
+                        </button>
+                        <button nz-button nzSize="large" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="topRight"
+                            [nzLoading]="loading.restart">
+                            <span nz-icon nzType="ellipsis"></span>
+                            <nz-dropdown-menu #menu="nzDropdownMenu">
+                                <ul nz-menu>
+                                    <li *ngIf="hasJobsFailed" nz-menu-item (click)="clickSelectAllFailedJobs()">Select
+                                        all failed jobs</li>
+                                    <li *ngIf="hasSkippedGateJobs" nz-menu-item (click)="clickSelectAllJobsWithGates()">
+                                        Select
+                                        skipped gate jobs</li>
+                                </ul>
+                            </nz-dropdown-menu>
+                        </button>
+                    </nz-space-compact>
                     <button *ngIf="workflowRunIsActive" nz-button nzType="primary" nzSize="large" nzDanger
                         title="Stop workflow run" [nzLoading]="loading.stop" (click)="clickStopRun()">Stop workflow
                         run</button>
+
+                    <div class="help" nz-tooltip [nzTooltipTitle]="keyboardShortcutsTooltip" nzTooltipPlacement="top"
+                        [nzTooltipOverlayStyle]="{maxWidth: '350px'}">
+                        <nz-icon nzType="question-circle" nzTheme="outline" />
+                    </div>
+                    <ng-template #keyboardShortcutsTooltip>
+                        <div class="shortcuts-tooltip">
+                            <div><b>Keyboard shortcuts</b></div>
+                            <div><kbd>&#8592;</kbd> <kbd>&#8593;</kbd> <kbd>&#8594;</kbd> <kbd>&#8595;</kbd> Navigate
+                                between jobs</div>
+                            <div><kbd>Enter</kbd> Open selected job</div>
+                            <div *ngIf="workflowRunIsTerminated"><kbd>Shift</kbd> Enter selection mode</div>
+                            <div><kbd>Esc</kbd> Cancel selection / Close panel</div>
+                        </div>
+                    </ng-template>
                 </div>
 
                 <app-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-                    [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
-                    (onConfirmJobGate)="confirmJobGate($event)" (onSelectJobRun)="openPanel('job', $event)"
-                    (onSelectHook)="openPanel('hook', $event)" (onSelectJobRunRestart)="restartJob($event)"
-                    (onSelectJobRunStop)="stopJob($event)" #graph></app-graph>
+                    [navigationDisabled]="!!selectedItemType" [selectionDisabled]="!workflowRunIsTerminated"
+                    (onSelectJobGate)="triggerGatedJob($event)" (onConfirmJobGate)="triggerGatedJob($event)"
+                    (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
+                    (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)"
+                    (onSelectionChange)="onSelectionChange($event)" (onSelectionValidate)="clickValidateRestartJobs()"
+                    (onSelectionModeChange)="onSelectionModeChange($event)" #graph></app-graph>
             </div>
         </div>
 
@@ -225,8 +273,6 @@
         </div>
         <app-run-job *ngIf="selectedItemType === 'job'" [workflowRun]="workflowRun"
             [jobRun]="selectedJobRun"></app-run-job>
-        <app-run-gate *ngIf="selectedItemType === 'gate'" [job]="selectedJob" [run]="workflowRun"
-            (onSubmit)="onGateSubmit()"></app-run-gate>
         <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"></app-run-hook>
         <app-run-result *ngIf="selectedItemType === 'result'" [result]="selectedRunResult"></app-run-result>
         <app-run-sources *ngIf="selectedItemType === 'sources'" [run]="workflowRun"></app-run-sources>

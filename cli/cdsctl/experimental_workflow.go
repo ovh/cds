@@ -122,6 +122,7 @@ var workflowRunSearchCmd = cli.Command{
 	Flags: []cli.Flag{
 		{Name: "commit"},
 		{Name: "workflow", Usage: "<vcs>/<repo>/<workflow_name>"},
+		{Name: "repository", Usage: "<vcs>/<repo>"},
 		{Name: "project"},
 		{Name: "branch"},
 		{Name: "status"},
@@ -134,6 +135,7 @@ var workflowRunSearchCmd = cli.Command{
 func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
 	commit := v.GetString("commit")
 	workflow := v.GetString("workflow")
+	repository := v.GetString("repository")
 	projKey := v.GetString("project")
 	branch := v.GetString("branch")
 	status := v.GetString("status")
@@ -172,6 +174,9 @@ func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
 	}
 	if status != "" {
 		mods = append(mods, cdsclient.WithQueryParameter("status", status))
+	}
+	if repository != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("repository", repository))
 	}
 
 	var runs []sdk.V2WorkflowRun
@@ -218,7 +223,47 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	wkfName := v.GetString("workflow_name")
 	commit := v.GetString("commit")
 
-	wkfIdentifier := vcsId + "/" + repoId + "/" + wkfName
+	vcsName := ""
+	// If vcsId looks like a UUID, resolve it to the VCS name.
+	if sdk.IsValidUUID(vcsId) {
+		vcsList, err := client.ProjectVCSList(context.Background(), projKey)
+		if err != nil {
+			return nil, err
+		}
+		for _, vcs := range vcsList {
+			if vcs.ID == vcsId {
+				vcsName = vcs.Name
+				break
+			}
+		}
+		if vcsName == "" {
+			return nil, fmt.Errorf("VCS with ID %q not found in project %s", vcsId, projKey)
+		}
+	} else {
+		vcsName = vcsId
+	}
+
+	repoName := ""
+	// If repoId looks like a UUID, resolve it to the repository name.
+	if sdk.IsValidUUID(repoId) {
+		repos, err := client.ProjectVCSRepositoryList(context.Background(), projKey, vcsName)
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range repos {
+			if r.ID == repoId {
+				repoName = r.Name
+				break
+			}
+		}
+		if repoName == "" {
+			return nil, fmt.Errorf("repository with ID %q not found in VCS %s/%s", repoId, projKey, vcsName)
+		}
+	} else {
+		repoName = repoId
+	}
+
+	wkfIdentifier := vcsName + "/" + repoName + "/" + wkfName
 
 	mods := make([]cdsclient.RequestModifier, 0)
 	mods = append(mods, cdsclient.Workflows(wkfIdentifier))
@@ -231,7 +276,39 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(runs), nil
+
+	type CliRun struct {
+		ID           string                  `json:"id" cli:"id"`
+		ProjectKey   string                  `json:"project_key" cli:"project_key"`
+		VCSServer    string                  `json:"vcs_server" cli:"vcs_server"`
+		Repository   string                  `json:"repository" cli:"repository"`
+		WorkflowName string                  `json:"workflow_name" cli:"workflow_name"`
+		User         string                  `json:"user" cli:"user"`
+		Status       sdk.V2WorkflowRunStatus `json:"status" cli:"status"`
+		RunNumber    int64                   `json:"run_number" cli:"run_number" `
+		Started      time.Time               `json:"started" cli:"started"`
+		LastModified time.Time               `json:"last_modified" cli:"last_modified"`
+		RefName      string                  `json:"ref_name" cli:"ref_name"`
+		Commit       string                  `json:"commit" cli:"commit"`
+	}
+	runsHistory := make([]CliRun, len(runs))
+	for i, r := range runs {
+		runsHistory[i] = CliRun{
+			ID:           r.ID,
+			ProjectKey:   r.ProjectKey,
+			VCSServer:    r.VCSServer,
+			Repository:   r.Repository,
+			WorkflowName: r.WorkflowName,
+			User:         r.Initiator.Username(),
+			Status:       r.Status,
+			RunNumber:    r.RunNumber,
+			Started:      r.Started,
+			LastModified: r.LastModified,
+			RefName:      r.Contexts.Git.RefName,
+			Commit:       r.Contexts.Git.Sha,
+		}
+	}
+	return cli.AsListResult(runsHistory), nil
 }
 
 var workflowRunStatusCmd = cli.Command{
@@ -393,7 +470,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 	}
 
 	if v.GetString("inputs") != "" {
-		var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+		var inputs sdk.V2WorkflowRunJobInputs
 		if err := json.Unmarshal([]byte(v.GetString("inputs")), &inputs); err != nil {
 			return nil, fmt.Errorf("unable to parse inputs: %v", err)
 		}
@@ -403,7 +480,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to read file %s: %v", v.GetString("inputs-file"), err)
 		}
-		var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+		var inputs sdk.V2WorkflowRunJobInputs
 		if err := yaml.Unmarshal(bts, &inputs); err != nil {
 			return nil, fmt.Errorf("unable to parse inputs: %v", err)
 		}
@@ -482,9 +559,9 @@ func workflowRestartFunc(v cli.Values) error {
 		}
 		fmt.Printf("Worflow %s #%d.%d restarted", run.WorkflowName, run.RunNumber, run.RunAttempt)
 	} else {
-		payload := sdk.V2WorkflowRunJobsRequest{}
+		payload := sdk.V2WorkflowRunTriggerJobsRequest{}
 		if v.GetString("inputs") != "" {
-			var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+			var inputs sdk.V2WorkflowRunJobInputs
 			if err := json.Unmarshal([]byte(v.GetString("inputs")), &inputs); err != nil {
 				return fmt.Errorf("unable to parse inputs: %v", err)
 			}
@@ -495,7 +572,7 @@ func workflowRestartFunc(v cli.Values) error {
 			if err != nil {
 				return fmt.Errorf("unable to read file %s: %v", v.GetString("inputs-file"), err)
 			}
-			var inputs map[string]sdk.V2WorkflowRunManualRequestJobInput
+			var inputs sdk.V2WorkflowRunJobInputs
 			if err := yaml.Unmarshal(bts, &inputs); err != nil {
 				return fmt.Errorf("unable to parse inputs: %v", err)
 			}
