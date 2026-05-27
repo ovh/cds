@@ -81,6 +81,9 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 		Memory:     cArgs.memory * 1024 * 1024, //from MB to B
 		MemorySwap: cArgs.memorySwap,
 	}
+	if len(h.Config.ExtraHosts) > 0 {
+		hostConfig.ExtraHosts = h.Config.ExtraHosts
+	}
 
 	networkingConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{},

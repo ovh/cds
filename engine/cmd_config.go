@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -287,11 +288,18 @@ var configEditCmd = &cobra.Command{
 			if len(t) != 2 {
 				sdk.Exit("Invalid key=value: %v", vk)
 			}
-			// check if value is bool, float, int or else string
+			// check if value is bool, float, int, JSON array, or else string
 			if v, err := strconv.ParseBool(t[1]); err == nil {
 				tomlConf.Set(t[0], "", false, "", v)
 			} else if v, err := strconv.ParseInt(t[1], 10, 64); err == nil {
 				tomlConf.Set(t[0], "", false, "", v)
+			} else if strings.HasPrefix(t[1], "[") {
+				var arr []string
+				if err := json.Unmarshal([]byte(t[1]), &arr); err == nil {
+					tomlConf.Set(t[0], "", false, "", arr)
+				} else {
+					tomlConf.Set(t[0], "", false, "", t[1])
+				}
 			} else if v, err := strconv.Unquote(`"` + t[1] + `"`); err == nil {
 				tomlConf.Set(t[0], "", false, "", v)
 			} else {

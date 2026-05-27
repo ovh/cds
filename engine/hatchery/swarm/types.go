@@ -32,6 +32,9 @@ type HatcheryConfiguration struct {
 	// DockerOpts Docker options
 	DockerOpts string `mapstructure:"dockerOpts" toml:"dockerOpts" default:"" commented:"true" comment:"Docker Options. --add-host and --privileged supported. Example: dockerOpts=\"--add-host=myhost:x.x.x.x,myhost2:y.y.y.y --privileged\"" json:"dockerOpts,omitempty"`
 
+	// ExtraHosts is a list of extra hostname:IP mappings to add to worker containers (like --add-host).
+	ExtraHosts []string `mapstructure:"extraHosts" toml:"extraHosts" default:"" commented:"true" comment:"Extra hosts to add to worker containers. Example: [\"gitea:192.168.1.1\", \"api:10.0.0.1\"]" json:"extraHosts,omitempty"`
+
 	// NetworkEnableIPv6 if true: set ipv6 to true
 	NetworkEnableIPv6 bool `mapstructure:"networkEnableIPv6" toml:"networkEnableIPv6" default:"false" commented:"false" comment:"if true: hatchery creates private network between services with ipv6 enabled" json:"networkEnableIPv6"`
 
