@@ -80,9 +80,8 @@ $ cd contrib/integrations/kubernetes/plugin-kubernetes
 # make build will compile the plugin in all os and arch
 # all binaries are under the dist/ directory
 $ make build
-# make publish create a yml file for each os/arch
-# then call cdsctl to upload the plugin on your CDS Instance
-$ make publish
+# import the plugin using cdsctl
+$ cdsctl experimental plugin import dist/plugin-kubernetes.yml --force
 ```
 
 ## Configure with WebUI
