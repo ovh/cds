@@ -507,6 +507,20 @@ func (mr *MockAdminMockRecorder) AdminUserCreate(ctx, user any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminUserCreate", reflect.TypeOf((*MockAdmin)(nil).AdminUserCreate), ctx, user)
 }
 
+// AdminUserSetContact mocks base method.
+func (m *MockAdmin) AdminUserSetContact(ctx context.Context, username string, contact sdk.UserContact) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminUserSetContact", ctx, username, contact)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminUserSetContact indicates an expected call of AdminUserSetContact.
+func (mr *MockAdminMockRecorder) AdminUserSetContact(ctx, username, contact any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminUserSetContact", reflect.TypeOf((*MockAdmin)(nil).AdminUserSetContact), ctx, username, contact)
+}
+
 // AdminUserLinkCreate mocks base method.
 func (m *MockAdmin) AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error {
 	m.ctrl.T.Helper()
@@ -7499,6 +7513,20 @@ func (m *MockInterface) AdminUserCreate(ctx context.Context, user sdk.CreateUser
 func (mr *MockInterfaceMockRecorder) AdminUserCreate(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminUserCreate", reflect.TypeOf((*MockInterface)(nil).AdminUserCreate), ctx, user)
+}
+
+// AdminUserSetContact mocks base method.
+func (m *MockInterface) AdminUserSetContact(ctx context.Context, username string, contact sdk.UserContact) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminUserSetContact", ctx, username, contact)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminUserSetContact indicates an expected call of AdminUserSetContact.
+func (mr *MockInterfaceMockRecorder) AdminUserSetContact(ctx, username, contact any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminUserSetContact", reflect.TypeOf((*MockInterface)(nil).AdminUserSetContact), ctx, username, contact)
 }
 
 // AdminUserLinkCreate mocks base method.

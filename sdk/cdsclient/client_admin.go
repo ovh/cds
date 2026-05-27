@@ -26,6 +26,14 @@ func (c *client) AdminUserLinkCreate(ctx context.Context, username string, link 
 	return nil
 }
 
+func (c *client) AdminUserSetContact(ctx context.Context, username string, contact sdk.UserContact) error {
+	u := fmt.Sprintf("/admin/user/%s/contact", url.QueryEscape(username))
+	if _, err := c.PutJSON(ctx, u, &contact, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) AdminUserLinkDelete(ctx context.Context, username string, link sdk.UserLink) error {
 	url := fmt.Sprintf("/admin/user/%s/link/%s", username, link.Type)
 	if _, err := c.DeleteJSON(ctx, url, nil); err != nil {

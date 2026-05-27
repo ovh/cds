@@ -79,7 +79,13 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 			return
 		}
 
-		cli.ExitOnError(err, root.Help)
+		// In non-interactive mode, only print the error without the full help text
+		noInteractive, _ := cmd.Root().PersistentFlags().GetBool("no-interactive")
+		if noInteractive {
+			cli.ExitOnError(err)
+		} else {
+			cli.ExitOnError(err, root.Help)
+		}
 	}
 
 	return root

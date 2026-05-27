@@ -57,6 +57,7 @@ type Admin interface {
 	AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error
 	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
 	AdminUserCreate(ctx context.Context, user sdk.CreateUser) error
+	AdminUserSetContact(ctx context.Context, username string, contact sdk.UserContact) error
 	AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error
 	AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error
 	AdminUserLinkDelete(ctx context.Context, username string, link sdk.UserLink) error

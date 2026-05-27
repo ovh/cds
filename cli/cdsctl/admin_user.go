@@ -19,6 +19,7 @@ var adminUsersCmd = cli.Command{
 func adminUsers() *cobra.Command {
 	return cli.NewCommand(adminUsersCmd, nil, []*cobra.Command{
 		cli.NewCommand(adminUserSetOrganizationCmd, adminUserSetOrganizationRun, nil),
+		cli.NewCommand(adminUserSetEmailCmd, adminUserSetEmailRun, nil),
 		cli.NewCommand(adminUserRenameCmd, adminUserRenameRun, nil),
 		cli.NewCommand(adminUserCreateCmd, adminUserCreateRun, nil),
 		cli.NewDeleteCommand(adminUserDeleteCmd, adminUserDeleteRun, nil),
@@ -163,5 +164,35 @@ func adminUserSetOrganizationRun(v cli.Values) error {
 	}
 
 	fmt.Printf("User organization set to %q\n", u.Organization)
+	return nil
+}
+
+var adminUserSetEmailCmd = cli.Command{
+	Name:  "set-email",
+	Short: "Set the primary email for a given user",
+	Args: []cli.Arg{
+		{
+			Name: "username",
+		},
+		{
+			Name: "email",
+		},
+	},
+}
+
+func adminUserSetEmailRun(v cli.Values) error {
+	ctx := context.Background()
+	username := v.GetString("username")
+	email := v.GetString("email")
+
+	contact := sdk.UserContact{
+		Type:  sdk.UserContactTypeEmail,
+		Value: email,
+	}
+	if err := client.AdminUserSetContact(ctx, username, contact); err != nil {
+		return err
+	}
+
+	fmt.Printf("User %q email set to %q\n", username, email)
 	return nil
 }
