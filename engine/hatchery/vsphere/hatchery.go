@@ -170,11 +170,13 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 	ctx, end := telemetry.Span(ctx, "vsphere.CanSpawn")
 	defer end()
 
-	if model.ModelV2 != nil && model.ModelV2.Type != sdk.WorkerModelTypeVSphere {
+	// Worker model v1 is no longer supported on vSphere: v1 jobs run on v2
+	// worker models (resolved via GetDetaultModelV2Name).
+	if model.ModelV1 != nil {
 		return false
 	}
 
-	if model.ModelV1 != nil && model.ModelV1.Type != sdk.VSphere {
+	if model.ModelV2 != nil && model.ModelV2.Type != sdk.WorkerModelTypeVSphere {
 		return false
 	}
 
@@ -185,34 +187,6 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 			model.GetCmd() == "" {
 			return false
 		}
-	}
-
-	if sdk.IsJobIDForRegister(jobID) {
-		// If jobID <= 0, it means that it's a call for a registration
-		// So we have to check if there is no pending registration at this time
-		// ie. virtual machine with name "<model>-tmp" or "register-<model>"
-
-		for _, vm := range h.getVirtualMachines(ctx) {
-			vmAnnotation := getVirtualMachineCDSAnnotation(ctx, vm)
-			if vmAnnotation == nil {
-				continue
-			}
-
-			if model.ModelV1 == nil {
-				log.Warn(ctx, "can't register a worker model v2: %s", model.GetName())
-				return false
-			}
-			switch {
-			case vm.Name == model.ModelV1.Name+"-tmp":
-				log.Warn(ctx, "can't span worker for model %q registration because there is a temporary machine %q", model.GetName(), vm.Name)
-				return false
-			case strings.HasPrefix(vm.Name, "register-") && model.ModelV1.Name == vmAnnotation.WorkerModelPath:
-				log.Warn(ctx, "can't span worker for model %q registration because there is a registering worker %q", model.GetName(), vm.Name)
-				return false
-			}
-		}
-
-		return true
 	}
 
 	// Check if there is a pending virtual machine with the same jobId in annotation - we want to avoid duplicates
@@ -475,22 +449,11 @@ func getVirtualMachineCDSAnnotation(_ context.Context, srv mo.VirtualMachine) *a
 	return &annot
 }
 
-// NeedRegistration return true if worker model need regsitration
-func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
-	model, err := h.getVirtualMachineTemplateByName(ctx, m.Name)
-	if err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Warn(ctx, "unable to find vm template %q: %v", m.Name, err)
-		return true
-	}
-
-	annot := getVirtualMachineCDSAnnotation(ctx, model)
-	if annot == nil {
-		return true
-	}
-
-	isTemplateOutdated := fmt.Sprintf("%d", m.UserLastModified.Unix()) != annot.WorkerModelLastModified
-	return !h.isMarkedToDelete(model) && (m.NeedRegistration || isTemplateOutdated)
+// NeedRegistration always returns false: worker model v1 (the only kind that
+// registers into vSphere) is no longer supported. v2 worker models reference an
+// existing vSphere template image and never need registration.
+func (h *HatcheryVSphere) NeedRegistration(_ context.Context, _ *sdk.Model) bool {
+	return false
 }
 
 // WorkerModelsEnabled returns Worker model enabled
@@ -903,129 +866,6 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 		batch.Add(1)
 		h.provisioningPool.tasks <- provisionTask{
 			cloneV2: modelVMware,
-			wg:      &batch,
-		}
-	}
-
-	batch.Wait()
-}
-
-func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
-	h.cacheProvisioning.mu.Lock()
-
-	// --- Step 1: compute current state and deficit per model ---
-	// Count ALL VMs with Provisioning annotation regardless of power state,
-	// so orphaned VMs (powered on, stuck) are included. This ensures that
-	// reconciled VMs don't cause additional clones in the deficit calculation.
-	mapAlreadyProvisionned := make(map[string]int)
-	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
-	machines := h.getVirtualMachines(ctx)
-	for _, machine := range machines {
-		if !strings.HasPrefix(machine.Name, "provision-v1") {
-			continue
-		}
-		annot := getVirtualMachineCDSAnnotation(ctx, machine)
-		if annot == nil {
-			continue
-		}
-		if annot.HatcheryName != h.Name() {
-			continue
-		}
-		if annot.Provisioning {
-			mapAlreadyProvisionned[annot.WorkerModelPath]++
-			mapProvisionedMachines[annot.WorkerModelPath] = append(
-				mapProvisionedMachines[annot.WorkerModelPath], machine)
-		}
-	}
-	h.cacheProvisioning.mu.Unlock()
-
-	// Build configured counts, resolve models, compute deficit
-	configuredCounts := make(map[string]int)
-	deficits := make(map[string]int)
-	mapModels := make(map[string]sdk.Model)
-	for i := range h.Config.WorkerProvisioning {
-		modelPath := h.Config.WorkerProvisioning[i].ModelPath
-		number := h.Config.WorkerProvisioning[i].Number
-		if modelPath == "" {
-			continue
-		}
-		configuredCounts[modelPath] = number
-		if number == 0 {
-			continue
-		}
-
-		tuple := strings.Split(modelPath, "/")
-		if len(tuple) != 2 {
-			log.Error(ctx, "invalid model name %q", modelPath)
-			continue
-		}
-		model, err := h.Client.WorkerModelGet(tuple[0], tuple[1])
-		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Warn(ctx, "unable to get model name %q: %v", modelPath, err)
-			continue
-		}
-		if model.CheckRegistration || model.NeedRegistration {
-			log.Info(ctx, "model %q needs registration. skip provisioning.", modelPath)
-			continue
-		}
-
-		existing := mapAlreadyProvisionned[modelPath]
-		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, existing, number)
-		mapModels[modelPath] = model
-		if delta := number - existing; delta > 0 {
-			deficits[modelPath] = delta
-		}
-	}
-
-	// Remove excess provisioned VMs when config is decreased or model removed
-	for modelPath, provisionedMachines := range mapProvisionedMachines {
-		desired := configuredCounts[modelPath]
-		if excess := len(provisionedMachines) - desired; excess > 0 {
-			log.Info(ctx, "model %q deprovisioning: removing %d excess (have %d, want %d)",
-				modelPath, excess, len(provisionedMachines), desired)
-			for i := 0; i < excess; i++ {
-				h.markToDelete(ctx, provisionedMachines[i].Name)
-			}
-		}
-	}
-
-	if len(deficits) == 0 {
-		return
-	}
-
-	// --- Step 2: interleave models using round-robin ---
-	modelOrder := make([]string, 0, len(h.Config.WorkerProvisioning))
-	for i := range h.Config.WorkerProvisioning {
-		m := h.Config.WorkerProvisioning[i].ModelPath
-		if _, ok := deficits[m]; ok {
-			modelOrder = append(modelOrder, m)
-		}
-	}
-	provisionQueue := roundRobinInterleave(modelOrder, deficits)
-
-	// --- Step 3: cap by available IPs and enqueue tasks ---
-	ipBudget := -1
-	if len(h.availableIPAddresses) > 0 {
-		ipBudget = h.countAvailableIPs(ctx)
-		log.Info(ctx, "provisioning IP budget: %d available", ipBudget)
-	}
-	if ipBudget == 0 {
-		log.Warn(ctx, "provisioning stopped: no IPs available")
-		provisionQueue = nil
-	} else if ipBudget > 0 && len(provisionQueue) > ipBudget {
-		log.Warn(ctx, "provisioning capped to %d tasks (IP budget)", ipBudget)
-		provisionQueue = provisionQueue[:ipBudget]
-	}
-
-	var batch sync.WaitGroup
-	h.reconcileProvisionedVMs(ctx, machines, "provision-v1", &batch)
-
-	for _, modelPath := range provisionQueue {
-		model := mapModels[modelPath]
-		batch.Add(1)
-		h.provisioningPool.tasks <- provisionTask{
-			cloneV1: &model,
 			wg:      &batch,
 		}
 	}

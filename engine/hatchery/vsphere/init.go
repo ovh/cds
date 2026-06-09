@@ -59,7 +59,6 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 						return
 					case <-provisioningTick.C:
 						h.provisioningV2(ctx)
-						h.provisioningV1(ctx)
 					}
 				}
 			},

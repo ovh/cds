@@ -32,7 +32,6 @@ type VSphereClient interface {
 	GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error)
 	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error)
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
-	MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string, vmName string) error
 	LoadFolder(ctx context.Context) (*object.Folder, error)
@@ -390,17 +389,6 @@ func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.Vir
 	*vm = *vm2
 
 	return nil
-}
-
-func (c *vSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
-	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
-	defer cancel()
-
-	if err := vm.MarkAsTemplate(ctxTo); err != nil {
-		return sdk.WrapError(err, "unable to mark vm as template")
-	}
-
-	return sdk.WithStack(ctxTo.Err())
 }
 
 func (c *vSphereClient) WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error {

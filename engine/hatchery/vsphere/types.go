@@ -55,9 +55,6 @@ type VSphereFlavorConfig struct {
 }
 
 type WorkerProvisioningConfig struct {
-	// ModelPath is the CDS worker model name, not the model from the VMWare point of view. It's used only by CDS Worker Model v1
-	ModelPath string `mapstructure:"modelPath" default:"my/model" commented:"true" toml:"modelPath" json:"modelPath"`
-
 	// ModelVMWare is the model from the VMWare point of view. It's used only by CDS Worker Model v2
 	ModelVMWare string `mapstructure:"modelVMWare" default:"debian12" commented:"true" toml:"modelVMWare" json:"modelVMWare"`
 
@@ -66,9 +63,6 @@ type WorkerProvisioningConfig struct {
 }
 
 type GuestCredential struct {
-	// ModelPath is the CDS worker model name, it's used only by CDS Worker Model v1
-	ModelPath string `mapstructure:"modelPath" default:"my/model" commented:"true" toml:"modelPath" json:"-"`
-
 	// ModelVMWare is the model from the VMWare point of view. It's used only by CDS Worker Model v2
 	ModelVMWare string `mapstructure:"modelVMWare" default:"debian12" commented:"true" toml:"modelVMWare" json:"-"`
 
@@ -77,11 +71,8 @@ type GuestCredential struct {
 }
 
 // ModelConfig holds per-model configuration: guest credentials and optional
-// pre-start script. It is matched to a VM by ModelPath (v1) or ModelVMWare (v2).
+// pre-start script. It is matched to a VM by ModelVMWare (the VMware template name).
 type ModelConfig struct {
-	// ModelPath is the CDS worker model name (group/name), used only by CDS Worker Model v1
-	ModelPath string `mapstructure:"modelPath" default:"" commented:"true" toml:"modelPath" json:"modelPath"`
-
 	// ModelVMWare is the VMware template name, used only by CDS Worker Model v2
 	ModelVMWare string `mapstructure:"modelVMWare" default:"" commented:"true" toml:"modelVMWare" json:"modelVMWare"`
 
