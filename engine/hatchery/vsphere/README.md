@@ -6,8 +6,10 @@ The CDS Hatchery vSphere is a component of the CDS (Continuous Delivery Service)
 automatically spawning CDS workers on a VMware vSphere infrastructure. It creates virtual machines by cloning
 VMware templates, boots them, and launches a CDS worker process inside the guest OS via VMware Guest Operations.
 
-The hatchery implements the `hatchery.InterfaceWithModels` interface and supports both CDS Worker Model V1
-(managed by the CDS API) and Worker Model V2 (defined as-code in repositories).
+The hatchery implements the `hatchery.InterfaceWithModels` interface and runs CDS workers exclusively on
+Worker Model V2 (defined as-code in repositories). CDS V1 jobs are still supported, but they are executed on
+V2 worker models (resolved via `GetDetaultModelV2Name`). Worker Model V1 (CDS models registered as vSphere
+templates) is no longer supported.
 
 ## 2. Architecture
 
@@ -29,7 +31,7 @@ The hatchery implements the `hatchery.InterfaceWithModels` interface and support
 |------|----------------|
 | `types.go` | Configuration structs and `HatcheryVSphere` struct definition |
 | `hatchery.go` | Hatchery lifecycle (init, config, CanSpawn), worker cleanup, provisioning scheduler |
-| `spawn.go` | VM spawning logic, template creation (V1), provisioning clone, worker bootstrap |
+| `spawn.go` | VM spawning logic, provisioning clone, worker bootstrap |
 | `provision.go` | Provisioning worker pool, task execution, reconciliation, `finishProvisioning` |
 | `client.go` | VM listing/filtering, clone spec preparation, guest operations |
 | `vsphere.go` | `VSphereClient` interface and govmomi SDK wrapper implementation |
@@ -66,7 +68,7 @@ The hatchery is configured via `HatcheryConfiguration`, serialized as TOML.
 | `workerProvisioning` | `[]WorkerProvisioningConfig` | — | No | List of models to pre-provision |
 | `guestCredentials` | `[]GuestCredential` | — | No | **Deprecated**: use `models` instead. Guest OS credentials per model |
 | `models` | `[]ModelConfig` | — | No | Per-model configuration (credentials, pre-start script) |
-| `defaultWorkerModelsV2` | `[]DefaultWorkerModelsV2` | — | No | Default V2 models for V1 jobs (binary matching) |
+| `defaultWorkerModelsV2` | `[]DefaultWorkerModelsV2` | — | No | Default V2 models used to run V1 jobs (binary matching) |
 
 ### 3.1.2 Networks Configuration
 
@@ -106,8 +108,7 @@ The fields most relevant to the vSphere hatchery are:
 
 ```go
 type WorkerProvisioningConfig struct {
-    ModelPath   string  // CDS worker model path (V1 only, e.g. "group/model")
-    ModelVMWare string  // VMware template name (V2 only, e.g. "debian12")
+    ModelVMWare string  // VMware template name (e.g. "debian12")
     Number      int     // Number of VMs to keep pre-provisioned
 }
 ```
@@ -116,8 +117,7 @@ type WorkerProvisioningConfig struct {
 
 ```go
 type ModelConfig struct {
-    ModelPath      string  // CDS worker model path (V1 only, e.g. "group/model")
-    ModelVMWare    string  // VMware template name (V2 only, e.g. "debian12")
+    ModelVMWare    string  // VMware template name (e.g. "debian12")
     Username       string  // Guest OS username
     Password       string  // Guest OS password
     PreStartScript string  // Shell script executed inside the VM before the worker starts
@@ -129,7 +129,7 @@ pre-start script that runs inside the VM after boot but before the CDS worker st
 be used for filesystem resizing, environment setup, or any other initialization.
 
 **Credential resolution order**:
-1. `models` config, matched by `ModelVMWare` (V2) or `ModelPath` (V1)
+1. `models` config, matched by `ModelVMWare` (VMware template name)
 2. Deprecated `guestCredentials` config (fallback)
 3. Worker model spec (`Username`/`Password`)
 
@@ -137,8 +137,7 @@ be used for filesystem resizing, environment setup, or any other initialization.
 
 ```go
 type GuestCredential struct {
-    ModelPath   string  // CDS worker model path (V1 only)
-    ModelVMWare string  // VMware template name (V2 only)
+    ModelVMWare string  // VMware template name
     Username    string  // Guest OS username
     Password    string  // Guest OS password
 }
@@ -159,33 +158,14 @@ Used to bridge V1 jobs (which select models by binary requirements) to V2 worker
 
 ## 4. Worker Models
 
-### 4.1 Worker Model V1
+The vSphere hatchery only supports **Worker Model V2**. Worker Model V1 (CDS models that were registered
+*into* vSphere as templates) is no longer supported: the hatchery never creates, registers, or manages
+templates on behalf of CDS models. Templates must already exist in vSphere.
 
-Worker Model V1 is managed by the CDS API. Each model has a type (`vsphere`), a name, and a
-`ModelVirtualMachine` struct:
+CDS **V1 jobs** are still supported; they simply run on a V2 worker model resolved via
+`GetDetaultModelV2Name` (see section 6.8).
 
-```go
-type ModelVirtualMachine struct {
-    Image    string  // vSphere template name to clone from
-    Flavor   string  // Currently unused by the vSphere hatchery
-    PreCmd   string  // Script to run before the worker binary
-    Cmd      string  // Worker binary invocation command
-    PostCmd  string  // Script to run after worker exits (e.g. "sudo shutdown -h now")
-    User     string  // Guest OS username (can be overridden by GuestCredentials config)
-    Password string  // Guest OS password (can be overridden by GuestCredentials config)
-}
-```
-
-The hatchery creates (and caches) a **template VM** for each V1 model. This template is built by:
-1. Cloning the base image
-2. Running `PostCmd` inside the guest
-3. Waiting for shutdown
-4. Marking the VM as a vSphere template
-
-Template re-creation is triggered when `NeedRegistration` is true or when `UserLastModified` differs
-from the timestamp stored in the template's annotation.
-
-### 4.2 Worker Model V2
+### 4.1 Worker Model V2
 
 Worker Model V2 is defined as-code (YAML) in repositories:
 
@@ -220,9 +200,7 @@ This annotation is the primary mechanism for tracking VM state and ownership.
 type annotation struct {
     HatcheryName            string    // Name of the hatchery that created this VM
     WorkerName              string    // CDS worker name assigned to this VM
-    RegisterOnly            bool      // True if VM is for model registration only
     Provisioning            bool      // True if VM is a pre-provisioned idle worker
-    WorkerModelPath         string    // CDS worker model path (V1, e.g. "group/model")
     VMwareModelPath         string    // VMware template name (V2)
     WorkerModelLastModified string    // Unix timestamp of model last modification
     Model                   bool      // True if VM is a model template (do not destroy)
@@ -259,10 +237,9 @@ The main spawn flow (`SpawnWorker`) proceeds as follows:
 SpawnWorker(spawnArgs)
 │
 ├── 1. Resolve template VM
-│   ├── V2: Load template by spec.Image name (must exist)
-│   └── V1: Load template by model name, or create it if NeedRegistration
+│   └── Load the V2 template by spec.Image name (must already exist)
 │
-├── 2. Try to find a pre-provisioned VM (if not register-only)
+├── 2. Try to find a pre-provisioned VM
 │   ├── Found: rename → reconfigure (flavor) → start → wait for IP
 │   │         → pre-start script → launch worker script → DONE
 │   └── Not found: continue to fresh clone
@@ -314,7 +291,7 @@ After the VM is cloned and has obtained an IP:
 #### 6.2.3 Guest Operations Authentication
 
 Guest OS credentials are resolved in order:
-1. From `models` config, matched by `ModelVMWare` (V2) or `ModelPath` (V1)
+1. From `models` config, matched by `ModelVMWare` (VMware template name)
 2. From deprecated `guestCredentials` config (fallback)
 3. If not found in config, from the worker model spec (`Username`/`Password`)
 
@@ -324,9 +301,10 @@ If neither provides valid credentials, spawning fails.
 
 Pre-provisioning creates idle VMs ahead of time so that job assignment is faster.
 
-#### 6.3.1 V2 Provisioning (`provisioningV2`)
+#### 6.3.1 Provisioning (`provisioningV2`)
 
-The provisioning scheduler runs a three-step process:
+Provisioning is keyed on the VMware template name (`provision-v2` VMs). The provisioning scheduler
+runs a three-step process:
 
 **Step 1 — Compute current state and deficit:**
 1. Lock the provisioning cache
@@ -342,7 +320,7 @@ The provisioning scheduler runs a three-step process:
 **Step 3 — Cap by available IPs and enqueue tasks:**
 - If IP ranges are configured, compute available IP count
 - Truncate the queue to the IP budget (prevents submitting work that would fail at clone time)
-- **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.4)
+- **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.3)
 - Submit clone tasks from the queue to the provisioning pool
 - Wait for the entire batch (reconciliation + new clones) to complete
 
@@ -352,28 +330,7 @@ Each task executed by a pool worker:
 - Calls `ProvisionWorkerV2()` (clone only), then `finishProvisioning()` (wait IP → shutdown)
 - Removes name from pending cache
 
-#### 6.3.2 V1 Provisioning (`provisioningV1`)
-
-Same three-step process as V2:
-
-**Step 1 — Compute current state and deficit:**
-1. Same counting logic as V2 but with `provision-v1` prefix and `WorkerModelPath`
-2. Additionally fetches the model from the CDS API to verify it doesn't need registration
-3. **Deprovisioning**: same as V2 — excess VMs are marked for deletion when config count is decreased or model is removed
-
-**Step 2 — Interleave models using round-robin:**
-- Same fair ordering as V2
-
-**Step 3 — Cap by available IPs and enqueue tasks:**
-- Same IP budget enforcement as V2
-- **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.4)
-- Submit clone tasks and wait for the batch to complete
-
-Each task executed by a pool worker:
-- Generates a worker name: `provision-v1-<random>`
-- Calls `ProvisionWorkerV1()` (clone only), then `finishProvisioning()` (wait IP → shutdown)
-
-#### 6.3.3 Provisioned VM Lifecycle
+#### 6.3.2 Provisioned VM Lifecycle
 
 A provisioned VM follows this lifecycle:
 
@@ -390,7 +347,7 @@ Template ──clone──► Provisioned VM (powered on)
                         └── Launch worker script
 ```
 
-#### 6.3.4 Provisioning State Reconciliation
+#### 6.3.3 Provisioning State Reconciliation
 
 The `cacheProvisioning.pending` list is in-memory only. If the hatchery restarts while a VM is
 being provisioned (between clone and shutdown), that VM becomes orphaned: it stays powered on
@@ -423,8 +380,8 @@ This mechanism also covers VMs where `ShutdownVirtualMachine` failed during norm
 
 When spawning a worker, the hatchery tries to reuse a pre-provisioned VM:
 
-1. Determine expected model path (V2: image name, V1: full CDS model path)
-2. Iterate all VMs, filtering by prefix (`provision-v2` or `provision-v1`)
+1. Determine expected model path (the VMware template / image name)
+2. Iterate all VMs, filtering by the `provision-v2` prefix
 3. Parse annotation, verify `Provisioning` flag and matching model path
 4. Skip VMs in `cacheProvisioning.pending` (still being created)
 5. Skip VMs in `cacheToDelete` (marked for deletion)
@@ -483,7 +440,6 @@ if h.Configuration().Provision.MaxWorker > 0 && len(workerPool) >= h.Configurati
 This limit applies uniformly to:
 - **Job V1 processing** (`processJobV1QueueV1`)
 - **Job V2 processing** (`processJobV2`)
-- **Model registration** (`workerRegister`)
 
 #### 6.4.3 MaxConcurrentProvisioning Limit
 
@@ -510,8 +466,9 @@ call `SpawnWorker()`. If this counter reaches `MaxConcurrentProvisioning`, capac
 Provision.MaxConcurrentRegistering (default: 2, -1 to disable)
 ```
 
-Controls the maximum number of worker models being registered simultaneously. Checked before
-spawning a registration-only worker.
+A common-framework limit controlling the maximum number of worker models being registered
+simultaneously. The vSphere hatchery no longer registers worker models (see §6.7), so this
+limit has no practical effect for this hatchery; it is kept for framework compatibility.
 
 #### 6.4.5 Configuration Validation
 
@@ -564,19 +521,16 @@ This resource-aware check happens **before** every `SpawnWorker()` call.
 
 Before spawning, the hatchery checks:
 
-1. **Model type**: Must be `vsphere` (V1 or V2)
+1. **Model type**: Must be a `vsphere` V2 model. Worker model V1 is rejected outright (returns `false`).
 2. **Unsupported requirements**: Returns `false` if any requirement is of type:
    - `ServiceRequirement`
    - `MemoryRequirement`
    - `HostnameRequirement`
    - `FlavorRequirement`
 3. **Empty Cmd**: Returns `false` if the model has no command defined
-4. **Registration checks** (for register jobs):
-   - V2 models cannot be registered (returns `false`)
-   - Checks no temporary VM (`<model>-tmp`) or registering VM (`register-<model>`) exists
-5. **Duplicate job check**: Ensures no existing VM annotation references the same `JobID`
-6. **Pending job check**: Ensures the job ID is not in the local `cachePendingJobID`
-7. **IP availability**: If IP range is configured, verifies at least one IP is available
+4. **Duplicate job check**: Ensures no existing VM annotation references the same `JobID`
+5. **Pending job check**: Ensures the job ID is not in the local `cachePendingJobID`
+6. **IP availability**: If IP range is configured, verifies at least one IP is available
 
 ### 6.6 Resource Allocation (`CanAllocateResources`)
 
@@ -590,14 +544,10 @@ func (h *HatcheryVSphere) CanAllocateResources(...) (bool, error) {
 
 No resource limits (CPU, RAM, disk) are verified before spawning.
 
-### 6.7 Model Registration (`NeedRegistration`) — V1 Only
+### 6.7 Model Registration (`NeedRegistration`)
 
-The hatchery checks whether a V1 model needs re-registration by:
-
-1. Looking up the existing VM template by model name
-2. Parsing its annotation
-3. Comparing `model.UserLastModified` with `annotation.WorkerModelLastModified`
-4. Returns `true` if the model is flagged for registration or the template is outdated
+Worker model V1 is no longer supported, so the hatchery never registers CDS models as vSphere
+templates. `NeedRegistration` always returns `false`.
 
 ### 6.8 Default V2 Model Selection — V1 Jobs on V2 Models
 
@@ -675,7 +625,7 @@ and the provisioning scheduler does not cap tasks by IP budget.
 For each VM with a CDS annotation belonging to this hatchery:
 
 1. **Marked for deletion**: Delete immediately
-2. **Provisioned VMs** (`provision-` prefix): Skip (managed by provisioning loop reconciliation, see §6.3.4)
+2. **Provisioned VMs** (`provision-` prefix): Skip (managed by provisioning loop reconciliation, see §6.3.3)
 3. **Model templates** (`Model: true`): Skip (never delete)
 4. **Event analysis**: Load VM events (`VmStartingEvent`, `VmPoweredOffEvent`, `VmRenamedEvent`)
    - Filter out events related to provisioning (`provision-` in message)
@@ -697,11 +647,9 @@ For each VM with a CDS annotation belonging to this hatchery:
 ### 8.3 Server Deletion (`deleteServer`)
 
 1. Load the VM object
-2. If the VM name starts with `register-`, check worker model registration status and report
-   spawn errors to the API
-3. If the VM is powered on, power it off
-4. Remove from `cacheToDelete`
-5. Destroy the VM via vSphere API
+2. If the VM is powered on, power it off
+3. Remove from `cacheToDelete`
+4. Destroy the VM via vSphere API
 
 ## 9. vSphere Client Interface
 
@@ -720,7 +668,6 @@ type VSphereClient interface {
     GetVirtualMachinePowerState(ctx, vm) (VirtualMachinePowerState, error)
     NewVirtualMachine(ctx, cloneSpec, ref, vmName) (*object.VirtualMachine, error)
     RenameVirtualMachine(ctx, vm, newName) error
-    MarkVirtualMachineAsTemplate(ctx, vm) error
     WaitForVirtualMachineShutdown(ctx, vm) error
     WaitForVirtualMachineIP(ctx, vm, IPAddress, vmName) error
     LoadFolder(ctx) (*object.Folder, error)

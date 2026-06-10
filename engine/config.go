@@ -125,10 +125,10 @@ func configBootstrap(args []string) Configuration {
 			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.VSphere.HTTP.Port = 8086
 			conf.Hatchery.VSphere.WorkerProvisioning = []vsphere.WorkerProvisioningConfig{{
-				ModelPath: "my/model",
+				ModelVMWare: "debian12",
 			}}
 			conf.Hatchery.VSphere.GuestCredentials = []vsphere.GuestCredential{{
-				ModelPath: "my/model",
+				ModelVMWare: "debian12",
 			}}
 		case sdk.TypeHooks:
 			conf.Hooks = &hooks.Configuration{}

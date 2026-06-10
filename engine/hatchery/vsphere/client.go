@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/object"
@@ -12,7 +11,6 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // reconfigureVM changes the CPU and RAM of a powered-off VM to match the requested flavor
@@ -20,14 +18,8 @@ import (
 // getModelConfig returns the ModelConfig for the given model, or nil if not configured.
 func (h *HatcheryVSphere) getModelConfig(model sdk.WorkerStarterWorkerModel) *ModelConfig {
 	for i := range h.Config.Models {
-		if model.ModelV2 != nil {
-			if h.Config.Models[i].ModelVMWare == model.GetVSphereImage() {
-				return &h.Config.Models[i]
-			}
-		} else {
-			if h.Config.Models[i].ModelPath == model.GetFullPath() {
-				return &h.Config.Models[i]
-			}
+		if h.Config.Models[i].ModelVMWare == model.GetVSphereImage() {
+			return &h.Config.Models[i]
 		}
 	}
 	return nil
@@ -226,19 +218,6 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 		return nil
 	}
 
-	if strings.HasPrefix(s.Name, "register-") {
-		if err := hatchery.CheckWorkerModelRegister(ctx, h, annot.WorkerModelPath); err != nil {
-			spawnErr := sdk.SpawnErrorForm{
-				Error: err.Error(),
-			}
-			log.Error(ctx, "failed check worker model register: %v", err)
-			tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
-			if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-				log.Error(ctx, "deleteServer> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
-			}
-		}
-	}
-
 	isPoweredOn := s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff
 
 	if isPoweredOn {
@@ -395,31 +374,17 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 
 	// Fallback to deprecated GuestCredentials if not found in Models
 	if auth.Username == "" || auth.Password == "" {
-		if model.ModelV2 != nil {
-			for i := range h.Config.GuestCredentials {
-				if h.Config.GuestCredentials[i].ModelVMWare == model.GetVSphereImage() {
-					auth.Username = h.Config.GuestCredentials[i].Username
-					auth.Password = h.Config.GuestCredentials[i].Password
-					break
-				}
-			}
-		} else {
-			for i := range h.Config.GuestCredentials {
-				if h.Config.GuestCredentials[i].ModelPath == model.GetFullPath() {
-					auth.Username = h.Config.GuestCredentials[i].Username
-					auth.Password = h.Config.GuestCredentials[i].Password
-					break
-				}
+		for i := range h.Config.GuestCredentials {
+			if h.Config.GuestCredentials[i].ModelVMWare == model.GetVSphereImage() {
+				auth.Username = h.Config.GuestCredentials[i].Username
+				auth.Password = h.Config.GuestCredentials[i].Password
+				break
 			}
 		}
 	}
 
 	if auth.Username == "" || auth.Password == "" {
-		if model.ModelV2 != nil {
-			return sdk.WithStack(fmt.Errorf("username and/or password not well configured for GetVSphereImage:%q", model.GetVSphereImage()))
-		} else {
-			return sdk.WithStack(fmt.Errorf("username and/or password not well configured for modelFullPath:%q", model.GetFullPath()))
-		}
+		return sdk.WithStack(fmt.Errorf("username and/or password not well configured for GetVSphereImage:%q", model.GetVSphereImage()))
 	}
 
 	guestspec := types.GuestProgramSpec{

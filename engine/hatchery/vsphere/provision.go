@@ -16,8 +16,7 @@ import (
 // provisionTask represents a unit of provisioning work submitted to the pool.
 type provisionTask struct {
 	// For "clone" tasks: clone a new VM then finish provisioning
-	cloneV1 *sdk.Model // non-nil for V1 clone tasks
-	cloneV2 string     // non-empty for V2 clone tasks (vmware model path)
+	cloneV2 string // non-empty for V2 clone tasks (vmware model path)
 
 	// For "finish" tasks: the VM already exists, just wait IP + shutdown
 	finishVM string // non-nil for reconciled VMs (name of existing powered-on VM)
@@ -87,18 +86,6 @@ func (h *HatcheryVSphere) executeProvisionTask(ctx context.Context, task provisi
 		if err != nil {
 			ctx = log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to provision vmware worker v2 %q model %q: %v", workerName, task.cloneV2, err)
-		}
-	} else if task.cloneV1 != nil {
-		workerName = namesgenerator.GenerateWorkerName("provision-v1")
-
-		h.cacheProvisioning.mu.Lock()
-		h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
-		h.cacheProvisioning.mu.Unlock()
-
-		err = h.ProvisionWorkerV1(ctx, *task.cloneV1, workerName)
-		if err != nil {
-			ctx = log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to provision vmware worker v1 %q model %q: %v", workerName, *task.cloneV1, err)
 		}
 	}
 

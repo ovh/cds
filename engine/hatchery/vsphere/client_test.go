@@ -191,7 +191,7 @@ func TestHatcheryVSphere_deleteServer(t *testing.T) {
 		vSphereClient: c,
 	}
 
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "register-foo").DoAndReturn(
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "foo").DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
 			return &object.VirtualMachine{}, nil
 		},
@@ -212,7 +212,7 @@ func TestHatcheryVSphere_deleteServer(t *testing.T) {
 	ctx := context.Background()
 	err := h.deleteServer(ctx, mo.VirtualMachine{
 		ManagedEntity: mo.ManagedEntity{
-			Name: "register-foo",
+			Name: "foo",
 		},
 		Summary: types.VirtualMachineSummary{
 			Config: types.VirtualMachineConfigSummary{
@@ -318,56 +318,6 @@ func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 	// Assert the DNS
 	assert.Equal(t, "192.168.0.253", cloneSpec.Customization.GlobalIPSettings.DnsServerList[0])
 
-}
-
-func TestHatcheryVSphere_launchClientOpV1(t *testing.T) {
-	log.Factory = log.NewTestingWrapper(t)
-
-	c := NewVSphereClientTest(t)
-	h := HatcheryVSphere{
-		vSphereClient: c,
-		Config: HatcheryConfiguration{
-			GuestCredentials: []GuestCredential{
-				{
-					ModelPath: "group/worker1",
-					Username:  "user",
-					Password:  "password",
-				},
-			},
-		},
-	}
-
-	var vm = object.VirtualMachine{
-		Common: object.Common{
-			InventoryPath: "inventory-path",
-		},
-	}
-
-	var model = sdk.ModelVirtualMachine{}
-	modelV1 := sdk.Model{ModelVirtualMachine: model, Group: &sdk.Group{Name: "group"}, Name: "worker1"}
-
-	var procman = guest.ProcessManager{}
-
-	c.EXPECT().ProcessManager(gomock.Any(), &vm).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
-			return &procman, nil
-		},
-	)
-
-	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
-			t.Logf("req: %+v", req.Spec.GetGuestProgramSpec())
-			assert.Equal(t, "user", req.Auth.(*types.NamePasswordAuthentication).Username)
-			assert.Equal(t, "password", req.Auth.(*types.NamePasswordAuthentication).Password)
-			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;this is a script")
-			assert.EqualValues(t, []string{"env=1"}, req.Spec.GetGuestProgramSpec().EnvVariables)
-			return &types.StartProgramInGuestResponse{}, nil
-		},
-	)
-
-	ctx := context.Background()
-	h.launchClientOp(ctx, &vm, sdk.WorkerStarterWorkerModel{ModelV1: &modelV1}, "this is a script", []string{"env=1"})
 }
 
 func TestHatcheryVSphere_launchClientOpV2(t *testing.T) {
