@@ -13,51 +13,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/vsphere/mock_vsphere"
 )
 
-func TestPrepareCloneSpecWithFlavor(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockClient := mock_vsphere.NewMockVSphereClient(ctrl)
-	h := &HatcheryVSphere{
-		vSphereClient:        mockClient,
-		availableIPAddresses: []string{},
-		Config: HatcheryConfiguration{
-			VSphereNetworkString:   "VM Network",
-			VSphereDatastoreString: "datastore1",
-			VSphereCardName:        "e1000",
-		},
-	}
-
-	// Mock expectations
-	mockClient.EXPECT().LoadVirtualMachineDevices(gomock.Any(), gomock.Any()).Return(
-		[]types.BaseVirtualDevice{
-			&types.VirtualE1000{
-				VirtualEthernetCard: types.VirtualEthernetCard{
-					VirtualDevice: types.VirtualDevice{},
-				},
-			},
-		}, nil)
-	mockClient.EXPECT().LoadNetwork(gomock.Any(), "VM Network").Return(&object.Network{}, nil)
-	mockClient.EXPECT().SetupEthernetCard(gomock.Any(), gomock.Any(), "e1000", gomock.Any()).Return(nil)
-	mockClient.EXPECT().LoadResourcePool(gomock.Any()).Return(&object.ResourcePool{}, nil)
-	mockClient.EXPECT().LoadDatastore(gomock.Any(), "datastore1").Return(&object.Datastore{}, nil)
-
-	flavor := &VSphereFlavorConfig{
-		CPUs:     8,
-		MemoryMB: 16384,
-	}
-
-	ctx := context.Background()
-	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{}, flavor)
-	require.NoError(t, err)
-	require.NotNil(t, cloneSpec)
-
-	// When a flavor is provided, the VM should be cloned powered off
-	// (reconfigureVM handles CPU/RAM/disk on the powered-off clone)
-	assert.False(t, cloneSpec.PowerOn)
-}
-
-func TestPrepareCloneSpecWithoutFlavor(t *testing.T) {
+func TestPrepareCloneSpec(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -87,11 +43,12 @@ func TestPrepareCloneSpecWithoutFlavor(t *testing.T) {
 	mockClient.EXPECT().LoadDatastore(gomock.Any(), "datastore1").Return(&object.Datastore{}, nil)
 
 	ctx := context.Background()
-	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{}, nil)
+	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{})
 	require.NoError(t, err)
 	require.NotNil(t, cloneSpec)
 
-	// Without a flavor, the VM should be cloned powered on
+	// Provisioned clones always boot right away (flavors are applied later by
+	// reconfigureVM, when a powered-off provision is claimed by SpawnWorker)
 	assert.True(t, cloneSpec.PowerOn)
 }
 

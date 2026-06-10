@@ -97,7 +97,9 @@ func TestHatcheryVSphere_launchScriptWorkerv2(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestHatcheryVSphere_SpawnWorkerv2(t *testing.T) {
+// SpawnWorker must fail when no provisioned VM is available for the model:
+// there is no fallback cloning the template directly.
+func TestHatcheryVSphere_SpawnWorkerNoProvisionedWorker(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
@@ -114,43 +116,14 @@ func TestHatcheryVSphere_SpawnWorkerv2(t *testing.T) {
 		},
 	}
 
-	h.Config.VSphereNetworkString = "vbox-net"
-	h.Config.VSphereCardName = "ethernet-card"
-	h.Config.VSphereDatastoreString = "datastore"
-	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
-	h.availableNetworks = []availableNetwork{{
-		config:      NetworkConfig{IPRange: "192.168.0.0/24", Gateway: "192.168.0.254", SubnetMask: "255.255.255.0"},
-		ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
-	}}
-	h.Config.Gateway = "192.168.0.254"
-	h.Config.DNS = "192.168.0.253"
-
 	var ctx = context.Background()
 
-	var validModel = sdk.Model{
-		Name: "cds-model-name",
-		Type: sdk.VSphere,
-		ModelVirtualMachine: sdk.ModelVirtualMachine{
-			Cmd:     "./worker",
-			Image:   "the-model",
-			PostCmd: "shutdown -h now",
-		},
-		Group: &sdk.Group{
-			Name: sdk.SharedInfraGroupName,
-		},
-	}
-
-	var vmTemplate = object.VirtualMachine{
-		Common: object.Common{
-			InventoryPath: "the-model",
-		},
-	}
-
+	// No provision-v2 VM exists, only the vSphere template
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
 				ManagedEntity: mo.ManagedEntity{
-					Name: validModel.Name,
+					Name: "the-model",
 				},
 				Summary: types.VirtualMachineSummary{
 					Config: types.VirtualMachineConfigSummary{
@@ -163,114 +136,6 @@ func TestHatcheryVSphere_SpawnWorkerv2(t *testing.T) {
 			},
 		}, nil
 	}).AnyTimes()
-
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "the-model").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
-			return &vmTemplate, nil
-		},
-	)
-
-	c.EXPECT().LoadVirtualMachineDevices(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error) {
-			card := types.VirtualEthernetCard{}
-			return object.VirtualDeviceList{
-				&card,
-			}, nil
-		},
-	)
-
-	c.EXPECT().LoadNetwork(gomock.Any(), "vbox-net").DoAndReturn(
-		func(ctx context.Context, s string) (object.NetworkReference, error) {
-			return &object.Network{}, nil
-		},
-	)
-
-	c.EXPECT().SetupEthernetCard(gomock.Any(), gomock.Any(), "ethernet-card", gomock.Any()).DoAndReturn(
-		func(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error {
-			return nil
-		},
-	)
-
-	c.EXPECT().LoadResourcePool(gomock.Any()).DoAndReturn(
-		func(ctx context.Context) (*object.ResourcePool, error) {
-			return &object.ResourcePool{}, nil
-		},
-	)
-
-	c.EXPECT().LoadDatastore(gomock.Any(), "datastore").DoAndReturn(
-		func(ctx context.Context, name string) (*object.Datastore, error) {
-			return &object.Datastore{}, nil
-		},
-	)
-
-	var folder object.Folder
-
-	c.EXPECT().LoadFolder(gomock.Any()).DoAndReturn(
-		func(ctx context.Context) (*object.Folder, error) {
-			return &folder, nil
-		},
-	)
-
-	var workerRef types.ManagedObjectReference
-
-	c.EXPECT().CloneVirtualMachine(gomock.Any(), &vmTemplate, &folder, "worker-name", gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error) {
-			return &workerRef, nil
-		},
-	)
-
-	var workerVM object.VirtualMachine
-
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmname string) (*object.VirtualMachine, error) {
-			assert.False(t, cloneSpec.Template)
-			assert.True(t, cloneSpec.PowerOn)
-			var givenAnnotation annotation
-			json.Unmarshal([]byte(cloneSpec.Config.Annotation), &givenAnnotation)
-			assert.Equal(t, "the-model", givenAnnotation.VMwareModelPath)
-			assert.False(t, givenAnnotation.Model)
-			assert.Equal(t, "192.168.0.1", (cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp).IpAddress))
-			return &workerVM, nil
-		},
-	)
-
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
-			return nil
-		},
-	)
-
-	var procman = guest.ProcessManager{}
-
-	c.EXPECT().ProcessManager(gomock.Any(), &workerVM).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
-			return &procman, nil
-		},
-	).AnyTimes()
-
-	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
-			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
-			return &types.StartProgramInGuestResponse{}, nil
-		},
-	)
-
-	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
-			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
-			var foundConfig bool
-			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
-				if strings.HasPrefix(env, "CDS_CONFIG=") {
-					foundConfig = true
-				}
-			}
-			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
-			return &types.StartProgramInGuestResponse{}, nil
-		},
-	)
 
 	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
 		WorkerName:  "worker-name",
@@ -285,20 +150,16 @@ func TestHatcheryVSphere_SpawnWorkerv2(t *testing.T) {
 				Username: "user",
 				Password: "password",
 			},
+			Cmd:     "./worker",
 			PostCmd: "sudo shutdown -h now",
 		},
-		JobName: "job_name",
-		JobID:   "666",
-		Requirements: []sdk.Requirement{
-			{
-				Type:  sdk.ModelRequirement,
-				Value: validModel.Name,
-			},
-		},
+		JobName:      "job_name",
+		JobID:        "666",
 		RegisterOnly: false,
 		HatcheryName: "hatchery_name",
 	})
-	require.NoError(t, err)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "no provisioned worker available")
 }
 
 func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
@@ -329,12 +190,6 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	h.Config.DNS = "192.168.0.253"
 
 	var ctx = context.Background()
-
-	var vmTemplate = object.VirtualMachine{
-		Common: object.Common{
-			InventoryPath: "the-model",
-		},
-	}
 
 	var vmProvisionned = object.VirtualMachine{
 		Common: object.Common{
@@ -369,12 +224,6 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 			},
 		}, nil
 	}).Times(1)
-
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "the-model").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
-			return &vmTemplate, nil
-		},
-	)
 
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), "provision-v2-worker").DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {

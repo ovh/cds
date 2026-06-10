@@ -210,11 +210,14 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		}
 	}
 
-	// Check if there is one ip available
-	if len(h.availableIPAddresses) > 0 {
-		if _, err := h.findAvailableIP(ctx); err != nil {
-			return false
-		}
+	// Workers are only started from pre-provisioned VMs (which already hold
+	// their own IP, reserved at clone time): check that one is available for
+	// this model instead of checking for a free IP. Checking for a free IP
+	// here would wrongly refuse to spawn when the whole IP range is held by
+	// provisioned machines, which is the nominal situation.
+	if !h.hasAvailableProvisionedWorker(ctx, model) {
+		log.Debug(ctx, "can't spawn worker for job %s: no provisioned worker available for model %q", jobID, model.GetName())
+		return false
 	}
 
 	return true

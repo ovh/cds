@@ -240,7 +240,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 }
 
 // prepareCloneSpec create a basic configuration in order to create a vm
-func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation, flavor *VSphereFlavorConfig) (*types.VirtualMachineCloneSpec, error) {
+func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation) (*types.VirtualMachineCloneSpec, error) {
 	devices, err := h.vSphereClient.LoadVirtualMachineDevices(ctx, vm)
 	if err != nil {
 		return nil, err
@@ -337,7 +337,7 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 
 	cloneSpec := &types.VirtualMachineCloneSpec{
 		Location: relocateSpec,
-		PowerOn:  flavor == nil, // When a flavor is set, clone powered off then reconfigureVM handles CPU/RAM/disk
+		PowerOn:  true,
 		Template: false,
 		Config: &types.VirtualMachineConfigSpec{
 			RepConfig: &types.ReplicationConfigSpec{
