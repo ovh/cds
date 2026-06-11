@@ -879,6 +879,25 @@ skipEntity:
 	return nil
 }
 
+// computeWorkflowRunHookFullName builds the canonical "project/vcs/org/repo/workflow" identifier
+// watched by an on.workflow-run hook, completing missing leading segments from the workflow's own
+// location. The org/repo segment is lowercased to match the run identity (repositories are stored
+// lowercase), so the match isn't case-sensitive on it.
+func computeWorkflowRunHookFullName(projectKey, defaultVCSName, defaultRepositoryName, watched string) string {
+	mSplit := strings.Split(watched, "/")
+	switch len(mSplit) {
+	case 1: // workflow
+		return fmt.Sprintf("%s/%s/%s/%s", projectKey, defaultVCSName, defaultRepositoryName, watched)
+	case 3: // org/repo/workflow
+		return fmt.Sprintf("%s/%s/%s/%s/%s", projectKey, defaultVCSName, strings.ToLower(mSplit[0]), strings.ToLower(mSplit[1]), mSplit[2])
+	case 4: // vcs/org/repo/workflow
+		return fmt.Sprintf("%s/%s/%s/%s/%s", projectKey, mSplit[0], strings.ToLower(mSplit[1]), strings.ToLower(mSplit[2]), mSplit[3])
+	case 5: // project/vcs/org/repo/workflow
+		return fmt.Sprintf("%s/%s/%s/%s/%s", mSplit[0], mSplit[1], strings.ToLower(mSplit[2]), strings.ToLower(mSplit[3]), mSplit[4])
+	}
+	return ""
+}
+
 func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, ef *EntityFinder, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch *sdk.VCSBranch) ([]sdk.V2WorkflowHook, error) {
 	ctx, next := telemetry.Span(ctx, "prepareWorkflowHooks")
 	defer next()
@@ -1127,18 +1146,7 @@ func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		}
 
 		for _, s := range e.Workflow.On.WorkflowRun {
-			mSplit := strings.Split(s.Workflow, "/")
-			var workflowFullName string
-			switch len(mSplit) {
-			case 1:
-				workflowFullName = fmt.Sprintf("%s/%s/%s/%s", e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, s.Workflow)
-			case 3:
-				workflowFullName = fmt.Sprintf("%s/%s/%s", e.ProjectKey, workflowDefVCSName, s.Workflow)
-			case 4:
-				workflowFullName = fmt.Sprintf("%s/%s", e.ProjectKey, s.Workflow)
-			case 5:
-				workflowFullName = s.Workflow
-			}
+			workflowFullName := computeWorkflowRunHookFullName(e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, s.Workflow)
 
 			// Add in data destination vcs / repo
 			wh := sdk.V2WorkflowHook{
