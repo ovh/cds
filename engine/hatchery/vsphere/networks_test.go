@@ -197,7 +197,7 @@ func TestHatcheryVSphere_prepareCloneSpec_MultiNetwork(t *testing.T) {
 	).AnyTimes()
 
 	ctx := context.Background()
-	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{}, nil)
+	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{})
 	require.NoError(t, err)
 	require.NotNil(t, cloneSpec)
 
