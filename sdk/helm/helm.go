@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chartmuseum/helm-push/pkg/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -13,9 +12,6 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/strvals"
-	v2downloader "k8s.io/helm/pkg/downloader"
-	v2getter "k8s.io/helm/pkg/getter"
-	v2environment "k8s.io/helm/pkg/helm/environment"
 	"sigs.k8s.io/yaml"
 )
 
@@ -93,35 +89,19 @@ func (c *Chart) OverrideValues(overrides []string) error {
 }
 
 var (
-	v2settings v2environment.EnvSettings
-	settings   = cli.New()
+	settings = cli.New()
 )
 
-func UpdateDependencies(c *Chart, skipUpdate bool) error {
-	if helm.HelmMajorVersionCurrent() == helm.HelmMajorVersion2 {
-		v2downloadManager := &v2downloader.Manager{
-			Out:        os.Stdout,
-			ChartPath:  c.ChartPath(),
-			HelmHome:   v2settings.Home,
-			Getters:    v2getter.All(v2settings),
-			Debug:      v2settings.Debug,
-			SkipUpdate: skipUpdate,
-		}
-		if err := v2downloadManager.Update(); err != nil {
-			return err
-		}
-		return nil
-	}
-
+func UpdateDependencies(chartPath string, c *Chart, skipUpdate bool) error {
 	downloadManager := &downloader.Manager{
-		Out:       os.Stdout,
-		ChartPath: c.ChartPath(),
-		Getters:   getter.All(settings),
-		Debug:     v2settings.Debug,
+		Out:        os.Stdout,
+		ChartPath:  chartPath,
+		Getters:    getter.All(settings),
+		Debug:      settings.Debug,
+		SkipUpdate: skipUpdate,
 	}
 	if err := downloadManager.Update(); err != nil {
 		return err
 	}
-
 	return nil
 }
