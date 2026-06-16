@@ -32,6 +32,7 @@ type VSphereClient interface {
 	GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error)
 	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error)
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
+	SetVirtualMachineAnnotation(ctx context.Context, vm *object.VirtualMachine, annotation string) error
 	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string, vmName string) error
 	LoadFolder(ctx context.Context) (*object.Folder, error)
@@ -387,6 +388,26 @@ func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.Vir
 	}
 
 	*vm = *vm2
+
+	return nil
+}
+
+// SetVirtualMachineAnnotation overwrites the VM annotation (the persistent
+// vSphere "notes" field, read back as config.annotation). It is used to record
+// the worker start time at claim time so cleanup does not depend on vSphere
+// events, which age out of the event log.
+func (c *vSphereClient) SetVirtualMachineAnnotation(ctx context.Context, vm *object.VirtualMachine, annotation string) error {
+	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
+
+	task, err := vm.Reconfigure(ctxTo, types.VirtualMachineConfigSpec{Annotation: annotation})
+	if err != nil {
+		return sdk.WrapError(err, "unable to reconfigure annotation of vm %q", vm.Name())
+	}
+
+	if err := task.Wait(ctxTo); err != nil {
+		return sdk.WrapError(err, "annotation reconfigure task failed for vm %q", vm.Name())
+	}
 
 	return nil
 }

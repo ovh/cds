@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -254,155 +255,86 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 	h.Config.WorkerTTL = 5
 	h.Config.WorkerRegistrationTTL = 5
 
+	now := time.Now()
+	old := now.Add(-10 * time.Minute)
+
+	annot := func(a annotation) string {
+		b, err := json.Marshal(a)
+		require.NoError(t, err)
+		return string(b)
+	}
+
+	// worker0 and worker1 are registered on the API side.
 	cdsclient.EXPECT().WorkerList(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]sdk.Worker, error) {
-			var un int64 = 1
-			return []sdk.Worker{
-				{
-					Name:    "worker1",
-					ModelID: &un,
-					Status:  sdk.StatusDisabled,
-				},
-			}, nil
+			return []sdk.Worker{{Name: "worker0"}, {Name: "worker1"}}, nil
 		},
 	)
 
-	c.EXPECT().GetVirtualMachinePowerState(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
-			switch vm.Name() {
-			case "worker0":
-				return types.VirtualMachinePowerStatePoweredOn, nil
-			default:
-				return types.VirtualMachinePowerStatePoweredOff, nil
-			}
-		},
-	).AnyTimes()
-
-	c.EXPECT().LoadVirtualMachineEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
-			t.Logf("LoadVirtualMachineEvents for %s", vm.Name())
-			switch vm.Name() {
-			case "worker0":
-				return []types.BaseEvent{
-					&types.VmStartingEvent{
-						VmEvent: types.VmEvent{
-							Event: types.Event{
-								CreatedTime: time.Now(),
-							},
-						},
-					},
-				}, nil
-			default:
-				return []types.BaseEvent{
-					&types.VmStartingEvent{
-						VmEvent: types.VmEvent{
-							Event: types.Event{
-								CreatedTime: time.Now().Add(-10 * time.Minute),
-							},
-						},
-					},
-				}, nil
-			}
-		},
-	).Times(5)
-
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			poweredOn := types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOn}
+			poweredOff := types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff}
 			return []mo.VirtualMachine{
-				{
-					ManagedEntity: mo.ManagedEntity{
-						Name: "worker0",
-					},
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-						Runtime: types.VirtualMachineRuntimeInfo{
-							PowerState: types.VirtualMachinePowerStatePoweredOn,
-						},
-					},
-					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "someting"}`,
-					},
+				{ // running worker, recently started, on API → KEEP
+					ManagedEntity: mo.ManagedEntity{Name: "worker0"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOn},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
 				},
-				{
-					ManagedEntity: mo.ManagedEntity{
-						Name: "worker1",
-					},
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-					},
-					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"model": false, "to_delete": true}`,
-					},
+				{ // running worker, started long ago, on API → DELETE (WorkerTTL)
+					ManagedEntity: mo.ManagedEntity{Name: "worker1"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOn},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: old})},
 				},
-				{ // Provisionned worker not used should be kept
-					ManagedEntity: mo.ManagedEntity{
-						Name: "provision-worker2",
-					},
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-					},
-					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"worker_name":"provision-worker2", "provisioning": true}`,
-					},
+				{ // pooled provision → SKIP (provision- prefix)
+					ManagedEntity: mo.ManagedEntity{Name: "provision-worker2"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerName: "provision-worker2", Provisioning: true})},
 				},
-				{ // Provisionned worker already used should be deleted
-					ManagedEntity: mo.ManagedEntity{
-						Name: "worker3",
-					},
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-					},
-					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"worker_name":"provision-worker3", "provisioning": true}`,
-					},
+				{ // finished/failed worker, powered off, old start → DELETE
+					ManagedEntity: mo.ManagedEntity{Name: "worker3"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: old})},
+				},
+				{ // legacy worker (no WorkerStartTime), powered off, old CreateDate → DELETE
+					ManagedEntity: mo.ManagedEntity{Name: "worker4"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{}), CreateDate: &old},
+				},
+				{ // just-claimed worker, powered off but recent start → KEEP (in-flight)
+					ManagedEntity: mo.ManagedEntity{Name: "worker5"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
 				},
 			}, nil
 		},
 	).Times(1)
 
-	var vm0 = object.VirtualMachine{
-		Common: object.Common{
-			InventoryPath: "worker0",
-		},
-	}
+	// deleteServer reloads the VM by name; only the deleted ones are loaded.
 	var vm1 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker1"}}
 	var vm3 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker3"}}
+	var vm4 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker4"}}
 
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, vmname string) (*object.VirtualMachine, error) {
-			t.Logf("calling LoadVirtualMachine: %s", vmname)
 			switch vmname {
-			case "worker0":
-				return &vm0, nil
 			case "worker1":
 				return &vm1, nil
 			case "worker3":
 				return &vm3, nil
+			case "worker4":
+				return &vm4, nil
 			}
 			return nil, fmt.Errorf("not expected: %s", vmname)
 		},
-	).Times(5)
+	).Times(3)
 
-	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm3).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm3).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
+	// worker1 is powered on → shutdown then destroy; worker3/worker4 are powered
+	// off → destroy only.
+	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).Return(nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).Return(nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm3).Return(nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm4).Return(nil)
 
 	h.killAwolServers(context.Background())
 }

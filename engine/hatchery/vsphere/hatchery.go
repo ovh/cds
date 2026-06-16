@@ -3,7 +3,6 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -580,110 +579,32 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
-		// skipping vm starting with provision-
+		// Pooled provisions (still in the pool, holding their reserved IP on
+		// purpose) and model templates must not be reaped here.
 		if strings.HasPrefix(s.Name, "provision-") {
 			continue
 		}
-
 		if annot.Model {
 			continue
 		}
 
-		// reload virtual machine to have fresh data from vsphere
-		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
-		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to load vm: %v", err)
-			return
+		// Determine when this worker actually started. Prefer the worker start
+		// time stamped on the annotation at claim time (persistent, survives a
+		// restart, does not age out like vSphere events). For VMs created before
+		// this field existed (transitional / upgrade), fall back to the VM's
+		// vSphere creation date so they are still handled and eventually cleaned.
+		startTime := annot.WorkerStartTime
+		if startTime.IsZero() && s.Config != nil && s.Config.CreateDate != nil {
+			startTime = *s.Config.CreateDate
 		}
-
-		// gettings events for this vm, we have to check if we have a types.VmStartingEvent
-		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent", "VmPoweredOffEvent", "VmRenamedEvent")
-		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
-			return
-		}
-
-		// if we don't have a types.VmStartingEvent, we skip this vm
-		if len(vmEvents) == 0 {
-			log.Debug(ctx, "killAwolServers> no VmStartingEvent found - we keep this vm")
+		if startTime.IsZero() {
+			// No reliable timestamp at all (should not happen). Keep it rather than
+			// risk deleting a VM we cannot reason about.
+			log.Warn(ctx, "killAwolServers> no start time for %q, keeping it", s.Name)
 			continue
 		}
-		// we can have many VmStartingEvent: one for the provision, another with the worker from on the provision
 
-		var vmStartedTime, vmPoweredOffTime, vmRenamedEvent time.Time
-		var foundStarted, foundPoweredOff, foundRenamedEvent bool
-		for _, event := range vmEvents {
-			// events on the vm can contain event from the provision.
-			// Skipping this event if it's a provision's event
-			if strings.Contains(event.GetEvent().FullFormattedMessage, "provision-") {
-				log.Debug(ctx, "killAwolServers> skipping event %+v with provision text", event)
-				continue
-			}
-
-			// take most recent VmStartingEvent and vmPoweredOffTime
-			switch reflect.TypeOf(event).Elem().Name() {
-			case "VmStartingEvent":
-				// first event found, take it
-				if !foundStarted {
-					vmStartedTime = event.GetEvent().CreatedTime
-					foundStarted = true
-					continue
-				}
-				// if current event is youngest than previous, take it
-				if event.GetEvent().CreatedTime.After(vmStartedTime) {
-					vmStartedTime = event.GetEvent().CreatedTime
-				}
-			case "VmRenamedEvent":
-				if !foundRenamedEvent {
-					vmRenamedEvent = event.GetEvent().CreatedTime
-					foundRenamedEvent = true
-					continue
-				}
-				// if current event is youngest than previous, take it
-				if event.GetEvent().CreatedTime.After(vmRenamedEvent) {
-					vmRenamedEvent = event.GetEvent().CreatedTime
-				}
-			case "VmPoweredOffEvent":
-				if !foundPoweredOff {
-					vmPoweredOffTime = event.GetEvent().CreatedTime
-					foundPoweredOff = true
-					continue
-				}
-				if event.GetEvent().CreatedTime.After(vmPoweredOffTime) {
-					vmPoweredOffTime = event.GetEvent().CreatedTime
-				}
-			}
-		}
-
-		// In some condition (restart hatchery for exemple),
-		// we can see some vm renamed, but not started. Deleting them if the renamed is too old
-		if !foundStarted && foundRenamedEvent {
-			expire := vmRenamedEvent.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
-			if time.Now().After(expire) {
-				log.Debug(ctx, "deleting machine %q started not found and vmRenamedEvent found but it's too old: %v expire:%v", s.Name, vmRenamedEvent, expire)
-				if err := h.deleteServer(ctx, s); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "killAwolServers> cannot delete server (renamed but not started) %s", s.Name)
-				}
-				// next vm
-				continue
-			}
-		}
-
-		if !foundStarted {
-			log.Debug(ctx, "killAwolServers> vmStartedTime NOT found for %v - events analyzed:%d", s.Name, len(vmEvents))
-			continue
-		}
-		if foundPoweredOff {
-			// this should not happen, but we check if the powerOff Time is AFTER the started time
-			if vmPoweredOffTime.Before(vmStartedTime) {
-				foundPoweredOff = false
-			}
-		}
-
-		log.Debug(ctx, "killAwolServers> vmStartedTime %v found: %s events analyzed:%d", s.Name, vmStartedTime, len(vmEvents))
+		poweredOff := s.Summary.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff
 
 		var existsOnAPISide bool
 		for _, w := range allWorkers {
@@ -693,54 +614,33 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			}
 		}
 
-		var toDelete bool
-
-		log.Debug(ctx, "checking if %v is outdated. vmStartedTime: %v. existsOnAPISide:%t foundPoweredOff:%t vmPoweredOffTime:%v", s.Name, vmStartedTime, existsOnAPISide, foundPoweredOff, vmPoweredOffTime)
-
-		if existsOnAPISide {
-			expire := vmStartedTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
-			if time.Now().After(expire) {
-				toDelete = true
-			}
-		} else {
-			// not currently visible on API. Can be:
-			// - worker starting, not yet visible on api
-			// - worker ended (job finished), removed on api
-
-			// if we found a foundPoweredOff event, it's a worker used, and terminated. We can delete it
-			if foundPoweredOff {
-				// poweredOff found, we can delete this vm
-				toDelete = true
-			} else { // worker starting
-				// not poweredOff found, check the WorkerRegistrationTTL
-				expire := vmStartedTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
-				if time.Now().After(expire) {
-					toDelete = true
-				}
-			}
+		// Decide when this VM expires:
+		// - powered off: a claimed worker is never restarted, so it has finished or
+		//   failed. WorkerRegistrationTTL frees its IP quickly while still covering
+		//   the brief rename->power-on window of an in-flight spawn (whose
+		//   WorkerStartTime is "now").
+		// - powered on and registered on the API: running worker, capped at WorkerTTL.
+		// - powered on but not on the API: still booting/registering, give it
+		//   WorkerRegistrationTTL to show up.
+		var expire time.Time
+		switch {
+		case poweredOff:
+			expire = startTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+		case existsOnAPISide:
+			expire = startTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+		default:
+			expire = startTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 		}
 
-		if !toDelete {
-			log.Debug(ctx, "We keep %v as not expired", s.Name)
+		if !time.Now().After(expire) {
+			log.Debug(ctx, "killAwolServers> keeping %q (poweredOff=%t existsOnAPISide=%t startTime=%v expire=%v)", s.Name, poweredOff, existsOnAPISide, startTime, expire)
 			continue
 		}
 
-		// debug with event if necessary
-		if log.Factory().GetLevel() == log.LevelDebug {
-			events, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "")
-			if err != nil {
-				log.Error(ctx, "event machine %q - can't load LoadVirtualMachineEvents", s.Name, err)
-			}
-			for _, e := range events {
-				log.Debug(ctx, "event machine %q - event: %T time:%v msg:%+v", s.Name, e, e.GetEvent().CreatedTime, e.GetEvent().FullFormattedMessage)
-			}
-		}
-
-		log.Info(ctx, "deleting machine %q - expired. vmStartedTime: %v. existsOnAPISide:%t foundPoweredOff:%t", s.Name, vmStartedTime, existsOnAPISide, foundPoweredOff)
-
+		log.Info(ctx, "deleting machine %q - expired (poweredOff=%t existsOnAPISide=%t startTime=%v)", s.Name, poweredOff, existsOnAPISide, startTime)
 		if err := h.deleteServer(ctx, s); err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "killAwolServers> cannot delete server (expire) %s", s.Name)
+			log.Error(ctx, "killAwolServers> cannot delete server (expire) %s: %v", s.Name, err)
 		}
 	}
 }

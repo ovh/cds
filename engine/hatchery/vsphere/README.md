@@ -198,20 +198,31 @@ This annotation is the primary mechanism for tracking VM state and ownership.
 
 ```go
 type annotation struct {
-    HatcheryName            string    // Name of the hatchery that created this VM
-    WorkerName              string    // CDS worker name assigned to this VM
-    Provisioning            bool      // True if VM is a pre-provisioned idle worker
-    VMwareModelPath         string    // VMware template name (V2)
-    WorkerModelLastModified string    // Unix timestamp of model last modification
-    Model                   bool      // True if VM is a model template (do not destroy)
-    Created                 time.Time // Creation timestamp
-    JobID                   string    // CDS job ID assigned to this worker
-    IPAddress               string    // Static IP assigned to this VM
+    HatcheryName    string    // Name of the hatchery that created this VM
+    WorkerName      string    // CDS worker name assigned to this VM
+    Provisioning    bool      // True while the VM is a pre-provisioned idle worker (cleared when claimed)
+    WorkerModelPath string    // CDS worker model path
+    VMwareModelPath string    // VMware template name (V2)
+    Model           bool      // True if VM is a model template (do not destroy)
+    Created         time.Time // Provision clone timestamp
+    WorkerStartTime time.Time // Time the VM was claimed for a job (turned into a worker)
+    JobID           string    // CDS job ID assigned to this worker
+    IPAddress       string    // Static IP assigned to this VM
 }
 ```
 
 All hatchery operations (cleanup, provisioning lookup, duplicate detection) rely on parsing these
 annotations from `VirtualMachine.Config.Annotation`.
+
+The annotation is set at clone time, and **updated in place** (via `ReconfigVM_Task`, the same
+mechanism used for flavor reconfiguration) when a provision is claimed for a job. Note the
+distinction between the two timestamps:
+
+- `Created` is the **provision clone time** — it can be arbitrarily old (a provision may sit
+  pooled for a long time), so it is not a reliable indicator of worker activity.
+- `WorkerStartTime` is stamped when the provision is **claimed and turned into a worker**. Being
+  persisted in the annotation, it survives a hatchery restart and never ages out like vSphere
+  events do. `killAwolServers` uses it to decide when a VM can be reclaimed (see §8.1).
 
 ## 6. Lifecycle
 
@@ -246,13 +257,22 @@ SpawnWorker(spawnArgs)
 │
 ├── 2. Start the claimed VM
 │   ├── If flavor: reconfigure (CPU/RAM/disk) while powered off
-│   ├── Rename to the worker name → start → wait for IP
-│   ├── Wait for guest operations readiness
-│   ├── Execute pre-start script (if configured)
+│   ├── Rename to the worker name
+│   ├── Stamp the annotation with WorkerStartTime (+ JobID, Provisioning=false)
+│   │   before power-on, preserving the reserved IP and VMware model path
+│   ├── Power on (bounded retry, tolerates a VM not yet startable after reconfigure)
+│   ├── Wait for the reserved IP
+│   ├── Wait for guest operations readiness, run the pre-start script (if any)
 │   └── Launch worker script via guest operations → DONE
 │
-└── 3. Error handling: shutdown + mark for deletion on any failure
+└── 3. Error handling: a single deferred teardown releases the provision from the
+       in-use cache and, on ANY failure above, shuts the VM down and marks it for
+       deletion — so a partially-configured worker is never left holding an IP.
 ```
+
+The `WorkerStartTime` stamp is written **before** power-on so that, even if the hatchery crashes
+mid-spawn (the deferred teardown would not run), the VM still carries a start time and is cleaned
+up by `killAwolServers` (see §8.1).
 
 #### 6.2.1 Clone Specification (`prepareCloneSpec`)
 
@@ -626,21 +646,43 @@ and the provisioning scheduler does not cap tasks by IP budget.
 
 ### 8.1 Kill Awol Servers (`killAwolServers`) — Every 2 minutes
 
+This routine relies on the `WorkerStartTime` annotation stamp (see §5) and the VM's **live power
+state**, not on vSphere events. Events were previously used to find a VM's start time, but they age
+out of vCenter's event retention; a VM whose start event had expired (or never existed, e.g. a spawn
+that crashed after rename) was then kept forever, accumulating powered-off VMs that each hold a
+reserved IP until the pool exhausts its IP range. Using the persisted start time avoids that.
+
 For each VM with a CDS annotation belonging to this hatchery:
 
 1. **Marked for deletion**: Delete immediately
-2. **Provisioned VMs** (`provision-` prefix): Skip (managed by provisioning loop reconciliation, see §6.3.3)
+2. **Provisioned VMs** (`provision-` prefix): Skip (still pooled, holding their reserved IP on
+   purpose; managed by provisioning loop reconciliation, see §6.3.3)
 3. **Model templates** (`Model: true`): Skip (never delete)
-4. **Event analysis**: Load VM events (`VmStartingEvent`, `VmPoweredOffEvent`, `VmRenamedEvent`)
-   - Filter out events related to provisioning (`provision-` in message)
-   - Find the most recent start, power-off, and rename events
-5. **Renamed but never started**: If `VmRenamedEvent` exists but no `VmStartingEvent`, and the
-   rename is older than `WorkerRegistrationTTL` → delete
-6. **No start event found**: Skip (VM not yet fully created)
-7. **Worker exists on API side**: Delete if `vmStartedTime + WorkerTTL` has expired
-8. **Worker does not exist on API side**:
-   - If `VmPoweredOffEvent` found (after start): Worker finished → delete
-   - If no power-off event: Worker still starting → delete if `vmStartedTime + WorkerRegistrationTTL` has expired
+4. **Determine the start time**: `WorkerStartTime` from the annotation, or — for VMs created before
+   this field existed (upgrade/transition) — the VM's vSphere `CreateDate` as a fallback. If neither
+   is available (should not happen), the VM is kept and a warning is logged.
+5. **Decide expiry** from the live power state:
+   - **Powered off**: a claimed worker is never restarted, so it has finished or failed. Delete once
+     `startTime + WorkerRegistrationTTL` has passed. The short grace frees the IP quickly while still
+     covering the brief rename→power-on window of an in-flight spawn (whose `WorkerStartTime` is "now").
+   - **Powered on and registered on the API**: running worker → delete if `startTime + WorkerTTL` has expired.
+   - **Powered on but not on the API**: still booting/registering → delete if `startTime + WorkerRegistrationTTL` has expired.
+
+#### Backward compatibility (VMs created before this change)
+
+No migration step is required — VMs that predate the `WorkerStartTime` stamp are handled
+transparently:
+
+- **Existing provisions** (`provision-` prefix, no `WorkerStartTime`): unaffected. They are still
+  skipped by `killAwolServers` (rule 2), and the first time the new code claims one it stamps the
+  annotation in place (`ReconfigVM_Task`), so it transitions to the new scheme automatically.
+- **Existing workers** (already claimed/renamed before the change, so no `WorkerStartTime`):
+  `killAwolServers` falls back to the VM's vSphere `CreateDate` (rule 4). This means they are still
+  evaluated and eventually cleaned up instead of being kept forever — including the orphaned
+  powered-off VMs this change was introduced to reclaim. Because `CreateDate` is the provision clone
+  time (older than the real start), such a legacy VM may be reaped slightly earlier than its
+  `WorkerStartTime`-based expiry would dictate; this only affects VMs spawned before the upgrade and
+  is a one-time transitional effect.
 
 ### 8.2 Kill Disabled Workers (`killDisabledWorkers`) — Every 2 minutes
 
@@ -672,6 +714,7 @@ type VSphereClient interface {
     GetVirtualMachinePowerState(ctx, vm) (VirtualMachinePowerState, error)
     NewVirtualMachine(ctx, cloneSpec, ref, vmName) (*object.VirtualMachine, error)
     RenameVirtualMachine(ctx, vm, newName) error
+    SetVirtualMachineAnnotation(ctx, vm, annotation) error
     WaitForVirtualMachineShutdown(ctx, vm) error
     WaitForVirtualMachineIP(ctx, vm, IPAddress, vmName) error
     LoadFolder(ctx) (*object.Folder, error)
