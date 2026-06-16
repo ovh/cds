@@ -55,7 +55,32 @@ func TestHatcheryVSphere_CanSpawnv2(t *testing.T) {
 		Type: sdk.WorkerModelTypeVSphere,
 	}
 	starter := func() sdk.WorkerStarterWorkerModel {
-		return sdk.WorkerStarterWorkerModel{ModelV2: &validModel, Cmd: "cmd"}
+		return sdk.WorkerStarterWorkerModel{
+			ModelV2: &validModel,
+			Cmd:     "cmd",
+			VSphereSpec: sdk.V2WorkerModelVSphereSpec{
+				Image: "the-model",
+			},
+		}
+	}
+
+	// A provisioned VM ready to be claimed for the model: powered off,
+	// provisioning annotation matching the VMware model path.
+	readyProvision := mo.VirtualMachine{
+		ManagedEntity: mo.ManagedEntity{
+			Name: "provision-v2-worker",
+		},
+		Summary: types.VirtualMachineSummary{
+			Config: types.VirtualMachineConfigSummary{
+				Template: false,
+			},
+			Runtime: types.VirtualMachineRuntimeInfo{
+				PowerState: types.VirtualMachinePowerStatePoweredOff,
+			},
+		},
+		Config: &types.VirtualMachineConfigInfo{
+			Annotation: `{"provisioning": true, "vmware_model_path": "the-model"}`,
+		},
 	}
 
 	can := h.CanSpawn(ctx, starter(), "1", []sdk.Requirement{{Type: sdk.ServiceRequirement}})
@@ -82,12 +107,14 @@ func TestHatcheryVSphere_CanSpawnv2(t *testing.T) {
 					Annotation: `{"job_id": "1"}`,
 				},
 			},
+			readyProvision,
 		}, nil
 	})
 
 	can = h.CanSpawn(ctx, starter(), "1", []sdk.Requirement{})
 	assert.False(t, can, "it should return False, because there is a worker for the same job")
 
+	// duplicate-job check + provisioned-worker check both list the VMs
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
@@ -103,17 +130,28 @@ func TestHatcheryVSphere_CanSpawnv2(t *testing.T) {
 					Annotation: `{"job_id": "2"}`,
 				},
 			},
+			readyProvision,
 		}, nil
-	})
+	}).Times(2)
 
 	can = h.CanSpawn(ctx, starter(), "1", []sdk.Requirement{})
-	assert.True(t, can, "it should return True")
+	assert.True(t, can, "it should return True, a provisioned worker is available for the model")
 
+	// a powered-on provision is not ready to be claimed
+	startingProvision := readyProvision
+	startingProvision.Summary.Runtime.PowerState = types.VirtualMachinePowerStatePoweredOn
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{startingProvision}, nil
+	}).Times(2)
+	can = h.CanSpawn(ctx, starter(), "1", []sdk.Requirement{})
+	assert.False(t, can, "it should return False, the provisioned worker is not powered off yet")
+
+	// without any provisioned VM for the model, it can't spawn
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{}, nil
 	}).AnyTimes()
 	can = h.CanSpawn(ctx, starter(), "0", []sdk.Requirement{})
-	assert.True(t, can, "it should return True")
+	assert.False(t, can, "it should return False, no provisioned worker is available for the model")
 
 	h.cachePendingJobID.list = append(h.cachePendingJobID.list, "666")
 	can = h.CanSpawn(ctx, starter(), "666", []sdk.Requirement{})

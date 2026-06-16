@@ -231,34 +231,33 @@ On startup (`InitHatchery`), the hatchery:
 
 ### 6.2 Spawning a Worker
 
+Workers are **only** started from pre-provisioned VMs: there is no fallback cloning the
+template at spawn time. `CanSpawn` only accepts a job when a provisioned VM is available
+for the model, and `SpawnWorker` fails if none can be claimed (e.g. when another job claimed
+it in the meantime — the job is then rescheduled).
+
 The main spawn flow (`SpawnWorker`) proceeds as follows:
 
 ```
 SpawnWorker(spawnArgs)
 │
-├── 1. Resolve template VM
-│   └── Load the V2 template by spec.Image name (must already exist)
+├── 1. Claim a pre-provisioned VM (FindProvisionnedWorker)
+│   └── None available: FAIL (job will be rescheduled)
 │
-├── 2. Try to find a pre-provisioned VM
-│   ├── Found: rename → reconfigure (flavor) → start → wait for IP
-│   │         → pre-start script → launch worker script → DONE
-│   └── Not found: continue to fresh clone
-│
-├── 3. Fresh clone path
-│   ├── Build annotation
-│   ├── prepareCloneSpec() → clone specification (network, IP, datastore)
-│   ├── Clone template VM into datacenter folder
-│   ├── If flavor: reconfigure (CPU/RAM/disk) → power on
+├── 2. Start the claimed VM
+│   ├── If flavor: reconfigure (CPU/RAM/disk) while powered off
+│   ├── Rename to the worker name → start → wait for IP
 │   ├── Wait for guest operations readiness
 │   ├── Execute pre-start script (if configured)
 │   └── Launch worker script via guest operations → DONE
 │
-└── 4. Error handling: shutdown + mark for deletion on any failure
+└── 3. Error handling: shutdown + mark for deletion on any failure
 ```
 
 #### 6.2.1 Clone Specification (`prepareCloneSpec`)
 
-The clone specification defines how the VM is created:
+The clone specification defines how a provisioned VM is created (used by the provisioning
+scheduler, see §6.3):
 
 - **Network**: Loads the first ethernet card from the template's devices, reconfigures it with the
   configured card type and network backing
@@ -268,12 +267,12 @@ The clone specification defines how the VM is created:
 - **Customization**: Linux prep with auto-generated hostname. If IP range is configured, assigns
   a static IP with subnet mask, gateway, and DNS
 - **Annotation**: Serializes the `annotation` struct as JSON into `VirtualMachineConfigSpec.Annotation`
-- **Power On**: `PowerOn: true` when no flavor is needed (VM boots immediately). `PowerOn: false`
-  when a flavor is provided (the caller must reconfigure and start the VM explicitly)
+- **Power On**: `PowerOn: true`, the VM boots immediately to complete its provisioning
 - **VM Tools**: Configured to run after power on
 
 **Important**: CPU, RAM, and disk size are **not** specified in the clone spec. All hardware
-reconfiguration (CPU, RAM, disk) is handled by `reconfigureVM` on the powered-off clone.
+reconfiguration (CPU, RAM, disk) is handled by `reconfigureVM` on the powered-off provisioned
+VM when it is claimed by `SpawnWorker`.
 
 #### 6.2.2 Worker Script Launch (`launchScriptWorker`)
 
@@ -530,7 +529,12 @@ Before spawning, the hatchery checks:
 3. **Empty Cmd**: Returns `false` if the model has no command defined
 4. **Duplicate job check**: Ensures no existing VM annotation references the same `JobID`
 5. **Pending job check**: Ensures the job ID is not in the local `cachePendingJobID`
-6. **IP availability**: If IP range is configured, verifies at least one IP is available
+6. **Provisioned worker availability** (`hasAvailableProvisionedWorker`): a provisioned VM
+   matching the model must be ready to be claimed (powered off, not pending/used/marked for
+   deletion). Workers are only started from provisioned VMs, and a provisioned VM already
+   holds its own IP (reserved at clone time) — so no free-IP check is performed: it would
+   wrongly refuse to spawn when the whole IP range is held by provisioned machines, which is
+   the nominal situation.
 
 ### 6.6 Resource Allocation (`CanAllocateResources`)
 
@@ -941,12 +945,9 @@ The hatchery supports **flavors** for flexible CPU, RAM, and disk sizing without
 
 ## 13.1 Overview
 
-Flavors map abstract size names (e.g., `small`, `medium`, `large`) to explicit CPU, RAM, and disk values. When a worker is spawned with a flavor:
+Flavors map abstract size names (e.g., `small`, `medium`, `large`) to explicit CPU, RAM, and disk values. When a worker is spawned with a flavor, the claimed pre-provisioned VM is reconfigured (while still powered off) to match the flavor before power-on.
 
-- **For pre-provisioned VMs**: The VM is reconfigured (while powered off) to match the flavor before power-on
-- **For fresh clones**: The VM is cloned powered off, then reconfigured via `reconfigureVM`, then powered on
-
-In both cases, `reconfigureVM` is the single entry point for all hardware configuration (CPU, RAM, disk). This consolidation ensures consistent behavior regardless of the spawn path.
+`reconfigureVM` is the single entry point for all hardware configuration (CPU, RAM, disk).
 
 ## 13.2 Configuration
 
@@ -1087,23 +1088,9 @@ Pre-start script (e.g. filesystem resize) runs inside guest
 Worker starts with 8 vCPUs, 16GB RAM, 100GB disk
 ```
 
-For fresh clones with a flavor, the same `reconfigureVM` function is used:
-
-```
-Template ──clone (powered off)──► New VM (template resources)
-  ↓
-reconfigureVM(vm, "large")  →  VM reconfigured (powered off)
-  ↓
-Power on VM
-  ↓
-Pre-start script runs inside guest
-  ↓
-Worker starts
-```
-
 ## 13.7 Backward Compatibility
 
-- If `flavors` map is empty/not configured → no resizing occurs, VMs inherit template resources and are cloned powered on (legacy behavior)
+- If `flavors` map is empty/not configured → no resizing occurs, VMs inherit template resources (legacy behavior)
 - If worker model has no flavor and no `defaultFlavor` configured → template resources used
 - If `diskSizeGB` is `0` or unset → disk is not resized, template disk size is inherited
 - Resource counting (Section 12) reads actual VM hardware → automatically handles resized VMs

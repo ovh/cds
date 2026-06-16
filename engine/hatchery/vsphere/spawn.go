@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/rockbears/log"
-	"github.com/rockbears/yaml"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -56,20 +56,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	h.cachePendingJobID.list = append(h.cachePendingJobID.list, spawnArgs.JobID)
 	h.cachePendingJobID.mu.Unlock()
 
-	// ascode v2: the template must exist into vsphere
-	// the template name is the image name in the worker model yml file
 	if spawnArgs.Model.ModelV2 == nil {
 		return sdk.WithStack(fmt.Errorf("worker model v1 is no longer supported on vSphere"))
-	}
-
-	var vsphereSpec sdk.V2WorkerModelVSphereSpec
-	if err := yaml.Unmarshal(spawnArgs.Model.ModelV2.Spec, &vsphereSpec); err != nil {
-		return sdk.WrapError(err, "cannot Unmarshal virtual machine spec")
-	}
-
-	var vmTemplate *object.VirtualMachine
-	if vmTemplate, err = h.vSphereClient.LoadVirtualMachine(ctx, vsphereSpec.Image); err != nil {
-		return sdk.WrapError(err, "cannot find virtual machine template with name %s", vsphereSpec.Image)
 	}
 
 	// Amendment C: Resolve flavor before spawning
@@ -104,125 +92,75 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		}
 	}
 
-	// Try to reuse a provisioned worker (it already holds its own IP)
-	{
-		provisionnedVMWorker, err := h.FindProvisionnedWorker(ctx, spawnArgs.Model)
-		if err != nil {
-			return err
-		}
+	// Workers are only started from pre-provisioned VMs: claim one. There is
+	// no fallback cloning the template directly, CanSpawn only accepts a job
+	// when a provisioned VM is available for the model.
+	provisionnedVMWorker, err := h.FindProvisionnedWorker(ctx, spawnArgs.Model)
+	if err != nil {
+		return err
+	}
+	if provisionnedVMWorker == nil {
+		return sdk.WithStack(fmt.Errorf("no provisioned worker available for model %q", spawnArgs.Model.GetName()))
+	}
 
-		if provisionnedVMWorker != nil {
-			log.Info(ctx, "starting worker %q with provisionned machine %q", spawnArgs.Model.GetName(), provisionnedVMWorker.Name())
+	log.Info(ctx, "starting worker %q with provisionned machine %q", spawnArgs.Model.GetName(), provisionnedVMWorker.Name())
 
-			// Amendment C: Reconfigure VM to flavor before starting (if flavor requested)
-			if flavor != nil {
-				log.Info(ctx, "reconfiguring provisioned VM %q to flavor %q", provisionnedVMWorker.Name(), flavorName)
-				if err := h.reconfigureVM(ctx, provisionnedVMWorker, flavor); err != nil {
-					h.cacheProvisioning.mu.Lock()
-					h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
-					h.cacheProvisioning.mu.Unlock()
-					return sdk.WrapError(err, "unable to reconfigure VM %q to flavor %q", provisionnedVMWorker.Name(), flavorName)
-				}
-			}
-
-			if err := h.vSphereClient.RenameVirtualMachine(ctx, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
-				h.cacheProvisioning.mu.Lock()
-				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
-				h.cacheProvisioning.mu.Unlock()
-				return sdk.WrapError(err, "unable to rename VM %q", provisionnedVMWorker.Name())
-			}
-
-			time.Sleep(2 * time.Second)
-
-			if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
-				h.cacheProvisioning.mu.Lock()
-				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
-				h.cacheProvisioning.mu.Unlock()
-
-				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
-				h.markToDelete(ctx, provisionnedVMWorker.Name())
-				return sdk.WrapError(err, "unable to start VM %q", spawnArgs.WorkerName)
-			}
-
-			// wait for the right IP, probably keep track of the IP address in the server annotations
-			// to avoid having two provisionned VM with the same IP address
-			// so we if to peek a random IP address by considering already provisionned IP addresses
-			moProvisionnedVMWorker, err := h.getVirtualMachineByName(ctx, provisionnedVMWorker.Name())
-			if err != nil {
-				return sdk.WrapError(err, "unable to find VM %q", spawnArgs.WorkerName)
-			}
-			annot := getVirtualMachineCDSAnnotation(ctx, *moProvisionnedVMWorker)
-
-			if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, provisionnedVMWorker, &annot.IPAddress, spawnArgs.WorkerName); err != nil {
-				h.cacheProvisioning.mu.Lock()
-				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
-				h.cacheProvisioning.mu.Unlock()
-
-				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
-				h.markToDelete(ctx, provisionnedVMWorker.Name())
-				return sdk.WrapError(err, "unable to get VM %q IP Address", spawnArgs.WorkerName)
-			}
-
-			errLaunch := h.launchScriptWorker(ctx, spawnArgs, provisionnedVMWorker, spawnArgs.WorkerName)
-
+	// Amendment C: Reconfigure VM to flavor before starting (if flavor requested)
+	if flavor != nil {
+		log.Info(ctx, "reconfiguring provisioned VM %q to flavor %q", provisionnedVMWorker.Name(), flavorName)
+		if err := h.reconfigureVM(ctx, provisionnedVMWorker, flavor); err != nil {
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
 			h.cacheProvisioning.mu.Unlock()
-
-			return errLaunch
+			return sdk.WrapError(err, "unable to reconfigure VM %q to flavor %q", provisionnedVMWorker.Name(), flavorName)
 		}
 	}
 
-	// No provisioned VM available: create fresh clone with flavor applied
-	annot := annotation{
-		HatcheryName:    h.Name(),
-		WorkerName:      spawnArgs.WorkerName,
-		WorkerModelPath: spawnArgs.Model.GetFullPath(),
-		VMwareModelPath: vmTemplate.Name(),
-		Created:         time.Now(),
-		JobID:           spawnArgs.JobID,
+	if err := h.vSphereClient.RenameVirtualMachine(ctx, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
+		h.cacheProvisioning.mu.Lock()
+		h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
+		h.cacheProvisioning.mu.Unlock()
+		return sdk.WrapError(err, "unable to rename VM %q", provisionnedVMWorker.Name())
 	}
 
-	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, flavor)
+	time.Sleep(2 * time.Second)
+
+	if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
+		h.cacheProvisioning.mu.Lock()
+		h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
+		h.cacheProvisioning.mu.Unlock()
+
+		_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
+		h.markToDelete(ctx, provisionnedVMWorker.Name())
+		return sdk.WrapError(err, "unable to start VM %q", spawnArgs.WorkerName)
+	}
+
+	// wait for the right IP, probably keep track of the IP address in the server annotations
+	// to avoid having two provisionned VM with the same IP address
+	// so we if to peek a random IP address by considering already provisionned IP addresses
+	moProvisionnedVMWorker, err := h.getVirtualMachineByName(ctx, provisionnedVMWorker.Name())
 	if err != nil {
-		if sdk.Cause(err).Error() == "no IP address available" {
-			log.Warn(ctx, "unable to create worker: %v", err)
-			return nil
-		}
-		return err
+		return sdk.WrapError(err, "unable to find VM %q", spawnArgs.WorkerName)
+	}
+	annot := getVirtualMachineCDSAnnotation(ctx, *moProvisionnedVMWorker)
+
+	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, provisionnedVMWorker, &annot.IPAddress, spawnArgs.WorkerName); err != nil {
+		h.cacheProvisioning.mu.Lock()
+		h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
+		h.cacheProvisioning.mu.Unlock()
+
+		_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
+		h.markToDelete(ctx, provisionnedVMWorker.Name())
+		return sdk.WrapError(err, "unable to get VM %q IP Address", spawnArgs.WorkerName)
 	}
 
-	folder, err := h.vSphereClient.LoadFolder(ctx)
-	if err != nil {
-		return err
-	}
+	errLaunch := h.launchScriptWorker(ctx, spawnArgs, provisionnedVMWorker, spawnArgs.WorkerName)
 
-	log.Info(ctx, "Create vm to execute worker %q, cloneSpec: %+v", spawnArgs.WorkerName, *cloneSpec)
-	defer log.Info(ctx, "Terminate to create vm for worker %s", spawnArgs.WorkerName)
+	h.cacheProvisioning.mu.Lock()
+	h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
+	h.cacheProvisioning.mu.Unlock()
 
-	cloneRef, err := h.vSphereClient.CloneVirtualMachine(ctx, vmTemplate, folder, spawnArgs.WorkerName, cloneSpec)
-	if err != nil {
-		return err
-	}
-
-	vmWorker, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, spawnArgs.WorkerName)
-	if err != nil {
-		return err
-	}
-
-	// When a flavor is set the VM was cloned powered off — reconfigure then start
-	if flavor != nil {
-		if err := h.reconfigureVM(ctx, vmWorker, flavor); err != nil {
-			h.markToDelete(ctx, spawnArgs.WorkerName)
-			return sdk.WrapError(err, "unable to reconfigure fresh clone %q", spawnArgs.WorkerName)
-		}
-		if err := h.vSphereClient.StartVirtualMachine(ctx, vmWorker); err != nil {
-			h.markToDelete(ctx, spawnArgs.WorkerName)
-			return sdk.WrapError(err, "unable to start fresh clone %q", spawnArgs.WorkerName)
-		}
-	}
-
-	return h.launchScriptWorker(ctx, spawnArgs, vmWorker, spawnArgs.WorkerName)
+	return errLaunch
 }
 
 func (h *HatcheryVSphere) checkVirtualMachineIsReady(ctx context.Context, model sdk.WorkerStarterWorkerModel, vm *object.VirtualMachine, vmName string) error {
@@ -395,7 +333,7 @@ func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel str
 // the VM is powered on but not yet shut down — the caller is responsible for
 // completing provisioning via finishProvisioning.
 func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate *object.VirtualMachine, annot annotation, workerName string) error {
-	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, nil)
+	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot)
 	if err != nil {
 		return err
 	}
@@ -417,6 +355,58 @@ func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate
 	}
 
 	return nil
+}
+
+// hasAvailableProvisionedWorker reports whether a provisioned VM matching the
+// given model is ready to be claimed by SpawnWorker. It mirrors the matching
+// logic of FindProvisionnedWorker but is read-only: it does not reserve the VM
+// (no mutation of cacheProvisioning.using) and avoids per-VM vSphere API calls,
+// so it is cheap enough to be called from CanSpawn.
+func (h *HatcheryVSphere) hasAvailableProvisionedWorker(ctx context.Context, model sdk.WorkerStarterWorkerModel) bool {
+	expectedModelPath := model.GetVSphereImage()
+
+	h.cacheProvisioning.mu.Lock()
+	pending := make([]string, len(h.cacheProvisioning.pending))
+	copy(pending, h.cacheProvisioning.pending)
+	using := make([]string, len(h.cacheProvisioning.using))
+	copy(using, h.cacheProvisioning.using)
+	h.cacheProvisioning.mu.Unlock()
+
+	h.cacheToDelete.mu.Lock()
+	toDelete := make([]string, len(h.cacheToDelete.list))
+	copy(toDelete, h.cacheToDelete.list)
+	h.cacheToDelete.mu.Unlock()
+
+	for _, machine := range h.getVirtualMachines(ctx) {
+		if !strings.HasPrefix(machine.Name, "provision-v2") {
+			continue
+		}
+
+		annot := getVirtualMachineCDSAnnotation(ctx, machine)
+		if annot == nil || !annot.Provisioning {
+			continue
+		}
+
+		if expectedModelPath != annot.VMwareModelPath {
+			continue
+		}
+
+		// A finished provision is powered off, waiting to be claimed. A
+		// powered-on one is either still being provisioned or already starting.
+		if machine.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff {
+			continue
+		}
+
+		if sdk.IsInArray(machine.Name, pending) ||
+			sdk.IsInArray(machine.Name, using) ||
+			sdk.IsInArray(machine.Name, toDelete) {
+			continue
+		}
+
+		return true
+	}
+
+	return false
 }
 
 func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.WorkerStarterWorkerModel) (*object.VirtualMachine, error) {
