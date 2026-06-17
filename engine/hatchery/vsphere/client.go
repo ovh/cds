@@ -332,6 +332,9 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 
 	annotStr, err := json.Marshal(annot)
 	if err != nil {
+		// The IP was reserved just above; release it since this clone spec will
+		// not be used.
+		h.releaseIPAddress(annot.IPAddress)
 		return nil, sdk.WrapError(err, "unable to marshal annotation")
 	}
 

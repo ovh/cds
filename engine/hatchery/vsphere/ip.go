@@ -34,6 +34,22 @@ func (h *HatcheryVSphere) getUsedIPs(ctx context.Context, srvs []mo.VirtualMachi
 	return usedIPs
 }
 
+// releaseObservedReservations drops reservations for IPs now confirmed in use by
+// a real VM (its annotation or guest network). The VM list returned by vSphere is
+// the source of truth: a reservation is only an optimistic, in-memory lock that
+// covers the window between picking an IP and the cloned VM becoming visible in
+// the inventory. Once a VM carrying the IP is observed, the annotation is
+// authoritative and the reservation is redundant, so it is released. This keeps
+// the lock self-healing (and harmless to lose on restart). Caller must hold
+// IpAddressesMutex.
+func (h *HatcheryVSphere) releaseObservedReservations(usedIPs map[string]struct{}) {
+	for ip := range usedIPs {
+		if sdk.IsInArray(ip, h.reservedIPAddresses) {
+			h.reservedIPAddresses = sdk.DeleteFromArray(h.reservedIPAddresses, ip)
+		}
+	}
+}
+
 // findAvailableIP looks for the first free IP across all configured networks
 // and returns the IP along with its associated network configuration.
 func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (ipResult, error) {
@@ -42,13 +58,7 @@ func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (ipResult, error)
 
 	srvs := h.getVirtualMachines(ctx)
 	usedIPs := h.getUsedIPs(ctx, srvs)
-
-	// If an IP appears in guest network, it's confirmed in use — clean up stale reservations
-	for ip := range usedIPs {
-		if sdk.IsInArray(ip, h.reservedIPAddresses) {
-			h.reservedIPAddresses = sdk.DeleteFromArray(h.reservedIPAddresses, ip)
-		}
-	}
+	h.releaseObservedReservations(usedIPs)
 
 	for _, network := range h.availableNetworks {
 		for _, ip := range network.ipAddresses {
@@ -76,6 +86,7 @@ func (h *HatcheryVSphere) countAvailableIPs(ctx context.Context) int {
 
 	srvs := h.getVirtualMachines(ctx)
 	usedIPs := h.getUsedIPs(ctx, srvs)
+	h.releaseObservedReservations(usedIPs)
 
 	count := 0
 	for _, network := range h.availableNetworks {
@@ -88,6 +99,18 @@ func (h *HatcheryVSphere) countAvailableIPs(ctx context.Context) int {
 		}
 	}
 	return count
+}
+
+// releaseIPAddress drops an IP reservation explicitly. Used when a provision
+// clone that reserved the IP fails before any VM ends up carrying it, so the IP
+// returns to the pool immediately instead of waiting out the reservation TTL.
+func (h *HatcheryVSphere) releaseIPAddress(ip string) {
+	if ip == "" {
+		return
+	}
+	h.IpAddressesMutex.Lock()
+	h.reservedIPAddresses = sdk.DeleteFromArray(h.reservedIPAddresses, ip)
+	h.IpAddressesMutex.Unlock()
 }
 
 func (h *HatcheryVSphere) reserveIPAddress(ctx context.Context, ip string) error {

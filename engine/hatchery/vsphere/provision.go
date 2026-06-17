@@ -30,6 +30,22 @@ type provisioningPool struct {
 	tasks chan provisionTask
 }
 
+// requestProvisioning asks the provisioning loop to run a refill pass now instead
+// of waiting for the next tick. It is non-blocking: if a refill is already pending
+// (or provisioning is not enabled), the request is dropped — the pending run will
+// pick up the latest state anyway.
+func (h *HatcheryVSphere) requestProvisioning(ctx context.Context) {
+	if h.provisionSignal == nil {
+		return
+	}
+	select {
+	case h.provisionSignal <- struct{}{}:
+		log.Debug(ctx, "provisioning refill requested")
+	default:
+		// a refill is already pending
+	}
+}
+
 // startProvisioningPool launches the worker pool. Workers are long-lived and
 // pull tasks from the channel until the context is cancelled.
 func (h *HatcheryVSphere) startProvisioningPool(ctx context.Context) {

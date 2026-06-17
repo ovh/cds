@@ -254,6 +254,7 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 	}
 	h.Config.WorkerTTL = 5
 	h.Config.WorkerRegistrationTTL = 5
+	h.Config.FinishedWorkerGracePeriod = 300 // 5 min
 
 	now := time.Now()
 	old := now.Add(-10 * time.Minute)
@@ -264,10 +265,10 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 		return string(b)
 	}
 
-	// worker0 and worker1 are registered on the API side.
+	// worker0, worker1 and worker6 are registered on the API side.
 	cdsclient.EXPECT().WorkerList(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]sdk.Worker, error) {
-			return []sdk.Worker{{Name: "worker0"}, {Name: "worker1"}}, nil
+			return []sdk.Worker{{Name: "worker0"}, {Name: "worker1"}, {Name: "worker6"}}, nil
 		},
 	)
 
@@ -301,8 +302,13 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
 					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{}), CreateDate: &old},
 				},
-				{ // just-claimed worker, powered off but recent start → KEEP (in-flight)
+				{ // just-claimed worker, powered off but recent start, not on API → KEEP (in-flight)
 					ManagedEntity: mo.ManagedEntity{Name: "worker5"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
+				},
+				{ // finished worker, powered off but still on API, recent start → DELETE NOW
+					ManagedEntity: mo.ManagedEntity{Name: "worker6"},
 					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
 					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
 				},
@@ -314,6 +320,7 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 	var vm1 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker1"}}
 	var vm3 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker3"}}
 	var vm4 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker4"}}
+	var vm6 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker6"}}
 
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, vmname string) (*object.VirtualMachine, error) {
@@ -324,19 +331,41 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 				return &vm3, nil
 			case "worker4":
 				return &vm4, nil
+			case "worker6":
+				return &vm6, nil
 			}
 			return nil, fmt.Errorf("not expected: %s", vmname)
 		},
-	).Times(3)
+	).Times(4)
 
-	// worker1 is powered on → shutdown then destroy; worker3/worker4 are powered
-	// off → destroy only.
+	// worker1 is powered on → shutdown then destroy; worker3/worker4/worker6 are
+	// powered off → destroy only.
 	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).Return(nil)
 	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).Return(nil)
 	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm3).Return(nil)
 	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm4).Return(nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm6).Return(nil)
 
 	h.killAwolServers(context.Background())
+}
+
+func TestHatcheryVSphere_requestProvisioning(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	ctx := context.Background()
+
+	// nil channel (provisioning disabled): must be a safe no-op.
+	h := &HatcheryVSphere{}
+	h.requestProvisioning(ctx)
+
+	// buffered size-1: repeated requests coalesce into a single pending refill.
+	h.provisionSignal = make(chan struct{}, 1)
+	h.requestProvisioning(ctx)
+	h.requestProvisioning(ctx)
+	h.requestProvisioning(ctx)
+	assert.Len(t, h.provisionSignal, 1, "requests must coalesce to a single pending refill")
+
+	<-h.provisionSignal
+	assert.Len(t, h.provisionSignal, 0)
 }
 
 func TestHatcheryVSphere_Status(t *testing.T) {

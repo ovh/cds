@@ -226,6 +226,39 @@ func TestHatcheryVSphere_deleteServer(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// Observing the vSphere VM list is the source of truth: when a listed VM's
+// annotation carries an IP that is still locally reserved, the reservation must
+// be released (the annotation now protects the IP). A reservation for an IP not
+// yet backed by any VM (in-flight clone) must be kept.
+func TestHatcheryVSphere_countAvailableIPs_releasesObservedReservations(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{vSphereClient: c}
+	h.availableNetworks = []availableNetwork{{ipAddresses: []string{"10.0.0.1", "10.0.0.2", "10.0.0.3"}}}
+	// 10.0.0.1 is reserved AND now backed by a real VM; 10.0.0.2 is reserved but
+	// not yet backed by any VM (in-flight clone).
+	h.reservedIPAddresses = []string{"10.0.0.1", "10.0.0.2"}
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{Name: "worker-x"},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: `{"ip_address": "10.0.0.1"}`},
+				},
+			}, nil
+		},
+	)
+
+	count := h.countAvailableIPs(context.Background())
+
+	// 10.0.0.1 used (annotation), 10.0.0.2 still reserved (in-flight) → only 10.0.0.3 free.
+	assert.Equal(t, 1, count)
+	assert.False(t, sdk.IsInArray("10.0.0.1", h.reservedIPAddresses), "reservation must be released once a VM carries the IP")
+	assert.True(t, sdk.IsInArray("10.0.0.2", h.reservedIPAddresses), "an unbacked (in-flight) reservation must be kept")
+}
+
 func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 

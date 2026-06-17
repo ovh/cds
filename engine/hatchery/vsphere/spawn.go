@@ -139,6 +139,10 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
 			h.markToDelete(ctx, provisionnedVMWorker.Name())
 		}
+		// A provision was consumed (claimed for this job, or marked for deletion on
+		// failure): ask the provisioning loop to refill the pool without waiting for
+		// its next tick.
+		h.requestProvisioning(ctx)
 	}()
 
 	log.Info(ctx, "starting worker %q with provisionned machine %q", spawnArgs.Model.GetName(), provisionName)
@@ -402,6 +406,18 @@ func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate
 		return err
 	}
 
+	// prepareCloneSpec reserved annot.IPAddress (when an IP range is configured).
+	// If the clone does not complete, no VM will ever carry that IP, so release
+	// the reservation right away instead of waiting out its TTL. On success the
+	// reservation is kept until the new VM is observed (its annotation then
+	// becomes the source of truth).
+	provisioned := false
+	defer func() {
+		if !provisioned {
+			h.releaseIPAddress(annot.IPAddress)
+		}
+	}()
+
 	folder, err := h.vSphereClient.LoadFolder(ctx)
 	if err != nil {
 		return err
@@ -418,6 +434,7 @@ func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate
 		return err
 	}
 
+	provisioned = true
 	return nil
 }
 

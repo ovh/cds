@@ -81,6 +81,12 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	if h.Config.WorkerRegistrationTTL == 0 {
 		h.Config.WorkerRegistrationTTL = 10
 	}
+	if h.Config.KillAwolServersInterval == 0 {
+		h.Config.KillAwolServersInterval = 60
+	}
+	if h.Config.FinishedWorkerGracePeriod == 0 {
+		h.Config.FinishedWorkerGracePeriod = 180
+	}
 
 	return nil
 }
@@ -558,6 +564,15 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
 	srvs := h.getVirtualMachines(ctx)
 
+	// Track whether anything was deleted so we can trigger an immediate
+	// provisioning refill once resources (and their reserved IPs) are freed.
+	var deleted bool
+	defer func() {
+		if deleted {
+			h.requestProvisioning(ctx)
+		}
+	}()
+
 	for _, s := range srvs {
 		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, s.Name)
 
@@ -575,6 +590,8 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server (markedToDelete) %s: %v", s.Name, err)
+			} else {
+				deleted = true
 			}
 			continue
 		}
@@ -615,17 +632,21 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// Decide when this VM expires:
-		// - powered off: a claimed worker is never restarted, so it has finished or
-		//   failed. WorkerRegistrationTTL frees its IP quickly while still covering
-		//   the brief rename->power-on window of an in-flight spawn (whose
-		//   WorkerStartTime is "now").
-		// - powered on and registered on the API: running worker, capped at WorkerTTL.
-		// - powered on but not on the API: still booting/registering, give it
+		// - powered off and still registered on the API: the worker booted, ran, and
+		//   is now down — the job is over. Reclaim it immediately.
+		// - powered off and no longer on the API: a finished+deregistered worker, or
+		//   an in-flight spawn between rename and power-on. The short
+		//   FinishedWorkerGracePeriod reclaims the former quickly while still covering
+		//   the latter (its WorkerStartTime is "now").
+		// - powered on and registered: running worker, capped at WorkerTTL.
+		// - powered on but not registered: still booting/registering, give it
 		//   WorkerRegistrationTTL to show up.
 		var expire time.Time
 		switch {
+		case poweredOff && existsOnAPISide:
+			expire = startTime
 		case poweredOff:
-			expire = startTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+			expire = startTime.Add(time.Duration(h.Config.FinishedWorkerGracePeriod) * time.Second)
 		case existsOnAPISide:
 			expire = startTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 		default:
@@ -641,6 +662,8 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		if err := h.deleteServer(ctx, s); err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "killAwolServers> cannot delete server (expire) %s: %v", s.Name, err)
+		} else {
+			deleted = true
 		}
 	}
 }

@@ -27,6 +27,8 @@ type HatcheryConfiguration struct {
 	WorkerTTL                  int                        `mapstructure:"workerTTL" toml:"workerTTL" default:"120" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 	WorkerRegistrationTTL      int                        `mapstructure:"workerRegistrationTTL" toml:"workerRegistrationTTL" commented:"false" comment:"Worker Registration TTL (minutes)" json:"workerRegistrationTTL"`
 	WorkerProvisioningInterval int                        `mapstructure:"workerProvisioningInterval" toml:"workerProvisioningInterval" commented:"true" comment:"Worker Provisioning interval (seconds)" json:"workerProvisioningInterval"`
+	KillAwolServersInterval    int                        `mapstructure:"killAwolServersInterval" toml:"killAwolServersInterval" commented:"true" comment:"Interval between cleanup passes of awol/finished servers (seconds). Default 60." json:"killAwolServersInterval"`
+	FinishedWorkerGracePeriod  int                        `mapstructure:"finishedWorkerGracePeriod" toml:"finishedWorkerGracePeriod" commented:"true" comment:"Grace period before deleting a powered-off worker VM that is no longer on the API side (seconds). Default 180." json:"finishedWorkerGracePeriod"`
 	WorkerProvisioningPoolSize int                        `mapstructure:"workerProvisioningPoolSize" toml:"workerProvisioningPoolSize" commented:"true" comment:"Worker Provisioning pool size" json:"workerProvisioningPoolSize"`
 	WorkerProvisioning         []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
 	GuestCredentials           []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"Deprecated: use [[models]] instead. List of Guest credentials" json:"-"`
@@ -114,7 +116,11 @@ type HatcheryVSphere struct {
 	availableNetworks    []availableNetwork
 	reservedIPAddresses  []string
 	provisioningPool     *provisioningPool
-	cachePendingJobID    struct {
+	// provisionSignal lets cleanup and spawn request an immediate provisioning
+	// refill instead of waiting for the next tick. Buffered (size 1) so a burst
+	// of requests coalesces into at most one pending run.
+	provisionSignal   chan struct{}
+	cachePendingJobID struct {
 		mu   sync.Mutex
 		list []string
 	}
