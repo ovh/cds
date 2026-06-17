@@ -21,7 +21,7 @@ $(TARGET_PLUGINS):
 
 build: $(TARGET_PLUGINS)
 
-.PHONY: dist test package publish clean
+.PHONY: dist test package clean
 
 package:
 	@mkdir -p dist
@@ -35,11 +35,6 @@ package:
 test:
 	@for P in $(ALL_PLUGINS); do \
 		$(MAKE) test -C $$P; \
-	done;
-
-publish:
-	@for P in $(ALL_PLUGINS); do \
-		$(MAKE) publish -C $$P; \
 	done;
 
 clean: mk_go_clean ## clean binary and tests results
