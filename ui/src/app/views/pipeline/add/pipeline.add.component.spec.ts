@@ -1,5 +1,4 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -32,7 +31,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 
 describe('CDS: Pipeline Add Component', () => {
 
-    let injector: Injector;
+    let injector: TestBed;
     let store: Store;
 
     beforeEach(async () => {
@@ -72,7 +71,7 @@ describe('CDS: Pipeline Add Component', () => {
         }).compileComponents();
 
         injector = getTestBed();
-        store = injector.get(Store);
+        store = injector.inject(Store);
     });
 
     afterEach(() => {

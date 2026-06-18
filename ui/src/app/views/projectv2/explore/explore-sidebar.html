@@ -1,90 +1,110 @@
 <div class="header">
-    <a class="title" title="Show overview" [routerLink]="['/project', project.key, 'explore']">
-        Workspace
-    </a>
-    <button class="collapse" nz-button nzType="text" nzSize="small" nz-tooltip
-        nzTooltipTitle="Collapse folders" (click)="collapseAll()">
-        <i nz-icon nzType="menu-fold" nzTheme="outline"></i>
-    </button>
-    <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip
-        nzTooltipTitle="Click to refresh the workspace" (click)="load()">
-        <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
-    </button>
+  <a class="title" title="Show overview" [routerLink]="['/project', project.key, 'explore']">
+    Workspace
+  </a>
+  <button class="collapse" nz-button nzType="text" nzSize="small" nz-tooltip
+    nzTooltipTitle="Collapse folders" (click)="collapseAll()">
+    <i nz-icon nzType="menu-fold" nzTheme="outline"></i>
+  </button>
+  <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip
+    nzTooltipTitle="Click to refresh the workspace" (click)="load()">
+    <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
+  </button>
 </div>
 <div class="content">
-    <ng-container *ngFor="let vcs of vcss">
-        <div class="tree-node-header large" (click)="clickVCS(vcs)">
-            <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
-            <div class="name">{{vcs.name}}</div>
-            <button nz-button nzSize="small" title="Add a new Repository"
-                (click)="openRepositoryAddDrawer(vcs.name);$event.stopPropagation()">
-                <i nz-icon nzType="plus" nzTheme="outline"></i>
-                Repository
-            </button>
-        </div>
-        <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name]">
-            <nz-alert *ngIf="!repositories[vcs.name] || repositories[vcs.name].length === 0" nzType="info"
-                nzMessage="No repository found"></nz-alert>
-            <ng-container *ngFor="let repo of repositories[vcs.name]">
-                <div class="tree-node-header large" (click)="clickRepository(vcs, repo)">
-                    <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
-                        nzTheme="fill"></span>
-                    <a class="name"
-                        [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']"
-                        routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)"
-                        [title]="repo.name">{{repo.name}}</a>
-                    <app-repository-ref-select *ngIf="treeExpandState[vcs.name+'/'+repo.name]" [size]="'small'"
-                        [branches]="branches[vcs.name+'/'+repo.name]" [tags]="tags[vcs.name+'/'+repo.name]"
-                        [ngModel]="refSelectState[vcs.name+'/'+repo.name]"
-                        (ngModelChange)="selectRepositoryRef(vcs, repo, $event)"></app-repository-ref-select>
+  @for (vcs of vcss; track vcs) {
+    <div class="tree-node-header large" (click)="clickVCS(vcs)">
+      <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
+      <div class="name">{{vcs.name}}</div>
+      <button nz-button nzSize="small" title="Add a new Repository"
+        (click)="openRepositoryAddDrawer(vcs.name);$event.stopPropagation()">
+        <i nz-icon nzType="plus" nzTheme="outline"></i>
+        Repository
+      </button>
+    </div>
+    @if (treeExpandState[vcs.name]) {
+      <div class="tree-node-content large">
+        @if (!repositories[vcs.name] || repositories[vcs.name].length === 0) {
+          <nz-alert nzType="info"
+          nzMessage="No repository found"></nz-alert>
+        }
+        @for (repo of repositories[vcs.name]; track repo) {
+          <div class="tree-node-header large" (click)="clickRepository(vcs, repo)">
+            <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
+            nzTheme="fill"></span>
+            <a class="name"
+              [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']"
+              routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)"
+            [title]="repo.name">{{repo.name}}</a>
+            @if (treeExpandState[vcs.name+'/'+repo.name]) {
+              <app-repository-ref-select [size]="'small'"
+                [branches]="branches[vcs.name+'/'+repo.name]" [tags]="tags[vcs.name+'/'+repo.name]"
+                [ngModel]="refSelectState[vcs.name+'/'+repo.name]"
+              (ngModelChange)="selectRepositoryRef(vcs, repo, $event)"></app-repository-ref-select>
+            }
+          </div>
+          @if (treeExpandState[vcs.name+'/'+repo.name]) {
+            <div class="tree-node-content large">
+              @if (!entities[vcs.name+'/'+repo.name] && !loadingEntities[vcs.name+'/'+repo.name]) {
+                <nz-alert
+                nzType="info" [nzMessage]="noResource"></nz-alert>
+              }
+              <ng-template #noResource>
+                No resource found
+                <button class="analyze" nz-button nzType="text" nzSize="small" nz-tooltip
+                  nzTooltipTitle="Click to trigger an analysis for the current ref"
+                  (click)="openTriggerAnalysisDrawer(vcs.name+'/'+repo.name, refSelectState[vcs.name+'/'+repo.name])">
+                  <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
+                </button>
+              </ng-template>
+              @if (loadingEntities[vcs.name+'/'+repo.name]) {
+                <nz-spin nzSimple></nz-spin>
+              }
+              @for (entity of entities[vcs.name+'/'+repo.name] | keyvalue; track entity) {
+                <div class="tree-node-header" (click)="clickEntityType(vcs, repo, entity.key)">
+                  <span nz-icon
+                    [nzType]="!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key] ? 'folder' : 'folder-open'"
+                  nzTheme="outline"></span>
+                  <div class="name">{{entity.key}}</div>
                 </div>
-                <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name+'/'+repo.name]">
-                    <nz-alert *ngIf="!entities[vcs.name+'/'+repo.name] && !loadingEntities[vcs.name+'/'+repo.name]"
-                        nzType="info" [nzMessage]="noResource"></nz-alert>
-                    <ng-template #noResource>
-                        No resource found
-                        <button class="analyze" nz-button nzType="text" nzSize="small" nz-tooltip
-                            nzTooltipTitle="Click to trigger an analysis for the current ref"
-                            (click)="openTriggerAnalysisDrawer(vcs.name+'/'+repo.name, refSelectState[vcs.name+'/'+repo.name])">
-                            <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
-                        </button>
-                    </ng-template>
-                    <nz-spin *ngIf="loadingEntities[vcs.name+'/'+repo.name]" nzSimple></nz-spin>
-                    <ng-container *ngFor="let entity of entities[vcs.name+'/'+repo.name] | keyvalue">
-                        <div class="tree-node-header" (click)="clickEntityType(vcs, repo, entity.key)">
-                            <span nz-icon
-                                [nzType]="!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key] ? 'folder' : 'folder-open'"
-                                nzTheme="outline"></span>
-                            <div class="name">{{entity.key}}</div>
-                        </div>
-                        <div class="tree-node-content" *ngIf="treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]">
-                            <ng-container *ngFor="let v of entity.value">
-                                <div class="tree-node-header">
-                                    <a class="name"
-                                        [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
-                                        [queryParams]="{ref: refSelectState[vcs.name+'/'+repo.name]}"
-                                        routerLinkActive="active" [title]="v.name">
-                                        <span nz-icon nzType="file"></span>{{v.name}}
-                                    </a>
-                                    <app-favorite-button *ngIf="v.type === 'Workflow'" type="workflow"
-                                        [id]="project.key+'/'+vcs.name+'/'+repo.name+'/'+v.name"></app-favorite-button>
-                                    <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
-                                        (click)="openRunStartDrawer(vcs.name+'/'+repo.name+'/'+v.name, refSelectState[vcs.name+'/'+repo.name])"
-                                        title="Start workflow">
-                                        <span nz-icon nzType="caret-right" nzTheme="fill"></span>
-                                    </button>
-                                    <a *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
-                                        [routerLink]="['/', 'project', project.key, 'run']"
-                                        [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name, workflow_ref: refSelectState[vcs.name+'/'+repo.name]}"
-                                        (click)="$event.stopPropagation();" title="Display workflow runs">
-                                        <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
-                                    </a>
-                                </div>
-                            </ng-container>
-                        </div>
-                    </ng-container>
-                </div>
-            </ng-container>
-        </div>
-    </ng-container>
+                @if (treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]) {
+                  <div class="tree-node-content">
+                    @for (v of entity.value; track v) {
+                      <div class="tree-node-header">
+                        <a class="name"
+                          [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
+                          [queryParams]="{ref: refSelectState[vcs.name+'/'+repo.name]}"
+                          routerLinkActive="active" [title]="v.name">
+                          <span nz-icon nzType="file"></span>{{v.name}}
+                        </a>
+                        @if (v.type === 'Workflow') {
+                          <app-favorite-button type="workflow"
+                          [id]="project.key+'/'+vcs.name+'/'+repo.name+'/'+v.name"></app-favorite-button>
+                        }
+                        @if (v.type === 'Workflow') {
+                          <button nz-button nzType="text" nzSize="small"
+                            (click)="openRunStartDrawer(vcs.name+'/'+repo.name+'/'+v.name, refSelectState[vcs.name+'/'+repo.name])"
+                            title="Start workflow">
+                            <span nz-icon nzType="caret-right" nzTheme="fill"></span>
+                          </button>
+                        }
+                        @if (v.type === 'Workflow') {
+                          <a nz-button nzType="text" nzSize="small"
+                            [routerLink]="['/', 'project', project.key, 'run']"
+                            [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name, workflow_ref: refSelectState[vcs.name+'/'+repo.name]}"
+                            (click)="$event.stopPropagation();" title="Display workflow runs">
+                            <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
+                          </a>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  }
 </div>

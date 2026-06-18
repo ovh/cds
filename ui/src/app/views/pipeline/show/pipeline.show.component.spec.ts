@@ -71,7 +71,7 @@ describe('CDS: Pipeline Show', () => {
             ]
         }).compileComponents();
         const injector = getTestBed();
-        routerService = injector.get(RouterService);
+        routerService = injector.inject(RouterService);
         spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({ key: 'key1', pipName: 'pip1' }));
     });
 

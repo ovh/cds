@@ -95,7 +95,7 @@ export class ResizablePanelComponent implements AfterViewInit, OnChanges {
         this.onGrabbingStart.emit();
     }
 
-    @HostListener('window:mouseup', ['$event'])
+    @HostListener('window:mouseup')
     onMouseUpGrabber(): void {
         if (!this.grabbing) {
             return;

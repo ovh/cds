@@ -12,11 +12,6 @@
     "paths": {
       "@model/*": ["src/app/model/*"]
     },
-    "lib": [
-      "ES2022",
-      "dom",
-      "ES2021.String"
-    ],
   },
   "exclude": [
     "**/*.spec.ts"

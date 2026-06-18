@@ -1,28 +1,38 @@
 <div class="asCodeEvents">
-    <p>
-        <span *ngIf="workflow.from_repository">{{ 'pipeline_from_repository' | translate: {repo: workflow.from_repository} }}</span>
-        <span *ngIf="!workflow.from_repository">{{ 'workflow_from_repository_pending' | translate }}</span>
-    </p>
-    <ul>
-        <li *ngFor="let e of events">
-            <a href="{{e.pullrequest_url}}" target="_blank">PullRequest #{{e.pullrequest_id}}</a>
-            <ul>
-                <ng-container *ngIf="e.data && e.data.workflows">
-                    <li *ngFor="let k of e?.data?.workflows | keys">
-                        <nz-tag class="blue">Workflow</nz-tag>{{' ' + e.data.workflows[k]}}
-                    </li>
-                </ng-container>
-                <ng-container *ngIf="e.data && e.data.pipelines">
-                    <li *ngFor="let k of e?.data?.pipelines | keys">
-                        <nz-tag class="green">Pipeline</nz-tag>{{' ' + e.data.pipelines[k]}}
-                    </li>
-                </ng-container>
-            </ul>
-        </li>
-    </ul>
-    <div class="footer">
-        <button nz-button nzType="primary" nzSize="small" [disabled]="loadingPopupButton"
-                [nzLoading]="loadingPopupButton" (click)="resyncEvents()">Resynchronize Pull-request on VCS</button>
-    </div>
+  <p>
+    @if (workflow.from_repository) {
+      <span>{{ 'pipeline_from_repository' | translate: {repo: workflow.from_repository} }}</span>
+    }
+    @if (!workflow.from_repository) {
+      <span>{{ 'workflow_from_repository_pending' | translate }}</span>
+    }
+  </p>
+  <ul>
+    @for (e of events; track e) {
+      <li>
+        <a href="{{e.pullrequest_url}}" target="_blank">PullRequest #{{e.pullrequest_id}}</a>
+        <ul>
+          @if (e.data && e.data.workflows) {
+            @for (k of e?.data?.workflows | keys; track k) {
+              <li>
+                <nz-tag class="blue">Workflow</nz-tag>{{' ' + e.data.workflows[k]}}
+              </li>
+            }
+          }
+          @if (e.data && e.data.pipelines) {
+            @for (k of e?.data?.pipelines | keys; track k) {
+              <li>
+                <nz-tag class="green">Pipeline</nz-tag>{{' ' + e.data.pipelines[k]}}
+              </li>
+            }
+          }
+        </ul>
+      </li>
+    }
+  </ul>
+  <div class="footer">
+    <button nz-button nzType="primary" nzSize="small" [disabled]="loadingPopupButton"
+    [nzLoading]="loadingPopupButton" (click)="resyncEvents()">Resynchronize Pull-request on VCS</button>
+  </div>
 
 </div>

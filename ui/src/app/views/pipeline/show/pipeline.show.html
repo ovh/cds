@@ -1,81 +1,92 @@
 <div id="PipelineShow">
-    <div *ngIf="project && pipeline;then showPipeline; else loadPipeline"></div>
-    <ng-template #showPipeline>
-        <app-project-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application"
-            [workflow]="workflowName" [version]="version" [buildNumber]="buildNumber" [envName]="envName"
-            [remote]="remote" [branch]="branch">
-            <nz-tag class="labelFeature" [title]="'workflow_from_repository_btn' | translate" [nzColor]="nzTagColor"
-                nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
-                nzPopoverPlacement="bottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
-            <ng-template #popupFromRepository>
-                <div class="content infoPopup">
-                    <ng-container *ngIf="pipeline?.workflow_ascode_holder">
-                        <app-ascode-event [project]="project" [workflow]="pipeline.workflow_ascode_holder"
-                            [events]="pipeline.ascode_events"></app-ascode-event>
-                    </ng-container>
-                    <ng-container *ngIf="pipeline && !pipeline.from_repository">
-                        <p>{{'pipeline_repository_help_line_1' | translate}}</p>
-                        <p>{{'workflow_repository_help_line_2' | translate}}</p>
-                        <div class="footer">
-                            <a class="item" target="_blank" rel="noopener noreferrer" href="#"
-                                [routerLink]="['/docs', 'tutorials', 'init_workflow_with_cdsctl']">
-                                Read more
-                            </a>
-                        </div>
-                    </ng-container>
+  @if (project && pipeline) {
+    <app-project-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application"
+      [workflow]="workflowName" [version]="version" [buildNumber]="buildNumber" [envName]="envName"
+      [remote]="remote" [branch]="branch">
+      <nz-tag class="labelFeature" [title]="'workflow_from_repository_btn' | translate" [nzColor]="nzTagColor"
+        nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
+        nzPopoverPlacement="bottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
+        <ng-template #popupFromRepository>
+          <div class="content infoPopup">
+            @if (pipeline?.workflow_ascode_holder) {
+              <app-ascode-event [project]="project" [workflow]="pipeline.workflow_ascode_holder"
+              [events]="pipeline.ascode_events"></app-ascode-event>
+            }
+            @if (pipeline && !pipeline.from_repository) {
+              <p>{{'pipeline_repository_help_line_1' | translate}}</p>
+              <p>{{'workflow_repository_help_line_2' | translate}}</p>
+              <div class="footer">
+                <a class="item" target="_blank" rel="noopener noreferrer" href="#"
+                  [routerLink]="['/docs', 'tutorials', 'init_workflow_with_cdsctl']">
+                  Read more
+                </a>
+              </div>
+            }
+          </div>
+        </ng-template>
+      </app-project-breadcrumb>
+      <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+      @if (editMode && !readOnly) {
+        <nz-space-compact class="ascodeButton">
+          @if (pipeline.editModeChanged) {
+            <button nz-button nzType="default" (click)="cancelPipeline()">{{'common_cancel' | translate
+            }}</button>
+          }
+          <button nz-button nzType="primary" [disabled]="!pipeline.editModeChanged"
+          (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
+        </nz-space-compact>
+      }
+      <div class="scrollingContent">
+        <div class="paddingContent">
+          <div class="viewContent">
+            @switch (selectedTab.key) {
+              @case ('pipeline') {
+                <div>
+                  <app-pipeline-workflow [project]="project" [currentPipeline]="pipeline"
+                    [queryParams]="queryParams" [editMode]="editMode" [readOnly]="readOnly">
+                  </app-pipeline-workflow>
                 </div>
-            </ng-template>
-        </app-project-breadcrumb>
-        <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
-        <ng-container *ngIf="editMode && !readOnly">
-            <nz-space-compact class="ascodeButton">
-                <ng-container *ngIf="pipeline.editModeChanged">
-                    <button nz-button nzType="default" (click)="cancelPipeline()">{{'common_cancel' | translate
-                        }}</button>
-                </ng-container>
-                <button nz-button nzType="primary" [disabled]="!pipeline.editModeChanged"
-                    (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
-            </nz-space-compact>
-        </ng-container>
-
-        <div class="scrollingContent">
-            <div class="paddingContent">
-                <div class="viewContent" [ngSwitch]="selectedTab.key">
-                    <div *ngSwitchCase="'pipeline'">
-                        <app-pipeline-workflow [project]="project" [currentPipeline]="pipeline"
-                            [queryParams]="queryParams" [editMode]="editMode" [readOnly]="readOnly">
-                        </app-pipeline-workflow>
-                    </div>
-                    <div *ngSwitchCase="'parameters'">
-                        <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
-                        <app-parameter-list (event)="parameterEvent($event)" [project]="project"
-                            [parameters]="pipeline.parameters" [keys]="keys" [mode]="readOnly? 'ro' : 'edit'">
-                        </app-parameter-list>
-                        <ng-container *ngIf="!readOnly">
-                            <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
-                            <app-parameter-form [project]="project" (createParameterEvent)="parameterEvent($event)"
-                                [keys]="keys"></app-parameter-form>
-                        </ng-container>
-                    </div>
-                    <div *ngSwitchCase="'usage'">
-                        <app-usage [project]="project" [applications]="applications" [workflows]="workflows"
-                            [environments]="environments"></app-usage>
-                    </div>
-                    <div *ngSwitchCase="'advanced'">
-                        <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
-                    </div>
-                    <div *ngSwitchCase="'audits'">
-                        <app-pipeline-audit [project]="project" [pipeline]="pipeline"></app-pipeline-audit>
-                    </div>
+              }
+              @case ('parameters') {
+                <div>
+                  <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
+                  <app-parameter-list (event)="parameterEvent($event)" [project]="project"
+                    [parameters]="pipeline.parameters" [keys]="keys" [mode]="readOnly? 'ro' : 'edit'">
+                  </app-parameter-list>
+                  @if (!readOnly) {
+                    <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
+                    <app-parameter-form [project]="project" (createParameterEvent)="parameterEvent($event)"
+                    [keys]="keys"></app-parameter-form>
+                  }
                 </div>
-            </div>
+              }
+              @case ('usage') {
+                <div>
+                  <app-usage [project]="project" [applications]="applications" [workflows]="workflows"
+                  [environments]="environments"></app-usage>
+                </div>
+              }
+              @case ('advanced') {
+                <div>
+                  <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
+                </div>
+              }
+              @case ('audits') {
+                <div>
+                  <app-pipeline-audit [project]="project" [pipeline]="pipeline"></app-pipeline-audit>
+                </div>
+              }
+            }
+          </div>
         </div>
-        <section class="content-wrap" *ngIf="pipeline != null">
-            <app-pipeline-ascode-editor [project]="project" [pipeline]="pipeline" [open]="asCodeEditorOpen">
-            </app-pipeline-ascode-editor>
+      </div>
+      @if (pipeline != null) {
+        <section class="content-wrap">
+          <app-pipeline-ascode-editor [project]="project" [pipeline]="pipeline" [open]="asCodeEditorOpen">
+          </app-pipeline-ascode-editor>
         </section>
-    </ng-template>
-    <ng-template #loadPipeline>
-        <nz-spin nzTip="Loading pipeline..."></nz-spin>
-    </ng-template>
-</div>
+      }
+    } @else {
+      <nz-spin nzTip="Loading pipeline..."></nz-spin>
+    }
+  </div>

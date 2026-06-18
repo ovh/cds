@@ -1,46 +1,52 @@
 <form nz-form>
-    <nz-alert nzType="info" *ngIf="newKey.type === 'ssh'" [nzMessage]="sshHelp"></nz-alert>
-    <ng-template #sshHelp>
-        {{ 'keys_ssh_key_help' | translate }} <a href="#"
-                                                 [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker
-        Install Key</a>
-    </ng-template>
-    <nz-alert nzType="info" *ngIf="newKey.type === 'pgp'" [nzMessage]="pgpHelp"></nz-alert>
-    <ng-template #pgpHelp>
-        {{ 'keys_pgp_key_help' | translate }} <a href="#"
-                                                 [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker
-        Install Key</a>
-    </ng-template>
-    <nz-row>
-        <nz-col [nzSpan]="8">
-            <nz-form-item>
-                <nz-form-label>Key name</nz-form-label>
-                <nz-form-control>
-                    <nz-input-group nzAddOnBefore="{{prefix}}">
-                        <input type="text" nz-input [(ngModel)]="newKey.name" name="keyname"/>
-                    </nz-input-group>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="7" [nzOffset]="1">
-            <nz-form-item>
-                <nz-form-label>Key type</nz-form-label>
-                <nz-form-control>
-                    <nz-select nzShowSearch [(ngModel)]="newKey.type" name="type">
-                        <nz-option *ngFor="let t of keyTypes" [nzValue]="t" [nzLabel]="t"></nz-option>
-                    </nz-select>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="2" [nzOffset]="1">
-            <nz-form-item>
-                <nz-form-control>
-                    <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || newKey.name === ''"
-                            (click)="addKey()">Add
-                    </button>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-    </nz-row>
+  @if (newKey.type === 'ssh') {
+    <nz-alert nzType="info" [nzMessage]="sshHelp"></nz-alert>
+  }
+  <ng-template #sshHelp>
+    {{ 'keys_ssh_key_help' | translate }} <a href="#"
+    [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker
+  Install Key</a>
+</ng-template>
+@if (newKey.type === 'pgp') {
+  <nz-alert nzType="info" [nzMessage]="pgpHelp"></nz-alert>
+}
+<ng-template #pgpHelp>
+  {{ 'keys_pgp_key_help' | translate }} <a href="#"
+  [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker
+Install Key</a>
+</ng-template>
+<nz-row>
+  <nz-col [nzSpan]="8">
+    <nz-form-item>
+      <nz-form-label>Key name</nz-form-label>
+      <nz-form-control>
+        <nz-input-group nzAddOnBefore="{{prefix}}">
+          <input type="text" nz-input [(ngModel)]="newKey.name" name="keyname"/>
+        </nz-input-group>
+      </nz-form-control>
+    </nz-form-item>
+  </nz-col>
+  <nz-col [nzSpan]="7" [nzOffset]="1">
+    <nz-form-item>
+      <nz-form-label>Key type</nz-form-label>
+      <nz-form-control>
+        <nz-select nzShowSearch [(ngModel)]="newKey.type" name="type">
+          @for (t of keyTypes; track t) {
+            <nz-option [nzValue]="t" [nzLabel]="t"></nz-option>
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+  </nz-col>
+  <nz-col [nzSpan]="2" [nzOffset]="1">
+    <nz-form-item>
+      <nz-form-control>
+        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || newKey.name === ''"
+          (click)="addKey()">Add
+        </button>
+      </nz-form-control>
+    </nz-form-item>
+  </nz-col>
+</nz-row>
 </form>
 

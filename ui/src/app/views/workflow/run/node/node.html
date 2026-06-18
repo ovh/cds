@@ -1,28 +1,46 @@
-<div id="WorkflowNodeRun" *ngIf="currentNodeRunNum">
+@if (currentNodeRunNum) {
+  <div id="WorkflowNodeRun">
     <ng-container>
-        <app-workflow-node-run-summary></app-workflow-node-run-summary>
+      <app-workflow-node-run-summary></app-workflow-node-run-summary>
     </ng-container>
     <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
-    <div class="pipeline" *ngIf="selectedTab.key === 'pipeline'">
+    @if (selectedTab.key === 'pipeline') {
+      <div class="pipeline">
         <app-node-run-pipeline></app-node-run-pipeline>
-    </div>
-    <div *ngIf="selectedTab.key !== 'pipeline'" class="scrollingContent">
+      </div>
+    }
+    @if (selectedTab.key !== 'pipeline') {
+      <div class="scrollingContent">
         <div class="paddingContent">
-            <div class="viewContent" [ngSwitch]="selectedTab.key">
-                <div *ngSwitchCase="'artifact'">
-                    <app-workflow-artifact-list></app-workflow-artifact-list>
+          <div class="viewContent">
+            @switch (selectedTab.key) {
+              @case ('artifact') {
+                <div>
+                  <app-workflow-artifact-list></app-workflow-artifact-list>
                 </div>
-                <div *ngSwitchCase="'commit'">
-                    <app-commit-list></app-commit-list>
+              }
+              @case ('commit') {
+                <div>
+                  <app-commit-list></app-commit-list>
                 </div>
-                <div *ngSwitchCase="'test'">
-                    <app-workflow-tests-result></app-workflow-tests-result>
+              }
+              @case ('test') {
+                <div>
+                  <app-workflow-tests-result></app-workflow-tests-result>
                 </div>
-                <div *ngSwitchCase="'history'">
-                    <app-workflow-node-run-history></app-workflow-node-run-history>
+              }
+              @case ('history') {
+                <div>
+                  <app-workflow-node-run-history></app-workflow-node-run-history>
                 </div>
-            </div>
+              }
+            }
+          </div>
         </div>
-    </div>
-</div>
-<nz-spin nzTip="Loading..." *ngIf="!currentNodeRunNum"></nz-spin>
+      </div>
+    }
+  </div>
+}
+@if (!currentNodeRunNum) {
+  <nz-spin nzTip="Loading..."></nz-spin>
+}

@@ -1,129 +1,182 @@
-<div *ngIf="nodeJobRun" class="job">
+@if (nodeJobRun) {
+  <div class="job">
     <div class="header">
-        <div class="menu left">
-            <ng-container *ngIf="tabs && tabs.length > 1">
-                <button *ngFor="let tab of tabs; let i = index" [class.active]="i === currentTabIndex"
-                    (click)="selectTab(i)">{{tab.name}}</button>
-            </ng-container>
-        </div>
-        <div class="menu right">
-            <button [class.active]="mode === displayModes.ANSI" (click)="clickMode(displayModes.ANSI)">ANSI</button>
-            <button [class.active]="mode === displayModes.HTML" (click)="clickMode(displayModes.HTML)">HTML</button>
-        </div>
-        <div class="menu right">
-            <button (click)="clickVariables()">Job variables</button>
-        </div>
+      <div class="menu left">
+        @if (tabs && tabs.length > 1) {
+          @for (tab of tabs; track tab; let i = $index) {
+            <button [class.active]="i === currentTabIndex"
+            (click)="selectTab(i)">{{tab.name}}</button>
+          }
+        }
+      </div>
+      <div class="menu right">
+        <button [class.active]="mode === displayModes.ANSI" (click)="clickMode(displayModes.ANSI)">ANSI</button>
+        <button [class.active]="mode === displayModes.HTML" (click)="clickMode(displayModes.HTML)">HTML</button>
+      </div>
+      <div class="menu right">
+        <button (click)="clickVariables()">Job variables</button>
+      </div>
     </div>
     <!-- Display job steps -->
-    <ng-container *ngIf="currentTabIndex === 0">
-        <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
-            <div class="line info" (click)="clickOpen(step)">
-                <div class="number">
-                    <span *ngIf="step.totalLinesCount > 0 && !step.loading && !step.open" nz-icon nzType="caret-right" nzTheme="fill"></span>
-                    <span *ngIf="step.totalLinesCount > 0 && !step.loading && step.open" nz-icon nzType="caret-down" nzTheme="fill"></span>
-                    <span nz-icon [nzType]="'loading'" *ngIf="step.lines.length === 0 && step.loading"></span>
-                    {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
-                </div>
-                <div class="value">{{step.name}}</div>
-                <div class="extra">
-                    <div *ngIf="!step.disabled && step.startDate && !step.duration">
-                        {{step.startDate | durationMs }}
-                    </div>
-                    <div *ngIf="step.duration" title="Step duration">{{step.duration}}</div>
-                    <div [class.orange]="step.optional && step.failed" *ngIf="step.optional">Optional</div>
-                    <div *ngIf="step.disabled">Disabled</div>
-                    <div class="red" *ngIf="step.failed && !step.optional">Failed</div>
-                </div>
-                <div class="action" *ngIf="i>0">
-                    <a *ngIf="step?.link"
-                        [href]="'./cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download?refresh=5'"
-                        target="_blank" rel="noopener noreferrer" title="Share/download the step"
-                        (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
-                </div>
+    @if (currentTabIndex === 0) {
+      @for (step of steps; track trackStepElement(i, step); let i = $index) {
+        <div class="step">
+          <div class="line info" (click)="clickOpen(step)">
+            <div class="number">
+              @if (step.totalLinesCount > 0 && !step.loading && !step.open) {
+                <span nz-icon nzType="caret-right" nzTheme="fill"></span>
+              }
+              @if (step.totalLinesCount > 0 && !step.loading && step.open) {
+                <span nz-icon nzType="caret-down" nzTheme="fill"></span>
+              }
+              @if (step.lines.length === 0 && step.loading) {
+                <span nz-icon [nzType]="'loading'"></span>
+              }
+              {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
             </div>
-            <ng-container *ngIf="step.open">
-                <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let j = index">
-                    <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
-                    <div class="value">
-                        <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
-                        <div class="since" *ngIf="line.since" title="Duration since step start">{{line.since |
-                            durationMs}}
-                        </div>
-                    </div>
-                    <div class="extra" *ngIf="line.extra">
-                        <div *ngFor="let extra of line.extra">{{extra}}</div>
-                    </div>
+            <div class="value">{{step.name}}</div>
+            <div class="extra">
+              @if (!step.disabled && step.startDate && !step.duration) {
+                <div>
+                  {{step.startDate | durationMs }}
                 </div>
-                <div class="line expand" *ngIf="step.lines.length + step.endLines.length < step.totalLinesCount"
-                    (click)="clickExpandStepDown(i, $event)">
-                    <div class="number">
-                        <i nz-icon nzType="caret-down" nzTheme="fill"></i>
-                        {{step.firstDisplayedLineNumber +
-                        step.lines.length + 1}}
-                    </div>
-                    <div class="value">…</div>
+              }
+              @if (step.duration) {
+                <div title="Step duration">{{step.duration}}</div>
+              }
+              @if (step.optional) {
+                <div [class.orange]="step.optional && step.failed">Optional</div>
+              }
+              @if (step.disabled) {
+                <div>Disabled</div>
+              }
+              @if (step.failed && !step.optional) {
+                <div class="red">Failed</div>
+              }
+            </div>
+            @if (i>0) {
+              <div class="action">
+                @if (step?.link) {
+                  <a
+                    [href]="'./cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download?refresh=5'"
+                    target="_blank" rel="noopener noreferrer" title="Share/download the step"
+                    (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
+                  }
                 </div>
+              }
+            </div>
+            @if (step.open) {
+              @for (line of step.lines; track trackLineElement(j, line); let j = $index) {
+                <div class="line">
+                  <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
+                  <div class="value">
+                    <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
+                    @if (line.since) {
+                      <div class="since" title="Duration since step start">{{line.since |
+                        durationMs}}
+                      </div>
+                    }
+                  </div>
+                  @if (line.extra) {
+                    <div class="extra">
+                      @for (extra of line.extra; track extra) {
+                        <div>{{extra}}</div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+              @if (step.lines.length + step.endLines.length < step.totalLinesCount) {
                 <div class="line expand"
-                    *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
-                    (click)="clickExpandStepUp(i, $event)">
-                    <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(step.firstDisplayedLineNumber +
-                        step.totalLinesCount) - step.endLines.length}}
-                    </div>
-                    <div class="value">…</div>
+                  (click)="clickExpandStepDown(i, $event)">
+                  <div class="number">
+                    <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+                    {{step.firstDisplayedLineNumber +
+                    step.lines.length + 1}}
+                  </div>
+                  <div class="value">…</div>
                 </div>
-                <div class="line" *ngFor="let line of step.endLines; trackBy: trackLineElement; let j = index">
-                    <div class="number">
-                        {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}
-                    </div>
-                    <div class="value">
-                        <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
-                        <div class="since" *ngIf="line.since" title="Duration since step start">{{line.since |
-                            durationMs}}</div>
-                    </div>
-                    <div class="extra" *ngIf="line.extra">
-                        <div *ngFor="let extra of line.extra">{{extra}}</div>
-                    </div>
+              }
+              @if (step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1) {
+                <div class="line expand"
+                  (click)="clickExpandStepUp(i, $event)">
+                  <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(step.firstDisplayedLineNumber +
+                  step.totalLinesCount) - step.endLines.length}}
                 </div>
-            </ng-container>
+                <div class="value">…</div>
+              </div>
+            }
+            @for (line of step.endLines; track trackLineElement(j, line); let j = $index) {
+              <div class="line">
+                <div class="number">
+                  {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}
+                </div>
+                <div class="value">
+                  <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
+                  @if (line.since) {
+                    <div class="since" title="Duration since step start">{{line.since |
+                    durationMs}}</div>
+                  }
+                </div>
+                @if (line.extra) {
+                  <div class="extra">
+                    @for (extra of line.extra; track extra) {
+                      <div>{{extra}}</div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
         </div>
-    </ng-container>
+      }
+    }
     <!-- Display service logs -->
-    <div class="step" *ngIf="currentTabIndex > 0">
-        <div class="line"
-            *ngFor="let line of services[currentTabIndex-1].lines; trackBy: trackLineElement; let j = index">
+    @if (currentTabIndex > 0) {
+      <div class="step">
+        @for (line of services[currentTabIndex-1].lines; track trackLineElement(j, line); let j = $index) {
+          <div class="line"
+            >
             <div class="number">{{j + 1}}</div>
             <div class="value">
-                <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
+              <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
             </div>
-        </div>
-        <div class="line expand"
-            *ngIf="services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < services[currentTabIndex-1].totalLinesCount"
+          </div>
+        }
+        @if (services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < services[currentTabIndex-1].totalLinesCount) {
+          <div class="line expand"
             (click)="clickExpandServiceDown(currentTabIndex-1)">
             <div class="number"><i nz-icon nzType="caret-down" nzTheme="fill"></i>{{services[currentTabIndex-1].lines.length + 1}}
-            </div>
-            <div class="value">…</div>
+          </div>
+          <div class="value">…</div>
         </div>
+      }
+      @if (services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < (services[currentTabIndex-1].totalLinesCount - expandLoadLinesCount) - 1) {
         <div class="line expand"
-            *ngIf="services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < (services[currentTabIndex-1].totalLinesCount - expandLoadLinesCount) - 1"
-            (click)="clickExpandServiceUp(currentTabIndex-1)">
-            <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(services[currentTabIndex-1].totalLinesCount) -
-                services[currentTabIndex-1].endLines.length}}
-            </div>
-            <div class="value">…</div>
+          (click)="clickExpandServiceUp(currentTabIndex-1)">
+          <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(services[currentTabIndex-1].totalLinesCount) -
+          services[currentTabIndex-1].endLines.length}}
         </div>
-        <div class="line"
-            *ngFor="let line of services[currentTabIndex-1].endLines; trackBy: trackLineElement; let j = index">
-            <div class="number">
-                {{((services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length) + j +
-                1}}
-            </div>
-            <div class="value">
-                <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
-            </div>
+        <div class="value">…</div>
+      </div>
+    }
+    @for (line of services[currentTabIndex-1].endLines; track trackLineElement(j, line); let j = $index) {
+      <div class="line"
+        >
+        <div class="number">
+          {{((services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length) + j +
+          1}}
         </div>
-    </div>
-    <div class="footer">
-        <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down" nzTheme="fill"></i></div>
-        <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill"></i></div>
-    </div>
+        <div class="value">
+          <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
+        </div>
+      </div>
+    }
+  </div>
+}
+<div class="footer">
+  <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down" nzTheme="fill"></i></div>
+  <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill"></i></div>
 </div>
+</div>
+}

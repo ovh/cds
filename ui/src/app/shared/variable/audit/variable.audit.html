@@ -1,17 +1,19 @@
 <nz-table [nzData]="nzModalData?.audits" #audit>
-    <thead>
-        <tr>
-            <th>Change date</th>
-            <th>Change</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let data of audit.data">
-            <td>{{ data.versionned | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }} {{ '(' + data.author + ')' }}</td>
-            <td>
-                <app-variable-diff [type]="data.type" [variableAfter]="data.variable_after"
-                                   [variableBefore]="data.variable_before"></app-variable-diff>
-            </td>
-        </tr>
-    </tbody>
+  <thead>
+    <tr>
+      <th>Change date</th>
+      <th>Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (data of audit.data; track data) {
+      <tr>
+        <td>{{ data.versionned | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }} {{ '(' + data.author + ')' }}</td>
+        <td>
+          <app-variable-diff [type]="data.type" [variableAfter]="data.variable_after"
+          [variableBefore]="data.variable_before"></app-variable-diff>
+        </td>
+      </tr>
+    }
+  </tbody>
 </nz-table>

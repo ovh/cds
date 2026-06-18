@@ -1,6 +1,5 @@
 import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -41,7 +40,7 @@ import { ApplicationShowComponent } from './application.component';
 
 describe('CDS: Application', () => {
 
-    let injector: Injector;
+    let injector: TestBed;
     let store: Store;
     let router: Router;
     let routerService: RouterService;
@@ -85,9 +84,9 @@ describe('CDS: Application', () => {
         }).compileComponents();
 
         injector = getTestBed();
-        store = injector.get(Store);
-        router = injector.get(Router);
-        routerService = injector.get(RouterService);
+        store = injector.inject(Store);
+        router = injector.inject(Router);
+        routerService = injector.inject(RouterService);
         spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({ key: 'key1', appName: 'app1' }));
     });
 

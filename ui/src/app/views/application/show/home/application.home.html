@@ -1,91 +1,107 @@
 <nz-row>
-    <nz-col [nzSpan]="17">
-        <ng-container *ngIf="dashboards && dashboards.length > 0">
-            <ng-container *ngFor="let d of dashboards">
-                <div class="dashboard">
-                    <h4>{{d.title}}</h4>
-                    <div class="graph">
-                        <app-chart [configuration]="d"></app-chart>
-                    </div>
-                </div>
-            </ng-container>
-        </ng-container>
-        <ng-container *ngIf="dashboards && dashboards.length === 0">
-            <nz-alert nzType="info" nzMessage="No graph to display (unit tests)"></nz-alert>
-        </ng-container>
-        <ng-container *ngIf="!dashboards">
-            <nz-spin nzTip="Loading..."></nz-spin>
-        </ng-container>
-    </nz-col>
-    <nz-col [nzSpan]="6" [nzOffset]="1">
-        <div class="nzSegment">
-            <h4>Git repository</h4>
-            <ng-container *ngIf="application.vcs_server">
-                <ul>
-                    <li *ngIf="overview">
-                        <a [href]="overview?.git_url" target="_blank">
-                            {{application.vcs_server + ' - ' + application.repository_fullname}}
-                        </a>
-                    </li>
-                    <li *ngIf="!overview">
-                        {{application.vcs_server + ' - ' + application.repository_fullname}}
-                    </li>
-                </ul>
-            </ng-container>
-            <ng-container *ngIf="!application.vcs_server">
-                <nz-alert nzType="info" [nzMessage]="gitTmpl"></nz-alert>
-                <ng-template #gitTmpl>
-                    <a [routerLink]="['/project', project.key, 'application', application.name]"
-                        [queryParams]="{tab: 'advanced'}">Link a repository</a>
-                </ng-template>
-            </ng-container>
-            <h4>Linked integrations</h4>
-            <ul *ngIf="application.deployment_strategies">
-                <li *ngFor="let p of application.deployment_strategies | keys">
-                    {{ p }}
-                </li>
-            </ul>
-            <nz-alert *ngIf="!application.deployment_strategies" nzType="info" [nzMessage]="integTmpl"></nz-alert>
-            <ng-template #integTmpl>
-                <a [routerLink]="['/project', project.key,'application', application.name]"
-                    [queryParams]="{tab: 'advanced'}">Link an integration</a>
-            </ng-template>
-            <h4>Usage</h4>
-            <ng-container *ngIf="application.usage && application.usage.workflows">
-                <ul>
-                    <li *ngFor="let w of application.usage.workflows">
-                        <a [routerLink]="['/project', w.project_key, 'workflow', w.name]">{{w.name}}</a>
-                    </li>
-                </ul>
-            </ng-container>
-            <ng-container
-                *ngIf="!application.usage || !application.usage.workflows || application.usage.workflows.length === 0">
-                <nz-alert nzType="info" nzMessage="Application is not used"></nz-alert>
-            </ng-container>
+  <nz-col [nzSpan]="17">
+    @if (dashboards && dashboards.length > 0) {
+      @for (d of dashboards; track d) {
+        <div class="dashboard">
+          <h4>{{d.title}}</h4>
+          <div class="graph">
+            <app-chart [configuration]="d"></app-chart>
+          </div>
         </div>
-    </nz-col>
+      }
+    }
+    @if (dashboards && dashboards.length === 0) {
+      <nz-alert nzType="info" nzMessage="No graph to display (unit tests)"></nz-alert>
+    }
+    @if (!dashboards) {
+      <nz-spin nzTip="Loading..."></nz-spin>
+    }
+  </nz-col>
+  <nz-col [nzSpan]="6" [nzOffset]="1">
+    <div class="nzSegment">
+      <h4>Git repository</h4>
+      @if (application.vcs_server) {
+        <ul>
+          @if (overview) {
+            <li>
+              <a [href]="overview?.git_url" target="_blank">
+                {{application.vcs_server + ' - ' + application.repository_fullname}}
+              </a>
+            </li>
+          }
+          @if (!overview) {
+            <li>
+              {{application.vcs_server + ' - ' + application.repository_fullname}}
+            </li>
+          }
+        </ul>
+      }
+      @if (!application.vcs_server) {
+        <nz-alert nzType="info" [nzMessage]="gitTmpl"></nz-alert>
+        <ng-template #gitTmpl>
+          <a [routerLink]="['/project', project.key, 'application', application.name]"
+          [queryParams]="{tab: 'advanced'}">Link a repository</a>
+        </ng-template>
+      }
+      <h4>Linked integrations</h4>
+      @if (application.deployment_strategies) {
+        <ul>
+          @for (p of application.deployment_strategies | keys; track p) {
+            <li>
+              {{ p }}
+            </li>
+          }
+        </ul>
+      }
+      @if (!application.deployment_strategies) {
+        <nz-alert nzType="info" [nzMessage]="integTmpl"></nz-alert>
+      }
+      <ng-template #integTmpl>
+        <a [routerLink]="['/project', project.key,'application', application.name]"
+        [queryParams]="{tab: 'advanced'}">Link an integration</a>
+      </ng-template>
+      <h4>Usage</h4>
+      @if (application.usage && application.usage.workflows) {
+        <ul>
+          @for (w of application.usage.workflows; track w) {
+            <li>
+              <a [routerLink]="['/project', w.project_key, 'workflow', w.name]">{{w.name}}</a>
+            </li>
+          }
+        </ul>
+      }
+      @if (!application.usage || !application.usage.workflows || application.usage.workflows.length === 0) {
+        <nz-alert nzType="info" nzMessage="Application is not used"></nz-alert>
+      }
+    </div>
+  </nz-col>
 </nz-row>
 
 <!-- HISTORY -->
-<div class="history" *ngIf="overview?.history">
+@if (overview?.history) {
+  <div class="history">
     <h4>{{ 'application_home_history' | translate }}</h4>
     <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-        <nz-col class="cardContainer" *ngFor="let k of overview.history | keys" [nzSpan]="6">
-            <div class="entity-card">
-                <div class="title">
-                    <a class="header" [routerLink]="['/project', project.key, 'workflow', k]">{{k}}</a>
-                </div>
-                <div class="description">
-                    <div *ngFor="let h of overview.history[k]" class="description-item">
-                        <span class="status" [class.green]="h.status === 'Success'">{{' '}}</span>
-                        <a class="info" [routerLink]="['/project', project.key, 'workflow', k, 'run', h.num]">
-                            {{'#' + h.num + ' - '}}
-                            {{ h.last_modified | amTimeAgo}}
-                        </a>
-                    </div>
-                </div>
+      @for (k of overview.history | keys; track k) {
+        <nz-col class="cardContainer" [nzSpan]="6">
+          <div class="entity-card">
+            <div class="title">
+              <a class="header" [routerLink]="['/project', project.key, 'workflow', k]">{{k}}</a>
             </div>
-
+            <div class="description">
+              @for (h of overview.history[k]; track h) {
+                <div class="description-item">
+                  <span class="status" [class.green]="h.status === 'Success'">{{' '}}</span>
+                  <a class="info" [routerLink]="['/project', project.key, 'workflow', k, 'run', h.num]">
+                    {{'#' + h.num + ' - '}}
+                    {{ h.last_modified | amTimeAgo}}
+                  </a>
+                </div>
+              }
+            </div>
+          </div>
         </nz-col>
+      }
     </nz-row>
-</div>
+  </div>
+}

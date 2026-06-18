@@ -1,81 +1,89 @@
 <div class="AppRepository" [hidden]="!project.vcs_servers || project.vcs_servers.length === 0">
-    <form nz-form  (ngSubmit)="linkRepository()" nzLayout="inline" [hidden]="application.vcs_server" *ngIf="!application.from_repository">
-        <div nz-row>
-            <div nz-col [nzSpan]="8">
-                <nz-form-item>
-                    <nz-form-label>Repository manager</nz-form-label>
-                    <nz-form-control>
-                        <nz-select nzShowSearch name="repomanname" [(ngModel)]="selectedRepoManager" (ngModelChange)="updateListRepo(false)" [disabled]="loadingRepos || application.from_repository">
-                            <nz-option *ngFor="let r of project?.vcs_servers" [nzValue]="r.name" [nzLabel]="r.name"></nz-option>
-                        </nz-select>
-                    </nz-form-control>
-                </nz-form-item>
-            </div>
-            <div nz-col [nzSpan]="8">
-                <nz-form-item>
-                    <nz-form-label>Repository</nz-form-label>
-                    <nz-form-control>
-                        <nz-select nzShowSearch name="repository" nzPlaceHolder="Choose a repository"  (nzOnSearch)="filterRepositories($event)"
-                                   [(ngModel)]="selectedRepo" [disabled]="loadingRepos || application.from_repository">
-                            <nz-option *ngFor="let r of reposFiltered" [nzValue]="r.fullname" [nzLabel]="r.fullname"></nz-option>
-                        </nz-select>
-                    </nz-form-control>
-
-                </nz-form-item>
-            </div>
-            <div nz-col [nzSpan]="4">
-                <nz-form-item>
-                    <button nz-button name="resync" [nzLoading]="loadingRepos" type="button"
-                        (click)="updateListRepo(true)">Resynchronize</button>
-                </nz-form-item>
-
-            </div>
-            <div nz-col [nzSpan]="4">
-                <nz-form-item nzJustify="end">
-                    <button nz-button nzType="primary" name="addrepobtn"[nzLoading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" type="submit">Connect</button>
-                </nz-form-item>
-            </div>
+  @if (!application.from_repository) {
+    <form nz-form  (ngSubmit)="linkRepository()" nzLayout="inline" [hidden]="application.vcs_server">
+      <div nz-row>
+        <div nz-col [nzSpan]="8">
+          <nz-form-item>
+            <nz-form-label>Repository manager</nz-form-label>
+            <nz-form-control>
+              <nz-select nzShowSearch name="repomanname" [(ngModel)]="selectedRepoManager" (ngModelChange)="updateListRepo(false)" [disabled]="loadingRepos || application.from_repository">
+                @for (r of project?.vcs_servers; track r) {
+                  <nz-option [nzValue]="r.name" [nzLabel]="r.name"></nz-option>
+                }
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
         </div>
+        <div nz-col [nzSpan]="8">
+          <nz-form-item>
+            <nz-form-label>Repository</nz-form-label>
+            <nz-form-control>
+              <nz-select nzShowSearch name="repository" nzPlaceHolder="Choose a repository"  (nzOnSearch)="filterRepositories($event)"
+                [(ngModel)]="selectedRepo" [disabled]="loadingRepos || application.from_repository">
+                @for (r of reposFiltered; track r) {
+                  <nz-option [nzValue]="r.fullname" [nzLabel]="r.fullname"></nz-option>
+                }
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        <div nz-col [nzSpan]="4">
+          <nz-form-item>
+            <button nz-button name="resync" [nzLoading]="loadingRepos" type="button"
+            (click)="updateListRepo(true)">Resynchronize</button>
+          </nz-form-item>
+        </div>
+        <div nz-col [nzSpan]="4">
+          <nz-form-item nzJustify="end">
+            <button nz-button nzType="primary" name="addrepobtn"[nzLoading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" type="submit">Connect</button>
+          </nz-form-item>
+        </div>
+      </div>
     </form>
-    <div [hidden]="!application.vcs_server">
-        <form nz-form [hidden]="!application.vcs_server">
-            <nz-form-item>
-                <nz-form-label>
-                    <span>{{application.vcs_server}}</span>
-                    <span> &#10145; </span>
-                    <span>{{application.repository_fullname}}</span>
-                </nz-form-label>
-                <nz-form-control>
-                    <button nz-button nzType="primary" class="unlink" name="deleteBtn" nzDanger [nzLoading]="loadingBtn" [disabled]="loadingBtn || application.from_repository"
-                            nz-popconfirm nzPopconfirmTitle="Are you sure you want to unlink this repository?" (nzOnConfirm)="removeRepository()"  nzPopconfirmPlacement="topLeft">
-                        Unlink
-                    </button>
-                </nz-form-control>
-            </nz-form-item>
-        </form>
-        <div *ngIf="application.repository_fullname" class="strategy">
-            <nz-alert nzType="warning" [nzMessage]="repoTemp" *ngIf="!application.vcs_strategy || !application.vcs_strategy.connection_type"></nz-alert>
-            <ng-template #repoTemp>
-                <div nz-row class="alert">
-                    <div nz-col [nzSpan]="2">
-                        <i nz-icon nzType="warning" nzTheme="fill" class="orange"></i>
-                    </div>
-                    <div nz-col [nzSpan]="22">
-                        <div class="header">Missing configuration</div>
-                        <p>Almost done ! You have to configure at least the connection protocol to your repository just below and save your changes</p>
-                    </div>
-                </div>
-            </ng-template>
-            <nz-collapse [nzBordered]="false">
-                <nz-collapse-panel nzHeader="Configuration" [nzActive]="true">
-                    <app-vcs-strategy [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
-                </nz-collapse-panel>
-            </nz-collapse>
-        </div>
-    </div>
+  }
+  <div [hidden]="!application.vcs_server">
+    <form nz-form [hidden]="!application.vcs_server">
+      <nz-form-item>
+        <nz-form-label>
+          <span>{{application.vcs_server}}</span>
+          <span> &#10145; </span>
+          <span>{{application.repository_fullname}}</span>
+        </nz-form-label>
+        <nz-form-control>
+          <button nz-button nzType="primary" class="unlink" name="deleteBtn" nzDanger [nzLoading]="loadingBtn" [disabled]="loadingBtn || application.from_repository"
+            nz-popconfirm nzPopconfirmTitle="Are you sure you want to unlink this repository?" (nzOnConfirm)="removeRepository()"  nzPopconfirmPlacement="topLeft">
+            Unlink
+          </button>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+    @if (application.repository_fullname) {
+      <div class="strategy">
+        @if (!application.vcs_strategy || !application.vcs_strategy.connection_type) {
+          <nz-alert nzType="warning" [nzMessage]="repoTemp"></nz-alert>
+        }
+        <ng-template #repoTemp>
+          <div nz-row class="alert">
+            <div nz-col [nzSpan]="2">
+              <i nz-icon nzType="warning" nzTheme="fill" class="orange"></i>
+            </div>
+            <div nz-col [nzSpan]="22">
+              <div class="header">Missing configuration</div>
+              <p>Almost done ! You have to configure at least the connection protocol to your repository just below and save your changes</p>
+            </div>
+          </div>
+        </ng-template>
+        <nz-collapse [nzBordered]="false">
+          <nz-collapse-panel nzHeader="Configuration" [nzActive]="true">
+            <app-vcs-strategy [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
+          </nz-collapse-panel>
+        </nz-collapse>
+      </div>
+    }
+  </div>
 </div>
 <div [hidden]="project.vcs_servers && project.vcs_servers.length > 0">
-    <p>
-        {{ 'application_repoman_cant' | translate }}<a [routerLink]="['/project', project.key]" [queryParams]="{tab: 'advanced'}">{{'application_repoman_cant_link' | translate}}</a>
-    </p>
+  <p>
+    {{ 'application_repoman_cant' | translate }}<a [routerLink]="['/project', project.key]" [queryParams]="{tab: 'advanced'}">{{'application_repoman_cant_link' | translate}}</a>
+  </p>
 </div>

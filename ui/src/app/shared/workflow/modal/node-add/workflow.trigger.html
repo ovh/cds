@@ -1,23 +1,23 @@
 <div>
-    <ng-container *ngIf="selectedType === 'pipeline'">
-        <app-workflow-node-add-wizard
-                [project]="project" [hideCancel]="true" [hideNext]="true" [display]="selectedType === 'pipeline'"
-                (nodeCreated)="destNodeChange($event)" (pipelineSectionChanged)="pipelineSectionChanged($event)" #nodeWizard>
-                </app-workflow-node-add-wizard>
-    </ng-container>
-    <ng-container *ngIf="selectedType === 'outgoinghook'">
-        <app-workflow-node-outgoinghook
-                [workflow]="workflow"
-                (outgoinghookEvent)="destNodeChange($event)"
-                #worklflowAddOutgoingHook></app-workflow-node-outgoinghook>
-    </ng-container>
-    <div *nzModalFooter>
-        <button nz-button [disabled]="loading" (click)="hide()">Close</button>
-        <ng-container *ngIf="selectedType === 'pipeline'">
-            <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="nextStep()">Next</button>
-        </ng-container>
-        <ng-container *ngIf="selectedType === 'outgoinghook'">
-            <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="addOutgoingHook()">{{ 'btn_save' | translate }}</button>
-        </ng-container>
-    </div>
+  @if (selectedType === 'pipeline') {
+    <app-workflow-node-add-wizard
+      [project]="project" [hideCancel]="true" [hideNext]="true" [display]="selectedType === 'pipeline'"
+      (nodeCreated)="destNodeChange($event)" (pipelineSectionChanged)="pipelineSectionChanged($event)" #nodeWizard>
+    </app-workflow-node-add-wizard>
+  }
+  @if (selectedType === 'outgoinghook') {
+    <app-workflow-node-outgoinghook
+      [workflow]="workflow"
+      (outgoinghookEvent)="destNodeChange($event)"
+    #worklflowAddOutgoingHook></app-workflow-node-outgoinghook>
+  }
+  <div *nzModalFooter>
+    <button nz-button [disabled]="loading" (click)="hide()">Close</button>
+    @if (selectedType === 'pipeline') {
+      <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="nextStep()">Next</button>
+    }
+    @if (selectedType === 'outgoinghook') {
+      <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="addOutgoingHook()">{{ 'btn_save' | translate }}</button>
+    }
+  </div>
 </div>

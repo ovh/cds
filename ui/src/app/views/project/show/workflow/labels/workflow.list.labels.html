@@ -1,17 +1,17 @@
 <nz-collapse>
+  @for (label of project.labels; track label) {
     <nz-collapse-panel
-            *ngFor="let label of project.labels"
-            [nzHeader]="headerTmpl">
-        <div>
-            <app-project-workflows-blocs [project]="project" [workflows]="workflowLabelsMapByLabels[label.name]"
-                                         (edit)="editLabels()">
-            </app-project-workflows-blocs>
-        </div>
-
-        <ng-template #headerTmpl>
-            <nz-tag [nzColor]="label.color">
-                <span style="color: {{label.font_color}}">{{label.name}}</span>
-            </nz-tag>
-        </ng-template>
+      [nzHeader]="headerTmpl">
+      <div>
+        <app-project-workflows-blocs [project]="project" [workflows]="workflowLabelsMapByLabels[label.name]"
+          (edit)="editLabels()">
+        </app-project-workflows-blocs>
+      </div>
+      <ng-template #headerTmpl>
+        <nz-tag [nzColor]="label.color">
+          <span style="color: {{label.font_color}}">{{label.name}}</span>
+        </nz-tag>
+      </ng-template>
     </nz-collapse-panel>
+  }
 </nz-collapse>

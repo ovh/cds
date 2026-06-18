@@ -1,17 +1,21 @@
 <div class="workflow-list-lines">
-    <nz-list nzBordered nzSize="small">
-        <a nz-list-item *ngFor="let wf of workflows" [routerLink]="['./workflow', wf.name]">
-            <div class="content">
-                {{wf.name}}
-            </div>
-            <div>
-                <nz-tag [nzColor]="label.color" *ngFor="let label of wf?.labels?.slice(0, 3)">
-                    <span style="color: {{label.font_color}}">{{label.name}}</span>
-                </nz-tag>
-                <nz-tag>
-                    ...
-                </nz-tag>
-            </div>
-        </a>
-    </nz-list>
+  <nz-list nzBordered nzSize="small">
+    @for (wf of workflows; track wf) {
+      <a nz-list-item [routerLink]="['./workflow', wf.name]">
+        <div class="content">
+          {{wf.name}}
+        </div>
+        <div>
+          @for (label of wf?.labels?.slice(0, 3); track label) {
+            <nz-tag [nzColor]="label.color">
+              <span style="color: {{label.font_color}}">{{label.name}}</span>
+            </nz-tag>
+          }
+          <nz-tag>
+            ...
+          </nz-tag>
+        </div>
+      </a>
+    }
+  </nz-list>
 </div>

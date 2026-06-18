@@ -1,151 +1,161 @@
 <nz-modal
-    [nzTitle]="isEditing ? 'Edit Repository Manager - ' + vcsProject.type : 'New Repository Manager'"
-    [nzVisible]="visible"
-    (nzOnCancel)="cancel()"
-    nzWidth="700px">
-    <div *nzModalContent>
-        <nz-spin [nzSpinning]="loading">
-            <form nz-form *ngIf="vcsProject">
-                <!-- Type selector: editable only on create, read-only on edit -->
-                <nz-form-item nz-rows *ngIf="!isEditing">
-                    <nz-form-label [nzSm]="6">Type</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <nz-select [(ngModel)]="vcsProject.type" name="type" nzPlaceholder="Select a type">
-                            <nz-option *ngFor="let t of reposManagerList" [nzValue]="t" [nzLabel]="t"></nz-option>
-                        </nz-select>
-                    </nz-form-control>
-                </nz-form-item>
-                <nz-form-item nz-rows *ngIf="isEditing">
-                    <nz-form-label [nzSm]="6">Type</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <input nz-input type="text" disabled [(ngModel)]="vcsProject.type" name="type">
-                    </nz-form-control>
-                </nz-form-item>
-
-                <nz-form-item nz-rows>
-                    <nz-form-label [nzSm]="6">Name</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <input nz-input type="text" [(ngModel)]="vcsProject.name" name="name">
-                    </nz-form-control>
-                </nz-form-item>
-                <nz-form-item nz-rows>
-                    <nz-form-label [nzSm]="6">Description</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <input nz-input type="text" [(ngModel)]="vcsProject.description" name="description">
-                    </nz-form-control>
-                </nz-form-item>
-                <nz-form-item nz-rows>
-                    <nz-form-label [nzSm]="6">URL</nz-form-label>
-                    <nz-form-control [nzSm]="14">
-                        <input nz-input type="text" [(ngModel)]="vcsProject.url" name="url">
-                    </nz-form-control>
-                </nz-form-item>
-
-                <nz-form-item>
-                    <h3>Options</h3>
-                    You can configure some options for the VCS Server. You can choose if CDS have to send build status (on your commit)
-                    and if this build status contains a link to your CDS Instance.
-                </nz-form-item>
-                <nz-form-item>
-                    <label nz-checkbox [(ngModel)]="vcsProject.options.disableStatus" name="disableStatus">
-                        <span>Disable build status</span>
-                    </label>
-                </nz-form-item>
-                <nz-form-item>
-                    <label nz-checkbox [(ngModel)]="vcsProject.options.disableStatusDetails" name="disableStatusDetails">
-                        <span>Disable status details</span>
-                    </label>
-                </nz-form-item>
-                <nz-form-item *ngIf="vcsProject.type === 'github'">
-                    <label nz-checkbox [(ngModel)]="vcsProject.options.disablePolling" name="disablePolling">
-                        <span>Disable polling. Polling is only supported by GitHub to let CDS use polling (instead of webhook) to be triggered.</span>
-                    </label>
-                </nz-form-item>
-                <nz-form-item *ngIf="vcsProject.type !== 'gerrit'">
-                    <label nz-checkbox [(ngModel)]="vcsProject.options.disableWebhooks" name="disableWebhooks">
-                        <span>Disable webhooks. You can disable webhooks you don't want to let CDS creating and using webhook to be triggered.</span>
-                    </label>
-                </nz-form-item>
-
-                <ng-container *ngIf="vcsProject.type !== 'gerrit'">
-                    <nz-form-item>
-                        <h3>Authentication</h3>
-                        CDS needs to call VCS API (getting repos, commits, etc...). These fields are mandatory.
-                    </nz-form-item>
-                    <nz-form-item nz-rows>
-                        <nz-form-label [nzSm]="6">Username</nz-form-label>
-                        <nz-form-control [nzSm]="14">
-                            <input nz-input type="text" [(ngModel)]="vcsProject.auth.username" name="username">
-                        </nz-form-control>
-                    </nz-form-item>
-                    <nz-form-item>
-                        <nz-form-label [nzSm]="6">Token</nz-form-label>
-                        <nz-form-control [nzSm]="14">
-                            <input nz-input type="password" [(ngModel)]="vcsProject.auth.token" name="token">
-                        </nz-form-control>
-                    </nz-form-item>
-                    <nz-form-item>
-                        <nz-form-label [nzSm]="6">SSH key</nz-form-label>
-                        <nz-form-control [nzSm]="14">
-                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
-                                                 [(value)]="vcsProject.auth.sshKeyName" (valueChange)="updatePublicKey($event)">
-                            </app-parameter-value>
-                        </nz-form-control>
-                        <ng-container *ngIf="selectedPublicKey">
-                            <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
-                                    [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
-                                <i nz-icon nzType="copy" nzTheme="outline"></i>
-                            </button>
-                        </ng-container>
-                    </nz-form-item>
-                </ng-container>
-
-                <ng-container *ngIf="vcsProject.type === 'gerrit'">
-                    <nz-form-item>
-                        <h3>Gerrit Authentication</h3>
-                        CDS needs to call Gerrit API. SSH Auth is used to access gerrit event stream. User and Token are used to add a review on Changes.
-                    </nz-form-item>
-                    <nz-form-item nz-rows>
-                        <nz-form-label [nzSm]="6">SSH Username</nz-form-label>
-                        <nz-form-control [nzSm]="14">
-                            <input nz-input type="text" [(ngModel)]="vcsProject.auth.sshUsername" name="sshUsername">
-                        </nz-form-control>
-                    </nz-form-item>
-                    <nz-form-item>
-                        <nz-form-label [nzSm]="6">SSH Port</nz-form-label>
-                        <nz-form-control [nzSm]="14">
-                            <input nz-input type="text" [(ngModel)]="vcsProject.auth.sshPort" name="sshPort">
-                        </nz-form-control>
-                    </nz-form-item>
-                    <nz-form-item>
-                        <nz-form-label [nzSm]="6">Reviewer User</nz-form-label>
-                        <nz-form-control [nzSm]="14">
-                            <input nz-input type="text" [(ngModel)]="vcsProject.auth.username" name="username">
-                        </nz-form-control>
-                    </nz-form-item>
-                    <nz-form-item>
-                        <nz-form-label [nzSm]="6">Reviewer Token</nz-form-label>
-                        <nz-form-control [nzSm]="14">
-                            <input nz-input type="password" [(ngModel)]="vcsProject.auth.token" name="token">
-                        </nz-form-control>
-                    </nz-form-item>
-                </ng-container>
-            </form>
-        </nz-spin>
-    </div>
-    <div *nzModalFooter>
-        <nz-row>
-            <nz-col [nzSpan]="4" *ngIf="isEditing">
-                <button nz-button nzType="primary" nzDanger nz-popconfirm
-                    nzPopconfirmTitle="Are you sure you want to delete this repository manager?"
-                    [nzLoading]="loading" (nzOnConfirm)="delete()">Delete</button>
-            </nz-col>
-            <nz-col [nzSpan]="isEditing ? 20 : 24" class="footer-actions">
-                <button nz-button nzType="primary" [nzLoading]="loading" (click)="save()">
-                    {{ isEditing ? 'Save' : 'Add' }}
+  [nzTitle]="isEditing ? 'Edit Repository Manager - ' + vcsProject.type : 'New Repository Manager'"
+  [nzVisible]="visible"
+  (nzOnCancel)="cancel()"
+  nzWidth="700px">
+  <div *nzModalContent>
+    <nz-spin [nzSpinning]="loading">
+      @if (vcsProject) {
+        <form nz-form>
+          <!-- Type selector: editable only on create, read-only on edit -->
+          @if (!isEditing) {
+            <nz-form-item nz-rows>
+              <nz-form-label [nzSm]="6">Type</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <nz-select [(ngModel)]="vcsProject.type" name="type" nzPlaceholder="Select a type">
+                  @for (t of reposManagerList; track t) {
+                    <nz-option [nzValue]="t" [nzLabel]="t"></nz-option>
+                  }
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
+          }
+          @if (isEditing) {
+            <nz-form-item nz-rows>
+              <nz-form-label [nzSm]="6">Type</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <input nz-input type="text" disabled [(ngModel)]="vcsProject.type" name="type">
+              </nz-form-control>
+            </nz-form-item>
+          }
+          <nz-form-item nz-rows>
+            <nz-form-label [nzSm]="6">Name</nz-form-label>
+            <nz-form-control [nzSm]="14">
+              <input nz-input type="text" [(ngModel)]="vcsProject.name" name="name">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item nz-rows>
+            <nz-form-label [nzSm]="6">Description</nz-form-label>
+            <nz-form-control [nzSm]="14">
+              <input nz-input type="text" [(ngModel)]="vcsProject.description" name="description">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item nz-rows>
+            <nz-form-label [nzSm]="6">URL</nz-form-label>
+            <nz-form-control [nzSm]="14">
+              <input nz-input type="text" [(ngModel)]="vcsProject.url" name="url">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <h3>Options</h3>
+            You can configure some options for the VCS Server. You can choose if CDS have to send build status (on your commit)
+            and if this build status contains a link to your CDS Instance.
+          </nz-form-item>
+          <nz-form-item>
+            <label nz-checkbox [(ngModel)]="vcsProject.options.disableStatus" name="disableStatus">
+              <span>Disable build status</span>
+            </label>
+          </nz-form-item>
+          <nz-form-item>
+            <label nz-checkbox [(ngModel)]="vcsProject.options.disableStatusDetails" name="disableStatusDetails">
+              <span>Disable status details</span>
+            </label>
+          </nz-form-item>
+          @if (vcsProject.type === 'github') {
+            <nz-form-item>
+              <label nz-checkbox [(ngModel)]="vcsProject.options.disablePolling" name="disablePolling">
+                <span>Disable polling. Polling is only supported by GitHub to let CDS use polling (instead of webhook) to be triggered.</span>
+              </label>
+            </nz-form-item>
+          }
+          @if (vcsProject.type !== 'gerrit') {
+            <nz-form-item>
+              <label nz-checkbox [(ngModel)]="vcsProject.options.disableWebhooks" name="disableWebhooks">
+                <span>Disable webhooks. You can disable webhooks you don't want to let CDS creating and using webhook to be triggered.</span>
+              </label>
+            </nz-form-item>
+          }
+          @if (vcsProject.type !== 'gerrit') {
+            <nz-form-item>
+              <h3>Authentication</h3>
+              CDS needs to call VCS API (getting repos, commits, etc...). These fields are mandatory.
+            </nz-form-item>
+            <nz-form-item nz-rows>
+              <nz-form-label [nzSm]="6">Username</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <input nz-input type="text" [(ngModel)]="vcsProject.auth.username" name="username">
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label [nzSm]="6">Token</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <input nz-input type="password" [(ngModel)]="vcsProject.auth.token" name="token">
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label [nzSm]="6">SSH key</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
+                  [(value)]="vcsProject.auth.sshKeyName" (valueChange)="updatePublicKey($event)">
+                </app-parameter-value>
+              </nz-form-control>
+              @if (selectedPublicKey) {
+                <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
+                  [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
+                  <i nz-icon nzType="copy" nzTheme="outline"></i>
                 </button>
-                <button nz-button name="cancel" (click)="cancel()">Cancel</button>
-            </nz-col>
-        </nz-row>
-    </div>
+              }
+            </nz-form-item>
+          }
+          @if (vcsProject.type === 'gerrit') {
+            <nz-form-item>
+              <h3>Gerrit Authentication</h3>
+              CDS needs to call Gerrit API. SSH Auth is used to access gerrit event stream. User and Token are used to add a review on Changes.
+            </nz-form-item>
+            <nz-form-item nz-rows>
+              <nz-form-label [nzSm]="6">SSH Username</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <input nz-input type="text" [(ngModel)]="vcsProject.auth.sshUsername" name="sshUsername">
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label [nzSm]="6">SSH Port</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <input nz-input type="text" [(ngModel)]="vcsProject.auth.sshPort" name="sshPort">
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label [nzSm]="6">Reviewer User</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <input nz-input type="text" [(ngModel)]="vcsProject.auth.username" name="username">
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label [nzSm]="6">Reviewer Token</nz-form-label>
+              <nz-form-control [nzSm]="14">
+                <input nz-input type="password" [(ngModel)]="vcsProject.auth.token" name="token">
+              </nz-form-control>
+            </nz-form-item>
+          }
+        </form>
+      }
+    </nz-spin>
+  </div>
+  <div *nzModalFooter>
+    <nz-row>
+      @if (isEditing) {
+        <nz-col [nzSpan]="4">
+          <button nz-button nzType="primary" nzDanger nz-popconfirm
+            nzPopconfirmTitle="Are you sure you want to delete this repository manager?"
+          [nzLoading]="loading" (nzOnConfirm)="delete()">Delete</button>
+        </nz-col>
+      }
+      <nz-col [nzSpan]="isEditing ? 20 : 24" class="footer-actions">
+        <button nz-button nzType="primary" [nzLoading]="loading" (click)="save()">
+          {{ isEditing ? 'Save' : 'Add' }}
+        </button>
+        <button nz-button name="cancel" (click)="cancel()">Cancel</button>
+      </nz-col>
+    </nz-row>
+  </div>
 </nz-modal>

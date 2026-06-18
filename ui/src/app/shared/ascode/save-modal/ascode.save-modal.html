@@ -1,25 +1,27 @@
 <div class="content">
-    <nz-alert *ngIf="repositoryFullname" nzType="info" [nzMessage]="infoPr"></nz-alert>
-    <ng-template #infoPr>
-        A pull request will be created to the repository {{repositoryFullname}}.<br>
-        Notice that you can't push on the default branch of your git repository.
-    </ng-template>
-    <app-ascode-save-form [project]="project" [workflow]="workflow" [operation]="asCodeOperation" (paramChange)="onParamChange($event)"></app-ascode-save-form>
+  @if (repositoryFullname) {
+    <nz-alert nzType="info" [nzMessage]="infoPr"></nz-alert>
+  }
+  <ng-template #infoPr>
+    A pull request will be created to the repository {{repositoryFullname}}.<br>
+    Notice that you can't push on the default branch of your git repository.
+  </ng-template>
+  <app-ascode-save-form [project]="project" [workflow]="workflow" [operation]="asCodeOperation" (paramChange)="onParamChange($event)"></app-ascode-save-form>
 </div>
 <div *nzModalFooter>
-    <ng-container *ngIf="!displayCloseButton">
-        <button nz-button [nzLoading]="loading" [disabled]="loading" (click)="close()">
-            Cancel
-        </button>
-        <button nz-button nzType="primary" [nzLoading]="loading"
-                 [disabled]="loading || !canSave"
-                 (click)="save()">
-                Save
-        </button>
-    </ng-container>
-    <ng-container *ngIf="displayCloseButton">
-        <button nz-button (click)="close()">
-            Close
-        </button>
-    </ng-container>
+  @if (!displayCloseButton) {
+    <button nz-button [nzLoading]="loading" [disabled]="loading" (click)="close()">
+      Cancel
+    </button>
+    <button nz-button nzType="primary" [nzLoading]="loading"
+      [disabled]="loading || !canSave"
+      (click)="save()">
+      Save
+    </button>
+  }
+  @if (displayCloseButton) {
+    <button nz-button (click)="close()">
+      Close
+    </button>
+  }
 </div>

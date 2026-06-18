@@ -1,59 +1,77 @@
 <div class="form">
-	<nz-input-group [nzSuffix]="suffixIcon">
-		<input type="text" nz-input placeholder="Search" [ngModel]="searchValue" (ngModelChange)="updateSearch($event)" />
-	</nz-input-group>
-	<ng-template #suffixIcon>
-		<span nz-icon nzType="search"></span>
-	</ng-template>
-	<button [class.active]="filtered" nz-button nzType="default" nz-popover [nzPopoverContent]="contentFilter"
-		nzPopoverPlacement="bottomRight" nzPopoverTrigger="click">
-		<span nz-icon nzType="filter" nzTheme="outline"></span>
-		<span *ngIf="filtered && ((tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)) > 0">
-			{{countDisplayedTests}}/{{(tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)}}</span>
-	</button>
-	<ng-template #contentFilter>
-		<nz-checkbox-group [nzOptions]="filterOptions" [ngModel]="activeFilters" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
-	</ng-template>
+  <nz-input-group [nzSuffix]="suffixIcon">
+    <input type="text" nz-input placeholder="Search" [ngModel]="searchValue" (ngModelChange)="updateSearch($event)" />
+  </nz-input-group>
+  <ng-template #suffixIcon>
+    <span nz-icon nzType="search"></span>
+  </ng-template>
+  <button [class.active]="filtered" nz-button nzType="default" nz-popover [nzPopoverContent]="contentFilter"
+    nzPopoverPlacement="bottomRight" nzPopoverTrigger="click">
+    <span nz-icon nzType="filter" nzTheme="outline"></span>
+    @if (filtered && ((tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)) > 0) {
+      <span>
+      {{countDisplayedTests}}/{{(tests?.ok ?? 0) + (tests?.ko ?? 0) + (tests?.skipped ?? 0)}}</span>
+    }
+  </button>
+  <ng-template #contentFilter>
+    <nz-checkbox-group [nzOptions]="filterOptions" [ngModel]="activeFilters" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
+  </ng-template>
 </div>
 <div class="content">
-	<ng-container *ngFor="let node of nodes">
-		<div class="tree-node-header large" (click)="clickTestSuite(node.key)">
-			<span nz-icon [nzType]="!treeExpandState[node.key] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
-			<div class="name" [title]="node.title">
-				<span class="title">
-					{{node.title}}
-				</span>
-				<span class="ok" *ngIf="node.success > 0">
-					<span nz-icon nzType="check" nzTheme="outline"></span>{{node.success}}
-				</span>
-				<span class="skipped" *ngIf="node.skipped > 0">
-					<span nz-icon nzType="warning" nzTheme="fill"></span>{{node.skipped}}
-				</span>
-				<span class="ko" *ngIf="node.failed > 0">
-					<span nz-icon nzType="close" nzTheme="outline"></span>{{node.failed}}
-				</span>
-			</div>
-			<div class="time">{{node.time}}</div>
-		</div>
-		<div class="tree-node-content" *ngIf="treeExpandState[node.key]">
-			<ng-container *ngFor="let child of node.children">
-				<div class="tree-node-header" (click)="clickTestCase(child.key)">
-					<span class="ok" *ngIf="child.status ==='success'">
-						<span nz-icon nzType="check" nzTheme="outline"></span>
-					</span>
-					<span class="skipped" *ngIf="child.status ==='skipped'">
-						<span nz-icon nzType="warning" nzTheme="fill"></span>
-					</span>
-					<span class="ko" *ngIf="child.status ==='failed'">
-						<span nz-icon nzType="close" nzTheme="outline"></span>
-					</span>
-					<div class="name title" [title]="child.title">
-						{{child.title}}
-					</div>
-					<div class="time">{{child.time}}</div>
-				</div>
-			</ng-container>
-		</div>
-	</ng-container>
-	<nz-list-empty *ngIf="nodes.length === 0" />
+  @for (node of nodes; track node) {
+    <div class="tree-node-header large" (click)="clickTestSuite(node.key)">
+      <span nz-icon [nzType]="!treeExpandState[node.key] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
+      <div class="name" [title]="node.title">
+        <span class="title">
+          {{node.title}}
+        </span>
+        @if (node.success > 0) {
+          <span class="ok">
+            <span nz-icon nzType="check" nzTheme="outline"></span>{{node.success}}
+          </span>
+        }
+        @if (node.skipped > 0) {
+          <span class="skipped">
+            <span nz-icon nzType="warning" nzTheme="fill"></span>{{node.skipped}}
+          </span>
+        }
+        @if (node.failed > 0) {
+          <span class="ko">
+            <span nz-icon nzType="close" nzTheme="outline"></span>{{node.failed}}
+          </span>
+        }
+      </div>
+      <div class="time">{{node.time}}</div>
+    </div>
+    @if (treeExpandState[node.key]) {
+      <div class="tree-node-content">
+        @for (child of node.children; track child) {
+          <div class="tree-node-header" (click)="clickTestCase(child.key)">
+            @if (child.status ==='success') {
+              <span class="ok">
+                <span nz-icon nzType="check" nzTheme="outline"></span>
+              </span>
+            }
+            @if (child.status ==='skipped') {
+              <span class="skipped">
+                <span nz-icon nzType="warning" nzTheme="fill"></span>
+              </span>
+            }
+            @if (child.status ==='failed') {
+              <span class="ko">
+                <span nz-icon nzType="close" nzTheme="outline"></span>
+              </span>
+            }
+            <div class="name title" [title]="child.title">
+              {{child.title}}
+            </div>
+            <div class="time">{{child.time}}</div>
+          </div>
+        }
+      </div>
+    }
+  }
+  @if (nodes.length === 0) {
+    <nz-list-empty />
+  }
 </div>

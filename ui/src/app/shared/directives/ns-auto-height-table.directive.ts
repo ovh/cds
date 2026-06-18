@@ -46,7 +46,7 @@ export class NsAutoHeightTableDirective {
         y: (this.element.nativeElement.parentElement.offsetHeight - offset).toString() + 'px'
       }
       this.table.ngOnChanges({
-        nzScroll: new SimpleChange({ originNzScroll }, this.table.nzScroll, false),
+        nzScroll: new SimpleChange(originNzScroll, this.table.nzScroll, false),
       });
       this.cd.detectChanges();
     }, 10);

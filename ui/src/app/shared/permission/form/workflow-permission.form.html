@@ -1,37 +1,45 @@
-<form nz-form *ngIf="groups.length > 0" (ngSubmit)="create()" nzLayout="vertical">
+@if (groups.length > 0) {
+  <form nz-form (ngSubmit)="create()" nzLayout="vertical">
     <nz-row>
-        <nz-col [nzSpan]="10">
-            <nz-form-item>
-                <nz-form-label>Group name</nz-form-label>
-                <nz-form-control *ngIf="newGroupPermission && groups">
-                    <nz-select nzShowSearch name="group-name" [(ngModel)]="newGroupPermission.group.name">
-                        <nz-option *ngFor="let g of groups" [nzValue]="g.group.name" [nzLabel]="g.group.name"></nz-option>
-                    </nz-select>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="10">
-            <nz-form-item>
-                <nz-form-label>Group permission</nz-form-label>
-                <nz-form-control>
-                    <nz-select nzShowSearch [(ngModel)]="newGroupPermission.permission" name="permission-level">
-                        <nz-option *ngFor="let p of permissionList" nzLabel="{{p.name | translate}}" [nzValue]="p.value"></nz-option>
-                    </nz-select>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="2">
-            <nz-form-label></nz-form-label>
+      <nz-col [nzSpan]="10">
+        <nz-form-item>
+          <nz-form-label>Group name</nz-form-label>
+          @if (newGroupPermission && groups) {
             <nz-form-control>
-                <ng-container *ngIf="buttonType === 'submit'" >
-                    <button nz-button type="submit" nzType="primary"  [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
-                        <i nz-icon nzType="save" nzTheme="outline"></i>Save</button>
-                </ng-container>
-                <ng-container *ngIf="buttonType === 'button'" >
-                    <button nz-button type="submit" nzType="default" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
-                        <i nz-icon nzType="plus" nzTheme="outline"></i></button>
-                </ng-container>
+              <nz-select nzShowSearch name="group-name" [(ngModel)]="newGroupPermission.group.name">
+                @for (g of groups; track g) {
+                  <nz-option [nzValue]="g.group.name" [nzLabel]="g.group.name"></nz-option>
+                }
+              </nz-select>
             </nz-form-control>
-        </nz-col>
-    </nz-row>
-</form>
+          }
+        </nz-form-item>
+      </nz-col>
+      <nz-col [nzSpan]="10">
+        <nz-form-item>
+          <nz-form-label>Group permission</nz-form-label>
+          <nz-form-control>
+            <nz-select nzShowSearch [(ngModel)]="newGroupPermission.permission" name="permission-level">
+              @for (p of permissionList; track p) {
+                <nz-option nzLabel="{{p.name | translate}}" [nzValue]="p.value"></nz-option>
+              }
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col [nzSpan]="2">
+        <nz-form-label></nz-form-label>
+        <nz-form-control>
+          @if (buttonType === 'submit') {
+            <button nz-button type="submit" nzType="primary"  [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
+              <i nz-icon nzType="save" nzTheme="outline"></i>Save</button>
+            }
+            @if (buttonType === 'button') {
+              <button nz-button type="submit" nzType="default" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
+                <i nz-icon nzType="plus" nzTheme="outline"></i></button>
+              }
+            </nz-form-control>
+          </nz-col>
+        </nz-row>
+      </form>
+    }

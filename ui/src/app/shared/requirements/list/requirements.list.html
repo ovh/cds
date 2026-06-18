@@ -1,34 +1,40 @@
-<div class="requirement" *ngIf="requirements && availableRequirements">
+@if (requirements && availableRequirements) {
+  <div class="requirement">
     <nz-table nzShowPagination [nzData]="requirements" [nzPageSize]="5" #reqList>
-        <thead>
-            <tr>
-                <th nzWidth="100px">Type</th>
-                <th nzWidth="400px">Value</th>
-                <th nzWidth="100px">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let r of reqList.data">
-                <td>
-                    {{r.type}}
-                </td>
-                <td>
-                    <ng-container *ngIf="suggestWithWorkerModel && suggestWithOSArch">
-                        <app-requirements-value [requirement]="r"
-                                                (requirementChange)="change(r)"
-                                                [edit]="edit"
-                                                [suggest]="suggest"
-                                                [workerModels]="workerModelsMap"
-                                                [suggestArchOs]="suggestWithOSArch"
-                                                [suggestWorkerModels]="suggestWithWorkerModel"></app-requirements-value>
-                    </ng-container>
-                </td>
-                <td>
-                    <div *ngIf="edit" class="center">
-                        <button name="deleteBtn" nz-button nzDanger nzType="primary" (click)="deleteEvent(r)">Remove</button>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
+      <thead>
+        <tr>
+          <th nzWidth="100px">Type</th>
+          <th nzWidth="400px">Value</th>
+          <th nzWidth="100px">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of reqList.data; track r) {
+          <tr>
+            <td>
+              {{r.type}}
+            </td>
+            <td>
+              @if (suggestWithWorkerModel && suggestWithOSArch) {
+                <app-requirements-value [requirement]="r"
+                  (requirementChange)="change(r)"
+                  [edit]="edit"
+                  [suggest]="suggest"
+                  [workerModels]="workerModelsMap"
+                  [suggestArchOs]="suggestWithOSArch"
+                [suggestWorkerModels]="suggestWithWorkerModel"></app-requirements-value>
+              }
+            </td>
+            <td>
+              @if (edit) {
+                <div class="center">
+                  <button name="deleteBtn" nz-button nzDanger nzType="primary" (click)="deleteEvent(r)">Remove</button>
+                </div>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
     </nz-table>
-</div>
+  </div>
+}

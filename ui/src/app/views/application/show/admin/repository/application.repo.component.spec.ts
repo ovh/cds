@@ -1,7 +1,7 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpRequest, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component, Injector, NO_ERRORS_SCHEMA } from '@angular/core';
+import { Component, NO_ERRORS_SCHEMA } from '@angular/core';
 import { fakeAsync, flush, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -38,7 +38,7 @@ class DummyComponent {
 }
 
 describe('CDS: Application Repo Component', () => {
-    let injector: Injector;
+    let injector: TestBed;
     let toast: ToastService;
 
     beforeEach(async () => {
@@ -87,7 +87,7 @@ describe('CDS: Application Repo Component', () => {
 
 
         injector = getTestBed();
-        toast = injector.get(ToastService);
+        toast = injector.inject(ToastService);
     });
 
     afterEach(() => {

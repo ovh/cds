@@ -16,6 +16,9 @@ module.exports = {
                 ],
                 createDefaultProgram: true
             },
+            plugins: [
+                "@typescript-eslint"
+            ],
             extends: [
                 "plugin:@angular-eslint/recommended",
                 "plugin:@angular-eslint/template/process-inline-templates"
@@ -48,7 +51,10 @@ module.exports = {
                 ],
                  "@angular-eslint/prefer-standalone": [
 					"off"
-				]
+				],
+                "@angular-eslint/prefer-inject": [
+                    "off"
+                ]
             }
         },
         {
@@ -64,6 +70,9 @@ module.exports = {
                     {
                         "allowNullOrUndefined": true
                     }
+                ],
+                "@angular-eslint/template/prefer-control-flow": [
+                    "off"
                 ]
             }
         }

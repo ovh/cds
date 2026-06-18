@@ -1,61 +1,81 @@
 <div class="breadcrumb">
-    <nz-breadcrumb>
-        <nz-breadcrumb-item>
-            <!-- PROJECT -->
-            <span nz-icon nzType="profile" nzTheme="outline"></span>
-            <a class="section" *ngIf="application || pipeline || action || workflow || environment"
-               [routerLink]="['/project', project.key]" [queryParams]="getProjectQueryParams()">
-                {{ project?.name}}
-            </a>
-            <span class="section active" *ngIf="!application && !pipeline && !action && !workflow && !environment">
-            {{ project?.name}}
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <!-- PROJECT -->
+      <span nz-icon nzType="profile" nzTheme="outline"></span>
+      @if (application || pipeline || action || workflow || environment) {
+        <a class="section"
+          [routerLink]="['/project', project.key]" [queryParams]="getProjectQueryParams()">
+          {{ project?.name}}
+        </a>
+      }
+      @if (!application && !pipeline && !action && !workflow && !environment) {
+        <span class="section active">
+          {{ project?.name}}
         </span>
-        </nz-breadcrumb-item>
-        <nz-breadcrumb-item *ngIf="environment">
-            <span nz-icon nzType="environment" nzTheme="outline"></span>
-            <a class="section" [class.active]="true"
-               [routerLink]="['/project', project.key, 'environment', environment?.name]">
-                {{ environment?.name}}
-            </a>
-        </nz-breadcrumb-item>
-        <nz-breadcrumb-item *ngIf="application">
-            <span nz-icon nzType="rocket" nzTheme="outline"></span>
-            <a class="section" [class.active]="application && !pipeline && !action"
-               [routerLink]="['/project', project.key, 'application', application?.name]"
-               [queryParams]="getApplicationQueryParams()">
-                {{ application?.name}}
-            </a>
-        </nz-breadcrumb-item>
-        <nz-breadcrumb-item *ngIf="workflow">
-            <span nz-icon nzType="share-alt" nzTheme="outline"></span>
-            <a class="section" [routerLink]="['/project', project.key, 'workflow', workflow]">{{ workflow }}</a>
-        </nz-breadcrumb-item>
-        <nz-breadcrumb-item *ngIf="pipeline">
-            <span nz-icon nzType="apartment" nzTheme="outline"></span>
-            <a class="section" [class.active]="pipeline && !action && !version"
-               [routerLink]="['/project', project.key, 'pipeline', pipeline?.name]"
-               [queryParams]="getPipelineQueryParams()">{{ pipeline?.name}}</a>
-        </nz-breadcrumb-item>
-        <nz-breadcrumb-item *ngIf="workflowRun">
-            <a class="section"
-               [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun]">{{ '#' + workflowRun}}</a>
-        </nz-breadcrumb-item>
-        <nz-breadcrumb-item *ngIf="workflowRunNode && wPipeline">
-            <span nz-icon nzType="apartment" nzTheme="outline"></span>
-            <a class="section"
-               [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun, 'node', workflowRunNode]"
-               [queryParams]="{ name: wPipeline}">{{ wPipeline}}</a>
-        </nz-breadcrumb-item>
-        <nz-breadcrumb-item *ngIf="application && pipeline && version && version > 0">
-            <a class="section active"
-               [routerLink]="['/project', project?.key, 'application', application?.name, 'pipeline', pipeline?.name, 'build', this.buildNumber]"
-               [queryParams]="getBuildQueryParams()">
-                {{ 'v' + version}}
-            </a>
-        </nz-breadcrumb-item>
-        <nz-breadcrumb-item *ngIf="action">
-            <div class="section">{{ action?.name}}</div>
-        </nz-breadcrumb-item>
-    </nz-breadcrumb>
-    <ng-content></ng-content>
+      }
+    </nz-breadcrumb-item>
+    @if (environment) {
+      <nz-breadcrumb-item>
+        <span nz-icon nzType="environment" nzTheme="outline"></span>
+        <a class="section" [class.active]="true"
+          [routerLink]="['/project', project.key, 'environment', environment?.name]">
+          {{ environment?.name}}
+        </a>
+      </nz-breadcrumb-item>
+    }
+    @if (application) {
+      <nz-breadcrumb-item>
+        <span nz-icon nzType="rocket" nzTheme="outline"></span>
+        <a class="section" [class.active]="application && !pipeline && !action"
+          [routerLink]="['/project', project.key, 'application', application?.name]"
+          [queryParams]="getApplicationQueryParams()">
+          {{ application?.name}}
+        </a>
+      </nz-breadcrumb-item>
+    }
+    @if (workflow) {
+      <nz-breadcrumb-item>
+        <span nz-icon nzType="share-alt" nzTheme="outline"></span>
+        <a class="section" [routerLink]="['/project', project.key, 'workflow', workflow]">{{ workflow }}</a>
+      </nz-breadcrumb-item>
+    }
+    @if (pipeline) {
+      <nz-breadcrumb-item>
+        <span nz-icon nzType="apartment" nzTheme="outline"></span>
+        <a class="section" [class.active]="pipeline && !action && !version"
+          [routerLink]="['/project', project.key, 'pipeline', pipeline?.name]"
+        [queryParams]="getPipelineQueryParams()">{{ pipeline?.name}}</a>
+      </nz-breadcrumb-item>
+    }
+    @if (workflowRun) {
+      <nz-breadcrumb-item>
+        <a class="section"
+        [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun]">{{ '#' + workflowRun}}</a>
+      </nz-breadcrumb-item>
+    }
+    @if (workflowRunNode && wPipeline) {
+      <nz-breadcrumb-item>
+        <span nz-icon nzType="apartment" nzTheme="outline"></span>
+        <a class="section"
+          [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun, 'node', workflowRunNode]"
+        [queryParams]="{ name: wPipeline}">{{ wPipeline}}</a>
+      </nz-breadcrumb-item>
+    }
+    @if (application && pipeline && version && version > 0) {
+      <nz-breadcrumb-item>
+        <a class="section active"
+          [routerLink]="['/project', project?.key, 'application', application?.name, 'pipeline', pipeline?.name, 'build', this.buildNumber]"
+          [queryParams]="getBuildQueryParams()">
+          {{ 'v' + version}}
+        </a>
+      </nz-breadcrumb-item>
+    }
+    @if (action) {
+      <nz-breadcrumb-item>
+        <div class="section">{{ action?.name}}</div>
+      </nz-breadcrumb-item>
+    }
+  </nz-breadcrumb>
+  <ng-content></ng-content>
 </div>

@@ -1,5 +1,4 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Injector } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -29,12 +28,11 @@ import { SharedModule } from 'app/shared/shared.module';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
-import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CDS: Project Show Component', () => {
 
-    let injector: Injector;
+    let injector: TestBed;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -52,7 +50,6 @@ describe('CDS: Project Show Component', () => {
                 ApplicationService,
                 EnvironmentService,
                 VariableService,
-                NzNotificationModule,
                 HelpService,
                 TranslateService,
                 TranslateParser,
@@ -81,8 +78,8 @@ describe('CDS: Project Show Component', () => {
 
 
     it('it should create a project', () => {
-        let store: Store = injector.get(Store);
-        let router: Router = injector.get(Router);
+        let store: Store = injector.inject(Store);
+        let router: Router = injector.inject(Router);
 
         spyOn(store, 'dispatch').and.callFake(() => of(null));
 

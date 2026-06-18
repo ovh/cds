@@ -1,39 +1,46 @@
 <div id="projectRepoManagers">
-    <div class="list-header">
-        <button *ngIf="canAdd" nz-button nzType="primary" (click)="openCreate()">
-            <i nz-icon nzType="plus"></i> Add
-        </button>
-    </div>
-    <nz-table [nzData]="vcsProjects" nzSize="small" [nzLoading]="loading" #listrepos>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>URL</th>
-                <th nzWidth="80px"></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let r of listrepos.data">
-                <td>
-                    {{r.name}}
-                    <span *ngIf="r.created_by && r.created_by !== ''"> - Created by {{r.created_by}}</span>
-                </td>
-                <td>{{r.type}}</td>
-                <td>{{r.url}}</td>
-                <td class="rightAlign">
-                    <button nz-button nzType="text" (click)="openEdit(r)" title="Edit">
-                        <i nz-icon nzType="edit"></i>
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </nz-table>
+  <div class="list-header">
+    @if (canAdd) {
+      <button nz-button nzType="primary" (click)="openCreate()">
+        <i nz-icon nzType="plus"></i> Add
+      </button>
+    }
+  </div>
+  <nz-table [nzData]="vcsProjects" nzSize="small" [nzLoading]="loading" #listrepos>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>URL</th>
+        <th nzWidth="80px"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (r of listrepos.data; track r) {
+        <tr>
+          <td>
+            {{r.name}}
+            @if (r.created_by && r.created_by !== '') {
+              <span> - Created by {{r.created_by}}</span>
+            }
+          </td>
+          <td>{{r.type}}</td>
+          <td>{{r.url}}</td>
+          <td class="rightAlign">
+            <button nz-button nzType="text" (click)="openEdit(r)" title="Edit">
+              <i nz-icon nzType="edit"></i>
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+  @if (selectedVCSProject) {
     <app-project-repomanager-form
-        *ngIf="selectedVCSProject"
-        [project]="project"
-        [vcsProject]="selectedVCSProject"
-        [visible]="modalVisible"
-        (closed)="onModalClose($event)">
+      [project]="project"
+      [vcsProject]="selectedVCSProject"
+      [visible]="modalVisible"
+      (closed)="onModalClose($event)">
     </app-project-repomanager-form>
+  }
 </div>

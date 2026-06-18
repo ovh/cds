@@ -1,14 +1,24 @@
 <div class="node-wrapper" (click)="clickOnNode()" (dblclick)="$event.stopPropagation(); dblClickOnNode()"
-    [ngSwitch]="node.type" nz-popover [nzPopoverContent]="popupNode" nzPopoverPlacement="right" nzPopoverTrigger="click" [(nzPopoverVisible)]="menuVisible">
-    <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [workflow]="workflow" [node]="node"
-        [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
-    <app-workflow-wnode-join *ngSwitchCase="'join'" [workflow]="workflow" [node]="node"
-        [noderunStatus]="currentNodeRun?.status"></app-workflow-wnode-join>
-    <app-workflow-wnode-fork *ngSwitchCase="'fork'" [noderunStatus]="currentNodeRun?.status"></app-workflow-wnode-fork>
-    <app-workflow-wnode-outgoing-hook *ngSwitchCase="'outgoinghook'" [workflow]="workflow"
-        [node]="node" [noderun]="currentNodeRun"></app-workflow-wnode-outgoing-hook>
+  nz-popover [nzPopoverContent]="popupNode" nzPopoverPlacement="right" nzPopoverTrigger="click" [(nzPopoverVisible)]="menuVisible">
+  @switch (node.type) {
+    @case ('pipeline') {
+      <app-workflow-wnode-pipeline [workflow]="workflow" [node]="node"
+      [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
+    }
+    @case ('join') {
+      <app-workflow-wnode-join [workflow]="workflow" [node]="node"
+      [noderunStatus]="currentNodeRun?.status"></app-workflow-wnode-join>
+    }
+    @case ('fork') {
+      <app-workflow-wnode-fork [noderunStatus]="currentNodeRun?.status"></app-workflow-wnode-fork>
+    }
+    @case ('outgoinghook') {
+      <app-workflow-wnode-outgoing-hook [workflow]="workflow"
+      [node]="node" [noderun]="currentNodeRun"></app-workflow-wnode-outgoing-hook>
+    }
+  }
 </div>
 <ng-template #popupNode>
-    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" #menu></app-workflow-menu-wnode-edit>
+  <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" #menu></app-workflow-menu-wnode-edit>
 </ng-template>
 

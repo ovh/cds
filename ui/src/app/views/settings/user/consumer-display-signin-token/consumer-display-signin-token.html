@@ -1,23 +1,23 @@
 <nz-row>
-    <nz-col [nzSpan]="24">
-        <ng-container *ngIf="consumer.id">
-            <nz-alert nzType="info" nzMessage="You can now use this token to signin with the consumer"></nz-alert>
-            <form nz-form>
-                <nz-form-item>
-                    <nz-form-label>Token</nz-form-label>
-                    <nz-form-control>
-                        <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
-                            <input type="text" nz-input value="{{signinToken}}" [readonly]="true" />
-                        </nz-input-group>
-                        <ng-template #suffixIconButton>
-                            <button nz-button nzSearch title="Copy to clipboard"
-                                    ngxClipboard [cbContent]="signinToken" (click)="confirmCopy()">
-                                <span nz-icon nzType="copy" nzTheme="outline"></span>
-                            </button>
-                        </ng-template>
-                    </nz-form-control>
-                </nz-form-item>
-            </form>
-        </ng-container>
-    </nz-col>
+  <nz-col [nzSpan]="24">
+    @if (consumer.id) {
+      <nz-alert nzType="info" nzMessage="You can now use this token to signin with the consumer"></nz-alert>
+      <form nz-form>
+        <nz-form-item>
+          <nz-form-label>Token</nz-form-label>
+          <nz-form-control>
+            <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+              <input type="text" nz-input value="{{signinToken}}" [readonly]="true" />
+            </nz-input-group>
+            <ng-template #suffixIconButton>
+              <button nz-button nzSearch title="Copy to clipboard"
+                ngxClipboard [cbContent]="signinToken" (click)="confirmCopy()">
+                <span nz-icon nzType="copy" nzTheme="outline"></span>
+              </button>
+            </ng-template>
+          </nz-form-control>
+        </nz-form-item>
+      </form>
+    }
+  </nz-col>
 </nz-row>

@@ -1,11 +1,29 @@
 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
 
-<div class="content" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
-	<app-project-variable-sets *ngSwitchCase="'variables'" [project]="project"></app-project-variable-sets>
-	<app-project-concurrencies *ngSwitchCase="'concurrencies'" [project]="project"></app-project-concurrencies>
-	<app-project-webhooks *ngSwitchCase="'webhooks'" [project]="project"></app-project-webhooks>
-	<app-project-keys *ngSwitchCase="'keys'" [project]="project"></app-project-keys>
-	<app-project-run-retention *ngSwitchCase="'retentions'" [project]="project"></app-project-run-retention>
-	<app-project-integrations *ngSwitchCase="'integrations'" [project]="project"></app-project-integrations>
-	<app-project-advanced *ngSwitchCase="'advanced'" [project]="project"></app-project-advanced>
-</div>
+@if (selectedTab) {
+  <div class="content">
+    @switch (selectedTab.key) {
+      @case ('variables') {
+        <app-project-variable-sets [project]="project"></app-project-variable-sets>
+      }
+      @case ('concurrencies') {
+        <app-project-concurrencies [project]="project"></app-project-concurrencies>
+      }
+      @case ('webhooks') {
+        <app-project-webhooks [project]="project"></app-project-webhooks>
+      }
+      @case ('keys') {
+        <app-project-keys [project]="project"></app-project-keys>
+      }
+      @case ('retentions') {
+        <app-project-run-retention [project]="project"></app-project-run-retention>
+      }
+      @case ('integrations') {
+        <app-project-integrations [project]="project"></app-project-integrations>
+      }
+      @case ('advanced') {
+        <app-project-advanced [project]="project"></app-project-advanced>
+      }
+    }
+  </div>
+}

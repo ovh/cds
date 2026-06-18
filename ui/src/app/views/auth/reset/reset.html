@@ -1,31 +1,43 @@
 <h3>
-    {{ 'account_password_title' | translate }}
+  {{ 'account_password_title' | translate }}
 </h3>
 <div class="content">
-    <nz-alert *ngIf="false && showErrorMessage" nzType="error"
-              nzMessage="Invalid given password or reset token"></nz-alert>
-    <nz-alert *ngIf="showSuccessMessage" nzType="success" nzMessage="Password successfully updated."></nz-alert>
-    <form *ngIf="!showSuccessMessage" nz-form (ngSubmit)="resetPassword(loginForm)" #loginForm="ngForm">
-        <nz-form-item>
-            <nz-form-label>New password</nz-form-label>
-            <nz-form-control>
-                <input nz-input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel
-                       required
-                       [disabled]="loading">
-                <nz-progress *ngIf="!passwordError && passwordLevel !== null"
-                             [nzShowInfo]="false"
-                             [nzStatus]="passwordLevel<3?'exception': 'success'"
-                             [nzPercent]="100 * (passwordLevel + 1)/5"></nz-progress>
-            </nz-form-control>
-            <nz-alert *ngIf="passwordError" nzType="error" nzMessage="{{ passwordError | translate }}"></nz-alert>
-        </nz-form-item>
-        <nz-form-item nzJustify="end">
-            <button nz-button nzType="primary" type="submit"
-                    [disabled]="loading">Modify password</button>
-        </nz-form-item>
+  @if (false && showErrorMessage) {
+    <nz-alert nzType="error"
+    nzMessage="Invalid given password or reset token"></nz-alert>
+  }
+  @if (showSuccessMessage) {
+    <nz-alert nzType="success" nzMessage="Password successfully updated."></nz-alert>
+  }
+  @if (!showSuccessMessage) {
+    <form nz-form (ngSubmit)="resetPassword(loginForm)" #loginForm="ngForm">
+      <nz-form-item>
+        <nz-form-label>New password</nz-form-label>
+        <nz-form-control>
+          <input nz-input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel
+            required
+            [disabled]="loading">
+          @if (!passwordError && passwordLevel !== null) {
+            <nz-progress
+              [nzShowInfo]="false"
+              [nzStatus]="passwordLevel<3?'exception': 'success'"
+            [nzPercent]="100 * (passwordLevel + 1)/5"></nz-progress>
+          }
+        </nz-form-control>
+        @if (passwordError) {
+          <nz-alert nzType="error" nzMessage="{{ passwordError | translate }}"></nz-alert>
+        }
+      </nz-form-item>
+      <nz-form-item nzJustify="end">
+        <button nz-button nzType="primary" type="submit"
+        [disabled]="loading">Modify password</button>
+      </nz-form-item>
     </form>
+  }
 
-    <button nz-button class="right" nzType="primary" *ngIf="showSuccessMessage"
-            (click)="navigateToHome()">{{ 'auth_btn_go_to_home' | translate }}</button>
+  @if (showSuccessMessage) {
+    <button nz-button class="right" nzType="primary"
+    (click)="navigateToHome()">{{ 'auth_btn_go_to_home' | translate }}</button>
+  }
 
 </div>

@@ -1,42 +1,52 @@
 <nz-modal [(nzVisible)]="openModal" [nzFooter]="null" nzWidth="1080px" [nzTitle]="hookSelected?'Hook edition':currentNodeName" (nzOnCancel)="close()">
-    <div *nzModalContent>
-        <nz-tabset nzTabPosition="left" *ngIf="currentNodeName">
-            <ng-container *ngIf="!hookSelected">
-                <nz-tab nzTitle="Execution context" *ngIf="currentNodeType === 'pipeline' || currentNodeType === 'fork'">
-                    <app-workflow-node-context [workflow]="workflow" [readonly]="readonly" (contextChange)="pushChange($event)"></app-workflow-node-context>
-                </nz-tab>
-                <nz-tab nzTitle="Inputs" *ngIf="currentNodeType === 'pipeline'">
-                    <app-workflow-node-input [workflow]="workflow" [readonly]="readonly" (inputChange)="pushChange($event)"></app-workflow-node-input>
-                </nz-tab>
-                <nz-tab nzTitle="Outgoing Hook" *ngIf="currentNodeType === 'outgoinghook'">
-                    <app-workflow-node-outgoinghook [workflow]="workflow" [mode]="readonly?'ro':'update'" (outgoinghookChange)="pushChange($event)"></app-workflow-node-outgoinghook>
-                </nz-tab>
-                <nz-tab nzTitle="Run conditions">
-                    <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
-                </nz-tab>
-                <nz-tab nzTitle="Permissions">
-                    <ng-container *ngIf="groups">
-                        <app-permission-list [permissions]="groups" (event)="groupManagement($event)"
-                                             (permissionChange)="pushChange($event)"
-                                             [edit]="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
-                        </app-permission-list>
-                    </ng-container>
-                    <div class="permForm"
-                            *ngIf="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
-                        <h4>{{ 'workflow_node_permissions_form_title' | translate }}</h4>
-                        <app-workflow-permission-form [groups]="workflow.groups" (createGroupPermissionEvent)="groupManagement($event)"
-                                                      [loading]="loading"></app-workflow-permission-form>
-                    </div>
-                </nz-tab>
-            </ng-container>
-            <ng-container *ngIf="hookSelected">
-                <nz-tab nzTitle="Hook">
-                    <app-workflow-node-hook-form [workflow]="workflow" [mode]="readonly?'ro':'update'" ></app-workflow-node-hook-form>
-                </nz-tab>
-                <nz-tab nzTitle="Run conditions">
-                    <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
-                </nz-tab>
-            </ng-container>
-        </nz-tabset>
-    </div>
+  <div *nzModalContent>
+    @if (currentNodeName) {
+      <nz-tabs nzTabPosition="left">
+        @if (!hookSelected) {
+          @if (currentNodeType === 'pipeline' || currentNodeType === 'fork') {
+            <nz-tab nzTitle="Execution context">
+              <app-workflow-node-context [workflow]="workflow" [readonly]="readonly" (contextChange)="pushChange($event)"></app-workflow-node-context>
+            </nz-tab>
+          }
+          @if (currentNodeType === 'pipeline') {
+            <nz-tab nzTitle="Inputs">
+              <app-workflow-node-input [workflow]="workflow" [readonly]="readonly" (inputChange)="pushChange($event)"></app-workflow-node-input>
+            </nz-tab>
+          }
+          @if (currentNodeType === 'outgoinghook') {
+            <nz-tab nzTitle="Outgoing Hook">
+              <app-workflow-node-outgoinghook [workflow]="workflow" [mode]="readonly?'ro':'update'" (outgoinghookChange)="pushChange($event)"></app-workflow-node-outgoinghook>
+            </nz-tab>
+          }
+          <nz-tab nzTitle="Run conditions">
+            <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
+          </nz-tab>
+          <nz-tab nzTitle="Permissions">
+            @if (groups) {
+              <app-permission-list [permissions]="groups" (event)="groupManagement($event)"
+                (permissionChange)="pushChange($event)"
+                [edit]="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
+              </app-permission-list>
+            }
+            @if (!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)) {
+              <div class="permForm"
+                >
+                <h4>{{ 'workflow_node_permissions_form_title' | translate }}</h4>
+                <app-workflow-permission-form [groups]="workflow.groups" (createGroupPermissionEvent)="groupManagement($event)"
+                [loading]="loading"></app-workflow-permission-form>
+              </div>
+            }
+          </nz-tab>
+        }
+        @if (hookSelected) {
+          <nz-tab nzTitle="Hook">
+            <app-workflow-node-hook-form [workflow]="workflow" [mode]="readonly?'ro':'update'" ></app-workflow-node-hook-form>
+          </nz-tab>
+          <nz-tab nzTitle="Run conditions">
+            <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
+          </nz-tab>
+        }
+      </nz-tabs>
+    }
+  </div>
 </nz-modal>

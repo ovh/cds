@@ -1,12 +1,18 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path">
-        <button nz-button nzType="primary" [routerLink]="['add']" class="alignRight">Add</button>
-    </app-breadcrumb>
-    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
-    <app-scrollview class="scrollview" [ngSwitch]="selectedTab.key">
-        <app-data-table *ngSwitchCase="'custom'" [withFilter]="filter" [withPagination]="15"
-            [columns]="columns" [data]="actions" [loading]="loading"></app-data-table>
-        <app-data-table *ngSwitchCase="'builtin'" [withFilter]="filterBuiltin" [withPagination]="15"
-            [columns]="columnsBuiltin" [data]="actionsBuiltin" [loading]="loadingBuiltin"></app-data-table>
-    </app-scrollview>
+  <app-breadcrumb [path]="path">
+    <button nz-button nzType="primary" [routerLink]="['add']" class="alignRight">Add</button>
+  </app-breadcrumb>
+  <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+  <app-scrollview class="scrollview">
+    @switch (selectedTab.key) {
+      @case ('custom') {
+        <app-data-table [withFilter]="filter" [withPagination]="15"
+        [columns]="columns" [data]="actions" [loading]="loading"></app-data-table>
+      }
+      @case ('builtin') {
+        <app-data-table [withFilter]="filterBuiltin" [withPagination]="15"
+        [columns]="columnsBuiltin" [data]="actionsBuiltin" [loading]="loadingBuiltin"></app-data-table>
+      }
+    }
+  </app-scrollview>
 </div>

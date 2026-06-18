@@ -1,21 +1,21 @@
 <h3><span nz-icon nzType="share-alt" nzTheme="outline"></span> {{'usage_workflow_list' | translate}}</h3>
 <div class="nzSegment">
-    <div *ngIf="workflows && workflows.length > 0;then workflowsDisplay; else noworkflows"></div>
-    <ng-template #workflowsDisplay>
-        <nz-row>
-            <nz-col [nzSpan]="4" [nzOffset]="2" *ngFor="let workflow of workflows">
-                <ng-container *ngIf="project">
-                    <a [routerLink]="['/project', project.key, 'workflow', workflow.name]">{{workflow.name}}</a>
-                </ng-container>
-                <ng-container *ngIf="!project">
-                    <a [routerLink]="['/project', workflow.project_key, 'workflow', workflow.name]">{{workflow.name}}</a>
-                </ng-container>
-            </nz-col>
-        </nz-row>
-    </ng-template>
-    <ng-template #noworkflows>
-        <div>
-            <span>{{ 'common_no_workflow' | translate }}</span>
-        </div>
-    </ng-template>
+  @if (workflows && workflows.length > 0) {
+    <nz-row>
+      @for (workflow of workflows; track workflow) {
+        <nz-col [nzSpan]="4" [nzOffset]="2">
+          @if (project) {
+            <a [routerLink]="['/project', project.key, 'workflow', workflow.name]">{{workflow.name}}</a>
+          }
+          @if (!project) {
+            <a [routerLink]="['/project', workflow.project_key, 'workflow', workflow.name]">{{workflow.name}}</a>
+          }
+        </nz-col>
+      }
+    </nz-row>
+  } @else {
+    <div>
+      <span>{{ 'common_no_workflow' | translate }}</span>
+    </div>
+  }
 </div>

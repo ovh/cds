@@ -1,54 +1,68 @@
-<form nz-form *ngIf="ready" (ngSubmit)="create()" nzLayout="vertical">
+@if (ready) {
+  <form nz-form (ngSubmit)="create()" nzLayout="vertical">
     <nz-row>
-        <nz-col nzSpan="10">
-            <nz-form-item>
-                <nz-form-label class="helperLabel">
-                    Group name
-                    <a class="group-help" nzPopoverTrigger="click"
-                                   nz-popover [nzPopoverContent]="popupHelp" [(nzPopoverVisible)]="helpVisible" nzPopoverPlacement="top">(My group is not listed)</a>
-                        <ng-template #popupHelp>
-                            <div class="group-help-popup">
-                                <span>You'll see only your groups in this list.</span>
-                                <span>If you need to add read permission to another group you can manually enter its name.</span>
-                                <button nz-button nzType="primary" nzBlock
-                                        (click)="switchManualInput();helpVisible = false;">Switch text
-                                    input</button>
-                            </div>
-                        </ng-template>
-                </nz-form-label>
-                <nz-form-control>
-                    <nz-select nzShowSearch *ngIf="!manual" [(ngModel)]="newGroupPermission.group.name" (ngModelChange)="selectGroup($event)" name="group-name">
-                        <nz-option *ngFor="let option of groupList" nzLabel=" {{option.name}}{{option.organization ? ' (' + option.organization + ')' : ''}}"
-                                   [nzValue]="option.name"></nz-option>
-                    </nz-select>
-                    <input nz-input *ngIf="manual" name="group-name" [(ngModel)]="newGroupPermission.group.name">
-                </nz-form-control>
-            </nz-form-item>
+      <nz-col nzSpan="10">
+        <nz-form-item>
+          <nz-form-label class="helperLabel">
+            Group name
+            <a class="group-help" nzPopoverTrigger="click"
+            nz-popover [nzPopoverContent]="popupHelp" [(nzPopoverVisible)]="helpVisible" nzPopoverPlacement="top">(My group is not listed)</a>
+            <ng-template #popupHelp>
+              <div class="group-help-popup">
+                <span>You'll see only your groups in this list.</span>
+                <span>If you need to add read permission to another group you can manually enter its name.</span>
+                <button nz-button nzType="primary" nzBlock
+                  (click)="switchManualInput();helpVisible = false;">Switch text
+                input</button>
+              </div>
+            </ng-template>
+          </nz-form-label>
+          <nz-form-control>
+            @if (!manual) {
+              <nz-select nzShowSearch [(ngModel)]="newGroupPermission.group.name" (ngModelChange)="selectGroup($event)" name="group-name">
+                @for (option of groupList; track option) {
+                  <nz-option nzLabel=" {{option.name}}{{option.organization ? ' (' + option.organization + ')' : ''}}"
+                  [nzValue]="option.name"></nz-option>
+                }
+              </nz-select>
+            }
+            @if (manual) {
+              <input nz-input name="group-name" [(ngModel)]="newGroupPermission.group.name">
+            }
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col nzSpan="10">
+        <nz-form-item>
+          <nz-form-label>
+            Group permission
+          </nz-form-label>
+          <nz-form-control>
+            <nz-select nzShowSearch [(ngModel)]="newGroupPermission.permission" name="perm-name">
+              @for (option of permissionList; track option) {
+                <nz-option nzLabel="{{option.name | translate}}" [nzValue]="option.value"></nz-option>
+              }
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col nzSpan="2">
+        <nz-form-item>
+          <nz-form-label></nz-form-label>
+          <nz-form-control>
+            @if (buttonType === 'submit') {
+              <button name="saveBtn" (click)="create()" nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
+                <i nz-icon nzType="save" nzTheme="outline"></i>Save
+              </button>
+            }
+            @if (buttonType === 'button') {
+              <button nz-button nzType="primary" [nzLoading]="loading"
+                [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
+                <i nz-icon nzType="plus" nzTheme="outline"></i></button>
+              }
+            </nz-form-control>
+          </nz-form-item>
         </nz-col>
-        <nz-col nzSpan="10">
-            <nz-form-item>
-                <nz-form-label>
-                    Group permission
-                </nz-form-label>
-                <nz-form-control>
-                    <nz-select nzShowSearch [(ngModel)]="newGroupPermission.permission" name="perm-name">
-                        <nz-option *ngFor="let option of permissionList" nzLabel="{{option.name | translate}}" [nzValue]="option.value"></nz-option>
-                    </nz-select>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col nzSpan="2">
-            <nz-form-item>
-                <nz-form-label></nz-form-label>
-                <nz-form-control>
-                    <button name="saveBtn" *ngIf="buttonType === 'submit'" (click)="create()" nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
-                        <i nz-icon nzType="save" nzTheme="outline"></i>Save
-                    </button>
-                    <button *ngIf="buttonType === 'button'" nz-button nzType="primary" [nzLoading]="loading"
-                            [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
-                        <i nz-icon nzType="plus" nzTheme="outline"></i></button>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-    </nz-row>
-</form>
+      </nz-row>
+    </form>
+  }

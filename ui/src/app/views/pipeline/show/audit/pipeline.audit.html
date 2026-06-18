@@ -1,8 +1,12 @@
-<div class="variable" *ngIf="pipeline && pipeline.audits">
+@if (pipeline && pipeline.audits) {
+  <div class="variable">
     <app-data-table [withPagination]="25" [columns]="columns" [data]="pipeline.audits" [loading]="loading"
-        [withLineClick]="true" (clickLine)="compareIndex($event)">
+      [withLineClick]="true" (clickLine)="compareIndex($event)">
     </app-data-table>
-</div>
-<div *ngIf="currentCompare" class="area">
+  </div>
+}
+@if (currentCompare) {
+  <div class="area">
     <app-diff-list [items]="items"></app-diff-list>
-</div>
+  </div>
+}

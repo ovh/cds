@@ -1,12 +1,20 @@
 <div class="entity-card" [class.short]="onlyTitle">
-    <img src="{{image}}">
-    <div class="title">{{title}}</div>
-    <div class="description" *ngIf="!onlyTitle">
-        <span *ngIf="description">
-             <span [innerText]="description.slice(0, 90)"></span><span *ngIf="description.length > 90">...</span>
-        </span>
-        <span *ngIf="!description">
-            No description available
-        </span>
-    </div>
+  <img src="{{image}}">
+  <div class="title">{{title}}</div>
+  @if (!onlyTitle) {
+    <div class="description">
+      @if (description) {
+        <span>
+          <span [innerText]="description.slice(0, 90)"></span>@if (description.length > 90) {
+          <span>...</span>
+        }
+      </span>
+    }
+    @if (!description) {
+      <span>
+        No description available
+      </span>
+    }
+  </div>
+}
 </div>

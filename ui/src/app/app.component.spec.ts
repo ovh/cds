@@ -32,7 +32,6 @@ import { SharedModule } from './shared/shared.module';
 import { ToastService } from './shared/toast/ToastService';
 import { FetchCurrentAuth } from './store/authentication.action';
 import { NgxsStoreModule } from './store/store.module';
-import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { ConfigService } from 'app/service/services.module';
 import { AnalysisService } from "./service/analysis/analysis.service";
 import { EventV2Service } from './event-v2.service';
@@ -79,7 +78,6 @@ describe('App: CDS', () => {
             imports: [
                 NgxsStoreModule,
                 SharedModule,
-                NzNotificationModule,
                 RouterTestingModule.withRoutes([]),
                 TranslateModule.forRoot({
                     loader: {

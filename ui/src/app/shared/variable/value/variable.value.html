@@ -1,30 +1,34 @@
-<ng-container [ngSwitch]="type">
-    <!-- Number -->
-    <div *ngSwitchCase="'number'">
-        <input nz-input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
+
+@switch (type) {
+  <!-- Number -->
+  @case ('number') {
+    <div>
+      <input nz-input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
     </div>
-
-    <!-- Boolean -->
-    <ng-container *ngSwitchCase="'boolean'">
-        <label nz-checkbox [(ngModel)]="value" (ngModelChange)="valueChanged()" [nzDisabled]="disabled" name="value"></label>
-    </ng-container>
-
-    <!-- Password -->
-    <div *ngSwitchCase="'password'">
-        <input nz-input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
+  }
+  <!-- Boolean -->
+  @case ('boolean') {
+    <label nz-checkbox [(ngModel)]="value" (ngModelChange)="valueChanged()" [nzDisabled]="disabled" name="value"></label>
+  }
+  <!-- Password -->
+  @case ('password') {
+    <div>
+      <input nz-input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
     </div>
-
-    <!-- Text -->
-    <div *ngSwitchCase="'text'">
-        <textarea nz-input [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value?.toString())}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
+  }
+  <!-- Text -->
+  @case ('text') {
+    <div>
+      <textarea nz-input [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value?.toString())}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
     </div>
-
-    <!-- String -->
-    <div *ngSwitchDefault>
-        <input nz-input [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+  }
+  <!-- String -->
+  @default {
+    <div>
+      <input nz-input [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
     </div>
-
-</ng-container>
+  }
+}
 
 
 

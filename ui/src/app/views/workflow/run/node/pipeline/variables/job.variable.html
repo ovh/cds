@@ -1,23 +1,59 @@
 <div class="variables">
-    <h4 *ngIf="varGit.length > 0">{{ 'pipeline_job_variable_git' | translate }}</h4>
-    <app-parameter-list *ngIf="varGit.length > 0" [parameters]="varGit" mode="job"></app-parameter-list>
-    <h4 *ngIf="varCDS.length > 0">{{ 'pipeline_job_variable_cds' | translate }}</h4>
-    <app-parameter-list *ngIf="varCDS.length > 0" [parameters]="varCDS" mode="job"></app-parameter-list>
-    <h4 *ngIf="varBuild.length > 0">{{ 'pipeline_job_variable_build' | translate }}</h4>
-    <app-parameter-list *ngIf="varBuild.length > 0" [parameters]="varBuild" mode="job"></app-parameter-list>
-    <h4 *ngIf="varEnvironment.length > 0">{{ 'pipeline_job_variable_env' | translate }}</h4>
-    <app-parameter-list *ngIf="varEnvironment.length > 0" [parameters]="varEnvironment" mode="job"></app-parameter-list>
-    <h4 *ngIf="varApplication.length > 0">{{ 'pipeline_job_variable_app' | translate }}</h4>
-    <app-parameter-list *ngIf="varApplication.length > 0" [parameters]="varApplication" mode="job"></app-parameter-list>
-    <h4 *ngIf="varPipeline.length > 0">{{ 'pipeline_job_variable_pip' | translate }}</h4>
-    <app-parameter-list *ngIf="varPipeline.length > 0" [parameters]="varPipeline" mode="job"></app-parameter-list>
-    <h4 *ngIf="varProject.length > 0">{{ 'pipeline_job_variable_project' | translate }}</h4>
-    <app-parameter-list *ngIf="varProject.length > 0" [parameters]="varProject" mode="job"></app-parameter-list>
-    <h4 *ngIf="varParent.length > 0">{{ 'pipeline_job_variable_parent' | translate }}</h4>
-    <app-parameter-list *ngIf="varParent.length > 0" [parameters]="varParent" mode="job"></app-parameter-list>
-    <h4 *ngIf="varWorkflow.length > 0">{{ 'pipeline_job_variable_workflow' | translate }}</h4>
-    <app-parameter-list *ngIf="varWorkflow.length > 0" [parameters]="varWorkflow" mode="job"></app-parameter-list>
+  @if (varGit.length > 0) {
+    <h4>{{ 'pipeline_job_variable_git' | translate }}</h4>
+  }
+  @if (varGit.length > 0) {
+    <app-parameter-list [parameters]="varGit" mode="job"></app-parameter-list>
+  }
+  @if (varCDS.length > 0) {
+    <h4>{{ 'pipeline_job_variable_cds' | translate }}</h4>
+  }
+  @if (varCDS.length > 0) {
+    <app-parameter-list [parameters]="varCDS" mode="job"></app-parameter-list>
+  }
+  @if (varBuild.length > 0) {
+    <h4>{{ 'pipeline_job_variable_build' | translate }}</h4>
+  }
+  @if (varBuild.length > 0) {
+    <app-parameter-list [parameters]="varBuild" mode="job"></app-parameter-list>
+  }
+  @if (varEnvironment.length > 0) {
+    <h4>{{ 'pipeline_job_variable_env' | translate }}</h4>
+  }
+  @if (varEnvironment.length > 0) {
+    <app-parameter-list [parameters]="varEnvironment" mode="job"></app-parameter-list>
+  }
+  @if (varApplication.length > 0) {
+    <h4>{{ 'pipeline_job_variable_app' | translate }}</h4>
+  }
+  @if (varApplication.length > 0) {
+    <app-parameter-list [parameters]="varApplication" mode="job"></app-parameter-list>
+  }
+  @if (varPipeline.length > 0) {
+    <h4>{{ 'pipeline_job_variable_pip' | translate }}</h4>
+  }
+  @if (varPipeline.length > 0) {
+    <app-parameter-list [parameters]="varPipeline" mode="job"></app-parameter-list>
+  }
+  @if (varProject.length > 0) {
+    <h4>{{ 'pipeline_job_variable_project' | translate }}</h4>
+  }
+  @if (varProject.length > 0) {
+    <app-parameter-list [parameters]="varProject" mode="job"></app-parameter-list>
+  }
+  @if (varParent.length > 0) {
+    <h4>{{ 'pipeline_job_variable_parent' | translate }}</h4>
+  }
+  @if (varParent.length > 0) {
+    <app-parameter-list [parameters]="varParent" mode="job"></app-parameter-list>
+  }
+  @if (varWorkflow.length > 0) {
+    <h4>{{ 'pipeline_job_variable_workflow' | translate }}</h4>
+  }
+  @if (varWorkflow.length > 0) {
+    <app-parameter-list [parameters]="varWorkflow" mode="job"></app-parameter-list>
+  }
 </div>
 <div *nzModalFooter>
-    <button nz-button (click)="clickClose()">Close</button>
+  <button nz-button (click)="clickClose()">Close</button>
 </div>

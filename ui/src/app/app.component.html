@@ -1,62 +1,82 @@
-<div class="app-loader" *ngIf="loading">
+@if (loading) {
+  <div class="app-loader">
     <span nz-icon [nzType]="'loading'"></span>CDS is loading
-</div>
+  </div>
+}
 
-<div class="app" *ngIf="!loading">
-    <div class="page"
-        *ngIf="!isAPIAvailable || (maintenance && isConnected && currentAuthSummary?.user?.ring !== 'ADMIN')">
+@if (!loading) {
+  <div class="app">
+    @if (!isAPIAvailable || (maintenance && isConnected && currentAuthSummary?.user?.ring !== 'ADMIN')) {
+      <div class="page"
+        >
         <div class="content">
-            <div class="wrapper loading">
-                <app-scrollview class="scrollview">
-                    <nz-row nzJustify="center">
-                        <nz-col class="center">
-                            <img class="logo image grayscale" src="assets/images/cds.png" alt="CDS Logo">
-                            <p *ngIf="!isAPIAvailable">{{ 'cdsapi_loading' | translate }}</p>
-                            <p *ngIf="isAPIAvailable">{{ 'maintenance_title' | translate }}</p>
-                        </nz-col>
-                    </nz-row>
-                </app-scrollview>
-            </div>
+          <div class="wrapper loading">
+            <app-scrollview class="scrollview">
+              <nz-row nzJustify="center">
+                <nz-col class="center">
+                  <img class="logo image grayscale" src="assets/images/cds.png" alt="CDS Logo">
+                  @if (!isAPIAvailable) {
+                    <p>{{ 'cdsapi_loading' | translate }}</p>
+                  }
+                  @if (isAPIAvailable) {
+                    <p>{{ 'maintenance_title' | translate }}</p>
+                  }
+                </nz-col>
+              </nz-row>
+            </app-scrollview>
+          </div>
         </div>
-    </div>
-
-    <ng-container
-        *ngIf="isAPIAvailable && (!isConnected || !maintenance || currentAuthSummary?.user?.ring === 'ADMIN')">
-        <nz-layout>
-            <nz-header>
-                <app-navbar></app-navbar>
-            </nz-header>
-            <nz-content>
-                <div class="banner"
-                    *ngIf="(maintenance) && (!isConnected || currentAuthSummary?.user?.ring === 'ADMIN')">
-                    {{ 'maintenance_title' | translate }}
-                </div>
-                <div class="banner update" (click)="refresh()" *ngIf="showUIUpdatedBanner">
-                    {{ 'ui_updated' | translate }}
-                </div>
-                <div class="page" [class.connected]="isConnected && !hideNavBar">
-                    <div class="content inner-content" [class.connected]="isConnected && !hideNavBar">
-                        <router-outlet></router-outlet>
-                        <nz-spin nzTip="Loading..." *ngIf="displayResolver"></nz-spin>
-                    </div>
-                </div>
-                <app-node-edit-modal></app-node-edit-modal>
-            </nz-content>
-        </nz-layout>
-    </ng-container>
-</div>
+      </div>
+    }
+    @if (isAPIAvailable && (!isConnected || !maintenance || currentAuthSummary?.user?.ring === 'ADMIN')) {
+      <nz-layout>
+        <nz-header>
+          <app-navbar></app-navbar>
+        </nz-header>
+        <nz-content>
+          @if ((maintenance) && (!isConnected || currentAuthSummary?.user?.ring === 'ADMIN')) {
+            <div class="banner"
+              >
+              {{ 'maintenance_title' | translate }}
+            </div>
+          }
+          @if (showUIUpdatedBanner) {
+            <div class="banner update" (click)="refresh()">
+              {{ 'ui_updated' | translate }}
+            </div>
+          }
+          <div class="page" [class.connected]="isConnected && !hideNavBar">
+            <div class="content inner-content" [class.connected]="isConnected && !hideNavBar">
+              <router-outlet></router-outlet>
+              @if (displayResolver) {
+                <nz-spin nzTip="Loading..."></nz-spin>
+              }
+            </div>
+          </div>
+          <app-node-edit-modal></app-node-edit-modal>
+        </nz-content>
+      </nz-layout>
+    }
+  </div>
+}
 
 <ng-template #templateRootToast let-data="data">
-    <div class="toastTitle">
-        <i nz-icon nzType="exclamation-circle" class="ant-notification-notice-icon-error"></i>
-        {{data.title}}
+  <div class="toastTitle">
+    <i nz-icon nzType="exclamation-circle" class="ant-notification-notice-icon-error"></i>
+    {{data.title}}
+  </div>
+  @if (data.from) {
+    <span>{{data.from}}<br /><br /></span>
+  }
+  @if (data.status === 500 && data?.help && data?.help?.length > 0) {
+    <div>
+      <markdown [data]="data.help"></markdown>
     </div>
-    <span *ngIf="data.from">{{data.from}}<br /><br /></span>
-    <div *ngIf="data.status === 500 && data?.help && data?.help?.length > 0">
-        <markdown [data]="data.help"></markdown>
-    </div>
-    <span *ngIf="data.status === 500">
-        Request ID:&nbsp;
-        <pre style="font-size: 10px">{{data.request_id}}</pre>
+  }
+  @if (data.status === 500) {
+    <span>
+      Request ID:&nbsp;
+      <pre style="font-size: 10px">{{data.request_id}}</pre>
     </span>
+  }
 </ng-template>
