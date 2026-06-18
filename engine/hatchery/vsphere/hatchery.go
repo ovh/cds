@@ -737,6 +737,13 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	mapAlreadyProvisionned := make(map[string]int)
 	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
 	listableProvisions := make(map[string]struct{})
+	// Breakdown of the total by state, for observability only — the deficit is
+	// always driven by the total. Only READY (powered off, not dying) provisions
+	// can actually be claimed; STARTING, DYING and in-flight ones are counted
+	// because they each still hold their IP, but cannot serve a job yet.
+	mapReady := make(map[string]int)    // powered off, claimable now
+	mapStarting := make(map[string]int) // powered on, still being created/finished
+	mapDying := make(map[string]int)    // marked for deletion, not yet reaped
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
 		if !strings.HasPrefix(machine.Name, "provision-v2") {
@@ -754,15 +761,25 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 			mapAlreadyProvisionned[annot.VMwareModelPath]++
 			mapProvisionedMachines[annot.VMwareModelPath] = append(
 				mapProvisionedMachines[annot.VMwareModelPath], machine)
+			switch {
+			case h.isMarkedToDelete(machine):
+				mapDying[annot.VMwareModelPath]++
+			case machine.Summary.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff:
+				mapReady[annot.VMwareModelPath]++
+			default:
+				mapStarting[annot.VMwareModelPath]++
+			}
 		}
 	}
 	// Also count in-flight clones whose VM is not yet visible in the inventory, so
 	// a retrigger does not double-create them. This is the only cache-derived term
 	// and is naturally empty after a restart (a dead process leaves no
 	// not-yet-listable clone — its VM either exists in vSphere or never did).
+	mapInflight := make(map[string]int)
 	for name, model := range h.cacheProvisioning.pending {
 		if _, listable := listableProvisions[name]; !listable {
 			mapAlreadyProvisionned[model]++
+			mapInflight[model]++
 		}
 	}
 	h.cacheProvisioning.mu.Unlock()
@@ -781,8 +798,9 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 			continue
 		}
 		existing := mapAlreadyProvisionned[modelVMware]
-		log.Info(ctx, "model vmware %q provisioning: %d/%d",
-			modelVMware, existing, number)
+		log.Info(ctx, "model vmware %q provisioning: %d/%d (ready=%d starting=%d dying=%d in-flight=%d)",
+			modelVMware, existing, number,
+			mapReady[modelVMware], mapStarting[modelVMware], mapDying[modelVMware], mapInflight[modelVMware])
 		if delta := number - existing; delta > 0 {
 			deficits[modelVMware] = delta
 		}
