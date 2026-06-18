@@ -68,7 +68,9 @@ func (h *HatcheryVSphere) startProvisionClone(ctx context.Context, model string)
 	name := namesgenerator.GenerateWorkerName("provision-v2")
 	h.addPending(name, model)
 
-	h.GoRoutines.Run(ctx, "hatchery-vsphere-provision-clone", func(ctx context.Context) {
+	// Exec (not Run): these are short-lived, fire-and-forget routines, so they
+	// must not be registered in the long-lived goroutine monitoring status.
+	h.GoRoutines.Exec(ctx, "hatchery-vsphere-provision-clone", func(ctx context.Context) {
 		defer h.removePending(name)
 		h.acquireProvisionSlot()
 		defer h.releaseProvisionSlot()
@@ -88,7 +90,8 @@ func (h *HatcheryVSphere) startProvisionClone(ctx context.Context, model string)
 func (h *HatcheryVSphere) startProvisionFinish(ctx context.Context, name, model string) {
 	h.addPending(name, model)
 
-	h.GoRoutines.Run(ctx, "hatchery-vsphere-provision-finish", func(ctx context.Context) {
+	// Exec (not Run): short-lived, fire-and-forget; not monitored like long-lived routines.
+	h.GoRoutines.Exec(ctx, "hatchery-vsphere-provision-finish", func(ctx context.Context) {
 		defer h.removePending(name)
 		h.acquireProvisionSlot()
 		defer h.releaseProvisionSlot()
