@@ -350,6 +350,70 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 	h.killAwolServers(context.Background())
 }
 
+// When killAwolServers reclaims the VM of a worker that is still registered on
+// the V2 API and running a job, it must release that job back to the queue so
+// it can be retried at once instead of waiting out the API heartbeat timeout.
+func TestHatcheryVSphere_killAwolServers_releasesDeadWorkerJob(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	sdkhatchery.InitMetrics(context.Background())
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	clientV1 := mock_cdsclient.NewMockInterface(ctrl)
+	clientV2 := mock_cdsclient.NewMockHatcheryServiceClient(ctrl)
+
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Clientv2: clientV2,
+			Common: service.Common{
+				Client: clientV1,
+				Region: "reg1",
+			},
+		},
+	}
+	h.Config.FinishedWorkerGracePeriod = 300
+
+	now := time.Now()
+
+	annot := func(a annotation) string {
+		b, err := json.Marshal(a)
+		require.NoError(t, err)
+		return string(b)
+	}
+
+	// No V1 workers; one V2 worker still registered and bound to job-1.
+	clientV1.EXPECT().WorkerList(gomock.Any()).Return([]sdk.Worker{}, nil)
+	clientV2.EXPECT().V2WorkerList(gomock.Any()).Return([]sdk.V2Worker{
+		{Name: "workerA", JobRunID: "job-1"},
+	}, nil)
+
+	// workerA: powered off but still on the API → DELETE NOW and release its job.
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			poweredOff := types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff}
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{Name: "workerA"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
+				},
+			}, nil
+		},
+	).Times(1)
+
+	var vmA = object.VirtualMachine{Common: object.Common{InventoryPath: "workerA"}}
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "workerA").Return(&vmA, nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vmA).Return(nil)
+
+	// The job is released for the configured region.
+	clientV2.EXPECT().V2HatcheryReleaseJob(gomock.Any(), "reg1", "job-1").Return(nil)
+
+	h.killAwolServers(context.Background())
+}
+
 func TestHatcheryVSphere_requestProvisioning(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	ctx := context.Background()

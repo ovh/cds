@@ -561,6 +561,17 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		return
 	}
 
+	// Map each still-registered V2 worker to the job it is running. When we
+	// reclaim such a worker's VM, we release that job back to the queue right
+	// away instead of waiting for the API to notice the lost heartbeat (~5 min)
+	// before the job can be retried.
+	jobByWorker := make(map[string]string)
+	for _, w := range allWorkers {
+		if v2w, ok := w.(*sdk.V2Worker); ok && v2w.JobRunID != "" {
+			jobByWorker[v2w.Name] = v2w.JobRunID
+		}
+	}
+
 	srvs := h.getVirtualMachines(ctx)
 
 	// Track whether anything was deleted so we can trigger an immediate
@@ -591,6 +602,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 				log.Error(ctx, "killAwolServers> cannot delete server (markedToDelete) %s: %v", s.Name, err)
 			} else {
 				deleted = true
+				h.releaseDeadWorkerJob(ctx, s.Name, jobByWorker)
 			}
 			continue
 		}
@@ -663,8 +675,26 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			log.Error(ctx, "killAwolServers> cannot delete server (expire) %s: %v", s.Name, err)
 		} else {
 			deleted = true
+			h.releaseDeadWorkerJob(ctx, s.Name, jobByWorker)
 		}
 	}
+}
+
+// releaseDeadWorkerJob asks the API to requeue the V2 job that the reclaimed
+// worker was running, so it can be retried at once. Without it, the job stays
+// Building until the worker's heartbeat times out on the API side (~5 min).
+// It is a no-op for VMs that hold no job (provisions, models, finished workers).
+func (h *HatcheryVSphere) releaseDeadWorkerJob(ctx context.Context, workerName string, jobByWorker map[string]string) {
+	jobRunID, ok := jobByWorker[workerName]
+	if !ok {
+		return
+	}
+	if err := h.CDSClientV2().V2HatcheryReleaseJob(ctx, h.GetRegion(), jobRunID); err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "killAwolServers> unable to release job %s of reclaimed worker %q: %v", jobRunID, workerName, err)
+		return
+	}
+	log.Info(ctx, "killAwolServers> released job %s for re-queue after reclaiming worker %q", jobRunID, workerName)
 }
 
 // roundRobinInterleave takes an ordered list of model keys and a deficit count
