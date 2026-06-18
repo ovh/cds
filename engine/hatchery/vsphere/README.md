@@ -896,7 +896,12 @@ with matching `HatcheryName`). Includes workers and pre-provisioned VMs. Exclude
 | `cds/hatchery/vsphere/allocated_vcpus` | Gauge | vCPUs | Total vCPUs allocated by this hatchery's VMs |
 | `cds/hatchery/vsphere/allocated_memory_mb` | Gauge | MB | Total memory allocated by this hatchery's VMs |
 | `cds/hatchery/vsphere/vm_count` | Gauge | count | Total number of VMs managed by this hatchery (workers + provisioned) |
-| `cds/hatchery/vsphere/provisioned_vm_count` | Gauge | count | Number of pre-provisioned (idle) VMs |
+| `cds/hatchery/vsphere/worker_vm_count` | Gauge | count | VMs running as workers (claimed, no longer in the provision pool) |
+| `cds/hatchery/vsphere/provisioned_vm_count` | Gauge | count | Pre-provisioned VMs (sum of ready + starting + dying) |
+| `cds/hatchery/vsphere/provision_ready_count` | Gauge | count | Provisioned VMs powered off and ready to be claimed |
+| `cds/hatchery/vsphere/provision_starting_count` | Gauge | count | Provisioned VMs powered on, still being created/finished (not yet claimable) |
+| `cds/hatchery/vsphere/provision_dying_count` | Gauge | count | Provisioned VMs marked for deletion, not yet reaped |
+| `cds/hatchery/vsphere/provision_inflight_count` | Gauge | count | In-flight provision clones not yet visible in the inventory |
 | `cds/hatchery/vsphere/template_vcpus` | Gauge | vCPUs | Total vCPUs defined by template VMs (annotation `Model=true`) |
 | `cds/hatchery/vsphere/template_memory_mb` | Gauge | MB | Total memory defined by template VMs |
 | `cds/hatchery/vsphere/template_count` | Gauge | count | Number of template VMs managed by this hatchery |
