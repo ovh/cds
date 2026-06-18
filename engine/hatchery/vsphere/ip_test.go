@@ -2,59 +2,77 @@ package vsphere
 
 import (
 	"context"
-	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/vim25/mo"
-	"go.uber.org/mock/gomock"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
-// findAvailableIP must reserve atomically: concurrent callers (parallel
-// provisioning clones) must each get a distinct IP, never the same one.
-func TestHatcheryVSphere_findAvailableIP_concurrentDistinct(t *testing.T) {
+func TestIPFromProvisionName(t *testing.T) {
+	encoded := provisionName(&ipResult{ip: "10.0.0.5"})
+	assert.Contains(t, encoded, "provision-v2-ip-10-0-0-5-")
+
+	ip, ok := ipFromProvisionName(encoded)
+	assert.True(t, ok)
+	assert.Equal(t, "10.0.0.5", ip)
+
+	// A plain provision name (DHCP mode / old style) has no IP.
+	_, ok = ipFromProvisionName("provision-v2-nervous-but-tender-pascal")
+	assert.False(t, ok)
+
+	// A claimed worker name has no IP.
+	_, ok = ipFromProvisionName("worker-abc")
+	assert.False(t, ok)
+}
+
+// getUsedIPs must see an in-flight provision's IP from its NAME (visible during
+// the clone, before the annotation is populated), and an old-style/claimed VM's
+// IP from its annotation or guest network.
+func TestHatcheryVSphere_getUsedIPs(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
+	h := HatcheryVSphere{}
 
-	c := NewVSphereClientTest(t)
-	h := HatcheryVSphere{vSphereClient: c}
+	srvs := []mo.VirtualMachine{
+		{ // cloning provision: only the IP-encoded name, no annotation yet
+			ManagedEntity: mo.ManagedEntity{Name: "provision-v2-ip-10-0-0-1-foo"},
+		},
+		{ // old-style provision: IP only in the annotation
+			ManagedEntity: mo.ManagedEntity{Name: "provision-v2-bar"},
+			Config:        &types.VirtualMachineConfigInfo{Annotation: `{"ip_address": "10.0.0.2"}`},
+		},
+		{ // running worker: IP on the guest network
+			ManagedEntity: mo.ManagedEntity{Name: "worker-baz"},
+			Guest:         &types.GuestInfo{Net: []types.GuestNicInfo{{IpAddress: []string{"10.0.0.3"}}}},
+		},
+	}
 
-	ips := []string{"10.0.0.1", "10.0.0.2", "10.0.0.3"}
+	used := h.getUsedIPs(context.Background(), srvs)
+	for _, ip := range []string{"10.0.0.1", "10.0.0.2", "10.0.0.3"} {
+		_, ok := used[ip]
+		assert.Truef(t, ok, "expected %s to be counted as used", ip)
+	}
+}
+
+// pickFreeIP returns distinct IPs as the caller marks each one used.
+func TestHatcheryVSphere_pickFreeIP_distinct(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	h := HatcheryVSphere{}
 	h.availableNetworks = []availableNetwork{{
 		config:      NetworkConfig{Gateway: "10.0.0.254", SubnetMask: "255.255.255.0"},
-		ipAddresses: ips,
+		ipAddresses: []string{"10.0.0.1", "10.0.0.2", "10.0.0.3"},
 	}}
-	h.availableIPAddresses = ips
 
-	// No VM uses any IP yet.
-	c.EXPECT().ListVirtualMachines(gomock.Any()).Return([]mo.VirtualMachine{}, nil).AnyTimes()
-
-	const goroutines = 8
-	var mu sync.Mutex
-	handed := map[string]int{}
-	var errCount int64
-	var wg sync.WaitGroup
-	for i := 0; i < goroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			res, err := h.findAvailableIP(context.Background())
-			if err != nil {
-				atomic.AddInt64(&errCount, 1)
-				return
-			}
-			mu.Lock()
-			handed[res.ip]++
-			mu.Unlock()
-		}()
+	used := map[string]struct{}{}
+	seen := map[string]bool{}
+	for i := 0; i < 3; i++ {
+		res, ok := h.pickFreeIP(used)
+		assert.True(t, ok)
+		assert.Falsef(t, seen[res.ip], "IP %s handed out twice", res.ip)
+		seen[res.ip] = true
+		used[res.ip] = struct{}{}
 	}
-	wg.Wait()
-
-	// Exactly the 3 IPs are handed out, each exactly once; the rest fail.
-	assert.Len(t, handed, 3, "all 3 IPs should have been allocated")
-	for ip, n := range handed {
-		assert.Equalf(t, 1, n, "IP %s was handed to more than one caller", ip)
-	}
-	assert.Equal(t, int64(goroutines-len(ips)), errCount, "callers beyond the IP budget must get an error, not a duplicate")
+	_, ok := h.pickFreeIP(used)
+	assert.False(t, ok, "no IP should remain after all are used")
 }

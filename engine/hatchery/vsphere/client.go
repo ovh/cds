@@ -239,8 +239,11 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 	return nil
 }
 
-// prepareCloneSpec create a basic configuration in order to create a vm
-func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation) (*types.VirtualMachineCloneSpec, error) {
+// prepareCloneSpec create a basic configuration in order to create a vm. When ip
+// is non-nil the VM is given that static IP via guest customization and the IP is
+// recorded in the annotation (the compatibility anchor); the IP itself is chosen
+// by the caller (provisioningV2) so parallel clones never collide.
+func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation, ip *ipResult) (*types.VirtualMachineCloneSpec, error) {
 	devices, err := h.vSphereClient.LoadVirtualMachineDevices(ctx, vm)
 	if err != nil {
 		return nil, err
@@ -298,40 +301,33 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 		},
 	}
 
-	if len(h.availableIPAddresses) > 0 {
-		// findAvailableIP already reserves the returned IP atomically, so parallel
-		// provisioning clones never receive the same address.
-		ipRes, err := h.findAvailableIP(ctx)
-		if err != nil {
-			return nil, err
-		}
-		log.Debug(ctx, "Found %s as available IP (gw=%s, mask=%s)", ipRes.ip, ipRes.gateway, ipRes.subnetMask)
+	if ip != nil {
+		log.Debug(ctx, "assigning %s as IP (gw=%s, mask=%s)", ip.ip, ip.gateway, ip.subnetMask)
 
 		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{
 			{
 				Adapter: types.CustomizationIPSettings{
-					Ip:         &types.CustomizationFixedIp{IpAddress: ipRes.ip},
-					SubnetMask: ipRes.subnetMask,
+					Ip:         &types.CustomizationFixedIp{IpAddress: ip.ip},
+					SubnetMask: ip.subnetMask,
 				},
 			},
 		}
-		if ipRes.gateway != "" {
-			customSpec.NicSettingMap[0].Adapter.Gateway = []string{ipRes.gateway}
+		if ip.gateway != "" {
+			customSpec.NicSettingMap[0].Adapter.Gateway = []string{ip.gateway}
 		}
 		if h.Config.DNS != "" {
 			customSpec.GlobalIPSettings = types.CustomizationGlobalIPSettings{DnsServerList: []string{h.Config.DNS}}
 		}
 
-		annot.IPAddress = ipRes.ip
+		// Store the IP in the annotation too (compat anchor: old provisions and a
+		// rolled-back binary read the IP from here).
+		annot.IPAddress = ip.ip
 
-		log.Debug(ctx, "IP: %s; Gateway: %v; DNS: %v", ipRes.ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.GlobalIPSettings.DnsServerList)
+		log.Debug(ctx, "IP: %s; Gateway: %v; DNS: %v", ip.ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.GlobalIPSettings.DnsServerList)
 	}
 
 	annotStr, err := json.Marshal(annot)
 	if err != nil {
-		// The IP was reserved just above; release it since this clone spec will
-		// not be used.
-		h.releaseIPAddress(annot.IPAddress)
 		return nil, sdk.WrapError(err, "unable to marshal annotation")
 	}
 

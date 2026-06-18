@@ -7,8 +7,6 @@ import (
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
-
-	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // requestProvisioning asks the provisioning loop to run a refill pass now instead
@@ -61,11 +59,12 @@ func (h *HatcheryVSphere) releaseProvisionSlot() {
 	}
 }
 
-// startProvisionClone clones a new provision for the model and finishes it
-// (wait IP + shutdown), tracked as pending for its whole lifetime. Fire-and-forget:
-// it returns immediately so the provisioning loop stays responsive.
-func (h *HatcheryVSphere) startProvisionClone(ctx context.Context, model string) {
-	name := namesgenerator.GenerateWorkerName("provision-v2")
+// startProvisionClone clones a new provision (with the caller-chosen name and IP)
+// and finishes it (wait IP + shutdown), tracked as pending for its whole lifetime.
+// Fire-and-forget: it returns immediately so the provisioning loop stays
+// responsive. The name and IP are chosen by provisioningV2 (single goroutine) so
+// parallel clones never receive the same IP; the name encodes the IP.
+func (h *HatcheryVSphere) startProvisionClone(ctx context.Context, model, name string, ip *ipResult) {
 	h.addPending(name, model)
 
 	// Exec (not Run): these are short-lived, fire-and-forget routines, so they
@@ -75,7 +74,7 @@ func (h *HatcheryVSphere) startProvisionClone(ctx context.Context, model string)
 		h.acquireProvisionSlot()
 		defer h.releaseProvisionSlot()
 
-		if err := h.ProvisionWorkerV2(ctx, model, name); err != nil {
+		if err := h.ProvisionWorkerV2(ctx, model, name, ip); err != nil {
 			ctx = log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to provision vmware worker v2 %q model %q: %v", name, model, err)
 			h.markToDelete(ctx, name)

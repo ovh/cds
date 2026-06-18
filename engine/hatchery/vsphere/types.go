@@ -111,10 +111,8 @@ type HatcheryVSphere struct {
 	Config               HatcheryConfiguration
 	vSphereClient        VSphereClient
 	metrics              vsphereMetrics
-	IpAddressesMutex     sync.Mutex
 	availableIPAddresses []string // flat list kept for backward-compat checks (e.g. CanSpawn)
 	availableNetworks    []availableNetwork
-	reservedIPAddresses  []string
 	// provisionSignal lets cleanup and spawn request an immediate provisioning
 	// refill instead of waiting for the next tick. Buffered (size 1) so a burst
 	// of requests coalesces into at most one pending run.

@@ -515,24 +515,6 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
-		return []mo.VirtualMachine{
-			{
-				ManagedEntity: mo.ManagedEntity{
-					Name: "the-model",
-				},
-				Summary: types.VirtualMachineSummary{
-					Config: types.VirtualMachineConfigSummary{
-						Template: true,
-					},
-				},
-				Config: &types.VirtualMachineConfigInfo{
-					Annotation: `{"vmware_model_path": "the-model", "model": true}`,
-				},
-			},
-		}, nil
-	})
-
 	var workerRef types.ManagedObjectReference
 
 	c.EXPECT().CloneVirtualMachine(gomock.Any(), &vmTemplate, &folder, "provisionned-worker", gomock.Any()).DoAndReturn(
@@ -556,39 +538,6 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 		},
 	)
 
-	err := h.ProvisionWorkerV2(ctx, "the-model", "provisionned-worker")
+	err := h.ProvisionWorkerV2(ctx, "the-model", "provisionned-worker", &ipResult{ip: "192.168.0.1", gateway: "192.168.0.254", subnetMask: "255.255.255.0"})
 	require.NoError(t, err)
-}
-
-// When a provision clone fails after an IP has been reserved, the reservation
-// must be released so the IP returns to the pool without waiting out its TTL.
-func TestHatcheryVSphere_ProvisionWorker_releasesIPOnCloneError(t *testing.T) {
-	log.Factory = log.NewTestingWrapper(t)
-
-	c := NewVSphereClientTest(t)
-	h := HatcheryVSphere{vSphereClient: c}
-	h.Config.VSphereNetworkString = "vbox-net"
-	h.Config.VSphereCardName = "ethernet-card"
-	h.Config.VSphereDatastoreString = "datastore"
-	h.availableIPAddresses = []string{"192.168.0.1"}
-	h.availableNetworks = []availableNetwork{{
-		config:      NetworkConfig{IPRange: "192.168.0.0/24", Gateway: "192.168.0.254", SubnetMask: "255.255.255.0"},
-		ipAddresses: []string{"192.168.0.1"},
-	}}
-
-	var vmTemplate = object.VirtualMachine{Common: object.Common{InventoryPath: "the-model"}}
-
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "the-model").Return(&vmTemplate, nil)
-	c.EXPECT().LoadVirtualMachineDevices(gomock.Any(), gomock.Any()).Return(object.VirtualDeviceList{&types.VirtualEthernetCard{}}, nil)
-	c.EXPECT().LoadNetwork(gomock.Any(), "vbox-net").Return(&object.Network{}, nil)
-	c.EXPECT().SetupEthernetCard(gomock.Any(), gomock.Any(), "ethernet-card", gomock.Any()).Return(nil)
-	c.EXPECT().LoadResourcePool(gomock.Any()).Return(&object.ResourcePool{}, nil)
-	c.EXPECT().LoadDatastore(gomock.Any(), "datastore").Return(&object.Datastore{}, nil)
-	c.EXPECT().ListVirtualMachines(gomock.Any()).Return([]mo.VirtualMachine{}, nil)
-	c.EXPECT().LoadFolder(gomock.Any()).Return(&object.Folder{}, nil)
-	c.EXPECT().CloneVirtualMachine(gomock.Any(), &vmTemplate, gomock.Any(), "provisionned-worker", gomock.Any()).Return(nil, fmt.Errorf("clone boom"))
-
-	err := h.ProvisionWorkerV2(context.Background(), "the-model", "provisionned-worker")
-	require.Error(t, err)
-	assert.NotContains(t, h.reservedIPAddresses, "192.168.0.1", "the reserved IP must be released when the clone fails")
 }

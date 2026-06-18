@@ -36,7 +36,7 @@ templates) is no longer supported.
 | `client.go` | VM listing/filtering, clone spec preparation, guest operations |
 | `vsphere.go` | `VSphereClient` interface and govmomi SDK wrapper implementation |
 | `init.go` | Hatchery initialization, govmomi client creation, background goroutines setup |
-| `ip.go` | IP address management (allocation, reservation, availability) |
+| `ip.go` | IP address management (name encode/parse, used-IP set, free-IP selection) |
 | `networks.go` | Multi-network initialization (parses networks config, builds IP pools per network) |
 | `monitoring.go` | Prometheus metrics: vSphere resource consumption at per-worker, hatchery, and pool levels |
 
@@ -347,18 +347,22 @@ launched but its VM is not yet listable, so a rapid retrigger never double-creat
 - Prevents models with larger counts from monopolizing the provisioning queue
 - Example: deficits A=3, B=1, C=2 → queue `[A, B, C, A, C, A]`
 
-**Step 3 — Cap by available IPs and launch clones:**
-- If IP ranges are configured, truncate the queue to the available-IP budget
-- **Reconciliation**: resume orphaned in-flight provisions (see §6.3.3)
-- For each model in the queue, launch a clone via `startProvisionClone()` — one goroutine per
-  provision, **no waiting for the batch**. Concurrency is bounded only by the deficit and IP budget;
-  set `WorkerProvisioningPoolSize > 0` to cap concurrent clones (a semaphore), or leave it `0` to
-  maximize parallelism.
+**Step 3 — Assign IPs and launch clones:**
+- **Reconciliation**: resume orphaned in-flight provisions (see §6.3.3).
+- When an IP range is configured, build the in-use IP set (`getUsedIPs` over the VM list + the IPs of
+  in-flight clones parsed from `pending` names). For each model in the queue, pick a distinct free IP
+  with `pickFreeIP` (adding it to the set so the next pick differs); stop when no IP remains — the IP
+  range is the budget (see §7.3).
+- Launch a clone per model via `startProvisionClone(model, name, ip)` — one goroutine, **no waiting
+  for the batch**. `WorkerProvisioningPoolSize > 0` caps concurrent clones (a semaphore); `0`
+  maximizes parallelism.
 
-Each clone goroutine:
-- Generates a worker name: `provision-v2-<random>`, recorded in `cacheProvisioning.pending` (with its model) **before** the goroutine starts
-- Calls `ProvisionWorkerV2()` (clone), then `finishProvisioning()` (wait IP → shutdown)
-- On any failure marks the VM for deletion; in all cases removes its name from `pending` when done
+Each clone:
+- Uses the caller-chosen name `provision-v2-ip-<dashed-ip>-<random>` (the IP-encoded lock, see §7.1;
+  DHCP mode uses a plain `provision-v2-<random>`), recorded in `cacheProvisioning.pending` **before**
+  the goroutine starts.
+- Calls `ProvisionWorkerV2()` (clone with that IP), then `finishProvisioning()` (wait IP → shutdown).
+- On any failure marks the VM for deletion; in all cases removes its name from `pending` when done.
 
 #### 6.3.2 Provisioned VM Lifecycle
 
@@ -596,61 +600,64 @@ For V1 jobs that need to run on a V2 model (`GetDetaultModelV2Name`):
 
 ### 7.1 IP Lifecycle
 
-When IP ranges are configured (via `networks` or legacy `iprange`), each VM is assigned a static
-IP at clone time through vSphere guest customization. This IP is:
+When IP ranges are configured (via `networks` or legacy `iprange`), each provision is assigned a
+static IP at clone time through vSphere guest customization. The IP is:
 
-1. **Allocated** during `prepareCloneSpec`: `findAvailableIP` picks the first free IP
-2. **Reserved** in local memory (`reservedIPAddresses`) with a 5-minute TTL to prevent races
-3. **Stored** in the VM annotation (`annot.IPAddress`) as part of the clone specification
-4. **Applied** by vSphere guest customization when the VM first boots
+1. **Chosen** by `provisioningV2` (the single provisioning goroutine) via `pickFreeIP`, which returns
+   the first IP not currently in use (see §7.2). Choosing in one goroutine means parallel clones can
+   never pick the same IP.
+2. **Locked by the VM name**: the provision is named `provision-v2-ip-<o1>-<o2>-<o3>-<o4>-<rand>`. The
+   cloning VM is listed in the vSphere inventory **with its name as soon as the clone starts** —
+   before its annotation is populated — so the IP is immediately visible as "in use" to every other
+   pass, and this lock survives a hatchery restart. There is no in-memory reservation and no timeout.
+3. **Stored** in the VM annotation (`annot.IPAddress`) as part of the clone spec — the compatibility
+   anchor (see §7.5), used by the spawn claim's `WaitForVirtualMachineIP`.
+4. **Applied** by vSphere guest customization when the VM first boots.
 
-The IP persists for the entire VM lifetime. When a provisioned VM is powered off and later
-restarted for a job, it comes back up with the **same IP** (baked into the guest OS via
-customization). The spawn flow verifies this by calling `WaitForVirtualMachineIP` with the
-expected IP from the annotation.
+The IP persists for the VM's lifetime: a provisioned VM powered off and later restarted for a job
+comes back with the **same IP** (baked into the guest via customization).
 
-### 7.2 IP Ownership and Counting
+### 7.2 IP Ownership and Counting (`getUsedIPs`)
 
-An IP is considered "in use" if it appears in **any** non-template VM, regardless of power state.
-The `getUsedIPs` function scans all VMs and collects IPs from two sources:
+An IP is "in use" if it appears in **any** non-template VM, from any of three sources:
 
-- **VM annotations** (`annot.IPAddress`): covers all VMs including powered-off provisioned VMs
-  and freshly cloned VMs where guest tools have not yet reported the IP
-- **Guest network info** (`Guest.Net[].IpAddress`): covers running VMs where the OS has the IP
-  active on an interface
+- **Provision name** (`provision-v2-ip-...`): covers a provision *during its clone*, before the
+  annotation exists, and after a restart (parsed straight from the live VM list).
+- **VM annotation** (`annot.IPAddress`): covers claimed workers (renamed away from the IP-encoded
+  name), old-style provisions created before this scheme, and any VM whose guest tools have not yet
+  reported the IP.
+- **Guest network info** (`Guest.Net[].IpAddress`): covers running VMs where the OS has the IP active.
 
-This means powered-off provisioned VMs **hold their IP** — they are counted as "in use" and
-prevent that IP from being allocated to another VM. This is correct because the same IP will be
-reused when the VM powers on for a job.
+Powered-off provisioned VMs therefore **hold their IP** (counted as in use), correctly preventing
+reallocation.
 
 ### 7.3 IP Budget in Provisioning
 
-The provisioning scheduler uses `countAvailableIPs` to determine how many new VMs can be cloned.
-Since powered-off provisioned VMs already hold IPs (via their annotations), they are naturally
-subtracted from the available pool. The IP budget only reflects IPs that are truly unassigned.
+`provisioningV2` builds the in-use set with `getUsedIPs` over the current VM list, plus the IPs of
+in-flight clones not yet listed (parsed from the `cacheProvisioning.pending` names), then picks a
+distinct free IP per clone with `pickFreeIP`, adding each pick to the set as it goes. When no free IP
+remains it stops launching clones — the IP range is the natural budget, no separate counter needed.
 
-### 7.4 Finding an Available IP (`findAvailableIP`)
+### 7.4 Why the name, not a reservation
 
-1. Acquire IP mutex
-2. List all VMs, collect used IPs via `getUsedIPs` (annotations + guest network)
-3. Clean up stale reservations for IPs that are now confirmed in guest network
-4. Return the first IP from the configured range that is neither used nor reserved
+The destination VM is not in the inventory until partway through the clone, and its annotation only
+appears when the clone completes — but its **name** is visible almost immediately. Encoding the IP in
+the name makes the IP lock readable from vSphere during the whole clone and across restarts, which an
+in-memory reservation (lost on restart, and needing a fragile TTL longer than the clone) could not
+provide. The annotation still carries the IP for backward/forward compatibility (§7.5).
 
-### 7.5 Reserving an IP (`reserveIPAddress`)
+### 7.5 Compatibility
 
-1. Check the IP is not already reserved
-2. Add to `reservedIPAddresses` list
-3. Start a goroutine that removes the reservation after 5 minutes (safety timeout)
-
-The reservation bridges the gap between `findAvailableIP` (which picks an IP) and the VM
-actually being created with that IP in its annotation. Without it, concurrent clones could
-pick the same IP.
+- **Old-style provisions** (named `provision-v2-<rand>`, no IP token): their IP is read from the
+  annotation, so they are counted and handled exactly as before — name parsing is purely additive.
+- **Rollback**: new provisions also store the IP in `annot.IPAddress` and keep the `provision-v2`
+  prefix, so a previous (reservation-based) binary handles them transparently.
 
 ### 7.6 IP-less Mode (DHCP)
 
-When no IP range is configured, no static IP assignment occurs. VMs rely on DHCP or
-template-defined network settings. In this mode, `countAvailableIPs` returns -1 (unlimited)
-and the provisioning scheduler does not cap tasks by IP budget.
+When no IP range is configured, no static IP is assigned and provisions keep the plain
+`provision-v2-<rand>` name. `pickFreeIP` is not consulted and provisioning is not IP-bounded; VMs
+rely on DHCP or template-defined network settings.
 
 ## 8. Cleanup and Garbage Collection
 
@@ -772,7 +779,6 @@ The hatchery maintains several in-memory caches protected by mutexes:
 | `cacheProvisioning.using` | `[]string` | Provisioned VM names being assigned to a job |
 | `cacheToDelete` | `[]string` | VM names marked for deletion by spawn logic |
 | `availableIPAddresses` | `[]string` | All IPs parsed from the configured range |
-| `reservedIPAddresses` | `[]string` | IPs temporarily reserved (5-minute TTL) |
 
 ## 11. Limitations
 
@@ -941,9 +947,10 @@ When an IP range is configured (`iprange`), these metrics track IP address pool 
 
 **Tags**: `service_name`, `service_type`
 
-An IP is considered "in use" if it appears in any VM's CDS annotation (`IPAddress` field) or in
-the VM's guest network info (`Guest.Net[].IpAddress`). These metrics are only emitted when
-`iprange` is configured (i.e. `availableIPAddresses` is non-empty).
+An IP is considered "in use" if it appears in a provision VM's IP-encoded name
+(`provision-v2-ip-...`), a VM's CDS annotation (`IPAddress` field), or the VM's guest network info
+(`Guest.Net[].IpAddress`) — see §7.2. These metrics are only emitted when `iprange` is configured
+(i.e. `availableIPAddresses` is non-empty).
 
 ### 14.7 Source Files
 

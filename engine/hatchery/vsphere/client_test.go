@@ -226,39 +226,6 @@ func TestHatcheryVSphere_deleteServer(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// Observing the vSphere VM list is the source of truth: when a listed VM's
-// annotation carries an IP that is still locally reserved, the reservation must
-// be released (the annotation now protects the IP). A reservation for an IP not
-// yet backed by any VM (in-flight clone) must be kept.
-func TestHatcheryVSphere_countAvailableIPs_releasesObservedReservations(t *testing.T) {
-	log.Factory = log.NewTestingWrapper(t)
-
-	c := NewVSphereClientTest(t)
-	h := HatcheryVSphere{vSphereClient: c}
-	h.availableNetworks = []availableNetwork{{ipAddresses: []string{"10.0.0.1", "10.0.0.2", "10.0.0.3"}}}
-	// 10.0.0.1 is reserved AND now backed by a real VM; 10.0.0.2 is reserved but
-	// not yet backed by any VM (in-flight clone).
-	h.reservedIPAddresses = []string{"10.0.0.1", "10.0.0.2"}
-
-	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
-		func(ctx context.Context) ([]mo.VirtualMachine, error) {
-			return []mo.VirtualMachine{
-				{
-					ManagedEntity: mo.ManagedEntity{Name: "worker-x"},
-					Config:        &types.VirtualMachineConfigInfo{Annotation: `{"ip_address": "10.0.0.1"}`},
-				},
-			}, nil
-		},
-	)
-
-	count := h.countAvailableIPs(context.Background())
-
-	// 10.0.0.1 used (annotation), 10.0.0.2 still reserved (in-flight) → only 10.0.0.3 free.
-	assert.Equal(t, 1, count)
-	assert.False(t, sdk.IsInArray("10.0.0.1", h.reservedIPAddresses), "reservation must be released once a VM carries the IP")
-	assert.True(t, sdk.IsInArray("10.0.0.2", h.reservedIPAddresses), "an unbacked (in-flight) reservation must be kept")
-}
-
 func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
@@ -269,19 +236,6 @@ func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 	h.Config.VSphereNetworkString = "vbox-net"
 	h.Config.VSphereCardName = "ethernet-card"
 	h.Config.VSphereDatastoreString = "datastore"
-	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
-	h.availableNetworks = []availableNetwork{
-		{
-			config: NetworkConfig{
-				IPRange:    "192.168.0.0/24",
-				Gateway:    "192.168.0.254",
-				SubnetMask: "255.255.255.0",
-			},
-			ipAddresses: []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"},
-		},
-	}
-	h.reservedIPAddresses = []string{"192.168.0.1", "192.168.0.2"}
-	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
 
 	c.EXPECT().LoadVirtualMachineDevices(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -292,65 +246,23 @@ func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 			}, nil
 		},
 	)
-
-	c.EXPECT().LoadNetwork(gomock.Any(), "vbox-net").DoAndReturn(
-		func(ctx context.Context, s string) (object.NetworkReference, error) {
-			return &object.Network{}, nil
-		},
-	)
-
-	c.EXPECT().SetupEthernetCard(gomock.Any(), gomock.Any(), "ethernet-card", gomock.Any()).DoAndReturn(
-		func(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error {
-			return nil
-		},
-	)
-
-	c.EXPECT().LoadResourcePool(gomock.Any()).DoAndReturn(
-		func(ctx context.Context) (*object.ResourcePool, error) {
-			return &object.ResourcePool{}, nil
-		},
-	)
-
-	c.EXPECT().LoadDatastore(gomock.Any(), "datastore").DoAndReturn(
-		func(ctx context.Context, name string) (*object.Datastore, error) {
-			return &object.Datastore{}, nil
-		},
-	)
-
-	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
-		func(ctx context.Context) ([]mo.VirtualMachine, error) {
-			return []mo.VirtualMachine{
-				{
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-					},
-					Guest: &types.GuestInfo{
-						Net: []types.GuestNicInfo{
-							{
-								IpAddress: []string{"192.168.0.2"},
-							},
-						},
-					},
-				},
-			}, nil
-		},
-	).AnyTimes()
+	c.EXPECT().LoadNetwork(gomock.Any(), "vbox-net").Return(&object.Network{}, nil)
+	c.EXPECT().SetupEthernetCard(gomock.Any(), gomock.Any(), "ethernet-card", gomock.Any()).Return(nil)
+	c.EXPECT().LoadResourcePool(gomock.Any()).Return(&object.ResourcePool{}, nil)
+	c.EXPECT().LoadDatastore(gomock.Any(), "datastore").Return(&object.Datastore{}, nil)
 
 	ctx := context.Background()
-	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{})
+	annot := annotation{}
+	ip := &ipResult{ip: "192.168.0.3", gateway: "192.168.0.254", subnetMask: "255.255.255.0"}
+	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annot, ip)
 	require.NoError(t, err)
 	require.NotNil(t, cloneSpec)
 
-	// Assert the IP address
+	// The clone spec uses the caller-chosen IP, and the IP is recorded in the annotation.
 	assert.Equal(t, "192.168.0.3", (cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp).IpAddress))
-	assert.EqualValues(t, []string{"192.168.0.1", "192.168.0.3"}, h.reservedIPAddresses) // "192.168.0.2" should be removed because it's returned by the ListVirtualMachine
-	// Assert the Gateway
 	assert.Equal(t, "192.168.0.254", cloneSpec.Customization.NicSettingMap[0].Adapter.Gateway[0])
-	// Assert the DNS
 	assert.Equal(t, "192.168.0.253", cloneSpec.Customization.GlobalIPSettings.DnsServerList[0])
-
+	assert.Equal(t, "192.168.0.3", annot.IPAddress)
 }
 
 func TestHatcheryVSphere_launchClientOpV2(t *testing.T) {

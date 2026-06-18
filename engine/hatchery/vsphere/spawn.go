@@ -380,7 +380,7 @@ func (h *HatcheryVSphere) markToDelete(ctx context.Context, vmName string) {
 	h.cacheToDelete.list = append(h.cacheToDelete.list, vmRef.Name)
 }
 
-func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel string, workerName string) error {
+func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel string, workerName string, ip *ipResult) error {
 	vmTemplate, err := h.vSphereClient.LoadVirtualMachine(ctx, vmwareModel)
 	if err != nil {
 		return sdk.WrapError(err, "cannot find virtual machine template with VMware model %v", vmwareModel)
@@ -394,29 +394,17 @@ func (h *HatcheryVSphere) ProvisionWorkerV2(ctx context.Context, vmwareModel str
 		Created:         time.Now(),
 	}
 
-	return h.cloneProvisionedWorker(ctx, vmTemplate, annot, workerName)
+	return h.cloneProvisionedWorker(ctx, vmTemplate, annot, workerName, ip)
 }
 
-// cloneProvisionedWorker clones a VM template for provisioning. After the clone
-// the VM is powered on but not yet shut down — the caller is responsible for
-// completing provisioning via finishProvisioning.
-func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate *object.VirtualMachine, annot annotation, workerName string) error {
-	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot)
+// cloneProvisionedWorker clones a VM template for provisioning, giving it the
+// caller-chosen IP (when set). After the clone the VM is powered on but not yet
+// shut down — the caller completes provisioning via finishProvisioning.
+func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate *object.VirtualMachine, annot annotation, workerName string, ip *ipResult) error {
+	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, ip)
 	if err != nil {
 		return err
 	}
-
-	// prepareCloneSpec reserved annot.IPAddress (when an IP range is configured).
-	// If the clone does not complete, no VM will ever carry that IP, so release
-	// the reservation right away instead of waiting out its TTL. On success the
-	// reservation is kept until the new VM is observed (its annotation then
-	// becomes the source of truth).
-	provisioned := false
-	defer func() {
-		if !provisioned {
-			h.releaseIPAddress(annot.IPAddress)
-		}
-	}()
 
 	folder, err := h.vSphereClient.LoadFolder(ctx)
 	if err != nil {
@@ -434,7 +422,6 @@ func (h *HatcheryVSphere) cloneProvisionedWorker(ctx context.Context, vmTemplate
 		return err
 	}
 
-	provisioned = true
 	return nil
 }
 

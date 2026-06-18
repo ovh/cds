@@ -2,22 +2,60 @@ package vsphere
 
 import (
 	"context"
-	"errors"
-	"time"
+	"strconv"
+	"strings"
 
 	"github.com/vmware/govmomi/vim25/mo"
 
-	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
-// getUsedIPs builds the set of IP addresses currently in use across all VMs.
-// It checks both the CDS annotation (IP assigned at clone time, before the VM
-// actually uses it) and the guest network info (IP visible on the running VM).
-// The annotation lookup is needed because a newly cloned VM may not yet have
-// the IP visible in guest tools, but the IP is already allocated.
+// provisionIPNamePrefix marks a provision VM name that encodes its assigned IP,
+// e.g. "provision-v2-ip-10-0-0-5-<random>". Encoding the IP in the name makes the
+// reserved IP visible in the vSphere inventory from the moment the clone starts —
+// before the annotation is populated — and survives a hatchery restart. The IP is
+// also stored in the annotation (see prepareCloneSpec) so older provisions
+// (without this name) and a rolled-back binary keep working.
+const provisionIPNamePrefix = "provision-v2-ip-"
+
+// provisionName builds the name for a new provision VM. When an IP is assigned it
+// is encoded into the name; otherwise (DHCP / no IP range) a plain name is used.
+func provisionName(ip *ipResult) string {
+	if ip == nil || ip.ip == "" {
+		return namesgenerator.GenerateWorkerName("provision-v2")
+	}
+	return namesgenerator.GenerateWorkerName(provisionIPNamePrefix + strings.ReplaceAll(ip.ip, ".", "-"))
+}
+
+// ipFromProvisionName extracts the IP encoded in a provision VM name, if present.
+func ipFromProvisionName(name string) (string, bool) {
+	if !strings.HasPrefix(name, provisionIPNamePrefix) {
+		return "", false
+	}
+	parts := strings.SplitN(strings.TrimPrefix(name, provisionIPNamePrefix), "-", 5)
+	if len(parts) < 4 {
+		return "", false
+	}
+	for _, octet := range parts[:4] {
+		n, err := strconv.Atoi(octet)
+		if err != nil || n < 0 || n > 255 {
+			return "", false
+		}
+	}
+	return strings.Join(parts[:4], "."), true
+}
+
+// getUsedIPs builds the set of IP addresses currently in use across all VMs. An
+// IP is "used" if it is encoded in a provision VM name (visible during the clone,
+// before the annotation exists), recorded in the CDS annotation (set at clone
+// time, the compatibility anchor for old provisions and claimed workers), or seen
+// on the running guest's network.
 func (h *HatcheryVSphere) getUsedIPs(ctx context.Context, srvs []mo.VirtualMachine) map[string]struct{} {
 	usedIPs := make(map[string]struct{}, len(srvs))
 	for _, s := range srvs {
+		if ip, ok := ipFromProvisionName(s.Name); ok {
+			usedIPs[ip] = struct{}{}
+		}
 		annot := getVirtualMachineCDSAnnotation(ctx, s)
 		if annot != nil && annot.IPAddress != "" {
 			usedIPs[annot.IPAddress] = struct{}{}
@@ -34,96 +72,21 @@ func (h *HatcheryVSphere) getUsedIPs(ctx context.Context, srvs []mo.VirtualMachi
 	return usedIPs
 }
 
-// releaseObservedReservations drops reservations for IPs now confirmed in use by
-// a real VM (its annotation or guest network). The VM list returned by vSphere is
-// the source of truth: a reservation is only an optimistic, in-memory lock that
-// covers the window between picking an IP and the cloned VM becoming visible in
-// the inventory. Once a VM carrying the IP is observed, the annotation is
-// authoritative and the reservation is redundant, so it is released. This keeps
-// the lock self-healing (and harmless to lose on restart). Caller must hold
-// IpAddressesMutex.
-func (h *HatcheryVSphere) releaseObservedReservations(usedIPs map[string]struct{}) {
-	for ip := range usedIPs {
-		if sdk.IsInArray(ip, h.reservedIPAddresses) {
-			h.reservedIPAddresses = sdk.DeleteFromArray(h.reservedIPAddresses, ip)
-		}
-	}
-}
-
-// findAvailableIP looks for the first free IP across all configured networks and
-// atomically reserves it before returning. Picking and reserving happen under a
-// single lock so concurrent callers (parallel provisioning clones) can never get
-// the same IP. The reservation is an in-memory lock covering the window until the
-// cloned VM becomes visible in the inventory; a safety TTL releases it if the
-// clone never produces a VM (see releaseIPAddress / the error paths that release
-// it explicitly).
-func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (ipResult, error) {
-	h.IpAddressesMutex.Lock()
-	defer h.IpAddressesMutex.Unlock()
-
-	srvs := h.getVirtualMachines(ctx)
-	usedIPs := h.getUsedIPs(ctx, srvs)
-	h.releaseObservedReservations(usedIPs)
-
+// pickFreeIP returns the first configured IP that is not in the given used set,
+// scanning networks in config order. It is pure (no shared state): the caller
+// (provisioningV2, a single goroutine) adds each picked IP to the used set so the
+// next pick in the same pass returns a distinct address.
+func (h *HatcheryVSphere) pickFreeIP(used map[string]struct{}) (ipResult, bool) {
 	for _, network := range h.availableNetworks {
 		for _, ip := range network.ipAddresses {
-			_, isUsed := usedIPs[ip]
-			isReserved := sdk.IsInArray(ip, h.reservedIPAddresses)
-			if !isUsed && !isReserved {
-				h.reservedIPAddresses = append(h.reservedIPAddresses, ip)
-				// Safety net: release the reservation if it is never confirmed by a
-				// VM carrying the IP (e.g. the clone fails after this point). Use
-				// Exec (short-lived, panic-recovered, not monitored).
-				reservedIP := ip
-				h.GoRoutines.Exec(context.Background(), "vsphere-ip-reservation-ttl", func(_ context.Context) {
-					time.Sleep(5 * time.Minute)
-					h.releaseIPAddress(reservedIP)
-				})
+			if _, taken := used[ip]; !taken {
 				return ipResult{
 					ip:         ip,
 					gateway:    network.config.Gateway,
 					subnetMask: network.config.SubnetMask,
-				}, nil
+				}, true
 			}
 		}
 	}
-
-	return ipResult{}, sdk.WithStack(errors.New("no IP address available"))
+	return ipResult{}, false
 }
-
-// countAvailableIPs returns the number of IPs that are currently free (not used
-// by any VM and not reserved). Used by provisioning to cap tasks to the actual
-// IP budget and avoid submitting work that would fail at clone time.
-func (h *HatcheryVSphere) countAvailableIPs(ctx context.Context) int {
-	h.IpAddressesMutex.Lock()
-	defer h.IpAddressesMutex.Unlock()
-
-	srvs := h.getVirtualMachines(ctx)
-	usedIPs := h.getUsedIPs(ctx, srvs)
-	h.releaseObservedReservations(usedIPs)
-
-	count := 0
-	for _, network := range h.availableNetworks {
-		for _, ip := range network.ipAddresses {
-			_, isUsed := usedIPs[ip]
-			isReserved := sdk.IsInArray(ip, h.reservedIPAddresses)
-			if !isUsed && !isReserved {
-				count++
-			}
-		}
-	}
-	return count
-}
-
-// releaseIPAddress drops an IP reservation explicitly. Used when a provision
-// clone that reserved the IP fails before any VM ends up carrying it, so the IP
-// returns to the pool immediately instead of waiting out the reservation TTL.
-func (h *HatcheryVSphere) releaseIPAddress(ip string) {
-	if ip == "" {
-		return
-	}
-	h.IpAddressesMutex.Lock()
-	h.reservedIPAddresses = sdk.DeleteFromArray(h.reservedIPAddresses, ip)
-	h.IpAddressesMutex.Unlock()
-}
-

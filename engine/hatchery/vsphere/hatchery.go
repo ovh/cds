@@ -782,18 +782,24 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	}
 	provisionQueue := roundRobinInterleave(modelOrder, deficits)
 
-	// --- Step 3: cap by available IPs and enqueue tasks ---
-	ipBudget := -1
-	if len(h.availableIPAddresses) > 0 {
-		ipBudget = h.countAvailableIPs(ctx)
-		log.Info(ctx, "provisioning IP budget: %d available", ipBudget)
-	}
-	if ipBudget == 0 {
-		log.Warn(ctx, "provisioning stopped: no IPs available")
-		provisionQueue = nil
-	} else if ipBudget > 0 && len(provisionQueue) > ipBudget {
-		log.Warn(ctx, "provisioning capped to %d tasks (IP budget)", ipBudget)
-		provisionQueue = provisionQueue[:ipBudget]
+	// --- Step 3: assign IPs and launch clones ---
+	// Build the set of IPs already in use (from the vSphere list — annotations and
+	// provision-v2-ip names) plus the IPs of in-flight clones not yet listed
+	// (parsed from pending names). When an IP range is configured, each clone gets
+	// a distinct IP picked here, in this single goroutine, so parallel clones can
+	// never collide. The IP is encoded in the VM name (see provisionName), which
+	// makes the lock visible in vSphere during the clone and across a restart — no
+	// in-memory reservation, no timeout.
+	var usedIPs map[string]struct{}
+	if len(h.availableNetworks) > 0 {
+		usedIPs = h.getUsedIPs(ctx, machines)
+		h.cacheProvisioning.mu.Lock()
+		for name := range h.cacheProvisioning.pending {
+			if ip, ok := ipFromProvisionName(name); ok {
+				usedIPs[ip] = struct{}{}
+			}
+		}
+		h.cacheProvisioning.mu.Unlock()
 	}
 
 	// Reuse any in-flight provisions orphaned by a restart, then submit the
@@ -803,6 +809,16 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	h.reconcileProvisionedVMs(ctx, machines, "provision-v2")
 
 	for _, modelVMware := range provisionQueue {
-		h.startProvisionClone(ctx, modelVMware)
+		var ip *ipResult
+		if usedIPs != nil {
+			res, ok := h.pickFreeIP(usedIPs)
+			if !ok {
+				log.Warn(ctx, "provisioning stopped: no IP address available")
+				break
+			}
+			usedIPs[res.ip] = struct{}{} // exclude from subsequent picks this pass
+			ip = &res
+		}
+		h.startProvisionClone(ctx, modelVMware, provisionName(ip), ip)
 	}
 }
