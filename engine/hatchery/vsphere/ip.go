@@ -50,8 +50,13 @@ func (h *HatcheryVSphere) releaseObservedReservations(usedIPs map[string]struct{
 	}
 }
 
-// findAvailableIP looks for the first free IP across all configured networks
-// and returns the IP along with its associated network configuration.
+// findAvailableIP looks for the first free IP across all configured networks and
+// atomically reserves it before returning. Picking and reserving happen under a
+// single lock so concurrent callers (parallel provisioning clones) can never get
+// the same IP. The reservation is an in-memory lock covering the window until the
+// cloned VM becomes visible in the inventory; a safety TTL releases it if the
+// clone never produces a VM (see releaseIPAddress / the error paths that release
+// it explicitly).
 func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (ipResult, error) {
 	h.IpAddressesMutex.Lock()
 	defer h.IpAddressesMutex.Unlock()
@@ -65,6 +70,15 @@ func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (ipResult, error)
 			_, isUsed := usedIPs[ip]
 			isReserved := sdk.IsInArray(ip, h.reservedIPAddresses)
 			if !isUsed && !isReserved {
+				h.reservedIPAddresses = append(h.reservedIPAddresses, ip)
+				// Safety net: release the reservation if it is never confirmed by a
+				// VM carrying the IP (e.g. the clone fails after this point). Use
+				// Exec (short-lived, panic-recovered, not monitored).
+				reservedIP := ip
+				h.GoRoutines.Exec(context.Background(), "vsphere-ip-reservation-ttl", func(_ context.Context) {
+					time.Sleep(5 * time.Minute)
+					h.releaseIPAddress(reservedIP)
+				})
 				return ipResult{
 					ip:         ip,
 					gateway:    network.config.Gateway,
@@ -113,20 +127,3 @@ func (h *HatcheryVSphere) releaseIPAddress(ip string) {
 	h.IpAddressesMutex.Unlock()
 }
 
-func (h *HatcheryVSphere) reserveIPAddress(ctx context.Context, ip string) error {
-	h.IpAddressesMutex.Lock()
-	if sdk.IsInArray(ip, h.reservedIPAddresses) {
-		return sdk.WithStack(errors.New("address already reserved"))
-	}
-	h.reservedIPAddresses = append(h.reservedIPAddresses, ip)
-	h.IpAddressesMutex.Unlock()
-
-	go func() {
-		time.Sleep(5 * time.Minute)
-		h.IpAddressesMutex.Lock()
-		h.reservedIPAddresses = sdk.DeleteFromArray(h.reservedIPAddresses, ip)
-		h.IpAddressesMutex.Unlock()
-	}()
-
-	return nil
-}

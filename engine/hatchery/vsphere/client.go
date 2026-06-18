@@ -299,16 +299,13 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 	}
 
 	if len(h.availableIPAddresses) > 0 {
+		// findAvailableIP already reserves the returned IP atomically, so parallel
+		// provisioning clones never receive the same address.
 		ipRes, err := h.findAvailableIP(ctx)
 		if err != nil {
 			return nil, err
 		}
 		log.Debug(ctx, "Found %s as available IP (gw=%s, mask=%s)", ipRes.ip, ipRes.gateway, ipRes.subnetMask)
-		// Once we found an IP Address, we have to reserve this IP in local memory
-		// because the IP address won't be used directly on the server
-		if err := h.reserveIPAddress(ctx, ipRes.ip); err != nil {
-			return nil, err
-		}
 
 		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{
 			{
