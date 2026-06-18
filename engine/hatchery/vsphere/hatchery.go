@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -701,11 +700,13 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
 	// --- Step 1: compute current state and deficit per model ---
-	// Count ALL VMs with Provisioning annotation regardless of power state,
-	// so orphaned VMs (powered on, stuck) are included. This ensures that
-	// reconciled VMs don't cause additional clones in the deficit calculation.
+	// vSphere is the source of truth. Count every provision VM with the
+	// Provisioning annotation regardless of power state — both READY (powered off,
+	// claimable) and STARTING (powered on, still being created). This makes the
+	// deficit correct even after a restart with an empty pending cache.
 	mapAlreadyProvisionned := make(map[string]int)
 	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
+	listableProvisions := make(map[string]struct{})
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
 		if !strings.HasPrefix(machine.Name, "provision-v2") {
@@ -719,9 +720,19 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 			continue
 		}
 		if annot.Provisioning {
+			listableProvisions[machine.Name] = struct{}{}
 			mapAlreadyProvisionned[annot.VMwareModelPath]++
 			mapProvisionedMachines[annot.VMwareModelPath] = append(
 				mapProvisionedMachines[annot.VMwareModelPath], machine)
+		}
+	}
+	// Also count in-flight clones whose VM is not yet visible in the inventory, so
+	// a retrigger does not double-create them. This is the only cache-derived term
+	// and is naturally empty after a restart (a dead process leaves no
+	// not-yet-listable clone — its VM either exists in vSphere or never did).
+	for name, model := range h.cacheProvisioning.pending {
+		if _, listable := listableProvisions[name]; !listable {
+			mapAlreadyProvisionned[model]++
 		}
 	}
 	h.cacheProvisioning.mu.Unlock()
@@ -785,16 +796,13 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 		provisionQueue = provisionQueue[:ipBudget]
 	}
 
-	var batch sync.WaitGroup
-	h.reconcileProvisionedVMs(ctx, machines, "provision-v2", &batch)
+	// Reuse any in-flight provisions orphaned by a restart, then submit the
+	// deficit's worth of clones. Fire-and-forget: each clone runs in its own
+	// goroutine and is tracked as pending, so this returns immediately and the
+	// provisioning loop stays responsive to the next tick/signal.
+	h.reconcileProvisionedVMs(ctx, machines, "provision-v2")
 
 	for _, modelVMware := range provisionQueue {
-		batch.Add(1)
-		h.provisioningPool.tasks <- provisionTask{
-			cloneV2: modelVMware,
-			wg:      &batch,
-		}
+		h.startProvisionClone(ctx, modelVMware)
 	}
-
-	batch.Wait()
 }

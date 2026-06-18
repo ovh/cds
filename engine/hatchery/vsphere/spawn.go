@@ -447,8 +447,10 @@ func (h *HatcheryVSphere) hasAvailableProvisionedWorker(ctx context.Context, mod
 	expectedModelPath := model.GetVSphereImage()
 
 	h.cacheProvisioning.mu.Lock()
-	pending := make([]string, len(h.cacheProvisioning.pending))
-	copy(pending, h.cacheProvisioning.pending)
+	pending := make(map[string]struct{}, len(h.cacheProvisioning.pending))
+	for name := range h.cacheProvisioning.pending {
+		pending[name] = struct{}{}
+	}
 	using := make([]string, len(h.cacheProvisioning.using))
 	copy(using, h.cacheProvisioning.using)
 	h.cacheProvisioning.mu.Unlock()
@@ -478,7 +480,7 @@ func (h *HatcheryVSphere) hasAvailableProvisionedWorker(ctx context.Context, mod
 			continue
 		}
 
-		if sdk.IsInArray(machine.Name, pending) ||
+		if _, isPending := pending[machine.Name]; isPending ||
 			sdk.IsInArray(machine.Name, using) ||
 			sdk.IsInArray(machine.Name, toDelete) {
 			continue
@@ -520,7 +522,7 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 		}
 
 		h.cacheProvisioning.mu.Lock()
-		if sdk.IsInArray(machine.Name, h.cacheProvisioning.pending) {
+		if _, isPending := h.cacheProvisioning.pending[machine.Name]; isPending {
 			h.cacheProvisioning.mu.Unlock()
 			log.Debug(ctx, "provision %q is in pending provisioning - skip it", machine.Name)
 			continue

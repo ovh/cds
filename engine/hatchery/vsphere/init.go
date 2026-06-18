@@ -46,8 +46,11 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	if len(h.Config.WorkerProvisioning) > 0 {
 		log.Debug(ctx, "provisioning is enabled")
 
-		// Start the provisioning worker pool
-		h.startProvisioningPool(ctx)
+		// Optional concurrency cap on provisioning operations. 0 = unbounded
+		// (clones run fully in parallel, bounded only by the deficit / IP budget).
+		if h.Config.WorkerProvisioningPoolSize > 0 {
+			h.provisionSem = make(chan struct{}, h.Config.WorkerProvisioningPoolSize)
+		}
 
 		provisioningInterval := 2 * time.Minute
 		if h.Config.WorkerProvisioningInterval > 0 {

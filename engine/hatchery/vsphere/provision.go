@@ -3,32 +3,13 @@ package vsphere
 import (
 	"context"
 	"strings"
-	"sync"
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
-
-// provisionTask represents a unit of provisioning work submitted to the pool.
-type provisionTask struct {
-	// For "clone" tasks: clone a new VM then finish provisioning
-	cloneV2 string // non-empty for V2 clone tasks (vmware model path)
-
-	// For "finish" tasks: the VM already exists, just wait IP + shutdown
-	finishVM string // non-nil for reconciled VMs (name of existing powered-on VM)
-
-	wg *sync.WaitGroup // shared per-batch WaitGroup, caller calls wg.Wait()
-}
-
-// provisioningPool manages a fixed set of long-lived worker goroutines that
-// execute provisioning tasks. Created at startup, shut down on context cancel.
-type provisioningPool struct {
-	tasks chan provisionTask
-}
 
 // requestProvisioning asks the provisioning loop to run a refill pass now instead
 // of waiting for the next tick. It is non-blocking: if a refill is already pending
@@ -46,84 +27,86 @@ func (h *HatcheryVSphere) requestProvisioning(ctx context.Context) {
 	}
 }
 
-// startProvisioningPool launches the worker pool. Workers are long-lived and
-// pull tasks from the channel until the context is cancelled.
-func (h *HatcheryVSphere) startProvisioningPool(ctx context.Context) {
-	poolSize := h.Config.WorkerProvisioningPoolSize
-	if poolSize == 0 {
-		poolSize = 1
+// addPending records an in-flight provision (vm name -> vmware model) so a
+// concurrent/subsequent provisioning pass does not re-create a clone whose VM is
+// not yet visible in the vSphere inventory. The map is an accelerator only and is
+// safe to lose on restart (state is rebuilt from vSphere — see provisioningV2).
+func (h *HatcheryVSphere) addPending(name, model string) {
+	h.cacheProvisioning.mu.Lock()
+	if h.cacheProvisioning.pending == nil {
+		h.cacheProvisioning.pending = map[string]string{}
 	}
+	h.cacheProvisioning.pending[name] = model
+	h.cacheProvisioning.mu.Unlock()
+}
 
-	h.provisioningPool = &provisioningPool{
-		tasks: make(chan provisionTask, poolSize*2),
-	}
+func (h *HatcheryVSphere) removePending(name string) {
+	h.cacheProvisioning.mu.Lock()
+	delete(h.cacheProvisioning.pending, name)
+	h.cacheProvisioning.mu.Unlock()
+}
 
-	for i := 0; i < poolSize; i++ {
-		h.GoRoutines.Run(ctx, "hatchery-vsphere-provisioning-worker",
-			func(ctx context.Context) {
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case task, ok := <-h.provisioningPool.tasks:
-						if !ok {
-							return
-						}
-						h.executeProvisionTask(ctx, task)
-					}
-				}
-			},
-		)
+// acquireProvisionSlot / releaseProvisionSlot bound the number of concurrent
+// provisioning operations when WorkerProvisioningPoolSize > 0. When it is 0 the
+// semaphore is nil and provisioning runs fully in parallel (maximize throughput).
+func (h *HatcheryVSphere) acquireProvisionSlot() {
+	if h.provisionSem != nil {
+		h.provisionSem <- struct{}{}
 	}
 }
 
-// executeProvisionTask runs a single provisioning task.
-func (h *HatcheryVSphere) executeProvisionTask(ctx context.Context, task provisionTask) {
-	defer task.wg.Done()
-
-	if task.finishVM != "" {
-		// Reconciled VM: just finish provisioning (wait IP + shutdown)
-		h.finishProvisioning(ctx, task.finishVM)
-		return
+func (h *HatcheryVSphere) releaseProvisionSlot() {
+	if h.provisionSem != nil {
+		<-h.provisionSem
 	}
+}
 
-	// Clone task: generate name, clone the VM, then finish provisioning
-	var workerName string
-	var err error
+// startProvisionClone clones a new provision for the model and finishes it
+// (wait IP + shutdown), tracked as pending for its whole lifetime. Fire-and-forget:
+// it returns immediately so the provisioning loop stays responsive.
+func (h *HatcheryVSphere) startProvisionClone(ctx context.Context, model string) {
+	name := namesgenerator.GenerateWorkerName("provision-v2")
+	h.addPending(name, model)
 
-	if task.cloneV2 != "" {
-		workerName = namesgenerator.GenerateWorkerName("provision-v2")
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-provision-clone", func(ctx context.Context) {
+		defer h.removePending(name)
+		h.acquireProvisionSlot()
+		defer h.releaseProvisionSlot()
 
-		h.cacheProvisioning.mu.Lock()
-		h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
-		h.cacheProvisioning.mu.Unlock()
-
-		err = h.ProvisionWorkerV2(ctx, task.cloneV2, workerName)
-		if err != nil {
+		if err := h.ProvisionWorkerV2(ctx, model, name); err != nil {
 			ctx = log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to provision vmware worker v2 %q model %q: %v", workerName, task.cloneV2, err)
+			log.Error(ctx, "unable to provision vmware worker v2 %q model %q: %v", name, model, err)
+			h.markToDelete(ctx, name)
+			return
 		}
-	}
+		h.finishProvisioning(ctx, name)
+	})
+}
 
-	if err != nil {
-		h.markToDelete(ctx, workerName)
-		h.cacheProvisioning.mu.Lock()
-		h.cacheProvisioning.pending = sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
-		h.cacheProvisioning.mu.Unlock()
-		return
-	}
+// startProvisionFinish resumes finishing an already-cloned provision VM (used by
+// reconciliation, e.g. after a restart). Tracked as pending; fire-and-forget.
+func (h *HatcheryVSphere) startProvisionFinish(ctx context.Context, name, model string) {
+	h.addPending(name, model)
 
-	// Clone succeeded — now wait for IP and shut down
-	h.finishProvisioning(ctx, workerName)
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-provision-finish", func(ctx context.Context) {
+		defer h.removePending(name)
+		h.acquireProvisionSlot()
+		defer h.releaseProvisionSlot()
+
+		h.finishProvisioning(ctx, name)
+	})
 }
 
 // reconcileProvisionedVMs detects provisioned VMs that are powered on but not
-// actively being provisioned (not in cacheProvisioning.pending). For each
-// orphaned VM it submits a "finish" task to the pool via the provided batch.
-func (h *HatcheryVSphere) reconcileProvisionedVMs(ctx context.Context, machines []mo.VirtualMachine, prefix string, batch *sync.WaitGroup) {
+// actively being provisioned (not in cacheProvisioning.pending) — typically
+// in-flight provisions orphaned by a hatchery restart — and resumes (reuses)
+// them by finishing their provisioning.
+func (h *HatcheryVSphere) reconcileProvisionedVMs(ctx context.Context, machines []mo.VirtualMachine, prefix string) {
 	h.cacheProvisioning.mu.Lock()
-	pending := make([]string, len(h.cacheProvisioning.pending))
-	copy(pending, h.cacheProvisioning.pending)
+	pending := make(map[string]struct{}, len(h.cacheProvisioning.pending))
+	for name := range h.cacheProvisioning.pending {
+		pending[name] = struct{}{}
+	}
 	h.cacheProvisioning.mu.Unlock()
 
 	for _, machine := range machines {
@@ -146,36 +129,20 @@ func (h *HatcheryVSphere) reconcileProvisionedVMs(ctx context.Context, machines 
 			continue
 		}
 
-		if sdk.IsInArray(machine.Name, pending) {
+		if _, ok := pending[machine.Name]; ok {
 			continue
 		}
 
-		vmName := machine.Name
-		log.Info(ctx, "reconcileProvisionedVMs: resuming provisioning for VM %q", vmName)
-
-		h.cacheProvisioning.mu.Lock()
-		h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, vmName)
-		h.cacheProvisioning.mu.Unlock()
-
-		batch.Add(1)
-		h.provisioningPool.tasks <- provisionTask{
-			finishVM: vmName,
-			wg:       batch,
-		}
+		log.Info(ctx, "reconcileProvisionedVMs: resuming provisioning for VM %q", machine.Name)
+		h.startProvisionFinish(ctx, machine.Name, annot.VMwareModelPath)
 	}
 }
 
 // finishProvisioning completes the provisioning of an already-cloned VM by
 // waiting for it to get an IP and then shutting it down. On failure the VM is
-// marked for deletion. In all cases the VM name is removed from
-// cacheProvisioning.pending when done.
+// marked for deletion. Pending bookkeeping is owned by the caller
+// (startProvisionClone / startProvisionFinish).
 func (h *HatcheryVSphere) finishProvisioning(ctx context.Context, vmName string) {
-	defer func() {
-		h.cacheProvisioning.mu.Lock()
-		h.cacheProvisioning.pending = sdk.DeleteFromArray(h.cacheProvisioning.pending, vmName)
-		h.cacheProvisioning.mu.Unlock()
-	}()
-
 	vm, err := h.vSphereClient.LoadVirtualMachine(ctx, vmName)
 	if err != nil {
 		log.Error(ctx, "finishProvisioning: unable to load VM %q: %v", vmName, err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -473,8 +474,71 @@ func TestHatcheryVSphere_provisioning_v2_do_nothing(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	setupTestPool(ctx, &h)
 	h.provisioningV2(ctx)
+}
+
+// provisioningV2 must count both ready (existing) and in-flight (starting,
+// tracked in the pending cache) provisions when computing the deficit, so a
+// retrigger while clones are still in flight does not double-create.
+func TestHatcheryVSphere_provisioningV2_noDoubleCreate(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{GoRoutines: sdk.NewGoRoutines(context.Background())},
+		},
+		Config: HatcheryConfiguration{
+			WorkerProvisioning: []WorkerProvisioningConfig{{ModelVMWare: "the-model", Number: 3}},
+		},
+	}
+
+	// One ready provision (powered off) already exists in vSphere.
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{{
+				ManagedEntity: mo.ManagedEntity{Name: "provision-v2-ready"},
+				Summary:       types.VirtualMachineSummary{Config: types.VirtualMachineConfigSummary{Template: false}},
+				Config:        &types.VirtualMachineConfigInfo{Annotation: `{"vmware_model_path": "the-model", "provisioning": true}`},
+				Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+			}}, nil
+		},
+	).AnyTimes()
+
+	// One in-flight clone already tracked (not yet visible in the inventory).
+	h.cacheProvisioning.pending = map[string]string{"provision-v2-starting": "the-model"}
+
+	// Each launched clone first loads the model template; block it so the clone
+	// stays in flight, and count how many clones were launched.
+	var cloneCount int64
+	release := make(chan struct{})
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "the-model").DoAndReturn(
+		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
+			atomic.AddInt64(&cloneCount, 1)
+			<-release
+			return nil, fmt.Errorf("stop the clone here")
+		},
+	).AnyTimes()
+
+	// deficit = Number(3) − existing(1) − starting(1) = 1
+	h.provisioningV2(context.Background())
+	assert.Eventually(t, func() bool { return atomic.LoadInt64(&cloneCount) == 1 }, 2*time.Second, 10*time.Millisecond)
+
+	// Retrigger while the clone is still in flight: it is now tracked as pending,
+	// so deficit = 3 − 1 − 2 = 0 → no new clone.
+	h.provisioningV2(context.Background())
+	time.Sleep(200 * time.Millisecond) // give any erroneous extra clone time to start
+	assert.Equal(t, int64(1), atomic.LoadInt64(&cloneCount), "a retrigger must not re-create in-flight provisions")
+
+	// Let the blocked clone fail and unwind, and wait for it to drop from pending
+	// so its goroutine is done before the test (and gomock controller) tears down.
+	close(release)
+	assert.Eventually(t, func() bool {
+		h.cacheProvisioning.mu.Lock()
+		defer h.cacheProvisioning.mu.Unlock()
+		return len(h.cacheProvisioning.pending) == 1 // only the manually-seeded "starting" entry remains
+	}, 2*time.Second, 10*time.Millisecond)
 }
 
 func TestHatcheryVSphere_GetDetaultModelV2Name(t *testing.T) {
@@ -563,7 +627,6 @@ func TestHatcheryVSphere_provisioning_v2_deprovision_excess(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	setupTestPool(ctx, &h)
 	h.provisioningV2(ctx)
 
 	// 2 excess VMs should be marked for deletion (3 exist - 1 configured = 2 excess)
@@ -618,7 +681,6 @@ func TestHatcheryVSphere_provisioning_v2_deprovision_removed_model(t *testing.T)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	setupTestPool(ctx, &h)
 	h.provisioningV2(ctx)
 
 	// Both VMs should be marked for deletion since model is removed from config

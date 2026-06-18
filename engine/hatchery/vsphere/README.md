@@ -32,7 +32,7 @@ templates) is no longer supported.
 | `types.go` | Configuration structs and `HatcheryVSphere` struct definition |
 | `hatchery.go` | Hatchery lifecycle (init, config, CanSpawn), worker cleanup, provisioning scheduler |
 | `spawn.go` | VM spawning logic, provisioning clone, worker bootstrap |
-| `provision.go` | Provisioning worker pool, task execution, reconciliation, `finishProvisioning` |
+| `provision.go` | On-demand provisioning trigger, clone/finish goroutines, reconciliation, `finishProvisioning` |
 | `client.go` | VM listing/filtering, clone spec preparation, guest operations |
 | `vsphere.go` | `VSphereClient` interface and govmomi SDK wrapper implementation |
 | `init.go` | Hatchery initialization, govmomi client creation, background goroutines setup |
@@ -64,7 +64,7 @@ The hatchery is configured via `HatcheryConfiguration`, serialized as TOML.
 | `workerTTL` | `int` | `120` | No | Worker time-to-live in minutes |
 | `workerRegistrationTTL` | `int` | `10` | No | Worker registration timeout in minutes |
 | `workerProvisioningInterval` | `int` | `120` (2 min) | No | Provisioning loop interval in seconds |
-| `workerProvisioningPoolSize` | `int` | `1` | No | Max concurrent provisioning operations |
+| `workerProvisioningPoolSize` | `int` | `0` | No | Optional cap on concurrent provisioning clones. `0` = unbounded (clones run fully in parallel, bounded by the deficit and IP budget) |
 | `workerProvisioning` | `[]WorkerProvisioningConfig` | — | No | List of models to pre-provision |
 | `guestCredentials` | `[]GuestCredential` | — | No | **Deprecated**: use `models` instead. Guest OS credentials per model |
 | `models` | `[]ModelConfig` | — | No | Per-model configuration (credentials, pre-start script) |
@@ -235,9 +235,8 @@ On startup (`InitHatchery`), the hatchery:
 3. Instantiates the `VSphereClient` wrapper bound to the configured datacenter
 4. Parses the IP range (if configured) into a list of available IP addresses
 5. Starts background goroutines:
-   - **Provisioning worker pool** (if `workerProvisioning` is configured): `WorkerProvisioningPoolSize` long-lived workers that pull tasks from a shared channel
-   - **Provisioning scheduler** (if `workerProvisioning` is configured): runs every `workerProvisioningInterval` seconds, computes deficit, submits tasks to the pool, waits for batch completion
-   - **Kill awol servers loop**: runs every 2 minutes, removes stale/expired VMs
+   - **Provisioning loop** (if `workerProvisioning` is configured): runs `provisioningV2` every `workerProvisioningInterval` seconds **and** on demand via the signal channel; each run computes the deficit and launches clones fire-and-forget (§6.3.1). An optional semaphore (`WorkerProvisioningPoolSize > 0`) caps concurrent clones.
+   - **Kill awol servers loop**: runs every `killAwolServersInterval` seconds, removes stale/expired VMs
    - **Kill disabled workers loop**: runs every 2 minutes, removes disabled workers
 
 ### 6.2 Spawning a Worker
@@ -322,32 +321,44 @@ Pre-provisioning creates idle VMs ahead of time so that job assignment is faster
 
 #### 6.3.1 Provisioning (`provisioningV2`)
 
-Provisioning is keyed on the VMware template name (`provision-v2` VMs). The provisioning scheduler
-runs a three-step process:
+Provisioning is keyed on the VMware template name (`provision-v2` VMs). `provisioningV2` is the
+trigger handler: it runs on the provisioning ticker **and** on demand whenever a provision is
+consumed — `requestProvisioning()` is called after every spawn claim and after `killAwolServers` deletes
+anything (it does a non-blocking send on a size-1 signal channel, coalescing bursts into a single
+pending run). Each run is **fire-and-forget**: it computes what is missing, submits
+the clones as independent goroutines, and returns immediately so the trigger loop stays responsive.
 
-**Step 1 — Compute current state and deficit:**
-1. Lock the provisioning cache
-2. List all VMs prefixed with `provision-v2`, count per VMware model path (includes all power states to account for orphans)
-3. Build configured counts and compute deficit (`desired - existing`) for each model
-4. **Deprovisioning**: for each model with more provisioned VMs than configured (or models removed from config), mark excess VMs for deletion
+**Step 1 — Compute the deficit (vSphere is the source of truth):**
+1. List `provision-v2` VMs and count per VMware model path, **including all power states**:
+   - **READY** = powered off, `Provisioning: true` → a finished, claimable provision
+   - **STARTING** = powered on, `Provisioning: true` → a provision still being created
+2. Also count **in-flight clones not yet visible** in the inventory — entries in
+   `cacheProvisioning.pending` (name → model) whose VM does not yet appear in the list.
+3. `deficit(model) = configured Number − READY − STARTING − not-yet-listable pending`.
+4. **Deprovisioning**: for each model with more provisioned VMs than configured (or models removed
+   from config), mark excess VMs for deletion.
+
+Counting READY + STARTING from vSphere is what makes the deficit correct after a restart with an
+empty cache (see §6.3.3); `pending` only additionally covers the brief window where a clone has been
+launched but its VM is not yet listable, so a rapid retrigger never double-creates.
 
 **Step 2 — Interleave models using round-robin:**
 - Uses `roundRobinInterleave()` to produce a fair ordering where models are picked one task at a time in config order
 - Prevents models with larger counts from monopolizing the provisioning queue
 - Example: deficits A=3, B=1, C=2 → queue `[A, B, C, A, C, A]`
 
-**Step 3 — Cap by available IPs and enqueue tasks:**
-- If IP ranges are configured, compute available IP count
-- Truncate the queue to the IP budget (prevents submitting work that would fail at clone time)
-- **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.3)
-- Submit clone tasks from the queue to the provisioning pool
-- Wait for the entire batch (reconciliation + new clones) to complete
+**Step 3 — Cap by available IPs and launch clones:**
+- If IP ranges are configured, truncate the queue to the available-IP budget
+- **Reconciliation**: resume orphaned in-flight provisions (see §6.3.3)
+- For each model in the queue, launch a clone via `startProvisionClone()` — one goroutine per
+  provision, **no waiting for the batch**. Concurrency is bounded only by the deficit and IP budget;
+  set `WorkerProvisioningPoolSize > 0` to cap concurrent clones (a semaphore), or leave it `0` to
+  maximize parallelism.
 
-Each task executed by a pool worker:
-- Generates a worker name: `provision-v2-<random>`
-- Adds name to `cacheProvisioning.pending`
-- Calls `ProvisionWorkerV2()` (clone only), then `finishProvisioning()` (wait IP → shutdown)
-- Removes name from pending cache
+Each clone goroutine:
+- Generates a worker name: `provision-v2-<random>`, recorded in `cacheProvisioning.pending` (with its model) **before** the goroutine starts
+- Calls `ProvisionWorkerV2()` (clone), then `finishProvisioning()` (wait IP → shutdown)
+- On any failure marks the VM for deletion; in all cases removes its name from `pending` when done
 
 #### 6.3.2 Provisioned VM Lifecycle
 
@@ -368,29 +379,28 @@ Template ──clone──► Provisioned VM (powered on)
 
 #### 6.3.3 Provisioning State Reconciliation
 
-The `cacheProvisioning.pending` list is in-memory only. If the hatchery restarts while a VM is
-being provisioned (between clone and shutdown), that VM becomes orphaned: it stays powered on
-indefinitely and is never picked up by `FindProvisionnedWorker` (which requires a
-`VmPoweredOffEvent`).
+`cacheProvisioning.pending` is in-memory only and **must be safe to lose at any time** (restart or
+crash). Correctness never relies on it surviving: the deficit (§6.3.1) is computed from the vSphere
+VM list, which is the source of truth. On restart the cache is empty, but every real provision is
+still classifiable by power state — **READY** (powered off) vs **STARTING** (powered on) — so the
+deficit is reconstructed exactly and no duplicates are created.
 
-To handle this, each provisioning tick calls `reconcileProvisionedVMs()` which reconstructs the
-pending state by scanning all VMs:
+The open question on restart is what to do with the **STARTING** provisions (powered on, mid-creation
+when the old process died). The hatchery **reuses** them: each provisioning run calls
+`reconcileProvisionedVMs()` to resume their provisioning rather than discarding the in-progress clone:
 
-1. List all powered-on VMs with `provision-` prefix, `Provisioning: true` annotation, and
-   matching `HatcheryName`
-2. Skip VMs already in `cacheProvisioning.pending` (actively being provisioned this run)
-3. For each orphaned VM, re-inject it into the provisioning pipeline:
-   - Add the VM name to `cacheProvisioning.pending`
-   - Submit a "finish" task to the provisioning worker pool
-   - The pool worker runs `finishProvisioning`: `WaitForVirtualMachineIP` → `ShutdownVirtualMachine`
-   - If the VM already has an IP, `WaitForVirtualMachineIP` returns immediately and the VM is
-     shut down — completing its provisioning
-   - If the VM has no IP, the 3-minute timeout applies. On timeout, the VM is marked for deletion
-   - On completion (success or failure), the VM is removed from `cacheProvisioning.pending`
+1. List powered-on VMs with the `provision-` prefix, `Provisioning: true`, and matching `HatcheryName`
+2. Skip VMs already in `cacheProvisioning.pending` (already being handled this process)
+3. For each remaining orphan, resume it via `startProvisionFinish()` (a fire-and-forget goroutine):
+   - Record it in `cacheProvisioning.pending`
+   - Run `finishProvisioning`: `WaitForVirtualMachineIP` → `ShutdownVirtualMachine`
+   - If it already has its IP, this returns quickly and the VM is shut down → becomes READY
+   - If it never gets an IP, the IP-wait timeout fires and the VM is marked for deletion (and
+     recreated by a later deficit) — so a genuinely stuck provision is never reused forever
+   - On completion (success or failure) the VM is removed from `cacheProvisioning.pending`
 
-Since reconciliation tasks are part of the same batch as new clone tasks, the scheduler waits
-for all work to complete before the next tick re-evaluates. This prevents double-counting and
-ensures a consistent snapshot between ticks.
+Because the deficit counts STARTING provisions, the in-flight ones being reconciled are not also
+cloned fresh.
 
 This mechanism also covers VMs where `ShutdownVirtualMachine` failed during normal operation
 (not just restarts), since the provisioning scheduler periodically re-runs reconciliation.
@@ -506,11 +516,11 @@ The `MaxWorker` limit and the vSphere-specific `WorkerProvisioning` (pre-provisi
   **do not count** against `MaxWorker`.
 - When a provisioned VM is assigned to a job, it is renamed (e.g. `provision-v2-xxx` →
   `worker-abc`). From that point, it **counts** against `MaxWorker`.
-- The `WorkerProvisioningPoolSize` config controls how many persistent workers handle
-  provisioning tasks (clone + finish). The provisioning scheduler submits all tasks to the pool
-  and waits for the batch to complete. This is separate from `MaxConcurrentProvisioning` which
-  governs the common framework's capacity check.
-- There is **no global coordination** between the provisioning pool and `MaxWorker`. It is the
+- The `WorkerProvisioningPoolSize` config optionally caps how many provision clones run
+  concurrently (`0` = unbounded — clones run fully in parallel, bounded only by the deficit and IP
+  budget). This is separate from `MaxConcurrentProvisioning`, which governs the common framework's
+  capacity check.
+- There is **no global coordination** between provisioning and `MaxWorker`. It is the
   operator's responsibility to ensure that `WorkerProvisioning[].Number` (total pre-provisioned
   VMs) plus expected active workers stays within the infrastructure's capacity.
 
@@ -700,7 +710,9 @@ transparently:
 ## 9. vSphere Client Interface
 
 The hatchery interacts with vSphere through the `VSphereClient` interface, which wraps the
-govmomi SDK. All vSphere API calls use a 15-second request timeout.
+govmomi SDK. Most API calls use a 15-second request timeout; the long-running task waits — clone,
+power-off, destroy — use a `vmTaskTimeout` of 10 minutes so a stuck vCenter task fails (and is
+recovered) instead of hanging the caller forever.
 
 ```go
 type VSphereClient interface {
@@ -756,7 +768,7 @@ The hatchery maintains several in-memory caches protected by mutexes:
 | Cache | Type | Purpose |
 |-------|------|---------|
 | `cachePendingJobID` | `[]string` | Job IDs currently being spawned, prevents duplicates |
-| `cacheProvisioning.pending` | `[]string` | VM names currently being provisioned |
+| `cacheProvisioning.pending` | `map[string]string` | In-flight provisions (VM name → VMware model); accelerator only, safe to lose on restart |
 | `cacheProvisioning.using` | `[]string` | Provisioned VM names being assigned to a job |
 | `cacheToDelete` | `[]string` | VM names marked for deletion by spawn logic |
 | `availableIPAddresses` | `[]string` | All IPs parsed from the configured range |

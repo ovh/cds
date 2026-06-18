@@ -45,6 +45,13 @@ type VSphereClient interface {
 	LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error)
 }
 
+// vmTaskTimeout bounds the wait for long-running vCenter tasks (clone, power
+// off, destroy). Without it these waits use the root context and a stuck vCenter
+// task hangs the caller forever — which, for the provisioning path, freezes all
+// future provisioning. It is generous (these tasks legitimately take minutes)
+// but finite, so a genuinely stuck task becomes a recoverable error.
+const vmTaskTimeout = 10 * time.Minute
+
 func NewVSphereClient(vclient *govmomi.Client, datacenter string) VSphereClient {
 	return &vSphereClient{
 		vclient:        vclient,
@@ -160,20 +167,20 @@ func (c *vSphereClient) StartVirtualMachine(ctx context.Context, vm *object.Virt
 func (c *vSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
 	log.Info(ctx, "shutdown server %v", vm.Name())
 
-	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	ctxC, cancelC := context.WithTimeout(ctx, vmTaskTimeout)
 	defer cancelC()
 
 	task, err := vm.PowerOff(ctxC)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	return sdk.WithStack(task.Wait(ctx))
+	return sdk.WithStack(task.Wait(ctxC))
 }
 
 func (c *vSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
 	log.Info(ctx, "destroying server %v", vm.Name())
 
-	ctxD, cancelD := context.WithTimeout(ctx, c.requestTimeout)
+	ctxD, cancelD := context.WithTimeout(ctx, vmTaskTimeout)
 	defer cancelD()
 
 	task, err := vm.Destroy(ctxD)
@@ -181,7 +188,7 @@ func (c *vSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.Vi
 		return sdk.WithStack(err)
 	}
 
-	return sdk.WithStack(task.Wait(ctx))
+	return sdk.WithStack(task.Wait(ctxD))
 }
 
 func (c *vSphereClient) LoadFolder(ctx context.Context) (*object.Folder, error) {
@@ -269,12 +276,15 @@ func (c *vSphereClient) LoadDatastore(ctx context.Context, name string) (*object
 }
 
 func (c *vSphereClient) CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error) {
-	task, err := vm.Clone(ctx, folder, name, *config)
+	ctxT, cancel := context.WithTimeout(ctx, vmTaskTimeout)
+	defer cancel()
+
+	task, err := vm.Clone(ctxT, folder, name, *config)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot clone VM name %v", name)
 	}
 
-	info, err := task.WaitForResult(ctx, nil)
+	info, err := task.WaitForResult(ctxT, nil)
 	if err != nil || info.State == types.TaskInfoStateError {
 		return nil, sdk.WrapError(err, "state in error: %+v", info)
 	}

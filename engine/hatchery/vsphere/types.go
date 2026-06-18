@@ -115,18 +115,25 @@ type HatcheryVSphere struct {
 	availableIPAddresses []string // flat list kept for backward-compat checks (e.g. CanSpawn)
 	availableNetworks    []availableNetwork
 	reservedIPAddresses  []string
-	provisioningPool     *provisioningPool
 	// provisionSignal lets cleanup and spawn request an immediate provisioning
 	// refill instead of waiting for the next tick. Buffered (size 1) so a burst
 	// of requests coalesces into at most one pending run.
-	provisionSignal   chan struct{}
+	provisionSignal chan struct{}
+	// provisionSem optionally bounds concurrent provisioning operations
+	// (WorkerProvisioningPoolSize). nil means unbounded (maximize parallelism).
+	provisionSem      chan struct{}
 	cachePendingJobID struct {
 		mu   sync.Mutex
 		list []string
 	}
 	cacheProvisioning struct {
-		mu      sync.Mutex
-		pending []string
+		mu sync.Mutex
+		// pending maps the name of a provision VM currently being created/finished
+		// to its VMware model. It is an in-memory accelerator only: it is safe to
+		// lose on restart, since provisioningV2 reconstructs the real state from the
+		// vSphere VM list (annotation + power state). Used to avoid double-creating a
+		// clone whose VM is not yet visible in the inventory.
+		pending map[string]string
 		using   []string
 	}
 	cacheToDelete struct {
