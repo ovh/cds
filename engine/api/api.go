@@ -975,7 +975,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunJobDeletion", func(ctx context.Context) {
-		a.WorkflowRunJobDeletion(ctx, time.Duration(10*rand.Float64())*time.Second, 10)
+		a.WorkflowRunJobDeletion(ctx, time.Duration((1+9*rand.Float64())*float64(time.Second)), 10)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunCraft", func(ctx context.Context) {
 		a.V2WorkflowRunCraft(ctx, 10*time.Second)
