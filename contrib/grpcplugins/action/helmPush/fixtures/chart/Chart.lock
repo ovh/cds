@@ -1,0 +1,6 @@
+dependencies:
+- name: library
+  repository: file://../library
+  version: 0.1.0
+digest: sha256:1adad16add22a30ff827d60dd8a916002a66e15997af6d563c31c5db36aeef83
+generated: "2026-05-20T18:33:15.111126+02:00"
