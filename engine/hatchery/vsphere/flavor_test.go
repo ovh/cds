@@ -43,7 +43,7 @@ func TestPrepareCloneSpec(t *testing.T) {
 	mockClient.EXPECT().LoadDatastore(gomock.Any(), "datastore1").Return(&object.Datastore{}, nil)
 
 	ctx := context.Background()
-	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{})
+	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, cloneSpec)
 

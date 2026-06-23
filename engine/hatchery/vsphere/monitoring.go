@@ -26,10 +26,17 @@ type vsphereMetrics struct {
 	AllocatedMemoryMB  *stats.Int64Measure
 	AllocatedDiskGB    *stats.Int64Measure
 	VMCount            *stats.Int64Measure
+	WorkerVMCount      *stats.Int64Measure
 	ProvisionedVMCount *stats.Int64Measure
-	TemplateVCPUs      *stats.Int64Measure
-	TemplateMemoryMB   *stats.Int64Measure
-	TemplateCount      *stats.Int64Measure
+	// Provisioned VMs broken down by state (sum of ready+starting+dying equals
+	// ProvisionedVMCount; in-flight clones are not VMs yet so they are tracked apart).
+	ProvisionReadyCount    *stats.Int64Measure
+	ProvisionStartingCount *stats.Int64Measure
+	ProvisionDyingCount    *stats.Int64Measure
+	ProvisionInflightCount *stats.Int64Measure
+	TemplateVCPUs          *stats.Int64Measure
+	TemplateMemoryMB       *stats.Int64Measure
+	TemplateCount          *stats.Int64Measure
 
 	// Level 3: Global pool (all VMs in datacenter)
 	PoolTotalVCPUs    *stats.Int64Measure
@@ -83,10 +90,25 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 		"total disk capacity (GB) allocated by this hatchery's VMs", stats.UnitDimensionless)
 	h.metrics.VMCount = stats.Int64(
 		"cds/hatchery/vsphere/vm_count",
-		"total VMs managed by this hatchery", stats.UnitDimensionless)
+		"total VMs managed by this hatchery (workers + provisions)", stats.UnitDimensionless)
+	h.metrics.WorkerVMCount = stats.Int64(
+		"cds/hatchery/vsphere/worker_vm_count",
+		"VMs running as workers (claimed, no longer in the provision pool)", stats.UnitDimensionless)
 	h.metrics.ProvisionedVMCount = stats.Int64(
 		"cds/hatchery/vsphere/provisioned_vm_count",
-		"pre-provisioned idle VMs", stats.UnitDimensionless)
+		"pre-provisioned VMs (ready + starting + dying)", stats.UnitDimensionless)
+	h.metrics.ProvisionReadyCount = stats.Int64(
+		"cds/hatchery/vsphere/provision_ready_count",
+		"provisioned VMs powered off and ready to be claimed", stats.UnitDimensionless)
+	h.metrics.ProvisionStartingCount = stats.Int64(
+		"cds/hatchery/vsphere/provision_starting_count",
+		"provisioned VMs powered on, still being created/finished", stats.UnitDimensionless)
+	h.metrics.ProvisionDyingCount = stats.Int64(
+		"cds/hatchery/vsphere/provision_dying_count",
+		"provisioned VMs marked for deletion, not yet reaped", stats.UnitDimensionless)
+	h.metrics.ProvisionInflightCount = stats.Int64(
+		"cds/hatchery/vsphere/provision_inflight_count",
+		"in-flight provision clones not yet visible in the inventory", stats.UnitDimensionless)
 	h.metrics.TemplateVCPUs = stats.Int64(
 		"cds/hatchery/vsphere/template_vcpus",
 		"total vCPUs defined by template VMs", stats.UnitDimensionless)
@@ -163,7 +185,12 @@ func (h *HatcheryVSphere) initVSphereMetricsMeasures() {
 		telemetry.NewViewLast("cds/hatchery/vsphere/allocated_memory_mb", h.metrics.AllocatedMemoryMB, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/allocated_disk_gb", h.metrics.AllocatedDiskGB, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/vm_count", h.metrics.VMCount, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/worker_vm_count", h.metrics.WorkerVMCount, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/provisioned_vm_count", h.metrics.ProvisionedVMCount, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/provision_ready_count", h.metrics.ProvisionReadyCount, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/provision_starting_count", h.metrics.ProvisionStartingCount, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/provision_dying_count", h.metrics.ProvisionDyingCount, baseTags),
+		telemetry.NewViewLast("cds/hatchery/vsphere/provision_inflight_count", h.metrics.ProvisionInflightCount, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/template_vcpus", h.metrics.TemplateVCPUs, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/template_memory_mb", h.metrics.TemplateMemoryMB, baseTags),
 		telemetry.NewViewLast("cds/hatchery/vsphere/template_count", h.metrics.TemplateCount, baseTags),
@@ -217,8 +244,12 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 
 	// Level 2: Hatchery-level counters
 	var hatcheryCPUs, hatcheryMemMB, hatcheryDiskGB int64
-	var vmCount, provisionedCount int64
+	var vmCount, workerCount, provisionedCount int64
+	var provisionReady, provisionStarting, provisionDying int64
 	var templateCPUs, templateMemMB, templateCount int64
+	// Names of provisions currently listed, used to count in-flight clones (in the
+	// pending cache but not yet visible in the inventory) without double counting.
+	provisionNames := make(map[string]struct{})
 
 	// Level 3: Global pool counters (ALL VMs, no annotation filtering)
 	var poolCPUs, poolMemMB, poolVMCount int64
@@ -257,8 +288,24 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 		hatcheryDiskGB += diskGB
 		vmCount++
 
-		if strings.HasPrefix(s.Name, "provision-") {
+		// Classify the VM. A pooled provision still carries the Provisioning flag
+		// and the provision-v2 prefix; once claimed it is renamed and the flag is
+		// cleared, so it counts as a worker. Provisions are broken down by state
+		// (same rule as provisioningV2): dying first, then ready (powered off) vs
+		// starting (powered on).
+		if strings.HasPrefix(s.Name, "provision-v2") && annot.Provisioning {
 			provisionedCount++
+			provisionNames[s.Name] = struct{}{}
+			switch {
+			case h.isMarkedToDelete(s):
+				provisionDying++
+			case s.Summary.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff:
+				provisionReady++
+			default:
+				provisionStarting++
+			}
+		} else {
+			workerCount++
 		}
 
 		// Level 1: Per-worker metrics
@@ -271,13 +318,29 @@ func (h *HatcheryVSphere) collectVSphereMetrics(ctx context.Context) {
 		)
 	}
 
+	// In-flight clones: tracked in the pending cache but not yet visible in the
+	// inventory above. Counted apart from the VM-based provision states.
+	var provisionInflight int64
+	h.cacheProvisioning.mu.Lock()
+	for name := range h.cacheProvisioning.pending {
+		if _, listed := provisionNames[name]; !listed {
+			provisionInflight++
+		}
+	}
+	h.cacheProvisioning.mu.Unlock()
+
 	// Level 2: Hatchery aggregate
 	stats.Record(ctx,
 		h.metrics.AllocatedVCPUs.M(hatcheryCPUs),
 		h.metrics.AllocatedMemoryMB.M(hatcheryMemMB),
 		h.metrics.AllocatedDiskGB.M(hatcheryDiskGB),
 		h.metrics.VMCount.M(vmCount),
+		h.metrics.WorkerVMCount.M(workerCount),
 		h.metrics.ProvisionedVMCount.M(provisionedCount),
+		h.metrics.ProvisionReadyCount.M(provisionReady),
+		h.metrics.ProvisionStartingCount.M(provisionStarting),
+		h.metrics.ProvisionDyingCount.M(provisionDying),
+		h.metrics.ProvisionInflightCount.M(provisionInflight),
 		h.metrics.TemplateVCPUs.M(templateCPUs),
 		h.metrics.TemplateMemoryMB.M(templateMemMB),
 		h.metrics.TemplateCount.M(templateCount),

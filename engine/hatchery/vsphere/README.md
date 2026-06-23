@@ -32,11 +32,11 @@ templates) is no longer supported.
 | `types.go` | Configuration structs and `HatcheryVSphere` struct definition |
 | `hatchery.go` | Hatchery lifecycle (init, config, CanSpawn), worker cleanup, provisioning scheduler |
 | `spawn.go` | VM spawning logic, provisioning clone, worker bootstrap |
-| `provision.go` | Provisioning worker pool, task execution, reconciliation, `finishProvisioning` |
+| `provision.go` | On-demand provisioning trigger, clone/finish goroutines, reconciliation, `finishProvisioning` |
 | `client.go` | VM listing/filtering, clone spec preparation, guest operations |
 | `vsphere.go` | `VSphereClient` interface and govmomi SDK wrapper implementation |
 | `init.go` | Hatchery initialization, govmomi client creation, background goroutines setup |
-| `ip.go` | IP address management (allocation, reservation, availability) |
+| `ip.go` | IP address management (name encode/parse, used-IP set, free-IP selection) |
 | `networks.go` | Multi-network initialization (parses networks config, builds IP pools per network) |
 | `monitoring.go` | Prometheus metrics: vSphere resource consumption at per-worker, hatchery, and pool levels |
 
@@ -64,7 +64,7 @@ The hatchery is configured via `HatcheryConfiguration`, serialized as TOML.
 | `workerTTL` | `int` | `120` | No | Worker time-to-live in minutes |
 | `workerRegistrationTTL` | `int` | `10` | No | Worker registration timeout in minutes |
 | `workerProvisioningInterval` | `int` | `120` (2 min) | No | Provisioning loop interval in seconds |
-| `workerProvisioningPoolSize` | `int` | `1` | No | Max concurrent provisioning operations |
+| `workerProvisioningPoolSize` | `int` | `0` | No | Optional cap on concurrent provisioning clones. `0` = unbounded (clones run fully in parallel, bounded by the deficit and IP budget) |
 | `workerProvisioning` | `[]WorkerProvisioningConfig` | — | No | List of models to pre-provision |
 | `guestCredentials` | `[]GuestCredential` | — | No | **Deprecated**: use `models` instead. Guest OS credentials per model |
 | `models` | `[]ModelConfig` | — | No | Per-model configuration (credentials, pre-start script) |
@@ -198,20 +198,31 @@ This annotation is the primary mechanism for tracking VM state and ownership.
 
 ```go
 type annotation struct {
-    HatcheryName            string    // Name of the hatchery that created this VM
-    WorkerName              string    // CDS worker name assigned to this VM
-    Provisioning            bool      // True if VM is a pre-provisioned idle worker
-    VMwareModelPath         string    // VMware template name (V2)
-    WorkerModelLastModified string    // Unix timestamp of model last modification
-    Model                   bool      // True if VM is a model template (do not destroy)
-    Created                 time.Time // Creation timestamp
-    JobID                   string    // CDS job ID assigned to this worker
-    IPAddress               string    // Static IP assigned to this VM
+    HatcheryName    string    // Name of the hatchery that created this VM
+    WorkerName      string    // CDS worker name assigned to this VM
+    Provisioning    bool      // True while the VM is a pre-provisioned idle worker (cleared when claimed)
+    WorkerModelPath string    // CDS worker model path
+    VMwareModelPath string    // VMware template name (V2)
+    Model           bool      // True if VM is a model template (do not destroy)
+    Created         time.Time // Provision clone timestamp
+    WorkerStartTime time.Time // Time the VM was claimed for a job (turned into a worker)
+    JobID           string    // CDS job ID assigned to this worker
+    IPAddress       string    // Static IP assigned to this VM
 }
 ```
 
 All hatchery operations (cleanup, provisioning lookup, duplicate detection) rely on parsing these
 annotations from `VirtualMachine.Config.Annotation`.
+
+The annotation is set at clone time, and **updated in place** (via `ReconfigVM_Task`, the same
+mechanism used for flavor reconfiguration) when a provision is claimed for a job. Note the
+distinction between the two timestamps:
+
+- `Created` is the **provision clone time** — it can be arbitrarily old (a provision may sit
+  pooled for a long time), so it is not a reliable indicator of worker activity.
+- `WorkerStartTime` is stamped when the provision is **claimed and turned into a worker**. Being
+  persisted in the annotation, it survives a hatchery restart and never ages out like vSphere
+  events do. `killAwolServers` uses it to decide when a VM can be reclaimed (see §8.1).
 
 ## 6. Lifecycle
 
@@ -224,9 +235,8 @@ On startup (`InitHatchery`), the hatchery:
 3. Instantiates the `VSphereClient` wrapper bound to the configured datacenter
 4. Parses the IP range (if configured) into a list of available IP addresses
 5. Starts background goroutines:
-   - **Provisioning worker pool** (if `workerProvisioning` is configured): `WorkerProvisioningPoolSize` long-lived workers that pull tasks from a shared channel
-   - **Provisioning scheduler** (if `workerProvisioning` is configured): runs every `workerProvisioningInterval` seconds, computes deficit, submits tasks to the pool, waits for batch completion
-   - **Kill awol servers loop**: runs every 2 minutes, removes stale/expired VMs
+   - **Provisioning loop** (if `workerProvisioning` is configured): runs `provisioningV2` every `workerProvisioningInterval` seconds **and** on demand via the signal channel; each run computes the deficit and launches clones fire-and-forget (§6.3.1). An optional semaphore (`WorkerProvisioningPoolSize > 0`) caps concurrent clones.
+   - **Kill awol servers loop**: runs every `killAwolServersInterval` seconds, removes stale/expired VMs
    - **Kill disabled workers loop**: runs every 2 minutes, removes disabled workers
 
 ### 6.2 Spawning a Worker
@@ -246,13 +256,22 @@ SpawnWorker(spawnArgs)
 │
 ├── 2. Start the claimed VM
 │   ├── If flavor: reconfigure (CPU/RAM/disk) while powered off
-│   ├── Rename to the worker name → start → wait for IP
-│   ├── Wait for guest operations readiness
-│   ├── Execute pre-start script (if configured)
+│   ├── Rename to the worker name
+│   ├── Stamp the annotation with WorkerStartTime (+ JobID, Provisioning=false)
+│   │   before power-on, preserving the reserved IP and VMware model path
+│   ├── Power on (bounded retry, tolerates a VM not yet startable after reconfigure)
+│   ├── Wait for the reserved IP
+│   ├── Wait for guest operations readiness, run the pre-start script (if any)
 │   └── Launch worker script via guest operations → DONE
 │
-└── 3. Error handling: shutdown + mark for deletion on any failure
+└── 3. Error handling: a single deferred teardown releases the provision from the
+       in-use cache and, on ANY failure above, shuts the VM down and marks it for
+       deletion — so a partially-configured worker is never left holding an IP.
 ```
+
+The `WorkerStartTime` stamp is written **before** power-on so that, even if the hatchery crashes
+mid-spawn (the deferred teardown would not run), the VM still carries a start time and is cleaned
+up by `killAwolServers` (see §8.1).
 
 #### 6.2.1 Clone Specification (`prepareCloneSpec`)
 
@@ -302,32 +321,48 @@ Pre-provisioning creates idle VMs ahead of time so that job assignment is faster
 
 #### 6.3.1 Provisioning (`provisioningV2`)
 
-Provisioning is keyed on the VMware template name (`provision-v2` VMs). The provisioning scheduler
-runs a three-step process:
+Provisioning is keyed on the VMware template name (`provision-v2` VMs). `provisioningV2` is the
+trigger handler: it runs on the provisioning ticker **and** on demand whenever a provision is
+consumed — `requestProvisioning()` is called after every spawn claim and after `killAwolServers` deletes
+anything (it does a non-blocking send on a size-1 signal channel, coalescing bursts into a single
+pending run). Each run is **fire-and-forget**: it computes what is missing, submits
+the clones as independent goroutines, and returns immediately so the trigger loop stays responsive.
 
-**Step 1 — Compute current state and deficit:**
-1. Lock the provisioning cache
-2. List all VMs prefixed with `provision-v2`, count per VMware model path (includes all power states to account for orphans)
-3. Build configured counts and compute deficit (`desired - existing`) for each model
-4. **Deprovisioning**: for each model with more provisioned VMs than configured (or models removed from config), mark excess VMs for deletion
+**Step 1 — Compute the deficit (vSphere is the source of truth):**
+1. List `provision-v2` VMs and count per VMware model path, **including all power states**:
+   - **READY** = powered off, `Provisioning: true` → a finished, claimable provision
+   - **STARTING** = powered on, `Provisioning: true` → a provision still being created
+2. Also count **in-flight clones not yet visible** in the inventory — entries in
+   `cacheProvisioning.pending` (name → model) whose VM does not yet appear in the list.
+3. `deficit(model) = configured Number − READY − STARTING − not-yet-listable pending`.
+4. **Deprovisioning**: for each model with more provisioned VMs than configured (or models removed
+   from config), mark excess VMs for deletion.
+
+Counting READY + STARTING from vSphere is what makes the deficit correct after a restart with an
+empty cache (see §6.3.3); `pending` only additionally covers the brief window where a clone has been
+launched but its VM is not yet listable, so a rapid retrigger never double-creates.
 
 **Step 2 — Interleave models using round-robin:**
 - Uses `roundRobinInterleave()` to produce a fair ordering where models are picked one task at a time in config order
 - Prevents models with larger counts from monopolizing the provisioning queue
 - Example: deficits A=3, B=1, C=2 → queue `[A, B, C, A, C, A]`
 
-**Step 3 — Cap by available IPs and enqueue tasks:**
-- If IP ranges are configured, compute available IP count
-- Truncate the queue to the IP budget (prevents submitting work that would fail at clone time)
-- **Reconciliation**: submit "finish" tasks for orphaned VMs (see §6.3.3)
-- Submit clone tasks from the queue to the provisioning pool
-- Wait for the entire batch (reconciliation + new clones) to complete
+**Step 3 — Assign IPs and launch clones:**
+- **Reconciliation**: resume orphaned in-flight provisions (see §6.3.3).
+- When an IP range is configured, build the in-use IP set (`getUsedIPs` over the VM list + the IPs of
+  in-flight clones parsed from `pending` names). For each model in the queue, pick a distinct free IP
+  with `pickFreeIP` (adding it to the set so the next pick differs); stop when no IP remains — the IP
+  range is the budget (see §7.3).
+- Launch a clone per model via `startProvisionClone(model, name, ip)` — one goroutine, **no waiting
+  for the batch**. `WorkerProvisioningPoolSize > 0` caps concurrent clones (a semaphore); `0`
+  maximizes parallelism.
 
-Each task executed by a pool worker:
-- Generates a worker name: `provision-v2-<random>`
-- Adds name to `cacheProvisioning.pending`
-- Calls `ProvisionWorkerV2()` (clone only), then `finishProvisioning()` (wait IP → shutdown)
-- Removes name from pending cache
+Each clone:
+- Uses the caller-chosen name `provision-v2-ip-<dashed-ip>-<random>` (the IP-encoded lock, see §7.1;
+  DHCP mode uses a plain `provision-v2-<random>`), recorded in `cacheProvisioning.pending` **before**
+  the goroutine starts.
+- Calls `ProvisionWorkerV2()` (clone with that IP), then `finishProvisioning()` (wait IP → shutdown).
+- On any failure marks the VM for deletion; in all cases removes its name from `pending` when done.
 
 #### 6.3.2 Provisioned VM Lifecycle
 
@@ -348,29 +383,28 @@ Template ──clone──► Provisioned VM (powered on)
 
 #### 6.3.3 Provisioning State Reconciliation
 
-The `cacheProvisioning.pending` list is in-memory only. If the hatchery restarts while a VM is
-being provisioned (between clone and shutdown), that VM becomes orphaned: it stays powered on
-indefinitely and is never picked up by `FindProvisionnedWorker` (which requires a
-`VmPoweredOffEvent`).
+`cacheProvisioning.pending` is in-memory only and **must be safe to lose at any time** (restart or
+crash). Correctness never relies on it surviving: the deficit (§6.3.1) is computed from the vSphere
+VM list, which is the source of truth. On restart the cache is empty, but every real provision is
+still classifiable by power state — **READY** (powered off) vs **STARTING** (powered on) — so the
+deficit is reconstructed exactly and no duplicates are created.
 
-To handle this, each provisioning tick calls `reconcileProvisionedVMs()` which reconstructs the
-pending state by scanning all VMs:
+The open question on restart is what to do with the **STARTING** provisions (powered on, mid-creation
+when the old process died). The hatchery **reuses** them: each provisioning run calls
+`reconcileProvisionedVMs()` to resume their provisioning rather than discarding the in-progress clone:
 
-1. List all powered-on VMs with `provision-` prefix, `Provisioning: true` annotation, and
-   matching `HatcheryName`
-2. Skip VMs already in `cacheProvisioning.pending` (actively being provisioned this run)
-3. For each orphaned VM, re-inject it into the provisioning pipeline:
-   - Add the VM name to `cacheProvisioning.pending`
-   - Submit a "finish" task to the provisioning worker pool
-   - The pool worker runs `finishProvisioning`: `WaitForVirtualMachineIP` → `ShutdownVirtualMachine`
-   - If the VM already has an IP, `WaitForVirtualMachineIP` returns immediately and the VM is
-     shut down — completing its provisioning
-   - If the VM has no IP, the 3-minute timeout applies. On timeout, the VM is marked for deletion
-   - On completion (success or failure), the VM is removed from `cacheProvisioning.pending`
+1. List powered-on VMs with the `provision-` prefix, `Provisioning: true`, and matching `HatcheryName`
+2. Skip VMs already in `cacheProvisioning.pending` (already being handled this process)
+3. For each remaining orphan, resume it via `startProvisionFinish()` (a fire-and-forget goroutine):
+   - Record it in `cacheProvisioning.pending`
+   - Run `finishProvisioning`: `WaitForVirtualMachineIP` → `ShutdownVirtualMachine`
+   - If it already has its IP, this returns quickly and the VM is shut down → becomes READY
+   - If it never gets an IP, the IP-wait timeout fires and the VM is marked for deletion (and
+     recreated by a later deficit) — so a genuinely stuck provision is never reused forever
+   - On completion (success or failure) the VM is removed from `cacheProvisioning.pending`
 
-Since reconciliation tasks are part of the same batch as new clone tasks, the scheduler waits
-for all work to complete before the next tick re-evaluates. This prevents double-counting and
-ensures a consistent snapshot between ticks.
+Because the deficit counts STARTING provisions, the in-flight ones being reconciled are not also
+cloned fresh.
 
 This mechanism also covers VMs where `ShutdownVirtualMachine` failed during normal operation
 (not just restarts), since the provisioning scheduler periodically re-runs reconciliation.
@@ -486,11 +520,11 @@ The `MaxWorker` limit and the vSphere-specific `WorkerProvisioning` (pre-provisi
   **do not count** against `MaxWorker`.
 - When a provisioned VM is assigned to a job, it is renamed (e.g. `provision-v2-xxx` →
   `worker-abc`). From that point, it **counts** against `MaxWorker`.
-- The `WorkerProvisioningPoolSize` config controls how many persistent workers handle
-  provisioning tasks (clone + finish). The provisioning scheduler submits all tasks to the pool
-  and waits for the batch to complete. This is separate from `MaxConcurrentProvisioning` which
-  governs the common framework's capacity check.
-- There is **no global coordination** between the provisioning pool and `MaxWorker`. It is the
+- The `WorkerProvisioningPoolSize` config optionally caps how many provision clones run
+  concurrently (`0` = unbounded — clones run fully in parallel, bounded only by the deficit and IP
+  budget). This is separate from `MaxConcurrentProvisioning`, which governs the common framework's
+  capacity check.
+- There is **no global coordination** between provisioning and `MaxWorker`. It is the
   operator's responsibility to ensure that `WorkerProvisioning[].Number` (total pre-provisioned
   VMs) plus expected active workers stays within the infrastructure's capacity.
 
@@ -566,81 +600,106 @@ For V1 jobs that need to run on a V2 model (`GetDetaultModelV2Name`):
 
 ### 7.1 IP Lifecycle
 
-When IP ranges are configured (via `networks` or legacy `iprange`), each VM is assigned a static
-IP at clone time through vSphere guest customization. This IP is:
+When IP ranges are configured (via `networks` or legacy `iprange`), each provision is assigned a
+static IP at clone time through vSphere guest customization. The IP is:
 
-1. **Allocated** during `prepareCloneSpec`: `findAvailableIP` picks the first free IP
-2. **Reserved** in local memory (`reservedIPAddresses`) with a 5-minute TTL to prevent races
-3. **Stored** in the VM annotation (`annot.IPAddress`) as part of the clone specification
-4. **Applied** by vSphere guest customization when the VM first boots
+1. **Chosen** by `provisioningV2` (the single provisioning goroutine) via `pickFreeIP`, which returns
+   the first IP not currently in use (see §7.2). Choosing in one goroutine means parallel clones can
+   never pick the same IP.
+2. **Locked by the VM name**: the provision is named `provision-v2-ip-<o1>-<o2>-<o3>-<o4>-<rand>`. The
+   cloning VM is listed in the vSphere inventory **with its name as soon as the clone starts** —
+   before its annotation is populated — so the IP is immediately visible as "in use" to every other
+   pass, and this lock survives a hatchery restart. There is no in-memory reservation and no timeout.
+3. **Stored** in the VM annotation (`annot.IPAddress`) as part of the clone spec — the compatibility
+   anchor (see §7.5), used by the spawn claim's `WaitForVirtualMachineIP`.
+4. **Applied** by vSphere guest customization when the VM first boots.
 
-The IP persists for the entire VM lifetime. When a provisioned VM is powered off and later
-restarted for a job, it comes back up with the **same IP** (baked into the guest OS via
-customization). The spawn flow verifies this by calling `WaitForVirtualMachineIP` with the
-expected IP from the annotation.
+The IP persists for the VM's lifetime: a provisioned VM powered off and later restarted for a job
+comes back with the **same IP** (baked into the guest via customization).
 
-### 7.2 IP Ownership and Counting
+### 7.2 IP Ownership and Counting (`getUsedIPs`)
 
-An IP is considered "in use" if it appears in **any** non-template VM, regardless of power state.
-The `getUsedIPs` function scans all VMs and collects IPs from two sources:
+An IP is "in use" if it appears in **any** non-template VM, from any of three sources:
 
-- **VM annotations** (`annot.IPAddress`): covers all VMs including powered-off provisioned VMs
-  and freshly cloned VMs where guest tools have not yet reported the IP
-- **Guest network info** (`Guest.Net[].IpAddress`): covers running VMs where the OS has the IP
-  active on an interface
+- **Provision name** (`provision-v2-ip-...`): covers a provision *during its clone*, before the
+  annotation exists, and after a restart (parsed straight from the live VM list).
+- **VM annotation** (`annot.IPAddress`): covers claimed workers (renamed away from the IP-encoded
+  name), old-style provisions created before this scheme, and any VM whose guest tools have not yet
+  reported the IP.
+- **Guest network info** (`Guest.Net[].IpAddress`): covers running VMs where the OS has the IP active.
 
-This means powered-off provisioned VMs **hold their IP** — they are counted as "in use" and
-prevent that IP from being allocated to another VM. This is correct because the same IP will be
-reused when the VM powers on for a job.
+Powered-off provisioned VMs therefore **hold their IP** (counted as in use), correctly preventing
+reallocation.
 
 ### 7.3 IP Budget in Provisioning
 
-The provisioning scheduler uses `countAvailableIPs` to determine how many new VMs can be cloned.
-Since powered-off provisioned VMs already hold IPs (via their annotations), they are naturally
-subtracted from the available pool. The IP budget only reflects IPs that are truly unassigned.
+`provisioningV2` builds the in-use set with `getUsedIPs` over the current VM list, plus the IPs of
+in-flight clones not yet listed (parsed from the `cacheProvisioning.pending` names), then picks a
+distinct free IP per clone with `pickFreeIP`, adding each pick to the set as it goes. When no free IP
+remains it stops launching clones — the IP range is the natural budget, no separate counter needed.
 
-### 7.4 Finding an Available IP (`findAvailableIP`)
+### 7.4 Why the name, not a reservation
 
-1. Acquire IP mutex
-2. List all VMs, collect used IPs via `getUsedIPs` (annotations + guest network)
-3. Clean up stale reservations for IPs that are now confirmed in guest network
-4. Return the first IP from the configured range that is neither used nor reserved
+The destination VM is not in the inventory until partway through the clone, and its annotation only
+appears when the clone completes — but its **name** is visible almost immediately. Encoding the IP in
+the name makes the IP lock readable from vSphere during the whole clone and across restarts, which an
+in-memory reservation (lost on restart, and needing a fragile TTL longer than the clone) could not
+provide. The annotation still carries the IP for backward/forward compatibility (§7.5).
 
-### 7.5 Reserving an IP (`reserveIPAddress`)
+### 7.5 Compatibility
 
-1. Check the IP is not already reserved
-2. Add to `reservedIPAddresses` list
-3. Start a goroutine that removes the reservation after 5 minutes (safety timeout)
-
-The reservation bridges the gap between `findAvailableIP` (which picks an IP) and the VM
-actually being created with that IP in its annotation. Without it, concurrent clones could
-pick the same IP.
+- **Old-style provisions** (named `provision-v2-<rand>`, no IP token): their IP is read from the
+  annotation, so they are counted and handled exactly as before — name parsing is purely additive.
+- **Rollback**: new provisions also store the IP in `annot.IPAddress` and keep the `provision-v2`
+  prefix, so a previous (reservation-based) binary handles them transparently.
 
 ### 7.6 IP-less Mode (DHCP)
 
-When no IP range is configured, no static IP assignment occurs. VMs rely on DHCP or
-template-defined network settings. In this mode, `countAvailableIPs` returns -1 (unlimited)
-and the provisioning scheduler does not cap tasks by IP budget.
+When no IP range is configured, no static IP is assigned and provisions keep the plain
+`provision-v2-<rand>` name. `pickFreeIP` is not consulted and provisioning is not IP-bounded; VMs
+rely on DHCP or template-defined network settings.
 
 ## 8. Cleanup and Garbage Collection
 
 ### 8.1 Kill Awol Servers (`killAwolServers`) — Every 2 minutes
 
+This routine relies on the `WorkerStartTime` annotation stamp (see §5) and the VM's **live power
+state**, not on vSphere events. Events were previously used to find a VM's start time, but they age
+out of vCenter's event retention; a VM whose start event had expired (or never existed, e.g. a spawn
+that crashed after rename) was then kept forever, accumulating powered-off VMs that each hold a
+reserved IP until the pool exhausts its IP range. Using the persisted start time avoids that.
+
 For each VM with a CDS annotation belonging to this hatchery:
 
 1. **Marked for deletion**: Delete immediately
-2. **Provisioned VMs** (`provision-` prefix): Skip (managed by provisioning loop reconciliation, see §6.3.3)
+2. **Provisioned VMs** (`provision-` prefix): Skip (still pooled, holding their reserved IP on
+   purpose; managed by provisioning loop reconciliation, see §6.3.3)
 3. **Model templates** (`Model: true`): Skip (never delete)
-4. **Event analysis**: Load VM events (`VmStartingEvent`, `VmPoweredOffEvent`, `VmRenamedEvent`)
-   - Filter out events related to provisioning (`provision-` in message)
-   - Find the most recent start, power-off, and rename events
-5. **Renamed but never started**: If `VmRenamedEvent` exists but no `VmStartingEvent`, and the
-   rename is older than `WorkerRegistrationTTL` → delete
-6. **No start event found**: Skip (VM not yet fully created)
-7. **Worker exists on API side**: Delete if `vmStartedTime + WorkerTTL` has expired
-8. **Worker does not exist on API side**:
-   - If `VmPoweredOffEvent` found (after start): Worker finished → delete
-   - If no power-off event: Worker still starting → delete if `vmStartedTime + WorkerRegistrationTTL` has expired
+4. **Determine the start time**: `WorkerStartTime` from the annotation, or — for VMs created before
+   this field existed (upgrade/transition) — the VM's vSphere `CreateDate` as a fallback. If neither
+   is available (should not happen), the VM is kept and a warning is logged.
+5. **Decide expiry** from the live power state:
+   - **Powered off**: a claimed worker is never restarted, so it has finished or failed. Delete once
+     `startTime + WorkerRegistrationTTL` has passed. The short grace frees the IP quickly while still
+     covering the brief rename→power-on window of an in-flight spawn (whose `WorkerStartTime` is "now").
+   - **Powered on and registered on the API**: running worker → delete if `startTime + WorkerTTL` has expired.
+   - **Powered on but not on the API**: still booting/registering → delete if `startTime + WorkerRegistrationTTL` has expired.
+
+#### Backward compatibility (VMs created before this change)
+
+No migration step is required — VMs that predate the `WorkerStartTime` stamp are handled
+transparently:
+
+- **Existing provisions** (`provision-` prefix, no `WorkerStartTime`): unaffected. They are still
+  skipped by `killAwolServers` (rule 2), and the first time the new code claims one it stamps the
+  annotation in place (`ReconfigVM_Task`), so it transitions to the new scheme automatically.
+- **Existing workers** (already claimed/renamed before the change, so no `WorkerStartTime`):
+  `killAwolServers` falls back to the VM's vSphere `CreateDate` (rule 4). This means they are still
+  evaluated and eventually cleaned up instead of being kept forever — including the orphaned
+  powered-off VMs this change was introduced to reclaim. Because `CreateDate` is the provision clone
+  time (older than the real start), such a legacy VM may be reaped slightly earlier than its
+  `WorkerStartTime`-based expiry would dictate; this only affects VMs spawned before the upgrade and
+  is a one-time transitional effect.
 
 ### 8.2 Kill Disabled Workers (`killDisabledWorkers`) — Every 2 minutes
 
@@ -658,7 +717,9 @@ For each VM with a CDS annotation belonging to this hatchery:
 ## 9. vSphere Client Interface
 
 The hatchery interacts with vSphere through the `VSphereClient` interface, which wraps the
-govmomi SDK. All vSphere API calls use a 15-second request timeout.
+govmomi SDK. Most API calls use a 15-second request timeout; the long-running task waits — clone,
+power-off, destroy — use a `vmTaskTimeout` of 10 minutes so a stuck vCenter task fails (and is
+recovered) instead of hanging the caller forever.
 
 ```go
 type VSphereClient interface {
@@ -672,6 +733,7 @@ type VSphereClient interface {
     GetVirtualMachinePowerState(ctx, vm) (VirtualMachinePowerState, error)
     NewVirtualMachine(ctx, cloneSpec, ref, vmName) (*object.VirtualMachine, error)
     RenameVirtualMachine(ctx, vm, newName) error
+    SetVirtualMachineAnnotation(ctx, vm, annotation) error
     WaitForVirtualMachineShutdown(ctx, vm) error
     WaitForVirtualMachineIP(ctx, vm, IPAddress, vmName) error
     LoadFolder(ctx) (*object.Folder, error)
@@ -713,11 +775,10 @@ The hatchery maintains several in-memory caches protected by mutexes:
 | Cache | Type | Purpose |
 |-------|------|---------|
 | `cachePendingJobID` | `[]string` | Job IDs currently being spawned, prevents duplicates |
-| `cacheProvisioning.pending` | `[]string` | VM names currently being provisioned |
+| `cacheProvisioning.pending` | `map[string]string` | In-flight provisions (VM name → VMware model); accelerator only, safe to lose on restart |
 | `cacheProvisioning.using` | `[]string` | Provisioned VM names being assigned to a job |
 | `cacheToDelete` | `[]string` | VM names marked for deletion by spawn logic |
 | `availableIPAddresses` | `[]string` | All IPs parsed from the configured range |
-| `reservedIPAddresses` | `[]string` | IPs temporarily reserved (5-minute TTL) |
 
 ## 11. Limitations
 
@@ -835,7 +896,12 @@ with matching `HatcheryName`). Includes workers and pre-provisioned VMs. Exclude
 | `cds/hatchery/vsphere/allocated_vcpus` | Gauge | vCPUs | Total vCPUs allocated by this hatchery's VMs |
 | `cds/hatchery/vsphere/allocated_memory_mb` | Gauge | MB | Total memory allocated by this hatchery's VMs |
 | `cds/hatchery/vsphere/vm_count` | Gauge | count | Total number of VMs managed by this hatchery (workers + provisioned) |
-| `cds/hatchery/vsphere/provisioned_vm_count` | Gauge | count | Number of pre-provisioned (idle) VMs |
+| `cds/hatchery/vsphere/worker_vm_count` | Gauge | count | VMs running as workers (claimed, no longer in the provision pool) |
+| `cds/hatchery/vsphere/provisioned_vm_count` | Gauge | count | Pre-provisioned VMs (sum of ready + starting + dying) |
+| `cds/hatchery/vsphere/provision_ready_count` | Gauge | count | Provisioned VMs powered off and ready to be claimed |
+| `cds/hatchery/vsphere/provision_starting_count` | Gauge | count | Provisioned VMs powered on, still being created/finished (not yet claimable) |
+| `cds/hatchery/vsphere/provision_dying_count` | Gauge | count | Provisioned VMs marked for deletion, not yet reaped |
+| `cds/hatchery/vsphere/provision_inflight_count` | Gauge | count | In-flight provision clones not yet visible in the inventory |
 | `cds/hatchery/vsphere/template_vcpus` | Gauge | vCPUs | Total vCPUs defined by template VMs (annotation `Model=true`) |
 | `cds/hatchery/vsphere/template_memory_mb` | Gauge | MB | Total memory defined by template VMs |
 | `cds/hatchery/vsphere/template_count` | Gauge | count | Number of template VMs managed by this hatchery |
@@ -886,9 +952,10 @@ When an IP range is configured (`iprange`), these metrics track IP address pool 
 
 **Tags**: `service_name`, `service_type`
 
-An IP is considered "in use" if it appears in any VM's CDS annotation (`IPAddress` field) or in
-the VM's guest network info (`Guest.Net[].IpAddress`). These metrics are only emitted when
-`iprange` is configured (i.e. `availableIPAddresses` is non-empty).
+An IP is considered "in use" if it appears in a provision VM's IP-encoded name
+(`provision-v2-ip-...`), a VM's CDS annotation (`IPAddress` field), or the VM's guest network info
+(`Guest.Net[].IpAddress`) — see §7.2. These metrics are only emitted when `iprange` is configured
+(i.e. `availableIPAddresses` is non-empty).
 
 ### 14.7 Source Files
 

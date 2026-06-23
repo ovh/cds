@@ -81,7 +81,8 @@ func TestCollectVSphereMetrics(t *testing.T) {
 					},
 				},
 			},
-			// Provisioned VM owned by this hatchery: 2 vCPUs, 4096 MB, 20GB disk
+			// Provisioned VM owned by this hatchery: 2 vCPUs, 4096 MB, 20GB disk.
+			// Powered off → ready to be claimed.
 			{
 				ManagedEntity: mo.ManagedEntity{Name: "provision-v2-xxx"},
 				Summary: types.VirtualMachineSummary{
@@ -89,6 +90,9 @@ func TestCollectVSphereMetrics(t *testing.T) {
 						Template:     false,
 						NumCpu:       2,
 						MemorySizeMB: 4096,
+					},
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOff,
 					},
 				},
 				Config: &types.VirtualMachineConfigInfo{
@@ -168,7 +172,14 @@ func TestCollectVSphereMetrics(t *testing.T) {
 	assertLastMetricValue(t, "cds/hatchery/vsphere/allocated_memory_mb", 12288)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/allocated_disk_gb", 70)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/vm_count", 2)
+	assertLastMetricValue(t, "cds/hatchery/vsphere/worker_vm_count", 1)
 	assertLastMetricValue(t, "cds/hatchery/vsphere/provisioned_vm_count", 1)
+
+	// Provision breakdown: the single provision is powered off → ready.
+	assertLastMetricValue(t, "cds/hatchery/vsphere/provision_ready_count", 1)
+	assertLastMetricValue(t, "cds/hatchery/vsphere/provision_starting_count", 0)
+	assertLastMetricValue(t, "cds/hatchery/vsphere/provision_dying_count", 0)
+	assertLastMetricValue(t, "cds/hatchery/vsphere/provision_inflight_count", 0)
 
 	// Verify Level 2: Template metrics
 	assertLastMetricValue(t, "cds/hatchery/vsphere/template_vcpus", 2)

@@ -35,14 +35,22 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 		return err
 	}
 
-	killAwolServersTick := time.NewTicker(2 * time.Minute)
-	killDisabledWorkersTick := time.NewTicker(2 * time.Minute)
+	killInterval := time.Duration(h.Config.KillAwolServersInterval) * time.Second
+	killAwolServersTick := time.NewTicker(killInterval)
+	killDisabledWorkersTick := time.NewTicker(killInterval)
+
+	// Buffered (size 1) so cleanup/spawn can request an immediate provisioning
+	// refill without blocking; bursts coalesce into a single pending run.
+	h.provisionSignal = make(chan struct{}, 1)
 
 	if len(h.Config.WorkerProvisioning) > 0 {
 		log.Debug(ctx, "provisioning is enabled")
 
-		// Start the provisioning worker pool
-		h.startProvisioningPool(ctx)
+		// Optional concurrency cap on provisioning operations. 0 = unbounded
+		// (clones run fully in parallel, bounded only by the deficit / IP budget).
+		if h.Config.WorkerProvisioningPoolSize > 0 {
+			h.provisionSem = make(chan struct{}, h.Config.WorkerProvisioningPoolSize)
+		}
 
 		provisioningInterval := 2 * time.Minute
 		if h.Config.WorkerProvisioningInterval > 0 {
@@ -58,6 +66,9 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 					case <-ctx.Done():
 						return
 					case <-provisioningTick.C:
+						h.provisioningV2(ctx)
+					case <-h.provisionSignal:
+						// on-demand refill requested by cleanup or a spawn claim
 						h.provisioningV2(ctx)
 					}
 				}

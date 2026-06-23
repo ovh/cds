@@ -2,7 +2,9 @@ package vsphere
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -253,158 +255,182 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 	}
 	h.Config.WorkerTTL = 5
 	h.Config.WorkerRegistrationTTL = 5
+	h.Config.FinishedWorkerGracePeriod = 300 // 5 min
 
+	now := time.Now()
+	old := now.Add(-10 * time.Minute)
+
+	annot := func(a annotation) string {
+		b, err := json.Marshal(a)
+		require.NoError(t, err)
+		return string(b)
+	}
+
+	// worker0, worker1 and worker6 are registered on the API side.
 	cdsclient.EXPECT().WorkerList(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]sdk.Worker, error) {
-			var un int64 = 1
-			return []sdk.Worker{
-				{
-					Name:    "worker1",
-					ModelID: &un,
-					Status:  sdk.StatusDisabled,
-				},
-			}, nil
+			return []sdk.Worker{{Name: "worker0"}, {Name: "worker1"}, {Name: "worker6"}}, nil
 		},
 	)
 
-	c.EXPECT().GetVirtualMachinePowerState(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
-			switch vm.Name() {
-			case "worker0":
-				return types.VirtualMachinePowerStatePoweredOn, nil
-			default:
-				return types.VirtualMachinePowerStatePoweredOff, nil
-			}
-		},
-	).AnyTimes()
-
-	c.EXPECT().LoadVirtualMachineEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
-			t.Logf("LoadVirtualMachineEvents for %s", vm.Name())
-			switch vm.Name() {
-			case "worker0":
-				return []types.BaseEvent{
-					&types.VmStartingEvent{
-						VmEvent: types.VmEvent{
-							Event: types.Event{
-								CreatedTime: time.Now(),
-							},
-						},
-					},
-				}, nil
-			default:
-				return []types.BaseEvent{
-					&types.VmStartingEvent{
-						VmEvent: types.VmEvent{
-							Event: types.Event{
-								CreatedTime: time.Now().Add(-10 * time.Minute),
-							},
-						},
-					},
-				}, nil
-			}
-		},
-	).Times(5)
-
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			poweredOn := types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOn}
+			poweredOff := types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff}
 			return []mo.VirtualMachine{
-				{
-					ManagedEntity: mo.ManagedEntity{
-						Name: "worker0",
-					},
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-						Runtime: types.VirtualMachineRuntimeInfo{
-							PowerState: types.VirtualMachinePowerStatePoweredOn,
-						},
-					},
-					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "someting"}`,
-					},
+				{ // running worker, recently started, on API → KEEP
+					ManagedEntity: mo.ManagedEntity{Name: "worker0"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOn},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
 				},
-				{
-					ManagedEntity: mo.ManagedEntity{
-						Name: "worker1",
-					},
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-					},
-					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"model": false, "to_delete": true}`,
-					},
+				{ // running worker, started long ago, on API → DELETE (WorkerTTL)
+					ManagedEntity: mo.ManagedEntity{Name: "worker1"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOn},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: old})},
 				},
-				{ // Provisionned worker not used should be kept
-					ManagedEntity: mo.ManagedEntity{
-						Name: "provision-worker2",
-					},
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-					},
-					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"worker_name":"provision-worker2", "provisioning": true}`,
-					},
+				{ // pooled provision → SKIP (provision- prefix)
+					ManagedEntity: mo.ManagedEntity{Name: "provision-worker2"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerName: "provision-worker2", Provisioning: true})},
 				},
-				{ // Provisionned worker already used should be deleted
-					ManagedEntity: mo.ManagedEntity{
-						Name: "worker3",
-					},
-					Summary: types.VirtualMachineSummary{
-						Config: types.VirtualMachineConfigSummary{
-							Template: false,
-						},
-					},
-					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"worker_name":"provision-worker3", "provisioning": true}`,
-					},
+				{ // finished/failed worker, powered off, old start → DELETE
+					ManagedEntity: mo.ManagedEntity{Name: "worker3"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: old})},
+				},
+				{ // legacy worker (no WorkerStartTime), powered off, old CreateDate → DELETE
+					ManagedEntity: mo.ManagedEntity{Name: "worker4"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{}), CreateDate: &old},
+				},
+				{ // just-claimed worker, powered off but recent start, not on API → KEEP (in-flight)
+					ManagedEntity: mo.ManagedEntity{Name: "worker5"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
+				},
+				{ // finished worker, powered off but still on API, recent start → DELETE NOW
+					ManagedEntity: mo.ManagedEntity{Name: "worker6"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
 				},
 			}, nil
 		},
 	).Times(1)
 
-	var vm0 = object.VirtualMachine{
-		Common: object.Common{
-			InventoryPath: "worker0",
-		},
-	}
+	// deleteServer reloads the VM by name; only the deleted ones are loaded.
 	var vm1 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker1"}}
 	var vm3 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker3"}}
+	var vm4 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker4"}}
+	var vm6 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker6"}}
 
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, vmname string) (*object.VirtualMachine, error) {
-			t.Logf("calling LoadVirtualMachine: %s", vmname)
 			switch vmname {
-			case "worker0":
-				return &vm0, nil
 			case "worker1":
 				return &vm1, nil
 			case "worker3":
 				return &vm3, nil
+			case "worker4":
+				return &vm4, nil
+			case "worker6":
+				return &vm6, nil
 			}
 			return nil, fmt.Errorf("not expected: %s", vmname)
 		},
-	).Times(5)
+	).Times(4)
 
-	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm3).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm3).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
+	// worker1 is powered on → shutdown then destroy; worker3/worker4/worker6 are
+	// powered off → destroy only.
+	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).Return(nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).Return(nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm3).Return(nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm4).Return(nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm6).Return(nil)
 
 	h.killAwolServers(context.Background())
+}
+
+// When killAwolServers reclaims the VM of a worker that is still registered on
+// the V2 API and running a job, it must release that job back to the queue so
+// it can be retried at once instead of waiting out the API heartbeat timeout.
+func TestHatcheryVSphere_killAwolServers_releasesDeadWorkerJob(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	sdkhatchery.InitMetrics(context.Background())
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	clientV1 := mock_cdsclient.NewMockInterface(ctrl)
+	clientV2 := mock_cdsclient.NewMockHatcheryServiceClient(ctrl)
+
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Clientv2: clientV2,
+			Common: service.Common{
+				Client: clientV1,
+				Region: "reg1",
+			},
+		},
+	}
+	h.Config.FinishedWorkerGracePeriod = 300
+
+	now := time.Now()
+
+	annot := func(a annotation) string {
+		b, err := json.Marshal(a)
+		require.NoError(t, err)
+		return string(b)
+	}
+
+	// No V1 workers; one V2 worker still registered and bound to job-1.
+	clientV1.EXPECT().WorkerList(gomock.Any()).Return([]sdk.Worker{}, nil)
+	clientV2.EXPECT().V2WorkerList(gomock.Any()).Return([]sdk.V2Worker{
+		{Name: "workerA", JobRunID: "job-1"},
+	}, nil)
+
+	// workerA: powered off but still on the API → DELETE NOW and release its job.
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			poweredOff := types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff}
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{Name: "workerA"},
+					Summary:       types.VirtualMachineSummary{Runtime: poweredOff},
+					Config:        &types.VirtualMachineConfigInfo{Annotation: annot(annotation{WorkerStartTime: now})},
+				},
+			}, nil
+		},
+	).Times(1)
+
+	var vmA = object.VirtualMachine{Common: object.Common{InventoryPath: "workerA"}}
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "workerA").Return(&vmA, nil)
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vmA).Return(nil)
+
+	// The job is released for the configured region.
+	clientV2.EXPECT().V2HatcheryReleaseJob(gomock.Any(), "reg1", "job-1").Return(nil)
+
+	h.killAwolServers(context.Background())
+}
+
+func TestHatcheryVSphere_requestProvisioning(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	ctx := context.Background()
+
+	// nil channel (provisioning disabled): must be a safe no-op.
+	h := &HatcheryVSphere{}
+	h.requestProvisioning(ctx)
+
+	// buffered size-1: repeated requests coalesce into a single pending refill.
+	h.provisionSignal = make(chan struct{}, 1)
+	h.requestProvisioning(ctx)
+	h.requestProvisioning(ctx)
+	h.requestProvisioning(ctx)
+	assert.Len(t, h.provisionSignal, 1, "requests must coalesce to a single pending refill")
+
+	<-h.provisionSignal
+	assert.Len(t, h.provisionSignal, 0)
 }
 
 func TestHatcheryVSphere_Status(t *testing.T) {
@@ -512,8 +538,71 @@ func TestHatcheryVSphere_provisioning_v2_do_nothing(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	setupTestPool(ctx, &h)
 	h.provisioningV2(ctx)
+}
+
+// provisioningV2 must count both ready (existing) and in-flight (starting,
+// tracked in the pending cache) provisions when computing the deficit, so a
+// retrigger while clones are still in flight does not double-create.
+func TestHatcheryVSphere_provisioningV2_noDoubleCreate(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{GoRoutines: sdk.NewGoRoutines(context.Background())},
+		},
+		Config: HatcheryConfiguration{
+			WorkerProvisioning: []WorkerProvisioningConfig{{ModelVMWare: "the-model", Number: 3}},
+		},
+	}
+
+	// One ready provision (powered off) already exists in vSphere.
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{{
+				ManagedEntity: mo.ManagedEntity{Name: "provision-v2-ready"},
+				Summary:       types.VirtualMachineSummary{Config: types.VirtualMachineConfigSummary{Template: false}},
+				Config:        &types.VirtualMachineConfigInfo{Annotation: `{"vmware_model_path": "the-model", "provisioning": true}`},
+				Runtime:       types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff},
+			}}, nil
+		},
+	).AnyTimes()
+
+	// One in-flight clone already tracked (not yet visible in the inventory).
+	h.cacheProvisioning.pending = map[string]string{"provision-v2-starting": "the-model"}
+
+	// Each launched clone first loads the model template; block it so the clone
+	// stays in flight, and count how many clones were launched.
+	var cloneCount int64
+	release := make(chan struct{})
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "the-model").DoAndReturn(
+		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
+			atomic.AddInt64(&cloneCount, 1)
+			<-release
+			return nil, fmt.Errorf("stop the clone here")
+		},
+	).AnyTimes()
+
+	// deficit = Number(3) − existing(1) − starting(1) = 1
+	h.provisioningV2(context.Background())
+	assert.Eventually(t, func() bool { return atomic.LoadInt64(&cloneCount) == 1 }, 2*time.Second, 10*time.Millisecond)
+
+	// Retrigger while the clone is still in flight: it is now tracked as pending,
+	// so deficit = 3 − 1 − 2 = 0 → no new clone.
+	h.provisioningV2(context.Background())
+	time.Sleep(200 * time.Millisecond) // give any erroneous extra clone time to start
+	assert.Equal(t, int64(1), atomic.LoadInt64(&cloneCount), "a retrigger must not re-create in-flight provisions")
+
+	// Let the blocked clone fail and unwind, and wait for it to drop from pending
+	// so its goroutine is done before the test (and gomock controller) tears down.
+	close(release)
+	assert.Eventually(t, func() bool {
+		h.cacheProvisioning.mu.Lock()
+		defer h.cacheProvisioning.mu.Unlock()
+		return len(h.cacheProvisioning.pending) == 1 // only the manually-seeded "starting" entry remains
+	}, 2*time.Second, 10*time.Millisecond)
 }
 
 func TestHatcheryVSphere_GetDetaultModelV2Name(t *testing.T) {
@@ -602,7 +691,6 @@ func TestHatcheryVSphere_provisioning_v2_deprovision_excess(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	setupTestPool(ctx, &h)
 	h.provisioningV2(ctx)
 
 	// 2 excess VMs should be marked for deletion (3 exist - 1 configured = 2 excess)
@@ -657,7 +745,6 @@ func TestHatcheryVSphere_provisioning_v2_deprovision_removed_model(t *testing.T)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	setupTestPool(ctx, &h)
 	h.provisioningV2(ctx)
 
 	// Both VMs should be marked for deletion since model is removed from config

@@ -3,9 +3,7 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strings"
-	"sync"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -81,6 +79,12 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	}
 	if h.Config.WorkerRegistrationTTL == 0 {
 		h.Config.WorkerRegistrationTTL = 10
+	}
+	if h.Config.KillAwolServersInterval == 0 {
+		h.Config.KillAwolServersInterval = 60
+	}
+	if h.Config.FinishedWorkerGracePeriod == 0 {
+		h.Config.FinishedWorkerGracePeriod = 180
 	}
 
 	return nil
@@ -557,7 +561,27 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		return
 	}
 
+	// Map each still-registered V2 worker to the job it is running. When we
+	// reclaim such a worker's VM, we release that job back to the queue right
+	// away instead of waiting for the API to notice the lost heartbeat (~5 min)
+	// before the job can be retried.
+	jobByWorker := make(map[string]string)
+	for _, w := range allWorkers {
+		if v2w, ok := w.(*sdk.V2Worker); ok && v2w.JobRunID != "" {
+			jobByWorker[v2w.Name] = v2w.JobRunID
+		}
+	}
+
 	srvs := h.getVirtualMachines(ctx)
+
+	// Track whether anything was deleted so we can trigger an immediate
+	// provisioning refill once resources (and their reserved IPs) are freed.
+	var deleted bool
+	defer func() {
+		if deleted {
+			h.requestProvisioning(ctx)
+		}
+	}()
 
 	for _, s := range srvs {
 		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, s.Name)
@@ -576,114 +600,39 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server (markedToDelete) %s: %v", s.Name, err)
+			} else {
+				deleted = true
+				h.releaseDeadWorkerJob(ctx, s.Name, jobByWorker)
 			}
 			continue
 		}
 
-		// skipping vm starting with provision-
+		// Pooled provisions (still in the pool, holding their reserved IP on
+		// purpose) and model templates must not be reaped here.
 		if strings.HasPrefix(s.Name, "provision-") {
 			continue
 		}
-
 		if annot.Model {
 			continue
 		}
 
-		// reload virtual machine to have fresh data from vsphere
-		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
-		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to load vm: %v", err)
-			return
+		// Determine when this worker actually started. Prefer the worker start
+		// time stamped on the annotation at claim time (persistent, survives a
+		// restart, does not age out like vSphere events). For VMs created before
+		// this field existed (transitional / upgrade), fall back to the VM's
+		// vSphere creation date so they are still handled and eventually cleaned.
+		startTime := annot.WorkerStartTime
+		if startTime.IsZero() && s.Config != nil && s.Config.CreateDate != nil {
+			startTime = *s.Config.CreateDate
 		}
-
-		// gettings events for this vm, we have to check if we have a types.VmStartingEvent
-		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent", "VmPoweredOffEvent", "VmRenamedEvent")
-		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
-			return
-		}
-
-		// if we don't have a types.VmStartingEvent, we skip this vm
-		if len(vmEvents) == 0 {
-			log.Debug(ctx, "killAwolServers> no VmStartingEvent found - we keep this vm")
+		if startTime.IsZero() {
+			// No reliable timestamp at all (should not happen). Keep it rather than
+			// risk deleting a VM we cannot reason about.
+			log.Warn(ctx, "killAwolServers> no start time for %q, keeping it", s.Name)
 			continue
 		}
-		// we can have many VmStartingEvent: one for the provision, another with the worker from on the provision
 
-		var vmStartedTime, vmPoweredOffTime, vmRenamedEvent time.Time
-		var foundStarted, foundPoweredOff, foundRenamedEvent bool
-		for _, event := range vmEvents {
-			// events on the vm can contain event from the provision.
-			// Skipping this event if it's a provision's event
-			if strings.Contains(event.GetEvent().FullFormattedMessage, "provision-") {
-				log.Debug(ctx, "killAwolServers> skipping event %+v with provision text", event)
-				continue
-			}
-
-			// take most recent VmStartingEvent and vmPoweredOffTime
-			switch reflect.TypeOf(event).Elem().Name() {
-			case "VmStartingEvent":
-				// first event found, take it
-				if !foundStarted {
-					vmStartedTime = event.GetEvent().CreatedTime
-					foundStarted = true
-					continue
-				}
-				// if current event is youngest than previous, take it
-				if event.GetEvent().CreatedTime.After(vmStartedTime) {
-					vmStartedTime = event.GetEvent().CreatedTime
-				}
-			case "VmRenamedEvent":
-				if !foundRenamedEvent {
-					vmRenamedEvent = event.GetEvent().CreatedTime
-					foundRenamedEvent = true
-					continue
-				}
-				// if current event is youngest than previous, take it
-				if event.GetEvent().CreatedTime.After(vmRenamedEvent) {
-					vmRenamedEvent = event.GetEvent().CreatedTime
-				}
-			case "VmPoweredOffEvent":
-				if !foundPoweredOff {
-					vmPoweredOffTime = event.GetEvent().CreatedTime
-					foundPoweredOff = true
-					continue
-				}
-				if event.GetEvent().CreatedTime.After(vmPoweredOffTime) {
-					vmPoweredOffTime = event.GetEvent().CreatedTime
-				}
-			}
-		}
-
-		// In some condition (restart hatchery for exemple),
-		// we can see some vm renamed, but not started. Deleting them if the renamed is too old
-		if !foundStarted && foundRenamedEvent {
-			expire := vmRenamedEvent.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
-			if time.Now().After(expire) {
-				log.Debug(ctx, "deleting machine %q started not found and vmRenamedEvent found but it's too old: %v expire:%v", s.Name, vmRenamedEvent, expire)
-				if err := h.deleteServer(ctx, s); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "killAwolServers> cannot delete server (renamed but not started) %s", s.Name)
-				}
-				// next vm
-				continue
-			}
-		}
-
-		if !foundStarted {
-			log.Debug(ctx, "killAwolServers> vmStartedTime NOT found for %v - events analyzed:%d", s.Name, len(vmEvents))
-			continue
-		}
-		if foundPoweredOff {
-			// this should not happen, but we check if the powerOff Time is AFTER the started time
-			if vmPoweredOffTime.Before(vmStartedTime) {
-				foundPoweredOff = false
-			}
-		}
-
-		log.Debug(ctx, "killAwolServers> vmStartedTime %v found: %s events analyzed:%d", s.Name, vmStartedTime, len(vmEvents))
+		poweredOff := s.Summary.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff
 
 		var existsOnAPISide bool
 		for _, w := range allWorkers {
@@ -693,56 +642,59 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			}
 		}
 
-		var toDelete bool
-
-		log.Debug(ctx, "checking if %v is outdated. vmStartedTime: %v. existsOnAPISide:%t foundPoweredOff:%t vmPoweredOffTime:%v", s.Name, vmStartedTime, existsOnAPISide, foundPoweredOff, vmPoweredOffTime)
-
-		if existsOnAPISide {
-			expire := vmStartedTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
-			if time.Now().After(expire) {
-				toDelete = true
-			}
-		} else {
-			// not currently visible on API. Can be:
-			// - worker starting, not yet visible on api
-			// - worker ended (job finished), removed on api
-
-			// if we found a foundPoweredOff event, it's a worker used, and terminated. We can delete it
-			if foundPoweredOff {
-				// poweredOff found, we can delete this vm
-				toDelete = true
-			} else { // worker starting
-				// not poweredOff found, check the WorkerRegistrationTTL
-				expire := vmStartedTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
-				if time.Now().After(expire) {
-					toDelete = true
-				}
-			}
+		// Decide when this VM expires:
+		// - powered off and still registered on the API: the worker booted, ran, and
+		//   is now down — the job is over. Reclaim it immediately.
+		// - powered off and no longer on the API: a finished+deregistered worker, or
+		//   an in-flight spawn between rename and power-on. The short
+		//   FinishedWorkerGracePeriod reclaims the former quickly while still covering
+		//   the latter (its WorkerStartTime is "now").
+		// - powered on and registered: running worker, capped at WorkerTTL.
+		// - powered on but not registered: still booting/registering, give it
+		//   WorkerRegistrationTTL to show up.
+		var expire time.Time
+		switch {
+		case poweredOff && existsOnAPISide:
+			expire = startTime
+		case poweredOff:
+			expire = startTime.Add(time.Duration(h.Config.FinishedWorkerGracePeriod) * time.Second)
+		case existsOnAPISide:
+			expire = startTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+		default:
+			expire = startTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 		}
 
-		if !toDelete {
-			log.Debug(ctx, "We keep %v as not expired", s.Name)
+		if !time.Now().After(expire) {
+			log.Debug(ctx, "killAwolServers> keeping %q (poweredOff=%t existsOnAPISide=%t startTime=%v expire=%v)", s.Name, poweredOff, existsOnAPISide, startTime, expire)
 			continue
 		}
 
-		// debug with event if necessary
-		if log.Factory().GetLevel() == log.LevelDebug {
-			events, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "")
-			if err != nil {
-				log.Error(ctx, "event machine %q - can't load LoadVirtualMachineEvents", s.Name, err)
-			}
-			for _, e := range events {
-				log.Debug(ctx, "event machine %q - event: %T time:%v msg:%+v", s.Name, e, e.GetEvent().CreatedTime, e.GetEvent().FullFormattedMessage)
-			}
-		}
-
-		log.Info(ctx, "deleting machine %q - expired. vmStartedTime: %v. existsOnAPISide:%t foundPoweredOff:%t", s.Name, vmStartedTime, existsOnAPISide, foundPoweredOff)
-
+		log.Info(ctx, "deleting machine %q - expired (poweredOff=%t existsOnAPISide=%t startTime=%v)", s.Name, poweredOff, existsOnAPISide, startTime)
 		if err := h.deleteServer(ctx, s); err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "killAwolServers> cannot delete server (expire) %s", s.Name)
+			log.Error(ctx, "killAwolServers> cannot delete server (expire) %s: %v", s.Name, err)
+		} else {
+			deleted = true
+			h.releaseDeadWorkerJob(ctx, s.Name, jobByWorker)
 		}
 	}
+}
+
+// releaseDeadWorkerJob asks the API to requeue the V2 job that the reclaimed
+// worker was running, so it can be retried at once. Without it, the job stays
+// Building until the worker's heartbeat times out on the API side (~5 min).
+// It is a no-op for VMs that hold no job (provisions, models, finished workers).
+func (h *HatcheryVSphere) releaseDeadWorkerJob(ctx context.Context, workerName string, jobByWorker map[string]string) {
+	jobRunID, ok := jobByWorker[workerName]
+	if !ok {
+		return
+	}
+	if err := h.CDSClientV2().V2HatcheryReleaseJob(ctx, h.GetRegion(), jobRunID); err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "killAwolServers> unable to release job %s of reclaimed worker %q: %v", jobRunID, workerName, err)
+		return
+	}
+	log.Info(ctx, "killAwolServers> released job %s for re-queue after reclaiming worker %q", jobRunID, workerName)
 }
 
 // roundRobinInterleave takes an ordered list of model keys and a deficit count
@@ -778,11 +730,20 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
 	// --- Step 1: compute current state and deficit per model ---
-	// Count ALL VMs with Provisioning annotation regardless of power state,
-	// so orphaned VMs (powered on, stuck) are included. This ensures that
-	// reconciled VMs don't cause additional clones in the deficit calculation.
+	// vSphere is the source of truth. Count every provision VM with the
+	// Provisioning annotation regardless of power state — both READY (powered off,
+	// claimable) and STARTING (powered on, still being created). This makes the
+	// deficit correct even after a restart with an empty pending cache.
 	mapAlreadyProvisionned := make(map[string]int)
 	mapProvisionedMachines := make(map[string][]mo.VirtualMachine)
+	listableProvisions := make(map[string]struct{})
+	// Breakdown of the total by state, for observability only — the deficit is
+	// always driven by the total. Only READY (powered off, not dying) provisions
+	// can actually be claimed; STARTING, DYING and in-flight ones are counted
+	// because they each still hold their IP, but cannot serve a job yet.
+	mapReady := make(map[string]int)    // powered off, claimable now
+	mapStarting := make(map[string]int) // powered on, still being created/finished
+	mapDying := make(map[string]int)    // marked for deletion, not yet reaped
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
 		if !strings.HasPrefix(machine.Name, "provision-v2") {
@@ -796,9 +757,29 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 			continue
 		}
 		if annot.Provisioning {
+			listableProvisions[machine.Name] = struct{}{}
 			mapAlreadyProvisionned[annot.VMwareModelPath]++
 			mapProvisionedMachines[annot.VMwareModelPath] = append(
 				mapProvisionedMachines[annot.VMwareModelPath], machine)
+			switch {
+			case h.isMarkedToDelete(machine):
+				mapDying[annot.VMwareModelPath]++
+			case machine.Summary.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff:
+				mapReady[annot.VMwareModelPath]++
+			default:
+				mapStarting[annot.VMwareModelPath]++
+			}
+		}
+	}
+	// Also count in-flight clones whose VM is not yet visible in the inventory, so
+	// a retrigger does not double-create them. This is the only cache-derived term
+	// and is naturally empty after a restart (a dead process leaves no
+	// not-yet-listable clone — its VM either exists in vSphere or never did).
+	mapInflight := make(map[string]int)
+	for name, model := range h.cacheProvisioning.pending {
+		if _, listable := listableProvisions[name]; !listable {
+			mapAlreadyProvisionned[model]++
+			mapInflight[model]++
 		}
 	}
 	h.cacheProvisioning.mu.Unlock()
@@ -817,8 +798,9 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 			continue
 		}
 		existing := mapAlreadyProvisionned[modelVMware]
-		log.Info(ctx, "model vmware %q provisioning: %d/%d",
-			modelVMware, existing, number)
+		log.Info(ctx, "model vmware %q provisioning: %d/%d (ready=%d starting=%d dying=%d in-flight=%d)",
+			modelVMware, existing, number,
+			mapReady[modelVMware], mapStarting[modelVMware], mapDying[modelVMware], mapInflight[modelVMware])
 		if delta := number - existing; delta > 0 {
 			deficits[modelVMware] = delta
 		}
@@ -848,30 +830,43 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 	}
 	provisionQueue := roundRobinInterleave(modelOrder, deficits)
 
-	// --- Step 3: cap by available IPs and enqueue tasks ---
-	ipBudget := -1
-	if len(h.availableIPAddresses) > 0 {
-		ipBudget = h.countAvailableIPs(ctx)
-		log.Info(ctx, "provisioning IP budget: %d available", ipBudget)
-	}
-	if ipBudget == 0 {
-		log.Warn(ctx, "provisioning stopped: no IPs available")
-		provisionQueue = nil
-	} else if ipBudget > 0 && len(provisionQueue) > ipBudget {
-		log.Warn(ctx, "provisioning capped to %d tasks (IP budget)", ipBudget)
-		provisionQueue = provisionQueue[:ipBudget]
+	// --- Step 3: assign IPs and launch clones ---
+	// Build the set of IPs already in use (from the vSphere list — annotations and
+	// provision-v2-ip names) plus the IPs of in-flight clones not yet listed
+	// (parsed from pending names). When an IP range is configured, each clone gets
+	// a distinct IP picked here, in this single goroutine, so parallel clones can
+	// never collide. The IP is encoded in the VM name (see provisionName), which
+	// makes the lock visible in vSphere during the clone and across a restart — no
+	// in-memory reservation, no timeout.
+	var usedIPs map[string]struct{}
+	if len(h.availableNetworks) > 0 {
+		usedIPs = h.getUsedIPs(ctx, machines)
+		h.cacheProvisioning.mu.Lock()
+		for name := range h.cacheProvisioning.pending {
+			if ip, ok := ipFromProvisionName(name); ok {
+				usedIPs[ip] = struct{}{}
+			}
+		}
+		h.cacheProvisioning.mu.Unlock()
 	}
 
-	var batch sync.WaitGroup
-	h.reconcileProvisionedVMs(ctx, machines, "provision-v2", &batch)
+	// Reuse any in-flight provisions orphaned by a restart, then submit the
+	// deficit's worth of clones. Fire-and-forget: each clone runs in its own
+	// goroutine and is tracked as pending, so this returns immediately and the
+	// provisioning loop stays responsive to the next tick/signal.
+	h.reconcileProvisionedVMs(ctx, machines, "provision-v2")
 
 	for _, modelVMware := range provisionQueue {
-		batch.Add(1)
-		h.provisioningPool.tasks <- provisionTask{
-			cloneV2: modelVMware,
-			wg:      &batch,
+		var ip *ipResult
+		if usedIPs != nil {
+			res, ok := h.pickFreeIP(usedIPs)
+			if !ok {
+				log.Warn(ctx, "provisioning stopped: no IP address available")
+				break
+			}
+			usedIPs[res.ip] = struct{}{} // exclude from subsequent picks this pass
+			ip = &res
 		}
+		h.startProvisionClone(ctx, modelVMware, provisionName(ip), ip)
 	}
-
-	batch.Wait()
 }

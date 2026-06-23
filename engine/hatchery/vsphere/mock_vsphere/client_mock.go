@@ -257,6 +257,20 @@ func (mr *MockVSphereClientMockRecorder) RenameVirtualMachine(ctx, vm, newName a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenameVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).RenameVirtualMachine), ctx, vm, newName)
 }
 
+// SetVirtualMachineAnnotation mocks base method.
+func (m *MockVSphereClient) SetVirtualMachineAnnotation(ctx context.Context, vm *object.VirtualMachine, annotation string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetVirtualMachineAnnotation", ctx, vm, annotation)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetVirtualMachineAnnotation indicates an expected call of SetVirtualMachineAnnotation.
+func (mr *MockVSphereClientMockRecorder) SetVirtualMachineAnnotation(ctx, vm, annotation any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetVirtualMachineAnnotation", reflect.TypeOf((*MockVSphereClient)(nil).SetVirtualMachineAnnotation), ctx, vm, annotation)
+}
+
 // SetupEthernetCard mocks base method.
 func (m *MockVSphereClient) SetupEthernetCard(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error {
 	m.ctrl.T.Helper()
