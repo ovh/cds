@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -191,12 +192,15 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 
 	var ctx = context.Background()
 
+	// The claimed provision keeps its provision name until rename; capturing it
+	// before rename is what SpawnWorker relies on.
 	var vmProvisionned = object.VirtualMachine{
 		Common: object.Common{
-			InventoryPath: "worker-name",
+			InventoryPath: "provision-v2-worker",
 		},
 	}
 
+	// Both FindProvisionnedWorker and the pre-rename annotation read list the VMs.
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
@@ -215,15 +219,17 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 				ManagedEntity: mo.ManagedEntity{
 					Name: "provision-v2-worker",
 				},
-				Runtime: types.VirtualMachineRuntimeInfo{
-					PowerState: types.VirtualMachinePowerStatePoweredOff,
+				Summary: types.VirtualMachineSummary{
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOff,
+					},
 				},
 				Config: &types.VirtualMachineConfigInfo{
-					Annotation: `{"provisioning": true, "vmware_model_path": "the-model"}`,
+					Annotation: `{"provisioning": true, "vmware_model_path": "the-model", "ip_address": "192.168.0.1"}`,
 				},
 			},
 		}, nil
-	}).Times(1)
+	}).Times(2)
 
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), "provision-v2-worker").DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
@@ -233,7 +239,6 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 
 	c.EXPECT().LoadVirtualMachineEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
-			t.Logf("LoadVirtualMachineEvents for %s", vm.Name())
 			return []types.BaseEvent{
 				&types.VmPoweredOffEvent{
 					VmEvent: types.VmEvent{
@@ -252,39 +257,26 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		},
 	)
 
+	// The claim time is persisted on the VM annotation before power-on, preserving
+	// the provisioning fields (IP, vmware model path) and clearing the provisioning flag.
+	c.EXPECT().SetVirtualMachineAnnotation(gomock.Any(), &vmProvisionned, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, annotStr string) error {
+			var a annotation
+			require.NoError(t, json.Unmarshal([]byte(annotStr), &a))
+			assert.False(t, a.WorkerStartTime.IsZero(), "WorkerStartTime must be stamped")
+			assert.Equal(t, "666", a.JobID)
+			assert.False(t, a.Provisioning, "claimed worker must not be flagged as provisioning")
+			assert.Equal(t, "the-model", a.VMwareModelPath, "vmware model path must be preserved")
+			assert.Equal(t, "192.168.0.1", a.IPAddress, "reserved IP must be preserved")
+			return nil
+		},
+	)
+
 	c.EXPECT().StartVirtualMachine(gomock.Any(), &vmProvisionned).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error {
 			return nil
 		},
 	)
-
-	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
-		return []mo.VirtualMachine{
-			{
-				ManagedEntity: mo.ManagedEntity{
-					Name: "the-model",
-				},
-				Summary: types.VirtualMachineSummary{
-					Config: types.VirtualMachineConfigSummary{
-						Template: true,
-					},
-				},
-				Config: &types.VirtualMachineConfigInfo{
-					Annotation: `{"vmware_model_path": "the-model", "model": true}`,
-				},
-			}, {
-				ManagedEntity: mo.ManagedEntity{
-					Name: "worker-name",
-				},
-				Runtime: types.VirtualMachineRuntimeInfo{
-					PowerState: types.VirtualMachinePowerStatePoweredOn,
-				},
-				Config: &types.VirtualMachineConfigInfo{
-					Annotation: `{"provisioning": true, "vmware_model_path": "the-model"}`,
-				},
-			},
-		}, nil
-	})
 
 	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vmProvisionned, gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
@@ -357,6 +349,88 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+}
+
+// When a step of the spawn fails after a provision has been claimed, the VM must
+// be torn down (marked for deletion) and released from the in-use cache, so we
+// never leave a partially-configured worker holding an IP.
+func TestHatcheryVSphere_SpawnWorker_TeardownOnFailure(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{vSphereClient: c}
+
+	var ctx = context.Background()
+	var vmProvisionned = object.VirtualMachine{Common: object.Common{InventoryPath: "provision-v2-worker"}}
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{
+			{
+				ManagedEntity: mo.ManagedEntity{Name: "provision-v2-worker"},
+				Summary:       types.VirtualMachineSummary{Runtime: types.VirtualMachineRuntimeInfo{PowerState: types.VirtualMachinePowerStatePoweredOff}},
+				Config:        &types.VirtualMachineConfigInfo{Annotation: `{"provisioning": true, "vmware_model_path": "the-model"}`},
+			},
+		}, nil
+	}).AnyTimes()
+
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "provision-v2-worker").Return(&vmProvisionned, nil).AnyTimes()
+	c.EXPECT().LoadVirtualMachineEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return([]types.BaseEvent{
+		&types.VmPoweredOffEvent{VmEvent: types.VmEvent{Event: types.Event{CreatedTime: time.Now().Add(-10 * time.Minute)}}},
+	}, nil)
+	c.EXPECT().RenameVirtualMachine(gomock.Any(), &vmProvisionned, "worker-name").Return(nil)
+
+	// The annotation update fails: the spawn must abort and tear the VM down.
+	c.EXPECT().SetVirtualMachineAnnotation(gomock.Any(), &vmProvisionned, gomock.Any()).Return(fmt.Errorf("boom"))
+	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vmProvisionned).Return(nil)
+
+	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
+		WorkerName: "worker-name",
+		Model: sdk.WorkerStarterWorkerModel{
+			ModelV2:     &sdk.V2WorkerModel{Name: "cds-model-name", Spec: json.RawMessage(`{"image":"the-model"}`)},
+			VSphereSpec: sdk.V2WorkerModelVSphereSpec{Image: "the-model"},
+			Cmd:         "./worker",
+		},
+		JobID: "666",
+	})
+
+	require.Error(t, err)
+	assert.True(t, sdk.IsInArray("provision-v2-worker", h.cacheToDelete.list), "the VM must be marked for deletion")
+	assert.Empty(t, h.cacheProvisioning.using, "the provision must be released from the in-use cache")
+}
+
+func TestHatcheryVSphere_startVirtualMachineWithRetry(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	// Speed up the retry loop for the test.
+	defer func(to, iv time.Duration) { startVMRetryTimeout, startVMRetryInterval = to, iv }(startVMRetryTimeout, startVMRetryInterval)
+	startVMRetryTimeout = time.Second
+	startVMRetryInterval = 5 * time.Millisecond
+
+	vm := &object.VirtualMachine{Common: object.Common{InventoryPath: "worker-name"}}
+
+	t.Run("transient failure then success", func(t *testing.T) {
+		c := NewVSphereClientTest(t)
+		h := HatcheryVSphere{vSphereClient: c}
+		var calls int
+		c.EXPECT().StartVirtualMachine(gomock.Any(), vm).DoAndReturn(func(ctx context.Context, vm *object.VirtualMachine) error {
+			calls++
+			if calls < 3 {
+				return fmt.Errorf("invalid state")
+			}
+			return nil
+		}).Times(3)
+
+		require.NoError(t, h.startVirtualMachineWithRetry(context.Background(), vm))
+		assert.Equal(t, 3, calls)
+	})
+
+	t.Run("failure for the whole budget", func(t *testing.T) {
+		c := NewVSphereClientTest(t)
+		h := HatcheryVSphere{vSphereClient: c}
+		c.EXPECT().StartVirtualMachine(gomock.Any(), vm).Return(fmt.Errorf("invalid state")).MinTimes(1)
+
+		require.Error(t, h.startVirtualMachineWithRetry(context.Background(), vm))
+	})
 }
 
 func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
@@ -441,24 +515,6 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
-		return []mo.VirtualMachine{
-			{
-				ManagedEntity: mo.ManagedEntity{
-					Name: "the-model",
-				},
-				Summary: types.VirtualMachineSummary{
-					Config: types.VirtualMachineConfigSummary{
-						Template: true,
-					},
-				},
-				Config: &types.VirtualMachineConfigInfo{
-					Annotation: `{"vmware_model_path": "the-model", "model": true}`,
-				},
-			},
-		}, nil
-	})
-
 	var workerRef types.ManagedObjectReference
 
 	c.EXPECT().CloneVirtualMachine(gomock.Any(), &vmTemplate, &folder, "provisionned-worker", gomock.Any()).DoAndReturn(
@@ -482,6 +538,6 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 		},
 	)
 
-	err := h.ProvisionWorkerV2(ctx, "the-model", "provisionned-worker")
+	err := h.ProvisionWorkerV2(ctx, "the-model", "provisionned-worker", &ipResult{ip: "192.168.0.1", gateway: "192.168.0.254", subnetMask: "255.255.255.0"})
 	require.NoError(t, err)
 }

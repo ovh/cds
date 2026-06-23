@@ -32,6 +32,7 @@ type VSphereClient interface {
 	GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error)
 	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error)
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
+	SetVirtualMachineAnnotation(ctx context.Context, vm *object.VirtualMachine, annotation string) error
 	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string, vmName string) error
 	LoadFolder(ctx context.Context) (*object.Folder, error)
@@ -43,6 +44,13 @@ type VSphereClient interface {
 	StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error)
 	LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error)
 }
+
+// vmTaskTimeout bounds the wait for long-running vCenter tasks (clone, power
+// off, destroy). Without it these waits use the root context and a stuck vCenter
+// task hangs the caller forever — which, for the provisioning path, freezes all
+// future provisioning. It is generous (these tasks legitimately take minutes)
+// but finite, so a genuinely stuck task becomes a recoverable error.
+const vmTaskTimeout = 10 * time.Minute
 
 func NewVSphereClient(vclient *govmomi.Client, datacenter string) VSphereClient {
 	return &vSphereClient{
@@ -159,20 +167,20 @@ func (c *vSphereClient) StartVirtualMachine(ctx context.Context, vm *object.Virt
 func (c *vSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
 	log.Info(ctx, "shutdown server %v", vm.Name())
 
-	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	ctxC, cancelC := context.WithTimeout(ctx, vmTaskTimeout)
 	defer cancelC()
 
 	task, err := vm.PowerOff(ctxC)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	return sdk.WithStack(task.Wait(ctx))
+	return sdk.WithStack(task.Wait(ctxC))
 }
 
 func (c *vSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
 	log.Info(ctx, "destroying server %v", vm.Name())
 
-	ctxD, cancelD := context.WithTimeout(ctx, c.requestTimeout)
+	ctxD, cancelD := context.WithTimeout(ctx, vmTaskTimeout)
 	defer cancelD()
 
 	task, err := vm.Destroy(ctxD)
@@ -180,7 +188,7 @@ func (c *vSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.Vi
 		return sdk.WithStack(err)
 	}
 
-	return sdk.WithStack(task.Wait(ctx))
+	return sdk.WithStack(task.Wait(ctxD))
 }
 
 func (c *vSphereClient) LoadFolder(ctx context.Context) (*object.Folder, error) {
@@ -268,12 +276,15 @@ func (c *vSphereClient) LoadDatastore(ctx context.Context, name string) (*object
 }
 
 func (c *vSphereClient) CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error) {
-	task, err := vm.Clone(ctx, folder, name, *config)
+	ctxT, cancel := context.WithTimeout(ctx, vmTaskTimeout)
+	defer cancel()
+
+	task, err := vm.Clone(ctxT, folder, name, *config)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot clone VM name %v", name)
 	}
 
-	info, err := task.WaitForResult(ctx, nil)
+	info, err := task.WaitForResult(ctxT, nil)
 	if err != nil || info.State == types.TaskInfoStateError {
 		return nil, sdk.WrapError(err, "state in error: %+v", info)
 	}
@@ -387,6 +398,26 @@ func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.Vir
 	}
 
 	*vm = *vm2
+
+	return nil
+}
+
+// SetVirtualMachineAnnotation overwrites the VM annotation (the persistent
+// vSphere "notes" field, read back as config.annotation). It is used to record
+// the worker start time at claim time so cleanup does not depend on vSphere
+// events, which age out of the event log.
+func (c *vSphereClient) SetVirtualMachineAnnotation(ctx context.Context, vm *object.VirtualMachine, annotation string) error {
+	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
+
+	task, err := vm.Reconfigure(ctxTo, types.VirtualMachineConfigSpec{Annotation: annotation})
+	if err != nil {
+		return sdk.WrapError(err, "unable to reconfigure annotation of vm %q", vm.Name())
+	}
+
+	if err := task.Wait(ctxTo); err != nil {
+		return sdk.WrapError(err, "annotation reconfigure task failed for vm %q", vm.Name())
+	}
 
 	return nil
 }
