@@ -168,6 +168,9 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 }
 
 func (api *API) WorkflowRunJobDeletion(ctx context.Context, tick time.Duration, limit int) {
+	if tick <= 0 {
+		tick = 10 * time.Second
+	}
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 
