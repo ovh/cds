@@ -5,7 +5,7 @@ import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
-import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { CommonModule } from '@angular/common';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import {NzBadgeModule } from 'ng-zorro-antd/badge';
@@ -38,7 +38,7 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
     NzCheckboxModule,
     NzIconModule.forRoot(icons),
     NzPopconfirmModule,
-    NzToolTipModule,
+    NzTooltipModule,
     MomentModule
   ],
   exports: [

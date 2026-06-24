@@ -1,56 +1,80 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
-    <app-scrollview class="scrollview" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
-        <nz-row *ngSwitchCase="'workflow_template'">
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+  @if (selectedTab) {
+    <app-scrollview class="scrollview">
+      @switch (selectedTab.key) {
+        @case ('workflow_template') {
+          <nz-row>
             <nz-col [nzSpan]="18">
-                <div class="nzSegment">
-                    <app-workflow-template-form mode="edit" [loading]="loading" [workflowTemplate]="workflowTemplate"
-                                                [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate($event)" (delete)="deleteWorkflowTemplate()"></app-workflow-template-form>
-                </div>
+              <div class="nzSegment">
+                <app-workflow-template-form mode="edit" [loading]="loading" [workflowTemplate]="workflowTemplate"
+                [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate($event)" (delete)="deleteWorkflowTemplate()"></app-workflow-template-form>
+              </div>
             </nz-col>
             <nz-col [nzSpan]="6">
-                <app-workflow-template-help></app-workflow-template-help>
-                <div class="nzSegment rightColumn" *ngIf="workflowTemplate">
-                    <div class="field" *ngIf="workflowTemplate.first_audit">
-                        <h3>Created by</h3>
-                        {{ workflowTemplate.first_audit.triggered_by }}
+              <app-workflow-template-help></app-workflow-template-help>
+              @if (workflowTemplate) {
+                <div class="nzSegment rightColumn">
+                  @if (workflowTemplate.first_audit) {
+                    <div class="field">
+                      <h3>Created by</h3>
+                      {{ workflowTemplate.first_audit.triggered_by }}
                     </div>
-                    <br />
-                    <div class="field" *ngIf="workflowTemplate.last_audit">
-                        <h3>Last modified</h3>
-                        {{ workflowTemplate.last_audit.created }}
+                  }
+                  <br />
+                  @if (workflowTemplate.last_audit) {
+                    <div class="field">
+                      <h3>Last modified</h3>
+                      {{ workflowTemplate.last_audit.created }}
                     </div>
+                  }
                 </div>
+              }
             </nz-col>
-        </nz-row>
-        <nz-row *ngSwitchCase="'audits'">
+          </nz-row>
+        }
+        @case ('audits') {
+          <nz-row>
             <nz-col [nzSpan]="24">
-                <app-data-table [withPagination]="10" [columns]="columnsAudits" [data]="audits" [loading]="loadingAudits"
-                    [withLineClick]="true" (clickLine)="clickAudit($event)"></app-data-table>
+              <app-data-table [withPagination]="10" [columns]="columnsAudits" [data]="audits" [loading]="loadingAudits"
+              [withLineClick]="true" (clickLine)="clickAudit($event)"></app-data-table>
             </nz-col>
             <nz-col [nzSpan]="24">
-                <app-diff-list *ngIf="diffItems" [items]="diffItems"></app-diff-list>
+              @if (diffItems) {
+                <app-diff-list [items]="diffItems"></app-diff-list>
+              }
             </nz-col>
-        </nz-row>
-        <nz-row *ngSwitchCase="'instances'">
+          </nz-row>
+        }
+        @case ('instances') {
+          <nz-row>
             <nz-col [nzSpan]="12" nzOffset="12">
-                <button nz-button nzType="primary" (click)="clickCreateBulk()">
-                    <span nz-icon nzType="folder" nzTheme="outline"></span>{{ 'workflow_template_btn_create_bulk' | translate }}
-                </button>
+              <button nz-button nzType="primary" (click)="clickCreateBulk()">
+                <span nz-icon nzType="folder" nzTheme="outline"></span>{{ 'workflow_template_btn_create_bulk' | translate }}
+              </button>
             </nz-col>
             <nz-col [nzSpan]="24">
-                <app-data-table [withPagination]="10" [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
+              <app-data-table [withPagination]="10" [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
             </nz-col>
-        </nz-row>
-        <nz-row *ngSwitchCase="'usage'">
+          </nz-row>
+        }
+        @case ('usage') {
+          <nz-row>
             <nz-col [nzSpan]="24">
-                <nz-spin nzTip="Loading..." *ngIf="loadingUsage"></nz-spin>
-                <ng-container *ngIf="!loadingUsage">
-                    <app-usage [workflows]="usages"></app-usage>
-                    <nz-alert nzType="info" *ngIf="!usages || usages.length === 0" nzMessage="This template isn't used by one of your workflow"></nz-alert>
-                </ng-container>
+              @if (loadingUsage) {
+                <nz-spin nzTip="Loading..."></nz-spin>
+              }
+              @if (!loadingUsage) {
+                <app-usage [workflows]="usages"></app-usage>
+                @if (!usages || usages.length === 0) {
+                  <nz-alert nzType="info" nzMessage="This template isn't used by one of your workflow"></nz-alert>
+                }
+              }
             </nz-col>
-        </nz-row>
+          </nz-row>
+        }
+      }
     </app-scrollview>
+  }
 </div>

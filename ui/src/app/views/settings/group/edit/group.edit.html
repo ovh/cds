@@ -1,159 +1,190 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-scrollview class="scrollview">
-        <div *ngIf="group;then showGroup;else loadGroup"></div>
-        <ng-template #showGroup>
-            <div id="GroupEdit">
-                <form nz-form>
-                    <nz-row>
-                        <nz-col [nzSpan]="24">
-                            <nz-form-item>
-                                <nz-form-label>Group name</nz-form-label>
-                                <nz-form-control>
-                                    <input nz-input type="text" name="name" [(ngModel)]="group.name"
-                                           [readonly]="loading">
-                                </nz-form-control>
-                            </nz-form-item>
-                        </nz-col>
-                    </nz-row>
-                    <nz-row *ngIf="group.organization">
-                        <nz-col [nzSpan]="24">
-                            <nz-form-item>
-                                <nz-form-label>Organization</nz-form-label>
-                                <nz-form-control>
-                                    <input nz-input type="text" name="organization"
-                                           [ngModel]="group.organization" readonly>
-                                </nz-form-control>
-                            </nz-form-item>
-                        </nz-col>
-                    </nz-row>
-                    <nz-row *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
-                        <nz-col [nzSpan]="24">
-                            <button nz-button nzType="primary" [nzLoading]="loading" (click)="saveGroup()">
-                                <i nz-icon nzType="save" nzTheme="outline"></i>Save
-                            </button>
-                            <button *ngIf="group.id" nz-button nzDanger nzType="primary" (nzOnConfirm)="clickDelete()"
-                                    [nzLoading]="deleteLoading" nzPopconfirmPlacement="topLeft"
-                                    nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this group ?">
-                                <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
-                            </button>
-                        </nz-col>
-                    </nz-row>
-                </form>
-                <nz-row>
-                    <nz-col [nzSpan]="12">
-                        <form nz-form *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
-                            <nz-form-item>
-                                <nz-form-label>Members</nz-form-label>
-                                <nz-form-control>
-                                    <nz-select nzShowSearch name="username" [nzLoading]="loading" [(ngModel)]="addUserUsername">
-                                        <nz-option *ngFor="let user of users" [nzValue]="user.username" nzLabel="{{user.fullname}} - {{user.username}} {{user.organization ?
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-scrollview class="scrollview">
+    @if (group) {
+      <div id="GroupEdit">
+        <form nz-form>
+          <nz-row>
+            <nz-col [nzSpan]="24">
+              <nz-form-item>
+                <nz-form-label>Group name</nz-form-label>
+                <nz-form-control>
+                  <input nz-input type="text" name="name" [(ngModel)]="group.name"
+                    [readonly]="loading">
+                </nz-form-control>
+              </nz-form-item>
+            </nz-col>
+          </nz-row>
+          @if (group.organization) {
+            <nz-row>
+              <nz-col [nzSpan]="24">
+                <nz-form-item>
+                  <nz-form-label>Organization</nz-form-label>
+                  <nz-form-control>
+                    <input nz-input type="text" name="organization"
+                      [ngModel]="group.organization" readonly>
+                  </nz-form-control>
+                </nz-form-item>
+              </nz-col>
+            </nz-row>
+          }
+          @if (currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup) {
+            <nz-row>
+              <nz-col [nzSpan]="24">
+                <button nz-button nzType="primary" [nzLoading]="loading" (click)="saveGroup()">
+                  <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                </button>
+                @if (group.id) {
+                  <button nz-button nzDanger nzType="primary" (nzOnConfirm)="clickDelete()"
+                    [nzLoading]="deleteLoading" nzPopconfirmPlacement="topLeft"
+                    nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this group ?">
+                    <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                  </button>
+                }
+              </nz-col>
+            </nz-row>
+          }
+        </form>
+        <nz-row>
+          <nz-col [nzSpan]="12">
+            @if (currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup) {
+              <form nz-form>
+                <nz-form-item>
+                  <nz-form-label>Members</nz-form-label>
+                  <nz-form-control>
+                    <nz-select nzShowSearch name="username" [nzLoading]="loading" [(ngModel)]="addUserUsername">
+                      @for (user of users; track user) {
+<nz-option [nzValue]="user.username" nzLabel="{{user.fullname}} - {{user.username}} {{user.organization ?
                                             '(' + user.organization + ')' : ''}}"></nz-option>
-                                    </nz-select>
-                                </nz-form-control>
-                                <button nz-button nzType="primary" [nzLoading]="loading" (click)="clickAddMember()">
-                                    <i nz-icon nzType="plus" nzTheme="outline"></i>Add
-                                </button>
-                            </nz-form-item>
-                        </form>
-                        <nz-alert *ngIf="group.members && group.members?.length === 0" nzType="info" nzMessage="No member in the group"></nz-alert>
-                        <nz-table *ngIf="group.members && group.members?.length > 0" [nzData]="displayedMembers" #members>
-                            <thead>
-                                <tr>
-                                    <th>
-                                        Username
-                                        <nz-filter-trigger [(nzVisible)]="usernameFilterVisible" [nzActive]="usernameFilter?.length > 0" [nzDropdownMenu]="usernameDropdown">
-                                            <i nz-icon nzType="search"></i>
-                                        </nz-filter-trigger>
-                                    </th>
-                                    <th>Fullname</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let m of members.data">
-                                    <td>
-                                        <span nz-icon nzType="crown" nzTheme="outline" *ngIf="m.admin" title="{{ 'group_user_is_admin' | translate }}"></span>
-                                        {{m?.username}}
-                                    </td>
-                                    <td>
-                                        {{m?.fullname}}
-                                    </td>
-                                    <td>
-                                        <ng-container *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
-                                            <button nz-button nzDanger nzType="primary" *ngIf="m?.username" [nzLoading]="deleteLoading"
-                                                    (nzOnConfirm)="clickRemoveMember(m.username)"
-                                                    nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove {{m.fullname}} from this group ?">
-                                                <i nz-icon nzType="delete" nzTheme="outline"></i>Remove
-                                            </button>
-                                            <button nz-button *ngIf="!m.admin"
-                                                    [nzLoading]="loading" (click)="clickSetAdmin(m.username)">
-                                                <i nz-icon nzType="plus" nzTheme="outline"></i>Admin
-                                            </button>
-                                            <button nz-button *ngIf="m.admin"
-                                                    [nzLoading]="loading" (click)="clickUnsetAdmin(m.username)">
-                                                <span nz-icon nzType="minus" nzTheme="outline"></span>Admin
-                                            </button>
-                                        </ng-container>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </nz-table>
-                        <nz-dropdown-menu #usernameDropdown="nzDropdownMenu">
-                            <div class="ant-table-filter-dropdown">
-                                <div class="search-box">
-                                    <input type="text" nz-input placeholder="Search name" [(ngModel)]="usernameFilter" />
-                                    <button nz-button nzSize="small" nzType="primary" (click)="searchUsername()" class="search-button">Search</button>
-                                    <button nz-button nzSize="small" (click)="usernameFilter = ''; searchUsername()">Reset</button>
-                                </div>
-                            </div>
-                        </nz-dropdown-menu>
-                    </nz-col>
-                    <nz-col [nzSpan]="12" class="projectList">
-                        <h3>Usage in projects</h3>
-                        <nz-alert *ngIf="!projects || projects.length === 0" nzType="info" nzMessage="This group is not used in any project"></nz-alert>
-                        <ng-container *ngIf="projects && projects.length > 0">
-                            <nz-table [nzData]="projects" #projList>
-                                <thead>
-                                    <tr>
-                                        <th>Project key</th>
-                                        <th>Project name</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr *ngFor="let p of projList.data">
-                                        <td>
-                                            <a [routerLink]="['/project', p.key]"
-                                               [queryParams]="{tab: 'permissions'}">
-                                                {{p.key}}
-                                            </a>
-                                        </td>
-                                        <td>{{p.name}}</td>
-                                    </tr>
-                                </tbody>
-                            </nz-table>
-                        </ng-container>
-                    </nz-col>
-                </nz-row>
-                <nz-row style="margin-top: 24px;">
-                    <nz-col [nzSpan]="24">
-                        <h3>Permissions</h3>
-                        <nz-spin *ngIf="loadingPermissions" nzTip="Loading permissions..."></nz-spin>
-                        <nz-alert *ngIf="!loadingPermissions && permissionEmpty"
-                            nzType="info" nzMessage="No permissions found for this group."
-                            nzShowIcon></nz-alert>
-                        <nz-code-editor
-                            *ngIf="!loadingPermissions && permissionYaml"
-                            [ngModel]="permissionYaml"
-                            [nzEditorOption]="permissionEditorOptions"
-                            style="height: 50vh; display: block;">
-                        </nz-code-editor>
-                    </nz-col>
-                </nz-row>
-            </div>
-        </ng-template>
-        <ng-template #loadGroup>
-            <nz-spin nzTip="Loading group..."></nz-spin>
-        </ng-template>
-    </app-scrollview>
+                      }
+                    </nz-select>
+                  </nz-form-control>
+                  <button nz-button nzType="primary" [nzLoading]="loading" (click)="clickAddMember()">
+                    <i nz-icon nzType="plus" nzTheme="outline"></i>Add
+                  </button>
+                </nz-form-item>
+              </form>
+            }
+            @if (group.members && group.members?.length === 0) {
+              <nz-alert nzType="info" nzMessage="No member in the group"></nz-alert>
+            }
+            @if (group.members && group.members?.length > 0) {
+              <nz-table [nzData]="displayedMembers" #members>
+                <thead>
+                  <tr>
+                    <th>
+                      Username
+                      <nz-filter-trigger [(nzVisible)]="usernameFilterVisible" [nzActive]="usernameFilter?.length > 0" [nzDropdownMenu]="usernameDropdown">
+                        <i nz-icon nzType="search"></i>
+                      </nz-filter-trigger>
+                    </th>
+                    <th>Fullname</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of members.data; track m) {
+                    <tr>
+                      <td>
+                        @if (m.admin) {
+                          <span nz-icon nzType="crown" nzTheme="outline" title="{{ 'group_user_is_admin' | translate }}"></span>
+                        }
+                        {{m?.username}}
+                      </td>
+                      <td>
+                        {{m?.fullname}}
+                      </td>
+                      <td>
+                        @if (currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup) {
+                          @if (m?.username) {
+                            <button nz-button nzDanger nzType="primary" [nzLoading]="deleteLoading"
+                              (nzOnConfirm)="clickRemoveMember(m.username)"
+                              nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove {{m.fullname}} from this group ?">
+                              <i nz-icon nzType="delete" nzTheme="outline"></i>Remove
+                            </button>
+                          }
+                          @if (!m.admin) {
+                            <button nz-button
+                              [nzLoading]="loading" (click)="clickSetAdmin(m.username)">
+                              <i nz-icon nzType="plus" nzTheme="outline"></i>Admin
+                            </button>
+                          }
+                          @if (m.admin) {
+                            <button nz-button
+                              [nzLoading]="loading" (click)="clickUnsetAdmin(m.username)">
+                              <span nz-icon nzType="minus" nzTheme="outline"></span>Admin
+                            </button>
+                          }
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </nz-table>
+            }
+            <nz-dropdown-menu #usernameDropdown="nzDropdownMenu">
+              <div class="ant-table-filter-dropdown">
+                <div class="search-box">
+                  <input type="text" nz-input placeholder="Search name" [(ngModel)]="usernameFilter" />
+                  <button nz-button nzSize="small" nzType="primary" (click)="searchUsername()" class="search-button">Search</button>
+                  <button nz-button nzSize="small" (click)="usernameFilter = ''; searchUsername()">Reset</button>
+                </div>
+              </div>
+            </nz-dropdown-menu>
+          </nz-col>
+          <nz-col [nzSpan]="12" class="projectList">
+            <h3>Usage in projects</h3>
+            @if (!projects || projects.length === 0) {
+              <nz-alert nzType="info" nzMessage="This group is not used in any project"></nz-alert>
+            }
+            @if (projects && projects.length > 0) {
+              <nz-table [nzData]="projects" #projList>
+                <thead>
+                  <tr>
+                    <th>Project key</th>
+                    <th>Project name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of projList.data; track p) {
+                    <tr>
+                      <td>
+                        <a [routerLink]="['/project', p.key]"
+                          [queryParams]="{tab: 'permissions'}">
+                          {{p.key}}
+                        </a>
+                      </td>
+                      <td>{{p.name}}</td>
+                    </tr>
+                  }
+                </tbody>
+              </nz-table>
+            }
+          </nz-col>
+        </nz-row>
+        <nz-row style="margin-top: 24px;">
+          <nz-col [nzSpan]="24">
+            <h3>Permissions</h3>
+            @if (loadingPermissions) {
+              <nz-spin nzTip="Loading permissions..."></nz-spin>
+            }
+            @if (!loadingPermissions && permissionEmpty) {
+              <nz-alert
+                nzType="info" nzMessage="No permissions found for this group."
+              nzShowIcon></nz-alert>
+            }
+            @if (!loadingPermissions && permissionYaml) {
+              <nz-code-editor
+                [ngModel]="permissionYaml"
+                [nzEditorOption]="permissionEditorOptions"
+                style="height: 50vh; display: block;">
+              </nz-code-editor>
+            }
+          </nz-col>
+        </nz-row>
+      </div>
+    } @else {
+      <nz-spin nzTip="Loading group..."></nz-spin>
+    }
+  </app-scrollview>
 </div>

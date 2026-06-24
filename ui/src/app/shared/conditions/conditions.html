@@ -1,98 +1,106 @@
 <div class="header">
-    {{'workflow_node_condition_advanced' | translate }}
-    <nz-switch name="mutex" [(ngModel)]="isAdvanced"></nz-switch>
+  {{'workflow_node_condition_advanced' | translate }}
+  <nz-switch name="mutex" [(ngModel)]="isAdvanced"></nz-switch>
 </div>
 <div class="content">
-    <ng-container *ngIf="conditions.plain && conditions.plain.length && conditions.lua_script">
-        <nz-alert nzType="warning" nzMessage="{{'workflow_node_condition_warning' | translate}}"></nz-alert>
-    </ng-container>
-    <ng-container *ngIf="!isAdvanced">
-        <nz-table [nzData]="conditions?.plain" #condTab *ngIf="conditionNames">
-            <thead>
+  @if (conditions.plain && conditions.plain.length && conditions.lua_script) {
+    <nz-alert nzType="warning" nzMessage="{{'workflow_node_condition_warning' | translate}}"></nz-alert>
+  }
+  @if (!isAdvanced) {
+    @if (conditionNames) {
+      <nz-table [nzData]="conditions?.plain" #condTab>
+        <thead>
+          <tr>
+            <th>Variable name</th>
+            <th>Operator</th>
+            <th>Expected value</th>
+            @if (!readonly) {
+              <th>
+                <button nz-button nzType="primary" (click)="addEmptyCondition()">
+                  <i nz-icon nzType="plus" nzTheme="outline"></i>
+                </button>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of condTab.data; track c; let i = $index) {
             <tr>
-                <th>Variable name</th>
-                <th>Operator</th>
-                <th>Expected value</th>
-                <th *ngIf="!readonly">
-                    <button nz-button nzType="primary" (click)="addEmptyCondition()">
-                        <i nz-icon nzType="plus" nzTheme="outline"></i>
-                    </button>
-                </th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let c of condTab.data; let i = index">
-                <td>
-                    <nz-select nzShowSearch (nzOnSearch)="onSearchName($event)" [(ngModel)]="c.variable" (ngModelChange)="pushChange('name');castValue(i)" [nzDisabled]="readonly">
-                        <nz-option *ngFor="let n of conditionNames" [nzValue]="n" [nzLabel]="n"></nz-option>
+              <td>
+                <nz-select nzShowSearch (nzOnSearch)="onSearchName($event)" [(ngModel)]="c.variable" (ngModelChange)="pushChange('name');castValue(i)" [nzDisabled]="readonly">
+                  @for (n of conditionNames; track n) {
+                    <nz-option [nzValue]="n" [nzLabel]="n"></nz-option>
+                  }
+                </nz-select>
+              </td>
+              <td>
+                @if (c && operators && !readonly) {
+                  <nz-select nzShowSearch  [(ngModel)]="c.operator"  (ngModelChange)="pushChange('operator')" [nzDisabled]="readonly">
+                    @for (o of operators; track o) {
+                      <nz-option [nzValue]="o.key" [nzLabel]="o.value"></nz-option>
+                    }
+                  </nz-select>
+                } @else {
+                  {{c.operator}}
+                }
+              </td>
+              <td>
+                @if (!readonly) {
+                  @if (c.variable === 'cds.status' && statuses) {
+                    <nz-select name="value" nzShowSearch [(ngModel)]="c.value" (ngModelChange)="pushChange('value')">
+                      @for (s of statuses; track s) {
+                        <nz-option [nzLabel]="s" [nzValue]="s"></nz-option>
+                      }
                     </nz-select>
-                </td>
+                  }
+                  @if (c.variable === 'cds.manual') {
+                    <label name="value" nz-checkbox [(ngModel)]="c.value"></label>
+                  }
+                  @if (c.variable !== 'cds.status' && c.variable !== 'cds.manual') {
+                    <input name="value" nz-input [(ngModel)]="c.value" (ngModelChange)="pushChange('all')" />
+                  }
+                } @else {
+                  {{c.value}}
+                }
+              </td>
+              @if (!readonly) {
                 <td>
-                    <div *ngIf="c && operators && !readonly; then operatorWrite;else operatorRead">
-                    </div>
-                    <ng-template #operatorWrite>
-                        <nz-select nzShowSearch  [(ngModel)]="c.operator"  (ngModelChange)="pushChange('operator')" [nzDisabled]="readonly">
-                            <nz-option *ngFor="let o of operators" [nzValue]="o.key" [nzLabel]="o.value"></nz-option>
-                        </nz-select>
-                    </ng-template>
-                    <ng-template #operatorRead>
-                        {{c.operator}}
-                    </ng-template>
+                  <button nz-button nzDanger nzType="primary" (click)="removeCondition(i)">Remove</button>
                 </td>
-                <td>
-                    <div *ngIf="!readonly; then valueWrite;else valueRead"></div>
-                    <ng-template #valueWrite>
-                        <ng-container *ngIf="c.variable === 'cds.status' && statuses">
-                            <nz-select name="value" nzShowSearch [(ngModel)]="c.value" (ngModelChange)="pushChange('value')">
-                                <nz-option *ngFor="let s of statuses" [nzLabel]="s" [nzValue]="s"></nz-option>
-                            </nz-select>
-                        </ng-container>
-                        <ng-container *ngIf="c.variable === 'cds.manual'">
-                            <label name="value" nz-checkbox [(ngModel)]="c.value"></label>
-                        </ng-container>
-                        <ng-container *ngIf="c.variable !== 'cds.status' && c.variable !== 'cds.manual'">
-                            <input name="value" nz-input [(ngModel)]="c.value" (ngModelChange)="pushChange('all')" />
-                        </ng-container>
-                    </ng-template>
-                    <ng-template #valueRead>
-                        {{c.value}}
-                    </ng-template>
-                </td>
-                <td *ngIf="!readonly">
-                    <button nz-button nzDanger nzType="primary" (click)="removeCondition(i)">Remove</button>
-                </td>
+              }
             </tr>
-            </tbody>
-        </nz-table>
-    </ng-container>
-    <ng-container *ngIf="isAdvanced">
-        <div class="title">
-            <h4>Lua script</h4>
-            <em>(should return a boolean)</em>
-            <h4>:</h4>
+          }
+        </tbody>
+      </nz-table>
+    }
+  }
+  @if (isAdvanced) {
+    <div class="title">
+      <h4>Lua script</h4>
+      <em>(should return a boolean)</em>
+      <h4>:</h4>
+    </div>
+    <nz-row>
+      <nz-col [nzSpan]="18">
+        <codemirror [(ngModel)]="conditions.lua_script"
+          (ngModelChange)="pushChange('codemirror', $event)" (change)="changeCodeMirror()"
+        [config]="codeMirrorConfig" #textareaCodeMirror></codemirror>
+      </nz-col>
+      <nz-col [nzSpan]="6">
+        @if (isAdvanced) {
+          <div class="helper">
+            <div>
+              <i nz-icon nzType="book" nzTheme="outline"></i><a href="https://devhints.io/lua" target="_blank" rel="noopener noreferrer">Lua Cheatsheet</a>
+            </div>
+            <div>
+              <i nz-icon nzType="book" nzTheme="outline"></i><a
+              href="#" [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'run-conditions']" target="_blank"
+            rel="noopener noreferrer">{{'common_cds_documentation' | translate}}</a>
+          </div>
         </div>
-
-        <nz-row>
-            <nz-col [nzSpan]="18">
-                <codemirror [(ngModel)]="conditions.lua_script"
-                            (ngModelChange)="pushChange('codemirror', $event)" (change)="changeCodeMirror()"
-                            [config]="codeMirrorConfig" #textareaCodeMirror></codemirror>
-            </nz-col>
-            <nz-col [nzSpan]="6">
-                <div class="helper" *ngIf="isAdvanced">
-                    <div>
-                        <i nz-icon nzType="book" nzTheme="outline"></i><a href="https://devhints.io/lua" target="_blank" rel="noopener noreferrer">Lua Cheatsheet</a>
-                    </div>
-                    <div>
-                        <i nz-icon nzType="book" nzTheme="outline"></i><a
-                            href="#" [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'run-conditions']" target="_blank"
-                            rel="noopener noreferrer">{{'common_cds_documentation' | translate}}</a>
-                    </div>
-                </div>
-            </nz-col>
-        </nz-row>
-
-
-    </ng-container>
+      }
+    </nz-col>
+  </nz-row>
+}
 </div>
 

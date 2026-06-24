@@ -1,78 +1,102 @@
-<ng-container [ngSwitch]="type" *ngIf="edit">
-    <ng-container *ngSwitchCase="'number'">
-        <input nz-input type="number" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"
-            name="value">
-    </ng-container>
-    <ng-container *ngSwitchCase="'text'">
-        <codemirror [(ngModel)]="editableValue" [config]="codeMirrorConfig" (change)="changeCodeMirror()" #codeMirror
-            (keydown)="sendValueChanged()"></codemirror>
-    </ng-container>
-    <ng-container *ngSwitchCase="'boolean'">
-        <label nz-checkbox [(ngModel)]="editableValue" (ngModelChange)="valueChanged();sendValueChanged()" name="value"></label>
-    </ng-container>
-    <ng-container *ngSwitchCase="'ssh-key'">
-        <ng-container *ngIf="keys && keys.ssh && (!editableValue || keyExist(editableValue.toString()))">
-            <nz-select nzShowSearch name="sshname" [(ngModel)]="editableValue"  (ngModelChange)="valueChanged();sendValueChanged()" >
-                <nz-option *ngFor="let t of keys.ssh" [nzLabel]="t.name" [nzValue]="t.name"></nz-option>
-            </nz-select>
-        </ng-container>
-        <ng-container *ngIf="!keys || (editableValue && keys && keys.ssh && !keyExist(editableValue.toString()))">
-            <input nz-input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"
-                name="value">
-        </ng-container>
-    </ng-container>
-    <ng-container *ngSwitchCase="'pgp-key'">
-        <ng-container *ngIf="keys">
-            <nz-select nzShowSearch name="gpgname" [(ngModel)]="editableValue"  (ngModelChange)="valueChanged();sendValueChanged()">
-                <nz-option *ngFor="let t of keys.pgp" [nzLabel]="t.name" [nzValue]="t.name"></nz-option>
-            </nz-select>
-        </ng-container>
-    </ng-container>
-    <ng-container *ngSwitchCase="'list'">
-        <ng-container *ngIf="editList">
-            <input nz-input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"
-                name="value" placeholder="value1;value2;value3">
-        </ng-container>
-        <ng-container *ngIf="!editList && editableValue && list">
-            <nz-select nzShowSearch name="listvalue" [(ngModel)]="editableValue" (ngModelChange)="valueChanged();sendValueChanged()">
-                <ng-container *ngIf="refValue">
-                    <nz-option *ngFor="let v of refValue" [nzValue]="v" [nzLabel]="v"></nz-option>
-                </ng-container>
-                <ng-container *ngIf="!refValue">
-                    <nz-option *ngFor="let v of list" [nzValue]="v" [nzLabel]="v"></nz-option>
-                </ng-container>
-            </nz-select>
-        </ng-container>
-    </ng-container>
-    <ng-container *ngSwitchCase="'repository'">
-        <nz-select nzShowSearch [(ngModel)]="selectedRepoManager.name" (ngModelChange)="updateRepoManager($event)">
-            <nz-option *ngFor="let r of repositoriesManager" [nzValue]="r.name" [nzLabel]="r.name"></nz-option>
+@if (edit) {
+  @switch (type) {
+    @case ('number') {
+      <input nz-input type="number" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"
+        name="value">
+    }
+    @case ('text') {
+      <codemirror [(ngModel)]="editableValue" [config]="codeMirrorConfig" (change)="changeCodeMirror()" #codeMirror
+      (keydown)="sendValueChanged()"></codemirror>
+    }
+    @case ('boolean') {
+      <label nz-checkbox [(ngModel)]="editableValue" (ngModelChange)="valueChanged();sendValueChanged()" name="value"></label>
+    }
+    @case ('ssh-key') {
+      @if (keys && keys.ssh && (!editableValue || keyExist(editableValue.toString()))) {
+        <nz-select nzShowSearch name="sshname" [(ngModel)]="editableValue"  (ngModelChange)="valueChanged();sendValueChanged()" >
+          @for (t of keys.ssh; track t) {
+            <nz-option [nzLabel]="t.name" [nzValue]="t.name"></nz-option>
+          }
         </nz-select>
-        <nz-select *ngIf="selectedRepoManager && selectedRepoManager.name !== 'Git Url'" [(ngModel)]="selectedRepo"
-                   [disabled]="loadingRepos"
-                   (ngModelChange)="valueRepoChanged($event)">
-            <nz-option *ngFor="let r of repositories" [nzLabel]="r.fullname" [nzValue]="r.fullname"></nz-option>
+      }
+      @if (!keys || (editableValue && keys && keys.ssh && !keyExist(editableValue.toString()))) {
+        <input nz-input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"
+          name="value">
+      }
+    }
+    @case ('pgp-key') {
+      @if (keys) {
+        <nz-select nzShowSearch name="gpgname" [(ngModel)]="editableValue"  (ngModelChange)="valueChanged();sendValueChanged()">
+          @for (t of keys.pgp; track t) {
+            <nz-option [nzLabel]="t.name" [nzValue]="t.name"></nz-option>
+          }
         </nz-select>
-        <input nz-input *ngIf="selectedRepoManager && selectedRepoManager.name === 'Git Url'" type="text"
-            [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"
-            placeholder="{{'parameter_git_url' | translate }}">
-    </ng-container>
-    <div *ngSwitchDefault>
+      }
+    }
+    @case ('list') {
+      @if (editList) {
+        <input nz-input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"
+          name="value" placeholder="value1;value2;value3">
+      }
+      @if (!editList && editableValue && list) {
+        <nz-select nzShowSearch name="listvalue" [(ngModel)]="editableValue" (ngModelChange)="valueChanged();sendValueChanged()">
+          @if (refValue) {
+            @for (v of refValue; track v) {
+              <nz-option [nzValue]="v" [nzLabel]="v"></nz-option>
+            }
+          }
+          @if (!refValue) {
+            @for (v of list; track v) {
+              <nz-option [nzValue]="v" [nzLabel]="v"></nz-option>
+            }
+          }
+        </nz-select>
+      }
+    }
+    @case ('repository') {
+      <nz-select nzShowSearch [(ngModel)]="selectedRepoManager.name" (ngModelChange)="updateRepoManager($event)">
+        @for (r of repositoriesManager; track r) {
+          <nz-option [nzValue]="r.name" [nzLabel]="r.name"></nz-option>
+        }
+      </nz-select>
+      @if (selectedRepoManager && selectedRepoManager.name !== 'Git Url') {
+        <nz-select [(ngModel)]="selectedRepo"
+          [disabled]="loadingRepos"
+          (ngModelChange)="valueRepoChanged($event)">
+          @for (r of repositories; track r) {
+            <nz-option [nzLabel]="r.fullname" [nzValue]="r.fullname"></nz-option>
+          }
+        </nz-select>
+      }
+      @if (selectedRepoManager && selectedRepoManager.name === 'Git Url') {
+        <input nz-input type="text"
+          [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"
+          placeholder="{{'parameter_git_url' | translate }}">
+      }
+    }
+    @default {
+      <div>
         <input nz-input [nzAutocomplete]="auto" type="text" [(ngModel)]="editableValue" (change)="valueChanged()"
-            (keydown)="sendValueChanged()" name="value" (ngModelChange)="onInput($event)">
+          (keydown)="sendValueChanged()" name="value" (ngModelChange)="onInput($event)">
         <nz-autocomplete nzBackfill #auto>
-            <nz-auto-option *ngFor="let option of suggestFiltered" [nzValue]="option">{{ option }}</nz-auto-option>
+          @for (option of suggestFiltered; track option) {
+            <nz-auto-option [nzValue]="option">{{ option }}</nz-auto-option>
+          }
         </nz-autocomplete>
-    </div>
-</ng-container>
-<ng-container [ngSwitch]="type" *ngIf="!edit">
-    <ng-container *ngSwitchCase="'text'">
-        <textarea nz-input readonly rows="{{_sharedService.getTextAreaheight(editableValue.toString())}}">{{editableValue}}</textarea>
-    </ng-container>
-    <ng-container *ngSwitchCase="'boolean'">
-        <label nz-checkbox [(ngModel)]="editableValue" name="value" [nzDisabled]="true"></label>
-    </ng-container>
-    <ng-container *ngSwitchDefault>
-        <input nz-input readonly [ngModel]="editableValue">
-    </ng-container>
-</ng-container>
+      </div>
+    }
+  }
+}
+@if (!edit) {
+  @switch (type) {
+    @case ('text') {
+      <textarea nz-input readonly rows="{{_sharedService.getTextAreaheight(editableValue.toString())}}">{{editableValue}}</textarea>
+    }
+    @case ('boolean') {
+      <label nz-checkbox [(ngModel)]="editableValue" name="value" [nzDisabled]="true"></label>
+    }
+    @default {
+      <input nz-input readonly [ngModel]="editableValue">
+    }
+  }
+}

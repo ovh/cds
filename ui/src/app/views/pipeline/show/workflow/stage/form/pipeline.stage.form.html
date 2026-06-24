@@ -1,20 +1,26 @@
-<form nz-form *ngIf="project && pipeline && stage" nzLayout="vertical">
+@if (project && pipeline && stage) {
+  <form nz-form nzLayout="vertical">
     <nz-form-item>
-        <nz-form-label>Name:</nz-form-label>
-        <nz-form-control>
-            <input nz-input type="text" name="stageName" [(ngModel)]="stage.name" (keydown)="stage.hasChanged = true" *ngIf="!readOnly">
-            <span *ngIf="readOnly">{{stage.name}}</span>
-        </nz-form-control>
+      <nz-form-label>Name:</nz-form-label>
+      <nz-form-control>
+        @if (!readOnly) {
+          <input nz-input type="text" name="stageName" [(ngModel)]="stage.name" (keydown)="stage.hasChanged = true">
+        }
+        @if (readOnly) {
+          <span>{{stage.name}}</span>
+        }
+      </nz-form-control>
     </nz-form-item>
     <label nz-checkbox name="enabled" [(ngModel)]="stage.enabled" (ngModelChange)="stage.hasChanged=true" [disabled]="readOnly">Enabled</label>
     <nz-form-item>
-        <nz-form-label>Conditions:</nz-form-label>
-        <nz-form-control>
-            <nz-spin nzTip="Loading..." [nzSpinning]="loading">
-                <app-conditions [project]="project" [readonly]="readOnly"
-                                [triggerConditions]="triggerConditions" [(conditions)]="stage.conditions">
-                </app-conditions>
-            </nz-spin>
-        </nz-form-control>
+      <nz-form-label>Conditions:</nz-form-label>
+      <nz-form-control>
+        <nz-spin nzTip="Loading..." [nzSpinning]="loading">
+          <app-conditions [project]="project" [readonly]="readOnly"
+            [triggerConditions]="triggerConditions" [(conditions)]="stage.conditions">
+          </app-conditions>
+        </nz-spin>
+      </nz-form-control>
     </nz-form-item>
-</form>
+  </form>
+}

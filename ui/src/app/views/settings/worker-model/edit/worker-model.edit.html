@@ -1,84 +1,116 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
-    <app-scrollview class="scrollview" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
-        <nz-row *ngSwitchCase="'worker_model'">
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+  @if (selectedTab) {
+    <app-scrollview class="scrollview">
+      @switch (selectedTab.key) {
+        @case ('worker_model') {
+          <nz-row>
             <nz-col [nzSpan]="18">
-                <app-worker-model-form mode="edit" [loading]="loading" [workerModel]="workerModel" [groups]="groups"
-                    [currentAuthSummary]="currentAuthSummary" [patterns]="patterns" [types]="types"
-                    (save)="saveWorkerModel($event)" (saveAsCode)="saveWorkerModelAsCode($event)"
-                    (delete)="deleteWorkerModel()">
-                </app-worker-model-form>
+              <app-worker-model-form mode="edit" [loading]="loading" [workerModel]="workerModel" [groups]="groups"
+                [currentAuthSummary]="currentAuthSummary" [patterns]="patterns" [types]="types"
+                (save)="saveWorkerModel($event)" (saveAsCode)="saveWorkerModelAsCode($event)"
+                (delete)="deleteWorkerModel()">
+              </app-worker-model-form>
             </nz-col>
             <nz-col [nzSpan]="6">
-                <app-worker-model-help></app-worker-model-help>
-                <div *ngIf="workerModel" class="nzSegment">
-                    <div *ngIf="workerModel.created_by?.username !== ''">
-                        <h3>{{'common_created_by' | translate}}</h3>
-                        <div>
-                            <span nz-icon nzType="user" nzTheme="outline"></span> {{workerModel.created_by?.fullname}}
-                            ({{workerModel.created_by?.username}})
-                            <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
-                        </div>
-                        <div *ngIf="workerModel.created_by?.email !== ''">
-                            <span nz-icon nzType="mail" nzTheme="outline"></span> {{workerModel.created_by?.email}}
-                        </div>
-                    </div>
-                    <div class="field" *ngIf="workerModel.user_last_modified !== ''">
-                        <h3>{{'common_last_modified' | translate}}</h3>
-                        {{workerModel.user_last_modified}}
-                    </div>
-                    <div class="field" *ngIf="workerModel.last_registration !== ''">
-                        <h3>{{'worker_model_last_registration' | translate}}</h3>
-                        {{workerModel.last_registration}}
-                    </div>
-                    <div class="field">
-                        <h3>Registration infos</h3>
-                        <div>
-                            Need registration : {{workerModel.need_registration}}
-                        </div>
-                        <div>
-                            Check registration : {{workerModel.check_registration}}
-                        </div>
-                    </div>
-                </div>
-            </nz-col>
-        </nz-row>
-        <nz-row *ngSwitchCase="'capabilities'">
-            <nz-col [nzSpan]="24">
+              <app-worker-model-help></app-worker-model-help>
+              @if (workerModel) {
                 <div class="nzSegment">
-                    <h3>{{'worker_model_capabilities' | translate}}
-                        <span *ngIf="!workerModel?.need_registration" nz-icon nzType="check" nzTheme="outline"
-                              nz-tooltip nzTooltipTitle="{{'worker_model_capabilities_up_to_date' | translate}}"
-                              title="{{'worker_model_capabilities_up_to_date' | translate}}"></span>
-                        <span *ngIf="workerModel?.need_registration" nz-icon nzType="warning" nzTheme="outline"
-                              nz-tooltip nzTooltipTitle="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"
-                              title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></span>
-                    </h3>
-                    <p>
-                        {{'worker_model_help_capabilities' | translate}}
-                    </p>
+                  @if (workerModel.created_by?.username !== '') {
+                    <div>
+                      <h3>{{'common_created_by' | translate}}</h3>
+                      <div>
+                        <span nz-icon nzType="user" nzTheme="outline"></span> {{workerModel.created_by?.fullname}}
+                        ({{workerModel.created_by?.username}})
+                        @if (workerModel.created_by?.admin) {
+                          <span><b>Admin</b></span>
+                        }
+                      </div>
+                      @if (workerModel.created_by?.email !== '') {
+                        <div>
+                          <span nz-icon nzType="mail" nzTheme="outline"></span> {{workerModel.created_by?.email}}
+                        </div>
+                      }
+                    </div>
+                  }
+                  @if (workerModel.user_last_modified !== '') {
+                    <div class="field">
+                      <h3>{{'common_last_modified' | translate}}</h3>
+                      {{workerModel.user_last_modified}}
+                    </div>
+                  }
+                  @if (workerModel.last_registration !== '') {
+                    <div class="field">
+                      <h3>{{'worker_model_last_registration' | translate}}</h3>
+                      {{workerModel.last_registration}}
+                    </div>
+                  }
+                  <div class="field">
+                    <h3>Registration infos</h3>
+                    <div>
+                      Need registration : {{workerModel.need_registration}}
+                    </div>
+                    <div>
+                      Check registration : {{workerModel.check_registration}}
+                    </div>
+                  </div>
                 </div>
+              }
+            </nz-col>
+          </nz-row>
+        }
+        @case ('capabilities') {
+          <nz-row>
+            <nz-col [nzSpan]="24">
+              <div class="nzSegment">
+                <h3>{{'worker_model_capabilities' | translate}}
+                  @if (!workerModel?.need_registration) {
+                    <span nz-icon nzType="check" nzTheme="outline"
+                      nz-tooltip nzTooltipTitle="{{'worker_model_capabilities_up_to_date' | translate}}"
+                    title="{{'worker_model_capabilities_up_to_date' | translate}}"></span>
+                  }
+                  @if (workerModel?.need_registration) {
+                    <span nz-icon nzType="warning" nzTheme="outline"
+                      nz-tooltip nzTooltipTitle="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"
+                    title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></span>
+                  }
+                </h3>
+                <p>
+                  {{'worker_model_help_capabilities' | translate}}
+                </p>
+              </div>
             </nz-col>
             <nz-col [nzSpan]="24">
-                <nz-table [nzPageSize]="100" [nzData]="workerModel?.registered_capabilities" #capaTable>
-                    <tr *ngFor="let v of capaTable.data">
-                        <td>
-                            {{v.value}}
-                        </td>
-                    </tr>
-                </nz-table>
+              <nz-table [nzPageSize]="100" [nzData]="workerModel?.registered_capabilities" #capaTable>
+                @for (v of capaTable.data; track v) {
+                  <tr>
+                    <td>
+                      {{v.value}}
+                    </td>
+                  </tr>
+                }
+              </nz-table>
             </nz-col>
-        </nz-row>
-        <nz-row *ngSwitchCase="'usage'">
+          </nz-row>
+        }
+        @case ('usage') {
+          <nz-row>
             <nz-col [nzSpan]="24">
-                <nz-spin nzTip="Loading..." *ngIf="loadingUsage"></nz-spin>
-                <ng-container *ngIf="!loadingUsage">
-                    <app-usage [pipelines]="usages"></app-usage>
-                    <div class="centered" *ngIf="!usages || usages.length === 0">{{'worker_model_no_usage'
-                                | translate}}</div>
-                </ng-container>
+              @if (loadingUsage) {
+                <nz-spin nzTip="Loading..."></nz-spin>
+              }
+              @if (!loadingUsage) {
+                <app-usage [pipelines]="usages"></app-usage>
+                @if (!usages || usages.length === 0) {
+                  <div class="centered">{{'worker_model_no_usage'
+                  | translate}}</div>
+                }
+              }
             </nz-col>
-        </nz-row>
+          </nz-row>
+        }
+      }
     </app-scrollview>
+  }
 </div>

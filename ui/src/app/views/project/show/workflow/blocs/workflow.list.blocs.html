@@ -1,56 +1,62 @@
 <div class="list">
-    <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-        <nz-col class="cardContainer" *ngFor="let wf of workflows" [nzSpan]="6">
-            <app-card [routerLink]="['./workflow', wf.name]" [title]="wf.name" [description]="wf.description" [image]="wf.icon"></app-card>
-                <div class="nzSegment extra">
-                    <span>
-                      <nz-tag [nzColor]="label.color" *ngFor="let label of wf?.labels?.slice(0, 3)">
-                          <span style="color: {{label.font_color}}">
-                              {{label.name}}
-                          </span>
-                      </nz-tag>
+  <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+    @for (wf of workflows; track wf) {
+      <nz-col class="cardContainer" [nzSpan]="6">
+        <app-card [routerLink]="['./workflow', wf.name]" [title]="wf.name" [description]="wf.description" [image]="wf.icon"></app-card>
+        <div class="nzSegment extra">
+          <span>
+            @for (label of wf?.labels?.slice(0, 3); track label) {
+              <nz-tag [nzColor]="label.color">
+                <span style="color: {{label.font_color}}">
+                  {{label.name}}
+                </span>
+              </nz-tag>
+            }
+          </span>
+          @if (project.permissions.writable) {
+            <span class="right"
+              nz-popover
+              [nzPopoverContent]="popupTemplate"
+              nzPopoverTrigger="click"
+              nzPopoverTitle="Labels"
+              nzPopoverPlacement="rightTop">
+              <i nz-icon nzType="tags" nzTheme="outline"></i>
+            </span>
+          }
+        </div>
+        <ng-template #popupTemplate>
+          <div class="content">
+            <div class="field">
+              <nz-input-group [nzSuffix]="suffixIconSearch">
+                <input nz-input type="text" placeholder="FIlter or create" [(ngModel)]="labelFilter"(keyup.enter)="confirmLabel(wf.name, labelFilter)">
+              </nz-input-group>
+              <ng-template #suffixIconSearch>
+                <i nz-icon nzType="search"></i>
+              </ng-template>
+            </div>
+            <nz-list nzSize="small">
+              @for (label of filteredLabels; track label) {
+                <nz-list-item>
+                  <div class="content">
+                    <span class="pointing" (click)="!workflowLabelsMap[wf.name][label.name] && linkLabelToWorkflow(wf.name, label)">
+                      <div class="round" [style.background-color]="label.color"></div>
+                      {{label.name}}
                     </span>
-                    <ng-container *ngIf="project.permissions.writable">
-                      <span class="right"
-                            nz-popover
-                            [nzPopoverContent]="popupTemplate"
-                            nzPopoverTrigger="click"
-                            nzPopoverTitle="Labels"
-                            nzPopoverPlacement="rightTop">
-                        <i nz-icon nzType="tags" nzTheme="outline"></i>
+                    @if (workflowLabelsMap[wf.name][label.name]) {
+                      <span class="pointing alignRight" (click)="unlinkLabelToWorkflow(wf.name, label)">
+                        <i nz-icon nzType="close-circle" nzTheme="outline"></i>
                       </span>
-                    </ng-container>
-                </div>
-
-            <ng-template #popupTemplate>
-                <div class="content">
-                    <div class="field">
-                        <nz-input-group [nzSuffix]="suffixIconSearch">
-                            <input nz-input type="text" placeholder="FIlter or create" [(ngModel)]="labelFilter"(keyup.enter)="confirmLabel(wf.name, labelFilter)">
-                        </nz-input-group>
-                        <ng-template #suffixIconSearch>
-                            <i nz-icon nzType="search"></i>
-                        </ng-template>
-                    </div>
-                    <nz-list nzSize="small">
-                        <nz-list-item *ngFor="let label of filteredLabels">
-                            <div class="content">
-                                <span class="pointing" (click)="!workflowLabelsMap[wf.name][label.name] && linkLabelToWorkflow(wf.name, label)">
-                                    <div class="round" [style.background-color]="label.color"></div>
-                                    {{label.name}}
-                                </span>
-
-                                <span class="pointing alignRight" *ngIf="workflowLabelsMap[wf.name][label.name]" (click)="unlinkLabelToWorkflow(wf.name, label)">
-                                    <i nz-icon nzType="close-circle" nzTheme="outline"></i>
-                                </span>
-                            </div>
-                        </nz-list-item>
-                    </nz-list>
-                </div>
-                <div class="footer">
-                    <a class="pointing alignRight" (click)="editLabels()"><i nz-icon nzType="edit" nzTheme="outline"></i> Edit labels</a>
-                </div>
-            </ng-template>
-        </nz-col>
-    </nz-row>
+                    }
+                  </div>
+                </nz-list-item>
+              }
+            </nz-list>
+          </div>
+          <div class="footer">
+            <a class="pointing alignRight" (click)="editLabels()"><i nz-icon nzType="edit" nzTheme="outline"></i> Edit labels</a>
+          </div>
+        </ng-template>
+      </nz-col>
+    }
+  </nz-row>
 </div>

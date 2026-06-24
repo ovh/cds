@@ -1,54 +1,70 @@
 <div class="content">
 
-    <ng-container *ngIf="nodeToRun && nodeToRun.type === nodeTypeEnum.PIPELINE && parameters?.length > 0 ">
-        <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
-        <app-parameter-list [parameters]="parameters"
-                            [paramsRef]="workflow.pipelines[nodeToRun.context.pipeline_id]?.parameters"
-                            mode="launcher"
-                            [suggest]="[]"></app-parameter-list>
-    </ng-container>
-    <h3 *ngIf="!readOnly">{{ 'workflow_node_context_payload' | translate}}</h3>
-    <h3 *ngIf="readOnly">{{ 'workflow_node_context_payload_read_only' | translate}}</h3>
-    <ng-container *ngIf="!loadingBranches">
-        <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig"
-                    (click)="changeCodeMirror(textareaCodeMirror, $event)"
-                    (change)="changeCodeMirror(textareaCodeMirror, $event)" #textareaCodeMirror>
-        </codemirror>
-    </ng-container>
-    <div class="payloadInfo">
-        <nz-alert *ngIf="loadingBranches" nzType="info" nzMessage="Loading..."></nz-alert>
-        <nz-alert *ngIf="invalidJSON" nzType="error" nzMessage="Invalid JSON"></nz-alert>
-        <ng-container *ngIf="!invalidJSON">
-            <button nz-button (click)="reindent()" class="reindent">Format</button>
-        </ng-container>
-    </div>
+  @if (nodeToRun && nodeToRun.type === nodeTypeEnum.PIPELINE && parameters?.length > 0 ) {
+    <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
+    <app-parameter-list [parameters]="parameters"
+      [paramsRef]="workflow.pipelines[nodeToRun.context.pipeline_id]?.parameters"
+      mode="launcher"
+    [suggest]="[]"></app-parameter-list>
+  }
+  @if (!readOnly) {
+    <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
+  }
+  @if (readOnly) {
+    <h3>{{ 'workflow_node_context_payload_read_only' | translate}}</h3>
+  }
+  @if (!loadingBranches) {
+    <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig"
+      (click)="changeCodeMirror(textareaCodeMirror, $event)"
+      (change)="changeCodeMirror(textareaCodeMirror, $event)" #textareaCodeMirror>
+    </codemirror>
+  }
+  <div class="payloadInfo">
+    @if (loadingBranches) {
+      <nz-alert nzType="info" nzMessage="Loading..."></nz-alert>
+    }
+    @if (invalidJSON) {
+      <nz-alert nzType="error" nzMessage="Invalid JSON"></nz-alert>
+    }
+    @if (!invalidJSON) {
+      <button nz-button (click)="reindent()" class="reindent">Format</button>
+    }
+  </div>
 
-    <h3>Commit list</h3>
-    <div class="scrollable" *ngIf="!loadingCommits && commits != null && commits.length !== 0">
-        <app-commit-list [commits]="commits"></app-commit-list>
+  <h3>Commit list</h3>
+  @if (!loadingCommits && commits != null && commits.length !== 0) {
+    <div class="scrollable">
+      <app-commit-list [commits]="commits"></app-commit-list>
     </div>
-    <nz-alert *ngIf="!loadingCommits && (commits == null || commits.length === 0)" nzType="info" nzMessage="There is no commit"></nz-alert>
-    <nz-alert *ngIf="loadingCommits" nzType="info" nzMessage="Loading commits..."></nz-alert>
+  }
+  @if (!loadingCommits && (commits == null || commits.length === 0)) {
+    <nz-alert nzType="info" nzMessage="There is no commit"></nz-alert>
+  }
+  @if (loadingCommits) {
+    <nz-alert nzType="info" nzMessage="Loading commits..."></nz-alert>
+  }
 </div>
 <div *nzModalFooter>
-    <button nz-button [disabled]="loading" (click)="close()">Cancel</button>
-    <nz-space-compact>
-        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading"
-                (click)="run(false, false)" autofocus>Run
-        </button>
-        <button *ngIf="!loading && currentNodeRun" nz-button nzType="primary" nz-dropdown [nzDropdownMenu]="menu"
-                nzPlacement="bottomRight">
-            <i nz-icon nzType="down"></i>
-        </button>
-        <nz-dropdown-menu #menu="nzDropdownMenu">
-            <ul nz-menu>
-                <li nz-menu-item [nzDisabled]="workflow?.from_repository" (click)="run(true, false)" nz-tooltip nzTooltipTitle="When you resync this run, it will update the pipelines linked to this run with your last editions. It won't resync your project variables.">
-                    <i nz-icon nzType="sync" nzTheme="outline"></i>{{'workflow_resync' | translate }}
-                </li>
-                <li nz-menu-item [nzDisabled]="currentNodeRun?.status !== 'Fail'" (click)="run(false, true)">
-                    <i nz-icon nzType="bug" nzTheme="outline"></i>{{'workflow_run_only_failed' | translate }}
-                </li>
-            </ul>
-        </nz-dropdown-menu>
-    </nz-space-compact>
+  <button nz-button [disabled]="loading" (click)="close()">Cancel</button>
+  <nz-space-compact>
+    <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading"
+      (click)="run(false, false)" autofocus>Run
+    </button>
+    @if (!loading && currentNodeRun) {
+      <button nz-button nzType="primary" nz-dropdown [nzDropdownMenu]="menu"
+        nzPlacement="bottomRight">
+        <i nz-icon nzType="down"></i>
+      </button>
+    }
+    <nz-dropdown-menu #menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item [nzDisabled]="workflow?.from_repository" (click)="run(true, false)" nz-tooltip nzTooltipTitle="When you resync this run, it will update the pipelines linked to this run with your last editions. It won't resync your project variables.">
+          <i nz-icon nzType="sync" nzTheme="outline"></i>{{'workflow_resync' | translate }}
+        </li>
+        <li nz-menu-item [nzDisabled]="currentNodeRun?.status !== 'Fail'" (click)="run(false, true)">
+          <i nz-icon nzType="bug" nzTheme="outline"></i>{{'workflow_run_only_failed' | translate }}
+        </li>
+      </ul>
+    </nz-dropdown-menu>
+  </nz-space-compact>
 </div>

@@ -1,15 +1,17 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-scrollview class="scrollview">
-        <nz-row>
-            <nz-col [nzSpan]="19">
-                <nz-alert *ngIf="job" nzType="info" nzMessage="{{'action_help_add_from' | translate: {projectKey: projectKey, pipelineName: pipeline.name, jobName: job.action.name} }}"></nz-alert>
-                <app-action-form [groups]="groups" [action]="action" (save)="actionSave($event)" [loading]="loading">
-                </app-action-form>
-            </nz-col>
-            <nz-col [nzSpan]="5">
-                <app-action-help></app-action-help>
-            </nz-col>
-        </nz-row>
-    </app-scrollview>
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-scrollview class="scrollview">
+    <nz-row>
+      <nz-col [nzSpan]="19">
+        @if (job) {
+          <nz-alert nzType="info" nzMessage="{{'action_help_add_from' | translate: {projectKey: projectKey, pipelineName: pipeline.name, jobName: job.action.name} }}"></nz-alert>
+        }
+        <app-action-form [groups]="groups" [action]="action" (save)="actionSave($event)" [loading]="loading">
+        </app-action-form>
+      </nz-col>
+      <nz-col [nzSpan]="5">
+        <app-action-help></app-action-help>
+      </nz-col>
+    </nz-row>
+  </app-scrollview>
 </div>

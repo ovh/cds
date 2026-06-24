@@ -1,54 +1,58 @@
 <form nz-form (ngSubmit)="create()" nzLayout="vertical">
-    <nz-row>
-        <nz-col [nzSpan]="4">
-            <nz-form-item>
-                <nz-form-label>Name</nz-form-label>
-                <nz-form-control>
-                    <input nz-input type="text" name="name" [(ngModel)]="newParameter.name">
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="4">
-            <nz-form-item>
-                <nz-form-label>Type</nz-form-label>
-                <nz-form-control>
-                    <nz-select nzShowSearch name="type" [(ngModel)]="newParameter.type">
-                        <nz-option *ngFor="let type of parameterTypes" [nzValue]="type" [nzLabel]="type"></nz-option>
-                    </nz-select>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="4">
-            <nz-form-item>
-                <nz-form-label>Value</nz-form-label>
-                <nz-form-control>
-                    <app-parameter-value [project]="project" [suggest]="suggest" [type]="newParameter.type" [(value)]="newParameter.value" [editList]="true" [keys]="keys"></app-parameter-value>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="6">
-            <nz-form-item>
-                <nz-form-label>Description</nz-form-label>
-                <nz-form-control>
-                    <textarea nz-input [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="4" *ngIf="!project">
-            <nz-form-label>Advanced parameter</nz-form-label>
-            <div class="checkbox">
-                <label nz-checkbox name="advanced" [(nzChecked)]="newParameter.advanced"></label>
-            </div>
-        </nz-col>
-        <nz-col [nzSpan]="2">
-            <nz-form-item>
-                <nz-form-label></nz-form-label>
-                <nz-form-control>
-                    <button name="addBtn" nz-button nzType="primary" [disabled]="!newParameter.name">
-                        <i nz-icon nzType="plus" nzTheme="outline"></i>Add
-                    </button>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-    </nz-row>
+  <nz-row>
+    <nz-col [nzSpan]="4">
+      <nz-form-item>
+        <nz-form-label>Name</nz-form-label>
+        <nz-form-control>
+          <input nz-input type="text" name="name" [(ngModel)]="newParameter.name">
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+    <nz-col [nzSpan]="4">
+      <nz-form-item>
+        <nz-form-label>Type</nz-form-label>
+        <nz-form-control>
+          <nz-select nzShowSearch name="type" [(ngModel)]="newParameter.type">
+            @for (type of parameterTypes; track type) {
+              <nz-option [nzValue]="type" [nzLabel]="type"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+    <nz-col [nzSpan]="4">
+      <nz-form-item>
+        <nz-form-label>Value</nz-form-label>
+        <nz-form-control>
+          <app-parameter-value [project]="project" [suggest]="suggest" [type]="newParameter.type" [(value)]="newParameter.value" [editList]="true" [keys]="keys"></app-parameter-value>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+    <nz-col [nzSpan]="6">
+      <nz-form-item>
+        <nz-form-label>Description</nz-form-label>
+        <nz-form-control>
+          <textarea nz-input [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+    @if (!project) {
+      <nz-col [nzSpan]="4">
+        <nz-form-label>Advanced parameter</nz-form-label>
+        <div class="checkbox">
+          <label nz-checkbox name="advanced" [(nzChecked)]="newParameter.advanced"></label>
+        </div>
+      </nz-col>
+    }
+    <nz-col [nzSpan]="2">
+      <nz-form-item>
+        <nz-form-label></nz-form-label>
+        <nz-form-control>
+          <button name="addBtn" nz-button nzType="primary" [disabled]="!newParameter.name">
+            <i nz-icon nzType="plus" nzTheme="outline"></i>Add
+          </button>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+  </nz-row>
 </form>

@@ -1,63 +1,70 @@
 <div class="scrollable">
-    <div id="AddPipeline">
-        <form nz-form>
-            <h2>Create a pipeline</h2>
-            <nz-row class="header">
-                <nz-col nzOffset="2" nzSpan="20">
-                    <nz-space-compact>
-                        <button nz-button type="button" [nzType]="!asCode?'primary':'default'" (click)="asCode = false">
-                            Create
-                        </button>
-                        <button nz-button type="button" [nzType]="asCode?'primary':'default'"
-                                (click)="asCode = true">
-                           Import
-                        </button>
-                    </nz-space-compact>
-                </nz-col>
-            </nz-row>
-            <nz-row *ngIf="asCode">
-                <nz-col nzOffset="2" nzSpan="20" class="center">
-                    <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)"></app-upload-button>
-                </nz-col>
-                <nz-col nzOffset="2" nzSpan="20">
-                    <nz-divider nzText="OR"></nz-divider>
-                </nz-col>
-                <nz-col nzOffset="2" nzSpan="20">
-                    <codemirror name="pipToImport" [(ngModel)]="pipToImport" (keydown)="updated = true"
-                                    [config]="codeMirrorConfig" #codeMirror></codemirror>
-                </nz-col>
-                <nz-col nzOffset="2" nzSpan="20" class="footer">
-                    <button nz-button type="button" (click)="goToProject()">Cancel</button>
-                    <button nz-button nzType="primary"  type="button" (click)="importPipeline()" class="right"
-                            *ngIf="asCode" [disabled]="!pipToImport" [nzLoading]="loadingCreate">Create
-                    </button>
-                </nz-col>
-            </nz-row>
+  <div id="AddPipeline">
+    <form nz-form>
+      <h2>Create a pipeline</h2>
+      <nz-row class="header">
+        <nz-col nzOffset="2" nzSpan="20">
+          <nz-space-compact>
+            <button nz-button type="button" [nzType]="!asCode?'primary':'default'" (click)="asCode = false">
+              Create
+            </button>
+            <button nz-button type="button" [nzType]="asCode?'primary':'default'"
+              (click)="asCode = true">
+              Import
+            </button>
+          </nz-space-compact>
+        </nz-col>
+      </nz-row>
+      @if (asCode) {
+        <nz-row>
+          <nz-col nzOffset="2" nzSpan="20" class="center">
+            <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)"></app-upload-button>
+          </nz-col>
+          <nz-col nzOffset="2" nzSpan="20">
+            <nz-divider nzText="OR"></nz-divider>
+          </nz-col>
+          <nz-col nzOffset="2" nzSpan="20">
+            <codemirror name="pipToImport" [(ngModel)]="pipToImport" (keydown)="updated = true"
+            [config]="codeMirrorConfig" #codeMirror></codemirror>
+          </nz-col>
+          <nz-col nzOffset="2" nzSpan="20" class="footer">
+            <button nz-button type="button" (click)="goToProject()">Cancel</button>
+            @if (asCode) {
+              <button nz-button nzType="primary"  type="button" (click)="importPipeline()" class="right"
+                [disabled]="!pipToImport" [nzLoading]="loadingCreate">Create
+              </button>
+            }
+          </nz-col>
+        </nz-row>
+      }
 
-            <nz-row *ngIf="!asCode">
-                <nz-col nzSpan="20" nzOffset="2">
-                    <nz-form-item>
-                        <nz-form-label nzSpan="3">Pipeline name</nz-form-label>
-                        <nz-form-control>
-                            <input nz-input type="text" name="pipname" [(ngModel)]="newPipeline.name">
-                        </nz-form-control>
-                        <nz-alert *ngIf="pipPatternError" nzType="error" nzMessage="Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
-                    </nz-form-item>
-                    <nz-form-item>
-                        <nz-form-label nzSpan="3">Description</nz-form-label>
-                        <nz-form-control>
-                            <textarea nz-input type="text" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
-                        </nz-form-control>
-                    </nz-form-item>
-                </nz-col>
-                <nz-col nzSpan="20" nzOffset="2" class="footer">
-                    <button nz-button [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'pipelines'}">Cancel</button>
-                    <button nz-button nzType="primary" class="right" [nzLoading]="loadingCreate"
-                            [disabled]="!newPipeline.name || newPipeline.name === ''" (click)="createPipeline()">Create
-                    </button>
-                </nz-col>
-
-            </nz-row>
-        </form>
-    </div>
+      @if (!asCode) {
+        <nz-row>
+          <nz-col nzSpan="20" nzOffset="2">
+            <nz-form-item>
+              <nz-form-label nzSpan="3">Pipeline name</nz-form-label>
+              <nz-form-control>
+                <input nz-input type="text" name="pipname" [(ngModel)]="newPipeline.name">
+              </nz-form-control>
+              @if (pipPatternError) {
+                <nz-alert nzType="error" nzMessage="Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
+              }
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label nzSpan="3">Description</nz-form-label>
+              <nz-form-control>
+                <textarea nz-input type="text" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
+              </nz-form-control>
+            </nz-form-item>
+          </nz-col>
+          <nz-col nzSpan="20" nzOffset="2" class="footer">
+            <button nz-button [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'pipelines'}">Cancel</button>
+            <button nz-button nzType="primary" class="right" [nzLoading]="loadingCreate"
+              [disabled]="!newPipeline.name || newPipeline.name === ''" (click)="createPipeline()">Create
+            </button>
+          </nz-col>
+        </nz-row>
+      }
+    </form>
+  </div>
 </div>

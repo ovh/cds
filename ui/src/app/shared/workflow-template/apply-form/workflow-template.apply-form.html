@@ -1,50 +1,64 @@
 <nz-row>
-    <nz-col [nzSpan]="24">
-        <nz-form-item>
-            <nz-form-label>Workflow name*</nz-form-label>
-            <nz-form-control>
-                <input nz-input type="text" name="workflow_name" [(ngModel)]="parameterName"
-                       [disabled]="!!workflowTemplateInstance">
-            </nz-form-control>
-        </nz-form-item>
-    </nz-col>
+  <nz-col [nzSpan]="24">
+    <nz-form-item>
+      <nz-form-label>Workflow name*</nz-form-label>
+      <nz-form-control>
+        <input nz-input type="text" name="workflow_name" [(ngModel)]="parameterName"
+          [disabled]="!!workflowTemplateInstance">
+      </nz-form-control>
+    </nz-form-item>
+  </nz-col>
 </nz-row>
 <nz-row>
-    <nz-col [nzSpan]="24">
-        <app-workflow-template-param-form [project]="project" [workflowTemplate]="workflowTemplate"
-                                          [workflowTemplateInstance]="workflowTemplateInstance" (paramChange)="changeParam($event)">
-        </app-workflow-template-param-form>
-    </nz-col>
+  <nz-col [nzSpan]="24">
+    <app-workflow-template-param-form [project]="project" [workflowTemplate]="workflowTemplate"
+      [workflowTemplateInstance]="workflowTemplateInstance" (paramChange)="changeParam($event)">
+    </app-workflow-template-param-form>
+  </nz-col>
 </nz-row>
-<nz-row *ngIf="asCodeApply">
+@if (asCodeApply) {
+  <nz-row>
     <nz-col [nzSpan]="24">
-        <app-ascode-save-form  [project]="project" [workflow]="workflow"
-                              [operation]="asCodeOperation" (paramChange)="onAsCodeParamChange($event)">
-        </app-ascode-save-form>
+      <app-ascode-save-form  [project]="project" [workflow]="workflow"
+        [operation]="asCodeOperation" (paramChange)="onAsCodeParamChange($event)">
+      </app-ascode-save-form>
     </nz-col>
-</nz-row>
-<nz-row *ngIf="result">
+  </nz-row>
+}
+@if (result) {
+  <nz-row>
     <nz-col [nzSpan]="24">
-        <ul>
-            <li *ngFor="let s of result.msgs">{{s}}</li>
-        </ul>
+      <ul>
+        @for (s of result.msgs; track s) {
+          <li>{{s}}</li>
+        }
+      </ul>
     </nz-col>
-</nz-row>
+  </nz-row>
+}
 <nz-row>
-    <nz-col [nzSpan]="12">
-        <button nz-button nzDanger nzType="primary" [nzLoading]="loading" *ngIf="workflowTemplateInstance?.id && !asCodeApply"
-                class="floatLeft" nz-popconfirm nzPopconfirmTitle="Are you sure you want to detach the workflow ?"
-                (nzOnConfirm)="clickDetach()" [title]="'workflow_template_detach'">Delete</button>
-        <label nz-checkbox [(ngModel)]="detached" (ngModelChange)="onSelectDetachChange()"
-               *ngIf="!workflowTemplateInstance && !result">{{'workflow_template_apply_detach' | translate}}</label>
+  <nz-col [nzSpan]="12">
+    @if (workflowTemplateInstance?.id && !asCodeApply) {
+      <button nz-button nzDanger nzType="primary" [nzLoading]="loading"
+        class="floatLeft" nz-popconfirm nzPopconfirmTitle="Are you sure you want to detach the workflow ?"
+      (nzOnConfirm)="clickDetach()" [title]="'workflow_template_detach'">Delete</button>
+    }
+    @if (!workflowTemplateInstance && !result) {
+      <label nz-checkbox [(ngModel)]="detached" (ngModelChange)="onSelectDetachChange()"
+      >{{'workflow_template_apply_detach' | translate}}</label>
+    }
 
-    </nz-col>
-    <nz-col [nzSpan]="12">
-        <button nz-button nzType="primary" class="floatRight" type="button" (click)="applyTemplate()"
-                [nzLoading]="loading" [disabled]="!validFields">Apply</button>
-        <button nz-button nzType="primary" class="floatRight" type="button" (click)="goToWorkflow()"
-                *ngIf="result && !withClose">See workflow</button>
-        <button nz-button nzType="primary" class="floatRight" [disabled]="loading" (click)="clickClose()"
-                *ngIf="withClose">Close</button>
-    </nz-col>
+  </nz-col>
+  <nz-col [nzSpan]="12">
+    <button nz-button nzType="primary" class="floatRight" type="button" (click)="applyTemplate()"
+    [nzLoading]="loading" [disabled]="!validFields">Apply</button>
+    @if (result && !withClose) {
+      <button nz-button nzType="primary" class="floatRight" type="button" (click)="goToWorkflow()"
+      >See workflow</button>
+    }
+    @if (withClose) {
+      <button nz-button nzType="primary" class="floatRight" [disabled]="loading" (click)="clickClose()"
+      >Close</button>
+    }
+  </nz-col>
 </nz-row>

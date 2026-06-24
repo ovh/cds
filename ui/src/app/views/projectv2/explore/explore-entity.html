@@ -1,17 +1,21 @@
-<nz-spin *ngIf="loading" nzTip="Loading entity"></nz-spin>
+@if (loading) {
+  <nz-spin nzTip="Loading entity"></nz-spin>
+}
 
-<ng-container *ngIf="entity && !loading">
-	<div class="content">
-		<div class="leftPanel">
-			<nz-tabset nzType="card" nzSize="small">
-				<nz-tab [nzTitle]="entity.type + ' ' + entity.file_path"></nz-tab>
-			</nz-tabset>
-			<nz-code-editor #editor [ngModel]="entity.data" [nzEditorOption]="editorOption"
-				(nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
-		</div>
-		<app-resizable-panel *ngIf="showWorkflowPreview" [minSize]="400" [initialSize]="panelSize"
-			(onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
-			<app-graph [navigationDisabled]="true" [workflow]="entity.data"></app-graph>
-		</app-resizable-panel>
-	</div>
-</ng-container>
+@if (entity && !loading) {
+  <div class="content">
+    <div class="leftPanel">
+      <nz-tabs nzType="card" nzSize="small">
+        <nz-tab [nzTitle]="entity.type + ' ' + entity.file_path"></nz-tab>
+      </nz-tabs>
+      <nz-code-editor #editor [ngModel]="entity.data" [nzEditorOption]="editorOption"
+      (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
+    </div>
+    @if (showWorkflowPreview) {
+      <app-resizable-panel [minSize]="400" [initialSize]="panelSize"
+        (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
+        <app-graph [navigationDisabled]="true" [workflow]="entity.data"></app-graph>
+      </app-resizable-panel>
+    }
+  </div>
+}

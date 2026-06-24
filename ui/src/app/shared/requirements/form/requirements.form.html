@@ -1,92 +1,120 @@
-<form nz-form name="addReqForm" *ngIf="availableRequirements.length > 0" #formAddRequirement="ngForm">
+@if (availableRequirements.length > 0) {
+  <form nz-form name="addReqForm" #formAddRequirement="ngForm">
     <div nz-row>
-        <div nz-col nzSpan="4">
-            <nz-form-item>
-                <nz-select [(ngModel)]="requirementType" (ngModelChange)="selectType($event)" name="selectType"
-                           nzPlaceHolder="{{ 'requirement_type' | translate }}">
-                    <nz-option *ngFor="let r of availableRequirements" [nzValue]="r" [nzLabel]="r"></nz-option>
-                </nz-select>
-            </nz-form-item>
+      <div nz-col nzSpan="4">
+        <nz-form-item>
+          <nz-select [(ngModel)]="requirementType" (ngModelChange)="selectType($event)" name="selectType"
+            nzPlaceHolder="{{ 'requirement_type' | translate }}">
+            @for (r of availableRequirements; track r) {
+              <nz-option [nzValue]="r" [nzLabel]="r"></nz-option>
+            }
+          </nz-select>
+        </nz-form-item>
+      </div>
+      <div nz-col nzSpan="14">
+        <div class="content">
+          <app-requirements-value [suggestArchOs]="suggestWithOsArch"
+            [suggestWorkerModels]="suggestWithWorkerModel"
+            [workerModels]="workerModelsMap"
+            [edit]="true"
+            [suggest]="suggest"
+            [(requirement)]="newRequirement">
+          </app-requirements-value>
         </div>
-        <div nz-col nzSpan="14">
-            <div class="content">
-                <app-requirements-value [suggestArchOs]="suggestWithOsArch"
-                                        [suggestWorkerModels]="suggestWithWorkerModel"
-                                        [workerModels]="workerModelsMap"
-                                        [edit]="true"
-                                        [suggest]="suggest"
-                                        [(requirement)]="newRequirement">
-                </app-requirements-value>
+      </div>
+      <div nz-col nzSpan="2">
+        @if (workerModelLinked) {
+          <nz-form-item>
+            @if (workerModelLinked.is_official) {
+              <span nz-tooltip nzTooltipTitle="{{'worker_model_official_tooltip' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="check-circle" nzTheme="outline" class="green"></i></span>
+            }
+            @if (!workerModelLinked.is_official) {
+              <span nz-tooltip nzTooltipTitle="{{'worker_model_unofficial' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="close-circle" nzTheme="outline" class="red"></i></span>
+            }
+            @if (workerModelLinked.is_deprecated) {
+              <span nz-tooltip nzTooltipTitle="{{'worker_model_deprecated_tooltip' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="warning" nzTheme="outline" class="orange"></i></span>
+            }
+          </nz-form-item>
+        }
+      </div>
+      <div nz-col nzSpan="4">
+        <nz-form-item>
+          @if ((newRequirement.type === 'model' && config.disableModel) || (newRequirement.type === 'hostname' && config.disableHostname) || (newRequirement.type === 'region' && config.disableRegion)) {
+            <div nz-tooltip [nzTooltipTitle]="popupText"
+              nzTooltipPlacement="top"
+              >
+              <button nz-button nzType="primary" name="addBtn"
+                (click)="onSubmitAddRequirement()">
+                <i nz-icon nzType="plus" nzTheme="outline"></i>
+              </button>
             </div>
-        </div>
-        <div nz-col nzSpan="2">
-            <nz-form-item *ngIf="workerModelLinked">
-                <span *ngIf="workerModelLinked.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_official_tooltip' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="check-circle" nzTheme="outline" class="green"></i></span>
-                <span *ngIf="!workerModelLinked.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_unofficial' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="close-circle" nzTheme="outline" class="red"></i></span>
-                <span *ngIf="workerModelLinked.is_deprecated" nz-tooltip nzTooltipTitle="{{'worker_model_deprecated_tooltip' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="warning" nzTheme="outline" class="orange"></i></span>
-            </nz-form-item>
-        </div>
-        <div nz-col nzSpan="4">
-            <nz-form-item>
-                <div nz-tooltip [nzTooltipTitle]="popupText"
-                     nzTooltipPlacement="top"
-                     *ngIf="(newRequirement.type === 'model' && config.disableModel) || (newRequirement.type === 'hostname' && config.disableHostname) || (newRequirement.type === 'region' && config.disableRegion)">
-                    <button nz-button nzType="primary" name="addBtn"
-                            (click)="onSubmitAddRequirement()">
-                        <i nz-icon nzType="plus" nzTheme="outline"></i>
-                    </button>
-                </div>
-                <div *ngIf="(newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname) && (newRequirement.type !== 'region' || !config.disableRegion)">
-                    <button nz-button nzType="primary" name="addBtn"
-                            (click)="onSubmitAddRequirement()">
-                        <i nz-icon nzType="plus" nzTheme="outline"></i>
-                    </button>
-                </div>
-            </nz-form-item>
-        </div>
+          }
+          @if ((newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname) && (newRequirement.type !== 'region' || !config.disableRegion)) {
+            <div>
+              <button nz-button nzType="primary" name="addBtn"
+                (click)="onSubmitAddRequirement()">
+                <i nz-icon nzType="plus" nzTheme="outline"></i>
+              </button>
+            </div>
+          }
+        </nz-form-item>
+      </div>
     </div>
-
     <p>
-        <span nz-icon nzType="book" nzTheme="outline"></span>
-        <a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']" target="_blank" rel="noopener noreferrer">
-        {{ 'requirement_documentation' | translate }} </a>
+      <span nz-icon nzType="book" nzTheme="outline"></span>
+      <a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']" target="_blank" rel="noopener noreferrer">
+      {{ 'requirement_documentation' | translate }} </a>
     </p>
-
-    <div [ngSwitch]="newRequirement.type">
-        <div *ngSwitchCase="'binary'">
+    <div>
+      @switch (newRequirement.type) {
+        @case ('binary') {
+          <div>
             {{ 'requirement_help_binary_0' | translate }}
-        </div>
-        <div *ngSwitchCase="'hostname'">
+          </div>
+        }
+        @case ('hostname') {
+          <div>
             {{ 'requirement_help_hostname_0' | translate }}
-        </div>
-        <div *ngSwitchCase="'os-architecture'">
+          </div>
+        }
+        @case ('os-architecture') {
+          <div>
             {{ 'requirement_help_os-architecture_0' | translate }}
-        </div>
-        <div *ngSwitchCase="'model'">
+          </div>
+        }
+        @case ('model') {
+          <div>
             {{ 'requirement_help_model_0' | translate }}
             <ul>
-                <li>{{ 'requirement_help_model_1' | translate }}</li>
-                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker']">{{ 'requirement_help_model_2' | translate }}</a></li>
-                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker', 'docker-customized']">{{ 'requirement_help_model_3' | translate }}</a></li>
-                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-openstack']">{{ 'requirement_help_model_4' | translate }}</a></li>
-                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model']">{{ 'requirement_help_model_5' | translate }}</a></li>
+              <li>{{ 'requirement_help_model_1' | translate }}</li>
+              <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker']">{{ 'requirement_help_model_2' | translate }}</a></li>
+              <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker', 'docker-customized']">{{ 'requirement_help_model_3' | translate }}</a></li>
+              <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-openstack']">{{ 'requirement_help_model_4' | translate }}</a></li>
+              <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model']">{{ 'requirement_help_model_5' | translate }}</a></li>
             </ul>
-        </div>
-        <div *ngSwitchCase="'memory'">
+          </div>
+        }
+        @case ('memory') {
+          <div>
             {{ 'requirement_help_memory_0' | translate }}
             <ul>
-                <li>{{ 'requirement_help_memory_1' | translate }}</li>
-                <li>{{ 'requirement_help_memory_2' | translate }}<a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model']">Worker Model</a> type Docker</li>
+              <li>{{ 'requirement_help_memory_1' | translate }}</li>
+              <li>{{ 'requirement_help_memory_2' | translate }}<a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model']">Worker Model</a> type Docker</li>
             </ul>
-        </div>
-        <div *ngSwitchCase="'service'">
+          </div>
+        }
+        @case ('service') {
+          <div>
             {{ 'requirement_help_service_0' | translate }}
             <ul>
-                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']">{{ 'requirement_help_service_1' | translate }}</a></li>
-                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'service-requirement-nginx']">{{ 'requirement_help_service_2' | translate }}</a></li>
-                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'service-requirement-pg']">{{ 'requirement_help_service_3' | translate }}</a></li>
-                <li>{{ 'requirement_help_service_4' | translate }}</li>
+              <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']">{{ 'requirement_help_service_1' | translate }}</a></li>
+              <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'service-requirement-nginx']">{{ 'requirement_help_service_2' | translate }}</a></li>
+              <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'service-requirement-pg']">{{ 'requirement_help_service_3' | translate }}</a></li>
+              <li>{{ 'requirement_help_service_4' | translate }}</li>
             </ul>
-        </div>
+          </div>
+        }
+      }
     </div>
-</form>
+  </form>
+}

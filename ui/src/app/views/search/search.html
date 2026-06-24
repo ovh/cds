@@ -1,76 +1,110 @@
 <div class="content">
-	<div class="header">
-		<nz-input-group>
-			<app-input-filter placeholder="Search..." [filterText]="filterText" [filters]="filters"
-				(changeFilter)="filterChange($event)" (submit)="submitForm()"></app-input-filter>
-		</nz-input-group>
-	</div>
-	<nz-list class="list" nzSize="small" [nzLoading]="loading">
-		<nz-list-item *ngFor="let item of results">
-			<nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
-				<ng-template #runAvatar>
-					<div class="type" [ngSwitch]="item.result.type">
-						<nz-tag *ngSwitchCase="'project'" nzColor="blue">{{item.result.type}}</nz-tag>
-						<nz-tag *ngSwitchCase="'workflow'" nzColor="green">{{item.result.type}}</nz-tag>
-						<nz-tag *ngSwitchDefault>{{item.result.type}}</nz-tag>
-					</div>
-				</ng-template>
-				<ng-template #runTitle>
-					<div class="title">
-						<a [routerLink]="item.defaultLink.path" [queryParams]="item.defaultLink.params">{{item.result.label}}</a>
-						<ng-container [ngSwitch]="item.result.type">
-							<app-searchable *ngSwitchCase="'project'" class="id" [link]="['/search']"
-								[params]="{project: item.result.id}" paramsHandling="merge">
-								{{item.result.id}}
-							</app-searchable>
-							<span *ngSwitchDefault class="id">{{item.result.id}}</span>
-						</ng-container>
-					</div>
-				</ng-template>
-				<ng-template #runDescription>
-					<div *ngIf="item.result.description">{{item.result.description}}</div>
-					<div class="variants" *ngIf="item.result.variants">
-						<ng-container *ngFor="let v of item.result.variants; let i = index">
-							<a *ngIf="i < 3 || item.unfold" [routerLink]="item.generateVariantRunLink(v).path"
-								[queryParams]="item.generateVariantRunLink(v).params">{{v}}</a>
-						</ng-container>
-						<a *ngIf="item.result.variants.length > 3 && !item.unfold" title="{{item.result.variants.length-3}} more"
-							(click)="unfoldItem(item.result.id)">
-							...{{item.result.variants.length-3}} more
-						</a>
-					</div>
-				</ng-template>
-			</nz-list-item-meta>
-			<ul nz-list-item-actions>
-				<nz-list-item-action>
-					<a class="action" *ngIf="item.result.type === 'project'" [routerLink]="item.exploreLink.path"
-						[queryParams]="item.exploreLink.params" title="Explore" nz-button>
-						<span nz-icon nzType="folder" nzTheme="outline"></span>
-					</a>
-					<a class="action" *ngIf="item.result.type === 'project'" [routerLink]="item.runLink.path"
-						[queryParams]="item.runLink.params" title="Run list" nz-button>
-						<span nz-icon nzType="play-circle" nzTheme="outline"></span>
-					</a>
-					<a class="action" *ngIf="item.result.type === 'workflow'" [routerLink]="item.exploreLink.path"
-						[queryParams]="item.exploreLink.params" title="Show sources" nz-button>
-						<span nz-icon nzType="file-text" nzTheme="outline"></span>
-					</a>
-					<a class="action" *ngIf="item.result.type === 'workflow'" [routerLink]="item.runLink.path"
-						[queryParams]="item.runLink.params" title="Run list" nz-button>
-						<span nz-icon nzType="play-circle" nzTheme="outline"></span>
-					</a>
-				</nz-list-item-action>
-			</ul>
-		</nz-list-item>
-		<nz-list-empty *ngIf="!loading && totalCount === 0" [nzNoResult]="emptyList"></nz-list-empty>
-		<ng-template #emptyList>
-			<nz-empty nzNotFoundContent="No result found"></nz-empty>
-		</ng-template>
-	</nz-list>
+  <div class="header">
+    <nz-input-group>
+      <app-input-filter placeholder="Search..." [filterText]="filterText" [filters]="filters"
+      (changeFilter)="filterChange($event)" (submit)="submitForm()"></app-input-filter>
+    </nz-input-group>
+  </div>
+  <nz-list class="list" nzSize="small" [nzLoading]="loading">
+    @for (item of results; track item) {
+      <nz-list-item>
+        <nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
+          <ng-template #runAvatar>
+            <div class="type">
+              @switch (item.result.type) {
+                @case ('project') {
+                  <nz-tag nzColor="blue">{{item.result.type}}</nz-tag>
+                }
+                @case ('workflow') {
+                  <nz-tag nzColor="green">{{item.result.type}}</nz-tag>
+                }
+                @default {
+                  <nz-tag>{{item.result.type}}</nz-tag>
+                }
+              }
+            </div>
+          </ng-template>
+          <ng-template #runTitle>
+            <div class="title">
+              <a [routerLink]="item.defaultLink.path" [queryParams]="item.defaultLink.params">{{item.result.label}}</a>
+              @switch (item.result.type) {
+                @case ('project') {
+                  <app-searchable class="id" [link]="['/search']"
+                    [params]="{project: item.result.id}" paramsHandling="merge">
+                    {{item.result.id}}
+                  </app-searchable>
+                }
+                @default {
+                  <span class="id">{{item.result.id}}</span>
+                }
+              }
+            </div>
+          </ng-template>
+          <ng-template #runDescription>
+            @if (item.result.description) {
+              <div>{{item.result.description}}</div>
+            }
+            @if (item.result.variants) {
+              <div class="variants">
+                @for (v of item.result.variants; track v; let i = $index) {
+                  @if (i < 3 || item.unfold) {
+                    <a [routerLink]="item.generateVariantRunLink(v).path"
+                    [queryParams]="item.generateVariantRunLink(v).params">{{v}}</a>
+                  }
+                }
+                @if (item.result.variants.length > 3 && !item.unfold) {
+                  <a title="{{item.result.variants.length-3}} more"
+                    (click)="unfoldItem(item.result.id)">
+                    ...{{item.result.variants.length-3}} more
+                  </a>
+                }
+              </div>
+            }
+          </ng-template>
+        </nz-list-item-meta>
+        <ul nz-list-item-actions>
+          <nz-list-item-action>
+            @if (item.result.type === 'project') {
+              <a class="action" [routerLink]="item.exploreLink.path"
+                [queryParams]="item.exploreLink.params" title="Explore" nz-button>
+                <span nz-icon nzType="folder" nzTheme="outline"></span>
+              </a>
+            }
+            @if (item.result.type === 'project') {
+              <a class="action" [routerLink]="item.runLink.path"
+                [queryParams]="item.runLink.params" title="Run list" nz-button>
+                <span nz-icon nzType="play-circle" nzTheme="outline"></span>
+              </a>
+            }
+            @if (item.result.type === 'workflow') {
+              <a class="action" [routerLink]="item.exploreLink.path"
+                [queryParams]="item.exploreLink.params" title="Show sources" nz-button>
+                <span nz-icon nzType="file-text" nzTheme="outline"></span>
+              </a>
+            }
+            @if (item.result.type === 'workflow') {
+              <a class="action" [routerLink]="item.runLink.path"
+                [queryParams]="item.runLink.params" title="Run list" nz-button>
+                <span nz-icon nzType="play-circle" nzTheme="outline"></span>
+              </a>
+            }
+          </nz-list-item-action>
+        </ul>
+      </nz-list-item>
+    }
+    @if (!loading && totalCount === 0) {
+      <nz-list-empty [nzNoResult]="emptyList"></nz-list-empty>
+    }
+    <ng-template #emptyList>
+      <nz-empty nzNotFoundContent="No result found"></nz-empty>
+    </ng-template>
+  </nz-list>
 
-	<div *ngIf="totalCount > 0" class="footer">
-		{{totalCount}} results
-		<nz-pagination [nzPageIndex]="pageIndex" [nzPageSize]="30" [nzTotal]="totalCount"
-			(nzPageIndexChange)="pageIndexChange($event)"></nz-pagination>
-	</div>
+  @if (totalCount > 0) {
+    <div class="footer">
+      {{totalCount}} results
+      <nz-pagination [nzPageIndex]="pageIndex" [nzPageSize]="30" [nzTotal]="totalCount"
+      (nzPageIndexChange)="pageIndexChange($event)"></nz-pagination>
+    </div>
+  }
 </div>

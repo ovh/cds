@@ -1,135 +1,158 @@
 <section class="step">
-    <nz-row class="stepParams">
-        <!-- Move and collapse -->
-        <nz-col [nzSpan]="1" class="move">
-            <span *ngIf="edit" class="move pointing">↕</span>
-            <span class="pointing" (click)="collapsed = !collapsed">
-                <i nz-icon nzType="caret-right" nzTheme="fill" *ngIf="!collapsed"></i>
-                <i nz-icon nzType="caret-down" nzTheme="fill" *ngIf="collapsed"></i>
-            </span>
-        </nz-col>
-        <!-- Step name -->
-        <nz-col [nzSpan]="5">
-                <ng-container *ngIf="edit && step.type !== 'ActionAsCode'">
-                    <input nz-input name="stepName" [(ngModel)]="step.step_name"  (keydown)="action.hasChanged = true">
-                </ng-container>
-                <ng-container *ngIf="!edit || step.type === 'ActionAsCode'">
-                    {{step.step_name}}
-                </ng-container>
-        </nz-col>
-        <!-- Link to documentation -->
-        <nz-col [nzSpan]="1">
-            <a title="Documentation" [routerLink]="this.stepURL">
-                <i nz-icon nzType="book" nzTheme="outline"></i>
-            </a>
-        </nz-col>
-        <!-- deprecated icon -->
-        <nz-col [nzSpan]="3">
-            <span class="textOrange" *ngIf="step.deprecated">
-                <i nz-icon nzType="warning" nzTheme="outline"></i>{{'common_deprecated' | translate}}
-            </span>
-        </nz-col>
-        <!-- Enable -->
-        <nz-col [nzSpan]="3">
-            <ng-container *ngIf="edit">
-                <label  id="enabled_step_{{order}}" name="enabled" nz-checkbox [(ngModel)]="step.enabled" (ngModelChange)="action.hasChanged = true">Enabled</label>
-            </ng-container>
-            <ng-container *ngIf="!edit">
-                <ng-container *ngIf="step.enabled">
-                    Enabled
-                </ng-container>
-                <ng-container *ngIf="!step.enabled">
-                    Disabled
-                </ng-container>
-            </ng-container>
-        </nz-col>
-        <!-- Optional -->
-        <nz-col [nzSpan]="3" [nzOffset]="1">
-            <ng-container *ngIf="edit">
-                <label id="active_{{order}}" name="active" nz-checkbox [(ngModel)]="step.optional" (ngModelChange)="action.hasChanged = true">
-                    <span nz-tooltip nzTooltipPlacement="top" nzTooltipTitle="If checked, even if this step fails, the stage execution will continue">
-                        Optional<i nz-icon nzType="info-circle" nzTheme="outline"></i>
-                    </span>
-                </label>
-            </ng-container>
-            <ng-container *ngIf="!edit && step.optional">Optional</ng-container>
-        </nz-col>
-        <!-- Always executed -->
-        <nz-col [nzSpan]="4" [nzOffset]="1">
-            <ng-container *ngIf="edit">
-                <label id="always_executed_{{order}}" name="always_executed" nz-checkbox [(ngModel)]="step.always_executed" (ngModelChange)="action.hasChanged = true">
-                     <span nz-tooltip nzTooltipPlacement="top" nzTooltipTitle="If checked, this step will be executed even if previous steps fail">
-                         Always executed<i nz-icon nzType="info-circle" nzTheme="outline"></i>
-                     </span>
-                </label>
-            </ng-container>
-            <ng-container *ngIf="!edit">
-                Always executed
-            </ng-container>
-        </nz-col>
-        <nz-col [nzSpan]="1" [nzOffset]="1">
-            <button class="removeStepBtn" nz-button nzType="primary" nzDanger
-                    nz-popconfirm
-                    name="deleteStepButton"
-                    nzPopconfirmTitle="Are you sure you want to delete this step ?"
-                    (nzOnConfirm)="removeStep()"
-                    nzPopconfirmPlacement="topRight">
-                <i nz-icon nzType="delete" nzTheme="outline"></i>
-            </button>
-        </nz-col>
-    </nz-row>
+  <nz-row class="stepParams">
+    <!-- Move and collapse -->
+    <nz-col [nzSpan]="1" class="move">
+      @if (edit) {
+        <span class="move pointing">↕</span>
+      }
+      <span class="pointing" (click)="collapsed = !collapsed">
+        @if (!collapsed) {
+          <i nz-icon nzType="caret-right" nzTheme="fill"></i>
+        }
+        @if (collapsed) {
+          <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+        }
+      </span>
+    </nz-col>
+    <!-- Step name -->
+    <nz-col [nzSpan]="5">
+      @if (edit && step.type !== 'ActionAsCode') {
+        <input nz-input name="stepName" [(ngModel)]="step.step_name"  (keydown)="action.hasChanged = true">
+      }
+      @if (!edit || step.type === 'ActionAsCode') {
+        {{step.step_name}}
+      }
+    </nz-col>
+    <!-- Link to documentation -->
+    <nz-col [nzSpan]="1">
+      <a title="Documentation" [routerLink]="this.stepURL">
+        <i nz-icon nzType="book" nzTheme="outline"></i>
+      </a>
+    </nz-col>
+    <!-- deprecated icon -->
+    <nz-col [nzSpan]="3">
+      @if (step.deprecated) {
+        <span class="textOrange">
+          <i nz-icon nzType="warning" nzTheme="outline"></i>{{'common_deprecated' | translate}}
+        </span>
+      }
+    </nz-col>
+    <!-- Enable -->
+    <nz-col [nzSpan]="3">
+      @if (edit) {
+        <label  id="enabled_step_{{order}}" name="enabled" nz-checkbox [(ngModel)]="step.enabled" (ngModelChange)="action.hasChanged = true">Enabled</label>
+      }
+      @if (!edit) {
+        @if (step.enabled) {
+          Enabled
+        }
+        @if (!step.enabled) {
+          Disabled
+        }
+      }
+    </nz-col>
+    <!-- Optional -->
+    <nz-col [nzSpan]="3" [nzOffset]="1">
+      @if (edit) {
+        <label id="active_{{order}}" name="active" nz-checkbox [(ngModel)]="step.optional" (ngModelChange)="action.hasChanged = true">
+          <span nz-tooltip nzTooltipPlacement="top" nzTooltipTitle="If checked, even if this step fails, the stage execution will continue">
+            Optional<i nz-icon nzType="info-circle" nzTheme="outline"></i>
+          </span>
+        </label>
+      }
+      @if (!edit && step.optional) {
+        Optional
+      }
+    </nz-col>
+    <!-- Always executed -->
+    <nz-col [nzSpan]="4" [nzOffset]="1">
+      @if (edit) {
+        <label id="always_executed_{{order}}" name="always_executed" nz-checkbox [(ngModel)]="step.always_executed" (ngModelChange)="action.hasChanged = true">
+          <span nz-tooltip nzTooltipPlacement="top" nzTooltipTitle="If checked, this step will be executed even if previous steps fail">
+            Always executed<i nz-icon nzType="info-circle" nzTheme="outline"></i>
+          </span>
+        </label>
+      }
+      @if (!edit) {
+        Always executed
+      }
+    </nz-col>
+    <nz-col [nzSpan]="1" [nzOffset]="1">
+      <button class="removeStepBtn" nz-button nzType="primary" nzDanger
+        nz-popconfirm
+        name="deleteStepButton"
+        nzPopconfirmTitle="Are you sure you want to delete this step ?"
+        (nzOnConfirm)="removeStep()"
+        nzPopconfirmPlacement="topRight">
+        <i nz-icon nzType="delete" nzTheme="outline"></i>
+      </button>
+    </nz-col>
+  </nz-row>
 
-    <ng-container *ngIf="collapsed">
-        <!-- Parameters not advanced -->
-        <ng-container *ngFor="let p of step.parameters">
-            <form nz-form *ngIf="!p.advanced" class="parameters">
-                <nz-form-item>
-                    <nz-form-label [nzSpan]="3">
-                        <b>{{p.name}}</b>
-                        <span *ngIf="p.description" nz-tooltip nzTooltipPlacement="right" [nzTooltipTitle]="p.description">
-                                    <i nz-icon nzType="info-circle" nzTheme="outline"></i>
-                                </span>
-                    </nz-form-label>
-                    <nz-form-control [nzSpan]="21">
-                        <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value" [editList]="false"
-                                             [suggest]="suggest" (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)">
-                        </app-parameter-value>
-                    </nz-form-control>
-                </nz-form-item>
-            </form>
-        </ng-container>
-
-        <!-- collapser for advanced parameters -->
-        <nz-row *ngIf="withAdvanced"  (click)="collapsed_advanced = !collapsed_advanced">
-            <nz-col [nzOffset]="1" [nzSpan]="20">
-                <nz-divider [nzText]="advancedDivider" nzOrientation="left"></nz-divider>
-                <ng-template #advancedDivider>
-                    <a>Advanced parameters</a>
-                    <i nz-icon nzType="caret-down" nzTheme="fill" *ngIf="collapsed_advanced"></i>
-                    <i nz-icon nzType="caret-right" nzTheme="fill" *ngIf="!collapsed_advanced"></i>
-                </ng-template>
-            </nz-col>
-        </nz-row>
-        <!-- Advanced parameters -->
-        <ng-container *ngIf="collapsed_advanced">
-            <ng-container *ngFor="let p of step.parameters">
-                <form nz-form *ngIf="p.advanced" class="parameters">
-                        <nz-form-item>
-                            <nz-form-label [nzSpan]="3">
-                                <b>{{p.name}}</b>
-                                <span *ngIf="p.description" nz-tooltip nzTooltipPlacement="right" [nzTooltipTitle]="p.description">
-                                    <i nz-icon nzType="info-circle" nzTheme="outline"></i>
-                                </span>
-                            </nz-form-label>
-                            <nz-form-control [nzSpan]="21">
-                                <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value"
-                                                     [editList]="false" [suggest]="suggest" (valueUpdating)="action.hasChanged = true"
-                                                     [ref]="originalParam.get(p.name)">
-                                </app-parameter-value>
-                            </nz-form-control>
-                        </nz-form-item>
-                </form>
-            </ng-container>
-        </ng-container>
-    </ng-container>
+  @if (collapsed) {
+    <!-- Parameters not advanced -->
+    @for (p of step.parameters; track p) {
+      @if (!p.advanced) {
+        <form nz-form class="parameters">
+          <nz-form-item>
+            <nz-form-label [nzSpan]="3">
+              <b>{{p.name}}</b>
+              @if (p.description) {
+                <span nz-tooltip nzTooltipPlacement="right" [nzTooltipTitle]="p.description">
+                  <i nz-icon nzType="info-circle" nzTheme="outline"></i>
+                </span>
+              }
+            </nz-form-label>
+            <nz-form-control [nzSpan]="21">
+              <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value" [editList]="false"
+                [suggest]="suggest" (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)">
+              </app-parameter-value>
+            </nz-form-control>
+          </nz-form-item>
+        </form>
+      }
+    }
+    <!-- collapser for advanced parameters -->
+    @if (withAdvanced) {
+      <nz-row  (click)="collapsed_advanced = !collapsed_advanced">
+        <nz-col [nzOffset]="1" [nzSpan]="20">
+          <nz-divider [nzText]="advancedDivider" nzOrientation="left"></nz-divider>
+          <ng-template #advancedDivider>
+            <a>Advanced parameters</a>
+            @if (collapsed_advanced) {
+              <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+            }
+            @if (!collapsed_advanced) {
+              <i nz-icon nzType="caret-right" nzTheme="fill"></i>
+            }
+          </ng-template>
+        </nz-col>
+      </nz-row>
+    }
+    <!-- Advanced parameters -->
+    @if (collapsed_advanced) {
+      @for (p of step.parameters; track p) {
+        @if (p.advanced) {
+          <form nz-form class="parameters">
+            <nz-form-item>
+              <nz-form-label [nzSpan]="3">
+                <b>{{p.name}}</b>
+                @if (p.description) {
+                  <span nz-tooltip nzTooltipPlacement="right" [nzTooltipTitle]="p.description">
+                    <i nz-icon nzType="info-circle" nzTheme="outline"></i>
+                  </span>
+                }
+              </nz-form-label>
+              <nz-form-control [nzSpan]="21">
+                <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value"
+                  [editList]="false" [suggest]="suggest" (valueUpdating)="action.hasChanged = true"
+                  [ref]="originalParam.get(p.name)">
+                </app-parameter-value>
+              </nz-form-control>
+            </nz-form-item>
+          </form>
+        }
+      }
+    }
+  }
 </section>

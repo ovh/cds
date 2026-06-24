@@ -1,11 +1,15 @@
 <nz-space-compact>
-    <button nz-button (click)="setUnified()" [class.active]="mode === 'unified'">Unified</button>
-    <button nz-button (click)="setSplit()" [class.active]="mode === 'split'">Split</button>
+  <button nz-button (click)="setUnified()" [class.active]="mode === 'unified'">Unified</button>
+  <button nz-button (click)="setSplit()" [class.active]="mode === 'split'">Split</button>
 </nz-space-compact>
 
-<ng-container *ngFor="let i of items;let idx = index">
-    <nz-card [nzTitle]="getTitle(i)" class="coloredTitle">
-        <app-diff-item *ngIf="idx < 10" [mode]="mode" [type]="i.type" [original]="i.before" [updated]="i.after"></app-diff-item>
-        <ng-container *ngIf="idx >= 10">{{'common_diff_to_much_item' | translate}}</ng-container>
-    </nz-card>
-</ng-container>
+@for (i of items; track i; let idx = $index) {
+  <nz-card [nzTitle]="getTitle(i)" class="coloredTitle">
+    @if (idx < 10) {
+      <app-diff-item [mode]="mode" [type]="i.type" [original]="i.before" [updated]="i.after"></app-diff-item>
+    }
+    @if (idx >= 10) {
+      {{'common_diff_to_much_item' | translate}}
+    }
+  </nz-card>
+}

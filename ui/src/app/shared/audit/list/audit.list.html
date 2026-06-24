@@ -1,10 +1,12 @@
 <div class="audits">
-    <h3>{{ 'audit_title' | translate }}</h3>
-    <app-data-table [withPagination]="25" [columns]="columns" [data]="audits" [loading]="loading" [withLineClick]="true"
-        (clickLine)="updateSelectedAudit($event)">
-    </app-data-table>
+  <h3>{{ 'audit_title' | translate }}</h3>
+  <app-data-table [withPagination]="25" [columns]="columns" [data]="audits" [loading]="loading" [withLineClick]="true"
+    (clickLine)="updateSelectedAudit($event)">
+  </app-data-table>
 </div>
-<div *ngIf="selectedAudit" class="area">
+@if (selectedAudit) {
+  <div class="area">
     <h3>{{selectedAudit.created | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm'}}</h3>
     <app-diff-list [items]="items"></app-diff-list>
-</div>
+  </div>
+}

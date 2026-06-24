@@ -1,63 +1,80 @@
-<nz-spin nzTip="Loading..." *ngIf="!project || !workflowTemplate || !workflowTemplateInstance"></nz-spin>
+@if (!project || !workflowTemplate || !workflowTemplateInstance) {
+  <nz-spin nzTip="Loading..."></nz-spin>
+}
 
-<div class="content" *ngIf="project && workflowTemplate && workflowTemplateInstance">
+@if (project && workflowTemplate && workflowTemplateInstance) {
+  <div class="content">
     <nz-row>
-        <nz-col [nzSpan]="24">
-            <nz-alert *ngIf="!this.workflow || !this.workflow.from_repository"
-                      nzType="info" nzMessage="{{'workflow_template_update_info_line_1' | translate}}">
-            </nz-alert>
-            <nz-alert *ngIf="this.workflow && this.workflow.from_repository"
-                      nzType="info" nzMessage="{{'workflow_template_update_info_line_2' | translate}}">
-            </nz-alert>
-        </nz-col>
-    </nz-row>
-    <nz-row>
-        <nz-col [nzSpan]="4">
-            Name
-        </nz-col>
-        <nz-col [nzSpan]="8">
-            <input nz-input type="text" name="name" [disabled]="true" [ngModel]="workflowTemplate.name">
-        </nz-col>
+      <nz-col [nzSpan]="24">
+        @if (!this.workflow || !this.workflow.from_repository) {
+          <nz-alert
+            nzType="info" nzMessage="{{'workflow_template_update_info_line_1' | translate}}">
+          </nz-alert>
+        }
+        @if (this.workflow && this.workflow.from_repository) {
+          <nz-alert
+            nzType="info" nzMessage="{{'workflow_template_update_info_line_2' | translate}}">
+          </nz-alert>
+        }
+      </nz-col>
     </nz-row>
     <nz-row>
-        <nz-col [nzSpan]="4">
-            Group
-        </nz-col>
-        <nz-col [nzSpan]="8">
-            <input nz-input type="text" name="group" [disabled]="true" [ngModel]="workflowTemplate.group.name">
-        </nz-col>
-        <nz-col [nzSpan]="4" [nzOffset]="8">
-            <nz-tag [nzColor]="'green'"
-                    *ngIf="workflowTemplateInstance.workflow_template_version === workflowTemplate.version">
-                Up to date
-            </nz-tag>
-            <nz-tag class="pointer" nzColor="orange"
-                    *ngIf="workflowTemplateInstance.workflow_template_version !== workflowTemplate.version"
-                    (click)="toggleDiff()" [title]="'workflow_template_update_info_btn' | translate">
-                {{'common_not_up_to_date' | translate }}
-            </nz-tag>
-        </nz-col>
-    </nz-row>
-    <nz-row *ngIf="workflowTemplateAuditMessages && workflowTemplateAuditMessages.length > 0">
-        <nz-col [nzSpan]="24">
-            <nz-alert nzType="warning" [nzMessage]="auditTmpl"></nz-alert>
-            <ng-template #auditTmpl>
-                <pre *ngFor="let m of workflowTemplateAuditMessages">{{m}}</pre>
-            </ng-template>
-        </nz-col>
-    </nz-row>
-    <nz-row *ngIf="diffVisible">
-        <nz-col [nzSpan]="24">
-            <app-diff-list [items]="diffItems"></app-diff-list>
-        </nz-col>
+      <nz-col [nzSpan]="4">
+        Name
+      </nz-col>
+      <nz-col [nzSpan]="8">
+        <input nz-input type="text" name="name" [disabled]="true" [ngModel]="workflowTemplate.name">
+      </nz-col>
     </nz-row>
     <nz-row>
-        <nz-col [nzSpan]="24">
-            <app-workflow-template-apply-form [project]="project" [workflow]="workflow"
-                                              [workflowTemplate]="workflowTemplate"
-                                              [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true"
-                                              (close)="clickClose()"
-                                              (apply)="onApply()"></app-workflow-template-apply-form>
-        </nz-col>
+      <nz-col [nzSpan]="4">
+        Group
+      </nz-col>
+      <nz-col [nzSpan]="8">
+        <input nz-input type="text" name="group" [disabled]="true" [ngModel]="workflowTemplate.group.name">
+      </nz-col>
+      <nz-col [nzSpan]="4" [nzOffset]="8">
+        @if (workflowTemplateInstance.workflow_template_version === workflowTemplate.version) {
+          <nz-tag [nzColor]="'green'"
+            >
+            Up to date
+          </nz-tag>
+        }
+        @if (workflowTemplateInstance.workflow_template_version !== workflowTemplate.version) {
+          <nz-tag class="pointer" nzColor="orange"
+            (click)="toggleDiff()" [title]="'workflow_template_update_info_btn' | translate">
+            {{'common_not_up_to_date' | translate }}
+          </nz-tag>
+        }
+      </nz-col>
     </nz-row>
-</div>
+    @if (workflowTemplateAuditMessages && workflowTemplateAuditMessages.length > 0) {
+      <nz-row>
+        <nz-col [nzSpan]="24">
+          <nz-alert nzType="warning" [nzMessage]="auditTmpl"></nz-alert>
+          <ng-template #auditTmpl>
+            @for (m of workflowTemplateAuditMessages; track m) {
+              <pre>{{m}}</pre>
+            }
+          </ng-template>
+        </nz-col>
+      </nz-row>
+    }
+    @if (diffVisible) {
+      <nz-row>
+        <nz-col [nzSpan]="24">
+          <app-diff-list [items]="diffItems"></app-diff-list>
+        </nz-col>
+      </nz-row>
+    }
+    <nz-row>
+      <nz-col [nzSpan]="24">
+        <app-workflow-template-apply-form [project]="project" [workflow]="workflow"
+          [workflowTemplate]="workflowTemplate"
+          [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true"
+          (close)="clickClose()"
+        (apply)="onApply()"></app-workflow-template-apply-form>
+      </nz-col>
+    </nz-row>
+  </div>
+}

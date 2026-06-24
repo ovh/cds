@@ -1,83 +1,94 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-scrollview class="scrollview">
-        <div *ngIf="!loading; then globalsPart;else loadingPart"></div>
-        <ng-template #globalsPart>
-            <div class="paddingContent">
-                <div class="viewContent">
-                    <nz-row>
-                        <nz-col [nzSpan]="24">
-                            <h1>
-                                CDS Services
-                                <div class="floatRight">
-                                    <nz-tag class="pointer" [nzColor]="globalStatus.status==='AL'?'error':(globalStatus.status==='WARN'?'warning': 'success')" (click)="filter=globalStatus.status">
-                                        {{globalStatus.name}} {{globalStatus.status}} - {{globalStatus.value}}
-                                    </nz-tag>
-                                    <nz-tag class="pointer" (click)="filter='/Version'" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'green': globalVersion.status==='OK'}">
-                                        {{globalVersion.name}} {{globalVersion.status}} - {{globalVersion.value}}
-                                    </nz-tag>
-                                </div>
-                            </h1>
-                        </nz-col>
-                    </nz-row>
-                    <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-                        <nz-col class="cardContainer"  (click)="filter=g.name" *ngFor="let g of globals" [nzSpan]="6">
-                            <div class="entity-card">
-                                <div class="title">
-                                    <nz-tag class="floatRight" [nzColor]="g.status==='AL'?'error':(g.status==='WARN'?'warning': 'success')">
-                                        {{g.status}}
-                                    </nz-tag>
-                                    {{ g.name }}
-                                </div>
-                                <div class="description">
-                                    <div *ngIf="g.value === '0'">
-                                        n/a
-                                    </div>
-                                    <ul>
-                                        <li *ngFor="let srv of g.services; index as idx; first as isFirst">
-                                            <div class="floatRight">
-                                                <span class="pointer" nz-icon nzType="filter" nzTheme="outline" nz-tooltip nzTooltipTitle="Click for filter list"
-                                                      popupPlacement="top left" (click)="filter=srv.name"></span>
-                                            </div>
-                                            <a [routerLink]="[srv.name]" nz-tooltip nzTooltipTitle="See details">
-                                                <ng-container [ngSwitch]="srv.status">
-                                                    <span nz-icon nzType="check" nzTheme="outline"  *ngSwitchCase="'OK'" class="green" title="{{srv.status}}"></span>
-                                                    <span nz-icon nzType="close" nzTheme="outline"  *ngSwitchCase="'AL'" class="red" title="{{srv.status}}"></span>
-                                                    <span nz-icon nzType="warning" nzTheme="outline"  *ngSwitchCase="'WARN'" class="orange" title="{{srv.status}}"></span>
-                                                </ng-container>
-                                                {{srv.name}}
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </nz-col>
-                    </nz-row>
-                    <app-data-table [filter]="filter" [withFilter]="filteredStatusLines" [withPagination]="25" [columns]="columns" [data]="status.lines" [loading]="loading">
-                    </app-data-table>
-
-                    <div>
-                        <h1>API Debug</h1>
-                        <ul>
-                            <li>
-                                <a href="./cdsapi/admin/debug/goroutine?debug=2" target="_blank">Full goroutine stack dump</a>
-                            </li>
-                            <li *ngFor="let profile of profiles | keys">
-                                <a href="./cdsapi/admin/debug/{{profile}}?debug=1" target="_blank">{{profile}} ({{profiles[profile]}})</a>
-                            </li>
-                            <li>
-                                <a href="./cdsapi/admin/debug/trace?seconds=30" target="_blank">Trace</a>
-                            </li>
-                            <li>
-                                <a href="./cdsapi/admin/debug/cpu?seconds=30" target="_blank">CPU Profile</a>
-                            </li>
-                        </ul>
-                    </div>
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-scrollview class="scrollview">
+    @if (!loading) {
+      <div class="paddingContent">
+        <div class="viewContent">
+          <nz-row>
+            <nz-col [nzSpan]="24">
+              <h1>
+                CDS Services
+                <div class="floatRight">
+                  <nz-tag class="pointer" [nzColor]="globalStatus.status==='AL'?'error':(globalStatus.status==='WARN'?'warning': 'success')" (click)="filter=globalStatus.status">
+                    {{globalStatus.name}} {{globalStatus.status}} - {{globalStatus.value}}
+                  </nz-tag>
+                  <nz-tag class="pointer" (click)="filter='/Version'" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'green': globalVersion.status==='OK'}">
+                    {{globalVersion.name}} {{globalVersion.status}} - {{globalVersion.value}}
+                  </nz-tag>
                 </div>
-            </div>
-        </ng-template>
-        <ng-template #loadingPart>
-            <nz-spin nzTip="Loading..."></nz-spin>
-        </ng-template>
-    </app-scrollview>
+              </h1>
+            </nz-col>
+          </nz-row>
+          <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+            @for (g of globals; track g) {
+              <nz-col class="cardContainer"  (click)="filter=g.name" [nzSpan]="6">
+                <div class="entity-card">
+                  <div class="title">
+                    <nz-tag class="floatRight" [nzColor]="g.status==='AL'?'error':(g.status==='WARN'?'warning': 'success')">
+                      {{g.status}}
+                    </nz-tag>
+                    {{ g.name }}
+                  </div>
+                  <div class="description">
+                    @if (g.value === '0') {
+                      <div>
+                        n/a
+                      </div>
+                    }
+                    <ul>
+                      @for (srv of g.services; track srv; let idx = $index; let isFirst = $first) {
+                        <li>
+                          <div class="floatRight">
+                            <span class="pointer" nz-icon nzType="filter" nzTheme="outline" nz-tooltip nzTooltipTitle="Click for filter list"
+                            popupPlacement="top left" (click)="filter=srv.name"></span>
+                          </div>
+                          <a [routerLink]="[srv.name]" nz-tooltip nzTooltipTitle="See details">
+                            @switch (srv.status) {
+                              @case ('OK') {
+                                <span nz-icon nzType="check" nzTheme="outline"  class="green" title="{{srv.status}}"></span>
+                              }
+                              @case ('AL') {
+                                <span nz-icon nzType="close" nzTheme="outline"  class="red" title="{{srv.status}}"></span>
+                              }
+                              @case ('WARN') {
+                                <span nz-icon nzType="warning" nzTheme="outline"  class="orange" title="{{srv.status}}"></span>
+                              }
+                            }
+                            {{srv.name}}
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              </nz-col>
+            }
+          </nz-row>
+          <app-data-table [filter]="filter" [withFilter]="filteredStatusLines" [withPagination]="25" [columns]="columns" [data]="status.lines" [loading]="loading">
+          </app-data-table>
+          <div>
+            <h1>API Debug</h1>
+            <ul>
+              <li>
+                <a href="./cdsapi/admin/debug/goroutine?debug=2" target="_blank">Full goroutine stack dump</a>
+              </li>
+              @for (profile of profiles | keys; track profile) {
+                <li>
+                  <a href="./cdsapi/admin/debug/{{profile}}?debug=1" target="_blank">{{profile}} ({{profiles[profile]}})</a>
+                </li>
+              }
+              <li>
+                <a href="./cdsapi/admin/debug/trace?seconds=30" target="_blank">Trace</a>
+              </li>
+              <li>
+                <a href="./cdsapi/admin/debug/cpu?seconds=30" target="_blank">CPU Profile</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <nz-spin nzTip="Loading..."></nz-spin>
+    }
+  </app-scrollview>
 </div>

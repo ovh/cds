@@ -1,37 +1,39 @@
 <form nz-form (ngSubmit)="create()">
-    <nz-row>
-        <nz-col [nzSpan]="8">
-            <nz-form-item>
-                <nz-form-label>Name</nz-form-label>
-                <nz-form-control>
-                    <input nz-input type="text" name="name" [(ngModel)]="newVariable.name" [disabled]="loading">
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="4">
-            <nz-form-item>
-                <nz-form-label>Type</nz-form-label>
-                <nz-form-control>
-                    <nz-select nzShowSearch name="type" [(ngModel)]="newVariable.type" [nzLoading]="loading">
-                        <nz-option *ngFor="let type of variableTypes" [nzValue]="type" [nzLabel]="type"></nz-option>
-                    </nz-select>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="8">
-            <nz-form-item>
-                <nz-form-label>Value</nz-form-label>
-                <nz-form-control>
-                    <app-variable-value [type]="newVariable.type" [(value)]="newVariable.value"
-                        [disabled]="loading"></app-variable-value>
-                </nz-form-control>
-            </nz-form-item>
-        </nz-col>
-        <nz-col [nzSpan]="4">
+  <nz-row>
+    <nz-col [nzSpan]="8">
+      <nz-form-item>
+        <nz-form-label>Name</nz-form-label>
+        <nz-form-control>
+          <input nz-input type="text" name="name" [(ngModel)]="newVariable.name" [disabled]="loading">
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+    <nz-col [nzSpan]="4">
+      <nz-form-item>
+        <nz-form-label>Type</nz-form-label>
+        <nz-form-control>
+          <nz-select nzShowSearch name="type" [(ngModel)]="newVariable.type" [nzLoading]="loading">
+            @for (type of variableTypes; track type) {
+              <nz-option [nzValue]="type" [nzLabel]="type"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+    <nz-col [nzSpan]="8">
+      <nz-form-item>
+        <nz-form-label>Value</nz-form-label>
+        <nz-form-control>
+          <app-variable-value [type]="newVariable.type" [(value)]="newVariable.value"
+          [disabled]="loading"></app-variable-value>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+    <nz-col [nzSpan]="4">
             <button nz-button nzType="primary" name="saveBtn" [nzLoading]="loading" [disabled]="loading || !newVariable.name || newVariable.name === '' ||
                 !newVariable.type || newVariable.type === ''">
-                <i nz-icon nzType="save" nzTheme="outline"></i>Save
-            </button>
-        </nz-col>
-    </nz-row>
+        <i nz-icon nzType="save" nzTheme="outline"></i>Save
+      </button>
+    </nz-col>
+  </nz-row>
 </form>

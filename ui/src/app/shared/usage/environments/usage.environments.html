@@ -1,8 +1,10 @@
 <h3><span nz-icon nzType="environment" nzTheme="outline"></span> {{'usage_environment_list' | translate}}</h3>
 <div class="nzSegment">
-    <nz-row>
-        <nz-col [nzSpan]="4" [nzOffset]="2" *ngFor="let env of environments">
-            <a [routerLink]="['/project', project.key, 'environment', env.name]">{{env.name}}</a>
-        </nz-col>
-    </nz-row>
+  <nz-row>
+    @for (env of environments; track env) {
+      <nz-col [nzSpan]="4" [nzOffset]="2">
+        <a [routerLink]="['/project', project.key, 'environment', env.name]">{{env.name}}</a>
+      </nz-col>
+    }
+  </nz-row>
 </div>

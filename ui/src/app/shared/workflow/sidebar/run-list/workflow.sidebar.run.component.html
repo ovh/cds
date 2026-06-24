@@ -1,62 +1,77 @@
-<ng-container *ngIf="ready">
-    <nz-select nzShowSearch nzMode="multiple" [(ngModel)]="selectedTags" (ngModelChange)="filterRuns()"
-        nzPlaceHolder="Filter...">
-        <nz-option *ngFor="let o of tagsSelectable" [nzLabel]="o" [nzValue]="o"></nz-option>
-    </nz-select>
-    <div class="runs" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
-        [scrollWindow]="false" (scrolled)="scroll()">
-        <ng-container *ngIf="workflowRuns.length > 0">
-            <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)"
-                [class.active]="currentWorkflowRunNumber === r.num"
-                [class.success]="r.status === pipelineStatusEnum.SUCCESS"
-                [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
-                [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
-                [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">
-                <div class="content">
-                    <div class="info">
-                        <div class="number-wrapper">
-                            <div class="number">
-                                <span class="hash">#</span>
-                                <span class="count" title="{{r.version ? r.version : r.num}}"
-                                    [class.success]="r.status === pipelineStatusEnum.SUCCESS"
-                                    [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
-                                    [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
-                                    [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.version
-                                    ? r.version : r.num}}</span>
-                            </div>
-                            <a title="Copy version" ngxClipboard [cbContent]="r.version ? r.version : '' + r.num"
-                                (click)="confirmCopy();$event.stopPropagation();"> <i nz-icon nzType="copy"
-                                    nzTheme="outline"></i></a>
-                        </div>
-                        <ng-template #popupTemplate>
-                            <ul>
-                                <li class="item" *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
-                                    <b>{{t.tag}} : </b> {{t.value}}
-                                </li>
-                            </ul>
-                        </ng-template>
-                        <div class="line" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" nz-popover
-                            [nzPopoverContent]="popupTemplate" nzPopoverPlacement="right">
-                            <ng-container *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
-                                {{t.value}}<ng-container *ngIf="!last">,</ng-container>
-                            </ng-container>
-                        </div>
-                    </div>
-                    <app-status-icon
-                        *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
-                        [status]="pipelineStatusEnum.BUILDING"></app-status-icon>
+@if (ready) {
+  <nz-select nzShowSearch nzMode="multiple" [(ngModel)]="selectedTags" (ngModelChange)="filterRuns()"
+    nzPlaceHolder="Filter...">
+    @for (o of tagsSelectable; track o) {
+      <nz-option [nzLabel]="o" [nzValue]="o"></nz-option>
+    }
+  </nz-select>
+  <div class="runs" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
+    [scrollWindow]="false" (scrolled)="scroll()">
+    @if (workflowRuns.length > 0) {
+      @for (r of workflowRuns; track r) {
+        <div class="item pointing" (click)="changeRun(r.num)"
+          [class.active]="currentWorkflowRunNumber === r.num"
+          [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+          [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
+          [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
+          [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">
+          <div class="content">
+            <div class="info">
+              <div class="number-wrapper">
+                <div class="number">
+                  <span class="hash">#</span>
+                  <span class="count" title="{{r.version ? r.version : r.num}}"
+                    [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+                    [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
+                    [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
+                    [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.version
+                  ? r.version : r.num}}</span>
                 </div>
-                <div class="foot">
-                    <div class="duration">
-                        {{durationMap[r.id]}}
-                    </div>
-                    {{r.start | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
-                </div>
-            </div>
-        </ng-container>
-        <div class="empty" *ngIf="workflowRuns.length === 0">
-            {{'workflow_no_run_found' | translate}}
+                <a title="Copy version" ngxClipboard [cbContent]="r.version ? r.version : '' + r.num"
+                  (click)="confirmCopy();$event.stopPropagation();"> <i nz-icon nzType="copy"
+                nzTheme="outline"></i></a>
+              </div>
+              <ng-template #popupTemplate>
+                <ul>
+                  @for (t of filteredTags[r.id]; track t; let i = $index; let last = $last) {
+                    <li class="item">
+                      <b>{{t.tag}} : </b> {{t.value}}
+                    </li>
+                  }
+                </ul>
+              </ng-template>
+              @if (filteredTags[r.id] && filteredTags[r.id].length) {
+                <div class="line" nz-popover
+                  [nzPopoverContent]="popupTemplate" nzPopoverPlacement="right">
+                  @for (t of filteredTags[r.id]; track t; let i = $index; let last = $last) {
+                    {{t.value}}@if (!last) {
+                    ,
+                  }
+                }
+              </div>
+            }
+          </div>
+          @if (r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING) {
+            <app-status-icon
+            [status]="pipelineStatusEnum.BUILDING"></app-status-icon>
+          }
         </div>
+        <div class="foot">
+          <div class="duration">
+            {{durationMap[r.id]}}
+          </div>
+          {{r.start | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
+        </div>
+      </div>
+    }
+  }
+  @if (workflowRuns.length === 0) {
+    <div class="empty">
+      {{'workflow_no_run_found' | translate}}
     </div>
-</ng-container>
-<nz-spin nzTip="Loading runs..." *ngIf="!ready"></nz-spin>
+  }
+</div>
+}
+@if (!ready) {
+  <nz-spin nzTip="Loading runs..."></nz-spin>
+}

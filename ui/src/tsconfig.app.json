@@ -6,11 +6,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es2022",
-    "lib": [
-      "ES2022",
-      "dom",
-      "ES2021.String"
-    ],
     "outDir": "../out-tsc/app",
     "module": "esnext",
     "baseUrl": "",

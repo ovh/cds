@@ -1,23 +1,34 @@
 <ul>
-        <li *ngIf="hook.hook_model_name !== 'Workflow'">
-           <a [class.disabled]="isRun && (!hookEventUUID || hookEventUUID !== hook.uuid)" (click)="sendEvent('logs')">Display logs</a>
-
-        </li>
-        <li  *ngIf="hook.hook_model_name === 'Workflow' && hookEvent?.parent_workflow?.key">
-            <a [routerLink]="['/project', hookEvent.parent_workflow.key, 'workflow', hookEvent.parent_workflow.name, 'run', hookEvent.parent_workflow.run]">Display parent workflow run</a>
-        </li>
-        <hr>
-        <li>
-            <a (click)="sendEvent('edit')">
-                <span *ngIf="readonly">Show context configuration</span>
-                <span *ngIf="!readonly">Edit the context</span>
-            </a>
-        </li>
-        <hr>
-        <li>
-            <a *ngIf="!readonly" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this hook ?" (nzOnConfirm)="sendEvent('delete')">Delete</a>
-            <span *ngIf="readonly"><a disabled>Delete</a></span>
-        </li>
+  @if (hook.hook_model_name !== 'Workflow') {
+    <li>
+      <a [class.disabled]="isRun && (!hookEventUUID || hookEventUUID !== hook.uuid)" (click)="sendEvent('logs')">Display logs</a>
+    </li>
+  }
+  @if (hook.hook_model_name === 'Workflow' && hookEvent?.parent_workflow?.key) {
+    <li >
+      <a [routerLink]="['/project', hookEvent.parent_workflow.key, 'workflow', hookEvent.parent_workflow.name, 'run', hookEvent.parent_workflow.run]">Display parent workflow run</a>
+    </li>
+  }
+  <hr>
+    <li>
+      <a (click)="sendEvent('edit')">
+        @if (readonly) {
+          <span>Show context configuration</span>
+        }
+        @if (!readonly) {
+          <span>Edit the context</span>
+        }
+      </a>
+    </li>
+    <hr>
+      <li>
+        @if (!readonly) {
+          <a nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this hook ?" (nzOnConfirm)="sendEvent('delete')">Delete</a>
+        }
+        @if (readonly) {
+          <span><a disabled>Delete</a></span>
+        }
+      </li>
     </ul>
 
 

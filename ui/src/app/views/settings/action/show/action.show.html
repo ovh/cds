@@ -1,22 +1,32 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
-    <app-scrollview class="scrollview" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
-        <nz-row *ngSwitchCase="'action'">
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+  @if (selectedTab) {
+    <app-scrollview class="scrollview">
+      @switch (selectedTab.key) {
+        @case ('action') {
+          <nz-row>
             <nz-col [nzSpan]="19">
-                <app-action [action]="action" [edit]="false"></app-action>
+              <app-action [action]="action" [edit]="false"></app-action>
             </nz-col>
             <nz-col [nzSpan]="5">
-                <app-action-help></app-action-help>
+              <app-action-help></app-action-help>
             </nz-col>
-        </nz-row>
-        <nz-row *ngSwitchCase="'usage'">
+          </nz-row>
+        }
+        @case ('usage') {
+          <nz-row>
             <nz-col [nzSpan]="24">
-                <nz-spin nzTip="Loading..." *ngIf="loadingUsage"></nz-spin>
-                <ng-container *ngIf="!loadingUsage">
-                    <app-action-usage [usage]="usage"></app-action-usage>
-                </ng-container>
+              @if (loadingUsage) {
+                <nz-spin nzTip="Loading..."></nz-spin>
+              }
+              @if (!loadingUsage) {
+                <app-action-usage [usage]="usage"></app-action-usage>
+              }
             </nz-col>
-        </nz-row>
+          </nz-row>
+        }
+      }
     </app-scrollview>
+  }
 </div>

@@ -1,53 +1,59 @@
-<ng-container *ngIf="requirement.type === 'service'">
-    <ng-container *ngIf="edit;else rName">
-        Hostname:
-        <input nz-input [nzAutocomplete]="autoSuggestService" [(ngModel)]="requirement.name" (input)="change(requirement)">
-        <nz-autocomplete [nzDataSource]="filteredSuggest" nzBackfill #autoSuggestService></nz-autocomplete>
-    </ng-container>
-    <ng-template #rName>
-        <span>{{requirement.name}}</span>
-    </ng-template>
-</ng-container>
-<ng-container *ngIf="edit;else rValue">
-    <ng-container *ngIf="requirement.type !== 'model' && requirement.type !== 'os-architecture'">
-        <ng-container *ngIf="requirement.type === 'service'">
-            Docker Image:
-        </ng-container>
-        <input nz-input [nzAutocomplete]="autoSuggestImage" [(ngModel)]="requirement.value" (input)="change(requirement)">
-        <nz-autocomplete [nzDataSource]="filteredSuggest" nzBackfill #autoSuggestImage ></nz-autocomplete>
-    </ng-container>
-    <ng-container *ngIf="requirement.type === 'os-architecture'">
-        <input nz-input [nzAutocomplete]="autoOsArch" name="value-os-architecture" [(ngModel)]="requirement.value" (input)="change(requirement)">
-        <nz-autocomplete [nzDataSource]="filteredSuggest" nzBackfill #autoOsArch></nz-autocomplete>
-    </ng-container>
-    <ng-container *ngIf="requirement.type === 'model' && workerModels">
-        <nz-row>
-            <nz-col [nzSpan]="20">
-                <input nz-input name="value-workermodel" [nzAutocomplete]="autoWorkerModel" [(ngModel)]="requirement.value" (input)="change(requirement)">
-                <nz-autocomplete [nzDataSource]="filteredSuggest" nzBackfill #autoWorkerModel></nz-autocomplete>
-            </nz-col>
-            <nz-col [nzSpan]="3" [nzOffset]="1">
-                <span *ngIf="workerModels.get(requirement.value)?.nb_spawn_err > 0" nz-tooltip nzTooltipTitle="Model in error" nzTooltipPlacement="top">
-                    <span class="icon status red" nz-icon nzType="warning" nzTheme="outline"></span>
-                </span>
-                <span *ngIf="workerModels.get(requirement.value)?.is_official" nz-tooltip nzTooltipTitle="Official worker model maintained by CDS Administrators" nzTooltipPlacement="top">
-                    <span class="icon status green" nz-icon nzType="check-circle" nzTheme="outline"></span>
-                </span>
-                <span *ngIf="workerModels.get(requirement.value)?.is_deprecated" nz-tooltip nzTooltipTitle="This worker model is deprecated" nzTooltipPlacement="top">
-                    <span class="icon status orange" nz-icon nzType="warning" nzTheme="outline"></span>
-                </span>
-            </nz-col>
-        </nz-row>
-    </ng-container>
-    <ng-container *ngIf="requirement.type === 'model' || requirement.type === 'service'">
-        {{ 'requirement_options' | translate }}
-        <textarea nz-input [(ngModel)]="requirement.opts" (ngModelChange)="change(requirement)" rows="3" placeholder="{{'requirement_placeholder_opts_' + requirement.type | translate}}"></textarea>
-    </ng-container>
-</ng-container>
-<ng-template #rValue>
-    <span>{{requirement.value}}</span>
-    <div *ngIf="requirement.type === 'model' || requirement.type === 'service'">
-        {{ 'requirement_options' | translate }}
-        <span>{{requirement.opts}}</span>
+@if (requirement.type === 'service') {
+  @if (edit) {
+    Hostname:
+    <input nz-input [nzAutocomplete]="autoSuggestService" [(ngModel)]="requirement.name" (input)="change(requirement)">
+    <nz-autocomplete [nzDataSource]="filteredSuggest" nzBackfill #autoSuggestService></nz-autocomplete>
+  } @else {
+    <span>{{requirement.name}}</span>
+  }
+}
+@if (edit) {
+  @if (requirement.type !== 'model' && requirement.type !== 'os-architecture') {
+    @if (requirement.type === 'service') {
+      Docker Image:
+    }
+    <input nz-input [nzAutocomplete]="autoSuggestImage" [(ngModel)]="requirement.value" (input)="change(requirement)">
+    <nz-autocomplete [nzDataSource]="filteredSuggest" nzBackfill #autoSuggestImage ></nz-autocomplete>
+  }
+  @if (requirement.type === 'os-architecture') {
+    <input nz-input [nzAutocomplete]="autoOsArch" name="value-os-architecture" [(ngModel)]="requirement.value" (input)="change(requirement)">
+    <nz-autocomplete [nzDataSource]="filteredSuggest" nzBackfill #autoOsArch></nz-autocomplete>
+  }
+  @if (requirement.type === 'model' && workerModels) {
+    <nz-row>
+      <nz-col [nzSpan]="20">
+        <input nz-input name="value-workermodel" [nzAutocomplete]="autoWorkerModel" [(ngModel)]="requirement.value" (input)="change(requirement)">
+        <nz-autocomplete [nzDataSource]="filteredSuggest" nzBackfill #autoWorkerModel></nz-autocomplete>
+      </nz-col>
+      <nz-col [nzSpan]="3" [nzOffset]="1">
+        @if (workerModels.get(requirement.value)?.nb_spawn_err > 0) {
+          <span nz-tooltip nzTooltipTitle="Model in error" nzTooltipPlacement="top">
+            <span class="icon status red" nz-icon nzType="warning" nzTheme="outline"></span>
+          </span>
+        }
+        @if (workerModels.get(requirement.value)?.is_official) {
+          <span nz-tooltip nzTooltipTitle="Official worker model maintained by CDS Administrators" nzTooltipPlacement="top">
+            <span class="icon status green" nz-icon nzType="check-circle" nzTheme="outline"></span>
+          </span>
+        }
+        @if (workerModels.get(requirement.value)?.is_deprecated) {
+          <span nz-tooltip nzTooltipTitle="This worker model is deprecated" nzTooltipPlacement="top">
+            <span class="icon status orange" nz-icon nzType="warning" nzTheme="outline"></span>
+          </span>
+        }
+      </nz-col>
+    </nz-row>
+  }
+  @if (requirement.type === 'model' || requirement.type === 'service') {
+    {{ 'requirement_options' | translate }}
+    <textarea nz-input [(ngModel)]="requirement.opts" (ngModelChange)="change(requirement)" rows="3" placeholder="{{'requirement_placeholder_opts_' + requirement.type | translate}}"></textarea>
+  }
+} @else {
+  <span>{{requirement.value}}</span>
+  @if (requirement.type === 'model' || requirement.type === 'service') {
+    <div>
+      {{ 'requirement_options' | translate }}
+      <span>{{requirement.opts}}</span>
     </div>
-</ng-template>
+  }
+}

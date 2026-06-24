@@ -1,69 +1,83 @@
 <div id="AddApplication" class="scrollingContent">
-    <div class="paddingContent">
-        <div class="viewContent">
-            <form nz-form (ngSubmit)="createApplication()" class="nzSegment">
-                <h2>Create new application</h2>
-                <nz-row>
-                    <nz-col [nzSpan]="16" [nzOffset]="4">
-                        <nz-form-item>
-                            <nz-form-label [nzSpan]="6">Application name *</nz-form-label>
-                            <nz-form-control>
-                                <input nz-input type="text" name="appname" [(ngModel)]="selectedName">
-                            </nz-form-control>
-                        </nz-form-item>
-                        <nz-alert *ngIf="appPatternError" nzType="error" nzMessage="Invalid application name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
+  <div class="paddingContent">
+    <div class="viewContent">
+      <form nz-form (ngSubmit)="createApplication()" class="nzSegment">
+        <h2>Create new application</h2>
+        <nz-row>
+          <nz-col [nzSpan]="16" [nzOffset]="4">
+            <nz-form-item>
+              <nz-form-label [nzSpan]="6">Application name *</nz-form-label>
+              <nz-form-control>
+                <input nz-input type="text" name="appname" [(ngModel)]="selectedName">
+              </nz-form-control>
+            </nz-form-item>
+            @if (appPatternError) {
+              <nz-alert nzType="error" nzMessage="Invalid application name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
+            }
 
-                        <nz-form-item>
-                            <nz-form-label [nzSpan]="6">Description</nz-form-label>
-                            <nz-form-control>
-                                <textarea nz-input type="text" name="applicationdescription" [(ngModel)]="description"></textarea>
-                            </nz-form-control>
-                        </nz-form-item>
+            <nz-form-item>
+              <nz-form-label [nzSpan]="6">Description</nz-form-label>
+              <nz-form-control>
+                <textarea nz-input type="text" name="applicationdescription" [(ngModel)]="description"></textarea>
+              </nz-form-control>
+            </nz-form-item>
 
-                        <nz-form-item>
-                            <nz-form-label [nzSpan]="6">Icon (Optional)</nz-form-label>
-                            <nz-form-control>
-                                <div *ngIf="!fileTooLarge && img">
-                                    <img class="app-icon" [src]="img" alt="icon" />
-                                </div>
-                                <app-upload-button accept=".png,.jpg,.jpeg" [image]="true" (event)="fileEvent($event)">
-                                </app-upload-button>
-                            </nz-form-control>
-                        </nz-form-item>
-                        <nz-alert nzType="error" *ngIf="fileTooLarge" nzMessage="Your file is too large (max 100Ko)"></nz-alert>
+            <nz-form-item>
+              <nz-form-label [nzSpan]="6">Icon (Optional)</nz-form-label>
+              <nz-form-control>
+                @if (!fileTooLarge && img) {
+                  <div>
+                    <img class="app-icon" [src]="img" alt="icon" />
+                  </div>
+                }
+                <app-upload-button accept=".png,.jpg,.jpeg" [image]="true" (event)="fileEvent($event)">
+                </app-upload-button>
+              </nz-form-control>
+            </nz-form-item>
+            @if (fileTooLarge) {
+              <nz-alert nzType="error" nzMessage="Your file is too large (max 100Ko)"></nz-alert>
+            }
 
-                        <nz-form-item>
-                            <nz-form-label [nzSpan]="6">New Application</nz-form-label>
-                            <nz-form-control>
-                                <nz-radio-group [(ngModel)]="typeofCreation" (ngModelChange)="updateSelection(typeofCreation)" name="type">
-                                    <label nz-radio nzValue="empty">Empty application</label>
-                                    <label nz-radio nzValue="clone" *ngIf="project.application_names && project.application_names.length > 0">Clone</label>
-                                </nz-radio-group>
-                            </nz-form-control>
-                        </nz-form-item>
+            <nz-form-item>
+              <nz-form-label [nzSpan]="6">New Application</nz-form-label>
+              <nz-form-control>
+                <nz-radio-group [(ngModel)]="typeofCreation" (ngModelChange)="updateSelection(typeofCreation)" name="type">
+                  <label nz-radio nzValue="empty">Empty application</label>
+                  @if (project.application_names && project.application_names.length > 0) {
+                    <label nz-radio nzValue="clone">Clone</label>
+                  }
+                </nz-radio-group>
+              </nz-form-control>
+            </nz-form-item>
 
 
-                        <nz-form-item *ngIf="typeofCreation === 'clone'">
-                            <nz-form-label>Application to clone</nz-form-label>
-                            <nz-form-control>
-                                <nz-select nzShowSearch name="appClone" [ngModel]="selectedApplicationName" (ngModelChange)="updateSelectedApplicationToClone($event)">
-                                    <nz-option *ngFor="let app of project.application_names" [nzValue]="app.name" [nzLabel]="app.name"></nz-option>
-                                </nz-select>
-                            </nz-form-control>
-                        </nz-form-item>
-                        <nz-form-item *ngIf="variables && variables.length > 0 && typeofCreation === 'clone'">
-                            <nz-form-label>Variables</nz-form-label>
-                            <app-variable [variables]="variables" mode="launcher"></app-variable>
-                        </nz-form-item>
-                        <nz-form-item nzJustify="end">
-                            <button nz-button (click)="goToProject()">Cancel</button>
-                            <button nz-button nzType="primary" [nzLoading]="loadingCreate"
-                                    [disabled]="!selectedName || selectedName === ''">Create
-                            </button>
-                        </nz-form-item>
-                    </nz-col>
-                </nz-row>
-            </form>
-        </div>
+            @if (typeofCreation === 'clone') {
+              <nz-form-item>
+                <nz-form-label>Application to clone</nz-form-label>
+                <nz-form-control>
+                  <nz-select nzShowSearch name="appClone" [ngModel]="selectedApplicationName" (ngModelChange)="updateSelectedApplicationToClone($event)">
+                    @for (app of project.application_names; track app) {
+                      <nz-option [nzValue]="app.name" [nzLabel]="app.name"></nz-option>
+                    }
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+            }
+            @if (variables && variables.length > 0 && typeofCreation === 'clone') {
+              <nz-form-item>
+                <nz-form-label>Variables</nz-form-label>
+                <app-variable [variables]="variables" mode="launcher"></app-variable>
+              </nz-form-item>
+            }
+            <nz-form-item nzJustify="end">
+              <button nz-button (click)="goToProject()">Cancel</button>
+              <button nz-button nzType="primary" [nzLoading]="loadingCreate"
+                [disabled]="!selectedName || selectedName === ''">Create
+              </button>
+            </nz-form-item>
+          </nz-col>
+        </nz-row>
+      </form>
     </div>
+  </div>
 </div>

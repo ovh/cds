@@ -1,39 +1,43 @@
 
-    <nz-row>
-        <nz-col [nzSpan]="24">
-            <div *ngIf="loading;then load;else loaded"></div>
-            <ng-template #load>
-                <nz-spin nzTip="Loading..."></nz-spin>
-            </ng-template>
-            <ng-template #loaded>
-                <div *ngIf="showInitTokenForm">
-                    <nz-alert nzType="info" nzMessage="If you just generated the CDS configuration you can give an optional init token."></nz-alert>
-                    <form nz-form (ngSubmit)="verify(verifyForm)" #verifyForm="ngForm">
-                        <nz-form-item>
-                            <nz-form-label>Initialization token</nz-form-label>
-                            <nz-form-control>
-                                <input nz-input type="password" name="init_token" ngModel required>
-                            </nz-form-control>
-                        </nz-form-item>
-                        <nz-form-item nzJustify="end">
-                            <button nz-button nzType="primary" type="submit">Verify</button>
-                        </nz-form-item>
-                    </form>
-                </div>
-                <div *ngIf="showSuccessMessage">
-                    <h3>Account information</h3>
-                    <nz-alert nzType="success" [nzMessage]="successTmpl"></nz-alert>
-                    <ng-template #successTmpl>
-                        <p>{{ 'auth_verify_success' | translate: {username: user.username} }}</p>
-                    </ng-template>
-                    <button id="loginButton" class="floatRight" nz-button nzType="primary" type="button"
-                            (click)="navigateToHome()">Go to CDS</button>
-                </div>
-                <div *ngIf="showErrorMessage">
-                    <nz-alert nzType="error" nzMessage="Unable to verify this account."></nz-alert>
-                    <button nz-button nzType="primary" nzBlock (click)="navigateToSignin()">Sign in</button>
-                </div>
-            </ng-template>
-        </nz-col>
-    </nz-row>
+<nz-row>
+  <nz-col [nzSpan]="24">
+    @if (loading) {
+      <nz-spin nzTip="Loading..."></nz-spin>
+    } @else {
+      @if (showInitTokenForm) {
+        <div>
+          <nz-alert nzType="info" nzMessage="If you just generated the CDS configuration you can give an optional init token."></nz-alert>
+          <form nz-form (ngSubmit)="verify(verifyForm)" #verifyForm="ngForm">
+            <nz-form-item>
+              <nz-form-label>Initialization token</nz-form-label>
+              <nz-form-control>
+                <input nz-input type="password" name="init_token" ngModel required>
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item nzJustify="end">
+              <button nz-button nzType="primary" type="submit">Verify</button>
+            </nz-form-item>
+          </form>
+        </div>
+      }
+      @if (showSuccessMessage) {
+        <div>
+          <h3>Account information</h3>
+          <nz-alert nzType="success" [nzMessage]="successTmpl"></nz-alert>
+          <ng-template #successTmpl>
+            <p>{{ 'auth_verify_success' | translate: {username: user.username} }}</p>
+          </ng-template>
+          <button id="loginButton" class="floatRight" nz-button nzType="primary" type="button"
+          (click)="navigateToHome()">Go to CDS</button>
+        </div>
+      }
+      @if (showErrorMessage) {
+        <div>
+          <nz-alert nzType="error" nzMessage="Unable to verify this account."></nz-alert>
+          <button nz-button nzType="primary" nzBlock (click)="navigateToSignin()">Sign in</button>
+        </div>
+      }
+    }
+  </nz-col>
+</nz-row>
 

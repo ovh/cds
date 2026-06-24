@@ -223,7 +223,7 @@ import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
@@ -416,7 +416,7 @@ const icons: IconDefinition[] = [
         NzTableModule,
         NzTabsModule,
         NzTagModule,
-        NzToolTipModule,
+        NzTooltipModule,
         NzTreeModule,
         NzTreeViewModule,
         NzTypographyModule,
@@ -618,7 +618,7 @@ const icons: IconDefinition[] = [
         NzTableModule,
         NzTabsModule,
         NzTagModule,
-        NzToolTipModule,
+        NzTooltipModule,
         NzTreeModule,
         NzTreeViewModule,
         NzTypographyModule,

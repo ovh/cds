@@ -1,7 +1,7 @@
 <ul nz-menu nzMode="horizontal">
-    <ng-container *ngFor="let t of tabs">
-        <li nz-menu-item [nzSelected]="selected && selected.key === t.key" (click)="clickSelect(t)" [nzDisabled]="t.disabled">
-            <app-tab [tab]="t"></app-tab>
-        </li>
-    </ng-container>
+  @for (t of tabs; track t) {
+    <li nz-menu-item [nzSelected]="selected && selected.key === t.key" (click)="clickSelect(t)" [nzDisabled]="t.disabled">
+      <app-tab [tab]="t"></app-tab>
+    </li>
+  }
 </ul>

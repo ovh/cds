@@ -1,26 +1,35 @@
-<div class="environmentList" *ngIf="!loading">
+@if (!loading) {
+  <div class="environmentList">
     <nz-row>
-        <nz-col [nzSpan]="8">
-            <h3>List of environments in the project</h3>
-        </nz-col>
-        <nz-col [nzSpan]="8" class="center">
-            <button nz-button nzType="primary" [routerLink]="['./environment']"
-                [disabled]="!project.permissions.writable">Create an environment</button>
-        </nz-col>
-        <nz-col [nzSpan]="8">
-            <app-input-autofocus [model]="filter" (modelChange)="filterChanged($event)"></app-input-autofocus>
-        </nz-col>
+      <nz-col [nzSpan]="8">
+        <h3>List of environments in the project</h3>
+      </nz-col>
+      <nz-col [nzSpan]="8" class="center">
+        <button nz-button nzType="primary" [routerLink]="['./environment']"
+        [disabled]="!project.permissions.writable">Create an environment</button>
+      </nz-col>
+      <nz-col [nzSpan]="8">
+        <app-input-autofocus [model]="filter" (modelChange)="filterChanged($event)"></app-input-autofocus>
+      </nz-col>
     </nz-row>
-
-    <nz-row *ngIf="project.environment_names && project.environment_names.length > 0" [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-        <nz-col class="cardContainer" [routerLink]="['./environment', env.name]" *ngFor="let env of filteredEnvironments" [nzSpan]="6">
+    @if (project.environment_names && project.environment_names.length > 0) {
+      <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+        @for (env of filteredEnvironments; track env) {
+          <nz-col class="cardContainer" [routerLink]="['./environment', env.name]" [nzSpan]="6">
             <app-card [title]="env.name" [onlyTitle]="true"></app-card>
-        </nz-col>
-    </nz-row>
-    <nz-row *ngIf="!project.environment_names || project.environment_names.length === 0">
+          </nz-col>
+        }
+      </nz-row>
+    }
+    @if (!project.environment_names || project.environment_names.length === 0) {
+      <nz-row>
         <nz-col [nzSpan]="24">
-            <nz-alert nzType="info" nzMessage="No environment"></nz-alert>
+          <nz-alert nzType="info" nzMessage="No environment"></nz-alert>
         </nz-col>
-    </nz-row>
-</div>
-<nz-spin *ngIf="loading" nzTip="Loading environments..."></nz-spin>
+      </nz-row>
+    }
+  </div>
+}
+@if (loading) {
+  <nz-spin nzTip="Loading environments..."></nz-spin>
+}

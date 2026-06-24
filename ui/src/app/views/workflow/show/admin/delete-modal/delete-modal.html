@@ -1,77 +1,89 @@
 <div class="content scrolling">
-    <ng-container *ngIf="!dependencies || (dependencies.deleted_dependencies.isEmpty() && dependencies.unlinked_as_code_dependencies.isEmpty())">
-        <div nz-row class="row">
-            <div nz-col nzSpan="24">
-                <h3>Please confirm</h3>
-            </div>
-        </div>
-        <div nz-row class="row">
-            <div nz-col nzSpan="24">
-                <button nz-popconfirm nzDanger nzType="primary" class="right"
-                        nzPopconfirmTitle="Are you sure you want to delete this workflow ?"
-                        (nzOnConfirm)="deleteWorkflow(false)"
-                        nzPopconfirmPlacement="topRight"
-                        nz-button>
-                    Delete
-                </button>
-            </div>
-        </div>
-    </ng-container>
-    <ng-container *ngIf="dependencies?.deleted_dependencies && (!dependencies.deleted_dependencies.isEmpty() || !dependencies.unlinked_as_code_dependencies.isEmpty())">
-        <div nz-row class="row">
-            <div nz-col nzSpan="24">
-                <h3>Do you want to delete the workflow and clean its dependencies ?</h3>
-                <ng-container *ngIf="dependencies?.deleted_dependencies && !dependencies.deleted_dependencies.isEmpty()">
-                    <h4>The following objects will be deleted:</h4>
-                    <nz-list>
-                        <nz-list-item *ngFor="let pip of dependencies.deleted_dependencies.pipelines">
-                            pipeline: <span class="bold">{{pip.name}}</span>
-                        </nz-list-item>
-                        <nz-list-item *ngFor="let app of dependencies.deleted_dependencies.applications">
-                            application <span class="bold">{{app.name}}</span>
-                        </nz-list-item>
-                        <nz-list-item *ngFor="let env of dependencies.deleted_dependencies.environments">
-                            environment <span class="bold">{{env.name}}</span>
-                        </nz-list-item>
-                    </nz-list>
-                </ng-container>
-                <ng-container *ngIf="dependencies?.unlinked_as_code_dependencies && !dependencies.unlinked_as_code_dependencies.isEmpty()">
-                    <h4>The following objects will be unlinked from repository "{{workflow.from_repository}}":</h4>
-                    <nz-list>
-                        <nz-list-item *ngFor="let pip of dependencies.unlinked_as_code_dependencies.pipelines">pipeline <span class="bold">{{pip.name}}</span></nz-list-item>
-                        <nz-list-item *ngFor="let app of dependencies.unlinked_as_code_dependencies.applications">application <span class="bold">{{app.name}}</span></nz-list-item>
-                        <nz-list-item *ngFor="let env of dependencies.unlinked_as_code_dependencies.environments">environment <span class="bold">{{env.name}}</span></nz-list-item>
-                    </nz-list>
-                </ng-container>
-            </div>
-        </div>
-        <div nz-row class="row">
-            <div nz-col nzSpan="24">
-                <button nz-popconfirm nzDanger nzType="primary" class="right"
-                        nzPopconfirmTitle="Are you sure you want to delete this workflow and all his dependencies ?"
-                        (nzOnConfirm)="deleteWorkflow(true)"
-                        nzPopconfirmPlacement="topRight"
-                        nz-button>
-                    Delete workflow and clean dependencies
-                </button>
-            </div>
-        </div>
-        <div nz-row class="row">
-            <div nz-col nzSpan="24">
-                <h3>Do you prefer to keep the dependencies ?</h3>
-                <p>Only the workflow {{workflow.name}} will be deleted.</p>
-            </div>
-        </div>
-        <div nz-row class="row">
-            <div nz-col nzSpan="24">
-                <button nz-popconfirm nzDanger nzType="primary" class="right"
-                        nzPopconfirmTitle="Are you sure you want to delete this workflow and keep all his dependencies ?"
-                        (nzOnConfirm)="deleteWorkflow(false)"
-                        nzPopconfirmPlacement="topRight"
-                        nz-button>
-                    Delete only the workflow
-                </button>
-            </div>
-        </div>
-    </ng-container>
+  @if (!dependencies || (dependencies.deleted_dependencies.isEmpty() && dependencies.unlinked_as_code_dependencies.isEmpty())) {
+    <div nz-row class="row">
+      <div nz-col nzSpan="24">
+        <h3>Please confirm</h3>
+      </div>
+    </div>
+    <div nz-row class="row">
+      <div nz-col nzSpan="24">
+        <button nz-popconfirm nzDanger nzType="primary" class="right"
+          nzPopconfirmTitle="Are you sure you want to delete this workflow ?"
+          (nzOnConfirm)="deleteWorkflow(false)"
+          nzPopconfirmPlacement="topRight"
+          nz-button>
+          Delete
+        </button>
+      </div>
+    </div>
+  }
+  @if (dependencies?.deleted_dependencies && (!dependencies.deleted_dependencies.isEmpty() || !dependencies.unlinked_as_code_dependencies.isEmpty())) {
+    <div nz-row class="row">
+      <div nz-col nzSpan="24">
+        <h3>Do you want to delete the workflow and clean its dependencies ?</h3>
+        @if (dependencies?.deleted_dependencies && !dependencies.deleted_dependencies.isEmpty()) {
+          <h4>The following objects will be deleted:</h4>
+          <nz-list>
+            @for (pip of dependencies.deleted_dependencies.pipelines; track pip) {
+              <nz-list-item>
+                pipeline: <span class="bold">{{pip.name}}</span>
+              </nz-list-item>
+            }
+            @for (app of dependencies.deleted_dependencies.applications; track app) {
+              <nz-list-item>
+                application <span class="bold">{{app.name}}</span>
+              </nz-list-item>
+            }
+            @for (env of dependencies.deleted_dependencies.environments; track env) {
+              <nz-list-item>
+                environment <span class="bold">{{env.name}}</span>
+              </nz-list-item>
+            }
+          </nz-list>
+        }
+        @if (dependencies?.unlinked_as_code_dependencies && !dependencies.unlinked_as_code_dependencies.isEmpty()) {
+          <h4>The following objects will be unlinked from repository "{{workflow.from_repository}}":</h4>
+          <nz-list>
+            @for (pip of dependencies.unlinked_as_code_dependencies.pipelines; track pip) {
+              <nz-list-item>pipeline <span class="bold">{{pip.name}}</span></nz-list-item>
+            }
+            @for (app of dependencies.unlinked_as_code_dependencies.applications; track app) {
+              <nz-list-item>application <span class="bold">{{app.name}}</span></nz-list-item>
+            }
+            @for (env of dependencies.unlinked_as_code_dependencies.environments; track env) {
+              <nz-list-item>environment <span class="bold">{{env.name}}</span></nz-list-item>
+            }
+          </nz-list>
+        }
+      </div>
+    </div>
+    <div nz-row class="row">
+      <div nz-col nzSpan="24">
+        <button nz-popconfirm nzDanger nzType="primary" class="right"
+          nzPopconfirmTitle="Are you sure you want to delete this workflow and all his dependencies ?"
+          (nzOnConfirm)="deleteWorkflow(true)"
+          nzPopconfirmPlacement="topRight"
+          nz-button>
+          Delete workflow and clean dependencies
+        </button>
+      </div>
+    </div>
+    <div nz-row class="row">
+      <div nz-col nzSpan="24">
+        <h3>Do you prefer to keep the dependencies ?</h3>
+        <p>Only the workflow {{workflow.name}} will be deleted.</p>
+      </div>
+    </div>
+    <div nz-row class="row">
+      <div nz-col nzSpan="24">
+        <button nz-popconfirm nzDanger nzType="primary" class="right"
+          nzPopconfirmTitle="Are you sure you want to delete this workflow and keep all his dependencies ?"
+          (nzOnConfirm)="deleteWorkflow(false)"
+          nzPopconfirmPlacement="topRight"
+          nz-button>
+          Delete only the workflow
+        </button>
+      </div>
+    </div>
+  }
 </div>

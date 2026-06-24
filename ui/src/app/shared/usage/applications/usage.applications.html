@@ -1,10 +1,14 @@
 <h3><span nz-icon nzType="rocket" nzTheme="outline"></span> {{'usage_application_list' | translate}}</h3>
-<div class="nzSegment" *ngIf="applications">
-    <ng-container *ngIf="applications.length">
-        <nz-row>
-            <nz-col [nzSpan]="4" [nzOffset]="2" *ngFor="let app of applications">
-                <a [routerLink]="['/project', project.key, 'application', app.name]">{{app.name}}</a>
-            </nz-col>
-        </nz-row>
-    </ng-container>
-</div>
+@if (applications) {
+  <div class="nzSegment">
+    @if (applications.length) {
+      <nz-row>
+        @for (app of applications; track app) {
+          <nz-col [nzSpan]="4" [nzOffset]="2">
+            <a [routerLink]="['/project', project.key, 'application', app.name]">{{app.name}}</a>
+          </nz-col>
+        }
+      </nz-row>
+    }
+  </div>
+}

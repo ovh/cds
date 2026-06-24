@@ -1,71 +1,93 @@
-<div class="variable" *ngIf="ready && variableTypes">
+@if (ready && variableTypes) {
+  <div class="variable">
     <nz-row>
-        <nz-col [nzOffset]="20" [nzSpan]="4" class="alignRight">
-            <input nz-input type="text" placeholder="Filter" [(ngModel)]="filter" (ngModelChange)="filterVariables()">
-        </nz-col>
+      <nz-col [nzOffset]="20" [nzSpan]="4" class="alignRight">
+        <input nz-input type="text" placeholder="Filter" [(ngModel)]="filter" (ngModelChange)="filterVariables()">
+      </nz-col>
     </nz-row>
     <nz-table  [nzData]="filteredVariables" [nzNoResult]="novars" #varlist>
-        <thead>
+      <thead>
         <tr>
-            <th nzWidth="100px" *ngIf="auditContext"></th>
-            <th nzWidth="200px">Name</th>
-            <th nzWidth="200px">Type</th>
-            <th nzWidth="300px">Value</th>
-            <th nzWidth="200px" *ngIf="mode === 'edit'"></th>
+          @if (auditContext) {
+            <th nzWidth="100px"></th>
+          }
+          <th nzWidth="200px">Name</th>
+          <th nzWidth="200px">Type</th>
+          <th nzWidth="300px">Value</th>
+          @if (mode === 'edit') {
+            <th nzWidth="200px"></th>
+          }
         </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let v of varlist.data">
-            <td *ngIf="auditContext">
+      </thead>
+      <tbody>
+        @for (v of varlist.data; track v) {
+          <tr>
+            @if (auditContext) {
+              <td>
                 <button nz-button (click)="showAudit($event, v)">
-                    <i nz-icon nzType="calendar" nzTheme="outline"></i>
+                  <i nz-icon nzType="calendar" nzTheme="outline"></i>
                 </button>
-            </td>
+              </td>
+            }
             <td>
-                <div class="warname">
-                    <div class="varname">
-                        <ng-container *ngIf="mode === 'edit'">
-                            <input nz-input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="true">
-                        </ng-container>
-                    </div>
+              <div class="warname">
+                <div class="varname">
+                  @if (mode === 'edit') {
+                    <input nz-input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="true">
+                  }
                 </div>
-                <span *ngIf="mode !== 'edit'">{{v.name}}</span>
+              </div>
+              @if (mode !== 'edit') {
+                <span>{{v.name}}</span>
+              }
             </td>
             <td>
-                <ng-container *ngIf="mode === 'edit'">
-                    <nz-select nzShowSearch [nzDisabled]="v.updating" [(ngModel)]="v.type" (ngModelChange)="v.hasChanged = true">
-                        <nz-option *ngFor="let t of variableTypes" [nzLabel]="t" [nzValue]="t"></nz-option>
-                    </nz-select>
-                </ng-container>
-                <ng-container *ngIf="mode !== 'edit'">{{v.type}}</ng-container>
+              @if (mode === 'edit') {
+                <nz-select nzShowSearch [nzDisabled]="v.updating" [(ngModel)]="v.type" (ngModelChange)="v.hasChanged = true">
+                  @for (t of variableTypes; track t) {
+                    <nz-option [nzLabel]="t" [nzValue]="t"></nz-option>
+                  }
+                </nz-select>
+              }
+              @if (mode !== 'edit') {
+                {{v.type}}
+              }
             </td>
             <td>
-                <app-variable-value *ngIf="mode !== 'ro'" [type]="v.type" [(value)]="v.value" (valueUpdating)="v.hasChanged = true"></app-variable-value>
-                <ng-container *ngIf="mode === 'ro'">{{v.value}}</ng-container>
+              @if (mode !== 'ro') {
+                <app-variable-value [type]="v.type" [(value)]="v.value" (valueUpdating)="v.hasChanged = true"></app-variable-value>
+              }
+              @if (mode === 'ro') {
+                {{v.value}}
+              }
             </td>
-            <td class="center" *ngIf="mode === 'edit'">
-                <div *ngIf="v.hasChanged;then save;else remove"></div>
-                <ng-template #save>
-                    <button nz-button nzType="primary"
-                            [nzLoading]="v.updating"
-                            [disabled]="v.updating || v.type === 'key'"
-                            name="btnupdatevar"
-                            (click)="sendEvent('update', v)">
-                        <i nz-icon nzType="save" nzTheme="outline"></i>
-                        Save
-                    </button>
-                </ng-template>
-                <ng-template #remove>
-                    <button nz-button nzDanger nzType="primary" name="delVarButton" [nzLoading]="v.updating" (nzOnConfirm)="sendEvent('delete', v)"
+            @if (mode === 'edit') {
+              <td class="center">
+                @if (v.hasChanged) {
+                  <button nz-button nzType="primary"
+                    [nzLoading]="v.updating"
+                    [disabled]="v.updating || v.type === 'key'"
+                    name="btnupdatevar"
+                    (click)="sendEvent('update', v)">
+                    <i nz-icon nzType="save" nzTheme="outline"></i>
+                    Save
+                  </button>
+                } @else {
+                  <button nz-button nzDanger nzType="primary" name="delVarButton" [nzLoading]="v.updating" (nzOnConfirm)="sendEvent('delete', v)"
                     nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove this variable ?">
-                        Delete
-                    </button>
-                </ng-template>
-            </td>
-        </tr>
-        </tbody>
+                    Delete
+                  </button>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
     </nz-table>
     <ng-template #novars>
-        <nz-alert *ngIf="!filteredVariables || filteredVariables.length === 0" nzType="info" nzMessage="There is no variable"></nz-alert>
+      @if (!filteredVariables || filteredVariables.length === 0) {
+        <nz-alert nzType="info" nzMessage="There is no variable"></nz-alert>
+      }
     </ng-template>
-</div>
+  </div>
+}

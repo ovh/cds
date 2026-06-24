@@ -1,90 +1,118 @@
-<nz-table [nzSize]="mode === 'launcher' || mode === 'job'?'small':'default'" nzShowPagination [nzData]="parameters" [nzPageSize]="5" #paramsList *ngIf="ready && parameters?.length > 0"  [nzFrontPagination]="mode === 'job' || mode === 'launcher'?false:true">
+@if (ready && parameters?.length > 0) {
+  <nz-table [nzSize]="mode === 'launcher' || mode === 'job'?'small':'default'" nzShowPagination [nzData]="parameters" [nzPageSize]="5" #paramsList  [nzFrontPagination]="mode === 'job' || mode === 'launcher'?false:true">
     <thead>
-    <tr *ngIf="mode !== 'launcher' && mode !== 'job'">
-        <th nzWidth="200px">Name</th>
-        <th nzWidth="100px" *ngIf="mode !=='launcher' && mode !== 'job'">Type</th>
-        <th nzWidth="300px">Value</th>
-        <th nzWidth="300px" *ngIf="mode !== 'launcher' && mode !== 'job'">Description</th>
-        <th nzWidth="200px" *ngIf="mode !== 'launcher' && mode !== 'job' && !project">Advanced parameter</th>
-        <th nzWidth="100px" *ngIf="mode !== 'launcher'">Action</th>
-    </tr>
+      @if (mode !== 'launcher' && mode !== 'job') {
+        <tr>
+          <th nzWidth="200px">Name</th>
+          @if (mode !=='launcher' && mode !== 'job') {
+            <th nzWidth="100px">Type</th>
+          }
+          <th nzWidth="300px">Value</th>
+          @if (mode !== 'launcher' && mode !== 'job') {
+            <th nzWidth="300px">Description</th>
+          }
+          @if (mode !== 'launcher' && mode !== 'job' && !project) {
+            <th nzWidth="200px">Advanced parameter</th>
+          }
+          @if (mode !== 'launcher') {
+            <th nzWidth="100px">Action</th>
+          }
+        </tr>
+      }
     </thead>
     <tbody>
-        <tr *ngFor="let p of paramsList.data">
+      @for (p of paramsList.data; track p) {
+        <tr>
+          <td>
+            @if (mode === 'edit') {
+              <input nz-input [(ngModel)]="p.name" (keydown)="p.hasChanged = true"
+                [disabled]="p.updating">
+            }
+            @if (mode === 'launcher') {
+              <span class="help" nz-tooltip [nzTooltipTitle]="p.description || 'No description'" nzTooltipPlacement="left">
+                <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+              </span>
+            }
+            @if (mode !== 'edit') {
+              <span>
+                {{p.name}}
+              </span>
+            }
+          </td>
+          @if (mode !=='launcher' && mode !== 'job') {
             <td>
-                <ng-container *ngIf="mode === 'edit'">
-                    <input nz-input [(ngModel)]="p.name" (keydown)="p.hasChanged = true"
-                           [disabled]="p.updating">
-                </ng-container>
-                <span class="help" *ngIf="mode === 'launcher'" nz-tooltip [nzTooltipTitle]="p.description || 'No description'" nzTooltipPlacement="left">
-                    <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+              @if (mode === 'edit') {
+                <nz-select nzShowSearch [nzDisabled]="p.updating" [(ngModel)]="p.type"
+                  (ngModelChange)="p.hasChanged = true">
+                  @for (option of parameterTypes; track option) {
+                    <nz-option [nzValue]="option" [nzLabel]="option"></nz-option>
+                  }
+                </nz-select>
+              }
+              @if (mode !== 'edit') {
+                <span>
+                  {{p.type}}
                 </span>
-                <span *ngIf="mode !== 'edit'">
-                    {{p.name}}
-                </span>
+              }
             </td>
-            <td *ngIf="mode !=='launcher' && mode !== 'job'">
-                <ng-container *ngIf="mode === 'edit'">
-                    <nz-select nzShowSearch [nzDisabled]="p.updating" [(ngModel)]="p.type"
-                               (ngModelChange)="p.hasChanged = true">
-                        <nz-option *ngFor="let option of parameterTypes" [nzValue]="option" [nzLabel]="option"></nz-option>
-                    </nz-select>
-                </ng-container>
-                <span *ngIf="mode !== 'edit'">
-                    {{p.type}}
-                </span>
-            </td>
+          }
+          <td>
+            <app-parameter-value [project]="project" [suggest]="suggest" [ref]="p.ref"
+              [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'" [keys]="keys"
+              [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true;">
+            </app-parameter-value>
+          </td>
+          @if (mode !== 'launcher' && mode !== 'job') {
             <td>
-                <app-parameter-value [project]="project" [suggest]="suggest" [ref]="p.ref"
-                                     [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'" [keys]="keys"
-                                     [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true;">
-                </app-parameter-value>
+              @if (mode !== 'launcher') {
+                <textarea nz-input (keydown)="p.hasChanged = true;"
+                  [class.lock]="mode !== 'edit'" [(ngModel)]="p.description"
+                  rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'">
+                </textarea>
+              }
+              @if (mode === 'launcher' && (!p.description && p.description === '')) {
+                No Description
+              }
             </td>
-            <td *ngIf="mode !== 'launcher' && mode !== 'job'">
-                <ng-container *ngIf="mode !== 'launcher'">
-                     <textarea nz-input (keydown)="p.hasChanged = true;"
-                        [class.lock]="mode !== 'edit'" [(ngModel)]="p.description"
-                        rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'">
-                    </textarea>
-                </ng-container>
-                <ng-container *ngIf="mode === 'launcher' && (!p.description && p.description === '')">
-                    No Description
-                </ng-container>
-            </td>
-            <td *ngIf="mode !== 'launcher' && mode !== 'job' && !project">
-                <label nz-checkbox name="advanced" class="checkbox"
-                       [nzDisabled]="mode === 'launcher'"
-                       [(ngModel)]="p.advanced"></label>
-            </td>
+          }
+          @if (mode !== 'launcher' && mode !== 'job' && !project) {
             <td>
-                <ng-container *ngIf="mode === 'edit'">
-                    <div *ngIf="p.hasChanged && !hideSave;then save;else remove"></div>
-                    <ng-template #save>
-                        <button nz-button nzType="primary" [nzLoading]="p.updating" [disabled]="p.updating"
-                                name="btnupdatevparam" (click)="sendEvent('update', p)">
-                            Save
-                        </button>
-                    </ng-template>
-                    <ng-template #remove>
-                        <button nz-button nzDanger nzType="primary"
-                                name="deleteBtn"
-                                nz-popconfirm
-                                [nzLoading]="p.updating"
-                                nzPopconfirmTitle="Are you sure you want to remove this parameter ?"
-                                (nzOnConfirm)="sendEvent('delete', p)"
-                                nzPopconfirmPlacement="topLeft">Delete</button>
-                    </ng-template>
-                </ng-container>
-                <ng-container *ngIf="mode === 'launcher' && canDelete">
-                    <button nz-button nzDanger nzType="primary"
-                            nz-popconfirm [nzLoading]="p.updating"
-                            nzPopconfirmTitle="Are you sure you want to remove this parameter ?"
-                            (nzOnConfirm)="sendEvent('delete', p)"
-                            nzPopconfirmPlacement="topLeft">Delete</button>
-                </ng-container>
+              <label nz-checkbox name="advanced" class="checkbox"
+                [nzDisabled]="mode === 'launcher'"
+              [(ngModel)]="p.advanced"></label>
             </td>
+          }
+          <td>
+            @if (mode === 'edit') {
+              @if (p.hasChanged && !hideSave) {
+                <button nz-button nzType="primary" [nzLoading]="p.updating" [disabled]="p.updating"
+                  name="btnupdatevparam" (click)="sendEvent('update', p)">
+                  Save
+                </button>
+              } @else {
+                <button nz-button nzDanger nzType="primary"
+                  name="deleteBtn"
+                  nz-popconfirm
+                  [nzLoading]="p.updating"
+                  nzPopconfirmTitle="Are you sure you want to remove this parameter ?"
+                  (nzOnConfirm)="sendEvent('delete', p)"
+                nzPopconfirmPlacement="topLeft">Delete</button>
+              }
+            }
+            @if (mode === 'launcher' && canDelete) {
+              <button nz-button nzDanger nzType="primary"
+                nz-popconfirm [nzLoading]="p.updating"
+                nzPopconfirmTitle="Are you sure you want to remove this parameter ?"
+                (nzOnConfirm)="sendEvent('delete', p)"
+              nzPopconfirmPlacement="topLeft">Delete</button>
+            }
+          </td>
         </tr>
+      }
     </tbody>
-</nz-table>
-<nz-alert nzMessage="There is no parameters" *ngIf="data.length === 0"></nz-alert>
+  </nz-table>
+}
+@if (data.length === 0) {
+  <nz-alert nzMessage="There is no parameters"></nz-alert>
+}
 

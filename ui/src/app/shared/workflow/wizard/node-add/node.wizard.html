@@ -14,7 +14,7 @@
                 <form nz-form *ngSwitchCase="0" nzLayout="inline">
                     <nz-row>
                         <nz-col [nzSpan]="24">
-                            <nz-tabset [nzAnimated]="false" [(nzSelectedIndex)]="pipIndexTab">
+                            <nz-tabs [nzAnimated]="false" [(nzSelectedIndex)]="pipIndexTab">
                                 <nz-tab nzTitle="Select an existing pipeline">
                                     <nz-form-item>
                                         <nz-form-label>Select pipeline</nz-form-label>
@@ -72,7 +72,7 @@
                                         </nz-form-control>
                                     </nz-form-item>
                                 </nz-tab>
-                            </nz-tabset>
+                            </nz-tabs>
                         </nz-col>
                     </nz-row>
                     <nz-row>
@@ -90,7 +90,7 @@
                 <form nz-form *ngSwitchCase="1" nzLayout="inline">
                     <nz-row>
                         <nz-col [nzSpan]="24">
-                            <nz-tabset [nzAnimated]="false" [(nzSelectedIndex)]="appIndexTab">
+                            <nz-tabs [nzAnimated]="false" [(nzSelectedIndex)]="appIndexTab">
                                 <nz-tab nzTitle="Select an existing application">
                                     <nz-form-item>
                                         <nz-form-label>Select an application</nz-form-label>
@@ -116,7 +116,7 @@
                                     </nz-form-item>
                                     <nz-alert nzType="error" nzMessage="Invalid application name. Allowed pattern is: a-zA-Z0-9._-" *ngIf="errorPipelineNamePattern"></nz-alert>
                                 </nz-tab>
-                            </nz-tabset>
+                            </nz-tabs>
                         </nz-col>
                     </nz-row>
                     <nz-row>
@@ -135,7 +135,7 @@
                 <form nz-form *ngSwitchCase="2" nzLayout="inline">
                     <nz-row>
                         <nz-col [nzSpan]="24">
-                            <nz-tabset [nzAnimated]="false" [(nzSelectedIndex)]="envIndexTab">
+                            <nz-tabs [nzAnimated]="false" [(nzSelectedIndex)]="envIndexTab">
                                 <nz-tab nzTitle="Select an existing environment">
                                     <nz-form-item>
                                         <nz-form-label>Select an environment</nz-form-label>
@@ -156,7 +156,7 @@
                                         </nz-form-control>
                                     </nz-form-item>
                                 </nz-tab>
-                            </nz-tabset>
+                            </nz-tabs>
                         </nz-col>
                     </nz-row>
                     <nz-row>

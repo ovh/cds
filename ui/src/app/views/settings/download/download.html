@@ -1,14 +1,18 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-scrollview class="scrollview">
-        <nz-spin *ngIf="loading" nzTip="Loading..."></nz-spin>
-        <ul>
-            <li *ngFor="let resource of resources">
-                <strong>{{resource.name}}</strong> {{resource.os}} {{resource.arch}} <em>{{resource.variant}}</em>
-                <a href="cdsapi/download/{{resource.name}}{{resource.os ? '/' + resource.os : ''}}{{resource.arch ? '/' + resource.arch : ''}}{{resource.variant ? '?variant=' + resource.variant : ''}}">
-                    ({{resource.filename}})
-                </a>
-            </li>
-        </ul>
-    </app-scrollview>
-</div> 
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-scrollview class="scrollview">
+    @if (loading) {
+      <nz-spin nzTip="Loading..."></nz-spin>
+    }
+    <ul>
+      @for (resource of resources; track resource) {
+        <li>
+          <strong>{{resource.name}}</strong> {{resource.os}} {{resource.arch}} <em>{{resource.variant}}</em>
+          <a href="cdsapi/download/{{resource.name}}{{resource.os ? '/' + resource.os : ''}}{{resource.arch ? '/' + resource.arch : ''}}{{resource.variant ? '?variant=' + resource.variant : ''}}">
+            ({{resource.filename}})
+          </a>
+        </li>
+      }
+    </ul>
+  </app-scrollview>
+</div>

@@ -1,154 +1,159 @@
 <div>
-    <div class="content scrolling">
-        <nz-row>
-            <nz-col [nzSpan]="24">
-                <nz-collapse nzAccordion *ngIf="!newConsumer.id">
-                    <nz-collapse-panel [(nzActive)]="panels[formStepName.INFORMATIONS]"
-                                       (click)="clickOpenStep(formStepName.INFORMATIONS)"
-                                       nzHeader="Information">
-                        <form nz-form nzLayout="vertical">
-                            <nz-row>
-                                <nz-col [nzSpan]="10">
-                                    <nz-form-item>
-                                        <nz-form-label>Name</nz-form-label>
-                                        <nz-form-control>
-                                            <input nz-input type="text" name="name"
-                                                   [(ngModel)]="newConsumer.name">
-                                        </nz-form-control>
-                                    </nz-form-item>
-                                </nz-col>
-                                <nz-col [nzSpan]="10" [nzOffset]="4">
-                                    <nz-form-item>
-                                        <nz-form-label>Description</nz-form-label>
-                                        <nz-form-control>
-                                            <input nz-input type="text" name="group"
-                                                   [(ngModel)]="newConsumer.description">
-                                        </nz-form-control>
-                                    </nz-form-item>
-                                </nz-col>
-                            </nz-row>
-                            <nz-row>
-                                <nz-col [nzSpan]="10">
-                                    <nz-form-item>
-                                        <nz-form-label>TTL (in days)</nz-form-label>
-                                        <nz-form-control>
-                                            <input nz-input type="number" name="duration" min="1" max="365"
-                                                   [(ngModel)]="newConsumer.validity_periods[0].duration">
-                                        </nz-form-control>
-                                    </nz-form-item>
-                                </nz-col>
-                            </nz-row>
-                        </form>
-                    </nz-collapse-panel>
-                    <nz-collapse-panel [(nzActive)]="panels[formStepName.GROUPS]"
-                                       (click)="clickOpenStep(formStepName.GROUPS)"
-                                       nzHeader="Groups">
-                        <form nz-form *ngIf="!newConsumer.id">
-                            <nz-alert nzType="info" nzMessage="Let groups selection empty to create consumer with wildcard access on groups."></nz-alert>
-                            <app-data-table [withFilter]="filterGroups" [withSelect]="selectGroupFunc"
-                                            (selectChange)="selectGroupChange($event)" [withPagination]="5"
-                                            [columns]="columnsGroups" [data]="groups" [loading]="loadingGroups">
-                            </app-data-table>
-                        </form>
-                    </nz-collapse-panel>
-                    <nz-collapse-panel [(nzActive)]="panels[formStepName.SCOPES]"
-                                       (click)="clickOpenStep(formStepName.SCOPES)"
-                                       nzHeader="Scopes">
-                        <div content class="scope-list">
-                            <nz-table [nzData]="scopes" #scopeTable [nzPageSize]="50" [nzShowPagination]="false">
-                                <tbody>
-                                <tr *ngFor="let scope of scopeTable.data" >
-                                    <td class="wide">
-                                        <app-scope-detail [scope]="scope" (onChange)="onScopeDetailChange($event)">
-                                        </app-scope-detail>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </nz-table>
-                        </div>
-                    </nz-collapse-panel>
-                    <nz-collapse-panel [(nzActive)]="panels[formStepName.SERVICE]"
-                                       (click)="clickOpenStep(formStepName.SERVICE)"
-                                       nzHeader="Service">
-                        <form nz-form nzLayout="vertical">
-                            <nz-alert nzType="info" nzMessage="Optional fields for consumer used by services (eg. hatcheries)."></nz-alert>
-                            <nz-row>
-                                <nz-col [nzSpan]="8">
-                                    <nz-form-item>
-                                        <nz-form-label>Name</nz-form-label>
-                                        <nz-form-control>
-                                            <input nz-input type="text" name="name"
-                                                   [(ngModel)]="newConsumer.auth_consumer_user.service_name">
-                                        </nz-form-control>
-                                    </nz-form-item>
-                                </nz-col>
-
-                                <nz-col [nzSpan]="7" [nzOffset]="1">
-                                    <nz-form-item>
-                                        <nz-form-label>Type</nz-form-label>
-                                        <nz-form-control>
-                                            <input nz-input type="text" name="type"
-                                                   [(ngModel)]="newConsumer.auth_consumer_user.service_type">
-                                        </nz-form-control>
-                                    </nz-form-item>
-                                </nz-col>
-
-                                <nz-col [nzSpan]="7" [nzOffset]="1">
-                                    <nz-form-item>
-                                        <nz-form-label>Region</nz-form-label>
-                                        <nz-form-control>
-                                            <input nz-input type="text" name="region"
-                                                   [(ngModel)]="newConsumer.auth_consumer_user.service_region">
-                                            <label nz-checkbox name="ignore" [(ngModel)]="newConsumer.auth_consumer_user.service_ignore_job_with_no_region">
-                                                Ignore job with no region
-                                            </label>
-                                        </nz-form-control>
-                                    </nz-form-item>
-                                </nz-col>
-                            </nz-row>
-                        </form>
-                    </nz-collapse-panel>
-
-                </nz-collapse>
-            </nz-col>
-        </nz-row>
-        <nz-row>
-            <nz-col [nzSpan]="24">
-                <app-consumer-display-signin-token *ngIf="newConsumer.id" [consumer]="newConsumer"
-                                                   [signinToken]="signinToken">
-                </app-consumer-display-signin-token>
-            </nz-col>
-        </nz-row>
-    </div>
+  <div class="content scrolling">
+    <nz-row>
+      <nz-col [nzSpan]="24">
+        @if (!newConsumer.id) {
+          <nz-collapse nzAccordion>
+            <nz-collapse-panel [(nzActive)]="panels[formStepName.INFORMATIONS]"
+              (click)="clickOpenStep(formStepName.INFORMATIONS)"
+              nzHeader="Information">
+              <form nz-form nzLayout="vertical">
+                <nz-row>
+                  <nz-col [nzSpan]="10">
+                    <nz-form-item>
+                      <nz-form-label>Name</nz-form-label>
+                      <nz-form-control>
+                        <input nz-input type="text" name="name"
+                          [(ngModel)]="newConsumer.name">
+                      </nz-form-control>
+                    </nz-form-item>
+                  </nz-col>
+                  <nz-col [nzSpan]="10" [nzOffset]="4">
+                    <nz-form-item>
+                      <nz-form-label>Description</nz-form-label>
+                      <nz-form-control>
+                        <input nz-input type="text" name="group"
+                          [(ngModel)]="newConsumer.description">
+                      </nz-form-control>
+                    </nz-form-item>
+                  </nz-col>
+                </nz-row>
+                <nz-row>
+                  <nz-col [nzSpan]="10">
+                    <nz-form-item>
+                      <nz-form-label>TTL (in days)</nz-form-label>
+                      <nz-form-control>
+                        <input nz-input type="number" name="duration" min="1" max="365"
+                          [(ngModel)]="newConsumer.validity_periods[0].duration">
+                      </nz-form-control>
+                    </nz-form-item>
+                  </nz-col>
+                </nz-row>
+              </form>
+            </nz-collapse-panel>
+            <nz-collapse-panel [(nzActive)]="panels[formStepName.GROUPS]"
+              (click)="clickOpenStep(formStepName.GROUPS)"
+              nzHeader="Groups">
+              @if (!newConsumer.id) {
+                <form nz-form>
+                  <nz-alert nzType="info" nzMessage="Let groups selection empty to create consumer with wildcard access on groups."></nz-alert>
+                  <app-data-table [withFilter]="filterGroups" [withSelect]="selectGroupFunc"
+                    (selectChange)="selectGroupChange($event)" [withPagination]="5"
+                    [columns]="columnsGroups" [data]="groups" [loading]="loadingGroups">
+                  </app-data-table>
+                </form>
+              }
+            </nz-collapse-panel>
+            <nz-collapse-panel [(nzActive)]="panels[formStepName.SCOPES]"
+              (click)="clickOpenStep(formStepName.SCOPES)"
+              nzHeader="Scopes">
+              <div content class="scope-list">
+                <nz-table [nzData]="scopes" #scopeTable [nzPageSize]="50" [nzShowPagination]="false">
+                  <tbody>
+                    @for (scope of scopeTable.data; track scope) {
+                      <tr >
+                        <td class="wide">
+                          <app-scope-detail [scope]="scope" (onChange)="onScopeDetailChange($event)">
+                          </app-scope-detail>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </nz-table>
+              </div>
+            </nz-collapse-panel>
+            <nz-collapse-panel [(nzActive)]="panels[formStepName.SERVICE]"
+              (click)="clickOpenStep(formStepName.SERVICE)"
+              nzHeader="Service">
+              <form nz-form nzLayout="vertical">
+                <nz-alert nzType="info" nzMessage="Optional fields for consumer used by services (eg. hatcheries)."></nz-alert>
+                <nz-row>
+                  <nz-col [nzSpan]="8">
+                    <nz-form-item>
+                      <nz-form-label>Name</nz-form-label>
+                      <nz-form-control>
+                        <input nz-input type="text" name="name"
+                          [(ngModel)]="newConsumer.auth_consumer_user.service_name">
+                      </nz-form-control>
+                    </nz-form-item>
+                  </nz-col>
+                  <nz-col [nzSpan]="7" [nzOffset]="1">
+                    <nz-form-item>
+                      <nz-form-label>Type</nz-form-label>
+                      <nz-form-control>
+                        <input nz-input type="text" name="type"
+                          [(ngModel)]="newConsumer.auth_consumer_user.service_type">
+                      </nz-form-control>
+                    </nz-form-item>
+                  </nz-col>
+                  <nz-col [nzSpan]="7" [nzOffset]="1">
+                    <nz-form-item>
+                      <nz-form-label>Region</nz-form-label>
+                      <nz-form-control>
+                        <input nz-input type="text" name="region"
+                          [(ngModel)]="newConsumer.auth_consumer_user.service_region">
+                        <label nz-checkbox name="ignore" [(ngModel)]="newConsumer.auth_consumer_user.service_ignore_job_with_no_region">
+                          Ignore job with no region
+                        </label>
+                      </nz-form-control>
+                    </nz-form-item>
+                  </nz-col>
+                </nz-row>
+              </form>
+            </nz-collapse-panel>
+          </nz-collapse>
+        }
+      </nz-col>
+    </nz-row>
+    <nz-row>
+      <nz-col [nzSpan]="24">
+        @if (newConsumer.id) {
+          <app-consumer-display-signin-token [consumer]="newConsumer"
+            [signinToken]="signinToken">
+          </app-consumer-display-signin-token>
+        }
+      </nz-col>
+    </nz-row>
+  </div>
 </div>
 <div *nzModalFooter>
-    <nz-row>
-        <nz-col [nzSpan]="8" class="alignLeft">
-            <button nz-button
-                    *ngIf="activeStep === formStepName.GROUPS || activeStep === formStepName.SCOPES || activeStep === formStepName.SERVICE"
-                    (click)="clickBack()">
-                Back
-            </button>
-        </nz-col>
-        <nz-col [nzSpan]="8" class="alignCenter">
-            <button *ngIf="activeStep !== formStepName.TOKEN" [nzLoading]="loading"
-                    nz-button nzType="primary"
-                    (click)="clickNext()">
-                <ng-container *ngIf="activeStep === formStepName.SERVICE; then createButton; else nextButton">
-                </ng-container>
-                <ng-template #createButton>
-                    <i nz-icon nzType="save" nzTheme="outline"></i>
-                    Create
-                </ng-template>
-                <ng-template #nextButton>
-                    Next
-                </ng-template>
-            </button>
-        </nz-col>
-        <nz-col [nzSpan]="8">
-            <button nz-button (click)="closeCallback()">
-                Close
-            </button>
-        </nz-col>
-    </nz-row>
+  <nz-row>
+    <nz-col [nzSpan]="8" class="alignLeft">
+      @if (activeStep === formStepName.GROUPS || activeStep === formStepName.SCOPES || activeStep === formStepName.SERVICE) {
+        <button nz-button
+          (click)="clickBack()">
+          Back
+        </button>
+      }
+    </nz-col>
+    <nz-col [nzSpan]="8" class="alignCenter">
+      @if (activeStep !== formStepName.TOKEN) {
+        <button [nzLoading]="loading"
+          nz-button nzType="primary"
+          (click)="clickNext()">
+          @if (activeStep === formStepName.SERVICE) {
+            <i nz-icon nzType="save" nzTheme="outline"></i>
+            Create
+          } @else {
+            Next
+          }
+        </button>
+      }
+    </nz-col>
+    <nz-col [nzSpan]="8">
+      <button nz-button (click)="closeCallback()">
+        Close
+      </button>
+    </nz-col>
+  </nz-row>
 </div>

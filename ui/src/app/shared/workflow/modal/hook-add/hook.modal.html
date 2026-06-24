@@ -1,10 +1,14 @@
 <div>
-    <app-workflow-node-hook-form [workflow]="workflow" #hookFormComponent></app-workflow-node-hook-form>
-    <div *nzModalFooter>
-        <button nz-button [disabled]="loading" (click)="close()">Close</button>
-        <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="saveHook()">
-            <span *ngIf="editMode">Apply</span>
-            <span *ngIf="!editMode">Save</span>
-        </button>
-    </div>
+  <app-workflow-node-hook-form [workflow]="workflow" #hookFormComponent></app-workflow-node-hook-form>
+  <div *nzModalFooter>
+    <button nz-button [disabled]="loading" (click)="close()">Close</button>
+    <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="saveHook()">
+      @if (editMode) {
+        <span>Apply</span>
+      }
+      @if (!editMode) {
+        <span>Save</span>
+      }
+    </button>
+  </div>
 </div>

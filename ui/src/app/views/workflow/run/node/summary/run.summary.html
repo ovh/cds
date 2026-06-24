@@ -1,74 +1,81 @@
-<div id="summary" *ngIf="nodeRunStatus" [class.success]="nodeRunStatus === pipelineStatusEnum.SUCCESS"
+@if (nodeRunStatus) {
+  <div id="summary" [class.success]="nodeRunStatus === pipelineStatusEnum.SUCCESS"
     [class.fail]="nodeRunStatus === pipelineStatusEnum.FAIL || nodeRunStatus === pipelineStatusEnum.STOPPED"
     [class.building]="nodeRunStatus === pipelineStatusEnum.BUILDING || nodeRunStatus === pipelineStatusEnum.WAITING">
-
-        <nz-row>
-            <nz-col [nzSpan]="16" class="winfo" [nzOffset]="4">
-                <div class="cardinfo"
-                    [class.building]="nodeRunStatus === pipelineStatusEnum.BUILDING || nodeRunStatus === pipelineStatusEnum.WAITING"
-                    [class.success]="nodeRunStatus === pipelineStatusEnum.SUCCESS"
-                    [class.fail]="nodeRunStatus === pipelineStatusEnum.FAIL || nodeRunStatus === pipelineStatusEnum.STOPPED"
-                    [class.inactive]="nodeRunStatus === pipelineStatusEnum.DISABLED || nodeRunStatus === pipelineStatusEnum.SKIPPED">
-                    <div class="content">
-                            <nz-row>
-                                <nz-col [nzSpan]="8" title="{{ 'common_pipeline' | translate }}"
-                                    *ngIf="node && node.context && node.context.pipeline_id">
-                                    <a href="#"
-                                        [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
-                                        *ngIf="node"
-                                        [queryParams]="{ workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
-                                        <span nz-icon nzType="apartment" nzTheme="outline"></span>
-                                        {{workflow.pipelines[node.context.pipeline_id].name + ' ' + nodeRunNum + '.' + nodeRunSubNum}}
-                                    </a>
-                                </nz-col>
-                                <nz-col [nzSpan]="8" class="center"
-                                    title="{{ 'common_pipeline_start_title' | translate }}">
-                                    <i nz-icon nzType="calendar" nzTheme="outline"></i>{{nodeRunStart | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
-                                </nz-col>
-                                <nz-col [nzSpan]="8" title="{{ 'common_duration_title' | translate }}">
-                                    <div class="right floated"
-                                        *ngIf="nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING">
-                                        <i nz-icon nzType="clock-circle" nzTheme="outline"></i>{{duration}}
-                                    </div>
-                                </nz-col>
-                            </nz-row>
-                            <nz-row *ngIf="node && node.context && (node.context.application_id || node.context.environment_id) && node.context.pipeline_id">
-                                <nz-col [nzSpan]="8" title="Application">
-                                    <ng-container *ngIf="node.context.application_id">
-                                        <a href="#"
-                                            [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
-                                            [queryParams]="{ workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
-                                            <i nz-icon nzType="rocket" nzTheme="outline"></i>
-                                            {{workflow.applications[node.context.application_id].name}}
-                                        </a>
-                                    </ng-container>
-                                </nz-col>
-                                <nz-col [nzSpan]="8" title="Environment" class="center">
-                                    <ng-container *ngIf="node.context.environment_id">
-                                        <a href="#" [routerLink]="['/project', project.key]"
-                                            [queryParams]="{ tab: 'environments', envName: workflow.environments[node.context.environment_id].name,workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
-                                            <i nz-icon nzType="environment" nzTheme="outline"></i>
-                                            {{workflow.environments[node.context.environment_id].name}}
-                                        </a>
-                                    </ng-container>
-                                </nz-col>
-                            </nz-row>
-                            <nz-row>
-                                <nz-col [nzSpan]="24" class="rightAlign">
-                                    <ng-container *ngIf="nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING">
-                                        <button nz-button nzType="primary" [nzLoading]="loading"  [disabled]="loading || readOnlyRun"
-                                                (click)="runNewWithParameter()">Run pipeline with parameters</button>
-                                    </ng-container>
-
-                                    <button nz-button nzDanger nzType="primary" [nzLoading]="loading" [disabled]="loading"
-                                            (click)="stop()"
-                                            *ngIf="nodeRunStatus === pipelineStatusEnum.WAITING || nodeRunStatus === pipelineStatusEnum.BUILDING">Stop</button>
-                                </nz-col>
-                            </nz-row>
-
-                    </div>
-                </div>
-            </nz-col>
-        </nz-row>
-
-</div>
+    <nz-row>
+      <nz-col [nzSpan]="16" class="winfo" [nzOffset]="4">
+        <div class="cardinfo"
+          [class.building]="nodeRunStatus === pipelineStatusEnum.BUILDING || nodeRunStatus === pipelineStatusEnum.WAITING"
+          [class.success]="nodeRunStatus === pipelineStatusEnum.SUCCESS"
+          [class.fail]="nodeRunStatus === pipelineStatusEnum.FAIL || nodeRunStatus === pipelineStatusEnum.STOPPED"
+          [class.inactive]="nodeRunStatus === pipelineStatusEnum.DISABLED || nodeRunStatus === pipelineStatusEnum.SKIPPED">
+          <div class="content">
+            <nz-row>
+              @if (node && node.context && node.context.pipeline_id) {
+                <nz-col [nzSpan]="8" title="{{ 'common_pipeline' | translate }}"
+                  >
+                  @if (node) {
+                    <a href="#"
+                      [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
+                      [queryParams]="{ workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
+                      <span nz-icon nzType="apartment" nzTheme="outline"></span>
+                      {{workflow.pipelines[node.context.pipeline_id].name + ' ' + nodeRunNum + '.' + nodeRunSubNum}}
+                    </a>
+                  }
+                </nz-col>
+              }
+              <nz-col [nzSpan]="8" class="center"
+                title="{{ 'common_pipeline_start_title' | translate }}">
+                <i nz-icon nzType="calendar" nzTheme="outline"></i>{{nodeRunStart | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
+              </nz-col>
+              <nz-col [nzSpan]="8" title="{{ 'common_duration_title' | translate }}">
+                @if (nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING) {
+                  <div class="right floated"
+                    >
+                    <i nz-icon nzType="clock-circle" nzTheme="outline"></i>{{duration}}
+                  </div>
+                }
+              </nz-col>
+            </nz-row>
+            @if (node && node.context && (node.context.application_id || node.context.environment_id) && node.context.pipeline_id) {
+              <nz-row>
+                <nz-col [nzSpan]="8" title="Application">
+                  @if (node.context.application_id) {
+                    <a href="#"
+                      [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
+                      [queryParams]="{ workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
+                      <i nz-icon nzType="rocket" nzTheme="outline"></i>
+                      {{workflow.applications[node.context.application_id].name}}
+                    </a>
+                  }
+                </nz-col>
+                <nz-col [nzSpan]="8" title="Environment" class="center">
+                  @if (node.context.environment_id) {
+                    <a href="#" [routerLink]="['/project', project.key]"
+                      [queryParams]="{ tab: 'environments', envName: workflow.environments[node.context.environment_id].name,workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
+                      <i nz-icon nzType="environment" nzTheme="outline"></i>
+                      {{workflow.environments[node.context.environment_id].name}}
+                    </a>
+                  }
+                </nz-col>
+              </nz-row>
+            }
+            <nz-row>
+              <nz-col [nzSpan]="24" class="rightAlign">
+                @if (nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING) {
+                  <button nz-button nzType="primary" [nzLoading]="loading"  [disabled]="loading || readOnlyRun"
+                  (click)="runNewWithParameter()">Run pipeline with parameters</button>
+                }
+                @if (nodeRunStatus === pipelineStatusEnum.WAITING || nodeRunStatus === pipelineStatusEnum.BUILDING) {
+                  <button nz-button nzDanger nzType="primary" [nzLoading]="loading" [disabled]="loading"
+                    (click)="stop()"
+                  >Stop</button>
+                }
+              </nz-col>
+            </nz-row>
+          </div>
+        </div>
+      </nz-col>
+    </nz-row>
+  </div>
+}

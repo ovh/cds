@@ -1,18 +1,24 @@
-<div [ngSwitch]="mode">
-    <nz-row *ngSwitchCase="'unified'">
+<div>
+  @switch (mode) {
+    @case ('unified') {
+      <nz-row>
         <nz-col [nzSpan]="24">
-            <codemirror [(ngModel)]="contentLeft" [config]="codeMirrorConfig" (change)="onCodeLeftChange()"
-                #codeLeft></codemirror>
+          <codemirror [(ngModel)]="contentLeft" [config]="codeMirrorConfig" (change)="onCodeLeftChange()"
+          #codeLeft></codemirror>
         </nz-col>
-    </nz-row>
-    <nz-row *ngSwitchCase="'split'">
+      </nz-row>
+    }
+    @case ('split') {
+      <nz-row>
         <nz-col [nzSpan]="12">
-            <codemirror [(ngModel)]="contentLeft" [config]="codeMirrorConfig" (change)="onCodeLeftChange()"
-                #codeLeft></codemirror>
+          <codemirror [(ngModel)]="contentLeft" [config]="codeMirrorConfig" (change)="onCodeLeftChange()"
+          #codeLeft></codemirror>
         </nz-col>
         <nz-col [nzSpan]="12">
-            <codemirror [(ngModel)]="contentRight" [config]="codeMirrorConfig" (change)="onCodeRightChange()"
-                #codeRight></codemirror>
+          <codemirror [(ngModel)]="contentRight" [config]="codeMirrorConfig" (change)="onCodeRightChange()"
+          #codeRight></codemirror>
         </nz-col>
-    </nz-row>
+      </nz-row>
+    }
+  }
 </div>
