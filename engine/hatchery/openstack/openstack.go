@@ -161,6 +161,10 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("invalid inject SSH public keys: %w", err)
 	}
 
+	if err := h.checkOverrideImagesWorkerBasedir(hconfig.OverrideImagesWorkerBasedir); err != nil {
+		return fmt.Errorf("invalid image worker basedir override: %w", err)
+	}
+
 	return nil
 }
 
@@ -176,6 +180,20 @@ func (h *HatcheryOpenstack) checkOverrideImagesUsername(overrides []ImageUsernam
 
 		if !usernameRe.MatchString(override.Username) {
 			return fmt.Errorf("invalid username %q: must match %s", override.Username, usernameRe.String())
+		}
+	}
+
+	return nil
+}
+
+func (h *HatcheryOpenstack) checkOverrideImagesWorkerBasedir(overrides []ImageWorkerBasedirOverride) error {
+	for _, override := range overrides {
+		if _, err := regexp.Compile(override.Image); err != nil {
+			return fmt.Errorf("invalid image expression %q: %w", override.Image, err)
+		}
+
+		if !strings.HasPrefix(override.Basedir, "/") {
+			return fmt.Errorf("invalid basedir %q: must be an absolute path", override.Basedir)
 		}
 	}
 
@@ -200,6 +218,15 @@ func (h *HatcheryOpenstack) GetImageUsername(ctx context.Context, imageName stri
 	for image, username := range h.imagesUsername {
 		if image.MatchString(imageName) {
 			return username
+		}
+	}
+	return ""
+}
+
+func (h *HatcheryOpenstack) GetImageWorkerBasedir(ctx context.Context, imageName string) string {
+	for image, basedir := range h.imagesWorkerBasedir {
+		if image.MatchString(imageName) {
+			return basedir
 		}
 	}
 	return ""
