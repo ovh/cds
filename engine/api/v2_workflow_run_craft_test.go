@@ -3391,3 +3391,167 @@ spec: |-
 	require.Equal(t, "hello_from_template", wrDB.Contexts.Env["TEMPLATE_ENV_VAR"])
 	require.Equal(t, "42", wrDB.Contexts.Env["ANOTHER_VAR"])
 }
+
+// A workflow run in project A uses a template hosted in project B. Both projects
+// declare a VCS server with the same name ("github"). The templated job references
+// a worker model fully-qualified to project A. The finder used to lint/check the
+// templated workflow must keep currentProject consistent with the template's
+// repo/vcs (project B), otherwise the worker model repository is wrongly looked up
+// in project B's VCS and reported as "not found" even though it exists in project A.
+func TestCraftWorkflowFromTemplateCrossProjectWorkerModel(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
+
+	// Project A: the run + the worker model
+	projRun := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	admin, _ := assets.InsertAdminUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, projRun.Key, *admin)
+	vcsRun := assets.InsertTestVCSProject(t, db, projRun.ID, "github", "github")
+	repoRun := assets.InsertTestProjectRepository(t, db, projRun.Key, vcsRun.ID, "my/repo")
+	repoWM := assets.InsertTestProjectRepository(t, db, projRun.Key, vcsRun.ID, "my/wmrepo")
+
+	// Integration declared in the run's project: it must still be resolved against the run
+	// project even when the workflow comes from a template in another project.
+	integModel := sdk.IntegrationModel{Name: sdk.RandomString(10)}
+	require.NoError(t, integration.InsertModel(db, &integModel))
+	projInt := sdk.ProjectIntegration{
+		Name:               sdk.RandomString(10),
+		ProjectID:          projRun.ID,
+		Model:              integModel,
+		IntegrationModelID: integModel.ID,
+		Config:             sdk.IntegrationConfig{},
+	}
+	require.NoError(t, integration.InsertIntegration(db, &projInt))
+
+	// Project B: the template, on a VCS server with the SAME name as project A's
+	projTmpl := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, projTmpl.Key, *admin)
+	vcsTmpl := assets.InsertTestVCSProject(t, db, projTmpl.ID, "github", "github")
+	repoTmpl := assets.InsertTestProjectRepository(t, db, projTmpl.Key, vcsTmpl.ID, "my/tmplrepo")
+
+	// Worker model lives in project A
+	myWMEnt := sdk.Entity{
+		ProjectKey:          projRun.Key,
+		ProjectRepositoryID: repoWM.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		FilePath:            ".cds/worker-models/myworker-model.yml",
+		Name:                "myworker-model",
+		Ref:                 "refs/heads/master",
+		Commit:              "123456789",
+		Head:                true,
+		Data:                "name: myworkermodel",
+	}
+	require.NoError(t, entity.Insert(ctx, db, &myWMEnt))
+
+	// Template lives in project B and references the worker model fully-qualified to project A
+	tmplEnt := sdk.Entity{
+		ProjectKey:          projTmpl.Key,
+		ProjectRepositoryID: repoTmpl.ID,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/mytmpl.yml",
+		Name:                "myTemplate",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		Head:                true,
+		UserID:              &admin.ID,
+		Data: fmt.Sprintf(`name: my-template
+spec: |-
+  integrations: [%s]
+  jobs:
+    build:
+      region: build
+      runs-on: %s/github/my/wmrepo/myworker-model
+      steps:
+        - run: echo hello`, projInt.Name, projRun.Key),
+	}
+	require.NoError(t, entity.Insert(ctx, db, &tmplEnt))
+
+	// Mock VCS
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	t.Cleanup(func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	})
+	// Repo info (run repo + template repo) - returned empty, only URL formatting uses it
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				if strings.Contains(path, "/branches/") {
+					b := &sdk.VCSBranch{Default: true, DisplayID: "master", ID: "refs/heads/master", LatestCommit: "123456789"}
+					*(out.(*sdk.VCSBranch)) = *b
+					return nil, 200, nil
+				}
+				b := &sdk.VCSRepo{}
+				*(out.(*sdk.VCSRepo)) = *b
+				return nil, 200, nil
+			},
+		).AnyTimes()
+
+	// Create hatchery able to spawn in the build region
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
+	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+	require.NoError(t, rbac.Insert(ctx, db, &sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}))
+
+	wkName := sdk.RandomString(10)
+	wr := sdk.V2WorkflowRun{
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       projRun.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsRun.ID,
+		RepositoryID:     repoRun.ID,
+		RunNumber:        1,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: sdk.V2Workflow{
+				Name: wkName,
+				From: fmt.Sprintf("%s/%s/%s/%s", projTmpl.Key, vcsTmpl.Name, repoTmpl.Name, "myTemplate"),
+			},
+		},
+		Initiator: &sdk.V2Initiator{
+			UserID:         admin.ID,
+			IsAdminWithMFA: true,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "refs/heads/master",
+			Sha:       "123456789",
+			EventName: sdk.WorkflowHookEventNamePush,
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
+
+	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(wrInfos), "Error found: %v", wrInfos)
+	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status)
+}
