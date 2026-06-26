@@ -148,7 +148,9 @@ func (h *HatcheryOpenstack) initImagesWorkerBasedir() {
 
 	for _, override := range h.Config.OverrideImagesWorkerBasedir {
 		h.imagesWorkerBasedir[regexp.MustCompile(override.Image)] = override.Basedir
+		log.Info(context.Background(), "initImagesWorkerBasedir> registered worker basedir override: image=%q basedir=%q", override.Image, override.Basedir)
 	}
+	log.Info(context.Background(), "initImagesWorkerBasedir> %d worker basedir override(s) configured", len(h.imagesWorkerBasedir))
 }
 
 // initIPStatus initializes ipsInfos to
