@@ -77,6 +77,9 @@ type HatcheryConfiguration struct {
 	// OverrideImagesBookDelay define the worker book delay to use for the specified image.
 	OverrideImagesBookDelay []ImageBookDelayOverride `mapstructure:"overrideImagesBookDelay" toml:"overrideImagesBookDelay" default:"" commented:"true" comment:"Override the book delay used for the images" json:"overrideImagesBookDelay"`
 
+	// OverrideImagesWorkerBasedir define the worker basedir to use for the specified image.
+	OverrideImagesWorkerBasedir []ImageWorkerBasedirOverride `mapstructure:"overrideImagesWorkerBasedir" toml:"overrideImagesWorkerBasedir" default:"" commented:"true" comment:"Override the worker basedir used for the images" json:"overrideImagesWorkerBasedir"`
+
 	// InjectSSHPublicKeys define the list of SSH public keys to inject into spawned workers
 	InjectSSHPublicKeys []string `mapstructure:"injectSSHPublicKeys" toml:"injectSSHPublicKeys" default:"" commented:"true" comment:"List of SSH public keys to inject into spawned workers" json:"injectSSHPublicKeys"`
 
@@ -92,8 +95,9 @@ type HatcheryOpenstack struct {
 	openstackClient *gophercloud.ServiceClient
 	cache           *cache
 	networkID       string                    // computed from networkString
-	imagesUsername  map[*regexp.Regexp]string // computed from initImagesUsername
-	imagesBookDelay map[*regexp.Regexp]int64  // computed from initBookDelay
+	imagesUsername      map[*regexp.Regexp]string // computed from initImagesUsername
+	imagesBookDelay     map[*regexp.Regexp]int64  // computed from initBookDelay
+	imagesWorkerBasedir map[*regexp.Regexp]string // computed from initImagesWorkerBasedir
 }
 
 type ipInfos struct {
@@ -109,4 +113,9 @@ type ImageUsernameOverride struct {
 type ImageBookDelayOverride struct {
 	Image string `mapstructure:"image" toml:"image" default:"" commented:"true" comment:"The image name regular expression." json:"image"`
 	Delay int64  `mapstructure:"delay" toml:"delay" default:"" commented:"true" comment:"The delay to use (in seconds)." json:"delay"`
+}
+
+type ImageWorkerBasedirOverride struct {
+	Image   string `mapstructure:"image" toml:"image" default:"" commented:"true" comment:"The image name regular expression." json:"image"`
+	Basedir string `mapstructure:"basedir" toml:"basedir" default:"" commented:"true" comment:"The worker basedir to use. Must be an absolute path on an exec-allowed, non-world-writable filesystem (e.g. /var/lib/cds-worker)." json:"basedir"`
 }

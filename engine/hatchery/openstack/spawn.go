@@ -95,6 +95,9 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		}
 	}
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
+	if basedir := h.GetImageWorkerBasedir(ctx, spawnArgs.Model.GetOpenstackImage()); basedir != "" {
+		workerConfig.Basedir = basedir
+	}
 
 	udataParam := struct {
 		// All fields below are deprecated

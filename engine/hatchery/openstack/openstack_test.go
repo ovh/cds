@@ -285,6 +285,88 @@ func TestHatcheryOpenstack_checkOverrideImagesUsername(t *testing.T) {
 	}
 }
 
+func TestHatcheryOpenstack_checkOverrideImagesWorkerBasedir(t *testing.T) {
+	tests := []struct {
+		name      string
+		overrides []ImageWorkerBasedirOverride
+		wantErr   bool
+	}{
+		{
+			name:      "empty",
+			overrides: []ImageWorkerBasedirOverride{},
+		},
+		{
+			name:      "nil",
+			overrides: nil,
+		},
+		{
+			name: "valid-values",
+			overrides: []ImageWorkerBasedirOverride{
+				{
+					Image:   "foo",
+					Basedir: "/var/lib/cds-worker",
+				},
+				{
+					Image:   "^foo-[a-z]+",
+					Basedir: "/opt/cds/worker",
+				},
+			},
+		},
+		{
+			name: "invalid-image-regexp",
+			overrides: []ImageWorkerBasedirOverride{
+				{
+					Image:   "foo[",
+					Basedir: "/var/lib/cds-worker",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "relative-basedir",
+			overrides: []ImageWorkerBasedirOverride{
+				{
+					Image:   "^foo$",
+					Basedir: "var/lib/cds-worker",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty-basedir",
+			overrides: []ImageWorkerBasedirOverride{
+				{
+					Image:   "^foo$",
+					Basedir: "",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &HatcheryOpenstack{}
+			if err := h.checkOverrideImagesWorkerBasedir(tt.overrides); (err != nil) != tt.wantErr {
+				t.Errorf("HatcheryOpenstack.checkOverrideImagesWorkerBasedir() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHatcheryOpenstack_GetImageWorkerBasedir(t *testing.T) {
+	h := &HatcheryOpenstack{
+		Config: HatcheryConfiguration{
+			OverrideImagesWorkerBasedir: []ImageWorkerBasedirOverride{
+				{Image: "^Debian 12", Basedir: "/var/lib/cds-worker"},
+			},
+		},
+	}
+	h.initImagesWorkerBasedir()
+
+	require.Equal(t, "/var/lib/cds-worker", h.GetImageWorkerBasedir(context.TODO(), "Debian 12 - IAAS"))
+	require.Equal(t, "", h.GetImageWorkerBasedir(context.TODO(), "Ubuntu 22.04"))
+}
+
 func TestHatcheryOpenstack_checkInjectSSHPublicKeys(t *testing.T) {
 	rsa, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
