@@ -1648,7 +1648,12 @@ func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, files
 	return entities, nil
 }
 
-func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store, o T, ef *EntityFinder, wmDockerImageWhiteList []regexp.Regexp) []error {
+// Lint validates an entity. ef provides the resolution location (project/vcs/repo of the body
+// being linted) for entity references, while ownerProjectKey is the project owning the run's
+// project-scoped resources (integrations, concurrencies). They differ when a run uses a template
+// hosted in another project: entities resolve against the template's location, but integrations
+// and concurrencies belong to the run's project.
+func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store, o T, ef *EntityFinder, ownerProjectKey string, wmDockerImageWhiteList []regexp.Regexp) []error {
 	// 1. Static lint
 	if err := o.Lint(); err != nil {
 		return err
@@ -1757,7 +1762,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 					if !found {
 						// Check if there is interpolation
 						if !strings.Contains(j.Concurrency, "${{") {
-							if _, errC := project.LoadConcurrencyByNameAndProjectKey(ctx, db, ef.currentProject, j.Concurrency); errC != nil {
+							if _, errC := project.LoadConcurrencyByNameAndProjectKey(ctx, db, ownerProjectKey, j.Concurrency); errC != nil {
 								if sdk.ErrorIs(errC, sdk.ErrNotFound) {
 									err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s job %s: concurrency %s doesn't exist", x.Name, jobID, j.Concurrency))
 								} else {
@@ -1780,7 +1785,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 					if !found {
 						// Check if there is interpolation
 						if !strings.Contains(x.Concurrency, "${{") {
-							if _, errC := project.LoadConcurrencyByNameAndProjectKey(ctx, db, ef.currentProject, x.Concurrency); errC != nil {
+							if _, errC := project.LoadConcurrencyByNameAndProjectKey(ctx, db, ownerProjectKey, x.Concurrency); errC != nil {
 								if sdk.ErrorIs(errC, sdk.ErrNotFound) {
 									err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s: concurrency %s doesn't exist", x.Name, x.Concurrency))
 								} else {
@@ -1798,7 +1803,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 					if strings.Contains(j.Integrations[i], "${{") {
 						continue
 					}
-					_, errI := integration.LoadProjectIntegrationByName(ctx, db, ef.currentProject, j.Integrations[i])
+					_, errI := integration.LoadProjectIntegrationByName(ctx, db, ownerProjectKey, j.Integrations[i])
 					if errI != nil {
 						if sdk.ErrorIs(errI, sdk.ErrNotFound) {
 							err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s job %s: integration %s doesn't exist", x.Name, jobID, j.Integrations[i]))
@@ -1816,7 +1821,7 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 				if strings.Contains(x.Integrations[i], "${{") {
 					continue
 				}
-				_, errI := integration.LoadProjectIntegrationByName(ctx, db, ef.currentProject, x.Integrations[i])
+				_, errI := integration.LoadProjectIntegrationByName(ctx, db, ownerProjectKey, x.Integrations[i])
 				if errI != nil {
 					if sdk.ErrorIs(errI, sdk.ErrNotFound) {
 						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s: integration %s doesn't exist", x.Name, x.Integrations[i]))
@@ -1847,7 +1852,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 	}
 	var entities []sdk.EntityWithObject
 	for _, o := range *out {
-		if err := Lint(ctx, api.mustDB(), api.Cache, o, ef, api.WorkerModelDockerImageWhiteList); err != nil {
+		if err := Lint(ctx, api.mustDB(), api.Cache, o, ef, ef.currentProject, api.WorkerModelDockerImageWhiteList); err != nil {
 			return nil, err
 		}
 		eo := sdk.EntityWithObject{

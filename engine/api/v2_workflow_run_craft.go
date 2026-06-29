@@ -244,16 +244,29 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			run.Contexts.CDS.WorkflowTemplateRefWebURL = fmt.Sprintf(vcsRepo.URLBranchFormat, strings.TrimPrefix(e.Entity.Ref, sdk.GitRefBranchPrefix))
 		}
 
-		// Recreate wref with vcs/repo = template's repo and not workflow's repo
-		wref, err = NewWorkflowRunEntityFinder(ctx, api.mustDB(), *p, *run, *repo, *vcsProj, e.Ref, e.Commit, api.Config.WorkflowV2.LibraryProjectKey, &wref.ef.initiator)
+		// Recreate wref with the template's location (project/vcs/repo) so the resolved
+		// template's entity references resolve against it. The finder's project must match its
+		// vcs (both the template's), else a cross-project entity is looked up in the wrong vcs
+		// when two projects share a vcs server name.
+		tmplProject := p
+		if e.Entity.ProjectKey != p.Key {
+			tmplProject, err = project.Load(ctx, api.mustDB(), e.Entity.ProjectKey)
+			if err != nil {
+				return err
+			}
+		}
+		wref, err = NewWorkflowRunEntityFinder(ctx, api.mustDB(), *tmplProject, *run, *repo, *vcsProj, e.Ref, e.Commit, api.Config.WorkflowV2.LibraryProjectKey, &wref.ef.initiator)
 		if err != nil {
 			return err
 		}
+		// Project-scoped resources (integrations, variable sets, concurrencies) belong to the
+		// run's project, not the template's.
+		wref.project = *p
 
 		// Lint workflow. Create tmp workflow without FROM to check workflow structure
 		tmpWkf := run.WorkflowData.Workflow
 		tmpWkf.From = ""
-		if errsLint := Lint(ctx, api.mustDB(), api.Cache, tmpWkf, wref.ef, api.WorkerModelDockerImageWhiteList); errsLint != nil {
+		if errsLint := Lint(ctx, api.mustDB(), api.Cache, tmpWkf, wref.ef, p.Key, api.WorkerModelDockerImageWhiteList); errsLint != nil {
 			//run.Status = sdk.V2WorkflowRunStatusFail
 			msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
 			for _, e := range errsLint {
@@ -747,13 +760,24 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 	if err != nil {
 		return &e, nil, nil, err
 	}
-	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, wref.project, *run, *repoTemplate, *vcsTemplate, e.Ref, e.Commit, wref.ef.libraryProject, &wref.ef.initiator)
+	// The finder's location must be the template's (project must match its vcs), so the
+	// templated job's entity references resolve against the template, not the run's project.
+	jobTemplateProject := wref.project
+	if e.ProjectKey != wref.project.Key {
+		tmplProj, err := project.Load(ctx, db, e.ProjectKey)
+		if err != nil {
+			return &e, nil, nil, sdk.WrapError(err, "unable to find project %s", e.ProjectKey)
+		}
+		jobTemplateProject = *tmplProj
+	}
+	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, jobTemplateProject, *run, *repoTemplate, *vcsTemplate, e.Ref, e.Commit, wref.ef.libraryProject, &wref.ef.initiator)
 	if err != nil {
 		return &e, nil, nil, err
 	}
+	wrefTemplate.project = wref.project
 
-	// Lint generated workflow
-	if errsLint := Lint(ctx, db, store, tmpWorkflow, wrefTemplate.ef, nil); errsLint != nil {
+	// Lint generated workflow. Project-scoped resources belong to the run's project.
+	if errsLint := Lint(ctx, db, store, tmpWorkflow, wrefTemplate.ef, wref.run.ProjectKey, nil); errsLint != nil {
 		//run.Status = sdk.V2WorkflowRunStatusFail
 		msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
 		for _, e := range errsLint {
