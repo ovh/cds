@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 )
@@ -97,6 +98,79 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 			ServiceIgnoreJobWithNoRegion: reqData.AuthConsumerUser.ServiceIgnoreJobWithNoRegion,
 		}
 		newConsumer, token, err := builtin.NewConsumer(ctx, tx, consumerOpts, consumer)
+		if err != nil {
+			return err
+		}
+		if err := authentication.LoadUserConsumerOptions.Default(ctx, tx, newConsumer); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return service.WriteJSON(w, sdk.AuthConsumerCreateResponse{
+			Token:    token,
+			Consumer: newConsumer,
+		}, http.StatusCreated)
+	}
+}
+
+// postAdminConsumerByUserHandler lets an admin create a builtin consumer on behalf of another user.
+// Unlike postConsumerByUserHandler it is reserved to admins (authAdminMiddleware) and creates a root
+// builtin consumer directly attached to the target user, even if that user has no consumer yet.
+func (api *API) postAdminConsumerByUserHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		username := vars["permUsername"]
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		u, err := user.LoadByUsername(ctx, tx, username)
+		if err != nil {
+			return err
+		}
+
+		// Load the target user's groups to validate the requested group ids.
+		groups, err := group.LoadAllByUserID(ctx, tx, u.ID)
+		if err != nil {
+			return err
+		}
+		userGroupIDs := make([]int64, 0, len(groups))
+		for i := range groups {
+			userGroupIDs = append(userGroupIDs, groups[i].ID)
+		}
+
+		// Check request data
+		var reqData sdk.AuthUserConsumer
+		if err := service.UnmarshalBody(r, &reqData); err != nil {
+			return err
+		}
+		if err := reqData.IsValid(api.Router.scopeDetails); err != nil {
+			return err
+		}
+
+		if reqData.ValidityPeriods.Latest() == nil {
+			reqData.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(time.Now(), time.Duration(api.Config.Auth.TokenDefaultDuration)*(24*time.Hour))
+		}
+
+		// Create the new root builtin consumer attached to the target user
+		consumerOpts := builtin.NewConsumerOptions{
+			Name:                         reqData.Name,
+			Description:                  reqData.Description,
+			Duration:                     reqData.ValidityPeriods.Latest().Duration,
+			GroupIDs:                     reqData.AuthConsumerUser.GroupIDs,
+			Scopes:                       reqData.AuthConsumerUser.ScopeDetails,
+			ServiceName:                  reqData.AuthConsumerUser.ServiceName,
+			ServiceType:                  reqData.AuthConsumerUser.ServiceType,
+			ServiceRegion:                reqData.AuthConsumerUser.ServiceRegion,
+			ServiceIgnoreJobWithNoRegion: reqData.AuthConsumerUser.ServiceIgnoreJobWithNoRegion,
+		}
+		newConsumer, token, err := builtin.NewConsumerForUser(ctx, tx, consumerOpts, u, userGroupIDs)
 		if err != nil {
 			return err
 		}

@@ -113,6 +113,54 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	require.Equal(t, localConsumer.ID, *created.Consumer.ParentID)
 }
 
+func Test_postAdminConsumerByUserHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	g := assets.InsertGroup(t, db)
+	targetUser, jwtRawTarget := assets.InsertLambdaUser(t, db, g)
+	_, jwtRawAdmin := assets.InsertAdminUser(t, db)
+
+	data := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     []int64{g.ID},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
+	}
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postAdminConsumerByUserHandler, map[string]string{
+		"permUsername": targetUser.Username,
+	})
+	require.NotEmpty(t, uri)
+
+	// A non-admin user can't use the admin route, even for itself
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRawTarget, http.MethodPost, uri, data)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 403, rec.Code)
+
+	// An admin can create a consumer on behalf of another user
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRawAdmin, http.MethodPost, uri, data)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 201, rec.Code)
+
+	var created sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
+	require.NotEmpty(t, created.Token)
+	require.Equal(t, data.Name, created.Consumer.Name)
+	require.Equal(t, sdk.ConsumerBuiltin, created.Consumer.Type)
+	require.Equal(t, targetUser.ID, created.Consumer.AuthConsumerUser.AuthentifiedUserID)
+	require.Nil(t, created.Consumer.ParentID, "an admin-created consumer is a root builtin consumer")
+	require.Len(t, created.Consumer.AuthConsumerUser.GroupIDs, 1)
+	require.Equal(t, g.ID, created.Consumer.AuthConsumerUser.GroupIDs[0])
+	require.Len(t, created.Consumer.AuthConsumerUser.ScopeDetails, 1)
+	require.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.AuthConsumerUser.ScopeDetails[0].Scope)
+}
+
 func Test_deleteConsumerByUserHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 

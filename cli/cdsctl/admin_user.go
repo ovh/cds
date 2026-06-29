@@ -25,6 +25,7 @@ func adminUsers() *cobra.Command {
 		cli.NewDeleteCommand(adminUserDeleteCmd, adminUserDeleteRun, nil),
 		adminUserLink(),
 		adminUserGroupList(),
+		adminUserConsumer(),
 	})
 }
 

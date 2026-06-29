@@ -118,6 +118,57 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 	return &c, jws, nil
 }
 
+// NewConsumerForUser returns a new builtin consumer attached to the given user. Unlike NewConsumer it has
+// no parent consumer: it is a root builtin consumer, meant to be created by an admin on behalf of another
+// user. Scopes and groups are not narrowed from a parent but validated against the target user's own groups.
+func NewConsumerForUser(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewConsumerOptions, user *sdk.AuthentifiedUser, userGroupIDs []int64) (*sdk.AuthUserConsumer, string, error) {
+	if opts.Name == "" {
+		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")
+	}
+
+	// Given group ids must be groups the target user belongs to. Empty means all user's groups.
+	for i := range opts.GroupIDs {
+		if !sdk.IsInInt64Array(opts.GroupIDs[i], userGroupIDs) {
+			return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", opts.GroupIDs[i])
+		}
+	}
+
+	// No parent consumer: all scopes are allowed but at least one valid scope is required.
+	if err := checkNewConsumerScopes(nil, opts.Scopes); err != nil {
+		return nil, "", err
+	}
+
+	c := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            opts.Name,
+			Description:     opts.Description,
+			Type:            sdk.ConsumerBuiltin,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), opts.Duration),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			AuthentifiedUserID:           user.ID,
+			Data:                         map[string]string{},
+			GroupIDs:                     opts.GroupIDs,
+			ScopeDetails:                 opts.Scopes,
+			ServiceName:                  opts.ServiceName,
+			ServiceType:                  opts.ServiceType,
+			ServiceRegion:                opts.ServiceRegion,
+			ServiceIgnoreJobWithNoRegion: opts.ServiceIgnoreJobWithNoRegion,
+		},
+	}
+
+	if err := authentication.InsertUserConsumer(ctx, db, &c); err != nil {
+		return nil, "", err
+	}
+
+	jws, err := builtin.NewSigninConsumerToken(&c)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return &c, jws, nil
+}
+
 func checkNewConsumerScopes(parentScopes, scopes sdk.AuthConsumerScopeDetails) error {
 	// At least one scope should be given, for each given scope checks if its authorized and if it's in parent scopes
 	if len(scopes) == 0 {

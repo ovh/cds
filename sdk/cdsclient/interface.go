@@ -851,6 +851,7 @@ type AuthClient interface {
 	AuthConsumerDelete(username, id string) error
 	AuthConsumerRegen(username, id string, newDuration int64, overlapDuration string) (sdk.AuthConsumerCreateResponse, error)
 	AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error)
+	AuthConsumerCreateForUserAsAdmin(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error)
 	AuthSessionListByUser(username string) (sdk.AuthSessions, error)
 	AuthSessionDelete(username, id string) error
 	AuthSessionGet(id string) (sdk.AuthCurrentConsumerResponse, error)
