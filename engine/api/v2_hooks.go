@@ -507,7 +507,7 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 	// For PullRequest event, skipped hooks are always empty
 	if len(hookRequest.SkippedHooks) == 0 && (hookRequest.RepositoryEventName == sdk.WorkflowHookEventNamePullRequest || hookRequest.RepositoryEventName == sdk.WorkflowHookEventNamePullRequestComment) {
 
-		hooks, err := workflow_v2.LoadHookHeadPullRequestHookByWorkflowAndEvent(ctx, db, hookRequest.VCSName, hookRequest.RepositoryName)
+		hooks, err := workflow_v2.LoadHookHeadPullRequestHookByWorkflowAndEvent(ctx, db, hookRequest.RepositoryEventName, hookRequest.VCSName, hookRequest.RepositoryName)
 		if err != nil {
 			return nil, err
 		}
@@ -588,6 +588,11 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 }
 
 func validateRepositoryWebHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hookRequest sdk.HookListWorkflowRequest, w sdk.V2WorkflowHook, repoCache map[string]string, fallback bool) (bool, error) {
+	// A hook only matches events of its own type
+	if w.Data.RepositoryEvent != hookRequest.RepositoryEventName {
+		return false, nil
+	}
+
 	// Skip branch/commit validation for fallback
 	if !fallback {
 		// If event && workflow declaration are on the same repo

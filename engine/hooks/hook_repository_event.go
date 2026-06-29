@@ -187,7 +187,7 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 			extractedData.CommitFrom = request.PullRequest.Base.Sha
 			extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
 		}
-	case "pull_request_comment":
+	case "pull_request_review_comment":
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
 		if request.PullRequest != nil {
@@ -199,6 +199,14 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 			extractedData.CommitFrom = request.PullRequest.Base.Sha
 			extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
 		}
+		if request.Comment != nil {
+			extractedData.Comment = request.Comment.Body
+		}
+	case "issue_comment":
+		// TODO: comment on a PR conversation; the issue_comment payload carries no
+		// head/base refs, so the PR refs must be resolved through the VCS API before
+		// the event can be triggered. Not supported yet.
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "event %q not supported yet", eventName)
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
 	}
@@ -287,6 +295,10 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", request.EventKey)
+	}
+
+	if request.Comment != nil {
+		extractedData.Comment = request.Comment.Text
 	}
 
 	if extractedData.Ref == "" {

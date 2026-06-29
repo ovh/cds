@@ -136,10 +136,11 @@ type WorkflowOnPullRequest struct {
 }
 
 type WorkflowOnPullRequestComment struct {
-	Branches []string                `json:"branches,omitempty" jsonschema_description:"Destination branches that will trigger the workflow"`
-	Comment  string                  `json:"comment,omitempty"  jsonschema_description:"Comment message pattern that will trigger the workflow"`
-	Paths    []string                `json:"paths,omitempty" jsonschema_description:"File paths that will trigger the workflow when modified"`
-	Types    []WorkflowHookEventType `json:"types,omitempty" jsonschema_description:"Pull request event types that will trigger the workflow"`
+	Branches      []string                `json:"branches,omitempty" jsonschema_description:"Destination branches that will trigger the workflow"`
+	Comment       string                  `json:"comment,omitempty"  jsonschema_description:"Comment posted on the pull request at the end of the run"`
+	CommentFilter string                  `json:"comment_filter,omitempty" jsonschema_description:"Glob pattern the comment must match to trigger the workflow"`
+	Paths         []string                `json:"paths,omitempty" jsonschema_description:"File paths that will trigger the workflow when modified"`
+	Types         []WorkflowHookEventType `json:"types,omitempty" jsonschema_description:"Pull request event types that will trigger the workflow"`
 }
 
 type WorkflowOnModelUpdate struct {
@@ -195,7 +196,7 @@ func IsDefaultHooks(on *WorkflowOn) []WorkflowHookEventName {
 	}
 	if on.PullRequestComment != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventNamePullRequestComment)
-		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" || len(on.PullRequestComment.Types) > 0 {
+		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" || on.PullRequestComment.CommentFilter != "" || len(on.PullRequestComment.Types) > 0 {
 			return nil
 		}
 	}
@@ -502,6 +503,7 @@ type V2WorkflowHookData struct {
 	RepositoryEvent             WorkflowHookEventName   `json:"repository_event,omitempty"`
 	Model                       string                  `json:"model,omitempty"`
 	CommitFilter                string                  `json:"commit_filter,omitempty"`
+	CommentFilter               string                  `json:"comment_filter,omitempty"`
 	BranchFilter                []string                `json:"branch_filter,omitempty"`
 	TagFilter                   []string                `json:"tag_filter,omitempty"`
 	PathFilter                  []string                `json:"path_filter,omitempty"`

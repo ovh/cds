@@ -37,3 +37,30 @@ func TestTriggerWorkflow(t *testing.T) {
 	require.Equal(t, sdk.HookEventWorkflowStatusSkipped, hre.WorkflowHooks[0].Status)
 	require.Equal(t, "no file matches path filters", hre.WorkflowHooks[0].Error)
 }
+
+func TestSkipNonMatchingPullRequestCommentHooks(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	ctx := context.TODO()
+
+	hre := &sdk.HookRepositoryEvent{
+		EventName: sdk.WorkflowHookEventNamePullRequestComment,
+		ExtractData: sdk.HookRepositoryEventExtractData{
+			Comment: "deploy the app",
+		},
+		WorkflowHooks: []sdk.HookRepositoryEventWorkflow{
+			{Status: sdk.HookEventWorkflowStatusScheduled, Data: sdk.V2WorkflowHookData{CommentFilter: "deploy*"}},
+			{Status: sdk.HookEventWorkflowStatusScheduled, Data: sdk.V2WorkflowHookData{CommentFilter: "release*"}},
+			{Status: sdk.HookEventWorkflowStatusScheduled},
+		},
+	}
+
+	skipNonMatchingPullRequestCommentHooks(ctx, hre)
+
+	// Matching filter stays scheduled
+	require.Equal(t, sdk.HookEventWorkflowStatusScheduled, hre.WorkflowHooks[0].Status)
+	// Non-matching filter is skipped with a reason
+	require.Equal(t, sdk.HookEventWorkflowStatusSkipped, hre.WorkflowHooks[1].Status)
+	require.Equal(t, "comment does not match comment filter", hre.WorkflowHooks[1].Error)
+	// No filter stays scheduled
+	require.Equal(t, sdk.HookEventWorkflowStatusScheduled, hre.WorkflowHooks[2].Status)
+}

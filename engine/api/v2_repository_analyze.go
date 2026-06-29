@@ -1014,6 +1014,7 @@ func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 					BranchFilter:    e.Workflow.On.PullRequestComment.Branches,
 					PathFilter:      e.Workflow.On.PullRequestComment.Paths,
 					TypesFilter:     e.Workflow.On.PullRequestComment.Types,
+					CommentFilter:   e.Workflow.On.PullRequestComment.CommentFilter,
 				},
 				Head: e.Head,
 			}
