@@ -121,6 +121,8 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		repository += "-puppet"
 	case sdk.V2WorkflowRunResultTypeConan:
 		repository += "-conan"
+	case sdk.V2WorkflowRunResultTypeOCI:
+		repository += "-oci"
 	}
 
 	// get file info
@@ -148,6 +150,12 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	if resultType == sdk.V2WorkflowRunResultTypeConan {
 		aqlPath := strings.TrimSuffix(strings.TrimPrefix(artifactPath, "/"), "/") + "/*"
 		aqlSearch = fmt.Sprintf(`items.find({"path" : {"$match": "%s"}, "repo": {"$eq":"%s"}}).include("repo","path","name","virtual_repos", "actual_md5", "actual_sha1", "sha256", "size", "property")`, aqlPath, repository)
+	} else if resultType == sdk.V2WorkflowRunResultTypeOCI {
+		// An OCI package is a folder (<name>/<version>) holding the manifest and blobs directly in it.
+		// We match the version folder itself and any nested path. The AQL "repo" field is the local
+		// repository, so we match the virtual repo's maturities (e.g. "<repo>-snapshot") with a prefix.
+		ociPath := strings.TrimSuffix(strings.TrimPrefix(artifactPath, "/"), "/")
+		aqlSearch = fmt.Sprintf(`items.find({"$or":[{"path":{"$eq":"%s"}},{"path":{"$match":"%s/*"}}], "repo":{"$match":"%s-*"}}).include("repo","path","name","virtual_repos", "actual_md5", "actual_sha1", "sha256", "size", "property")`, ociPath, ociPath, repository)
 	} else if aqlPath == "" {
 		aqlSearch = fmt.Sprintf(`items.find({"name" : "%s"}).include("repo","path","name","virtual_repos")`, fileName)
 	} else {
@@ -265,6 +273,10 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		}
 	case sdk.V2WorkflowRunResultTypeConan:
 		if err := performConan(&runResult, itemSearch, artifactPath); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypeOCI:
+		if err := performOCI(&runResult, itemSearch, artifactPath); err != nil {
 			return true, err
 		}
 	default:
@@ -684,6 +696,38 @@ func performConan(runResult *sdk.V2WorkflowRunResult, aqlSearch *grpcplugins.Sea
 			Version:         packageVersion,
 			PackageRevision: pathSplit[len(pathSplit)-1],
 			Files:           files,
+		},
+	}
+
+	return nil
+}
+
+// performOCI handles generic OCI packages. Like Conan, an OCI package is a folder (<name>/<version>)
+// containing several files (manifest + blobs). The package name and version are derived from the path:
+// the version is the last path segment, the name is everything before it.
+func performOCI(runResult *sdk.V2WorkflowRunResult, aqlSearch *grpcplugins.SearchResultResponse, packagePath string) error {
+	files := make([]sdk.V2WorkflowRunResultOCIDetailFile, 0)
+	for _, item := range aqlSearch.Results {
+		files = append(files, sdk.V2WorkflowRunResultOCIDetailFile{
+			FileName: item.Name,
+			Path:     item.Path,
+			Size:     item.Size,
+			MD5:      item.ActualMd5,
+			SHA1:     item.ActualSha1,
+			SHA256:   item.Sha256,
+		})
+	}
+
+	pathSplit := strings.Split(strings.Trim(packagePath, "/"), "/")
+	version := pathSplit[len(pathSplit)-1]
+	name := strings.Join(pathSplit[:len(pathSplit)-1], "/")
+
+	runResult.Type = sdk.V2WorkflowRunResultTypeOCI
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultOCIDetail{
+			Name:    name,
+			Version: version,
+			Files:   files,
 		},
 	}
 

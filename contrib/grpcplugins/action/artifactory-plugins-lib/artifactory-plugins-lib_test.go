@@ -73,6 +73,28 @@ func newConanRunResult(integrationName string, metadata map[string]string, files
 	return r
 }
 
+func newOCIRunResult(integrationName string, metadata map[string]string, files []sdk.V2WorkflowRunResultOCIDetailFile) sdk.V2WorkflowRunResult {
+	r := sdk.V2WorkflowRunResult{
+		Type: sdk.V2WorkflowRunResultTypeOCI,
+		Detail: sdk.V2WorkflowRunResultDetail{
+			Data: &sdk.V2WorkflowRunResultOCIDetail{
+				Name:    "mirror/api-exposition/gateway",
+				Version: "1.46.0",
+				Files:   files,
+			},
+			Type: "V2WorkflowRunResultOCIDetail",
+		},
+	}
+	if integrationName != "" {
+		r.ArtifactManagerIntegrationName = &integrationName
+	}
+	if metadata != nil {
+		m := sdk.V2WorkflowRunResultArtifactManagerMetadata(metadata)
+		r.ArtifactManagerMetadata = &m
+	}
+	return r
+}
+
 // --- Single file tests (generic) ---
 
 func Test_checkRunResultIntegrity_AllChecksumsMatch(t *testing.T) {
@@ -547,6 +569,117 @@ func Test_checkRunResultIntegrity_ConanGetFileInfoError(t *testing.T) {
 	})
 
 	mockClient.EXPECT().GetFileInfo("conan-snapshot-local", "mylib/1.0.0/_/_/export/conanfile.py").Return(sdk.FileInfo{}, fmt.Errorf("not found"))
+
+	c := new(actionplugin.Common)
+	err := checkRunResultIntegrity(context.Background(), c, mockClient, r)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unable to get file info for")
+}
+
+// --- OCI tests ---
+
+func Test_checkRunResultIntegrity_OCIAllMatch(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := mock_artifact_manager.NewMockArtifactManager(ctrl)
+
+	r := newOCIRunResult("my-integration", map[string]string{
+		"localRepository": "oci-snapshot-local",
+	}, []sdk.V2WorkflowRunResultOCIDetailFile{
+		{FileName: "manifest.json", Path: "mirror/api-exposition/gateway/1.46.0", MD5: "md5aaa", SHA1: "sha1aaa", SHA256: "sha256aaa"},
+		{FileName: "sha256__abc", Path: "mirror/api-exposition/gateway/1.46.0", MD5: "md5bbb", SHA1: "sha1bbb", SHA256: "sha256bbb"},
+	})
+
+	mockClient.EXPECT().GetFileInfo("oci-snapshot-local", "mirror/api-exposition/gateway/1.46.0/manifest.json").Return(sdk.FileInfo{
+		Checksums: &sdk.FileInfoChecksum{Md5: "md5aaa", Sha1: "sha1aaa", Sha256: "sha256aaa"},
+	}, nil)
+	mockClient.EXPECT().GetFileInfo("oci-snapshot-local", "mirror/api-exposition/gateway/1.46.0/sha256__abc").Return(sdk.FileInfo{
+		Checksums: &sdk.FileInfoChecksum{Md5: "md5bbb", Sha1: "sha1bbb", Sha256: "sha256bbb"},
+	}, nil)
+
+	c := new(actionplugin.Common)
+	err := checkRunResultIntegrity(context.Background(), c, mockClient, r)
+	require.NoError(t, err)
+}
+
+func Test_checkRunResultIntegrity_OCIFileMD5Mismatch(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := mock_artifact_manager.NewMockArtifactManager(ctrl)
+
+	r := newOCIRunResult("my-integration", map[string]string{
+		"localRepository": "oci-snapshot-local",
+	}, []sdk.V2WorkflowRunResultOCIDetailFile{
+		{FileName: "manifest.json", Path: "mirror/api-exposition/gateway/1.46.0", MD5: "md5aaa", SHA1: "sha1aaa", SHA256: "sha256aaa"},
+	})
+
+	mockClient.EXPECT().GetFileInfo("oci-snapshot-local", "mirror/api-exposition/gateway/1.46.0/manifest.json").Return(sdk.FileInfo{
+		Checksums: &sdk.FileInfoChecksum{Md5: "wrongmd5", Sha1: "sha1aaa", Sha256: "sha256aaa"},
+	}, nil)
+
+	c := new(actionplugin.Common)
+	err := checkRunResultIntegrity(context.Background(), c, mockClient, r)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "MD5 mismatch")
+	require.Contains(t, err.Error(), "manifest.json")
+}
+
+func Test_checkRunResultIntegrity_OCIFileSHA256Mismatch(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := mock_artifact_manager.NewMockArtifactManager(ctrl)
+
+	r := newOCIRunResult("my-integration", map[string]string{
+		"localRepository": "oci-snapshot-local",
+	}, []sdk.V2WorkflowRunResultOCIDetailFile{
+		{FileName: "manifest.json", Path: "mirror/api-exposition/gateway/1.46.0", MD5: "md5aaa", SHA1: "sha1aaa", SHA256: "sha256aaa"},
+	})
+
+	mockClient.EXPECT().GetFileInfo("oci-snapshot-local", "mirror/api-exposition/gateway/1.46.0/manifest.json").Return(sdk.FileInfo{
+		Checksums: &sdk.FileInfoChecksum{Md5: "md5aaa", Sha1: "sha1aaa", Sha256: "wrongsha256"},
+	}, nil)
+
+	c := new(actionplugin.Common)
+	err := checkRunResultIntegrity(context.Background(), c, mockClient, r)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "SHA256 mismatch")
+	require.Contains(t, err.Error(), "manifest.json")
+}
+
+func Test_checkRunResultIntegrity_OCIFileNoChecksum(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := mock_artifact_manager.NewMockArtifactManager(ctrl)
+
+	r := newOCIRunResult("my-integration", map[string]string{
+		"localRepository": "oci-snapshot-local",
+	}, []sdk.V2WorkflowRunResultOCIDetailFile{
+		{FileName: "manifest.json", Path: "mirror/api-exposition/gateway/1.46.0"},
+	})
+
+	c := new(actionplugin.Common)
+	err := checkRunResultIntegrity(context.Background(), c, mockClient, r)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "has no checksum")
+}
+
+func Test_checkRunResultIntegrity_OCIGetFileInfoError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := mock_artifact_manager.NewMockArtifactManager(ctrl)
+
+	r := newOCIRunResult("my-integration", map[string]string{
+		"localRepository": "oci-snapshot-local",
+	}, []sdk.V2WorkflowRunResultOCIDetailFile{
+		{FileName: "manifest.json", Path: "mirror/api-exposition/gateway/1.46.0", MD5: "md5aaa", SHA1: "sha1aaa", SHA256: "sha256aaa"},
+	})
+
+	mockClient.EXPECT().GetFileInfo("oci-snapshot-local", "mirror/api-exposition/gateway/1.46.0/manifest.json").Return(sdk.FileInfo{}, fmt.Errorf("not found"))
 
 	c := new(actionplugin.Common)
 	err := checkRunResultIntegrity(context.Background(), c, mockClient, r)
