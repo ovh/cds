@@ -85,6 +85,12 @@ func (c *client) AuthConsumerCreateForUser(username string, request sdk.AuthUser
 	return consumer, err
 }
 
+func (c *client) AuthConsumerCreateForUserAsAdmin(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
+	var consumer sdk.AuthConsumerCreateResponse
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/admin/user/"+username+"/auth/consumer", request, &consumer)
+	return consumer, err
+}
+
 func (c *client) AuthSessionListByUser(username string) (sdk.AuthSessions, error) {
 	var sessions sdk.AuthSessions
 	if _, err := c.GetJSON(context.Background(), "/user/"+username+"/auth/session", &sessions); err != nil {

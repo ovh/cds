@@ -7832,6 +7832,21 @@ func (mr *MockInterfaceMockRecorder) AuthConsumerCreateForUser(username, request
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerCreateForUser", reflect.TypeOf((*MockInterface)(nil).AuthConsumerCreateForUser), username, request)
 }
 
+// AuthConsumerCreateForUserAsAdmin mocks base method.
+func (m *MockInterface) AuthConsumerCreateForUserAsAdmin(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthConsumerCreateForUserAsAdmin", username, request)
+	ret0, _ := ret[0].(sdk.AuthConsumerCreateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthConsumerCreateForUserAsAdmin indicates an expected call of AuthConsumerCreateForUserAsAdmin.
+func (mr *MockInterfaceMockRecorder) AuthConsumerCreateForUserAsAdmin(username, request any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerCreateForUserAsAdmin", reflect.TypeOf((*MockInterface)(nil).AuthConsumerCreateForUserAsAdmin), username, request)
+}
+
 // AuthConsumerDelete mocks base method.
 func (m *MockInterface) AuthConsumerDelete(username, id string) error {
 	m.ctrl.T.Helper()
@@ -15000,6 +15015,21 @@ func (m *MockAuthClient) AuthConsumerCreateForUser(username string, request sdk.
 func (mr *MockAuthClientMockRecorder) AuthConsumerCreateForUser(username, request any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerCreateForUser", reflect.TypeOf((*MockAuthClient)(nil).AuthConsumerCreateForUser), username, request)
+}
+
+// AuthConsumerCreateForUserAsAdmin mocks base method.
+func (m *MockAuthClient) AuthConsumerCreateForUserAsAdmin(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthConsumerCreateForUserAsAdmin", username, request)
+	ret0, _ := ret[0].(sdk.AuthConsumerCreateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthConsumerCreateForUserAsAdmin indicates an expected call of AuthConsumerCreateForUserAsAdmin.
+func (mr *MockAuthClientMockRecorder) AuthConsumerCreateForUserAsAdmin(username, request any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerCreateForUserAsAdmin", reflect.TypeOf((*MockAuthClient)(nil).AuthConsumerCreateForUserAsAdmin), username, request)
 }
 
 // AuthConsumerDelete mocks base method.
