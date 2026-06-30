@@ -91,6 +91,8 @@ func checkRunResultIntegrity(_ context.Context, c *actionplugin.Common, artifact
 		return checkDockerIntegrity(c, artifactClient, r, localRepo)
 	case sdk.V2WorkflowRunResultTypeConan:
 		return checkConanIntegrity(c, artifactClient, r, localRepo)
+	case sdk.V2WorkflowRunResultTypeOCI:
+		return checkOCIIntegrity(c, artifactClient, r, localRepo)
 	default:
 		return checkSingleFileIntegrity(c, artifactClient, r, localRepo)
 	}
@@ -177,6 +179,25 @@ func checkConanIntegrity(c *actionplugin.Common, artifactClient artifact_manager
 	return nil
 }
 
+func checkOCIIntegrity(c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, r sdk.V2WorkflowRunResult, localRepo string) error {
+	details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultOCIDetail](&r)
+	if err != nil {
+		return errors.Errorf("integrity check failed for %s: unable to get oci detail: %v", r.Name(), err)
+	}
+
+	for _, f := range details.Files {
+		filePath := f.Path + "/" + f.FileName
+		if err := verifyFileChecksums(artifactClient, localRepo, filePath,
+			f.MD5, f.SHA1, f.SHA256,
+			r.Name(), filePath); err != nil {
+			return err
+		}
+	}
+
+	grpcplugins.Successf(c, "Integrity check passed for oci package %s (%d file(s) verified)", r.Name(), len(details.Files))
+	return nil
+}
+
 func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, integration sdk.JobIntegrationsContext, r sdk.V2WorkflowRunResult, maturity string, props *utils.Properties, status string, futureReleaseName, futureReleaseVersion string) (string, error) {
 	var (
 		promotedArtifact      string
@@ -242,6 +263,30 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 		for _, f := range details.Files {
 			promotedArtifact = fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, f.Path+"/"+f.FileName)
 		}
+	case "oci":
+		// An OCI package is a folder (<name>/<version>) holding several files (manifest + blobs).
+		// We promote each file explicitly so the move does not depend on folder recursion, and
+		// expose the package folder as the promoted artifact so the release bundle captures it recursively.
+		details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultOCIDetail](&r)
+		if err != nil {
+			return promotedArtifact, errors.Errorf("unable to get oci detail: %v", err)
+		}
+		repoType := r.ArtifactManagerMetadata.Get("type")
+		repoName := r.ArtifactManagerMetadata.Get("repository")
+		for _, f := range details.Files {
+			data := art.FileToPromote{
+				RepoType: repoType,
+				RepoName: repoName,
+				Name:     f.FileName,
+				Path:     f.Path + "/" + f.FileName,
+			}
+			promoted, err := art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, skipExistingArtifacts)
+			if err != nil {
+				return promotedArtifact, errors.Errorf("unable to promote oci file: %s: %v", f.FileName, err)
+			}
+			hasBeenPromoted = hasBeenPromoted || promoted
+		}
+		promotedArtifact = fmt.Sprintf("%s-%s%s", repoName, newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path"))
 	default:
 		data := art.FileToPromote{
 			RepoType: r.ArtifactManagerMetadata.Get("type"),
@@ -362,6 +407,19 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		}
 		if results[i].Type == sdk.V2WorkflowRunResultTypeConan {
 			grpcplugins.Warnf(c, "Please note that Conan artifacts will not be part of the release bundle.")
+			continue
+		}
+		if results[i].Type == sdk.V2WorkflowRunResultTypeOCI {
+			// The release bundle spec rejects a bare folder pattern, so list every file of the
+			// OCI package (manifest + blobs) as a concrete file pattern instead.
+			details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultOCIDetail](&results[i])
+			if err != nil {
+				return errors.Errorf("unable to get oci detail: %v", err)
+			}
+			repoName := results[i].ArtifactManagerMetadata.Get("repository")
+			for _, f := range details.Files {
+				promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/%s", repoName, maturity, f.Path, f.FileName))
+			}
 			continue
 		}
 		promotedArtifacts = append(promotedArtifacts, promotedArtifact)

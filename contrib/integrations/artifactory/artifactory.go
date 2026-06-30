@@ -574,6 +574,27 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 				}
 				mod.Artifacts = append(mod.Artifacts, currentArtifact)
 			}
+		case "oci":
+			details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultOCIDetail](&r)
+			if err != nil {
+				return nil, err
+			}
+			mod.Type = buildinfo.Generic
+
+			// An OCI package is a folder; "dir" is not set for OCI, so use the artifact path
+			// (the <name>/<version> folder) for the recursive build-property tagging below.
+			path = strings.TrimPrefix(path, "/")
+
+			for _, f := range details.Files {
+				currentArtifact := buildinfo.Artifact{
+					Name: f.FileName,
+					Type: strings.TrimPrefix(filepath.Ext(f.FileName), "."),
+					Checksum: buildinfo.Checksum{
+						Md5: f.MD5,
+					},
+				}
+				mod.Artifacts = append(mod.Artifacts, currentArtifact)
+			}
 		default:
 			_, objectName := filepath.Split(path)
 			currentArtifact := buildinfo.Artifact{

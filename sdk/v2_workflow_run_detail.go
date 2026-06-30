@@ -56,6 +56,7 @@ func init() {
 		&V2WorkflowRunResultNugetDetail{},
 		&V2WorkflowRunResultPuppetDetail{},
 		&V2WorkflowRunResultConanDetail{},
+		&V2WorkflowRunResultOCIDetail{},
 	)
 }
 
@@ -225,6 +226,7 @@ const (
 	V2WorkflowRunResultTypeNuget             V2WorkflowRunResultType = "nuget"
 	V2WorkflowRunResultTypePuppet            V2WorkflowRunResultType = "puppet"
 	V2WorkflowRunResultTypeConan             V2WorkflowRunResultType = "conan"
+	V2WorkflowRunResultTypeOCI               V2WorkflowRunResultType = "oci"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 
@@ -828,6 +830,47 @@ func (v *V2WorkflowRunResultConanDetail) Cast(i any) error {
 
 // GetName implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultConanDetail) GetName() string {
+	return v.Name + ":" + v.Version
+}
+
+type V2WorkflowRunResultOCIDetail struct {
+	Name    string
+	Version string
+	Files   []V2WorkflowRunResultOCIDetailFile
+}
+
+type V2WorkflowRunResultOCIDetailFile struct {
+	FileName string
+	Path     string
+	Size     int64
+	MD5      string
+	SHA1     string
+	SHA256   string
+}
+
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultOCIDetail) GetLabel() string {
+	return fmt.Sprintf("Package: %s - Version: %s", v.Name, v.Version)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultOCIDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Name":    {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Version": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
+	}
+}
+
+// Cast implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultOCIDetail) Cast(i any) error {
+	if err := castV2WorkflowRunResultDetailWithMapStructure(i, v); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetName implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultOCIDetail) GetName() string {
 	return v.Name + ":" + v.Version
 }
 
