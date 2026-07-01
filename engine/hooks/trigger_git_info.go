@@ -22,6 +22,11 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 	for i := range hre.WorkflowHooks {
 		wh := &hre.WorkflowHooks[i]
 
+		// Already skipped/errored hooks don't need git info
+		if wh.IsTerminated() {
+			continue
+		}
+
 		repoKeyUniqueKey := fmt.Sprintf("%s-%s-%s", wh.Data.VCSServer, wh.Data.RepositoryName, wh.TargetCommit)
 
 		if wh.OperationUUID == "" {
@@ -103,6 +108,10 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 	allFailed := true
 	for i := range hre.WorkflowHooks {
 		wh := hre.WorkflowHooks[i]
+		// Skipped/errored hooks have no operation to wait for
+		if wh.IsTerminated() {
+			continue
+		}
 		if wh.OperationStatus != sdk.OperationStatusError {
 			allFailed = false
 		}

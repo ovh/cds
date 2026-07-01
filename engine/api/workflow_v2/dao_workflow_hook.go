@@ -160,7 +160,7 @@ func LoadHooksByWorkflowUpdated(ctx context.Context, db gorp.SqlExecutor, projKe
 	return getHook(ctx, db, q)
 }
 
-func LoadHookHeadPullRequestHookByWorkflowAndEvent(ctx context.Context, db gorp.SqlExecutor, vcsName, repoName string) ([]sdk.V2WorkflowHook, error) {
+func LoadHookHeadPullRequestHookByWorkflowAndEvent(ctx context.Context, db gorp.SqlExecutor, eventName sdk.WorkflowHookEventName, vcsName, repoName string) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`
 		SELECT *
 		FROM v2_workflow_hook
@@ -170,7 +170,7 @@ func LoadHookHeadPullRequestHookByWorkflowAndEvent(ctx context.Context, db gorp.
 		data ->> 'repository_event'::text = $2 AND
 		data ->> 'vcs_server'::text = $3 AND
 		data ->> 'repository_name'::text = $4
-	`).Args(sdk.WorkflowHookTypeRepository, sdk.WorkflowHookEventNamePullRequest, vcsName, repoName)
+	`).Args(sdk.WorkflowHookTypeRepository, eventName, vcsName, repoName)
 	return getAllHooks(ctx, db, q)
 }
 

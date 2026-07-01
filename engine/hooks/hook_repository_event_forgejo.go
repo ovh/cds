@@ -65,6 +65,10 @@ func (s *Service) extractDataFromForgejoPullRequestCommentEvent(body []byte) (st
 	extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
 	extractedData.PullRequestID = int64(request.PullRequest.Number)
 
+	if request.Review != nil {
+		extractedData.Comment = request.Review.Content
+	}
+
 	return repoName, extractedData, nil
 }
 
@@ -137,6 +141,10 @@ func (s *Service) extractDataFromForgejoIssueCommentPREvent(body []byte) (string
 	extractedData.Commit = request.PullRequest.Head.Sha
 	extractedData.CommitFrom = request.PullRequest.Base.Sha
 	extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+
+	if request.Comment != nil {
+		extractedData.Comment = request.Comment.Body
+	}
 
 	return repoName, extractedData, nil
 }

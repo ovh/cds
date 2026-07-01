@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
@@ -40,9 +41,24 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 		}
 	}
 
-	// If no hooks, we can end the process
-	if len(hre.WorkflowHooks) == 0 {
-		hre.Status = sdk.HookEventStatusDone
+	// Comment text is available without git info, so evaluate the comment filter now and skip
+	// non-matching pull-request-comment hooks before the costly git info step.
+	skipNonMatchingPullRequestCommentHooks(ctx, hre)
+
+	// If no hook remains to run, we can end the process
+	hasRunnableHook := false
+	for i := range hre.WorkflowHooks {
+		if hre.WorkflowHooks[i].Status == sdk.HookEventWorkflowStatusScheduled {
+			hasRunnableHook = true
+			break
+		}
+	}
+	if !hasRunnableHook {
+		if len(hre.WorkflowHooks) == 0 {
+			hre.Status = sdk.HookEventStatusDone
+		} else {
+			hre.Status = sdk.HookEventStatusSkipped
+		}
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}
@@ -59,6 +75,29 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 	}
 
 	return s.executeEvent(ctx, hre)
+}
+
+// skipNonMatchingPullRequestCommentHooks marks pull-request-comment hooks whose comment filter
+// does not match the event comment as skipped, so they are dropped before the git info step.
+func skipNonMatchingPullRequestCommentHooks(ctx context.Context, hre *sdk.HookRepositoryEvent) {
+	if hre.EventName != sdk.WorkflowHookEventNamePullRequestComment {
+		return
+	}
+	for i := range hre.WorkflowHooks {
+		wh := &hre.WorkflowHooks[i]
+		if wh.Status != sdk.HookEventWorkflowStatusScheduled || wh.Data.CommentFilter == "" {
+			continue
+		}
+		r, err := glob.New(wh.Data.CommentFilter).MatchString(hre.ExtractData.Comment)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			hre.LastError = err.Error()
+		}
+		if r == nil {
+			wh.Status = sdk.HookEventWorkflowStatusSkipped
+			wh.Error = "comment does not match comment filter"
+		}
+	}
 }
 
 func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEvent) error {

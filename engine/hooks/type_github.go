@@ -24,6 +24,7 @@ type GithubWebHookEvent struct {
 	Pusher      GithubOwner        `json:"pusher"`
 	Sender      GithubSender       `json:"sender"`
 	PullRequest *GithubPullRequest `json:"pull_request"`
+	Comment     *GithubComment     `json:"comment"`
 }
 
 type GithubPullRequest struct {
@@ -32,6 +33,10 @@ type GithubPullRequest struct {
 	Body string            `json:"body"`
 	Head PullRequestCommit `json:"head"`
 	Base PullRequestCommit `json:"base"`
+}
+
+type GithubComment struct {
+	Body string `json:"body"`
 }
 
 type PullRequestCommit struct {
