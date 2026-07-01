@@ -226,9 +226,11 @@ func (h *HatcheryOpenstack) GetImageUsername(ctx context.Context, imageName stri
 func (h *HatcheryOpenstack) GetImageWorkerBasedir(ctx context.Context, imageName string) string {
 	for image, basedir := range h.imagesWorkerBasedir {
 		if image.MatchString(imageName) {
+			log.Info(ctx, "GetImageWorkerBasedir> image %q matched override %q, using basedir %q", imageName, image.String(), basedir)
 			return basedir
 		}
 	}
+	log.Info(ctx, "GetImageWorkerBasedir> no worker basedir override matched image %q (%d override(s) configured)", imageName, len(h.imagesWorkerBasedir))
 	return ""
 }
 

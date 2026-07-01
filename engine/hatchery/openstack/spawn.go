@@ -95,8 +95,20 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		}
 	}
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
-	if basedir := h.GetImageWorkerBasedir(ctx, spawnArgs.Model.GetOpenstackImage()); basedir != "" {
+	openstackImage := spawnArgs.Model.GetOpenstackImage()
+	if basedir := h.GetImageWorkerBasedir(ctx, openstackImage); basedir != "" {
+		log.Info(ctx, "SpawnWorker> overriding worker basedir for image %q: %q -> %q", openstackImage, workerConfig.Basedir, basedir)
 		workerConfig.Basedir = basedir
+		hatcheryBasedirInfo := sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Time:    time.Now(),
+			Message: fmt.Sprintf("Hatchery %q is configured to use the worker basedir '%s' for this worker", h.Name(), basedir),
+		}
+		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, hatcheryBasedirInfo); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	} else {
+		log.Info(ctx, "SpawnWorker> no worker basedir override for image %q, keeping basedir %q", openstackImage, workerConfig.Basedir)
 	}
 
 	udataParam := struct {
