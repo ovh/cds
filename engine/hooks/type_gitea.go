@@ -71,7 +71,7 @@ type GiteaEventPayload struct {
 		Mergeable           bool   `json:"mergeable"`
 		Merged              bool   `json:"merged"`
 		MergedAt            any    `json:"merged_at"`
-		MergeCommitSha      any    `json:"merge_commit_sha"`
+		MergeCommitSha      string `json:"merge_commit_sha"`
 		MergedBy            any    `json:"merged_by"`
 		AllowMaintainerEdit bool   `json:"allow_maintainer_edit"`
 		Base                struct {

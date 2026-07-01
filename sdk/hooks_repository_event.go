@@ -317,6 +317,7 @@ type HookRepositoryEventExtractData struct {
 	Ref                string                                       `json:"ref"`
 	PullRequestID      int64                                        `json:"pullrequest_id,omitempty"`
 	PullRequestRefTo   string                                       `json:"pullrequest_ref_to,omitempty"`
+	PullRequestRefFrom string                                       `json:"pullrequest_ref_from,omitempty"`
 	Comment            string                                       `json:"comment,omitempty"`
 	Manual             *HookRepositoryEventExtractedDataManual      `json:"manual,omitempty"`
 	DeprecatedAdminMFA bool                                         `json:"admin_mfa,omitempty"` // Deprecated

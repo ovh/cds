@@ -8,19 +8,11 @@ export AWS_ENDPOINT_URL=http://$$(hostname):9000
 endef
 
 MINIO_CONTAINER_ID = $(shell docker ps -f name=minio1 -q)
-GITEA_CONTAINER_ID = $(shell docker ps -f name=gitea -q)
-GITEA_VERSION = 1.21
 FORGEJO_CONTAINER_ID = $(shell docker ps -f name=forgejo -q)
 FORGEJO_VERSION = 14
 
 UNAME_S := $(shell uname -s| tr A-Z a-z)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
-
-GITEA_USER := $(if ${GITEA_USER},${GITEA_USER},gituser)
-GITEA_USER_FORK := $(if ${GITEA_USER_FORK},${GITEA_USER_FORK},gituserfork)
-GITEA_PASSWORD := $(if ${GITEA_PASSWORD},${GITEA_PASSWORD},gitpassword)
-GITEA_DOMAIN := $(if ${GITEA_DOMAIN},${GITEA_DOMAIN},localhost)
-GITEA_SSH_PORT := $(if ${GITEA_SSH_PORT},${GITEA_SSH_PORT},2222)
 
 FORGEJO_USER := $(if ${FORGEJO_USER},${FORGEJO_USER},gituser)
 FORGEJO_USER_FORK := $(if ${FORGEJO_USER_FORK},${FORGEJO_USER_FORK},gituserfork)
@@ -33,7 +25,6 @@ COVER_FILES = $(shell find . -name "*.coverprofile")
 clean:
 	@rm -f $(MINIO_CONTAINER_ID) $(MINIO_RC)
 	@docker kill minio1 || true && docker rm minio1 || true
-	@docker kill gitea || true && docker rm gitea || true
 	@docker kill forgejo || true && docker rm forgejo || true
 
 minio_start: $(MINIO_RC)
@@ -56,16 +47,6 @@ minio_reset_bucket:
 		mc rm -r --force myminio/cds-it  || true && \
 		mc mb myminio/cds-it || true \
 		"
-
-gitea_start:
-	@if [ -z "$(GITEA_CONTAINER_ID)" ]; then \
-  		docker run -d -p 3000:3000 -p ${GITEA_SSH_PORT}:${GITEA_SSH_PORT} -e INSTALL_LOCK=true -e SSH_PORT=${GITEA_SSH_PORT} -e GITEA__server__SSH_DOMAIN=$(GITEA_DOMAIN) -e GITEA__webhook__ALLOWED_HOST_LIST=* --name gitea gitea/gitea:$(GITEA_VERSION); \
-  		echo "Starting gitea..."; \
-  		sleep 5; \
-  		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER) --password $(GITEA_PASSWORD) --email $(GITEA_USER)@gitea.eu --config /data/gitea/conf/app.ini; \
-		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER_FORK) --password $(GITEA_PASSWORD) --email $(GITEA_USER_FORK)@gitea.eu --must-change-password=false --config /data/gitea/conf/app.ini; \
-		echo "Gitea started"; \
-  	fi
 
 forgejo_start:
 	@if [ -z "$(FORGEJO_CONTAINER_ID)" ]; then \

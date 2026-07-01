@@ -63,6 +63,7 @@ func (s *Service) extractDataFromForgejoPullRequestCommentEvent(body []byte) (st
 	extractedData.Commit = request.PullRequest.Head.Sha
 	extractedData.CommitFrom = request.PullRequest.Base.Sha
 	extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+	extractedData.PullRequestRefFrom = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 	extractedData.PullRequestID = int64(request.PullRequest.Number)
 
 	if request.Review != nil {
@@ -108,7 +109,16 @@ func (s *Service) extractDataFromForgejoPullRequestEvent(body []byte, eventType 
 	extractedData.Commit = request.PullRequest.Head.Sha
 	extractedData.CommitFrom = request.PullRequest.Base.Sha
 	extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+	extractedData.PullRequestRefFrom = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 	extractedData.PullRequestID = int64(request.PullRequest.Number)
+
+	// On merge, run against the merge result on the target branch. base.sha is refreshed to
+	// the post-merge tip (== merge commit), so use merge_base as the changeset origin.
+	if request.PullRequest.Merged {
+		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+		extractedData.Commit = request.PullRequest.MergeCommitSha
+		extractedData.CommitFrom = request.PullRequest.MergeBase
+	}
 
 	return repoName, extractedData, nil
 }
@@ -141,6 +151,7 @@ func (s *Service) extractDataFromForgejoIssueCommentPREvent(body []byte) (string
 	extractedData.Commit = request.PullRequest.Head.Sha
 	extractedData.CommitFrom = request.PullRequest.Base.Sha
 	extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+	extractedData.PullRequestRefFrom = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 
 	if request.Comment != nil {
 		extractedData.Comment = request.Comment.Body

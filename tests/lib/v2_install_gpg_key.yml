@@ -7,7 +7,7 @@ input:
   git_password: ""
 
 steps:
-  # Add the emailaddress on the gitea user
+  # Add the emailaddress on the forgejo user
   - script: >
       gpg --list-secret-keys | grep {{.input.gpg_key_id}} -A 1 | tail -n 1 | grep --only-matching --extended-regexp "<.*>" | head -n 1 | cut -c2- | rev | cut -c2- | rev
     vars:
@@ -35,7 +35,7 @@ steps:
     vars:
       gpgPubKey:
         from: result.systemout
-  # Add the user gpg on gitea  
+  # Add the user gpg on forgejo  
   - type: http
     method: POST
     url: "{{.input.git_host}}/api/v1/user/gpg_keys"
