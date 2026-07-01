@@ -9,7 +9,7 @@ input:
   git_password: ""
 
 steps:
-  # Delete the repo in gitea if exists
+  # Delete the repo in forgejo if exists
   - type: http
     method: DELETE
     url: "{{.input.git_host}}/api/v1/repos/{{.input.git_user}}/{{.input.git_repo}}"
@@ -20,7 +20,7 @@ steps:
       - result.statuscode ShouldEqual 204
       - result.statuscode ShouldEqual 404
 
-  # Create the repo in gitea
+  # Create the repo in forgejo
   - type: http
     method: POST
     url: "{{.input.git_host}}/api/v1/user/repos"
@@ -67,7 +67,7 @@ steps:
     body: >
       {
         "active": true,
-        "type": "gitea",
+        "type": "forgejo",
         "config": {
             "secret": "{{.hookSecret}}",
             "content_type": "json",

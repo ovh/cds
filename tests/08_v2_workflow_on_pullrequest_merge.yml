@@ -1,8 +1,8 @@
-name: Workflow notifications
+name: Workflow on pull-request merge
 vars:
-  cds_project: "ITV2WFNOTIF"
-  git_repo: "it_v2_workflow_notifications"
-  cds_workflow: "WorkflowNotificationsLog"
+  cds_project: "ITV2WFPRMERGE"
+  git_repo: "it_v2_workflow_pr_merge"
+  cds_workflow: "WorkflowPRMerge"
 testcases:
 - name: Prepare test
   steps:
@@ -59,15 +59,11 @@ testcases:
           type: docker
           spec:
             image: buildpack-deps:bookworm
-        workflows/workflow_notifications.yaml:
+        workflows/workflow_pr_merge.yaml:
           name: {{.cds_workflow}}
-          commit-status:
-            title: foo
-            description: bar
           on:
             pull-request:
-              comment: "a comment here"
-              types: ["opened", "edited"]
+              types: ["closed"]
           jobs:
             myjob:
               runs-on: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
@@ -75,9 +71,13 @@ testcases:
                 - run: |-
                     #!/bin/bash
                     set -ex
-                    echo "GIT_REF: $GIT_REF"
-                    echo "GIT_SHA: $GIT_SHA"
-                    echo "job done" && date
+                    echo "ASSERT_GIT_REF=${{ git.ref }}"
+                    echo "ASSERT_GIT_SHA=${{ git.sha }}"
+                    echo "ASSERT_PR_ID=${{ git.pullrequest_id }}"
+                    echo "ASSERT_PR_TO=${{ git.pullrequest_to_ref }}"
+                    echo "ASSERT_PR_FROM=${{ git.pullrequest_from_ref }}"
+                    echo "ASSERT_EVENT_MERGED=${{ cds.event.pull_request.merged }}"
+                    echo "ASSERT_EVENT_ACTION=${{ cds.event.action }}"
 
     - name: Check CDS project analyses status after push on master
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -91,7 +91,7 @@ testcases:
 - name: Work on another git branch
   steps:
     - name: Create a file on a new-branch branch
-      script: |- 
+      script: |-
         cd /tmp/repos/{{.git_repo}}
         git checkout -b new-branch
         echo 'FOO' > foo.md
@@ -111,7 +111,7 @@ testcases:
 
 - name: Create Pull-Request
   steps:
-    - name: Create the pull-request on forgejo
+    - name: Create the pull-request
       type: http
       method: POST
       url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls"
@@ -131,12 +131,47 @@ testcases:
       vars:
         prNumber:
           from: result.bodyjson.number
-        gitSha:
-          from: result.bodyjson.head.sha
 
-- name: Check if workflow triggered on the new-branch is ok after pull-request creation
+- name: Merge pull-request
   steps:
-    - name: Check that the CDS workflow has at least one execution and is Success
+    - name: Merge the pull-request
+      type: http
+      method: POST
+      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/merge"
+      basic_auth_user: "{{.git.user}}"
+      basic_auth_password: "{{.git.password}}"
+      headers:
+        Content-Type: application/json
+      body: >
+        {
+          "Do": "merge"
+        }
+      assertions:
+        - result.statuscode ShouldEqual 200
+      retry: 10
+      delay: 1
+
+    - name: Get the merged pull-request to read the merge commit
+      type: http
+      method: GET
+      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}"
+      basic_auth_user: "{{.git.user}}"
+      basic_auth_password: "{{.git.password}}"
+      headers:
+        Content-Type: application/json
+      assertions:
+        - result.statuscode ShouldEqual 200
+        - result.bodyjson.merged ShouldBeTrue
+        - result.bodyjson.merge_commit_sha ShouldNotBeEmpty
+      retry: 10
+      delay: 1
+      vars:
+        mergeCommit:
+          from: result.bodyjson.merge_commit_sha
+
+- name: Check workflow triggered by the merge and assert git context
+  steps:
+    - name: Check that the CDS workflow has one execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
@@ -147,78 +182,21 @@ testcases:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
-    - name: Download and check logs
+    - name: Download logs and assert the git context of the merge event
       script: |-
         #!/bin/bash
         set -e
         FILE=/tmp/`uuidgen`
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
-        # Check workflowEnv log content
-        cat {{.cds_workflow}}-*-myjob* | grep "job done"
+        LOG=$(cat {{.cds_workflow}}-*-myjob*)
+        echo "$LOG"
+        echo "$LOG" | grep -F "ASSERT_GIT_REF=refs/heads/master"
+        echo "$LOG" | grep -F "ASSERT_GIT_SHA={{.Merge-pull-request.mergeCommit}}"
+        echo "$LOG" | grep -F "ASSERT_PR_ID={{.Create-Pull-Request.prNumber}}"
+        echo "$LOG" | grep -F "ASSERT_PR_TO=refs/heads/master"
+        echo "$LOG" | grep -F "ASSERT_PR_FROM=refs/heads/new-branch"
+        echo "$LOG" | grep -F "ASSERT_EVENT_MERGED=true"
+        echo "$LOG" | grep -F "ASSERT_EVENT_ACTION=closed"
       retry: 60
       delay: 1
-
-- name: Check comment created on forgejo
-  steps:
-  - name: Get pull-request from forgejo and check comment
-    type: http
-    method: GET
-    url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/reviews"
-    basic_auth_user: "{{.git.user}}"
-    basic_auth_password: "{{.git.password}}"
-    headers:
-      Content-Type: application/json
-    assertions:
-      - result.statuscode ShouldEqual 200
-      - result.bodyjson ShouldHaveLength 1
-      - result.bodyjson.bodyjson0.body ShouldEqual "a comment here"
-    retry: 10
-    delay: 1
-
-- name: Check status created on forgejo
-  steps:
-  - name: Get status from forgejo
-    type: http
-    method: GET
-    url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/commits/{{.Create-Pull-Request.gitSha}}/status"
-    basic_auth_user: "{{.git.user}}"
-    basic_auth_password: "{{.git.password}}"
-    headers:
-      Content-Type: application/json
-    assertions:
-      - result.statuscode ShouldEqual 200
-      - result.bodyjson.statuses ShouldHaveLength 1
-      - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
-      - "result.bodyjson.statuses.statuses0.context ShouldEqual \"ITV2WFNOTIF-WorkflowNotificationsLog\""
-    retry: 10
-    delay: 1
-
-- name: Update the pull request by adding a new commit
-  steps:
-  - name: Update the branch
-    script: |- 
-      cd /tmp/repos/{{.git_repo}}
-      echo 'FOO' > foo_updated.md
-      git add --all
-      git commit --gpg-sign={{.gpg.key_id}} -m "add file and sign" --author "{{.git.user}} <{{.Prepare-test.emailaddress}}>"
-      git push origin new-branch
-
-  - name: Check CDS project analyses status after push on new-branch
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
-    assertions:
-      - result.systemoutjson ShouldHaveLength 4
-      - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
-      - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
-      - result.systemoutjson.systemoutjson3.status ShouldEqual "Success"
-    retry: 100
-    delay: 1
-  - name: Check that the CDS workflow has at least one execution and is Success
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
-    assertions:
-      - result.systemoutjson ShouldHaveLength 2
-      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-    retry: 200
-    delay: 1

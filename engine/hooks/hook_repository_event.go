@@ -83,7 +83,15 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 		extractedData.Commit = request.PullRequest.Head.Sha
 		extractedData.CommitFrom = request.PullRequest.Base.Sha
 		extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+		extractedData.PullRequestRefFrom = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		extractedData.PullRequestID = int64(request.PullRequest.Number)
+		// On merge, run against the merge result on the target branch. base.sha is refreshed to
+		// the post-merge tip (== merge commit), so use merge_base as the changeset origin.
+		if request.PullRequest.Merged {
+			extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+			extractedData.Commit = request.PullRequest.MergeCommitSha
+			extractedData.CommitFrom = request.PullRequest.MergeBase
+		}
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
 	}
@@ -182,10 +190,14 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 			extractedData.PullRequestID = request.PullRequest.ID
 			extractedData.Commit = request.PullRequest.Head.Sha
 			extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
-		}
-		if request.PullRequest != nil {
 			extractedData.CommitFrom = request.PullRequest.Base.Sha
 			extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+			extractedData.PullRequestRefFrom = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
+			// On merge, run against the merge result on the target branch
+			if request.PullRequest.Merged {
+				extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+				extractedData.Commit = request.PullRequest.MergeCommitSha
+			}
 		}
 	case "pull_request_review_comment":
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
@@ -194,10 +206,9 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 			extractedData.PullRequestID = request.PullRequest.ID
 			extractedData.Commit = request.PullRequest.Head.Sha
 			extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
-		}
-		if request.PullRequest != nil {
 			extractedData.CommitFrom = request.PullRequest.Base.Sha
 			extractedData.PullRequestRefTo = sdk.GitRefBranchPrefix + request.PullRequest.Base.Ref
+			extractedData.PullRequestRefFrom = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		}
 		if request.Comment != nil {
 			extractedData.Comment = request.Comment.Body
@@ -261,6 +272,17 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestClosed
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
+	case "pr:merged":
+		// Merge is reported as a closed pull request (same as GitHub/Forgejo); the run can
+		// tell a merge from a decline through the event payload. Run against the merge result
+		// on the target branch (merge commit), with the pre-merge target tip as changeset origin.
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
+		extractedData.Ref = request.PullRequest.ToRef.ID
+		extractedData.Commit = request.PullRequest.Properties.MergeCommit.ID
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestClosed
+		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	case "pr:from_ref_updated":
 		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
@@ -295,6 +317,10 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.PullRequestRefTo = request.PullRequest.ToRef.ID
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", request.EventKey)
+	}
+
+	if request.PullRequest != nil {
+		extractedData.PullRequestRefFrom = request.PullRequest.FromRef.ID
 	}
 
 	if request.Comment != nil {

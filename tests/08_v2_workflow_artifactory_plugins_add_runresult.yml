@@ -46,7 +46,7 @@ testcases:
   - type: v2_add_git_repo
     cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
     cds_project: "{{.cds_project}}"
-    cds_hook_url: "{{.gitea.hook.url}}"
+    cds_hook_url: "{{.forgejo.hook.url}}"
     git_host: "{{.git.host}}"
     git_user: "{{.git.user}}"
     git_password: "{{.git.password}}"

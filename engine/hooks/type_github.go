@@ -28,11 +28,13 @@ type GithubWebHookEvent struct {
 }
 
 type GithubPullRequest struct {
-	ID   int64             `json:"id"`
-	URL  string            `json:"url"`
-	Body string            `json:"body"`
-	Head PullRequestCommit `json:"head"`
-	Base PullRequestCommit `json:"base"`
+	ID             int64             `json:"id"`
+	URL            string            `json:"url"`
+	Body           string            `json:"body"`
+	Merged         bool              `json:"merged"`
+	MergeCommitSha string            `json:"merge_commit_sha"`
+	Head           PullRequestCommit `json:"head"`
+	Base           PullRequestCommit `json:"base"`
 }
 
 type GithubComment struct {

@@ -181,6 +181,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					DeprecatedAdminMFA: hre.ExtractData.DeprecatedAdminMFA,
 					PullrequestID:      hre.ExtractData.PullRequestID,
 					PullrequestToRef:   hre.ExtractData.PullRequestRefTo,
+					PullrequestFromRef: hre.ExtractData.PullRequestRefFrom,
 					Initiator:          initiator,
 				}
 				if initiator != nil {

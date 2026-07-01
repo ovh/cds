@@ -94,36 +94,38 @@ type CDSContext struct {
 }
 
 type GitContext struct {
-	Server               string   `json:"server,omitempty" jsonschema:"example=github" jsonschema_description:"VCS server name"`
-	ServerURL            string   `json:"server_url,omitempty" jsonschema:"example=https://github.com" jsonschema_description:"VCS server base URL"`
-	ServerType           string   `json:"server_type,omitempty" jsonschema:"example=gitea" jsonschema_description:"VCS server type (github, gitlab, bitbucketserver, bitbucketcloud, gitea, forgejo, gerrit)"`
-	Repository           string   `json:"repository,omitempty" jsonschema:"example=ovh/cds" jsonschema_description:"Repository identifier"`
-	RepositoryOrigin     string   `json:"repository_origin",omitempty jsonschema:"example=fork-user/cds" jsonschema_description:"Origin repository for pull requests"`
-	RepositoryURL        string   `json:"repositoryUrl,omitempty" jsonschema:"example=https://github.com/ovh/cds.git" jsonschema_description:"Git clone URL"`
-	RepositoryWebURL     string   `json:"repository_web_url,omitempty" jsonschema:"example=https://github.com/ovh/cds" jsonschema_description:"Web URL of the repository"`
-	RefWebURL            string   `json:"ref_web_url,omitempty" jsonschema:"example=https://github.com/ovh/cds/tree/main" jsonschema_description:"Web URL of the reference"`
-	CommitWebURL         string   `json:"commit_web_url,omitempty" jsonschema:"example=https://github.com/ovh/cds/commit/a1b2c3d4e5f6" jsonschema_description:"Web URL of the commit"`
-	CommitMessage        string   `json:"commit_message,omitempty" jsonschema:"example=feat: add new feature" jsonschema_description:"Commit message"`
-	Author               string   `json:"author,omitempty" jsonschema:"example=John Doe" jsonschema_description:"Commit author name"`
-	AuthorEmail          string   `json:"author_email,omitempty" jsonschema:"example=john.doe@example.com" jsonschema_description:"Commit author email"`
-	Ref                  string   `json:"ref,omitempty" jsonschema:"example=refs/heads/main" jsonschema_description:"Full git reference"`
-	RefName              string   `json:"ref_name,omitempty" jsonschema:"example=main" jsonschema_description:"Short reference name"`
-	Sha                  string   `json:"sha,omitempty" jsonschema:"example=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0" jsonschema_description:"Full commit SHA"`
-	ShaShort             string   `json:"sha_short,omitempty" jsonschema:"example=a1b2c3d" jsonschema_description:"Short commit SHA (7 characters)"`
-	RefType              string   `json:"ref_type,omitempty" jsonschema:"example=branch" jsonschema_description:"Type of reference (branch, tag)"`
-	Connection           string   `json:"connection,omitempty" jsonschema:"example=my-github-connection" jsonschema_description:"VCS connection name"`
-	SSHKey               string   `json:"ssh_key,omitempty" jsonschema_description:"SSH private key for git operations"`
-	Username             string   `json:"username,omitempty" jsonschema:"example=git-user" jsonschema_description:"Git username for authentication"`
-	Token                string   `json:"token,omitempty" jsonschema_description:"Git access token for authentication"`
-	SemverCurrent        string   `json:"semver_current,omitempty" jsonschema:"example=1.2.3" jsonschema_description:"Current semantic version"`
-	SemverNext           string   `json:"semver_next,omitempty" jsonschema:"example=1.2.4" jsonschema_description:"Next semantic version"`
-	ChangeSets           []string `json:"changesets,omitempty" jsonschema_description:"List of changed file paths"`
-	PullRequestID        int64    `json:"pullrequest_id,omitempty" jsonschema:"example=123" jsonschema_description:"Pull request number"`
-	PullRequestToRef     string   `json:"pullrequest_to_ref,omitempty" jsonschema:"example=refs/heads/main" jsonschema_description:"Target reference of the pull request"`
-	PullRequestToRefName string   `json:"pullrequest_to_ref_name,omitempty" jsonschema:"example=main" jsonschema_description:"Target branch name of the pull request"`
-	PullRequestWebURL    string   `json:"pullrequest_web_url,omitempty" jsonschema:"example=https://github.com/ovh/cds/pull/123" jsonschema_description:"Web URL of the pull request"`
-	GPGKey               string   `json:"gpg_key,omitempty" jsonschema_description:"GPG private key for signing commits"`
-	Email                string   `json:"email,omitempty" jsonschema:"example=git-user@example.com" jsonschema_description:"Git email for commits"`
+	Server                 string   `json:"server,omitempty" jsonschema:"example=github" jsonschema_description:"VCS server name"`
+	ServerURL              string   `json:"server_url,omitempty" jsonschema:"example=https://github.com" jsonschema_description:"VCS server base URL"`
+	ServerType             string   `json:"server_type,omitempty" jsonschema:"example=gitea" jsonschema_description:"VCS server type (github, gitlab, bitbucketserver, bitbucketcloud, gitea, forgejo, gerrit)"`
+	Repository             string   `json:"repository,omitempty" jsonschema:"example=ovh/cds" jsonschema_description:"Repository identifier"`
+	RepositoryOrigin       string   `json:"repository_origin",omitempty jsonschema:"example=fork-user/cds" jsonschema_description:"Origin repository for pull requests"`
+	RepositoryURL          string   `json:"repositoryUrl,omitempty" jsonschema:"example=https://github.com/ovh/cds.git" jsonschema_description:"Git clone URL"`
+	RepositoryWebURL       string   `json:"repository_web_url,omitempty" jsonschema:"example=https://github.com/ovh/cds" jsonschema_description:"Web URL of the repository"`
+	RefWebURL              string   `json:"ref_web_url,omitempty" jsonschema:"example=https://github.com/ovh/cds/tree/main" jsonschema_description:"Web URL of the reference"`
+	CommitWebURL           string   `json:"commit_web_url,omitempty" jsonschema:"example=https://github.com/ovh/cds/commit/a1b2c3d4e5f6" jsonschema_description:"Web URL of the commit"`
+	CommitMessage          string   `json:"commit_message,omitempty" jsonschema:"example=feat: add new feature" jsonschema_description:"Commit message"`
+	Author                 string   `json:"author,omitempty" jsonschema:"example=John Doe" jsonschema_description:"Commit author name"`
+	AuthorEmail            string   `json:"author_email,omitempty" jsonschema:"example=john.doe@example.com" jsonschema_description:"Commit author email"`
+	Ref                    string   `json:"ref,omitempty" jsonschema:"example=refs/heads/main" jsonschema_description:"Full git reference"`
+	RefName                string   `json:"ref_name,omitempty" jsonschema:"example=main" jsonschema_description:"Short reference name"`
+	Sha                    string   `json:"sha,omitempty" jsonschema:"example=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0" jsonschema_description:"Full commit SHA"`
+	ShaShort               string   `json:"sha_short,omitempty" jsonschema:"example=a1b2c3d" jsonschema_description:"Short commit SHA (7 characters)"`
+	RefType                string   `json:"ref_type,omitempty" jsonschema:"example=branch" jsonschema_description:"Type of reference (branch, tag)"`
+	Connection             string   `json:"connection,omitempty" jsonschema:"example=my-github-connection" jsonschema_description:"VCS connection name"`
+	SSHKey                 string   `json:"ssh_key,omitempty" jsonschema_description:"SSH private key for git operations"`
+	Username               string   `json:"username,omitempty" jsonschema:"example=git-user" jsonschema_description:"Git username for authentication"`
+	Token                  string   `json:"token,omitempty" jsonschema_description:"Git access token for authentication"`
+	SemverCurrent          string   `json:"semver_current,omitempty" jsonschema:"example=1.2.3" jsonschema_description:"Current semantic version"`
+	SemverNext             string   `json:"semver_next,omitempty" jsonschema:"example=1.2.4" jsonschema_description:"Next semantic version"`
+	ChangeSets             []string `json:"changesets,omitempty" jsonschema_description:"List of changed file paths"`
+	PullRequestID          int64    `json:"pullrequest_id,omitempty" jsonschema:"example=123" jsonschema_description:"Pull request number"`
+	PullRequestToRef       string   `json:"pullrequest_to_ref,omitempty" jsonschema:"example=refs/heads/main" jsonschema_description:"Target reference of the pull request"`
+	PullRequestToRefName   string   `json:"pullrequest_to_ref_name,omitempty" jsonschema:"example=main" jsonschema_description:"Target branch name of the pull request"`
+	PullRequestFromRef     string   `json:"pullrequest_from_ref,omitempty" jsonschema:"example=refs/heads/my-feature" jsonschema_description:"Source reference of the pull request"`
+	PullRequestFromRefName string   `json:"pullrequest_from_ref_name,omitempty" jsonschema:"example=my-feature" jsonschema_description:"Source branch name of the pull request"`
+	PullRequestWebURL      string   `json:"pullrequest_web_url,omitempty" jsonschema:"example=https://github.com/ovh/cds/pull/123" jsonschema_description:"Web URL of the pull request"`
+	GPGKey                 string   `json:"gpg_key,omitempty" jsonschema_description:"GPG private key for signing commits"`
+	Email                  string   `json:"email,omitempty" jsonschema:"example=git-user@example.com" jsonschema_description:"Git email for commits"`
 }
 
 type JobContext struct {
