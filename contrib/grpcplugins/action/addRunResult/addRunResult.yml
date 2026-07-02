@@ -5,9 +5,27 @@ description: |
   Create a CDS run result from an artifact
 inputs:
   path:
+    type: string
+    description: >
+      A path inside the artifact manager repository matching the result type. It supports
+      wildcard patterns (*, ?, [abc], ** and ! negation, several patterns separated by spaces):
+      one run result is created per matching artifact. For file-based types a pattern matches
+      files (e.g. pool/*.deb); for oci and conan it matches package folders (e.g. myimage/*).
+      Wildcards are not supported for the docker and staticFiles types.
     required: true
   type:
-    required: true  
+    type: string
+    required: true
   payload:
+    type: string
     required: false
+  if-no-files-found:
+    type: string
+    description: >
+      The desired behavior if no artifact is found using a wildcard path.
 
+      Available Options:
+        warn: Output a warning but do not fail the action
+        error: Fail the action with an error message
+        ignore: Do not output any warnings or errors, the action does not fail
+    default: 'warn'

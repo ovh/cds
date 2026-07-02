@@ -131,9 +131,15 @@ testcases:
             runs-on: "{{.worker_model}}"     
             steps:
             - id: name
-              run: | 
+              run: |
                 debfile=package-linux-amd64-$(date +%s).deb
                 worker export DEBNAME ${debfile}
+                globts=$(date +%s)
+                worker export GLOBTS ${globts}
+                globdeb1=glob-${globts}-a.deb
+                worker export GLOBDEB1 ${globdeb1}
+                globdeb2=glob-${globts}-b.deb
+                worker export GLOBDEB2 ${globdeb2}
                 terrafile=terraform-linux-amd64-$(date +%s).tar.gz
                 worker export TERRANAME ${terrafile}
                 pyfile=package-$(date +%s).py
@@ -145,14 +151,25 @@ testcases:
                 sbtfile=sbt.pomo
                 worker export SBTNAME ${sbtfile}
 
-                touch ${debfile} && touch ${terrafile} && touch ${pyfile} && touch ${mvnfile} && touch ${gradlefile} && touch ${sbtfile}
+                touch ${debfile} && touch ${globdeb1} && touch ${globdeb2} && touch ${terrafile} && touch ${pyfile} && touch ${mvnfile} && touch ${gradlefile} && touch ${sbtfile}
                 ls -l
             - id: uploadDeb
-              run: curl --fail -X PUT -T ${{ steps.name.outputs.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
+              run: curl --fail -X PUT -T ${{ steps.name.outputs.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"
             - uses: actions/addRunResult
               with:
                 path: pool/${{ steps.name.outputs.DEBNAME }}
                 type: debian
+            - id: uploadDebGlob
+              run: |
+                curl --fail -X PUT -T ${{ steps.name.outputs.GLOBDEB1 }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.GLOBDEB1 }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"
+                curl --fail -X PUT -T ${{ steps.name.outputs.GLOBDEB2 }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.GLOBDEB2 }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"
+            # one glob step registering the two glob-*.deb files above; the timestamp keeps the
+            # pattern from matching artifacts of previous runs in the shared -debian repository
+            - uses: actions/addRunResult
+              with:
+                path: pool/glob-${{ steps.name.outputs.GLOBTS }}-*.deb
+                type: debian
+                if-no-files-found: error
             - id: uploadTerraform
               run: curl --fail -X PUT -T ${{ steps.name.outputs.TERRANAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-terraformProvider/${{ steps.name.outputs.TERRANAME }};terraform.name=myprovider;terraform.namespace=ovh;terraform.version=0.0.1;terraform.flavor=linux-amd64;terraform.type=provider"    
             - uses: actions/addRunResult
@@ -256,10 +273,10 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
     assertions:
       - result.systemoutjson ShouldHaveLength 1
-  - name: Check that we have 1 run result of type debian
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=debian --format json"  
+  - name: Check that we have 3 run results of type debian (1 single + 2 via glob)
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=debian --format json"
     assertions:
-      - result.systemoutjson ShouldHaveLength 1
+      - result.systemoutjson ShouldHaveLength 3
   - name: Check that we have 1 run result of type terraformProvider
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=terraformProvider --format json"  
     assertions:

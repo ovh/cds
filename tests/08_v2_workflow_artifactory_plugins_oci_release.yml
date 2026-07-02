@@ -200,20 +200,20 @@ testcases:
                   --dest-creds "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" \
                   docker://docker-hub-remote.${{ steps.login.outputs.RTHOST }}/busybox:1.36 \
                   docker://${{ steps.login.outputs.REGISTRY }}/busybox:${{ steps.login.outputs.TS }}
-            - uses: actions/addRunResult
-              with:
-                type: oci
-                path: busybox/${{ steps.login.outputs.TS }}
             # 3) Generic artifact pushed with flux -> <prefix>-oci/myapp/0.0.1-<ts>
             - id: fluxpush
               run: |
                 set -e
                 mkdir -p artifact && echo "hello oci" > artifact/data.txt
                 flux push artifact oci://${{ steps.login.outputs.REGISTRY }}/myapp:0.0.1-${{ steps.login.outputs.TS }} --path=./artifact --source=cds --revision=0.0.1 --creds "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}"
+            # 2) and 3) are registered by a single glob step: the <ts> version suffix keeps the
+            # pattern from matching packages of previous runs in the shared -oci repository, and
+            # the negation skips mychart, already registered as a single path above.
             - uses: actions/addRunResult
               with:
                 type: oci
-                path: myapp/0.0.1-${{ steps.login.outputs.TS }}
+                path: "*/*${{ steps.login.outputs.TS }} !mychart/*"
+                if-no-files-found: error
           Release:
             needs: [Push]
             runs-on: "{{.worker_model}}"
