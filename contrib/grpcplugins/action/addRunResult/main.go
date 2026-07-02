@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	pathpkg "path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +20,7 @@ import (
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
@@ -45,6 +48,7 @@ func (p *addRunResultPlugin) Stream(q *actionplugin.ActionQuery, stream actionpl
 	resultType := sdk.V2WorkflowRunResultType(q.GetOptions()["type"])
 	path := q.GetOptions()["path"]
 	payload := q.GetOptions()["payload"]
+	ifNoFilesFound := q.GetOptions()["if-no-files-found"]
 
 	var detail sdk.V2WorkflowRunResultDetail
 	if payload != "" {
@@ -56,7 +60,7 @@ func (p *addRunResultPlugin) Stream(q *actionplugin.ActionQuery, stream actionpl
 		}
 	}
 
-	ko, err := p.perform(ctx, resultType, path, detail)
+	ko, err := p.perform(ctx, resultType, path, ifNoFilesFound, detail)
 	if err != nil {
 		err := fmt.Errorf("unable to create run result: %v", err)
 		res.Status = sdk.StatusFail
@@ -71,7 +75,7 @@ func (p *addRunResultPlugin) Stream(q *actionplugin.ActionQuery, stream actionpl
 
 }
 
-func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2WorkflowRunResultType, artifactPath string, detail sdk.V2WorkflowRunResultDetail) (bool, error) {
+func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2WorkflowRunResultType, artifactPath, ifNoFilesFound string, detail sdk.V2WorkflowRunResultDetail) (bool, error) {
 	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
 	if err != nil {
 		return true, err
@@ -86,7 +90,10 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		Token: jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigToken),
 	}
 
-	path := artifactPath
+	isGlob := containsGlob(artifactPath)
+	if isGlob && !globSupportedType(resultType) {
+		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "wildcard path %q is not supported for result type %s", artifactPath, resultType)
+	}
 
 	repository := jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix)
 	switch resultType {
@@ -108,7 +115,7 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	case sdk.V2WorkflowRunResultTypeNpm:
 		repository += "-npm"
 	case sdk.V2WorkflowRunResultTypeStaticFiles:
-		return false, performStaticFiles(ctx, &p.Common, path, detail)
+		return false, performStaticFiles(ctx, &p.Common, artifactPath, detail)
 	case sdk.V2WorkflowRunResultTypeMaven:
 		repository += "-maven"
 	case sdk.V2WorkflowRunResultTypeGradle:
@@ -125,15 +132,56 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		repository += "-oci"
 	}
 
+	if !isGlob {
+		return p.performOne(ctx, resultType, artiConfig, jobCtx.Integrations.ArtifactManager, repository, artifactPath)
+	}
+
+	candidates, err := p.enumerateGlobMatches(ctx, artiConfig, repository, artifactPath, resultType)
+	if err != nil {
+		return true, err
+	}
+	if len(candidates) == 0 {
+		msg := fmt.Sprintf("no artifact found matching %q in repository %s", artifactPath, repository)
+		switch strings.ToUpper(ifNoFilesFound) {
+		case "ERROR":
+			return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg)
+		case "IGNORE":
+			grpcplugins.Log(&p.Common, msg)
+		default:
+			grpcplugins.Warn(&p.Common, msg)
+		}
+		return false, nil
+	}
+
+	var nbKO int
+	for _, candidate := range candidates {
+		ko, err := p.performOne(ctx, resultType, artiConfig, jobCtx.Integrations.ArtifactManager, repository, candidate)
+		if err != nil {
+			grpcplugins.Errorf(&p.Common, "unable to create run result for %q: %v", candidate, err)
+			nbKO++
+			continue
+		}
+		if ko {
+			nbKO++
+		}
+	}
+	grpcplugins.Logf(&p.Common, "%d run result(s) created, %d failed (pattern %q)", len(candidates)-nbKO, nbKO, artifactPath)
+	return nbKO > 0, nil
+}
+
+// performOne creates a single run result for a concrete artifact path: a file for most types,
+// a package folder for oci and conan.
+func (p *addRunResultPlugin) performOne(ctx context.Context, resultType sdk.V2WorkflowRunResultType, artiConfig grpcplugins.ArtifactoryConfig, integ sdk.JobIntegrationsContext, repository, path string) (bool, error) {
 	// get file info
 	fileInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &p.Common, artiConfig, repository, path)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			repository = strings.Replace(repository, "-cds", "-generic", -1)
-			fileInfo, err = grpcplugins.GetArtifactoryFileInfo(ctx, &p.Common, artiConfig, repository, path)
-			if err != nil {
-				return true, err
-			}
+		if !strings.Contains(err.Error(), "404") {
+			return true, err
+		}
+		repository = strings.Replace(repository, "-cds", "-generic", -1)
+		fileInfo, err = grpcplugins.GetArtifactoryFileInfo(ctx, &p.Common, artiConfig, repository, path)
+		if err != nil {
+			return true, err
 		}
 	}
 
@@ -148,13 +196,13 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	aqlPath := strings.TrimPrefix(strings.TrimSuffix(fileDir, "/"), "/")
 	var aqlSearch string
 	if resultType == sdk.V2WorkflowRunResultTypeConan {
-		aqlPath := strings.TrimSuffix(strings.TrimPrefix(artifactPath, "/"), "/") + "/*"
+		aqlPath := strings.TrimSuffix(strings.TrimPrefix(path, "/"), "/") + "/*"
 		aqlSearch = fmt.Sprintf(`items.find({"path" : {"$match": "%s"}, "repo": {"$eq":"%s"}}).include("repo","path","name","virtual_repos", "actual_md5", "actual_sha1", "sha256", "size", "property")`, aqlPath, repository)
 	} else if resultType == sdk.V2WorkflowRunResultTypeOCI {
 		// An OCI package is a folder (<name>/<version>) holding the manifest and blobs directly in it.
 		// We match the version folder itself and any nested path. The AQL "repo" field is the local
 		// repository, so we match the virtual repo's maturities (e.g. "<repo>-snapshot") with a prefix.
-		ociPath := strings.TrimSuffix(strings.TrimPrefix(artifactPath, "/"), "/")
+		ociPath := strings.TrimSuffix(strings.TrimPrefix(path, "/"), "/")
 		aqlSearch = fmt.Sprintf(`items.find({"$or":[{"path":{"$eq":"%s"}},{"path":{"$match":"%s/*"}}], "repo":{"$match":"%s-*"}}).include("repo","path","name","virtual_repos", "actual_md5", "actual_sha1", "sha256", "size", "property")`, ociPath, ociPath, repository)
 	} else if aqlPath == "" {
 		aqlSearch = fmt.Sprintf(`items.find({"name" : "%s"}).include("repo","path","name","virtual_repos")`, fileName)
@@ -190,7 +238,7 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	runResult := sdk.V2WorkflowRunResult{
 		IssuedAt:                       fileInfo.Created,
 		Status:                         sdk.V2WorkflowRunResultStatusCompleted,
-		ArtifactManagerIntegrationName: &jobCtx.Integrations.ArtifactManager.Name,
+		ArtifactManagerIntegrationName: &integ.Name,
 	}
 
 	grpcplugins.ExtractFileInfoIntoRunResult(&runResult, *fileInfo, fileName, resultType, localRepo, virtualRepo, maturity)
@@ -204,7 +252,7 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		}
 	case sdk.V2WorkflowRunResultTypeTest:
 		runResult.Type = sdk.V2WorkflowRunResultTypeTest
-		nbKo, err := performTests(ctx, &p.Common, *fileInfo, &runResult, jobCtx.Integrations.ArtifactManager, repository, path)
+		nbKo, err := performTests(ctx, &p.Common, *fileInfo, &runResult, integ, repository, path)
 		if err != nil {
 			return true, err
 		}
@@ -272,11 +320,11 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 			return true, err
 		}
 	case sdk.V2WorkflowRunResultTypeConan:
-		if err := performConan(&runResult, itemSearch, artifactPath); err != nil {
+		if err := performConan(&runResult, itemSearch, path); err != nil {
 			return true, err
 		}
 	case sdk.V2WorkflowRunResultTypeOCI:
-		if err := performOCI(&runResult, itemSearch, artifactPath); err != nil {
+		if err := performOCI(&runResult, itemSearch, path); err != nil {
 			return true, err
 		}
 	default:
@@ -476,7 +524,7 @@ func performDocker(ctx context.Context, c *actionplugin.Common, runResult *sdk.V
 
 	url, err := url.Parse(integ.Get(sdk.ArtifactoryConfigURL))
 	if err != nil {
-		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid artifact_manager url "+integ.Get(sdk.ArtifactoryConfigURL))
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid artifact_manager url %s", integ.Get(sdk.ArtifactoryConfigURL))
 	}
 
 	name := fmt.Sprintf("%s.%s/%s", repository, url.Host, dockerImageName)
@@ -493,7 +541,7 @@ func performTests(ctx context.Context, c *actionplugin.Common, fileInfo grpcplug
 	downloadURI := fmt.Sprintf("%s%s/%s", jobCtx.Get(sdk.ArtifactoryConfigURL), repository, strings.TrimPrefix(path, "/"))
 	req, err := http.NewRequestWithContext(ctx, "GET", downloadURI, nil)
 	if err != nil {
-		return 0, sdk.WrapError(err, "unable to create request to retrieve file "+path)
+		return 0, sdk.WrapError(err, "unable to create request to retrieve file %s", path)
 	}
 
 	rtToken := jobCtx.Get(sdk.ArtifactoryConfigToken)
@@ -865,6 +913,150 @@ func performGeneric(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.Ar
 		},
 	}
 	return nil
+}
+
+const aqlSearchLimit = 10000
+
+func containsGlob(path string) bool {
+	return strings.ContainsAny(path, "*?[")
+}
+
+// globSupportedType returns false for the types whose path is not a globbable artifact path
+// (docker takes an image:tag, staticFiles a destination folder).
+func globSupportedType(resultType sdk.V2WorkflowRunResultType) bool {
+	switch resultType {
+	case sdk.V2WorkflowRunResultTypeDocker, sdk.V2WorkflowRunResultTypeStaticFiles:
+		return false
+	default:
+		return true
+	}
+}
+
+// staticPrefix returns the folder prefix common to all positive patterns of the expression,
+// each truncated before its first wildcard. It only narrows the AQL search: a shorter prefix
+// widens the search, the exact selection is done by the glob matcher afterwards.
+func staticPrefix(expression string) string {
+	var common []string
+	first := true
+	for _, pattern := range strings.FieldsFunc(expression, func(r rune) bool {
+		return r == ' ' || r == '\t' || r == '\n' || r == ','
+	}) {
+		if strings.HasPrefix(pattern, "!") { // exclusion patterns don't widen the search
+			continue
+		}
+		if i := strings.IndexAny(pattern, "*?["); i >= 0 {
+			pattern = pattern[:i]
+		}
+		var segments []string
+		if i := strings.LastIndex(pattern, "/"); i > 0 {
+			segments = strings.Split(strings.Trim(pattern[:i], "/"), "/")
+		}
+		if first {
+			common, first = segments, false
+		} else {
+			common = commonSegments(common, segments)
+		}
+		if len(common) == 0 {
+			return ""
+		}
+	}
+	return strings.Join(common, "/")
+}
+
+func commonSegments(a, b []string) []string {
+	n := 0
+	for n < len(a) && n < len(b) && a[n] == b[n] {
+		n++
+	}
+	return a[:n]
+}
+
+// repoCriteria returns the AQL criteria matching the local repositories (maturities) behind
+// the virtual repository. For -cds the -generic family is also included, mirroring the 404
+// fallback of the single path flow.
+func repoCriteria(repository string) string {
+	if prefix, ok := strings.CutSuffix(repository, "-cds"); ok {
+		return fmt.Sprintf(`{"$or":[{"repo":{"$match":"%s-*"}},{"repo":{"$match":"%s-generic-*"}}]}`, repository, prefix)
+	}
+	return fmt.Sprintf(`{"repo":{"$match":"%s-*"}}`, repository)
+}
+
+// deriveCandidate returns the path to match against the glob pattern: the file path for
+// file-based types, the package folder for oci and conan. It returns "" when the item must
+// be ignored.
+func deriveCandidate(r grpcplugins.SearchResult, resultType sdk.V2WorkflowRunResultType) string {
+	var candidate string
+	switch resultType {
+	case sdk.V2WorkflowRunResultTypeOCI:
+		candidate = strings.Trim(r.Path, "/")
+	case sdk.V2WorkflowRunResultTypeConan:
+		folder, ok := strings.CutSuffix(strings.Trim(r.Path, "/"), "/export")
+		if !ok {
+			return ""
+		}
+		candidate = folder
+	default:
+		candidate = strings.Trim(pathpkg.Join(r.Path, r.Name), "/")
+	}
+	if candidate == "." {
+		return ""
+	}
+	return candidate
+}
+
+// enumerateGlobMatches lists the artifacts matching the glob pattern in the local
+// repositories behind the virtual repository. One AQL search scoped to the static prefix of
+// the pattern enumerates the candidates, then the glob matcher selects them in Go:
+//   - file-based types: every file is a candidate;
+//   - oci: a package is the folder directly holding a manifest.json or list.manifest.json
+//     (digest folders <image>/sha256:<digest> are standalone packages and are kept);
+//   - conan: a package revision is the parent of the export folder holding conanmanifest.txt.
+func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfig grpcplugins.ArtifactoryConfig, repository, pattern string, resultType sdk.V2WorkflowRunResultType) ([]string, error) {
+	criteria := []string{repoCriteria(repository)}
+	if base := staticPrefix(pattern); base != "" {
+		criteria = append(criteria, fmt.Sprintf(`{"$or":[{"path":{"$eq":"%s"}},{"path":{"$match":"%s/*"}}]}`, base, base))
+	}
+	switch resultType {
+	case sdk.V2WorkflowRunResultTypeOCI:
+		criteria = append(criteria, `{"$or":[{"name":{"$eq":"manifest.json"}},{"name":{"$eq":"list.manifest.json"}}]}`)
+	case sdk.V2WorkflowRunResultTypeConan:
+		criteria = append(criteria, `{"name":{"$eq":"conanmanifest.txt"}}`, `{"path":{"$match":"*/export"}}`)
+	default:
+		criteria = append(criteria, `{"type":"file"}`)
+	}
+	aql := fmt.Sprintf(`items.find({"$and":[%s]}).include("repo","path","name").limit(%d)`, strings.Join(criteria, ","), aqlSearchLimit)
+
+	res, err := grpcplugins.SearchItem(ctx, &p.Common, artiConfig, aql)
+	if err != nil {
+		return nil, err
+	}
+	if len(res.Results) >= aqlSearchLimit {
+		grpcplugins.Warnf(&p.Common, "glob search returned %d items: results may be truncated, consider a more specific pattern", len(res.Results))
+	}
+
+	g := glob.New(pattern)
+	seen := make(map[string]struct{}, len(res.Results))
+	var candidates []string
+	for _, r := range res.Results {
+		candidate := deriveCandidate(r, resultType)
+		if candidate == "" {
+			continue
+		}
+		// the same path can exist in several local repositories (maturities)
+		if _, ok := seen[candidate]; ok {
+			continue
+		}
+		seen[candidate] = struct{}{}
+		m, err := g.MatchString(candidate)
+		if err != nil {
+			return nil, err
+		}
+		if m != nil {
+			candidates = append(candidates, candidate)
+		}
+	}
+	sort.Strings(candidates)
+	return candidates, nil
 }
 
 func (actPlugin *addRunResultPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
