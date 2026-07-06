@@ -40,6 +40,13 @@ func (api *API) globalRegionManage(ctx context.Context, _ map[string]string) err
 	return api.hasGlobalRole(ctx, sdk.GlobalRoleManageRegion)
 }
 
+func (api *API) globalListHatcheries(ctx context.Context, _ map[string]string) error {
+	if isCDN(ctx) {
+		return nil
+	}
+	return api.hasGlobalRole(ctx, sdk.GlobalRoleManageHatchery)
+}
+
 func (api *API) globalHatcheryManage(ctx context.Context, _ map[string]string) error {
 	return api.hasGlobalRole(ctx, sdk.GlobalRoleManageHatchery)
 }
