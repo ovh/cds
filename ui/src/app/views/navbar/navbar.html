@@ -28,8 +28,8 @@
             <a [routerLink]="generateBookmarkLink(b)" [queryParams]="generateBookmarkQueryParams(b)"
               class="navbar-bookmark">
               <div class="title">
-                <span class="label">{{b.label}}</span>
-                <span class="id">{{b.id}}</span>
+                <span class="label" title="{{b.label}}">{{b.label}}</span>
+                <span class="id" title="{{b.id}}">{{b.id}}</span>
               </div>
               <div>
                 @switch (b.type) {
