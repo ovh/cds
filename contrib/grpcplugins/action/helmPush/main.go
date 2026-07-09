@@ -128,7 +128,14 @@ func (p *helmPushPlugin) perform(
 ) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
 
-	// Prepare teh chart package
+	// Update dependencies before loading the chart so they end up in the package
+	if opts.updateDeps {
+		if err := helm.UpdateDependencies(chartFolder, opts.skipUpdate); err != nil {
+			return nil, time.Since(t0), errors.Errorf("unable to update chart dependencies: %v", err)
+		}
+	}
+
+	// Prepare the chart package
 	chart, err := helm.GetChartByName(chartFolder)
 	if err != nil {
 		return nil, time.Since(t0), errors.Errorf("unable to get chart: %v", err)
@@ -151,12 +158,6 @@ func (p *helmPushPlugin) perform(
 	chartPackagePath, err := helm.CreateChartPackage(chart, tmp)
 	if err != nil {
 		return nil, time.Since(t0), errors.Errorf("unable to create chart package: %v", err)
-	}
-
-	if opts.updateDeps {
-		if err := helm.UpdateDependencies(chart, opts.skipUpdate); err != nil {
-			return nil, time.Since(t0), errors.Errorf("unable to update chart dependencies: %v", err)
-		}
 	}
 
 	// Create run result at status "pending"

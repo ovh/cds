@@ -97,11 +97,13 @@ var (
 	settings   = cli.New()
 )
 
-func UpdateDependencies(c *Chart, skipUpdate bool) error {
+// UpdateDependencies downloads the dependencies of the chart located at
+// chartPath (a chart directory) into its charts/ subdirectory.
+func UpdateDependencies(chartPath string, skipUpdate bool) error {
 	if helm.HelmMajorVersionCurrent() == helm.HelmMajorVersion2 {
 		v2downloadManager := &v2downloader.Manager{
 			Out:        os.Stdout,
-			ChartPath:  c.ChartPath(),
+			ChartPath:  chartPath,
 			HelmHome:   v2settings.Home,
 			Getters:    v2getter.All(v2settings),
 			Debug:      v2settings.Debug,
@@ -115,7 +117,7 @@ func UpdateDependencies(c *Chart, skipUpdate bool) error {
 
 	downloadManager := &downloader.Manager{
 		Out:       os.Stdout,
-		ChartPath: c.ChartPath(),
+		ChartPath: chartPath,
 		Getters:   getter.All(settings),
 		Debug:     v2settings.Debug,
 	}
