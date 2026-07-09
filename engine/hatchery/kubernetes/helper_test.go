@@ -17,7 +17,13 @@ func NewHatcheryKubernetesTest(t *testing.T) *HatcheryKubernetes {
 	h.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(h.Client.(cdsclient.Raw).HTTPClient())
 
-	clientSet, errCl := kubernetes.NewForConfig(&rest.Config{Host: "http://lolcat.kube"})
+	clientSet, errCl := kubernetes.NewForConfig(&rest.Config{
+		Host: "http://lolcat.kube",
+		ContentConfig: rest.ContentConfig{
+			AcceptContentTypes: "application/json",
+			ContentType:        "application/json",
+		},
+	})
 	require.NoError(t, errCl)
 
 	h.kubeClient = &kubernetesClient{clientSet}

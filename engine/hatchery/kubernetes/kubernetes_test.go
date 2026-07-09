@@ -66,7 +66,7 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 		},
 	}
 
-	gock.New("http://lolcat.kube").Post("/api/v1/namespaces/cds-workers/secrets").Reply(http.StatusOK).JSON(v1.Pod{})
+	gock.New("http://lolcat.kube").Post("/api/v1/namespaces/cds-workers/secrets").Reply(http.StatusOK).JSON(v1.Secret{})
 	gock.New("http://lolcat.kube").Post("/api/v1/namespaces/cds-workers/pods").Reply(http.StatusOK).JSON(v1.Pod{})
 
 	gock.Observe(func(request *http.Request, mock gock.Mock) {

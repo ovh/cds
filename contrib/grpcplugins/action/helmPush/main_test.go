@@ -153,6 +153,6 @@ func Test_helmPushPlugin(t *testing.T) {
 		},
 	)
 
-	_, _, err := p.perform(context.TODO(), "fixtures/chart", "", "", helmOpts{}, chartMuseumOptions{})
+	_, _, err := p.perform(context.TODO(), "fixtures/chart", "", "", helmOpts{updateDeps: true}, chartMuseumOptions{})
 	require.NoError(t, err)
 }
