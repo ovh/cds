@@ -16,8 +16,8 @@
             <th>Expected value</th>
             @if (!readonly) {
               <th>
-                <button nz-button nzType="primary" (click)="addEmptyCondition()">
-                  <i nz-icon nzType="plus" nzTheme="outline"></i>
+                <button nz-button nzType="primary" (click)="addEmptyCondition()" aria-label="Add condition">
+                  <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
                 </button>
               </th>
             }
@@ -57,7 +57,7 @@
                     <label name="value" nz-checkbox [(ngModel)]="c.value"></label>
                   }
                   @if (c.variable !== 'cds.status' && c.variable !== 'cds.manual') {
-                    <input name="value" nz-input [(ngModel)]="c.value" (ngModelChange)="pushChange('all')" />
+                    <input name="value" aria-label="Expected value" nz-input [(ngModel)]="c.value" (ngModelChange)="pushChange('all')" />
                   }
                 } @else {
                   {{c.value}}
@@ -82,7 +82,7 @@
     </div>
     <nz-row>
       <nz-col [nzSpan]="18">
-        <codemirror [(ngModel)]="conditions.lua_script"
+        <codemirror [(ngModel)]="conditions.lua_script" aria-label="Lua condition script editor"
           (ngModelChange)="pushChange('codemirror', $event)" (change)="changeCodeMirror()"
         [config]="codeMirrorConfig" #textareaCodeMirror></codemirror>
       </nz-col>

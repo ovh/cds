@@ -12,7 +12,7 @@
                 @if (info.type === 'Error') {
                   <nz-collapse-panel [nzActive]="first" [nzHeader]="headerTmpl">
                     <ng-template #headerTmpl>
-                      <i nz-icon nzType="warning" nzTheme="fill" class="header"></i>
+                      <i nz-icon nzType="warning" nzTheme="fill" class="header" aria-hidden="true"></i>
                       @if (!errorsMap[info.message.id]) {
                         <span>{{info.message.id}}</span>
                       }
@@ -32,7 +32,7 @@
                     <p>
                       @if (errorsMap[info.message.id] && errorsMap[info.message.id].link) {
                         <span>
-                          <i nz-icon nzType="book" nzTheme="outline"></i>{{'common_find_help' | translate}}
+                          <i nz-icon nzType="book" nzTheme="outline" aria-hidden="true"></i>{{'common_find_help' | translate}}
                           <a target="_blank" rel="noopener noreferrer" [href]="errorsMap[info.message.id]?.link">{{'common_here' | translate}}</a>.
                         </span>
                       }
@@ -54,7 +54,7 @@
           @for (info of warnings; track info; let first = $first) {
             <nz-collapse-panel [nzActive]="first" [nzHeader]="headerWarnTmpl">
               <ng-template #headerWarnTmpl>
-                <i nz-icon nzType="warning" nzTheme="fill" class="header warning"></i>
+                <i nz-icon nzType="warning" nzTheme="fill" class="header warning" aria-hidden="true"></i>
                 @if (warningsMap[info.message.id]) {
                   <span>{{warningsMap[info.message.id].title |
                   translate}}</span>
@@ -69,7 +69,7 @@
                 </p>
                 @if (warningsMap[info.message.id]) {
                   <p>
-                    <i nz-icon nzType="book" nzTheme="outline"></i>{{'common_find_help' | translate}}
+                    <i nz-icon nzType="book" nzTheme="outline" aria-hidden="true"></i>{{'common_find_help' | translate}}
                     <a target="_blank" rel="noopener noreferrer" [href]="warningsMap[info.message.id].link">{{'common_here' | translate}}</a>
                   </p>
                 }
@@ -86,7 +86,7 @@
         <nz-collapse>
           <nz-collapse-panel [nzHeader]="headerROTmpl">
             <ng-template #headerROTmpl>
-              <i nz-icon nzType="warning" nzTheme="outline" class="header info"></i>
+              <i nz-icon nzType="warning" nzTheme="outline" class="header info" aria-hidden="true"></i>
               <span>{{'workflow_run_readonly_title' | translate}}</span>
             </ng-template>
             <p>{{'workflow_run_readonly_content' | translate}}</p>
@@ -105,7 +105,7 @@
       <div class="loading">
         <div class="col">
           @if (!runDelayed) {
-            <div class="sk-fold">
+            <div class="sk-fold" aria-hidden="true">
               <div class="sk-fold-cube"></div>
               <div class="sk-fold-cube"></div>
               <div class="sk-fold-cube"></div>
@@ -115,7 +115,7 @@
           }
           @if (runDelayed) {
             <div>
-              <i nz-icon nzType="hourglass" nzTheme="outline"></i>
+              <i nz-icon nzType="hourglass" nzTheme="outline" aria-hidden="true"></i>
               {{'workflow_run_delayed' | translate }}
             </div>
           }

@@ -9,7 +9,7 @@
           <nz-form-item>
             <nz-form-label>Name</nz-form-label>
             <nz-form-control>
-              <input nz-input type="text" name="{{label.name}}" placeholder="name" [(ngModel)]="label.name">
+              <input nz-input type="text" name="{{label.name}}" placeholder="name" aria-label="Name" [(ngModel)]="label.name">
             </nz-form-control>
           </nz-form-item>
         </nz-col>
@@ -17,7 +17,7 @@
           <nz-form-item>
             <nz-form-label>Color</nz-form-label>
             <nz-form-control>
-              <input nz-input type="text" name="color-{{label.name}}" placeholder="color" [(ngModel)]="label.color">
+              <input nz-input type="text" name="color-{{label.name}}" placeholder="color" aria-label="Color" [(ngModel)]="label.color">
             </nz-form-control>
           </nz-form-item>
         </nz-col>
@@ -38,17 +38,17 @@
     <nz-row>
       <nz-col [nzSpan]="8">
         <nz-form-item>
-          <nz-form-label>Name</nz-form-label>
+          <nz-form-label nzFor="cds-field-label-new-name">Name</nz-form-label>
           <nz-form-control>
-            <input nz-input type="text" name="newName" placeholder="Name" [(ngModel)]="newLabel.name">
+            <input nz-input type="text" id="cds-field-label-new-name" name="newName" placeholder="Name" [(ngModel)]="newLabel.name">
           </nz-form-control>
         </nz-form-item>
       </nz-col>
       <nz-col [nzSpan]="8">
         <nz-form-item>
-          <nz-form-label>Color</nz-form-label>
+          <nz-form-label nzFor="cds-field-label-new-color">Color</nz-form-label>
           <nz-form-control>
-            <input nz-input type="text" name="newColor" placeholder="#FF0000" [(ngModel)]="newLabel.color">
+            <input nz-input type="text" id="cds-field-label-new-color" name="newColor" placeholder="#FF0000" [(ngModel)]="newLabel.color">
           </nz-form-control>
         </nz-form-item>
       </nz-col>
@@ -63,7 +63,7 @@
         <nz-form-item>
           <nz-form-control>
             <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading"
-              (click)="createLabel()"><i nz-icon nzType="plus" nzTheme="outline"></i>Add</button>
+              (click)="createLabel()"><i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>Add</button>
             </nz-form-control>
           </nz-form-item>
         </nz-col>

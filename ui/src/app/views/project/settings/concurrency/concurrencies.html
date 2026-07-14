@@ -15,8 +15,8 @@
     <tbody>
       @for (data of table.data; track data) {
         <tr>
-          <td (click)="selectConcurrency(data)">{{data.name}}</td>
-          <td (click)="selectConcurrency(data)">{{data.description}}</td>
+          <td appClickable (click)="selectConcurrency(data)">{{data.name}}</td>
+          <td appClickable (click)="selectConcurrency(data)">{{data.description}}</td>
           <td>
             <button nz-button nzDanger nzType="primary" [nzLoading]="loading.action" nz-popconfirm
               nzPopconfirmTitle="Are you sure you want to delete this variableset ? it will remove all items"

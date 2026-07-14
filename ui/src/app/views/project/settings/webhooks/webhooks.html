@@ -10,11 +10,11 @@
   <nz-row>
     <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4">
       <nz-form-item>
-        <nz-form-label>
+        <nz-form-label nzFor="cds-field-hooktype">
           Hook Type
         </nz-form-label>
         <nz-form-control>
-          <nz-select name="type" id="type" [(ngModel)]="newWebhook.type">
+          <nz-select name="type" id="cds-field-hooktype" [(ngModel)]="newWebhook.type">
             @for (n of hookTypes; track n) {
               <nz-option [nzLabel]="n" [nzValue]="n"></nz-option>
             }
@@ -24,11 +24,11 @@
     </nz-col>
     <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4" [nzOffset]="1">
       <nz-form-item>
-        <nz-form-label>
+        <nz-form-label nzFor="cds-field-vcs">
           Vcs server
         </nz-form-label>
         <nz-form-control>
-          <nz-select name="vcs" id="vcs" [(ngModel)]="newWebhook.vcs_server">
+          <nz-select name="vcs" id="cds-field-vcs" [(ngModel)]="newWebhook.vcs_server">
             @for (n of vcss; track n) {
               <nz-option [nzLabel]="n.name" [nzValue]="n.name"></nz-option>
             }
@@ -38,11 +38,11 @@
     </nz-col>
     <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4" [nzOffset]="1">
       <nz-form-item>
-        <nz-form-label>
+        <nz-form-label nzFor="cds-field-repository">
           Repository
         </nz-form-label>
         <nz-form-control>
-          <input nz-input name="repository" id="repository" [(ngModel)]="newWebhook.repository">
+          <input nz-input name="repository" id="cds-field-repository" [(ngModel)]="newWebhook.repository">
           @if (errorRepository) {
             <nz-alert nzType="warning" nzMessage="Repository cannot be empty"></nz-alert>
           }
@@ -52,11 +52,11 @@
     @if (newWebhook.type === 'workflow') {
       <nz-col [nzSpan]="5" [nzOffset]="1">
         <nz-form-item>
-          <nz-form-label>
+          <nz-form-label nzFor="cds-field-workflow">
             Workflow
           </nz-form-label>
           <nz-form-control>
-            <input nz-input name="workflow" id="workflow" [(ngModel)]="newWebhook.workflow">
+            <input nz-input name="workflow" id="cds-field-workflow" [(ngModel)]="newWebhook.workflow">
             @if (errorWorkflow) {
               <nz-alert nzType="warning" nzMessage="Workflow cannot be empty"></nz-alert>
             }

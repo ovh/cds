@@ -5,7 +5,7 @@
       [remote]="remote" [branch]="branch">
       <nz-tag class="labelFeature" [title]="'workflow_from_repository_btn' | translate" [nzColor]="nzTagColor"
         nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
-        nzPopoverPlacement="bottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
+        nzPopoverPlacement="bottom"><i nz-icon nzType="code" nzTheme="outline" aria-hidden="true"></i>as code</nz-tag>
         <ng-template #popupFromRepository>
           <div class="content infoPopup">
             @if (pipeline?.workflow_ascode_holder) {

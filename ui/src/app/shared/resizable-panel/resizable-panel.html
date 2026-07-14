@@ -1,7 +1,7 @@
 <div class="panel" [class.horizontal]="this.direction === 'horizontal'"
   [class.vertical]="this.direction === 'vertical'">
   @if (this.growDirection === 'before') {
-    <div class="grabber" (mousedown)="onMouseDownGrabber()" #grabber>
+    <div class="grabber" role="separator" aria-label="Resize panel" (mousedown)="onMouseDownGrabber()" #grabber>
       @if (this.direction === 'horizontal') {
         <i nz-icon nzType="more" nzTheme="outline"></i>
       }
@@ -14,7 +14,7 @@
     <ng-content></ng-content>
   </div>
   @if (this.growDirection === 'after') {
-    <div class="grabber" (mousedown)="onMouseDownGrabber()" #grabber>
+    <div class="grabber" role="separator" aria-label="Resize panel" (mousedown)="onMouseDownGrabber()" #grabber>
       @if (this.direction === 'horizontal') {
         <i nz-icon nzType="more" nzTheme="outline"></i>
       }

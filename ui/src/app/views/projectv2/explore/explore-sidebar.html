@@ -2,23 +2,23 @@
   <a class="title" title="Show overview" [routerLink]="['/project', project.key, 'explore']">
     Workspace
   </a>
-  <button class="collapse" nz-button nzType="text" nzSize="small" nz-tooltip
+  <button class="collapse" nz-button nzType="text" nzSize="small" nz-tooltip aria-label="Collapse folders"
     nzTooltipTitle="Collapse folders" (click)="collapseAll()">
-    <i nz-icon nzType="menu-fold" nzTheme="outline"></i>
+    <i nz-icon nzType="menu-fold" nzTheme="outline" aria-hidden="true"></i>
   </button>
-  <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip
+  <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip aria-label="Refresh the workspace"
     nzTooltipTitle="Click to refresh the workspace" (click)="load()">
-    <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
+    <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></i>
   </button>
 </div>
 <div class="content">
   @for (vcs of vcss; track vcs) {
-    <div class="tree-node-header large" (click)="clickVCS(vcs)">
-      <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
+    <div class="tree-node-header large" appClickable [attr.aria-expanded]="!!treeExpandState[vcs.name]" (click)="clickVCS(vcs)">
+      <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill" aria-hidden="true"></span>
       <div class="name">{{vcs.name}}</div>
       <button nz-button nzSize="small" title="Add a new Repository"
         (click)="openRepositoryAddDrawer(vcs.name);$event.stopPropagation()">
-        <i nz-icon nzType="plus" nzTheme="outline"></i>
+        <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
         Repository
       </button>
     </div>
@@ -29,9 +29,9 @@
           nzMessage="No repository found"></nz-alert>
         }
         @for (repo of repositories[vcs.name]; track repo) {
-          <div class="tree-node-header large" (click)="clickRepository(vcs, repo)">
+          <div class="tree-node-header large" appClickable [attr.aria-expanded]="!!treeExpandState[vcs.name+'/'+repo.name]" (click)="clickRepository(vcs, repo)">
             <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
-            nzTheme="fill"></span>
+            nzTheme="fill" aria-hidden="true"></span>
             <a class="name"
               [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']"
               routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)"
@@ -51,20 +51,20 @@
               }
               <ng-template #noResource>
                 No resource found
-                <button class="analyze" nz-button nzType="text" nzSize="small" nz-tooltip
+                <button class="analyze" nz-button nzType="text" nzSize="small" nz-tooltip aria-label="Trigger an analysis for the current ref"
                   nzTooltipTitle="Click to trigger an analysis for the current ref"
                   (click)="openTriggerAnalysisDrawer(vcs.name+'/'+repo.name, refSelectState[vcs.name+'/'+repo.name])">
-                  <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
+                  <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></i>
                 </button>
               </ng-template>
               @if (loadingEntities[vcs.name+'/'+repo.name]) {
                 <nz-spin nzSimple></nz-spin>
               }
               @for (entity of entities[vcs.name+'/'+repo.name] | keyvalue; track entity) {
-                <div class="tree-node-header" (click)="clickEntityType(vcs, repo, entity.key)">
+                <div class="tree-node-header" appClickable [attr.aria-expanded]="!!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]" (click)="clickEntityType(vcs, repo, entity.key)">
                   <span nz-icon
                     [nzType]="!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key] ? 'folder' : 'folder-open'"
-                  nzTheme="outline"></span>
+                  nzTheme="outline" aria-hidden="true"></span>
                   <div class="name">{{entity.key}}</div>
                 </div>
                 @if (treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]) {
@@ -75,7 +75,7 @@
                           [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
                           [queryParams]="{ref: refSelectState[vcs.name+'/'+repo.name]}"
                           routerLinkActive="active" [title]="v.name">
-                          <span nz-icon nzType="file"></span>{{v.name}}
+                          <span nz-icon nzType="file" aria-hidden="true"></span>{{v.name}}
                         </a>
                         @if (v.type === 'Workflow') {
                           <app-favorite-button type="workflow"
@@ -84,16 +84,16 @@
                         @if (v.type === 'Workflow') {
                           <button nz-button nzType="text" nzSize="small"
                             (click)="openRunStartDrawer(vcs.name+'/'+repo.name+'/'+v.name, refSelectState[vcs.name+'/'+repo.name])"
-                            title="Start workflow">
-                            <span nz-icon nzType="caret-right" nzTheme="fill"></span>
+                            title="Start workflow" aria-label="Start workflow">
+                            <span nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>
                           </button>
                         }
                         @if (v.type === 'Workflow') {
                           <a nz-button nzType="text" nzSize="small"
                             [routerLink]="['/', 'project', project.key, 'run']"
                             [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name, workflow_ref: refSelectState[vcs.name+'/'+repo.name]}"
-                            (click)="$event.stopPropagation();" title="Display workflow runs">
-                            <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
+                            (click)="$event.stopPropagation();" title="Display workflow runs" aria-label="Display workflow runs">
+                            <span nz-icon nzType="unordered-list" nzTheme="outline" aria-hidden="true"></span>
                           </a>
                         }
                       </div>

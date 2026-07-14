@@ -101,6 +101,7 @@ import { WorkflowWNodeOutGoingHookComponent } from './workflow/wnode/outgoinghoo
 import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.pipeline.component';
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.directive';
+import { ClickableDirective } from 'app/shared/directives/clickable.directive';
 import {
     NZ_CONFIG,
     NzConfig
@@ -461,6 +462,7 @@ const icons: IconDefinition[] = [
         NgForNumber,
         NgxAutoScrollDirective,
         NsAutoHeightTableDirective,
+        ClickableDirective,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,
@@ -580,6 +582,7 @@ const icons: IconDefinition[] = [
         NgForNumber,
         NgxAutoScrollDirective,
         NsAutoHeightTableDirective,
+        ClickableDirective,
         NzAlertModule,
         NzAutocompleteModule,
         NzAvatarModule,

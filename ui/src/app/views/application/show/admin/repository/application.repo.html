@@ -4,9 +4,9 @@
       <div nz-row>
         <div nz-col [nzSpan]="8">
           <nz-form-item>
-            <nz-form-label>Repository manager</nz-form-label>
+            <nz-form-label nzFor="cds-field-repomanager">Repository manager</nz-form-label>
             <nz-form-control>
-              <nz-select nzShowSearch name="repomanname" [(ngModel)]="selectedRepoManager" (ngModelChange)="updateListRepo(false)" [disabled]="loadingRepos || application.from_repository">
+              <nz-select nzShowSearch id="cds-field-repomanager" name="repomanname" [(ngModel)]="selectedRepoManager" (ngModelChange)="updateListRepo(false)" [disabled]="loadingRepos || application.from_repository">
                 @for (r of project?.vcs_servers; track r) {
                   <nz-option [nzValue]="r.name" [nzLabel]="r.name"></nz-option>
                 }
@@ -16,9 +16,9 @@
         </div>
         <div nz-col [nzSpan]="8">
           <nz-form-item>
-            <nz-form-label>Repository</nz-form-label>
+            <nz-form-label nzFor="cds-field-repository">Repository</nz-form-label>
             <nz-form-control>
-              <nz-select nzShowSearch name="repository" nzPlaceHolder="Choose a repository"  (nzOnSearch)="filterRepositories($event)"
+              <nz-select nzShowSearch id="cds-field-repository" name="repository" nzPlaceHolder="Choose a repository"  (nzOnSearch)="filterRepositories($event)"
                 [(ngModel)]="selectedRepo" [disabled]="loadingRepos || application.from_repository">
                 @for (r of reposFiltered; track r) {
                   <nz-option [nzValue]="r.fullname" [nzLabel]="r.fullname"></nz-option>
@@ -65,7 +65,7 @@
         <ng-template #repoTemp>
           <div nz-row class="alert">
             <div nz-col [nzSpan]="2">
-              <i nz-icon nzType="warning" nzTheme="fill" class="orange"></i>
+              <i nz-icon nzType="warning" nzTheme="fill" class="orange" aria-hidden="true"></i>
             </div>
             <div nz-col [nzSpan]="22">
               <div class="header">Missing configuration</div>

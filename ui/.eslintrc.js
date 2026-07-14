@@ -73,7 +73,21 @@ module.exports = {
                 ],
                 "@angular-eslint/template/prefer-control-flow": [
                     "off"
-                ]
+                ],
+                // Accessibility rules (see ui/docs/accessibility.md).
+                // Introduced as "warn"; flipped to "error" per rule once the
+                // corresponding remediation sweep is complete.
+                "@angular-eslint/template/alt-text": ["warn"],
+                "@angular-eslint/template/click-events-have-key-events": ["warn"],
+                "@angular-eslint/template/elements-content": ["warn"],
+                "@angular-eslint/template/interactive-supports-focus": ["warn"],
+                "@angular-eslint/template/label-has-associated-control": ["warn"],
+                "@angular-eslint/template/mouse-events-have-key-events": ["warn"],
+                "@angular-eslint/template/no-autofocus": ["off"],
+                "@angular-eslint/template/no-distracting-elements": ["warn"],
+                "@angular-eslint/template/role-has-required-aria": ["warn"],
+                "@angular-eslint/template/table-scope": ["warn"],
+                "@angular-eslint/template/valid-aria": ["warn"]
             }
         }
     ]

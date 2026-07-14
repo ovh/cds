@@ -2,7 +2,7 @@
   <div class="list-header">
     @if (canAdd) {
       <button nz-button nzType="primary" (click)="openCreate()">
-        <i nz-icon nzType="plus"></i> Add
+        <i nz-icon nzType="plus" aria-hidden="true"></i> Add
       </button>
     }
   </div>
@@ -27,8 +27,8 @@
           <td>{{r.type}}</td>
           <td>{{r.url}}</td>
           <td class="rightAlign">
-            <button nz-button nzType="text" (click)="openEdit(r)" title="Edit">
-              <i nz-icon nzType="edit"></i>
+            <button nz-button nzType="text" (click)="openEdit(r)" title="Edit" aria-label="Edit repository manager {{r.name}}">
+              <i nz-icon nzType="edit" aria-hidden="true"></i>
             </button>
           </td>
         </tr>

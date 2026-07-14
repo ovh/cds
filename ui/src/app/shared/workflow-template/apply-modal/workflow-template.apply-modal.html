@@ -23,7 +23,7 @@
         Name
       </nz-col>
       <nz-col [nzSpan]="8">
-        <input nz-input type="text" name="name" [disabled]="true" [ngModel]="workflowTemplate.name">
+        <input nz-input type="text" name="name" aria-label="Name" [disabled]="true" [ngModel]="workflowTemplate.name">
       </nz-col>
     </nz-row>
     <nz-row>
@@ -31,7 +31,7 @@
         Group
       </nz-col>
       <nz-col [nzSpan]="8">
-        <input nz-input type="text" name="group" [disabled]="true" [ngModel]="workflowTemplate.group.name">
+        <input nz-input type="text" name="group" aria-label="Group" [disabled]="true" [ngModel]="workflowTemplate.group.name">
       </nz-col>
       <nz-col [nzSpan]="4" [nzOffset]="8">
         @if (workflowTemplateInstance.workflow_template_version === workflowTemplate.version) {

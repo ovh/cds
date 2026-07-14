@@ -92,7 +92,8 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 			language: 'yaml',
 			minimap: { enabled: false },
 			readOnly: true,
-			scrollBeyondLastLine: false
+			scrollBeyondLastLine: false,
+			ariaLabel: 'Entity definition editor'
 		};
 
 		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ExploreEntityComponent.PANEL_KEY));

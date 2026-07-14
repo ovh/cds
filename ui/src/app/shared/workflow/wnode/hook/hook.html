@@ -19,7 +19,7 @@
   }
   @if (hookEvent && hookEvent.parent_workflow && hookEvent.parent_workflow.name) {
     <i nz-icon nzType="{{icon | lowercase }}" nzTheme="outline" [class.green]="hookEvent.uuid === hook.uuid"
-    nz-tooltip nzTooltipTitle="{{hookEvent.parent_workflow.key}}/{{hookEvent.parent_workflow.name}} #{{hookEvent.parent_workflow.run}}"></i>
+    nz-tooltip nzTooltipTitle="{{hookEvent.parent_workflow.key}}/{{hookEvent.parent_workflow.name}} #{{hookEvent.parent_workflow.run}}" role="img" aria-label="{{hookEvent.parent_workflow.key}}/{{hookEvent.parent_workflow.name}} #{{hookEvent.parent_workflow.run}}"></i>
   }
   @if (!hookEvent || !hookEvent.parent_workflow) {
     @if (icon === 'bitbucket') {

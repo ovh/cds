@@ -1,6 +1,14 @@
-<ul nz-menu nzMode="horizontal">
+<ul nz-menu nzMode="horizontal" role="tablist">
   @for (t of tabs; track t) {
-    <li nz-menu-item [nzSelected]="selected && selected.key === t.key" (click)="clickSelect(t)" [nzDisabled]="t.disabled">
+    <li nz-menu-item role="tab"
+      [attr.aria-selected]="!!(selected && selected.key === t.key)"
+      [attr.aria-disabled]="t.disabled ? true : null"
+      [attr.tabindex]="selected && selected.key === t.key ? 0 : -1"
+      (keydown.arrowright)="keyNavigate($event, 1)"
+      (keydown.arrowleft)="keyNavigate($event, -1)"
+      (keydown.enter)="keyActivate($event, t)"
+      (keydown.space)="keyActivate($event, t)"
+      [nzSelected]="selected && selected.key === t.key" (click)="clickSelect(t)" [nzDisabled]="t.disabled">
       <app-tab [tab]="t"></app-tab>
     </li>
   }

@@ -30,20 +30,20 @@
                 <button nz-button nzType="primary" [nzLoading]="gp.updating"
                   [disabled]="gp.updating" name="btnupdateperm"
                   (click)="sendEvent('update', gp)">
-                  <i nz-icon nzType="save" nzTheme="outline"></i>
+                  <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>
                   {{ 'btn_save' | translate}}
                 </button>
               }
               @if (mode === 'form') {
                 <button nz-button  nzType="primary" nzDanger [nzLoading]="gp.updating" (click)="sendEvent('delete', gp)">
-                  <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                  <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete
                 </button>
               }
               @if (mode === 'submit' && !gp.hasChanged) {
                 <button nz-button nzType="primary" nzDanger [nzLoading]="gp.updating" name="deleteButton"
                   nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this permission ?"
                   (nzOnConfirm)="sendEvent('delete', gp)" nzPopconfirmPlacement="topLeft">
-                  <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                  <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete
                 </button>
               }
             }

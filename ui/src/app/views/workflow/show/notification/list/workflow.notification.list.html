@@ -3,10 +3,10 @@
     <nz-col [nzSpan]="6">
       <div class="section">
         <h3>Workflow notifications</h3>
-        <button nz-button [disabled]="readOnly" (click)="openNewNotifArea()"><i nz-icon nzType="plus" nzTheme="outline"></i></button>
+        <button nz-button [disabled]="readOnly" (click)="openNewNotifArea()" aria-label="Add notification"><i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i></button>
       </div>
       @for (n of workflow.notifications; track n; let i = $index) {
-        <div class="item" (click)="openEditionArea(i)" [class.active]="this.selectedNotification === i">
+        <div class="item" appClickable (click)="openEditionArea(i)" [class.active]="this.selectedNotification === i">
           <div class="content">
             <div class="title">
               {{n.type}}
@@ -24,7 +24,7 @@
       }
       <div class="section">
         <h3>Events integration</h3>
-        <button nz-button (click)="openNewEventArea()"><i nz-icon nzType="plus" nzTheme="outline"></i></button>
+        <button nz-button (click)="openNewEventArea()" aria-label="Add event integration"><i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i></button>
       </div>
       @for (eventIntegration of workflow.integrations | callback: filterEvent; track eventIntegration) {
         <div class="item">
@@ -69,7 +69,7 @@
         @if (eventIntegrations && eventIntegrations.length > 0) {
           <nz-form-item>
             <nz-form-control>
-              <nz-select nzShowSearch [(ngModel)]="selectedIntegration" name="integ" class="integrationsList">
+              <nz-select nzShowSearch [(ngModel)]="selectedIntegration" name="integ" class="integrationsList" aria-label="Event integration">
                 @for (o of eventIntegrations; track o) {
                   <nz-option [nzLabel]="o.name" [nzValue]="o"></nz-option>
                 }
@@ -81,7 +81,7 @@
           <button nz-button nzType="primary" [nzLoading]="loading"
             [disabled]="!selectedIntegration || loading"
             (click)="addEvent(selectedIntegration)">
-            <i nz-icon nzType="save" nzTheme="outline"></i>Add
+            <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Add
           </button>
         </nz-form-item>
       </form>

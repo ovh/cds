@@ -148,6 +148,8 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
     hooksOn: any;
     selectedNodeNavigationKey: string;
     navigationGraph: NavigationGraph;
+    liveAnnouncement: string = '';
+    graphSummary: string = '';
     direction: GraphDirection = GraphDirection.HORIZONTAL;
     ready: boolean;
     hasStages = false;
@@ -186,6 +188,30 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyDown(event: KeyboardEvent) {
+        const activeElement = document.activeElement as HTMLElement;
+        const focusInGraph = !!activeElement && this.host.nativeElement.contains(activeElement);
+        if (activeElement && !focusInGraph) {
+            const tag = activeElement.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || activeElement.isContentEditable) {
+                return;
+            }
+        }
+
+        if (focusInGraph) {
+            switch (event.key) {
+                case '+':
+                case '=':
+                    this.graph?.zoomIn();
+                    return;
+                case '-':
+                    this.graph?.zoomOut();
+                    return;
+                case '0':
+                    this.graph?.center();
+                    return;
+            }
+        }
+
         // Selection-mode shortcuts (handled regardless of navigationDisabled)
         switch (event.key) {
             case 'Shift':
@@ -231,7 +257,64 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
             this.selectedNodeNavigationKey = newSelected;
             this.graph.selectNode(this.selectedNodeNavigationKey);
             this.graph.centerNode(this.selectedNodeNavigationKey, true);
+            this.graph.focusNode(this.selectedNodeNavigationKey);
+            this.announceSelection(this.selectedNodeNavigationKey);
         }
+    }
+
+    announceSelection(navigationKey: string): void {
+        this.liveAnnouncement = this.describeNode(navigationKey);
+        this._cd.markForCheck();
+    }
+
+    describeNode(navigationKey: string): string {
+        for (const n of this.nodes) {
+            if (n.type === GraphNodeType.Stage) {
+                for (const sub of n.sub_graph) {
+                    const description = this.describeGraphNode(sub, navigationKey);
+                    if (description) {
+                        return description;
+                    }
+                }
+            } else {
+                const description = this.describeGraphNode(n, navigationKey);
+                if (description) {
+                    return description;
+                }
+            }
+        }
+        return navigationKey;
+    }
+
+    describeGraphNode(n: GraphNode, navigationKey: string): string {
+        const baseKey = n.job?.stage ? `${n.job.stage}-${n.name}` : n.name;
+        if (n.type === GraphNodeType.Matrix) {
+            if (!navigationKey.startsWith(`${baseKey}-`)) {
+                return null;
+            }
+            const matrixKey = navigationKey.substring(baseKey.length + 1);
+            let description = `Job ${n.name} ${matrixKey}`;
+            const run = (n.runs ?? []).find(r =>
+                Object.keys(r.matrix).sort().map(k => `${k}: ${r.matrix[k]}`).join(', ') === matrixKey);
+            if (run?.status) {
+                description += `, status ${run.status}`;
+            }
+            if (n.job?.stage) {
+                description += `, stage ${n.job.stage}`;
+            }
+            return description;
+        }
+        if (navigationKey !== baseKey) {
+            return null;
+        }
+        let description = `Job ${n.name}`;
+        if (n.run?.status) {
+            description += `, status ${n.run.status}`;
+        }
+        if (n.job?.stage) {
+            description += `, stage ${n.job.stage}`;
+        }
+        return description;
     }
 
     @HostListener('window:keyup', ['$event'])
@@ -330,6 +413,21 @@ export class GraphComponent implements AfterViewInit, OnDestroy {
                 };
             });
         });
+
+        this.computeGraphSummary();
+    }
+
+    computeGraphSummary(): void {
+        if (!this._runJobs || this._runJobs.length === 0) {
+            this.graphSummary = '';
+            return;
+        }
+        const counts: { [status: string]: number } = {};
+        this._runJobs.forEach(j => {
+            counts[j.status] = (counts[j.status] ?? 0) + 1;
+        });
+        const details = Object.keys(counts).map(s => `${counts[s]} ${s.toLowerCase()}`).join(', ');
+        this.graphSummary = `Workflow graph with ${this._runJobs.length} jobs: ${details}.`;
     }
 
     initGraph() {

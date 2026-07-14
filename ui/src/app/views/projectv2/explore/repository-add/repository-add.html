@@ -22,8 +22,8 @@
           }
         </nz-select>
         <button nz-button nzType="primary" (click)="resyncRepositories($event)" [nzLoading]="isLoading()"
-          [disabled]="validateForm.disabled" title="Resync Repositories"><span nz-icon
-        nzType="reload"></span></button>
+          [disabled]="validateForm.disabled" title="Resync Repositories" aria-label="Resync Repositories"><span nz-icon
+        nzType="reload" aria-hidden="true"></span></button>
       </nz-row>
 
       @if (validateForm.controls.vcs && vcsProject) {

@@ -1,4 +1,5 @@
-<div class="stage" [class.highlight]="highlight" (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()">
+<div class="stage" role="group" [attr.aria-label]="'Stage ' + node?.name" [class.highlight]="highlight"
+     (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()">
     <div class="title">
         <div class="info" title="Stage {{node?.name}}">
             {{node?.name}}
@@ -6,6 +7,8 @@
         <div class="controls">
             <span nz-tooltip nzTooltipTitle="Center graph on stage {{node?.name}}"
                   nz-icon nzType="expand" nzTheme="outline" title="Center graph on stage {{node?.name}}"
+                  role="button" tabindex="0" [attr.aria-label]="'Center graph on stage ' + node?.name"
+                  (keydown.enter)="$event.stopPropagation();clickCenter();"
                   (click)="$event.stopPropagation();clickCenter();"></span>
         </div>
     </div>

@@ -1,9 +1,9 @@
 <nz-row>
   <nz-col [nzSpan]="24">
     <nz-form-item>
-      <nz-form-label>Workflow name*</nz-form-label>
+      <nz-form-label nzFor="cds-field-workflow-name">Workflow name*</nz-form-label>
       <nz-form-control>
-        <input nz-input type="text" name="workflow_name" [(ngModel)]="parameterName"
+        <input nz-input type="text" id="cds-field-workflow-name" name="workflow_name" [(ngModel)]="parameterName"
           [disabled]="!!workflowTemplateInstance">
       </nz-form-control>
     </nz-form-item>

@@ -9,10 +9,10 @@
               <h1>
                 CDS Services
                 <div class="floatRight">
-                  <nz-tag class="pointer" [nzColor]="globalStatus.status==='AL'?'error':(globalStatus.status==='WARN'?'warning': 'success')" (click)="filter=globalStatus.status">
+                  <nz-tag class="pointer" appClickable [nzColor]="globalStatus.status==='AL'?'error':(globalStatus.status==='WARN'?'warning': 'success')" (click)="filter=globalStatus.status">
                     {{globalStatus.name}} {{globalStatus.status}} - {{globalStatus.value}}
                   </nz-tag>
-                  <nz-tag class="pointer" (click)="filter='/Version'" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'green': globalVersion.status==='OK'}">
+                  <nz-tag class="pointer" appClickable (click)="filter='/Version'" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'green': globalVersion.status==='OK'}">
                     {{globalVersion.name}} {{globalVersion.status}} - {{globalVersion.value}}
                   </nz-tag>
                 </div>
@@ -40,18 +40,18 @@
                         <li>
                           <div class="floatRight">
                             <span class="pointer" nz-icon nzType="filter" nzTheme="outline" nz-tooltip nzTooltipTitle="Click for filter list"
-                            popupPlacement="top left" (click)="filter=srv.name"></span>
+                            popupPlacement="top left" appClickable aria-label="Filter list on {{srv.name}}" (click)="filter=srv.name"></span>
                           </div>
                           <a [routerLink]="[srv.name]" nz-tooltip nzTooltipTitle="See details">
                             @switch (srv.status) {
                               @case ('OK') {
-                                <span nz-icon nzType="check" nzTheme="outline"  class="green" title="{{srv.status}}"></span>
+                                <span nz-icon nzType="check" nzTheme="outline"  class="green" title="{{srv.status}}" role="img" aria-label="{{srv.status}}"></span>
                               }
                               @case ('AL') {
-                                <span nz-icon nzType="close" nzTheme="outline"  class="red" title="{{srv.status}}"></span>
+                                <span nz-icon nzType="close" nzTheme="outline"  class="red" title="{{srv.status}}" role="img" aria-label="{{srv.status}}"></span>
                               }
                               @case ('WARN') {
-                                <span nz-icon nzType="warning" nzTheme="outline"  class="orange" title="{{srv.status}}"></span>
+                                <span nz-icon nzType="warning" nzTheme="outline"  class="orange" title="{{srv.status}}" role="img" aria-label="{{srv.status}}"></span>
                               }
                             }
                             {{srv.name}}

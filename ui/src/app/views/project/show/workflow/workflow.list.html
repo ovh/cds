@@ -8,14 +8,14 @@
     <nz-row>
       <nz-col [nzSpan]="8">
         <nz-space-compact>
-          <button nz-button [nzType]="viewMode === 'blocs'?'primary':'default'" (click)="setViewMode('blocs')">
-            <i nz-icon nzType="table" nzTheme="outline"></i>
+          <button nz-button [nzType]="viewMode === 'blocs'?'primary':'default'" aria-label="Display workflows as blocs" (click)="setViewMode('blocs')">
+            <i nz-icon nzType="table" nzTheme="outline" aria-hidden="true"></i>
           </button>
-          <button nz-button [nzType]="viewMode === 'labels'?'primary':'default'" (click)="setViewMode('labels')">
-            <i nz-icon nzType="tags" nzTheme="outline"></i>
+          <button nz-button [nzType]="viewMode === 'labels'?'primary':'default'" aria-label="Display workflows grouped by labels" (click)="setViewMode('labels')">
+            <i nz-icon nzType="tags" nzTheme="outline" aria-hidden="true"></i>
           </button>
-          <button nz-button [nzType]="viewMode === 'lines'?'primary':'default'" (click)="setViewMode('lines')">
-            <i nz-icon nzType="unordered-list" nzTheme="outline"></i>
+          <button nz-button [nzType]="viewMode === 'lines'?'primary':'default'" aria-label="Display workflows as lines" (click)="setViewMode('lines')">
+            <i nz-icon nzType="unordered-list" nzTheme="outline" aria-hidden="true"></i>
           </button>
         </nz-space-compact>
       </nz-col>

@@ -13,6 +13,42 @@ body {
     overflow-y: hidden;
 }
 
+// Screenreader-only content: visually hidden, still announced by AT.
+.cds-sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+// Skip link: rendered off-screen, becomes visible only while keyboard-focused.
+.cds-skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 2000;
+    padding: 8px 16px;
+    background: #fff;
+    color: #1890ff;
+    border: 1px solid #d4d4d5;
+    border-radius: 0 0 3px 3px;
+
+    &:focus {
+        left: 0;
+    }
+}
+
+// Programmatic focus target for the skip link; no visible ring on the page body.
+#main-content:focus {
+    outline: none;
+}
+
 .app-loader {
     position: absolute;
     top: 50%;

@@ -39,7 +39,7 @@
                 }
               </div>
               <button nz-button nzType="text" nzDanger (click)="deleteBookmark($event, b)"
-                title="Remove {{b.type}} from bookmarks"><i nz-icon nzType="delete" nzTheme="outline"></i></button>
+                title="Remove {{b.type}} from bookmarks" aria-label="Remove {{b.type}} from bookmarks"><i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i></button>
               </a>
             </nz-list-item>
           }

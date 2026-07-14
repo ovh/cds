@@ -32,11 +32,11 @@
         <nz-form-control>
           @if (buttonType === 'submit') {
             <button nz-button type="submit" nzType="primary"  [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
-              <i nz-icon nzType="save" nzTheme="outline"></i>Save</button>
+              <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Save</button>
             }
             @if (buttonType === 'button') {
-              <button nz-button type="submit" nzType="default" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
-                <i nz-icon nzType="plus" nzTheme="outline"></i></button>
+              <button nz-button type="submit" nzType="default" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''" aria-label="Add permission">
+                <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i></button>
               }
             </nz-form-control>
           </nz-col>

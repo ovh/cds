@@ -52,9 +52,9 @@
                       <nz-row>
                         <nz-col [nzSpan]="20" [nzOffset]="2">
                           <nz-form-item>
-                            <nz-form-label>Workflow name</nz-form-label>
+                            <nz-form-label nzFor="cds-field-workflow-name">Workflow name</nz-form-label>
                             <nz-form-control>
-                              <input nz-input name="name" [(ngModel)]="workflow.name"
+                              <input nz-input name="name" id="cds-field-workflow-name" [(ngModel)]="workflow.name"
                                 pattern="^[a-zA-Z0-9._-]{1,}$"
                                 (ngModelChange)="duplicateWorkflowName = false" #name="ngModel">
                             </nz-form-control>
@@ -68,9 +68,9 @@
                             }
                           </nz-form-item>
                           <nz-form-item>
-                            <nz-form-label>Workflow description</nz-form-label>
+                            <nz-form-label nzFor="cds-field-workflow-description">Workflow description</nz-form-label>
                             <nz-form-control>
-                              <textarea nz-input name="description"
+                              <textarea nz-input name="description" id="cds-field-workflow-description"
                               [(ngModel)]="workflow.description"></textarea>
                             </nz-form-control>
                           </nz-form-item>
@@ -79,7 +79,7 @@
                             <nz-form-control>
                               @if (!fileTooLarge && workflow.icon) {
                                 <div>
-                                  <img width="32" class="app-icon" [src]="workflow.icon" alt="icon" />
+                                  <img width="32" class="app-icon" [src]="workflow.icon" alt="Workflow icon preview" />
                                 </div>
                               }
                               <app-upload-button accept=".png,.jpg,.jpeg" [image]="true"
@@ -142,10 +142,10 @@
                           <nz-row>
                             <nz-col [nzSpan]="24">
                               <nz-form-item>
-                                <nz-form-label>{{ 'workflow_wizard_select_template' |
+                                <nz-form-label nzFor="cds-field-template-path">{{ 'workflow_wizard_select_template' |
                                 translate}}</nz-form-label>
                                 <nz-form-control>
-                                  <nz-select name="selectedTemplatePath" nzShowSearch
+                                  <nz-select name="selectedTemplatePath" nzId="cds-field-template-path" nzShowSearch
                                     [(ngModel)]="selectedTemplatePath"
                                     (ngModelChange)="showTemplateForm($event)"
                                     (nzOnSearch)="filterTemplate($event)" #select>
@@ -163,17 +163,17 @@
                                 <nz-row>
                                   <nz-col [nzSpan]="12">
                                     <nz-form-item>
-                                      <nz-form-label>Name</nz-form-label>
+                                      <nz-form-label nzFor="cds-field-template-name">Name</nz-form-label>
                                       <nz-form-control>
-                                        <input nz-input type="text" name="name"
+                                        <input nz-input type="text" name="name" id="cds-field-template-name"
                                           [disabled]="true" [ngModel]="selectedTemplate.name">
                                       </nz-form-control>
                                     </nz-form-item>
                                   </nz-col>
                                   <nz-col [nzSpan]="11" [nzOffset]="1">
-                                    <nz-form-label>Group</nz-form-label>
+                                    <nz-form-label nzFor="cds-field-template-group">Group</nz-form-label>
                                     <nz-form-control>
-                                      <input nz-input type="text" name="group" [disabled]="true"
+                                      <input nz-input type="text" name="group" id="cds-field-template-group" [disabled]="true"
                                         [ngModel]="selectedTemplate.group.name">
                                     </nz-form-control>
                                   </nz-col>

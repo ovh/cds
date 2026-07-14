@@ -2,9 +2,9 @@
   <nz-card nzTitle="Settings" class="coloredTitle">
     <form nz-form #environmentUpdateFrom="ngForm">
       <nz-form-item>
-        <nz-form-label>Name</nz-form-label>
+        <nz-form-label nzFor="cds-field-envname">Name</nz-form-label>
         <nz-form-control>
-          <input nz-input type="text" name="formEnvironmentUpdateName" [(ngModel)]="environment.name" required
+          <input nz-input type="text" id="cds-field-envname" name="formEnvironmentUpdateName" [(ngModel)]="environment.name" required
             #formEnvironmentUpdateName="ngModel" pattern="[a-zA-Z0-9._-]*" [disabled]="loading">
           @if (formEnvironmentUpdateName.invalid && !formEnvironmentUpdateName.pristine) {
             <nz-alert nzType="error">
@@ -16,7 +16,7 @@
       <nz-form-item nzJustify="end">
         <button nz-button nzType="primary" (click)="cloneModalVisible = true" type="button" name="clonebtn"
           [nzLoading]="loading" [disabled]="loading"><i
-        class="copy icon"></i>Clone
+        class="copy icon" aria-hidden="true"></i>Clone
       </button>
       <button nz-button nzType="primary" [nzLoading]="loading" name="updateNameButton"
         (click)="onSubmitEnvironmentUpdate()"
@@ -41,9 +41,9 @@
   <div *nzModalContent>
     <form nz-form>
       <nz-form-item>
-        <nz-form-label>Name</nz-form-label>
+        <nz-form-label nzFor="cds-field-clonename">Name</nz-form-label>
         <nz-form-control>
-          <input nz-input type="text" name="name" placeholder="{{'environment_clone_placeholder' | translate}}"
+          <input nz-input type="text" id="cds-field-clonename" name="name" placeholder="{{'environment_clone_placeholder' | translate}}"
             [(ngModel)]="cloneName">
         </nz-form-control>
       </nz-form-item>
@@ -53,7 +53,7 @@
     <button nz-button (click)="cloneModalVisible = false">Cancel</button>
     <button nz-button nzType="primary" [disabled]="!cloneName"
       [nzLoading]="loading" (click)="cloneEnvironment()">
-      <i nz-icon nzType="copy" nzTheme="outline"></i>Clone
+      <i nz-icon nzType="copy" nzTheme="outline" aria-hidden="true"></i>Clone
     </button>
   </div>
 </nz-modal>
