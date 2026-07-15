@@ -80,7 +80,7 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/cpu", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getCPUProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getCPUProfileHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 	r.Handle("/admin/debug/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getProfileHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 
-	r.Handle("/admin/user", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postUserHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/user", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminUsersHandler, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postUserHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/user/{permUsername}/contact", Scope(sdk.AuthConsumerScopeAdmin), r.PUT(api.putAdminUserContactHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/user/{permUsername}/link", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postUserLinkHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/user/{permUsername}/link/{consumerType}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteUserLinkHandler, service.OverrideAuth(api.authAdminMiddleware)))

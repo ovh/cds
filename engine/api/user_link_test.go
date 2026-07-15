@@ -48,6 +48,66 @@ func Test_getUserLinksHandler(t *testing.T) {
 
 }
 
+func Test_getAdminUsersHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	// Admin user performing the search
+	_, adminJWT := assets.InsertAdminUser(t, db)
+
+	// Two target users with the same external username but different consumer types
+	u1, _ := assets.InsertLambdaUser(t, db)
+	u2, _ := assets.InsertLambdaUser(t, db)
+
+	externalUsername := "ext-" + sdk.RandomString(6)
+
+	require.NoError(t, link.Insert(context.Background(), db, &sdk.UserLink{
+		AuthentifiedUserID: u1.ID,
+		Type:               string(sdk.ConsumerForgejo),
+		ExternalID:         sdk.RandomString(8),
+		Username:           externalUsername,
+	}))
+	require.NoError(t, link.Insert(context.Background(), db, &sdk.UserLink{
+		AuthentifiedUserID: u2.ID,
+		Type:               string(sdk.ConsumerBitbucketServer),
+		ExternalID:         sdk.RandomString(8),
+		Username:           externalUsername,
+	}))
+
+	baseURI := api.Router.GetRoute(http.MethodGet, api.getAdminUsersHandler, nil)
+	test.NotEmpty(t, baseURI)
+
+	// 1. Happy path: only the forgejo link matches
+	uri := baseURI + "?consumerType=" + string(sdk.ConsumerForgejo) + "&externalUsername=" + externalUsername
+	req := assets.NewJWTAuthentifiedRequest(t, adminJWT, http.MethodGet, uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var users []sdk.AuthentifiedUser
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &users))
+	require.Len(t, users, 1)
+	require.Equal(t, u1.ID, users[0].ID)
+
+	// 2. Missing params -> 400
+	req = assets.NewJWTAuthentifiedRequest(t, adminJWT, http.MethodGet, baseURI+"?consumerType="+string(sdk.ConsumerForgejo), nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+
+	// 3. Invalid consumer type -> 400
+	req = assets.NewJWTAuthentifiedRequest(t, adminJWT, http.MethodGet, baseURI+"?consumerType=fake&externalUsername="+externalUsername, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+
+	// 4. Forbidden for non-admin
+	_, lambdaJWT := assets.InsertLambdaUser(t, db)
+	req = assets.NewJWTAuthentifiedRequest(t, lambdaJWT, http.MethodGet, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+}
+
 func Test_postUserLinkHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 

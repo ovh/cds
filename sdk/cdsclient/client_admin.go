@@ -18,6 +18,33 @@ func (c *client) AdminUserCreate(ctx context.Context, user sdk.CreateUser) error
 	return nil
 }
 
+type AdminUserFilter struct {
+	ConsumerType     string
+	ExternalUsername string
+}
+
+func (c *client) AdminUserSearch(ctx context.Context, filter *AdminUserFilter) ([]sdk.AuthentifiedUser, error) {
+	var mods []RequestModifier
+	if filter != nil {
+		mods = append(mods, func(req *http.Request) {
+			q := req.URL.Query()
+			if filter.ConsumerType != "" {
+				q.Set("consumerType", filter.ConsumerType)
+			}
+			if filter.ExternalUsername != "" {
+				q.Set("externalUsername", filter.ExternalUsername)
+			}
+			req.URL.RawQuery = q.Encode()
+		})
+	}
+
+	var users []sdk.AuthentifiedUser
+	if _, err := c.GetJSON(ctx, "/admin/user", &users, mods...); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func (c *client) AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error {
 	url := fmt.Sprintf("/admin/user/%s/link", username)
 	if _, err := c.PostJSON(ctx, url, &link, nil); err != nil {

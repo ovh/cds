@@ -80,3 +80,8 @@ func LoadUserLinkByTypeAndExternalID(ctx context.Context, db gorp.SqlExecutor, t
 	query := gorpmapping.NewQuery(`SELECT * FROM user_link WHERE type = $1 AND external_id = $2`).Args(t, externalID)
 	return get(ctx, db, query)
 }
+
+func LoadUserLinksByTypeAndUsername(ctx context.Context, db gorp.SqlExecutor, t string, username string) ([]sdk.UserLink, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM user_link WHERE type = $1 AND username = $2`).Args(t, username)
+	return getAll(ctx, db, query)
+}

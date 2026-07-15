@@ -11,12 +11,52 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+// getAdminUsersHandler searches CDS users by external link criteria, available for admin only.
+func (api *API) getAdminUsersHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		consumerType := r.FormValue("consumerType")
+		externalUsername := r.FormValue("externalUsername")
+		if consumerType == "" || externalUsername == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "consumerType and externalUsername are required")
+		}
+		if !sdk.AuthConsumerType(consumerType).IsValid() {
+			return sdk.WithStack(sdk.ErrInvalidData)
+		}
+
+		links, err := link.LoadUserLinksByTypeAndUsername(ctx, api.mustDB(), consumerType, externalUsername)
+		if err != nil {
+			return err
+		}
+
+		userIDs := make([]string, 0, len(links))
+		seen := make(map[string]struct{}, len(links))
+		for _, l := range links {
+			if _, ok := seen[l.AuthentifiedUserID]; ok {
+				continue
+			}
+			seen[l.AuthentifiedUserID] = struct{}{}
+			userIDs = append(userIDs, l.AuthentifiedUserID)
+		}
+
+		users, err := user.LoadAllByIDs(ctx, api.mustDB(), userIDs)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, users, http.StatusOK)
+	}
+}
 
 // postUserHandler creates a users, available from admin cdsctl only.
 func (api *API) postUserHandler() service.Handler {

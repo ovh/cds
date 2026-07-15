@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var adminUsersCmd = cli.Command{
@@ -22,11 +23,42 @@ func adminUsers() *cobra.Command {
 		cli.NewCommand(adminUserSetEmailCmd, adminUserSetEmailRun, nil),
 		cli.NewCommand(adminUserRenameCmd, adminUserRenameRun, nil),
 		cli.NewCommand(adminUserCreateCmd, adminUserCreateRun, nil),
+		cli.NewListCommand(adminUserSearchCmd, adminUserSearchRun, nil),
 		cli.NewDeleteCommand(adminUserDeleteCmd, adminUserDeleteRun, nil),
 		adminUserLink(),
 		adminUserGroupList(),
 		adminUserConsumer(),
 	})
+}
+
+var adminUserSearchCmd = cli.Command{
+	Name:  "search",
+	Short: "Search CDS users by external link (consumer type + external username)",
+	Flags: []cli.Flag{
+		{
+			Name:      "consumer-type",
+			Usage:     "External consumer type (e.g. forgejo, bitbucketserver)",
+			ShortHand: "t",
+		},
+		{
+			Name:      "external-username",
+			Usage:     "Username on the external consumer",
+			ShortHand: "u",
+		},
+	},
+}
+
+func adminUserSearchRun(v cli.Values) (cli.ListResult, error) {
+	ctx := context.Background()
+	filter := &cdsclient.AdminUserFilter{
+		ConsumerType:     v.GetString("consumer-type"),
+		ExternalUsername: v.GetString("external-username"),
+	}
+	users, err := client.AdminUserSearch(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(users), nil
 }
 
 func adminUserGroupList() *cobra.Command {
