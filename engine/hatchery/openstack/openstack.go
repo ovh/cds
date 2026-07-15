@@ -566,7 +566,7 @@ func (h *HatcheryOpenstack) killErrorServers(ctx context.Context) {
 
 		//Remove Error server
 		if s.Status == "ERROR" {
-			log.Info(ctx, "killErrorServers> s.Status: %s", s.Status)
+			log.Warn(ctx, "killErrorServers> deleting server %s in ERROR: fault_code=%d fault=%q", s.Name, s.Fault.Code, s.Fault.Message)
 			_ = h.deleteServer(ctx, s)
 		}
 	}
