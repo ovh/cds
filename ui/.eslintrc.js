@@ -75,8 +75,8 @@ module.exports = {
                     "off"
                 ],
                 // Accessibility rules (see ui/docs/accessibility.md).
-                // Introduced as "warn"; flipped to "error" per rule once the
-                // corresponding remediation sweep is complete.
+                // A rule runs at "warn" while legacy templates still trigger it
+                // and is switched to "error" once the codebase is clean for it.
                 "@angular-eslint/template/alt-text": ["warn"],
                 "@angular-eslint/template/click-events-have-key-events": ["warn"],
                 "@angular-eslint/template/elements-content": ["warn"],
