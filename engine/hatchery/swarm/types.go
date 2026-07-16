@@ -26,7 +26,9 @@ type HatcheryConfiguration struct {
 	MaxContainers int `mapstructure:"maxContainers" toml:"maxContainers" default:"10" commented:"false" comment:"Max Containers on Host managed by this Hatchery" json:"maxContainers"`
 
 	// DefaultMemory Worker default memory
-	DefaultMemory     int  `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
+	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
+	// RegisterMemory Memory allocated to containers spawned to register a worker model
+	RegisterMemory    int  `mapstructure:"registerMemory" toml:"registerMemory" default:"128" commented:"true" comment:"Memory in Mo allocated to containers spawned to register a worker model" json:"registerMemory"`
 	DisableMemorySwap bool `mapstructure:"disableMemorySwap" toml:"disableMemorySwap" default:"false" commented:"true" comment:"Set to true to disable memory swap" json:"disableMemorySwap"`
 
 	// DockerOpts Docker options

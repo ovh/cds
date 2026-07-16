@@ -583,8 +583,9 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 	return h.CanSpawn(ctx, j.model, j.id, j.requirements)
 }
 
-// MemoryRegisterContainer is the RAM used for spawning
-// a docker container for register a worker model. 128 Mo
+// MemoryRegisterContainer is the default RAM (in Mo) used for spawning
+// a docker container for register a worker model, when the hatchery
+// configuration does not set registerMemory
 const MemoryRegisterContainer int64 = 128
 
 func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, workerModelV2 string) (*sdk.Model, *sdk.WorkerStarterWorkerModel, error) {

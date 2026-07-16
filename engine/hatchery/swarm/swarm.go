@@ -404,6 +404,9 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	if spawnArgs.RegisterOnly {
 		cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
+		if h.Config.RegisterMemory > 0 {
+			memory = int64(h.Config.RegisterMemory)
+		}
 	}
 
 	// labels are used to make container cleanup easier

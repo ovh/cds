@@ -23,6 +23,8 @@ type HatcheryConfiguration struct {
 	DisableCPULimit bool   `mapstructure:"disableCPULimit" toml:"disableCPULimit" default:"false" commented:"false" comment:"Disable Worker default CPU" json:"disableCPULimit"`
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
+	// RegisterMemory Memory allocated to pods spawned to register a worker model
+	RegisterMemory int `mapstructure:"registerMemory" toml:"registerMemory" default:"128" commented:"true" comment:"Memory in Mo allocated to pods spawned to register a worker model" json:"registerMemory"`
 	// DefaultEphemeralStorage Worker default ephemeral storage size
 	DefaultEphemeralStorage string `mapstructure:"defaultEphemeralStorage" toml:"defaultEphemeralStorage" default:"1Gi" commented:"false" comment:"Worker default ephemeral storage size" json:"defaultEphemeralStorage"`
 	// DefaultServiceCPU Service default CPU

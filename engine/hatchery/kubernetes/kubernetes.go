@@ -302,6 +302,9 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	if spawnArgs.RegisterOnly {
 		cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
+		if h.Config.RegisterMemory > 0 {
+			memory = int64(h.Config.RegisterMemory)
+		}
 	}
 
 	envsWm := workerConfig.InjectEnvVars
