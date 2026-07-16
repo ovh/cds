@@ -37,7 +37,9 @@ func (c *client) V2WorkerGet(ctx context.Context, name string, mods ...RequestMo
 }
 
 func (c *client) V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	// The timeout must be higher than the API processing time: a take that times out client-side
+	// but commits API-side leaves the job Building with no worker attached.
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	var takenJob sdk.V2TakeJobResponse
 	url := fmt.Sprintf("/v2/queue/%s/job/%s/worker/take", region, runJobID)
@@ -48,7 +50,7 @@ func (c *client) V2QueueWorkerTakeJob(ctx context.Context, region, runJobID stri
 }
 
 func (c *client) V2WorkerRefresh(ctx context.Context, region, runJobID string) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	url := fmt.Sprintf("/v2/queue/%s/job/%s/worker/refresh", region, runJobID)
 	if _, err := c.PostJSON(ctx, url, nil, nil); err != nil {
@@ -58,7 +60,7 @@ func (c *client) V2WorkerRefresh(ctx context.Context, region, runJobID string) e
 }
 
 func (c *client) V2WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm, region, runJobID string) (*sdk.V2Worker, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var w sdk.V2Worker
@@ -83,7 +85,7 @@ func (c *client) V2WorkerRegister(ctx context.Context, authToken string, form sd
 }
 
 func (c *client) V2WorkerUnregister(ctx context.Context, region, runJobID string) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/worker/signout", region, runJobID)
 	if _, err := c.PostJSON(ctx, path, nil, nil); err != nil {

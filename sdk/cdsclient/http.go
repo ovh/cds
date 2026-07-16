@@ -359,7 +359,9 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 
 	var savederror error
 	var savedCodeError int
+	var attempts int
 	for i := 0; i <= c.config.Retry; i++ {
+		attempts++
 		var req *http.Request
 		if rs, ok := body.(io.ReadSeeker); ok {
 			if _, err := rs.Seek(0, 0); err != nil {
@@ -421,8 +423,12 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 
 		resp, err := httpClient.Do(req)
 		if err != nil {
-			time.Sleep(250 * time.Millisecond)
 			savederror = newTransportError(err)
+			// The context is expired, no attempt can succeed anymore
+			if ctx.Err() != nil {
+				break
+			}
+			time.Sleep(250 * time.Millisecond)
 			continue
 		}
 
@@ -440,8 +446,12 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		}
 
 		if resp.StatusCode == 409 || resp.StatusCode >= 500 {
-			time.Sleep(250 * time.Millisecond)
 			savederror = extractBodyErrorFromResponse(resp)
+			// The context is expired, no attempt can succeed anymore
+			if ctx.Err() != nil {
+				break
+			}
+			time.Sleep(250 * time.Millisecond)
 			continue
 		}
 		return resp.Body, resp.Header, resp.StatusCode, nil
@@ -450,7 +460,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 	if savedCodeError == 409 {
 		return nil, nil, savedCodeError, savederror
 	}
-	return nil, nil, savedCodeError, newError(fmt.Errorf("request failed after %d retries: %v savedCodeError: %d", c.config.Retry, savederror, savedCodeError))
+	return nil, nil, savedCodeError, newError(fmt.Errorf("request failed after %d attempts: %v savedCodeError: %d", attempts, savederror, savedCodeError))
 }
 
 // UploadMultiPart upload multipart
