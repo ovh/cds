@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -165,6 +166,11 @@ spec: |-
 	_, has = wrAfter1.WorkflowData.Workflow.Jobs["deploy"]
 	require.True(t, has)
 
+	// Empty jobs carry no provenance, the nested reference keeps its own from
+	require.Empty(t, wrAfter1.WorkflowData.Workflow.Jobs["build"].From)
+	require.Empty(t, wrAfter1.WorkflowData.Workflow.Jobs["test"].From)
+	require.Equal(t, ".cds/workflow-templates/mytmpl2.yml", wrAfter1.WorkflowData.Workflow.Jobs["deploy"].From)
+
 	rjs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(rjs)) // No run jobs
@@ -204,6 +210,10 @@ spec: |-
 	_, has = wrAfter2.WorkflowData.Workflow.Jobs["it4"]
 	require.True(t, has)
 
+	// Empty jobs injected from the nested template carry no provenance
+	for _, jobID := range []string{"it", "it2", "it3", "it4"} {
+		require.Empty(t, wrAfter2.WorkflowData.Workflow.Jobs[jobID].From)
+	}
 }
 
 func TestWorkflowTrigger_JobTemplateDuplicateJob(t *testing.T) {
@@ -911,6 +921,8 @@ spec: |-
 	deployJob, has := wrAfter1.WorkflowData.Workflow.Jobs["deploy"]
 	require.True(t, has)
 	require.NotNil(t, deployJob.Strategy)
+	// The injected concrete job carries the template's complete name as provenance
+	require.Equal(t, fmt.Sprintf("%s/%s/%s/mytemplate@refs/heads/master", proj.Key, vcsServer.Name, repo.Name), deployJob.From)
 
 	rjs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
 	require.NoError(t, err)
@@ -940,6 +952,7 @@ spec: |-
 	for _, rj := range rjs {
 		require.Equal(t, "deploy", rj.JobID)
 		require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, rj.Status)
+		require.Equal(t, fmt.Sprintf("%s/%s/%s/mytemplate@refs/heads/master", proj.Key, vcsServer.Name, repo.Name), rj.Job.From)
 		permutations[rj.Matrix["region"]] = true
 	}
 	require.True(t, permutations["region1"])
