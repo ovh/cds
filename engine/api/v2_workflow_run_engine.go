@@ -1791,7 +1791,7 @@ func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Sto
 	}
 
 	msgsLint := make([]sdk.V2WorkflowRunInfo, 0)
-	errs := run.WorkflowData.Workflow.Lint()
+	errs := run.WorkflowData.Workflow.LintWorkflowRunData()
 	for _, e := range errs {
 		msgsLint = append(msgsLint, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -2102,7 +2102,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 	}
 
 	msgsLint := make([]sdk.V2WorkflowRunInfo, 0)
-	errs := run.WorkflowData.Workflow.Lint()
+	errs := run.WorkflowData.Workflow.LintWorkflowRunData()
 	for _, e := range errs {
 		msgsLint = append(msgsLint, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,

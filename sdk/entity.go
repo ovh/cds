@@ -141,7 +141,8 @@ func GetManageRoleByEntity(entityType string) (string, error) {
 }
 
 type Lintable interface {
-	Lint() []error
+	// LintYamlDefinition validates a user-authored yaml definition file.
+	LintYamlDefinition() []error
 	GetName() string
 }
 

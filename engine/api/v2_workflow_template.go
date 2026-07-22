@@ -18,7 +18,7 @@ func (api *API) postGenerateWorkflowFromTemplateHandler() ([]service.RbacChecker
 				return err
 			}
 
-			errs := tmplGen.Template.Lint()
+			errs := tmplGen.Template.LintYamlDefinition()
 			if len(errs) > 0 {
 				errorsS := ""
 				for _, e := range errs {

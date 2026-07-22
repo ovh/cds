@@ -24,7 +24,7 @@ func TestWorkerDockerModelWithoutImage(t *testing.T) {
 	var dockerModel V2WorkerModel
 	require.NoError(t, yaml.Unmarshal([]byte(dockerWM), &dockerModel))
 
-	err := dockerModel.Lint()
+	err := dockerModel.LintYamlDefinition()
 	require.NotEqual(t, 0, len(err))
 	require.Contains(t, fmt.Sprintf("%v", err), "image is required")
 }
@@ -45,7 +45,7 @@ func TestWorkerDockerModelWrongType(t *testing.T) {
 	var dockerModel V2WorkerModel
 	require.NoError(t, yaml.Unmarshal([]byte(dockerWM), &dockerModel))
 
-	err := dockerModel.Lint()
+	err := dockerModel.LintYamlDefinition()
 	require.NotEqual(t, 0, len(err))
 	require.Contains(t, fmt.Sprintf("%v", err), "type must be one of the following")
 }
@@ -63,5 +63,5 @@ func TestWorkerDockerModelOK(t *testing.T) {
 	var dockerModel V2WorkerModel
 	require.NoError(t, yaml.Unmarshal([]byte(dockerWM), &dockerModel))
 
-	require.Nil(t, dockerModel.Lint())
+	require.Nil(t, dockerModel.LintYamlDefinition())
 }

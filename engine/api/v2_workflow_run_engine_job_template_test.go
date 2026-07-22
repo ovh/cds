@@ -640,6 +640,121 @@ spec: |-
 	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrAfter1.Status)
 }
 
+// A job template whose content declares a job combining `from` with runs-on:
+// resolving the template must fail the run with a lint error.
+func TestWorkflowTrigger_JobTemplateWithFromAndRunsOnFails(t *testing.T) {
+	ctx := context.TODO()
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:        sdk.RegionRoleExecute,
+				AllProjects: true,
+				RegionID:    reg.ID,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	// Template whose spec declares an invalid job: from combined with runs-on
+	entityTmpl := sdk.Entity{
+		ProjectKey:          proj.Key,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/mytmpl.yml",
+		Name:                "myTemplate",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		ProjectRepositoryID: repo.ID,
+		UserID:              &admin.ID,
+		Data: `name: mytemplate
+spec: |-
+  jobs:
+    bad:
+      from: .cds/workflow-templates/other.yml
+      runs-on: mymodel`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &entityTmpl))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123456789",
+		WorkflowRef:  "refs/heads/master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: "myworkflow",
+			Jobs: map[string]sdk.V2Job{
+				"root": {
+					From: ".cds/workflow-templates/mytmpl.yml",
+				},
+			},
+		}},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}))
+
+	wrAfter, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunStatusFail, wrAfter.Status)
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(runInfos))
+	require.Contains(t, runInfos[0].Message, "from cannot be combined with steps or runs-on")
+}
+
 // A job template whose content declares a concrete job with a matrix strategy:
 // the first trigger replaces the templated job by the matrix job in the workflow
 // definition; the second trigger enqueues one run job per matrix permutation.

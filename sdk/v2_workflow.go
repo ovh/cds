@@ -357,6 +357,13 @@ func (j V2Job) Copy() V2Job {
 	return new
 }
 
+// IsTemplateReference returns true when the job is a reference to a job template
+// that has not been resolved yet. A job resolved from a template keeps its `from`
+// as provenance but holds concrete content (steps or runs-on).
+func (j V2Job) IsTemplateReference() bool {
+	return j.From != "" && len(j.Steps) == 0 && j.RunsOn.Model == ""
+}
+
 type V2JobRunsOn struct {
 	Model  string `json:"model" jsonschema_description:"Worker model name to use for the job"`
 	Memory string `json:"memory" jsonschema_description:"Amount of memory to use for the job"`
@@ -574,13 +581,46 @@ func (w V2Workflow) GetName() string {
 	return w.Name
 }
 
-func (w V2Workflow) Lint() []error {
-	// Before anything, check if workflow inherits from a workflow template.
-	// Skip other checks if it is the case.
+// LintYamlDefinition validates a user-authored workflow definition, as written in a
+// repository file. It enforces rules that only make sense on user input, such as:
+// a job referencing a template (`from`) cannot declare steps or runs-on.
+func (w V2Workflow) LintYamlDefinition() []error {
 	if w.From != "" {
 		return nil
 	}
+	errs := w.lintStructure()
+	errs = append(errs, w.checkJobsTemplateReference()...)
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
 
+// LintWorkflowRunData validates the structural consistency of the workflow held by a
+// workflow run. Such a workflow has been mutated by the run engine: jobs resolved from
+// a job template keep `from` as provenance alongside their concrete content, which is
+// invalid in a user file but expected here.
+func (w V2Workflow) LintWorkflowRunData() []error {
+	if w.From != "" {
+		return nil
+	}
+	return w.lintStructure()
+}
+
+// checkJobsTemplateReference returns an error for each job combining `from` with
+// concrete content (steps or runs-on).
+func (w V2Workflow) checkJobsTemplateReference() []error {
+	var errs []error
+	for jobID, j := range w.Jobs {
+		if j.From != "" && !j.IsTemplateReference() {
+			errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: from cannot be combined with steps or runs-on", w.Name, jobID))
+		}
+	}
+	return errs
+}
+
+// lintStructure holds the checks shared by LintYamlDefinition and LintWorkflowRunData.
+func (w V2Workflow) lintStructure() []error {
 	errs := w.CheckStageAndJobNeeds()
 
 	for _, j := range w.Jobs {

@@ -65,7 +65,7 @@ func (a *V2Action) Clean() {
 	}
 }
 
-func (a V2Action) Lint() []error {
+func (a V2Action) LintYamlDefinition() []error {
 	actionSchema := GetActionJsonSchema(nil)
 	actionSchemaS, err := actionSchema.MarshalJSON()
 	if err != nil {

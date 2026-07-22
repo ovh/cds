@@ -316,7 +316,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 	// Check workflow lint in case of modification through job template
 	msgs := make([]sdk.V2WorkflowRunInfo, 0)
-	errs := run.WorkflowData.Workflow.Lint()
+	errs := run.WorkflowData.Workflow.LintYamlDefinition()
 	for _, e := range errs {
 		msgs = append(msgs, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
