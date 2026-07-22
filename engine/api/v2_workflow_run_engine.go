@@ -1892,6 +1892,12 @@ loop:
 
 	// Set job on workflow
 	for k, v := range newJobs {
+		// Jobs resolved from the template keep the reference's `from` as provenance.
+		// Empty jobs are skipped: `from` without content would read as an unresolved
+		// reference. Nested references keep their own `from`.
+		if v.From == "" && (len(v.Steps) > 0 || v.RunsOn.Model != "") {
+			v.From = j.From
+		}
 		run.WorkflowData.Workflow.Jobs[k] = v
 		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, k, v, wrefTemplate, integrations, allVariableSets, defaultRegion)
 		if msg != nil {
