@@ -3555,3 +3555,152 @@ spec: |-
 	require.Equal(t, 0, len(wrInfos), "Error found: %v", wrInfos)
 	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status)
 }
+
+// A workflow holding a job template reference: crafting must leave the reference
+// untouched (no worker model resolution on it) while resolving the dependencies of
+// the sibling concrete job.
+func TestCraftWorkflowRunWithJobTemplateReference(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, sdk.RandomString(10))
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	t.Cleanup(func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	})
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/"+repo.Name, gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				b := &sdk.VCSRepo{}
+				*(out.(*sdk.VCSRepo)) = *b
+				return nil, 200, nil
+			},
+		).Times(1)
+
+	entityTmpl := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/mytmpl.yml",
+		Name:                "myTemplate",
+		Ref:                 "refs/heads/master",
+		Commit:              "123456789",
+		Data: `name: mytemplate
+spec: |-
+  jobs:
+    fromTemplate:
+      runs-on: .cds/worker-models/myworker-model.yml
+      steps:
+      - run: echo "from template"`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &entityTmpl))
+
+	myWMEnt := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repo.ID,
+		Type:                sdk.EntityTypeWorkerModel,
+		FilePath:            ".cds/worker-models/myworker-model.yml",
+		Name:                "myworker-model",
+		Ref:                 "refs/heads/master",
+		Commit:              "123456789",
+		Data:                "name: myworkermodel",
+	}
+	require.NoError(t, entity.Insert(ctx, db, &myWMEnt))
+
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
+	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(ctx, db, &perm))
+
+	wkName := sdk.RandomString(10)
+	wr := sdk.V2WorkflowRun{
+		DeprecatedUserID: admin.ID,
+		ProjectKey:       proj.Key,
+		Status:           sdk.V2WorkflowRunStatusCrafting,
+		VCSServerID:      vcsProject.ID,
+		RepositoryID:     repo.ID,
+		RunNumber:        0,
+		RunAttempt:       0,
+		WorkflowRef:      "refs/heads/master",
+		WorkflowSha:      "123456789",
+		WorkflowName:     wkName,
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: sdk.V2Workflow{
+				Name: wkName,
+				Jobs: map[string]sdk.V2Job{
+					"tmplJob": {
+						From: ".cds/workflow-templates/mytmpl.yml",
+					},
+					"normalJob": {
+						RunsOn: sdk.V2JobRunsOn{
+							Model: "myworker-model",
+						},
+						Steps: []sdk.ActionStep{
+							{ID: "step1", Run: "echo hello"},
+						},
+					},
+				},
+			},
+		},
+		Initiator: &sdk.V2Initiator{
+			UserID:         admin.ID,
+			IsAdminWithMFA: true,
+		},
+		RunEvent: sdk.V2WorkflowRunEvent{
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "refs/heads/master",
+			Sha:       "123456789",
+			EventName: sdk.WorkflowHookEventNamePush,
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
+
+	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(wrInfos), "Error found: %v", wrInfos)
+	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status)
+
+	// The job template reference is kept as is: no expansion, no model resolution
+	tmplJob := wrDB.WorkflowData.Workflow.Jobs["tmplJob"]
+	require.Equal(t, ".cds/workflow-templates/mytmpl.yml", tmplJob.From)
+	require.Empty(t, tmplJob.RunsOn.Model)
+	require.Empty(t, tmplJob.Steps)
+
+	// The concrete job got its worker model resolved
+	normalJob := wrDB.WorkflowData.Workflow.Jobs["normalJob"]
+	require.Contains(t, normalJob.RunsOn.Model, "myworker-model@refs/heads/master")
+}
