@@ -357,10 +357,10 @@ func (j V2Job) Copy() V2Job {
 	return new
 }
 
-// IsTemplateReference returns true when the job is a reference to a job template
-// that has not been resolved yet. A job resolved from a template keeps its `from`
-// as provenance but holds concrete content (steps or runs-on).
-func (j V2Job) IsTemplateReference() bool {
+// NeedsTemplateResolution returns true when the job references a job template
+// (`from`) that has not been resolved yet. A job resolved from a template keeps
+// `from` as provenance alongside its concrete content (steps or runs-on).
+func (j V2Job) NeedsTemplateResolution() bool {
 	return j.From != "" && len(j.Steps) == 0 && j.RunsOn.Model == ""
 }
 
@@ -612,7 +612,7 @@ func (w V2Workflow) LintWorkflowRunData() []error {
 func (w V2Workflow) checkJobsTemplateReference() []error {
 	var errs []error
 	for jobID, j := range w.Jobs {
-		if j.From != "" && !j.IsTemplateReference() {
+		if j.From != "" && !j.NeedsTemplateResolution() {
 			errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: from cannot be combined with steps or runs-on", w.Name, jobID))
 		}
 	}

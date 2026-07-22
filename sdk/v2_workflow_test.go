@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestV2JobIsTemplateReference(t *testing.T) {
+func TestV2JobNeedsTemplateResolution(t *testing.T) {
 	tests := []struct {
 		name string
 		job  V2Job
@@ -28,29 +28,29 @@ func TestV2JobIsTemplateReference(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "from with steps is a resolved job",
+			name: "from with steps is already resolved",
 			job:  V2Job{From: "tmpl", Steps: []ActionStep{{Run: "echo"}}},
 			want: false,
 		},
 		{
-			name: "from with runs-on is a resolved job",
+			name: "from with runs-on is already resolved",
 			job:  V2Job{From: "tmpl", RunsOn: V2JobRunsOn{Model: "docker-debian"}},
 			want: false,
 		},
 		{
-			name: "no from is not a reference",
+			name: "job without from has nothing to resolve",
 			job:  V2Job{Steps: []ActionStep{{Run: "echo"}}},
 			want: false,
 		},
 		{
-			name: "empty job is not a reference",
+			name: "empty job without from has nothing to resolve",
 			job:  V2Job{},
 			want: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, tt.job.IsTemplateReference())
+			require.Equal(t, tt.want, tt.job.NeedsTemplateResolution())
 		})
 	}
 }

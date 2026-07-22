@@ -325,7 +325,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// Enqueue JOB
 	hasTemplatedJob := false
 	for _, j := range jobsToQueue {
-		if j.Job.From != "" {
+		if j.Job.NeedsTemplateResolution() {
 			hasTemplatedJob = true
 		}
 	}
@@ -1536,7 +1536,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		}
 
 		// No matrixed jobs or templated job skipped
-		if len(matrixPermutation) == 0 || (jobDef.From != "" && jobToTrigger.Status.IsTerminated()) {
+		if len(matrixPermutation) == 0 || (jobDef.NeedsTemplateResolution() && jobToTrigger.Status.IsTerminated()) {
 			runJob := sdk.V2WorkflowRunJob{
 				ID:                 sdk.UUID(),
 				WorkflowRunID:      run.ID,
@@ -1555,7 +1555,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				RunAttempt:         run.RunAttempt,
 				Initiator:          wrEnqueue.Initiator,
 			}
-			if jobDef.From == "" && len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
+			if !jobDef.NeedsTemplateResolution() && len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
 				runJob.Status = sdk.V2WorkflowRunJobStatusSuccess
 			}
 			// If the current job was a matrix, skip it
@@ -1572,7 +1572,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			// If job has to be run
 			if !runJob.Status.IsTerminated() {
 				// If from template, retrieve template and apply it
-				if jobDef.From != "" {
+				if jobDef.NeedsTemplateResolution() {
 					hasToUpdateRun = true
 					// For templated job, we only create new jobs on the parent worklow
 					// With hasToUpdateRun the workflow run will be saved to update his definition
@@ -1660,7 +1660,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				allVariableSets: allVariableSets,
 			}
 
-			if jobDef.From == "" {
+			if !jobDef.NeedsTemplateResolution() {
 				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 				if err != nil {
 					return nil, nil, nil, nil, false, err
@@ -2373,7 +2373,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 			if runJobMapItem.Job.Strategy != nil && len(runJobMapItem.Job.Strategy.Matrix) > 0 {
 
 				// If runjob has a status && a template, ignore it. A matrix job can be run if template has been resolved
-				if runJobMapItem.Job.From != "" {
+				if runJobMapItem.Job.NeedsTemplateResolution() {
 					continue
 				}
 
