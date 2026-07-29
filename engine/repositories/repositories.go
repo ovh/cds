@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -114,9 +115,15 @@ func (s *Service) Serve(c context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		return sdk.WrapError(err, "unable to get hostname")
+	}
+
 	//Set the dao
 	s.dao = dao{
-		store: s.Cache,
+		store:    s.Cache,
+		hostname: hostname,
 	}
 
 	log.Info(ctx, "Initializing processor...")

@@ -72,7 +72,8 @@ func newTestService(t *testing.T) (*Service, error) {
 	}
 
 	service.dao = dao{
-		store: service.Cache,
+		store:    service.Cache,
+		hostname: "test-instance",
 	}
 
 	return service, nil
