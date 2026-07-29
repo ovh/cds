@@ -50,3 +50,20 @@ func (s *Service) Repo(op sdk.Operation) *sdk.OperationRepo {
 	r.RepositoryStrategy = op.RepositoryStrategy
 	return r
 }
+
+// bareCacheDir is the basedir subdirectory holding bare partial clones,
+// kept apart from the full clones used by checkout/loadfiles/push operations
+const bareCacheDir = "bare"
+
+// BareRepo maps an operation to its location in the bare clones cache
+func (s Service) BareRepo(op sdk.Operation) *sdk.OperationRepo {
+	r := s.Repo(op)
+	r.Basedir = filepath.Join(s.Cfg.Basedir, bareCacheDir, r.ID())
+	return r
+}
+
+// bareLastAccessID scopes a repo ID to the bare cache so that the retention
+// of a bare clone and of a full clone of the same repository are independent
+func bareLastAccessID(repoID string) string {
+	return bareCacheDir + "/" + repoID
+}

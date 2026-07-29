@@ -28,16 +28,14 @@ func (s *Service) checkOrCreateFS(r *sdk.OperationRepo) error {
 	if err := s.checkOrCreateRootFS(); err != nil {
 		return sdk.WithStack(err)
 	}
-	path := filepath.Join(s.Cfg.Basedir, r.ID())
-	fi, err := os.Stat(path)
+	fi, err := os.Stat(r.Basedir)
 	if os.IsNotExist(err) {
-		return sdk.WrapError(os.MkdirAll(path, os.FileMode(0700)), "unable to create directory %q", path)
+		return sdk.WrapError(os.MkdirAll(r.Basedir, os.FileMode(0700)), "unable to create directory %q", r.Basedir)
 	}
 	if fi.IsDir() {
 		return nil
 	}
-	r.Basedir = path
-	return nil
+	return fmt.Errorf("bad repository basedir: %s is not a directory", r.Basedir)
 }
 
 func (s *Service) cleanFS(ctx context.Context, r *sdk.OperationRepo) error {
