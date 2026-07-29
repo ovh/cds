@@ -38,7 +38,8 @@ type Configuration struct {
 		TTL   int           `toml:"ttl" default:"60" json:"ttl"`
 		Redis sdk.RedisConf `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Repositories Cache Settings \n######################" json:"cache"`
-	MaxWorkers int `toml:"maxWorkers" comment:"Maximum of operations that can be done in parallel" default:"10" json:"maxWorkers"`
+	MaxWorkers        int  `toml:"maxWorkers" comment:"Maximum of operations that can be done in parallel" default:"10" json:"maxWorkers"`
+	BareAnalysisCache bool `toml:"bareAnalysisCache" comment:"Process analysis-only operations (signature, semver, changeset) on a cache of bare partial clones, much lighter on disk. Requires git partial clone support on the VCS" default:"false" json:"bareAnalysisCache"`
 }
 
 // Repo retiens a sdk.OperationRepo from an sdk.Operation
