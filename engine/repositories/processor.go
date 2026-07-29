@@ -75,16 +75,32 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	log.Debug(ctx, "processing > %v", op.UUID)
 
 	r := s.Repo(op)
+	useBareCache := s.useBareAnalysisCache(op)
+	lastAccessID := r.ID()
+	if useBareCache {
+		lastAccessID = bareLastAccessID(r.ID())
+	}
 	defer func() {
 		s.localCache.Delete(r.ID())
 		ttlDuration := s.repositoriesRetention(ctx)
 		ttl := int(ttlDuration.Seconds())
 		ttlTime := time.Now().Add(ttlDuration)
-		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())
-		s.dao.saveLastAccess(r.ID(), ttlTime, ttl)
+		log.Info(ctx, "%s protected until %s", lastAccessID, ttlTime.String())
+		s.dao.saveLastAccess(lastAccessID, ttlTime, ttl)
 	}()
 
 	switch {
+	// Analysis-only operation on the bare clones cache
+	case useBareCache:
+		if err := s.processAnalyzeBare(ctx, &op); err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, err.Error())
+			op.Error = sdk.ToOperationError(sdk.FromGitToHumanError(sdk.ErrUnknownError, err))
+			op.Status = sdk.OperationStatusError
+		} else {
+			op.Error = nil
+			op.Status = sdk.OperationStatusDone
+		}
 	// Load workflow as code file
 	case op.Setup.Checkout.Branch != "" || op.Setup.Checkout.Tag != "":
 
