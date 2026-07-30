@@ -16,14 +16,23 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// execGitIn runs a git command in dir with a neutral identity and signing
-// disabled, so tests do not depend on the developer's global git config.
+// execGitIn runs a git command in dir with a neutral identity, no signing and
+// no global nor system config, so fixtures do not depend on the host git
+// environment; identity is forced through env vars, which take precedence
+// over any configuration.
 func execGitIn(t *testing.T, dir string, args ...string) string {
 	allArgs := append([]string{"-C", dir,
-		"-c", "user.name=test", "-c", "user.email=test@test.local",
 		"-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false",
 		"-c", "init.defaultbranch=master"}, args...)
-	out, err := exec.Command("git", allArgs...).CombinedOutput()
+	cmd := exec.Command("git", allArgs...)
+	cmd.Env = append(os.Environ(),
+		"GIT_CONFIG_GLOBAL=/dev/null",
+		"GIT_CONFIG_SYSTEM=/dev/null",
+		"GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=test@test.local",
+		"GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=test@test.local",
+		"EMAIL=test@test.local",
+	)
+	out, err := cmd.CombinedOutput()
 	require.NoError(t, err, "git %v: %s", args, string(out))
 	return strings.TrimSpace(string(out))
 }
