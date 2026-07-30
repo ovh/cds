@@ -7,7 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -158,6 +160,99 @@ func Test_processAnalyzeBare(t *testing.T) {
 		clonePath := s.BareRepo(newOp()).Basedir
 		missing := execGitIn(t, clonePath, "rev-list", "--objects", "--missing=print", "refs/heads/feat")
 		assert.NotZero(t, strings.Count(missing, "?"), "expected filtered blobs to still be missing")
+	})
+}
+
+func Test_doWithBareAnalysisCache(t *testing.T) {
+	fixture := createFixtureRepo(t)
+	execGitIn(t, fixture, "tag", "v1.0.0")
+	sinceSha := execGitIn(t, fixture, "rev-parse", "master")
+	require.NoError(t, os.WriteFile(filepath.Join(fixture, "handler.go"), []byte("package handler"), os.FileMode(0644)))
+	execGitIn(t, fixture, "add", ".")
+	execGitIn(t, fixture, "commit", "-q", "-m", "add handler")
+	headSha := execGitIn(t, fixture, "rev-parse", "master")
+
+	s, err := newTestService(t)
+	require.NoError(t, err)
+	s.Cfg.Basedir = t.TempDir()
+	s.Cfg.BareAnalysisCache = true
+	s.Cfg.RepositoriesRetention = "6h"
+	s.localCache = gocache.New(10*time.Minute, 10*time.Minute)
+	ctx := context.TODO()
+
+	newOp := func() sdk.Operation {
+		op := sdk.Operation{UUID: sdk.UUID(), URL: "file://" + fixture, RepoFullName: "test/fixture"}
+		op.Setup.Checkout.Branch = "master"
+		op.Setup.Checkout.Commit = headSha
+		op.Setup.Checkout.GetMessage = true
+		op.Setup.Checkout.ProcessSemver = true
+		op.Setup.Checkout.CheckSignature = true
+		op.Setup.Checkout.GetChangeSet = true
+		op.Setup.Checkout.ChangeSetCommitSince = sinceSha
+		return op
+	}
+	repoID := s.Repo(newOp()).ID()
+	t.Cleanup(func() {
+		_ = s.Cache.Delete(s.dao.lastAccessKey(repoID))
+		_ = s.Cache.Delete(s.dao.lastAccessKey(bareLastAccessID(repoID)))
+	})
+
+	t.Run("analysis operation is routed to the bare cache", func(t *testing.T) {
+		op := newOp()
+		require.NoError(t, s.do(ctx, op))
+
+		saved := s.dao.loadOperation(ctx, op.UUID)
+		require.NotNil(t, saved)
+		t.Cleanup(func() { _ = s.dao.deleteOperation(saved) })
+		assert.Equal(t, sdk.OperationStatusDone, saved.Status)
+		assert.Nil(t, saved.Error)
+		assert.Equal(t, "add handler", saved.Setup.Checkout.Result.CommitMessage)
+		assert.Regexp(t, `^1\.0\.0\+1\.g[0-9a-f]+$`, saved.Setup.Checkout.Result.Semver.Current)
+		assert.Equal(t, "commit not signed", saved.Setup.Checkout.Result.Msg)
+		require.Len(t, saved.Setup.Checkout.Result.Files, 1)
+		assert.Equal(t, "A", saved.Setup.Checkout.Result.Files["handler.go"].Status)
+
+		assert.DirExists(t, filepath.Join(s.Cfg.Basedir, bareCacheDir, repoID), "the clone must live in the bare namespace")
+		assert.NoDirExists(t, filepath.Join(s.Cfg.Basedir, repoID), "the full clones namespace must stay untouched")
+
+		var protectedUntil time.Time
+		found, err := s.Cache.Get(s.dao.lastAccessKey(bareLastAccessID(repoID)), &protectedUntil)
+		require.NoError(t, err)
+		assert.True(t, found, "the bare scoped lastAccess key must be written")
+		found, err = s.Cache.Get(s.dao.lastAccessKey(repoID), &protectedUntil)
+		require.NoError(t, err)
+		assert.False(t, found, "the full clone lastAccess key must not be written")
+	})
+
+	t.Run("failed analysis ends in error status", func(t *testing.T) {
+		op := newOp()
+		op.Setup.Checkout.Branch = "doesnotexist"
+		require.NoError(t, s.do(ctx, op))
+
+		saved := s.dao.loadOperation(ctx, op.UUID)
+		require.NotNil(t, saved)
+		t.Cleanup(func() { _ = s.dao.deleteOperation(saved) })
+		assert.Equal(t, sdk.OperationStatusError, saved.Status)
+		require.NotNil(t, saved.Error)
+	})
+
+	t.Run("disabled flag keeps the current path", func(t *testing.T) {
+		s.Cfg.BareAnalysisCache = false
+		defer func() { s.Cfg.BareAnalysisCache = true }()
+
+		op := newOp()
+		require.NoError(t, s.do(ctx, op))
+
+		saved := s.dao.loadOperation(ctx, op.UUID)
+		require.NotNil(t, saved)
+		t.Cleanup(func() { _ = s.dao.deleteOperation(saved) })
+		assert.Equal(t, sdk.OperationStatusDone, saved.Status)
+		assert.DirExists(t, filepath.Join(s.Cfg.Basedir, repoID), "the operation must run on the full clones cache")
+
+		var protectedUntil time.Time
+		found, err := s.Cache.Get(s.dao.lastAccessKey(repoID), &protectedUntil)
+		require.NoError(t, err)
+		assert.True(t, found, "the full clone lastAccess key must be written")
 	})
 }
 
