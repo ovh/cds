@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-repo"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -133,6 +134,84 @@ func (s *Service) fetchAnalysisTarget(ctx context.Context, gitRepo repo.Repo, op
 	return "refs/heads/" + op.Setup.Checkout.Branch, nil
 }
 
+// processAnalyses runs the requested analyses against target, without any
+// checkout: on a bare clone every git command names the commit-ish it reads.
 func (s *Service) processAnalyses(ctx context.Context, gitRepo repo.Repo, op *sdk.Operation, target string) error {
-	return sdk.NewErrorFrom(sdk.ErrNotImplemented, "bare analysis cache processor")
+	if op.Setup.Checkout.GetMessage {
+		currentCommit, err := gitRepo.GetCommit(ctx, target, repo.CommitOption{DisableDiffDetail: true})
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		op.Setup.Checkout.Result.CommitMessage = currentCommit.Subject
+		op.Setup.Checkout.Result.Author = currentCommit.Author
+		op.Setup.Checkout.Result.AuthorEmail = currentCommit.AuthorEmail
+	}
+
+	if op.Setup.Checkout.ProcessSemver {
+		describe, err := gitRepo.Describe(ctx, &repo.DescribeOpt{
+			Long:  true,
+			Match: []string{"v[0-9]*", "[0-9]*"},
+			Ref:   target,
+		})
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, errors.Wrap(err, "git describe failed"))
+		} else if describe.Semver != nil {
+			op.Setup.Checkout.Result.Semver.Current = describe.SemverString
+			op.Setup.Checkout.Result.Semver.Next = describe.Semver.IncMinor().String()
+		}
+	}
+
+	if err := s.checkCommitSignature(ctx, gitRepo, op); err != nil {
+		return err
+	}
+
+	if op.Setup.Checkout.GetChangeSet {
+		op.Setup.Checkout.Result.Files = make(map[string]sdk.OperationChangetsetFile)
+		computeFromLastCommit := false
+		if op.Setup.Checkout.ChangeSetBranchTo != "" {
+			files, err := gitRepo.DiffBetweenBranches(ctx, op.Setup.Checkout.Branch, op.Setup.Checkout.ChangeSetBranchTo)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				computeFromLastCommit = true
+			} else {
+				for k, v := range files {
+					op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
+						Filename: v.Filename,
+						Status:   v.Status,
+					}
+				}
+			}
+		} else if op.Setup.Checkout.ChangeSetCommitSince != "" {
+			files, err := gitRepo.DiffMergeBase(ctx, op.Setup.Checkout.ChangeSetCommitSince, target)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				computeFromLastCommit = true
+			} else {
+				for k, v := range files {
+					op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
+						Filename: v.Filename,
+						Status:   v.Status,
+					}
+				}
+			}
+		} else {
+			computeFromLastCommit = true
+		}
+
+		if computeFromLastCommit {
+			commitWithChangesets, err := gitRepo.GetCommit(ctx, target, repo.CommitOption{DisableDiffDetail: true})
+			if err != nil {
+				return err
+			}
+			for k, v := range commitWithChangesets.Files {
+				op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
+					Filename: v.Filename,
+					Status:   v.Status,
+				}
+			}
+		}
+	}
+
+	log.Info(ctx, "processAnalyses> repository %s ready", op.URL)
+	return nil
 }

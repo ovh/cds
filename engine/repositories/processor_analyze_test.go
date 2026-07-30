@@ -67,6 +67,100 @@ func Test_processGitCloneBare(t *testing.T) {
 	require.NotNil(t, op.RepositoryInfo)
 }
 
+func Test_processAnalyzeBare(t *testing.T) {
+	fixture := createFixtureRepo(t)
+	execGitIn(t, fixture, "tag", "v1.0.0")
+	// feat, first commit: one rename, one addition
+	execGitIn(t, fixture, "checkout", "-q", "-b", "feat")
+	execGitIn(t, fixture, "mv", "main.go", "renamed.go")
+	require.NoError(t, os.WriteFile(filepath.Join(fixture, "handler.go"), []byte("package handler"), os.FileMode(0644)))
+	execGitIn(t, fixture, "add", ".")
+	execGitIn(t, fixture, "commit", "-q", "-m", "rework handlers")
+	// feat, second commit: one modification
+	require.NoError(t, os.WriteFile(filepath.Join(fixture, "README.md"), []byte("# modified"), os.FileMode(0644)))
+	execGitIn(t, fixture, "add", ".")
+	execGitIn(t, fixture, "commit", "-q", "-m", "update readme")
+
+	featSha := execGitIn(t, fixture, "rev-parse", "feat")
+	sinceSha := execGitIn(t, fixture, "rev-parse", "master")
+
+	s := &Service{}
+	s.Cfg.Basedir = t.TempDir()
+
+	newOp := func() sdk.Operation {
+		op := sdk.Operation{URL: "file://" + fixture, RepoFullName: "test/fixture"}
+		op.Setup.Checkout.Branch = "feat"
+		op.Setup.Checkout.Commit = featSha
+		return op
+	}
+
+	t.Run("message, semver, signature and push changeset", func(t *testing.T) {
+		op := newOp()
+		op.Setup.Checkout.GetMessage = true
+		op.Setup.Checkout.ProcessSemver = true
+		op.Setup.Checkout.CheckSignature = true
+		op.Setup.Checkout.GetChangeSet = true
+		op.Setup.Checkout.ChangeSetCommitSince = sinceSha
+
+		require.NoError(t, s.processAnalyzeBare(context.TODO(), &op))
+
+		assert.Equal(t, "update readme", op.Setup.Checkout.Result.CommitMessage)
+		assert.Equal(t, "test", op.Setup.Checkout.Result.Author)
+		assert.Equal(t, "test@test.local", op.Setup.Checkout.Result.AuthorEmail)
+
+		assert.Regexp(t, `^1\.0\.0\+2\.g[0-9a-f]+$`, op.Setup.Checkout.Result.Semver.Current)
+		assert.Equal(t, "1.1.0", op.Setup.Checkout.Result.Semver.Next)
+
+		assert.False(t, op.Setup.Checkout.Result.CommitVerified)
+		assert.Equal(t, "commit not signed", op.Setup.Checkout.Result.Msg)
+
+		require.Len(t, op.Setup.Checkout.Result.Files, 4)
+		assert.Equal(t, "M", op.Setup.Checkout.Result.Files["README.md"].Status)
+		assert.Equal(t, "D", op.Setup.Checkout.Result.Files["main.go"].Status)
+		assert.Equal(t, "A", op.Setup.Checkout.Result.Files["renamed.go"].Status)
+		assert.Equal(t, "A", op.Setup.Checkout.Result.Files["handler.go"].Status)
+	})
+
+	t.Run("pull request changeset", func(t *testing.T) {
+		op := newOp()
+		op.Setup.Checkout.GetChangeSet = true
+		op.Setup.Checkout.ChangeSetBranchTo = "master"
+
+		require.NoError(t, s.processAnalyzeBare(context.TODO(), &op))
+		require.Len(t, op.Setup.Checkout.Result.Files, 4)
+		assert.Equal(t, "M", op.Setup.Checkout.Result.Files["README.md"].Status)
+		assert.Equal(t, "D", op.Setup.Checkout.Result.Files["main.go"].Status)
+	})
+
+	t.Run("changeset falls back to last commit files on unknown since commit", func(t *testing.T) {
+		op := newOp()
+		op.Setup.Checkout.GetChangeSet = true
+		op.Setup.Checkout.ChangeSetCommitSince = strings.Repeat("0", 40)
+
+		require.NoError(t, s.processAnalyzeBare(context.TODO(), &op))
+		require.Len(t, op.Setup.Checkout.Result.Files, 1)
+		assert.Equal(t, "M", op.Setup.Checkout.Result.Files["README.md"].Status)
+	})
+
+	t.Run("semver and signature on tag", func(t *testing.T) {
+		op := sdk.Operation{URL: "file://" + fixture, RepoFullName: "test/fixture"}
+		op.Setup.Checkout.Tag = "v1.0.0"
+		op.Setup.Checkout.ProcessSemver = true
+		op.Setup.Checkout.CheckSignature = true
+
+		require.NoError(t, s.processAnalyzeBare(context.TODO(), &op))
+		assert.Equal(t, "1.0.0", op.Setup.Checkout.Result.Semver.Current)
+		assert.False(t, op.Setup.Checkout.Result.CommitVerified)
+		assert.Equal(t, "commit not signed", op.Setup.Checkout.Result.Msg)
+	})
+
+	t.Run("no blob was ever fetched in the bare cache", func(t *testing.T) {
+		clonePath := s.BareRepo(newOp()).Basedir
+		missing := execGitIn(t, clonePath, "rev-list", "--objects", "--missing=print", "refs/heads/feat")
+		assert.NotZero(t, strings.Count(missing, "?"), "expected filtered blobs to still be missing")
+	})
+}
+
 func Test_fetchAnalysisTarget(t *testing.T) {
 	fixture := createFixtureRepo(t)
 	s := &Service{}
