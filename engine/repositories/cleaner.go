@@ -67,47 +67,80 @@ const (
 	cleanerRemoved
 )
 
+// cleanerStats accumulates the decisions of one cleaner run.
+type cleanerStats struct {
+	checked, inUse, protected, removed, failed int
+	freedBytes, protectedBytes                 uint64
+}
+
 func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 	start := time.Now()
-	fi, err := os.Open(s.Cfg.Basedir)
+	var st cleanerStats
+
+	// Full clones live at the basedir root; the bare clones cache is a namespace, not a repository
+	names, err := readCacheEntries(s.Cfg.Basedir)
 	if err != nil {
 		return err
+	}
+	for _, n := range names {
+		if n == bareCacheDir {
+			continue
+		}
+		s.cleanRepository(ctx, &st, filepath.Join(s.Cfg.Basedir, n), n, n)
+	}
+
+	// Bare clones cache, absent until the first analysis operation runs
+	bareDir := filepath.Join(s.Cfg.Basedir, bareCacheDir)
+	bareNames, err := readCacheEntries(bareDir)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	for _, n := range bareNames {
+		s.cleanRepository(ctx, &st, filepath.Join(bareDir, n), n, bareLastAccessID(n))
+	}
+
+	log.Info(ctx, "vacuumFilesystemCleanerRun> done in %s on instance %q: %d git repositories checked, %d removed (%s freed), %d kept (protected, %s), %d kept (in use), %d failed",
+		time.Since(start).Round(time.Millisecond), s.dao.hostname, st.checked, st.removed, humanize.IBytes(st.freedBytes), st.protected, humanize.IBytes(st.protectedBytes), st.inUse, st.failed)
+	return nil
+}
+
+// cleanRepository runs the cleaner on one directory and records the outcome.
+func (s *Service) cleanRepository(ctx context.Context, st *cleanerStats, path, repoID, lastAccessID string) {
+	st.checked++
+	size, _ := s.repoSize(lastAccessID)
+	outcome, err := s.vacuumFileSystemCleanerFunc(ctx, path, repoID, lastAccessID)
+	switch {
+	case err != nil:
+		st.failed++
+		log.Error(ctx, "vacuumFilesystemCleanerRun> %s: %v", lastAccessID, err)
+	case outcome == cleanerKeptInUse:
+		st.inUse++
+	case outcome == cleanerKeptProtected:
+		st.protected++
+		st.protectedBytes += uint64(size)
+	case outcome == cleanerRemoved:
+		st.removed++
+		st.freedBytes += uint64(size)
+	}
+}
+
+func readCacheEntries(dir string) ([]string, error) {
+	fi, err := os.Open(dir)
+	if err != nil {
+		return nil, err
 	}
 	defer fi.Close()
 
 	names, err := fi.Readdirnames(-1)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	sort.Strings(names)
-
-	var inUse, protected, removed, failed int
-	var freedBytes, protectedBytes uint64
-	for _, n := range names {
-		size, _ := s.repoSize(n)
-		outcome, err := s.vacuumFileSystemCleanerFunc(ctx, n)
-		switch {
-		case err != nil:
-			failed++
-			log.Error(ctx, "vacuumFilesystemCleanerRun> %s: %v", n, err)
-		case outcome == cleanerKeptInUse:
-			inUse++
-		case outcome == cleanerKeptProtected:
-			protected++
-			protectedBytes += uint64(size)
-		case outcome == cleanerRemoved:
-			removed++
-			freedBytes += uint64(size)
-		}
-	}
-
-	log.Info(ctx, "vacuumFilesystemCleanerRun> done in %s on instance %q: %d git repositories checked, %d removed (%s freed), %d kept (protected, %s), %d kept (in use), %d failed",
-		time.Since(start).Round(time.Millisecond), s.dao.hostname, len(names), removed, humanize.IBytes(freedBytes), protected, humanize.IBytes(protectedBytes), inUse, failed)
-	return nil
+	return names, nil
 }
 
-// repoLabel renders a Basedir entry for logs: the decoded repository URL
+// repoLabel renders a cache entry for logs: the decoded repository URL
 // followed by the raw directory name (base64 of the URL, also used in the
 // Redis keys); names that are not a valid ID are returned as is.
 func repoLabel(repoID string) string {
@@ -127,9 +160,15 @@ func (s *Service) repoSizeLabel(repoID string) string {
 	return humanize.IBytes(uint64(size))
 }
 
-func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoID string) (cleanerOutcome, error) {
+// vacuumFileSystemCleanerFunc decides the fate of one clone directory: repoID
+// is the repository id shared by its full and bare copies (the processor's
+// in-progress marker), lastAccessID the retention key of this copy.
+func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, path, repoID, lastAccessID string) (cleanerOutcome, error) {
 	label := repoLabel(repoID)
-	sizeLabel := s.repoSizeLabel(repoID)
+	if lastAccessID != repoID {
+		label = "[" + filepath.Dir(lastAccessID) + "] " + label
+	}
+	sizeLabel := s.repoSizeLabel(lastAccessID)
 	// Same marker as the processor: whoever holds it owns the directory, the other steps back.
 	if err := s.localCache.Add(repoID, true, 10*time.Minute); err != nil {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: an operation is running on it [%s]", label, sizeLabel)
@@ -137,12 +176,11 @@ func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoID string
 	}
 	defer s.localCache.Delete(repoID)
 
-	if v, expired := s.dao.isExpired(ctx, repoID); !expired {
+	if v, expired := s.dao.isExpired(ctx, lastAccessID); !expired {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: protected until %s (%s left) [%s]", label, v.Format(time.RFC3339), time.Until(v).Round(time.Second), sizeLabel)
 		return cleanerKeptProtected, nil
 	}
 
-	path := filepath.Join(s.Cfg.Basedir, repoID)
 	log.Info(ctx, "vacuumFileSystemCleanerFunc> %s removed: no last access recorded for instance %q (%s) [%s]", label, s.dao.hostname, path, sizeLabel)
 	if err := os.RemoveAll(path); err != nil {
 		return cleanerRemoved, err

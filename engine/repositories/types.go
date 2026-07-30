@@ -56,7 +56,7 @@ func (s *Service) Repo(op sdk.Operation) *sdk.OperationRepo {
 const bareCacheDir = "bare"
 
 // BareRepo maps an operation to its location in the bare clones cache
-func (s Service) BareRepo(op sdk.Operation) *sdk.OperationRepo {
+func (s *Service) BareRepo(op sdk.Operation) *sdk.OperationRepo {
 	r := s.Repo(op)
 	r.Basedir = filepath.Join(s.Cfg.Basedir, bareCacheDir, r.ID())
 	return r
