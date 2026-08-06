@@ -59,6 +59,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.actions = info.AscodeActions
 
 	w.actionPlugin = make(map[string]*sdk.GRPCPlugin)
+	w.checkedPluginBinaries = make(map[string]*sdk.GRPCPluginBinary)
 
 	// Reset build variables
 	w.currentJob.newVariables = nil

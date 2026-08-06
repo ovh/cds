@@ -11,6 +11,7 @@ import (
 
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -61,28 +62,8 @@ func checkPluginRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	var currentOS = strings.ToLower(sdk.GOOS)
 	var currentARCH = strings.ToLower(sdk.GOARCH)
 
-	binary, err := w.client.PluginGetBinaryInfos(r.Name, currentOS, currentARCH)
-	if err != nil {
+	if _, err := plugin.DownloadBinary(ctx, w, r.Name, currentOS, currentARCH); err != nil {
 		return false, err
-	}
-
-	// then try to download the plugin
-	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
-		log.Debug(ctx, "Downloading the plugin %s", binary.Name)
-		//If the file doesn't exist. Download it.
-		fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
-		if err != nil {
-			return false, err
-		}
-		log.Debug(ctx, "Get the binary plugin %s", r.Name)
-		if err := w.client.PluginGetBinary(r.Name, currentOS, currentARCH, fi); err != nil {
-			_ = fi.Close()
-			return false, err
-		}
-		//It's downloaded. Close the file
-		_ = fi.Close()
-	} else {
-		log.Debug(ctx, "plugin binary is in cache %s", binary.Name)
 	}
 
 	return true, nil
@@ -222,41 +203,11 @@ func checkPluginBinary(ctx context.Context, w *CurrentWorker, p sdk.GRPCPlugin) 
 			return fmt.Errorf("plugin requirement %s does not match", r.Name)
 		}
 	}
-	// then try to download the plugin
-	//integrationPluginBinary := path.Join(w.BaseDir().Name(), binary.Name)
-	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
-		var retry int
-		for {
-			log.Info(ctx, "Downloading the plugin %s", binary.PluginName)
-			//If the file doesn't exist. Download it.
-			fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
-			if err != nil {
-				ctx := log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "unable to openfile %q: %v", binary.Name, err)
-				return err
-			}
-
-			if err := w.client.PluginGetBinary(binary.PluginName, currentOS, currentARCH, fi); err != nil {
-				ctx := log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "unable to download plugin %q, %q , %q, try:%v : %v ", binary.PluginName, currentOS, currentARCH, retry, err)
-
-				err = sdk.NewErrorFrom(sdk.ErrPluginInvalid, "unable to download plugin %q %q %q: %v", binary.PluginName, currentOS, currentARCH, err)
-
-				if retry >= 20 {
-					_ = fi.Close()
-					return err
-				}
-				log.Debug(ctx, "%v", err)
-				retry++
-				time.Sleep(3 * time.Second)
-				continue
-			}
-			//It's downloaded. Close the file
-			_ = fi.Close()
-			break
-		}
-	} else {
-		log.Debug(ctx, "plugin binary is in cache")
+	// then download the plugin and check its integrity
+	if _, err := plugin.DownloadBinary(ctx, w, p.Name, currentOS, currentARCH); err != nil {
+		ctx := log.ContextWithStackTrace(ctx, err)
+		log.Error(ctx, "unable to download plugin %q %q %q: %v", p.Name, currentOS, currentARCH, err)
+		return err
 	}
 
 	log.Info(ctx, "plugin successfully downloaded: %#v", binary.Name)

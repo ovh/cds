@@ -68,6 +68,13 @@ func (w *TestWorker) PluginGetBinary(name, os, arch string, wr io.Writer) error 
 	return nil
 }
 
+func (w *TestWorker) GetCheckedPluginBinary(pluginName, os, arch string) *sdk.GRPCPluginBinary {
+	return nil
+}
+
+func (w *TestWorker) SetCheckedPluginBinary(b *sdk.GRPCPluginBinary) {
+}
+
 func (w *TestWorker) GetJobIdentifiers() (int64, int64, int64) {
 	return 0, 0, 0
 }
