@@ -64,10 +64,13 @@ type CurrentWorker struct {
 	httpPort      int32
 	signer        jose.Signer
 	actionPlugin  map[string]*sdk.GRPCPlugin
-	actions       map[string]sdk.V2Action
-	pluginFactory plugin.Factory
-	currentJobV2  CurrentJobV2
-	currentJob    struct {
+	// checkedPluginBinaries keeps the plugin binaries whose integrity has already been
+	// verified during the current job, keyed by pluginName/os/arch.
+	checkedPluginBinaries map[string]*sdk.GRPCPluginBinary
+	actions               map[string]sdk.V2Action
+	pluginFactory         plugin.Factory
+	currentJobV2          CurrentJobV2
+	currentJob            struct {
 		wJob             *sdk.WorkflowNodeJobRun
 		newVariables     []sdk.Variable
 		params           []sdk.Parameter
@@ -212,6 +215,23 @@ func (wk *CurrentWorker) GetActionPlugin(pluginName string) *sdk.GRPCPlugin {
 }
 func (wk *CurrentWorker) SetActionPlugin(p *sdk.GRPCPlugin) {
 	wk.actionPlugin[p.Name] = p
+}
+
+func checkedPluginBinaryKey(pluginName, os, arch string) string {
+	return pluginName + "/" + os + "/" + arch
+}
+
+func (wk *CurrentWorker) GetCheckedPluginBinary(pluginName, os, arch string) *sdk.GRPCPluginBinary {
+	return wk.checkedPluginBinaries[checkedPluginBinaryKey(pluginName, os, arch)]
+}
+
+func (wk *CurrentWorker) SetCheckedPluginBinary(b *sdk.GRPCPluginBinary) {
+	// plugin requirements are checked before the job is taken, so the map may not be
+	// initialized yet at this point
+	if wk.checkedPluginBinaries == nil {
+		wk.checkedPluginBinaries = make(map[string]*sdk.GRPCPluginBinary)
+	}
+	wk.checkedPluginBinaries[checkedPluginBinaryKey(b.PluginName, b.OS, b.Arch)] = b
 }
 
 func (wk *CurrentWorker) GetIntegrationPlugin(pluginType string) *sdk.GRPCPlugin {
