@@ -21,6 +21,8 @@ import (
 
 var properties = []string{"name", "summary", "guest", "config"}
 
+//go:generate mockgen -source=vsphere.go -destination=mock_vsphere/client_mock.go -package mock_vsphere
+
 type VSphereClient interface {
 	ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error)
 	LoadVirtualMachine(ctx context.Context, name string) (*object.VirtualMachine, error)
@@ -33,6 +35,7 @@ type VSphereClient interface {
 	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error)
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
 	SetVirtualMachineAnnotation(ctx context.Context, vm *object.VirtualMachine, annotation string) error
+	ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, spec types.VirtualMachineConfigSpec) error
 	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string, vmName string) error
 	LoadFolder(ctx context.Context) (*object.Folder, error)
@@ -351,10 +354,13 @@ func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.
 		}
 	}
 
+	// guestinfo clones carry no customization spec (the guest applies its network
+	// itself from guestinfo), so there is no IP to wait for specifically.
 	var expectedIP *string
-	customFixedIP, ok := cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp)
-	if ok {
-		expectedIP = &customFixedIP.IpAddress
+	if cloneSpec.Customization != nil && len(cloneSpec.Customization.NicSettingMap) > 0 {
+		if customFixedIP, ok := cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp); ok {
+			expectedIP = &customFixedIP.IpAddress
+		}
 	}
 
 	if err := c.WaitForVirtualMachineIP(ctx, vm, expectedIP, vmName); err != nil {
@@ -417,6 +423,27 @@ func (c *vSphereClient) SetVirtualMachineAnnotation(ctx context.Context, vm *obj
 
 	if err := task.Wait(ctxTo); err != nil {
 		return sdk.WrapError(err, "annotation reconfigure task failed for vm %q", vm.Name())
+	}
+
+	return nil
+}
+
+// ReconfigureVirtualMachine applies an arbitrary config spec to a VM. It is used
+// to push the per-worker guestinfo bootstrap (guestinfo.cds.cmd / .config) before
+// power-on, for models that have no guest-operations channel.
+func (c *vSphereClient) ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, spec types.VirtualMachineConfigSpec) error {
+	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
+
+	task, err := vm.Reconfigure(ctxTo, spec)
+	if err != nil {
+		return sdk.WrapError(err, "unable to reconfigure vm %q", vm.Name())
+	}
+
+	ctxWait, cancelWait := context.WithTimeout(ctx, vmTaskTimeout)
+	defer cancelWait()
+	if err := task.Wait(ctxWait); err != nil {
+		return sdk.WrapError(err, "reconfigure task failed for vm %q", vm.Name())
 	}
 
 	return nil
