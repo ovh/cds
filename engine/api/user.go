@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
@@ -406,10 +407,23 @@ func (api *API) deleteUserHandler() service.Handler {
 					adminLeftCount[gus[i].GroupID] += 1
 				}
 			}
-			for _, count := range adminLeftCount {
-				if count < 1 {
-					return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot remove user because it is the last admin of a group")
+			var lastAdminGroupIDs []int64
+			for _, id := range adminGroupIDs {
+				if adminLeftCount[id] < 1 {
+					lastAdminGroupIDs = append(lastAdminGroupIDs, id)
 				}
+			}
+			if len(lastAdminGroupIDs) > 0 {
+				gs, err := group.LoadAllByIDs(ctx, tx, lastAdminGroupIDs)
+				if err != nil {
+					return err
+				}
+				mGroups := gs.ToMap()
+				names := make([]string, 0, len(lastAdminGroupIDs))
+				for _, id := range lastAdminGroupIDs {
+					names = append(names, mGroups[id].Name)
+				}
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot remove user because it is the last admin of group(s): %s", strings.Join(names, ", "))
 			}
 		}
 
