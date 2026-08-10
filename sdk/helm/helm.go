@@ -115,11 +115,17 @@ func UpdateDependencies(chartPath string, skipUpdate bool) error {
 		return nil
 	}
 
+	// RepositoryConfig and RepositoryCache must be set, otherwise the manager reads
+	// no repository at all: every dependency is then resolved as an unmanaged repository,
+	// fetched anonymously, and fails on private repositories.
 	downloadManager := &downloader.Manager{
-		Out:       os.Stdout,
-		ChartPath: chartPath,
-		Getters:   getter.All(settings),
-		Debug:     v2settings.Debug,
+		Out:              os.Stdout,
+		ChartPath:        chartPath,
+		Getters:          getter.All(settings),
+		RepositoryConfig: settings.RepositoryConfig,
+		RepositoryCache:  settings.RepositoryCache,
+		SkipUpdate:       skipUpdate,
+		Debug:            settings.Debug,
 	}
 	if err := downloadManager.Update(); err != nil {
 		return err
