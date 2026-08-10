@@ -291,15 +291,17 @@ func Test_deleteUserHandler(t *testing.T) {
 
 	initial1, jwtInitial1Raw := assets.InsertLambdaUser(t, db)
 	initial2, _ := assets.InsertLambdaUser(t, db)
-	initial3, _ := assets.InsertLambdaUser(t, db, &sdk.Group{Name: sdk.RandomString(10)})
+	initial3Group := &sdk.Group{Name: sdk.RandomString(10)}
+	initial3, _ := assets.InsertLambdaUser(t, db, initial3Group)
 	admin1, jwtAdmin1Raw := assets.InsertAdminUser(t, db)
 	admin2, _ := assets.InsertAdminUser(t, db)
 
 	cases := []struct {
-		Name           string
-		JWT            string
-		TargetUsername string
-		ExpectedStatus int
+		Name                 string
+		JWT                  string
+		TargetUsername       string
+		ExpectedStatus       int
+		ExpectedBodyContains string
 	}{
 		{
 			Name:           "A lambda user can delete himself",
@@ -326,10 +328,12 @@ func Test_deleteUserHandler(t *testing.T) {
 			ExpectedStatus: http.StatusForbidden,
 		},
 		{
-			Name:           "A user can be removed if last admin of a group",
-			JWT:            jwtAdmin1Raw,
-			TargetUsername: initial3.Username,
-			ExpectedStatus: http.StatusForbidden,
+			// The error should tell which group prevents the deletion
+			Name:                 "A user can't be removed if last admin of a group",
+			JWT:                  jwtAdmin1Raw,
+			TargetUsername:       initial3.Username,
+			ExpectedStatus:       http.StatusForbidden,
+			ExpectedBodyContains: initial3Group.Name,
 		},
 	}
 
@@ -344,6 +348,9 @@ func Test_deleteUserHandler(t *testing.T) {
 			rec := httptest.NewRecorder()
 			api.Router.Mux.ServeHTTP(rec, req)
 			assert.Equal(t, c.ExpectedStatus, rec.Code)
+			if c.ExpectedBodyContains != "" {
+				assert.Contains(t, rec.Body.String(), c.ExpectedBodyContains)
+			}
 		})
 	}
 }
