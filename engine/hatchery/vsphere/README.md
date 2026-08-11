@@ -67,8 +67,10 @@ The hatchery is configured via `HatcheryConfiguration`, serialized as TOML.
 | `workerProvisioningPoolSize` | `int` | `0` | No | Optional cap on concurrent provisioning clones. `0` = unbounded (clones run fully in parallel, bounded by the deficit and IP budget) |
 | `workerProvisioning` | `[]WorkerProvisioningConfig` | — | No | List of models to pre-provision |
 | `guestCredentials` | `[]GuestCredential` | — | No | **Deprecated**: use `models` instead. Guest OS credentials per model |
-| `models` | `[]ModelConfig` | — | No | Per-model configuration (credentials, pre-start script) |
+| `models` | `[]ModelConfig` | — | No | Per-model configuration (credentials, pre-start script, guestinfo mode) |
 | `defaultWorkerModelsV2` | `[]DefaultWorkerModelsV2` | — | No | Default V2 models used to run V1 jobs (binary matching) |
+| `sshAllowedCIDRs` | `[]string` | — | No | Guestinfo models only. CIDRs allowed to reach workers over SSH, applied as a packet-filter allowlist in the guest (see section 3.5) |
+| `injectSSHPublicKeys` | `[]string` | — | No | Guestinfo models only. SSH public keys to inject into spawned workers; each must carry a `from=` option (see section 3.5) |
 
 ### 3.1.2 Networks Configuration
 
@@ -121,6 +123,7 @@ type ModelConfig struct {
     Username       string  // Guest OS username
     Password       string  // Guest OS password
     PreStartScript string  // Shell script executed inside the VM before the worker starts
+    GuestInfo      bool    // Drive the model through guestinfo (see section 3.5)
 }
 ```
 
@@ -156,6 +159,78 @@ type DefaultWorkerModelsV2 struct {
 
 Used to bridge V1 jobs (which select models by binary requirements) to V2 worker models.
 
+### 3.5 Guestinfo Models
+
+Some guest OSes cannot be driven the default way. The vSphere customization engine (GOSC) has no
+support for them, and a credential-less image offers no account for guest operations to
+authenticate against. FreeBSD is both. Such a model is declared with `guestInfo = true` in its
+`models` entry, and everything the guest needs is handed over as **guestinfo** keys instead: plain
+VM metadata, always accepted regardless of guest OS, read by the guest at every boot.
+
+```toml
+[[hatchery.vsphere.models]]
+  modelVMWare = "freebsd14"
+  guestInfo = true
+  # no username/password: the image is credential-less
+
+# Optional debug access. Left unset, workers accept no inbound SSH at all —
+# the intended default.
+[hatchery.vsphere]
+  sshAllowedCIDRs = ["10.0.0.0/24"]
+  injectSSHPublicKeys = [
+    "from=\"10.0.0.0/24\" ssh-ed25519 AAAAC3Nza... ops@example",
+  ]
+```
+
+These are **two independent layers, and neither substitutes for the other**:
+
+- `sshAllowedCIDRs` is a **network-level allowlist**. The guest is expected to load it into a
+  packet filter that denies inbound by default, so SSH from anywhere else is dropped before sshd
+  is ever reached. Omit it and the worker is unreachable no matter which keys are injected.
+- `injectSSHPublicKeys` is what **sshd then authenticates**, as in the OpenStack hatchery. Each
+  key must carry a `from=` option restricting its source addresses; `CheckConfiguration` rejects
+  the configuration otherwise, so an injected key can never be usable from anywhere. That
+  validation is shared with the OpenStack hatchery (`hatchery.CheckInjectSSHPublicKeys`).
+
+Malformed CIDRs are rejected at startup too: a bad entry would otherwise yield a silently broken
+allowlist.
+
+| Key | Written at | Value |
+|-----|-----------|-------|
+| `guestinfo.cds.net.ip` / `.mask` / `.gateway` / `.dns` / `.hostname` | Clone (provision) | Allocated IP, dotted-quad mask, gateway, DNS, VM name |
+| `guestinfo.cds.access.allowed_cidrs` | Clone, only when configured | `sshAllowedCIDRs` joined by spaces, for the guest's packet-filter allowlist |
+| `guestinfo.cds.access.authorized_keys` | Clone, only when configured | `injectSSHPublicKeys` joined by newline, i.e. an `authorized_keys` body |
+| `guestinfo.cds.cmd` / `.config` | Spawn, before power-on | Assembled worker command; base64(JSON) worker config, passed verbatim to the worker's `CDS_CONFIG` |
+| `guestinfo.cds.net.hostname` | Spawn, before power-on | Re-emitted with the worker name, the VM having been renamed out of its provision name |
+
+`provision.injectEnvVars` are **not** emitted as separate keys: the worker reads them from the
+config it decodes out of `cds.config`, so a copy would never be read — and it would outlive the
+config, which the guest scrubs once consumed.
+
+This is a contract: the hatchery emits these keys, and the guest image is responsible for acting
+on them at boot. An image implementing it must:
+
+- apply `cds.net.*` on **every** boot, the same VM being booted once to provision and again to
+  run a worker;
+- **no-op when `cds.cmd` is unset**. This is what makes the **provision boot** harmless: the
+  network is applied, the VM gets its IP, and it shuts down without ever starting a worker. The
+  worker only starts on the **spawn boot**, once `cds.cmd` and `cds.config` are in place;
+- scrub `cds.config` in-guest once consumed, since guestinfo values otherwise persist in the VM
+  config in clear text. Worker tokens should be short-lived regardless.
+
+`guestInfo` is the single gate for both the clone and the spawn path. It cannot be derived from
+the model's `OSArch`, because the provisioning loop only ever knows the VMware template name —
+never a CDS worker model. A clone made with guest customization cannot be bootstrapped through
+guestinfo, so the two must agree, and reading one flag on both paths is what guarantees it.
+
+Forgetting the flag on a model whose image needs it is therefore a configuration error the
+hatchery cannot detect: the clone applies a customization the guest ignores, the provision never
+reports an IP, and it is marked for deletion by `finishProvisioning`. The symptom is a model that
+never manages to provision.
+
+The commands wrapping the worker (download, start, power off) are not model fields; CDS derives
+them from the model's `osarch` — see §4.1.
+
 ## 4. Worker Models
 
 The vSphere hatchery only supports **Worker Model V2**. Worker Model V1 (CDS models that were registered
@@ -190,6 +265,28 @@ type V2WorkerModelVSphereSpec struct {
 For V2, the template must already exist in vSphere. The hatchery does **not** create or manage templates
 for V2 models. Guest credentials can be specified either in the model spec or in the hatchery
 `models` configuration (which takes precedence over the model spec).
+
+A guestinfo model (§3.5) carries no credentials at all:
+
+```yaml
+name: my-freebsd-worker
+type: vsphere
+osarch: freebsd/amd64
+spec:
+  image: "freebsd14"   # requires guestInfo = true in the hatchery models config
+```
+
+The commands that download and start the worker, and the one that powers the VM off afterwards,
+are not part of the model: CDS derives them from `osarch` (`sdk/hatchery`). The download URL
+carries the model's `osarch`, so the guest gets a matching binary rather than the Linux one, and
+a `freebsd/*` model is powered off with `shutdown -p now` — `-h` would halt the OS but leave the
+VM powered on as far as vSphere is concerned, so the provision would never be reclaimed. No
+`sudo` is involved either, the worker being started as root by the guest's boot script.
+
+The image must provide `curl` (or `wget`), as every other CDS worker model does.
+
+As on the guest-operations path, the hatchery redirects the worker's stdout and stderr to
+`/tmp/worker.log` inside the guest.
 
 ## 5. VM Annotations
 
@@ -259,8 +356,10 @@ SpawnWorker(spawnArgs)
 │   ├── Rename to the worker name
 │   ├── Stamp the annotation with WorkerStartTime (+ JobID, Provisioning=false)
 │   │   before power-on, preserving the reserved IP and VMware model path
+│   ├── If guestinfo model: push guestinfo.cds.{cmd,config} — BEFORE power-on
 │   ├── Power on (bounded retry, tolerates a VM not yet startable after reconfigure)
 │   ├── Wait for the reserved IP
+│   ├── Guestinfo model: DONE — the guest starts the worker itself at boot
 │   ├── Wait for guest operations readiness, run the pre-start script (if any)
 │   └── Launch worker script via guest operations → DONE
 │
@@ -284,7 +383,9 @@ scheduler, see §6.3):
 - **Datastore**: Relocates the VM to the configured datastore
 - **Disk**: Uses `MoveChildMostDiskBacking` disk move type (linked clone)
 - **Customization**: Linux prep with auto-generated hostname. If IP range is configured, assigns
-  a static IP with subnet mask, gateway, and DNS
+  a static IP with subnet mask, gateway, and DNS. **Guestinfo models carry no customization spec
+  at all** — their network goes into `ExtraConfig` as `guestinfo.cds.net.*` instead (see §3.5).
+  Either way the assigned IP is recorded in the annotation, which is what `getUsedIPs` reads
 - **Annotation**: Serializes the `annotation` struct as JSON into `VirtualMachineConfigSpec.Annotation`
 - **Power On**: `PowerOn: true`, the VM boots immediately to complete its provisioning
 - **VM Tools**: Configured to run after power on
@@ -306,6 +407,15 @@ After the VM is cloned and has obtained an IP:
 6. Execute the launch script via `StartProgramInGuest` with guest credentials
 7. The script is run as: `/bin/echo -n ;<script>`, with `CDS_CONFIG` passed as environment variable
 
+Steps 1-3 and 6-7 are **skipped entirely for guestinfo models**: there is no guest-operations
+channel to drive, and no credentials to drive it with. The assembled command and worker config
+are pushed as guestinfo keys before power-on (§3.5) and the guest starts the worker itself. The
+IP wait in `SpawnWorker` is kept, so IP accounting is unchanged.
+
+One consequence: with guest operations gone there is no synchronous launch error. A worker that
+fails to start does not fail the spawn — it surfaces as a CDS registration timeout and is reaped
+by `killAwolServers` (§8.1), the same as any other never-registered worker.
+
 #### 6.2.3 Guest Operations Authentication
 
 Guest OS credentials are resolved in order:
@@ -313,7 +423,8 @@ Guest OS credentials are resolved in order:
 2. From deprecated `guestCredentials` config (fallback)
 3. If not found in config, from the worker model spec (`Username`/`Password`)
 
-If neither provides valid credentials, spawning fails.
+If neither provides valid credentials, spawning fails. Guestinfo models need no credentials at
+all, never reaching this path.
 
 ### 6.3 Pre-Provisioning
 
@@ -734,6 +845,7 @@ type VSphereClient interface {
     NewVirtualMachine(ctx, cloneSpec, ref, vmName) (*object.VirtualMachine, error)
     RenameVirtualMachine(ctx, vm, newName) error
     SetVirtualMachineAnnotation(ctx, vm, annotation) error
+    ReconfigureVirtualMachine(ctx, vm, spec) error
     WaitForVirtualMachineShutdown(ctx, vm) error
     WaitForVirtualMachineIP(ctx, vm, IPAddress, vmName) error
     LoadFolder(ctx) (*object.Folder, error)
@@ -747,7 +859,12 @@ type VSphereClient interface {
 }
 ```
 
-The interface is mockable for unit testing (see `mock_vsphere/`).
+The interface is mockable for unit testing (see `mock_vsphere/`). Regenerate the mock after any
+change to the interface:
+
+```
+cd engine/hatchery/vsphere && go generate ./...
+```
 
 ### 9.1 VM Readiness
 
@@ -756,6 +873,10 @@ After cloning, the hatchery waits for full VM readiness in multiple stages:
 1. **Guest operations ready**: Polls `Guest.GuestOperationsReady` (timeout: 3 minutes)
 2. **IP address**: Polls `vm.WaitForIP()`, optionally matching an expected static IP (timeout: 3 minutes)
 3. **Command execution ready**: Runs `env` in the guest to verify guest operations work (timeout: 1 minute)
+
+Stage 3 is skipped for guestinfo models (§3.5). Stage 2 only matches against an expected IP when
+the clone carried a customization spec; a guestinfo clone applies its own network, so any IP
+reported by VMware Tools ends the wait.
 
 ### 9.2 VM Listing and Filtering
 
@@ -784,7 +905,9 @@ The hatchery maintains several in-memory caches protected by mutexes:
 
 1. **Unsupported job requirements**: Service, Memory, Hostname requirements
    cause the hatchery to reject the job.
-2. **Linux only**: Customization assumes Linux guests (`CustomizationLinuxPrep`).
+2. **Linux, or guestinfo**: guest customization assumes Linux guests (`CustomizationLinuxPrep`).
+   Any other guest OS must be declared as a guestinfo model (§3.5) and run an image that reads
+   the guestinfo contract at boot.
 3. **Single datacenter**: The hatchery operates on a single vSphere datacenter.
 4. **No V2 model registration**: V2 templates must be pre-created in vSphere manually.
 

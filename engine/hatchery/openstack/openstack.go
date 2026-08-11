@@ -15,9 +15,9 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/ovh/cds/engine/api"
+	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -201,17 +201,7 @@ func (h *HatcheryOpenstack) checkOverrideImagesWorkerBasedir(overrides []ImageWo
 }
 
 func (h *HatcheryOpenstack) checkInjectSSHPublicKeys(publicKeys []string) error {
-	for _, publicKey := range publicKeys {
-		_, _, options, _, err := ssh.ParseAuthorizedKey([]byte(publicKey))
-		if err != nil {
-			return fmt.Errorf("invalid public key %q: %w", publicKey, err)
-		}
-		if len(options) == 0 || !slices.ContainsFunc(options, func(o string) bool { return strings.HasPrefix(o, "from=") }) {
-			return fmt.Errorf("invalid public key %q: from option is missing", publicKey)
-		}
-	}
-
-	return nil
+	return hatcheryCommon.CheckInjectSSHPublicKeys(publicKeys)
 }
 
 func (h *HatcheryOpenstack) GetImageUsername(ctx context.Context, imageName string) string {
