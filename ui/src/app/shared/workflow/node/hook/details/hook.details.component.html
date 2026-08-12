@@ -30,13 +30,14 @@
           @if (task.config) {
             @for (k of task.config | keys; track k) {
               <nz-form-item>
-                <nz-form-label [nzSpan]="4">{{k}}</nz-form-label>
+                <nz-form-label [nzSpan]="4" nzFor="cds-field-hook-{{k}}">{{k}}</nz-form-label>
                 <nz-form-control [nzSpan]="20">
                   @if (k !== 'payload') {
-                    <input nz-input type="text" name="value-{{k}}" [ngModel]="task.config[k].value" [readonly]="true">
+                    <input nz-input type="text" id="cds-field-hook-{{k}}" name="value-{{k}}" [ngModel]="task.config[k].value" [readonly]="true">
                   }
                   @if (k === 'payload') {
                     <codemirror name="value-{{k}}"
+                      aria-label="Hook payload"
                       [ngModel]="task.config[k].value"
                       [config]="codeMirrorConfig"
                       #textareaCodeMirror>
@@ -52,17 +53,17 @@
           <h3>Hook's log</h3>
           @if (task.workflow_run) {
             <nz-form-item>
-              <nz-form-label [nzSpan]="4">Workflow run</nz-form-label>
+              <nz-form-label [nzSpan]="4" nzFor="cds-field-hook-run">Workflow run</nz-form-label>
               <nz-form-control [nzSpan]="20">
-                <input nz-input type="text" [value]="task.workflow_run" [readonly]="true" name="run">
+                <input nz-input type="text" id="cds-field-hook-run" [value]="task.workflow_run" [readonly]="true" name="run">
               </nz-form-control>
             </nz-form-item>
           }
           <nz-form-item>
-            <nz-form-label [nzSpan]="4">Status</nz-form-label>
+            <nz-form-label [nzSpan]="4" nzFor="cds-field-hook-status">Status</nz-form-label>
             <nz-form-control [nzSpan]="20">
               <nz-input-group [nzSuffix]="suffixIconSearch">
-                <input nz-input type="text" [value]="task.status" name="status" readonly>
+                <input nz-input type="text" id="cds-field-hook-status" [value]="task.status" name="status" readonly>
               </nz-input-group>
               <ng-template #suffixIconSearch>
                 @if (task.status === hookStatus.DONE) {
@@ -81,22 +82,22 @@
             </nz-form-control>
           </nz-form-item>
           <nz-form-item>
-            <nz-form-label [nzSpan]="4">Begin</nz-form-label>
+            <nz-form-label [nzSpan]="4" nzFor="cds-field-hook-begin">Begin</nz-form-label>
             <nz-form-control [nzSpan]="20">
-              <input nz-input type="text" [value]="(task.timestamp / 1000000) | date:'short'" [readonly]="true" name="begin">
+              <input nz-input type="text" id="cds-field-hook-begin" [value]="(task.timestamp / 1000000) | date:'short'" [readonly]="true" name="begin">
             </nz-form-control>
           </nz-form-item>
           <nz-form-item>
-            <nz-form-label [nzSpan]="4">End</nz-form-label>
+            <nz-form-label [nzSpan]="4" nzFor="cds-field-hook-end">End</nz-form-label>
             <nz-form-control [nzSpan]="20">
-              <input nz-input type="text" [value]="(task.processing_timestamp / 1000000) | date:'short'" [readonly]="true" name="end">
+              <input nz-input type="text" id="cds-field-hook-end" [value]="(task.processing_timestamp / 1000000) | date:'short'" [readonly]="true" name="end">
             </nz-form-control>
           </nz-form-item>
           @if (task.last_error) {
             <nz-form-item>
-              <nz-form-label [nzSpan]="4">Error</nz-form-label>
+              <nz-form-label [nzSpan]="4" nzFor="cds-field-hook-error">Error</nz-form-label>
               <nz-form-control [nzSpan]="20">
-                <input nz-input type="text" [value]="task.last_error" [readonly]="true" name="error">
+                <input nz-input type="text" id="cds-field-hook-error" [value]="task.last_error" [readonly]="true" name="error">
               </nz-form-control>
             </nz-form-item>
           }
@@ -105,6 +106,7 @@
               <nz-form-label [nzSpan]="4">Body</nz-form-label>
               <nz-form-control [nzSpan]="20">
                 <codemirror name="body"
+                  aria-label="Hook body"
                   [ngModel]="body"
                   [config]="codeMirrorConfig"
                   #code>

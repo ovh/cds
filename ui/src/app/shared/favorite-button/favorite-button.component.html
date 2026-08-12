@@ -1,9 +1,10 @@
 <div class="content">
   @if (loading) {
-    <span nz-icon nzType="loading"></span>
+    <span nz-icon nzType="loading" aria-hidden="true"></span>
   }
   @if (!loading) {
-    <span nz-icon nzType="star" nzTheme="fill" [class.active]="!!bookmark" (click)="click()"
-    [title]="(!!bookmark ? 'Remove' : 'Add') + ' ' + type + ' ' + (!!bookmark ? 'from' : 'to') + ' bookmarks'"></span>
+    <span nz-icon nzType="star" nzTheme="fill" [class.active]="!!bookmark" appClickable (click)="click()"
+    [title]="(!!bookmark ? 'Remove' : 'Add') + ' ' + type + ' ' + (!!bookmark ? 'from' : 'to') + ' bookmarks'"
+    [attr.aria-label]="(!!bookmark ? 'Remove' : 'Add') + ' ' + type + ' ' + (!!bookmark ? 'from' : 'to') + ' bookmarks'"></span>
   }
 </div>

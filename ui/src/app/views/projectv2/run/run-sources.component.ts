@@ -56,7 +56,8 @@ export class RunSourcesComponent implements OnInit, OnChanges, OnDestroy {
 			language: 'yaml',
 			minimap: { enabled: false },
 			readOnly: true,
-			scrollBeyondLastLine: false
+			scrollBeyondLastLine: false,
+			ariaLabel: 'Workflow sources viewer'
 		};
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {

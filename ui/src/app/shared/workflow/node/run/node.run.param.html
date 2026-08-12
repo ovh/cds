@@ -14,7 +14,7 @@
     <h3>{{ 'workflow_node_context_payload_read_only' | translate}}</h3>
   }
   @if (!loadingBranches) {
-    <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig"
+    <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig" aria-label="Run payload editor"
       (click)="changeCodeMirror(textareaCodeMirror, $event)"
       (change)="changeCodeMirror(textareaCodeMirror, $event)" #textareaCodeMirror>
     </codemirror>
@@ -52,17 +52,17 @@
     </button>
     @if (!loading && currentNodeRun) {
       <button nz-button nzType="primary" nz-dropdown [nzDropdownMenu]="menu"
-        nzPlacement="bottomRight">
-        <i nz-icon nzType="down"></i>
+        nzPlacement="bottomRight" aria-label="More run options">
+        <i nz-icon nzType="down" aria-hidden="true"></i>
       </button>
     }
     <nz-dropdown-menu #menu="nzDropdownMenu">
       <ul nz-menu>
-        <li nz-menu-item [nzDisabled]="workflow?.from_repository" (click)="run(true, false)" nz-tooltip nzTooltipTitle="When you resync this run, it will update the pipelines linked to this run with your last editions. It won't resync your project variables.">
-          <i nz-icon nzType="sync" nzTheme="outline"></i>{{'workflow_resync' | translate }}
+        <li nz-menu-item appClickable [nzDisabled]="workflow?.from_repository" (click)="run(true, false)" nz-tooltip nzTooltipTitle="When you resync this run, it will update the pipelines linked to this run with your last editions. It won't resync your project variables.">
+          <i nz-icon nzType="sync" nzTheme="outline" aria-hidden="true"></i>{{'workflow_resync' | translate }}
         </li>
-        <li nz-menu-item [nzDisabled]="currentNodeRun?.status !== 'Fail'" (click)="run(false, true)">
-          <i nz-icon nzType="bug" nzTheme="outline"></i>{{'workflow_run_only_failed' | translate }}
+        <li nz-menu-item appClickable [nzDisabled]="currentNodeRun?.status !== 'Fail'" (click)="run(false, true)">
+          <i nz-icon nzType="bug" nzTheme="outline" aria-hidden="true"></i>{{'workflow_run_only_failed' | translate }}
         </li>
       </ul>
     </nz-dropdown-menu>

@@ -1,4 +1,5 @@
-<div class="node pointing" [class.highlight]="highlight && !selected" [class.active]="selected" (click)="onMouseClick()"
+<div class="node pointing" role="button" tabindex="-1" [attr.aria-label]="ariaLabel"
+  [class.highlight]="highlight && !selected" [class.active]="selected" (click)="onMouseClick()"
   (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()" [class.success]="node?.run?.status === statusEnum.Success"
   [class.inactive]="node?.run?.status === statusEnum.Skipped || node?.run?.status === statusEnum.Cancelled"
   [class.fail]="node?.run?.status === statusEnum.Fail || node?.run?.status === statusEnum.Stopped"
@@ -104,7 +105,8 @@
     (click)="clickSelectionOverlay($event)" (dblclick)="$event.stopPropagation();">
     @if (selectionMode === 'active') {
       <div class="controls">
-        <label nz-checkbox [ngModel]="selectionActive" (ngModelChange)="clickSelectionOverlay()"></label>
+        <label nz-checkbox [ngModel]="selectionActive" (ngModelChange)="clickSelectionOverlay()"
+        [attr.aria-label]="'Select job ' + node?.name + ' for restart'"></label>
       </div>
     }
   </div>

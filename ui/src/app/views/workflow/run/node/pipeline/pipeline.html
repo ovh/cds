@@ -36,13 +36,13 @@
                             [class.inactive]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.DISABLED || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SKIPPED)"
                             [class.fail]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.FAIL"
                             [class.building]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.BUILDING || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.WAITING)"
-                            (click)="selectedJobManual(j.pipeline_action_id)">
+                            appClickable (click)="selectedJobManual(j.pipeline_action_id)">
                             @if (mapJobStatus?.get(j.pipeline_action_id)?.warnings > 0) {
                               <div class="warningPip"
                                 nz-tooltip
                                 nzTooltipTitle="The build is in success state but there are/is {{mapJobStatus?.get(j.pipeline_action_id)?.warnings}} optional step(s) in error"
                                 nzTooltipPlacement="top">
-                                <span nz-icon nzType="warning" nzTheme="outline" class="orange"></span>
+                                <span nz-icon nzType="warning" nzTheme="outline" class="orange" role="img" aria-label="Warning: optional step(s) in error"></span>
                               </div>
                             }
                             <div class="title">

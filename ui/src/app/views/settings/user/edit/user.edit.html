@@ -4,7 +4,7 @@
         <nz-col [nzSpan]="24">
             <ul nz-menu nzMode="horizontal" *ngIf="menuItems?.size > 0">
                 <ng-container *ngFor="let entry of menuItems | forMap">
-                    <li nz-menu-item [nzSelected]="selectedItem === entry.key" (click)="selectMenuItem(entry.key)">
+                    <li nz-menu-item appClickable [nzSelected]="selectedItem === entry.key" (click)="selectMenuItem(entry.key)">
                         {{entry.value}}
                     </li>
                 </ng-container>
@@ -15,14 +15,14 @@
         <app-scrollview class="scrollview" *ngIf="selectedItem" [ngSwitch]="selectedItem">
             <ng-container *ngSwitchCase="'links'">
                 <nz-form-item *ngFor="let d of linkDriver">
-                    <nz-form-label [nzSpan]="2">Link {{d}}</nz-form-label>
+                    <nz-form-label [nzSpan]="2" nzFor="cds-field-link-{{d}}">Link {{d}}</nz-form-label>
                     <nz-form-control>
                         <ng-container *ngIf="userLinks.has(d)">
-                            <input name="link-{{d}}" nz-input [readOnly]="true" [ngModel]="userLinks.get(d).username">
+                            <input name="link-{{d}}" id="cds-field-link-{{d}}" nz-input [readOnly]="true" [ngModel]="userLinks.get(d).username">
                         </ng-container>
                         <ng-container *ngIf="!userLinks.has(d)">
                             <button nz-button nzType="primary" (click)="linkUser(d)">
-                                <i nz-icon nzType="{{d}}" nzTheme="outline"></i>
+                                <i nz-icon nzType="{{d}}" nzTheme="outline" aria-hidden="true"></i>
                                 Link
                             </button>
                         </ng-container>
@@ -30,10 +30,10 @@
                 </nz-form-item>
                 <ng-container *ngFor="let k of userLinks.keys()">
                     <ng-container *ngIf="linkDriver.indexOf(k) === -1">
-                        <nz-form-label [nzSpan]="2">Link {{k}}</nz-form-label>
+                        <nz-form-label [nzSpan]="2" nzFor="cds-field-link-{{k}}">Link {{k}}</nz-form-label>
                          <nz-form-control>
-                            <input name="link-{{k}}" nz-input [readOnly]="true" [ngModel]="userLinks.get(k).username">
-                         </nz-form-control>   
+                            <input name="link-{{k}}" id="cds-field-link-{{k}}" nz-input [readOnly]="true" [ngModel]="userLinks.get(k).username">
+                         </nz-form-control>
                     </ng-container>
                 </ng-container>
             </ng-container>
@@ -44,37 +44,37 @@
                         <nz-row>
                             <nz-col [nzSpan]="24">
                                 <nz-form-item>
-                                    <nz-form-label [nzSpan]="2">Username</nz-form-label>
+                                    <nz-form-label [nzSpan]="2" nzFor="cds-field-username">Username</nz-form-label>
                                     <nz-form-control>
-                                        <input nz-input type="text" name="username" [(ngModel)]="user.username"
+                                        <input nz-input type="text" name="username" id="cds-field-username" [(ngModel)]="user.username"
                                                [disabled]="loading" readonly>
                                     </nz-form-control>
                                 </nz-form-item>
                                 <nz-form-item>
-                                    <nz-form-label [nzSpan]="2">Fullname</nz-form-label>
+                                    <nz-form-label [nzSpan]="2" nzFor="cds-field-fullname">Fullname</nz-form-label>
                                     <nz-form-control>
-                                        <input nz-input type="text" name="fullname" [(ngModel)]="user.fullname"
+                                        <input nz-input type="text" name="fullname" id="cds-field-fullname" [(ngModel)]="user.fullname"
                                                [disabled]="loading" [readonly]="!editable">
                                     </nz-form-control>
                                 </nz-form-item>
                                 <nz-form-item *ngIf="user.organization">
-                                    <nz-form-label [nzSpan]="2">Organization</nz-form-label>
+                                    <nz-form-label [nzSpan]="2" nzFor="cds-field-organization">Organization</nz-form-label>
                                     <nz-form-control>
-                                        <input nz-input type="text" name="organization"
+                                        <input nz-input type="text" name="organization" id="cds-field-organization"
                                                [ngModel]="user.organization" readonly>
                                     </nz-form-control>
                                 </nz-form-item>
                                 <nz-form-item>
-                                    <nz-form-label [nzSpan]="2">Ring</nz-form-label>
+                                    <nz-form-label [nzSpan]="2" nzFor="cds-field-ring">Ring</nz-form-label>
                                     <nz-form-control>
-                                        <nz-select name="admin" [nzDisabled]="loading" *ngIf="currentAuthSummary.isAdmin()"
+                                        <nz-select name="admin" id="cds-field-ring" [nzDisabled]="loading" *ngIf="currentAuthSummary.isAdmin()"
                                                    [(ngModel)]="user.ring">
                                             <nz-option nzValue="USER" nzLabel="USER"></nz-option>
                                             <nz-option nzValue="MAINTAINER" nzLabel="MAINTAINER"></nz-option>
                                             <nz-option nzValue="ADMIN" nzLabel="ADMIN"></nz-option>
                                         </nz-select>
                                         <input *ngIf="!currentAuthSummary.isAdmin()"nz-input type="text"
-                                               name="admin" [ngModel]="user.ring" [readonly]="true">
+                                               name="admin" id="cds-field-ring" [ngModel]="user.ring" [readonly]="true">
                                     </nz-form-control>
                                 </nz-form-item>
                             </nz-col>
@@ -84,14 +84,14 @@
                                 <button nz-button nzDanger nzType="primary"
                                         nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this user ?"
                                         (nzOnConfirm)="clickDelete()">
-                                    <i nz-icon nzType="delete" nzTheme="outline"></i>
+                                    <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>
                                     Delete
                                 </button>
                             </nz-col>
                             <nz-col [nzSpan]="12" class="alignRight">
                                 <button nz-button nzType="primary" [nzLoading]="loading"
                                         (click)="clickSave()">
-                                    <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                                    <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Save
                                 </button>
                             </nz-col>
                         </nz-row>
@@ -116,7 +116,7 @@
             <div *ngSwitchCase="'authentication'">
                 <nz-row>
                     <nz-col [nzSpan]="24">
-                        <h1><span nz-icon nzType="idcard" nzTheme="outline"></span>Consumers</h1>
+                        <h1><span nz-icon nzType="idcard" nzTheme="outline" aria-hidden="true"></span>Consumers</h1>
                     </nz-col>
                 </nz-row>
                 <nz-row class="cardGrid" nzJustify="center">
@@ -125,7 +125,7 @@
                             <div class="entity-card" [ngSwitch]="d.type">
                                 <ng-container *ngSwitchCase="'local'">
                                     <div class="image">
-                                        <span nz-icon nzType="lock" nzTheme="outline"></span>
+                                        <span nz-icon nzType="lock" nzTheme="outline" aria-hidden="true"></span>
                                     </div>
                                     <div class="content">
                                         Local
@@ -133,7 +133,7 @@
                                 </ng-container>
                                 <ng-container *ngSwitchCase="'corporate-sso'">
                                     <div class="image">
-                                        <span nz-icon nzType="safety-certificate" nzTheme="outline"></span>
+                                        <span nz-icon nzType="safety-certificate" nzTheme="outline" aria-hidden="true"></span>
                                     </div>
                                     <div class="content">
                                         Corporate SSO
@@ -142,7 +142,7 @@
                                 <ng-container *ngSwitchCase="'ldap'">
                                     <ng-container *ngIf="!showLDAPSigninForm">
                                         <div class="image">
-                                            <span nz-icon nzType="book" nzTheme="outline"></span>
+                                            <span nz-icon nzType="book" nzTheme="outline" aria-hidden="true"></span>
                                         </div>
                                         <div class="content">
                                             LDAP
@@ -151,15 +151,15 @@
                                         <ng-container *ngIf="showLDAPSigninForm">
                                             <form nz-form #ldapSigninForm="ngForm">
                                                 <nz-form-item>
-                                                    <nz-form-label>LDAP Bind*</nz-form-label>
+                                                    <nz-form-label nzFor="cds-field-ldap-bind">LDAP Bind*</nz-form-label>
                                                     <nz-form-control>
-                                                        <input nz-input type="text" name="bind" ngModel required>
+                                                        <input nz-input type="text" name="bind" id="cds-field-ldap-bind" ngModel required>
                                                     </nz-form-control>
                                                 </nz-form-item>
                                                 <nz-form-item>
-                                                    <nz-form-label>{{ 'user_label_password' | translate }}*</nz-form-label>
+                                                    <nz-form-label nzFor="cds-field-ldap-password">{{ 'user_label_password' | translate }}*</nz-form-label>
                                                     <nz-form-control>
-                                                        <input nz-input type="password" name="password" ngModel required>
+                                                        <input nz-input type="password" name="password" id="cds-field-ldap-password" ngModel required>
                                                     </nz-form-control>
                                                 </nz-form-item>
                                             </form>
@@ -167,7 +167,7 @@
                                 </ng-container>
                                 <ng-container *ngSwitchCase="'openid-connect'">
                                     <div class="image">
-                                        <span nz-icon nzType="lock" nzTheme="outline"></span>
+                                        <span nz-icon nzType="lock" nzTheme="outline" aria-hidden="true"></span>
                                     </div>
                                     <div class="content">
                                         OpenID Connect
@@ -175,7 +175,7 @@
                                 </ng-container>
                                 <ng-container *ngSwitchDefault>
                                     <div class="image">
-                                        <span nz-icon nzType="{{d.type}}" nzTheme="outline"></span>
+                                        <span nz-icon nzType="{{d.type}}" nzTheme="outline" aria-hidden="true"></span>
                                     </div>
                                     <div class="content">
                                         {{d.type | titlecase}}
@@ -226,6 +226,7 @@
                         <h2>
                             My consumers
                             <span nz-icon nzType="plus-circle" nzTheme="fill" class="green" *ngIf="user.id === currentAuthSummary.user.id"
+                                  appClickable aria-label="Create a new consumer"
                                   (click)="clickConsumerCreate()"></span>
                         </h2>
                         <app-data-table [withFilter]="filterConsumers" [withPagination]="10" [columns]="columnsConsumers"
@@ -262,7 +263,7 @@
                                 <nz-form-item>
                                     <nz-form-control>
                                         <nz-input-group>
-                                            <textarea rows="4" nz-input [(ngModel)]="importPublicGPGKey" [ngModelOptions]="{standalone: true}" placeholder="Paste here a GPG public key "></textarea>
+                                            <textarea rows="4" nz-input [(ngModel)]="importPublicGPGKey" [ngModelOptions]="{standalone: true}" placeholder="Paste here a GPG public key " aria-label="GPG public key to add"></textarea>
                                         </nz-input-group>
                                     </nz-form-control>
                                 </nz-form-item>
@@ -290,7 +291,7 @@
                           <tr *ngFor="let data of gpgKeysTable.data">
                             <td>{{data.key_id}}</td>
                             <td>
-                                <textarea nz-input [ngModel]="data.public_key" readonly rows="10"></textarea>
+                                <textarea nz-input [ngModel]="data.public_key" readonly rows="10" aria-label="Public key {{data.key_id}}"></textarea>
                             </td>
                             <td>
                                 <button nz-button nzDanger nzType="primary" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this key ?" (nzOnConfirm)="deleteGPGKey(data)">Delete</button>

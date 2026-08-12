@@ -3,7 +3,7 @@
   <!-- Number -->
   @case ('number') {
     <div>
-      <input nz-input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
+      <input nz-input type="number" aria-label="Variable value" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
     </div>
   }
   <!-- Boolean -->
@@ -13,19 +13,19 @@
   <!-- Password -->
   @case ('password') {
     <div>
-      <input nz-input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
+      <input nz-input type="password" aria-label="Variable value" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
     </div>
   }
   <!-- Text -->
   @case ('text') {
     <div>
-      <textarea nz-input [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value?.toString())}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
+      <textarea nz-input aria-label="Variable value" [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value?.toString())}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
     </div>
   }
   <!-- String -->
   @default {
     <div>
-      <input nz-input [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+      <input nz-input aria-label="Variable value" [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
     </div>
   }
 }

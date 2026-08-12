@@ -6,10 +6,10 @@
     </div>
     <h3>Hook configuration</h3>
     <nz-form-item>
-        <nz-form-label [nzSm]="6" [nzXs]="24">hook type</nz-form-label>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="cds-field-hookform-type">hook type</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24">
             <ng-container *ngIf="isRun">
-                <input nz-input name="modelName" [value]="hook?.hook_model_name" [readOnly]="true">
+                <input nz-input id="cds-field-hookform-type" name="modelName" [value]="hook?.hook_model_name" [readOnly]="true">
             </ng-container>
             <ng-container *ngIf="!isRun">
                 <ng-container *ngIf="!loadingModels">
@@ -21,23 +21,23 @@
         </nz-form-control>
     </nz-form-item>
     <nz-form-item *ngIf="hook?.uuid">
-        <nz-form-label [nzSm]="6" [nzXs]="24">uuid</nz-form-label>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="cds-field-hookform-uuid">uuid</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24">
-                <input nz-input name="uuid" [value]="hook.uuid" [readOnly]="true">
+                <input nz-input id="cds-field-hookform-uuid" name="uuid" [value]="hook.uuid" [readOnly]="true">
         </nz-form-control>
     </nz-form-item>
     <ng-container *ngIf="hook?.model && displayConfig">
         <ng-container *ngIf="hook.config && hook.model.name !== 'Workflow'">
             <nz-form-item *ngFor="let k of hook.config | keys">
-                <nz-form-label [nzSm]="6" [nzXs]="24">{{k}}</nz-form-label>
+                <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="cds-field-hookform-{{k}}">{{k}}</nz-form-label>
                 <nz-form-control [nzSm]="14" [nzXs]="24">
                     <!-- STRING -->
                     <ng-container *ngIf="k !== 'payload' && (hook.config[k].type === 'string' || !hook.config[k].type)">
-                        <input nz-input name="{{k}}" [(ngModel)]="hook.config[k].value" [readonly]="!hook.config[k].configurable || mode === 'ro'"/>
+                        <input nz-input id="cds-field-hookform-{{k}}" name="{{k}}" [(ngModel)]="hook.config[k].value" [readonly]="!hook.config[k].configurable || mode === 'ro'"/>
                     </ng-container>
                     <!-- PASSWORD -->
                     <ng-container  *ngIf="k !== 'payload' && hook.config[k].type === 'password'">
-                        <input nz-input name="{{k}}" type="password" [(ngModel)]="hook.config[k].value"
+                        <input nz-input id="cds-field-hookform-{{k}}" name="{{k}}" type="password" [(ngModel)]="hook.config[k].value"
                                [readonly]="!hook.config[k].configurable || mode === 'ro'"/>
                     </ng-container>
                     <!-- MULTICHOICE -->
@@ -51,6 +51,7 @@
                     <!-- PAYLOAD -->
                     <ng-container *ngIf="k === 'payload' && hook.config[k].type === 'string'">
                         <codemirror name="{{k}}"
+                                aria-label="Hook payload editor"
                                 [class.invalid]="invalidJSON"
                                 [(ngModel)]="hook.config[k].value"
                                 [config]="codeMirrorConfig"

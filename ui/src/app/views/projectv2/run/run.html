@@ -8,18 +8,18 @@
   <div class="tests">
     Tests
     @if (tests && tests.ok > 0) {
-      <span class="ok">
-        <span nz-icon nzType="check" nzTheme="outline"></span>{{tests.ok}}
+      <span class="ok" [attr.aria-label]="tests.ok + ' passed'">
+        <span nz-icon nzType="check" nzTheme="outline" aria-hidden="true"></span>{{tests.ok}}
       </span>
     }
     @if (tests && tests.skipped > 0) {
-      <span class="skipped">
-        <span nz-icon nzType="warning" nzTheme="fill"></span>{{tests.skipped}}
+      <span class="skipped" [attr.aria-label]="tests.skipped + ' skipped'">
+        <span nz-icon nzType="warning" nzTheme="fill" aria-hidden="true"></span>{{tests.skipped}}
       </span>
     }
     @if (tests && tests.ko > 0) {
-      <span class="ko">
-        <span nz-icon nzType="close" nzTheme="outline"></span>{{tests.ko}}
+      <span class="ko" [attr.aria-label]="tests.ko + ' failed'">
+        <span nz-icon nzType="close" nzTheme="outline" aria-hidden="true"></span>{{tests.ko}}
       </span>
     }
   </div>
@@ -43,21 +43,21 @@
             [class.skipped]="run.status === 'Skipped'">#{{run.run_number}}</span>
             <ng-template #runDetails>
               <div class="run-details">
-                <div class="run-avatar" [title]="'Status: ' + run.status">
+                <div class="run-avatar" [title]="'Status: ' + run.status" role="img" [attr.aria-label]="'Status: ' + run.status">
                   @if (run.status === 'Success') {
                     <span class="success" nz-icon nzType="check-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Cancelled') {
                     <span class="cancelled" nz-icon nzType="close-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Fail') {
                     <span class="fail" nz-icon nzType="close-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Stopped') {
-                    <span class="stopped" nz-icon>
+                    <span class="stopped" nz-icon aria-hidden="true">
                       <svg>
                         <path d="M 760 260 h -500 v 500 h 500 z"></path>
                       </svg>
@@ -65,15 +65,15 @@
                   }
                   @if (run.status === 'Building') {
                     <span class="building" nz-icon nzType="play-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Blocked') {
                     <span class="blocked" nz-icon nzType="pause-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Skipped') {
                     <span class="skipped" nz-icon nzType="stop"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                 </div>
                 <div class="run-info">
@@ -101,7 +101,7 @@
             @if (workflowRun.run_attempt > 1 && selectedRunAttempt) {
               <nz-select
                 [ngModel]="selectedRunAttempt" (ngModelChange)="changeRunAttempt($event)" nzSize="small"
-                title="Select run attempt">
+                title="Select run attempt" aria-label="Select run attempt">
                 @for (item of [].constructor(workflowRun.run_attempt); track item; let i = $index) {
                   <nz-option
                   [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
@@ -110,14 +110,14 @@
             }
             <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
               (click)="openPanel('sources')"><span nz-icon nzType="file-text"
-            nzTheme="outline"></span>Sources</button>
+            nzTheme="outline" aria-hidden="true"></span>Sources</button>
             <button nz-button nzType="default" nzSize="small" title="Show workflow run contexts"
               (click)="openPanel('contexts')"><span nz-icon nzType="read"
-            nzTheme="outline"></span>Contexts</button>
+            nzTheme="outline" aria-hidden="true"></span>Contexts</button>
             <a nz-button nzType="link" title="Show workflow in Explore view"
               [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.vcs_server, 'repository', workflowRun.repository, 'workflow', workflowRun.workflow_name]"
               [queryParams]="{ref: workflowRun.workflow_ref}">
-              <span nz-icon nzType="folder-view" nzTheme="outline"></span>Show in Explore</a>
+              <span nz-icon nzType="folder-view" nzTheme="outline" aria-hidden="true"></span>Show in Explore</a>
             </nz-page-header-title>
             <nz-page-header-content>
               <span nz-typography nzType="secondary">
@@ -127,7 +127,7 @@
                     [routerLink]="['/project', workflowRun.contexts.cds.workflow_template_project_key, 'explore', 'vcs', workflowRun.contexts.cds.workflow_template_vcs_server, 'repository', workflowRun.contexts.cds.workflow_template_repository, 'workflowtemplate', workflowRun.contexts.cds.workflow_template]">
                   {{workflowRun.contexts.cds.workflow_template_vcs_server}}/{{workflowRun.contexts.cds.workflow_template_repository}}/{{workflowRun.contexts.cds.workflow_template}}</a>
                   <span class="templateDetails" nz-icon nzType="eye" nzTheme="outline" nz-tooltip
-                  [nzTooltipTitle]="templateTooltip"></span>
+                  [nzTooltipTitle]="templateTooltip" role="img" aria-label="Template details"></span>
                   <ng-template #templateTooltip>
                     Repository: <a
                     href="{{workflowRun.contexts.cds.workflow_template_repository_web_url}}"
@@ -190,7 +190,7 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
       <app-searchable [link]="['/project', projectKey, 'run']"
         [params]="generateAnnotationQueryParams(annotation)">
         @if (annotation.value !== 'true') {
-          <nz-tag nzColor="default" style="cursor: copy;"
+          <nz-tag nzColor="default" style="cursor: copy;" appClickable
             title="key: {{annotation.key}} - value: {{annotation.value}}"
             (click)="confirmCopyAnnotationValue($event, annotation.value)">
             <b>{{annotation.key}}:</b> {{annotation.value}}
@@ -241,8 +241,8 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
         </button>
       }
       <button nz-button nzSize="large" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="topRight"
-        [nzLoading]="loading.restart">
-        <span nz-icon nzType="ellipsis"></span>
+        [nzLoading]="loading.restart" aria-label="More job selection options">
+        <span nz-icon nzType="ellipsis" aria-hidden="true"></span>
         <nz-dropdown-menu #menu="nzDropdownMenu">
           <ul nz-menu>
             @if (hasJobsFailed) {
@@ -265,8 +265,8 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
     run</button>
   }
   <div class="help" nz-tooltip [nzTooltipTitle]="keyboardShortcutsTooltip" nzTooltipPlacement="top"
-    [nzTooltipOverlayStyle]="{maxWidth: '350px'}">
-    <nz-icon nzType="question-circle" nzTheme="outline" />
+    [nzTooltipOverlayStyle]="{maxWidth: '350px'}" role="img" aria-label="Keyboard shortcuts help">
+    <nz-icon nzType="question-circle" nzTheme="outline" aria-hidden="true" />
   </div>
   <ng-template #keyboardShortcutsTooltip>
     <div class="shortcuts-tooltip">
@@ -315,16 +315,16 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
     (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)"
     (dblclick)="$event.stopPropagation(); dblClickOnPanel()">
     <div class="controls">
-      <div class="control" title="Close panel" (click)="clickClosePanel()">
-        <span nz-icon nzType="close" nzTheme="outline"></span>
+      <div class="control" title="Close panel" appClickable aria-label="Close panel" (click)="clickClosePanel()">
+        <span nz-icon nzType="close" nzTheme="outline" aria-hidden="true"></span>
       </div>
-      <div class="control" title="Expand/Reduce panel" [class.expand]="!panelExpanded"
-        [class.expanded]="panelExpanded" (click)="clickExpandPanel()">
-        <span nz-icon nzType="vertical-align-top" nzTheme="outline"></span>
+      <div class="control" title="Expand/Reduce panel" appClickable aria-label="Expand or reduce panel" [class.expand]="!panelExpanded"
+        [class.expanded]="panelExpanded" (click)="clickExpandPanel()" [attr.aria-expanded]="panelExpanded">
+        <span nz-icon nzType="vertical-align-top" nzTheme="outline" aria-hidden="true"></span>
       </div>
-      <a class="control" title="Copy share link" [href]="selectedItemShareLink" #shareLink
+      <a class="control" title="Copy share link" aria-label="Copy share link" [href]="selectedItemShareLink" #shareLink
         (click)="confirmCopy($event)">
-        <span nz-icon nzType="share-alt" nzTheme="outline"></span>
+        <span nz-icon nzType="share-alt" nzTheme="outline" aria-hidden="true"></span>
       </a>
     </div>
     @if (selectedItemType === 'job') {

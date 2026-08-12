@@ -1,7 +1,7 @@
 @if (filterFunc && allData && allData.length > 1) {
   <nz-row>
     <nz-col [nzSpan]="24">
-      <input nz-input type="text" placeholder="Filter" [(ngModel)]="filter"
+      <input nz-input type="text" placeholder="Filter" aria-label="Filter" [(ngModel)]="filter"
         (keyup)="filterKeyUp()">
     </nz-col>
   </nz-row>
@@ -19,6 +19,10 @@
           <th class="wide {{c.class}}" [class.sortable]="c.sortable && c !== sortedColumn"
             [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'"
             [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
+            [attr.aria-sort]="c.sortable ? (c === sortedColumn ? (sortedColumnDirection === 'desc' ? 'descending' : 'ascending') : 'none') : null"
+            [attr.tabindex]="c.sortable ? 0 : null"
+            (keydown.enter)="columnClick($event, c)"
+            (keydown.space)="$event.preventDefault(); columnClick($event, c)"
             (click)="columnClick($event, c)">
             {{ c.name | translate }}
           </th>
@@ -30,6 +34,9 @@
     <tbody>
       @for (d of table.data; track d; let i = $index) {
         <tr (click)="lineClick(i, d)"
+          [attr.tabindex]="withLineClick ? 0 : null"
+          (keydown.enter)="lineKeyActivate($event, i, d)"
+          (keydown.space)="lineKeyActivate($event, i, d)"
           [class.pointing]="withLineClick" [class.active]="withLineClick && indexSelected === i">
           @if (withSelect) {
             <td class="wide">
@@ -52,7 +59,7 @@
                   @case ('img-text') {
                     <div class="vcenter">
                       @if (c.selector.img) {
-                        <img [src]="c.selector.img">
+                        <img [src]="c.selector.img" alt="">
                       }
                       <div class="{{c.selector.valueclass}}">
                         {{ c.selector.value }}
@@ -60,7 +67,7 @@
                     </div>
                   }
                   @case ('link-click') {
-                    <a (click)="c.selector.callback()">
+                    <a appClickable (click)="c.selector.callback()">
                       {{c.selector.value}}
                     </a>
                   }
@@ -77,8 +84,8 @@
                   @case ('router-link-with-icons') {
                     <a [routerLink]="c.selector.link">{{c.selector.value}}</a>
                     @for (i of c.selector.icons; track i) {
-                      <span nz-tooltip [nzTooltipTitle]="i.label | translate">
-                        {{' '}}<i nz-icon [nzType]="i.iconType" [nzTheme]="i.iconTheme" [class]="i.iconColor"></i>
+                      <span nz-tooltip [nzTooltipTitle]="i.label | translate" [attr.aria-label]="i.label | translate" role="img">
+                        {{' '}}<i nz-icon [nzType]="i.iconType" [nzTheme]="i.iconTheme" [class]="i.iconColor" aria-hidden="true"></i>
                       </span>
                     }
                   }
@@ -94,7 +101,7 @@
                 @case ('button') {
                   <button nz-button [nzType]="c.selector.buttonType" [nzDanger]="c.selector.buttonDanger" [class]="c.class"
                     (click)="c.selector.click()">
-                    <i nz-icon [nzType]="c.selector.iconType" [nzTheme]="c.selector.iconTheme" [class]="c.selector.iconColor"></i>
+                    <i nz-icon [nzType]="c.selector.iconType" [nzTheme]="c.selector.iconTheme" [class]="c.selector.iconColor" aria-hidden="true"></i>
                     {{c.selector.title | translate}}
                   </button>
                 }
@@ -110,10 +117,10 @@
                   <div>
                     @if (c.selector) {
                       <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
-                        <input nz-input type="text" value="{{c.selector}}"  />
+                        <input nz-input type="text" value="{{c.selector}}" aria-label="Value to copy"  />
                       </nz-input-group>
                       <ng-template #suffixIconButton>
-                        <button nzSearch nz-button nzType="primary" ngxClipboard [cbContent]="c.selector"><i nz-icon nzType="copy"></i></button>
+                        <button nzSearch nz-button nzType="primary" ngxClipboard [cbContent]="c.selector" aria-label="Copy to clipboard"><i nz-icon nzType="copy" aria-hidden="true"></i></button>
                       </ng-template>
                     }
                   </div>
@@ -131,9 +138,9 @@
                   <span>
                     {{c.selector.value | translate}}
                     @for (i of c.selector.icons; track i) {
-                      <span nz-tooltip [nzTooltipTitle]="i.label | translate" [nzTooltipTrigger]="i.trigger ? i.trigger : 'hover'">
+                      <span nz-tooltip [nzTooltipTitle]="i.label | translate" [nzTooltipTrigger]="i.trigger ? i.trigger : 'hover'" [attr.aria-label]="i.label | translate" role="img">
                         {{' '}}@if (i.type) {
-                        <i nz-icon [nzType]="i.type" [nzTheme]="i.theme" [class]="i.class"></i>
+                        <i nz-icon [nzType]="i.type" [nzTheme]="i.theme" [class]="i.class" aria-hidden="true"></i>
                       }
                     </span>
                   }

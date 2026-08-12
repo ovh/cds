@@ -24,7 +24,7 @@
             <nz-divider nzText="OR"></nz-divider>
           </nz-col>
           <nz-col nzOffset="2" nzSpan="20">
-            <codemirror name="pipToImport" [(ngModel)]="pipToImport" (keydown)="updated = true"
+            <codemirror name="pipToImport" aria-label="Pipeline as code YAML editor" [(ngModel)]="pipToImport" (keydown)="updated = true"
             [config]="codeMirrorConfig" #codeMirror></codemirror>
           </nz-col>
           <nz-col nzOffset="2" nzSpan="20" class="footer">
@@ -42,18 +42,18 @@
         <nz-row>
           <nz-col nzSpan="20" nzOffset="2">
             <nz-form-item>
-              <nz-form-label nzSpan="3">Pipeline name</nz-form-label>
+              <nz-form-label nzSpan="3" nzFor="cds-field-pipname">Pipeline name</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="pipname" [(ngModel)]="newPipeline.name">
+                <input nz-input type="text" id="cds-field-pipname" name="pipname" [(ngModel)]="newPipeline.name">
               </nz-form-control>
               @if (pipPatternError) {
                 <nz-alert nzType="error" nzMessage="Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
               }
             </nz-form-item>
             <nz-form-item>
-              <nz-form-label nzSpan="3">Description</nz-form-label>
+              <nz-form-label nzSpan="3" nzFor="cds-field-pipdescription">Description</nz-form-label>
               <nz-form-control>
-                <textarea nz-input type="text" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
+                <textarea nz-input type="text" id="cds-field-pipdescription" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
               </nz-form-control>
             </nz-form-item>
           </nz-col>

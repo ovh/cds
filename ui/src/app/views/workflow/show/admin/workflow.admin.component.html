@@ -32,9 +32,9 @@
   <nz-card nzTitle="Settings" class="coloredTitle">
     <form nz-form (ngSubmit)="onSubmitWorkflowUpdate()">
       <nz-form-item>
-        <nz-form-label [nzSpan]="6">Workflow name</nz-form-label>
+        <nz-form-label [nzSpan]="6" nzFor="cds-field-admin-name">Workflow name</nz-form-label>
         <nz-form-control>
-          <input nz-input type="text" name="formWorkflowUpdateName"
+          <input nz-input type="text" name="formWorkflowUpdateName" id="cds-field-admin-name"
             [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
             [(ngModel)]="workflow.name" [disabled]="loading" required #formWorkflowUpdateName="ngModel"
             pattern="^[a-zA-Z0-9._-]{1,}$">
@@ -45,26 +45,26 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="6">Description</nz-form-label>
+        <nz-form-label [nzSpan]="6" nzFor="cds-field-admin-description">Description</nz-form-label>
         <nz-form-control>
-          <textarea nz-input name="description" [(ngModel)]="_workflow.description"
+          <textarea nz-input name="description" id="cds-field-admin-description" [(ngModel)]="_workflow.description"
           [disabled]="loading"></textarea>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="6">
+        <nz-form-label [nzSpan]="6" nzFor="cds-field-admin-tags">
           Add sidebar's tags
         </nz-form-label>
         <nz-form-control>
           @if (existingTags.length > 0) {
             <div class="selectTag">
-              <nz-select name="tags" nzShowSearch [nzLoading]="loading" [(ngModel)]="tagsToAdd" nzMode="multiple">
+              <nz-select name="tags" nzId="cds-field-admin-tags" nzShowSearch [nzLoading]="loading" [(ngModel)]="tagsToAdd" nzMode="multiple">
                 @for (i of existingTags; track i) {
                   <nz-option [nzValue]="i" [nzLabel]="i"></nz-option>
                 }
               </nz-select>
-              <button nz-button (click)="updateTagMetadata()" type="button" [disabled]="!tagsToAdd">
-                <i nz-icon nzType="plus" nzTheme="outline"></i>
+              <button nz-button (click)="updateTagMetadata()" type="button" [disabled]="!tagsToAdd" aria-label="Add sidebar's tags">
+                <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
               </button>
             </div>
           }
@@ -80,7 +80,7 @@
                 <nz-tag>
                   {{t + ' '}}
                   @if (workflow.permissions.writable) {
-                    <i nz-icon nzType="close" nzTheme="outline"  (click)="removeFromSelectedTags(i)"></i>
+                    <i nz-icon nzType="close" nzTheme="outline" appClickable [attr.aria-label]="'Remove tag ' + t" (click)="removeFromSelectedTags(i)"></i>
                   }
                 </nz-tag>
               }
@@ -93,9 +93,9 @@
       </nz-form-item>
       @if (!retentionRunsPolicyEnabled) {
         <nz-form-item>
-          <nz-form-label [nzSpan]="6">Maximum number of workflow runs</nz-form-label>
+          <nz-form-label [nzSpan]="6" nzFor="cds-field-admin-history-length">Maximum number of workflow runs</nz-form-label>
           <nz-form-control>
-            <input nz-input type="number" name="formWorkflowUpdateHistory" [disabled]="loading"
+            <input nz-input type="number" name="formWorkflowUpdateHistory" id="cds-field-admin-history-length" [disabled]="loading"
               [(ngModel)]="_workflow.history_length" required
               #formWorkflowUpdateHistory="ngModel" min="1" max="500">
           </nz-form-control>
@@ -103,16 +103,16 @@
       }
       @if (!retentionRunsPolicyEnabled) {
         <nz-form-item>
-          <nz-form-label [nzSpan]="6">Purge tags</nz-form-label>
+          <nz-form-label [nzSpan]="6" nzFor="cds-field-admin-purge-tags">Purge tags</nz-form-label>
           <nz-form-control>
             <div class="selectTag">
-              <nz-select nzShowSearch nzMode="multiple" name="sidebartagzonehistory" [(ngModel)]="tagsToAddPurge" [nzLoading]="loading">
+              <nz-select nzShowSearch nzMode="multiple" name="sidebartagzonehistory" nzId="cds-field-admin-purge-tags" [(ngModel)]="tagsToAddPurge" [nzLoading]="loading">
                 @for (i of existingTagsPurge; track i) {
                   <nz-option [nzValue]="i" [nzLabel]="i">
                   </nz-option>
                 }
               </nz-select>
-              <button nz-button (click)="updateTagPurge()" type="button" [disabled]="!tagsToAddPurge"><i nz-icon nzType="plus" nzTheme="outline"></i></button>
+              <button nz-button (click)="updateTagPurge()" type="button" [disabled]="!tagsToAddPurge" aria-label="Add purge tags"><i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i></button>
             </div>
           </nz-form-control>
         </nz-form-item>
@@ -128,7 +128,7 @@
                   <nz-tag>
                     {{t + ' '}}
                     @if (workflow.permissions.writable) {
-                      <i nz-icon nzType="close" nzTheme="outline"
+                      <i nz-icon nzType="close" nzTheme="outline" appClickable [attr.aria-label]="'Remove purge tag ' + t"
                       (click)="removeFromSelectedTagsPurge(i)"></i>
                     }
                   </nz-tag>
@@ -201,13 +201,13 @@
                 }
                 <div class="alignRight">
                   @if (dryRunStatus === 'INCOMING') {
-                    <i nz-icon [nzType]="'sync'" [nzSpin]="true" class="blue"></i>
+                    <i nz-icon [nzType]="'sync'" [nzSpin]="true" class="blue" role="img" aria-label="Status: in progress"></i>
                   }
                   @if (dryRunStatus === 'ERROR') {
-                    <i nz-icon nzType="close-circle" nzTheme="outline" class="red"></i>
+                    <i nz-icon nzType="close-circle" nzTheme="outline" class="red" role="img" aria-label="Status: error"></i>
                   }
                   @if (dryRunStatus === 'DONE') {
-                    <i nz-icon nzType="check-circle" nzTheme="outline" class="green"></i>
+                    <i nz-icon nzType="check-circle" nzTheme="outline" class="green" role="img" aria-label="Status: done"></i>
                   }
                   {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed ( ' +
                   dryRunDatas.length + ' runs kept )'}}
@@ -231,9 +231,9 @@
         </nz-form-item>
       }
       <nz-form-item>
-        <nz-form-label>Current run number</nz-form-label>
+        <nz-form-label nzFor="cds-field-admin-run-number">Current run number</nz-form-label>
         <nz-form-control>
-          <input nz-input type="number" name="formWorkflowRunNumUpdateNumber"
+          <input nz-input type="number" name="formWorkflowRunNumUpdateNumber" id="cds-field-admin-run-number"
             [(ngModel)]="runnumber" required
             #formWorkflowRunNumUpdateNumber="ngModel">
         </nz-form-control>
@@ -254,15 +254,15 @@
   <nz-card nzTitle="Integrations" class="coloredTitle">
     <form nz-form>
       <nz-form-item>
-        <nz-form-label>Link an integration</nz-form-label>
+        <nz-form-label nzFor="cds-field-admin-integration">Link an integration</nz-form-label>
         <nz-form-control>
           <div class="selectTag">
-            <nz-select nzShowSearch name="selectIntegration" [(ngModel)]="selectedIntegration" placeholder="Link an integration...">
+            <nz-select nzShowSearch name="selectIntegration" nzId="cds-field-admin-integration" [(ngModel)]="selectedIntegration" placeholder="Link an integration...">
               @for (t of filteredIntegrations; track t) {
                 <nz-option [nzValue]="t" [nzLabel]="t.name"></nz-option>
               }
             </nz-select>
-            <button nz-button type="button" nzType="primary" [nzLoading]="loading" (click)="addIntegration()"><i nz-icon nzType="plus" nzTheme="outline"></i>Link</button>
+            <button nz-button type="button" nzType="primary" [nzLoading]="loading" (click)="addIntegration()"><i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>Link</button>
           </div>
         </nz-form-control>
       </nz-form-item>

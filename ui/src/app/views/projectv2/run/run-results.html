@@ -1,13 +1,13 @@
 <div class="form">
   <nz-input-group [nzSuffix]="suffixIcon">
-    <input type="text" nz-input placeholder="Search" [ngModel]="searchValue" (ngModelChange)="updateSearch($event)" />
+    <input type="text" nz-input placeholder="Search" aria-label="Search results" [ngModel]="searchValue" (ngModelChange)="updateSearch($event)" />
   </nz-input-group>
   <ng-template #suffixIcon>
-    <span nz-icon nzType="search"></span>
+    <span nz-icon nzType="search" aria-hidden="true"></span>
   </ng-template>
   <button [class.active]="filtered" nz-button nzType="default" nz-popover [nzPopoverContent]="contentFilter"
-    nzPopoverPlacement="bottomRight" nzPopoverTrigger="click">
-    <span nz-icon nzType="filter" nzTheme="outline"></span>
+    nzPopoverPlacement="bottomRight" nzPopoverTrigger="click" aria-label="Filter results">
+    <span nz-icon nzType="filter" nzTheme="outline" aria-hidden="true"></span>
     @if (filtered && results?.length > 0) {
       <span>{{filteredResults?.length}}/{{results?.length}}</span>
     }
@@ -18,17 +18,17 @@
 </div>
 <nz-list nzSize="small" [nzDataSource]="filteredResults">
   @for (item of filteredResults; track item) {
-    <nz-list-item (click)="clickResult(item.result)">
+    <nz-list-item appClickable (click)="clickResult(item.result)">
       <span class="identifier" [title]="item.result.identifier">{{item.result.identifier}}</span>
       <span class="label" [title]="item.result.label">{{item.result.label}}</span>
       @if (item.downloadLink) {
         <a [href]="item.downloadLink" target="_blank" rel="noopener noreferrer"
-          title="Download the result" (click)="$event.stopPropagation()"><i nz-icon nzType="download"
-        nzTheme="outline"></i></a>
+          title="Download the result" aria-label="Download the result" (click)="$event.stopPropagation()"><i nz-icon nzType="download"
+        nzTheme="outline" aria-hidden="true"></i></a>
       }
       @if (item.viewLink) {
-        <a [href]="item.viewLink" target="_blank" rel="noopener noreferrer" title="View the result"
-          (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
+        <a [href]="item.viewLink" target="_blank" rel="noopener noreferrer" title="View the result" aria-label="View the result"
+          (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline" aria-hidden="true"></i></a>
         }
       </nz-list-item>
     }

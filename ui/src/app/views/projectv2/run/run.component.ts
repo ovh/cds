@@ -21,6 +21,7 @@ import { NzDrawerService } from "ng-zorro-antd/drawer";
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from "../run-start/run-start.component";
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Clipboard } from '@angular/cdk/clipboard';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { GraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { Title } from "@angular/platform-browser";
 import { WebsocketV2Filter, WebsocketV2FilterType } from "app/model/websocket-v2";
@@ -119,6 +120,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     private _titleService = inject(Title);
     private _http = inject(HttpClient);
     private _eventV2Service = inject(EventV2Service);
+    private _liveAnnouncer = inject(LiveAnnouncer);
 
     constructor() {
         this.paramsSub = this._route.params.pipe(
@@ -158,6 +160,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             if (!event || [EventV2Type.EventRunCrafted, EventV2Type.EventRunBuilding, EventV2Type.EventRunEnded, EventV2Type.EventRunRestart].indexOf(event.type) === -1) { return; }
             if (!this.runs) { return; }
             const idx = this.runs.findIndex(run => run.id === event.workflow_run_id);
+            if (idx !== -1 && this.workflowRun && event.workflow_run_id === this.workflowRun.id
+                && this.runs[idx].status !== event.payload.status) {
+                this._liveAnnouncer.announce(`Run ${event.payload.run_number} ${event.payload.status}`, 'polite');
+            }
             delete (this.animatedRuns[event.payload.id]);
             this._cd.detectChanges();
             if (idx !== -1) {

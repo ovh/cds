@@ -1,6 +1,6 @@
 <nz-input-group [nzSuffix]="suffixIconSearch">
-    <input nz-input type="text" placeholder="{{'navbar_search' | translate}}" [(ngModel)]="model" (ngModelChange)="pushModification()" #searchinput>
+    <input nz-input type="text" placeholder="{{'navbar_search' | translate}}" [attr.aria-label]="'navbar_search' | translate" [(ngModel)]="model" (ngModelChange)="pushModification()" #searchinput>
 </nz-input-group>
 <ng-template #suffixIconSearch>
-    <i nz-icon nzType="search"></i>
+    <i nz-icon nzType="search" aria-hidden="true"></i>
 </ng-template>

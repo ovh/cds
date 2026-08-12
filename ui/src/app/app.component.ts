@@ -1,3 +1,4 @@
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
 import { Component, inject, NgZone, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
@@ -52,6 +53,7 @@ export class AppComponent implements OnInit, OnDestroy {
     _nzNotificationService = inject(NzNotificationService);
     _configService = inject(NzConfigService);
     _eventV2Service = inject(EventV2Service)
+    _liveAnnouncer = inject(LiveAnnouncer);
 
     @ViewChild('templateRootToast') toastTemplate: TemplateRef<any>;
     toastSubs: Subscription;
@@ -214,6 +216,7 @@ export class AppComponent implements OnInit, OnDestroy {
                 if (routeData[0]['title']) {
                     let title = format(routeData[0]['title'], routeData[1]);
                     this._titleService.setTitle(title);
+                    this._liveAnnouncer.announce(title, 'polite');
                 } else {
                     this._titleService.setTitle('CDS');
                 }
@@ -242,5 +245,13 @@ export class AppComponent implements OnInit, OnDestroy {
         this.zone.runOutsideAngular(() => {
             location.reload();
         });
+    }
+
+    skipToMain(e: Event): void {
+        e.preventDefault();
+        const el = document.getElementById('main-content');
+        if (el) {
+            el.focus();
+        }
     }
 }

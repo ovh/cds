@@ -9,10 +9,10 @@
           @if (task && task.config) {
             @for (k of task.config | keys; track k) {
               <nz-form-item>
-                <nz-form-label [nzSpan]="2">{{k}}</nz-form-label>
+                <nz-form-label [nzSpan]="2" nzFor="cds-field-{{k}}">{{k}}</nz-form-label>
                 <nz-form-control>
                   @if (k !== 'payload') {
-                    <input nz-input type="text" name="value-{{k}}" [ngModel]="task.config[k].value" [readonly]="true">
+                    <input nz-input type="text" name="value-{{k}}" id="cds-field-{{k}}" [ngModel]="task.config[k].value" [readonly]="true">
                   }
                   @if (k === 'payload') {
                     <codemirror class="code"name="value-{{k}}" [ngModel]="task.config[k].value" [config]="codeMirrorConfig"
@@ -35,23 +35,23 @@
             <h2>{{'workflow_hook_log_title' | translate}}</h2>
             @if (selectedExecution.workflow_run) {
               <nz-form-item>
-                <nz-form-label [nzSpan]="3">{{'workflow_hook_log_workflow_run' | translate}}</nz-form-label>
+                <nz-form-label [nzSpan]="3" nzFor="cds-field-hook-log">{{'workflow_hook_log_workflow_run' | translate}}</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="text" name="hook_log" [value]="selectedExecution?.workflow_run" [readonly]="true">
+                  <input nz-input type="text" name="hook_log" id="cds-field-hook-log" [value]="selectedExecution?.workflow_run" [readonly]="true">
                 </nz-form-control>
               </nz-form-item>
             }
             <nz-form-item>
-              <nz-form-label [nzSpan]="3">Status</nz-form-label>
+              <nz-form-label [nzSpan]="3" nzFor="cds-field-hook-status">Status</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="hook_status" [value]="selectedExecution.status" [readonly]="true">
+                <input nz-input type="text" name="hook_status" id="cds-field-hook-status" [value]="selectedExecution.status" [readonly]="true">
               </nz-form-control>
             </nz-form-item>
             @if (selectedExecution.last_error) {
               <nz-form-item>
-                <nz-form-label [nzSpan]="3">{{'common_error' | translate}}</nz-form-label>
+                <nz-form-label [nzSpan]="3" nzFor="cds-field-hook-error">{{'common_error' | translate}}</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="text" name="hook_error" [value]="selectedExecution?.last_error" [readonly]="true">
+                  <input nz-input type="text" name="hook_error" id="cds-field-hook-error" [value]="selectedExecution?.last_error" [readonly]="true">
                 </nz-form-control>
               </nz-form-item>
             }

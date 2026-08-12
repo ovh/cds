@@ -9,11 +9,11 @@
     </nz-col>
     <nz-col [nzSpan]="12">
         <div [ngSwitch]="parameter.type">
-            <input nz-input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}"
+            <input nz-input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}" aria-label="Parameter {{parameter.key}}"
                 [ngModel]="parameterValues[parameter.key]" (ngModelChange)="changeParam(parameter.key, $event)">
             <label *ngSwitchCase="'boolean'" nz-checkbox name="parameter-{{parameter.key}}"
                 [ngModel]="parameterValues[parameter.key]" (ngModelChange)="changeParam(parameter.key, $event)"></label>
-            <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}"
+            <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}" aria-label="Parameter {{parameter.key}} editor"
                 [ngModel]="parameterValues[parameter.key]" [config]="codeMirrorConfig"
                 (ngModelChange)="changeParam(parameter.key, $event)" #codemirror>
             </codemirror>

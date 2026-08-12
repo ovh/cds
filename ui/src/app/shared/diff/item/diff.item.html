@@ -4,7 +4,7 @@
       <nz-row>
         <nz-col [nzSpan]="24">
           <codemirror [(ngModel)]="contentLeft" [config]="codeMirrorConfig" (change)="onCodeLeftChange()"
-          #codeLeft></codemirror>
+          aria-label="Diff content" #codeLeft></codemirror>
         </nz-col>
       </nz-row>
     }
@@ -12,11 +12,11 @@
       <nz-row>
         <nz-col [nzSpan]="12">
           <codemirror [(ngModel)]="contentLeft" [config]="codeMirrorConfig" (change)="onCodeLeftChange()"
-          #codeLeft></codemirror>
+          aria-label="Original content" #codeLeft></codemirror>
         </nz-col>
         <nz-col [nzSpan]="12">
           <codemirror [(ngModel)]="contentRight" [config]="codeMirrorConfig" (change)="onCodeRightChange()"
-          #codeRight></codemirror>
+          aria-label="Modified content" #codeRight></codemirror>
         </nz-col>
       </nz-row>
     }

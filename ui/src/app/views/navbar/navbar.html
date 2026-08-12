@@ -1,4 +1,4 @@
-<nz-header [class.not-dark]="!darkActive" class="navbar">
+<nz-header [class.not-dark]="!darkActive" class="navbar" role="navigation" aria-label="Main navigation">
   @if (!homeActive) {
     <a href="#" [routerLink]="['/']" class="logo">
       <img src="assets/images/cds.png" alt="CDS logo" title="{{'navbar_home' | translate}}" />
@@ -8,7 +8,7 @@
     <!-- PROJECTS -->
     <nz-select nzShowSearch nzPlaceHolder="Select a project..." [ngModel]="selectedProjectKey"
       (ngModelChange)="navigateToProject($event)" [class.not-dark]="!darkActive"
-      [nzDropdownMatchSelectWidth]="false">
+      [nzDropdownMatchSelectWidth]="false" aria-label="Select a project">
       @for (p of projects; track p) {
         <nz-option [nzLabel]="p.name + ' - ' + p.key" [nzValue]="p.key"></nz-option>
       }
@@ -19,7 +19,7 @@
     <!-- BOOKMARKS -->
     <button nz-dropdown [nzDropdownMenu]="bookmarksMenu" nz-button nzType="text" style="margin-right: 20px;">
       Bookmarks
-      <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+      <i nz-icon nzType="caret-down" nzTheme="fill" aria-hidden="true"></i>
     </button>
     <nz-dropdown-menu #bookmarksMenu="nzDropdownMenu">
       <ul nz-menu>
@@ -54,11 +54,11 @@
   <div class="menu-right">
     <!-- Maintainer part -->
     @if (currentAuthSummary && currentAuthSummary.isMaintainer()) {
-      <button nz-dropdown [nzDropdownMenu]="adminMenu" nz-button nzType="text">
+      <button nz-dropdown [nzDropdownMenu]="adminMenu" nz-button nzType="text" aria-label="Administration">
         <div>
-          <i nz-icon nzType="tool" nzTheme="fill"></i>
+          <i nz-icon nzType="tool" nzTheme="fill" aria-hidden="true"></i>
         </div>
-        <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+        <i nz-icon nzType="caret-down" nzTheme="fill" aria-hidden="true"></i>
       </button>
       <nz-dropdown-menu #adminMenu="nzDropdownMenu">
         <div nz-menu>
@@ -71,11 +71,11 @@
     }
 
     <!-- Settings -->
-    <button nz-dropdown [nzDropdownMenu]="settings" nz-button nzType="text">
+    <button nz-dropdown [nzDropdownMenu]="settings" nz-button nzType="text" aria-label="Settings">
       <div>
-        <i nz-icon nzType="setting" nzTheme="fill"></i>
+        <i nz-icon nzType="setting" nzTheme="fill" aria-hidden="true"></i>
       </div>
-      <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+      <i nz-icon nzType="caret-down" nzTheme="fill" aria-hidden="true"></i>
     </button>
     <nz-dropdown-menu #settings="nzDropdownMenu">
       <div nz-menu>
@@ -132,12 +132,13 @@
         }
 
         <div nz-menu-item>
-          <nz-switch [ngModel]="darkActive" (ngModelChange)="changeTheme()"></nz-switch>Dark mode
+          <nz-switch [ngModel]="darkActive" (ngModelChange)="changeTheme()" aria-label="Dark mode"></nz-switch>Dark mode
         </div>
 
         @if (currentAuthSummary) {
           <div nz-menu-divider></div>
-          <a nz-menu-item (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
+          <a nz-menu-item (click)="clickLogout()" role="button" tabindex="0"
+            (keydown.enter)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
         }
       </div>
     </nz-dropdown-menu>
@@ -145,8 +146,8 @@
     <!-- HELP -->
     @if (help?.content?.length > 0) {
       <div nz-popover [nzPopoverContent]="popupTemplateHelp"
-        nzPopoverPlacement="bottomRight">
-        <i nz-icon nzType="phone" nzTheme="fill"></i>
+        nzPopoverPlacement="bottomRight" role="button" tabindex="0" aria-label="Help and contact">
+        <i nz-icon nzType="phone" nzTheme="fill" aria-hidden="true"></i>
         <ng-template #popupTemplateHelp>
           <markdown [data]="help.content"></markdown>
         </ng-template>
@@ -166,8 +167,9 @@
       }
       @if (currentAuthSummary.user.ring === 'ADMIN' && !currentAuthSummary.isAdmin()) {
         <nz-tag nzColor="#f50"
-          style="cursor: pointer;" (click)="mfaLogin()" title="Elevate to admin">
-          Maintainer <i nz-icon nzType="unlock" nzTheme="fill"></i>
+          style="cursor: pointer;" (click)="mfaLogin()" title="Elevate to admin"
+          role="button" tabindex="0" aria-label="Elevate to admin" (keydown.enter)="mfaLogin()">
+          Maintainer <i nz-icon nzType="unlock" nzTheme="fill" aria-hidden="true"></i>
         </nz-tag>
       }
       @if (currentAuthSummary.isAdmin()) {

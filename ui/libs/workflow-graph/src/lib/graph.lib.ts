@@ -303,6 +303,20 @@ export class WorkflowV2Graph<T extends InteractiveNode> {
         this.previousTransformed = null;
     }
 
+    zoomIn(): void {
+        if (!this.zoom || !this.svg) {
+            return;
+        }
+        this.svg.call(this.zoom.scaleBy, 1.2);
+    }
+
+    zoomOut(): void {
+        if (!this.zoom || !this.svg) {
+            return;
+        }
+        this.svg.call(this.zoom.scaleBy, 1 / 1.2);
+    }
+
     /**
      * Center and zoom the viewport on a specific stage node.
      * Computes optimal scale for the stage bounding box, capped at maxOriginScale.
@@ -643,6 +657,30 @@ export class WorkflowV2Graph<T extends InteractiveNode> {
 
     selectNode(navigationKey: string): void {
         this.nodesComponent.forEach(n => n.instance.selectNode(navigationKey));
+    }
+
+    focusNode(navigationKey: string): void {
+        for (let i = 0; i < this.nodes.length; i++) {
+            if (this.nodes[i].type === GraphNodeType.Stage) {
+                continue;
+            }
+            const component = this.nodesComponent.get(`node-${this.nodes[i].key}`);
+            if (component && component.instance.match(navigationKey)) {
+                const instance = component.instance as any;
+                if (instance.focusNode) {
+                    instance.focusNode(navigationKey);
+                }
+                return;
+            }
+        }
+        for (let i = 0; i < this.nodes.length; i++) {
+            if (this.nodes[i].type === GraphNodeType.Stage) {
+                const subGraph = (this.nodesComponent.get(`node-${this.nodes[i].key}`)?.instance as any)?.graph as WorkflowV2Graph<T>;
+                if (subGraph) {
+                    subGraph.focusNode(navigationKey);
+                }
+            }
+        }
     }
 
     activateNode(navigationKey: string): void {

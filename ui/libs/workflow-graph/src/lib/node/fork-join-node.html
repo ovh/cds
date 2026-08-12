@@ -1,4 +1,4 @@
-<div class="node pointing" [class.highlight]="highlight" (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()"
+<div class="node pointing" aria-hidden="true" [class.highlight]="highlight" (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()"
      [class.success]="status === nodeStatusEnum.SUCCESS"
      [class.inactive]="status === nodeStatusEnum.SKIPPED"
      [class.fail]="status === nodeStatusEnum.FAIL">

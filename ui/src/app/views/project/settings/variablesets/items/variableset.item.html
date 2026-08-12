@@ -3,11 +3,11 @@
   <nz-row>
     <nz-col [nzSpan]="16">
       <nz-form-item>
-        <nz-form-label [nzSpan]="3">
+        <nz-form-label [nzSpan]="3" nzFor="cds-field-itemname">
           Item name
         </nz-form-label>
         <nz-form-control>
-          <input nz-input name="name" id="itemname" [(ngModel)]="newItem.name">
+          <input nz-input name="name" id="cds-field-itemname" [(ngModel)]="newItem.name">
           @if (errorItemName) {
             <nz-alert nzType="warning" nzMessage="Name must respect pattern ^[a-zA-Z0-9_-]{1,}$"></nz-alert>
           }
@@ -18,11 +18,11 @@
   <nz-row>
     <nz-col [nzSpan]="16">
       <nz-form-item>
-        <nz-form-label [nzSpan]="3">
+        <nz-form-label [nzSpan]="3" nzFor="cds-field-itemtype">
           Item Type
         </nz-form-label>
         <nz-form-control>
-          <nz-select [(ngModel)]="newItem.type" name="type">
+          <nz-select id="cds-field-itemtype" [(ngModel)]="newItem.type" name="type">
             <nz-option nzValue="string" nzLabel="string"></nz-option>
             <nz-option nzValue="secret" nzLabel="secret"></nz-option>
           </nz-select>
@@ -33,15 +33,15 @@
   <nz-row>
     <nz-col [nzSpan]="16">
       <nz-form-item>
-        <nz-form-label [nzSpan]="3">
+        <nz-form-label [nzSpan]="3" nzFor="cds-field-itemvalue">
           Item value
         </nz-form-label>
         <nz-form-control>
           @if (newItem.type === 'secret') {
-            <input nz-input type="password" name="value" [(ngModel)]="newItem.value">
+            <input nz-input type="password" id="cds-field-itemvalue" name="value" [(ngModel)]="newItem.value">
           }
           @if (newItem.type !== 'secret') {
-            <textarea nz-input  name="value" id="itemvalue" [(ngModel)]="newItem.value"></textarea>
+            <textarea nz-input  name="value" id="cds-field-itemvalue" [(ngModel)]="newItem.value"></textarea>
           }
           @if (errorItemValue) {
             <nz-alert nzType="warning" nzMessage="Value must not be empty"></nz-alert>
@@ -74,7 +74,7 @@
         <td>{{data.name}}</td>
         <td>{{data.type}}</td>
         <td>
-          <textarea nz-input  name="value" id="itemvalue" [(ngModel)]="data.value" (ngModelChange)="data.changed = true"></textarea>
+          <textarea nz-input  name="value" id="cds-field-item-{{data.name}}" aria-label="Value of item {{data.name}}" [(ngModel)]="data.value" (ngModelChange)="data.changed = true"></textarea>
         </td>
         <td>
           @if (data.changed) {

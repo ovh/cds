@@ -2,9 +2,9 @@
   <h3>Create an integration:</h3>
   <form nz-form>
     <nz-form-item>
-      <nz-form-label>Model</nz-form-label>
+      <nz-form-label nzFor="cds-field-integration-model">Model</nz-form-label>
       <nz-form-control>
-        <nz-select nzShowSearch name="model" [ngModel]="newIntegration.model" (ngModelChange)="updateConfig($event)">
+        <nz-select nzShowSearch id="cds-field-integration-model" name="model" [ngModel]="newIntegration.model" (ngModelChange)="updateConfig($event)">
           @for (m of models; track m) {
             <nz-option [nzLabel]="m.name" nzCustomContent [nzValue]="m">
               <div>{{ m.name }}</div>
@@ -27,14 +27,14 @@
     </nz-form-item>
     @if (newIntegration.model) {
       <nz-form-item>
-        <nz-form-label [nzSpan]="5">Integration name</nz-form-label>
+        <nz-form-label [nzSpan]="5" nzFor="cds-field-integration-name">Integration name</nz-form-label>
         <nz-form-control>
-          <input nz-input name="name" type="text" [(ngModel)]="newIntegration.name">
+          <input nz-input id="cds-field-integration-name" name="name" type="text" [(ngModel)]="newIntegration.name">
         </nz-form-control>
       </nz-form-item>
       @for (k of newIntegration.model.default_config | keys; track k) {
         <nz-form-item>
-          <nz-form-label [nzSpan]="5">
+          <nz-form-label [nzSpan]="5" nzFor="cds-field-new-{{k}}">
             {{k}}
             @if (newIntegration.config[k].description) {
               <span nz-tooltip
@@ -49,15 +49,15 @@
               [(ngModel)]="newIntegration.config[k].value"></label>
             }
             @if (newIntegration.config[k].type === 'string') {
-              <input nz-input type="text" name="{{k}}" [(ngModel)]="newIntegration.config[k].value"
+              <input nz-input type="text" id="cds-field-new-{{k}}" name="{{k}}" [(ngModel)]="newIntegration.config[k].value"
                 >
             }
             @if (newIntegration.config[k].type === 'text') {
-              <codemirror [(ngModel)]="newIntegration.config[k].value" [config]="codeMirrorConfig" #codeMirror>
+              <codemirror aria-label="{{k}}" [(ngModel)]="newIntegration.config[k].value" [config]="codeMirrorConfig" #codeMirror>
               </codemirror>
             }
             @if (newIntegration.config[k].type === 'password') {
-              <input nz-input type="password" name="{{k}}" [(ngModel)]="newIntegration.config[k].value"
+              <input nz-input type="password" id="cds-field-new-{{k}}" name="{{k}}" [(ngModel)]="newIntegration.config[k].value"
                 >
             }
           </nz-form-control>
@@ -93,8 +93,8 @@
           <td>
             {{ p.name }}
             @if (p.model.public) {
-              <span nz-tooltip nzTooltipTitle="Public integration" nzTooltipPlacement="top">
-                <i nz-icon nzType="check-circle" nzTheme="outline" class="green"></i>
+              <span nz-tooltip nzTooltipTitle="Public integration" nzTooltipPlacement="top" role="img" aria-label="Public integration">
+                <i nz-icon nzType="check-circle" nzTheme="outline" class="green" aria-hidden="true"></i>
               </span>
             }
           </td>
@@ -105,7 +105,7 @@
             <form nz-form>
               @for (k of p.config | keys; track k) {
                 <nz-form-item>
-                  <nz-form-label [nzSpan]="12">
+                  <nz-form-label [nzSpan]="12" nzFor="cds-field-{{p.name}}-{{k}}">
                     {{k}}
                     @if (p.config[k].description) {
                       <span nz-tooltip [nzTooltipTitle]="p.config[k].description"
@@ -117,38 +117,38 @@
                   <nz-form-control>
                     @if (p.config[k].static) {
                       @if (p.config[k].type !== 'password') {
-                        <input nz-input type="text" name="{{k}}-value"
+                        <input nz-input type="text" id="cds-field-{{p.name}}-{{k}}" name="{{k}}-value"
                           [(ngModel)]="p.config[k].value" readonly>
                       }
                       @if (p.config[k].type === 'password') {
-                        <input nz-input type="password" name="{{k}}-value"
+                        <input nz-input type="password" id="cds-field-{{p.name}}-{{k}}" name="{{k}}-value"
                           [(ngModel)]="p.config[k].value" readonly>
                       }
                     }
                     @if (!p.config[k].static) {
                       @if (p.config[k].type === 'boolean') {
-                        <input type="checkbox" name="{{k}}-value" [(ngModel)]="p.config[k].value"
+                        <input type="checkbox" id="cds-field-{{p.name}}-{{k}}" name="{{k}}-value" [(ngModel)]="p.config[k].value"
                           (keydown)="p.hasChanged = true"
                           [readonly]="p.model.public" />
                       }
                       @if (p.config[k].type === 'string') {
-                        <input nz-input type="text" name="{{k}}-value" [(ngModel)]="p.config[k].value"
+                        <input nz-input type="text" id="cds-field-{{p.name}}-{{k}}" name="{{k}}-value" [(ngModel)]="p.config[k].value"
                           (keydown)="p.hasChanged = true" [readonly]="p.model.public">
                       }
                       @if (p.config[k].type === 'text') {
                         @if (p.model.public) {
-                          <codemirror name="{{k}}-value" [(ngModel)]="p.config[k].value"
+                          <codemirror aria-label="{{k}}" name="{{k}}-value" [(ngModel)]="p.config[k].value"
                             [config]="codeMirrorConfigRO" #codeMirror (keydown)="p.hasChanged = true">
                           </codemirror>
                         }
                         @if (!p.model.public) {
-                          <codemirror name="{{k}}-value" [(ngModel)]="p.config[k].value"
+                          <codemirror aria-label="{{k}}" name="{{k}}-value" [(ngModel)]="p.config[k].value"
                             [config]="codeMirrorConfig" #codeMirror (keydown)="p.hasChanged = true">
                           </codemirror>
                         }
                       }
                       @if (p.config[k].type === 'password') {
-                        <input nz-input type="password" name="{{k}}-value" [(ngModel)]="p.config[k].value"
+                        <input nz-input type="password" id="cds-field-{{p.name}}-{{k}}" name="{{k}}-value" [(ngModel)]="p.config[k].value"
                           (keydown)="p.hasChanged = true" [readonly]="p.model.public">
                       }
                     }

@@ -2,9 +2,9 @@
   <nz-card nzTitle="Settings" class="coloredTitle">
     <form nz-form #applicationUpdateFrom="ngForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="3">Name</nz-form-label>
+        <nz-form-label [nzSpan]="3" nzFor="cds-field-appname">Name</nz-form-label>
         <nz-form-control>
-          <input nz-input type="text" name="formApplicationUpdateName" [(ngModel)]="newName" required
+          <input nz-input type="text" id="cds-field-appname" name="formApplicationUpdateName" [(ngModel)]="newName" required
             #formApplicationUpdateName="ngModel" pattern="[a-zA-Z0-9._-]*" [disabled]="loading">
           @if (formApplicationUpdateName.invalid && !formApplicationUpdateName.pristine) {
             <nz-alert nzType="error"
@@ -13,9 +13,9 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="3">Description</nz-form-label>
+        <nz-form-label [nzSpan]="3" nzFor="cds-field-appdescription">Description</nz-form-label>
         <nz-form-control>
-          <textarea nz-input class="app-description" type="text" name="formApplicationUpdateDescription"
+          <textarea nz-input class="app-description" type="text" id="cds-field-appdescription" name="formApplicationUpdateDescription"
             [(ngModel)]="application.description" required #formApplicationUpdateDescription="ngModel"
             [disabled]="loading">
           </textarea>
@@ -26,7 +26,7 @@
         <nz-form-control>
           <div>
             @if (application.icon) {
-              <img class="app-icon" [src]="application.icon" alt="application icon">
+              <img class="app-icon" [src]="application.icon" alt="Current application icon">
             }
           </div>
           <app-upload-button accept=".png,.jpg,.jpeg" [image]="true"

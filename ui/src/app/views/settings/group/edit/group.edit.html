@@ -7,9 +7,9 @@
           <nz-row>
             <nz-col [nzSpan]="24">
               <nz-form-item>
-                <nz-form-label>Group name</nz-form-label>
+                <nz-form-label nzFor="cds-field-name">Group name</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="text" name="name" [(ngModel)]="group.name"
+                  <input nz-input type="text" name="name" id="cds-field-name" [(ngModel)]="group.name"
                     [readonly]="loading">
                 </nz-form-control>
               </nz-form-item>
@@ -19,9 +19,9 @@
             <nz-row>
               <nz-col [nzSpan]="24">
                 <nz-form-item>
-                  <nz-form-label>Organization</nz-form-label>
+                  <nz-form-label nzFor="cds-field-organization">Organization</nz-form-label>
                   <nz-form-control>
-                    <input nz-input type="text" name="organization"
+                    <input nz-input type="text" name="organization" id="cds-field-organization"
                       [ngModel]="group.organization" readonly>
                   </nz-form-control>
                 </nz-form-item>
@@ -32,13 +32,13 @@
             <nz-row>
               <nz-col [nzSpan]="24">
                 <button nz-button nzType="primary" [nzLoading]="loading" (click)="saveGroup()">
-                  <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                  <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Save
                 </button>
                 @if (group.id) {
                   <button nz-button nzDanger nzType="primary" (nzOnConfirm)="clickDelete()"
                     [nzLoading]="deleteLoading" nzPopconfirmPlacement="topLeft"
                     nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this group ?">
-                    <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                    <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete
                   </button>
                 }
               </nz-col>
@@ -50,9 +50,9 @@
             @if (currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup) {
               <form nz-form>
                 <nz-form-item>
-                  <nz-form-label>Members</nz-form-label>
+                  <nz-form-label nzFor="cds-field-members">Members</nz-form-label>
                   <nz-form-control>
-                    <nz-select nzShowSearch name="username" [nzLoading]="loading" [(ngModel)]="addUserUsername">
+                    <nz-select nzShowSearch name="username" id="cds-field-members" [nzLoading]="loading" [(ngModel)]="addUserUsername">
                       @for (user of users; track user) {
 <nz-option [nzValue]="user.username" nzLabel="{{user.fullname}} - {{user.username}} {{user.organization ?
                                             '(' + user.organization + ')' : ''}}"></nz-option>
@@ -60,7 +60,7 @@
                     </nz-select>
                   </nz-form-control>
                   <button nz-button nzType="primary" [nzLoading]="loading" (click)="clickAddMember()">
-                    <i nz-icon nzType="plus" nzTheme="outline"></i>Add
+                    <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>Add
                   </button>
                 </nz-form-item>
               </form>
@@ -75,7 +75,7 @@
                     <th>
                       Username
                       <nz-filter-trigger [(nzVisible)]="usernameFilterVisible" [nzActive]="usernameFilter?.length > 0" [nzDropdownMenu]="usernameDropdown">
-                        <i nz-icon nzType="search"></i>
+                        <i nz-icon nzType="search" aria-hidden="true"></i>
                       </nz-filter-trigger>
                     </th>
                     <th>Fullname</th>
@@ -87,7 +87,7 @@
                     <tr>
                       <td>
                         @if (m.admin) {
-                          <span nz-icon nzType="crown" nzTheme="outline" title="{{ 'group_user_is_admin' | translate }}"></span>
+                          <span nz-icon nzType="crown" nzTheme="outline" title="{{ 'group_user_is_admin' | translate }}" role="img" [attr.aria-label]="'group_user_is_admin' | translate"></span>
                         }
                         {{m?.username}}
                       </td>
@@ -100,19 +100,19 @@
                             <button nz-button nzDanger nzType="primary" [nzLoading]="deleteLoading"
                               (nzOnConfirm)="clickRemoveMember(m.username)"
                               nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove {{m.fullname}} from this group ?">
-                              <i nz-icon nzType="delete" nzTheme="outline"></i>Remove
+                              <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Remove
                             </button>
                           }
                           @if (!m.admin) {
                             <button nz-button
                               [nzLoading]="loading" (click)="clickSetAdmin(m.username)">
-                              <i nz-icon nzType="plus" nzTheme="outline"></i>Admin
+                              <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>Admin
                             </button>
                           }
                           @if (m.admin) {
                             <button nz-button
                               [nzLoading]="loading" (click)="clickUnsetAdmin(m.username)">
-                              <span nz-icon nzType="minus" nzTheme="outline"></span>Admin
+                              <span nz-icon nzType="minus" nzTheme="outline" aria-hidden="true"></span>Admin
                             </button>
                           }
                         }
@@ -125,7 +125,7 @@
             <nz-dropdown-menu #usernameDropdown="nzDropdownMenu">
               <div class="ant-table-filter-dropdown">
                 <div class="search-box">
-                  <input type="text" nz-input placeholder="Search name" [(ngModel)]="usernameFilter" />
+                  <input type="text" nz-input placeholder="Search name" aria-label="Search name" [(ngModel)]="usernameFilter" />
                   <button nz-button nzSize="small" nzType="primary" (click)="searchUsername()" class="search-button">Search</button>
                   <button nz-button nzSize="small" (click)="usernameFilter = ''; searchUsername()">Reset</button>
                 </div>

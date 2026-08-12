@@ -9,7 +9,7 @@
     [scrollWindow]="false" (scrolled)="scroll()">
     @if (workflowRuns.length > 0) {
       @for (r of workflowRuns; track r) {
-        <div class="item pointing" (click)="changeRun(r.num)"
+        <div class="item pointing" appClickable [attr.aria-label]="'Run ' + (r.version ? r.version : r.num)" (click)="changeRun(r.num)"
           [class.active]="currentWorkflowRunNumber === r.num"
           [class.success]="r.status === pipelineStatusEnum.SUCCESS"
           [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
@@ -27,9 +27,9 @@
                     [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.version
                   ? r.version : r.num}}</span>
                 </div>
-                <a title="Copy version" ngxClipboard [cbContent]="r.version ? r.version : '' + r.num"
+                <a title="Copy version" aria-label="Copy version" appClickable ngxClipboard [cbContent]="r.version ? r.version : '' + r.num"
                   (click)="confirmCopy();$event.stopPropagation();"> <i nz-icon nzType="copy"
-                nzTheme="outline"></i></a>
+                nzTheme="outline" aria-hidden="true"></i></a>
               </div>
               <ng-template #popupTemplate>
                 <ul>

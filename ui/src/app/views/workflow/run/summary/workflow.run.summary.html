@@ -8,9 +8,10 @@
             [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
             [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
             [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED || workflowRun.status === pipelineStatusEnum.NEVER_BUILT">
+            <span class="cds-sr-only">{{'Status: ' + workflowRun.status}}</span>
             <nz-row>
               <nz-col [nzSpan]="7">
-                <i nz-icon nzType="calendar" nzTheme="outline"></i>
+                <i nz-icon nzType="calendar" nzTheme="outline" aria-hidden="true"></i>
                 <span>{{workflowRun.start | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</span>
               </nz-col>
               <nz-col [nzSpan]="10" class="center">
@@ -18,7 +19,7 @@
               </nz-col>
               <nz-col [nzSpan]="7" class="alignRight">
                 @if (workflowRun.status !== pipelineStatusEnum.BUILDING && workflowRun.status !== pipelineStatusEnum.WAITING) {
-                  <i nz-icon nzType="calendar" nzTheme="outline"></i>
+                  <i nz-icon nzType="calendar" nzTheme="outline" aria-hidden="true"></i>
                   <span>{{workflowRun.last_execution | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</span>
                 }
               </nz-col>
@@ -28,14 +29,14 @@
                 @if (direction === 'TB') {
                   <button nz-button class="direction"
                     (click)="changeDirection()">
-                    <i nz-icon nzType="arrow-right" nzTheme="outline"></i>
+                    <i nz-icon nzType="arrow-right" nzTheme="outline" aria-hidden="true"></i>
                     Workflow layout
                   </button>
                 }
                 @if (direction === 'LR') {
                   <button nz-button class="direction"
                     (click)="changeDirection()">
-                    <i nz-icon nzType="arrow-down" nzTheme="outline"></i>
+                    <i nz-icon nzType="arrow-down" nzTheme="outline" aria-hidden="true"></i>
                     Workflow layout
                   </button>
                 }
@@ -43,7 +44,7 @@
               <nz-col [nzSpan]="10" class="center">
                 @if (author) {
                   <div>
-                    <i nz-icon nzType="user" nzTheme="outline"></i>
+                    <i nz-icon nzType="user" nzTheme="outline" aria-hidden="true"></i>
                   </div>
                   {{author}}
                 }
@@ -65,7 +66,7 @@
                   <button nz-button nz-tooltip nzTooltipTitle="This action will resend to your repository manager the current status of all your pipelines"
                     [nzLoading]="loadingAction"
                     (click)="resyncVCSStatus()">
-                    <i nz-icon nzType="sync" nzTheme="outline"></i>
+                    <i nz-icon nzType="sync" nzTheme="outline" aria-hidden="true"></i>
                     {{ 'workflow_resync_vcs' | translate }}
                   </button>
                 </nz-col>
@@ -86,16 +87,16 @@
               </nz-row>
             }
           </nz-card>
-          <div class="semicircle" (click)="showInfos = !showInfos"
+          <div class="semicircle" appClickable aria-label="Run information" [attr.aria-expanded]="showInfos" (click)="showInfos = !showInfos"
             [class.building]="workflowRun.status === pipelineStatusEnum.PENDING || workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
             [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
             [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
             [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED || workflowRun.status === pipelineStatusEnum.NEVER_BUILT">
             @if (!showInfos) {
-              <i nz-icon nzType="down" nzTheme="outline"></i>
+              <i nz-icon nzType="down" nzTheme="outline" aria-hidden="true"></i>
             }
             @if (showInfos) {
-              <i nz-icon nzType="up" nzTheme="outline"></i>
+              <i nz-icon nzType="up" nzTheme="outline" aria-hidden="true"></i>
             }
           </div>
         </nz-col>

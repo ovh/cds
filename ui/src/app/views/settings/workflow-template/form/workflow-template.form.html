@@ -8,28 +8,28 @@
     <nz-row>
       <nz-col [nzSpan]="6">
         <nz-form-item>
-          <nz-form-label>Name*</nz-form-label>
+          <nz-form-label nzFor="cds-field-wt-name">Name*</nz-form-label>
           <nz-form-control>
-            <input nz-input type="text" name="name" [(ngModel)]="workflowTemplate.name"
+            <input nz-input type="text" name="name" id="cds-field-wt-name" [(ngModel)]="workflowTemplate.name"
               [readonly]="!workflowTemplate.editable">
           </nz-form-control>
         </nz-form-item>
       </nz-col>
       <nz-col [nzSpan]="6">
         <nz-form-item>
-          <nz-form-label>Slug*</nz-form-label>
+          <nz-form-label nzFor="cds-field-wt-slug">Slug*</nz-form-label>
           <nz-form-control>
-            <input nz-input type="text" name="slug" [ngModel]="workflowTemplate.slug" [disabled]="true">
+            <input nz-input type="text" name="slug" id="cds-field-wt-slug" [ngModel]="workflowTemplate.slug" [disabled]="true">
           </nz-form-control>
         </nz-form-item>
       </nz-col>
       <nz-col [nzSpan]="6">
         <nz-form-item>
-          <nz-form-label>Group*</nz-form-label>
+          <nz-form-label nzFor="cds-field-wt-group">Group*</nz-form-label>
           <nz-form-control>
             @if (groups && workflowTemplate.editable) {
               <nz-select nzShowSearch [nzDisabled]="loading"
-                name="group" [(ngModel)]="workflowTemplate.group_id">
+                name="group" id="cds-field-wt-group" [(ngModel)]="workflowTemplate.group_id">
                 @for (group of groups; track group) {
                   <nz-option [nzValue]="group.id"
                   [nzLabel]="group.name"></nz-option>
@@ -37,7 +37,7 @@
               </nz-select>
             }
             @if (!workflowTemplate.editable) {
-              <input nz-input type="text" name="group"
+              <input nz-input type="text" name="group" id="cds-field-wt-group-ro"
                 [ngModel]="workflowTemplate.group?.name" [readonly]="true">
             }
           </nz-form-control>
@@ -45,9 +45,9 @@
       </nz-col>
       <nz-col [nzSpan]="6">
         <nz-form-item>
-          <nz-form-label>Version</nz-form-label>
+          <nz-form-label nzFor="cds-field-wt-version">Version</nz-form-label>
           <nz-form-control>
-            <input nz-input type="text" name="version" [ngModel]="workflowTemplate.version"
+            <input nz-input type="text" name="version" id="cds-field-wt-version" [ngModel]="workflowTemplate.version"
               [disabled]="true">
           </nz-form-control>
         </nz-form-item>
@@ -56,9 +56,9 @@
     <nz-row>
       <nz-col [nzSpan]="24">
         <nz-form-item>
-          <nz-form-label>Description</nz-form-label>
+          <nz-form-label nzFor="cds-field-wt-description">Description</nz-form-label>
           <nz-form-control>
-            <textarea nz-input name="description" [(ngModel)]="workflowTemplate.description"
+            <textarea nz-input name="description" id="cds-field-wt-description" [(ngModel)]="workflowTemplate.description"
               (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
             [readonly]="!workflowTemplate.editable"></textarea>
           </nz-form-control>
@@ -76,7 +76,7 @@
           <nz-col [nzSpan]="12">
             <nz-form-item>
               <nz-form-control>
-                <input nz-input type="text" name="parameter-key-{{index}}" placeholder="Name"
+                <input nz-input type="text" name="parameter-key-{{index}}" placeholder="Name" aria-label="Parameter name"
                   [(ngModel)]="parameterValues[k].key" [readonly]="!workflowTemplate.editable">
               </nz-form-control>
             </nz-form-item>
@@ -112,9 +112,9 @@
           <nz-col [nzSpan]="2">
             <nz-form-item nzJustify="end">
               @if (workflowTemplate.editable) {
-                <button nz-button nzDanger nzType="primary"
+                <button nz-button nzDanger nzType="primary" aria-label="Remove parameter"
                   (click)="clickRemoveParameter(k)">
-                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                  <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>
                 </button>
               }
             </nz-form-item>
@@ -125,7 +125,7 @@
         <nz-col [nzSpan]="12">
           <nz-form-item>
             <nz-form-control>
-              <input nz-input type="text" name="parameter-key-add" placeholder="Name"
+              <input nz-input type="text" name="parameter-key-add" placeholder="Name" aria-label="New parameter name"
                 [(ngModel)]="parameterValueAdd.key">
             </nz-form-control>
           </nz-form-item>
@@ -153,8 +153,8 @@
         </nz-col>
         <nz-col [nzSpan]="2">
           <nz-form-item nzJustify="end">
-            <button nz-button nzType="primary" (click)="clickAddParameter()">
-              <i nz-icon nzType="plus" nzTheme="outline"></i>
+            <button nz-button nzType="primary" aria-label="Add parameter" (click)="clickAddParameter()">
+              <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
             </button>
           </nz-form-item>
         </nz-col>
@@ -185,8 +185,8 @@
         }
         <nz-row>
           @if (workflowTemplate.editable) {
-            <button nz-button nzType="primary" (click)="clickAddPipeline()">
-              <i nz-icon nzType="plus" nzTheme="outline"></i>
+            <button nz-button nzType="primary" aria-label="Add pipeline" (click)="clickAddPipeline()">
+              <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
             </button>
           }
         </nz-row>
@@ -207,9 +207,9 @@
         }
         <nz-row>
           @if (workflowTemplate.editable) {
-            <button nz-button nzType="primary"
+            <button nz-button nzType="primary" aria-label="Add application"
               (click)="clickAddApplication()">
-              <i nz-icon nzType="plus" nzTheme="outline"></i>
+              <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
             </button>
           }
         </nz-row>
@@ -230,9 +230,9 @@
         }
         <nz-row>
           @if (workflowTemplate.editable) {
-            <button nz-button nzType="primary"
+            <button nz-button nzType="primary" aria-label="Add environment"
               (click)="clickAddEnvironment()">
-              <i nz-icon nzType="plus" nzTheme="outline"></i>
+              <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
             </button>
           }
         </nz-row>
@@ -241,7 +241,7 @@
         <nz-row class="subItem">
           <nz-col [nzSpan]="24">
             <textarea nz-input name="changeMessage" [(ngModel)]="changeMessage"
-            [placeholder]="'workflow_template_change_message' | translate" [rows]="3"></textarea>
+            [placeholder]="'workflow_template_change_message' | translate" [attr.aria-label]="'workflow_template_change_message' | translate" [rows]="3"></textarea>
           </nz-col>
         </nz-row>
       }
@@ -250,13 +250,13 @@
       <nz-row class="subItem">
         <nz-col [nzSpan]="24">
           <button nz-button nzType="primary" class="floatRight" [nzLoading]="loading" (click)="clickSave()">
-            <i nz-icon nzType="save" nzTheme="outline"></i>Save
+            <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Save
           </button>
           @if (mode === 'edit') {
             <button class="floatRight" nz-button nzDanger nzType="primary"
               [nzLoading]="loading" nz-popconfirm
               nzPopconfirmTitle="Are you sure you want to delete this template ?" (nzOnConfirm)="clickDelete()">
-              <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+              <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete
             </button>
           }
         </nz-col>

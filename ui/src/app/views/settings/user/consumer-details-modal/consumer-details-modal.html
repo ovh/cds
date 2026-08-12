@@ -28,7 +28,7 @@
             {{groups}}
             @if (consumer.warnings) {
               <span nz-tooltip [nzTooltipTitle]="warningText">
-                {{' '}}<i nz-icon nzType="warning" nzTheme="fill" class="orange" nz-tooltip nzTooltipTitle="{{warningText}}"></i>
+                {{' '}}<i nz-icon nzType="warning" nzTheme="fill" class="orange" nz-tooltip nzTooltipTitle="{{warningText}}" role="img" [attr.aria-label]="warningText"></i>
               </span>
             }
           </nz-form-control>
@@ -63,7 +63,7 @@
         @if (menuItems?.size > 0) {
           <ul nz-menu nzMode="horizontal">
             @for (entry of menuItems | forMap; track entry) {
-              <li nz-menu-item [nzSelected]="selectedItem === entry.key" (click)="selectMenuItem(entry.key)">
+              <li nz-menu-item appClickable [nzSelected]="selectedItem === entry.key" (click)="selectMenuItem(entry.key)">
                 {{entry.value}}
               </li>
             }
@@ -125,12 +125,12 @@
                     <button nz-button nzType="primary" (click)="clickRegen(false)">Regen
                     </button>
                     <button nz-button nzType="primary" nz-dropdown [nzDropdownMenu]="menu"
-                      nzPlacement="bottomRight">
-                      <i nz-icon nzType="down"></i>
+                      nzPlacement="bottomRight" aria-label="More regenerate options">
+                      <i nz-icon nzType="down" aria-hidden="true"></i>
                     </button>
                     <nz-dropdown-menu #menu="nzDropdownMenu">
                       <ul nz-menu>
-                        <li nz-menu-item (click)="clickRegen(true)">
+                        <li nz-menu-item appClickable (click)="clickRegen(true)">
                           {{'auth_consumer_regen_revoke' | translate }}
                         </li>
                       </ul>
