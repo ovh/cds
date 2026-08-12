@@ -17,7 +17,7 @@ testcases:
         from: result.systemoutjson.username
   - name: "Display username"
     info: "Connected CDS user is {{.cdsUser}}"
-    
+
   - type: v2_install_gpg_key
     cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
     gpg_key_id: "{{.gpg.key_id}}"
@@ -46,8 +46,6 @@ testcases:
     git_password: "{{.git.password}}"
     git_repo: "{{.git_repo}}"
 
-  # The template below generates a job only if this variable set exists. It also carries a job
-  # guarded by vsmissing, which is never created.
   - name: Create the variable set used by the template
     script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} vsdeploy TOKEN myTokenValue string --force"
 
@@ -181,7 +179,7 @@ testcases:
       cat {{.cds_workflow_local}}-*-deploy-* | grep "token=myTokenValue"
     retry: 60
     delay: 1
-      
+
   - name: Download and check backend logs
     script: |-
       #!/bin/bash

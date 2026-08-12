@@ -75,11 +75,6 @@ func templateGenerateWorkflowFunc(v cli.Values) (interface{}, error) {
 		if name == "" {
 			continue
 		}
-		// Reject the myVarset.myItem form that an earlier version accepted, it would silently
-		// never match any variable set
-		if strings.Contains(name, ".") {
-			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable set name %s", name)
-		}
 		vars = append(vars, name)
 	}
 
