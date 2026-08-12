@@ -913,7 +913,7 @@ func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		if msg != "" {
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg)
 		}
-		allVariableSets, err := project.LoadVariableSetsWithItemsByProject(ctx, db, e.ProjectKey)
+		allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, e.ProjectKey)
 		if err != nil {
 			return nil, err
 		}

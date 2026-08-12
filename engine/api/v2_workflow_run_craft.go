@@ -174,7 +174,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 	// Loaded before the template resolution: a template can gate blocks of yaml on the existence
 	// of a variable set.
-	allVariableSets, err := project.LoadVariableSetsWithItemsByProject(ctx, api.mustDB(), p.Key)
+	allVariableSets, err := project.LoadVariableSetsByProject(ctx, api.mustDB(), p.Key)
 	if err != nil {
 		return err
 	}
@@ -714,7 +714,7 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 	}
 
 	// The run's project, not the template's
-	allVariableSets, err := project.LoadVariableSetsWithItemsByProject(ctx, db, run.ProjectKey)
+	allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, run.ProjectKey)
 	if err != nil {
 		return &e, nil, nil, err
 	}

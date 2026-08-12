@@ -3572,13 +3572,6 @@ func TestCraftWorkflowFromTemplateWithVariableSets(t *testing.T) {
 
 	vs := sdk.ProjectVariableSet{ProjectKey: proj.Key, Name: "vs-deploy"}
 	require.NoError(t, project.InsertVariableSet(ctx, db, &vs))
-	item := sdk.ProjectVariableSetItem{
-		ProjectVariableSetID: vs.ID,
-		Name:                 "TOKEN",
-		Type:                 sdk.ProjectVariableTypeString,
-		Value:                "myTokenValue",
-	}
-	require.NoError(t, project.InsertVariableSetItemText(ctx, db, &item))
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
@@ -3596,7 +3589,7 @@ func TestCraftWorkflowFromTemplateWithVariableSets(t *testing.T) {
 spec: |-
   jobs:
     build: {}
-    [[- if .vars.Exists "vs-deploy" "TOKEN" ]]
+    [[- if .vars.Exists "vs-deploy" ]]
     deploy:
       vars: [vs-deploy]
     [[- end ]]

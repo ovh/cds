@@ -36,42 +36,26 @@ type V2WorkflowTemplateParameter struct {
 }
 
 type V2WorkflowTemplateGenerateRequest struct {
-	Template V2WorkflowTemplate  `json:"template"`
-	Params   map[string]string   `json:"params"`
-	Vars     map[string][]string `json:"vars,omitempty"`
+	Template V2WorkflowTemplate `json:"template"`
+	Params   map[string]string  `json:"params"`
+	Vars     []string           `json:"vars,omitempty"`
 }
 
-// TemplateVariableSets holds the names of the project variable sets and of their items, never
-// their values. Values are read at runtime with ${{ vars.x.y }}.
-type TemplateVariableSets map[string]map[string]bool
+// TemplateVariableSets holds the names of the project variable sets, nothing of their content.
+// Items and values are read at runtime with ${{ vars.x.y }}.
+type TemplateVariableSets map[string]bool
 
-// Exists takes a variable set name, and optionally item names that must all exist in it.
-//
-// Templates call this rather than indexing .vars: a dash is legal in a variable set name and
-// text/template cannot parse it as a field name, and an existing but empty variable set is falsy.
+// Templates call Exists rather than indexing .vars: a dash is legal in a variable set name and
+// text/template cannot parse it as a field name.
 // A variable set named Exists is shadowed by the method, reach it with index .vars "Exists".
-func (v TemplateVariableSets) Exists(name string, items ...string) bool {
-	set, ok := v[name]
-	if !ok {
-		return false
-	}
-	for _, i := range items {
-		if !set[i] {
-			return false
-		}
-	}
-	return true
+func (v TemplateVariableSets) Exists(name string) bool {
+	return v[name]
 }
 
-// The variable sets must have been loaded with their items.
 func NewTemplateVariableSets(vss []ProjectVariableSet) TemplateVariableSets {
 	tvs := make(TemplateVariableSets, len(vss))
 	for _, vs := range vss {
-		items := make(map[string]bool, len(vs.Items))
-		for _, i := range vs.Items {
-			items[i.Name] = true
-		}
-		tvs[vs.Name] = items
+		tvs[vs.Name] = true
 	}
 	return tvs
 }

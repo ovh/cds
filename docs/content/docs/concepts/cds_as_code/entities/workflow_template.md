@@ -103,8 +103,7 @@ spec: |-
 ### Variable sets
 
 To know whether a [variable set](/docs/concepts/cds_as_code/project/variableset/) exists on the
-project, use `.vars.Exists`. It takes the variable set name, and optionally item names that must all
-exist in it:
+project, pass its name to `.vars.Exists`:
 
 ```yaml
 spec: |-
@@ -115,11 +114,6 @@ spec: |-
     deploy:
       runs-on: my-model
       vars: [deploy-creds]
-    [[- end ]]
-    [[- if .vars.Exists "deploy-creds" "TOKEN" "REGION" ]]
-    deploy-regional:
-      runs-on: my-model
-      vars: [deploy-creds]
       steps:
       - run: echo "${{ vars.deploy-creds.TOKEN }}"
     [[- end ]]
@@ -128,8 +122,14 @@ spec: |-
 When the variable set is missing, the guarded block is not generated at all. The job is absent from
 the workflow, it is not a skipped job.
 
-`.vars` only tells whether a variable set and its items exist, it never exposes their values. Values
-are read at runtime with `${{ vars.<varset_name>.<item_name> }}`.
+Combine several variable sets with `and`:
+
+```yaml
+    [[- if and (.vars.Exists "deploy-creds") (.vars.Exists "deploy-regions") ]]
+```
+
+`.vars` answers existence and nothing else. It exposes neither the items of a variable set nor their
+values, which are read at runtime with `${{ vars.<varset_name>.<item_name> }}`.
 
 Two limitations:
 
@@ -142,6 +142,5 @@ Two limitations:
 there with `--vars`:
 
 ```bash
-cdsctl experimental template generate-from-file my-template.yml -p env=prod \
-  --vars deploy-creds.TOKEN --vars deploy-creds.REGION
+cdsctl experimental template generate-from-file my-template.yml -p env=prod --vars deploy-creds
 ```

@@ -43,7 +43,7 @@ var templateGenerateWorkflowCmd = cli.Command{
 			Type:      cli.FlagArray,
 			Name:      "vars",
 			ShortHand: "v",
-			Usage:     "Simulate the existence of variable sets and items like -v myVarset -v myVarset.myItem",
+			Usage:     "Simulate the existence of variable sets like -v myVarset -v myOtherVarset",
 			Default:   "",
 		},
 	},
@@ -70,19 +70,17 @@ func templateGenerateWorkflowFunc(v cli.Values) (interface{}, error) {
 		params[ps[0]] = ps[1]
 	}
 
-	// A variable set name cannot contain a dot
-	vars := make(map[string][]string)
-	for _, v := range v.GetStringArray("vars") {
-		if v == "" {
+	vars := make([]string, 0)
+	for _, name := range v.GetStringArray("vars") {
+		if name == "" {
 			continue
 		}
-		name, item, hasItem := strings.Cut(v, ".")
-		if _, has := vars[name]; !has {
-			vars[name] = make([]string, 0, 1)
+		// Reject the myVarset.myItem form that an earlier version accepted, it would silently
+		// never match any variable set
+		if strings.Contains(name, ".") {
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable set name %s", name)
 		}
-		if hasItem {
-			vars[name] = append(vars[name], item)
-		}
+		vars = append(vars, name)
 	}
 
 	req := sdk.V2WorkflowTemplateGenerateRequest{

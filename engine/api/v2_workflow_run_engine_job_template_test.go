@@ -667,13 +667,6 @@ func TestWorkflowTrigger_JobTemplateWithVariableSets(t *testing.T) {
 		Name:       "vs-deploy",
 	}
 	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
-	item := sdk.ProjectVariableSetItem{
-		ProjectVariableSetID: vs.ID,
-		Name:                 "TOKEN",
-		Type:                 sdk.ProjectVariableTypeString,
-		Value:                "myTokenValue",
-	}
-	require.NoError(t, project.InsertVariableSetItemText(context.TODO(), db, &item))
 
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
@@ -711,7 +704,7 @@ func TestWorkflowTrigger_JobTemplateWithVariableSets(t *testing.T) {
 spec: |-
   jobs:
     it:
-    [[- if .vars.Exists "vs-deploy" "TOKEN" ]]
+    [[- if .vars.Exists "vs-deploy" ]]
     itDeploy:
       vars: [vs-deploy]
     [[- end ]]

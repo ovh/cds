@@ -91,7 +91,7 @@ testcases:
                   #!/bin/bash
                   echo "Hello [[.params.subname]]"
               [[- end ]]
-            [[- if .vars.Exists "vsdeploy" "TOKEN" ]]
+            [[- if .vars.Exists "vsdeploy" ]]
             deploy:
               runs-on:
                 model: "{{.worker_model}}"

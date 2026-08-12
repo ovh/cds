@@ -37,11 +37,8 @@ func (api *API) postGenerateWorkflowFromTemplateHandler() ([]service.RbacChecker
 
 			// Variable sets are simulated by the caller: this endpoint has no project context.
 			vars := make(sdk.TemplateVariableSets, len(tmplGen.Vars))
-			for name, items := range tmplGen.Vars {
-				vars[name] = make(map[string]bool, len(items))
-				for _, i := range items {
-					vars[name][i] = true
-				}
+			for _, name := range tmplGen.Vars {
+				vars[name] = true
 			}
 
 			yamlWorkflow, err := tmplGen.Template.Resolve(ctx, &work, vars)

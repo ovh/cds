@@ -249,7 +249,7 @@ func TestTemplateVariableSetsExists(t *testing.T) {
 	vars := NewTemplateVariableSets([]ProjectVariableSet{
 		{Name: "vs1", Items: []ProjectVariableSetItem{{Name: "A"}, {Name: "B"}}},
 		// EntityNamePattern allows a dash
-		{Name: "vs-with-dash", Items: []ProjectVariableSetItem{{Name: "A"}}},
+		{Name: "vs-with-dash"},
 		{Name: "empty-vs"},
 	})
 
@@ -257,27 +257,20 @@ func TestTemplateVariableSetsExists(t *testing.T) {
 		name     string
 		vars     TemplateVariableSets
 		varset   string
-		items    []string
 		expected bool
 	}{
 		{name: "existing variable set", vars: vars, varset: "vs1", expected: true},
 		{name: "unknown variable set", vars: vars, varset: "unknown", expected: false},
 		{name: "name with a dash", vars: vars, varset: "vs-with-dash", expected: true},
-		// An empty variable set still exists, where map truthiness would say false
+		// Items play no part, a variable set holding none still exists
 		{name: "existing variable set without item", vars: vars, varset: "empty-vs", expected: true},
-		{name: "existing item", vars: vars, varset: "vs1", items: []string{"A"}, expected: true},
-		{name: "unknown item", vars: vars, varset: "vs1", items: []string{"MISSING"}, expected: false},
-		{name: "all items must exist", vars: vars, varset: "vs1", items: []string{"A", "B"}, expected: true},
-		{name: "one missing item is enough to fail", vars: vars, varset: "vs1", items: []string{"A", "MISSING"}, expected: false},
-		{name: "item on unknown variable set", vars: vars, varset: "unknown", items: []string{"A"}, expected: false},
 		// Callers without any project context (template preview) pass a nil map
 		{name: "nil variable sets", vars: nil, varset: "vs1", expected: false},
-		{name: "nil variable sets with item", vars: nil, varset: "vs1", items: []string{"A"}, expected: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.expected, tt.vars.Exists(tt.varset, tt.items...))
+			require.Equal(t, tt.expected, tt.vars.Exists(tt.varset))
 		})
 	}
 }
@@ -303,14 +296,6 @@ spec: |-
     jobVarsetEmpty:
       runs-on: mymodel
     [[- end ]]
-    [[- if .vars.Exists "vs-present" "TOKEN" ]]
-    jobItemPresent:
-      runs-on: mymodel
-    [[- end ]]
-    [[- if .vars.Exists "vs-present" "NOPE" ]]
-    jobItemAbsent:
-      runs-on: mymodel
-    [[- end ]]
 `
 
 func TestResolveWithVariableSets(t *testing.T) {
@@ -331,11 +316,9 @@ func TestResolveWithVariableSets(t *testing.T) {
 	require.Contains(t, work.Jobs, "always")
 	require.Contains(t, work.Jobs, "jobVarsetPresent")
 	require.Contains(t, work.Jobs, "jobVarsetEmpty")
-	require.Contains(t, work.Jobs, "jobItemPresent")
 	require.NotContains(t, work.Jobs, "jobVarsetAbsent")
-	require.NotContains(t, work.Jobs, "jobItemAbsent")
 	// No extra job must be generated
-	require.Equal(t, 4, len(work.Jobs))
+	require.Equal(t, 3, len(work.Jobs))
 
 	require.Equal(t, []string{"vs-present"}, work.Jobs["jobVarsetPresent"].VariableSets)
 }

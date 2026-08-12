@@ -95,22 +95,6 @@ func LoadVariableSetsByProject(ctx context.Context, db gorp.SqlExecutor, project
 	return getAllVariableSets(ctx, db, query)
 }
 
-// Secret values are not decrypted.
-func LoadVariableSetsWithItemsByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVariableSet, error) {
-	varSets, err := LoadVariableSetsByProject(ctx, db, projectKey)
-	if err != nil {
-		return nil, err
-	}
-	for i := range varSets {
-		items, err := LoadVariableSetAllItem(ctx, db, varSets[i].ID)
-		if err != nil {
-			return nil, err
-		}
-		varSets[i].Items = items
-	}
-	return varSets, nil
-}
-
 func LoadVariableSetItem(ctx context.Context, db gorp.SqlExecutor, variableSetID string, itemName string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectVariableSetItem, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM project_variable_set_text WHERE project_variable_set_id = $1 AND name = $2").Args(variableSetID, itemName)
 	item, err := getVariableSetItemText(ctx, db, query)
