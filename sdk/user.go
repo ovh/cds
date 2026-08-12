@@ -50,6 +50,7 @@ type AuthentifiedUser struct {
 	Username string    `json:"username" yaml:"username" cli:"username,key" db:"username"`
 	Fullname string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
 	Ring     string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
+	Disabled bool      `json:"disabled" yaml:"disabled,omitempty" cli:"disabled" db:"disabled"`
 	// aggregates
 	Contacts     UserContacts `json:"-" yaml:"-" db:"-"`
 	Groups       Groups       `json:"groups" yaml:"groups" db:"-"`

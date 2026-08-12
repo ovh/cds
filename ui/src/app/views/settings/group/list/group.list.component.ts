@@ -36,6 +36,14 @@ export class GroupListComponent {
                 name: 'Organization',
                 disabled: true,
                 selector: (u: Group) => u.organization
+            },
+            <Column<Group>>{
+                type: ColumnType.LABEL,
+                hidden: (g: Group) => !g.no_active_member,
+                selector: (g: Group) => ({
+                    class: 'red',
+                    value: 'group_no_active_member'
+                })
             }
         ];
         this.getGroups();

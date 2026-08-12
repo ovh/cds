@@ -90,6 +90,9 @@
                           <span nz-icon nzType="crown" nzTheme="outline" title="{{ 'group_user_is_admin' | translate }}" role="img" [attr.aria-label]="'group_user_is_admin' | translate"></span>
                         }
                         {{m?.username}}
+                        @if (m.disabled) {
+                          <nz-tag nzColor="red">{{ 'user_label_disabled' | translate }}</nz-tag>
+                        }
                       </td>
                       <td>
                         {{m?.fullname}}

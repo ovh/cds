@@ -27,3 +27,29 @@ func TestListItem(t *testing.T) {
 	result = listItem(keyProject, nil, false, []string{"NAME"}, false, map[string]string{})
 	assert.Equal(t, map[string]string{"name": "myKey"}, result)
 }
+
+// TestListItemUserDisabled checks that `cdsctl user list` exposes the disabled state:
+// an admin cleaning up users has to be able to tell a neutralized account from a live one.
+func TestListItemUserDisabled(t *testing.T) {
+	disabled := listItem(sdk.AuthentifiedUser{
+		Username: "jdoe",
+		Fullname: "John Doe",
+		Ring:     sdk.UserRingUser,
+		Disabled: true,
+	}, nil, false, nil, false, map[string]string{})
+	assert.Equal(t, "true", disabled["disabled"])
+
+	active := listItem(sdk.AuthentifiedUser{
+		Username: "jdoe",
+		Fullname: "John Doe",
+		Ring:     sdk.UserRingUser,
+	}, nil, false, nil, false, map[string]string{})
+	assert.Equal(t, "false", active["disabled"])
+
+	// The column can be selected explicitly with --fields
+	filtered := listItem(sdk.AuthentifiedUser{
+		Username: "jdoe",
+		Disabled: true,
+	}, nil, false, []string{"username", "disabled"}, false, map[string]string{})
+	assert.Equal(t, map[string]string{"username": "jdoe", "disabled": "true"}, filtered)
+}

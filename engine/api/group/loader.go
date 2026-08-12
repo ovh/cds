@@ -16,13 +16,15 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Group) error
 
 // LoadOptions provides all options on group loads functions.
 var LoadOptions = struct {
-	Default          LoadOptionFunc
-	WithMembers      LoadOptionFunc
-	WithOrganization LoadOptionFunc
+	Default            LoadOptionFunc
+	WithMembers        LoadOptionFunc
+	WithOrganization   LoadOptionFunc
+	WithNoActiveMember LoadOptionFunc
 }{
-	Default:          loadDefault,
-	WithMembers:      loadMembers,
-	WithOrganization: loadOrganization,
+	Default:            loadDefault,
+	WithMembers:        loadMembers,
+	WithOrganization:   loadOrganization,
+	WithNoActiveMember: loadNoActiveMember,
 }
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) error {
@@ -70,10 +72,32 @@ func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) err
 						Fullname:     member.Fullname,
 						Admin:        link.Admin,
 						Organization: member.Organization,
+						Disabled:     member.Disabled,
 					})
 				}
 			}
 		}
+	}
+
+	return nil
+}
+
+// loadNoActiveMember flags the groups nobody can act through, so that a group left with
+// only disabled members does not silently look like a live one.
+func loadNoActiveMember(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) error {
+	ids, err := LoadGroupIDsWithoutActiveMember(ctx, db, sdk.GroupPointersToIDs(gs))
+	if err != nil {
+		return err
+	}
+
+	withoutActiveMember := make(map[int64]struct{}, len(ids))
+	for _, id := range ids {
+		withoutActiveMember[id] = struct{}{}
+	}
+
+	for i := range gs {
+		_, ok := withoutActiveMember[gs[i].ID]
+		gs[i].NoActiveMember = ok
 	}
 
 	return nil

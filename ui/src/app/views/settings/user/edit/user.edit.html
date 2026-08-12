@@ -41,6 +41,12 @@
                 <div *ngIf="user;then showUser;else loadUser"></div>
                 <ng-template #showUser>
                     <form nz-form>
+                        <nz-row *ngIf="user.disabled">
+                            <nz-col [nzSpan]="24">
+                                <nz-alert nzType="warning" [nzMessage]="'user_disabled_warning' | translate"
+                                          nzShowIcon></nz-alert>
+                            </nz-col>
+                        </nz-row>
                         <nz-row>
                             <nz-col [nzSpan]="24">
                                 <nz-form-item>
@@ -75,6 +81,13 @@
                                         </nz-select>
                                         <input *ngIf="!currentAuthSummary.isAdmin()"nz-input type="text"
                                                name="admin" id="cds-field-ring" [ngModel]="user.ring" [readonly]="true">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item *ngIf="currentAuthSummary.isAdmin() && user.ring !== 'ADMIN'">
+                                    <nz-form-label [nzSpan]="2">{{ 'user_label_disabled' | translate }}</nz-form-label>
+                                    <nz-form-control [nzExtra]="'user_disabled_help' | translate">
+                                        <nz-switch name="disabled" [nzDisabled]="loading"
+                                                   [(ngModel)]="user.disabled"></nz-switch>
                                     </nz-form-control>
                                 </nz-form-item>
                             </nz-col>
