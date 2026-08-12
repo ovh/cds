@@ -36,8 +36,44 @@ type V2WorkflowTemplateParameter struct {
 }
 
 type V2WorkflowTemplateGenerateRequest struct {
-	Template V2WorkflowTemplate `json:"template"`
-	Params   map[string]string  `json:"params"`
+	Template V2WorkflowTemplate  `json:"template"`
+	Params   map[string]string   `json:"params"`
+	Vars     map[string][]string `json:"vars,omitempty"`
+}
+
+// TemplateVariableSets holds the names of the project variable sets and of their items, never
+// their values. Values are read at runtime with ${{ vars.x.y }}.
+type TemplateVariableSets map[string]map[string]bool
+
+// Exists takes a variable set name, and optionally item names that must all exist in it.
+//
+// Templates call this rather than indexing .vars: a dash is legal in a variable set name and
+// text/template cannot parse it as a field name, and an existing but empty variable set is falsy.
+// A variable set named Exists is shadowed by the method, reach it with index .vars "Exists".
+func (v TemplateVariableSets) Exists(name string, items ...string) bool {
+	set, ok := v[name]
+	if !ok {
+		return false
+	}
+	for _, i := range items {
+		if !set[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// The variable sets must have been loaded with their items.
+func NewTemplateVariableSets(vss []ProjectVariableSet) TemplateVariableSets {
+	tvs := make(TemplateVariableSets, len(vss))
+	for _, vs := range vss {
+		items := make(map[string]bool, len(vs.Items))
+		for _, i := range vs.Items {
+			items[i.Name] = true
+		}
+		tvs[vs.Name] = items
+	}
+	return tvs
 }
 
 type V2WorkflowTemplateGenerateResponse struct {
@@ -78,7 +114,7 @@ func (wt V2WorkflowTemplate) GetName() string {
 	return wt.Name
 }
 
-func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, error) {
+func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow, vars TemplateVariableSets) (string, error) {
 	type innerWorkflow struct {
 		Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty"`
 		Semver        *WorkflowSemver          `json:"semver,omitempty"`
@@ -139,6 +175,7 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 	if err := wt.Spec.tpl.Execute(&buf, map[string]interface{}{
 		"name":   w.Name,
 		"params": params,
+		"vars":   vars,
 	}); err != nil {
 		return "", err
 	}

@@ -913,7 +913,11 @@ func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		if msg != "" {
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg)
 		}
-		if _, err := entTemplate.Template.Resolve(ctx, &e.Workflow); err != nil {
+		allVariableSets, err := project.LoadVariableSetsWithItemsByProject(ctx, db, e.ProjectKey)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := entTemplate.Template.Resolve(ctx, &e.Workflow, sdk.NewTemplateVariableSets(allVariableSets)); err != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute workflow from template: %v", err)
 		}
 	}

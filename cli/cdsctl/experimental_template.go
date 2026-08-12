@@ -39,6 +39,13 @@ var templateGenerateWorkflowCmd = cli.Command{
 			Usage:     "Specify parameters for template like -p paramKey=paramValue -p param2=value2",
 			Default:   "",
 		},
+		{
+			Type:      cli.FlagArray,
+			Name:      "vars",
+			ShortHand: "v",
+			Usage:     "Simulate the existence of variable sets and items like -v myVarset -v myVarset.myItem",
+			Default:   "",
+		},
 	},
 }
 
@@ -63,9 +70,25 @@ func templateGenerateWorkflowFunc(v cli.Values) (interface{}, error) {
 		params[ps[0]] = ps[1]
 	}
 
+	// A variable set name cannot contain a dot
+	vars := make(map[string][]string)
+	for _, v := range v.GetStringArray("vars") {
+		if v == "" {
+			continue
+		}
+		name, item, hasItem := strings.Cut(v, ".")
+		if _, has := vars[name]; !has {
+			vars[name] = make([]string, 0, 1)
+		}
+		if hasItem {
+			vars[name] = append(vars[name], item)
+		}
+	}
+
 	req := sdk.V2WorkflowTemplateGenerateRequest{
 		Template: template,
 		Params:   params,
+		Vars:     vars,
 	}
 	resp, err := client.TemplateGenerateWorkflowFromFile(context.Background(), req)
 	if err != nil {

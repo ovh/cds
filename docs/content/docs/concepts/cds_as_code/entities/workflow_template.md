@@ -99,3 +99,49 @@ spec: |-
   stages: ...
   gates: ...
 ```
+
+### Variable sets
+
+To know whether a [variable set](/docs/concepts/cds_as_code/project/variableset/) exists on the
+project, use `.vars.Exists`. It takes the variable set name, and optionally item names that must all
+exist in it:
+
+```yaml
+spec: |-
+  jobs:
+    build:
+      runs-on: my-model
+    [[- if .vars.Exists "deploy-creds" ]]
+    deploy:
+      runs-on: my-model
+      vars: [deploy-creds]
+    [[- end ]]
+    [[- if .vars.Exists "deploy-creds" "TOKEN" "REGION" ]]
+    deploy-regional:
+      runs-on: my-model
+      vars: [deploy-creds]
+      steps:
+      - run: echo "${{ vars.deploy-creds.TOKEN }}"
+    [[- end ]]
+```
+
+When the variable set is missing, the guarded block is not generated at all. The job is absent from
+the workflow, it is not a skipped job.
+
+`.vars` only tells whether a variable set and its items exist, it never exposes their values. Values
+are read at runtime with `${{ vars.<varset_name>.<item_name> }}`.
+
+Two limitations:
+
+- `on:` must not be driven by `.vars`. Hooks are computed when the repository is analyzed, and an
+  analysis is not replayed when a variable set is created or deleted.
+- the resolution happens when the run is crafted. Creating or deleting a variable set leaves a run
+  that already started untouched.
+
+`cdsctl experimental template generate-from-file` has no project context. Simulate variable sets
+there with `--vars`:
+
+```bash
+cdsctl experimental template generate-from-file my-template.yml -p env=prod \
+  --vars deploy-creds.TOKEN --vars deploy-creds.REGION
+```

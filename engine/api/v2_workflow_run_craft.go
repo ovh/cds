@@ -172,6 +172,13 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
+	// Loaded before the template resolution: a template can gate blocks of yaml on the existence
+	// of a variable set.
+	allVariableSets, err := project.LoadVariableSetsWithItemsByProject(ctx, api.mustDB(), p.Key)
+	if err != nil {
+		return err
+	}
+
 	// Resolve workflow template if applicable
 	if run.WorkflowData.Workflow.From != "" {
 		e, msg, err := wref.checkWorkflowTemplate(ctx, api.mustDB(), api.Cache, run.WorkflowData.Workflow.From)
@@ -182,7 +189,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, *msg)
 		}
 
-		if _, err := e.Template.Resolve(ctx, &run.WorkflowData.Workflow); err != nil {
+		if _, err := e.Template.Resolve(ctx, &run.WorkflowData.Workflow, sdk.NewTemplateVariableSets(allVariableSets)); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
@@ -307,11 +314,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	} else {
 		run.Contexts.CDS.Version = run.Contexts.Git.SemverCurrent
 		run.Contexts.CDS.VersionNext = run.Contexts.Git.SemverNext
-	}
-
-	allVariableSets, err := project.LoadVariableSetsByProject(ctx, api.mustDB(), p.Key)
-	if err != nil {
-		return err
 	}
 
 	// Check workflow lint in case of modification through job template
@@ -711,7 +713,13 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 		Parameters: params,
 	}
 
-	if _, err := e.Template.Resolve(ctx, &tmpWorkflow); err != nil {
+	// The run's project, not the template's
+	allVariableSets, err := project.LoadVariableSetsWithItemsByProject(ctx, db, run.ProjectKey)
+	if err != nil {
+		return &e, nil, nil, err
+	}
+
+	if _, err := e.Template.Resolve(ctx, &tmpWorkflow, sdk.NewTemplateVariableSets(allVariableSets)); err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return &e, nil, []sdk.V2WorkflowRunInfo{
 			{

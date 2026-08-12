@@ -46,6 +46,11 @@ testcases:
     git_password: "{{.git.password}}"
     git_repo: "{{.git_repo}}"
 
+  # The template below generates a job only if this variable set exists. It also carries a job
+  # guarded by vsmissing, which is never created.
+  - name: Create the variable set used by the template
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} vsdeploy TOKEN myTokenValue string --force"
+
 - name: Push workflow template files
   steps:
   - type: v2_push_cds_files_on_repo
@@ -86,6 +91,25 @@ testcases:
                   #!/bin/bash
                   echo "Hello [[.params.subname]]"
               [[- end ]]
+            [[- if .vars.Exists "vsdeploy" "TOKEN" ]]
+            deploy:
+              runs-on:
+                model: "{{.worker_model}}"
+                memory: "512"
+              vars: [vsdeploy]
+              steps:
+              - run: |-
+                  #!/bin/bash
+                  echo "token=${{ vars.vsdeploy.TOKEN }}"
+            [[- end ]]
+            [[- if .vars.Exists "vsmissing" ]]
+            never:
+              runs-on:
+                model: "{{.worker_model}}"
+                memory: "512"
+              steps:
+              - run: echo "this job must never be generated"
+            [[- end ]]
       workflows/local.yaml:
         name: "{{.cds_workflow_local}}"
         from: ".cds/workflow-templates/test.yaml"
@@ -133,6 +157,17 @@ testcases:
       workflowFromBackendRunID:
         from: result.systemoutjson.systemoutjson0.id
 
+  # never is absent from the workflow, it is not a skipped job
+  - name: Check jobs generated from the variable sets
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowFromLocalRunID}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemout ShouldContainSubstring "hello"
+    - result.systemout ShouldContainSubstring "deploy"
+    - result.systemout ShouldNotContainSubstring "never"
+    retry: 60
+    delay: 1
+
   - name: Download and check local logs
     script: |-
       #!/bin/bash
@@ -142,6 +177,8 @@ testcases:
       {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromLocalRunID}}
       # Check workflow local log content
       cat {{.cds_workflow_local}}-*-hello-* | grep Hello
+      # deploy exists only because the vsdeploy variable set exists
+      cat {{.cds_workflow_local}}-*-deploy-* | grep "token=myTokenValue"
     retry: 60
     delay: 1
       
