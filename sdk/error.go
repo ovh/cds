@@ -203,6 +203,7 @@ var (
 	ErrHatcheryNoResourceAvailable                   = Error{ID: 195, Status: http.StatusInternalServerError}
 	ErrRegionNotAllowed                              = Error{ID: 196, Status: http.StatusInternalServerError}
 	ErrConditionNotSatisfied                         = Error{ID: 197, Status: http.StatusForbidden}
+	ErrUserDisabled                                  = Error{ID: 198, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -388,6 +389,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrHatcheryNoResourceAvailable.ID:                   "No enough resource available to start worker",
 	ErrRegionNotAllowed.ID:                              "Region not allowed",
 	ErrConditionNotSatisfied.ID:                         "Conditions are not satisfied",
+	ErrUserDisabled.ID:                                  "User is disabled",
 }
 
 // Error type.
