@@ -117,6 +117,19 @@ func (c *client) WorkerModelGet(groupName, name string) (sdk.Model, error) {
 	return model, err
 }
 
+func (c *client) WorkerModelUpdate(groupName, name string, model sdk.Model) (sdk.Model, error) {
+	uri := fmt.Sprintf("/worker/model/%s/%s", groupName, name)
+	var modelUpdated sdk.Model
+	code, err := c.PutJSON(context.Background(), uri, model, &modelUpdated)
+	if err != nil {
+		return modelUpdated, err
+	}
+	if code >= 300 {
+		return modelUpdated, newAPIError(fmt.Errorf("WorkerModelUpdate> HTTP %d", code))
+	}
+	return modelUpdated, nil
+}
+
 func (c *client) WorkerModelDelete(groupName, name string) error {
 	uri := fmt.Sprintf("/worker/model/%s/%s", groupName, name)
 	_, errDelete := c.DeleteJSON(context.Background(), uri, nil)

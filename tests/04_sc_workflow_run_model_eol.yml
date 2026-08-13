@@ -1,0 +1,139 @@
+name: Fail the queued jobs of a disabled worker model (04SCWorkflowRunModelEOL)
+# The scenario has to queue the job while its worker model is still enabled: an already disabled
+# model is refused upfront by processNodeJobRunRequirements, so no job ever reaches the queue in
+# that case. The gap covered here is only about jobs already queued when the model goes away.
+#
+# The jobs also carry a region requirement no hatchery serves, which is what keeps them in the
+# queue deterministically instead of being picked up and run.
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/04SCWorkflowRunModelEOL/model.yml ]'
+  - script: '[ -f ./fixtures/04SCWorkflowRunModelEOL/model_eol_past.yml ]'
+  - script: '[ -f ./fixtures/04SCWorkflowRunModelEOL/pipeline.yml ]'
+  - script: '[ -f ./fixtures/04SCWorkflowRunModelEOL/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNMODELEOL
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunmodeleol
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete 04SCWorkflowRunModelEOL-MODEL --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete 04SCWorkflowRunModelEOL-MODEL-DISABLED --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL
+
+- name: queue a job while its model is still enabled
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/04SCWorkflowRunModelEOL/model.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNMODELEOL ./fixtures/04SCWorkflowRunModelEOL/pipeline.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNMODELEOL ./fixtures/04SCWorkflowRunModelEOL/workflow.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL-WORKFLOW
+    assertions:
+      - result.code ShouldEqual 0
+      - "result.systemout ShouldContainSubstring has been launched"
+  # the job must really be waiting, otherwise the rest of the testcase proves nothing
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL-WORKFLOW 1 --format json
+    retry: 60
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.status ShouldEqual Building
+
+# Before this feature the job stayed queued until stopRunsBlocked force stopped the whole run, a day
+# later and without any reason given. This assertion is the whole point of the change.
+- name: reaching the end of life date fails the queued job
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/04SCWorkflowRunModelEOL/model_eol_past.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list --filter name=shared.infra/04SCWorkflowRunModelEOL-MODEL --format json --fields disabled | jq '.[0]'
+    retry: 90
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.disabled ShouldEqual true
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL-WORKFLOW 1 --format json
+    retry: 120
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.status ShouldEqual Fail
+  # asserting on the message id, not on its text: the id is stored as is and does not depend on the locale
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /project/04SCWORKFLOWRUNMODELEOL/workflows/04SCWorkflowRunModelEOL-WORKFLOW/runs/1
+    retry: 30
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring MsgSpawnInfoJobFailedCauseByModelEOL
+
+- name: disabling a model by hand also fails its queued job
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/04SCWorkflowRunModelEOL/model_disabled.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNMODELEOL ./fixtures/04SCWorkflowRunModelEOL/pipeline_disabled.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNMODELEOL ./fixtures/04SCWorkflowRunModelEOL/workflow_disabled.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL-WORKFLOW-DISABLED
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL-WORKFLOW-DISABLED 1 --format json
+    retry: 60
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.status ShouldEqual Building
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model disable shared.infra/04SCWorkflowRunModelEOL-MODEL-DISABLED
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL-WORKFLOW-DISABLED 1 --format json
+    retry: 120
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.status ShouldEqual Fail
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /project/04SCWORKFLOWRUNMODELEOL/workflows/04SCWorkflowRunModelEOL-WORKFLOW-DISABLED/runs/1
+    retry: 30
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring MsgSpawnInfoJobFailedCauseByModelDisabled
+
+# Non regression guard: the routine must only touch jobs that can never run. buildpack-deps is the
+# healthy model imported by 01_init_model.yml.
+- name: a job on a healthy model still succeeds
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNMODELEOL ./fixtures/04SCWorkflowRunModelEOL/pipeline_healthy.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNMODELEOL ./fixtures/04SCWorkflowRunModelEOL/workflow_healthy.yml
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL-WORKFLOW-HEALTHY
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNMODELEOL 04SCWorkflowRunModelEOL-WORKFLOW-HEALTHY 1 --format json
+    retry: 200
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.status ShouldEqual Success
+
+- name: cleanup
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNMODELEOL
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunmodeleol
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete 04SCWorkflowRunModelEOL-MODEL --force
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete 04SCWorkflowRunModelEOL-MODEL-DISABLED --force
+    assertions:
+      - result.code ShouldEqual 0

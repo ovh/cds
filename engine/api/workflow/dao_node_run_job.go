@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -282,6 +283,38 @@ func LoadDeadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	return deadJobs, nil
+}
+
+// LoadQueuedNodeJobRunWithModelRequirement loads the queued NodeJobRun that hold a worker model
+// requirement. The requirements are filtered in SQL because they live in the job JSONB column, so
+// that we only fetch the small subset of the queue that can be stuck on a given worker model
+// instead of the whole queue.
+func LoadQueuedNodeJobRunWithModelRequirement(ctx context.Context, db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
+	var jobsDB []JobRun
+	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job
+    WHERE status = $1
+    AND job -> 'action' -> 'requirements' @> $2::jsonb`
+	if _, err := db.Select(&jobsDB, query, sdk.StatusWaiting, fmt.Sprintf(`[{"type": %q}]`, sdk.ModelRequirement)); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WithStack(err)
+	}
+
+	jobs := make([]sdk.WorkflowNodeJobRun, len(jobsDB))
+	for i, job := range jobsDB {
+		if store != nil {
+			getHatcheryInfo(ctx, store, &job)
+		}
+
+		jr, err := job.WorkflowNodeRunJob()
+		if err != nil {
+			return nil, err
+		}
+		jobs[i] = jr
+	}
+
+	return jobs, nil
 }
 
 func LoadAndLockTerminatedNodeJobRun(ctx context.Context, db gorp.SqlExecutor, limit int) ([]sdk.WorkflowNodeJobRun, error) {

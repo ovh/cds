@@ -1,0 +1,9 @@
+name: 04SCWorkflowRunModelEOL-MODEL
+type: docker
+description: "same model, now deprecated with an outdated end of life date"
+group: shared.infra
+image: buildpack-deps:bookworm
+shell: sh -c
+cmd: curl {{.API}}/download/worker/linux/x86_64 -o worker --retry 10 --retry-max-time 120 -C - && chmod +x worker && exec ./worker
+is_deprecated: true
+eol: 2020-01-01

@@ -5662,6 +5662,21 @@ func (mr *MockWorkerClientMockRecorder) WorkerModelSpawnError(groupName, name, i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockWorkerClient)(nil).WorkerModelSpawnError), groupName, name, info)
 }
 
+// WorkerModelUpdate mocks base method.
+func (m *MockWorkerClient) WorkerModelUpdate(groupName, name string, model sdk.Model) (sdk.Model, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkerModelUpdate", groupName, name, model)
+	ret0, _ := ret[0].(sdk.Model)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkerModelUpdate indicates an expected call of WorkerModelUpdate.
+func (mr *MockWorkerClientMockRecorder) WorkerModelUpdate(groupName, name, model any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelUpdate", reflect.TypeOf((*MockWorkerClient)(nil).WorkerModelUpdate), groupName, name, model)
+}
+
 // WorkerModelv2List mocks base method.
 func (m *MockWorkerClient) WorkerModelv2List(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelV2Filter) ([]sdk.V2WorkerModel, error) {
 	m.ctrl.T.Helper()
@@ -12130,6 +12145,21 @@ func (mr *MockInterfaceMockRecorder) WorkerModelSpawnError(groupName, name, info
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockInterface)(nil).WorkerModelSpawnError), groupName, name, info)
 }
 
+// WorkerModelUpdate mocks base method.
+func (m *MockInterface) WorkerModelUpdate(groupName, name string, model sdk.Model) (sdk.Model, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkerModelUpdate", groupName, name, model)
+	ret0, _ := ret[0].(sdk.Model)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkerModelUpdate indicates an expected call of WorkerModelUpdate.
+func (mr *MockInterfaceMockRecorder) WorkerModelUpdate(groupName, name, model any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelUpdate", reflect.TypeOf((*MockInterface)(nil).WorkerModelUpdate), groupName, name, model)
+}
+
 // WorkerModelv2List mocks base method.
 func (m *MockInterface) WorkerModelv2List(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelV2Filter) ([]sdk.V2WorkerModel, error) {
 	m.ctrl.T.Helper()
@@ -14330,6 +14360,21 @@ func (m *MockWorkerInterface) WorkerModelSpawnError(groupName, name string, info
 func (mr *MockWorkerInterfaceMockRecorder) WorkerModelSpawnError(groupName, name, info any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerModelSpawnError), groupName, name, info)
+}
+
+// WorkerModelUpdate mocks base method.
+func (m *MockWorkerInterface) WorkerModelUpdate(groupName, name string, model sdk.Model) (sdk.Model, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkerModelUpdate", groupName, name, model)
+	ret0, _ := ret[0].(sdk.Model)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkerModelUpdate indicates an expected call of WorkerModelUpdate.
+func (mr *MockWorkerInterfaceMockRecorder) WorkerModelUpdate(groupName, name, model any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelUpdate", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerModelUpdate), groupName, name, model)
 }
 
 // WorkerModelv2List mocks base method.
