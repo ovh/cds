@@ -17,6 +17,7 @@ import { JSONSchema } from "app/model/schema.model";
 import { PreferencesState } from "app/store/preferences.state";
 import { load } from "js-yaml";
 import { editor, } from 'monaco-editor';
+import { EntityReference, EntityReferenceUtils } from 'app/shared/entity-reference.utils';
 
 declare const monaco: any;
 
@@ -45,6 +46,10 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 	resizingSubscription: Subscription;
 	showWorkflowPreview: boolean;
 	vcs: VCSProject;
+
+	private _editorInstance: editor.ICodeEditor;
+	private _decorations: editor.IEditorDecorationsCollection;
+	private _references: Array<EntityReference> = [];
 
 	constructor(
 		private _activatedRoute: ActivatedRoute,
@@ -144,7 +149,55 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 				schema: JSONSchema.flat(this.jsonSchema)
 			}]
 		});
+		this._editorInstance = <editor.ICodeEditor>e;
+		// The editor is destroyed and rebuilt on every entity load, so the collection
+		// has to be rebound; the previous one belongs to a discarded editor.
+		this._decorations = this._editorInstance.createDecorationsCollection();
+		// Monaco drops decorations whenever the model value is replaced.
+		this._editorInstance.onDidChangeModelContent(() => this.applyDecorations());
+		this._editorInstance.onMouseDown(event => {
+			const position = event.target?.position;
+			if (!position) {
+				return;
+			}
+			const reference = this._references.find(r => r.line === position.lineNumber
+				&& position.column >= r.startColumn && position.column <= r.endColumn);
+			if (reference) {
+				this.openReference(reference);
+			}
+		});
 		this.editor.layout();
+		this.applyDecorations();
+	}
+
+	/** Follow a `uses:` / `runs-on:` value to the entity it denotes. */
+	openReference(reference: EntityReference): void {
+		const path = EntityReferenceUtils.parse(reference.value);
+		if (!path) {
+			return;
+		}
+		const entityType = reference.kind === 'model' ? EntityType.WorkerModel : EntityType.Action;
+		const ref = path.ref ?? this.currentRef;
+		this._router.navigate([
+			'/project', path.projectKey ?? this.projectKey,
+			'explore',
+			'vcs', path.vcs ?? this.vcs.name,
+			'repository', path.repository ?? this.repository.name,
+			EntityTypeUtil.toURLParam(entityType), path.name
+		], ref ? { queryParams: { ref } } : {});
+	}
+
+	private applyDecorations(): void {
+		if (!this._decorations) {
+			return;
+		}
+		// Only values that denote a CDS entity are offered as links.
+		this._references = EntityReferenceUtils.scan(this.entity?.data)
+			.filter(r => !!EntityReferenceUtils.parse(r.value));
+		this._decorations.set(this._references.map(r => ({
+			range: { startLineNumber: r.line, startColumn: r.startColumn, endLineNumber: r.line, endColumn: r.endColumn },
+			options: { inlineClassName: 'cds-source-link', hoverMessage: { value: 'Open definition' } }
+		})));
 	}
 
 	panelStartResize(): void {

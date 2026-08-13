@@ -256,6 +256,7 @@ import { NsAutoHeightTableDirective } from './directives/ns-auto-height-table.di
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { DateFromNowComponent } from './date-from-now/date-from-now';
 import { NzTreeModule } from 'ng-zorro-antd/tree';
+import { NzTreeSelectModule } from 'ng-zorro-antd/tree-select';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { SearchableComponent } from './searchable/searchable.component';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
@@ -419,6 +420,7 @@ const icons: IconDefinition[] = [
         NzTagModule,
         NzTooltipModule,
         NzTreeModule,
+        NzTreeSelectModule,
         NzTreeViewModule,
         NzTypographyModule,
         NzUploadModule,
@@ -623,6 +625,7 @@ const icons: IconDefinition[] = [
         NzTagModule,
         NzTooltipModule,
         NzTreeModule,
+        NzTreeSelectModule,
         NzTreeViewModule,
         NzTypographyModule,
         NzUploadModule,

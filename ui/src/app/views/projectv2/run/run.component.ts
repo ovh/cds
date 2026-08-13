@@ -65,6 +65,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     workflowRunInfo: Array<WorkflowRunInfo>;
     selectedItemType: string;
     selectedItemShareLink: string;
+    selectedSourceKey: string;
     selectedJobRun: V2WorkflowRunJob;
     selectedHookName: string;
     selectedRunResult: WorkflowRunResult;
@@ -108,6 +109,15 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     static INFO_PANEL_KEY = 'workflow-run-info';
     static JOB_PANEL_KEY = 'workflow-run-job';
 
+    /** Panels without a target are serialized as "type" alone, others as "type:encodedData". */
+    static parsePanelParam(value: string): { type: string, data: string } {
+        const separator = value.indexOf(':');
+        if (separator === -1) {
+            return { type: value, data: null };
+        }
+        return { type: value.substring(0, separator), data: decodeURIComponent(value.substring(separator + 1)) };
+    }
+
     private _cd = inject(ChangeDetectorRef);
     private _workflowService = inject(V2WorkflowRunService);
     private _store = inject(Store);
@@ -135,8 +145,8 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
                 return from(this.load(workflowRunID).then(() => {
                     const params = this._route.snapshot.queryParams;
                     if (params['panel']) {
-                        const splitted = params['panel'].split(':');
-                        this.openPanel(splitted[0], decodeURI(splitted[1]) ?? null);
+                        const panel = ProjectV2RunComponent.parsePanelParam(params['panel']);
+                        this.openPanel(panel.type, panel.data);
                     }
                 }));
             })
@@ -144,8 +154,8 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         this.queryParamsSub = this._route.queryParams.subscribe(params => {
             if (params['panel'] && this.workflowRun && this.jobs) {
-                const splitted = params['panel'].split(':');
-                this.openPanel(splitted[0], splitted[1] ?? null);
+                const panel = ProjectV2RunComponent.parsePanelParam(params['panel']);
+                this.openPanel(panel.type, panel.data);
             }
         });
 
@@ -398,15 +408,31 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
             case 'test':
                 this.selectedTest = data;
                 break;
+            case 'sources':
+                this.selectedSourceKey = data;
+                break;
         }
 
         this.selectedItemType = type;
 
-        let params = new HttpParams();
-        params = params.append('panel', `${type}:${encodeURIComponent(data)}`);
-        this.selectedItemShareLink = `/project/${this.projectKey}/run/${this.workflowRun.id}?${params.toString()}`;
+        this.refreshShareLink(type, data);
 
         this._cd.markForCheck();
+    }
+
+    /** Keep the share link pointed at the source file currently opened in the panel. */
+    onSourceFileChange(key: string): void {
+        this.selectedSourceKey = key;
+        if (this.selectedItemType === 'sources') {
+            this.refreshShareLink('sources', key);
+            this._cd.markForCheck();
+        }
+    }
+
+    private refreshShareLink(type: string, data: string): void {
+        let params = new HttpParams();
+        params = params.append('panel', data === null || data === undefined ? type : `${type}:${encodeURIComponent(data)}`);
+        this.selectedItemShareLink = `/project/${this.projectKey}/run/${this.workflowRun.id}?${params.toString()}`;
     }
 
     async refreshPanel() {
@@ -444,6 +470,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         delete this.selectedRunResult;
         delete this.selectedJobRun;
         delete this.selectedTest;
+        delete this.selectedSourceKey;
     }
 
     async changeRunAttempt(value: number) {

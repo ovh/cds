@@ -200,10 +200,13 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
             entities.push(entity);
             m.set(entity.type, entities);
         });
-        Object.keys(m).forEach(key => {
-            m[key].sort((a, b) => { a.name < b.name ? -1 : 1 });
-            if (Object.keys(this.treeExpandState).indexOf(vcs.name + '/' + repo.name + '/' + key) === -1) {
-                this.treeExpandState[vcs.name + '/' + repo.name + '/' + key] = true;
+        m.forEach((entities, type) => {
+            entities.sort((a, b) => a.name < b.name ? -1 : 1);
+            const typeKey = vcs.name + '/' + repo.name + '/' + type;
+            // Workflows are the usual entry point of a repository; opening every
+            // folder buries them, so the others stay closed until asked for.
+            if (Object.keys(this.treeExpandState).indexOf(typeKey) === -1) {
+                this.treeExpandState[typeKey] = type === EntityType.Workflow;
             }
         });
         this.entities[vcs.name + '/' + repo.name] = m;
@@ -286,10 +289,12 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
                 if (keys.indexOf(repoKey) !== -1) {
                     state[repoKey] = this.treeExpandState[repoKey];
                 }
-                // Persist entity folder that were closed
-                Object.keys(this.entities[vcs.name + '/' + repo.name] ?? {}).forEach(entityType => {
-                    if (keys.indexOf(vcs.name + '/' + repo.name + '/' + entityType) !== -1 && !this.treeExpandState[vcs.name + '/' + repo.name + '/' + entityType]) {
-                        state[vcs.name + '/' + repo.name + '/' + entityType] = false;
+                // Persist entity folders that were opened or closed. Both directions
+                // matter since the default is no longer "everything open".
+                (this.entities[repoKey] ?? new Map<EntityType, Array<Entity>>()).forEach((_, entityType) => {
+                    const typeKey = repoKey + '/' + entityType;
+                    if (keys.indexOf(typeKey) !== -1) {
+                        state[typeKey] = this.treeExpandState[typeKey];
                     }
                 });
             });
@@ -320,16 +325,13 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         if (loadRepo) {
             await this.loadRepository(vcs, repo);
         }
-        let entityType: EntityType = null;
-        if (params['workflowName']) {
-            entityType = EntityType.Workflow;
-        } else if (params['actionName']) {
-            entityType = EntityType.Action;
-        } else if (params['workerModelName']) {
-            entityType = EntityType.WorkerModel;
-        }
-        if (entityType) {
-            this.treeExpandState[vcs.name + '/' + repo.name + '/' + entityType] = true;
+        if (params['entityType']) {
+            try {
+                const entityType = EntityTypeUtil.fromURLParam(params['entityType']);
+                this.treeExpandState[vcs.name + '/' + repo.name + '/' + entityType] = true;
+            } catch (e) {
+                // URL carries an unknown entity type, nothing to expand
+            }
         }
     }
 

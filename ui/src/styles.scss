@@ -13,6 +13,14 @@ body {
     overflow-y: hidden;
 }
 
+// Monaco decoration marking a `uses:` / `runs-on:` value that can be followed to
+// its definition. Global because Monaco renders outside component styling.
+.cds-source-link {
+    color: #177ddc !important;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 // Screenreader-only content: visually hidden, still announced by AT.
 .cds-sr-only {
     position: absolute !important;
