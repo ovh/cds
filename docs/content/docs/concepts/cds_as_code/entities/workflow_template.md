@@ -100,6 +100,26 @@ spec: |-
   gates: ...
 ```
 
+### Workflow name
+
+`[[ .name ]]` gives the name of the workflow that uses the template:
+
+```yaml
+spec: |-
+  jobs:
+    deploy:
+      runs-on: my-model
+      steps:
+      - run: echo "running [[.name]]"
+```
+
+`${{ cds.workflow }}` carries the same value, but the two are not interchangeable. `[[ .name ]]` is
+resolved when the run is crafted, so it can be used where the value is needed before the workflow is
+built: job keys, stage names, `on:`. `${{ cds.workflow }}` is only interpolated when the job runs.
+
+Writing `name:` in a `spec:` has no effect: the workflow keeps the name of the file that calls the
+template, so `[[ .name ]]` is read-only.
+
 ### Variable sets
 
 To know whether a [variable set](/docs/concepts/cds_as_code/project/variableset/) exists on the
@@ -138,9 +158,15 @@ Two limitations:
 - the resolution happens when the run is crafted. Creating or deleting a variable set leaves a run
   that already started untouched.
 
-`cdsctl experimental template generate-from-file` has no project context. Simulate variable sets
-there with `--vars`:
+## Previewing a template
+
+`cdsctl experimental template generate-from-file` renders a template file without pushing it. It has
+neither a project nor a workflow to read from, so `--vars` simulates the variable sets and `--name`
+supplies the workflow name that `[[ .name ]]` returns:
 
 ```bash
-cdsctl experimental template generate-from-file my-template.yml -p env=prod --vars deploy-creds
+cdsctl experimental template generate-from-file my-template.yml \
+  -p env=prod --vars deploy-creds --name my-workflow
 ```
+
+Without `--name`, `[[ .name ]]` renders empty.

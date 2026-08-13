@@ -84,6 +84,9 @@ testcases:
                   #!/bin/bash
                   env
                   echo "Hello, [[.params.name]]"
+              - run: |-
+                  #!/bin/bash
+                  echo "workflow=[[.name]]"
               [[- if .params.subname ]]
               - run: |-
                   #!/bin/bash
@@ -175,6 +178,8 @@ testcases:
       {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromLocalRunID}}
       # Check workflow local log content
       cat {{.cds_workflow_local}}-*-hello-* | grep Hello
+      # [[.name]] is the calling workflow, not the template
+      cat {{.cds_workflow_local}}-*-hello-* | grep "workflow={{.cds_workflow_local}}"
       # deploy exists only because the vsdeploy variable set exists
       cat {{.cds_workflow_local}}-*-deploy-* | grep "token=myTokenValue"
     retry: 60
@@ -189,5 +194,7 @@ testcases:
       {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromBackendRunID}}
       # Check workflow local log content
       cat {{.cds_workflow_backend}}-*-hello-* | grep Hello
+      # Same template as the local workflow, but [[.name]] must resolve to this workflow
+      cat {{.cds_workflow_backend}}-*-hello-* | grep "workflow={{.cds_workflow_backend}}"
     retry: 60
     delay: 1

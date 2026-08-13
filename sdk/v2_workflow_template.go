@@ -39,6 +39,7 @@ type V2WorkflowTemplateGenerateRequest struct {
 	Template V2WorkflowTemplate `json:"template"`
 	Params   map[string]string  `json:"params"`
 	Vars     []string           `json:"vars,omitempty"`
+	Name     string             `json:"name,omitempty"`
 }
 
 // TemplateVariableSets holds the names of the project variable sets, nothing of their content.

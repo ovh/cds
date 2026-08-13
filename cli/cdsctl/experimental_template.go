@@ -46,6 +46,11 @@ var templateGenerateWorkflowCmd = cli.Command{
 			Usage:     "Simulate the existence of variable sets like -v myVarset -v myOtherVarset",
 			Default:   "",
 		},
+		{
+			Type:  cli.FlagString,
+			Name:  "name",
+			Usage: "Name of the workflow that uses the template, available as [[.name]]",
+		},
 	},
 }
 
@@ -82,6 +87,7 @@ func templateGenerateWorkflowFunc(v cli.Values) (interface{}, error) {
 		Template: template,
 		Params:   params,
 		Vars:     vars,
+		Name:     v.GetString("name"),
 	}
 	resp, err := client.TemplateGenerateWorkflowFromFile(context.Background(), req)
 	if err != nil {

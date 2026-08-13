@@ -32,6 +32,7 @@ func (api *API) postGenerateWorkflowFromTemplateHandler() ([]service.RbacChecker
 
 			//craft workflow
 			work := sdk.V2Workflow{
+				Name:       tmplGen.Name,
 				Parameters: tmplGen.Params,
 			}
 
