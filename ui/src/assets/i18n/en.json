@@ -336,6 +336,8 @@
   "worker_model_state": "State of worker model",
   "worker_model_deleted": "Worker model deleted",
   "worker_model_deprecated_tooltip": "This worker model is deprecated",
+  "worker_model_eol": "End of life date",
+  "worker_model_eol_help": "The worker model will be automatically disabled from this date on. Queued jobs still requiring it will then fail.",
   "worker_model_official_tooltip": "Official worker model maintained by CDS Administrators",
   "worker_model_error": "This worker model is in error. You can reset error by saving it.",
   "worker_model_error_log": "Console output",

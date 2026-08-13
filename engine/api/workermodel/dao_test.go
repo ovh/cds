@@ -390,3 +390,73 @@ func TestLoadWorkerModelsForGroupIDs(t *testing.T) {
 	assert.Equal(t, m1.ID, models[0].ID)
 	assert.Equal(t, m2.ID, models[1].ID)
 }
+
+// TestDisableExpired encodes the point of the end of life date: once it is reached, a deprecated
+// model must stop being usable on its own, and nothing else must be touched. The second call
+// asserts idempotence, which is what makes the lifecycle routine safe to run concurrently on
+// several API instances without a lock.
+func TestDisableExpired(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	models, err := workermodel.LoadAll(context.TODO(), db, nil)
+	require.NoError(t, err)
+	for _, m := range models {
+		require.NoError(t, workermodel.DeleteByID(db, m.ID))
+	}
+
+	g := assets.InsertGroup(t, db)
+	past := time.Now().Add(-24 * time.Hour)
+	future := time.Now().Add(24 * time.Hour)
+
+	expired := insertWorkerModelWithEOL(t, db, "expired", g.ID, true, &past)
+	notYet := insertWorkerModelWithEOL(t, db, "not-yet", g.ID, true, &future)
+	noEOL := insertWorkerModelWithEOL(t, db, "no-eol", g.ID, true, nil)
+	notDeprecated := insertWorkerModelWithEOL(t, db, "not-deprecated", g.ID, false, nil)
+
+	now := time.Now()
+
+	// only the deprecated model past its end of life date is a candidate
+	candidates, err := workermodel.LoadAllPastEOL(context.TODO(), db, now)
+	require.NoError(t, err)
+	require.Len(t, candidates, 1)
+	assert.Equal(t, expired.ID, candidates[0].ID)
+
+	disabled, err := workermodel.DisableExpired(context.TODO(), db, expired.ID, now)
+	require.NoError(t, err)
+	assert.True(t, disabled)
+
+	reloaded, err := workermodel.LoadByID(context.TODO(), db, expired.ID)
+	require.NoError(t, err)
+	assert.True(t, reloaded.Disabled, "a deprecated model past its end of life date must be disabled")
+	assert.True(t, reloaded.IsDeprecated, "disabling must not clear the deprecated flag")
+	require.NotNil(t, reloaded.EOL)
+
+	// a second pass must not report a change, so a concurrent API instance stays a no-op
+	disabled, err = workermodel.DisableExpired(context.TODO(), db, expired.ID, now)
+	require.NoError(t, err)
+	assert.False(t, disabled)
+
+	// the three other models are left untouched
+	for _, id := range []int64{notYet.ID, noEOL.ID, notDeprecated.ID} {
+		m, err := workermodel.LoadByID(context.TODO(), db, id)
+		require.NoError(t, err)
+		assert.False(t, m.Disabled, "model %s must not be disabled", m.Name)
+
+		disabled, err := workermodel.DisableExpired(context.TODO(), db, id, now)
+		require.NoError(t, err)
+		assert.False(t, disabled, "model %s must not be a candidate", m.Name)
+	}
+}
+
+func insertWorkerModelWithEOL(t *testing.T, db gorpmapper.SqlExecutorWithTx, name string, groupID int64, deprecated bool, eol *time.Time) *sdk.Model {
+	m := sdk.Model{
+		Name:         name,
+		Type:         sdk.Docker,
+		ModelDocker:  sdk.ModelDocker{Image: "foo/bar:3.4"},
+		GroupID:      groupID,
+		IsDeprecated: deprecated,
+		EOL:          eol,
+	}
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m))
+	return &m
+}

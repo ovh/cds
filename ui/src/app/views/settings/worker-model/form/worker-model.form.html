@@ -50,12 +50,26 @@
         </nz-col>
         <nz-col [nzSpan]="6">
           <nz-form-item>
-            <label nz-checkbox name="deprecated" [(ngModel)]="workerModel.is_deprecated" [disabled]="!workerModel.editable">
+            <label nz-checkbox name="deprecated" [(ngModel)]="workerModel.is_deprecated"
+              (ngModelChange)="deprecatedChange()" [disabled]="!workerModel.editable">
               Set the worker model as deprecated
             </label>
           </nz-form-item>
         </nz-col>
       </nz-row>
+      @if (workerModel.is_deprecated) {
+        <nz-row>
+          <nz-col [nzSpan]="12">
+            <nz-form-item>
+              <nz-form-label nzFor="cds-field-wm-eol">{{'worker_model_eol' | translate}}</nz-form-label>
+              <nz-form-control [nzExtra]="'worker_model_eol_help' | translate">
+                <input nz-input type="date" name="eol" id="cds-field-wm-eol" [(ngModel)]="eolDate"
+                  (ngModelChange)="eolChange()" [readonly]="!workerModel.editable">
+              </nz-form-control>
+            </nz-form-item>
+          </nz-col>
+        </nz-row>
+      }
       <nz-row>
         <nz-col [nzSpan]="24">
           <nz-form-item>

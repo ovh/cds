@@ -1024,6 +1024,9 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "worker.DisabledDeadWorkers", func(ctx context.Context) {
 		DisabledDeadWorkers(ctx, a.Cache, a.mustDB)
 	})
+	a.GoRoutines.RunWithRestart(ctx, "api.manageWorkerModelsLifecycle", func(ctx context.Context) {
+		a.manageWorkerModelsLifecycle(ctx, 1*time.Minute)
+	})
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {
 			a.cleanWorkflowRunSecrets(ctx)
