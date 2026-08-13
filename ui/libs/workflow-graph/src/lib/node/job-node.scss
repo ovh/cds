@@ -7,7 +7,10 @@
 }
 
 .node {
-    position: relative;
+    // WebKit ignores a foreignObject's x/y and its ancestor transform when the
+    // HTML inside it is positioned, painting the content at the top-left of the
+    // root svg instead. Nothing in here may use position. See react-d3-tree#284.
+    position: static;
     width: 100%;
     height: 100%;
     border: 2px solid common.$polar_grey_3;
@@ -127,6 +130,9 @@
         background-color: inherit;
 
         [nz-button] {
+            // ant sets position: relative for the wave effect, which WebKit
+            // mispaints inside a foreignObject. See react-d3-tree#284.
+            position: static;
             margin-left: 10px;
             border-width: 2px;
             box-shadow: 1px 1px 1px #a2a3a3ab;

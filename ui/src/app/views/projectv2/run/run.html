@@ -314,7 +314,7 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
   <app-resizable-panel [minSize]="400" [initialSize]="jobPanelSize"
     (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)"
     (dblclick)="$event.stopPropagation(); dblClickOnPanel()">
-    <div class="controls">
+    <div class="controls" (dblclick)="$event.stopPropagation();">
       <div class="control" title="Close panel" appClickable aria-label="Close panel" (click)="clickClosePanel()">
         <span nz-icon nzType="close" nzTheme="outline" aria-hidden="true"></span>
       </div>
@@ -338,7 +338,8 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
       <app-run-result [result]="selectedRunResult"></app-run-result>
     }
     @if (selectedItemType === 'sources') {
-      <app-run-sources [run]="workflowRun"></app-run-sources>
+      <app-run-sources [run]="workflowRun" [selectedFileKey]="selectedSourceKey"
+      (selectedFileKeyChange)="onSourceFileChange($event)"></app-run-sources>
     }
     @if (selectedItemType === 'contexts') {
       <app-run-contexts [run]="workflowRun"></app-run-contexts>
