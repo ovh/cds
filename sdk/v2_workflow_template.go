@@ -38,6 +38,27 @@ type V2WorkflowTemplateParameter struct {
 type V2WorkflowTemplateGenerateRequest struct {
 	Template V2WorkflowTemplate `json:"template"`
 	Params   map[string]string  `json:"params"`
+	Vars     []string           `json:"vars,omitempty"`
+	Name     string             `json:"name,omitempty"`
+}
+
+// TemplateVariableSets holds the names of the project variable sets, nothing of their content.
+// Items and values are read at runtime with ${{ vars.x.y }}.
+type TemplateVariableSets map[string]bool
+
+// Templates call Exists rather than indexing .vars: a dash is legal in a variable set name and
+// text/template cannot parse it as a field name.
+// A variable set named Exists is shadowed by the method, reach it with index .vars "Exists".
+func (v TemplateVariableSets) Exists(name string) bool {
+	return v[name]
+}
+
+func NewTemplateVariableSets(vss []ProjectVariableSet) TemplateVariableSets {
+	tvs := make(TemplateVariableSets, len(vss))
+	for _, vs := range vss {
+		tvs[vs.Name] = true
+	}
+	return tvs
 }
 
 type V2WorkflowTemplateGenerateResponse struct {
@@ -78,7 +99,7 @@ func (wt V2WorkflowTemplate) GetName() string {
 	return wt.Name
 }
 
-func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, error) {
+func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow, vars TemplateVariableSets) (string, error) {
 	type innerWorkflow struct {
 		Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty"`
 		Semver        *WorkflowSemver          `json:"semver,omitempty"`
@@ -139,6 +160,7 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow) (string, 
 	if err := wt.Spec.tpl.Execute(&buf, map[string]interface{}{
 		"name":   w.Name,
 		"params": params,
+		"vars":   vars,
 	}); err != nil {
 		return "", err
 	}
