@@ -2,15 +2,15 @@
     <nz-card nzTitle="Settings" class="coloredTitle">
         <form nz-form #pipelineUpdateFrom="ngForm" (ngSubmit)="updatePipeline()">
             <nz-form-item>
-                <nz-form-label>Pipeline name</nz-form-label>
+                <nz-form-label nzFor="cds-field-pipname">Pipeline name</nz-form-label>
                 <nz-form-control>
-                    <input nz-input type="text" [(ngModel)]="editablePipeline.name" name="pipname" [disabled]="loading">
+                    <input nz-input type="text" id="cds-field-pipname" [(ngModel)]="editablePipeline.name" name="pipname" [disabled]="loading">
                 </nz-form-control>
             </nz-form-item>
             <nz-form-item>
-                <nz-form-label>Description</nz-form-label>
+                <nz-form-label nzFor="cds-field-pipdesc">Description</nz-form-label>
                 <nz-form-control>
-                    <textarea nz-input type="text" [(ngModel)]="editablePipeline.description" name="pipdesc" [disabled]="loading"></textarea>
+                    <textarea nz-input type="text" id="cds-field-pipdesc" [(ngModel)]="editablePipeline.description" name="pipdesc" [disabled]="loading"></textarea>
                 </nz-form-control>
             </nz-form-item>
             <nz-form-item nzJustify="end">

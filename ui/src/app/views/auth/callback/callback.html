@@ -8,15 +8,16 @@
           <nz-alert nzType="info" nzMessage="You can now copy this command to your terminal to finish login then close this tab."></nz-alert>
           <form nz-form>
             <nz-form-item class="field">
-              <nz-form-label>Command</nz-form-label>
+              <nz-form-label nzFor="cds-field-cmd">Command</nz-form-label>
               <nz-form-control>
                 <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
-                  <input nz-input type="text" value="{{cmd}}" [readonly]="true" />
+                  <input nz-input type="text" id="cds-field-cmd" value="{{cmd}}" [readonly]="true" />
                 </nz-input-group>
                 <ng-template #suffixIconButton>
                   <button nz-button nzSearch [title]="'common_copy_clipboard' | translate"
+                    [attr.aria-label]="'common_copy_clipboard' | translate"
                     ngxClipboard [cbContent]="cmd" (click)="confirmCopy()">
-                    <span nz-icon nzType="copy"></span></button>
+                    <span nz-icon nzType="copy" aria-hidden="true"></span></button>
                   </ng-template>
                 </nz-form-control>
               </nz-form-item>
@@ -28,9 +29,9 @@
             <nz-alert nzType="info" nzMessage="If you just generated the CDS configuration you can give an optional init token."></nz-alert>
             <form nz-form (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
               <nz-form-item>
-                <nz-form-label>Initialization token</nz-form-label>
+                <nz-form-label nzFor="cds-field-init-token">Initialization token</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="password" name="init_token" ngModel required>
+                  <input nz-input type="password" name="init_token" id="cds-field-init-token" ngModel required>
                 </nz-form-control>
               </nz-form-item>
               <nz-form-item nzJustify="end">

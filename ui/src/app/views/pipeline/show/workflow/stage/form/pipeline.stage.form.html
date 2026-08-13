@@ -1,10 +1,10 @@
 @if (project && pipeline && stage) {
   <form nz-form nzLayout="vertical">
     <nz-form-item>
-      <nz-form-label>Name:</nz-form-label>
+      <nz-form-label nzFor="cds-field-stagename">Name:</nz-form-label>
       <nz-form-control>
         @if (!readOnly) {
-          <input nz-input type="text" name="stageName" [(ngModel)]="stage.name" (keydown)="stage.hasChanged = true">
+          <input nz-input type="text" id="cds-field-stagename" name="stageName" [(ngModel)]="stage.name" (keydown)="stage.hasChanged = true">
         }
         @if (readOnly) {
           <span>{{stage.name}}</span>

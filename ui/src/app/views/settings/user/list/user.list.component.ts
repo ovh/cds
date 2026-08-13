@@ -50,6 +50,15 @@ export class UserListComponent {
                 name: 'Organization',
                 disabled: true,
                 selector: (u: AuthentifiedUser) => u.organization
+            },
+            <Column<AuthentifiedUser>>{
+                type: ColumnType.LABEL,
+                class: 'two',
+                hidden: (u: AuthentifiedUser) => !u.disabled,
+                selector: (u: AuthentifiedUser) => ({
+                    class: 'red',
+                    value: 'user_label_disabled'
+                })
             }
         ];
         this.getUsers();

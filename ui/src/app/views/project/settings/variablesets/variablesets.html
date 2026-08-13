@@ -3,9 +3,9 @@
   <nz-row>
     <nz-col [nzSpan]="12">
       <nz-form-item>
-        <nz-form-label>Name</nz-form-label>
+        <nz-form-label nzFor="cds-field-vsname">Name</nz-form-label>
         <nz-form-control>
-          <input nz-input name="name" id="vsname" [(ngModel)]="newVariableSetName">
+          <input nz-input name="name" id="cds-field-vsname" [(ngModel)]="newVariableSetName">
         </nz-form-control>
       </nz-form-item>
     </nz-col>
@@ -30,7 +30,7 @@
     <tbody>
       @for (data of table.data; track data) {
         <tr>
-          <td (click)="selectVariableSet(data)">{{data.name}}</td>
+          <td appClickable (click)="selectVariableSet(data)">{{data.name}}</td>
           <td>
             <button nz-button nzDanger nzType="primary" [nzLoading]="loading.action" nz-popconfirm
               nzPopconfirmTitle="Are you sure you want to delete this variableset ? it will remove all items"

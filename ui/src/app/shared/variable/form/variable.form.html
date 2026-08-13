@@ -2,9 +2,9 @@
   <nz-row>
     <nz-col [nzSpan]="8">
       <nz-form-item>
-        <nz-form-label>Name</nz-form-label>
+        <nz-form-label nzFor="cds-field-variable-name">Name</nz-form-label>
         <nz-form-control>
-          <input nz-input type="text" name="name" [(ngModel)]="newVariable.name" [disabled]="loading">
+          <input nz-input type="text" id="cds-field-variable-name" name="name" [(ngModel)]="newVariable.name" [disabled]="loading">
         </nz-form-control>
       </nz-form-item>
     </nz-col>
@@ -32,7 +32,7 @@
     <nz-col [nzSpan]="4">
             <button nz-button nzType="primary" name="saveBtn" [nzLoading]="loading" [disabled]="loading || !newVariable.name || newVariable.name === '' ||
                 !newVariable.type || newVariable.type === ''">
-        <i nz-icon nzType="save" nzTheme="outline"></i>Save
+        <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Save
       </button>
     </nz-col>
   </nz-row>

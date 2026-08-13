@@ -18,7 +18,7 @@
                         @case('choice') {
                             @if (input.value.options.multiple) {
                                 <nz-select nzMode="multiple" [nzDisabled]="disabled || values[gate.key].withJobOverrides"
-                                    [ngModel]="values[gate.key].global[input.key.toString()]"
+                                    [ngModel]="values[gate.key].global[input.key.toString()]" [attr.aria-label]="input.key"
                                     (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
                                     @for(opt of input.value.options.values; track opt) {
                                         <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
@@ -26,7 +26,7 @@
                                 </nz-select>
                             } @else {
                                 <nz-select [nzDisabled]="disabled || values[gate.key].withJobOverrides"
-                                    [ngModel]="values[gate.key].global[input.key.toString()]"
+                                    [ngModel]="values[gate.key].global[input.key.toString()]" [attr.aria-label]="input.key"
                                     (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
                                     @for(opt of input.value.options.values; track opt) {
                                         <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
@@ -36,7 +36,7 @@
                         }
                         @default {
                             <input nz-input [disabled]="disabled || values[gate.key].withJobOverrides"
-                                [ngModel]="values[gate.key].global[input.key.toString()]"
+                                [ngModel]="values[gate.key].global[input.key.toString()]" [attr.aria-label]="input.key"
                                 (ngModelChange)="onGateValueChange(gate.key, input.key.toString(), $event)">
                         }
                     }
@@ -71,7 +71,7 @@
                             @case ('choice') {
                                 @if (input.value.options.multiple) {
                                      <nz-select nzMode="multiple" [nzDisabled]="disabled"
-                                        [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
+                                        [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]" [attr.aria-label]="input.key"
                                         (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
                                         @for(opt of input.value.options.values; track opt) {
                                             <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
@@ -79,7 +79,7 @@
                                     </nz-select>
                                 } @else {
                                     <nz-select [nzDisabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
-                                        (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
+                                        [attr.aria-label]="input.key" (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
                                         @for(opt of input.value.options.values; track opt) {
                                             <nz-option [nzValue]="opt" [nzLabel]="opt"></nz-option>
                                         }
@@ -88,7 +88,7 @@
                             }
                             @default {
                                 <input nz-input [disabled]="disabled" [ngModel]="values[gate.key].jobs[job.key][input.key.toString()]"
-                                    (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
+                                    [attr.aria-label]="input.key" (ngModelChange)="onJobValueChange(gate.key, job.key, input.key.toString(), $event)">
                             }
                         }
                     </nz-form-control>

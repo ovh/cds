@@ -2,13 +2,13 @@
   @for (i of info; track i) {
     <div class="line">
       @if (i.level === 'error') {
-        <span class="error" nz-icon nzType="close-circle" nzTheme="fill"></span>
+        <span class="error" nz-icon nzType="close-circle" nzTheme="fill" role="img" aria-label="Error"></span>
       }
       @if (i.level === 'warning') {
-        <span class="warning" nz-icon nzType="warning" nzTheme="fill"></span>
+        <span class="warning" nz-icon nzType="warning" nzTheme="fill" role="img" aria-label="Warning"></span>
       }
       @if (i.level==='info') {
-        <span class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
+        <span class="info" nz-icon nzType="info-circle" nzTheme="fill" role="img" aria-label="Info"></span>
       }
       <div class="message" [title]="i.message">
         {{i.message}}

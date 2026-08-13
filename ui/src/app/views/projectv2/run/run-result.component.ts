@@ -48,7 +48,8 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 			language: 'json',
 			minimap: { enabled: false },
 			readOnly: true,
-			scrollBeyondLastLine: false
+			scrollBeyondLastLine: false,
+			ariaLabel: 'Run result viewer'
 		};
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {

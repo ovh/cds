@@ -74,7 +74,8 @@ export class ProjectRunRetentionComponent implements OnInit {
     ngOnInit(): void {
         this.editorOption = {
             language: 'yaml',
-            minimap: { enabled: false }
+            minimap: { enabled: false },
+            ariaLabel: 'Workflow run retention rules editor'
         };
         this._v2ProjectService.getRetentionSchema(this.project.key).pipe(first()).subscribe(j => {
             this.jsonSchema = j;

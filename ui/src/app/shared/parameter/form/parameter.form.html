@@ -2,9 +2,9 @@
   <nz-row>
     <nz-col [nzSpan]="4">
       <nz-form-item>
-        <nz-form-label>Name</nz-form-label>
+        <nz-form-label nzFor="cds-field-parameter-name">Name</nz-form-label>
         <nz-form-control>
-          <input nz-input type="text" name="name" [(ngModel)]="newParameter.name">
+          <input nz-input type="text" id="cds-field-parameter-name" name="name" [(ngModel)]="newParameter.name">
         </nz-form-control>
       </nz-form-item>
     </nz-col>
@@ -30,9 +30,9 @@
     </nz-col>
     <nz-col [nzSpan]="6">
       <nz-form-item>
-        <nz-form-label>Description</nz-form-label>
+        <nz-form-label nzFor="cds-field-parameter-description">Description</nz-form-label>
         <nz-form-control>
-          <textarea nz-input [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
+          <textarea nz-input id="cds-field-parameter-description" [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
         </nz-form-control>
       </nz-form-item>
     </nz-col>
@@ -49,7 +49,7 @@
         <nz-form-label></nz-form-label>
         <nz-form-control>
           <button name="addBtn" nz-button nzType="primary" [disabled]="!newParameter.name">
-            <i nz-icon nzType="plus" nzTheme="outline"></i>Add
+            <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>Add
           </button>
         </nz-form-control>
       </nz-form-item>

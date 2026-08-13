@@ -27,7 +27,7 @@
               </nz-select>
             }
             @if (manual) {
-              <input nz-input name="group-name" [(ngModel)]="newGroupPermission.group.name">
+              <input nz-input name="group-name" aria-label="Group name" [(ngModel)]="newGroupPermission.group.name">
             }
           </nz-form-control>
         </nz-form-item>
@@ -52,13 +52,13 @@
           <nz-form-control>
             @if (buttonType === 'submit') {
               <button name="saveBtn" (click)="create()" nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
-                <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Save
               </button>
             }
             @if (buttonType === 'button') {
               <button nz-button nzType="primary" [nzLoading]="loading"
-                [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
-                <i nz-icon nzType="plus" nzTheme="outline"></i></button>
+                [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''" aria-label="Add permission">
+                <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i></button>
               }
             </nz-form-control>
           </nz-form-item>

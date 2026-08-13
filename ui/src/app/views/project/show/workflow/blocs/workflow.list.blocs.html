@@ -2,7 +2,7 @@
   <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
     @for (wf of workflows; track wf) {
       <nz-col class="cardContainer" [nzSpan]="6">
-        <app-card [routerLink]="['./workflow', wf.name]" [title]="wf.name" [description]="wf.description" [image]="wf.icon"></app-card>
+        <app-card appClickable [routerLink]="['./workflow', wf.name]" [title]="wf.name" [description]="wf.description" [image]="wf.icon"></app-card>
         <div class="nzSegment extra">
           <span>
             @for (label of wf?.labels?.slice(0, 3); track label) {
@@ -19,8 +19,10 @@
               [nzPopoverContent]="popupTemplate"
               nzPopoverTrigger="click"
               nzPopoverTitle="Labels"
-              nzPopoverPlacement="rightTop">
-              <i nz-icon nzType="tags" nzTheme="outline"></i>
+              nzPopoverPlacement="rightTop"
+              appClickable
+              aria-label="Manage labels of workflow {{wf.name}}">
+              <i nz-icon nzType="tags" nzTheme="outline" aria-hidden="true"></i>
             </span>
           }
         </div>
@@ -28,23 +30,23 @@
           <div class="content">
             <div class="field">
               <nz-input-group [nzSuffix]="suffixIconSearch">
-                <input nz-input type="text" placeholder="FIlter or create" [(ngModel)]="labelFilter"(keyup.enter)="confirmLabel(wf.name, labelFilter)">
+                <input nz-input type="text" placeholder="FIlter or create" aria-label="Filter or create a label" [(ngModel)]="labelFilter"(keyup.enter)="confirmLabel(wf.name, labelFilter)">
               </nz-input-group>
               <ng-template #suffixIconSearch>
-                <i nz-icon nzType="search"></i>
+                <i nz-icon nzType="search" aria-hidden="true"></i>
               </ng-template>
             </div>
             <nz-list nzSize="small">
               @for (label of filteredLabels; track label) {
                 <nz-list-item>
                   <div class="content">
-                    <span class="pointing" (click)="!workflowLabelsMap[wf.name][label.name] && linkLabelToWorkflow(wf.name, label)">
-                      <div class="round" [style.background-color]="label.color"></div>
+                    <span class="pointing" appClickable (click)="!workflowLabelsMap[wf.name][label.name] && linkLabelToWorkflow(wf.name, label)">
+                      <div class="round" [style.background-color]="label.color" aria-hidden="true"></div>
                       {{label.name}}
                     </span>
                     @if (workflowLabelsMap[wf.name][label.name]) {
-                      <span class="pointing alignRight" (click)="unlinkLabelToWorkflow(wf.name, label)">
-                        <i nz-icon nzType="close-circle" nzTheme="outline"></i>
+                      <span class="pointing alignRight" appClickable aria-label="Remove label {{label.name}}" (click)="unlinkLabelToWorkflow(wf.name, label)">
+                        <i nz-icon nzType="close-circle" nzTheme="outline" aria-hidden="true"></i>
                       </span>
                     }
                   </div>
@@ -53,7 +55,7 @@
             </nz-list>
           </div>
           <div class="footer">
-            <a class="pointing alignRight" (click)="editLabels()"><i nz-icon nzType="edit" nzTheme="outline"></i> Edit labels</a>
+            <a class="pointing alignRight" appClickable (click)="editLabels()"><i nz-icon nzType="edit" nzTheme="outline" aria-hidden="true"></i> Edit labels</a>
           </div>
         </ng-template>
       </nz-col>

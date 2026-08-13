@@ -3,19 +3,19 @@
     <nz-row>
       <nz-col [nzSpan]="8">
         <nz-form-item>
-          <nz-form-label>Name</nz-form-label>
+          <nz-form-label nzFor="cds-field-action-name">Name</nz-form-label>
           <nz-form-control>
-            <input nz-input name="actionName" placeholder="Action name" [(ngModel)]="action.name"
+            <input nz-input name="actionName" id="cds-field-action-name" placeholder="Action name" [(ngModel)]="action.name"
               (keydown)="action.hasChanged = true; keyEvent($event)" [readonly]="!action.editable">
           </nz-form-control>
         </nz-form-item>
       </nz-col>
       <nz-col [nzSpan]="8">
         <nz-form-item>
-          <nz-form-label>Group</nz-form-label>
+          <nz-form-label nzFor="cds-field-action-group">Group</nz-form-label>
           <nz-form-control>
             @if (groups && action.editable) {
-              <nz-select nzShowSearch name="group" nzPlaceHolder="Group name"
+              <nz-select nzShowSearch name="group" id="cds-field-action-group" nzPlaceHolder="Group name"
                 [(ngModel)]="action.group_id" (ngModelChange)="refreshActions()">
                 @for (group of groups; track group) {
                   <nz-option [nzValue]="group.id"
@@ -25,7 +25,7 @@
             }
             @if (!action.editable) {
               @if (!action.editable) {
-                <input nz-input type="text" name="group" [ngModel]="action.group?.name"
+                <input nz-input type="text" name="group" id="cds-field-action-group-ro" [ngModel]="action.group?.name"
                   [readonly]="true">
               }
             }
@@ -39,7 +39,7 @@
       <nz-col [nzSpan]="4">
         <nz-form-item>
           <nz-form-control>
-            <a class="pointing"
+            <a class="pointing" appClickable
               (click)="prepareEditRequirements(); requirementModalVisible = true">
               {{ action.requirements.length + ' '}}{{'common_requirements' | translate }}
             </a>
@@ -70,10 +70,10 @@
     <nz-row>
       <nz-col [nzSpan]="16">
         <nz-form-item>
-          <nz-form-label>Description</nz-form-label>
+          <nz-form-label nzFor="cds-field-action-description">Description</nz-form-label>
           <nz-form-control>
             @if (action.editable;) {
-              <textarea nz-input [disabled]="!action.editable" name="actionDescription"
+              <textarea nz-input [disabled]="!action.editable" name="actionDescription" id="cds-field-action-description"
                 placeholder="description"
                 [(ngModel)]="action.description" rows="{{getDescriptionHeight()}}"
               (keydown)="action.hasChanged = true; keyEvent($event)"></textarea>
@@ -114,11 +114,11 @@
       <div class="jobSectionTitle">
         <button nz-button (click)="collapsed = !collapsed" class="hideButton">
           @if (collapsed) {
-            <i nz-icon nzType="eye-invisible" nzTheme="outline"></i>
+            <i nz-icon nzType="eye-invisible" nzTheme="outline" aria-hidden="true"></i>
             Hide all
           }
           @if (!collapsed) {
-            <i nz-icon nzType="eye" nzTheme="outline"></i>
+            <i nz-icon nzType="eye" nzTheme="outline" aria-hidden="true"></i>
             Show all
           }
         </button>
@@ -162,20 +162,20 @@
         @if (action.id) {
           <button (click)="saveAction()" nzType="primary" class="validButton" name="updatebtn" [nzLoading]="loading"
             nz-button>
-            <i nz-icon nzType="save" nzTheme="outline"></i>Save
+            <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Save
           </button>
           <button nz-popconfirm nzDanger class="validButton ml10"
             nzType="default"
             nzPopconfirmTitle="Are you sure you want to delete this action?"
             (nzOnConfirm)="deleteAction()"
             nzPopconfirmPlacement="topLeft"
-            nz-button><i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+            nz-button><i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete
           </button>
         }
         @if (!action.id) {
           <div nz-col nzSpan="24">
             <button nz-button nzType="primary" name="addbtn" (click)="saveAction()" [nzLoading]="loading" nzBlock>
-              <i nz-icon nzType="save" nzTheme="outline"></i>Create
+              <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Create
             </button>
           </div>
         }

@@ -11,21 +11,21 @@
             <nz-tab nzTitle="Sign in" (click)="clickShowLocalSignin()">
               <form nz-form (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
                 <nz-form-item>
-                  <nz-form-label [nzSpan]="4">Username*</nz-form-label>
+                  <nz-form-label [nzSpan]="4" nzFor="cds-field-signin-username">Username*</nz-form-label>
                   <nz-form-control>
-                    <input nz-input type="text" name="username" ngModel required>
+                    <input nz-input type="text" name="username" id="cds-field-signin-username" ngModel required>
                   </nz-form-control>
                 </nz-form-item>
                 <nz-form-item>
-                  <nz-form-label [nzSpan]="4">Password*</nz-form-label>
+                  <nz-form-label [nzSpan]="4" nzFor="cds-field-signin-password">Password*</nz-form-label>
                   <nz-form-control>
-                    <input nz-input type="password" name="password" ngModel required>
+                    <input nz-input type="password" name="password" id="cds-field-signin-password" ngModel required>
                   </nz-form-control>
                 </nz-form-item>
                 <nz-form-item>
                 </nz-form-item>
                 <nz-form-item nzJustify="end">
-                  <a class="pointing" (click)="navigateToAskReset()">Forgotten password</a>
+                  <a class="pointing" appClickable (click)="navigateToAskReset()">Forgotten password</a>
                   <button nz-button nzType="primary" type="submit">Sign in</button>
                 </nz-form-item>
               </form>
@@ -37,27 +37,27 @@
               @if (!showSuccessSignup) {
                 <form nz-form (ngSubmit)="signup(signupForm)" #signupForm="ngForm">
                   <nz-form-item>
-                    <nz-form-label [nzSpan]="4">Username*</nz-form-label>
+                    <nz-form-label [nzSpan]="4" nzFor="cds-field-signup-username">Username*</nz-form-label>
                     <nz-form-control>
-                      <input nz-input type="text" name="username" ngModel required>
+                      <input nz-input type="text" name="username" id="cds-field-signup-username" ngModel required>
                     </nz-form-control>
                   </nz-form-item>
                   <nz-form-item>
-                    <nz-form-label [nzSpan]="4">Fullname*</nz-form-label>
+                    <nz-form-label [nzSpan]="4" nzFor="cds-field-signup-fullname">Fullname*</nz-form-label>
                     <nz-form-control>
-                      <input nz-input type="text" name="fullname" ngModel required>
+                      <input nz-input type="text" name="fullname" id="cds-field-signup-fullname" ngModel required>
                     </nz-form-control>
                   </nz-form-item>
                   <nz-form-item>
-                    <nz-form-label [nzSpan]="4">Email*</nz-form-label>
+                    <nz-form-label [nzSpan]="4" nzFor="cds-field-signup-email">Email*</nz-form-label>
                     <nz-form-control>
-                      <input nz-input type="email" name="email" ngModel required>
+                      <input nz-input type="email" name="email" id="cds-field-signup-email" ngModel required>
                     </nz-form-control>
                   </nz-form-item>
                   <nz-form-item>
-                    <nz-form-label [nzSpan]="4">Password*</nz-form-label>
+                    <nz-form-label [nzSpan]="4" nzFor="cds-field-signup-password">Password*</nz-form-label>
                     <nz-form-control>
-                      <input nz-input type="password" name="password"
+                      <input nz-input type="password" name="password" id="cds-field-signup-password"
                         (keyup)="onChangeSignupPassword($event)" ngModel required>
                       @if (!passwordError && passwordLevel !== null) {
                         <nz-progress
@@ -87,22 +87,22 @@
             <nz-tab nzTitle="LDAP Sign in" (click)="clickShowLDAPSignin()">
               <form nz-form (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
                 <nz-form-item>
-                  <nz-form-label [nzSpan]="4">LDAP Bind*</nz-form-label>
+                  <nz-form-label [nzSpan]="4" nzFor="cds-field-ldap-bind">LDAP Bind*</nz-form-label>
                   <nz-form-control>
-                    <input nz-input type="text" name="bind" ngModel required>
+                    <input nz-input type="text" name="bind" id="cds-field-ldap-bind" ngModel required>
                   </nz-form-control>
                 </nz-form-item>
                 <nz-form-item>
-                  <nz-form-label [nzSpan]="4">Password*</nz-form-label>
+                  <nz-form-label [nzSpan]="4" nzFor="cds-field-ldap-password">Password*</nz-form-label>
                   <nz-form-control>
-                    <input nz-input type="password" name="password" ngModel required>
+                    <input nz-input type="password" name="password" id="cds-field-ldap-password" ngModel required>
                   </nz-form-control>
                 </nz-form-item>
                 @if (isFirstConnection) {
                   <nz-form-item>
-                    <nz-form-label [nzSpan]="4">Initialization token</nz-form-label>
+                    <nz-form-label [nzSpan]="4" nzFor="cds-field-ldap-init-token">Initialization token</nz-form-label>
                     <nz-form-control>
-                      <input nz-input type="password" name="init_token" ngModel required>
+                      <input nz-input type="password" name="init_token" id="cds-field-ldap-init-token" ngModel required>
                     </nz-form-control>
                   </nz-form-item>
                 }
@@ -121,7 +121,7 @@
               <button nz-button nzBlock nzType="primary"
                 [routerLink]="'/auth/ask-signin/'+driver.type"
                 [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
-                <i nz-icon nzType="{{driver.icon}}" nzTheme="outline"></i>
+                <i nz-icon nzType="{{driver.icon}}" nzTheme="outline" aria-hidden="true"></i>
                 {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
               </button>
             }

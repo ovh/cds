@@ -52,14 +52,16 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 			minimap: { enabled: false },
 			readOnly: true,
 			wordWrap: 'on',
-			scrollBeyondLastLine: false
+			scrollBeyondLastLine: false,
+			ariaLabel: 'Test report viewer'
 		};
 		this.editorOptionRaw = {
 			language: 'text',
 			minimap: { enabled: false },
 			readOnly: true,
 			wordWrap: 'on',
-			scrollBeyondLastLine: false
+			scrollBeyondLastLine: false,
+			ariaLabel: 'Test output viewer'
 		};
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {

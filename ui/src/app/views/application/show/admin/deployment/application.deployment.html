@@ -5,9 +5,9 @@
   <nz-row>
     <nz-col [nzSpan]="8">
       <nz-form-item>
-        <nz-form-label>Integration/Deployment</nz-form-label>
+        <nz-form-label nzFor="cds-field-deployment-integration">Integration/Deployment</nz-form-label>
         <nz-form-control>
-          <nz-select nzShowSearch name="selectIntegration" [(ngModel)]="selectedIntegration" >
+          <nz-select nzShowSearch id="cds-field-deployment-integration" name="selectIntegration" [(ngModel)]="selectedIntegration" >
             @for (t of deploymentIntegrations; track t) {
               <nz-option [nzLabel]="t.name" [nzValue]="t"></nz-option>
             }
@@ -22,7 +22,7 @@
           <div>
             <div class="six wide field">
               <nz-form-item>
-                <nz-form-label [nzSpan]="6">
+                <nz-form-label [nzSpan]="6" nzFor="cds-field-new-{{k}}">
                   {{k}}
                   @if (selectedIntegration.model.additional_default_config[k].description) {
                     <i nz-icon nzType="info-circle" nzTheme="outline" nz-tooltip nzTooltipPlacement="right"
@@ -31,15 +31,15 @@
                 </nz-form-label>
                 <nz-form-control>
                   @if (selectedIntegration.model.additional_default_config[k].type === 'string') {
-                    <input nz-input name="{{k}}-value" type="text" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                    <input nz-input id="cds-field-new-{{k}}" name="{{k}}-value" type="text" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
                       >
                   }
                   @if (selectedIntegration.model.additional_default_config[k].type === 'password') {
-                    <input nz-input name="{{k}}-value" type="password" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                    <input nz-input id="cds-field-new-{{k}}" name="{{k}}-value" type="password" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
                       >
                   }
                   @if (selectedIntegration.model.additional_default_config[k].type === 'text') {
-                    <textarea nz-input name="{{k}}-value" rows="3" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                    <textarea nz-input id="cds-field-new-{{k}}" name="{{k}}-value" rows="3" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
                     ></textarea>
                   }
                 </nz-form-control>
@@ -77,7 +77,7 @@
                 <form nz-form>
                   @for (k of application.deployment_strategies[pf] | keys; track k) {
                     <nz-form-item>
-                      <nz-form-label [nzSpan]="6">
+                      <nz-form-label [nzSpan]="6" nzFor="cds-field-{{pf}}-{{k}}">
                         {{k}}
                         @if (application.deployment_strategies[pf][k].description) {
                           <i nz-icon nzType="info-circle" nzTheme="outline" nz-tooltip
@@ -86,15 +86,15 @@
                       </nz-form-label>
                       <nz-form-control>
                         @if (application.deployment_strategies[pf][k].type === 'string') {
-                          <input nz-input type="text" name="{{k}}-value" [(ngModel)]="application.deployment_strategies[pf][k].value"
+                          <input nz-input type="text" id="cds-field-{{pf}}-{{k}}" name="{{k}}-value" [(ngModel)]="application.deployment_strategies[pf][k].value"
                             >
                         }
                         @if (application.deployment_strategies[pf][k].type === 'password') {
-                          <input nz-input type="password" name="{{k}}-value" [(ngModel)]="application.deployment_strategies[pf][k].value"
+                          <input nz-input type="password" id="cds-field-{{pf}}-{{k}}" name="{{k}}-value" [(ngModel)]="application.deployment_strategies[pf][k].value"
                             >
                         }
                         @if (application.deployment_strategies[pf][k].type === 'text') {
-                          <textarea nz-input name="{{k}}-value" rows="3" [(ngModel)]="application.deployment_strategies[pf][k].value"
+                          <textarea nz-input id="cds-field-{{pf}}-{{k}}" name="{{k}}-value" rows="3" [(ngModel)]="application.deployment_strategies[pf][k].value"
                           ></textarea>
                         }
                       </nz-form-control>

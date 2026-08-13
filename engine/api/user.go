@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
 	"github.com/rockbears/log"
@@ -264,6 +265,10 @@ func (api *API) putUserHandler() service.Handler {
 
 			// If new ring is admin we need to restore invalid consumer group for user
 			if data.Ring == sdk.UserRingAdmin {
+				// An admin can't be disabled, so a disabled user can't become an admin
+				if oldUser.Disabled && data.Disabled {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "can't set the admin ring on a disabled user, enable it first")
+				}
 				if err := authentication.ConsumerRestoreInvalidatedGroupsForUser(ctx, tx, oldUser.ID); err != nil {
 					return err
 				}
@@ -272,6 +277,20 @@ func (api *API) putUserHandler() service.Handler {
 			newUser.Ring = data.Ring
 			// Specific audit log for admin: don't change it
 			log.Info(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
+		}
+
+		// Only an admin can disable or enable a user
+		if isAdmin(ctx) && oldUser.Disabled != data.Disabled {
+			trackSudo(ctx, w)
+			if data.Disabled {
+				// newUser already holds the ring change of the current request, if any
+				if err := api.checkUserCanBeDisabled(ctx, tx, &newUser); err != nil {
+					return err
+				}
+			}
+			newUser.Disabled = data.Disabled
+			// Specific audit log for admin: don't change it
+			log.Info(ctx, "putUserHandler> %s change disabled of user %s from %t to %t", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Disabled, newUser.Disabled)
 		}
 
 		if err := user.Update(ctx, tx, &newUser); err != nil {
@@ -288,6 +307,14 @@ func (api *API) putUserHandler() service.Handler {
 			}
 		}
 
+		// Revoke all sessions of a user that has just been disabled, so that it is
+		// signed out right away instead of waiting for its sessions to expire.
+		if newUser.Disabled && !oldUser.Disabled {
+			if err := revokeUserSessions(ctx, tx, newUser.ID); err != nil {
+				return err
+			}
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -300,6 +327,69 @@ func (api *API) putUserHandler() service.Handler {
 
 		return service.WriteJSON(w, newUser, http.StatusOK)
 	}
+}
+
+// checkUserCanBeDisabled returns an error if disabling the given user would lock the
+// instance out: an admin losing its access, or the running services losing the user
+// their consumers are attached to.
+func (api *API) checkUserCanBeDisabled(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthentifiedUser) error {
+	// An admin can never be disabled, it has to be demoted first. As only an admin can
+	// disable a user, this also prevents an admin from locking itself out.
+	if u.Ring == sdk.UserRingAdmin {
+		return sdk.NewErrorFrom(sdk.ErrForbidden, "can't disable an admin, change its ring first")
+	}
+
+	// The consumers of the CDS services are attached to a user, disabling it would
+	// prevent every one of them from signing in again.
+	consumers, err := authentication.LoadUserConsumersByUserID(ctx, db, u.ID)
+	if err != nil {
+		return err
+	}
+	var serviceNames []string
+	for i := range consumers {
+		if consumers[i].AuthConsumerUser.ServiceName != nil {
+			serviceNames = append(serviceNames, *consumers[i].AuthConsumerUser.ServiceName)
+		}
+	}
+	if len(serviceNames) > 0 {
+		return sdk.NewErrorFrom(sdk.ErrForbidden, "can't disable user %s, it holds the consumers of services: %s", u.Username, strings.Join(serviceNames, ", "))
+	}
+
+	// A disabled user keeps its group memberships, so it can remain the last admin of a
+	// group. This is not blocking, unlike a user deletion, but worth an audit log.
+	gus, err := group.LoadLinksGroupUserForUserIDs(ctx, db, []string{u.ID})
+	if err != nil {
+		return err
+	}
+	var adminGroupIDs []int64
+	for i := range gus {
+		if gus[i].Admin {
+			adminGroupIDs = append(adminGroupIDs, gus[i].GroupID)
+		}
+	}
+	if len(adminGroupIDs) > 0 {
+		log.Warn(ctx, "checkUserCanBeDisabled> user %s is disabled but remains group admin of groups %v", u.Username, adminGroupIDs)
+	}
+
+	return nil
+}
+
+// revokeUserSessions removes every session of every consumer of the given user.
+func revokeUserSessions(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string) error {
+	consumers, err := authentication.LoadUserConsumersByUserID(ctx, db, userID)
+	if err != nil {
+		return err
+	}
+	sessions, err := authentication.LoadSessionsByConsumerIDs(ctx, db, sdk.AuthConsumersToIDs(consumers))
+	if err != nil {
+		return err
+	}
+	for _, s := range sessions {
+		if err := authentication.DeleteSessionByID(db, s.ID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u *sdk.AuthentifiedUser, org string) error {

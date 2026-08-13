@@ -1,4 +1,4 @@
-<div class="node-wrapper" (click)="clickOnNode()" (dblclick)="$event.stopPropagation(); dblClickOnNode()"
+<div class="node-wrapper" appClickable [attr.aria-label]="'Workflow node ' + node.name" (click)="clickOnNode()" (dblclick)="$event.stopPropagation(); dblClickOnNode()"
   nz-popover [nzPopoverContent]="popupNode" nzPopoverPlacement="right" nzPopoverTrigger="click" [(nzPopoverVisible)]="menuVisible">
   @switch (node.type) {
     @case ('pipeline') {

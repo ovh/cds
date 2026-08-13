@@ -24,9 +24,9 @@ func (api *API) getGroupsHandler() service.Handler {
 
 		withoutDefault := service.FormBool(r, "withoutDefault")
 		if isMaintainer(ctx) {
-			groups, err = group.LoadAll(ctx, api.mustDB(), group.LoadOptions.WithOrganization)
+			groups, err = group.LoadAll(ctx, api.mustDB(), group.LoadOptions.WithOrganization, group.LoadOptions.WithNoActiveMember)
 		} else {
-			groups, err = group.LoadAllByUserID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID, group.LoadOptions.WithOrganization)
+			groups, err = group.LoadAllByUserID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID, group.LoadOptions.WithOrganization, group.LoadOptions.WithNoActiveMember)
 		}
 		if err != nil {
 			return err

@@ -10,9 +10,9 @@
       }
     </nz-form-item>
     <nz-form-item>
-      <nz-form-label [nzSpan]="6">Name</nz-form-label>
+      <nz-form-label [nzSpan]="6" nzFor="cds-field-node-name">Name</nz-form-label>
       <nz-form-control [nzSpan]="12">
-        <input name="name" nz-input [(ngModel)]="node.name" (ngModelChange)="pushChange()" [disabled]="readonly">
+        <input name="name" id="cds-field-node-name" nz-input [(ngModel)]="node.name" (ngModelChange)="pushChange()" [disabled]="readonly">
       </nz-form-control>
     </nz-form-item>
     <nz-form-item>

@@ -1,4 +1,8 @@
-<div class="svg-wrapper" #svgGraph></div>
+<div class="svg-wrapper" #svgGraph tabindex="0" role="application"
+  aria-label="Workflow graph. Use arrow keys to move between jobs, Enter to open, Shift to select multiple."></div>
+<span aria-live="polite"
+  style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">{{liveAnnouncement}}</span>
+<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">{{graphSummary}}</span>
 
 @if (_workflowRun) {
   <div class="hooks">
@@ -38,7 +42,8 @@
 }
 
 <div class="controls">
-  <button nz-button (click)="changeDirection()" nzSize="default">
+  <button nz-button (click)="changeDirection()" nzSize="default"
+    [attr.aria-label]="direction === 'horizontal' ? 'Rotate graph right' : 'Rotate graph left'">
     @if (direction === 'horizontal') {
       <span nz-icon nzType="rotate-right" nzTheme="outline"
       title="Rotate graph right"></span>
@@ -48,7 +53,7 @@
       title="Rotate graph left"></span>
     }
   </button>
-  <button nz-button (click)="clickOrigin()" nzSize="default" title="Center graph">
+  <button nz-button (click)="clickOrigin()" nzSize="default" title="Center graph" aria-label="Center graph">
     <span nz-icon nzType="aim" nzTheme="outline"></span>
   </button>
 </div>

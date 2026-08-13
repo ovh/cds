@@ -6,7 +6,7 @@
     <nz-row>
       <nz-col [nzSpan]="12">
         <nz-input-group nzSearch [nzAddOnAfter]="suffixButton">
-          <input nz-input type="text" [placeholder]="'worker_model_binary_capability' | translate" [(ngModel)]="binaryValue">
+          <input nz-input type="text" [placeholder]="'worker_model_binary_capability' | translate" [attr.aria-label]="'worker_model_binary_capability' | translate" [(ngModel)]="binaryValue">
         </nz-input-group>
         <ng-template #suffixButton>
           @if (!binarySelected) {

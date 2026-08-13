@@ -23,7 +23,8 @@ export class ProjectRunRetentionReportComponent implements OnInit {
     constructor(private _cd: ChangeDetectorRef) {
         this.editorOption = {
             language: 'yaml',
-            minimap: { enabled: false }
+            minimap: { enabled: false },
+            ariaLabel: 'Run retention report'
         };
     }
 

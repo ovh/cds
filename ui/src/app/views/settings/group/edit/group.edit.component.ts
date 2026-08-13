@@ -6,7 +6,7 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { finalize } from 'rxjs/operators';
 import { Project } from 'app/model/project.model';
 import { Group, GroupMember } from '../../../../model/group.model';
-import { AuthentifiedUser, AuthSummary, PermissionSummary, User } from '../../../../model/user.model';
+import { AuthentifiedUser, AuthSummary, PermissionSummary } from '../../../../model/user.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -35,7 +35,7 @@ export class GroupEditComponent implements OnInit {
     path: Array<PathItem>;
     projects: Array<Project>;
 
-    displayedMembers: User[] = [];
+    displayedMembers: GroupMember[] = [];
     usernameFilterVisible: boolean;
     usernameFilter: string = '';
     loadingPermissions = false;
@@ -282,7 +282,7 @@ export class GroupEditComponent implements OnInit {
         if (this.usernameFilter.length === 0) {
             this.displayedMembers = this.group.members;
         } else {
-            this.displayedMembers = this.group.members.filter((mu: User) => mu.username.indexOf(this.usernameFilter) !== -1);
+            this.displayedMembers = this.group.members.filter((mu: GroupMember) => mu.username.indexOf(this.usernameFilter) !== -1);
         }
         this._cd.markForCheck();
     }

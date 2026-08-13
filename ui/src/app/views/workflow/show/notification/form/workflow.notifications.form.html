@@ -7,34 +7,34 @@
       <nz-row>
         <nz-col [nzSpan]="10">
           <nz-form-item>
-            <nz-form-label>Notification type</nz-form-label>
+            <nz-form-label nzFor="cds-field-notif-type">Notification type</nz-form-label>
             <nz-form-control>
               @if (!readOnly) {
-                <nz-select nzShowSearch name="type" [(ngModel)]="notification.type" (ngModelChange)="formatNode()">
+                <nz-select nzShowSearch name="type" nzId="cds-field-notif-type" [(ngModel)]="notification.type" (ngModelChange)="formatNode()">
                   @for (notifType of types; track notifType) {
                     <nz-option [nzValue]="notifType" [nzLabel]="notifType"></nz-option>
                   }
                 </nz-select>
               }
               @if (readOnly) {
-                <input nz-input type="text" name="type" [ngModel]="notification.type"
+                <input nz-input type="text" name="type" id="cds-field-notif-type" [ngModel]="notification.type"
                   [readonly]="true">
               }
             </nz-form-control>
           </nz-form-item>
         </nz-col>
         <nz-col [nzSpan]="14">
-          <nz-form-label>Pipelines</nz-form-label>
+          <nz-form-label nzFor="cds-field-notif-pipelines">Pipelines</nz-form-label>
           <nz-form-control>
             @if (!readOnly) {
-              <nz-select nzShowSearch name="nodes" nzMode="multiple" [(ngModel)]="notification.source_node_ref">
+              <nz-select nzShowSearch name="nodes" nzId="cds-field-notif-pipelines" nzMode="multiple" [(ngModel)]="notification.source_node_ref">
                 @for (n of nodes; track n) {
                   <nz-option [nzLabel]="n.name" [nzValue]="n.name"></nz-option>
                 }
               </nz-select>
             }
             @if (readOnly) {
-              <input nz-input type="text" name="nodes"
+              <input nz-input type="text" name="nodes" id="cds-field-notif-pipelines"
                 [ngModel]="notification.source_node_ref ? notification.source_node_ref.join(',') : ''"
                 [readonly]="true">
             }
@@ -45,11 +45,11 @@
         <nz-row >
           <nz-col [nzSpan]="8">
             <nz-form-item>
-              <nz-form-label>Send on success</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-on-success">Send on success</nz-form-label>
               <nz-form-control>
                 @if (notification && notification.settings && notification.settings.on_success && notifOnSuccess) {
                   @if (!readOnly) {
-                    <nz-select nzShowSearch name="onsuccess"
+                    <nz-select nzShowSearch name="onsuccess" nzId="cds-field-notif-on-success"
                       [(ngModel)]="notification.settings.on_success" >
                       @for (n of notifOnSuccess; track n) {
                         <nz-option [nzValue]="n" [nzLabel]="n">
@@ -58,7 +58,7 @@
                     </nz-select>
                   }
                   @if (readOnly) {
-                    <input nz-inputtype="text" name="onsuccess"
+                    <input nz-inputtype="text" name="onsuccess" id="cds-field-notif-on-success"
                       [ngModel]="notification.settings.on_success" [readonly]="true">
                   }
                 }
@@ -67,10 +67,10 @@
           </nz-col>
           <nz-col [nzSpan]="8">
             <nz-form-item>
-              <nz-form-label>Send on error</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-on-failure">Send on error</nz-form-label>
               <nz-form-control>
                 @if (!readOnly) {
-                  <nz-select nzShowSearch name="onfailure"
+                  <nz-select nzShowSearch name="onfailure" nzId="cds-field-notif-on-failure"
                     [(ngModel)]="notification.settings.on_failure">
                     @for (n of notifOnFailure; track n) {
                       <nz-option [nzValue]="n" [nzLabel]="n">
@@ -79,7 +79,7 @@
                   </nz-select>
                 }
                 @if (readOnly) {
-                  <input nz-input type="text" name="onfailure"
+                  <input nz-input type="text" name="onfailure" id="cds-field-notif-on-failure"
                     [ngModel]="notification.settings.on_failure" [readonly]="true">
                 }
               </nz-form-control>
@@ -87,9 +87,9 @@
           </nz-col>
           <nz-col [nzSpan]="8">
             <nz-form-item>
-              <nz-form-label>Send on start</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-on-start">Send on start</nz-form-label>
               <nz-form-control>
-                <nz-switch [disabled]="readOnly" name="onstart"
+                <nz-switch [disabled]="readOnly" name="onstart" nzId="cds-field-notif-on-start"
                   [(ngModel)]="notification.settings.on_start"
                   [nzCheckedChildren]="checkedTemplate"
                   [nzUnCheckedChildren]="unCheckedTemplate"
@@ -101,17 +101,17 @@
         <nz-row>
           <nz-col [nzSpan]="12">
             <nz-form-item>
-              <nz-form-label>Mails</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-mails">Mails</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="users" [(ngModel)]="selectedUsers" [readonly]="readOnly">
+                <input nz-input type="text" name="users" id="cds-field-notif-mails" [(ngModel)]="selectedUsers" [readonly]="readOnly">
               </nz-form-control>
             </nz-form-item>
           </nz-col>
           <nz-col [nzSpan]="6">
             <nz-form-item>
-              <nz-form-label>Send to group</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-to-group">Send to group</nz-form-label>
               <nz-form-control>
-                <nz-switch [disabled]="readOnly" name="togroup"
+                <nz-switch [disabled]="readOnly" name="togroup" nzId="cds-field-notif-to-group"
                   [(ngModel)]="notification.settings.send_to_groups"
                   [nzCheckedChildren]="checkedTemplate"
                   [nzUnCheckedChildren]="unCheckedTemplate"
@@ -121,9 +121,9 @@
           </nz-col>
           <nz-col [nzSpan]="6">
             <nz-form-item>
-              <nz-form-label>Send to initiator</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-to-initiator">Send to initiator</nz-form-label>
               <nz-form-control>
-                <nz-switch [disabled]="readOnly" name="toInitiator"
+                <nz-switch [disabled]="readOnly" name="toInitiator" nzId="cds-field-notif-to-initiator"
                   [(ngModel)]="notification.settings.send_to_author"
                   [nzCheckedChildren]="checkedTemplate"
                   [nzUnCheckedChildren]="unCheckedTemplate"
@@ -135,9 +135,9 @@
         <nz-row>
           <nz-col [nzSpan]="24">
             <nz-form-item>
-              <nz-form-label>Subject</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-subject">Subject</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="title" [(ngModel)]="notification.settings.template.subject"
+                <input nz-input type="text" name="title" id="cds-field-notif-subject" [(ngModel)]="notification.settings.template.subject"
                   [readonly]="readOnly">
               </nz-form-control>
             </nz-form-item>
@@ -146,10 +146,10 @@
         <nz-row>
           <nz-col [nzSpan]="24">
             <nz-form-item>
-              <nz-form-label>Message</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-email-body">Message</nz-form-label>
               <nz-form-control>
                 <textarea nz-input type="text" rows="8" [(ngModel)]="notification.settings.template.body" name="body"
-                [readonly]="readOnly"></textarea>
+                id="cds-field-notif-email-body" [readonly]="readOnly"></textarea>
               </nz-form-control>
             </nz-form-item>
           </nz-col>
@@ -174,9 +174,9 @@
         <nz-row>
           <nz-col [nzSpan]="8">
             <nz-form-item>
-              <nz-form-label>Send status on commit</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-status-enabled">Send status on commit</nz-form-label>
               <nz-form-control>
-                <nz-switch [disabled]="readOnly" name="statusEnabled"
+                <nz-switch [disabled]="readOnly" name="statusEnabled" nzId="cds-field-notif-status-enabled"
                   [(ngModel)]="statusEnabled"
                   [nzCheckedChildren]="checkedTemplate"
                   [nzUnCheckedChildren]="unCheckedTemplate"
@@ -186,9 +186,9 @@
           </nz-col>
           <nz-col [nzSpan]="8">
             <nz-form-item>
-              <nz-form-label>Pull-request's comment enabled</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-pr-enabled">Pull-request's comment enabled</nz-form-label>
               <nz-form-control>
-                <nz-switch [disabled]="readOnly" name="prEnabled"
+                <nz-switch [disabled]="readOnly" name="prEnabled" nzId="cds-field-notif-pr-enabled"
                   [(ngModel)]="commentEnabled"
                   [nzCheckedChildren]="checkedTemplate"
                   [nzUnCheckedChildren]="unCheckedTemplate"
@@ -198,9 +198,9 @@
           </nz-col>
           <nz-col [nzSpan]="8">
             <nz-form-item>
-              <nz-form-label>Always send</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-always-send">Always send</nz-form-label>
               <nz-form-control>
-                <nz-switch [disabled]="!commentEnabled || readOnly" name="alwaysSend"
+                <nz-switch [disabled]="!commentEnabled || readOnly" name="alwaysSend" nzId="cds-field-notif-always-send"
                   [(ngModel)]="alwaysSend"
                   [nzCheckedChildren]="checkedTemplate"
                   [nzUnCheckedChildren]="unCheckedTemplate"
@@ -212,10 +212,10 @@
         <nz-row>
           <nz-col [nzSpan]="24">
             <nz-form-item>
-              <nz-form-label>Pull-request's comment body</nz-form-label>
+              <nz-form-label nzFor="cds-field-notif-vcs-body">Pull-request's comment body</nz-form-label>
               <nz-form-control>
                 <textarea nz-input type="text" rows="8" [(ngModel)]="notification.settings.template.body"
-                [disabled]="!commentEnabled" name="body" [readonly]="readOnly"></textarea>
+                [disabled]="!commentEnabled" name="body" id="cds-field-notif-vcs-body" [readonly]="readOnly"></textarea>
               </nz-form-control>
             </nz-form-item>
           </nz-col>

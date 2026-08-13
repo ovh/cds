@@ -2,9 +2,9 @@
   <nz-row>
     <nz-col [nzSpan]="24">
       <nz-form-item>
-        <nz-form-label>{{ 'ascode_modal_label_branch' | translate }}</nz-form-label>
+        <nz-form-label nzFor="cds-field-ascode-branch">{{ 'ascode_modal_label_branch' | translate }}</nz-form-label>
         <nz-form-control>
-          <input nz-input type="text" [(ngModel)]="selectedBranch" (keyup)="changeParam()" [nzAutocomplete]="auto" name="branch" (input)="onInput($event)" />
+          <input nz-input type="text" id="cds-field-ascode-branch" [(ngModel)]="selectedBranch" (keyup)="changeParam()" [nzAutocomplete]="auto" name="branch" (input)="onInput($event)" />
           <nz-autocomplete nzBackfill #auto>
             @for (option of branchesFiltered; track option) {
               <nz-auto-option [nzValue]="option">{{ option }}</nz-auto-option>
@@ -13,8 +13,8 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label>{{ 'ascode_modal_label_message' | translate }}</nz-form-label>
-        <textarea nz-input rows="2" [(ngModel)]="commitMessage" (keyup)="changeParam()" name="commitMessage"></textarea>
+        <nz-form-label nzFor="cds-field-ascode-message">{{ 'ascode_modal_label_message' | translate }}</nz-form-label>
+        <textarea nz-input rows="2" id="cds-field-ascode-message" [(ngModel)]="commitMessage" (keyup)="changeParam()" name="commitMessage"></textarea>
       </nz-form-item>
     </nz-col>
     <nz-col [nzSpan]="24">

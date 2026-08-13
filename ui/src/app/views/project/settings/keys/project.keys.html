@@ -30,10 +30,10 @@
         </td>
         <td nzBreakWord>
           @if (k.type === 'ssh') {
-            <input nz-input readonly [ngModel]="k.public">
+            <input nz-input readonly aria-label="Public key of {{k.name}}" [ngModel]="k.public">
           }
           @if (k.type === 'pgp') {
-            <textarea nz-input [ngModel]="k.public" readonly rows="29"></textarea>
+            <textarea nz-input aria-label="Public key of {{k.name}}" [ngModel]="k.public" readonly rows="29"></textarea>
           }
         </td>
         @if (project.permissions.writable) {
