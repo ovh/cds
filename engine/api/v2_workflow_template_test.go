@@ -19,8 +19,10 @@ func Test_postGenerateWorkflowFromTemplateHandler_Name(t *testing.T) {
 
 	user1, pass := assets.InsertLambdaUser(t, db)
 
+	// parameters has no omitempty, the json schema rejects a null one
 	var tmpl sdk.V2WorkflowTemplate
 	require.NoError(t, yaml.Unmarshal([]byte(`name: myTemplate
+parameters: []
 spec: |-
   jobs:
     hello:
@@ -41,7 +43,8 @@ spec: |-
 
 		var resp sdk.V2WorkflowTemplateGenerateResponse
 		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
-		require.Empty(t, resp.Error)
+		// The handler answers 200 even on a lint or resolution failure, so report what it said
+		require.Empty(t, resp.Error, "generate returned an error: %s", resp.Error)
 		return resp
 	}
 
