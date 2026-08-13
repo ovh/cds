@@ -29,6 +29,8 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
             if (this._workerModel && this._workerModel.model_docker && this._workerModel.model_docker.envs) {
                 this.envNames = Object.keys(this._workerModel.model_docker.envs);
             }
+            // the api returns a RFC3339 timestamp, the native date input only handles a day
+            this.eolDate = this._workerModel.eol ? this._workerModel.eol.substring(0, 10) : null;
             if (this.patterns) {
                 this.typeChange();
             }
@@ -68,6 +70,7 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
     patternsFiltered: Array<ModelPattern>;
     patternSelected: ModelPattern;
     descriptionRows: number;
+    eolDate: string;
     envNames: Array<string> = [];
     newEnvName: string;
     newEnvValue: string;
@@ -162,6 +165,20 @@ pattern_name: basic_unix`;
 
     descriptionChange(): void {
         this.descriptionRows = this.getDescriptionHeight();
+    }
+
+    // An end of life date is only accepted by the api on a deprecated model, so dropping the
+    // deprecated flag has to drop the date with it.
+    deprecatedChange(): void {
+        if (!this.workerModel.is_deprecated) {
+            this.eolDate = null;
+            this.workerModel.eol = null;
+        }
+    }
+
+    eolChange(): void {
+        // pin the date at UTC midnight so the day cannot drift with the browser timezone
+        this.workerModel.eol = this.eolDate ? new Date(this.eolDate + 'T00:00:00Z').toISOString() : null;
     }
 
     getDescriptionHeight(): number {

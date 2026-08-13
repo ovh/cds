@@ -1,0 +1,8 @@
+name: myITModelEOL
+type: docker
+description: "an end of life date without the deprecated flag must be refused"
+group: shared.infra
+image: foo/model/go:latest
+shell: "sh -c"
+cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use"
+eol: 2099-01-01

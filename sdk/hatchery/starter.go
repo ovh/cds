@@ -330,11 +330,19 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	}
 
 	if j.model.ModelV1 != nil && j.model.ModelV1.IsDeprecated {
-		ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
-		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
+		// when an end of life date is set, tell the job's users when the model will stop working
+		msg := sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
 			Args: []interface{}{modelName},
-		})
+		}
+		if eol := j.model.ModelV1.EOL; eol != nil {
+			msg = sdk.SpawnMsg{
+				ID:   sdk.MsgSpawnInfoDeprecatedModelEOL.ID,
+				Args: []interface{}{modelName, eol.Format("2006-01-02")},
+			}
+		}
+		ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", msg.ID))
+		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, msg)
 		next()
 	}
 

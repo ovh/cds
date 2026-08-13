@@ -151,6 +151,38 @@ func LoadAllActiveAndNotDeprecatedForGroupIDs(ctx context.Context, db gorp.SqlEx
 	return getAll(ctx, db, query, opts...)
 }
 
+// LoadAllPastEOL returns the deprecated worker models that reached their end of life date, whether
+// they are already disabled or not.
+func LoadAllPastEOL(ctx context.Context, db gorp.SqlExecutor, now time.Time, opts ...LoadOptionFunc) (sdk.Models, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM worker_model
+    WHERE is_deprecated = true
+    AND eol IS NOT NULL
+    AND eol <= $1
+    ORDER BY name
+  `).Args(now)
+	return getAll(ctx, db, query, opts...)
+}
+
+// DisableExpired disables a worker model only if it is still deprecated, enabled and past its end of
+// life date. It returns false when another API instance already did it, or when the model was edited
+// in between: the conditions are re-checked in the statement so the routine stays safe to run
+// concurrently on several API instances without any lock.
+func DisableExpired(ctx context.Context, db gorp.SqlExecutor, modelID int64, now time.Time) (bool, error) {
+	query := `UPDATE worker_model SET disabled = true
+    WHERE id = $1 AND is_deprecated = true AND disabled = false AND eol IS NOT NULL AND eol <= $2`
+	res, err := db.Exec(query, modelID, now)
+	if err != nil {
+		return false, sdk.WithStack(err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, sdk.WithStack(err)
+	}
+	return n == 1, nil
+}
+
 // LoadByID retrieves a specific worker model in database.
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Model, error) {
 	query := gorpmapping.NewQuery(`

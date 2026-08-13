@@ -53,6 +53,7 @@ type workerModelDisplay struct {
 	NeedRegistration bool   `json:"need_registration" cli:"need_registration"`
 	NbSpawnErr       int64  `json:"nb_spawn_err" cli:"nb_spawn_err"`
 	IsDeprecated     bool   `json:"is_deprecated" cli:"deprecated"`
+	EOL              string `json:"eol,omitempty" cli:"eol"`
 	IsOfficial       bool   `json:"is_official" cli:"official"`
 	Image            string `json:"image" cli:"image"`
 	Flavor           string `json:"flavor" cli:"flavor"`
@@ -62,6 +63,11 @@ func newWorkerModelDisplay(wm sdk.Model) workerModelDisplay {
 	name := wm.Name
 	if wm.Group != nil {
 		name = fmt.Sprintf("%s/%s", wm.Group.Name, wm.Name)
+	}
+
+	var eol string
+	if wm.EOL != nil {
+		eol = wm.EOL.Format("2006-01-02")
 	}
 
 	var image, flavor string
@@ -82,6 +88,7 @@ func newWorkerModelDisplay(wm sdk.Model) workerModelDisplay {
 		NeedRegistration: wm.NeedRegistration,
 		NbSpawnErr:       wm.NbSpawnErr,
 		IsDeprecated:     wm.IsDeprecated,
+		EOL:              eol,
 		Image:            image,
 		Flavor:           flavor,
 		IsOfficial:       wm.IsOfficial,

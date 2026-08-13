@@ -57,6 +57,7 @@ type Model struct {
 	LastSpawnErrLogs    *string             `json:"last_spawn_err_log" db:"last_spawn_err_log" cli:"-"`
 	DateLastSpawnErr    *time.Time          `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
 	IsDeprecated        bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
+	EOL                 *time.Time          `json:"eol,omitempty" db:"eol" cli:"eol,omitempty"`
 	ModelVirtualMachine ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"model_virtual_machine" cli:"-"`
 	ModelDocker         ModelDocker         `json:"model_docker,omitempty" db:"model_docker" cli:"-"`
 	// aggregates
@@ -119,6 +120,7 @@ func (m *Model) Update(data Model) {
 	m.Disabled = data.Disabled
 	m.Restricted = data.Restricted
 	m.IsDeprecated = data.IsDeprecated
+	m.EOL = data.EOL
 	m.IsOfficial = data.IsOfficial
 	m.GroupID = data.GroupID
 	m.Type = data.Type
@@ -141,6 +143,11 @@ func (m Model) IsValid() error {
 
 	if m.GroupID == 0 {
 		return WrapError(ErrWrongRequest, "missing worker model group data")
+	}
+
+	// an end of life date only makes sense on a deprecated model, as it drives its automatic disabling
+	if m.EOL != nil && !m.IsDeprecated {
+		return NewErrorFrom(ErrWrongRequest, "worker model end of life date can only be set on a deprecated worker model")
 	}
 	return nil
 }

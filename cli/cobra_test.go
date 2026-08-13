@@ -2,6 +2,7 @@ package cli
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -52,4 +53,25 @@ func TestListItemUserDisabled(t *testing.T) {
 		Disabled: true,
 	}, nil, false, []string{"username", "disabled"}, false, map[string]string{})
 	assert.Equal(t, map[string]string{"username": "jdoe", "disabled": "true"}, filtered)
+}
+
+// TestListItemWorkerModelEOL checks that `cdsctl worker model show` renders the end of life date,
+// and above all that a model without one does not blow up: EOL is the only *time.Time on sdk.Model
+// carrying a cli tag, so nil pointer rendering is exercised here for the first time.
+func TestListItemWorkerModelEOL(t *testing.T) {
+	eol := time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC)
+
+	withEOL := listItem(sdk.Model{
+		Name:         "myModel",
+		Type:         sdk.Docker,
+		IsDeprecated: true,
+		EOL:          &eol,
+	}, nil, false, []string{"name", "eol"}, false, map[string]string{})
+	assert.Equal(t, map[string]string{"name": "myModel", "eol": "2026-12-31 00:00:00 +0000 UTC"}, withEOL)
+
+	withoutEOL := listItem(sdk.Model{
+		Name: "myModel",
+		Type: sdk.Docker,
+	}, nil, false, []string{"name", "eol"}, false, map[string]string{})
+	assert.Equal(t, map[string]string{"name": "myModel", "eol": ""}, withoutEOL)
 }
