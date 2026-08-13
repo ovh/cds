@@ -1,0 +1,7 @@
+name: 04SCWorkflowRunModelEOL-MODEL
+type: docker
+description: "model used by a job that stays queued, until its end of life date is reached"
+group: shared.infra
+image: buildpack-deps:bookworm
+shell: sh -c
+cmd: curl {{.API}}/download/worker/linux/x86_64 -o worker --retry 10 --retry-max-time 120 -C - && chmod +x worker && exec ./worker

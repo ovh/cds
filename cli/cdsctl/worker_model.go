@@ -25,6 +25,8 @@ func workerModel() *cobra.Command {
 		cli.NewDeleteCommand(workerModelDeleteCmd, workerModelDeleteRun, nil),
 		cli.NewCommand(workerModelImportCmd, workerModelImportRun, nil),
 		cli.NewCommand(workerModelExportCmd, workerModelExportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workerModelDisableCmd, workerModelDisableRun, nil),
+		cli.NewCommand(workerModelEnableCmd, workerModelEnableRun, nil),
 	})
 }
 
@@ -236,6 +238,53 @@ func workerModelDeleteRun(v cli.Values) error {
 		return err
 	}
 
+	return nil
+}
+
+var workerModelDisableCmd = cli.Command{
+	Name:    "disable",
+	Short:   "Disable a worker model: no hatchery can spawn a worker for it anymore, and the queued jobs requiring it are set to fail",
+	Example: `cdsctl worker model disable shared.infra/myModel`,
+	Args: []cli.Arg{
+		{Name: "worker-model-path"},
+	},
+}
+
+func workerModelDisableRun(v cli.Values) error {
+	return setWorkerModelDisabled(v.GetString("worker-model-path"), true)
+}
+
+var workerModelEnableCmd = cli.Command{
+	Name:    "enable",
+	Short:   "Enable a worker model that was disabled",
+	Example: `cdsctl worker model enable shared.infra/myModel`,
+	Args: []cli.Arg{
+		{Name: "worker-model-path"},
+	},
+}
+
+func workerModelEnableRun(v cli.Values) error {
+	return setWorkerModelDisabled(v.GetString("worker-model-path"), false)
+}
+
+func setWorkerModelDisabled(path string, disabled bool) error {
+	groupName, modelName, err := cli.ParsePath(path)
+	if err != nil {
+		return err
+	}
+
+	wm, err := client.WorkerModelGet(groupName, modelName)
+	if err != nil {
+		return err
+	}
+	if wm.Disabled == disabled {
+		return nil
+	}
+	wm.Disabled = disabled
+
+	if _, err := client.WorkerModelUpdate(groupName, modelName, wm); err != nil {
+		return err
+	}
 	return nil
 }
 

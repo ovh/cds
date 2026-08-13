@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -190,6 +191,22 @@ func (m Model) IsValidType() error {
 // Path returns full path of the model that contains group and model names.
 func (m Model) Path() string {
 	return ComputeWorkerModelPath(m.Group.Name, m.Name)
+}
+
+// MatchesRequirementValue returns true if the given model requirement value targets this model.
+// The value could be: theModelName --port=8888:9999, so we only compare the first field.
+// Note that the group prefix is compared as is, not through ComputeWorkerModelPath: a requirement
+// may spell out shared.infra/myModel even though the computed path of such a model is just myModel.
+func (m Model) MatchesRequirementValue(value string) bool {
+	name := strings.Split(value, " ")[0]
+	// for backward compatibility with runs, if only the name match we consider that the model can be used
+	if name == m.Name {
+		return true
+	}
+	if m.Group == nil {
+		return false
+	}
+	return name == fmt.Sprintf("%s/%s", m.Group.Name, m.Name)
 }
 
 // ComputeWorkerModelPath returns path for a worker model with given group name and model name.

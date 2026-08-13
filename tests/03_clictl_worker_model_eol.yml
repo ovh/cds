@@ -50,8 +50,31 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemoutjson.disabled ShouldEqual true
 
+- name: a model can be disabled and enabled by hand
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import ./fixtures/my_worker_model_disable.yml --force
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model disable shared.infra/myITModelDisable
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list --filter name=shared.infra/myITModelDisable --format json --fields disabled | jq '.[0]'
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.disabled ShouldEqual true
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model enable shared.infra/myITModelDisable
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list --filter name=shared.infra/myITModelDisable --format json --fields disabled | jq '.[0]'
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.disabled ShouldEqual false
+
 - name: cleanup
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModelEOL --force
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModelDisable --force
     assertions:
       - result.code ShouldEqual 0
