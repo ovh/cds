@@ -19,8 +19,9 @@ import (
 
 const (
 	binaryDownloadRetry = 20
-	// a checksum mismatch is deterministic: the descriptor has just been read from the API,
-	// so retrying more than once only delays a failure that will not resolve itself
+	// a checksum mismatch is only deterministic as long as the published descriptor does not
+	// change: retrying more than once with the very same checksum only delays a failure that
+	// will not resolve itself
 	binaryChecksumRetry = 2
 )
 
@@ -38,16 +39,9 @@ func DownloadBinary(ctx context.Context, w workerruntime.Runtime, pluginName, cu
 
 	// The descriptor carried by the job payload can be older than the binary actually served
 	// by the API: read the checksum from the same source as the binary itself.
-	p, err := w.PluginGet(pluginName)
+	b, err := readBinaryDescriptor(w, pluginName, currentOS, currentARCH)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to get plugin %q", pluginName)
-	}
-	b := p.GetBinary(currentOS, currentARCH)
-	if b == nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find plugin %q for %s/%s", pluginName, currentOS, currentARCH)
-	}
-	if b.SHA512sum == "" {
-		return nil, sdk.NewErrorFrom(sdk.ErrPluginInvalid, "plugin %q: binary %q has no published sha512sum, refusing to run it", pluginName, b.Name)
+		return nil, err
 	}
 
 	if _, err := w.BaseDir().Stat(b.Name); err == nil {
@@ -68,6 +62,22 @@ func DownloadBinary(ctx context.Context, w workerruntime.Runtime, pluginName, cu
 	for retry := 0; retry < binaryDownloadRetry; retry++ {
 		if retry > 0 {
 			time.Sleep(binaryDownloadRetryDelay)
+
+			// A binary can be replaced while the job runs: its checksum, and the name it is
+			// published under, are only valid for the content served when the descriptor was read.
+			// Reading the descriptor again is what makes a download that raced with an upload
+			// recoverable, instead of failing on a checksum that will never match again.
+			previous := b
+			refreshed, err := readBinaryDescriptor(w, pluginName, currentOS, currentARCH)
+			if err != nil {
+				log.Warn(ctx, "plugin %q: unable to read the descriptor of binary %q again (try %d): %v", pluginName, b.Name, retry+1, err)
+			} else {
+				b = refreshed
+				if !strings.EqualFold(b.SHA512sum, previous.SHA512sum) {
+					log.Info(ctx, "plugin %q: binary %q has been replaced, retrying with the checksum now published", pluginName, b.Name)
+					checksumFailures = 0
+				}
+			}
 		}
 
 		lastErr = downloadBinary(w, b)
@@ -88,6 +98,22 @@ func DownloadBinary(ctx context.Context, w workerruntime.Runtime, pluginName, cu
 	}
 
 	return nil, sdk.NewErrorFrom(sdk.ErrPluginInvalid, "unable to get a valid binary %q for plugin %q after %d tries: %v", b.Name, pluginName, binaryDownloadRetry, lastErr)
+}
+
+// readBinaryDescriptor reads from the API the binary currently published for the given os and arch.
+func readBinaryDescriptor(w workerruntime.Runtime, pluginName, currentOS, currentARCH string) (*sdk.GRPCPluginBinary, error) {
+	p, err := w.PluginGet(pluginName)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get plugin %q", pluginName)
+	}
+	b := p.GetBinary(currentOS, currentARCH)
+	if b == nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find plugin %q for %s/%s", pluginName, currentOS, currentARCH)
+	}
+	if b.SHA512sum == "" {
+		return nil, sdk.NewErrorFrom(sdk.ErrPluginInvalid, "plugin %q: binary %q has no published sha512sum, refusing to run it", pluginName, b.Name)
+	}
+	return b, nil
 }
 
 // downloadBinary writes the plugin binary in the worker basedir and checks its integrity
