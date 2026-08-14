@@ -71,6 +71,26 @@
       }
     }
 
+    .run-line {
+      cursor: pointer;
+
+      &:hover {
+        background-color: rgba(79, 163, 227, 0.06);
+      }
+    }
+
+    // The magnifier closes the title, right after the ref and the scope, so it takes their style
+    // rather than the one of the name. The hover has to be restated, this wins over app-searchable.
+    nz-list-item-meta ::ng-deep .ant-list-item-meta-title .search {
+      font-weight: normal;
+      font-size: 12px;
+      color: #979797;
+
+      &:hover {
+        color: #177ddc;
+      }
+    }
+
     nz-list-item-meta {
       ::ng-deep {
         .ant-list-item-meta-content {
@@ -165,6 +185,71 @@
       text-align: right;
       margin: 0 0 0 10px;
       min-width: 120px;
+    }
+
+    // Way out of an empty result set: the message and the workflows it announces, as one block.
+    ::ng-deep .ant-list-empty-text {
+      color: inherit;
+    }
+
+    .no-run {
+      max-width: 780px;
+      margin: 40px auto;
+      text-align: left;
+
+      .message {
+        text-align: center;
+        margin-bottom: 8px;
+
+        h3 {
+          font-size: 18px;
+          font-weight: 500;
+          color: inherit;
+          margin-bottom: 8px;
+        }
+
+        // Spread the sentence evenly over its lines rather than leaving a word alone on the last.
+        p {
+          margin-bottom: 20px;
+          text-wrap: balance;
+        }
+      }
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      li {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+
+        // No line between the message and the first workflow, they belong together.
+        +li {
+          border-top: 1px solid #f0f0f0;
+
+          :host-context(.night) & {
+            border-color: common.$darkTheme_grey_3;
+          }
+        }
+
+        .workflow {
+          flex: 1;
+          min-width: 0;
+          color: inherit;
+        }
+
+        .actions {
+          flex: 0 0 auto;
+          display: flex;
+          flex-direction: row;
+          gap: 8px;
+        }
+      }
     }
   }
 

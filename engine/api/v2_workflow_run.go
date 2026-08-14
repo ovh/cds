@@ -705,6 +705,8 @@ func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchRunsFil
 			filters.Commits = v
 		case "template":
 			filters.Templates = v
+		case "query":
+			filters.Query = strings.Join(v, " ")
 		case "offset":
 			value, _ := strconv.ParseUint(v[0], 10, 0)
 			offset = uint(value)

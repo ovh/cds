@@ -324,21 +324,58 @@ const runQueryFilters = `
 	AND (array_length(:commits::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY(:commits))
 	AND (array_length(:templates::text[], 1) IS NULL OR ((contexts -> 'cds' ->> 'workflow_template_vcs_server') || '/' || (contexts -> 'cds' ->> 'workflow_template_repository') || '/' || (contexts -> 'cds' ->> 'workflow_template')) = ANY(:templates))
 	AND (array_length(:annotations::text[], 1) IS NULL OR annotation_strings @> :annotations)
+	AND (array_length(:query::text[], 1) IS NULL OR LOWER(` + runQuerySearchableText + `) LIKE ALL(:query::text[]))
 `
+
+// runQuerySearchableText concatenates the run fields exposed to the free text search. NULL parts
+// are skipped by CONCAT_WS and treated as empty strings by CONCAT.
+const runQuerySearchableText = `CONCAT_WS(' ',
+		project_key,
+		CONCAT(vcs_server, '/', repository, '/', workflow_name),
+		CONCAT(workflow_name, '#', run_number),
+		workflow_ref,
+		status,
+		CONCAT(contexts -> 'git' ->> 'server', '/', contexts -> 'git' ->> 'repository'),
+		contexts -> 'git' ->> 'ref',
+		contexts -> 'git' ->> 'sha',
+		contexts -> 'git' ->> 'author',
+		contexts -> 'git' ->> 'commit_message',
+		contexts -> 'cds' ->> 'version',
+		initiator -> 'user' ->> 'username',
+		initiator ->> 'vcs_username',
+		array_to_string(annotation_strings, ' ')
+	)`
+
+// runAnnotationsJoin flattens the run annotations jsonb into a text[] of "key:value" values, so that
+// they can be filtered and searched.
+const runAnnotationsJoin = `
+	LEFT JOIN (
+		SELECT run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
+		FROM v2_workflow_run run, jsonb_each_text(COALESCE(run.annotations, '{}'::jsonb)) as annotation_object
+		GROUP BY run.id
+	) v2_workflow_run_annotations
+	ON
+		v2_workflow_run.id = v2_workflow_run_annotations.id`
+
+// runAnnotationsJoinByProject is runAnnotationsJoin bounded to a single project. The planner cannot
+// push the outer project filter into a grouped subquery, so without this the aggregate would be
+// computed over every run of every project on each search.
+const runAnnotationsJoinByProject = `
+	LEFT JOIN (
+		SELECT run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
+		FROM v2_workflow_run run, jsonb_each_text(COALESCE(run.annotations, '{}'::jsonb)) as annotation_object
+		WHERE run.project_key = :projKey
+		GROUP BY run.id
+	) v2_workflow_run_annotations
+	ON
+		v2_workflow_run.id = v2_workflow_run_annotations.id`
 
 func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
 
 	query := `SELECT COUNT(1)
-	FROM v2_workflow_run
-	LEFT JOIN (
-		SELECT v2_workflow_run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
-		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
-		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations
-	ON
-		v2_workflow_run.id = v2_workflow_run_annotations.id
+	FROM v2_workflow_run` + runAnnotationsJoin + `
 	WHERE ` + runQueryFilters
 
 	params := map[string]interface{}{
@@ -353,6 +390,7 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFi
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
 		"annotations":           pq.StringArray(filters.Annotations),
+		"query":                 filters.queryPatterns(),
 	}
 
 	count, err := db.SelectInt(query, params)
@@ -364,14 +402,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	defer next()
 
 	query := `SELECT COUNT(1)
-	FROM v2_workflow_run
-	LEFT JOIN (
-		SELECT v2_workflow_run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
-		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
-		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations
-	ON
-		v2_workflow_run.id = v2_workflow_run_annotations.id
+	FROM v2_workflow_run` + runAnnotationsJoinByProject + `
 	WHERE
 		project_key = :projKey AND ` + runQueryFilters
 
@@ -388,6 +419,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
 		"annotations":           pq.StringArray(filters.Annotations),
+		"query":                 filters.queryPatterns(),
 	}
 
 	count, err := db.SelectInt(query, params)
@@ -406,12 +438,17 @@ type SearchRunsFilters struct {
 	Commits              []string
 	Templates            []string
 	Annotations          []string
+	Query                string
 }
 
 func (s SearchRunsFilters) Lower() {
 	for i := range s.Repositories {
 		s.Repositories[i] = strings.ToLower(s.Repositories[i])
 	}
+}
+
+func (s SearchRunsFilters) queryPatterns() pq.StringArray {
+	return pq.StringArray(sdk.SearchQueryLikePatterns(s.Query))
 }
 
 func parseSortFilter(sort string) (string, error) {
@@ -443,14 +480,7 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run.*
-    FROM v2_workflow_run
-		LEFT JOIN (
-			SELECT v2_workflow_run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
-			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
-			GROUP BY v2_workflow_run.id
-		) v2_workflow_run_annotations
-		ON
-			v2_workflow_run.id = v2_workflow_run_annotations.id
+    FROM v2_workflow_run` + runAnnotationsJoin + `
 		WHERE ` + runQueryFilters + `
 		ORDER BY
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
@@ -471,6 +501,7 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 			"commits":               pq.StringArray(filters.Commits),
 			"templates":             pq.StringArray(filters.Templates),
 			"annotations":           pq.StringArray(filters.Annotations),
+			"query":                 filters.queryPatterns(),
 			"sort":                  sort,
 			"limit":                 limit,
 			"offset":                offset,
@@ -497,14 +528,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run.*
-    FROM v2_workflow_run
-		LEFT JOIN (
-			SELECT v2_workflow_run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
-			FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
-			GROUP BY v2_workflow_run.id
-		) v2_workflow_run_annotations
-		ON
-			v2_workflow_run.id = v2_workflow_run_annotations.id
+    FROM v2_workflow_run` + runAnnotationsJoinByProject + `
 		WHERE project_key = :projKey AND ` + runQueryFilters + `
 		ORDER BY
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
@@ -525,6 +549,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
 		"annotations":           pq.StringArray(filters.Annotations),
+		"query":                 filters.queryPatterns(),
 		"sort":                  sort,
 		"limit":                 limit,
 		"offset":                offset,

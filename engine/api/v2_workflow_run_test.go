@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"testing"
 	"time"
@@ -78,6 +79,103 @@ func TestSearchAllWorkflow(t *testing.T) {
 	require.Len(t, runs, 1)
 	require.Equal(t, wr.ID, runs[0].ID)
 
+}
+
+func TestSearchWorkflowRunsFreeTextQuery(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	newRun := func(workflowName string, gitRepo, ref, author string, annotations map[string]string) sdk.V2WorkflowRun {
+		wr := sdk.V2WorkflowRun{
+			ProjectKey:   proj.Key,
+			VCSServerID:  vcsServer.ID,
+			VCSServer:    vcsServer.Name,
+			RepositoryID: repo.ID,
+			Repository:   repo.Name,
+			WorkflowName: workflowName,
+			WorkflowSha:  "123",
+			WorkflowRef:  "refs/heads/master",
+			RunAttempt:   0,
+			RunNumber:    1,
+			Started:      time.Now(),
+			LastModified: time.Now(),
+			Status:       sdk.V2WorkflowRunStatusSuccess,
+			Initiator: &sdk.V2Initiator{
+				UserID: admin.ID,
+				User:   admin.Initiator(),
+			},
+			RunEvent: sdk.V2WorkflowRunEvent{},
+			Contexts: sdk.WorkflowRunContext{
+				Git: sdk.GitContext{
+					Server:     "github",
+					Repository: gitRepo,
+					Ref:        ref,
+					Sha:        "abcdef123456",
+					Author:     author,
+				},
+			},
+			Annotations:  annotations,
+			WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
+		}
+		require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+		return wr
+	}
+
+	runAwesome := newRun("my-awesome-workflow", "ovh/cds", "refs/heads/main", "jdoe", map[string]string{"release": "1.2.3"})
+	runOther := newRun("other-workflow", "ovh/other-repo", "refs/heads/dev", "asmith", nil)
+
+	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunsSearchV2Handler, map[string]string{"projectKey": proj.Key})
+	test.NotEmpty(t, uri)
+
+	search := func(t *testing.T, query string) []string {
+		req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri+"?"+query, nil)
+		w := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(w, req)
+		require.Equal(t, 200, w.Code)
+
+		var runs []sdk.V2WorkflowRun
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &runs))
+		require.Equal(t, strconv.Itoa(len(runs)), w.Header().Get("X-Total-Count"))
+
+		ids := make([]string, 0, len(runs))
+		for i := range runs {
+			ids = append(ids, runs[i].ID)
+		}
+		return ids
+	}
+
+	for _, tc := range []struct {
+		name     string
+		query    string
+		expected []string
+	}{
+		{"no query returns everything", "", []string{runOther.ID, runAwesome.ID}},
+		{"workflow name", "query=awesome", []string{runAwesome.ID}},
+		{"workflow name is case insensitive", "query=AWESOME", []string{runAwesome.ID}},
+		{"workflow path", "query=" + url.QueryEscape(vcsServer.Name+"/"+repo.Name), []string{runOther.ID, runAwesome.ID}},
+		{"run number", "query=" + url.QueryEscape("other-workflow#1"), []string{runOther.ID}},
+		{"git ref", "query=" + url.QueryEscape("refs/heads/dev"), []string{runOther.ID}},
+		{"git repository", "query=" + url.QueryEscape("ovh/other-repo"), []string{runOther.ID}},
+		{"git author", "query=jdoe", []string{runAwesome.ID}},
+		{"initiator", "query=" + url.QueryEscape(admin.Username), []string{runOther.ID, runAwesome.ID}},
+		{"annotation value", "query=" + url.QueryEscape("1.2.3"), []string{runAwesome.ID}},
+		{"annotation filter", "release=" + url.QueryEscape("1.2.3"), []string{runAwesome.ID}},
+		{"annotation filter combined with query", "release=" + url.QueryEscape("1.2.3") + "&query=awesome", []string{runAwesome.ID}},
+		{"unmatched annotation filter", "release=" + url.QueryEscape("9.9.9"), []string{}},
+		{"all words must match", "query=" + url.QueryEscape("awesome main"), []string{runAwesome.ID}},
+		{"words can be given in any order", "query=" + url.QueryEscape("main awesome"), []string{runAwesome.ID}},
+		{"unmatched word excludes the run", "query=" + url.QueryEscape("awesome dev"), []string{}},
+		{"like wildcards are escaped", "query=" + url.QueryEscape("%"), []string{}},
+		{"query combines with filters", "query=workflow&status=Success&ref=" + url.QueryEscape("refs/heads/main"), []string{runAwesome.ID}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ElementsMatch(t, tc.expected, search(t, tc.query))
+		})
+	}
 }
 
 func TestRunManualJob_WrongGateReviewer(t *testing.T) {

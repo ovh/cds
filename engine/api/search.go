@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -25,7 +26,7 @@ func parseSearchQuery(values url.Values) (search.SearchFilters, uint, uint) {
 		case "type":
 			filters.Types = v
 		case "query":
-			filters.Query = v[0]
+			filters.Query = strings.Join(v, " ")
 		case "offset":
 			value, _ := strconv.ParseUint(v[0], 10, 0)
 			offset = uint(value)

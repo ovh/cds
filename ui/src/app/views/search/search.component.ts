@@ -4,7 +4,7 @@ import { SearchResult, SearchResultType } from "app/model/search.model";
 import { SearchService } from "app/service/search.service";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { ErrorUtils } from "app/shared/error.utils";
-import { Filter } from "app/shared/input/input-filter.component";
+import { Filter, FilterText } from "app/shared/input/input-filter.component";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom, Subscription } from "rxjs";
 
@@ -112,11 +112,7 @@ export class SearchComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		this.loadFilters();
 		this.queryParamsSub = this._activatedRoute.queryParams.subscribe(values => {
-			this.filterText = Object.keys(values).filter(key => key !== 'page').map(key => {
-				return (!Array.isArray(values[key]) ? [values[key]] : values[key]).map(f => {
-					return key === 'query' ? f : `${key}:${f}`;
-				}).join(' ');
-			}).join(' ');
+			this.filterText = FilterText.fromQueryParams(values, ['page']);
 			this.pageIndex = values['page'] ?? 1;
 			this.search();
 		});
@@ -148,18 +144,7 @@ export class SearchComponent implements OnInit, OnDestroy {
 		this.loading = true;
 		this._cd.markForCheck();
 
-		let mFilters = {};
-		this.filterText.split(' ').forEach(f => {
-			const s = f.split(':');
-			if (s.length === 2) {
-				if (!mFilters[s[0]]) {
-					mFilters[s[0]] = [];
-				}
-				mFilters[s[0]].push(decodeURI(s[1]));
-			} else if (s.length === 1) {
-				mFilters['query'] = f;
-			}
-		});
+		const mFilters = FilterText.toSearchParams(this.filterText);
 
 		try {
 			const res = await lastValueFrom(this._searchService.search(mFilters,
@@ -175,20 +160,7 @@ export class SearchComponent implements OnInit, OnDestroy {
 	}
 
 	saveSearchInQueryParams() {
-		let mFilters = {};
-		this.filterText.split(' ').forEach(f => {
-			const s = f.split(':');
-			if (s.length === 2 && s[1] !== '') {
-				if (!mFilters[s[0]]) {
-					mFilters[s[0]] = [];
-				}
-				mFilters[s[0]].push(s[1]);
-			} else if (s.length === 1) {
-				mFilters['query'] = f;
-			}
-		});
-
-		let queryParams = { ...mFilters };
+		let queryParams = FilterText.toQueryParams(this.filterText);
 		if (this.pageIndex > 1) {
 			queryParams['page'] = this.pageIndex;
 		}
