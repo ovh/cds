@@ -49,21 +49,38 @@ func (fss *FilesystemStore) Status(ctx context.Context) sdk.MonitoringStatusLine
 	return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Filesystem Storage", Status: sdk.MonitoringStatusOK}
 }
 
-// Store store a object on disk
+// Store store a object on disk. The content is written in a temporary file then moved in place, so
+// that a reader never gets a partially written object and an object being replaced stays readable
+// for the whole write.
 func (fss *FilesystemStore) Store(o Object, data io.ReadCloser) (string, error) {
+	defer data.Close()
+
 	dst := path.Join(fss.basedir, o.GetPath())
 	if err := os.MkdirAll(dst, 0755); err != nil {
 		return "", err
 	}
 	distfile := path.Join(dst, o.GetName())
-	f, err := os.OpenFile(distfile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+
+	f, err := os.CreateTemp(dst, "."+o.GetName()+".tmp")
 	if err != nil {
 		return "", err
 	}
+	tmpfile := f.Name()
+	defer os.Remove(tmpfile) // no-op once the file has been renamed
 
-	_, err = io.Copy(f, data)
-	defer data.Close()
-	return distfile, err
+	if _, err := io.Copy(f, data); err != nil {
+		_ = f.Close()
+		return "", err
+	}
+	if err := f.Close(); err != nil {
+		return "", err
+	}
+
+	if err := os.Rename(tmpfile, distfile); err != nil {
+		return "", err
+	}
+
+	return distfile, nil
 }
 
 // Fetch lookup on disk for data

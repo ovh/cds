@@ -104,7 +104,7 @@ func TestDownloadBinary_RefusesBinaryWithoutSHA512(t *testing.T) {
 func TestDownloadBinary_RefusesTamperedDownload(t *testing.T) {
 	w, _ := setupBinaryTest(t)
 
-	w.EXPECT().PluginGet(testPluginName).Return(pluginServing(t, "the published binary"), nil)
+	w.EXPECT().PluginGet(testPluginName).Return(pluginServing(t, "the published binary"), nil).Times(binaryChecksumRetry)
 	w.EXPECT().
 		PluginGetBinary(testPluginName, testOS, testARCH, gomock.Any()).
 		DoAndReturn(serve("a tampered binary")).
@@ -114,6 +114,61 @@ func TestDownloadBinary_RefusesTamperedDownload(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrPluginInvalid), "got %v", err)
 	require.Contains(t, err.Error(), "sha512 mismatch")
+}
+
+// Uploading a binary replaces the stored object before the new checksum is committed: a download
+// landing in that window gets the new content with the old checksum. The mismatch is not
+// deterministic, the descriptor read again carries the checksum of the content now served.
+func TestDownloadBinary_RetriesWithTheChecksumPublishedAfterAnUpload(t *testing.T) {
+	w, fs := setupBinaryTest(t)
+
+	gomock.InOrder(
+		w.EXPECT().PluginGet(testPluginName).Return(pluginServing(t, "the previous binary"), nil),
+		w.EXPECT().PluginGet(testPluginName).Return(pluginServing(t, "the binary just uploaded"), nil),
+	)
+	// the storage serves the new content for both tries
+	w.EXPECT().
+		PluginGetBinary(testPluginName, testOS, testARCH, gomock.Any()).
+		DoAndReturn(serve("the binary just uploaded")).
+		Times(2)
+
+	b, err := DownloadBinary(context.TODO(), w, testPluginName, testOS, testARCH)
+	require.NoError(t, err)
+	require.Equal(t, pluginServing(t, "the binary just uploaded").Binaries[0].SHA512sum, b.SHA512sum)
+
+	content, err := afero.ReadFile(fs, testBinaryName)
+	require.NoError(t, err)
+	require.Equal(t, "the binary just uploaded", string(content))
+}
+
+// A binary published under a new name, the previous object having been deleted, must not keep the
+// worker downloading the object that will never come back.
+func TestDownloadBinary_RetriesWithTheNamePublishedAfterAnUpload(t *testing.T) {
+	w, fs := setupBinaryTest(t)
+
+	renamed := pluginServing(t, "the binary just uploaded")
+	renamed.Binaries[0].Name = testBinaryName + "-v2"
+
+	gomock.InOrder(
+		w.EXPECT().PluginGet(testPluginName).Return(pluginServing(t, "the previous binary"), nil),
+		w.EXPECT().PluginGet(testPluginName).Return(renamed, nil),
+	)
+	gomock.InOrder(
+		w.EXPECT().
+			PluginGetBinary(testPluginName, testOS, testARCH, gomock.Any()).
+			Return(sdk.NewErrorFrom(sdk.ErrNotFound, "object not found")),
+		w.EXPECT().
+			PluginGetBinary(testPluginName, testOS, testARCH, gomock.Any()).
+			DoAndReturn(serve("the binary just uploaded")),
+	)
+
+	b, err := DownloadBinary(context.TODO(), w, testPluginName, testOS, testARCH)
+	require.NoError(t, err)
+	require.Equal(t, testBinaryName+"-v2", b.Name)
+
+	content, err := afero.ReadFile(fs, testBinaryName+"-v2")
+	require.NoError(t, err)
+	require.Equal(t, "the binary just uploaded", string(content))
 }
 
 // The worker basedir defaults to os.TempDir() and can be shared between workers: a binary
