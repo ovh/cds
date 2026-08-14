@@ -206,32 +206,41 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postGRPCluginBinaryHandler")
 		}
 
+		if _, err := plugin.LoadByName(ctx, api.mustDB(), name); err != nil {
+			return sdk.WrapError(err, "postGRPCluginBinaryHandler")
+		}
+
+		// The binary is uploaded before the transaction is opened: the object is replaced only when
+		// the upload completes, so the plugin stays downloadable, and the binaries of a same plugin
+		// can still be uploaded in parallel without waiting for the row lock taken below.
+		buff := bytes.NewBuffer(b.FileContent)
+		if err := plugin.UploadBinary(ctx, api.SharedStorage, &b, io.NopCloser(buff)); err != nil {
+			return sdk.WrapError(err, "unable to upload plugin binary")
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start tx")
 		}
 		defer tx.Rollback() // nolint
 
-		p, err := plugin.LoadByName(ctx, tx, name)
+		p, err := plugin.LoadByNameForUpdate(ctx, tx, name)
 		if err != nil {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler")
 		}
 
-		buff := bytes.NewBuffer(b.FileContent)
-
-		old := p.GetBinary(b.OS, b.Arch)
-		if old == nil {
-			if err := plugin.AddBinary(ctx, tx, api.SharedStorage, p, &b, io.NopCloser(buff)); err != nil {
-				return sdk.WrapError(err, "unable to add plugin binary")
-			}
-		} else {
-			if err := plugin.UpdateBinary(ctx, tx, api.SharedStorage, p, &b, io.NopCloser(buff)); err != nil {
-				return sdk.WrapError(err, "unable to add plugin binary")
-			}
+		staleBinary, err := plugin.SetBinary(tx, p, &b)
+		if err != nil {
+			return sdk.WrapError(err, "unable to add plugin binary")
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "unable to commit tx")
+		}
+
+		// the replaced binary had another name, its object is not referenced anymore
+		if staleBinary != nil {
+			plugin.DeleteStaleBinary(ctx, api.SharedStorage, p, staleBinary)
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -323,18 +332,21 @@ func (api *API) deleteGRPCluginBinaryHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		p, err := plugin.LoadByName(ctx, tx, name)
+		p, err := plugin.LoadByNameForUpdate(ctx, tx, name)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load plugin")
 		}
 
-		if err := plugin.DeleteBinary(ctx, tx, api.SharedStorage, p, os, arch); err != nil {
+		deletedBinary, err := plugin.DeleteBinary(tx, p, os, arch)
+		if err != nil {
 			return err
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "unable to commit tx")
 		}
+
+		plugin.DeleteStaleBinary(ctx, api.SharedStorage, p, deletedBinary)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
