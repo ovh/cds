@@ -8,16 +8,6 @@
   padding: 20px;
 }
 
-form {
-  .controls {
-    text-align: right;
-
-    button {
-      margin-left: 8px;
-    }
-  }
-}
-
 .list {
   flex: 1;
   overflow: hidden;
@@ -30,4 +20,8 @@ i {
 
 .green {
   color: common.$cds_color_green;
+}
+
+.types nz-tag {
+  margin-top: 4px;
 }

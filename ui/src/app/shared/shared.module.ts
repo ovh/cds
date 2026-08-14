@@ -195,6 +195,7 @@ import {
     RocketOutline,
     SafetyCertificateOutline,
     SaveOutline,
+    SearchOutline,
     SettingFill,
     SettingOutline,
     ShareAltOutline,
@@ -263,6 +264,7 @@ import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { RepositoryRefSelectComponent } from './repository-ref-selector/repository-ref-select.component';
 import { InputFilterComponent } from './input/input-filter.component';
+import { ListToolbarComponent } from './list-toolbar/list-toolbar.component';
 
 const ngZorroConfig: NzConfig = {
     notification: {
@@ -348,6 +350,7 @@ const icons: IconDefinition[] = [
     RocketOutline,
     SafetyCertificateOutline,
     SaveOutline,
+    SearchOutline,
     SettingFill,
     SettingOutline,
     ShareAltOutline,
@@ -461,6 +464,7 @@ const icons: IconDefinition[] = [
         KeysListComponent,
         KeysPipe,
         LabelsEditComponent,
+        ListToolbarComponent,
         NgForNumber,
         NgxAutoScrollDirective,
         NsAutoHeightTableDirective,
@@ -579,6 +583,7 @@ const icons: IconDefinition[] = [
         KeysListComponent,
         KeysPipe,
         LabelsEditComponent,
+        ListToolbarComponent,
         MarkdownModule,
         MomentModule,
         NgForNumber,

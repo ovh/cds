@@ -1,4 +1,3 @@
-<h3>Create a Webhook</h3>
 @if (createdHook) {
   <nz-alert nzType="info" nzCloseable [nzMessage]="hookCreation" (nzOnClose)="closeAlert()"></nz-alert>
 }
@@ -6,86 +5,27 @@
   Hook URL: {{createdHook.url}}<br/>
   Hook secret: {{createdHook.hook_sign_key}}
 </ng-template>
-<form nz-form (ngSubmit)="createHook()">
-  <nz-row>
-    <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4">
-      <nz-form-item>
-        <nz-form-label nzFor="cds-field-hooktype">
-          Hook Type
-        </nz-form-label>
-        <nz-form-control>
-          <nz-select name="type" id="cds-field-hooktype" [(ngModel)]="newWebhook.type">
-            @for (n of hookTypes; track n) {
-              <nz-option [nzLabel]="n" [nzValue]="n"></nz-option>
-            }
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-    </nz-col>
-    <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4" [nzOffset]="1">
-      <nz-form-item>
-        <nz-form-label nzFor="cds-field-vcs">
-          Vcs server
-        </nz-form-label>
-        <nz-form-control>
-          <nz-select name="vcs" id="cds-field-vcs" [(ngModel)]="newWebhook.vcs_server">
-            @for (n of vcss; track n) {
-              <nz-option [nzLabel]="n.name" [nzValue]="n.name"></nz-option>
-            }
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-    </nz-col>
-    <nz-col [nzSpan]="newWebhook.type === 'repository' ? 6: 4" [nzOffset]="1">
-      <nz-form-item>
-        <nz-form-label nzFor="cds-field-repository">
-          Repository
-        </nz-form-label>
-        <nz-form-control>
-          <input nz-input name="repository" id="cds-field-repository" [(ngModel)]="newWebhook.repository">
-          @if (errorRepository) {
-            <nz-alert nzType="warning" nzMessage="Repository cannot be empty"></nz-alert>
-          }
-        </nz-form-control>
-      </nz-form-item>
-    </nz-col>
-    @if (newWebhook.type === 'workflow') {
-      <nz-col [nzSpan]="5" [nzOffset]="1">
-        <nz-form-item>
-          <nz-form-label nzFor="cds-field-workflow">
-            Workflow
-          </nz-form-label>
-          <nz-form-control>
-            <input nz-input name="workflow" id="cds-field-workflow" [(ngModel)]="newWebhook.workflow">
-            @if (errorWorkflow) {
-              <nz-alert nzType="warning" nzMessage="Workflow cannot be empty"></nz-alert>
-            }
-          </nz-form-control>
-        </nz-form-item>
-      </nz-col>
-    }
-    <nz-col [nzSpan]="4" class="alignEnd">
-      <button nz-button nzType="primary" [nzLoading]="loading.action">Create</button>
-    </nz-col>
-  </nz-row>
-</form>
 
-<h3>Webhooks :</h3>
+<app-list-toolbar searchPlaceholder="Search a webhook by id, type, VCS, repository, workflow or user"
+  itemLabel="webhooks" [searchValue]="filter"
+  [count]="filteredWebhooks.length" [total]="webhooks.length" addLabel="New webhook"
+  (searchChange)="updateFilter($event)" (add)="openCreateModal()"></app-list-toolbar>
+
 <div class="list">
-  <nz-table #table [nzData]="webhooks" [nsAutoHeightTable]="39" [nzFrontPagination]="false" nzSize="small"
-    [nzLoading]="loading.list">
+  <nz-table #table [nzData]="filteredWebhooks" [nsAutoHeightTable]="39" [nzFrontPagination]="false" nzSize="small"
+    [nzLoading]="loading.list" [nzNoResult]="empty">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Type</th>
+        <th nzWidth="290px">ID</th>
+        <th nzWidth="120px">Type</th>
         <th>Target</th>
-        <th>Created</th>
-        <th>Username</th>
-        <th>Action</th>
+        <th nzWidth="180px">Created</th>
+        <th nzWidth="150px">Username</th>
+        <th nzWidth="80px" nzAlign="right">Actions</th>
       </tr>
     </thead>
     <tbody>
-      @for (data of table.data; track data) {
+      @for (data of table.data; track data.id) {
         <tr>
           <td>{{data.id}}</td>
           <td>{{data.type}}</td>
@@ -94,9 +34,71 @@
           }</td>
           <td>{{data.created}}</td>
           <td>{{data.username}}</td>
-          <td class="alignEnd"><button nz-button nzDanger [nzLoading]="loading.action" nz-popconfirm="Are you sure you want to revoke this webhook?" (nzOnConfirm)="deleteWebhook(data)">Delete</button></td>
+          <td nzAlign="right">
+            <button nz-button nzDanger nzType="text" [nzLoading]="loading.action"
+              nz-popconfirm="Are you sure you want to revoke this webhook?" (nzOnConfirm)="deleteWebhook(data)"
+              title="Revoke the webhook {{data.id}}" [attr.aria-label]="'Revoke the webhook ' + data.id">
+              <span nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></span>
+            </button>
+          </td>
         </tr>
       }
     </tbody>
   </nz-table>
+
+  <ng-template #empty>
+    <nz-empty [nzNotFoundContent]="webhooks.length === 0 ? 'No webhook yet' : 'No webhook matches your search'"></nz-empty>
+  </ng-template>
 </div>
+
+<nz-modal [nzVisible]="createModalVisible" nzTitle="New webhook" [nzFooter]="null" [nzWidth]="640"
+  (nzOnCancel)="closeCreateModal()">
+  <ng-container *nzModalContent>
+    <form nz-form (ngSubmit)="createHook()">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzFor="cds-field-hooktype">Hook type</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-select name="type" id="cds-field-hooktype" [(ngModel)]="newWebhook.type">
+            @for (n of hookTypes; track n) {
+              <nz-option [nzLabel]="n" [nzValue]="n"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzFor="cds-field-vcs">VCS server</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-select name="vcs" id="cds-field-vcs" [(ngModel)]="newWebhook.vcs_server">
+            @for (n of vcss; track n) {
+              <nz-option [nzLabel]="n.name" [nzValue]="n.name"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzFor="cds-field-repository" nzRequired>Repository</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <input nz-input name="repository" id="cds-field-repository" [(ngModel)]="newWebhook.repository">
+          @if (errorRepository) {
+            <nz-alert nzType="warning" nzMessage="Repository cannot be empty"></nz-alert>
+          }
+        </nz-form-control>
+      </nz-form-item>
+      @if (newWebhook.type === 'workflow') {
+        <nz-form-item>
+          <nz-form-label [nzSpan]="6" nzFor="cds-field-workflow" nzRequired>Workflow</nz-form-label>
+          <nz-form-control [nzSpan]="18">
+            <input nz-input name="workflow" id="cds-field-workflow" [(ngModel)]="newWebhook.workflow">
+            @if (errorWorkflow) {
+              <nz-alert nzType="warning" nzMessage="Workflow cannot be empty"></nz-alert>
+            }
+          </nz-form-control>
+        </nz-form-item>
+      }
+      <div class="cds-modal-footer">
+        <button nz-button type="button" (click)="closeCreateModal()">Cancel</button>
+        <button nz-button nzType="primary" [nzLoading]="loading.action">Create</button>
+      </div>
+    </form>
+  </ng-container>
+</nz-modal>
