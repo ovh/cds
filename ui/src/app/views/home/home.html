@@ -3,7 +3,7 @@
     <img src="assets/images/cds.png" alt="CDS logo" title="{{'navbar_home' | translate}}" />
   </div>
 
-  <app-search-bar #searchBar></app-search-bar>
+  <app-search-bar #searchBar [autofocus]="true"></app-search-bar>
 
   <div class="controls">
     <button nz-button nzSize="large" title="Search in CDS" (click)="clickSearch()">

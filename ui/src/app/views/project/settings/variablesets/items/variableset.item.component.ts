@@ -17,7 +17,10 @@ export class ProjectVariableSetItemsComponent implements OnChanges {
     @Input() project: Project;
     @Input() variableSet: VariableSet
 
-    items: VariableSetItem[];
+    items: VariableSetItem[] = [];
+    filteredItems: VariableSetItem[] = [];
+    filter: string = '';
+    createModalVisible: boolean = false;
     loading: boolean;
     itemFormLoading: boolean;
     newItem: VariableSetItem;
@@ -37,6 +40,7 @@ export class ProjectVariableSetItemsComponent implements OnChanges {
         if (!this.variableSet || !this.project) {
             return
         }
+        this.filter = '';
         this.loadVariableSet();
     }
 
@@ -46,7 +50,8 @@ export class ProjectVariableSetItemsComponent implements OnChanges {
 
         try {
             const res = await lastValueFrom(this._v2ProjectService.getVariableSet(this.project.key, this.variableSet.name));
-            this.items = res.items
+            this.items = res.items ?? [];
+            this.applyFilter();
         } catch (e) {
             this._messageService.error(`Unable to load variable set: ${ErrorUtils.print(e)}`);
         }
@@ -85,7 +90,33 @@ export class ProjectVariableSetItemsComponent implements OnChanges {
             this._cd.markForCheck();
         }
 
+        this.closeCreateModal();
         this.loadVariableSet();
+    }
+
+    updateFilter(value: string): void {
+        this.filter = value;
+        this.applyFilter();
+        this._cd.markForCheck();
+    }
+
+    applyFilter(): void {
+        const search = (this.filter ?? '').trim().toLowerCase();
+        this.filteredItems = search === '' ? this.items :
+            this.items.filter(i => i.name.toLowerCase().indexOf(search) !== -1 || (i.type ?? '').toLowerCase().indexOf(search) !== -1);
+    }
+
+    openCreateModal(): void {
+        this.newItem = new VariableSetItem();
+        this.errorItemName = false;
+        this.errorItemValue = false;
+        this.createModalVisible = true;
+        this._cd.markForCheck();
+    }
+
+    closeCreateModal(): void {
+        this.createModalVisible = false;
+        this._cd.markForCheck();
     }
 
     async updateVariableSetItem(i: VariableSetItem) {

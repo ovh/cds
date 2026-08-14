@@ -1,0 +1,33 @@
+<div class="toolbar">
+  <nz-input-group class="search" [nzPrefix]="searchPrefix" [nzSuffix]="searchSuffix">
+    <input #searchInput nz-input type="text" [placeholder]="searchPlaceholder" [attr.aria-label]="searchPlaceholder"
+      [ngModel]="searchValue" (ngModelChange)="searchChange.emit($event)">
+  </nz-input-group>
+  <ng-template #searchPrefix>
+    <span nz-icon nzType="search" nzTheme="outline" aria-hidden="true"></span>
+  </ng-template>
+  <ng-template #searchSuffix>
+    @if (searchValue) {
+      <button type="button" class="clear" title="Clear the search" aria-label="Clear the search"
+        (click)="searchChange.emit('')">
+        <span nz-icon nzType="close-circle" nzTheme="outline" aria-hidden="true"></span>
+      </button>
+    }
+  </ng-template>
+
+  @if (total !== undefined && total !== null) {
+    <span class="count" aria-live="polite">
+      @if (searchValue) {
+        {{ count }} / {{ total }} {{ itemLabel }}
+      } @else {
+        {{ total }} {{ itemLabel }}
+      }
+    </span>
+  }
+
+  @if (addLabel) {
+    <button nz-button nzType="primary" class="add" (click)="add.emit()">
+      <span nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></span><span>{{ addLabel }}</span>
+    </button>
+  }
+</div>

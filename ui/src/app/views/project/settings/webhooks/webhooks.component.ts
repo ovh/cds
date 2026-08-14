@@ -21,6 +21,9 @@ export class ProjectWebhooksComponent implements OnInit {
     loading = { list: false, action: false };
     vcss: Array<VCSProject>;
     webhooks: Array<ProjectWebHook> = [];
+    filteredWebhooks: Array<ProjectWebHook> = [];
+    filter: string = '';
+    createModalVisible: boolean = false;
     newWebhook: PostProjectWebHook = new PostProjectWebHook();
     createdHook: PostResponseCreateHook;
     errorRepository: boolean;
@@ -43,6 +46,7 @@ export class ProjectWebhooksComponent implements OnInit {
         this._cd.markForCheck();
         try {
             this.webhooks = await lastValueFrom(this._v2ProjectService.getWebhooks(this.project.key));
+            this.applyFilter();
             this.vcss = await lastValueFrom(this._projectService.listVCSProject(this.project.key));
             if (this.vcss.length > 0) {
                 this.newWebhook.vcs_server = this.vcss[0].name;
@@ -60,6 +64,7 @@ export class ProjectWebhooksComponent implements OnInit {
         try {
             await lastValueFrom(this._v2ProjectService.deleteWebhook(this.project.key, h.id))
             this.webhooks = this.webhooks.filter(s => s.id !== h.id);
+            this.applyFilter();
             this._messageService.success(`WebHook ${h.id} deleted`, { nzDuration: 2000 });
         } catch (e) {
             this._messageService.error(`Unable to delete webhook: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
@@ -85,6 +90,7 @@ export class ProjectWebhooksComponent implements OnInit {
         this._cd.markForCheck();
         try {
             this.createdHook = await lastValueFrom(this._v2ProjectService.createWebhook(this.project.key, this.newWebhook))
+            this.closeCreateModal();
             this.load();
             this.newWebhook = new PostProjectWebHook();
         } catch (e) {
@@ -96,5 +102,35 @@ export class ProjectWebhooksComponent implements OnInit {
 
     closeAlert() {
         delete this.createdHook;
+        this._cd.markForCheck();
+    }
+
+    updateFilter(value: string): void {
+        this.filter = value;
+        this.applyFilter();
+        this._cd.markForCheck();
+    }
+
+    applyFilter(): void {
+        const search = (this.filter ?? '').trim().toLowerCase();
+        this.filteredWebhooks = search === '' ? this.webhooks : this.webhooks.filter(h =>
+            [h.id, h.type, h.vcs_server, h.repository, h.workflow, h.username]
+                .some(field => (field ?? '').toLowerCase().indexOf(search) !== -1));
+    }
+
+    openCreateModal(): void {
+        this.errorRepository = false;
+        this.errorWorkflow = false;
+        this.newWebhook = new PostProjectWebHook();
+        if (this.vcss?.length > 0) {
+            this.newWebhook.vcs_server = this.vcss[0].name;
+        }
+        this.createModalVisible = true;
+        this._cd.markForCheck();
+    }
+
+    closeCreateModal(): void {
+        this.createModalVisible = false;
+        this._cd.markForCheck();
     }
 }

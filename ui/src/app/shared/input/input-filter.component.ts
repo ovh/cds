@@ -38,7 +38,8 @@ export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked,
 	@Input() filterText: string = '';
 	@Input() filters: Array<Filter> = [];
 	@Input() suggestions: Array<Suggestion<T>> = [];
-	@Input() suggestionTemplate: TemplateRef<unknown> | undefined; cds
+	@Input() suggestionTemplate: TemplateRef<unknown> | undefined;
+	@Input() autofocus: boolean = false;
 	@Output() changeFilter: EventEmitter<string> = new EventEmitter();
 	@Output() selectSuggestion: EventEmitter<T> = new EventEmitter();
 	@Output() submit: EventEmitter<void> = new EventEmitter();
@@ -99,6 +100,15 @@ export class InputFilterComponent<T> implements AfterViewInit, AfterViewChecked,
 				return;
 			}
 			doBackfill();
+		}
+
+		if (this.autofocus) {
+			// Focusing opens the autocomplete panel; close it back so the page stays
+			// readable until the user actually types or clicks.
+			setTimeout(() => {
+				this.filterInput.nativeElement.focus({ preventScroll: true });
+				this.filterInputDirective.closePanel();
+			});
 		}
 	}
 

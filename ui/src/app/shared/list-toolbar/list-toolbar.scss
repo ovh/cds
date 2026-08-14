@@ -1,0 +1,39 @@
+@use '../../../common' as common;
+
+:host {
+  display: block;
+  margin-bottom: 15px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search {
+  flex: 1;
+  min-width: 0;
+}
+
+.count {
+  color: common.$polar_grey_2;
+  white-space: nowrap;
+
+  :host-context(.night) & {
+    color: common.$polar_grey_3;
+  }
+}
+
+.clear {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+}
+
+.add {
+  flex: none;
+}

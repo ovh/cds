@@ -57,6 +57,14 @@ body {
     outline: none;
 }
 
+// Action row of a form rendered inside a nz-modal that opts out of the default footer.
+.cds-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 24px;
+}
+
 .app-loader {
     position: absolute;
     top: 50%;

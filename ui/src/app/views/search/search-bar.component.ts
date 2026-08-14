@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { Router } from "@angular/router";
 import { SearchResult, SearchResultType } from "app/model/search.model";
 import { SearchService } from "app/service/search.service";
@@ -20,6 +20,8 @@ import { DisplaySearchResult } from "./search.component";
 @AutoUnsubscribe()
 export class SearchBarComponent implements OnInit, OnDestroy {
 	@ViewChild('searchBar') searchBar: InputFilterComponent<Suggestion<SearchResult>>;
+
+	@Input() autofocus: boolean = false;
 
 	searchFilterText: string = '';
 	searchFilters: Array<Filter> = [];
