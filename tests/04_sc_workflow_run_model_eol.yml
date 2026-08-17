@@ -127,13 +127,12 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemoutjson.status ShouldEqual Success
 
+# The model deletes are best effort: a hatchery may have spawned a registration worker while the
+# model was still enabled, and its worker row keeps a foreign key on the model for up to 300s after
+# its last heartbeat, making the delete fail. The prepare testcase removes any leftover next run.
 - name: cleanup
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNMODELEOL
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunmodeleol
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete 04SCWorkflowRunModelEOL-MODEL --force
-    assertions:
-      - result.code ShouldEqual 0
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete 04SCWorkflowRunModelEOL-MODEL-DISABLED --force
-    assertions:
-      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete 04SCWorkflowRunModelEOL-MODEL --force || true
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete 04SCWorkflowRunModelEOL-MODEL-DISABLED --force || true
