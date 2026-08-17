@@ -127,6 +127,7 @@ var workflowRunSearchCmd = cli.Command{
 		{Name: "branch"},
 		{Name: "status"},
 		{Name: "actor"},
+		{Name: "query", Usage: "free text search, all given words must match"},
 		{Name: "offset"},
 		{Name: "limit"},
 	},
@@ -140,6 +141,7 @@ func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
 	branch := v.GetString("branch")
 	status := v.GetString("status")
 	actor := v.GetString("actor")
+	query := v.GetString("query")
 
 	offset, err := v.GetInt64("offset")
 	if err != nil {
@@ -177,6 +179,9 @@ func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
 	}
 	if repository != "" {
 		mods = append(mods, cdsclient.WithQueryParameter("repository", repository))
+	}
+	if query != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("query", query))
 	}
 
 	var runs []sdk.V2WorkflowRun

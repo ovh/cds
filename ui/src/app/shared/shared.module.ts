@@ -256,6 +256,7 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NsAutoHeightTableDirective } from './directives/ns-auto-height-table.directive';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { DateFromNowComponent } from './date-from-now/date-from-now';
+import { WorkflowNameComponent } from './workflow-name/workflow-name.component';
 import { NzTreeModule } from 'ng-zorro-antd/tree';
 import { NzTreeSelectModule } from 'ng-zorro-antd/tree-select';
 import { NzResultModule } from 'ng-zorro-antd/result';
@@ -453,6 +454,7 @@ const icons: IconDefinition[] = [
         CutPipe,
         DataTableComponent,
         DateFromNowComponent,
+        WorkflowNameComponent,
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
@@ -569,6 +571,7 @@ const icons: IconDefinition[] = [
         CutPipe,
         DataTableComponent,
         DateFromNowComponent,
+        WorkflowNameComponent,
         DiffItemComponent,
         DiffListComponent,
         DragulaModule,

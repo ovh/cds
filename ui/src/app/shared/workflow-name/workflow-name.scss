@@ -1,0 +1,34 @@
+:host {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+// The flex values are explicit because app-searchable force applies `flex: 1` to every projected
+// span, which would give each part an equal share of the width and truncate them all.
+.name {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  a {
+    color: inherit;
+
+    &:hover {
+      color: #177ddc;
+    }
+  }
+}
+
+.ref,
+.scope {
+  flex: 0 0 auto;
+  color: #979797;
+  font-size: 12px;
+  white-space: nowrap;
+}

@@ -92,12 +92,12 @@
       <div class="graph">
         <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
           <nz-page-header-title>
-            <span style="margin-right: 10px;" title="Show workflow's runs">
-              <a [routerLink]="['/project', projectKey, 'run']"
-                [queryParams]="{workflow: workflowRun.vcs_server+'/'+workflowRun.repository+'/'+workflowRun.workflow_name}">
-              {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}</a>
-              <span class="number">#{{workflowRun.run_number}}</span>
-            </span>
+            <app-workflow-name style="margin-right: 10px;" [name]="workflowRun.workflow_name"
+              [suffix]="'#'+workflowRun.run_number"
+              [scope]="workflowRun.vcs_server+'/'+workflowRun.repository"
+              [link]="['/project', projectKey, 'run']"
+              [linkQueryParams]="{workflow: workflowRun.vcs_server+'/'+workflowRun.repository+'/'+workflowRun.workflow_name}"
+              linkTitle="Show workflow's runs"></app-workflow-name>
             @if (workflowRun.run_attempt > 1 && selectedRunAttempt) {
               <nz-select
                 [ngModel]="selectedRunAttempt" (ngModelChange)="changeRunAttempt($event)" nzSize="small"

@@ -22,7 +22,7 @@
 		<form nz-form (ngSubmit)="submitForm()">
 			<nz-form-item>
 				<nz-form-control>
-					<app-input-filter placeholder="Filter workflow runs" [filterText]="filterText" [filters]="filters"
+					<app-input-filter placeholder="Search workflow runs, or narrow with key:value filters" [filterText]="filterText" [filters]="filters"
 						(changeFilter)="changeFilter($event)" (submit)="submitForm()"></app-input-filter>
 				</nz-form-control>
 			</nz-form-item>
@@ -48,9 +48,13 @@
 	</div>
 
 	<nz-list class="run-list" [nzLoading]="loading" nzSize="small" nzNoResult="test">
+		<!-- The line click only duplicates the run link it contains, which stays the keyboard and
+		     screen reader entry point, so no extra focus stop nor key handler is wanted here. -->
+		<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
 		<nz-list-item *ngFor="let run of runs; let i = index; trackBy: trackRunElement"
-			[class.append]="!!animatedRuns[run.id]" [@appendToList]="animatedRuns[run.id] ? 'append' : 'active'"
-			(mouseenter)="onMouseEnterRun(run.id)">
+			class="run-line" [class.append]="!!animatedRuns[run.id]"
+			[@appendToList]="animatedRuns[run.id] ? 'append' : 'active'"
+			(mouseenter)="onMouseEnterRun(run.id)" (click)="clickRunLine($event, run)">
 			<ng-container>
 				<nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
 				</nz-list-item-meta>
@@ -74,10 +78,13 @@
 					</div>
 				</ng-template>
 				<ng-template #runTitle>
-					<app-searchable [link]="['/project', project.key, 'run']" [fixed]="true"
+					<app-searchable [style]="{display:'unset'}" [link]="['/project', project.key, 'run']" [fixed]="true"
 						[params]="{workflow: run.vcs_server+'/'+run.repository+'/'+run.workflow_name}" paramsHandling="merge">
-						<a [routerLink]="['/project', run.project_key, 'run', run.id]">{{run.vcs_server}}/{{run.repository}}/{{run.workflow_name}}
-							#{{run.run_number}}</a>
+						<a [routerLink]="['/project', run.project_key, 'run', run.id]"
+							[title]="run.vcs_server+'/'+run.repository+'/'+run.workflow_name+' #'+run.run_number">
+							<app-workflow-name [name]="run.workflow_name" [suffix]="'#'+run.run_number"
+								[scope]="run.vcs_server+'/'+run.repository"></app-workflow-name>
+						</a>
 					</app-searchable>
 				</ng-template>
 				<ng-template #runDescription>
@@ -153,11 +160,37 @@
 		</nz-list-item>
 		<nz-list-empty *ngIf="!loading && totalCount === 0" [nzNoResult]="emptyList"></nz-list-empty>
 		<ng-template #emptyList>
-			<nz-empty nzNotFoundContent="No result found"></nz-empty>
+			<nz-empty *ngIf="matchingWorkflows.length === 0" nzNotFoundContent="No result found"></nz-empty>
+			<div class="no-run" *ngIf="matchingWorkflows.length > 0">
+				<div class="message">
+					<h3>No run matches this search</h3>
+					<p>The following workflow{{matchingWorkflows.length > 1 ? 's' : ''}}
+						match{{matchingWorkflows.length > 1 ? '' : 'es'}} it. You can open
+						{{matchingWorkflows.length > 1 ? 'their definitions' : 'its definition'}} in the explore view,
+						or start a run of {{matchingWorkflows.length > 1 ? 'one of them' : 'it'}}.</p>
+				</div>
+				<ul>
+					<li *ngFor="let w of matchingWorkflows">
+						<a class="workflow" [routerLink]="w.exploreLink.path" [title]="workflowTitleTooltip(w)">
+							<app-workflow-name [name]="w.result.label" [scope]="workflowScope(w)"
+								[ref]="workflowRef(w)"></app-workflow-name>
+						</a>
+						<span class="actions">
+							<a nz-button [routerLink]="w.exploreLink.path"
+								[attr.aria-label]="'Explore workflow ' + workflowPath(w)"><span nz-icon nzType="folder"
+									nzTheme="outline" aria-hidden="true"></span> Explore</a>
+							<button nz-button nzType="primary"
+								(click)="openRunStartDrawer(workflowPath(w))"
+								[attr.aria-label]="'Start a run of workflow ' + workflowPath(w)"><span nz-icon
+									nzType="caret-right" nzTheme="fill" aria-hidden="true"></span> Start a run</button>
+						</span>
+					</li>
+				</ul>
+			</div>
 		</ng-template>
 	</nz-list>
 	<div *ngIf="totalCount > 0" class="footer">
-		{{totalCount}} results - sorted by
+		{{totalCount}} result{{totalCount > 1 ? 's' : ''}} - sorted by
 		<nz-select [ngModel]="sort" (ngModelChange)="onSortChange($event)" nzBorderless aria-label="Sort runs">
 			<nz-option nzValue="last_modified:desc" nzLabel="last modification desc"></nz-option>
 			<nz-option nzValue="last_modified:asc" nzLabel="last modification asc"></nz-option>

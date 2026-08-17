@@ -19,6 +19,76 @@ export class Suggestion<T> {
 	data: T;
 }
 
+/**
+ * Serialization helpers for the raw filter text of app-input-filter.
+ * A filter text is a space separated list of tokens, a token being either a `key:value` filter
+ * or a free text search word. Free text words are carried by the `query` query param.
+ */
+export class FilterText {
+	static readonly queryKey = 'query';
+
+	static parse(text: string, opts?: { skipEmptyValues?: boolean }): { filters: { [key: string]: Array<string> }, query: Array<string> } {
+		const filters: { [key: string]: Array<string> } = {};
+		const query: Array<string> = [];
+		(text ?? '').split(' ').forEach(token => {
+			if (token === '') { return; }
+			const splitted = token.split(':');
+			if (splitted.length === 2) {
+				if (opts?.skipEmptyValues && splitted[1] === '') { return; }
+				const key = FilterText.decodeSpaces(splitted[0]);
+				if (!filters[key]) { filters[key] = []; }
+				filters[key].push(FilterText.decodeSpaces(splitted[1]));
+			} else if (splitted.length === 1) {
+				query.push(FilterText.decodeSpaces(token));
+			}
+		});
+		return { filters, query };
+	}
+
+	/** Params sent to a search API: filters as arrays, free text words joined under the query key. */
+	static toSearchParams(text: string): { [key: string]: any } {
+		const { filters, query } = FilterText.parse(text);
+		let params: { [key: string]: any } = { ...filters };
+		if (query.length > 0) {
+			params[FilterText.queryKey] = query.join(' ');
+		}
+		return params;
+	}
+
+	/** Router query params, dropping the filters left without a value. */
+	static toQueryParams(text: string): { [key: string]: any } {
+		const { filters, query } = FilterText.parse(text, { skipEmptyValues: true });
+		let params: { [key: string]: any } = {};
+		Object.keys(filters).forEach(key => {
+			params[key] = filters[key].length === 1 ? filters[key][0] : filters[key];
+		});
+		if (query.length > 0) {
+			params[FilterText.queryKey] = query.join(' ');
+		}
+		return params;
+	}
+
+	static fromQueryParams(values: { [key: string]: any }, ignoredKeys: Array<string> = []): string {
+		const keys = Object.keys(values ?? {})
+			.filter(key => ignoredKeys.indexOf(key) === -1)
+			// Keep the free text search last, so that the key:value filters stay easy to spot.
+			.sort((a, b) => (a === FilterText.queryKey ? 1 : 0) - (b === FilterText.queryKey ? 1 : 0));
+		return keys.map(key => {
+			const values_ = !Array.isArray(values[key]) ? [values[key]] : values[key];
+			return values_.map(v => key === FilterText.queryKey ? `${v}` :
+				`${FilterText.encodeSpaces(key)}:${FilterText.encodeSpaces(`${v}`)}`).join(' ');
+		}).join(' ').trim();
+	}
+
+	private static encodeSpaces(v: string): string {
+		return v.split(' ').join(InputFilterComponent.spaceAlternative);
+	}
+
+	private static decodeSpaces(v: string): string {
+		return v.split(InputFilterComponent.spaceAlternative).join(' ');
+	}
+}
+
 @Component({
 	standalone: false,
 	selector: 'app-input-filter',
