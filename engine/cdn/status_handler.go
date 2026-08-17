@@ -73,6 +73,14 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 		return true
 	})
 
+	nbDequeuing := s.dequeuingJobQueues.Load()
+	dequeueStatus := sdk.MonitoringStatusOK
+	if nbDequeuing >= s.maxJobLogsGoroutines() {
+		// saturated: job logs queues are waiting in redis until a slot frees up
+		dequeueStatus = sdk.MonitoringStatusWarn
+	}
+	m.AddLine(addMonitoringLine(nbDequeuing, "dequeue/job_queues", nil, dequeueStatus))
+
 	m.AddLine(s.DBConnectionFactory.Status(ctx))
 
 	return m

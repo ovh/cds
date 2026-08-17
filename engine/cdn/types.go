@@ -3,6 +3,7 @@ package cdn
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.opencensus.io/stats"
@@ -41,11 +42,15 @@ type Service struct {
 	WSBroker            *websocket.Broker
 	WSEventsMutex       sync.Mutex
 	WSEvents            map[string]sdk.CDNWSEvent
+	dequeuingJobQueues  atomic.Int64 // job log queues currently claimed by this instance
+	dequeueOwnerID      string       // unique instance id stored as heartbeat value
 	Metrics             struct {
 		tcpServerErrorsCount     *stats.Int64Measure
 		tcpServerHitsCount       *stats.Int64Measure
 		tcpServerStepLogCount    *stats.Int64Measure
 		tcpServerServiceLogCount *stats.Int64Measure
+		dequeuedJobQueues        *stats.Int64Measure
+		dequeuedMessages         *stats.Int64Measure
 		itemCompletedByGCCount   *stats.Int64Measure
 		itemInDatabaseCount      *stats.Int64Measure
 		itemPerStorageUnitCount  *stats.Int64Measure
