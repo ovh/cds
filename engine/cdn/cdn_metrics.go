@@ -37,6 +37,12 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	s.Metrics.tcpServerServiceLogCount = stats.Int64("cdn/tcp/service_log_count", "number of service log received", stats.UnitDimensionless)
 	tcpServerServiceLogCountView := telemetry.NewViewCount(s.Metrics.tcpServerServiceLogCount.Name(), s.Metrics.tcpServerServiceLogCount, []tag.Key{tagServiceName, tagServiceType})
 
+	s.Metrics.dequeuedJobQueues = stats.Int64("cdn/dequeue/job_queues", "number of job logs queues currently claimed by this instance", stats.UnitDimensionless)
+	dequeuedJobQueuesView := telemetry.NewViewLast(s.Metrics.dequeuedJobQueues.Name(), s.Metrics.dequeuedJobQueues, []tag.Key{tagServiceName, tagServiceType})
+
+	s.Metrics.dequeuedMessages = stats.Int64("cdn/dequeue/messages", "number of job logs messages dequeued", stats.UnitDimensionless)
+	dequeuedMessagesView := telemetry.NewViewCount(s.Metrics.dequeuedMessages.Name(), s.Metrics.dequeuedMessages, []tag.Key{tagServiceName, tagServiceType})
+
 	s.Metrics.itemCompletedByGCCount = stats.Int64("cdn/items/completed_by_gc", "number of items completed by GC", stats.UnitDimensionless)
 	itemCompletedByGCCountView := telemetry.NewViewCount(s.Metrics.itemCompletedByGCCount.Name(), s.Metrics.itemCompletedByGCCount, []tag.Key{tagServiceName, tagServiceType})
 
@@ -75,6 +81,8 @@ func (s *Service) initMetrics(ctx context.Context) error {
 		tcpServerHitsCountView,
 		tcpServerStepLogCountView,
 		tcpServerServiceLogCountView,
+		dequeuedJobQueuesView,
+		dequeuedMessagesView,
 		itemCompletedByGCCountView,
 		itemInDatabaseCountView,
 		itemPerStorageUnitCountView,
