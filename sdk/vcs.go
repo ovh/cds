@@ -19,6 +19,7 @@ const (
 	HeaderXVCSType          = "X-CDS-VCS-TYPE"
 	HeaderXVCSToken         = "X-CDS-VCS-TOKEN"
 	HeaderXVCSUsername      = "X-CDS-VCS-USERNAME"
+	HeaderXVCSProjectKey    = "X-CDS-VCS-PROJECT-KEY"
 	HeaderXVCSSSHUsername   = "X-CDS-VCS-SSH-USERNAME"
 	HeaderXVCSSSHPort       = "X-CDS-VCS-SSH-PORT"
 	HeaderXVCSSSHPrivateKey = "X-CDS-VCS-SSH-PRIVATE-KEY"

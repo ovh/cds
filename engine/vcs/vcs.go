@@ -175,7 +175,11 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	// register custom field
-	log.RegisterField(log.Field(github.LogFieldGithubRateLimitRemaining))
+	log.RegisterField(
+		log.Field(github.LogFieldGithubRateLimitRemaining),
+		log.Field(github.LogFieldGithubRateLimitLimit),
+		log.Field(github.LogFieldGithubRateLimitReset),
+	)
 
 	//Start the http server
 	log.Info(c, "VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
