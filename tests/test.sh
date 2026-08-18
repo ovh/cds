@@ -16,7 +16,8 @@ trap cleanup EXIT
 # script usage definition
 usage() {
     echo "Usage: ./test.sh <target...>"
-    echo "   Available targets: smoke_api, smoke_services, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties, admin"
+    echo "   Available targets: smoke_api, initialization, smoke_services, cli, workflow, workflow_with_integration, workflow_with_third_parties, admin, v2, v2_concurrency"
+    echo "   The v2 target can be split across runners with SHARD_TOTAL and SHARD_INDEX."
 }
 
 # Arguments are mandatory
