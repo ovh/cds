@@ -685,12 +685,13 @@ func LoadRunsDescAtOffset(ctx context.Context, db gorp.SqlExecutor, projKey, vcs
 	vcs_server = $2 AND
 	repository = $3 AND
 	workflow_name = $4 AND
-	contexts -> 'git' ->> 'ref'::TEXT = $5
+	contexts -> 'git' ->> 'ref'::TEXT = $5 AND
+	status != ALL($7)
 	ORDER BY run_number DESC
 	OFFSET $6`
 
 	var ids []string
-	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, offset); err != nil {
+	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, offset, pq.StringArray(sdk.V2WorkflowRunNonTerminalStatuses())); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -704,10 +705,11 @@ func LoadOlderRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo,
 	repository = $3 AND
 	workflow_name = $4 AND
 	contexts -> 'git' ->> 'ref'::TEXT = $5 AND
-	now() - started > $6 * INTERVAL '1' DAY`
+	now() - started > $6 * INTERVAL '1' DAY AND
+	status != ALL($7)`
 
 	var ids []string
-	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, days); err != nil {
+	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, days, pq.StringArray(sdk.V2WorkflowRunNonTerminalStatuses())); err != nil {
 		return nil, err
 	}
 	return ids, nil

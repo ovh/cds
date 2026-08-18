@@ -233,6 +233,11 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 		}
 		if opts.DisabledDryRun {
 			if err := RemoveWorkflowRunV2(ctx, db, id, routines); err != nil {
+				// The run was restarted between its selection and now, leave it
+				// alone, a later purge will pick it up once it is done.
+				if sdk.ErrorIs(err, sdk.ErrWrongRequest) {
+					continue
+				}
 				gitRefReport.Error = "unable to remove run " + id
 				return gitRefReport, err
 			}
@@ -254,6 +259,11 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 		}
 		if opts.DisabledDryRun {
 			if err := RemoveWorkflowRunV2(ctx, db, id, routines); err != nil {
+				// The run was restarted between its selection and now, leave it
+				// alone, a later purge will pick it up once it is done.
+				if sdk.ErrorIs(err, sdk.ErrWrongRequest) {
+					continue
+				}
 				gitRefReport.Error = "unable to remove run " + id
 				return gitRefReport, err
 			}
@@ -289,6 +299,15 @@ func RemoveWorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string, routine
 			return nil
 		}
 		return err
+	}
+
+	// Deleting a run that is still going orphans its jobs: the run cascades to
+	// the run jobs then to the workers, whose containers keep going until a
+	// hatchery reaps them as awol. Checked here under the lock and not only when
+	// selecting the runs to delete, since a terminated run can be restarted in
+	// between the two.
+	if !run.Status.IsTerminated() {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow run %s is %s, it has to be terminated before being deleted", run.ID, run.Status)
 	}
 
 	if err := DeleteArtifactsFromRepositoryManagerV2(ctx, tx, run, routines); err != nil {
