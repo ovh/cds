@@ -102,11 +102,11 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.5.2
-	golang.org/x/crypto v0.50.0
-	golang.org/x/net v0.53.0
+	golang.org/x/crypto v0.52.0
+	golang.org/x/net v0.54.0
 	golang.org/x/oauth2 v0.36.0
-	golang.org/x/sys v0.43.0
-	golang.org/x/text v0.36.0
+	golang.org/x/sys v0.45.0
+	golang.org/x/text v0.37.0
 	golang.org/x/time v0.15.0
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
@@ -316,7 +316,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/term v0.42.0 // indirect
+	golang.org/x/term v0.43.0 // indirect
 	google.golang.org/api v0.275.0 // indirect
 	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260319201613-d00831a3d3e7 // indirect
