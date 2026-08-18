@@ -312,8 +312,8 @@ admin_tests() {
 cds_v2_tests() {
     echo "Check if forgejo is running"
     curl --fail -I -X GET ${FORGEJO_HOST}/api/swagger
-    echo "Running CDS v2 tests (excluding concurrency), shard ${SHARD_INDEX}/${SHARD_TOTAL}:"
-    for f in $(ls -1 08_*.yml | grep -v concurrency | shard); do
+    echo "Running CDS v2 tests, shard ${SHARD_INDEX}/${SHARD_TOTAL}:"
+    for f in $(ls -1 08_*.yml | shard); do
         run_cds_v2_tests $f &
         local my_pid=$$
         local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
@@ -325,6 +325,10 @@ cds_v2_tests() {
     wait
 }
 
+# Transitional: the concurrency suites are part of the v2 target again, but the
+# dedicated sequential job still calls this one. It goes away once that job is
+# removed from the workflow. Running both for a while is deliberate, it compares
+# the two arrangements within a single run.
 cds_v2_concurrency_tests() {
     echo "Check if forgejo is running"
     curl --fail -I -X GET ${FORGEJO_HOST}/api/swagger
