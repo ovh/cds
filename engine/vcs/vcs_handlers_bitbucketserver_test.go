@@ -18,9 +18,16 @@ import (
 // by filterText, and the default branch. It counts the calls so that a test can assert that the
 // default branch fallback is only paid for when the listing did not answer.
 type fakeBitbucket struct {
-	listing            string
+	// branch expected to be pushed as filterText, defaults to "master"
+	branch string
+	// listing answered when the request does not ask for boosted matches
+	listing string
+	// listing answered when the request carries boostMatches=true, like a real bitbucket bringing the
+	// exact match to the top of the page. Empty means boostMatches changes nothing.
+	boostedListing     string
 	defaultBranch      string
 	listingCalls       int
+	boostedCalls       int
 	defaultBranchCalls int
 }
 
@@ -38,7 +45,19 @@ func (f *fakeBitbucket) server(t *testing.T) *httptest.Server {
 			fmt.Fprint(w, f.defaultBranch)
 		case strings.HasSuffix(r.URL.Path, "/branches"):
 			f.listingCalls++
-			require.Equal(t, "master", r.URL.Query().Get("filterText"), "the branch name must be pushed to bitbucket as filterText")
+			expectedBranch := f.branch
+			if expectedBranch == "" {
+				expectedBranch = "master"
+			}
+			require.Equal(t, expectedBranch, r.URL.Query().Get("filterText"), "the branch name must be pushed to bitbucket as filterText")
+			boosted := r.URL.Query().Get("boostMatches") == "true"
+			if boosted {
+				f.boostedCalls++
+			}
+			if boosted && f.boostedListing != "" {
+				fmt.Fprint(w, f.boostedListing)
+				return
+			}
 			fmt.Fprint(w, f.listing)
 		default:
 			t.Errorf("unexpected call to the bitbucket fake: %s %s", r.Method, r.URL.String())
@@ -50,6 +69,10 @@ func (f *fakeBitbucket) server(t *testing.T) *httptest.Server {
 // callGetBranchHandler asks the vcs service for the branch "master" of MANAGER/manager-core-manifests
 // on a bitbucketserver backed by the given fake, and returns the recorded response.
 func callGetBranchHandler(t *testing.T, s *Service, bitbucketURL string) *httptest.ResponseRecorder {
+	return callGetBranchHandlerForBranch(t, s, bitbucketURL, "master")
+}
+
+func callGetBranchHandlerForBranch(t *testing.T, s *Service, bitbucketURL, branch string) *httptest.ResponseRecorder {
 	vars := map[string]string{
 		"name":  "my-bitbucket",
 		"owner": "MANAGER",
@@ -60,7 +83,7 @@ func callGetBranchHandler(t *testing.T, s *Service, bitbucketURL string) *httpte
 
 	req := newRequest(t, s, "GET", uri, nil, func(req *http.Request) {
 		q := req.URL.Query()
-		q.Set("branch", "master")
+		q.Set("branch", branch)
 		// keep the run independent from what a previous run left in redis
 		q.Set("noCache", "true")
 		req.URL.RawQuery = q.Encode()
@@ -181,4 +204,41 @@ func Test_getBranchHandler_bitbucketserver_danglingDefaultBranch(t *testing.T) {
 	var httpErr sdk.Error
 	require.NoError(t, sdk.JSONUnmarshal(rec.Body.Bytes(), &httpErr))
 	assert.Equal(t, sdk.ErrNoBranch.ID, httpErr.ID)
+}
+
+// Test_getBranchHandler_bitbucketserver_exactMatchIsBoosted covers what the default branch fallback
+// cannot: a branch that is *not* the default one and that a page ordered by modification date leaves
+// out. Asking bitbucket to boost the exact match is the only thing that brings it back without
+// paginating the listing.
+func Test_getBranchHandler_bitbucketserver_exactMatchIsBoosted(t *testing.T) {
+	s, err := newTestService(t)
+	require.NoError(t, err)
+
+	fake := &fakeBitbucket{
+		branch: "release-1.2",
+		// without boostMatches, bitbucket answers the most recently modified matches and truncates
+		listing: `{"size":2,"isLastPage":false,"values":[
+			{"id":"refs/heads/release-1.20","displayId":"release-1.20","latestChangeset":"1111111","isDefault":false},
+			{"id":"refs/heads/release-1.21","displayId":"release-1.21","latestChangeset":"2222222","isDefault":false}
+		]}`,
+		boostedListing: `{"size":3,"isLastPage":false,"values":[
+			{"id":"refs/heads/release-1.2","displayId":"release-1.2","latestChangeset":"beef4242","isDefault":false},
+			{"id":"refs/heads/release-1.20","displayId":"release-1.20","latestChangeset":"1111111","isDefault":false},
+			{"id":"refs/heads/release-1.21","displayId":"release-1.21","latestChangeset":"2222222","isDefault":false}
+		]}`,
+		defaultBranch: `{"id":"refs/heads/master","displayId":"master","latestChangeset":"deadbeef","isDefault":true}`,
+	}
+	srv := fake.server(t)
+	defer srv.Close()
+
+	rec := callGetBranchHandlerForBranch(t, s, srv.URL, "release-1.2")
+	require.Equal(t, 200, rec.Code, "body: %s", rec.Body.String())
+
+	var branch sdk.VCSBranch
+	require.NoError(t, sdk.JSONUnmarshal(rec.Body.Bytes(), &branch))
+	assert.Equal(t, "release-1.2", branch.DisplayID)
+	assert.Equal(t, "beef4242", branch.LatestCommit)
+	assert.False(t, branch.Default)
+	assert.Equal(t, 1, fake.boostedCalls, "bitbucket must be asked to boost the exact match")
+	assert.Equal(t, 0, fake.defaultBranchCalls, "the listing answered, the default branch fallback is not involved")
 }
