@@ -52,7 +52,10 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 			}
 			defer tx.Rollback() //nolint
 
-			oldP, err := plugin.LoadByName(ctx, db, p.Name)
+			// The row is locked until the end of the transaction: all the binaries of a plugin live
+			// in the same row, so an import racing with a binary upload would otherwise drop the
+			// binaries the other one references.
+			oldP, err := plugin.LoadByNameForUpdate(ctx, tx, p.Name)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
@@ -65,6 +68,10 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 				// If plugin exist and --force, update it
 				if force {
 					p.ID = oldP.ID
+					// Importing a definition does not publish binaries: the ones already published
+					// are kept, otherwise the plugin would not be runnable until its new binaries
+					// are uploaded.
+					p.Binaries = oldP.Binaries
 					if err := plugin.Update(tx, &p); err != nil {
 						return sdk.WrapError(err, "unable to insert plugin")
 					}
