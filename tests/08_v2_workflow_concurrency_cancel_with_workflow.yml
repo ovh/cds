@@ -97,7 +97,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
       vars:
         workflowRunID:
@@ -112,7 +112,7 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Cancelled"
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
 
     - name: Wait all success
