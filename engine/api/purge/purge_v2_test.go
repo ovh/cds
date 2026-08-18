@@ -305,3 +305,74 @@ func TestApplyRunRetentionOnProject_KeepsRunningRuns(t *testing.T) {
 	require.Equal(t, int64(3), wrDB[0].RunNumber)
 	require.Equal(t, int64(2), wrDB[1].RunNumber, "a run still building must not be deleted by the retention")
 }
+
+// A run that just ended is protected from the count rule for the duration of
+// the grace period, so that its result can still be consulted.
+func TestApplyRunRetentionOnProject_KeepsRecentlyEndedRuns(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/bulk/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
+	wkname := sdk.RandomString(10)
+	lambdauser, _ := assets.InsertLambdaUser(t, db)
+	p := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, "ovh/cds")
+
+	require.NoError(t, project.InsertRunRetention(ctx, db, &sdk.ProjectRunRetention{
+		ProjectKey: p.Key,
+		Retentions: sdk.Retentions{
+			DefaultRetention: sdk.RetentionRule{DurationInDays: 365, Count: 1},
+		},
+	}))
+
+	insertRun := func(runNumber int64) string {
+		wr := sdk.V2WorkflowRun{
+			ProjectKey:   p.Key,
+			VCSServerID:  vcs.ID,
+			VCSServer:    vcs.Name,
+			RepositoryID: repo.ID,
+			Repository:   repo.Name,
+			WorkflowName: wkname,
+			WorkflowSha:  "123456",
+			Status:       sdk.V2WorkflowRunStatusSuccess,
+			RunAttempt:   0,
+			Started:      time.Now(),
+			LastModified: time.Now(),
+			Initiator:    &sdk.V2Initiator{UserID: lambdauser.ID},
+			RunNumber:    runNumber,
+			Contexts:     sdk.WorkflowRunContext{Git: sdk.GitContext{Ref: "refs/heads/master"}},
+		}
+		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+		return wr.ID
+	}
+
+	oldest := insertRun(1) // ended long ago: deletable
+	insertRun(2)           // just ended: protected by the grace period
+	insertRun(3)           // newest: kept by the count rule
+
+	// last_modified is not part of the signed canonical form, it can be moved
+	// back without invalidating the row.
+	_, err := db.Exec("UPDATE v2_workflow_run SET last_modified = $1 WHERE id = $2", time.Now().Add(-48*time.Hour), oldest)
+	require.NoError(t, err)
+
+	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, &sdk.GoRoutines{}, PurgeOption{DisabledDryRun: true, GracePeriodInHours: 24}))
+
+	wrDB, err := workflow_v2.LoadRuns(ctx, db, p.Key, vcs.ID, repo.ID, wkname)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(wrDB))
+	require.Equal(t, int64(3), wrDB[0].RunNumber)
+	require.Equal(t, int64(2), wrDB[1].RunNumber, "a run that just ended must not be deleted by the retention count")
+}

@@ -252,6 +252,7 @@ type Configuration struct {
 		JobSchedulingTimeout             int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
 		JobSchedulingMaxErrors           int64  `toml:"jobSchedulingMaxErrors" comment:"Number of scheduling error before failing the job" json:"jobSchedulingMaxErrors" default:"5"`
 		RunRetentionScheduling           int64  `toml:"runRetentionScheduling" comment:"Time in hour between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"1"`
+		RunRetentionGracePeriod          int64  `toml:"runRetentionGracePeriod" comment:"Time in hour a terminated workflow run is protected from the retention count, so that it can still be consulted" json:"runRetentionGracePeriod" default:"24"`
 		WorkflowRunMaxRetention          int64  `toml:"workflowRunMaxRetention" comment:"Workflow run max retention in days" json:"workflowRunMaxRetention" default:"1095"`
 		WorkflowRunRetentionDefaultCount int64  `toml:"workflowRunRetentionDefaultCount" comment:"Workflow run retention default nb of run to keep" json:"workflowRunRetentionDefaultCount" default:"60"`
 		WorkflowRunRetentionDefaultDays  int64  `toml:"workflowRunRetentionDefaultDays" comment:"Workflow run retention default nb of days" json:"workflowRunRetentionDefaultDays" default:"30"`
@@ -541,6 +542,11 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	if a.Config.WorkflowV2.RunRetentionScheduling == 0 {
 		a.Config.WorkflowV2.RunRetentionScheduling = 15
+	}
+	// Left explicitly at 0 the runs are deletable as soon as they end, which is
+	// only ever wanted on a test instance.
+	if a.Config.WorkflowV2.RunRetentionGracePeriod < 0 {
+		a.Config.WorkflowV2.RunRetentionGracePeriod = 24
 	}
 
 	if a.Config.WorkflowV2.WorkflowRunRetentionDefaultCount <= 0 {
@@ -1107,7 +1113,7 @@ func (a *API) Serve(ctx context.Context) error {
 		})
 	a.GoRoutines.Run(ctx, "Purge-Runs-V2",
 		func(ctx context.Context) {
-			purge.PurgeWorkflowRunsV2(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.WorkflowV2.RunRetentionScheduling, a.GoRoutines)
+			purge.PurgeWorkflowRunsV2(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.WorkflowV2.RunRetentionScheduling, a.Config.WorkflowV2.RunRetentionGracePeriod, a.GoRoutines)
 		})
 	a.GoRoutines.Run(ctx, "Purge-OldRunsV1",
 		func(ctx context.Context) {

@@ -28,10 +28,15 @@ type PurgeOption struct {
 	DisabledDryRun bool
 	DryRunRules    *sdk.ProjectRunRetention
 	ReportID       string
+	// Delay before a terminated run becomes deletable by the count rule. That
+	// rule has no notion of age, so without it a run is a candidate as soon as
+	// enough runs exist on its git ref, which on a busy branch means it can be
+	// removed minutes after it ended, before anyone got to read its results.
+	GracePeriodInHours int64
 }
 
 // WorkflowRunsV2 deletes workflow run v2
-func PurgeWorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, purgeRoutineTicker int64, routines *sdk.GoRoutines) {
+func PurgeWorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, purgeRoutineTicker int64, gracePeriodInHours int64, routines *sdk.GoRoutines) {
 	tickPurge := time.NewTicker(time.Duration(purgeRoutineTicker) * time.Hour)
 	defer tickPurge.Stop()
 
@@ -49,7 +54,7 @@ func PurgeWorkflowRunsV2(ctx context.Context, DBFunc func() *gorp.DbMap, store c
 			}
 			for _, pkey := range pkeys {
 				ctx := context.WithValue(ctx, cdslog.Project, pkey)
-				if err := ApplyRunRetentionOnProject(ctx, DBFunc(), store, pkey, routines, PurgeOption{DisabledDryRun: true}); err != nil {
+				if err := ApplyRunRetentionOnProject(ctx, DBFunc(), store, pkey, routines, PurgeOption{DisabledDryRun: true, GracePeriodInHours: gracePeriodInHours}); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			}
@@ -246,7 +251,7 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 	}
 
 	// Select next run to delete runs
-	ids, err = workflow_v2.LoadRunsDescAtOffset(ctx, db, pkey, vcs, repo, workflowName, ref, ruleRetention.Count)
+	ids, err = workflow_v2.LoadRunsDescAtOffset(ctx, db, pkey, vcs, repo, workflowName, ref, ruleRetention.Count, opts.GracePeriodInHours)
 	if err != nil {
 		gitRefReport.Error = "unable to load runs"
 		return gitRefReport, err
