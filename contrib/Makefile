@@ -1,4 +1,4 @@
-.PHONY: clean build package copy
+.PHONY: clean build package copy archive archive-linux-amd64
 
 TARGET_DIST := $(if ${TARGET_DIST},${TARGET_DIST},./dist)
 
@@ -53,6 +53,27 @@ $(ALL_ARCHIVES):
 	cd $(TARGET_DIST); tar czf $(ARCHIVE) $(PATTERN)
 
 archive: $(ALL_ARCHIVES)
+
+# Slim archive holding only the linux/amd64 binaries and their manifests. The
+# integration tests never import any other os/arch (see tests/01_init_plugins.yml),
+# so shipping the full cross-compiled set to them is pure transfer time.
+LINUX_AMD64_ARCHIVE = cds-plugins-linux-amd64.tar.gz
+
+archive-linux-amd64:
+	$(info Preparing archive $(LINUX_AMD64_ARCHIVE))
+	@cd $(TARGET_DIST); \
+	FILES=""; \
+	for BIN in `ls *-linux-amd64 2>/dev/null`; do \
+		NAME=`echo $$BIN | sed 's/-linux-amd64$$//'`; \
+		FILES="$$FILES $$BIN"; \
+		if [ -f "$$BIN.yml" ]; then FILES="$$FILES $$BIN.yml"; fi; \
+		if [ -f "$$NAME.yml" ]; then FILES="$$FILES $$NAME.yml"; fi; \
+	done; \
+	if [ -z "$$FILES" ]; then \
+		echo "no linux/amd64 plugin binary found in $(TARGET_DIST)" >&2; \
+		exit 1; \
+	fi; \
+	tar czf $(LINUX_AMD64_ARCHIVE) $$FILES
 
 clean_archive:
 	rm -rf $(TARGET_DIST)/*.tar.gz

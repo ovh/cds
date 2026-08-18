@@ -73,6 +73,11 @@ CDS_REGION_REQ="${CDS_REGION_REQ:-""}"
 HOSTNAME="${HOSTNAME:-localhost}"
 MAX_CHILDREN="${MAX_CHILDREN:-10}"
 
+# Split a test suite across several runners. SHARD_INDEX is 0-based and must be
+# lower than SHARD_TOTAL. Defaults run every test suite in a single shard.
+SHARD_TOTAL="${SHARD_TOTAL:-1}"
+SHARD_INDEX="${SHARD_INDEX:-0}"
+
 # The default values below fit to default minio installation.
 # Run "make minio_start" to start a minio docker container
 AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
@@ -130,6 +135,10 @@ report_failures() {
         echo -e "  ${RED}${f}${NOCOLOR}"
     done
     return 1
+}
+
+shard() {
+    awk -v total="${SHARD_TOTAL}" -v idx="${SHARD_INDEX}" 'NR % total == idx'
 }
 
 smoke_tests_api() {
@@ -302,8 +311,8 @@ admin_tests() {
 cds_v2_tests() {
     echo "Check if forgejo is running"
     curl --fail -I -X GET ${FORGEJO_HOST}/api/swagger
-    echo "Running CDS v2 tests (excluding concurrency):"
-    for f in $(ls -1 08_*.yml | grep -v concurrency); do
+    echo "Running CDS v2 tests (excluding concurrency), shard ${SHARD_INDEX}/${SHARD_TOTAL}:"
+    for f in $(ls -1 08_*.yml | grep -v concurrency | shard); do
         run_cds_v2_tests $f &
         local my_pid=$$
         local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
