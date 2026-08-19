@@ -111,19 +111,24 @@ func (api *API) putGRPCluginHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		old, err := plugin.LoadByName(ctx, api.mustDB(), name)
-		if err != nil {
-			return sdk.WrapError(err, "unable to load old plugin")
-		}
-
-		p.ID = old.ID
-		p.Binaries = old.Binaries
-
 		tx, err := db.Begin()
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() //nolint
+
+		// The row is locked until the end of the transaction: all the binaries of a plugin live in
+		// the same row, so an update racing with a binary upload would otherwise drop the binaries
+		// the other one references.
+		old, err := plugin.LoadByNameForUpdate(ctx, tx, name)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load old plugin")
+		}
+
+		p.ID = old.ID
+		// Updating a definition does not publish binaries: the ones already published are kept,
+		// otherwise the plugin would not be runnable until its new binaries are uploaded.
+		p.Binaries = old.Binaries
 
 		// a plugin can be attached to a integration model OR not, for "action plugin"
 		if p.Integration != "" {
