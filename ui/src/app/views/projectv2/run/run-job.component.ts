@@ -14,8 +14,8 @@ import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { DisplayMode, ScrollTarget } from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
 import { PipelineStatus } from "app/model/pipeline.model";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
-import { concatMap, delay, from, interval, lastValueFrom, retryWhen, Subscription } from "rxjs";
-import { StepStatus, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsTerminated, WorkflowRunInfo } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { delay, lastValueFrom, retryWhen, Subscription } from "rxjs";
+import { StepStatus, V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { DurationService } from "../../../../../libs/workflow-graph/src/lib/duration.service";
 import moment from "moment";
 import { NzMessageService } from "ng-zorro-antd/message";
@@ -73,10 +73,12 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     @Input() workflowRun: V2WorkflowRun
     @Input() jobRun: V2WorkflowRunJob;
 
+    /** Run infos are not carried by the events of the run, they are read again at most that often. */
+    static INFOS_REFRESH_DELAY = 5000;
+
     mode = DisplayMode.ANSI;
     tabs: Array<Tab> = [];
     currentTabIndex = 0;
-    pollRunJobInfosSubs: Subscription;
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     jobRunInfos: Array<WorkflowRunInfo> = [];
@@ -85,6 +87,9 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     jobRetries: Array<V2WorkflowRunJob>;
     selectedJobRetry: V2WorkflowRunJob;
     selectedRetry: number = 0;
+
+    private infosRefreshedAt: number = 0;
+    private infosRefreshTimer: any;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -98,6 +103,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnDestroy(): void {
         if (this.websocket) { this.stopStreamingLogsForJob(); }
+        this.cancelInfosRefresh();
     }
 
     ngOnInit(): void {
@@ -112,7 +118,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     reset(): void {
         this.tabs = [{ name: 'Job', logBlocks: [new LogBlock('Information')] }];
         this.currentTabIndex = 0;
-        if (this.pollRunJobInfosSubs) { this.pollRunJobInfosSubs.unsubscribe(); }
+        this.cancelInfosRefresh();
         this.stopStreamingLogsForJob();
     }
 
@@ -135,6 +141,8 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
             this._cd.markForCheck();
             await this.setServices();
             this._cd.markForCheck();
+        } else if (jobRunChanged) {
+            this.scheduleInfosRefresh();
         }
         if (isInit || jobRunChanged) {
             await this.setSteps();
@@ -185,22 +193,36 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.markForCheck();
     }
 
+    /**
+     * The job moved: its infos may have been completed. They are read again without exceeding one call
+     * per interval, whatever the number of steps the job goes through in the meantime.
+     */
+    private scheduleInfosRefresh(): void {
+        if (this.infosRefreshTimer) {
+            return;
+        }
+        const delayMs = Math.max(0, RunJobComponent.INFOS_REFRESH_DELAY - (Date.now() - this.infosRefreshedAt));
+        this.infosRefreshTimer = setTimeout(() => {
+            this.infosRefreshTimer = null;
+            this.refreshInfos();
+        }, delayMs);
+    }
+
+    private cancelInfosRefresh(): void {
+        if (this.infosRefreshTimer) {
+            clearTimeout(this.infosRefreshTimer);
+            this.infosRefreshTimer = null;
+        }
+    }
+
     async setInfos() {
+        this.infosRefreshedAt = Date.now();
+
         try {
             this.jobRunInfos = await lastValueFrom(this._workflowRunService.getRunJobInfos(this.workflowRun, this.selectedJobRetry.id));
         } catch (e) {
             this._messageService.error(`Unable to get run job infos: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
             return;
-        }
-
-        if (!V2WorkflowRunJobStatusIsTerminated(this.selectedJobRetry.status) && !this.pollRunJobInfosSubs) {
-            this.pollRunJobInfosSubs = interval(5000)
-                .pipe(concatMap(_ => from(this.refreshInfos())))
-                .subscribe();
-        }
-
-        if (V2WorkflowRunJobStatusIsTerminated(this.selectedJobRetry.status) && this.pollRunJobInfosSubs) {
-            this.pollRunJobInfosSubs.unsubscribe();
         }
 
         this.tabs[0].logBlocks[0].lines = (this.jobRunInfos ?? [])

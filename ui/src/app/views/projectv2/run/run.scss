@@ -58,6 +58,27 @@
     }
 }
 
+// Frame shown while the run is being read. The spinner only fades in after a moment, so a run that
+// arrives quickly never shows one.
+.loading-shell {
+    .graph-placeholder {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: common.$polar_grey_2;
+        opacity: 0;
+        animation: cds-run-loading-fade-in 200ms ease-out 400ms forwards;
+    }
+}
+
+@keyframes cds-run-loading-fade-in {
+    to {
+        opacity: 1;
+    }
+}
+
 .content {
     flex: 1;
     display: flex;
@@ -75,6 +96,10 @@
         .list {
             overflow-y: auto;
             height: 100%;
+            // Holds its width from the first frame, the runs it lists are read after the run itself
+            // and would otherwise push the graph sideways when they land.
+            min-width: 53px;
+            flex: 0 0 auto;
             border-right: 1px solid;
             border-color: #f0f0f0 !important;
 
@@ -97,6 +122,23 @@
 
                 :host-context(.night) & {
                     border-bottom-color: #303030;
+                }
+
+                &.placeholder {
+                    cursor: default;
+
+                    &::after {
+                        content: '';
+                        height: 14px;
+                        width: 28px;
+                        margin-left: 8px;
+                        border-radius: 3px;
+                        background-color: #f0f0f0;
+
+                        :host-context(.night) & {
+                            background-color: #303030;
+                        }
+                    }
                 }
 
                 &:hover {
@@ -161,6 +203,13 @@
             align-items: center;
             width: 100%;
             overflow: hidden;
+
+            // The graph of the run being left stays until the next one is read. It dims only if that
+            // read takes a moment, and comes back at once, the switch itself being animated.
+            &.switching {
+                opacity: 0.55;
+                transition: opacity 150ms ease-out 250ms;
+            }
 
             .dotted {
                 color: inherit;

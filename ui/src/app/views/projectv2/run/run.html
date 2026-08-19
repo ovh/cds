@@ -26,16 +26,26 @@
 </ng-template>
 
 @if (workflowRun) {
-  <div class="content" [class.disableSelection]="resizing">
+  <div class="content" [class.disableSelection]="resizing" [@.disabled]="reduceMotion">
     <!--  GRAPH -->
     <div class="graph-wrapper">
       <div class="list">
+        <!-- The runs of the workflow are read after the run itself: hold their place so that they
+             do not push the graph sideways when they arrive. -->
+        @if (!runs) {
+          @for (placeholder of runsPlaceholders; track placeholder) {
+            <span class="item placeholder" aria-hidden="true"></span>
+          }
+        }
         @for (run of runs; track trackRunElement(i, run); let i = $index) {
-          <a class="item" nz-popover
+          <!-- No detail popover over the run being displayed: it has nothing to tell that the page
+               does not, and leaving it open over the run just opened hides it. -->
+          <a class="item" nz-popover #runPopover="nzPopover"
             [nzPopoverContent]="runDetails" [nzPopoverMouseEnterDelay]="0.1" [nzPopoverMouseLeaveDelay]="0.05"
+            [nzPopoverTrigger]="run.id === workflowRun?.id ? null : 'hover'"
             [routerLink]="['/project', projectKey, 'run', run.id]" [class.selected]="run.id === workflowRun?.id"
             [class.append]="!!animatedRuns[run.id]" [@appendToList]="animatedRuns[run.id] ? 'append' : 'active'"
-            (mouseenter)="onMouseEnterRun(run.id)">
+            (mouseenter)="onMouseEnterRun(run.id)" (click)="runPopover.hide()">
             <span [title]="'Number: ' + run.run_number" [class.success]="run.status === 'Success'"
               [class.cancelled]="run.status === 'Cancelled'" [class.fail]="run.status === 'Fail'"
               [class.stopped]="run.status === 'Stopped'" [class.building]="run.status === 'Building'"
@@ -89,7 +99,9 @@
           </a>
         }
       </div>
-      <div class="graph">
+      <!-- Fades on every change of run: two runs of the same workflow in the same state look alike,
+           and the sidebar stays still since that is where the click happened. -->
+      <div class="graph" [@runSwitch]="workflowRun.id" [class.switching]="loadingRun">
         <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
           <nz-page-header-title>
             <app-workflow-name style="margin-right: 10px;" [name]="workflowRun.workflow_name"
@@ -349,4 +361,21 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
     }
   </app-resizable-panel>
 }
+}
+@if (!workflowRun && loadingRun) {
+  <!-- The frame of the view, so that reading the run does not leave a blank page and everything
+       does not jump into place at once when it lands. -->
+  <div class="content loading-shell" role="status">
+    <span class="cds-sr-only">Loading the workflow run</span>
+    <div class="graph-wrapper">
+      <div class="list">
+        @for (placeholder of runsPlaceholders; track placeholder) {
+          <span class="item placeholder" aria-hidden="true"></span>
+        }
+      </div>
+      <div class="graph-placeholder" aria-hidden="true">
+        <span nz-icon nzType="loading" nzTheme="outline"></span>
+      </div>
+    </div>
+  </div>
 }
