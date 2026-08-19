@@ -124,6 +124,14 @@ func (m *WorkflowRunAnnotations) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, m), "cannot unmarshal WorkflowRunAnnotations")
 }
 
+// ContentTypeWorkflowRunSummary is the media type a client asks for, through the Accept header, to
+// receive workflow runs without the definition they ran. A list of runs shows names, statuses and git
+// information; the workflow definition of each of them, with its actions and its worker models,
+// weighs more than all the rest put together and is of no use there.
+// It is not a query parameter because unknown parameters of the run search are read as annotation
+// filters, which would reserve that word for good.
+const ContentTypeWorkflowRunSummary = "application/vnd.cds.workflow-run-summary+json"
+
 type WorkflowRunContext struct {
 	CDS CDSContext        `json:"cds,omitempty" jsonschema_description:"CDS workflow run information and metadata"`
 	Git GitContext        `json:"git,omitempty" jsonschema_description:"Git repository information and commit details"`

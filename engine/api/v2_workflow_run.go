@@ -751,8 +751,19 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 
 			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
 
-			return service.WriteJSON(w, runs, http.StatusOK)
+			return writeRunsJSON(w, req, runs)
 		}
+}
+
+// Runs are returned without the definition they ran when the caller asked for the summary media
+// type, see sdk.ContentTypeWorkflowRunSummary.
+func writeRunsJSON(w http.ResponseWriter, req *http.Request, runs []sdk.V2WorkflowRun) error {
+	if service.Accepts(req, sdk.ContentTypeWorkflowRunSummary) {
+		for i := range runs {
+			runs[i].WorkflowData = sdk.V2WorkflowRunData{}
+		}
+	}
+	return service.WriteJSON(w, runs, http.StatusOK)
 }
 
 func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service.Handler) {
@@ -780,7 +791,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 
 			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
 
-			return service.WriteJSON(w, runs, http.StatusOK)
+			return writeRunsJSON(w, req, runs)
 		}
 }
 

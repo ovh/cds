@@ -523,6 +523,13 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WithStack(tx.Commit())
 	}
 
+	// The definition of the run changed while it was running: jobs coming from a template or a matrix
+	// replaced the job that declared them. Send the new definition so that a run view can redraw its
+	// graph instead of waiting for a manual refresh.
+	if runUpdated {
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunUpdated, *run, allrunJobsMap, runResults, &wrEnqueue.Initiator)
+	}
+
 	needReEnqueue := hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedJob
 	api.endWorkflowV2Trigger(ctx, run, allrunJobsMap, runJobs, runResults, wrEnqueue, needReEnqueue)
 
