@@ -310,7 +310,7 @@ func sendVCSPullRequestComment(ctx context.Context, db *gorp.DbMap, vcsClient sd
 }
 
 func pushNotifications(ctx context.Context, db *gorp.DbMap, event sdk.FullEventV2) error {
-	if event.ProjectKey == "" {
+	if event.ProjectKey == "" || isProgressOnly(event) {
 		return nil
 	}
 	notifications, err := notification_v2.LoadAll(ctx, db, event.ProjectKey, gorpmapper.GetAllOptions.WithDecryption)
@@ -371,7 +371,17 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, event sdk.FullEventV
 	return nil
 }
 
+// A progress event says nothing new about the state of a run, it only tells a view watching it that
+// something moved. It is worth a websocket frame, not an audit trail nor a notification.
+func isProgressOnly(e sdk.FullEventV2) bool {
+	return e.Type == sdk.EventRunJobStepUpdated
+}
+
 func pushToElasticSearch(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) error {
+	if isProgressOnly(e) {
+		return nil
+	}
+
 	esServices, err := services.LoadAllByType(ctx, db, sdk.TypeElasticsearch)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load elasticsearch service")

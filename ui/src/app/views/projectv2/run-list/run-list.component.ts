@@ -22,6 +22,7 @@ import { ProjectV2State } from "app/store/project-v2.state";
 import { Filter, FilterText } from "../../../shared/input/input-filter.component";
 import { Clipboard } from '@angular/cdk/clipboard';
 import { SearchService } from "app/service/search.service";
+import { RUN_SUMMARY_HEADERS } from "app/service/workflowv2/workflow.service";
 import { SearchResultType } from "app/model/search.model";
 import { DisplaySearchResult } from "app/views/search/search.component";
 import { WorkflowNameComponent } from "app/shared/workflow-name/workflow-name.component";
@@ -166,7 +167,11 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		});
 
 		try {
-			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run`, { params, observe: 'response' })
+			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run`, {
+				params,
+				headers: RUN_SUMMARY_HEADERS,
+				observe: 'response'
+			})
 				.pipe(map(res => {
 					let headers: HttpHeaders = res.headers;
 					return {

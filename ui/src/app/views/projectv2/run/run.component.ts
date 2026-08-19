@@ -1,14 +1,13 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, inject, OnDestroy, TemplateRef, ViewChild } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { from, interval, lastValueFrom, Subscription } from "rxjs";
-import { dump } from "js-yaml";
-import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
+import { RUN_SUMMARY_HEADERS, V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { PreferencesState } from "app/store/preferences.state";
 import { Store } from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
 import { Tab } from "app/shared/tabs/tabs.component";
 import { Tests } from "../../../model/pipeline.model";
-import { concatMap, map } from "rxjs/operators";
+import { concatMap, map, switchMap } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NavigationState } from "app/store/navigation.state";
@@ -26,7 +25,7 @@ import { GraphComponent } from "../../../../../libs/workflow-graph/src/public-ap
 import { Title } from "@angular/platform-browser";
 import { WebsocketV2Filter, WebsocketV2FilterType } from "app/model/websocket-v2";
 import { EventV2Service } from "app/event-v2.service";
-import { EventV2Type } from "app/model/event-v2.model";
+import { EventV2Type, FullEventV2 } from "app/model/event-v2.model";
 import { EventV2State } from "app/store/event-v2.state";
 import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 
@@ -49,6 +48,14 @@ import { animate, keyframes, state, style, transition, trigger } from "@angular/
                 style({ opacity: 0.5 }),
                 style({ opacity: 1 })
             ])))
+        ]),
+        // Two runs of the same workflow in the same state look alike: without this, switching from
+        // one to the other moves nothing but a number, and nothing tells the user it happened.
+        trigger('runSwitch', [
+            transition('* => *', [
+                style({ opacity: 0.25 }),
+                animate('200ms ease-out', style({ opacity: 1 }))
+            ])
         ])
     ],
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -84,6 +91,18 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         restart: false,
         stop: false
     };
+    /** The run itself is being read: the view shows its shape, waiting for what fills it. */
+    loadingRun: boolean = false;
+    /**
+     * The last run asked for. Reads are not cancellable, so a read that is not for this run anymore
+     * is thrown away instead of being shown: going through runs quickly must land on the last one,
+     * never on whichever answered last.
+     */
+    private requestedRunID: string;
+    /** Holds the place of the runs of the sidebar while they are being read. */
+    readonly runsPlaceholders = Array.from({ length: 8 }, (_, i) => i);
+    /** Someone who asked for less movement gets no transition when the run changes. */
+    readonly reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     animatedRuns: { [key: string]: boolean } = {};
     selectionModeActive: boolean = false;
     gateDrawerOpen: boolean = false;
@@ -94,8 +113,15 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     paramsSub: Subscription;
     queryParamsSub: Subscription;
     resizingSubscription: Subscription;
-    pollSubs: Subscription;
+    refreshSubs: Subscription;
     eventV2Subscription: Subscription;
+    connectedSubscription: Subscription;
+
+    /** Last applied event per subject, events are not ordered on the wire. */
+    private lastEventTimestamps: { [key: string]: number } = {};
+    private refreshTimers: { [key: string]: any } = {};
+    /** Bumped by every event changing the state of the run, to spot a read racing with it. */
+    private eventSequence: number = 0;
 
     // Panels
     resizing: boolean;
@@ -108,6 +134,12 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     static INFO_PANEL_KEY = 'workflow-run-info';
     static JOB_PANEL_KEY = 'workflow-run-job';
+    /**
+     * The view is driven by the events of the run. This refresh is only a safety net for what events
+     * cannot carry (run infos written without any status change) and for what a disconnection may have
+     * dropped, hence its low frequency.
+     */
+    static SAFETY_REFRESH_DELAY = 30000;
 
     /** Panels without a target are serialized as "type" alone, others as "type:encodedData". */
     static parsePanelParam(value: string): { type: string, data: string } {
@@ -133,8 +165,11 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     private _liveAnnouncer = inject(LiveAnnouncer);
 
     constructor() {
+        // switchMap, not concatMap: going through several runs quickly must not read them one after
+        // the other and show each of them on the way. Only the last one asked for is applied, see the
+        // guard in load().
         this.paramsSub = this._route.params.pipe(
-            concatMap(_ => {
+            switchMap(_ => {
                 const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
                 const workflowRunID = params['workflowRunID'];
                 if (this.workflowRun && this.workflowRun.id === workflowRunID) {
@@ -166,26 +201,13 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunComponent.INFO_PANEL_KEY));
         this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunComponent.JOB_PANEL_KEY)) ?? '50%';
 
-        this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => {
-            if (!event || [EventV2Type.EventRunCrafted, EventV2Type.EventRunBuilding, EventV2Type.EventRunEnded, EventV2Type.EventRunRestart].indexOf(event.type) === -1) { return; }
-            if (!this.runs) { return; }
-            const idx = this.runs.findIndex(run => run.id === event.workflow_run_id);
-            if (idx !== -1 && this.workflowRun && event.workflow_run_id === this.workflowRun.id
-                && this.runs[idx].status !== event.payload.status) {
-                this._liveAnnouncer.announce(`Run ${event.payload.run_number} ${event.payload.status}`, 'polite');
+        this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => this.onEvent(event));
+
+        // Events sent while the websocket was down are lost, so read everything again when it opens.
+        this.connectedSubscription = this._eventV2Service.connected$.subscribe(connected => {
+            if (connected && this.workflowRun) {
+                this.scheduleReload();
             }
-            delete (this.animatedRuns[event.payload.id]);
-            this._cd.detectChanges();
-            if (idx !== -1) {
-                this.runs[idx] = event.payload;
-            } else {
-                this.runs = [event.payload].concat(...this.runs);
-                if (this.runs.length > 50) {
-                    this.runs.pop();
-                }
-            }
-            this.animatedRuns[event.payload.id] = true;
-            this._cd.markForCheck();
         });
     }
 
@@ -206,41 +228,367 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+        this.clearScheduledRefresh();
+    }
+
+    // A tab left in the background has its timers throttled and its websocket frames delayed, so what
+    // it displays cannot be trusted when the user comes back to it.
+    @HostListener('document:visibilitychange')
+    onVisibilityChange(): void {
+        if (document.visibilityState === 'visible' && this.workflowRun && !this.workflowRunIsTerminated) {
+            this.scheduleReload();
+        }
+    }
+
+    onEvent(event: FullEventV2): void {
+        if (!event) {
+            return;
+        }
+
+        this.updateRunList(event);
+
+        // An event for the run currently being read: what is being read is already behind it, and
+        // load() will notice through the sequence.
+        if (this.loadingRun && event.workflow_run_id === this.requestedRunID) {
+            this.eventSequence++;
+        }
+
+        if (!this.workflowRun || event.workflow_run_id !== this.workflowRun.id) {
+            return;
+        }
+
+        switch (event.type) {
+            case EventV2Type.EventRunCrafted:
+            case EventV2Type.EventRunBuilding:
+            case EventV2Type.EventRunUpdated:
+            case EventV2Type.EventRunEnded:
+            case EventV2Type.EventRunRestart:
+                this.applyRunEvent(event);
+                break;
+            case EventV2Type.EventRunDeleted:
+                this._messageService.warning('This workflow run has been deleted', { nzDuration: 4000 });
+                break;
+            case EventV2Type.EventRunJobManualTriggered:
+                // The inputs of the gate are kept on the run, which this event does not carry.
+                this.scheduleReload();
+                break;
+            case EventV2Type.EventRunJobRunResultAdded:
+            case EventV2Type.EventRunJobRunResultUpdated:
+                this.applyRunResultEvent(event);
+                break;
+            default:
+                if (event.type.indexOf('RunJob') === 0) {
+                    this.applyRunJobEvent(event);
+                }
+        }
+    }
+
+    /** The sidebar lists the last runs of the same workflow, fed by the run events of the project. */
+    private updateRunList(event: FullEventV2): void {
+        if ([EventV2Type.EventRunCrafted, EventV2Type.EventRunBuilding, EventV2Type.EventRunEnded, EventV2Type.EventRunRestart].indexOf(event.type) === -1) { return; }
+        if (!this.runs) { return; }
+        const idx = this.runs.findIndex(run => run.id === event.workflow_run_id);
+        delete (this.animatedRuns[event.payload.id]);
+        this._cd.detectChanges();
+        if (idx !== -1) {
+            this.runs[idx] = event.payload;
+        } else {
+            this.runs = [event.payload].concat(...this.runs);
+            if (this.runs.length > 50) {
+                this.runs.pop();
+            }
+        }
+        this.animatedRuns[event.payload.id] = true;
+        this._cd.markForCheck();
+    }
+
+    private applyRunEvent(event: FullEventV2): void {
+        if (!this.isNewerEvent('run', event)) { return; }
+
+        const run = event.payload as V2WorkflowRun;
+        const previousStatus = this.workflowRun.status;
+        const previousAttempt = this.workflowRun.run_attempt;
+        const previousShape = ProjectV2RunComponent.workflowShape(this.workflowRun.workflow_data?.workflow);
+        const wasOnLastAttempt = this.selectedRunAttempt === previousAttempt;
+
+        // The payload of the event carries the results of the jobs in the contexts, the run read from
+        // the API does not: drop them so that the run stays the same object whatever refreshed it.
+        const { jobs, ...contexts } = run.contexts ?? {};
+        this.workflowRun = { ...run, contexts };
+        this.workflowRunIsTerminated = V2WorkflowRunStatusIsTerminated(run.status);
+        this.workflowRunIsActive = !this.workflowRunIsTerminated;
+
+        if (previousStatus !== run.status) {
+            this._liveAnnouncer.announce(`Run ${run.run_number} ${run.status}`, 'polite');
+        }
+
+        // The run was restarted from somewhere else: follow its new attempt, unless the user was
+        // deliberately looking at a previous one.
+        if (run.run_attempt > previousAttempt && wasOnLastAttempt) {
+            this.selectedRunAttempt = run.run_attempt;
+            this.scheduleJobsRefresh();
+        }
+
+        // Jobs coming from a template or a matrix replace the job that declared them while the run is
+        // going: the graph has to be drawn again from the new definition, and the new jobs read.
+        if (previousShape !== ProjectV2RunComponent.workflowShape(run.workflow_data?.workflow)) {
+            this.workflowGraph = run.workflow_data.workflow;
+            this.scheduleJobsRefresh();
+        }
+
+        this.scheduleRunInfoRefresh();
+
+        if (this.workflowRunIsTerminated) {
+            this.stopSafetyRefresh();
+            // Last word on the run: read everything the events may have missed while it was running.
+            this.scheduleJobsRefresh();
+        } else {
+            this.startSafetyRefresh();
+        }
+
+        this.eventSequence++;
+        this._cd.markForCheck();
+    }
+
+    private applyRunJobEvent(event: FullEventV2): void {
+        if (!this.jobs || event.run_attempt !== this.selectedRunAttempt) { return; }
+        if (!this.isNewerEvent(`job-${event.run_job_id}`, event)) { return; }
+
+        const job = event.payload as V2WorkflowRunJob;
+        if (!job?.id) { return; }
+
+        // A job the displayed definition does not know about: it was added by a template or a matrix
+        // expanded after the graph was drawn, the run has to be read again to get its new definition.
+        if (!this.workflowRun.workflow_data?.workflow?.jobs?.[job.job_id]) {
+            this.scheduleReload();
+            return;
+        }
+
+        const idx = this.jobs.findIndex(j => j.id === job.id);
+        if (idx !== -1) {
+            this.jobs = this.jobs.map((j, i) => i === idx ? job : j);
+        } else {
+            // A retry takes the place of the run job it retries: the list holds the last retry of each
+            // job, as the API returns it.
+            const retried = this.jobs.find(j => ProjectV2RunComponent.isSameJob(j, job) && j.retry < job.retry);
+            this.jobs = retried ? this.jobs.map(j => j === retried ? job : j) : this.jobs.concat(job);
+
+            // The panel was open on the run job that has just been retried: it stays open on the job,
+            // now holding its new retry. Whether it shows that retry or the one being read is the
+            // panel's own decision.
+            if (retried && this.selectedItemType === 'job' && this.selectedJobRun?.id === retried.id) {
+                this.openPanel('job', job.id);
+            }
+        }
+
+        if (this.selectedJobRun?.id === job.id) {
+            this.selectedJobRun = job;
+        }
+
+        this.hasJobsFailed = this.jobs.filter(j => V2WorkflowRunJobStatusIsFailed(j.status)).length > 0;
+        this.hasSkippedGateJobs = this.getSkippedGateJobIds().length > 0;
+
+        // Steps moving forward do not change the state of the run: no need to read its infos, and a
+        // read racing with them can be trusted.
+        if (event.type !== EventV2Type.EventRunJobStepUpdated) {
+            this.scheduleRunInfoRefresh();
+            this.eventSequence++;
+        }
+
+        this._cd.markForCheck();
+    }
+
+    private applyRunResultEvent(event: FullEventV2): void {
+        if (!this.results || event.run_attempt !== this.selectedRunAttempt) { return; }
+
+        const result = event.payload as WorkflowRunResult;
+        if (!result?.id || !this.isNewerEvent(`result-${result.id}`, event)) { return; }
+
+        const idx = this.results.findIndex(r => r.id === result.id);
+        this.results = idx !== -1 ? this.results.map((r, i) => i === idx ? result : r) : this.results.concat(result);
+
+        if (this.selectedRunResult?.id === result.id) {
+            this.selectedRunResult = result;
+        }
+        if (this.results.find(r => r.type === WorkflowRunResultType.tests)) {
+            this.computeTestsReport();
+        }
+
+        this.eventSequence++;
+        this._cd.markForCheck();
+    }
+
+    /** Events are not ordered on the wire, an outdated one must not overwrite a fresher state. */
+    private isNewerEvent(key: string, event: FullEventV2): boolean {
+        const timestamp = Date.parse(event.timestamp);
+        if (isNaN(timestamp)) {
+            return true;
+        }
+        if (this.lastEventTimestamps[key] > timestamp) {
+            return false;
+        }
+        this.lastEventTimestamps[key] = timestamp;
+        return true;
+    }
+
+    private static workflowPath(run: V2WorkflowRun): string {
+        return `${run.vcs_server}/${run.repository}/${run.workflow_name}`;
+    }
+
+    /** Two run jobs of the same job of the workflow: same name, and same matrix variant if any. */
+    private static isSameJob(a: V2WorkflowRunJob, b: V2WorkflowRunJob): boolean {
+        if (a.job_id !== b.job_id) {
+            return false;
+        }
+        const variant = (matrix: { [key: string]: string }) => Object.keys(matrix ?? {}).sort().map(k => `${k}=${matrix[k]}`).join(',');
+        return variant(a.matrix) === variant(b.matrix);
+    }
 
     /**
-     * Load a workflow run and all its associated data.
-     * Resets all restart selection state (selected jobs, gate data, selection mode,
-     * graph visuals) to prevent stale state from carrying over between runs.
+     * What the graph is drawn from: the jobs of the run, their stage, their gate and their
+     * dependencies. Two runs sharing that shape draw the same graph.
+     */
+    private static workflowShape(workflow: any): string {
+        if (!workflow) {
+            return '';
+        }
+        const jobs = workflow.jobs ?? {};
+        const stages = workflow.stages ?? {};
+        return JSON.stringify({
+            jobs: Object.keys(jobs).sort().map(k => [k, jobs[k]?.stage ?? '', jobs[k]?.gate ?? '', (jobs[k]?.needs ?? []).slice().sort()]),
+            stages: Object.keys(stages).sort().map(k => [k, (stages[k]?.needs ?? []).slice().sort()])
+        });
+    }
+
+    private scheduleJobsRefresh(): void {
+        this.scheduleRefresh('jobs', 300, () => this.loadJobsAndResults());
+    }
+
+    private scheduleReload(): void {
+        this.scheduleRefresh('reload', 300, () => this.reload());
+    }
+
+    private scheduleRunInfoRefresh(): void {
+        this.scheduleRefresh('infos', 1000, () => this.loadRunInfos());
+    }
+
+    private scheduleRefresh(key: string, delayMs: number, refresh: () => Promise<void>): void {
+        if (this.refreshTimers[key]) {
+            clearTimeout(this.refreshTimers[key]);
+        }
+        this.refreshTimers[key] = setTimeout(() => {
+            delete this.refreshTimers[key];
+            refresh();
+        }, delayMs);
+    }
+
+    private clearScheduledRefresh(): void {
+        Object.keys(this.refreshTimers).forEach(k => clearTimeout(this.refreshTimers[k]));
+        this.refreshTimers = {};
+    }
+
+    private startSafetyRefresh(): void {
+        if (this.refreshSubs) {
+            return;
+        }
+        this.refreshSubs = interval(ProjectV2RunComponent.SAFETY_REFRESH_DELAY)
+            .pipe(concatMap(_ => from(this.reload())))
+            .subscribe();
+    }
+
+    private stopSafetyRefresh(): void {
+        if (!this.refreshSubs) {
+            return;
+        }
+        this.refreshSubs.unsubscribe();
+        delete this.refreshSubs;
+    }
+
+    /**
+     * Read a workflow run and everything shown around it. Selection mode and the open panel are
+     * dropped on the way, so that nothing of the previous run carries over to this one.
      */
     async load(workflowRunID: string, runAttempt?: number) {
         this.clearPanel();
-        delete this.workflowGraph;
-        if (this.pollSubs) {
-            this.pollSubs.unsubscribe();
-            delete this.pollSubs;
-        }
+        // The graph of the run being left is kept until the next one is read: emptying it here would
+        // show a blank frame between two runs.
+        this.stopSafetyRefresh();
+        this.clearScheduledRefresh();
+        this.lastEventTimestamps = {};
+        this.loadingRun = true;
+        this.requestedRunID = workflowRunID;
 
         if (this.graph) {
             this.graph.setSelectionModeActive(false);
         }
 
-        await this.loadRun(workflowRunID);
-        this.selectedRunAttempt = runAttempt ?? this.workflowRun.run_attempt;
-        this._titleService.setTitle(`#${this.workflowRun.run_number} [${this.workflowRun.contexts.git.ref_name}] • ${this.workflowRun.vcs_server}/${this.workflowRun.repository}/${this.workflowRun.workflow_name} • Workflow Run`);
+        // Watch every event of this run: the run itself, its jobs, their steps and their results.
+        this._eventV2Service.updateFilter(<WebsocketV2Filter>{
+            type: WebsocketV2FilterType.PROJECT_RUN,
+            project_key: this.projectKey,
+            workflow_run_id: workflowRunID
+        });
 
-        this.workflowGraph = dump(this.workflowRun.workflow_data.workflow, { lineWidth: -1 });
+        // The jobs, the results and the infos of a run are keyed by its id, not by anything the run
+        // carries: they are read at the same time as the run rather than one after the other, so the
+        // whole view is drawn once, complete, after a single round trip.
+        const sequence = this.eventSequence;
+        const [run, jobs, results, infos] = await Promise.all([
+            this.fetchRun(workflowRunID),
+            this.fetchJobs(workflowRunID, runAttempt),
+            this.fetchResults(workflowRunID, runAttempt),
+            this.fetchRunInfos(workflowRunID)
+        ]);
 
+        // Another run was asked for while this one was being read: it is the one the user is waiting
+        // for, this answer is dropped rather than shown on the way.
+        if (this.requestedRunID !== workflowRunID) {
+            return;
+        }
+
+        this.loadingRun = false;
+
+        if (!run) {
+            this._cd.markForCheck();
+            return;
+        }
+
+        // The sidebar lists the runs of one workflow: coming from another one, what it holds has
+        // nothing to do with this run.
+        if (this.workflowRun && ProjectV2RunComponent.workflowPath(this.workflowRun) !== ProjectV2RunComponent.workflowPath(run)) {
+            delete this.runs;
+        }
+
+        // The definition of the run and everything filling it are set together, without an await
+        // between them: no rendering can catch the graph of this run holding the jobs of another,
+        // which would paint its nodes with the statuses of the previous one.
+        this.applyRun(run);
+        this.selectedRunAttempt = runAttempt ?? run.run_attempt;
+        this._titleService.setTitle(`#${run.run_number} [${run.contexts.git.ref_name}] • ${run.vcs_server}/${run.repository}/${run.workflow_name} • Workflow Run`);
+        this.workflowGraph = run.workflow_data.workflow;
+
+        // Nothing of the run being left is kept: what could not be read is shown empty rather than
+        // with the values of the previous run.
+        this.applyJobs(jobs ?? []);
+        this.applyResults(results ?? []);
+        this.applyRunInfos(infos ?? []);
+
+        await this.refreshPanel();
         this._cd.markForCheck();
 
-        await this.loadRuns();
+        if (sequence !== this.eventSequence) {
+            this.scheduleJobsRefresh();
+        }
 
-        this._cd.markForCheck();
-
-        await this.loadJobsAndResults();
+        // The sibling runs of the sidebar are the only thing that needs the run to be read first.
+        // Nothing else waits for them.
+        this.loadRuns();
     }
 
     async loadRuns() {
+        const runID = this.workflowRun.id;
+
         let params = new HttpParams();
         params = params.appendAll({
             workflow: `${this.workflowRun.vcs_server}/${this.workflowRun.repository}/${this.workflowRun.workflow_name}`,
@@ -255,7 +603,11 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         });
 
         try {
-            const res = await lastValueFrom(this._http.get(`/v2/project/${this.projectKey}/run`, { params, observe: 'response' })
+            const res = await lastValueFrom(this._http.get(`/v2/project/${this.projectKey}/run`, {
+                params,
+                headers: RUN_SUMMARY_HEADERS,
+                observe: 'response'
+            })
                 .pipe(map(res => {
                     let headers: HttpHeaders = res.headers;
                     return {
@@ -263,74 +615,178 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
                         runs: res.body as Array<V2WorkflowRun>
                     };
                 })));
+            if (this.isStale(runID)) {
+                return;
+            }
             this.runs = res.runs;
         } catch (e) {
+            if (this.isStale(runID)) {
+                return;
+            }
             this._messageService.error(`Unable to list workflow runs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            this.runs = [];
+        }
+
+        // Nothing awaits this read: without marking the view, the runs would only appear on the next
+        // interaction.
+        this._cd.markForCheck();
+    }
+
+    private async fetchRun(workflowRunID: string): Promise<V2WorkflowRun> {
+        try {
+            return await lastValueFrom(this._workflowService.getRun(this.projectKey, workflowRunID));
+        } catch (e) {
+            this._messageService.error(`Unable to get workflow run: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return null;
         }
     }
 
-    async loadRun(workflowRunID: string) {
+    private async fetchJobs(workflowRunID: string, attempt: number): Promise<Array<V2WorkflowRunJob>> {
         try {
-            this.workflowRun = await lastValueFrom(this._workflowService.getRun(this.projectKey, workflowRunID));
-            this.workflowRunIsTerminated = V2WorkflowRunStatusIsTerminated(this.workflowRun.status);
-            this.workflowRunIsActive = !this.workflowRunIsTerminated;
+            return await lastValueFrom(this._workflowService.getJobs(this.projectKey, workflowRunID, attempt));
         } catch (e) {
-            this._messageService.error(`Unable to get workflow run: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to get jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return null;
         }
+    }
+
+    private async fetchResults(workflowRunID: string, attempt: number): Promise<Array<WorkflowRunResult>> {
+        try {
+            return await lastValueFrom(this._workflowService.getResults(this.projectKey, workflowRunID, attempt));
+        } catch (e) {
+            this._messageService.error(`Unable to get results: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return null;
+        }
+    }
+
+    private async fetchRunInfos(workflowRunID: string): Promise<Array<WorkflowRunInfo>> {
+        try {
+            return await lastValueFrom(this._workflowService.getRunInfos(this.projectKey, workflowRunID));
+        } catch (e) {
+            this._messageService.error(`Unable to get run infos: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+            return null;
+        }
+    }
+
+    private applyRun(run: V2WorkflowRun): void {
+        this.workflowRun = run;
+        this.workflowRunIsTerminated = V2WorkflowRunStatusIsTerminated(run.status);
+        this.workflowRunIsActive = !this.workflowRunIsTerminated;
+        if (this.workflowRunIsActive) {
+            this.startSafetyRefresh();
+        } else {
+            this.stopSafetyRefresh();
+        }
+    }
+
+    private applyJobs(jobs: Array<V2WorkflowRunJob>): void {
+        if (!jobs) {
+            return;
+        }
+        this.jobs = jobs;
+        this.hasJobsFailed = this.jobs.filter(j => V2WorkflowRunJobStatusIsFailed(j.status)).length > 0;
+        this.hasSkippedGateJobs = this.getSkippedGateJobIds().length > 0;
+    }
+
+    private applyResults(results: Array<WorkflowRunResult>): void {
+        if (!results) {
+            return;
+        }
+        this.results = results;
+        if (this.results.find(r => r.type === WorkflowRunResultType.tests)) {
+            this.computeTestsReport();
+        } else {
+            // A run without test result must not keep showing the report of the previous one.
+            delete this.tests;
+        }
+    }
+
+    private applyRunInfos(infos: Array<WorkflowRunInfo>): void {
+        if (!infos) {
+            return;
+        }
+        this.workflowRunInfo = infos.sort((a, b) => moment(a.issued_at).isBefore(moment(b.issued_at)) ? 1 : -1);
     }
 
     async loadJobsAndResults() {
-        try {
-            this.jobs = await lastValueFrom(this._workflowService.getJobs(this.workflowRun, this.selectedRunAttempt));
-        } catch (e) {
-            this._messageService.error(`Unable to get jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-        }
+        const sequence = this.eventSequence;
+        const runID = this.workflowRun.id;
 
-        try {
-            this.results = await lastValueFrom(this._workflowService.getResults(this.workflowRun, this.selectedRunAttempt));
-            if (!!this.results.find(r => r.type === WorkflowRunResultType.tests)) {
-                this.computeTestsReport();
-            }
-        } catch (e) {
-            this._messageService.error(`Unable to get results: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-        }
-        try {
-            this.workflowRunInfo = await lastValueFrom(this._workflowService.getRunInfos(this.workflowRun));
-            this.workflowRunInfo.sort((a, b) => moment(a.issued_at).isBefore(moment(b.issued_at)) ? 1 : -1);
-        } catch (e) {
-            this._messageService.error(`Unable to get run infos: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-        }
+        const [jobs, results, infos] = await Promise.all([
+            this.fetchJobs(runID, this.selectedRunAttempt),
+            this.fetchResults(runID, this.selectedRunAttempt),
+            this.fetchRunInfos(runID)
+        ]);
 
-        await this.refreshPanel();
-
-        this.hasJobsFailed = this.jobs.filter(j => V2WorkflowRunJobStatusIsFailed(j.status)).length > 0;
-        this.hasSkippedGateJobs = this.getSkippedGateJobIds().length > 0;
-
-        if (this.workflowRunIsActive && !this.pollSubs) {
-            this.pollSubs = interval(5000)
-                .pipe(concatMap(_ => from(this.pollReload())))
-                .subscribe();
-        }
-
-        if (this.workflowRunIsTerminated && this.pollSubs) {
-            this.pollSubs.unsubscribe();
-            delete this.pollSubs;
-        }
-
-        this._cd.detectChanges();
-    }
-
-    async pollReload() {
-        const previousJobsCount = Object.keys(this.workflowRun.workflow_data.workflow.jobs).length;
-        await this.loadRun(this.workflowRun.id);
-
-        // Force redraw of the graph if the count of jobs changed in the workflow definition
-        if (previousJobsCount !== Object.keys(this.workflowRun.workflow_data.workflow.jobs).length) {
-            await this.load(this.workflowRun.id, this.selectedRunAttempt);
+        if (this.isStale(runID)) {
             return;
         }
 
-        await this.loadJobsAndResults();
+        this.applyJobs(jobs);
+        this.applyResults(results);
+        this.applyRunInfos(infos);
+
+        await this.refreshPanel();
+
+        this._cd.markForCheck();
+
+        // An event landed while this was being read: what has just been read is already outdated.
+        if (sequence !== this.eventSequence) {
+            this.scheduleJobsRefresh();
+        }
+    }
+
+    async loadRunInfos(): Promise<void> {
+        const runID = this.workflowRun.id;
+        const infos = await this.fetchRunInfos(runID);
+        if (this.isStale(runID)) {
+            return;
+        }
+        this.applyRunInfos(infos);
+        this._cd.markForCheck();
+    }
+
+    /** Whether what was read is not for the run the view must show anymore. */
+    private isStale(runID: string): boolean {
+        return this.requestedRunID !== runID;
+    }
+
+    /** Read the run and everything shown around it again, the events being trusted for nothing here. */
+    async reload(): Promise<void> {
+        const previousShape = ProjectV2RunComponent.workflowShape(this.workflowRun.workflow_data?.workflow);
+
+        const sequence = this.eventSequence;
+        const runID = this.workflowRun.id;
+        const [run, jobs, results, infos] = await Promise.all([
+            this.fetchRun(runID),
+            this.fetchJobs(runID, this.selectedRunAttempt),
+            this.fetchResults(runID, this.selectedRunAttempt),
+            this.fetchRunInfos(runID)
+        ]);
+
+        if (this.isStale(runID)) {
+            return;
+        }
+
+        if (run) {
+            this.applyRun(run);
+            // Draw the graph again when the definition of the run changed, a template or a matrix
+            // having replaced the job that declared them.
+            if (previousShape !== ProjectV2RunComponent.workflowShape(run.workflow_data?.workflow)) {
+                this.workflowGraph = run.workflow_data.workflow;
+            }
+        }
+        this.applyJobs(jobs);
+        this.applyResults(results);
+        this.applyRunInfos(infos);
+
+        await this.refreshPanel();
+
+        this._cd.markForCheck();
+
+        if (sequence !== this.eventSequence) {
+            this.scheduleJobsRefresh();
+        }
     }
 
     computeTestsReport(): void {
@@ -442,7 +898,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         switch (this.selectedItemType) {
             case 'job':
-                const jobToSelect = this.jobs.find(j => j.id === this.selectedJobRun.id);
+                // The run job on screen may have been retried since, in which case the list holds its
+                // retry instead of it: the panel follows the job rather than closing.
+                const jobToSelect = this.jobs.find(j => j.id === this.selectedJobRun.id)
+                    ?? this.jobs.find(j => ProjectV2RunComponent.isSameJob(j, this.selectedJobRun) && j.retry > this.selectedJobRun.retry);
                 if (jobToSelect) {
                     this.openPanel('job', jobToSelect.id);
                 } else {
