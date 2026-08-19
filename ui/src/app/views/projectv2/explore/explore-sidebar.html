@@ -12,7 +12,7 @@
   </button>
 </div>
 <div class="content">
-  @for (vcs of vcss; track vcs) {
+  @for (vcs of vcss; track vcs.name) {
     <div class="tree-node-header large" appClickable [attr.aria-expanded]="!!treeExpandState[vcs.name]" (click)="clickVCS(vcs)">
       <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill" aria-hidden="true"></span>
       <div class="name">{{vcs.name}}</div>
@@ -28,7 +28,7 @@
           <nz-alert nzType="info"
           nzMessage="No repository found"></nz-alert>
         }
-        @for (repo of repositories[vcs.name]; track repo) {
+        @for (repo of repositories[vcs.name]; track repo.name) {
           <div class="tree-node-header large" appClickable [attr.aria-expanded]="!!treeExpandState[vcs.name+'/'+repo.name]" (click)="clickRepository(vcs, repo)">
             <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
             nzTheme="fill" aria-hidden="true"></span>
@@ -60,7 +60,7 @@
               @if (loadingEntities[vcs.name+'/'+repo.name]) {
                 <nz-spin nzSimple></nz-spin>
               }
-              @for (entity of entities[vcs.name+'/'+repo.name] | keyvalue; track entity) {
+              @for (entity of entities[vcs.name+'/'+repo.name] | keyvalue; track entity.key) {
                 <div class="tree-node-header" appClickable [attr.aria-expanded]="!!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]" (click)="clickEntityType(vcs, repo, entity.key)">
                   <span nz-icon
                     [nzType]="!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key] ? 'folder' : 'folder-open'"
@@ -69,7 +69,7 @@
                 </div>
                 @if (treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]) {
                   <div class="tree-node-content">
-                    @for (v of entity.value; track v) {
+                    @for (v of entity.value; track v.name) {
                       <div class="tree-node-header">
                         <a class="name"
                           [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
