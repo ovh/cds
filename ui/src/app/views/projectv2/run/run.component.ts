@@ -366,7 +366,21 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         }
 
         const idx = this.jobs.findIndex(j => j.id === job.id);
-        this.jobs = idx !== -1 ? this.jobs.map((j, i) => i === idx ? job : j) : this.jobs.concat(job);
+        if (idx !== -1) {
+            this.jobs = this.jobs.map((j, i) => i === idx ? job : j);
+        } else {
+            // A retry takes the place of the run job it retries: the list holds the last retry of each
+            // job, as the API returns it.
+            const retried = this.jobs.find(j => ProjectV2RunComponent.isSameJob(j, job) && j.retry < job.retry);
+            this.jobs = retried ? this.jobs.map(j => j === retried ? job : j) : this.jobs.concat(job);
+
+            // The panel was open on the run job that has just been retried: it stays open on the job,
+            // now holding its new retry. Whether it shows that retry or the one being read is the
+            // panel's own decision.
+            if (retried && this.selectedItemType === 'job' && this.selectedJobRun?.id === retried.id) {
+                this.openPanel('job', job.id);
+            }
+        }
 
         if (this.selectedJobRun?.id === job.id) {
             this.selectedJobRun = job;
@@ -420,6 +434,15 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     private static workflowPath(run: V2WorkflowRun): string {
         return `${run.vcs_server}/${run.repository}/${run.workflow_name}`;
+    }
+
+    /** Two run jobs of the same job of the workflow: same name, and same matrix variant if any. */
+    private static isSameJob(a: V2WorkflowRunJob, b: V2WorkflowRunJob): boolean {
+        if (a.job_id !== b.job_id) {
+            return false;
+        }
+        const variant = (matrix: { [key: string]: string }) => Object.keys(matrix ?? {}).sort().map(k => `${k}=${matrix[k]}`).join(',');
+        return variant(a.matrix) === variant(b.matrix);
     }
 
     /**
@@ -875,7 +898,10 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         switch (this.selectedItemType) {
             case 'job':
-                const jobToSelect = this.jobs.find(j => j.id === this.selectedJobRun.id);
+                // The run job on screen may have been retried since, in which case the list holds its
+                // retry instead of it: the panel follows the job rather than closing.
+                const jobToSelect = this.jobs.find(j => j.id === this.selectedJobRun.id)
+                    ?? this.jobs.find(j => ProjectV2RunComponent.isSameJob(j, this.selectedJobRun) && j.retry > this.selectedJobRun.retry);
                 if (jobToSelect) {
                     this.openPanel('job', jobToSelect.id);
                 } else {

@@ -106,7 +106,10 @@ func (api *API) getWorkflowRunResultsV2Handler() ([]service.RbacChecker, service
 				}
 			}
 
-			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			// The jobs of the attempt asked for, not of the last one: a result belongs to the job that
+			// produced it, so looking for the results of an older attempt among the jobs of the last one
+			// finds nothing.
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, attempt)
 			if err != nil {
 				return err
 			}

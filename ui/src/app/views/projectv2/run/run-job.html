@@ -24,8 +24,22 @@
 @if (jobRun) {
   <div class="scrollWrapper" (scroll)="onScroll($event)" (dblclick)="$event.stopPropagation();"
     #scrollWrapper>
+    <!-- A job that has not run has no log: show what it waits for and what it will do, rather than an
+         empty panel. -->
+    @if (showPending) {
+      <div class="pending" role="status">
+        <span nz-icon [nzType]="pending.icon" nzTheme="outline" aria-hidden="true"></span>
+        <span class="label">{{pending.label}}</span>
+        @if (pending.since) {
+          <span class="since" title="Queued since">{{pending.since}}</span>
+        }
+      </div>
+    }
     <!-- Display job services and steps -->
     @for (logBlock of tabs[currentTabIndex].logBlocks; track trackStepElement(i, logBlock); let i = $index) {
+      <!-- The infos of the job are a block like the others, but it is not a step: with nothing to
+           say it is left out rather than shown empty. -->
+      @if (!logBlock.information || logBlock.lines.length > 0) {
       <div class="step"
         [attr.role]="websocket && !logBlock.closed ? 'log' : null">
         <div class="line info" appClickable [attr.aria-expanded]="!logBlock.closed" (click)="clickOpenClose(logBlock)">
@@ -138,6 +152,7 @@
           }
         }
       </div>
+      }
     }
     <div class="footer">
       <div class="goto" appClickable (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down"

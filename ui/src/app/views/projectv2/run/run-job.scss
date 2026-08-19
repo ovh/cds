@@ -70,6 +70,20 @@
     padding-bottom: 19px;
 }
 
+// Shown instead of logs a job does not have yet.
+.pending {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 20px;
+    font-size: 13px;
+    line-height: 20px;
+
+    .since {
+        color: #B4B4B4;
+    }
+}
+
 .step {
     display: flex;
     flex-direction: column;
