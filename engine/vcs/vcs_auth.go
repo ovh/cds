@@ -7,6 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // Context
@@ -41,12 +42,29 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 	if err != nil {
 		return nil, sdk.WrapError(err, "bad header syntax for HeaderXVCSToken")
 	}
+	projectKey, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.HeaderXVCSProjectKey))
+	if err != nil {
+		return nil, sdk.WrapError(err, "bad header syntax for HeaderXVCSProjectKey")
+	}
 	if string(vcsType) != "" {
 		ctx = context.WithValue(ctx, contextKeyVCSURL, string(vcsURL))
 		ctx = context.WithValue(ctx, contextKeyVCSURLApi, string(vcsURLApi))
 		ctx = context.WithValue(ctx, contextKeyVCSType, string(vcsType))
 		ctx = context.WithValue(ctx, contextKeyVCSUsername, string(vcsUsername))
 		ctx = context.WithValue(ctx, contextKeyVCSToken, string(vcsToken))
+
+		// identify which credentials served the call: without them a vcs error cannot be told apart
+		// from a permission issue. The token is deliberately never logged.
+		ctx = context.WithValue(ctx, cdslog.VCSType, string(vcsType))
+		ctx = context.WithValue(ctx, cdslog.VCSURL, string(vcsURL))
+		ctx = context.WithValue(ctx, cdslog.VCSUsername, string(vcsUsername))
+		ctx = context.WithValue(ctx, cdslog.Project, string(projectKey))
+		if name := muxVar(req, "name"); name != "" {
+			ctx = context.WithValue(ctx, cdslog.VCSServer, name)
+		}
+		if repo := muxVar(req, "repo"); repo != "" {
+			ctx = context.WithValue(ctx, cdslog.Repository, muxVar(req, "owner")+"/"+repo)
+		}
 		return ctx, nil
 	}
 

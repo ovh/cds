@@ -45,6 +45,16 @@ func (b *bitbucketClient) getFullAPIURL(api string) string {
 	return url
 }
 
+// truncateBody keeps error messages bounded: bitbucket error payloads are small but we never want
+// a whole response body inside an error returned to the user.
+func truncateBody(body []byte) string {
+	const maxLen = 512
+	if len(body) > maxLen {
+		return string(body[:maxLen]) + "..."
+	}
+	return string(body)
+}
+
 func (b *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}, opts Options) error {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.do_http")
 	defer end()
@@ -110,7 +120,7 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	// make the request using the default http client
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return sdk.WrapError(err, "HTTP Error")
+		return sdk.WrapError(err, "bitbucket: %s %s failed", req.Method, req.URL.String())
 	}
 
 	// Read the bytes from the body (make sure we defer close the body)
@@ -120,17 +130,18 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		return sdk.WithStack(err)
 	}
 
+	log.Info(ctx, "%s | %d | %s", req.Method, resp.StatusCode, req.URL.String())
+
 	// Check for an http error status (ie not 200 StatusOK)
 	switch resp.StatusCode {
 	case 404:
-		return sdk.WithStack(sdk.ErrNotFound)
+		return sdk.NewErrorFrom(sdk.WithStack(sdk.ErrNotFound), "bitbucket: %s %s returned 404: %s", req.Method, req.URL.String(), truncateBody(body))
 	case 403:
-		return sdk.WithStack(sdk.ErrForbidden)
+		return sdk.NewErrorFrom(sdk.WithStack(sdk.ErrForbidden), "bitbucket: %s %s returned 403: %s", req.Method, req.URL.String(), truncateBody(body))
 	case 401:
-		return sdk.WithStack(sdk.ErrUnauthorized)
+		return sdk.NewErrorFrom(sdk.WithStack(sdk.ErrUnauthorized), "bitbucket: %s %s returned 401: %s", req.Method, req.URL.String(), truncateBody(body))
 	case 400:
-		log.Warn(ctx, "bitbucketClient.do> %s", string(body))
-		return sdk.WithStack(sdk.ErrWrongRequest)
+		return sdk.NewErrorFrom(sdk.WithStack(sdk.ErrWrongRequest), "bitbucket: %s %s returned 400: %s", req.Method, req.URL.String(), truncateBody(body))
 	}
 
 	if method != "GET" {

@@ -63,7 +63,8 @@ func (c *gerritClient) Branch(ctx context.Context, fullname string, filters sdk.
 	}
 
 	if branch == nil {
-		return nil, sdk.WithStack(sdk.ErrNoBranch)
+		return nil, sdk.NewErrorFrom(sdk.WithStack(sdk.ErrNoBranch),
+			"gerrit: GetBranch returned no branch %q on %s", filters.BranchName, fullname)
 	}
 
 	newBranch := sdk.VCSBranch{
