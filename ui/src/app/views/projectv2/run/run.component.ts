@@ -5,7 +5,7 @@ import { RUN_SUMMARY_HEADERS, V2WorkflowRunService } from "app/service/workflowv
 import { PreferencesState } from "app/store/preferences.state";
 import { Store } from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
-import { Tab } from "app/shared/tabs/tabs.component";
+import { Tab, TabsComponent } from "app/shared/tabs/tabs.component";
 import { Tests } from "../../../model/pipeline.model";
 import { concatMap, map, switchMap } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -66,6 +66,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     @ViewChild('tabResultsTemplate') tabResultsTemplate: TemplateRef<any>;
     @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
     @ViewChild('shareLink') shareLink: any;
+    @ViewChild('bottomTabs') bottomTabs: TabsComponent;
 
     runs: Array<V2WorkflowRun>;
     workflowRun: V2WorkflowRun;
@@ -108,6 +109,8 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     gateDrawerOpen: boolean = false;
     /** Selected run job IDs for restart. Both simple jobs and matrix variants are tracked uniformly by their run job UUID. */
     selectedRunJobIds: Array<string> = [];
+    /** The run job the pointer is over in the graph, echoed on its lane in the timeline. */
+    hoveredJobRunID: string;
 
     // Subs
     paramsSub: Subscription;
@@ -213,9 +216,12 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     ngAfterViewInit(): void {
         this.tabs = [<Tab>{
-            title: 'Info',
-            key: 'info',
+            title: 'Timeline',
+            key: 'timeline',
             default: true
+        }, <Tab>{
+            title: 'Info',
+            key: 'info'
         }, <Tab>{
             title: 'Results',
             key: 'results',
@@ -823,6 +829,17 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         this.selectedTab = tab;
     }
 
+    /**
+     * An error marked on the timeline was clicked. The full text of what the run logged lives in the Info
+     * tab rather than in a panel of its own, so that is where this goes.
+     */
+    showRunInfos(): void {
+        const info = this.tabs?.find(t => t.key === 'info');
+        if (info) {
+            this.bottomTabs?.select(info);
+        }
+    }
+
     panelStartResize(): void {
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
@@ -1099,6 +1116,24 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
         // No gates needed, restart jobs directly
         await this.triggerRestartJobs();
+    }
+
+    /**
+     * A job opened from the timeline is the same job the graph draws: the graph follows the selection
+     * so that the two views never disagree about what is being looked at.
+     */
+    selectJobRunFromTimeline(runJobID: string): void {
+        this.graph?.selectRunJob(runJobID);
+        this.openPanel('job', runJobID);
+    }
+
+    /** Pointing at a job in the graph points at its lane in the timeline. */
+    onHoverJobRun(runJobID: string): void {
+        if (this.hoveredJobRunID === runJobID) {
+            return;
+        }
+        this.hoveredJobRunID = runJobID;
+        this._cd.markForCheck();
     }
 
     /** Receive the latest selection from the graph component. */

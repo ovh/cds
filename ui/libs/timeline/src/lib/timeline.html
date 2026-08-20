@@ -1,0 +1,224 @@
+<!-- The keydown here catches what the lanes did not: the zoom keys, wherever the focus happens to be
+     inside the view. It is not itself something to focus — it only listens to what bubbles up. -->
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+<div class="timeline" [class.highlighting]="highlightEnabled" [style.--timeline-label-width]="labelWidth"
+  (keydown)="onTimelineKeyDown($event)">
+
+  <!-- Everything that drives the view sits in the gutter of the axis, above the names: a bar of its own
+       would cost the lanes a row of height for controls used once. -->
+  <div class="axis">
+    <div class="gutter">
+      <div class="controls" role="group" [attr.aria-label]="label + ' display controls'">
+        <button nz-button nzSize="small" (click)="clickToggleAll()" [attr.aria-pressed]="expandedAll"
+          [attr.aria-label]="expandedAll ? 'Collapse every lane' : 'Expand every lane'"
+          [title]="expandedAll ? 'Collapse every lane' : 'Expand every lane'">
+          <span nz-icon [nzType]="expandedAll ? 'shrink' : 'arrows-alt'" nzTheme="outline" aria-hidden="true"></span>
+        </button>
+
+        <ng-content></ng-content>
+
+        <!-- Zooming itself is on the wheel and the keys. The only button for it is the one that puts
+             the whole of the timeline back in view. -->
+        <button nz-button nzSize="small" (click)="resetZoom()" [disabled]="!zoomed"
+          aria-label="Fit the whole timeline" title="Fit the whole timeline (0)">
+          <span nz-icon nzType="aim" nzTheme="outline" aria-hidden="true"></span>
+        </button>
+
+        @if (totalLabel) {
+          <span class="total" title="Total time the timeline spans, from its start to its end">
+            <span nz-icon nzType="field-time" nzTheme="outline" aria-hidden="true"></span><b>{{totalLabel}}</b>
+          </span>
+        }
+
+        <span class="help" nz-tooltip [nzTooltipTitle]="shortcuts" nzTooltipPlacement="bottomLeft" role="img"
+          aria-label="Timeline keyboard and mouse shortcuts">
+          <span nz-icon nzType="question-circle" nzTheme="outline" aria-hidden="true"></span>
+        </span>
+        <ng-template #shortcuts>
+          <div class="timeline-shortcuts">
+            <div><b>Timeline</b></div>
+            <div><kbd>&#8593;</kbd> <kbd>&#8595;</kbd> Move between lanes</div>
+            <div><kbd>&#8592;</kbd> <kbd>&#8594;</kbd> Collapse / expand a lane</div>
+            <div><kbd>Enter</kbd> Open the focused lane</div>
+            <div><kbd>+</kbd> <kbd>-</kbd> <kbd>0</kbd> Zoom in, out, fit</div>
+            <div><kbd>Ctrl</kbd> + wheel Zoom around the pointer</div>
+            <div>Drag, or wheel sideways Pan</div>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+    <div class="axis-track" #axisTrack>
+      @if (!empty) {
+        @for (fold of folds; track fold.id) {
+          <span class="axis-fold" [style.left]="fold.left" [style.width]="fold.width" [title]="fold.title">
+            <span class="axis-fold-label">{{fold.label}}</span>
+          </span>
+        }
+        @for (tick of ticks; track tick.id) {
+          <span class="axis-tick" [style.left]="tick.left">{{tick.label}}</span>
+        }
+        @if (startCap) {
+          <span class="axis-cap start" [style.left]="startCap.left" [title]="startCap.title">{{startCap.label}}</span>
+        }
+        @if (endCap) {
+          <span class="axis-cap end" [class.live]="endCap.live" [style.left]="endCap.left"
+            [title]="endCap.title">{{endCap.label}}</span>
+        }
+      }
+      <!-- The time under the pointer. Moved by hand, so it is not a binding. -->
+      <span class="axis-cursor" #cursorLabel aria-hidden="true"></span>
+    </div>
+  </div>
+
+  @if (empty) {
+    <div class="empty" role="status">{{emptyLabel}}</div>
+  } @else {
+    <div class="viewport" #viewport [class.panning]="panning" [class.pannable]="zoomed"
+      (wheel)="onWheel($event)" (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp($event)" (pointercancel)="onPointerUp($event)" (scroll)="dropCard()">
+      <div class="canvas">
+        <div class="grid" aria-hidden="true">
+          @for (fold of folds; track fold.id) {
+            <span class="grid-fold" [style.left]="fold.left" [style.width]="fold.width"></span>
+          }
+          @for (tick of ticks; track tick.id) {
+            <span class="grid-line" [style.left]="tick.left"></span>
+          }
+          <!-- Hatched bands at both ends, marked like a fold is: the extent of the timeline is something
+               to be seen rather than an edge to be trusted. Each one runs from where the content stops to
+               the edge of the view, so when the axis is wider than what it holds the whole of the outside
+               is hatched rather than left as blank space nothing accounts for. -->
+          @if (startCap) {
+            <span class="grid-cap start" [style.width]="startCap.left"></span>
+          }
+          @if (endCap) {
+            <span class="grid-cap end" [class.live]="endCap.live" [style.left]="endCap.left"></span>
+          }
+          <span class="grid-cursor" #cursorLine></span>
+        </div>
+
+        @for (section of sections; track section.id) {
+          <div class="section">
+            @if (section.label) {
+              <div class="section-header"><span>{{section.label}}</span></div>
+            }
+            <ul class="lanes" role="list" [attr.aria-label]="section.label ?? label">
+              @for (lane of section.lanes; track lane.id) {
+                <li class="lane" [class.highlighted]="lane.highlighted" [class.child]="lane.depth > 0"
+                  [class.hovered]="lane.id === hoveredLaneID" [class.selected]="lane.id === selectedLaneID"
+                  [class.marked]="lane.hasMarkers" [attr.data-status]="lane.status">
+                  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+                  <div class="lane-gutter" [class.expandable]="lane.expandable"
+                    [style.padding-left.px]="6 + lane.depth * 16" (click)="clickRow(lane, $event)">
+                    @if (lane.expandable) {
+                      <span class="lane-caret" nz-icon [nzType]="lane.expanded ? 'down' : 'right'"
+                      nzTheme="outline" aria-hidden="true"></span>
+                    } @else {
+                      <span class="lane-caret placeholder" aria-hidden="true"></span>
+                    }
+                    <!-- The row asks what is inside the lane. The bars, further along, are the lane
+                         itself. -->
+                    <button class="lane-label" [class.inert]="!lane.expandable && !lane.activatable"
+                      (keydown)="onKeyDown($event, lane)"
+                      [attr.aria-expanded]="lane.expandable ? lane.expanded : null"
+                      [attr.aria-label]="lane.label + (lane.sublabel ? ', ' + lane.sublabel : '') + (lane.description ? ', ' + lane.description : '')"
+                      [title]="lane.expandable ? (lane.expanded ? 'Hide what is inside ' + lane.label : 'Show what is inside ' + lane.label) : lane.label">
+                      <span class="name">{{lane.label}}</span>
+                      @if (lane.sublabel) {
+                        <span class="sub">{{lane.sublabel}}</span>
+                      }
+                    </button>
+                    <!-- Dotted rule carrying the eye from the name across to the bars. -->
+                    <span class="leader" aria-hidden="true"></span>
+                  </div>
+                  <!-- Empty track answers to the row: unfolding it. The bars answer for themselves. -->
+                  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+                  <div class="lane-track" [class.expandable]="lane.expandable" (click)="clickRow(lane, $event)">
+                    <span class="leader" aria-hidden="true"></span>
+                    <!-- One element per group of segments, since a group is one thing. Clicking it opens
+                         what it stands for, and hovering it says where its time went. -->
+                    @for (group of lane.groups; track group.id) {
+                      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+                      <span class="segment-group" [class.activatable]="lane.activatable"
+                        [style.left]="group.left" [style.width]="group.width"
+                        (click)="clickGroup(lane, $event)" (mouseenter)="onGroupEnter(lane, $event)"
+                        (mouseleave)="onCardLeave()">
+                        @for (segment of group.segments; track segment.id) {
+                          <span class="segment" [class.open]="segment.open" [attr.data-kind]="segment.kind"
+                            [style.left]="segment.left" [style.width]="segment.width">
+                            @if (segment.showLabel) {
+                              <span class="segment-label">{{segment.label}}</span>
+                            }
+                            @if (segment.showDuration) {
+                              <span class="segment-duration">{{segment.duration}}</span>
+                            }
+                          </span>
+                        }
+                        @for (marker of group.markers; track marker.id) {
+                          <button class="marker" [class.iconic]="!!marker.icon" [class.crowd]="marker.count > 1" [attr.data-kind]="marker.kind"
+                            [style.left]="marker.left" [attr.aria-label]="marker.label" [title]="marker.count > 1 ? marker.label + ' — click to zoom in on them' : marker.label" tabindex="-1"
+                            (click)="clickMarker(lane, marker, $event)"
+                            (mouseenter)="onMarkerEnter(marker, $event)" (mouseleave)="onMarkerLeave(lane, $event)">
+                            @if (marker.icon) {
+                              <span nz-icon [nzType]="marker.icon" nzTheme="outline" aria-hidden="true"></span>
+                            }
+                            @if (marker.count > 1) {
+                              <span class="count" aria-hidden="true">{{marker.count}}</span>
+                            }
+                          </button>
+                        }
+                      </span>
+                    }
+                    <!-- Markers with no bar to stand on: a lane that is only a point in time. -->
+                    @for (marker of lane.markers; track marker.id) {
+                      <button class="marker loose" [class.iconic]="!!marker.icon" [class.crowd]="marker.count > 1" [attr.data-kind]="marker.kind"
+                        [style.left]="marker.left" [attr.aria-label]="marker.label" [title]="marker.count > 1 ? marker.label + ' — click to zoom in on them' : marker.label" tabindex="-1"
+                        (click)="clickMarker(lane, marker, $event)"
+                        (mouseenter)="onMarkerEnter(marker, $event)" (mouseleave)="onMarkerLeave(lane, $event)">
+                        @if (marker.icon) {
+                          <span nz-icon [nzType]="marker.icon" nzTheme="outline" aria-hidden="true"></span>
+                        }
+                        @if (marker.count > 1) {
+                          <span class="count" aria-hidden="true">{{marker.count}}</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Shown in an overlay of its own, above what it is about. Inside the timeline it was clipped by the
+     panel; attached to the row it landed in the middle of the page, a row being as wide as the view. -->
+<ng-template #cardTemplate let-subject>
+  <div class="hover-card" role="tooltip">
+    <div class="tip-title">{{subject.label}}</div>
+    @if (subject.total) {
+      <div class="tip-total">Total <b>{{subject.total}}</b></div>
+    }
+    @for (share of subject.shares; track share.label) {
+      <div class="tip-share">
+        <span class="tip-name">{{share.label}}</span>
+        <span class="tip-gauge"><span [style.width]="share.width"></span></span>
+        <span class="tip-value">{{share.duration}}</span>
+        <span class="tip-percent">{{share.percent}}</span>
+      </div>
+    }
+    @if (subject.details.length > 0) {
+      <div class="tip-details" [class.alone]="!subject.total">
+        @for (detail of subject.details; track detail.label) {
+          <div class="tip-detail">
+            <span class="tip-detail-label">{{detail.label}}</span>
+            <span class="tip-detail-value">{{detail.value}}</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</ng-template>

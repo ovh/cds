@@ -1,0 +1,785 @@
+/**
+ * The timeline draws its own shape and nothing more. Every colour comes from a custom property the
+ * host sets, and the colours of a segment or a marker — whose `kind` only the host understands — are
+ * left to the host entirely, through `[data-kind]`.
+ */
+
+:host {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
+.timeline {
+  --timeline-label-width: 260px;
+  --timeline-row-height: 40px;
+  --timeline-child-row-height: 32px;
+  // A lane carrying markers is no taller than any other: its marks sit above its bars and overflow into
+  // the row above rather than every such row growing to hold them. A timeline is read by comparing rows,
+  // and rows of two heights are harder to compare than marks are to look past. To give the room back
+  // instead: 62px / 54px here, and 18px for the two insets under `.marked` below.
+  --timeline-marked-row-height: var(--timeline-row-height);
+  --timeline-marked-child-row-height: var(--timeline-child-row-height);
+
+  --timeline-text: rgba(0, 0, 0, .85);
+  // Kept dark enough for small text to stay readable against the panel.
+  --timeline-muted: rgba(0, 0, 0, .55);
+  --timeline-border: #f0f0f0;
+  --timeline-grid: #f5f5f5;
+  --timeline-leader: rgba(0, 0, 0, .12);
+  --timeline-cap: rgba(0, 0, 0, .1);
+  --timeline-hover: rgba(0, 0, 0, .04);
+  --timeline-fold: rgba(0, 0, 0, .06);
+  --timeline-now: #4fa3e3;
+  --timeline-segment: #d9d9d9;
+  --timeline-marker: #6b6f7b;
+  --timeline-focus: #1668dc;
+  --timeline-accent: #1668dc;
+  --timeline-surface: #ffffff;
+  // The resting border of a small control, so a focused one can be put back to looking untouched.
+  --timeline-control-border: #d9d9d9;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  color: var(--timeline-text);
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--timeline-muted);
+}
+
+// -- Axis, and the controls that share its row -------------------------------------------------
+
+.axis {
+  display: flex;
+  flex-direction: row;
+  flex: 0 0 auto;
+  height: 36px;
+  border-bottom: 1px solid var(--timeline-border);
+
+  .gutter {
+    flex: 0 0 var(--timeline-label-width);
+    overflow: hidden;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+    padding: 0 10px;
+
+    // Only the controls of the view itself. A control projected in here belongs to whoever projected
+    // it — these rules are scoped to this component and cannot reach it — so what it looks like on and
+    // off is stated in the host stylesheet, next to the button it is about.
+    [nz-button] {
+      cursor: pointer;
+
+      &[disabled] {
+        cursor: not-allowed;
+      }
+
+      // Clicking a button with the pointer leaves it focused, and the button styles the UI ships paint a
+      // focused button exactly like a hovered one — so a control stayed lit long after it had been let
+      // go of. Only a pointer focus is put back: a keyboard one still shows, through :focus-visible.
+      &:not([disabled]):focus:not(:focus-visible) {
+        color: var(--timeline-text);
+        border-color: var(--timeline-control-border);
+      }
+    }
+
+    .total {
+      font-size: .78em;
+      color: var(--timeline-muted);
+      white-space: nowrap;
+      margin-left: 2px;
+
+      b {
+        color: var(--timeline-text);
+        margin-left: 4px;
+      }
+    }
+
+    .help {
+      color: var(--timeline-muted);
+      cursor: help;
+      display: inline-flex;
+      margin-left: auto;
+    }
+  }
+
+  .axis-track {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    // Carries the column separator through the header, so the line is unbroken top to bottom.
+    border-left: 1px solid var(--timeline-border);
+  }
+
+  .axis-tick {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: .75em;
+    color: var(--timeline-muted);
+    white-space: nowrap;
+    padding: 0 3px;
+  }
+
+  // Sits on the band marking that end of the axis. Graduations are kept away from it in the layout, so
+  // that two times are never printed on top of one another.
+  .axis-cap {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: .68em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    // A signpost, not a headline: it says where the axis stops and then gets out of the way.
+    color: var(--timeline-muted);
+    background-color: var(--timeline-surface);
+    padding: 2px 6px;
+    border: 1px solid var(--timeline-border);
+    border-radius: 2px;
+    white-space: nowrap;
+    cursor: help;
+
+    &.start {
+      margin-left: 5px;
+    }
+
+    &.end {
+      transform: translate(-100%, -50%);
+      margin-left: -5px;
+    }
+
+    // The end of an axis still growing is the present, and is worth telling apart from one that is not.
+    &.live {
+      color: var(--timeline-now);
+      border-color: var(--timeline-now);
+    }
+  }
+
+  // The time the pointer is on. On a folded axis, working out what a position means is otherwise
+  // guesswork, so it is read out where the graduations are.
+  .axis-cursor {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    z-index: 1;
+    font-size: .72em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    padding: 2px 5px;
+    border-radius: 2px;
+    background-color: var(--timeline-accent);
+    color: var(--timeline-surface);
+  }
+
+  .axis-fold {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--timeline-fold);
+    cursor: help;
+
+    .axis-fold-label {
+      font-size: .7em;
+      color: var(--timeline-muted);
+      white-space: nowrap;
+      // The label of a narrow fold has to stay readable, so it is allowed out of its band.
+      overflow: visible;
+    }
+  }
+}
+
+// -- Lanes ---------------------------------------------------------------------------------------
+
+.viewport {
+  flex: 1;
+  // Up and down only. Sideways is this view's own gesture, never a scrollbar: the names column and the
+  // bars have to stay lined up with each other whatever the axis is doing.
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  touch-action: pan-y;
+
+  &.pannable {
+    cursor: grab;
+  }
+
+  &.panning {
+    cursor: grabbing;
+    user-select: none;
+  }
+}
+
+.canvas {
+  position: relative;
+  min-height: 100%;
+  // The first row has no row above it to hang over, so the canvas gives it the same room.
+  padding-top: 12px;
+  padding-bottom: 8px;
+}
+
+.grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--timeline-label-width);
+  right: 0;
+  overflow: hidden;
+  pointer-events: none;
+  // The names and the bars are two columns and always read as two, even zoomed in past the point where
+  // the band marking the start of the axis is still in view.
+  border-left: 1px solid var(--timeline-border);
+
+  .grid-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: var(--timeline-grid);
+  }
+
+  // A band, not a line, and hatched like a fold: the ends of the timeline read as walls the lanes stop
+  // against, rather than as an edge that might be hiding something. Faint, and with no hard rule down its
+  // side — these say where the axis stops, they are not the subject.
+  .grid-cap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-image: repeating-linear-gradient(-45deg,
+        transparent 0 4px,
+        var(--timeline-cap) 4px 5px);
+
+    // Each band runs from where the axis stops to the edge of the view, so that whatever the ends keep
+    // clear of the track is walled off rather than left as blank space nothing accounts for.
+    &.start {
+      left: 0;
+    }
+
+    &.end {
+      right: 0;
+    }
+
+    // The wall at the present, on an axis that is still growing into it.
+    &.live {
+      background-image: repeating-linear-gradient(-45deg,
+          transparent 0 4px,
+          var(--timeline-now) 4px 5px);
+      opacity: .5;
+    }
+  }
+
+  // Where the pointer is. Moved by hand outside change detection, hidden until there is one.
+  .grid-cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    display: none;
+    background-color: var(--timeline-accent);
+    opacity: .65;
+  }
+
+  .grid-fold {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: var(--timeline-fold);
+    // The pattern says the time in there is not to scale.
+    background-image: repeating-linear-gradient(-45deg,
+        transparent 0 4px,
+        var(--timeline-grid) 4px 5px);
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 10px 4px;
+  font-size: .8em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--timeline-muted);
+  position: relative;
+}
+
+.lanes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lane {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: var(--timeline-row-height);
+  position: relative;
+  --timeline-bar-top: 7px;
+  --timeline-bar-bottom: 7px;
+
+  // What is pinned on a lane is drawn above its bars, so a lane carrying anything is taller by the room
+  // that takes — at both ends, so the bars do not move off the middle of the line. Centred on the bar,
+  // an icon covered the very label it was sitting next to.
+  &.marked {
+    height: var(--timeline-marked-row-height);
+    --timeline-bar-top: 7px;
+    --timeline-bar-bottom: 7px;
+  }
+
+  &:hover,
+  &.hovered {
+    background-color: var(--timeline-hover);
+  }
+
+  // Pointed at from somewhere else, another view of the same thing. Stronger than a hover, since the
+  // pointer is not here to say where it is.
+  &.hovered {
+    box-shadow: inset 0 0 0 1px var(--timeline-accent);
+  }
+
+  // The lane whose panel is open. Says what is being looked at, and outranks a passing hover.
+  &.selected {
+    background-color: var(--timeline-hover);
+    box-shadow: inset 3px 0 0 var(--timeline-accent);
+
+    .lane-label .name {
+      color: var(--timeline-accent);
+    }
+  }
+
+  &.child {
+    height: var(--timeline-child-row-height);
+
+    .lane-label .name {
+      font-weight: normal;
+    }
+
+    &.marked {
+      height: var(--timeline-marked-child-row-height);
+      --timeline-bar-top: 7px;
+      --timeline-bar-bottom: 7px;
+    }
+  }
+}
+
+.lane-gutter {
+  flex: 0 0 var(--timeline-label-width);
+  // The column answers the click, all the way across, not only where the name happens to end.
+  &.expandable {
+    cursor: pointer;
+  }
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+// Dotted rule running from the name across to the bars, so a lane reads as one line. It runs to the very
+// edge of the gutter and starts again at the very edge of the track, so the two halves join instead of
+// leaving a blank where the columns meet.
+.leader {
+  flex: 1 1 8px;
+  min-width: 8px;
+  height: 0;
+  border-bottom: 1px dotted var(--timeline-leader);
+  margin-left: 6px;
+}
+
+.lane-caret {
+  flex: 0 0 18px;
+  width: 18px;
+  text-align: center;
+  color: var(--timeline-muted);
+  font-size: .7em;
+  line-height: 1;
+}
+
+.lane-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  overflow: hidden;
+  // Whatever the column around it does, since that is what the click reaches.
+  cursor: inherit;
+
+  &:focus-visible {
+    outline: 2px solid var(--timeline-focus);
+    outline-offset: -2px;
+  }
+
+  .name {
+    font-size: .88em;
+    font-weight: bold;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sub {
+    font-size: .75em;
+    color: var(--timeline-muted);
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.lane-track {
+  flex: 1;
+  position: relative;
+  // Cut off at the sides of the column and nowhere else, so a mark standing above a bar can hang over the
+  // row above it. `hidden` cannot say this — hiding one axis makes the other clip too — but `clip` can,
+  // and unlike a clip path it also keeps what it cuts from counting towards the scrollable area. With a
+  // clip path, a bar wider than the column gave the view something to scroll sideways, and scrolling it
+  // dragged the names along with the bars.
+  overflow-x: clip;
+  overflow-y: visible;
+  display: flex;
+  align-items: center;
+  cursor: default;
+
+  // Empty track answers to the row, which unfolds the lane.
+  &.expandable {
+    cursor: pointer;
+  }
+
+  .leader {
+    // The rule carries on behind the bars, tying the two halves of the row together.
+    flex: 1 1 auto;
+    margin-left: 0;
+  }
+}
+
+// The box a run of segments is drawn in. It carries no look of its own — it is there to be one element
+// where there are several bars, so the pointer never falls between them. It is inset to the height of
+// the bars, so that it covers what is coloured and nothing else.
+.segment-group {
+  position: absolute;
+  top: var(--timeline-bar-top);
+  bottom: var(--timeline-bar-bottom);
+  min-width: 2px;
+
+  // The bars are the lane itself: clicking them opens it.
+  &.activatable {
+    cursor: pointer;
+  }
+}
+
+.segment {
+  position: absolute;
+  // Filling the group, which is what holds the height: the bars are what is read here, the rows only
+  // have to be told apart.
+  top: 0;
+  bottom: 0;
+  min-width: 2px;
+  border-radius: 2px;
+  background-color: var(--timeline-segment);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+
+  // Still going: the trailing edge is left open instead of squared off.
+  &.open {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .segment-label {
+    font-size: .72em;
+    padding: 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // The duration where the eye already is, instead of only on hover.
+  .segment-duration {
+    font-size: .7em;
+    padding-right: 5px;
+    margin-left: auto;
+    opacity: .75;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// A point in time. Without an icon it is a lozenge; with one it is that icon, which says what kind of
+// thing was produced without having to be hovered.
+.marker {
+  // Standing on the top edge of the bar rather than laid across it: a mark in the middle of a short bar
+  // covers the name of the very thing it belongs to. Held a little clear of it, so the stem between the
+  // two is visible, and placed with `bottom` rather than a transform so hovering can scale it without
+  // moving it.
+  //
+  // Everything here has to fit in the room the row keeps above its bars, because the track clips what
+  // overflows it — and it must, to cut the bars off at its edges. So a mark that has more to say grows
+  // sideways, never upwards.
+  position: absolute;
+  bottom: calc(100% + 3px);
+  width: 10px;
+  height: 10px;
+  margin: 0 0 0 -5px;
+  padding: 0;
+  border: 1px solid var(--timeline-marker);
+  background-color: var(--timeline-marker);
+  transform: rotate(45deg);
+  cursor: pointer;
+
+  &:hover {
+    transform: rotate(45deg) scale(1.3);
+  }
+
+  &.iconic {
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    box-sizing: border-box;
+    border-radius: 3px;
+    transform: none;
+    // The icon carries the colour; the box behind it only has to lift it off whatever is underneath.
+    background-color: var(--timeline-surface);
+    border-color: var(--timeline-marker);
+    color: var(--timeline-marker);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 9px;
+    line-height: 1;
+
+    &:hover {
+      transform: scale(1.15);
+      z-index: 1;
+    }
+
+    // A stem across the gap to the bar, meeting its top edge exactly. Inside the bar it was hidden by
+    // it; in the gap it is what makes the mark read as belonging to that bar.
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      width: 2px;
+      height: 3px;
+      margin-left: -1px;
+      background-color: var(--timeline-marker);
+    }
+  }
+
+  // Several drawn as one, because they would have overlapped. It says so by carrying the number, which
+  // makes it wider than a single mark — the one direction it has room to grow in. A badge hung off the
+  // corner was the obvious thing to reach for and the wrong one: it needed height the row does not have,
+  // so it came out clipped.
+  &.crowd {
+    width: auto;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    box-sizing: border-box;
+    // Stated here rather than left to `.iconic`, so that a crowd is a legible pill even where the host
+    // gave its markers no icon to draw.
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-radius: 3px;
+    background-color: var(--timeline-surface);
+    border-color: var(--timeline-marker);
+    color: var(--timeline-marker);
+    line-height: 1;
+    // Centred on its instant whatever its width, which a fixed negative margin cannot do. The shift is
+    // the same in both states, so hovering still scales without moving it.
+    margin-left: 0;
+    transform: translateX(-50%);
+
+    &:hover {
+      transform: translateX(-50%) scale(1.15);
+    }
+
+    .count {
+      font-size: 9px;
+      font-weight: bold;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      color: var(--timeline-marker);
+    }
+  }
+
+  // Nothing to stand on: a lane that is only a point in time has no bar under its mark, so it sits in
+  // the middle of the row and has nothing to be welded to.
+  &.loose {
+    bottom: auto;
+    top: 50%;
+    margin-top: -5px;
+
+    &.iconic {
+      margin-top: -7px;
+    }
+
+    &::after {
+      display: none;
+    }
+  }
+}
+
+// Highlighting brings out a few lanes by holding the others back, rather than by painting them.
+.timeline.highlighting {
+
+  .lane:not(.highlighted) {
+    .segment,
+    .marker {
+      opacity: .2;
+    }
+
+    // Held back with them: left alone it showed straight through the bars it runs behind, which drew
+    // more attention than the bars themselves.
+    .leader {
+      opacity: .3;
+    }
+
+    .lane-label {
+      color: var(--timeline-muted);
+    }
+  }
+}
+
+// -- What a lane says when hovered ---------------------------------------------------------------
+
+// Lives in an overlay, which owns its position: this only says what it looks like.
+.hover-card {
+  width: 320px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 4px;
+  // The overlay is outside the timeline, so the theme cannot reach it through a custom property:
+  // these two are the only colours the component states outright.
+  background-color: #262626;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .35);
+  pointer-events: none;
+
+  .tip-title {
+    font-weight: bold;
+    margin-bottom: 2px;
+    word-break: break-all;
+  }
+
+  .tip-total {
+    margin-bottom: 6px;
+    opacity: .85;
+  }
+
+  .tip-share {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+
+    .tip-name {
+      flex: 0 0 78px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    // A neutral gauge rather than the colour of the segment: what a `kind` looks like is the host's
+    // business, and repeating it here would mean repeating its stylesheet.
+    .tip-gauge {
+      flex: 1 1 auto;
+      height: 6px;
+      border-radius: 3px;
+      background-color: rgba(255, 255, 255, .18);
+      overflow: hidden;
+
+      span {
+        display: block;
+        height: 100%;
+        background-color: currentColor;
+        opacity: .75;
+      }
+    }
+
+    .tip-value {
+      flex: 0 0 auto;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tip-percent {
+      flex: 0 0 34px;
+      text-align: right;
+      opacity: .7;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .tip-details {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, .18);
+    opacity: .85;
+
+    // A marker has no breakdown above it, so there is nothing to be separated from.
+    &.alone {
+      margin-top: 2px;
+      padding-top: 0;
+      border-top: none;
+    }
+  }
+
+  // Label against the left edge, value against the right, so the values read down a single column.
+  .tip-detail {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+
+    .tip-detail-value {
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+.timeline-shortcuts {
+  kbd {
+    display: inline-block;
+    padding: 0 4px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, .2);
+  }
+}

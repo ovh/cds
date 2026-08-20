@@ -276,6 +276,10 @@ export class WorkflowRunInfo {
 
 export class WorkflowRunResult {
     id: string;
+    /** The run job that created the result, which is what puts it on the timeline of that job. */
+    workflow_run_job_id: string;
+    /** When the result was created. */
+    issued_at: string;
     type: WorkflowRunResultType | string;
     detail: WorkflowRunResultDetail;
     metadata: { [key: string]: WorkflowRunResultMetadata };

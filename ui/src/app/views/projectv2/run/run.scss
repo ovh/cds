@@ -395,6 +395,13 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
+
+        // The tabs of the panel are kept alive and hidden rather than destroyed, so that leaving one and
+        // coming back does not reset its zoom, its unfolded lanes or its filters. Said here because each
+        // of them sets its own display, which would otherwise win against the one `hidden` asks for.
+        > [hidden] {
+            display: none;
+        }
     }
 }
 

@@ -1,0 +1,280 @@
+@use '../../../../common' as common;
+
+/**
+ * The timeline component draws the shape and leaves every colour to whoever uses it: what a `kind`
+ * means is only known here. The frame is themed through the custom properties it reads, the segments
+ * and the markers through the `data-kind` they carry.
+ */
+
+// The bottom panel is a flex column holding the tabs and then this: take what is left of it, and no more.
+:host {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/**
+ * The critical path toggle is projected into the timeline's controls, so it is styled here rather than
+ * there: a projected element belongs to this component, and the library's own rules — scoped to its own
+ * template — cannot reach it. On and off read the way the filters of the Results tab do.
+ */
+.critical-path {
+  &.active {
+    color: common.$cds_color_green;
+    border-color: common.$cds_color_green;
+
+    :host-context(.night) & {
+      color: common.$darkTheme_green;
+      border-color: common.$darkTheme_green;
+    }
+  }
+
+  // Clicking with the pointer leaves the button focused, and the button styles the UI ships paint a
+  // focused button exactly like a hovered one — so the control stayed lit whether it was on or not,
+  // which is the one thing it is there to tell you. A keyboard focus still shows, through :focus-visible.
+  &:not(.active):not([disabled]):focus:not(:focus-visible) {
+    color: rgba(0, 0, 0, .85);
+    border-color: #d9d9d9;
+
+    :host-context(.night) & {
+      color: rgba(255, 255, 255, .85);
+      border-color: #434343;
+    }
+  }
+}
+
+app-timeline {
+  display: block;
+  height: 100%;
+
+  ::ng-deep .timeline {
+    --timeline-text: rgba(0, 0, 0, .85);
+    --timeline-muted: rgba(0, 0, 0, .55);
+    --timeline-border: #f0f0f0;
+    --timeline-grid: #f0f0f0;
+    --timeline-leader: rgba(0, 0, 0, .12);
+    --timeline-cap: rgba(0, 0, 0, .09);
+    --timeline-hover: rgba(0, 0, 0, .04);
+    --timeline-fold: rgba(0, 0, 0, .05);
+    // What the axis caps and the marker icons sit on, so they read as opaque over the lanes.
+    --timeline-surface: #ffffff;
+    --timeline-control-border: #d9d9d9;
+    --timeline-now: #{common.$cds_color_teal};
+    --timeline-segment: #{common.$cds_color_light_grey};
+    --timeline-marker: #{common.$polar_grey_0};
+    --timeline-focus: #{common.$polar_grey_0};
+    --timeline-accent: #{common.$cds_color_teal};
+  }
+
+  :host-context(.night) & ::ng-deep .timeline {
+    --timeline-text: #{common.$darkTheme_grey_6};
+    --timeline-muted: #{common.$darkTheme_grey_5};
+    --timeline-border: #303030;
+    --timeline-grid: #303030;
+    --timeline-leader: rgba(255, 255, 255, .18);
+    --timeline-cap: rgba(255, 255, 255, .13);
+    --timeline-hover: rgba(255, 255, 255, .05);
+    --timeline-fold: rgba(255, 255, 255, .05);
+    --timeline-surface: #{common.$darkTheme_grey_1};
+    --timeline-control-border: #434343;
+    --timeline-now: #{common.$darkTheme_light_blue};
+    --timeline-segment: #{common.$darkTheme_night_grey};
+    --timeline-marker: #{common.$darkTheme_grey_5};
+    --timeline-focus: white;
+    --timeline-accent: #{common.$darkTheme_light_blue};
+  }
+
+  ::ng-deep .segment {
+    border: 1px solid transparent;
+    color: common.$polar_grey_1;
+
+    :host-context(.night) & {
+      color: common.$darkTheme_grey_6;
+    }
+
+    // Waiting in the queue: hatched, because no time is being spent on the job itself.
+    &[data-kind='queued'] {
+      background-color: common.$cds_color_light_grey;
+      border-color: common.$polar_grey_3;
+      background-image: repeating-linear-gradient(-45deg,
+          transparent 0 3px,
+          rgba(0, 0, 0, .06) 3px 6px);
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_night_grey;
+        border-color: common.$darkTheme_grey_4;
+        background-image: repeating-linear-gradient(-45deg,
+            transparent 0 3px,
+            rgba(255, 255, 255, .07) 3px 6px);
+      }
+    }
+
+    // Held by a gate or a concurrency rule: the wait that can last days.
+    &[data-kind='blocked'] {
+      background-color: #ffe0d2;
+      border-color: common.$cds_color_orange;
+      background-image: repeating-linear-gradient(-45deg,
+          transparent 0 3px,
+          rgba(0, 0, 0, .08) 3px 6px);
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_night_orange;
+        border-color: common.$darkTheme_orange;
+      }
+    }
+
+    // A hatchery starting a worker.
+    &[data-kind='scheduling'] {
+      background-color: common.$cds_color_light_teal;
+      border-color: common.$cds_color_teal;
+      opacity: .75;
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_night_blue;
+        border-color: common.$darkTheme_blue;
+      }
+    }
+
+    &[data-kind^='running'],
+    &[data-kind^='step'] {
+      background-color: common.$cds_color_light_teal;
+      border-color: common.$cds_color_teal;
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_night_blue;
+        border-color: common.$darkTheme_blue;
+      }
+    }
+
+    &[data-kind='running-success'],
+    &[data-kind='step-success'] {
+      background-color: common.$cds_color_light_green;
+      border-color: common.$cds_color_green;
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_night_green;
+        border-color: common.$darkTheme_green;
+      }
+    }
+
+    &[data-kind='running-fail'],
+    &[data-kind='running-stopped'],
+    &[data-kind='step-fail'],
+    &[data-kind='step-failure'] {
+      background-color: common.$cds_color_light_red;
+      border-color: common.$cds_color_red;
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_night_red;
+        border-color: common.$darkTheme_red;
+      }
+    }
+
+    &[data-kind='running-cancelled'],
+    &[data-kind='running-skipped'],
+    &[data-kind='step-skipped'] {
+      background-color: common.$cds_color_light_grey;
+      border-color: common.$polar_grey_3;
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_night_grey;
+        border-color: common.$darkTheme_grey_4;
+      }
+    }
+  }
+
+  // What the run logged as an error. The one mark on the timeline worth stopping at, so it is the one
+  // that takes the colour of a failure.
+  ::ng-deep .marker[data-kind='error'] {
+    border-color: common.$cds_color_red;
+    color: common.$cds_color_red;
+
+    :host-context(.night) & {
+      border-color: common.$darkTheme_red;
+      color: common.$darkTheme_red;
+    }
+
+    &::after {
+      background-color: common.$cds_color_red;
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_red;
+      }
+    }
+  }
+
+  /**
+   * The lane of the run is not one of its jobs, and a name set like theirs read as one. It is set like
+   * the heading of a section instead, which is what it is: the run, above the jobs it ran. Only this lane
+   * is ever given these two statuses.
+   */
+  ::ng-deep .lane[data-status='run'] .lane-label .name,
+  ::ng-deep .lane[data-status='error'] .lane-label .name {
+    font-size: .8em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  ::ng-deep .lane[data-status='run'] .lane-label .name {
+    color: var(--timeline-muted);
+  }
+
+  // Red once the run has logged an error, which is the one thing about a run worth interrupting a read for.
+  ::ng-deep .lane[data-status='error'] .lane-label .name {
+    color: common.$cds_color_red;
+
+    :host-context(.night) & {
+      color: common.$darkTheme_red;
+    }
+  }
+
+  // What set the run off. It is about the run and not about anything it produced, so it takes the
+  // colour the view uses for itself rather than one of the statuses.
+  ::ng-deep .marker[data-kind='trigger'] {
+    border-color: common.$cds_color_teal;
+    color: common.$cds_color_teal;
+
+    :host-context(.night) & {
+      border-color: common.$darkTheme_light_blue;
+      color: common.$darkTheme_light_blue;
+    }
+
+    &::after {
+      background-color: common.$cds_color_teal;
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_light_blue;
+      }
+    }
+  }
+
+  // A gate is not a thing the job produced but the thing that let it start, so it is set apart from
+  // the results sharing its lane.
+  ::ng-deep .marker[data-kind='gate'] {
+    border-color: common.$cds_color_orange;
+    color: common.$cds_color_orange;
+
+    :host-context(.night) & {
+      border-color: common.$darkTheme_orange;
+      color: common.$darkTheme_orange;
+    }
+
+    &::after {
+      background-color: common.$cds_color_orange;
+
+      :host-context(.night) & {
+        background-color: common.$darkTheme_orange;
+      }
+    }
+  }
+
+  // Every result carries an icon saying what kind of thing it is, so what tells two of them apart is
+  // the shape rather than the colour. They only need to stay legible over whatever bar they sit on,
+  // which is what `--timeline-marker` and `--timeline-surface` above are for.
+
+  ::ng-deep .lane[data-status='result'] .lane-label .name {
+    font-style: italic;
+  }
+}

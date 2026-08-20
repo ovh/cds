@@ -91,34 +91,11 @@
             </div>
           }
           <div class="infos">
+            <!-- Only the duration here. The dates behind it, and where that duration went, are on the
+                 lane of this variant in the Timeline tab. -->
             @if (durations[key] && selectionMode === 'disabled') {
-              <div class="duration" nz-tooltip
-                [nzTooltipTitle]="durationTooltip">
-                {{durations[key]}}
-                <ng-template #durationTooltip>
-                  <div class="durationTooltip">
-                    @if (dates[key].queued) {
-                      <div><b>Queued:</b>&nbsp;{{dates[key].queued | date: 'long'}}
-                    </div>
-                  }
-                  @if (dates[key].scheduled) {
-                    <div><b>Scheduled:</b>&nbsp;{{dates[key].scheduled | date:
-                    'long'}}
-                  </div>
-                }
-                @if (dates[key].started) {
-                  <div><b>Started:</b>&nbsp;{{dates[key].started | date:
-                  'long'}}
-                </div>
-              }
-              @if (dates[key].ended) {
-                <div><b>Ended:</b>&nbsp;{{dates[key].ended | date: 'long'}}
-              </div>
+              <div class="duration">{{durations[key]}}</div>
             }
-          </div>
-        </ng-template>
-      </div>
-    }
     @if (status[key] && selectionMode === 'disabled') {
       <div class="status">
         {{status[key].toLowerCase()}}
