@@ -4,6 +4,10 @@
 
 The workflow run view renders an interactive **directed acyclic graph (DAG)** that visualizes the complete structure of a CDS workflow: its jobs, stages, matrix expansions, dependency edges, and runtime status. The graph is the central element of the run page — it drives navigation, status monitoring, and operational features such as **job restart** and **gate management**.
 
+The graph shows the run as structure. The same run seen as time — how long each job waited and ran, and
+when it produced what — is the Timeline tab of the bottom panel, specified in
+[workflow-run-timeline.md](workflow-run-timeline.md).
+
 ---
 
 ## 1 — Graph Rendering
@@ -47,6 +51,10 @@ A rectangular node representing a single workflow job.
 - Duration (live-updating while active, static when terminated)
 - Status label (success, fail, building, inactive, etc.)
 - Condition tooltip showing gate and if-expressions when defined
+
+The duration is a number and nothing more. The dates behind it — queued, scheduled, started, ended —
+and how the duration was split between waiting and working are on the job's lane in the Timeline tab,
+which shows them for every job at once instead of one hovered node at a time.
 
 **Action buttons** (in the commands area):
 - **Gate button**: Shown when the job defines a gate and the workflow is not active. For gates without inputs, a popconfirm triggers the gate directly. For gates with inputs, a button opens a drawer.
@@ -103,7 +111,8 @@ Edges represent dependencies between jobs. The rendering pipeline:
 5. Colors edges based on source node status (green for success, red for fail, grey for inactive)
 6. Active-status edges are drawn thicker for emphasis
 
-On **hover**, all edges connected to the hovered node are highlighted.
+On **hover**, all edges connected to the hovered node are highlighted, and the graph reports which run
+job is being pointed at so that the timeline can bring out the same one.
 
 ---
 
@@ -168,6 +177,12 @@ The graph maintains a **navigation graph** — a flattened representation of the
 ### 5.3 Help Tooltip
 
 A help icon (?) in the toolbar shows a tooltip listing all keyboard shortcuts with styled key caps. The Shift shortcut line is only visible when the workflow run has terminated, since selection mode is only relevant for terminated runs.
+
+The Shift and Enter shortcuts of selection mode only act when **this graph is the thing being used**: the
+focus is inside it, or the pointer is over it. They are listened for on the window, so without that a Shift
+pressed anywhere on the page — as a modifier for something else entirely, in another view of the same run —
+armed the lasso and flipped the graph into selection mode. The pointer counts as well as the focus because
+the lasso is a drag, and a drag has to be armed before there is anything to have clicked on.
 
 ---
 

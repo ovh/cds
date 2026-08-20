@@ -165,6 +165,9 @@ export class GraphComponent implements AfterViewInit, OnChanges, OnDestroy {
     /** Emitted when selection mode is entered or exited. */
     @Output() onSelectionModeChange = new EventEmitter<boolean>();
 
+    /** The run job being pointed at, or null when the pointer left it. */
+    @Output() onHoverJobRun = new EventEmitter<string>();
+
     /** Current selection of run job IDs, managed internally. */
     selectedRunJobIds: Array<string> = [];
     /** Whether the graph is currently in selection (restart) mode. */
@@ -270,21 +273,27 @@ export class GraphComponent implements AfterViewInit, OnChanges, OnDestroy {
             }
         }
 
-        // Selection-mode shortcuts (handled regardless of navigationDisabled)
-        switch (event.key) {
-            case 'Shift':
-                if (this.selectionDisabled) { return; }
-                if (!this.selectionModeActive) {
-                    this.setSelectionModeActive(true);
-                }
-                this.enableLassoSelection();
-                return;
-            case 'Enter':
-                if (this.selectionModeActive) {
-                    this.onSelectionValidate.emit([...this.selectedRunJobIds]);
+        // Selection-mode shortcuts. Only when this graph is what is being used: listening for them on the
+        // window meant a Shift pressed anywhere on the page — as a modifier for something else entirely,
+        // in another view of the same run — armed the lasso here and flipped the graph into selection
+        // mode. Focus is one way of being used; the pointer being over it is the other, and it matters
+        // because the lasso is a drag: it has to be armed before there is anything to have clicked on.
+        if (focusInGraph || this.pointerOver) {
+            switch (event.key) {
+                case 'Shift':
+                    if (this.selectionDisabled) { return; }
+                    if (!this.selectionModeActive) {
+                        this.setSelectionModeActive(true);
+                    }
+                    this.enableLassoSelection();
                     return;
-                }
-                break;
+                case 'Enter':
+                    if (this.selectionModeActive) {
+                        this.onSelectionValidate.emit([...this.selectedRunJobIds]);
+                        return;
+                    }
+                    break;
+            }
         }
 
         // Arrow / Enter navigation (guarded)
@@ -375,6 +384,22 @@ export class GraphComponent implements AfterViewInit, OnChanges, OnDestroy {
         return description;
     }
 
+    /**
+     * Whether the pointer is over this graph. Kept because the keyboard shortcuts that arm the lasso are
+     * only meant for whoever is using this graph, and a drag has to be armed before it begins.
+     */
+    pointerOver: boolean = false;
+
+    @HostListener('mouseenter')
+    onMouseEnterGraph() {
+        this.pointerOver = true;
+    }
+
+    @HostListener('mouseleave')
+    onMouseLeaveGraph() {
+        this.pointerOver = false;
+    }
+
     @HostListener('window:keyup', ['$event'])
     handleKeyUp(event: KeyboardEvent) {
         if (event.key === 'Shift' && this.selectionModeActive) {
@@ -383,6 +408,49 @@ export class GraphComponent implements AfterViewInit, OnChanges, OnDestroy {
                 this.setSelectionModeActive(false);
             }
         }
+    }
+
+    /**
+     * Select the node holding a run job and bring it into view, as clicking it would, without acting
+     * on it again. This is how another view of the same run — the timeline — keeps the graph in step
+     * with what it opened.
+     */
+    selectRunJob(runJobID: string): void {
+        const found = this.findRunJobNode(runJobID);
+        if (!found || !this.graph) {
+            return;
+        }
+        const baseKey = found.node.job?.stage ? `${found.node.job.stage}-${found.node.name}` : found.node.name;
+        this.selectedNodeNavigationKey = found.matrixKey ? `${baseKey}-${found.matrixKey}` : baseKey;
+        this.graph.selectNode(this.selectedNodeNavigationKey);
+        this.graph.centerNode(baseKey);
+        this._cd.markForCheck();
+    }
+
+    /** The node a run job is drawn on, and the matrix variant it stands for when the node is a matrix. */
+    private findRunJobNode(runJobID: string): { node: GraphNode, matrixKey: string } {
+        const match = (node: GraphNode): { node: GraphNode, matrixKey: string } => {
+            if (node.run?.id === runJobID) {
+                return { node, matrixKey: null };
+            }
+            const run = (node.runs ?? []).find(r => r.id === runJobID);
+            if (!run) {
+                return null;
+            }
+            // The matrix node keys its variants this way, and the key is what selection goes by.
+            const matrixKey = Object.keys(run.matrix ?? {}).sort().map(k => `${k}: ${run.matrix[k]}`).join(', ');
+            return { node, matrixKey };
+        };
+
+        for (const node of this.nodes ?? []) {
+            const found = node.sub_graph
+                ? node.sub_graph.map(match).find(m => !!m)
+                : match(node);
+            if (found) {
+                return found;
+            }
+        }
+        return null;
     }
 
     unSelect() {
@@ -609,9 +677,11 @@ export class GraphComponent implements AfterViewInit, OnChanges, OnDestroy {
         switch (type) {
             case GraphNodeAction.Enter:
                 this.graph.nodeMouseEvent(NodeMouseEvent.Enter, n.name, options);
+                this.onHoverJobRun.emit(options?.['jobRunID'] ?? null);
                 break;
             case GraphNodeAction.Out:
                 this.graph.nodeMouseEvent(NodeMouseEvent.Out, n.name, options);
+                this.onHoverJobRun.emit(null);
                 break;
             case GraphNodeAction.Click:
                 const baseKey = (n.job && n.job.stage) ? `${n.job.stage}-${n.name}` : n.name;

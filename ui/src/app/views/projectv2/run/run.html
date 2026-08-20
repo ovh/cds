@@ -299,25 +299,29 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
   (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
   (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)"
   (onSelectionChange)="onSelectionChange($event)" (onSelectionValidate)="clickValidateRestartJobs()"
-(onSelectionModeChange)="onSelectionModeChange($event)" #graph></app-graph>
+  (onSelectionModeChange)="onSelectionModeChange($event)" (onHoverJobRun)="onHoverJobRun($event)"
+#graph></app-graph>
 </div>
 </div>
 <!--  BOTTOM PANELS -->
 <app-resizable-panel [direction]="'vertical'" [minSize]="200" [initialSize]="infoPanelSize"
   (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
   <div class="bottom-panel">
-    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
-    @if (selectedTab && selectedTab.key === 'info') {
-      <app-run-info [info]="workflowRunInfo"></app-run-info>
-    }
-    @if (selectedTab && selectedTab.key === 'results') {
-      <app-run-results [results]="results"
-      (onSelectResult)="openPanel('result', $event)"></app-run-results>
-    }
-    @if (selectedTab && selectedTab.key === 'tests') {
-      <app-run-tests [tests]="tests"
-      (onSelectTest)="openPanel('test', $event)"></app-run-tests>
-    }
+    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true" #bottomTabs></app-tabs>
+    <!-- Hidden rather than destroyed: a tab that is torn down on the way out comes back with its zoom,
+         its unfolded lanes and its filters reset, which is a poor trade for the little it saves. -->
+    <app-run-info [hidden]="selectedTab?.key !== 'info'" [info]="workflowRunInfo"></app-run-info>
+    <app-run-timeline [hidden]="selectedTab?.key !== 'timeline'" [workflowRun]="workflowRun" [jobs]="jobs"
+      [results]="results" [infos]="workflowRunInfo" [runAttempt]="selectedRunAttempt"
+      [hoveredJobRunID]="hoveredJobRunID"
+      [selectedJobRunID]="selectedItemType === 'job' ? selectedJobRun?.id : null"
+      (onSelectJobRun)="selectJobRunFromTimeline($event)" (onSelectInfo)="showRunInfos()"
+      (onSelectHook)="openPanel('hook', $event)"
+    (onSelectResult)="openPanel('result', $event)"></app-run-timeline>
+    <app-run-results [hidden]="selectedTab?.key !== 'results'" [results]="results"
+    (onSelectResult)="openPanel('result', $event)"></app-run-results>
+    <app-run-tests [hidden]="selectedTab?.key !== 'tests'" [tests]="tests"
+    (onSelectTest)="openPanel('test', $event)"></app-run-tests>
   </div>
 </app-resizable-panel>
 </div>
