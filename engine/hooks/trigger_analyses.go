@@ -11,6 +11,24 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+// setInitiatorFromAnalysis copies back on the event the initiator and the signing key
+// resolved by the analysis. triggerCheckAnalyses only reuses an analysis triggered by a
+// previous push event, so without this the event keeps no identity at all and
+// triggerWorkflows rejects every workflow hook with "unknown user". This is also the only
+// channel able to carry a VCS user (a robot with no CDS account), as entity.user_id can
+// only hold a CDS user id.
+func setInitiatorFromAnalysis(hre *sdk.HookRepositoryEvent, analysis sdk.ProjectRepositoryAnalysis) {
+	// A repository can be analyzed by several projects, but only the one owning the signing
+	// key resolves an initiator: never let a later analysis erase it.
+	if hre.Initiator != nil || analysis.Data.Initiator == nil {
+		return
+	}
+	hre.SignKey = analysis.Data.SignKeyID
+	hre.Initiator = analysis.Data.Initiator
+	// Deprecated, but it is the only field the UI reads to display the event initiator.
+	hre.DeprecatedUsername = analysis.Data.Initiator.Username()
+}
+
 func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
 	allEnded := true
 
@@ -50,6 +68,7 @@ func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookReposit
 				if a.Commit == hre.ExtractData.Commit {
 					hreAnl.AnalyzeID = a.ID
 					hreAnl.Status = a.Status
+					setInitiatorFromAnalysis(hre, a)
 					foundAnl = true
 					break
 				}
@@ -78,6 +97,7 @@ func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookReposit
 				return err
 			}
 			hreAnl.Status = apiAnalysis.Status
+			setInitiatorFromAnalysis(hre, apiAnalysis)
 			if hreAnl.Status == sdk.RepositoryAnalysisStatusInProgress {
 				hreAnl.FindRetryCount++
 				if hreAnl.FindRetryCount > s.Cfg.OldRepositoryEventRetry {

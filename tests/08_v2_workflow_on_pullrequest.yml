@@ -159,6 +159,30 @@ testcases:
       retry: 60
       delay: 1
 
+- name: Check the pull-request event kept the identity resolved by the analysis
+  steps:
+    # A pull-request event never runs its own analysis, it only reuses the one created by the
+    # push. If the initiator and the signing key that analysis resolved are not copied back
+    # on the event, nothing is left to authorize the run and every workflow hook is skipped
+    # with "unknown user".
+    - name: Find the pull-request hook event
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks repository event list my_vcs_server {{.git.user}}/{{.git_repo}} --filter event_name=pull-request --format json"
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson ShouldHaveLength 1
+      retry: 30
+      delay: 2
+      vars:
+        hookEventUUID:
+          from: result.systemoutjson.systemoutjson0.uuid
+
+    - name: The event must carry the signing key and the initiator of the reused analysis
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks repository event show my_vcs_server {{.git.user}}/{{.git_repo}} {{.hookEventUUID}} --format json"
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.sign_key ShouldNotBeEmpty
+        - result.systemoutjson.username ShouldNotBeEmpty
+
 - name: Check comment created on forgejo
   steps:
   - name: Get pull-request from forgejo and check comment

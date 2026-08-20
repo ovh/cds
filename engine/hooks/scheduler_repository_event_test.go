@@ -184,3 +184,123 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID)
 	require.NoError(t, s.manageRepositoryEvent(context.TODO(), k))
 }
+
+// A pull-request event never runs its own analysis: triggerCheckAnalyses only reuses the
+// one created by the push event. The identity that analysis resolved must be copied back on
+// the event, otherwise nothing is left to authorize the run. It matters most for a VCS user
+// (a robot with no CDS account): entity.user_id can only hold a CDS user id, so the event
+// initiator is the only channel able to carry that identity. Losing it made every robot
+// pull-request fail with "unknown user" before reaching the RBAC check.
+func TestManageRepositoryEvent_PullRequestKeepsVCSUserInitiator(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+
+	event := GiteaEventPayload{}
+	event.Repository.FullName = "ovh/cds"
+	event.Ref = "refs/heads/renovate/all"
+	event.After = "abcdef123456"
+
+	bts, _ := json.Marshal(event)
+
+	hr := sdk.HookRepositoryEvent{
+		UUID:           sdk.UUID(),
+		VCSServerName:  "private-github",
+		RepositoryName: "ovh/cds",
+		Status:         sdk.HookEventStatusScheduled,
+		EventName:      sdk.WorkflowHookEventNamePullRequest,
+		Created:        time.Now().UnixNano(),
+		Body:           bts,
+		// A pull-request event carries no signing key: only the analysis knows it.
+		SignKey: "",
+		ExtractData: sdk.HookRepositoryEventExtractData{
+			Commit: "abcdef123456",
+			Ref:    "refs/heads/renovate/all",
+		},
+	}
+	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
+
+	// Create repo
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
+	require.NoError(t, err)
+
+	m := s.Client.(*mock_cdsclient.MockInterface)
+
+	m.EXPECT().HookRepositoriesList(gomock.Any(), gomock.Any(), gomock.Any()).Return([]sdk.ProjectRepository{
+		{
+			ProjectKey: "PROJ",
+		},
+	}, nil)
+
+	// The analysis triggered by the push resolved a VCS user: it holds no CDS user id.
+	m.EXPECT().ProjectRepositoryAnalysisList(gomock.Any(), "PROJ", "private-github", "ovh/cds").Return([]sdk.ProjectRepositoryAnalysis{
+		{
+			ID:     "123456",
+			Commit: "abcdef123456",
+			Status: sdk.RepositoryAnalysisStatusSucceed,
+			Data: sdk.ProjectRepositoryData{
+				SignKeyID: "18E8DDC6067B2F72",
+				Initiator: &sdk.V2Initiator{VCS: "private-github", VCSUsername: "robot-cds"},
+			},
+		},
+	}, nil)
+
+	m.EXPECT().CreateInsightReport(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
+	m.EXPECT().ListWorkflowToTrigger(gomock.Any(), gomock.Any()).Return([]sdk.V2WorkflowHook{
+		{
+			ProjectKey:     "PROJ",
+			VCSName:        "private-github",
+			RepositoryName: "ovh/cds",
+			WorkflowName:   "myworkflow",
+		},
+	}, nil)
+
+	// The workflow entity was last updated by the robot, so it carries no CDS user id.
+	m.EXPECT().EntityGet(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&sdk.Entity{
+		UserID: nil,
+	}, nil).Times(1)
+
+	// A done operation is required to go past the git info step and reach triggerWorkflows.
+	m.EXPECT().RetrieveHookEventSigningKey(gomock.Any(), gomock.Any()).Return(sdk.Operation{
+		UUID:   sdk.UUID(),
+		Status: sdk.OperationStatusDone,
+	}, nil).Times(1)
+
+	var runRequest sdk.V2WorkflowRunHookRequest
+	m.EXPECT().WorkflowV2RunFromHook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Cond(func(r sdk.V2WorkflowRunHookRequest) bool {
+			runRequest = r
+			return true
+		}), gomock.Any(), gomock.Any()).Return(&sdk.V2WorkflowRun{
+		ID:        sdk.UUID(),
+		RunNumber: 1,
+	}, nil).Times(1)
+
+	// Force dequeue
+	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID)
+	require.NoError(t, s.manageRepositoryEvent(context.TODO(), k))
+
+	var hreUpdate sdk.HookRepositoryEvent
+	f, err := s.Cache.Get(k, &hreUpdate)
+	require.NoError(t, err)
+	require.True(t, f)
+
+	// The identity resolved by the analysis must have been copied back on the event...
+	require.NotNil(t, hreUpdate.Initiator)
+	require.Equal(t, "robot-cds", hreUpdate.Initiator.VCSUsername)
+	require.Equal(t, "18E8DDC6067B2F72", hreUpdate.SignKey)
+
+	// Deprecated, but it is the only field the UI reads to display the event initiator:
+	// dropping it would make the identity invisible again in the repository view.
+	require.Equal(t, "private-github/robot-cds", hreUpdate.DeprecatedUsername)
+
+	// ...and must have reached the API, otherwise RBAC cannot evaluate the vcs_users rules.
+	require.NotNil(t, runRequest.Initiator)
+	require.Equal(t, "robot-cds", runRequest.Initiator.VCSUsername)
+
+	// The workflow must have been triggered, not skipped as an unknown user.
+	require.Len(t, hreUpdate.WorkflowHooks, 1)
+	require.NotEqual(t, "unknown user", hreUpdate.WorkflowHooks[0].Error)
+	require.Equal(t, sdk.HookEventWorkflowStatusDone, hreUpdate.WorkflowHooks[0].Status)
+}
