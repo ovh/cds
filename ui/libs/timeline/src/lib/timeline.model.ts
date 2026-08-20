@@ -159,10 +159,40 @@ export function shouldFollow(live: boolean, zoomed: boolean, hovering: boolean, 
     return roomBelowPx <= FOLLOW_SLACK_PX;
 }
 
+/** How much of the view is kept clear above and below a lane brought into it. */
+export const REVEAL_MARGIN_PX = 10;
+
+/** A stretch of the vertical, in whatever coordinates both sides of a comparison share. */
+export interface VerticalBounds {
+    top: number;
+    bottom: number;
+}
+
+/**
+ * How far to scroll to bring a lane into view, in pixels — negative upwards, and zero when it is already
+ * there. Pointing at a job in the graph brings out its lane here, which says nothing at all if that lane
+ * is below the fold.
+ *
+ * The least that does it, never more: the view is where someone put it, and a lane that is already in it
+ * is not a reason to move anything. A lane taller than the view — an unfolded job with many steps — is
+ * shown from its top rather than scrolled past to its foot, which is why the two ends are not symmetric.
+ */
+export function revealBy(view: VerticalBounds, lane: VerticalBounds, margin: number = REVEAL_MARGIN_PX): number {
+    const above = lane.top - margin - view.top;
+    const below = lane.bottom + margin - view.bottom;
+    if (above < 0) {
+        return above;
+    }
+    if (below > 0) {
+        return Math.min(below, above);
+    }
+    return 0;
+}
+
 /** Width of the band walling off either end of the axis. */
 export const AXIS_BAND_PX = 12;
-/** How much more is kept clear on a side where a marker sits on the bound. */
-export const MARKER_ROOM_PX = 14;
+/** How much more is kept clear on a side where a marker sits on the bound: the width of one, `--timeline-mark-size`. */
+export const MARKER_ROOM_PX = 21;
 
 /** What decides how much room the ends of an axis need. */
 export interface AxisRoom {
