@@ -12,6 +12,7 @@ import {
     OnChanges,
     OnDestroy,
     Output,
+    SimpleChanges,
     TemplateRef,
     ViewChild,
     ViewContainerRef
@@ -23,6 +24,7 @@ import {
     AXIS_BAND_PX,
     flattenLanes,
     formatDuration,
+    revealBy,
     TimelineActivation,
     TimelineData,
     TimelineDetail,
@@ -152,9 +154,10 @@ const CARD_DELAY = 450;
 const CAP_MARGIN_PX = 46;
 /**
  * How far apart two markers have to be to be drawn separately. Closer than this they overlap, so they are
- * drawn as one carrying a count — see `cluster()`.
+ * drawn as one carrying a count — see `cluster()`. A mark is `--timeline-mark-size` wide, and this is that
+ * plus enough for the two to be seen as two.
  */
-const MARKER_GAP_PX = 17;
+const MARKER_GAP_PX = 25;
 /** How many of them a card lists before it stops and says how many are left. */
 const CLUSTER_LISTED = 8;
 
@@ -269,6 +272,9 @@ export class TimelineComponent implements OnChanges, OnDestroy {
     private pointerInside: boolean = false;
     /** One scroll to the foot of the lanes pending, so a burst of updates does not queue a dozen. */
     private followQueued: boolean = false;
+    /** The lane to bring into view once the render lands, and whether one scroll is already pending. */
+    private revealID: string = null;
+    private revealQueued: boolean = false;
     /** Where the pointer is, in client coordinates: what the guide and the card are placed against. */
     private pointer = { x: 0, y: 0 };
     private unwatchPointer: () => void;
@@ -279,8 +285,13 @@ export class TimelineComponent implements OnChanges, OnDestroy {
     private _viewContainer = inject(ViewContainerRef);
     private _injector = inject(Injector);
 
-    ngOnChanges(): void {
+    ngOnChanges(changes: SimpleChanges): void {
         this.layout();
+        // Which lane the two views agree is being looked at outranks which one is merely being pointed at.
+        const asked = changes['selectedLaneID']?.currentValue ?? changes['hoveredLaneID']?.currentValue;
+        if (asked) {
+            this.revealLane(asked);
+        }
     }
 
     ngOnDestroy(): void {
@@ -1035,6 +1046,48 @@ export class TimelineComponent implements OnChanges, OnDestroy {
             if (view && !this.pointerInside) {
                 view.scrollTop = view.scrollHeight;
             }
+        }, { injector: this._injector });
+    }
+
+    /**
+     * Bring a lane into view. Pointing at a job in the graph, or opening one from anywhere, brings out its
+     * lane here — which says nothing at all if that lane is below the fold.
+     *
+     * Vertically only, and by the least that does it: the axis is where someone put it and moving it
+     * sideways would be answering a question nobody asked, and a lane already in view is not a reason to
+     * move anything. A lane that has gone with the data it stood for is simply not found, and nothing moves.
+     *
+     * This never fights the lanes being followed down (§8.1), and does not have to be made to: following
+     * only happens while the view is sitting at the foot of the list, which a view that has just been
+     * scrolled up to a lane is not.
+     */
+    private revealLane(id: string): void {
+        this.revealID = id;
+        if (this.revealQueued) {
+            return;
+        }
+        this.revealQueued = true;
+        // After the render, because the lane asked for may be one that is only arriving with this change.
+        afterNextRender(() => {
+            this.revealQueued = false;
+            const wanted = this.revealID;
+            this.revealID = null;
+            const view = this.viewport?.nativeElement;
+            if (!view?.offsetParent || !wanted) {
+                return;
+            }
+            const lane = Array.from(view.querySelectorAll<HTMLElement>('.lane'))
+                .find(element => element.dataset.laneId === wanted);
+            if (!lane) {
+                return;
+            }
+            const by = revealBy(view.getBoundingClientRect(), lane.getBoundingClientRect());
+            if (by === 0) {
+                return;
+            }
+            // Somebody who has asked for less motion is not asking for the view to slide there.
+            const still = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+            view.scrollBy({ top: by, behavior: still ? 'auto' : 'smooth' });
         }, { injector: this._injector });
     }
 

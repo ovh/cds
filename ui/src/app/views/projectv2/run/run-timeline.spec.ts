@@ -1,4 +1,4 @@
-import { axisEnds, AXIS_BAND_PX, formatDuration, MARKER_ROOM_PX, shouldFollow, timelineIcon, TimelineLane, TimelineScale, TimelineSection } from "../../../../../libs/timeline/src/public-api";
+import { axisEnds, AXIS_BAND_PX, formatDuration, MARKER_ROOM_PX, revealBy, shouldFollow, timelineIcon, TimelineLane, TimelineScale, TimelineSection } from "../../../../../libs/timeline/src/public-api";
 import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatus, WorkflowRunInfo, WorkflowRunResult } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { buildRunTimeline, computeCriticalPath } from "./run-timeline.builder";
 
@@ -679,5 +679,31 @@ describe('shouldFollow', () => {
     it('picks it up again on the way back down, having remembered nothing', () => {
         expect(shouldFollow(true, false, false, 300)).toBeFalse();
         expect(shouldFollow(true, false, false, 4)).toBeTrue();
+    });
+});
+
+describe('revealBy', () => {
+    const view = { top: 100, bottom: 400 };
+
+    it('leaves a lane already in view where it is', () => {
+        expect(revealBy(view, { top: 200, bottom: 220 }, 10)).toBe(0);
+        // Right up against either edge, margin included.
+        expect(revealBy(view, { top: 110, bottom: 390 }, 10)).toBe(0);
+    });
+
+    it('scrolls up by the least that shows a lane above the view', () => {
+        expect(revealBy(view, { top: 60, bottom: 80 }, 10)).toBe(-50);
+        // In view but for its top edge: only the missing part, and the margin, is scrolled.
+        expect(revealBy(view, { top: 95, bottom: 200 }, 10)).toBe(-15);
+    });
+
+    it('scrolls down by the least that shows a lane below the view', () => {
+        expect(revealBy(view, { top: 500, bottom: 520 }, 10)).toBe(130);
+        expect(revealBy(view, { top: 300, bottom: 405 }, 10)).toBe(15);
+    });
+
+    it('shows a lane taller than the view from its top rather than its foot', () => {
+        // Scrolling to its foot would have carried its name off the top of the view.
+        expect(revealBy(view, { top: 500, bottom: 900 }, 10)).toBe(390);
     });
 });

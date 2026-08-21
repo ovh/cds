@@ -106,7 +106,8 @@
               @for (lane of section.lanes; track lane.id) {
                 <li class="lane" [class.highlighted]="lane.highlighted" [class.child]="lane.depth > 0"
                   [class.hovered]="lane.id === hoveredLaneID" [class.selected]="lane.id === selectedLaneID"
-                  [class.marked]="lane.hasMarkers" [attr.data-status]="lane.status">
+                  [class.marked]="lane.hasMarkers" [attr.data-status]="lane.status"
+                  [attr.data-lane-id]="lane.id">
                   <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
                   <div class="lane-gutter" [class.expandable]="lane.expandable"
                     [style.padding-left.px]="6 + lane.depth * 16" (click)="clickRow(lane, $event)">

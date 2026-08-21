@@ -21,6 +21,21 @@
   --timeline-marked-row-height: var(--timeline-row-height);
   --timeline-marked-child-row-height: var(--timeline-child-row-height);
 
+  /**
+   * How big a mark on a lane is drawn. Everything else about one — where it is centred, how far its stem
+   * reaches, how wide a crowd of them may grow — is worked out from these, so a mark is resized in one
+   * place and nowhere else.
+   *
+   * Two sizes, because a mark carrying an icon has to hold it and a bare lozenge has nothing to hold.
+   * Both are read by `MARKER_GAP_PX`, which decides when two of them would touch and have to be drawn as
+   * one, and by `MARKER_ROOM_PX`, which keeps the room a mark sitting on the end of the axis needs: change
+   * these and those two go with them.
+   */
+  --timeline-mark-size: 21px;
+  --timeline-dot-size: 15px;
+  // The gap a mark is held above its bar, which its stem then crosses.
+  --timeline-mark-stem: 3px;
+
   --timeline-text: rgba(0, 0, 0, .85);
   // Kept dark enough for small text to stay readable against the panel.
   --timeline-muted: rgba(0, 0, 0, .55);
@@ -522,12 +537,15 @@
     text-overflow: ellipsis;
   }
 
-  // The duration where the eye already is, instead of only on hover.
+  /**
+   * The duration where the eye already is, instead of only on hover. Set apart from the name by its size
+   * and by sitting at the far end of the bar, and not by being faded: a number small enough to need every
+   * bit of contrast it has is the wrong thing to spend contrast on.
+   */
   .segment-duration {
     font-size: .7em;
     padding-right: 5px;
     margin-left: auto;
-    opacity: .75;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
@@ -541,14 +559,15 @@
   // two is visible, and placed with `bottom` rather than a transform so hovering can scale it without
   // moving it.
   //
-  // Everything here has to fit in the room the row keeps above its bars, because the track clips what
-  // overflows it — and it must, to cut the bars off at its edges. So a mark that has more to say grows
-  // sideways, never upwards.
+  // A mark is taller than the room the row keeps above its bars, so it hangs into the row above — which
+  // is what that room being the same on every row buys, and what growing a mark spends. A mark that has
+  // more to say therefore grows sideways, never upwards: upwards it would reach the bars of a lane it has
+  // nothing to do with, and on the first row it would reach the edge of the view, which does clip.
   position: absolute;
-  bottom: calc(100% + 3px);
-  width: 10px;
-  height: 10px;
-  margin: 0 0 0 -5px;
+  bottom: calc(100% + var(--timeline-mark-stem));
+  width: var(--timeline-dot-size);
+  height: var(--timeline-dot-size);
+  margin: 0 0 0 calc(var(--timeline-dot-size) / -2);
   padding: 0;
   border: 1px solid var(--timeline-marker);
   background-color: var(--timeline-marker);
@@ -560,11 +579,11 @@
   }
 
   &.iconic {
-    width: 14px;
-    height: 14px;
-    margin-left: -7px;
+    width: var(--timeline-mark-size);
+    height: var(--timeline-mark-size);
+    margin-left: calc(var(--timeline-mark-size) / -2);
     box-sizing: border-box;
-    border-radius: 3px;
+    border-radius: 4px;
     transform: none;
     // The icon carries the colour; the box behind it only has to lift it off whatever is underneath.
     background-color: var(--timeline-surface);
@@ -573,8 +592,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    font-size: 9px;
+    gap: 3px;
+    font-size: 13px;
     line-height: 1;
 
     &:hover {
@@ -589,9 +608,9 @@
       position: absolute;
       top: 100%;
       left: 50%;
-      width: 2px;
-      height: 3px;
-      margin-left: -1px;
+      width: 3px;
+      height: var(--timeline-mark-stem);
+      margin-left: -1.5px;
       background-color: var(--timeline-marker);
     }
   }
@@ -602,17 +621,17 @@
   // so it came out clipped.
   &.crowd {
     width: auto;
-    min-width: 14px;
-    height: 14px;
-    padding: 0 3px;
+    min-width: var(--timeline-mark-size);
+    height: var(--timeline-mark-size);
+    padding: 0 5px;
     box-sizing: border-box;
     // Stated here rather than left to `.iconic`, so that a crowd is a legible pill even where the host
     // gave its markers no icon to draw.
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    border-radius: 3px;
+    gap: 3px;
+    border-radius: 4px;
     background-color: var(--timeline-surface);
     border-color: var(--timeline-marker);
     color: var(--timeline-marker);
@@ -626,9 +645,11 @@
       transform: translateX(-50%) scale(1.15);
     }
 
+    // Plain rather than bold: at this size the number is legible on its own, and a mark drawn heavier than
+    // its neighbours would be saying that several results are more worth looking at than one, which is the
+    // opposite of what the crowd means.
     .count {
-      font-size: 9px;
-      font-weight: bold;
+      font-size: 13px;
       line-height: 1;
       font-variant-numeric: tabular-nums;
       color: var(--timeline-marker);
@@ -640,10 +661,10 @@
   &.loose {
     bottom: auto;
     top: 50%;
-    margin-top: -5px;
+    margin-top: calc(var(--timeline-dot-size) / -2);
 
     &.iconic {
-      margin-top: -7px;
+      margin-top: calc(var(--timeline-mark-size) / -2);
     }
 
     &::after {

@@ -61,10 +61,32 @@ app-timeline {
     --timeline-surface: #ffffff;
     --timeline-control-border: #d9d9d9;
     --timeline-now: #{common.$cds_color_teal};
-    --timeline-segment: #{common.$cds_color_light_grey};
     --timeline-marker: #{common.$polar_grey_0};
     --timeline-focus: #{common.$polar_grey_0};
     --timeline-accent: #{common.$cds_color_teal};
+
+    /**
+     * The greys a bar is drawn in at rest. Colour says what a job came to; these say what a bar *is*, and
+     * they have to go on saying it once the colour is gone — a run read in grey is still a run whose queue,
+     * whose worker and whose work can be told apart at a glance.
+     *
+     * So they are a ramp rather than a set: nothing happened, waited, starting up, working. Nothing happened
+     * is nothing at all rather than a grey close enough to the lane to be taken for one, and each step after
+     * it is darker than the last — which puts the most ink on the one phase worth measuring, and leaves an
+     * edge wherever a job goes from one phase to the next.
+     *
+     * Those three steps are off the palette, which offers #EEEEEE and #E1E2E5 — too close to read as two —
+     * and then #B5B7BD, a heavier bar than a row of them can carry. They are spaced evenly instead, and
+     * end well short of that weight.
+     */
+    --bar-inert: transparent;
+    --bar-wait: #F4F4F6;
+    --bar-start: #E7E8EB;
+    --bar-work: #D3D5DA;
+    --bar-edge: #{common.$polar_grey_3};
+    // The one phase that is work gets a darker outline with it, so the bar is read as solid.
+    --bar-work-edge: #{common.$polar_grey_2};
+    --bar-text: #{common.$polar_grey_0};
   }
 
   :host-context(.night) & ::ng-deep .timeline {
@@ -79,31 +101,61 @@ app-timeline {
     --timeline-surface: #{common.$darkTheme_grey_1};
     --timeline-control-border: #434343;
     --timeline-now: #{common.$darkTheme_light_blue};
-    --timeline-segment: #{common.$darkTheme_night_grey};
     --timeline-marker: #{common.$darkTheme_grey_5};
     --timeline-focus: white;
     --timeline-accent: #{common.$darkTheme_light_blue};
+
+    // The same ramp read the other way up: here a bar is lighter than the surface, so working is the
+    // lightest step rather than the darkest.
+    --bar-inert: transparent;
+    --bar-wait: #{common.$darkTheme_grey_0};
+    --bar-start: #{common.$darkTheme_grey_3};
+    --bar-work: #{common.$darkTheme_grey_inactive};
+    --bar-edge: #{common.$darkTheme_grey_4};
+    --bar-work-edge: #{common.$darkTheme_grey_5};
+    // Light enough to stay legible on the lightest step of the ramp, which `--timeline-text` is not.
+    --bar-text: white;
   }
 
+  /**
+   * A kind says which colour a bar *has*; whether that colour is painted is a second question, answered
+   * below. The timeline shares the run page with the graph, and the graph is what the eye should land on
+   * first — so a bar that has nothing left to say is grey, and colour is kept for the four cases that do:
+   * what is still running, what failed, the lane being pointed at or opened, and the critical path.
+   *
+   * Grey rather than faded: the name and the duration written on a bar keep their contrast, which an
+   * opacity over the whole thing would have taken with them. What tells a wait from work at rest is the
+   * hatching, which every kind keeps whatever colour it is drawn in.
+   */
   ::ng-deep .segment {
-    border: 1px solid transparent;
-    color: common.$polar_grey_1;
+    // What a kind is worth in colour, and what it is worth in grey. Both are stated for every kind: which
+    // of the two is painted is not the kind's business.
+    --segment-fill: var(--bar-work);
+    --segment-edge: var(--bar-work-edge);
+    --segment-rest-fill: var(--bar-work);
+    --segment-rest-edge: var(--bar-work-edge);
 
-    :host-context(.night) & {
-      color: common.$darkTheme_grey_6;
-    }
+    // What is actually painted. Only these two are ever overridden to say "this one is worth a colour".
+    --segment-paint-fill: var(--segment-rest-fill);
+    --segment-paint-edge: var(--segment-rest-edge);
+
+    background-color: var(--segment-paint-fill);
+    border: 1px solid var(--segment-paint-edge);
+    color: var(--bar-text);
 
     // Waiting in the queue: hatched, because no time is being spent on the job itself.
     &[data-kind='queued'] {
-      background-color: common.$cds_color_light_grey;
-      border-color: common.$polar_grey_3;
+      --segment-fill: #{common.$cds_color_light_grey};
+      --segment-edge: #{common.$polar_grey_3};
+      --segment-rest-fill: var(--bar-wait);
+      --segment-rest-edge: var(--bar-edge);
       background-image: repeating-linear-gradient(-45deg,
           transparent 0 3px,
           rgba(0, 0, 0, .06) 3px 6px);
 
       :host-context(.night) & {
-        background-color: common.$darkTheme_night_grey;
-        border-color: common.$darkTheme_grey_4;
+        --segment-fill: #{common.$darkTheme_night_grey};
+        --segment-edge: #{common.$darkTheme_grey_4};
         background-image: repeating-linear-gradient(-45deg,
             transparent 0 3px,
             rgba(255, 255, 255, .07) 3px 6px);
@@ -112,49 +164,53 @@ app-timeline {
 
     // Held by a gate or a concurrency rule: the wait that can last days.
     &[data-kind='blocked'] {
-      background-color: #ffe0d2;
-      border-color: common.$cds_color_orange;
+      --segment-fill: #ffe0d2;
+      --segment-edge: #{common.$cds_color_orange};
+      --segment-rest-fill: var(--bar-wait);
+      --segment-rest-edge: var(--bar-edge);
       background-image: repeating-linear-gradient(-45deg,
           transparent 0 3px,
           rgba(0, 0, 0, .08) 3px 6px);
 
       :host-context(.night) & {
-        background-color: common.$darkTheme_night_orange;
-        border-color: common.$darkTheme_orange;
+        --segment-fill: #{common.$darkTheme_night_orange};
+        --segment-edge: #{common.$darkTheme_orange};
       }
     }
 
-    // A hatchery starting a worker.
+    // A hatchery starting a worker: a step of the ramp of its own, since it is neither the wait before it
+    // nor the work after it — and the two bars it sits between are what say so once the colour is gone.
     &[data-kind='scheduling'] {
-      background-color: common.$cds_color_light_teal;
-      border-color: common.$cds_color_teal;
-      opacity: .75;
+      --segment-fill: #{common.$cds_color_light_teal};
+      --segment-edge: #{common.$cds_color_teal};
+      --segment-rest-fill: var(--bar-start);
+      --segment-rest-edge: var(--bar-edge);
 
       :host-context(.night) & {
-        background-color: common.$darkTheme_night_blue;
-        border-color: common.$darkTheme_blue;
+        --segment-fill: #{common.$darkTheme_night_blue};
+        --segment-edge: #{common.$darkTheme_blue};
       }
     }
 
     &[data-kind^='running'],
     &[data-kind^='step'] {
-      background-color: common.$cds_color_light_teal;
-      border-color: common.$cds_color_teal;
+      --segment-fill: #{common.$cds_color_light_teal};
+      --segment-edge: #{common.$cds_color_teal};
 
       :host-context(.night) & {
-        background-color: common.$darkTheme_night_blue;
-        border-color: common.$darkTheme_blue;
+        --segment-fill: #{common.$darkTheme_night_blue};
+        --segment-edge: #{common.$darkTheme_blue};
       }
     }
 
     &[data-kind='running-success'],
     &[data-kind='step-success'] {
-      background-color: common.$cds_color_light_green;
-      border-color: common.$cds_color_green;
+      --segment-fill: #{common.$cds_color_light_green};
+      --segment-edge: #{common.$cds_color_green};
 
       :host-context(.night) & {
-        background-color: common.$darkTheme_night_green;
-        border-color: common.$darkTheme_green;
+        --segment-fill: #{common.$darkTheme_night_green};
+        --segment-edge: #{common.$darkTheme_green};
       }
     }
 
@@ -162,26 +218,56 @@ app-timeline {
     &[data-kind='running-stopped'],
     &[data-kind='step-fail'],
     &[data-kind='step-failure'] {
-      background-color: common.$cds_color_light_red;
-      border-color: common.$cds_color_red;
+      --segment-fill: #{common.$cds_color_light_red};
+      --segment-edge: #{common.$cds_color_red};
 
       :host-context(.night) & {
-        background-color: common.$darkTheme_night_red;
-        border-color: common.$darkTheme_red;
+        --segment-fill: #{common.$darkTheme_night_red};
+        --segment-edge: #{common.$darkTheme_red};
       }
     }
 
+    // Terminated without running: the one bar with no work in it, so at rest it is an outline with
+    // nothing inside, and reads as a place kept on the axis rather than as time spent.
     &[data-kind='running-cancelled'],
     &[data-kind='running-skipped'],
     &[data-kind='step-skipped'] {
-      background-color: common.$cds_color_light_grey;
-      border-color: common.$polar_grey_3;
+      --segment-fill: #{common.$cds_color_light_grey};
+      --segment-edge: #{common.$polar_grey_3};
+      --segment-rest-fill: var(--bar-inert);
+      --segment-rest-edge: var(--bar-edge);
 
       :host-context(.night) & {
-        background-color: common.$darkTheme_night_grey;
-        border-color: common.$darkTheme_grey_4;
+        --segment-fill: #{common.$darkTheme_night_grey};
+        --segment-edge: #{common.$darkTheme_grey_4};
       }
     }
+  }
+
+  /**
+   * The four cases worth a colour. Every one of them is the same two declarations, so they are stated
+   * once: what changes between them is only which bars are being spoken about.
+   *
+   * - **Still going.** A segment with no end is what is happening now, and that is worth seeing without
+   *   being asked for. It greys out on its own the moment the job ends, since the segment closes.
+   * - **Failed.** Red stays whatever else is grey, so where a run went wrong is answered from across the
+   *   room rather than by reading. Stopped counts: it is how a run ends badly, not how it ends.
+   * - **Pointed at or opened.** The lane under the pointer — from the graph as well as from here — and
+   *   the lane whose panel is open. Colour follows what is being looked at.
+   * - **On the critical path**, once the highlight is on. A lane carries `highlighted` whether or not it
+   *   is: it is which lanes the chain holds, not the answer to a question nobody asked.
+   */
+  ::ng-deep .segment.open,
+  ::ng-deep .segment[data-kind='running-fail'],
+  ::ng-deep .segment[data-kind='running-stopped'],
+  ::ng-deep .segment[data-kind='step-fail'],
+  ::ng-deep .segment[data-kind='step-failure'],
+  ::ng-deep .lane:hover > .lane-track .segment,
+  ::ng-deep .lane.hovered > .lane-track .segment,
+  ::ng-deep .lane.selected > .lane-track .segment,
+  ::ng-deep .timeline.highlighting .lane.highlighted > .lane-track .segment {
+    --segment-paint-fill: var(--segment-fill);
+    --segment-paint-edge: var(--segment-edge);
   }
 
   // What the run logged as an error. The one mark on the timeline worth stopping at, so it is the one

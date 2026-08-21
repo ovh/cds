@@ -98,12 +98,48 @@ doing any work.
 A job that never reached the queue has no place on a time axis and is left out.
 
 The lane label carries nothing but the job name and its matrix variant when it has one. There is no
-second line: the status is already in the colour of the bars, and a bare duration under a name says
-neither what it measured nor between which two points. Both are in the hover card, where there is room
-to name them.
+second line: what a job came to is the graph's answer to give and a bar says it again as soon as the lane
+is asked about, and a bare duration under a name says neither what it measured nor between which two
+points. What it measured, and between which points, are in the hover card, where there is room to name
+them.
 
 Durations are read off the bars themselves — a segment wide enough shows its own duration next to its
 name — so the common question is answered without hovering anything.
+
+**Which bars are painted.** The timeline shares the run page with the graph, and the graph is what the eye
+should land on first: a wall of status colour under it would take that, and it would be saying a second
+time what the graph is already there to say. So a bar that has nothing left to say is **grey**, and colour
+is kept for the four cases that do:
+
+| Coloured | Because |
+|---|---|
+| What is **still running** | It is what is happening now, and worth seeing without being asked for |
+| What **failed** — stopped with it | Where a run went wrong should be answerable from across the room |
+| The lane **pointed at or opened** — from the graph as well as from here | Colour follows what is being looked at |
+| The lanes on the **critical path**, once the highlight is on | See §4 |
+
+A live job is therefore coloured while it runs and greys out as it ends, which is the state changing rather
+than a rule about it: a bar is coloured for still going by having no end, and ending is what gives it one.
+
+Grey, not faded: the name and the duration written on a bar keep their contrast, which an opacity over the
+whole thing would have taken with them.
+
+**The greys are a ramp, not a wash.** Colour says what a job came to; the greys have to go on saying what a
+bar *is* once it is gone, or the view at rest is a row of identical blocks. So they run from nothing
+happened to working, each step darker than the last in the light theme and lighter in the dark one — which
+puts the most ink on the one phase worth measuring, and leaves a visible edge wherever a job passes from
+one phase to the next:
+
+| At rest | Reads as |
+|---|---|
+| An outline with nothing in it | Terminated without running — a place kept on the axis, not time spent |
+| The palest fill, hatched | Waiting: in the queue, or held by a gate |
+| A step darker | A hatchery starting a worker |
+| The darkest fill, and a darker outline with it | The job running — the one bar that is work |
+
+So a job read in grey still says where its time went, and two of the three things a colour was carrying —
+the wait, and whether it ran at all — survive without it. The third, what the job came to, is the graph's
+answer to give, and comes back here on hover.
 
 ### 2.1 The Row Asks, The Bars Answer
 
@@ -149,9 +185,11 @@ of the very thing it belonged to. A short stem crosses the gap and meets the top
 so the mark reads as belonging to that bar rather than floating above the row. The gap is what makes the
 stem worth having — run down inside the bar it was hidden by it.
 
-A lane carrying markers is taller than one that does not, by the room they take. It is grown **at both
-ends**, so its bars stay centred on the line and keep exactly the height they have on a lane carrying
-none — a lane with artifacts is a taller lane, not a lane whose bars have moved.
+A lane carrying markers is **no taller** than one that does not: a mark is taller than the room a row keeps
+above its bars, and hangs into the row above rather than every such row growing to hold it. A timeline is
+read by comparing rows, and rows of two heights are harder to compare than marks are to look past. The room
+can be given back — `--timeline-marked-row-height` and the insets under it are there for exactly that —
+and the price is that comparison.
 
 A marker with no bar under it — a lane that is only a point in time, which is what an unaccounted-for
 result falls back to — sits in the middle of its row instead, with nothing to be welded to.
@@ -226,17 +264,23 @@ for is the host's to name — and a kind of marker may name its own plural, so a
 
 - A cluster of one kind keeps that kind's icon; a mixed one gets a neutral mark, since the icon would
   otherwise claim they were all the same thing.
-- It carries the count **beside** the icon, growing sideways into a pill. Everything a marker draws has
-  to fit in the room the row keeps above its bars, because the track clips what overflows it — and it
-  must, to cut the bars off at its edges. A badge hung off the corner was the obvious thing to reach for
-  and the wrong one: it needed height the row does not have, so it came out clipped. Sideways is the one
-  direction a marker has room to grow in.
+- It carries the count **beside** the icon, growing sideways into a pill. A mark is taller than the room
+  the row keeps above its bars and hangs into the row above, which is what every row being the same height
+  buys; growing one upwards would spend that on reaching the bars of a lane it has nothing to do with, and
+  on the first row would reach the edge of the view, which does clip. A badge hung off the corner was the
+  obvious thing to reach for and the wrong one, for the same reason. Sideways is the one direction a marker
+  has room to grow in.
 - Hovering it lists the first few by name and time, then says how many are left.
 - **Clicking it zooms into what it covers**, which pulls it apart into the individual marks — the natural
   way out, given that the crowding was a matter of scale to begin with. It stands for no single thing, so
   there is nothing else for a click to open.
 - Results created at the very same instant cannot be pulled apart by any zoom. Those stay one mark, and
   the card is what tells them apart.
+
+**How big a mark is drawn** is one number, `--timeline-mark-size`, and two things follow from it rather
+than being decided beside it: how close two marks may come before they are drawn as one, and how much room
+the axis keeps at an end a mark sits on. Both are pixel counts in the view, and both are wrong the moment a
+mark is resized without them.
 
 A result is called by its **key** — `generic:binary.tar.gz`, `tests:unit.xml` — which is what the Results
 tab lists it under and what someone would search a log for. The sentence the API also offers, filename and
@@ -377,7 +421,8 @@ stage needs. For a matrixed job, the variant that ended last is the one on the c
 
 Highlighting it brings those lanes out by holding the others back: everything off the chain is dimmed —
 its bars, its markers, its name, and the dotted rule behind them, which left alone showed straight through
-the faded bars and drew more attention than they did.
+the faded bars and drew more attention than they did. The lanes on the chain are given their colour back
+while it is on, so the gap between kept and left out is opened from both ends.
 
 The control is a toggle that reads on or off the way the filters of the Results tab do.
 
@@ -511,6 +556,12 @@ The graph and the timeline show one run, and must never disagree about what is b
   what is being looked at rather than only what was last hovered.
 - Hovering a job in the graph **brings out its lane** in the timeline, marked more strongly than a plain
   hover since the pointer is elsewhere and cannot say where it is.
+- A lane brought out from the graph, or opened from anywhere, is **scrolled into view if it is not in
+  it** — the timeline holds one row per job and a run has more of them than fit. Vertically only, by the
+  least that shows it, and not at all when it is already there: the axis is where somebody put it, and a
+  view that has nothing to answer is a view that should not move. A lane taller than the view is shown
+  from its top. This never fights the lanes being followed down (§8.1), which only happens while the view
+  is sitting at the foot of the list — which a view just scrolled up to a lane is not.
 
 ---
 
@@ -586,7 +637,7 @@ and there is no longer any way to tell whether it was being watched.
 |---|---|
 | Generic timeline view (axis, folding, zoom, lanes, keyboard) | `libs/timeline/src/lib/timeline.component.ts`, `timeline.html`, `timeline.scss` |
 | Time axis and gap folding | `libs/timeline/src/lib/timeline.scale.ts` |
-| View model, and the rules pulled out of the view to be testable (`axisEnds`, `shouldFollow`) | `libs/timeline/src/lib/timeline.model.ts` |
+| View model, and the rules pulled out of the view to be testable (`axisEnds`, `shouldFollow`, `revealBy`) | `libs/timeline/src/lib/timeline.model.ts` |
 | The icons a marker may be drawn with, and why nothing else is | `libs/timeline/src/lib/timeline.icons.ts` |
 | CDS adapter (trigger, phases, stages, results, critical path) | `run-timeline.builder.ts` |
 | Host component (panels, critical path toggle, graph hover) | `run-timeline.component.ts`, `run-timeline.html` |
