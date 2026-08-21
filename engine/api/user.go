@@ -517,6 +517,12 @@ func (api *API) deleteUserHandler() service.Handler {
 			}
 		}
 
+		// Consumers are not removed by cascade when deleting a user, only their user data are.
+		// Delete them explicitly so the user's tokens and sessions can't be used anymore.
+		if err := authentication.DeleteConsumersByUserID(tx, u.ID); err != nil {
+			return err
+		}
+
 		if err := user.DeleteByID(tx, u.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete user")
 		}

@@ -19,7 +19,8 @@ func loadConsumerUserDataByConsumerID(ctx context.Context, db gorp.SqlExecutor, 
 		return sdk.WrapError(err, "cannot get auth consumer user")
 	}
 	if !found {
-		return nil
+		// The consumer's user data are removed by cascade when the user is deleted, the consumer is then orphan and can't be used anymore
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "no user data found for auth consumer %s", ac.ID)
 	}
 
 	isValid, err := gorpmapping.CheckSignature(dbAuthConsumerUserData, dbAuthConsumerUserData.Signature)
