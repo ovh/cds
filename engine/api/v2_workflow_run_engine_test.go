@@ -2069,6 +2069,11 @@ spec:
 	require.True(t, sm2)
 	require.Len(t, wrDB.WorkflowData.Workflow.Concurrencies, 1)
 	require.Equal(t, "mymatrixconcu", wrDB.WorkflowData.Workflow.Concurrencies[0].Name)
+
+	// All jobs injected from the matrix permutations share the template's complete name as provenance
+	for _, j := range []sdk.V2Job{deploy1, smoke1, deploy2, smoke2} {
+		require.Equal(t, fmt.Sprintf("%s/%s/%s/jobtmpl@refs/heads/master", proj.Key, vcsServer.Name, repo.Name), j.From)
+	}
 }
 
 func TestCreateJobsFromTemplatedMatrix_WithStage(t *testing.T) {

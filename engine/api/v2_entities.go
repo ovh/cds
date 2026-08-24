@@ -70,7 +70,7 @@ func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler
 				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
 			}
 			if err == nil {
-				errs := wm.Lint()
+				errs := wm.LintYamlDefinition()
 				for _, err := range errs {
 					response.Messages = append(response.Messages, err.Error())
 				}
@@ -82,7 +82,7 @@ func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler
 				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
 			}
 			if err == nil {
-				errs := a.Lint()
+				errs := a.LintYamlDefinition()
 				for _, err := range errs {
 					response.Messages = append(response.Messages, err.Error())
 				}
@@ -94,7 +94,7 @@ func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler
 				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
 			}
 			if err == nil {
-				errs := w.Lint()
+				errs := w.LintYamlDefinition()
 				for _, err := range errs {
 					response.Messages = append(response.Messages, err.Error())
 				}
@@ -106,7 +106,7 @@ func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler
 				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
 			}
 			if err == nil {
-				errs := wt.Lint()
+				errs := wt.LintYamlDefinition()
 				for _, err := range errs {
 					response.Messages = append(response.Messages, err.Error())
 				}

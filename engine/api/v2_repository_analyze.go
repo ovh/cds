@@ -1660,7 +1660,7 @@ func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, files
 // and concurrencies belong to the run's project.
 func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store, o T, ef *EntityFinder, ownerProjectKey string, wmDockerImageWhiteList []regexp.Regexp) []error {
 	// 1. Static lint
-	if err := o.Lint(); err != nil {
+	if err := o.LintYamlDefinition(); err != nil {
 		return err
 	}
 

@@ -66,7 +66,7 @@ type V2WorkflowTemplateGenerateResponse struct {
 	Workflow string `json:"workflow" cli:"workflow"`
 }
 
-func (wt V2WorkflowTemplate) Lint() (errs []error) {
+func (wt V2WorkflowTemplate) LintYamlDefinition() (errs []error) {
 	schema := GetWorkflowTemplateJsonSchema()
 	rawSchema, err := schema.MarshalJSON()
 	if err != nil {
