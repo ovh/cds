@@ -49,8 +49,8 @@
       </tbody>
     </nz-table>
     <div class="footer">
-      <button nz-button nzType="primary" (click)="loadJobsV1()" title="Refresh jobs"><span nz-icon
-      [nzType]="'reload'"></span></button>
+      <button nz-button nzType="primary" (click)="loadJobsV1()" title="Refresh jobs" aria-label="Refresh jobs"><span nz-icon
+      [nzType]="'reload'" aria-hidden="true"></span></button>
       {{jobsV1Table.data.length}} results
       <nz-pagination [nzPageIndex]="pageIndexV1" [nzPageSize]="100" [nzTotal]="jobsV1Table.data.length"
       (nzPageIndexChange)="pageIndexV1Change($event)"></nz-pagination>
@@ -99,8 +99,8 @@
       </tbody>
     </nz-table>
     <div class="footer">
-      <button nz-button nzType="primary" (click)="loadJobsV2()" title="Refresh jobs"><span nz-icon
-      [nzType]="'reload'"></span></button>
+      <button nz-button nzType="primary" (click)="loadJobsV2()" title="Refresh jobs" aria-label="Refresh jobs"><span nz-icon
+      [nzType]="'reload'" aria-hidden="true"></span></button>
       {{jobsV2totalCount}} results
       <nz-pagination [nzPageIndex]="pageIndexV2" [nzPageSize]="100" [nzTotal]="jobsV2totalCount"
       (nzPageIndexChange)="pageIndexV2Change($event)"></nz-pagination>

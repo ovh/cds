@@ -92,6 +92,37 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
         return this.tabs[0];
     }
 
+    keyActivate(event: Event, tab: Tab) {
+        if (event.target !== event.currentTarget) {
+            return;
+        }
+        event.preventDefault();
+        this.clickSelect(tab);
+    }
+
+    keyNavigate(event: Event, direction: number) {
+        if (event.target !== event.currentTarget) {
+            return;
+        }
+        event.preventDefault();
+        const enabledTabs = this.tabs.filter(t => !t.disabled);
+        if (enabledTabs.length === 0) {
+            return;
+        }
+        const current = this.selected ?? this.getDefaultTab();
+        let idx = enabledTabs.findIndex(t => current && t.key === current.key);
+        if (idx === -1) {
+            idx = 0;
+        }
+        const next = enabledTabs[(idx + direction + enabledTabs.length) % enabledTabs.length];
+        this.clickSelect(next);
+        const items = (event.currentTarget as HTMLElement).parentElement?.querySelectorAll('li[role="tab"]');
+        const nextIndex = this.tabs.indexOf(next);
+        if (items && items[nextIndex]) {
+            (items[nextIndex] as HTMLElement).focus();
+        }
+    }
+
     clickSelect(tab: Tab) {
         if (this.selected && this.selected.key === tab.key) {
             return;

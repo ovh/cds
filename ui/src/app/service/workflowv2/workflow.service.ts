@@ -1,8 +1,15 @@
 import { inject, Injectable } from "@angular/core";
-import { HttpClient, HttpParams } from "@angular/common/http";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunTriggerJobsRequest, V2WorkflowRunManualRequest, V2WorkflowRunManualResponse, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { CDNLogLink, CDNLogLinks } from "app/model/cdn.model";
+
+/**
+ * Asks a run search for runs without the definition they ran. A list shows numbers, statuses and git
+ * information; the definition of the workflow each run ran weighs more than all the rest put together
+ * and none of it is displayed there.
+ */
+export const RUN_SUMMARY_HEADERS = new HttpHeaders({ Accept: 'application/vnd.cds.workflow-run-summary+json' });
 
 @Injectable()
 export class V2WorkflowRunService {
@@ -29,24 +36,26 @@ export class V2WorkflowRunService {
         return this._http.post(`/v2/project/${projKey}/run/${workflowRunID}/job/${jobRunID}/stop`, null);
     }
 
-    getJobs(r: V2WorkflowRun, attempt: number = null): Observable<Array<V2WorkflowRunJob>> {
+    // Keyed by ids rather than by the run itself: the jobs, the results and the infos of a run can
+    // then be read at the same time as the run, instead of waiting for it.
+    getJobs(projKey: string, workflowRunID: string, attempt: number = null): Observable<Array<V2WorkflowRunJob>> {
         let params = new HttpParams();
         if (attempt) {
             params = params.append('attempt', attempt);
         }
-        return this._http.get<Array<V2WorkflowRunJob>>(`/v2/project/${r.project_key}/run/${r.id}/job`, { params });
+        return this._http.get<Array<V2WorkflowRunJob>>(`/v2/project/${projKey}/run/${workflowRunID}/job`, { params });
     }
 
-    getResults(r: V2WorkflowRun, attempt: number = null): Observable<Array<WorkflowRunResult>> {
+    getResults(projKey: string, workflowRunID: string, attempt: number = null): Observable<Array<WorkflowRunResult>> {
         let params = new HttpParams();
         if (attempt) {
             params = params.append('attempt', attempt);
         }
-        return this._http.get<Array<WorkflowRunResult>>(`/v2/project/${r.project_key}/run/${r.id}/result`, { params });
+        return this._http.get<Array<WorkflowRunResult>>(`/v2/project/${projKey}/run/${workflowRunID}/result`, { params });
     }
 
-    getRunInfos(r: V2WorkflowRun): Observable<Array<WorkflowRunInfo>> {
-        return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/run/${r.id}/infos`);
+    getRunInfos(projKey: string, workflowRunID: string): Observable<Array<WorkflowRunInfo>> {
+        return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${projKey}/run/${workflowRunID}/infos`);
     }
 
     getRunJobInfos(r: V2WorkflowRun, jobRunID: string): Observable<Array<WorkflowRunInfo>> {

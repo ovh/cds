@@ -21,22 +21,22 @@
     @if (outgoingHook.outgoing_hook.config && selectedOutgoingHookModel.name !== 'Workflow') {
       @for (k of outgoingHook.outgoing_hook.config | keys; track k) {
         <nz-form-item>
-          <nz-form-label [nzSm]="6" [nzXs]="24">{{k}}</nz-form-label>
+          <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="cds-field-outgoinghook-{{k}}">{{k}}</nz-form-label>
           <nz-form-control [nzSm]="14" [nzXs]="24">
             @if (k !== 'payload' && (outgoingHook.outgoing_hook.config[k].type === 'string' || !outgoingHook.outgoing_hook.config[k].type)) {
-              <input nz-input name="{{k}}" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
+              <input nz-input id="cds-field-outgoinghook-{{k}}" name="{{k}}" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
                 (ngModelChange)="pushChange()"
                 [readonly]="!outgoingHook.outgoing_hook.config[k].configurable || mode === 'ro'"
                 />
             }
             @if (k !== 'payload' && outgoingHook.outgoing_hook.config[k].type === 'password') {
-              <input nz-input name="{{k}}" type="password" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
+              <input nz-input id="cds-field-outgoinghook-{{k}}" name="{{k}}" type="password" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
                 (ngModelChange)="pushChange()"
                 [readonly]="!outgoingHook.outgoing_hook.config[k].configurable || mode === 'ro'"
                 />
             }
             @if (k === 'payload' && outgoingHook.outgoing_hook.config[k].type === 'string') {
-              <codemirror name="{{k}}" [class.invalid]="invalidJSON"
+              <codemirror name="{{k}}" aria-label="Payload editor" [class.invalid]="invalidJSON"
                 [(ngModel)]="outgoingHook.outgoing_hook.config[k].value" [config]="codeMirrorConfig"
                 (change)="changeCodeMirror($event)" #textareaCodeMirror>
               </codemirror>
@@ -47,9 +47,9 @@
     }
     @if (selectedOutgoingHookModel.name === 'Workflow') {
       <nz-form-item>
-        <nz-form-label [nzSm]="6" [nzXs]="24">project</nz-form-label>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="cds-field-outgoinghook-project">project</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24">
-          <input nz-input name="project" [(ngModel)]="outgoingHook.outgoing_hook.config['target_project'].value" [disabled]="true"/>
+          <input nz-input id="cds-field-outgoinghook-project" name="project" [(ngModel)]="outgoingHook.outgoing_hook.config['target_project'].value" [disabled]="true"/>
         </nz-form-control>
       </nz-form-item>
       @if (availableWorkflows) {
@@ -82,7 +82,7 @@
         <nz-form-item>
           <nz-form-label [nzSm]="6" [nzXs]="24">payload</nz-form-label>
           <nz-form-control [nzSm]="14" [nzXs]="24">
-            <codemirror [class.invalid]="invalidJSON" name="payload"
+            <codemirror [class.invalid]="invalidJSON" name="payload" aria-label="Payload editor"
               [(ngModel)]="outgoingHook.outgoing_hook.config['payload'].value" [config]="codeMirrorConfig"
               (change)="changeCodeMirror($event)" #textareaCodeMirror>
             </codemirror>

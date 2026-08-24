@@ -19,8 +19,13 @@ import { EventV2Type } from "app/model/event-v2.model";
 import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 import { ErrorUtils } from "app/shared/error.utils";
 import { ProjectV2State } from "app/store/project-v2.state";
-import { Filter, InputFilterComponent } from "../../../shared/input/input-filter.component";
+import { Filter, FilterText } from "../../../shared/input/input-filter.component";
 import { Clipboard } from '@angular/cdk/clipboard';
+import { SearchService } from "app/service/search.service";
+import { RUN_SUMMARY_HEADERS } from "app/service/workflowv2/workflow.service";
+import { SearchResultType } from "app/model/search.model";
+import { DisplaySearchResult } from "app/views/search/search.component";
+import { WorkflowNameComponent } from "app/shared/workflow-name/workflow-name.component";
 
 @Component({
 	standalone: false,
@@ -50,6 +55,7 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 	static PANEL_KEY = 'project-v2-run-list-sidebar';
 	static DEFAULT_SORT = 'started:desc';
 	static DEFAULT_PAGESIZE = 20;
+	static MAX_MATCHING_WORKFLOWS = 5;
 
 	@ViewChild('saveSearchButton') saveSearchButton: NzPopconfirmDirective;
 
@@ -66,8 +72,10 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 	sort: string = ProjectV2RunListComponent.DEFAULT_SORT;
 	eventV2Subscription: Subscription;
 	animatedRuns: { [key: string]: boolean } = {};
+	matchingWorkflows: Array<DisplaySearchResult> = [];
 
 	private _http = inject(HttpClient);
+	private _searchService = inject(SearchService);
 	private _messageService = inject(NzMessageService);
 	private _cd = inject(ChangeDetectorRef);
 	private _store = inject(Store);
@@ -87,11 +95,7 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunListComponent.PANEL_KEY));
 		this.loadFilters();
 		this._activatedRoute.queryParams.subscribe(values => {
-			this.filterText = Object.keys(values).filter(key => key !== 'page' && key !== 'sort').map(key => {
-				return (!Array.isArray(values[key]) ? [values[key]] : values[key]).map(f => {
-					return `${key.replace(' ', InputFilterComponent.spaceAlternative)}:${f.replace(' ', InputFilterComponent.spaceAlternative)}`;
-				}).join(' ');
-			}).join(' ');
+			this.filterText = FilterText.fromQueryParams(values, ['page', 'sort']);
 			this.pageIndex = values['page'] ?? 1;
 			this.sort = values['sort'] ?? ProjectV2RunListComponent.DEFAULT_SORT;
 			this.search();
@@ -108,6 +112,10 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 				if (this.runs.length > ProjectV2RunListComponent.DEFAULT_PAGESIZE) {
 					this.runs.pop();
 				}
+				// The run pushed by the websocket matches the current search, so the empty result
+				// state and the workflows it was suggesting do not stand anymore.
+				this.totalCount++;
+				this.matchingWorkflows = [];
 			}
 			this.animatedRuns[event.payload.id] = true;
 			this._cd.markForCheck();
@@ -142,21 +150,9 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 
 		this.previousFilterText = this.filterText;
 
-		let mFilters = {};
-		this.filterText.split(' ').forEach(f => {
-			const s = f.split(':');
-			const key = s[0].replace(InputFilterComponent.spaceAlternative, ' ');
-			if (s.length === 2) {
-				if (!mFilters[key]) {
-					mFilters[key] = [];
-				}
-				mFilters[key].push(s[1].replace(InputFilterComponent.spaceAlternative, ' '));
-			}
-		});
-
 		let params = new HttpParams();
 		params = params.appendAll({
-			...mFilters,
+			...FilterText.toSearchParams(this.filterText),
 			offset: this.pageIndex ? (this.pageIndex - 1) * ProjectV2RunListComponent.DEFAULT_PAGESIZE : 0,
 			limit: ProjectV2RunListComponent.DEFAULT_PAGESIZE
 		});
@@ -171,7 +167,11 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		});
 
 		try {
-			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run`, { params, observe: 'response' })
+			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run`, {
+				params,
+				headers: RUN_SUMMARY_HEADERS,
+				observe: 'response'
+			})
 				.pipe(map(res => {
 					let headers: HttpHeaders = res.headers;
 					return {
@@ -181,6 +181,7 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 				})));
 			this.totalCount = res.totalCount;
 			this.runs = res.runs;
+			await this.loadMatchingWorkflows();
 		} catch (e) {
 			this._messageService.error(`Unable to list workflow runs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 		}
@@ -189,20 +190,68 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		this._cd.markForCheck();
 	}
 
-	saveSearchInQueryParams() {
-		let mFilters = {};
-		this.filterText.split(' ').forEach(f => {
-			const s = f.split(':');
-			const key = s[0].replace(InputFilterComponent.spaceAlternative, ' ');
-			if (s.length === 2 && s[1] !== '') {
-				if (!mFilters[key]) {
-					mFilters[key] = [];
-				}
-				mFilters[key].push(s[1].replace(InputFilterComponent.spaceAlternative, ' '));
-			}
-		});
+	// Without any run to show, look for the workflows the search was aiming at, so that a workflow
+	// that exists but never ran can still be reached instead of ending on an empty list.
+	async loadMatchingWorkflows(): Promise<void> {
+		this.matchingWorkflows = [];
+		if (this.totalCount > 0) {
+			return;
+		}
 
-		let queryParams = { ...mFilters };
+		const { filters, query } = FilterText.parse(this.filterText);
+		const workflows = filters['workflow'] ?? [];
+		const terms = workflows.length === 1 ? workflows : (workflows.length === 0 ? query : []);
+		if (terms.length === 0) {
+			return;
+		}
+
+		try {
+			const res = await lastValueFrom(this._searchService.search({
+				project: this.project.key,
+				type: SearchResultType.Workflow,
+				query: terms.join(' ')
+			}, 0, ProjectV2RunListComponent.MAX_MATCHING_WORKFLOWS));
+			this.matchingWorkflows = res.results
+				.filter(r => r.type === SearchResultType.Workflow)
+				.map(r => new DisplaySearchResult(r));
+		} catch (e) {
+			// Only a hint, a failure here must not hide the empty result state.
+		}
+	}
+
+	workflowPath(result: DisplaySearchResult): string {
+		return result.runLink.params['workflow'];
+	}
+
+	// The workflow name is the last segment, what precedes it is its vcs/repository scope. Same
+	// split and same ref shortening as the source panel of a run, to read them alike.
+	workflowScope(result: DisplaySearchResult): string {
+		const path = this.workflowPath(result);
+		const separator = path.lastIndexOf('/');
+		return separator === -1 ? '' : path.substring(0, separator);
+	}
+
+	// A workflow can be defined on several refs, only the first one is shown inline with a counter
+	// for the others, the tooltip carrying the full list.
+	workflowRef(result: DisplaySearchResult): string {
+		const refs = ProjectV2RunListComponent.shortRefs(result);
+		if (refs.length === 0) {
+			return null;
+		}
+		return refs.length === 1 ? refs[0] : `${refs[0]} +${refs.length - 1}`;
+	}
+
+	workflowTitleTooltip(result: DisplaySearchResult): string {
+		const refs = ProjectV2RunListComponent.shortRefs(result);
+		return this.workflowPath(result) + (refs.length > 0 ? ` @${refs.join(', ')}` : '');
+	}
+
+	private static shortRefs(result: DisplaySearchResult): Array<string> {
+		return (result.result.variants ?? []).map(r => WorkflowNameComponent.shortRef(r));
+	}
+
+	saveSearchInQueryParams() {
+		let queryParams = FilterText.toQueryParams(this.filterText);
 		if (this.pageIndex > 1) {
 			queryParams['page'] = this.pageIndex;
 		}
@@ -271,18 +320,9 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		this.saveSearchInQueryParams();
 	}
 
-	openRunStartDrawer(): void {
-		let mFilters = {};
-		this.filterText.split(' ').forEach(f => {
-			const s = f.split(':');
-			const key = s[0].replace(InputFilterComponent.spaceAlternative, ' ');
-			if (s.length === 2) {
-				if (!mFilters[key]) {
-					mFilters[key] = [];
-				}
-				mFilters[key].push(s[1].replace(InputFilterComponent.spaceAlternative, ' '));
-			}
-		});
+	openRunStartDrawer(workflow: string = null): void {
+		// A workflow picked from an empty result set must not inherit the filters that found nothing.
+		const mFilters = workflow ? { workflow: [workflow] } : FilterText.parse(this.filterText).filters;
 		const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
 			nzTitle: 'Start new Workflow Run',
 			nzContent: ProjectV2RunStartComponent,
@@ -318,6 +358,22 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 
 	trackRunElement(index: number, run: V2WorkflowRun): any {
 		return run.id;
+	}
+
+	// Opening a run by clicking anywhere on its line is a convenience for the mouse, the keyboard
+	// reaches it through the run link of the line. Clicks meant for another control of the line, a
+	// modified click or the end of a text selection are left alone.
+	clickRunLine(event: MouseEvent, run: V2WorkflowRun): void {
+		if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+			return;
+		}
+		if ((event.target as HTMLElement).closest('a, button, nz-tag, [role="button"]')) {
+			return;
+		}
+		if (window.getSelection()?.toString()) {
+			return;
+		}
+		this._router.navigate(['/project', run.project_key, 'run', run.id]);
 	}
 
 	onMouseEnterRun(id: string): void {

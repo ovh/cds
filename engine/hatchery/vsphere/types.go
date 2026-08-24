@@ -10,13 +10,13 @@ import (
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
 	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
-	VSphereUser                         string                     `mapstructure:"user" toml:"user" default:"" commented:"false" comment:"VSphere User" json:"user"`
-	VSphereEndpoint                     string                     `mapstructure:"endpoint" toml:"endpoint" default:"" commented:"false" comment:"VShpere Endpoint, example:pcc-11-222-333-444.ovh.com" json:"endpoint"`
-	VSpherePassword                     string                     `mapstructure:"password" toml:"password" default:"" commented:"false" comment:"VShpere Password" json:"-"`
-	VSphereDatacenterString             string                     `mapstructure:"datacenterString" toml:"datacenterString" default:"" commented:"false" comment:"VSphere Datacenter" json:"datacenterString"`
-	VSphereDatastoreString              string                     `mapstructure:"datastoreString" toml:"datastoreString" default:"" commented:"false" comment:"VSphere Datastore" json:"datastoreString"`
-	VSphereNetworkString                string                     `mapstructure:"networkString" toml:"networkString" default:"" commented:"false" comment:"VShpere Network" json:"networkString"`
-	VSphereCardName                     string                     `mapstructure:"cardName" toml:"cardName" default:"e1000" commented:"false" comment:"Name of the virtual ethernet card" json:"cardName"`
+	VSphereUser                         string `mapstructure:"user" toml:"user" default:"" commented:"false" comment:"VSphere User" json:"user"`
+	VSphereEndpoint                     string `mapstructure:"endpoint" toml:"endpoint" default:"" commented:"false" comment:"VShpere Endpoint, example:pcc-11-222-333-444.ovh.com" json:"endpoint"`
+	VSpherePassword                     string `mapstructure:"password" toml:"password" default:"" commented:"false" comment:"VShpere Password" json:"-"`
+	VSphereDatacenterString             string `mapstructure:"datacenterString" toml:"datacenterString" default:"" commented:"false" comment:"VSphere Datacenter" json:"datacenterString"`
+	VSphereDatastoreString              string `mapstructure:"datastoreString" toml:"datastoreString" default:"" commented:"false" comment:"VSphere Datastore" json:"datastoreString"`
+	VSphereNetworkString                string `mapstructure:"networkString" toml:"networkString" default:"" commented:"false" comment:"VShpere Network" json:"networkString"`
+	VSphereCardName                     string `mapstructure:"cardName" toml:"cardName" default:"e1000" commented:"false" comment:"Name of the virtual ethernet card" json:"cardName"`
 	// Deprecated: Use Networks instead. Kept for backward compatibility.
 	IPRange    string `mapstructure:"iprange" toml:"iprange" default:"" commented:"false" comment:"Deprecated: use [[networks]] instead. Optional. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, you have to set it in your worker model template" json:"iprange,omitempty"`
 	Gateway    string `mapstructure:"gateway" toml:"gateway" default:"" commented:"false" comment:"Deprecated: use [[networks]] instead. Optional. Gateway IP for spawned workers." json:"gateway,omitempty"`
@@ -39,6 +39,14 @@ type HatcheryConfiguration struct {
 	Flavors                    []VSphereFlavorConfig      `mapstructure:"flavors" toml:"flavors" commented:"true" comment:"Optional. VM flavors for CPU/RAM sizing. List of available flavors." json:"flavors,omitempty"`
 	DefaultFlavor              string                     `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"" commented:"true" comment:"Optional. Default flavor to use when no flavor is specified in worker model or job requirements." json:"defaultFlavor,omitempty"`
 	CountSmallerFlavorToKeep   int                        `mapstructure:"countSmallerFlavorToKeep" toml:"countSmallerFlavorToKeep" default:"0" commented:"true" comment:"Optional. Reserve capacity for N smaller flavor workers when spawning large flavors. 0 disables starvation prevention." json:"countSmallerFlavorToKeep"`
+	// SSHAllowedCIDRs and InjectSSHPublicKeys grant debug access to guestinfo
+	// workers (see ModelConfig.GuestInfo), and are two distinct layers: the CIDRs
+	// feed a packet-filter allowlist in the guest, which drops inbound SSH from
+	// anywhere else, while the keys are what sshd then authenticates. Neither
+	// substitutes for the other. Both default to empty, which is the intended
+	// default: no inbound access at all, access being debug-only.
+	SSHAllowedCIDRs     []string `mapstructure:"sshAllowedCIDRs" toml:"sshAllowedCIDRs" default:"" commented:"true" comment:"Optional, guestinfo models only. CIDRs allowed to reach spawned workers over SSH, applied as a packet-filter allowlist in the guest. Empty means no inbound access." json:"sshAllowedCIDRs,omitempty"`
+	InjectSSHPublicKeys []string `mapstructure:"injectSSHPublicKeys" toml:"injectSSHPublicKeys" default:"" commented:"true" comment:"Optional, guestinfo models only. List of SSH public keys to inject into spawned workers. Each key must carry a from= option restricting the source addresses." json:"injectSSHPublicKeys,omitempty"`
 }
 
 // NetworkConfig defines a network with an IP range, gateway and subnet mask.
@@ -78,12 +86,24 @@ type ModelConfig struct {
 	// ModelVMWare is the VMware template name, used only by CDS Worker Model v2
 	ModelVMWare string `mapstructure:"modelVMWare" default:"" commented:"true" toml:"modelVMWare" json:"modelVMWare"`
 
-	// Guest credentials for executing scripts inside the VM
+	// Guest credentials for executing scripts inside the VM. Unused (and not
+	// required) when GuestInfo is set.
 	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
 	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
 
-	// Script executed inside the VM after boot but before the CDS worker starts
-	PreStartScript string `mapstructure:"preStartScript" toml:"preStartScript" commented:"true" comment:"Shell script executed inside the VM before the worker starts" json:"preStartScript"`
+	// Script executed inside the VM after boot but before the CDS worker starts.
+	// Ignored when GuestInfo is set: there is no guest-operations channel to run it.
+	PreStartScript string `mapstructure:"preStartScript" toml:"preStartScript" commented:"true" comment:"Shell script executed inside the VM before the worker starts. Ignored for guestinfo models." json:"preStartScript"`
+
+	// GuestInfo drives this model entirely through guestinfo keys instead of
+	// vSphere guest customization (GOSC) and guest operations: the network is
+	// pushed as guestinfo.cds.net.* at clone time and the worker bootstrap as
+	// guestinfo.cds.{cmd,config} at spawn time, both consumed in-guest at boot.
+	// Required for FreeBSD, which GOSC does not support and whose image is
+	// credential-less. This flag is the single gate for both the clone and the
+	// spawn path — the provisioning loop only knows the VMware template name, so
+	// it cannot be derived from the CDS model's OSArch.
+	GuestInfo bool `mapstructure:"guestInfo" toml:"guestInfo" default:"false" commented:"true" comment:"Drive this model through guestinfo instead of guest customization and guest operations (no credentials needed). Required for FreeBSD models." json:"guestInfo,omitempty"`
 }
 
 // this is used to run worker model v2 in a job v1

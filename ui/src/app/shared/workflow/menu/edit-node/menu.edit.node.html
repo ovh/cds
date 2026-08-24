@@ -2,7 +2,7 @@
   <ul>
     @if (workflowrun) {
       <li>
-        <a (click)="sendEvent('run')" [class.disabled]="!runnable">
+        <a appClickable (click)="sendEvent('run')" [class.disabled]="!runnable">
           Run pipeline
         </a>
       </li>
@@ -10,47 +10,47 @@
       }
       @if (node && !workflowrun) {
         <li>
-          <a (click)="sendEvent('pipeline')"
+          <a appClickable (click)="sendEvent('pipeline')"
             [class.disabled]="readonly">
             Add a pipeline
           </a>
         </li>
         <li>
-          <a (click)="sendEvent('parent')"
+          <a appClickable (click)="sendEvent('parent')"
             [class.disabled]="workflow.workflow_data.node.id !== node.id || readonly">
             Add a parent pipeline
           </a>
         </li>
         <li>
-          <a (click)="sendEvent('fork')" [class.disabled]="readonly">
+          <a appClickable (click)="sendEvent('fork')" [class.disabled]="readonly">
             Add a fork
           </a>
         </li>
         <li>
-          <a (click)="sendEvent('join')" [class.disabled]="readonly">
+          <a appClickable (click)="sendEvent('join')" [class.disabled]="readonly">
             Add a join
           </a>
         </li>
         <li>
-          <a (click)="sendEvent('join_link')" [class.disabled]="readonly">
+          <a appClickable (click)="sendEvent('join_link')" [class.disabled]="readonly">
             Link to a join
           </a>
         </li>
         <hr>
           <li>
-            <a (click)="sendEvent('hook')"
+            <a appClickable (click)="sendEvent('hook')"
               [class.disabled]="!workflow.workflow_data || workflow.workflow_data.node.id !== node.id || readonly">
               Add a hook
             </a>
           </li>
           <li>
-            <a (click)="sendEvent('outgoinghook')" [class.disabled]="readonly">
+            <a appClickable (click)="sendEvent('outgoinghook')" [class.disabled]="readonly">
               Add an outgoing hook
             </a>
           </li>
           <hr>
             <li>
-              <a class="item" (click)="sendEvent('edit')">
+              <a class="item" appClickable (click)="sendEvent('edit')">
                 @if (readonly) {
                   <span>Show context configuration</span>
                 }
@@ -70,7 +70,7 @@
             <hr>
               <li>
                 @if (!readonly && node.id !== workflow.workflow_data.node.id) {
-                  <a (click)="sendEvent('delete')">
+                  <a appClickable (click)="sendEvent('delete')">
                     Delete
                   </a>
                 }
@@ -78,7 +78,7 @@
             }
             @if (node && noderun && node.type === 'pipeline') {
               <li>
-                <a (click)="sendEvent('logs')">
+                <a appClickable (click)="sendEvent('logs')">
                   Display logs
                 </a>
               </li>
@@ -86,7 +86,7 @@
               }
               @if (node && workflowrun) {
                 <li>
-                  <a (click)="sendEvent('edit')">
+                  <a appClickable (click)="sendEvent('edit')">
                     Show context configuration
                   </a>
                 </li>

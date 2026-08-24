@@ -162,6 +162,8 @@ type Runtime interface {
 	Parameters() []sdk.Parameter
 	PluginGet(pluginName string) (*sdk.GRPCPlugin, error)
 	PluginGetBinary(name, os, arch string, w io.Writer) error
+	GetCheckedPluginBinary(pluginName, os, arch string) *sdk.GRPCPluginBinary
+	SetCheckedPluginBinary(b *sdk.GRPCPluginBinary)
 
 	V2AddRunResult(ctx context.Context, req V2RunResultRequest) (*V2AddResultResponse, error)
 	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)

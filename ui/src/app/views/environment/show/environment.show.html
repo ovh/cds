@@ -5,7 +5,7 @@
       <nz-tag class="labelFeature" [title]="'workflow_from_repository_btn' | translate"
         [nzColor]="environment?.from_repository?'green':''" nz-popover nzPopoverTrigger="click"
         [nzPopoverContent]="popupFromRepository" nzPopoverPlacement="leftBottom"><i nz-icon nzType="code"
-      nzTheme="outline"></i>as code</nz-tag>
+      nzTheme="outline" aria-hidden="true"></i>as code</nz-tag>
       <ng-template #popupFromRepository>
         <div class="content infoPopup">
           @if (environment.from_repository) {

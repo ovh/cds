@@ -10,12 +10,12 @@
     <form nz-form (ngSubmit)="askReset(askResetForm)" #askResetForm="ngForm">
       @if (!showSuccessMessage) {
         <nz-form-item class="field">
-          <nz-form-label>Mail address</nz-form-label>
-          <input nz-input type="email" name="email" ngModel required [disabled]="loading">
+          <nz-form-label nzFor="cds-field-email">Mail address</nz-form-label>
+          <input nz-input type="email" name="email" id="cds-field-email" ngModel required [disabled]="loading">
         </nz-form-item>
       }
       <div class="alignRight">
-        <a class="pointing" (click)="navigateToSignin()">{{ 'account_login_title' | translate }}</a>
+        <a class="pointing" appClickable (click)="navigateToSignin()">{{ 'account_login_title' | translate }}</a>
         &nbsp;&nbsp;&nbsp;
         @if (!showSuccessMessage) {
           <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading"

@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -57,6 +58,7 @@ type Model struct {
 	LastSpawnErrLogs    *string             `json:"last_spawn_err_log" db:"last_spawn_err_log" cli:"-"`
 	DateLastSpawnErr    *time.Time          `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
 	IsDeprecated        bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
+	EOL                 *time.Time          `json:"eol,omitempty" db:"eol" cli:"eol,omitempty"`
 	ModelVirtualMachine ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"model_virtual_machine" cli:"-"`
 	ModelDocker         ModelDocker         `json:"model_docker,omitempty" db:"model_docker" cli:"-"`
 	// aggregates
@@ -119,6 +121,7 @@ func (m *Model) Update(data Model) {
 	m.Disabled = data.Disabled
 	m.Restricted = data.Restricted
 	m.IsDeprecated = data.IsDeprecated
+	m.EOL = data.EOL
 	m.IsOfficial = data.IsOfficial
 	m.GroupID = data.GroupID
 	m.Type = data.Type
@@ -141,6 +144,11 @@ func (m Model) IsValid() error {
 
 	if m.GroupID == 0 {
 		return WrapError(ErrWrongRequest, "missing worker model group data")
+	}
+
+	// an end of life date only makes sense on a deprecated model, as it drives its automatic disabling
+	if m.EOL != nil && !m.IsDeprecated {
+		return NewErrorFrom(ErrWrongRequest, "worker model end of life date can only be set on a deprecated worker model")
 	}
 	return nil
 }
@@ -183,6 +191,22 @@ func (m Model) IsValidType() error {
 // Path returns full path of the model that contains group and model names.
 func (m Model) Path() string {
 	return ComputeWorkerModelPath(m.Group.Name, m.Name)
+}
+
+// MatchesRequirementValue returns true if the given model requirement value targets this model.
+// The value could be: theModelName --port=8888:9999, so we only compare the first field.
+// Note that the group prefix is compared as is, not through ComputeWorkerModelPath: a requirement
+// may spell out shared.infra/myModel even though the computed path of such a model is just myModel.
+func (m Model) MatchesRequirementValue(value string) bool {
+	name := strings.Split(value, " ")[0]
+	// for backward compatibility with runs, if only the name match we consider that the model can be used
+	if name == m.Name {
+		return true
+	}
+	if m.Group == nil {
+		return false
+	}
+	return name == fmt.Sprintf("%s/%s", m.Group.Name, m.Name)
 }
 
 // ComputeWorkerModelPath returns path for a worker model with given group name and model name.

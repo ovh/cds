@@ -18,8 +18,8 @@
     </div>
     @if (warnings > 0) {
       <div nz-tooltip nzTooltipPlacement="right"
-        [nzTooltipTitle]="'warning_build_title' | translate: {nb: warnings}" class="warn">
-        <span nz-icon nzType="warning" nzTheme="outline" class="orange"></span>
+        [nzTooltipTitle]="'warning_build_title' | translate: {nb: warnings}" class="warn" role="img" [attr.aria-label]="'warning_build_title' | translate: {nb: warnings}">
+        <span nz-icon nzType="warning" nzTheme="outline" class="orange" aria-hidden="true"></span>
       </div>
     }
     @if (noderun && noderun.subnumber) {
@@ -65,7 +65,7 @@
       <div class="actions">
         @if (noderun) {
           <div class="action">
-            <span class="logs" nz-icon nzType="file-text" nzTheme="outline" title="Logs"  (click)="$event.stopPropagation(); displayLogs()"></span>
+            <span class="logs" nz-icon nzType="file-text" nzTheme="outline" title="Logs" aria-label="Logs" appClickable (click)="$event.stopPropagation(); displayLogs()"></span>
           </div>
         }
       </div>

@@ -86,12 +86,16 @@ export class WorkerModelListComponent {
                         });
                     }
                     if (wm.is_deprecated) {
+                        let deprecated = 'This worker model is deprecated';
+                        if (wm.eol) {
+                            deprecated += `, it will be disabled on ${wm.eol.substring(0, 10)}`;
+                        }
                         icons.push({
-                            label: 'This worker model is deprecated',
+                            label: deprecated,
                             iconTheme: 'outline',
                             iconType: 'warning',
                             iconColor: 'orange',
-                            title: 'This worker model is deprecated'
+                            title: deprecated
                         });
                     }
 

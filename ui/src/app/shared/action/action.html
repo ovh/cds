@@ -4,10 +4,10 @@
       <nz-row>
         <nz-col [nzSpan]="7">
           <nz-form-item>
-            <nz-form-label>Name</nz-form-label>
+            <nz-form-label nzFor="cds-field-action-name">Name</nz-form-label>
             <nz-form-control>
               @if (edit;) {
-                <input nz-input type="text" name="actionName" [(ngModel)]="editableAction.name"
+                <input nz-input type="text" id="cds-field-action-name" name="actionName" [(ngModel)]="editableAction.name"
                   (keydown)="editableAction.hasChanged = true; keyEvent($event)">
               }
               @if (!edit;) {
@@ -18,10 +18,10 @@
         </nz-col>
         <nz-col [nzSpan]="10">
           <nz-form-item>
-            <nz-form-label>Description</nz-form-label>
+            <nz-form-label nzFor="cds-field-action-description">Description</nz-form-label>
             <nz-form-control>
               @if (edit;) {
-                <textarea nz-input [disabled]="!edit" name="actionDescription"
+                <textarea nz-input [disabled]="!edit" id="cds-field-action-description" name="actionDescription"
                   [(ngModel)]="editableAction.description" rows="{{getDescriptionHeight()}}"
                 (keydown)="editableAction.hasChanged = true; keyEvent($event)"></textarea>
               }
@@ -37,7 +37,7 @@
           [disabled]="!edit">Enabled</label>
         </nz-col>
         <nz-col [nzSpan]="4">
-          <a class="pointing"
+          <a class="pointing" appClickable
             (click)="prepareEditRequirements(); requirementModalVisible = true">
             {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
           </a>
@@ -72,11 +72,11 @@
         <div class="alignRight">
           <button nz-button (click)="collapsed = !collapsed">
             @if (collapsed) {
-              <span nz-icon nzType="eye-invisible" nzTheme="outline"></span>
+              <span nz-icon nzType="eye-invisible" nzTheme="outline" aria-hidden="true"></span>
               {{'common_hide_all' | translate}}
             }
             @if (!collapsed) {
-              <span nz-icon nzType="eye" nzTheme="outline"></span>
+              <span nz-icon nzType="eye" nzTheme="outline" aria-hidden="true"></span>
               {{'common_show_all' | translate}}
             }
           </button>
@@ -127,7 +127,7 @@
               (click)="sendActionEvent('update')"
               [disabled]="!editableAction.hasChanged || editableAction.loading"
               [nzLoading]="editableAction.loading" nzBlock>
-              <i nz-icon nzType="save" nzTheme="outline"></i>
+              <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>
               @if (!editPipelineMode) {
                 <span>Save</span>
               }
@@ -137,15 +137,15 @@
             </button>
           </div>
           <div nz-col nzSpan="4">
-            <button nz-button nz-dropdown class="menuBtn" [nzDropdownMenu]="menu" nzPlacement="topRight" nzTrigger="click" name="menuBtn">
-              <i nz-icon nzType="ellipsis" nzTheme="outline"></i>
+            <button nz-button nz-dropdown class="menuBtn" [nzDropdownMenu]="menu" nzPlacement="topRight" nzTrigger="click" name="menuBtn" aria-label="More actions">
+              <i nz-icon nzType="ellipsis" nzTheme="outline" aria-hidden="true"></i>
             </button>
             <nz-dropdown-menu #menu="nzDropdownMenu" >
               <ul nz-menu>
                 <li nz-menu-item>
                   <button nz-button nzBlock nzType="primary"
                     (click)="$event.stopPropagation(); initActionFromJob()">
-                    <i nz-icon nzType="share-alt" nzTheme="outline"></i>Init a new action from job
+                    <i nz-icon nzType="share-alt" nzTheme="outline" aria-hidden="true"></i>Init a new action from job
                   </button>
                 </li>
                 <li nz-menu-item>
@@ -155,7 +155,7 @@
                     (nzOnConfirm)="sendActionEvent('delete')"
                     nzPopconfirmPlacement="topLeft"
                     nz-button>
-                    <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                    <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete
                   </button>
                 </li>
               </ul>

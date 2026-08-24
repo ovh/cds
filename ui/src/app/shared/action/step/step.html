@@ -5,19 +5,19 @@
       @if (edit) {
         <span class="move pointing">↕</span>
       }
-      <span class="pointing" (click)="collapsed = !collapsed">
+      <span class="pointing" appClickable aria-label="Toggle step details" (click)="collapsed = !collapsed">
         @if (!collapsed) {
-          <i nz-icon nzType="caret-right" nzTheme="fill"></i>
+          <i nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></i>
         }
         @if (collapsed) {
-          <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+          <i nz-icon nzType="caret-down" nzTheme="fill" aria-hidden="true"></i>
         }
       </span>
     </nz-col>
     <!-- Step name -->
     <nz-col [nzSpan]="5">
       @if (edit && step.type !== 'ActionAsCode') {
-        <input nz-input name="stepName" [(ngModel)]="step.step_name"  (keydown)="action.hasChanged = true">
+        <input nz-input name="stepName" aria-label="Step name" [(ngModel)]="step.step_name"  (keydown)="action.hasChanged = true">
       }
       @if (!edit || step.type === 'ActionAsCode') {
         {{step.step_name}}
@@ -25,8 +25,8 @@
     </nz-col>
     <!-- Link to documentation -->
     <nz-col [nzSpan]="1">
-      <a title="Documentation" [routerLink]="this.stepURL">
-        <i nz-icon nzType="book" nzTheme="outline"></i>
+      <a title="Documentation" aria-label="Documentation" [routerLink]="this.stepURL">
+        <i nz-icon nzType="book" nzTheme="outline" aria-hidden="true"></i>
       </a>
     </nz-col>
     <!-- deprecated icon -->
@@ -83,8 +83,9 @@
         name="deleteStepButton"
         nzPopconfirmTitle="Are you sure you want to delete this step ?"
         (nzOnConfirm)="removeStep()"
-        nzPopconfirmPlacement="topRight">
-        <i nz-icon nzType="delete" nzTheme="outline"></i>
+        nzPopconfirmPlacement="topRight"
+        aria-label="Delete step">
+        <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>
       </button>
     </nz-col>
   </nz-row>

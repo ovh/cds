@@ -53,7 +53,7 @@
                   }
                 }
                 @if (item.result.variants.length > 3 && !item.unfold) {
-                  <a title="{{item.result.variants.length-3}} more"
+                  <a title="{{item.result.variants.length-3}} more" appClickable
                     (click)="unfoldItem(item.result.id)">
                     ...{{item.result.variants.length-3}} more
                   </a>
@@ -66,26 +66,26 @@
           <nz-list-item-action>
             @if (item.result.type === 'project') {
               <a class="action" [routerLink]="item.exploreLink.path"
-                [queryParams]="item.exploreLink.params" title="Explore" nz-button>
-                <span nz-icon nzType="folder" nzTheme="outline"></span>
+                [queryParams]="item.exploreLink.params" title="Explore" aria-label="Explore" nz-button>
+                <span nz-icon nzType="folder" nzTheme="outline" aria-hidden="true"></span>
               </a>
             }
             @if (item.result.type === 'project') {
               <a class="action" [routerLink]="item.runLink.path"
-                [queryParams]="item.runLink.params" title="Run list" nz-button>
-                <span nz-icon nzType="play-circle" nzTheme="outline"></span>
+                [queryParams]="item.runLink.params" title="Run list" aria-label="Run list" nz-button>
+                <span nz-icon nzType="play-circle" nzTheme="outline" aria-hidden="true"></span>
               </a>
             }
             @if (item.result.type === 'workflow') {
               <a class="action" [routerLink]="item.exploreLink.path"
-                [queryParams]="item.exploreLink.params" title="Show sources" nz-button>
-                <span nz-icon nzType="file-text" nzTheme="outline"></span>
+                [queryParams]="item.exploreLink.params" title="Show sources" aria-label="Show sources" nz-button>
+                <span nz-icon nzType="file-text" nzTheme="outline" aria-hidden="true"></span>
               </a>
             }
             @if (item.result.type === 'workflow') {
               <a class="action" [routerLink]="item.runLink.path"
-                [queryParams]="item.runLink.params" title="Run list" nz-button>
-                <span nz-icon nzType="play-circle" nzTheme="outline"></span>
+                [queryParams]="item.runLink.params" title="Run list" aria-label="Run list" nz-button>
+                <span nz-icon nzType="play-circle" nzTheme="outline" aria-hidden="true"></span>
               </a>
             }
           </nz-list-item-action>

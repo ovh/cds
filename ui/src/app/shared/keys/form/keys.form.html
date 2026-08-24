@@ -18,10 +18,10 @@ Install Key</a>
 <nz-row>
   <nz-col [nzSpan]="8">
     <nz-form-item>
-      <nz-form-label>Key name</nz-form-label>
+      <nz-form-label nzFor="cds-field-key-name">Key name</nz-form-label>
       <nz-form-control>
         <nz-input-group nzAddOnBefore="{{prefix}}">
-          <input type="text" nz-input [(ngModel)]="newKey.name" name="keyname"/>
+          <input type="text" nz-input id="cds-field-key-name" [(ngModel)]="newKey.name" name="keyname"/>
         </nz-input-group>
       </nz-form-control>
     </nz-form-item>

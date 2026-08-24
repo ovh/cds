@@ -22,12 +22,18 @@ const (
 	EventRunJobRunResultAdded   EventType = "RunJobRunResultAdded"
 	EventRunJobRunResultUpdated EventType = "RunJobRunResultUpdated"
 	EventRunJobEnded            EventType = "RunJobEnded"
+	// EventRunJobStepUpdated is sent when a worker reports the progress of the steps of a job. Only
+	// the steps moved, the job status did not change.
+	EventRunJobStepUpdated EventType = "RunJobStepUpdated"
 
 	EventRunCrafted  EventType = "RunCrafted"
 	EventRunBuilding EventType = "RunBuilding"
-	EventRunEnded    EventType = "RunEnded"
-	EventRunRestart  EventType = "RunRestart"
-	EventRunDeleted  EventType = "RunDeleted"
+	// EventRunUpdated is sent when the definition of a running workflow changed, which happens when
+	// jobs coming from a template or a matrix replace the job that declared them.
+	EventRunUpdated EventType = "RunUpdated"
+	EventRunEnded   EventType = "RunEnded"
+	EventRunRestart EventType = "RunRestart"
+	EventRunDeleted EventType = "RunDeleted"
 
 	EventEntityCreated EventType = "EntityCreated"
 	EventEntityUpdated EventType = "EntityUpdated"

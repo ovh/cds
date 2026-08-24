@@ -17,9 +17,10 @@ import { lastValueFrom } from "rxjs";
 export class ProjectConcurrencyFormComponent implements OnInit {
     @Input() project: Project;
     @Input() concurrency: Concurrency
-    @Input() verticalOrientation: boolean;
+    @Input() cancellable: boolean;
 
     @Output() refresh: EventEmitter<boolean> = new EventEmitter();
+    @Output() cancel: EventEmitter<void> = new EventEmitter();
 
     loading: boolean;
     errorName: boolean;
@@ -34,9 +35,13 @@ export class ProjectConcurrencyFormComponent implements OnInit {
         private _v2ProjectService: V2ProjectService
     ) { }
 
+    get isEdition(): boolean {
+        return !!this.concurrency?.id;
+    }
+
     ngOnInit(): void {
         if (!this.concurrency) {
-            this.concurrency = <Concurrency>{ pool: 1, order: ConcurrencyOrder.OLDEST_FIRST }
+            this.concurrency = new Concurrency();
         }
     }
 

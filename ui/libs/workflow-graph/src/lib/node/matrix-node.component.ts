@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model'
 import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
 import { concatMap, from, interval, Subscription } from 'rxjs';
@@ -43,10 +43,36 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy, InteractiveN
     allMatrixSelected: boolean = false;
 
     private _cd = inject(ChangeDetectorRef);
+    private _host = inject(ElementRef);
 
     constructor() {
         this.setHighlight.bind(this);
         this.selectNode.bind(this);
+    }
+
+    jobAriaLabel(key: string): string {
+        let label = `Job ${this.displayNames[key] ?? key}`;
+        if (this.status[key]) {
+            label += `, status ${this.status[key]}`;
+        }
+        if (this.node?.job?.stage) {
+            label += `, stage ${this.node.job.stage}`;
+        }
+        return label;
+    }
+
+    focusNode(navigationKey: string): void {
+        const baseKey = this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name;
+        for (let i = 0; i < this.keys.length; i++) {
+            if (`${baseKey}-${this.keys[i]}` === navigationKey) {
+                const elements = this._host.nativeElement.querySelectorAll('.job');
+                const element = elements[i] as HTMLElement;
+                if (element) {
+                    element.focus({ preventScroll: true });
+                }
+                return;
+            }
+        }
     }
 
     ngOnDestroy(): void {
@@ -56,6 +82,27 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy, InteractiveN
     }
 
     ngOnInit(): void {
+        this.initRun();
+    }
+
+    /** The runs of the variants changed: recompute what is derived from them, keeping the node in place. */
+    refreshRun(): void {
+        this.initRun();
+    }
+
+    private initRun(): void {
+        if (this.delaySubs) {
+            this.delaySubs.unsubscribe();
+            this.delaySubs = null;
+        }
+        this.dates = {};
+        this.status = {};
+        this.jobRunIDs = {};
+        this.displayNames = {};
+        this.retries = {};
+        this.warningSteps = {};
+        this.durations = {};
+
         const alls = GraphNode.generateMatrixOptions(this.node.job.strategy.matrix);
         this.keys = alls.map(option => {
             return Array.from(option.keys()).sort().map(key => {

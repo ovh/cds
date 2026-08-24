@@ -106,7 +106,10 @@ func (api *API) getWorkflowRunResultsV2Handler() ([]service.RbacChecker, service
 				}
 			}
 
-			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			// The jobs of the attempt asked for, not of the last one: a result belongs to the job that
+			// produced it, so looking for the results of an older attempt among the jobs of the last one
+			// finds nothing.
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, attempt)
 			if err != nil {
 				return err
 			}
@@ -705,6 +708,8 @@ func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchRunsFil
 			filters.Commits = v
 		case "template":
 			filters.Templates = v
+		case "query":
+			filters.Query = strings.Join(v, " ")
 		case "offset":
 			value, _ := strconv.ParseUint(v[0], 10, 0)
 			offset = uint(value)
@@ -749,8 +754,19 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 
 			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
 
-			return service.WriteJSON(w, runs, http.StatusOK)
+			return writeRunsJSON(w, req, runs)
 		}
+}
+
+// Runs are returned without the definition they ran when the caller asked for the summary media
+// type, see sdk.ContentTypeWorkflowRunSummary.
+func writeRunsJSON(w http.ResponseWriter, req *http.Request, runs []sdk.V2WorkflowRun) error {
+	if service.Accepts(req, sdk.ContentTypeWorkflowRunSummary) {
+		for i := range runs {
+			runs[i].WorkflowData = sdk.V2WorkflowRunData{}
+		}
+	}
+	return service.WriteJSON(w, runs, http.StatusOK)
 }
 
 func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service.Handler) {
@@ -778,7 +794,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 
 			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
 
-			return service.WriteJSON(w, runs, http.StatusOK)
+			return writeRunsJSON(w, req, runs)
 		}
 }
 

@@ -9,6 +9,13 @@ nz-spin {
   width: 100%;
   overflow: hidden;
 
+  // The entity being left stays visible while the next one is read. It only dims if that read takes
+  // a moment, and comes back at once.
+  &.loading {
+    opacity: 0.55;
+    transition: opacity 150ms ease-out 250ms;
+  }
+
   .leftPanel {
     flex: 1;
     display: flex;

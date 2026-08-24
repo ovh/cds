@@ -1,6 +1,6 @@
 @if (loading) {
-  <div class="app-loader">
-    <span nz-icon [nzType]="'loading'"></span>CDS is loading
+  <div class="app-loader" role="status">
+    <span nz-icon [nzType]="'loading'" aria-hidden="true"></span>CDS is loading
   </div>
 }
 
@@ -30,26 +30,29 @@
     }
     @if (isAPIAvailable && (!isConnected || !maintenance || currentAuthSummary?.user?.ring === 'ADMIN')) {
       <nz-layout>
-        <nz-header>
+        <a class="cds-skip-link" href="#main-content" (click)="skipToMain($event)">Skip to main content</a>
+        <nz-header role="banner">
           <app-navbar></app-navbar>
         </nz-header>
         <nz-content>
           @if ((maintenance) && (!isConnected || currentAuthSummary?.user?.ring === 'ADMIN')) {
-            <div class="banner"
+            <div class="banner" role="status"
               >
               {{ 'maintenance_title' | translate }}
             </div>
           }
           @if (showUIUpdatedBanner) {
-            <div class="banner update" (click)="refresh()">
+            <div class="banner update" (click)="refresh()" role="button" tabindex="0"
+              (keydown.enter)="refresh()" (keydown.space)="$event.preventDefault(); refresh()">
               {{ 'ui_updated' | translate }}
             </div>
           }
           <div class="page" [class.connected]="isConnected && !hideNavBar">
-            <div class="content inner-content" [class.connected]="isConnected && !hideNavBar">
+            <div class="content inner-content" [class.connected]="isConnected && !hideNavBar"
+              role="main" id="main-content" tabindex="-1">
               <router-outlet></router-outlet>
               @if (displayResolver) {
-                <nz-spin nzTip="Loading..."></nz-spin>
+                <nz-spin nzTip="Loading..." role="status" aria-label="Loading page"></nz-spin>
               }
             </div>
           </div>

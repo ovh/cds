@@ -1,9 +1,0 @@
---config
-/etc/cds-engine/cds-engine.toml
-start
-api
-cdn
-hooks
-hatchery:swarm
-vcs
-ui

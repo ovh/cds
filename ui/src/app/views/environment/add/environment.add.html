@@ -6,9 +6,9 @@
         <nz-row>
           <nz-col [nzSpan]="24">
             <nz-form-item>
-              <nz-form-label>Environment name *</nz-form-label>
+              <nz-form-label nzFor="cds-field-envname">Environment name *</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="envname" [(ngModel)]="newEnvironment.name"
+                <input nz-input type="text" id="cds-field-envname" name="envname" [(ngModel)]="newEnvironment.name"
                   (ngModelChange)="checkPattern(newEnvironment.name)">
                 @if (envPatternError) {
                   <nz-alert nzType="error" nzMessage="Invalid environment name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>

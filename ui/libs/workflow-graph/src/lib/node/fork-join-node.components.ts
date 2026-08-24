@@ -30,6 +30,11 @@ export class GraphForkJoinNodeComponent implements OnInit, InteractiveNode {
         this.status = NodeStatus.sum(this.nodes.map(n => n.run ? n.run.status : null));
     }
 
+    refreshRun(): void {
+        this.status = NodeStatus.sum(this.nodes.map(n => n.run ? n.run.status : null));
+        this._cd.markForCheck();
+    }
+
     getNodes() {
         return this.nodes;
     }

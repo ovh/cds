@@ -1,0 +1,9 @@
+version: v1.0
+name: 04SCWorkflowRunModelEOL-PIPELINE-HEALTHY
+jobs:
+- job: OnHealthyModel
+  steps:
+  - script:
+    - echo "this job runs on a healthy model and must not be touched by the lifecycle routine"
+  requirements:
+  - model: shared.infra/buildpack-deps

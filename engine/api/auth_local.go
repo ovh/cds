@@ -220,6 +220,9 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
+		if usr.Disabled {
+			return sdk.NewErrorFrom(sdk.ErrUserDisabled, "user %s is disabled", usr.Username)
+		}
 
 		userInfo, err := authDriver.GetUserInfo(ctx, reqData)
 		if err != nil {

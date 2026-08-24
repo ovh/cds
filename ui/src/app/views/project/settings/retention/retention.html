@@ -26,7 +26,7 @@
   <ng-container *nzModalContent>
     <div class="modalHeight">
       @if (!dryRunReport) {
-        <i nz-icon nzType="loading" zTheme="outline"></i>  Dry run ongoing
+        <i nz-icon nzType="loading" zTheme="outline" aria-hidden="true"></i>  Dry run ongoing
       }
       @if (dryRunReport) {
         <app-project-run-retention-report [report]="dryRunReport"></app-project-run-retention-report>

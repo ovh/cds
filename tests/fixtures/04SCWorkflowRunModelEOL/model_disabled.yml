@@ -1,0 +1,7 @@
+name: 04SCWorkflowRunModelEOL-MODEL-DISABLED
+type: docker
+description: "model disabled by hand once a job is already queued on it"
+group: shared.infra
+image: buildpack-deps:bookworm
+shell: sh -c
+cmd: curl {{.API}}/download/worker/linux/x86_64 -o worker --retry 10 --retry-max-time 120 -C - && chmod +x worker && exec ./worker

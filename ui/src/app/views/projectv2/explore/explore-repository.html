@@ -17,7 +17,7 @@
       {{repository.created_by}}</nz-descriptions-item>
     </nz-descriptions>
     <div class="events">
-      <h3>Repository events <i (click)="loadHookEvents()" nz-icon nzType="sync" [nzSpin]="loadingHooks"
+      <h3>Repository events <i (click)="loadHookEvents()" appClickable aria-label="Refresh repository events" nz-icon nzType="sync" [nzSpin]="loadingHooks"
       nzTheme="outline" class="pointing"></i> </h3>
       <nz-table [nsAutoHeightTable]="85" [nzLoading]="loadingHooks" [nzData]="hookEvents"
         [nzFrontPagination]="false" nzSize="small" #hooksTable>
@@ -37,9 +37,9 @@
         </thead>
         <tbody>
           @for (h of hooksTable.data; track h) {
-            <tr (click)="displayDetail(h)" class="pointing">
+            <tr (click)="displayDetail(h)" class="pointing" tabindex="0" (keydown.enter)="displayDetail(h)">
               <td>
-                <app-status-icon [status]="h.status" nz-tooltip="{{h.last_error}}"></app-status-icon>
+                <app-status-icon [status]="h.status" nz-tooltip="{{h.last_error}}" role="img" [attr.aria-label]="'Status: ' + h.status"></app-status-icon>
               </td>
               <td><app-date-from-now [value]="h.created_string"></app-date-from-now></td>
               <td>{{h.uuid}}</td>
@@ -50,23 +50,23 @@
                 @for (a of h?.analyses; track a) {
                   @if (a.project_key === project.key) {
                     <app-status-icon
-                    [status]="a.status"></app-status-icon>
+                    [status]="a.status" role="img" [attr.aria-label]="'Status: ' + a.status"></app-status-icon>
                   }
                 }
               </td>
               <td>
                 @switch (h.nbFailed > 0? 'fail': (h.nbScheduled > 0? 'scheduled': (h.nbDone >0? 'success': 'skipped'))) {
                   @case ('fail') {
-                    <app-status-icon [status]="'Error'"></app-status-icon>
+                    <app-status-icon [status]="'Error'" role="img" aria-label="Status: Error"></app-status-icon>
                   }
                   @case ('success') {
-                    <app-status-icon [status]="'Success'"></app-status-icon>
+                    <app-status-icon [status]="'Success'" role="img" aria-label="Status: Success"></app-status-icon>
                   }
                   @case ('scheduled') {
-                    <app-status-icon [status]="'Scheduled'"></app-status-icon>
+                    <app-status-icon [status]="'Scheduled'" role="img" aria-label="Status: Scheduled"></app-status-icon>
                   }
                   @case ('skipped') {
-                    <app-status-icon [status]="'Skipped'"></app-status-icon>
+                    <app-status-icon [status]="'Skipped'" role="img" aria-label="Status: Skipped"></app-status-icon>
                   }
                 }
               </td>
@@ -175,12 +175,12 @@
           @for (w of selectedHookEvent.workflows; track w) {
             <nz-list-item>
               @if (w.status === 'Done') {
-                <app-status-icon [status]="'Success'" title="Done"></app-status-icon>
+                <app-status-icon [status]="'Success'" title="Done" role="img" aria-label="Status: Done"></app-status-icon>
                 <a
                 [routerLink]="['/project', w.project_key, 'run', w.run_id]">{{w.project_key}}/{{w.workflow_name}}#{{w.run_number}}</a>
               }
               @if (w.status !== 'Done') {
-                <app-status-icon [status]="w.status" [title]="w.status"></app-status-icon>
+                <app-status-icon [status]="w.status" [title]="w.status" role="img" [attr.aria-label]="'Status: ' + w.status"></app-status-icon>
                 <span>{{w.project_key}}/{{w.workflow_name}}{{w.error ? ' - Error: ' + w.error : ''}}</span>
               }
             </nz-list-item>

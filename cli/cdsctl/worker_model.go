@@ -25,6 +25,8 @@ func workerModel() *cobra.Command {
 		cli.NewDeleteCommand(workerModelDeleteCmd, workerModelDeleteRun, nil),
 		cli.NewCommand(workerModelImportCmd, workerModelImportRun, nil),
 		cli.NewCommand(workerModelExportCmd, workerModelExportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workerModelDisableCmd, workerModelDisableRun, nil),
+		cli.NewCommand(workerModelEnableCmd, workerModelEnableRun, nil),
 	})
 }
 
@@ -53,6 +55,7 @@ type workerModelDisplay struct {
 	NeedRegistration bool   `json:"need_registration" cli:"need_registration"`
 	NbSpawnErr       int64  `json:"nb_spawn_err" cli:"nb_spawn_err"`
 	IsDeprecated     bool   `json:"is_deprecated" cli:"deprecated"`
+	EOL              string `json:"eol,omitempty" cli:"eol"`
 	IsOfficial       bool   `json:"is_official" cli:"official"`
 	Image            string `json:"image" cli:"image"`
 	Flavor           string `json:"flavor" cli:"flavor"`
@@ -62,6 +65,11 @@ func newWorkerModelDisplay(wm sdk.Model) workerModelDisplay {
 	name := wm.Name
 	if wm.Group != nil {
 		name = fmt.Sprintf("%s/%s", wm.Group.Name, wm.Name)
+	}
+
+	var eol string
+	if wm.EOL != nil {
+		eol = wm.EOL.Format("2006-01-02")
 	}
 
 	var image, flavor string
@@ -82,6 +90,7 @@ func newWorkerModelDisplay(wm sdk.Model) workerModelDisplay {
 		NeedRegistration: wm.NeedRegistration,
 		NbSpawnErr:       wm.NbSpawnErr,
 		IsDeprecated:     wm.IsDeprecated,
+		EOL:              eol,
 		Image:            image,
 		Flavor:           flavor,
 		IsOfficial:       wm.IsOfficial,
@@ -229,6 +238,53 @@ func workerModelDeleteRun(v cli.Values) error {
 		return err
 	}
 
+	return nil
+}
+
+var workerModelDisableCmd = cli.Command{
+	Name:    "disable",
+	Short:   "Disable a worker model: no hatchery can spawn a worker for it anymore, and the queued jobs requiring it are set to fail",
+	Example: `cdsctl worker model disable shared.infra/myModel`,
+	Args: []cli.Arg{
+		{Name: "worker-model-path"},
+	},
+}
+
+func workerModelDisableRun(v cli.Values) error {
+	return setWorkerModelDisabled(v.GetString("worker-model-path"), true)
+}
+
+var workerModelEnableCmd = cli.Command{
+	Name:    "enable",
+	Short:   "Enable a worker model that was disabled",
+	Example: `cdsctl worker model enable shared.infra/myModel`,
+	Args: []cli.Arg{
+		{Name: "worker-model-path"},
+	},
+}
+
+func workerModelEnableRun(v cli.Values) error {
+	return setWorkerModelDisabled(v.GetString("worker-model-path"), false)
+}
+
+func setWorkerModelDisabled(path string, disabled bool) error {
+	groupName, modelName, err := cli.ParsePath(path)
+	if err != nil {
+		return err
+	}
+
+	wm, err := client.WorkerModelGet(groupName, modelName)
+	if err != nil {
+		return err
+	}
+	if wm.Disabled == disabled {
+		return nil
+	}
+	wm.Disabled = disabled
+
+	if _, err := client.WorkerModelUpdate(groupName, modelName, wm); err != nil {
+		return err
+	}
 	return nil
 }
 

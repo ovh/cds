@@ -53,6 +53,9 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		if err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
+		if consumer.AuthConsumerUser.AuthentifiedUser.Disabled {
+			return sdk.NewErrorFrom(sdk.ErrUserDisabled, "user %s is disabled", consumer.AuthConsumerUser.AuthentifiedUser.Username)
+		}
 
 		token, err := req.StringE("token")
 		if err != nil {

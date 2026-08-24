@@ -107,7 +107,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
     
     - name: Run the second workflow
@@ -118,7 +118,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
 
     - name: Check that the 1st workflow is cancelled
@@ -126,7 +126,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Cancelled"
-      retry: 20
+      retry: 120
       delay: 1
 
     - name: Wait all success

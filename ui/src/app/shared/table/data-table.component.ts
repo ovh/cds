@@ -247,6 +247,14 @@ export class DataTableComponent<T> extends Table<T> implements OnChanges {
         }
     }
 
+    lineKeyActivate(event: Event, i: number, d: T) {
+        if (!this.withLineClick || event.target !== event.currentTarget) {
+            return;
+        }
+        event.preventDefault();
+        this.lineClick(i, d);
+    }
+
     onSelectAllChange(e: any) {
         this.selectedAll = !this.selectedAll;
         this.allData.forEach(d => this.selected[(d as any).key()] = this.selectedAll);

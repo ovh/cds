@@ -4,15 +4,15 @@
     <nz-row>
       <nz-col [nzSpan]="24" class="center">
         <button nz-button nzType="primary" (click)="showAsCodeEditor()">
-          <span nz-icon nzType="code" nzTheme="outline"></span> Edit as code
+          <span nz-icon nzType="code" nzTheme="outline" aria-hidden="true"></span> Edit as code
           @if (previewMode) {
-            <span nz-icon nzType="warning" nzTheme="outline" class="orange" nz-tooltip
+            <span nz-icon nzType="warning" nzTheme="outline" class="orange" nz-tooltip role="img" aria-label="Your pipeline is in preview mode"
             nzTooltipTitle="Your pipeline is in preview mode"></span>
           }
         </button>
         @if (previewMode) {
           <button class="saveBtn" nz-button nzType="primary" (click)="savePreview()">
-            <span nz-icon nzType="save" nzTheme="outline"></span> Save
+            <span nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></span> Save
           </button>
         }
       </nz-col>
@@ -29,13 +29,13 @@
               [class.four]="pipeline.stages.length === 3" [class.five]="pipeline.stages.length === 4"
               [class.six]="pipeline.stages.length === 5" [class.seven]="pipeline.stages.length === 6">
               <div class="stageItem">
-                <a class="pointing" (click)="openEditModal(stage)"><i
-                class="setting icon"></i>{{stage.name}}</a>
-                <span class="move floatRight pointing">&harr;</span>
+                <a class="pointing" appClickable (click)="openEditModal(stage)"><i
+                class="setting icon" aria-hidden="true"></i>{{stage.name}}</a>
+                <span class="move floatRight pointing" aria-hidden="true">&harr;</span>
                 <ul>
                   @for (j of stage.jobs; track j; let i = $index) {
                     <li id="Job{{i}}">
-                      <div class="job nzSegment pointing" [class.inactive]="!j.enabled"
+                      <div class="job nzSegment pointing" appClickable [class.inactive]="!j.enabled"
                                      (click)="selectJob(j, stage)" [class.active]="selectedJob &&
                                         (!j.ref && j.pipeline_action_id === selectedJob?.pipeline_action_id) ||
                                         (j.ref && j.ref === selectedJob?.ref)">
@@ -45,7 +45,7 @@
                   }
                   @if (!readOnly) {
                     <li class="new job">
-                      <div class="new job nzSegment pointing" (click)="addJob(stage)">
+                      <div class="new job nzSegment pointing" appClickable (click)="addJob(stage)">
                         <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
                           {{ 'step_add_job' | translate }}
                         </span>
@@ -64,7 +64,7 @@
               <div class="new stageItem">
                 <ul>
                   <li class="job">
-                    <div id="AddStageAndJob" class="new job nzSegment pointing"
+                    <div id="AddStageAndJob" class="new job nzSegment pointing" appClickable
                       (click)="addStageAndJob()">
                       <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
                         {{ 'step_add_job' | translate }}
@@ -118,7 +118,7 @@
         (nzOnConfirm)="stageEvent('delete')"
         nzPopconfirmPlacement="topLeft"
         nz-button>
-        <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+        <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete
       </button>
     }
   </div>

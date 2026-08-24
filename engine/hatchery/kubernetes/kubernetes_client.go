@@ -10,6 +10,7 @@ import (
 	"github.com/rockbears/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -26,6 +27,15 @@ func init() {
 	log.RegisterField(logNS, logPod)
 }
 
+// newClientSet builds a Kubernetes clientset from cfg.
+// The wire format is pinned to JSON: when ContentType is left empty, client-go defaults the
+// generated clients to protobuf for built-in resources. Pinning it keeps the hatchery talking
+// the same format as before to the user-provided clusters.
+func newClientSet(cfg *rest.Config) (*kubernetes.Clientset, error) {
+	cfg.ContentType = runtime.ContentTypeJSON
+	return kubernetes.NewForConfig(cfg)
+}
+
 func initKubeClient(config HatcheryConfiguration) (KubernetesClient, error) {
 	k8sTimeout := time.Second * 10
 
@@ -36,7 +46,7 @@ func initKubeClient(config HatcheryConfiguration) (KubernetesClient, error) {
 		}
 		cfg.Timeout = k8sTimeout
 
-		clientSet, err := kubernetes.NewForConfig(cfg)
+		clientSet, err := newClientSet(cfg)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Cannot create client with newForConfig")
 		}
@@ -59,7 +69,7 @@ func initKubeClient(config HatcheryConfiguration) (KubernetesClient, error) {
 		}
 
 		// creates the clientset
-		clientSet, err := kubernetes.NewForConfig(configK8s)
+		clientSet, err := newClientSet(configK8s)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Cannot create new config")
 		}
@@ -72,7 +82,7 @@ func initKubeClient(config HatcheryConfiguration) (KubernetesClient, error) {
 		return nil, sdk.WrapError(err, "Unable to configure k8s InClusterConfig")
 	}
 
-	clientSet, err := kubernetes.NewForConfig(cfg)
+	clientSet, err := newClientSet(cfg)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to configure k8s client with InClusterConfig")
 	}

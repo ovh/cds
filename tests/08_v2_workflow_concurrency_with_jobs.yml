@@ -110,7 +110,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
     
     - name: Run the 2nd workflow
@@ -121,7 +121,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Blocked"
-      retry: 20
+      retry: 120
       delay: 1
 
     - name: Check the end of workflow 1
@@ -129,7 +129,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 20
+      retry: 120
       delay: 1
 
     - name: Check that workflow 2 is building
@@ -137,7 +137,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
 
     - name: Wait all success

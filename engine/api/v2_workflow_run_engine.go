@@ -523,6 +523,16 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WithStack(tx.Commit())
 	}
 
+	// The definition of the run changed while it was running: jobs coming from a template or a matrix
+	// replaced the job that declared them. Send the new definition so that a run view can redraw its
+	// graph instead of waiting for a manual refresh.
+	// The initiator of the enqueue is not passed on purpose: it may carry a user id without the user
+	// itself, which Username() dereferences, and the engine rewriting the definition is not the doing
+	// of whoever enqueued it. The run reports its own initiator.
+	if runUpdated {
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunUpdated, *run, allrunJobsMap, runResults, nil)
+	}
+
 	needReEnqueue := hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedJob
 	api.endWorkflowV2Trigger(ctx, run, allrunJobsMap, runJobs, runResults, wrEnqueue, needReEnqueue)
 

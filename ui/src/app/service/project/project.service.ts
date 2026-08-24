@@ -5,8 +5,8 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import { Schema } from 'app/model/json-schema.model';
 import { Key } from 'app/model/keys.model';
 import { LoadOpts, Project, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map, shareReplay } from 'rxjs/operators';
 import { RepositoryAnalysis } from "../../model/analysis.model";
 import { Branch, Tag } from "../../model/repositories.model";
 import { Entity, EntityType } from "../../model/entity.model";
@@ -14,6 +14,8 @@ import { VCSProject } from 'app/model/vcs.model';
 
 @Injectable()
 export class ProjectService {
+
+    private _jsonSchemas: { [type: string]: Observable<Schema> } = {};
 
     constructor(
         private _http: HttpClient
@@ -159,9 +161,22 @@ export class ProjectService {
         return this._http.get<Entity>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities/${entityType}/${entityName}`, { params });
     }
 
+    /**
+     * The schema of an entity type is the same for the whole session: the API builds it from every
+     * action, worker model and region the user can reach. It is read once rather than on every entity
+     * opened, a failed read being forgotten so the next one tries again.
+     */
     getJSONSchema(type: string): Observable<Schema> {
-        return this._http.get<Schema>(`/v2/jsonschema/${type}`).pipe(
-            map(s => Object.assign(new Schema(), s))
-        );
+        if (!this._jsonSchemas[type]) {
+            this._jsonSchemas[type] = this._http.get<Schema>(`/v2/jsonschema/${type}`).pipe(
+                map(s => Object.assign(new Schema(), s)),
+                catchError(e => {
+                    delete this._jsonSchemas[type];
+                    return throwError(() => e);
+                }),
+                shareReplay(1)
+            );
+        }
+        return this._jsonSchemas[type];
     }
 }

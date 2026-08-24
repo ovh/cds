@@ -57,19 +57,19 @@ type webSocketV2Filters []sdk.WebsocketV2Filter
 func (f webSocketV2Filters) HasOneKey(keys ...string) (found bool, needPostCheck bool) {
 	for i := range keys {
 		for _, filter := range f {
-			if keys[i] == filter.Key() {
-				found = true
-				switch filter.Type {
-				case sdk.WebsocketV2FilterTypeGlobal,
-					sdk.WebsocketV2FilterTypeProjectRuns,
-					sdk.WebsocketV2FilterTypeQueue:
-					needPostCheck = true
-				}
-				// If we found a filter that don't need post check we can return directly
-				// If not we will check if another filter match the given keys, this will prevent from running post check if not needed
-				if !needPostCheck {
-					return
-				}
+			if keys[i] != filter.Key() {
+				continue
+			}
+			found = true
+			switch filter.Type {
+			case sdk.WebsocketV2FilterTypeGlobal,
+				sdk.WebsocketV2FilterTypeProjectRuns,
+				sdk.WebsocketV2FilterTypeQueue:
+				needPostCheck = true
+			default:
+				// A filter that needs no post check is enough to allow the event, whatever the other
+				// filters matching it.
+				return true, false
 			}
 		}
 	}
@@ -113,7 +113,8 @@ func (c *websocketV2ClientData) updateEventFilters(ctx context.Context, db gorp.
 		switch f.Type {
 		case sdk.WebsocketV2FilterTypeProject,
 			sdk.WebsocketV2FilterTypeProjectPurgeReport,
-			sdk.WebsocketV2FilterTypeProjectRuns:
+			sdk.WebsocketV2FilterTypeProjectRuns,
+			sdk.WebsocketV2FilterTypeProjectRun:
 			if isMaintainer {
 				continue
 			}
@@ -331,7 +332,7 @@ func (a *API) websocketV2OnMessage(e sdk.FullEventV2) {
 				Event:  e,
 			}); err != nil {
 				log.Debug(ctx, "api.websocketV2OnMessage> can't send to client %s it will be removed: %+v", clientID, err)
-				a.WSServer.RemoveClient(clientID)
+				a.WSV2Server.RemoveClient(clientID)
 			}
 		})
 	}
@@ -341,6 +342,17 @@ func (a *API) websocketV2OnMessage(e sdk.FullEventV2) {
 func (a *API) websocketV2ComputeEventKeys(event sdk.FullEventV2) []string {
 	// Compute required filter(s) key for given event
 	var keys []string
+
+	// Every event carrying a workflow run id is of interest for a client watching that run: the run
+	// itself, its jobs, their steps and their results. Read access on the project was checked when the
+	// filter was registered, so no post check is needed.
+	if event.WorkflowRunID != "" {
+		keys = append(keys, sdk.WebsocketV2Filter{
+			Type:          sdk.WebsocketV2FilterTypeProjectRun,
+			ProjectKey:    event.ProjectKey,
+			WorkflowRunID: event.WorkflowRunID,
+		}.Key())
+	}
 
 	// Event that match project-runs filter
 	switch event.Type {

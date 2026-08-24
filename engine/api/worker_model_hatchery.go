@@ -34,6 +34,11 @@ func (api *API) putBookWorkerModelHandler() service.Handler {
 			return err
 		}
 
+		// a hatchery may hold a stale model list: never let it book a disabled model for registration
+		if m.Disabled {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "worker model %s/%s is disabled", groupName, modelName)
+		}
+
 		s, err := services.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 		if err != nil {
 			return err

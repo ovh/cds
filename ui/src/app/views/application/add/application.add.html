@@ -6,9 +6,9 @@
         <nz-row>
           <nz-col [nzSpan]="16" [nzOffset]="4">
             <nz-form-item>
-              <nz-form-label [nzSpan]="6">Application name *</nz-form-label>
+              <nz-form-label [nzSpan]="6" nzFor="cds-field-appname">Application name *</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="appname" [(ngModel)]="selectedName">
+                <input nz-input type="text" id="cds-field-appname" name="appname" [(ngModel)]="selectedName">
               </nz-form-control>
             </nz-form-item>
             @if (appPatternError) {
@@ -16,9 +16,9 @@
             }
 
             <nz-form-item>
-              <nz-form-label [nzSpan]="6">Description</nz-form-label>
+              <nz-form-label [nzSpan]="6" nzFor="cds-field-appdescription">Description</nz-form-label>
               <nz-form-control>
-                <textarea nz-input type="text" name="applicationdescription" [(ngModel)]="description"></textarea>
+                <textarea nz-input type="text" id="cds-field-appdescription" name="applicationdescription" [(ngModel)]="description"></textarea>
               </nz-form-control>
             </nz-form-item>
 
@@ -27,7 +27,7 @@
               <nz-form-control>
                 @if (!fileTooLarge && img) {
                   <div>
-                    <img class="app-icon" [src]="img" alt="icon" />
+                    <img class="app-icon" [src]="img" alt="Preview of the selected application icon" />
                   </div>
                 }
                 <app-upload-button accept=".png,.jpg,.jpeg" [image]="true" (event)="fileEvent($event)">
@@ -53,9 +53,9 @@
 
             @if (typeofCreation === 'clone') {
               <nz-form-item>
-                <nz-form-label>Application to clone</nz-form-label>
+                <nz-form-label nzFor="cds-field-appclone">Application to clone</nz-form-label>
                 <nz-form-control>
-                  <nz-select nzShowSearch name="appClone" [ngModel]="selectedApplicationName" (ngModelChange)="updateSelectedApplicationToClone($event)">
+                  <nz-select nzShowSearch id="cds-field-appclone" name="appClone" [ngModel]="selectedApplicationName" (ngModelChange)="updateSelectedApplicationToClone($event)">
                     @for (app of project.application_names; track app) {
                       <nz-option [nzValue]="app.name" [nzLabel]="app.name"></nz-option>
                     }

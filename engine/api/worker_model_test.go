@@ -1181,3 +1181,72 @@ func Test_renameWorkerModel(t *testing.T) {
 	assert.Equal(t, 1, len(action.Requirements))
 	assert.Equal(t, updatedModelPath, action.Requirements[0].Value)
 }
+
+// Test_putWorkerModelEOL checks the invariant that gives the end of life date its meaning: the date
+// drives the automatic disabling of a deprecated model, so it is only accepted together with the
+// deprecated flag. Without this, an operator could set a date on an active model and wrongly expect
+// it to be retired.
+func Test_putWorkerModelEOL(t *testing.T) {
+	Test_DeleteAllWorkerModels(t)
+
+	api, db, router := newTestAPI(t)
+
+	g := &sdk.Group{Name: sdk.RandomString(10)}
+	u, jwt := assets.InsertLambdaUser(t, db, g)
+	assets.SetUserGroupAdmin(t, db, g.ID, u.ID)
+
+	model := sdk.Model{
+		Name:       "TestEOL",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
+		Restricted: true,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Shell: "sh -c",
+			Cmd:   "worker",
+		},
+	}
+
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &model))
+
+	vars := map[string]string{
+		"permGroupName": g.Name,
+		"permModelName": model.Name,
+	}
+	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
+	test.NotEmpty(t, uri)
+
+	eol := time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC)
+
+	// an end of life date without the deprecated flag is refused
+	notDeprecated := model
+	notDeprecated.IsDeprecated = false
+	notDeprecated.EOL = &eol
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, notDeprecated)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 400, w.Code, "body: %s", w.Body.String())
+	assert.Contains(t, w.Body.String(), "end of life date can only be set on a deprecated worker model")
+
+	// the same date on a deprecated model is accepted and persisted
+	deprecated := model
+	deprecated.IsDeprecated = true
+	deprecated.EOL = &eol
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, deprecated)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code, "body: %s", w.Body.String())
+
+	reloaded, err := workermodel.LoadByID(context.TODO(), db, model.ID)
+	require.NoError(t, err)
+	require.NotNil(t, reloaded.EOL, "the end of life date must be persisted")
+	assert.Equal(t, eol, reloaded.EOL.UTC())
+	assert.True(t, reloaded.IsDeprecated)
+	assert.False(t, reloaded.Disabled, "a future end of life date must not disable the model")
+}

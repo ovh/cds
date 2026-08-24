@@ -7,7 +7,7 @@
       }
     }
     @if (jobRun?.retry > 0) {
-      <nz-select nzSize="small" [ngModel]="selectedRetry" (ngModelChange)="onRetryChange($event)" nzPlaceHolder="Select Retry" title="Job retry">
+      <nz-select nzSize="small" [ngModel]="selectedRetry" (ngModelChange)="onRetryChange($event)" nzPlaceHolder="Select Retry" title="Job retry" aria-label="Job retry">
         @for (jobRetry of jobRetries; track jobRetry) {
           <nz-option [nzValue]="jobRetry.retry" [nzLabel]="jobRetry.retry"></nz-option>
         }
@@ -24,19 +24,33 @@
 @if (jobRun) {
   <div class="scrollWrapper" (scroll)="onScroll($event)" (dblclick)="$event.stopPropagation();"
     #scrollWrapper>
+    <!-- A job that has not run has no log: show what it waits for and what it will do, rather than an
+         empty panel. -->
+    @if (showPending) {
+      <div class="pending" role="status">
+        <span nz-icon [nzType]="pending.icon" nzTheme="outline" aria-hidden="true"></span>
+        <span class="label">{{pending.label}}</span>
+        @if (pending.since) {
+          <span class="since" title="Queued since">{{pending.since}}</span>
+        }
+      </div>
+    }
     <!-- Display job services and steps -->
     @for (logBlock of tabs[currentTabIndex].logBlocks; track trackStepElement(i, logBlock); let i = $index) {
+      <!-- The infos of the job are a block like the others, but it is not a step: with nothing to
+           say it is left out rather than shown empty. -->
+      @if (!logBlock.information || logBlock.lines.length > 0) {
       <div class="step"
-        >
-        <div class="line info" (click)="clickOpenClose(logBlock)">
+        [attr.role]="websocket && !logBlock.closed ? 'log' : null">
+        <div class="line info" appClickable [attr.aria-expanded]="!logBlock.closed" (click)="clickOpenClose(logBlock)">
           <div class="number">
             @if (logBlock.totalLinesCount > 0 && !logBlock.loading && logBlock.closed) {
               <span nz-icon
-              nzType="caret-right" nzTheme="fill"></span>
+              nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>
             }
             @if (logBlock.totalLinesCount > 0 && !logBlock.loading && !logBlock.closed) {
               <span nz-icon
-              nzType="caret-down" nzTheme="fill"></span>
+              nzType="caret-down" nzTheme="fill" aria-hidden="true"></span>
             }
             @if (logBlock.lines.length === 0 && logBlock.loading) {
               <span nz-icon [nzType]="'loading'"></span>
@@ -67,8 +81,8 @@
             @if (logBlock?.link) {
               <a
                 [href]="'./cdscdn/item/' + logBlock.link.item_type + '/' + logBlock.link.api_ref + '/download?refresh=5'"
-                target="_blank" rel="noopener noreferrer" title="Share/download the step"
-                (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
+                target="_blank" rel="noopener noreferrer" title="Share/download the step" aria-label="Share/download the step"
+                (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline" aria-hidden="true"></i></a>
               }
             </div>
           </div>
@@ -94,10 +108,10 @@
               </div>
             }
             @if (logBlock.lines.length + logBlock.endLines.length < logBlock.totalLinesCount) {
-              <div class="line expand"
+              <div class="line expand" appClickable aria-label="Load next lines"
                 (click)="clickExpandStepDown(logBlock.name, $event)">
                 <div class="number">
-                  <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+                  <i nz-icon nzType="caret-down" nzTheme="fill" aria-hidden="true"></i>
                   {{logBlock.firstDisplayedLineNumber +
                   logBlock.lines.length + 1}}
                 </div>
@@ -105,9 +119,9 @@
               </div>
             }
             @if (logBlock.lines.length + logBlock.endLines.length < (logBlock.totalLinesCount - expandLoadLinesCount) - 1) {
-              <div class="line expand"
+              <div class="line expand" appClickable aria-label="Load previous lines"
                 (click)="clickExpandStepUp(logBlock.name)">
-                <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(logBlock.firstDisplayedLineNumber
+                <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill" aria-hidden="true"></i>{{(logBlock.firstDisplayedLineNumber
                 +
                 logBlock.totalLinesCount) - logBlock.endLines.length}}
               </div>
@@ -138,11 +152,12 @@
           }
         }
       </div>
+      }
     }
     <div class="footer">
-      <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down"
-      nzTheme="fill"></i></div>
-      <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill"></i>
+      <div class="goto" appClickable (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down"
+      nzTheme="fill" aria-hidden="true"></i></div>
+      <div class="goto" appClickable (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill" aria-hidden="true"></i>
     </div>
   </div>
 </div>

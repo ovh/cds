@@ -32,10 +32,17 @@ func (api *API) postGenerateWorkflowFromTemplateHandler() ([]service.RbacChecker
 
 			//craft workflow
 			work := sdk.V2Workflow{
+				Name:       tmplGen.Name,
 				Parameters: tmplGen.Params,
 			}
 
-			yamlWorkflow, err := tmplGen.Template.Resolve(ctx, &work)
+			// Variable sets are simulated by the caller: this endpoint has no project context.
+			vars := make(sdk.TemplateVariableSets, len(tmplGen.Vars))
+			for _, name := range tmplGen.Vars {
+				vars[name] = true
+			}
+
+			yamlWorkflow, err := tmplGen.Template.Resolve(ctx, &work, vars)
 			if err != nil {
 				resp := sdk.V2WorkflowTemplateGenerateResponse{
 					Error:    fmt.Sprintf("%v", err.Error()),

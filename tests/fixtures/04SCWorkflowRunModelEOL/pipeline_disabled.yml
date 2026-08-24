@@ -1,0 +1,10 @@
+version: v1.0
+name: 04SCWorkflowRunModelEOL-PIPELINE-DISABLED
+jobs:
+- job: OnDisabledModel
+  steps:
+  - script:
+    - echo "this job must never start"
+  requirements:
+  - model: shared.infra/04SCWorkflowRunModelEOL-MODEL-DISABLED
+  - region: 04scwrmeol-no-hatchery

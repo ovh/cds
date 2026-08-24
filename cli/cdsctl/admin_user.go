@@ -23,6 +23,8 @@ func adminUsers() *cobra.Command {
 		cli.NewCommand(adminUserSetEmailCmd, adminUserSetEmailRun, nil),
 		cli.NewCommand(adminUserRenameCmd, adminUserRenameRun, nil),
 		cli.NewCommand(adminUserCreateCmd, adminUserCreateRun, nil),
+		cli.NewCommand(adminUserDisableCmd, adminUserDisableRun, nil),
+		cli.NewCommand(adminUserEnableCmd, adminUserEnableRun, nil),
 		cli.NewListCommand(adminUserSearchCmd, adminUserSearchRun, nil),
 		cli.NewDeleteCommand(adminUserDeleteCmd, adminUserDeleteRun, nil),
 		adminUserLink(),
@@ -131,6 +133,56 @@ var adminUserDeleteCmd = cli.Command{
 
 func adminUserDeleteRun(v cli.Values) error {
 	return client.UserDelete(context.Background(), v.GetString("username"))
+}
+
+var adminUserDisableCmd = cli.Command{
+	Name:  "disable",
+	Short: "Disable a user without deleting it: it can no longer sign in and its sessions are revoked",
+	Args: []cli.Arg{
+		{Name: "username"},
+	},
+}
+
+func adminUserDisableRun(v cli.Values) error {
+	return adminUserSetDisabled(v.GetString("username"), true)
+}
+
+var adminUserEnableCmd = cli.Command{
+	Name:  "enable",
+	Short: "Enable a previously disabled user",
+	Args: []cli.Arg{
+		{Name: "username"},
+	},
+}
+
+func adminUserEnableRun(v cli.Values) error {
+	return adminUserSetDisabled(v.GetString("username"), false)
+}
+
+func adminUserSetDisabled(username string, disabled bool) error {
+	ctx := context.Background()
+
+	u, err := client.UserGet(ctx, username)
+	if err != nil {
+		return err
+	}
+	if u.Disabled == disabled {
+		return cli.NewError("user %q is already %s", username, humanDisabledState(disabled))
+	}
+	u.Disabled = disabled
+	if err := client.UserUpdate(ctx, username, u); err != nil {
+		return err
+	}
+
+	fmt.Printf("User %q has been %s\n", username, humanDisabledState(disabled))
+	return nil
+}
+
+func humanDisabledState(disabled bool) string {
+	if disabled {
+		return "disabled"
+	}
+	return "enabled"
 }
 
 var adminUserRenameCmd = cli.Command{

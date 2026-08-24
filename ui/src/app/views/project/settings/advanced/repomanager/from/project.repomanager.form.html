@@ -10,9 +10,9 @@
           <!-- Type selector: editable only on create, read-only on edit -->
           @if (!isEditing) {
             <nz-form-item nz-rows>
-              <nz-form-label [nzSm]="6">Type</nz-form-label>
+              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-type">Type</nz-form-label>
               <nz-form-control [nzSm]="14">
-                <nz-select [(ngModel)]="vcsProject.type" name="type" nzPlaceholder="Select a type">
+                <nz-select id="cds-field-vcs-type" [(ngModel)]="vcsProject.type" name="type" nzPlaceholder="Select a type">
                   @for (t of reposManagerList; track t) {
                     <nz-option [nzValue]="t" [nzLabel]="t"></nz-option>
                   }
@@ -22,28 +22,28 @@
           }
           @if (isEditing) {
             <nz-form-item nz-rows>
-              <nz-form-label [nzSm]="6">Type</nz-form-label>
+              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-type">Type</nz-form-label>
               <nz-form-control [nzSm]="14">
-                <input nz-input type="text" disabled [(ngModel)]="vcsProject.type" name="type">
+                <input nz-input type="text" id="cds-field-vcs-type" disabled [(ngModel)]="vcsProject.type" name="type">
               </nz-form-control>
             </nz-form-item>
           }
           <nz-form-item nz-rows>
-            <nz-form-label [nzSm]="6">Name</nz-form-label>
+            <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-name">Name</nz-form-label>
             <nz-form-control [nzSm]="14">
-              <input nz-input type="text" [(ngModel)]="vcsProject.name" name="name">
+              <input nz-input type="text" id="cds-field-vcs-name" [(ngModel)]="vcsProject.name" name="name">
             </nz-form-control>
           </nz-form-item>
           <nz-form-item nz-rows>
-            <nz-form-label [nzSm]="6">Description</nz-form-label>
+            <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-description">Description</nz-form-label>
             <nz-form-control [nzSm]="14">
-              <input nz-input type="text" [(ngModel)]="vcsProject.description" name="description">
+              <input nz-input type="text" id="cds-field-vcs-description" [(ngModel)]="vcsProject.description" name="description">
             </nz-form-control>
           </nz-form-item>
           <nz-form-item nz-rows>
-            <nz-form-label [nzSm]="6">URL</nz-form-label>
+            <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-url">URL</nz-form-label>
             <nz-form-control [nzSm]="14">
-              <input nz-input type="text" [(ngModel)]="vcsProject.url" name="url">
+              <input nz-input type="text" id="cds-field-vcs-url" [(ngModel)]="vcsProject.url" name="url">
             </nz-form-control>
           </nz-form-item>
           <nz-form-item>
@@ -81,15 +81,15 @@
               CDS needs to call VCS API (getting repos, commits, etc...). These fields are mandatory.
             </nz-form-item>
             <nz-form-item nz-rows>
-              <nz-form-label [nzSm]="6">Username</nz-form-label>
+              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-username">Username</nz-form-label>
               <nz-form-control [nzSm]="14">
-                <input nz-input type="text" [(ngModel)]="vcsProject.auth.username" name="username">
+                <input nz-input type="text" id="cds-field-vcs-username" [(ngModel)]="vcsProject.auth.username" name="username">
               </nz-form-control>
             </nz-form-item>
             <nz-form-item>
-              <nz-form-label [nzSm]="6">Token</nz-form-label>
+              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-token">Token</nz-form-label>
               <nz-form-control [nzSm]="14">
-                <input nz-input type="password" [(ngModel)]="vcsProject.auth.token" name="token">
+                <input nz-input type="password" id="cds-field-vcs-token" [(ngModel)]="vcsProject.auth.token" name="token">
               </nz-form-control>
             </nz-form-item>
             <nz-form-item>
@@ -100,9 +100,9 @@
                 </app-parameter-value>
               </nz-form-control>
               @if (selectedPublicKey) {
-                <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
+                <button nz-button [title]="'key_copy_public' | translate" [attr.aria-label]="'key_copy_public' | translate" ngxClipboard
                   [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
-                  <i nz-icon nzType="copy" nzTheme="outline"></i>
+                  <i nz-icon nzType="copy" nzTheme="outline" aria-hidden="true"></i>
                 </button>
               }
             </nz-form-item>
@@ -113,27 +113,27 @@
               CDS needs to call Gerrit API. SSH Auth is used to access gerrit event stream. User and Token are used to add a review on Changes.
             </nz-form-item>
             <nz-form-item nz-rows>
-              <nz-form-label [nzSm]="6">SSH Username</nz-form-label>
+              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-sshusername">SSH Username</nz-form-label>
               <nz-form-control [nzSm]="14">
-                <input nz-input type="text" [(ngModel)]="vcsProject.auth.sshUsername" name="sshUsername">
+                <input nz-input type="text" id="cds-field-vcs-sshusername" [(ngModel)]="vcsProject.auth.sshUsername" name="sshUsername">
               </nz-form-control>
             </nz-form-item>
             <nz-form-item>
-              <nz-form-label [nzSm]="6">SSH Port</nz-form-label>
+              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-sshport">SSH Port</nz-form-label>
               <nz-form-control [nzSm]="14">
-                <input nz-input type="text" [(ngModel)]="vcsProject.auth.sshPort" name="sshPort">
+                <input nz-input type="text" id="cds-field-vcs-sshport" [(ngModel)]="vcsProject.auth.sshPort" name="sshPort">
               </nz-form-control>
             </nz-form-item>
             <nz-form-item>
-              <nz-form-label [nzSm]="6">Reviewer User</nz-form-label>
+              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-revieweruser">Reviewer User</nz-form-label>
               <nz-form-control [nzSm]="14">
-                <input nz-input type="text" [(ngModel)]="vcsProject.auth.username" name="username">
+                <input nz-input type="text" id="cds-field-vcs-revieweruser" [(ngModel)]="vcsProject.auth.username" name="username">
               </nz-form-control>
             </nz-form-item>
             <nz-form-item>
-              <nz-form-label [nzSm]="6">Reviewer Token</nz-form-label>
+              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-reviewertoken">Reviewer Token</nz-form-label>
               <nz-form-control [nzSm]="14">
-                <input nz-input type="password" [(ngModel)]="vcsProject.auth.token" name="token">
+                <input nz-input type="password" id="cds-field-vcs-reviewertoken" [(ngModel)]="vcsProject.auth.token" name="token">
               </nz-form-control>
             </nz-form-item>
           }

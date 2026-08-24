@@ -36,6 +36,7 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	w.actions = info.AsCodeActions
 	w.currentJobV2.runJobContext = info.Contexts
 	w.actionPlugin = make(map[string]*sdk.GRPCPlugin)
+	w.checkedPluginBinaries = make(map[string]*sdk.GRPCPluginBinary)
 
 	// setup blur
 	w.blur, err = sdk.NewBlur(w.currentJobV2.sensitiveDatas)

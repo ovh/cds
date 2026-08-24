@@ -1,18 +1,18 @@
 <div class="actions">
-	<div title="Start a Workflow" (click)="openRunStartDrawer()">
-		<span nz-icon nzType="play-circle" [nzTheme]="isNight ? 'fill' : 'outline'"></span>
+	<div title="Start a Workflow" appClickable (click)="openRunStartDrawer()">
+		<span nz-icon nzType="play-circle" [nzTheme]="isNight ? 'fill' : 'outline'" aria-hidden="true"></span>
 		Start a Workflow
 	</div>
 	<a [routerLink]="['/project', project.key, 'run']" title="Workflow Runs">
-		<span nz-icon nzType="unordered-list" nzTheme="outline"></span>
+		<span nz-icon nzType="unordered-list" nzTheme="outline" aria-hidden="true"></span>
 		Show Workflow Runs
 	</a>
-	<div title="Add a Repository" (click)="openRepositoryAddDrawer()">
-		<span nz-icon nzType="plus-circle" [nzTheme]="isNight ? 'fill' : 'outline'"></span>
+	<div title="Add a Repository" appClickable (click)="openRepositoryAddDrawer()">
+		<span nz-icon nzType="plus-circle" [nzTheme]="isNight ? 'fill' : 'outline'" aria-hidden="true"></span>
 		Add a Repository
 	</div>
 	<a [routerLink]="['/project', project.key, 'settings']" title="Edit settings">
-		<span nz-icon nzType="setting" [nzTheme]="isNight ? 'fill' : 'outline'"></span>
+		<span nz-icon nzType="setting" [nzTheme]="isNight ? 'fill' : 'outline'" aria-hidden="true"></span>
 		Edit settings
 	</a>
 </div>

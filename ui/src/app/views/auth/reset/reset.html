@@ -12,9 +12,9 @@
   @if (!showSuccessMessage) {
     <form nz-form (ngSubmit)="resetPassword(loginForm)" #loginForm="ngForm">
       <nz-form-item>
-        <nz-form-label>New password</nz-form-label>
+        <nz-form-label nzFor="cds-field-password">New password</nz-form-label>
         <nz-form-control>
-          <input nz-input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel
+          <input nz-input type="password" name="password" id="cds-field-password" (keyup)="onChangeSignupPassword($event)" ngModel
             required
             [disabled]="loading">
           @if (!passwordError && passwordLevel !== null) {

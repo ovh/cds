@@ -104,6 +104,15 @@ func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.GRP
 	return get(ctx, db, query, LoadOptions.WithIntegrationModelName)
 }
 
+// LoadByNameForUpdate retrieves in database the plugin with given name and locks its row until the
+// end of the transaction. All the binaries of a plugin are stored in a single row: concurrent
+// updates of the binaries of a same plugin have to be serialized, otherwise the last writer drops
+// the binaries referenced by the others.
+func LoadByNameForUpdate(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.GRPCPlugin, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM grpc_plugin WHERE name = $1 FOR UPDATE").Args(name)
+	return get(ctx, db, query, LoadOptions.WithIntegrationModelName)
+}
+
 // LoadByIntegrationModelIDAndType retrieves in database a single plugin associated to a integration model id with a specified type.
 func LoadByIntegrationModelIDAndType(ctx context.Context, db gorp.SqlExecutor, integrationModelID int64, typePlugin string) (*sdk.GRPCPlugin, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM grpc_plugin WHERE integration_model_id = $1 AND type = $2").Args(integrationModelID, typePlugin)

@@ -21,7 +21,7 @@
     @if (currentTabIndex === 0) {
       @for (step of steps; track trackStepElement(i, step); let i = $index) {
         <div class="step">
-          <div class="line info" (click)="clickOpen(step)">
+          <div class="line info" appClickable [attr.aria-expanded]="!!step.open" (click)="clickOpen(step)">
             <div class="number">
               @if (step.totalLinesCount > 0 && !step.loading && !step.open) {
                 <span nz-icon nzType="caret-right" nzTheme="fill"></span>
@@ -59,8 +59,8 @@
                 @if (step?.link) {
                   <a
                     [href]="'./cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download?refresh=5'"
-                    target="_blank" rel="noopener noreferrer" title="Share/download the step"
-                    (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
+                    target="_blank" rel="noopener noreferrer" title="Share/download the step" aria-label="Share/download the step"
+                    (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline" aria-hidden="true"></i></a>
                   }
                 </div>
               }
@@ -88,7 +88,7 @@
               }
               @if (step.lines.length + step.endLines.length < step.totalLinesCount) {
                 <div class="line expand"
-                  (click)="clickExpandStepDown(i, $event)">
+                  appClickable aria-label="Show more lines" (click)="clickExpandStepDown(i, $event)">
                   <div class="number">
                     <i nz-icon nzType="caret-down" nzTheme="fill"></i>
                     {{step.firstDisplayedLineNumber +
@@ -99,7 +99,7 @@
               }
               @if (step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1) {
                 <div class="line expand"
-                  (click)="clickExpandStepUp(i, $event)">
+                  appClickable aria-label="Show more lines" (click)="clickExpandStepUp(i, $event)">
                   <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(step.firstDisplayedLineNumber +
                   step.totalLinesCount) - step.endLines.length}}
                 </div>
@@ -133,7 +133,7 @@
     }
     <!-- Display service logs -->
     @if (currentTabIndex > 0) {
-      <div class="step">
+      <div class="step" role="log">
         @for (line of services[currentTabIndex-1].lines; track trackLineElement(j, line); let j = $index) {
           <div class="line"
             >
@@ -145,7 +145,7 @@
         }
         @if (services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < services[currentTabIndex-1].totalLinesCount) {
           <div class="line expand"
-            (click)="clickExpandServiceDown(currentTabIndex-1)">
+            appClickable aria-label="Show more lines" (click)="clickExpandServiceDown(currentTabIndex-1)">
             <div class="number"><i nz-icon nzType="caret-down" nzTheme="fill"></i>{{services[currentTabIndex-1].lines.length + 1}}
           </div>
           <div class="value">…</div>
@@ -153,7 +153,7 @@
       }
       @if (services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < (services[currentTabIndex-1].totalLinesCount - expandLoadLinesCount) - 1) {
         <div class="line expand"
-          (click)="clickExpandServiceUp(currentTabIndex-1)">
+          appClickable aria-label="Show more lines" (click)="clickExpandServiceUp(currentTabIndex-1)">
           <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(services[currentTabIndex-1].totalLinesCount) -
           services[currentTabIndex-1].endLines.length}}
         </div>
@@ -175,8 +175,8 @@
   </div>
 }
 <div class="footer">
-  <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down" nzTheme="fill"></i></div>
-  <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill"></i></div>
+  <div class="goto" appClickable (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down" nzTheme="fill" aria-hidden="true"></i></div>
+  <div class="goto" appClickable (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill" aria-hidden="true"></i></div>
 </div>
 </div>
 }

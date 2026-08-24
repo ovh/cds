@@ -29,6 +29,9 @@ type Group struct {
 	Members      GroupMembers `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
 	Admin        bool         `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
 	Organization string       `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization" db:"-"`
+	// NoActiveMember is true when no member of the group can act: every member is
+	// disabled, or the group has no member at all
+	NoActiveMember bool `json:"no_active_member,omitempty" yaml:"-" cli:"no_active_member" db:"-"`
 }
 
 // AdminCreateGroup is used by cdsctl admin group create command.
@@ -154,6 +157,8 @@ type GroupMember struct {
 	Fullname     string `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
 	Admin        bool   `json:"admin,omitempty" yaml:"admin,omitempty" cli:"admin"`
 	Organization string `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization"`
+	// Disabled is read only, it is set from the member's user and ignored on write
+	Disabled bool `json:"disabled,omitempty" yaml:"disabled,omitempty" cli:"disabled"`
 }
 
 // GroupPermission represent a group and his role in the project

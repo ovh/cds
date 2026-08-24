@@ -25,12 +25,12 @@
         <tr>
           <td>
             @if (mode === 'edit') {
-              <input nz-input [(ngModel)]="p.name" (keydown)="p.hasChanged = true"
+              <input nz-input aria-label="Parameter name" [(ngModel)]="p.name" (keydown)="p.hasChanged = true"
                 [disabled]="p.updating">
             }
             @if (mode === 'launcher') {
-              <span class="help" nz-tooltip [nzTooltipTitle]="p.description || 'No description'" nzTooltipPlacement="left">
-                <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+              <span class="help" nz-tooltip [nzTooltipTitle]="p.description || 'No description'" nzTooltipPlacement="left" role="img" [attr.aria-label]="p.description || 'No description'">
+                <i nz-icon nzType="question-circle" nzTheme="outline" aria-hidden="true"></i>
               </span>
             }
             @if (mode !== 'edit') {
@@ -65,7 +65,7 @@
           @if (mode !== 'launcher' && mode !== 'job') {
             <td>
               @if (mode !== 'launcher') {
-                <textarea nz-input (keydown)="p.hasChanged = true;"
+                <textarea nz-input aria-label="Parameter description" (keydown)="p.hasChanged = true;"
                   [class.lock]="mode !== 'edit'" [(ngModel)]="p.description"
                   rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'">
                 </textarea>

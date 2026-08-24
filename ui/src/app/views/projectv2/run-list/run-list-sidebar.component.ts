@@ -20,6 +20,7 @@ import { ProjectRunFilterService } from 'app/service/project/project-run-filter.
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { ErrorUtils } from 'app/shared/error.utils';
+import { FilterText } from 'app/shared/input/input-filter.component';
 
 @Component({
     standalone: false,
@@ -79,19 +80,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 		// Load personal filters
 		this.searchesSubscription = this._store.select(PreferencesState.selectProjectRunFilters(this.project.key)).subscribe(searches => {
 			this.searches = (searches ?? []).map(s => {
-				let params = {};
-				s.value.split(' ').forEach(f => {
-					const parts = f.split(':');
-					if (parts.length === 2 && parts[1] !== '') {
-						if (Array.isArray(params[parts[0]])) {
-							params[parts[0]].push(parts[1]);
-						} else if (params[parts[0]]) {
-							params[parts[0]] = [params[parts[0]], parts[1]];
-						} else {
-							params[parts[0]] = parts[1];
-						}
-					}
-				});
+				let params = FilterText.toQueryParams(s.value);
 				if (s.sort) { params['sort'] = s.sort; }
 				return {
 					name: s.name,
@@ -110,19 +99,7 @@ export class ProjectV2RunListSidebarComponent implements OnInit, OnDestroy {
 	}
 
 	parseFilterToParams(filter: ProjectRunFilter): any {
-		let params = {};
-		filter.value.split(' ').forEach(f => {
-			const parts = f.split(':');
-			if (parts.length === 2 && parts[1] !== '') {
-				if (Array.isArray(params[parts[0]])) {
-					params[parts[0]].push(parts[1]);
-				} else if (params[parts[0]]) {
-					params[parts[0]] = [params[parts[0]], parts[1]];
-				} else {
-					params[parts[0]] = parts[1];
-				}
-			}
-		});
+		let params = FilterText.toQueryParams(filter.value);
 		if (filter.sort) {
 			params['sort'] = filter.sort;
 		}

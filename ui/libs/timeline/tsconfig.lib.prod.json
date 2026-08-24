@@ -1,0 +1,15 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "extends": "./tsconfig.lib.json",
+  "compilerOptions": {
+    "declarationMap": false,
+    "rootDir": "../../",
+    "baseUrl": "../../",
+    "paths": {
+      "@model/*": ["src/app/model/*"]
+    },
+  },
+  "angularCompilerOptions": {
+    "compilationMode": "partial"
+  }
+}

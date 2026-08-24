@@ -43,6 +43,28 @@ func LoadLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, gro
 	return getAllLinksGroupUser(ctx, db, query)
 }
 
+// LoadGroupIDsWithoutActiveMember returns, among the given group ids, those that have no
+// enabled member. A group without any member is returned as well: in both cases nobody
+// can act through the group.
+func LoadGroupIDsWithoutActiveMember(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]int64, error) {
+	if len(groupIDs) == 0 {
+		return nil, nil
+	}
+	var ids []int64
+	_, err := db.Select(&ids, `
+		SELECT g.id
+		FROM "group" g
+		WHERE g.id = ANY(string_to_array($1, ',')::int[])
+		AND NOT EXISTS (
+			SELECT 1
+			FROM group_authentified_user gau
+			JOIN authentified_user au ON au.id = gau.authentified_user_id
+			WHERE gau.group_id = g.id AND NOT au.disabled
+		)
+	`, gorpmapping.IDsToQueryString(groupIDs))
+	return ids, sdk.WithStack(err)
+}
+
 // LoadLinksGroupUserForUserIDs returns data from group_user table for given user ids.
 func LoadLinksGroupUserForUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []string) (LinksGroupUser, error) {
 	query := gorpmapping.NewQuery(`

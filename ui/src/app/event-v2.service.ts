@@ -6,6 +6,7 @@ import { WebsocketV2Event, WebsocketV2Filter, WebsocketV2FilterType } from './mo
 import { Store } from '@ngxs/store';
 import { AddEventV2 } from './store/event-v2.action';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable()
 export class EventV2Service {
@@ -13,6 +14,7 @@ export class EventV2Service {
     websocket: WebSocketSubject<any>;
     currentFilters: Array<WebsocketV2Filter>;
     private connected: boolean;
+    private _connected = new BehaviorSubject<boolean>(false);
 
     constructor(
         private _router: Router,
@@ -20,9 +22,25 @@ export class EventV2Service {
         private _store: Store
     ) { }
 
+    /**
+     * Emits whenever the websocket opens or closes. Events sent while it was closed are lost, so a
+     * view that mirrors a state through events has to refresh itself when it opens again.
+     */
+    get connected$(): Observable<boolean> {
+        return this._connected.asObservable();
+    }
+
     stopWebsocket() {
         if (this.websocket) {
             this.websocket.complete();
+        }
+        this.setConnected(false);
+    }
+
+    private setConnected(connected: boolean): void {
+        this.connected = connected;
+        if (this._connected.value !== connected) {
+            this._connected.next(connected);
         }
     }
 
@@ -36,11 +54,16 @@ export class EventV2Service {
             openObserver: {
                 next: value => {
                     if (value.type === 'open') {
-                        this.connected = true;
                         if (this.currentFilters) {
                             this.websocket.next(this.currentFilters);
                         }
+                        this.setConnected(true);
                     }
+                }
+            },
+            closeObserver: {
+                next: () => {
+                    this.setConnected(false);
                 }
             }
         });
@@ -56,9 +79,11 @@ export class EventV2Service {
                     return ok;
                 }),
                 concatMap((message: WebsocketV2Event) => this._store.dispatch(new AddEventV2(message.event))),
-            ).subscribe((e) => { console.log(e) }, (err) => {
+            ).subscribe(() => { }, (err) => {
+                this.setConnected(false);
                 console.error('Error: ', err);
             }, () => {
+                this.setConnected(false);
                 console.warn('Websocket Completed');
             });
     }

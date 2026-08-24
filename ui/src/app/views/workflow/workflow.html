@@ -3,7 +3,7 @@
     <nz-tag class="labelFeature" [title]="'workflow_from_template_btn' | translate"
       [nzColor]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : ''"
       nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromTemplate"
-      nzPopoverPlacement="bottomRight"><i nz-icon nzType="copy" nzTheme="outline"></i>template</nz-tag>
+      nzPopoverPlacement="bottomRight"><i nz-icon nzType="copy" nzTheme="outline" aria-hidden="true"></i>template</nz-tag>
       <ng-template #popupFromTemplate>
         <div class="content infoPopup">
           @if (workflow && workflow.from_template) {
@@ -35,7 +35,7 @@
       </ng-template>
       <nz-tag class="labelFeature" [title]="'workflow_from_repository_btn' | translate" [nzColor]="asCodeTagColor"
         nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
-        nzPopoverPlacement="bottomRight"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
+        nzPopoverPlacement="bottomRight"><i nz-icon nzType="code" nzTheme="outline" aria-hidden="true"></i>as code</nz-tag>
         <ng-template #popupFromRepository>
           <div class="content infoPopup">
             @if (workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))) {

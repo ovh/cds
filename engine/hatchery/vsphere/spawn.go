@@ -14,6 +14,7 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -66,6 +67,11 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	if spawnArgs.Model.ModelV2 == nil {
 		return sdk.WithStack(fmt.Errorf("worker model v1 is no longer supported on vSphere"))
 	}
+
+	// ModelConfig.GuestInfo is the single gate: the clone and the spawn must agree
+	// on how the VM is driven, and the provisioning loop only ever knows the
+	// VMware template name.
+	guestInfo := h.isGuestInfoImage(spawnArgs.Model.GetVSphereImage())
 
 	// Amendment C: Resolve flavor before spawning
 	var flavor *VSphereFlavorConfig
@@ -175,6 +181,15 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(err, "unable to set worker annotation on VM %q", spawnArgs.WorkerName)
 	}
 
+	// A guestinfo model starts its worker from the guest at boot, so the bootstrap
+	// has to be in place before power-on. On failure the deferred teardown above
+	// shuts the VM down and marks it for deletion, as for any other spawn step.
+	if guestInfo {
+		if err := h.setupGuestInfoBootstrap(ctx, provisionnedVMWorker, spawnArgs); err != nil {
+			return sdk.WrapError(err, "unable to push guestinfo bootstrap to VM %q", spawnArgs.WorkerName)
+		}
+	}
+
 	// Power on, tolerating a VM that is not immediately startable right after the
 	// reconfigure/annotation update.
 	if err := h.startVirtualMachineWithRetry(ctx, provisionnedVMWorker); err != nil {
@@ -186,8 +201,13 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(err, "unable to get VM %q IP Address", spawnArgs.WorkerName)
 	}
 
-	if err := h.launchScriptWorker(ctx, spawnArgs, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
-		return err
+	// The guest already has everything it needs; there is no guest-operations
+	// channel to drive (and no credentials to do so). A worker that fails to
+	// start surfaces as a CDS registration timeout, handled by killAwolServers.
+	if !guestInfo {
+		if err := h.launchScriptWorker(ctx, spawnArgs, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
+			return err
+		}
 	}
 
 	spawnOK = true
@@ -251,12 +271,11 @@ func (h *HatcheryVSphere) checkVirtualMachineIsReady(ctx context.Context, model 
 	return nil
 }
 
-// launchScriptWorker launch a script on the worker
-func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments, vm *object.VirtualMachine, vmName string) error {
-	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, vm, nil, vmName); err != nil {
-		return err
-	}
-
+// buildWorkerBootstrap renders the model's PreCmd/Cmd/PostCmd into the command
+// that starts the worker, along with the worker configuration it needs. It is
+// shared by the guest-operations bootstrap (launchScriptWorker) and the guestinfo
+// one (setupGuestInfoBootstrap), so both hand the guest the exact same command.
+func (h *HatcheryVSphere) buildWorkerBootstrap(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, workerruntime.WorkerConfig, error) {
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
 	udata := spawnArgs.Model.GetPreCmd() + "\n" + spawnArgs.Model.GetCmd()
@@ -267,7 +286,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 
 	tmpl, err := template.New("udata").Parse(udata)
 	if err != nil {
-		return sdk.NewErrorFrom(err, "unable to parse template: %v", err)
+		return "", workerConfig, sdk.NewErrorFrom(err, "unable to parse template: %v", err)
 	}
 
 	udataParam := struct {
@@ -298,7 +317,48 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
-		return sdk.NewErrorFrom(err, "unable to execute template: %v", err)
+		return "", workerConfig, sdk.NewErrorFrom(err, "unable to execute template: %v", err)
+	}
+
+	return buffer.String(), workerConfig, nil
+}
+
+// setupGuestInfoBootstrap pushes the per-worker bootstrap as guestinfo keys. It
+// must run while the VM is still powered off: the guest reads these keys at boot
+// and starts the worker itself, there being no guest-operations channel to drive
+// it. The image no-ops when guestinfo.cds.cmd is unset, which is what makes the
+// provision boot harmless.
+func (h *HatcheryVSphere) setupGuestInfoBootstrap(ctx context.Context, vm *object.VirtualMachine, spawnArgs hatchery.SpawnArguments) error {
+	cmd, workerConfig, err := h.buildWorkerBootstrap(ctx, spawnArgs)
+	if err != nil {
+		return err
+	}
+
+	// InjectEnvVars are deliberately not emitted as separate keys: the worker
+	// reads them from the config it decodes out of guestinfo.cds.config. A copy
+	// would never be read, and unlike the config — which the guest scrubs once
+	// consumed — it would linger in the VM config in clear text.
+	extraConfig := []types.BaseOptionValue{
+		&types.OptionValue{Key: "guestinfo.cds.config", Value: workerConfig.EncodeBase64()},
+		&types.OptionValue{Key: "guestinfo.cds.cmd", Value: cmd},
+		// The VM was renamed from its provision name just above; refresh the
+		// hostname the guest applies on this boot.
+		&types.OptionValue{Key: "guestinfo.cds.net.hostname", Value: spawnArgs.WorkerName},
+	}
+
+	log.Info(ctx, "pushing guestinfo bootstrap to %q", spawnArgs.WorkerName)
+	return h.vSphereClient.ReconfigureVirtualMachine(ctx, vm, types.VirtualMachineConfigSpec{ExtraConfig: extraConfig})
+}
+
+// launchScriptWorker launch a script on the worker
+func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments, vm *object.VirtualMachine, vmName string) error {
+	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, vm, nil, vmName); err != nil {
+		return err
+	}
+
+	script, workerConfig, err := h.buildWorkerBootstrap(ctx, spawnArgs)
+	if err != nil {
+		return err
 	}
 
 	if err := h.checkVirtualMachineIsReady(ctx, spawnArgs.Model, vm, spawnArgs.WorkerName); err != nil {
@@ -329,7 +389,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 		env = append(env, k+"="+v)
 	}
 
-	if err := h.launchClientOp(ctx, vm, spawnArgs.Model, buffer.String(), env); err != nil {
+	if err := h.launchClientOp(ctx, vm, spawnArgs.Model, script, env); err != nil {
 		log.Warn(ctx, "launchScript> cannot start program %s", err)
 		log.Error(ctx, "cannot start program on virtual machine %q: %v", spawnArgs.WorkerName, err)
 		log.Warn(ctx, "shutdown virtual machine %q", spawnArgs.WorkerName)

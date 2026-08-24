@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/engine/api"
+	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -140,6 +142,19 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 
 	if hconfig.VSphereDatacenterString == "" {
 		return sdk.WithStack(fmt.Errorf("vsphere-datacenter is mandatory"))
+	}
+
+	if err := hatcheryCommon.CheckInjectSSHPublicKeys(hconfig.InjectSSHPublicKeys); err != nil {
+		return sdk.WithStack(fmt.Errorf("invalid inject SSH public keys: %v", err))
+	}
+
+	// A malformed CIDR would silently produce a broken guest allowlist, i.e. a
+	// worker unreachable for debug (or, depending on the guest, one that does not
+	// filter at all).
+	for _, cidr := range hconfig.SSHAllowedCIDRs {
+		if _, _, err := net.ParseCIDR(cidr); err != nil {
+			return sdk.WithStack(fmt.Errorf("invalid sshAllowedCIDRs entry %q: %v", cidr, err))
+		}
 	}
 
 	if hconfig.IPRange != "" {

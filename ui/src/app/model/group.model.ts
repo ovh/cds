@@ -1,14 +1,14 @@
 import { WithKey } from 'app/shared/table/data-table.component';
-import { User } from './user.model';
 
 export const SharedInfraGroupName = 'shared.infra';
 
 export class Group implements WithKey {
     id: number;
     name: string;
-    members: Array<User>;
+    members: Array<GroupMember>;
     admin: boolean;
     organization: string;
+    no_active_member: boolean;
 
     constructor() {
         this.name = '';
@@ -25,6 +25,7 @@ export class GroupMember {
     username: string;
     fullname: string;
     admin: boolean;
+    disabled: boolean;
 }
 
 export class Groups {

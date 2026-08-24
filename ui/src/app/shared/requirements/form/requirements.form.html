@@ -26,13 +26,13 @@
         @if (workerModelLinked) {
           <nz-form-item>
             @if (workerModelLinked.is_official) {
-              <span nz-tooltip nzTooltipTitle="{{'worker_model_official_tooltip' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="check-circle" nzTheme="outline" class="green"></i></span>
+              <span nz-tooltip nzTooltipTitle="{{'worker_model_official_tooltip' | translate}}" nzTooltipPlacement="top" role="img" [attr.aria-label]="'worker_model_official_tooltip' | translate"><i nz-icon nzType="check-circle" nzTheme="outline" class="green" aria-hidden="true"></i></span>
             }
             @if (!workerModelLinked.is_official) {
-              <span nz-tooltip nzTooltipTitle="{{'worker_model_unofficial' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="close-circle" nzTheme="outline" class="red"></i></span>
+              <span nz-tooltip nzTooltipTitle="{{'worker_model_unofficial' | translate}}" nzTooltipPlacement="top" role="img" [attr.aria-label]="'worker_model_unofficial' | translate"><i nz-icon nzType="close-circle" nzTheme="outline" class="red" aria-hidden="true"></i></span>
             }
             @if (workerModelLinked.is_deprecated) {
-              <span nz-tooltip nzTooltipTitle="{{'worker_model_deprecated_tooltip' | translate}}" nzTooltipPlacement="top"><i nz-icon nzType="warning" nzTheme="outline" class="orange"></i></span>
+              <span nz-tooltip nzTooltipTitle="{{'worker_model_deprecated_tooltip' | translate}}" nzTooltipPlacement="top" role="img" [attr.aria-label]="'worker_model_deprecated_tooltip' | translate"><i nz-icon nzType="warning" nzTheme="outline" class="orange" aria-hidden="true"></i></span>
             }
           </nz-form-item>
         }
@@ -44,16 +44,16 @@
               nzTooltipPlacement="top"
               >
               <button nz-button nzType="primary" name="addBtn"
-                (click)="onSubmitAddRequirement()">
-                <i nz-icon nzType="plus" nzTheme="outline"></i>
+                (click)="onSubmitAddRequirement()" aria-label="Add requirement">
+                <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
               </button>
             </div>
           }
           @if ((newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname) && (newRequirement.type !== 'region' || !config.disableRegion)) {
             <div>
               <button nz-button nzType="primary" name="addBtn"
-                (click)="onSubmitAddRequirement()">
-                <i nz-icon nzType="plus" nzTheme="outline"></i>
+                (click)="onSubmitAddRequirement()" aria-label="Add requirement">
+                <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
               </button>
             </div>
           }

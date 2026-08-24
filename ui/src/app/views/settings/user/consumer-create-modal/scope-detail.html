@@ -5,7 +5,7 @@
         {{scopeDetail.scope}}
       </nz-col>
       <nz-col [nzSpan]="10" [nzOffset]="8">
-        <a class="pointing advanced" (click)="clickAdvanced()">Advanced</a>
+        <a class="pointing advanced" appClickable (click)="clickAdvanced()">Advanced</a>
         <label nz-checkbox [ngModel]="allReadRoutesSelected" (nzCheckedChange)="clickSelectAllRoutesRead()">Read</label>
         <label nz-checkbox [ngModel]="allWriteRoutesSelected" (nzCheckedChange)="clickSelectAllRoutesWrite()">Write</label>
         <label nz-checkbox [ngModel]="allRoutesSelected" (nzCheckedChange)="clickSelectAllRoutes()">All</label>

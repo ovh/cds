@@ -12,14 +12,25 @@ import (
 )
 
 var (
-	rootKey       = cache.Key("repositories", "operations")
-	processorKey  = cache.Key("repositories", "processor")
-	locksKey      = cache.Key("repositories", "locks")
-	lastAccessKey = cache.Key("repositories", "lastAccess")
+	rootKey           = cache.Key("repositories", "operations")
+	processorKey      = cache.Key("repositories", "processor")
+	locksKey          = cache.Key("repositories", "locks")
+	lastAccessRootKey = cache.Key("repositories", "lastAccess")
 )
 
 type dao struct {
 	store cache.Store
+	// hostname scopes lastAccess keys to this instance: clones live on a local
+	// filesystem, so retention must reflect each instance's own usage.
+	hostname string
+}
+
+func (d *dao) lastAccessKey(repoUUID string) string {
+	return cache.Key(lastAccessRootKey, d.hostname, repoUUID)
+}
+
+func (d *dao) saveLastAccess(repoUUID string, expiration time.Time, ttlSeconds int) {
+	d.store.SetWithTTL(d.lastAccessKey(repoUUID), expiration, ttlSeconds)
 }
 
 func (d *dao) saveOperation(o *sdk.Operation) error {
@@ -88,7 +99,7 @@ func (d *dao) unlock(ctx context.Context, uuid string) error {
 }
 
 func (d *dao) isExpired(ctx context.Context, uuid string) (time.Time, bool) {
-	k := cache.Key(lastAccessKey, uuid)
+	k := d.lastAccessKey(uuid)
 	var v time.Time
 	find, err := d.store.Get(k, &v)
 	if err != nil {

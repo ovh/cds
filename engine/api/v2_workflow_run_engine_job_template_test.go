@@ -1159,3 +1159,137 @@ spec: |-
 		}
 	}
 }
+
+// Same gating as TestCraftWorkflowFromTemplateWithVariableSets, but through job.from: that path
+// resolves the template in checkJobTemplate, which loads the project variable sets by itself.
+func TestWorkflowTrigger_JobTemplateWithVariableSets(t *testing.T) {
+	ctx := context.TODO()
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       "vs-deploy",
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:        sdk.RegionRoleExecute,
+				AllProjects: true,
+				RegionID:    reg.ID,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	e := sdk.Entity{
+		ProjectKey:          proj.Key,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/mytmpl.yml",
+		Name:                "myJobTemplate",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		ProjectRepositoryID: repo.ID,
+		UserID:              &admin.ID,
+		Data: `name: mytemplate
+spec: |-
+  jobs:
+    it:
+    [[- if .vars.Exists "vs-deploy" ]]
+    itDeploy:
+      vars: [vs-deploy]
+    [[- end ]]
+    [[- if .vars.Exists "vs-missing" ]]
+    itNever:
+    [[- end ]]`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &e))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123456789",
+		WorkflowRef:  "refs/heads/master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: "myworkflow",
+			Jobs: map[string]sdk.V2Job{
+				"root": {
+					From: ".cds/workflow-templates/mytmpl.yml",
+				},
+			},
+		}},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}))
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	for _, ri := range runInfos {
+		t.Logf("RunInfo: %s", ri.Message)
+	}
+	require.Equal(t, 0, len(runInfos))
+
+	wrAfter, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrAfter.Status)
+
+	require.Contains(t, wrAfter.WorkflowData.Workflow.Jobs, "it")
+	require.Contains(t, wrAfter.WorkflowData.Workflow.Jobs, "itDeploy")
+	// The job guarded by a missing variable set is not in the workflow at all
+	require.NotContains(t, wrAfter.WorkflowData.Workflow.Jobs, "itNever")
+	require.Equal(t, 2, len(wrAfter.WorkflowData.Workflow.Jobs))
+
+	require.Equal(t, []string{"vs-deploy"}, wrAfter.WorkflowData.Workflow.Jobs["itDeploy"].VariableSets)
+}

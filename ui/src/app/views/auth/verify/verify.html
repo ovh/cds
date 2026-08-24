@@ -9,9 +9,9 @@
           <nz-alert nzType="info" nzMessage="If you just generated the CDS configuration you can give an optional init token."></nz-alert>
           <form nz-form (ngSubmit)="verify(verifyForm)" #verifyForm="ngForm">
             <nz-form-item>
-              <nz-form-label>Initialization token</nz-form-label>
+              <nz-form-label nzFor="cds-field-init-token">Initialization token</nz-form-label>
               <nz-form-control>
-                <input nz-input type="password" name="init_token" ngModel required>
+                <input nz-input type="password" name="init_token" id="cds-field-init-token" ngModel required>
               </nz-form-control>
             </nz-form-item>
             <nz-form-item nzJustify="end">
