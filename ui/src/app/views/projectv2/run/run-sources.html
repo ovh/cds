@@ -1,10 +1,36 @@
-<nz-tabs nzType="card" nzSize="small" [nzSelectedIndex]="selectedFileIndex">
-  @for (f of filenames; track f; let i = $index) {
-    <nz-tab [nzTitle]="f" (nzSelect)="selectFile(i)"></nz-tab>
-  }
-</nz-tabs>
+<div class="toolbar" (dblclick)="$event.stopPropagation();">
+  <button nz-button nzType="text" nzSize="small" [disabled]="!canBack" (click)="back()"
+    title="Back" aria-label="Back">
+    <span nz-icon nzType="arrow-left" aria-hidden="true"></span>
+  </button>
+  <button nz-button nzType="text" nzSize="small" [disabled]="!canForward" (click)="forward()"
+    title="Forward" aria-label="Forward">
+    <span nz-icon nzType="arrow-right" aria-hidden="true"></span>
+  </button>
 
-@if (files.length > 0) {
-  <nz-code-editor #editor [ngModel]="files[selectedFileIndex]" [nzEditorOption]="editorOption"
+  <label class="cds-sr-only" for="cds-field-run-source">Opened source file</label>
+  <nz-tree-select class="path" nzId="cds-field-run-source" nzSize="small" nzShowSearch
+    nzPlaceHolder="Select a source" [nzNodes]="treeNodes" [nzDefaultExpandAll]="true"
+    [nzDisplayWith]="displayPath" [nzTreeTemplate]="nodeTemplate" [ngModel]="selectedTreeKey"
+    (ngModelChange)="onTreeSelect($event)" [nzDropdownMatchSelectWidth]="true"
+    [title]="current?.key"></nz-tree-select>
+</div>
+
+<ng-template #nodeTemplate let-node>
+  @if (node.origin.isGroup) {
+    <span class="tree-group">{{node.title}}</span>
+  } @else {
+    <span class="tree-leaf">
+      <span class="name">{{node.origin.name}}</span>
+      @if (node.origin.ref) {
+        <span class="ref">&#64;{{node.origin.ref}}</span>
+      }
+      <span class="scope">{{node.origin.scope}}</span>
+    </span>
+  }
+</ng-template>
+
+@if (current) {
+  <nz-code-editor #editor [ngModel]="current.content" [nzEditorOption]="editorOption"
   (nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>
 }

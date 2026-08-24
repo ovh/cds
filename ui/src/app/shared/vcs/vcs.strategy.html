@@ -22,24 +22,24 @@
             </app-parameter-value>
           </nz-form-control>
           @if (selectedPublicKey) {
-            <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
+            <button nz-button [title]="'key_copy_public' | translate" [attr.aria-label]="'key_copy_public' | translate" ngxClipboard
               [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
-              <i nz-icon nzType="copy" nzTheme="outline"></i>
+              <i nz-icon nzType="copy" nzTheme="outline" aria-hidden="true"></i>
             </button>
           }
         </nz-form-item>
       }
       @case (connectionType.HTTPS) {
         <nz-form-item>
-          <nz-form-label [nzSpan]="3">User</nz-form-label>
+          <nz-form-label [nzSpan]="3" nzFor="cds-field-vcs-user">User</nz-form-label>
           <nz-form-control [nzSpan]="7">
-            <input nz-input name="user" type="text" [(ngModel)]="strategy.user">
+            <input nz-input id="cds-field-vcs-user" name="user" type="text" [(ngModel)]="strategy.user">
           </nz-form-control>
         </nz-form-item>
         <nz-form-item>
-          <nz-form-label [nzSpan]="3">Password</nz-form-label>
+          <nz-form-label [nzSpan]="3" nzFor="cds-field-vcs-password">Password</nz-form-label>
           <nz-form-control [nzSpan]="7">
-            <input nz-input name="password" type="password" [(ngModel)]="strategy.password">
+            <input nz-input id="cds-field-vcs-password" name="password" type="password" [(ngModel)]="strategy.password">
           </nz-form-control>
         </nz-form-item>
       }
@@ -87,9 +87,9 @@
           </app-parameter-value>
         </nz-col>
         <nz-col [nzSpan]="1">
-          <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
+          <button nz-button [title]="'key_copy_public' | translate" [attr.aria-label]="'key_copy_public' | translate" ngxClipboard
             [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
-            <i nz-icon nzType="copy" nzTheme="outline"></i>
+            <i nz-icon nzType="copy" nzTheme="outline" aria-hidden="true"></i>
           </button>
         </nz-col>
       </nz-row>
@@ -100,7 +100,7 @@
           User:
         </nz-col>
         <nz-col [nzSpan]="7"  [nzOffset]="1">
-          <input nz-input name="user" type="text" [(ngModel)]="strategy.user">
+          <input nz-input name="user" aria-label="User" type="text" [(ngModel)]="strategy.user">
         </nz-col>
       </nz-row>
     }
@@ -110,7 +110,7 @@
           Password:
         </nz-col>
         <nz-col [nzSpan]="7" [nzOffset]="1">
-          <input nz-input name="password" type="password"[(ngModel)]="strategy.password">
+          <input nz-input name="password" aria-label="Password" type="password"[(ngModel)]="strategy.password">
         </nz-col>
       </nz-row>
     }

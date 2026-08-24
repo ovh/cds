@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/object"
@@ -13,18 +14,31 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// reconfigureVM changes the CPU and RAM of a powered-off VM to match the requested flavor
-//
 // getModelConfig returns the ModelConfig for the given model, or nil if not configured.
 func (h *HatcheryVSphere) getModelConfig(model sdk.WorkerStarterWorkerModel) *ModelConfig {
+	return h.getModelConfigByImage(model.GetVSphereImage())
+}
+
+// getModelConfigByImage returns the ModelConfig for a VMware template name, or
+// nil if not configured. The provisioning path only knows that name, never a
+// sdk.WorkerStarterWorkerModel.
+func (h *HatcheryVSphere) getModelConfigByImage(vmwareImage string) *ModelConfig {
 	for i := range h.Config.Models {
-		if h.Config.Models[i].ModelVMWare == model.GetVSphereImage() {
+		if h.Config.Models[i].ModelVMWare == vmwareImage {
 			return &h.Config.Models[i]
 		}
 	}
 	return nil
 }
 
+// isGuestInfoImage reports whether a VMware template is driven through guestinfo
+// rather than guest customization and guest operations. See ModelConfig.GuestInfo.
+func (h *HatcheryVSphere) isGuestInfoImage(vmwareImage string) bool {
+	cfg := h.getModelConfigByImage(vmwareImage)
+	return cfg != nil && cfg.GuestInfo
+}
+
+// reconfigureVM changes the CPU and RAM of a powered-off VM to match the requested flavor
 func (h *HatcheryVSphere) reconfigureVM(ctx context.Context, vm *object.VirtualMachine, flavor *VSphereFlavorConfig) error {
 	if flavor == nil {
 		return nil
@@ -72,14 +86,8 @@ func (h *HatcheryVSphere) reconfigureVM(ctx context.Context, vm *object.VirtualM
 
 	log.Info(ctx, "reconfigureVM> reconfiguring VM to %d vCPUs, %d MB RAM, disk %d GB", flavor.CPUs, flavor.MemoryMB, flavor.DiskSizeGB)
 
-	// Apply reconfiguration
-	task, err := vm.Reconfigure(ctx, spec)
-	if err != nil {
+	if err := h.vSphereClient.ReconfigureVirtualMachine(ctx, vm, spec); err != nil {
 		return sdk.WrapError(err, "reconfigureVM> cannot reconfigure VM")
-	}
-
-	if err := task.Wait(ctx); err != nil {
-		return sdk.WrapError(err, "reconfigureVM> VM reconfiguration task failed")
 	}
 
 	log.Info(ctx, "reconfigureVM> VM successfully reconfigured")
@@ -295,13 +303,18 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 	}
 	datastoreref := datastore.Reference()
 
+	// guestinfo models (see ModelConfig.GuestInfo) get their network through
+	// guestinfo keys read by the guest at every boot: GOSC does not support them
+	// and would reject or silently no-op the customization.
+	guestInfo := h.isGuestInfoImage(annot.VMwareModelPath)
+
 	customSpec := &types.CustomizationSpec{
 		Identity: &types.CustomizationLinuxPrep{
 			HostName: new(types.CustomizationVirtualMachineName),
 		},
 	}
 
-	if ip != nil {
+	if ip != nil && !guestInfo {
 		log.Debug(ctx, "assigning %s as IP (gw=%s, mask=%s)", ip.ip, ip.gateway, ip.subnetMask)
 
 		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{
@@ -326,6 +339,24 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 		log.Debug(ctx, "IP: %s; Gateway: %v; DNS: %v", ip.ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.GlobalIPSettings.DnsServerList)
 	}
 
+	var extraConfig []types.BaseOptionValue
+	if ip != nil && guestInfo {
+		log.Debug(ctx, "assigning %s as IP through guestinfo (gw=%s, mask=%s)", ip.ip, ip.gateway, ip.subnetMask)
+
+		extraConfig = append(extraConfig,
+			&types.OptionValue{Key: "guestinfo.cds.net.ip", Value: ip.ip},
+			&types.OptionValue{Key: "guestinfo.cds.net.mask", Value: ip.subnetMask},
+			&types.OptionValue{Key: "guestinfo.cds.net.gateway", Value: ip.gateway},
+			&types.OptionValue{Key: "guestinfo.cds.net.dns", Value: h.Config.DNS},
+			&types.OptionValue{Key: "guestinfo.cds.net.hostname", Value: annot.WorkerName},
+		)
+		extraConfig = append(extraConfig, h.guestInfoAccessOptions()...)
+
+		// Same compat anchor as the customization path: getUsedIPs reads the IP
+		// from here to avoid handing it out twice.
+		annot.IPAddress = ip.ip
+	}
+
 	annotStr, err := json.Marshal(annot)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to marshal annotation")
@@ -343,14 +374,43 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 			Tools: &types.ToolsConfigInfo{
 				AfterPowerOn: &sdk.True,
 			},
+			ExtraConfig: extraConfig,
 		},
 	}
 
-	cloneSpec.Customization = customSpec
+	// A guestinfo model must not carry a customization spec at all: the GOSC
+	// engine has no support for its guest OS. Everything it needs is in
+	// ExtraConfig above.
+	if !guestInfo {
+		cloneSpec.Customization = customSpec
+	}
 
 	// Set the destination datastore
 	cloneSpec.Location.Datastore = &datastoreref
 	return cloneSpec, nil
+}
+
+// guestInfoAccessOptions returns the optional debug-access guestinfo keys, empty
+// when nothing is configured — the guest image bakes no credentials and no
+// allowlist, so an unset key means the worker is unreachable, which is the
+// intended default. The two keys are separate layers: allowed_cidrs feeds the
+// guest's packet filter (inbound SSH is dropped from anywhere else), while
+// authorized_keys is what sshd authenticates once a packet gets through.
+func (h *HatcheryVSphere) guestInfoAccessOptions() []types.BaseOptionValue {
+	var opts []types.BaseOptionValue
+	if len(h.Config.SSHAllowedCIDRs) > 0 {
+		opts = append(opts, &types.OptionValue{
+			Key:   "guestinfo.cds.access.allowed_cidrs",
+			Value: strings.Join(h.Config.SSHAllowedCIDRs, " "),
+		})
+	}
+	if len(h.Config.InjectSSHPublicKeys) > 0 {
+		opts = append(opts, &types.OptionValue{
+			Key:   "guestinfo.cds.access.authorized_keys",
+			Value: strings.Join(h.Config.InjectSSHPublicKeys, "\n"),
+		})
+	}
+	return opts
 }
 
 // launchClientOp launch a script on the virtual machine given in parameters

@@ -3,7 +3,6 @@ package search
 import (
 	"context"
 	"database/sql"
-	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -16,6 +15,10 @@ type SearchFilters struct {
 	Types    []string
 	Query    string
 }
+
+// queryFilter keeps a result when every word of the free text search matches its label or its id,
+// so words can be given in any order. An empty search keeps everything.
+const queryFilter = `(array_length(:query::text[], 1) IS NULL OR LOWER(CONCAT_WS(' ', label, id)) LIKE ALL(:query::text[]))`
 
 func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountAll")
@@ -56,13 +59,13 @@ func CountAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters) (
 			)
 		SELECT COUNT(1)
 		FROM results
-		WHERE LOWER(label) LIKE :query OR LOWER(id) LIKE :query
+		WHERE ` + queryFilter + `
 	`
 
 	count, err := db.SelectInt(query, map[string]interface{}{
 		"projects": pq.StringArray(filters.Projects),
 		"types":    pq.StringArray(filters.Types),
-		"query":    "%" + strings.ToLower(filters.Query) + "%",
+		"query":    pq.StringArray(sdk.SearchQueryLikePatterns(filters.Query)),
 	})
 	return count, sdk.WithStack(err)
 }
@@ -118,15 +121,15 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 				)
 			)
 		SELECT id, label, description, variants, CASE
-				WHEN LOWER(label) LIKE :query THEN 1
-				WHEN LOWER(id) LIKE :query THEN 2
+				WHEN LOWER(label) LIKE ALL(:query::text[]) THEN 1
+				WHEN LOWER(id) LIKE ALL(:query::text[]) THEN 2
 			END AS priority, CASE
 				WHEN type_int = 0 THEN 'project'
 				WHEN type_int = 1 THEN 'workflow'
 				WHEN type_int = 2 THEN 'workflow-legacy'
 			END AS type
 		FROM results
-		WHERE LOWER(label) LIKE :query OR LOWER(id) LIKE :query
+		WHERE ` + queryFilter + `
 		ORDER BY priority ASC, CHAR_LENGTH(label) ASC, type_int ASC
 		LIMIT :limit OFFSET :offset
 	`
@@ -136,7 +139,7 @@ func SearchAll(ctx context.Context, db gorp.SqlExecutor, filters SearchFilters, 
 	if _, err := db.Select(&res, query, map[string]interface{}{
 		"projects": pq.StringArray(filters.Projects),
 		"types":    pq.StringArray(filters.Types),
-		"query":    "%" + strings.ToLower(filters.Query) + "%",
+		"query":    pq.StringArray(sdk.SearchQueryLikePatterns(filters.Query)),
 		"limit":    limit,
 		"offset":   offset,
 	}); err != nil {

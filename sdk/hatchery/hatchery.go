@@ -626,11 +626,19 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 		},
 	}
 
+	// The worker binary must match the model's OS, so the download path cannot
+	// assume linux. Fall back to the probed arch when a model declares no
+	// os/arch; the API normalizes uname's spelling (x86_64 -> amd64).
+	workerOSArch := "linux/$(uname -m)"
+	if model.OSArch != "" {
+		workerOSArch = model.OSArch
+	}
+
 	preCmd := `#!/bin/sh
 if [ ! -z ` + "`which curl`" + ` ]; then
-	curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o /usr/local/bin/worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
+	curl -L "{{.API}}/download/worker/` + workerOSArch + `" -o /usr/local/bin/worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
 elif [ ! -z ` + "`which wget`" + ` ]; then
-	wget "{{.API}}/download/worker/linux/$(uname -m)" -O /usr/local/bin/worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
+	wget "{{.API}}/download/worker/` + workerOSArch + `" -O /usr/local/bin/worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x /usr/local/bin/worker
 else
 	echo "Missing requirements to download CDS worker binary.";
 	exit 1;
@@ -671,10 +679,18 @@ fi`
 			return nil, nil, sdk.WithStack(err)
 		}
 
+		// Powering the VM off is OS-specific: FreeBSD needs -p, since -h halts the
+		// OS but leaves the VM running as far as vSphere knows, and it has no
+		// sudo — the guest's boot script already runs the worker as root.
+		postCmd := "sudo shutdown -h now"
+		if strings.HasPrefix(model.OSArch, "freebsd") {
+			postCmd = "shutdown -p now"
+		}
+
 		workerStarterModelWithModelv2 := sdk.WorkerStarterWorkerModel{
 			Cmd:         "PATH=$PATH worker",
 			PreCmd:      preCmd,
-			PostCmd:     "sudo shutdown -h now",
+			PostCmd:     postCmd,
 			ModelV2:     model,
 			VSphereSpec: vsphereSpec,
 		}
@@ -855,14 +871,8 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 	// Common check
 	for _, r := range j.requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
-		// r.Value could be: theModelName --port=8888:9999, so we take strings.Split(r.Value, " ")[0] to compare
-		// only modelName
 		if r.Type == sdk.ModelRequirement {
-			modelName := strings.Split(r.Value, " ")[0]
-			isGroupModel := modelName == fmt.Sprintf("%s/%s", model.Group.Name, model.Name)
-			isSharedInfraModel := model.Group.Name == sdk.SharedInfraGroupName && modelName == model.Name
-			isSameName := modelName == model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
-			if !isGroupModel && !isSharedInfraModel && !isSameName {
+			if !model.MatchesRequirementValue(r.Value) {
 				log.Debug(ctx, "model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
 				return false
 			}

@@ -1,6 +1,8 @@
 package exportentities
 
 import (
+	"time"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -23,6 +25,8 @@ type WorkerModel struct {
 	PostCmd      string            `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
 	Restricted   bool              `json:"restricted,omitempty" yaml:"restricted,omitempty"`
 	IsDeprecated bool              `json:"is_deprecated,omitempty" yaml:"is_deprecated,omitempty"`
+	// EOL is only meaningful on a deprecated model: the API disables the model once it is reached.
+	EOL *time.Time `json:"eol,omitempty" yaml:"eol,omitempty"`
 }
 
 type WorkerModelOption func(sdk.Model, *WorkerModel) error
@@ -50,6 +54,7 @@ func NewWorkerModel(wm sdk.Model, opts ...WorkerModelOption) WorkerModel {
 		PatternName:  wm.PatternName,
 		Group:        wm.Group.Name,
 		IsDeprecated: wm.IsDeprecated,
+		EOL:          wm.EOL,
 		Description:  wm.Description,
 		Restricted:   wm.Restricted,
 	}
@@ -88,6 +93,7 @@ func (wm WorkerModel) GetWorkerModel() sdk.Model {
 		PatternName:  wm.PatternName,
 		Group:        &sdk.Group{Name: wm.Group},
 		IsDeprecated: wm.IsDeprecated,
+		EOL:          wm.EOL,
 		Description:  wm.Description,
 		Restricted:   wm.Restricted,
 	}

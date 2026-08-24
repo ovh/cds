@@ -1,4 +1,4 @@
-<app-input-filter placeholder="Search..." [filters]="searchFilters" (changeFilter)="searchChange($event)"
+<app-input-filter placeholder="Search..." [filters]="searchFilters" [autofocus]="autofocus" (changeFilter)="searchChange($event)"
   [suggestions]="searchSuggestions" [suggestionTemplate]="suggestionTemplate"
   (selectSuggestion)="selectSuggestion($event)" (submit)="submitSearch()" #searchBar>
   <ng-template #suggestionTemplate let-option="option">

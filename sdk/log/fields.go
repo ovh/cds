@@ -45,6 +45,9 @@ const (
 	StatusNum          = log.Field("status_num")
 	Sudo               = log.Field("sudo")
 	VCSServer          = log.Field("vcs_server")
+	VCSType            = log.Field("vcs_type")
+	VCSURL             = log.Field("vcs_url")
+	VCSUsername        = log.Field("vcs_username")
 	KafkaBroker        = log.Field("kafka_broker")
 	KafkaTopic         = log.Field("kafka_topic")
 	AnalyzeID          = log.Field("analyze_id")
@@ -101,6 +104,9 @@ func init() {
 		StatusNum,
 		Sudo,
 		VCSServer,
+		VCSType,
+		VCSURL,
+		VCSUsername,
 		KafkaBroker,
 		KafkaTopic,
 		AnalyzeID,

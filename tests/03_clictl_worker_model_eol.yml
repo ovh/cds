@@ -1,0 +1,80 @@
+name: Worker Model End Of Life TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModelEOL --force
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: import a deprecated model with a future end of life date
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import ./fixtures/my_worker_model_eol.yml
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: the end of life date is persisted and the model stays usable
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list --filter name=shared.infra/myITModelEOL --format json --fields eol,deprecated,disabled | jq '.[0]'
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.deprecated ShouldEqual true
+      - result.systemoutjson.disabled ShouldEqual false
+      - result.systemoutjson.eol ShouldNotBeEmpty
+
+- name: the end of life date is exported
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model export myITModelEOL
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring eol
+      - result.systemout ShouldContainSubstring 2099
+
+# The date drives the automatic disabling of a deprecated model, so it has no meaning on its own:
+# accepting it on an active model would let an operator believe the model will be retired.
+- name: an end of life date without the deprecated flag is refused
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import ./fixtures/my_worker_model_eol_invalid.yml --force
+    assertions:
+      - result.code ShouldNotEqual 0
+      - result.systemout ShouldContainSubstring end of life date can only be set on a deprecated worker model
+
+- name: an outdated end of life date disables the model
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import ./fixtures/my_worker_model_eol_past.yml --force
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list --filter name=shared.infra/myITModelEOL --format json --fields disabled | jq '.[0]'
+    retry: 90
+    delay: 1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.disabled ShouldEqual true
+
+- name: a model can be disabled and enabled by hand
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import ./fixtures/my_worker_model_disable.yml --force
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model disable shared.infra/myITModelDisable
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list --filter name=shared.infra/myITModelDisable --format json --fields disabled | jq '.[0]'
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.disabled ShouldEqual true
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model enable shared.infra/myITModelDisable
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list --filter name=shared.infra/myITModelDisable --format json --fields disabled | jq '.[0]'
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.disabled ShouldEqual false
+
+- name: cleanup
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModelEOL --force
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModelDisable --force
+    assertions:
+      - result.code ShouldEqual 0

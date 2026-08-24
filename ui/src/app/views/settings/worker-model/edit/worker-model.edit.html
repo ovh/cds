@@ -21,7 +21,7 @@
                     <div>
                       <h3>{{'common_created_by' | translate}}</h3>
                       <div>
-                        <span nz-icon nzType="user" nzTheme="outline"></span> {{workerModel.created_by?.fullname}}
+                        <span nz-icon nzType="user" nzTheme="outline" aria-hidden="true"></span> {{workerModel.created_by?.fullname}}
                         ({{workerModel.created_by?.username}})
                         @if (workerModel.created_by?.admin) {
                           <span><b>Admin</b></span>
@@ -29,7 +29,7 @@
                       </div>
                       @if (workerModel.created_by?.email !== '') {
                         <div>
-                          <span nz-icon nzType="mail" nzTheme="outline"></span> {{workerModel.created_by?.email}}
+                          <span nz-icon nzType="mail" nzTheme="outline" aria-hidden="true"></span> {{workerModel.created_by?.email}}
                         </div>
                       }
                     </div>
@@ -68,12 +68,12 @@
                   @if (!workerModel?.need_registration) {
                     <span nz-icon nzType="check" nzTheme="outline"
                       nz-tooltip nzTooltipTitle="{{'worker_model_capabilities_up_to_date' | translate}}"
-                    title="{{'worker_model_capabilities_up_to_date' | translate}}"></span>
+                    title="{{'worker_model_capabilities_up_to_date' | translate}}" role="img" aria-label="{{'worker_model_capabilities_up_to_date' | translate}}"></span>
                   }
                   @if (workerModel?.need_registration) {
                     <span nz-icon nzType="warning" nzTheme="outline"
                       nz-tooltip nzTooltipTitle="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"
-                    title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></span>
+                    title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}" role="img" aria-label="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></span>
                   }
                 </h3>
                 <p>

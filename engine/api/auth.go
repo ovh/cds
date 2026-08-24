@@ -267,6 +267,10 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			}
 		}
 
+		if u.Disabled {
+			return sdk.NewErrorFrom(sdk.ErrUserDisabled, "user %s is disabled", u.Username)
+		}
+
 		if err := api.userSetOrganization(ctx, tx, u, userInfo.Organization); err != nil {
 			return err
 		}

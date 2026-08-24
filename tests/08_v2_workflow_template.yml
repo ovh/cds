@@ -17,7 +17,7 @@ testcases:
         from: result.systemoutjson.username
   - name: "Display username"
     info: "Connected CDS user is {{.cdsUser}}"
-    
+
   - type: v2_install_gpg_key
     cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
     gpg_key_id: "{{.gpg.key_id}}"
@@ -45,6 +45,9 @@ testcases:
     git_user: "{{.git.user}}"
     git_password: "{{.git.password}}"
     git_repo: "{{.git_repo}}"
+
+  - name: Create the variable set used by the template
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} vsdeploy TOKEN myTokenValue string --force"
 
 - name: Push workflow template files
   steps:
@@ -81,11 +84,33 @@ testcases:
                   #!/bin/bash
                   env
                   echo "Hello, [[.params.name]]"
+              - run: |-
+                  #!/bin/bash
+                  echo "workflow=[[.name]]"
               [[- if .params.subname ]]
               - run: |-
                   #!/bin/bash
                   echo "Hello [[.params.subname]]"
               [[- end ]]
+            [[- if .vars.Exists "vsdeploy" ]]
+            deploy:
+              runs-on:
+                model: "{{.worker_model}}"
+                memory: "512"
+              vars: [vsdeploy]
+              steps:
+              - run: |-
+                  #!/bin/bash
+                  echo "token=${{ vars.vsdeploy.TOKEN }}"
+            [[- end ]]
+            [[- if .vars.Exists "vsmissing" ]]
+            never:
+              runs-on:
+                model: "{{.worker_model}}"
+                memory: "512"
+              steps:
+              - run: echo "this job must never be generated"
+            [[- end ]]
       workflows/local.yaml:
         name: "{{.cds_workflow_local}}"
         from: ".cds/workflow-templates/test.yaml"
@@ -133,6 +158,17 @@ testcases:
       workflowFromBackendRunID:
         from: result.systemoutjson.systemoutjson0.id
 
+  # never is absent from the workflow, it is not a skipped job
+  - name: Check jobs generated from the variable sets
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowFromLocalRunID}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemout ShouldContainSubstring "hello"
+    - result.systemout ShouldContainSubstring "deploy"
+    - result.systemout ShouldNotContainSubstring "never"
+    retry: 60
+    delay: 1
+
   - name: Download and check local logs
     script: |-
       #!/bin/bash
@@ -142,9 +178,13 @@ testcases:
       {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromLocalRunID}}
       # Check workflow local log content
       cat {{.cds_workflow_local}}-*-hello-* | grep Hello
+      # [[.name]] is the calling workflow, not the template
+      cat {{.cds_workflow_local}}-*-hello-* | grep "workflow={{.cds_workflow_local}}"
+      # deploy exists only because the vsdeploy variable set exists
+      cat {{.cds_workflow_local}}-*-deploy-* | grep "token=myTokenValue"
     retry: 60
     delay: 1
-      
+
   - name: Download and check backend logs
     script: |-
       #!/bin/bash
@@ -154,5 +194,7 @@ testcases:
       {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromBackendRunID}}
       # Check workflow local log content
       cat {{.cds_workflow_backend}}-*-hello-* | grep Hello
+      # Same template as the local workflow, but [[.name]] must resolve to this workflow
+      cat {{.cds_workflow_backend}}-*-hello-* | grep "workflow={{.cds_workflow_backend}}"
     retry: 60
     delay: 1

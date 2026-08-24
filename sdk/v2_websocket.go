@@ -11,7 +11,10 @@ const (
 	WebsocketV2FilterTypeProject            WebsocketV2FilterType = "project"
 	WebsocketV2FilterTypeProjectPurgeReport WebsocketV2FilterType = "project-purge-report"
 	WebsocketV2FilterTypeProjectRuns        WebsocketV2FilterType = "project-runs"
-	WebsocketV2FilterTypeQueue              WebsocketV2FilterType = "queue"
+	// WebsocketV2FilterTypeProjectRun receives every event of a single workflow run: the run itself,
+	// its jobs, their steps and their results.
+	WebsocketV2FilterTypeProjectRun WebsocketV2FilterType = "project-run"
+	WebsocketV2FilterTypeQueue      WebsocketV2FilterType = "queue"
 )
 
 func (f WebsocketV2FilterType) IsValid() bool {
@@ -19,6 +22,7 @@ func (f WebsocketV2FilterType) IsValid() bool {
 	case WebsocketV2FilterTypeGlobal,
 		WebsocketV2FilterTypeProject,
 		WebsocketV2FilterTypeProjectRuns,
+		WebsocketV2FilterTypeProjectRun,
 		WebsocketV2FilterTypeProjectPurgeReport,
 		WebsocketV2FilterTypeQueue:
 		return true
@@ -32,6 +36,7 @@ type WebsocketV2Filter struct {
 	Type              WebsocketV2FilterType `json:"type"`
 	ProjectKey        string                `json:"project_key"`
 	ProjectRunsParams string                `json:"project_runs_params"`
+	WorkflowRunID     string                `json:"workflow_run_id"`
 	PurgeReportID     string                `json:"purge_report_id"`
 }
 
@@ -44,6 +49,8 @@ func (f WebsocketV2Filter) Key() string {
 		return fmt.Sprintf("%s-%s-%s", f.Type, f.ProjectKey, f.PurgeReportID)
 	case WebsocketV2FilterTypeProjectRuns:
 		return fmt.Sprintf("%s-%s", f.Type, f.ProjectKey)
+	case WebsocketV2FilterTypeProjectRun:
+		return fmt.Sprintf("%s-%s-%s", f.Type, f.ProjectKey, f.WorkflowRunID)
 	default:
 		return string(f.Type)
 	}
@@ -60,6 +67,10 @@ func (f WebsocketV2Filter) IsValid() error {
 		WebsocketV2FilterTypeProjectRuns:
 		if f.ProjectKey == "" {
 			return NewErrorFrom(ErrWrongRequest, "missing project key")
+		}
+	case WebsocketV2FilterTypeProjectRun:
+		if f.ProjectKey == "" || f.WorkflowRunID == "" {
+			return NewErrorFrom(ErrWrongRequest, "missing project key or workflow run id")
 		}
 	case WebsocketV2FilterTypeProjectPurgeReport:
 		if f.ProjectKey == "" || f.PurgeReportID == "" {

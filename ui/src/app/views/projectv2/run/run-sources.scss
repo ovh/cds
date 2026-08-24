@@ -8,56 +8,64 @@
   position: relative;
 }
 
-app-tabs {
-  ::ng-deep {
-    .ant-menu {
-      background-color: common.$greyBackground !important;
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px 8px;
+  background-color: common.$greyBackground;
+  border-bottom: 1px solid #f0f0f0;
 
-      :host-context(.night) & {
-        background-color: common.$darkBackground !important;
-        color: common.$darkTheme_grey_6;
-      }
+  :host-context(.night) & {
+    background-color: common.$darkBackground;
+    border-bottom-color: #303030;
+  }
+
+  // The opened entity doubles as the file picker trigger.
+  .path {
+    flex: 1;
+    min-width: 0;
+    margin-left: 4px;
+
+    // nz-tree-select has no nzBorderless input, so the frame is removed here.
+    ::ng-deep .ant-select-selector {
+      border-color: transparent !important;
+      background-color: transparent !important;
+      box-shadow: none !important;
+      padding-left: 0 !important;
     }
   }
+
 }
 
+.tree-group {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #979797;
+}
 
-nz-tabset {
-  background-color: #1b1c1d;
+.tree-leaf {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
 
-  ::ng-deep {
-    .ant-tabs-tab {
-      padding: 3px 16px !important;
-      cursor: inherit !important;
+  .name {
+    font-weight: 500;
+  }
 
-      :host-context(.night) & {
-        background-color: #141414;
-      }
-    }
-
-    .ant-tabs-tab-active {
-      :host-context(.night) & {
-        background-color: #1e1e1e;
-        border-bottom-color: #1e1e1e !important;
-      }
-    }
-
-    .ant-tabs-tab-btn {
-      color: #979797;
-
-      :host-context(.night) & {
-        color: #828282;
-      }
-    }
-
-    nz-tabs-nav {
-      margin: 0 !important;
-    }
+  .ref,
+  .scope {
+    color: #979797;
+    font-size: 12px;
   }
 }
 
 nz-code-editor {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   border-left: 1px solid #f0f0f0;
 
   :host-context(.night) & {
@@ -65,3 +73,4 @@ nz-code-editor {
     border-left: 1px solid #303030;
   }
 }
+

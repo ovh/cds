@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { Router } from "@angular/router";
 import { SearchResult, SearchResultType } from "app/model/search.model";
 import { SearchService } from "app/service/search.service";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import Debounce from "app/shared/decorator/debounce";
 import { ErrorUtils } from "app/shared/error.utils";
-import { Filter, InputFilterComponent, Suggestion } from "app/shared/input/input-filter.component";
+import { Filter, FilterText, InputFilterComponent, Suggestion } from "app/shared/input/input-filter.component";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom } from "rxjs";
 import { DisplaySearchResult } from "./search.component";
@@ -20,6 +20,8 @@ import { DisplaySearchResult } from "./search.component";
 @AutoUnsubscribe()
 export class SearchBarComponent implements OnInit, OnDestroy {
 	@ViewChild('searchBar') searchBar: InputFilterComponent<Suggestion<SearchResult>>;
+
+	@Input() autofocus: boolean = false;
 
 	searchFilterText: string = '';
 	searchFilters: Array<Filter> = [];
@@ -44,21 +46,8 @@ export class SearchBarComponent implements OnInit, OnDestroy {
 	}
 
 	submitSearch(): void {
-		let mFilters = {};
-		this.searchFilterText.split(' ').forEach(f => {
-			const s = f.split(':');
-			if (s.length === 2 && s[1] !== '') {
-				if (!mFilters[s[0]]) {
-					mFilters[s[0]] = [];
-				}
-				mFilters[s[0]].push(s[1]);
-			} else if (s.length === 1) {
-				mFilters['query'] = f;
-			}
-		});
-
 		this._router.navigate(['/search'], {
-			queryParams: { ...mFilters }
+			queryParams: FilterText.toQueryParams(this.searchFilterText)
 		});
 	}
 
@@ -72,18 +61,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
 		this.loading = true;
 		this._cd.markForCheck();
 
-		let mFilters = {};
-		this.searchFilterText.split(' ').forEach(f => {
-			const s = f.split(':');
-			if (s.length === 2) {
-				if (!mFilters[s[0]]) {
-					mFilters[s[0]] = [];
-				}
-				mFilters[s[0]].push(decodeURI(s[1]));
-			} else if (s.length === 1) {
-				mFilters['query'] = f;
-			}
-		});
+		const mFilters = FilterText.toSearchParams(this.searchFilterText);
 
 		try {
 			const res = await lastValueFrom(this._searchService.search(mFilters, 0, 10));

@@ -2,7 +2,7 @@
   <div class="summary">
     <nz-row>
       <nz-col [nzSpan]="5" [nzOffset]="3">
-        <a class="pointing" (click)="statusFilter('all')">
+        <a class="pointing" appClickable (click)="statusFilter('all')">
           {{tests.total}}
           @if (tests.total > 1) {
             <span>{{'pipeline_run_test_total_title_s' | translate}}</span>
@@ -13,7 +13,7 @@
         </a>
       </nz-col>
       <nz-col [nzSpan]="5" [nzOffset]="3">
-        <a class="pointing" (click)="statusFilter('failed')">
+        <a class="pointing" appClickable (click)="statusFilter('failed')">
           {{ tests.ko }}
           @if (tests.ko > 1) {
             <span>{{'pipeline_run_test_failed_title_s' | translate}}</span>
@@ -24,7 +24,7 @@
         </a>
       </nz-col>
       <nz-col [nzSpan]="5" [nzOffset]="3">
-        <a class="pointing" (click)="statusFilter('skipped')">
+        <a class="pointing" appClickable (click)="statusFilter('skipped')">
           {{ tests.skipped }}
           @if (tests.skipped > 1) {
             <span>{{'pipeline_run_test_skipped_title_s' | translate}}</span>

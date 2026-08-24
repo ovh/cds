@@ -2,7 +2,7 @@
   [class.success]="noderunStatus === pipelineStatus.SUCCESS" [class.fail]="noderunStatus === pipelineStatus.FAIL || noderunStatus === pipelineStatus.STOPPED"
   [class.inactive]="noderunStatus === pipelineStatus.DISABLED || noderunStatus === pipelineStatus.SKIPPED">
   @if (nodeToLink) {
-    <svg width="32" height="32" (click)="$event.stopPropagation(); selectJoinToLink()">
+    <svg width="32" height="32" role="button" tabindex="0" aria-label="Link to this join" (keydown.enter)="$event.preventDefault(); selectJoinToLink()" (keydown.space)="$event.preventDefault(); selectJoinToLink()" (click)="$event.stopPropagation(); selectJoinToLink()">
       <circle cx="16" cy="16" r="16" style="fill:grey;">
         <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" />
       </circle>

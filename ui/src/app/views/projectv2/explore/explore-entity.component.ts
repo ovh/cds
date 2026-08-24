@@ -17,6 +17,7 @@ import { JSONSchema } from "app/model/schema.model";
 import { PreferencesState } from "app/store/preferences.state";
 import { load } from "js-yaml";
 import { editor, } from 'monaco-editor';
+import { EntityReference, EntityReferenceUtils } from 'app/shared/entity-reference.utils';
 
 declare const monaco: any;
 
@@ -45,6 +46,10 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 	resizingSubscription: Subscription;
 	showWorkflowPreview: boolean;
 	vcs: VCSProject;
+
+	private _editorInstance: editor.ICodeEditor;
+	private _decorations: editor.IEditorDecorationsCollection;
+	private _references: Array<EntityReference> = [];
 
 	constructor(
 		private _activatedRoute: ActivatedRoute,
@@ -92,7 +97,8 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 			language: 'yaml',
 			minimap: { enabled: false },
 			readOnly: true,
-			scrollBeyondLastLine: false
+			scrollBeyondLastLine: false,
+			ariaLabel: 'Entity definition editor'
 		};
 
 		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ExploreEntityComponent.PANEL_KEY));
@@ -113,20 +119,26 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 		this._cd.markForCheck();
 
 		try {
+			// The entity is keyed by the names the url carries, not by what the vcs and the repository
+			// answer: all four are read at once rather than the entity after the others.
 			const results = await Promise.all([
 				lastValueFrom(this._projectService.getVCSProject(this.projectKey, vcsName)),
 				lastValueFrom(this._projectService.getVCSRepository(this.projectKey, vcsName, repoName)),
-				lastValueFrom(this._projectService.getJSONSchema(entityType))
+				lastValueFrom(this._projectService.getJSONSchema(entityType)),
+				lastValueFrom(this._projectService.getRepoEntity(this.projectKey, vcsName, repoName, entityType, entityName, this.currentRef))
 			]);
 			this.vcs = results[0];
 			this.repository = results[1];
 			this.jsonSchema = results[2];
-			this.entity = await lastValueFrom(this._projectService.getRepoEntity(this.projectKey, this.vcs.name, this.repository.name, entityType, entityName, this.currentRef));
+			this.entity = results[3];
 			this.showWorkflowPreview = false;
 			if (this.entity.type === EntityType.Workflow) {
 				const wkf = load(this.entity.data);
 				this.showWorkflowPreview = !wkf['from'];
 			}
+			// The editor outlives the entity it shows, so the schema of its type is applied on every
+			// load and not only when the editor is built.
+			this.applyJsonSchema();
 		} catch (e: any) {
 			this._messageService.error(`Unable to load entity: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 			this._router.navigate(['/project', this.projectKey, 'explore', 'vcs', vcsName, 'repository', repoName]);
@@ -137,13 +149,68 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 	}
 
 	onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
+		this.applyJsonSchema();
+		this._editorInstance = <editor.ICodeEditor>e;
+		// The editor is destroyed and rebuilt on every entity load, so the collection
+		// has to be rebound; the previous one belongs to a discarded editor.
+		this._decorations = this._editorInstance.createDecorationsCollection();
+		// Monaco drops decorations whenever the model value is replaced.
+		this._editorInstance.onDidChangeModelContent(() => this.applyDecorations());
+		this._editorInstance.onMouseDown(event => {
+			const position = event.target?.position;
+			if (!position) {
+				return;
+			}
+			const reference = this._references.find(r => r.line === position.lineNumber
+				&& position.column >= r.startColumn && position.column <= r.endColumn);
+			if (reference) {
+				this.openReference(reference);
+			}
+		});
+		this.editor.layout();
+		this.applyDecorations();
+	}
+
+	/** Follow a `uses:` / `runs-on:` value to the entity it denotes. */
+	openReference(reference: EntityReference): void {
+		const path = EntityReferenceUtils.parse(reference.value);
+		if (!path) {
+			return;
+		}
+		const entityType = reference.kind === 'model' ? EntityType.WorkerModel : EntityType.Action;
+		const ref = path.ref ?? this.currentRef;
+		this._router.navigate([
+			'/project', path.projectKey ?? this.projectKey,
+			'explore',
+			'vcs', path.vcs ?? this.vcs.name,
+			'repository', path.repository ?? this.repository.name,
+			EntityTypeUtil.toURLParam(entityType), path.name
+		], ref ? { queryParams: { ref } } : {});
+	}
+
+	private applyJsonSchema(): void {
+		if (!this.jsonSchema || typeof monaco === 'undefined') {
+			return;
+		}
 		monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
 			schemas: [{
 				uri: '',
 				schema: JSONSchema.flat(this.jsonSchema)
 			}]
 		});
-		this.editor.layout();
+	}
+
+	private applyDecorations(): void {
+		if (!this._decorations) {
+			return;
+		}
+		// Only values that denote a CDS entity are offered as links.
+		this._references = EntityReferenceUtils.scan(this.entity?.data)
+			.filter(r => !!EntityReferenceUtils.parse(r.value));
+		this._decorations.set(this._references.map(r => ({
+			range: { startLineNumber: r.line, startColumn: r.startColumn, endLineNumber: r.line, endColumn: r.endColumn },
+			options: { inlineClassName: 'cds-source-link', hoverMessage: { value: 'Open definition' } }
+		})));
 	}
 
 	panelStartResize(): void {

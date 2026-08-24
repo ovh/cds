@@ -91,7 +91,9 @@ func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname string,
 		return nil, err
 	}
 	if status == 404 {
-		return nil, sdk.WithStack(sdk.ErrNoBranch)
+		return nil, sdk.NewErrorFrom(sdk.WithStack(sdk.ErrNoBranch),
+			"bitbucketcloud: GET %s returned 404 (%v) - the branch may not exist, or the configured credentials may not have access to this repository",
+			url, errorAPI(body))
 	}
 	if status >= 400 {
 		return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))

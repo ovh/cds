@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/ovh/cds/sdk"
@@ -17,7 +16,7 @@ func NewHatcheryKubernetesTest(t *testing.T) *HatcheryKubernetes {
 	h.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(h.Client.(cdsclient.Raw).HTTPClient())
 
-	clientSet, errCl := kubernetes.NewForConfig(&rest.Config{Host: "http://lolcat.kube"})
+	clientSet, errCl := newClientSet(&rest.Config{Host: "http://lolcat.kube"})
 	require.NoError(t, errCl)
 
 	h.kubeClient = &kubernetesClient{clientSet}

@@ -23,6 +23,7 @@ export class WorkerModel {
     last_spawn_err_log: string;
     date_last_spawn_err: string;
     is_deprecated: boolean;
+    eol: string;
     model_virtual_machine: ModelVirtualMachine;
     model_docker: ModelDocker;
     editable: boolean;

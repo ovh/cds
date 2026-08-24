@@ -18,28 +18,29 @@
                             <nz-col [nzSpan]="7">
                                 <button nz-button *ngIf="direction === 'TB'" class="direction"
                                         (click)="changeDirection()">
-                                    <i nz-icon nzType="arrow-right" nzTheme="outline"></i>
+                                    <i nz-icon nzType="arrow-right" nzTheme="outline" aria-hidden="true"></i>
                                     Workflow layout
                                 </button>
                                 <button nz-button *ngIf="direction === 'LR'" class="direction"
                                         (click)="changeDirection()">
-                                    <i nz-icon nzType="arrow-down" nzTheme="outline"></i>
+                                    <i nz-icon nzType="arrow-down" nzTheme="outline" aria-hidden="true"></i>
                                     Workflow layout
                                 </button>
                             </nz-col>
                             <nz-col [nzSpan]="10" class="center">
                                 <button nz-button nzType="primary" (click)="showAsCodeEditor()"
                                      [nzLoading]="loading">
-                                    <i nz-icon nzType="code" nzTheme="outline"></i>
+                                    <i nz-icon nzType="code" nzTheme="outline" aria-hidden="true"></i>
                                     Edit as code
                                     <i nz-icon nzType="warning" nzTheme="outline" class="orange" *ngIf="previewWorkflow"
+                                        role="img" aria-label="Your workflow is in preview mode"
                                         nz-tooltip nzTooltipTitle="Your workflow is in preview mode"></i>
                                 </button>
                                 <button nz-button nzType="primary" *ngIf="previewWorkflow"
                                      (click)="savePreview()" class="savePreview"
                                      [class.disabled]="!detailedWorkflow.permissions.writable"
                                      [nzLoading]="loading">
-                                    <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                                    <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Save
                                 </button>
                             </nz-col>
                             <nz-col [nzSpan]="7" class="alignRight">

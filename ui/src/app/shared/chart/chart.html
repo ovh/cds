@@ -1,7 +1,12 @@
 
 @switch (configuration.type) {
   @case ('area-stacked') {
-    <div class="graph">
+    <span class="cds-sr-only">
+      @for (d of configuration.datas; track d) {
+        <span>{{d.name}}: @for (s of d.series; track s) {<span>{{s.name}} {{s.value}}. </span>}</span>
+      }
+    </span>
+    <div class="graph" role="img" [attr.aria-label]="configuration.title ? 'Chart: ' + configuration.title : 'Chart'">
       <ngx-charts-area-chart-stacked
         [scheme]="configuration.colorScheme"
         [results]="configuration.datas"

@@ -61,6 +61,9 @@ func (api *API) postJobRunStepHandler() ([]service.RbacChecker, service.Handler)
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		event_v2.PublishRunJobStepUpdate(ctx, api.Cache, *runjob)
+
 		return nil
 	}
 }

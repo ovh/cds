@@ -212,6 +212,11 @@ func (api *API) handleAuthMiddlewareUserConsumer(ctx context.Context, w http.Res
 		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
 	}
 
+	// If the consumer's user is disabled, return an error
+	if consumer.AuthConsumerUser.AuthentifiedUser.Disabled {
+		return ctx, sdk.WrapError(sdk.ErrUserDisabled, "user (%s) is disabled", consumer.AuthConsumerUser.AuthentifiedUserID)
+	}
+
 	// If the driver was disabled for the consumer that was found, ignore it
 	var driverManifest *sdk.AuthDriverManifest
 	if authDriver, ok := api.AuthenticationDrivers[consumer.Type]; ok {

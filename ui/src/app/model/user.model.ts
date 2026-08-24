@@ -37,6 +37,7 @@ export class AuthentifiedUser {
     fullname: string;
     ring: string;
     organization: string;
+    disabled: boolean;
 }
 
 export class UserLink {

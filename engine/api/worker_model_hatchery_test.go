@@ -72,3 +72,37 @@ func Test_getWorkerModelSecretHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 403, w.Code)
 }
+
+// Test_putBookWorkerModelHandler_DisabledModel: a hatchery can hold a stale model list, so the API is
+// the last barrier against spawning a registration worker for a disabled model. Such a worker is
+// useless (the model cannot run jobs anymore) and its row references the model for several minutes,
+// which blocks the model deletion.
+func Test_putBookWorkerModelHandler_DisabledModel(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	_, _, _, jwtHatchery := assets.InsertHatchery(t, db, *g)
+
+	disabledModel := insertLifecycleModel(t, db, sdk.RandomString(10), g.ID, false, true, nil)
+	enabledModel := insertLifecycleModel(t, db, sdk.RandomString(10), g.ID, false, false, nil)
+
+	uri := router.GetRoute(http.MethodPut, api.putBookWorkerModelHandler, map[string]string{
+		"permGroupName": g.Name,
+		"permModelName": disabledModel.Name,
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodPut, uri, nil)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code, "booking a disabled worker model must be refused")
+
+	uri = router.GetRoute(http.MethodPut, api.putBookWorkerModelHandler, map[string]string{
+		"permGroupName": g.Name,
+		"permModelName": enabledModel.Name,
+	})
+	test.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodPut, uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 204, w.Code, "booking an enabled worker model must still work")
+}

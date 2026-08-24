@@ -1,0 +1,7 @@
+<span class="name">
+  <a *ngIf="link" [routerLink]="link" [queryParams]="linkQueryParams" [title]="linkTitle">{{name}}</a>
+  <ng-container *ngIf="!link">{{name}}</ng-container>
+  <ng-container *ngIf="suffix">&nbsp;{{suffix}}</ng-container>
+</span>
+<span class="ref" *ngIf="displayRef">&#64;{{displayRef}}</span>
+<span class="scope" *ngIf="scope">{{scope}}</span>

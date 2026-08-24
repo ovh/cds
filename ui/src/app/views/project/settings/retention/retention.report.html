@@ -5,7 +5,7 @@
       (ngModelChange)="onEditorChange($event)"></nz-code-editor>
     }
     @if (!report?.workflows) {
-      <i nz-icon nzType="stop" nzTheme="outline"></i>No workflow runs have been deleted
+      <i nz-icon nzType="stop" nzTheme="outline" aria-hidden="true"></i>No workflow runs have been deleted
     }
   </div>
 }

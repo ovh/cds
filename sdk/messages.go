@@ -20,52 +20,56 @@ var (
 
 // Message list
 var (
-	MsgAppCreated                           = &Message{"MsgAppCreated", trad{FR: "L'application %s a été créée avec succès", EN: "Application %s successfully created"}, nil, RunInfoTypInfo}
-	MsgAppUpdated                           = &Message{"MsgAppUpdated", trad{FR: "L'application %s a été mise à jour avec succès", EN: "Application %s successfully updated"}, nil, RunInfoTypInfo}
-	MsgPipelineCreated                      = &Message{"MsgPipelineCreated", trad{FR: "Le pipeline %s a été créé avec succès", EN: "Pipeline %s successfully created"}, nil, RunInfoTypInfo}
-	MsgPipelineCreationAborted              = &Message{"MsgPipelineCreationAborted", trad{FR: "La création du pipeline %s a été abandonnée", EN: "Pipeline %s creation aborted"}, nil, RunInfoTypeError}
-	MsgPipelineExists                       = &Message{"MsgPipelineExists", trad{FR: "Le pipeline %s existe déjà", EN: "Pipeline %s already exists"}, nil, RunInfoTypInfo}
-	MsgAppVariablesCreated                  = &Message{"MsgAppVariablesCreated", trad{FR: "Les variables ont été ajoutées avec succès sur l'application %s", EN: "Application variables for %s are successfully created"}, nil, RunInfoTypInfo}
-	MsgAppKeyCreated                        = &Message{"MsgAppKeyCreated", trad{FR: "La clé %s %s a été créée sur l'application %s", EN: "%s key %s created on application %s"}, nil, RunInfoTypInfo}
-	MsgEnvironmentExists                    = &Message{"MsgEnvironmentExists", trad{FR: "L'environnement %s existe déjà", EN: "Environment %s already exists"}, nil, RunInfoTypInfo}
-	MsgEnvironmentCreated                   = &Message{"MsgEnvironmentCreated", trad{FR: "L'environnement %s a été créé avec succès", EN: "Environment %s successfully created"}, nil, RunInfoTypInfo}
-	MsgEnvironmentVariableUpdated           = &Message{"MsgEnvironmentVariableUpdated", trad{FR: "La variable %s de l'environnement %s a été mise à jour", EN: "Variable %s on environment %s has been updated"}, nil, RunInfoTypInfo}
-	MsgEnvironmentVariableCannotBeUpdated   = &Message{"MsgEnvironmentVariableCannotBeUpdated", trad{FR: "La variable %s de l'environnement %s n'a pu être mise à jour : %s", EN: "Variable %s on environment %s cannot be updated: %s"}, nil, RunInfoTypeError}
-	MsgEnvironmentVariableCreated           = &Message{"MsgEnvironmentVariableCreated", trad{FR: "La variable %s de l'environnement %s a été ajoutée", EN: "Variable %s on environment %s has been added"}, nil, RunInfoTypInfo}
-	MsgEnvironmentVariableCannotBeCreated   = &Message{"MsgEnvironmentVariableCannotBeCreated", trad{FR: "La variable %s de l'environnement %s n'a pu être ajoutée : %s", EN: "Variable %s on environment %s cannot be added: %s"}, nil, RunInfoTypeError}
-	MsgEnvironmentGroupUpdated              = &Message{"MsgEnvironmentGroupUpdated", trad{FR: "Le groupe %s de l'environnement %s a été mis à jour", EN: "Group %s on environment %s has been updated"}, nil, RunInfoTypInfo}
-	MsgEnvironmentGroupCannotBeUpdated      = &Message{"MsgEnvironmentGroupCannotBeUpdated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être mis à jour : %s", EN: "Group %s on environment %s cannot be updated: %s"}, nil, RunInfoTypeError}
-	MsgEnvironmentGroupCreated              = &Message{"MsgEnvironmentGroupCreated", trad{FR: "Le groupe %s de l'environnement %s a été ajouté", EN: "Group %s on environment %s has been added"}, nil, RunInfoTypInfo}
-	MsgEnvironmentGroupCannotBeCreated      = &Message{"MsgEnvironmentGroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être ajouté : %s", EN: "Group %s on environment %s cannot be added: %s"}, nil, RunInfoTypeError}
-	MsgEnvironmentGroupDeleted              = &Message{"MsgEnvironmentGroupDeleted", trad{FR: "Le groupe %s de l'environnement %s a été supprimé", EN: "Group %s on environment %s has been deleted"}, nil, RunInfoTypInfo}
-	MsgEnvironmentGroupCannotBeDeleted      = &Message{"MsgEnvironmentGMsgEnvironmentGroupCannotBeDeletedroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être supprimé : %s", EN: "Group %s on environment %s cannot be deleted: %s"}, nil, RunInfoTypeError}
-	MsgEnvironmentKeyCreated                = &Message{"MsgEnvironmentKeyCreated", trad{FR: "La clé %s %s a été créée sur l'environnement %s", EN: "%s key %s created on environment %s"}, nil, RunInfoTypInfo}
-	MsgEnvironmentKeyCannotBeCreated        = &Message{"MsgEnvironmentKeyCannotBeCreated", trad{FR: "La clé %s %s n'a pas été créée sur l'environnement %s", EN: "%s key %s cannot be created on environment %s: %v"}, nil, RunInfoTypeError}
-	MsgJobNotValidActionNotFound            = &Message{"MsgJobNotValidActionNotFound", trad{FR: "Erreur de validation du Job %s : L'action %s à l'étape %d n'a pas été trouvée", EN: "Job %s validation Failure: Unknown action %s on step #%d"}, nil, RunInfoTypeError}
-	MsgJobNotValidInvalidActionParameter    = &Message{"MsgJobNotValidInvalidActionParameter", trad{FR: "Erreur de validation du Job %s : Le paramètre %s de l'étape %d - %s est invalide", EN: "Job %s validation Failure: Invalid parameter %s on step #%d %s"}, nil, RunInfoTypeError}
-	MsgPipelineGroupUpdated                 = &Message{"MsgPipelineGroupUpdated", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été mises à jour", EN: "Permission for group %s on pipeline %s has been updated"}, nil, RunInfoTypInfo}
-	MsgPipelineGroupAdded                   = &Message{"MsgPipelineGroupAdded", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été ajoutées", EN: "Permission for group %s on pipeline %s has been added"}, nil, RunInfoTypInfo}
-	MsgPipelineGroupDeleted                 = &Message{"MsgPipelineGroupDeleted", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été supprimées", EN: "Permission for group %s on pipeline %s has been deleted"}, nil, RunInfoTypInfo}
-	MsgPipelineStageUpdated                 = &Message{"MsgPipelineStageUpdated", trad{FR: "Le stage %s a été mis à jour", EN: "Stage %s updated"}, nil, RunInfoTypInfo}
-	MsgPipelineStageUpdating                = &Message{"MsgPipelineStageUpdating", trad{FR: "Mise à jour du stage %s en cours...", EN: "Updating stage %s ..."}, nil, RunInfoTypInfo}
-	MsgPipelineStageDeletingOldJobs         = &Message{"MsgPipelineStageDeletingOldJobs", trad{FR: "Suppression des anciens jobs du stage %s en cours...", EN: "Deleting old jobs in stage %s ..."}, nil, RunInfoTypInfo}
-	MsgPipelineStageInsertingNewJobs        = &Message{"MsgPipelineStageInsertingNewJobs", trad{FR: "Insertion des nouveaux jobs dans le stage %s en cours...", EN: "Inserting new jobs in stage %s ..."}, nil, RunInfoTypInfo}
-	MsgPipelineStageAdded                   = &Message{"MsgPipelineStageAdded", trad{FR: "Le stage %s a été ajouté", EN: "Stage %s added"}, nil, RunInfoTypInfo}
-	MsgPipelineStageDeleted                 = &Message{"MsgPipelineStageDeleted", trad{FR: "Le stage %s a été supprimé", EN: "Stage %s deleted"}, nil, RunInfoTypInfo}
-	MsgPipelineJobUpdated                   = &Message{"MsgPipelineJobUpdated", trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil, RunInfoTypInfo}
-	MsgPipelineJobAdded                     = &Message{"MsgPipelineJobAdded", trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil, RunInfoTypInfo}
-	MsgPipelineJobDeleted                   = &Message{"MsgPipelineJobDeleted", trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil, RunInfoTypInfo}
-	MsgPipelineDetached                     = &Message{"MsgPipelineDetached", trad{FR: "Le pipeline %s est détaché du repository %s", EN: "The pipeline %s is detached from repository %s"}, nil, RunInfoTypInfo}
-	MsgApplicationDetached                  = &Message{"MsgApplicationDetached", trad{FR: "L'application %s est détachée du repository %s", EN: "The application %s is detached from repository %s"}, nil, RunInfoTypInfo}
-	MsgEnvironmentDetached                  = &Message{"MsgEnvironmentDetached", trad{FR: "L'environnement %s est détaché du repository %s", EN: "The environment %s is detached from repository %s"}, nil, RunInfoTypInfo}
-	MsgWorkflowDetached                     = &Message{"MsgWorkflowDetached", trad{FR: "Le workflow %s est détaché du repository %s", EN: "The workflow %s is detached from repository %s"}, nil, RunInfoTypInfo}
-	MsgSpawnInfoHatcheryStarts              = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s a démarré le lancement du worker %s avec le modèle %s", EN: "Hatchery %s starts spawn worker %s with model %s"}, nil, RunInfoTypInfo}
-	MsgSpawnInfoHatcheryStartsFlavor        = &Message{"MsgSpawnInfoHatcheryStartsFlavor", trad{FR: "Le worker %q utilisera la flavor %q", EN: "The worker %q will use the flavor %q"}, nil, RunInfoTypInfo}
-	MsgSpawnInfoHatcheryErrorSpawn          = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s a démarré un worker avec le modèle %s après %s, err: %s", EN: "Error while Hatchery %s spawns worker with model %s after %s, err: %s"}, nil, RunInfoTypeError}
-	MsgSpawnInfoHatcheryStartDockerPull     = &Message{"MsgSpawnInfoHatcheryStartDockerPull", trad{FR: "La Hatchery %s a démarré le docker pull de l'image %s...", EN: "Hatchery %s starts docker pull %s..."}, nil, RunInfoTypInfo}
-	MsgSpawnInfoHatcheryEndDockerPull       = &Message{"MsgSpawnInfoHatcheryEndDockerPull", trad{FR: "La Hatchery %s a terminé le docker pull de l'image %s", EN: "Hatchery %s docker pull %s done"}, nil, RunInfoTypInfo}
-	MsgSpawnInfoHatcheryEndDockerPullErr    = &Message{"MsgSpawnInfoHatcheryEndDockerPullErr", trad{FR: "⚠ La Hatchery %s a terminé le docker pull de l'image %s en erreur: %s", EN: "⚠ Hatchery %s - docker pull %s done with error: %v"}, nil, RunInfoTypeError}
-	MsgSpawnInfoDeprecatedModel             = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "⚠ Attention vous utilisez un worker model (%s) déprécié", EN: "⚠ Pay attention you are using a deprecated worker model (%s)"}, nil, RunInfoTypeWarning}
+	MsgAppCreated                         = &Message{"MsgAppCreated", trad{FR: "L'application %s a été créée avec succès", EN: "Application %s successfully created"}, nil, RunInfoTypInfo}
+	MsgAppUpdated                         = &Message{"MsgAppUpdated", trad{FR: "L'application %s a été mise à jour avec succès", EN: "Application %s successfully updated"}, nil, RunInfoTypInfo}
+	MsgPipelineCreated                    = &Message{"MsgPipelineCreated", trad{FR: "Le pipeline %s a été créé avec succès", EN: "Pipeline %s successfully created"}, nil, RunInfoTypInfo}
+	MsgPipelineCreationAborted            = &Message{"MsgPipelineCreationAborted", trad{FR: "La création du pipeline %s a été abandonnée", EN: "Pipeline %s creation aborted"}, nil, RunInfoTypeError}
+	MsgPipelineExists                     = &Message{"MsgPipelineExists", trad{FR: "Le pipeline %s existe déjà", EN: "Pipeline %s already exists"}, nil, RunInfoTypInfo}
+	MsgAppVariablesCreated                = &Message{"MsgAppVariablesCreated", trad{FR: "Les variables ont été ajoutées avec succès sur l'application %s", EN: "Application variables for %s are successfully created"}, nil, RunInfoTypInfo}
+	MsgAppKeyCreated                      = &Message{"MsgAppKeyCreated", trad{FR: "La clé %s %s a été créée sur l'application %s", EN: "%s key %s created on application %s"}, nil, RunInfoTypInfo}
+	MsgEnvironmentExists                  = &Message{"MsgEnvironmentExists", trad{FR: "L'environnement %s existe déjà", EN: "Environment %s already exists"}, nil, RunInfoTypInfo}
+	MsgEnvironmentCreated                 = &Message{"MsgEnvironmentCreated", trad{FR: "L'environnement %s a été créé avec succès", EN: "Environment %s successfully created"}, nil, RunInfoTypInfo}
+	MsgEnvironmentVariableUpdated         = &Message{"MsgEnvironmentVariableUpdated", trad{FR: "La variable %s de l'environnement %s a été mise à jour", EN: "Variable %s on environment %s has been updated"}, nil, RunInfoTypInfo}
+	MsgEnvironmentVariableCannotBeUpdated = &Message{"MsgEnvironmentVariableCannotBeUpdated", trad{FR: "La variable %s de l'environnement %s n'a pu être mise à jour : %s", EN: "Variable %s on environment %s cannot be updated: %s"}, nil, RunInfoTypeError}
+	MsgEnvironmentVariableCreated         = &Message{"MsgEnvironmentVariableCreated", trad{FR: "La variable %s de l'environnement %s a été ajoutée", EN: "Variable %s on environment %s has been added"}, nil, RunInfoTypInfo}
+	MsgEnvironmentVariableCannotBeCreated = &Message{"MsgEnvironmentVariableCannotBeCreated", trad{FR: "La variable %s de l'environnement %s n'a pu être ajoutée : %s", EN: "Variable %s on environment %s cannot be added: %s"}, nil, RunInfoTypeError}
+	MsgEnvironmentGroupUpdated            = &Message{"MsgEnvironmentGroupUpdated", trad{FR: "Le groupe %s de l'environnement %s a été mis à jour", EN: "Group %s on environment %s has been updated"}, nil, RunInfoTypInfo}
+	MsgEnvironmentGroupCannotBeUpdated    = &Message{"MsgEnvironmentGroupCannotBeUpdated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être mis à jour : %s", EN: "Group %s on environment %s cannot be updated: %s"}, nil, RunInfoTypeError}
+	MsgEnvironmentGroupCreated            = &Message{"MsgEnvironmentGroupCreated", trad{FR: "Le groupe %s de l'environnement %s a été ajouté", EN: "Group %s on environment %s has been added"}, nil, RunInfoTypInfo}
+	MsgEnvironmentGroupCannotBeCreated    = &Message{"MsgEnvironmentGroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être ajouté : %s", EN: "Group %s on environment %s cannot be added: %s"}, nil, RunInfoTypeError}
+	MsgEnvironmentGroupDeleted            = &Message{"MsgEnvironmentGroupDeleted", trad{FR: "Le groupe %s de l'environnement %s a été supprimé", EN: "Group %s on environment %s has been deleted"}, nil, RunInfoTypInfo}
+	MsgEnvironmentGroupCannotBeDeleted    = &Message{"MsgEnvironmentGMsgEnvironmentGroupCannotBeDeletedroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être supprimé : %s", EN: "Group %s on environment %s cannot be deleted: %s"}, nil, RunInfoTypeError}
+	MsgEnvironmentKeyCreated              = &Message{"MsgEnvironmentKeyCreated", trad{FR: "La clé %s %s a été créée sur l'environnement %s", EN: "%s key %s created on environment %s"}, nil, RunInfoTypInfo}
+	MsgEnvironmentKeyCannotBeCreated      = &Message{"MsgEnvironmentKeyCannotBeCreated", trad{FR: "La clé %s %s n'a pas été créée sur l'environnement %s", EN: "%s key %s cannot be created on environment %s: %v"}, nil, RunInfoTypeError}
+	MsgJobNotValidActionNotFound          = &Message{"MsgJobNotValidActionNotFound", trad{FR: "Erreur de validation du Job %s : L'action %s à l'étape %d n'a pas été trouvée", EN: "Job %s validation Failure: Unknown action %s on step #%d"}, nil, RunInfoTypeError}
+	MsgJobNotValidInvalidActionParameter  = &Message{"MsgJobNotValidInvalidActionParameter", trad{FR: "Erreur de validation du Job %s : Le paramètre %s de l'étape %d - %s est invalide", EN: "Job %s validation Failure: Invalid parameter %s on step #%d %s"}, nil, RunInfoTypeError}
+	MsgPipelineGroupUpdated               = &Message{"MsgPipelineGroupUpdated", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été mises à jour", EN: "Permission for group %s on pipeline %s has been updated"}, nil, RunInfoTypInfo}
+	MsgPipelineGroupAdded                 = &Message{"MsgPipelineGroupAdded", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été ajoutées", EN: "Permission for group %s on pipeline %s has been added"}, nil, RunInfoTypInfo}
+	MsgPipelineGroupDeleted               = &Message{"MsgPipelineGroupDeleted", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été supprimées", EN: "Permission for group %s on pipeline %s has been deleted"}, nil, RunInfoTypInfo}
+	MsgPipelineStageUpdated               = &Message{"MsgPipelineStageUpdated", trad{FR: "Le stage %s a été mis à jour", EN: "Stage %s updated"}, nil, RunInfoTypInfo}
+	MsgPipelineStageUpdating              = &Message{"MsgPipelineStageUpdating", trad{FR: "Mise à jour du stage %s en cours...", EN: "Updating stage %s ..."}, nil, RunInfoTypInfo}
+	MsgPipelineStageDeletingOldJobs       = &Message{"MsgPipelineStageDeletingOldJobs", trad{FR: "Suppression des anciens jobs du stage %s en cours...", EN: "Deleting old jobs in stage %s ..."}, nil, RunInfoTypInfo}
+	MsgPipelineStageInsertingNewJobs      = &Message{"MsgPipelineStageInsertingNewJobs", trad{FR: "Insertion des nouveaux jobs dans le stage %s en cours...", EN: "Inserting new jobs in stage %s ..."}, nil, RunInfoTypInfo}
+	MsgPipelineStageAdded                 = &Message{"MsgPipelineStageAdded", trad{FR: "Le stage %s a été ajouté", EN: "Stage %s added"}, nil, RunInfoTypInfo}
+	MsgPipelineStageDeleted               = &Message{"MsgPipelineStageDeleted", trad{FR: "Le stage %s a été supprimé", EN: "Stage %s deleted"}, nil, RunInfoTypInfo}
+	MsgPipelineJobUpdated                 = &Message{"MsgPipelineJobUpdated", trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil, RunInfoTypInfo}
+	MsgPipelineJobAdded                   = &Message{"MsgPipelineJobAdded", trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil, RunInfoTypInfo}
+	MsgPipelineJobDeleted                 = &Message{"MsgPipelineJobDeleted", trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil, RunInfoTypInfo}
+	MsgPipelineDetached                   = &Message{"MsgPipelineDetached", trad{FR: "Le pipeline %s est détaché du repository %s", EN: "The pipeline %s is detached from repository %s"}, nil, RunInfoTypInfo}
+	MsgApplicationDetached                = &Message{"MsgApplicationDetached", trad{FR: "L'application %s est détachée du repository %s", EN: "The application %s is detached from repository %s"}, nil, RunInfoTypInfo}
+	MsgEnvironmentDetached                = &Message{"MsgEnvironmentDetached", trad{FR: "L'environnement %s est détaché du repository %s", EN: "The environment %s is detached from repository %s"}, nil, RunInfoTypInfo}
+	MsgWorkflowDetached                   = &Message{"MsgWorkflowDetached", trad{FR: "Le workflow %s est détaché du repository %s", EN: "The workflow %s is detached from repository %s"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoHatcheryStarts            = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s a démarré le lancement du worker %s avec le modèle %s", EN: "Hatchery %s starts spawn worker %s with model %s"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoHatcheryStartsFlavor      = &Message{"MsgSpawnInfoHatcheryStartsFlavor", trad{FR: "Le worker %q utilisera la flavor %q", EN: "The worker %q will use the flavor %q"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoHatcheryErrorSpawn        = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s a démarré un worker avec le modèle %s après %s, err: %s", EN: "Error while Hatchery %s spawns worker with model %s after %s, err: %s"}, nil, RunInfoTypeError}
+	MsgSpawnInfoHatcheryStartDockerPull   = &Message{"MsgSpawnInfoHatcheryStartDockerPull", trad{FR: "La Hatchery %s a démarré le docker pull de l'image %s...", EN: "Hatchery %s starts docker pull %s..."}, nil, RunInfoTypInfo}
+	MsgSpawnInfoHatcheryEndDockerPull     = &Message{"MsgSpawnInfoHatcheryEndDockerPull", trad{FR: "La Hatchery %s a terminé le docker pull de l'image %s", EN: "Hatchery %s docker pull %s done"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoHatcheryEndDockerPullErr  = &Message{"MsgSpawnInfoHatcheryEndDockerPullErr", trad{FR: "⚠ La Hatchery %s a terminé le docker pull de l'image %s en erreur: %s", EN: "⚠ Hatchery %s - docker pull %s done with error: %v"}, nil, RunInfoTypeError}
+	MsgSpawnInfoDeprecatedModel           = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "⚠ Attention vous utilisez un worker model (%s) déprécié", EN: "⚠ Pay attention you are using a deprecated worker model (%s)"}, nil, RunInfoTypeWarning}
+	// A new message instead of a second argument on MsgSpawnInfoDeprecatedModel: spawn infos are
+	// persisted as an ID plus its args and rendered later, so changing the arity of an existing
+	// message would break the rendering of the rows already stored.
+	MsgSpawnInfoDeprecatedModelEOL          = &Message{"MsgSpawnInfoDeprecatedModelEOL", trad{FR: "⚠ Attention vous utilisez un worker model (%s) déprécié, il sera désactivé le %s", EN: "⚠ Pay attention you are using a deprecated worker model (%s), it will be disabled on %s"}, nil, RunInfoTypeWarning}
 	MsgSpawnInfoWorkerEnd                   = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "✓ Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "✓ Worker %s finished working on this job"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobDisabled                 = &Message{"MsgSpawnInfoJobDisabled", trad{FR: "✓ Le job a désactivé", EN: "✓ Job is disabled"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobInQueue                  = &Message{"MsgSpawnInfoJobInQueue", trad{FR: "✓ Le job a été mis en file d'attente", EN: "✓ Job has been queued"}, nil, RunInfoTypInfo}
@@ -104,94 +108,101 @@ var (
 	MsgSpawnInfoWorkerDisabledByHatchery    = &Message{"MsgSpawnInfoWorkerDisabledByHatchery", trad{EN: "The worker (not responding) %s was disabled by hatchery"}, nil, RunInfoTypeWarning}
 	MsgSpawnInfoWorkerDisabledByAdmin       = &Message{"MsgSpawnInfoWorkerDisabledByAdmin", trad{EN: "The worker %s was disabled by an administrator"}, nil, RunInfoTypeWarning}
 	MsgSpawnInfoJobFailedCauseByWorkerLost  = &Message{"MsgSpawnInfoJobFailedCauseByWorkerLost", trad{EN: "The job %s was set to failed due to lost connection with the worker"}, nil, RunInfoTypeWarning}
+	// Two distinct messages instead of one with the reason as an argument: the reason has to be
+	// translated, and an argument built in Go would be stuck in a single language.
+	MsgSpawnInfoJobFailedCauseByModelEOL      = &Message{"MsgSpawnInfoJobFailedCauseByModelEOL", trad{FR: "⚠ Le job a échoué : le worker model %s a été désactivé, sa date de fin de vie (%s) est atteinte", EN: "⚠ Job failed: worker model %s has been disabled, its end of life date (%s) is reached"}, nil, RunInfoTypeError}
+	MsgSpawnInfoJobFailedCauseByModelDisabled = &Message{"MsgSpawnInfoJobFailedCauseByModelDisabled", trad{FR: "⚠ Le job a échoué : le worker model %s est désactivé, aucune hatchery ne peut démarrer de worker", EN: "⚠ Job failed: worker model %s is disabled, no hatchery can spawn a worker for it"}, nil, RunInfoTypeError}
 )
 
 // Messages contains all sdk Messages
 var Messages = map[string]*Message{
-	MsgAppCreated.ID:                           MsgAppCreated,
-	MsgAppUpdated.ID:                           MsgAppUpdated,
-	MsgPipelineCreated.ID:                      MsgPipelineCreated,
-	MsgPipelineCreationAborted.ID:              MsgPipelineCreationAborted,
-	MsgPipelineExists.ID:                       MsgPipelineExists,
-	MsgAppVariablesCreated.ID:                  MsgAppVariablesCreated,
-	MsgAppKeyCreated.ID:                        MsgAppKeyCreated,
-	MsgEnvironmentExists.ID:                    MsgEnvironmentExists,
-	MsgEnvironmentCreated.ID:                   MsgEnvironmentCreated,
-	MsgEnvironmentVariableUpdated.ID:           MsgEnvironmentVariableUpdated,
-	MsgEnvironmentVariableCannotBeUpdated.ID:   MsgEnvironmentVariableCannotBeUpdated,
-	MsgEnvironmentVariableCreated.ID:           MsgEnvironmentVariableCreated,
-	MsgEnvironmentVariableCannotBeCreated.ID:   MsgEnvironmentVariableCannotBeCreated,
-	MsgEnvironmentGroupUpdated.ID:              MsgEnvironmentGroupUpdated,
-	MsgEnvironmentGroupCannotBeUpdated.ID:      MsgEnvironmentGroupCannotBeUpdated,
-	MsgEnvironmentGroupCreated.ID:              MsgEnvironmentGroupCreated,
-	MsgEnvironmentGroupCannotBeCreated.ID:      MsgEnvironmentGroupCannotBeCreated,
-	MsgEnvironmentGroupDeleted.ID:              MsgEnvironmentGroupDeleted,
-	MsgEnvironmentGroupCannotBeDeleted.ID:      MsgEnvironmentGroupCannotBeDeleted,
-	MsgEnvironmentKeyCreated.ID:                MsgEnvironmentKeyCreated,
-	MsgEnvironmentKeyCannotBeCreated.ID:        MsgEnvironmentKeyCannotBeCreated,
-	MsgJobNotValidActionNotFound.ID:            MsgJobNotValidActionNotFound,
-	MsgJobNotValidInvalidActionParameter.ID:    MsgJobNotValidInvalidActionParameter,
-	MsgPipelineGroupUpdated.ID:                 MsgPipelineGroupUpdated,
-	MsgPipelineGroupAdded.ID:                   MsgPipelineGroupAdded,
-	MsgPipelineGroupDeleted.ID:                 MsgPipelineGroupDeleted,
-	MsgPipelineStageUpdated.ID:                 MsgPipelineStageUpdated,
-	MsgPipelineStageUpdating.ID:                MsgPipelineStageUpdating,
-	MsgPipelineStageDeletingOldJobs.ID:         MsgPipelineStageDeletingOldJobs,
-	MsgPipelineStageInsertingNewJobs.ID:        MsgPipelineStageInsertingNewJobs,
-	MsgPipelineStageAdded.ID:                   MsgPipelineStageAdded,
-	MsgPipelineStageDeleted.ID:                 MsgPipelineStageDeleted,
-	MsgPipelineJobUpdated.ID:                   MsgPipelineJobUpdated,
-	MsgPipelineJobAdded.ID:                     MsgPipelineJobAdded,
-	MsgPipelineJobDeleted.ID:                   MsgPipelineJobDeleted,
-	MsgPipelineDetached.ID:                     MsgPipelineDetached,
-	MsgApplicationDetached.ID:                  MsgApplicationDetached,
-	MsgEnvironmentDetached.ID:                  MsgEnvironmentDetached,
-	MsgWorkflowDetached.ID:                     MsgWorkflowDetached,
-	MsgSpawnInfoHatcheryStarts.ID:              MsgSpawnInfoHatcheryStarts,
-	MsgSpawnInfoHatcheryStartsFlavor.ID:        MsgSpawnInfoHatcheryStartsFlavor,
-	MsgSpawnInfoHatcheryErrorSpawn.ID:          MsgSpawnInfoHatcheryErrorSpawn,
-	MsgSpawnInfoHatcheryStartDockerPull.ID:     MsgSpawnInfoHatcheryStartDockerPull,
-	MsgSpawnInfoHatcheryEndDockerPull.ID:       MsgSpawnInfoHatcheryEndDockerPull,
-	MsgSpawnInfoHatcheryEndDockerPullErr.ID:    MsgSpawnInfoHatcheryEndDockerPullErr,
-	MsgSpawnInfoDeprecatedModel.ID:             MsgSpawnInfoDeprecatedModel,
-	MsgSpawnInfoWorkerEnd.ID:                   MsgSpawnInfoWorkerEnd,
-	MsgSpawnInfoJobDisabled.ID:                 MsgSpawnInfoJobDisabled,
-	MsgSpawnInfoJobInQueue.ID:                  MsgSpawnInfoJobInQueue,
-	MsgSpawnInfoJobTaken.ID:                    MsgSpawnInfoJobTaken,
-	MsgSpawnInfoJobTakenWorkerVersion.ID:       MsgSpawnInfoJobTakenWorkerVersion,
-	MsgSpawnInfoWorkerForJob.ID:                MsgSpawnInfoWorkerForJob,
-	MsgSpawnInfoWorkerForJobError.ID:           MsgSpawnInfoWorkerForJobError,
-	MsgSpawnInfoJobError.ID:                    MsgSpawnInfoJobError,
-	MsgWorkflowStarting.ID:                     MsgWorkflowStarting,
-	MsgWorkflowError.ID:                        MsgWorkflowError,
-	MsgWorkflowConditionError.ID:               MsgWorkflowConditionError,
-	MsgWorkflowNodeStop.ID:                     MsgWorkflowNodeStop,
-	MsgWorkflowNodeMutex.ID:                    MsgWorkflowNodeMutex,
-	MsgWorkflowNodeMutexRelease.ID:             MsgWorkflowNodeMutexRelease,
-	MsgWorkflowImportedUpdated.ID:              MsgWorkflowImportedUpdated,
-	MsgWorkflowImportedInserted.ID:             MsgWorkflowImportedInserted,
-	MsgSpawnInfoHatcheryCannotStartJob.ID:      MsgSpawnInfoHatcheryCannotStartJob,
-	MsgWorkflowRunBranchDeleted.ID:             MsgWorkflowRunBranchDeleted,
-	MsgWorkflowTemplateImportedInserted.ID:     MsgWorkflowTemplateImportedInserted,
-	MsgWorkflowTemplateImportedUpdated.ID:      MsgWorkflowTemplateImportedUpdated,
-	MsgWorkflowErrorBadPipelineName.ID:         MsgWorkflowErrorBadPipelineName,
-	MsgWorkflowErrorBadApplicationName.ID:      MsgWorkflowErrorBadApplicationName,
-	MsgWorkflowErrorBadEnvironmentName.ID:      MsgWorkflowErrorBadEnvironmentName,
-	MsgWorkflowErrorBadIntegrationName.ID:      MsgWorkflowErrorBadIntegrationName,
-	MsgWorkflowErrorBadCdsDir.ID:               MsgWorkflowErrorBadCdsDir,
-	MsgWorkflowErrorUnknownKey.ID:              MsgWorkflowErrorUnknownKey,
-	MsgWorkflowErrorBadVCSStrategy.ID:          MsgWorkflowErrorBadVCSStrategy,
-	MsgWorkflowDeprecatedVersion.ID:            MsgWorkflowDeprecatedVersion,
-	MsgWorkflowGeneratedFromTemplateVersion.ID: MsgWorkflowGeneratedFromTemplateVersion,
-	MsgTooMuchWorkflowRun.ID:                   MsgTooMuchWorkflowRun,
-	MsgSpawnErrorHatcheryRetryAttempt.ID:       MsgSpawnErrorHatcheryRetryAttempt,
-	MsgSpawnInfoDisableSecretInjection.ID:      MsgSpawnInfoDisableSecretInjection,
-	MsgSpawnInfoManualSecretInjection.ID:       MsgSpawnInfoManualSecretInjection,
-	MsgSpawnInfoWorkerHookRun.ID:               MsgSpawnInfoWorkerHookRun,
-	MsgSpawnInfoWorkerHookRunTeardown.ID:       MsgSpawnInfoWorkerHookRunTeardown,
-	MsgSpawnInfoWorkerDisabledByHatchery.ID:    MsgSpawnInfoWorkerDisabledByHatchery,
-	MsgSpawnInfoWorkerDisabledByAdmin.ID:       MsgSpawnInfoWorkerDisabledByAdmin,
-	MsgSpawnInfoJobFailedCauseByWorkerLost.ID:  MsgSpawnInfoJobFailedCauseByWorkerLost,
+	MsgAppCreated.ID:                             MsgAppCreated,
+	MsgAppUpdated.ID:                             MsgAppUpdated,
+	MsgPipelineCreated.ID:                        MsgPipelineCreated,
+	MsgPipelineCreationAborted.ID:                MsgPipelineCreationAborted,
+	MsgPipelineExists.ID:                         MsgPipelineExists,
+	MsgAppVariablesCreated.ID:                    MsgAppVariablesCreated,
+	MsgAppKeyCreated.ID:                          MsgAppKeyCreated,
+	MsgEnvironmentExists.ID:                      MsgEnvironmentExists,
+	MsgEnvironmentCreated.ID:                     MsgEnvironmentCreated,
+	MsgEnvironmentVariableUpdated.ID:             MsgEnvironmentVariableUpdated,
+	MsgEnvironmentVariableCannotBeUpdated.ID:     MsgEnvironmentVariableCannotBeUpdated,
+	MsgEnvironmentVariableCreated.ID:             MsgEnvironmentVariableCreated,
+	MsgEnvironmentVariableCannotBeCreated.ID:     MsgEnvironmentVariableCannotBeCreated,
+	MsgEnvironmentGroupUpdated.ID:                MsgEnvironmentGroupUpdated,
+	MsgEnvironmentGroupCannotBeUpdated.ID:        MsgEnvironmentGroupCannotBeUpdated,
+	MsgEnvironmentGroupCreated.ID:                MsgEnvironmentGroupCreated,
+	MsgEnvironmentGroupCannotBeCreated.ID:        MsgEnvironmentGroupCannotBeCreated,
+	MsgEnvironmentGroupDeleted.ID:                MsgEnvironmentGroupDeleted,
+	MsgEnvironmentGroupCannotBeDeleted.ID:        MsgEnvironmentGroupCannotBeDeleted,
+	MsgEnvironmentKeyCreated.ID:                  MsgEnvironmentKeyCreated,
+	MsgEnvironmentKeyCannotBeCreated.ID:          MsgEnvironmentKeyCannotBeCreated,
+	MsgJobNotValidActionNotFound.ID:              MsgJobNotValidActionNotFound,
+	MsgJobNotValidInvalidActionParameter.ID:      MsgJobNotValidInvalidActionParameter,
+	MsgPipelineGroupUpdated.ID:                   MsgPipelineGroupUpdated,
+	MsgPipelineGroupAdded.ID:                     MsgPipelineGroupAdded,
+	MsgPipelineGroupDeleted.ID:                   MsgPipelineGroupDeleted,
+	MsgPipelineStageUpdated.ID:                   MsgPipelineStageUpdated,
+	MsgPipelineStageUpdating.ID:                  MsgPipelineStageUpdating,
+	MsgPipelineStageDeletingOldJobs.ID:           MsgPipelineStageDeletingOldJobs,
+	MsgPipelineStageInsertingNewJobs.ID:          MsgPipelineStageInsertingNewJobs,
+	MsgPipelineStageAdded.ID:                     MsgPipelineStageAdded,
+	MsgPipelineStageDeleted.ID:                   MsgPipelineStageDeleted,
+	MsgPipelineJobUpdated.ID:                     MsgPipelineJobUpdated,
+	MsgPipelineJobAdded.ID:                       MsgPipelineJobAdded,
+	MsgPipelineJobDeleted.ID:                     MsgPipelineJobDeleted,
+	MsgPipelineDetached.ID:                       MsgPipelineDetached,
+	MsgApplicationDetached.ID:                    MsgApplicationDetached,
+	MsgEnvironmentDetached.ID:                    MsgEnvironmentDetached,
+	MsgWorkflowDetached.ID:                       MsgWorkflowDetached,
+	MsgSpawnInfoHatcheryStarts.ID:                MsgSpawnInfoHatcheryStarts,
+	MsgSpawnInfoHatcheryStartsFlavor.ID:          MsgSpawnInfoHatcheryStartsFlavor,
+	MsgSpawnInfoHatcheryErrorSpawn.ID:            MsgSpawnInfoHatcheryErrorSpawn,
+	MsgSpawnInfoHatcheryStartDockerPull.ID:       MsgSpawnInfoHatcheryStartDockerPull,
+	MsgSpawnInfoHatcheryEndDockerPull.ID:         MsgSpawnInfoHatcheryEndDockerPull,
+	MsgSpawnInfoHatcheryEndDockerPullErr.ID:      MsgSpawnInfoHatcheryEndDockerPullErr,
+	MsgSpawnInfoDeprecatedModel.ID:               MsgSpawnInfoDeprecatedModel,
+	MsgSpawnInfoDeprecatedModelEOL.ID:            MsgSpawnInfoDeprecatedModelEOL,
+	MsgSpawnInfoWorkerEnd.ID:                     MsgSpawnInfoWorkerEnd,
+	MsgSpawnInfoJobDisabled.ID:                   MsgSpawnInfoJobDisabled,
+	MsgSpawnInfoJobInQueue.ID:                    MsgSpawnInfoJobInQueue,
+	MsgSpawnInfoJobTaken.ID:                      MsgSpawnInfoJobTaken,
+	MsgSpawnInfoJobTakenWorkerVersion.ID:         MsgSpawnInfoJobTakenWorkerVersion,
+	MsgSpawnInfoWorkerForJob.ID:                  MsgSpawnInfoWorkerForJob,
+	MsgSpawnInfoWorkerForJobError.ID:             MsgSpawnInfoWorkerForJobError,
+	MsgSpawnInfoJobError.ID:                      MsgSpawnInfoJobError,
+	MsgWorkflowStarting.ID:                       MsgWorkflowStarting,
+	MsgWorkflowError.ID:                          MsgWorkflowError,
+	MsgWorkflowConditionError.ID:                 MsgWorkflowConditionError,
+	MsgWorkflowNodeStop.ID:                       MsgWorkflowNodeStop,
+	MsgWorkflowNodeMutex.ID:                      MsgWorkflowNodeMutex,
+	MsgWorkflowNodeMutexRelease.ID:               MsgWorkflowNodeMutexRelease,
+	MsgWorkflowImportedUpdated.ID:                MsgWorkflowImportedUpdated,
+	MsgWorkflowImportedInserted.ID:               MsgWorkflowImportedInserted,
+	MsgSpawnInfoHatcheryCannotStartJob.ID:        MsgSpawnInfoHatcheryCannotStartJob,
+	MsgWorkflowRunBranchDeleted.ID:               MsgWorkflowRunBranchDeleted,
+	MsgWorkflowTemplateImportedInserted.ID:       MsgWorkflowTemplateImportedInserted,
+	MsgWorkflowTemplateImportedUpdated.ID:        MsgWorkflowTemplateImportedUpdated,
+	MsgWorkflowErrorBadPipelineName.ID:           MsgWorkflowErrorBadPipelineName,
+	MsgWorkflowErrorBadApplicationName.ID:        MsgWorkflowErrorBadApplicationName,
+	MsgWorkflowErrorBadEnvironmentName.ID:        MsgWorkflowErrorBadEnvironmentName,
+	MsgWorkflowErrorBadIntegrationName.ID:        MsgWorkflowErrorBadIntegrationName,
+	MsgWorkflowErrorBadCdsDir.ID:                 MsgWorkflowErrorBadCdsDir,
+	MsgWorkflowErrorUnknownKey.ID:                MsgWorkflowErrorUnknownKey,
+	MsgWorkflowErrorBadVCSStrategy.ID:            MsgWorkflowErrorBadVCSStrategy,
+	MsgWorkflowDeprecatedVersion.ID:              MsgWorkflowDeprecatedVersion,
+	MsgWorkflowGeneratedFromTemplateVersion.ID:   MsgWorkflowGeneratedFromTemplateVersion,
+	MsgTooMuchWorkflowRun.ID:                     MsgTooMuchWorkflowRun,
+	MsgSpawnErrorHatcheryRetryAttempt.ID:         MsgSpawnErrorHatcheryRetryAttempt,
+	MsgSpawnInfoDisableSecretInjection.ID:        MsgSpawnInfoDisableSecretInjection,
+	MsgSpawnInfoManualSecretInjection.ID:         MsgSpawnInfoManualSecretInjection,
+	MsgSpawnInfoWorkerHookRun.ID:                 MsgSpawnInfoWorkerHookRun,
+	MsgSpawnInfoWorkerHookRunTeardown.ID:         MsgSpawnInfoWorkerHookRunTeardown,
+	MsgSpawnInfoWorkerDisabledByHatchery.ID:      MsgSpawnInfoWorkerDisabledByHatchery,
+	MsgSpawnInfoWorkerDisabledByAdmin.ID:         MsgSpawnInfoWorkerDisabledByAdmin,
+	MsgSpawnInfoJobFailedCauseByWorkerLost.ID:    MsgSpawnInfoJobFailedCauseByWorkerLost,
+	MsgSpawnInfoJobFailedCauseByModelEOL.ID:      MsgSpawnInfoJobFailedCauseByModelEOL,
+	MsgSpawnInfoJobFailedCauseByModelDisabled.ID: MsgSpawnInfoJobFailedCauseByModelDisabled,
 }
 
 // Message represent a struc format translated messages

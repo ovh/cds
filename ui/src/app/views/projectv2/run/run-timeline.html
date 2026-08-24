@@ -1,0 +1,10 @@
+<app-timeline [data]="data" label="Workflow run timeline" [highlightEnabled]="criticalPathEnabled"
+  [hoveredLaneID]="hoveredLaneID" [selectedLaneID]="selectedLaneID"
+  markersLabel="results" emptyLabel="No job has reached the queue yet" (activate)="onActivate($event)">
+  <button class="critical-path" nz-button nzSize="small" [class.active]="criticalPathEnabled"
+    [disabled]="!hasCriticalPath" (click)="clickToggleCriticalPath()"
+    [attr.aria-pressed]="criticalPathEnabled" aria-label="Highlight the critical path"
+    [title]="criticalPathHint">
+    <span nz-icon nzType="branches" nzTheme="outline" aria-hidden="true"></span>
+  </button>
+</app-timeline>

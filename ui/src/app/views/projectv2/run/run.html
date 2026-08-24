@@ -8,34 +8,44 @@
   <div class="tests">
     Tests
     @if (tests && tests.ok > 0) {
-      <span class="ok">
-        <span nz-icon nzType="check" nzTheme="outline"></span>{{tests.ok}}
+      <span class="ok" [attr.aria-label]="tests.ok + ' passed'">
+        <span nz-icon nzType="check" nzTheme="outline" aria-hidden="true"></span>{{tests.ok}}
       </span>
     }
     @if (tests && tests.skipped > 0) {
-      <span class="skipped">
-        <span nz-icon nzType="warning" nzTheme="fill"></span>{{tests.skipped}}
+      <span class="skipped" [attr.aria-label]="tests.skipped + ' skipped'">
+        <span nz-icon nzType="warning" nzTheme="fill" aria-hidden="true"></span>{{tests.skipped}}
       </span>
     }
     @if (tests && tests.ko > 0) {
-      <span class="ko">
-        <span nz-icon nzType="close" nzTheme="outline"></span>{{tests.ko}}
+      <span class="ko" [attr.aria-label]="tests.ko + ' failed'">
+        <span nz-icon nzType="close" nzTheme="outline" aria-hidden="true"></span>{{tests.ko}}
       </span>
     }
   </div>
 </ng-template>
 
 @if (workflowRun) {
-  <div class="content" [class.disableSelection]="resizing">
+  <div class="content" [class.disableSelection]="resizing" [@.disabled]="reduceMotion">
     <!--  GRAPH -->
     <div class="graph-wrapper">
       <div class="list">
+        <!-- The runs of the workflow are read after the run itself: hold their place so that they
+             do not push the graph sideways when they arrive. -->
+        @if (!runs) {
+          @for (placeholder of runsPlaceholders; track placeholder) {
+            <span class="item placeholder" aria-hidden="true"></span>
+          }
+        }
         @for (run of runs; track trackRunElement(i, run); let i = $index) {
-          <a class="item" nz-popover
+          <!-- No detail popover over the run being displayed: it has nothing to tell that the page
+               does not, and leaving it open over the run just opened hides it. -->
+          <a class="item" nz-popover #runPopover="nzPopover"
             [nzPopoverContent]="runDetails" [nzPopoverMouseEnterDelay]="0.1" [nzPopoverMouseLeaveDelay]="0.05"
+            [nzPopoverTrigger]="run.id === workflowRun?.id ? null : 'hover'"
             [routerLink]="['/project', projectKey, 'run', run.id]" [class.selected]="run.id === workflowRun?.id"
             [class.append]="!!animatedRuns[run.id]" [@appendToList]="animatedRuns[run.id] ? 'append' : 'active'"
-            (mouseenter)="onMouseEnterRun(run.id)">
+            (mouseenter)="onMouseEnterRun(run.id)" (click)="runPopover.hide()">
             <span [title]="'Number: ' + run.run_number" [class.success]="run.status === 'Success'"
               [class.cancelled]="run.status === 'Cancelled'" [class.fail]="run.status === 'Fail'"
               [class.stopped]="run.status === 'Stopped'" [class.building]="run.status === 'Building'"
@@ -43,21 +53,21 @@
             [class.skipped]="run.status === 'Skipped'">#{{run.run_number}}</span>
             <ng-template #runDetails>
               <div class="run-details">
-                <div class="run-avatar" [title]="'Status: ' + run.status">
+                <div class="run-avatar" [title]="'Status: ' + run.status" role="img" [attr.aria-label]="'Status: ' + run.status">
                   @if (run.status === 'Success') {
                     <span class="success" nz-icon nzType="check-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Cancelled') {
                     <span class="cancelled" nz-icon nzType="close-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Fail') {
                     <span class="fail" nz-icon nzType="close-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Stopped') {
-                    <span class="stopped" nz-icon>
+                    <span class="stopped" nz-icon aria-hidden="true">
                       <svg>
                         <path d="M 760 260 h -500 v 500 h 500 z"></path>
                       </svg>
@@ -65,15 +75,15 @@
                   }
                   @if (run.status === 'Building') {
                     <span class="building" nz-icon nzType="play-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Blocked') {
                     <span class="blocked" nz-icon nzType="pause-circle"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                   @if (run.status === 'Skipped') {
                     <span class="skipped" nz-icon nzType="stop"
-                    nzTheme="outline"></span>
+                    nzTheme="outline" aria-hidden="true"></span>
                   }
                 </div>
                 <div class="run-info">
@@ -89,19 +99,21 @@
           </a>
         }
       </div>
-      <div class="graph">
+      <!-- Fades on every change of run: two runs of the same workflow in the same state look alike,
+           and the sidebar stays still since that is where the click happened. -->
+      <div class="graph" [@runSwitch]="workflowRun.id" [class.switching]="loadingRun">
         <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
           <nz-page-header-title>
-            <span style="margin-right: 10px;" title="Show workflow's runs">
-              <a [routerLink]="['/project', projectKey, 'run']"
-                [queryParams]="{workflow: workflowRun.vcs_server+'/'+workflowRun.repository+'/'+workflowRun.workflow_name}">
-              {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}</a>
-              <span class="number">#{{workflowRun.run_number}}</span>
-            </span>
+            <app-workflow-name style="margin-right: 10px;" [name]="workflowRun.workflow_name"
+              [suffix]="'#'+workflowRun.run_number"
+              [scope]="workflowRun.vcs_server+'/'+workflowRun.repository"
+              [link]="['/project', projectKey, 'run']"
+              [linkQueryParams]="{workflow: workflowRun.vcs_server+'/'+workflowRun.repository+'/'+workflowRun.workflow_name}"
+              linkTitle="Show workflow's runs"></app-workflow-name>
             @if (workflowRun.run_attempt > 1 && selectedRunAttempt) {
               <nz-select
                 [ngModel]="selectedRunAttempt" (ngModelChange)="changeRunAttempt($event)" nzSize="small"
-                title="Select run attempt">
+                title="Select run attempt" aria-label="Select run attempt">
                 @for (item of [].constructor(workflowRun.run_attempt); track item; let i = $index) {
                   <nz-option
                   [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
@@ -110,14 +122,14 @@
             }
             <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
               (click)="openPanel('sources')"><span nz-icon nzType="file-text"
-            nzTheme="outline"></span>Sources</button>
+            nzTheme="outline" aria-hidden="true"></span>Sources</button>
             <button nz-button nzType="default" nzSize="small" title="Show workflow run contexts"
               (click)="openPanel('contexts')"><span nz-icon nzType="read"
-            nzTheme="outline"></span>Contexts</button>
+            nzTheme="outline" aria-hidden="true"></span>Contexts</button>
             <a nz-button nzType="link" title="Show workflow in Explore view"
               [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.vcs_server, 'repository', workflowRun.repository, 'workflow', workflowRun.workflow_name]"
               [queryParams]="{ref: workflowRun.workflow_ref}">
-              <span nz-icon nzType="folder-view" nzTheme="outline"></span>Show in Explore</a>
+              <span nz-icon nzType="folder-view" nzTheme="outline" aria-hidden="true"></span>Show in Explore</a>
             </nz-page-header-title>
             <nz-page-header-content>
               <span nz-typography nzType="secondary">
@@ -127,7 +139,7 @@
                     [routerLink]="['/project', workflowRun.contexts.cds.workflow_template_project_key, 'explore', 'vcs', workflowRun.contexts.cds.workflow_template_vcs_server, 'repository', workflowRun.contexts.cds.workflow_template_repository, 'workflowtemplate', workflowRun.contexts.cds.workflow_template]">
                   {{workflowRun.contexts.cds.workflow_template_vcs_server}}/{{workflowRun.contexts.cds.workflow_template_repository}}/{{workflowRun.contexts.cds.workflow_template}}</a>
                   <span class="templateDetails" nz-icon nzType="eye" nzTheme="outline" nz-tooltip
-                  [nzTooltipTitle]="templateTooltip"></span>
+                  [nzTooltipTitle]="templateTooltip" role="img" aria-label="Template details"></span>
                   <ng-template #templateTooltip>
                     Repository: <a
                     href="{{workflowRun.contexts.cds.workflow_template_repository_web_url}}"
@@ -190,7 +202,7 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
       <app-searchable [link]="['/project', projectKey, 'run']"
         [params]="generateAnnotationQueryParams(annotation)">
         @if (annotation.value !== 'true') {
-          <nz-tag nzColor="default" style="cursor: copy;"
+          <nz-tag nzColor="default" style="cursor: copy;" appClickable
             title="key: {{annotation.key}} - value: {{annotation.value}}"
             (click)="confirmCopyAnnotationValue($event, annotation.value)">
             <b>{{annotation.key}}:</b> {{annotation.value}}
@@ -241,8 +253,8 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
         </button>
       }
       <button nz-button nzSize="large" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="topRight"
-        [nzLoading]="loading.restart">
-        <span nz-icon nzType="ellipsis"></span>
+        [nzLoading]="loading.restart" aria-label="More job selection options">
+        <span nz-icon nzType="ellipsis" aria-hidden="true"></span>
         <nz-dropdown-menu #menu="nzDropdownMenu">
           <ul nz-menu>
             @if (hasJobsFailed) {
@@ -265,8 +277,8 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
     run</button>
   }
   <div class="help" nz-tooltip [nzTooltipTitle]="keyboardShortcutsTooltip" nzTooltipPlacement="top"
-    [nzTooltipOverlayStyle]="{maxWidth: '350px'}">
-    <nz-icon nzType="question-circle" nzTheme="outline" />
+    [nzTooltipOverlayStyle]="{maxWidth: '350px'}" role="img" aria-label="Keyboard shortcuts help">
+    <nz-icon nzType="question-circle" nzTheme="outline" aria-hidden="true" />
   </div>
   <ng-template #keyboardShortcutsTooltip>
     <div class="shortcuts-tooltip">
@@ -287,25 +299,29 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
   (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
   (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)"
   (onSelectionChange)="onSelectionChange($event)" (onSelectionValidate)="clickValidateRestartJobs()"
-(onSelectionModeChange)="onSelectionModeChange($event)" #graph></app-graph>
+  (onSelectionModeChange)="onSelectionModeChange($event)" (onHoverJobRun)="onHoverJobRun($event)"
+#graph></app-graph>
 </div>
 </div>
 <!--  BOTTOM PANELS -->
 <app-resizable-panel [direction]="'vertical'" [minSize]="200" [initialSize]="infoPanelSize"
   (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
   <div class="bottom-panel">
-    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
-    @if (selectedTab && selectedTab.key === 'info') {
-      <app-run-info [info]="workflowRunInfo"></app-run-info>
-    }
-    @if (selectedTab && selectedTab.key === 'results') {
-      <app-run-results [results]="results"
-      (onSelectResult)="openPanel('result', $event)"></app-run-results>
-    }
-    @if (selectedTab && selectedTab.key === 'tests') {
-      <app-run-tests [tests]="tests"
-      (onSelectTest)="openPanel('test', $event)"></app-run-tests>
-    }
+    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true" #bottomTabs></app-tabs>
+    <!-- Hidden rather than destroyed: a tab that is torn down on the way out comes back with its zoom,
+         its unfolded lanes and its filters reset, which is a poor trade for the little it saves. -->
+    <app-run-info [hidden]="selectedTab?.key !== 'info'" [info]="workflowRunInfo"></app-run-info>
+    <app-run-timeline [hidden]="selectedTab?.key !== 'timeline'" [workflowRun]="workflowRun" [jobs]="jobs"
+      [results]="results" [infos]="workflowRunInfo" [runAttempt]="selectedRunAttempt"
+      [hoveredJobRunID]="hoveredJobRunID"
+      [selectedJobRunID]="selectedItemType === 'job' ? selectedJobRun?.id : null"
+      (onSelectJobRun)="selectJobRunFromTimeline($event)" (onSelectInfo)="showRunInfos()"
+      (onSelectHook)="openPanel('hook', $event)"
+    (onSelectResult)="openPanel('result', $event)"></app-run-timeline>
+    <app-run-results [hidden]="selectedTab?.key !== 'results'" [results]="results"
+    (onSelectResult)="openPanel('result', $event)"></app-run-results>
+    <app-run-tests [hidden]="selectedTab?.key !== 'tests'" [tests]="tests"
+    (onSelectTest)="openPanel('test', $event)"></app-run-tests>
   </div>
 </app-resizable-panel>
 </div>
@@ -314,17 +330,17 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
   <app-resizable-panel [minSize]="400" [initialSize]="jobPanelSize"
     (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)"
     (dblclick)="$event.stopPropagation(); dblClickOnPanel()">
-    <div class="controls">
-      <div class="control" title="Close panel" (click)="clickClosePanel()">
-        <span nz-icon nzType="close" nzTheme="outline"></span>
+    <div class="controls" (dblclick)="$event.stopPropagation();">
+      <div class="control" title="Close panel" appClickable aria-label="Close panel" (click)="clickClosePanel()">
+        <span nz-icon nzType="close" nzTheme="outline" aria-hidden="true"></span>
       </div>
-      <div class="control" title="Expand/Reduce panel" [class.expand]="!panelExpanded"
-        [class.expanded]="panelExpanded" (click)="clickExpandPanel()">
-        <span nz-icon nzType="vertical-align-top" nzTheme="outline"></span>
+      <div class="control" title="Expand/Reduce panel" appClickable aria-label="Expand or reduce panel" [class.expand]="!panelExpanded"
+        [class.expanded]="panelExpanded" (click)="clickExpandPanel()" [attr.aria-expanded]="panelExpanded">
+        <span nz-icon nzType="vertical-align-top" nzTheme="outline" aria-hidden="true"></span>
       </div>
-      <a class="control" title="Copy share link" [href]="selectedItemShareLink" #shareLink
+      <a class="control" title="Copy share link" aria-label="Copy share link" [href]="selectedItemShareLink" #shareLink
         (click)="confirmCopy($event)">
-        <span nz-icon nzType="share-alt" nzTheme="outline"></span>
+        <span nz-icon nzType="share-alt" nzTheme="outline" aria-hidden="true"></span>
       </a>
     </div>
     @if (selectedItemType === 'job') {
@@ -338,7 +354,8 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
       <app-run-result [result]="selectedRunResult"></app-run-result>
     }
     @if (selectedItemType === 'sources') {
-      <app-run-sources [run]="workflowRun"></app-run-sources>
+      <app-run-sources [run]="workflowRun" [selectedFileKey]="selectedSourceKey"
+      (selectedFileKeyChange)="onSourceFileChange($event)"></app-run-sources>
     }
     @if (selectedItemType === 'contexts') {
       <app-run-contexts [run]="workflowRun"></app-run-contexts>
@@ -348,4 +365,21 @@ nzContent="{{workflowRun.contexts.cds.version}}" [nzCopyTooltips]="null"></span>
     }
   </app-resizable-panel>
 }
+}
+@if (!workflowRun && loadingRun) {
+  <!-- The frame of the view, so that reading the run does not leave a blank page and everything
+       does not jump into place at once when it lands. -->
+  <div class="content loading-shell" role="status">
+    <span class="cds-sr-only">Loading the workflow run</span>
+    <div class="graph-wrapper">
+      <div class="list">
+        @for (placeholder of runsPlaceholders; track placeholder) {
+          <span class="item placeholder" aria-hidden="true"></span>
+        }
+      </div>
+      <div class="graph-placeholder" aria-hidden="true">
+        <span nz-icon nzType="loading" nzTheme="outline"></span>
+      </div>
+    </div>
+  </div>
 }

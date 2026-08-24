@@ -14,7 +14,7 @@
     @if (branches?.length > 0 || tags?.length > 0) {
       <div class="container" [class.night]="darkActive">
         <nz-input-group [nzSuffix]="suffixIconSearch">
-          <input type="text" nz-input placeholder="Search for ref" (input)="onFilterRefChange($event)" />
+          <input type="text" nz-input placeholder="Search for ref" aria-label="Search for ref" (input)="onFilterRefChange($event)" />
         </nz-input-group>
         <ng-template #suffixIconSearch>
           <span nz-icon nzType="search"></span>
@@ -29,7 +29,7 @@
               </ng-template>
               <div class="options">
                 @for (opt of filteredBranches; track opt) {
-                  <div class="option" [title]="opt.display_id"
+                  <div class="option" [title]="opt.display_id" appClickable
                     [class.active]="selectedRef === 'refs/heads/' + opt.display_id"
                   (click)="clickOption('refs/heads/' + opt.display_id)">{{opt.display_id}}</div>
                 }
@@ -45,7 +45,7 @@
               </ng-template>
               <div class="options">
                 @for (opt of filteredTags; track opt) {
-                  <div class="option" [title]="opt.tag"
+                  <div class="option" [title]="opt.tag" appClickable
                     [class.active]="selectedRef === 'refs/tags/' + opt.tag" (click)="clickOption('refs/tags/' + opt.tag)">
                   {{opt.tag}}</div>
                 }

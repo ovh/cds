@@ -52,7 +52,9 @@ import { RunResultsComponent } from '../projectv2/run/run-results.component';
 import { RunSourcesComponent } from '../projectv2/run/run-sources.component';
 import { RunTestComponent } from '../projectv2/run/run-test.component';
 import { RunTestsComponent } from '../projectv2/run/run-tests.component';
+import { RunTimelineComponent } from '../projectv2/run/run-timeline.component';
 import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
+import { TimelineModule } from '../../../../libs/timeline/src/public-api';
 
 @NgModule({
     declarations: [
@@ -104,6 +106,7 @@ import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
         RunSourcesComponent,
         RunTestComponent,
         RunTestsComponent,
+        RunTimelineComponent,
         RunTriggerComponent
     ],
 
@@ -112,6 +115,7 @@ import { GraphModule } from '../../../../libs/workflow-graph/src/public-api';
         RouterModule,
         DragDropModule,
         GraphModule,
+        TimelineModule,
         projectRouting
     ],
     providers: [

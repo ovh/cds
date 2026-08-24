@@ -48,9 +48,9 @@
                                 </nz-tab>
                                 <nz-tab nzTitle="Create a new pipeline">
                                     <nz-form-item>
-                                        <nz-form-label>New pipeline name</nz-form-label>
+                                        <nz-form-label nzFor="cds-field-new-pipeline-name">New pipeline name</nz-form-label>
                                         <nz-form-control>
-                                            <input nz-input type="text" name="pipname" [(ngModel)]="newPipeline.name">
+                                            <input nz-input type="text" id="cds-field-new-pipeline-name" name="pipname" [(ngModel)]="newPipeline.name">
                                         </nz-form-control>
                                     </nz-form-item>
                                     <nz-alert nzType="error" *ngIf="errorPipelineNamePattern" nzMessage="Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
@@ -109,9 +109,9 @@
                                 </nz-tab>
                                 <nz-tab nzTitle="Create a new application">
                                     <nz-form-item>
-                                        <nz-form-label>New application name</nz-form-label>
+                                        <nz-form-label nzFor="cds-field-new-application-name">New application name</nz-form-label>
                                         <nz-form-control>
-                                            <input nz-input type="text" name="appname" [(ngModel)]="newApplication.name">
+                                            <input nz-input type="text" id="cds-field-new-application-name" name="appname" [(ngModel)]="newApplication.name">
                                         </nz-form-control>
                                     </nz-form-item>
                                     <nz-alert nzType="error" nzMessage="Invalid application name. Allowed pattern is: a-zA-Z0-9._-" *ngIf="errorPipelineNamePattern"></nz-alert>
@@ -150,9 +150,9 @@
                                 </nz-tab>
                                 <nz-tab nzTitle="Create a new environment">
                                     <nz-form-item>
-                                        <nz-form-label>New environment name</nz-form-label>
+                                        <nz-form-label nzFor="cds-field-new-environment-name">New environment name</nz-form-label>
                                         <nz-form-control>
-                                            <input nz-input type="text" name="envname" [(ngModel)]="newEnvironment.name">
+                                            <input nz-input type="text" id="cds-field-new-environment-name" name="envname" [(ngModel)]="newEnvironment.name">
                                         </nz-form-control>
                                     </nz-form-item>
                                 </nz-tab>

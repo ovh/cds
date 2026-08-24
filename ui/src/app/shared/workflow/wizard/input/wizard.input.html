@@ -35,6 +35,7 @@
         @if (!loadingBranches) {
           <codemirror
             name="payload"
+            aria-label="Payload editor"
             [class.invalid]="invalidJSON"
             [(ngModel)]="payloadString"
             [config]="codeMirrorConfig"

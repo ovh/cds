@@ -1,3 +1,4 @@
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { Injectable, inject } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { HelpState } from 'app/store/help.state';
@@ -21,6 +22,7 @@ export class ToastService {
 
     _nzNotificationService = inject(NzNotificationService);
     _store = inject(Store)
+    _liveAnnouncer = inject(LiveAnnouncer);
 
     constructor() { }
 
@@ -30,17 +32,21 @@ export class ToastService {
 
     success(title: string, msg: string) {
         this._nzNotificationService.success(title, msg);
+        this._liveAnnouncer.announce(msg ? `${title}. ${msg}` : title, 'polite');
     }
 
     info(title: string, msg: string) {
         this._nzNotificationService.info(title, msg);
+        this._liveAnnouncer.announce(msg ? `${title}. ${msg}` : title, 'polite');
     }
 
     error(title: string, msg: string) {
         this._nzNotificationService.error(title, msg);
+        this._liveAnnouncer.announce(msg ? `Error: ${title}. ${msg}` : `Error: ${title}`, 'assertive');
     }
 
     errorHTTP(status: number, message: string, from: string, request_id: string) {
+        this._liveAnnouncer.announce(`Error: ${message}`, 'assertive');
         this._store.select(HelpState.last).pipe(
             filter((help) => help != null),
         ).subscribe(help => {

@@ -13,26 +13,26 @@
         <nz-row>
           <nz-col [nzSpan]="6">
             <nz-form-item>
-              <nz-form-label>Name</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-name">Name</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="name" [(ngModel)]="workerModel.name"
+                <input nz-input type="text" name="name" id="cds-field-wm-name" [(ngModel)]="workerModel.name"
                   [readonly]="!workerModel.editable">
               </nz-form-control>
             </nz-form-item>
           </nz-col>
           <nz-col [nzSpan]="6">
             <nz-form-item>
-              <nz-form-label>Group</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-group">Group</nz-form-label>
               <nz-form-control>
                 @if (groups && workerModel.editable) {
-                  <nz-select nzShowSearch name="group" [nzLoading]="loading" [(ngModel)]="workerModel.group_id">
+                  <nz-select nzShowSearch name="group" id="cds-field-wm-group" [nzLoading]="loading" [(ngModel)]="workerModel.group_id">
                     @for (group of groups; track group) {
                       <nz-option [nzValue]="group.id" [nzLabel]="group.name"></nz-option>
                     }
                   </nz-select>
                 }
                 @if (!workerModel.editable) {
-                  <input  nz-input type="text" name="group"
+                  <input  nz-input type="text" name="group" id="cds-field-wm-group-ro"
                     [ngModel]="workerModel.group?.name" [readonly]="true">
                 }
               </nz-form-control>
@@ -50,18 +50,32 @@
         </nz-col>
         <nz-col [nzSpan]="6">
           <nz-form-item>
-            <label nz-checkbox name="deprecated" [(ngModel)]="workerModel.is_deprecated" [disabled]="!workerModel.editable">
+            <label nz-checkbox name="deprecated" [(ngModel)]="workerModel.is_deprecated"
+              (ngModelChange)="deprecatedChange()" [disabled]="!workerModel.editable">
               Set the worker model as deprecated
             </label>
           </nz-form-item>
         </nz-col>
       </nz-row>
+      @if (workerModel.is_deprecated) {
+        <nz-row>
+          <nz-col [nzSpan]="12">
+            <nz-form-item>
+              <nz-form-label nzFor="cds-field-wm-eol">{{'worker_model_eol' | translate}}</nz-form-label>
+              <nz-form-control [nzExtra]="'worker_model_eol_help' | translate">
+                <input nz-input type="date" name="eol" id="cds-field-wm-eol" [(ngModel)]="eolDate"
+                  (ngModelChange)="eolChange()" [readonly]="!workerModel.editable">
+              </nz-form-control>
+            </nz-form-item>
+          </nz-col>
+        </nz-row>
+      }
       <nz-row>
         <nz-col [nzSpan]="24">
           <nz-form-item>
-            <nz-form-label>Description</nz-form-label>
+            <nz-form-label nzFor="cds-field-wm-description">Description</nz-form-label>
             <nz-form-control>
-              <textarea nz-input name="description" [(ngModel)]="workerModel.description"
+              <textarea nz-input name="description" id="cds-field-wm-description" [(ngModel)]="workerModel.description"
                 (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
               [readonly]="!workerModel.editable"></textarea>
             </nz-form-control>
@@ -71,18 +85,18 @@
       <nz-row>
         <nz-col [nzSpan]="12">
           <nz-form-item>
-            <nz-form-label>Operating system</nz-form-label>
+            <nz-form-label nzFor="cds-field-wm-os">Operating system</nz-form-label>
             <nz-form-control>
-              <input nz-input type="text" name="os" [(ngModel)]="workerModel.registered_os"
+              <input nz-input type="text" name="os" id="cds-field-wm-os" [(ngModel)]="workerModel.registered_os"
                 [disabled]="true">
             </nz-form-control>
           </nz-form-item>
         </nz-col>
         <nz-col [nzSpan]="12">
           <nz-form-item>
-            <nz-form-label>Architecture</nz-form-label>
+            <nz-form-label nzFor="cds-field-wm-arch">Architecture</nz-form-label>
             <nz-form-control>
-              <input nz-input type="text" name="arch" [(ngModel)]="workerModel.registered_arch"
+              <input nz-input type="text" name="arch" id="cds-field-wm-arch" [(ngModel)]="workerModel.registered_arch"
                 [disabled]="true">
             </nz-form-control>
           </nz-form-item>
@@ -98,7 +112,7 @@
                 @if (!workerModel.disabled) {
                   <nz-row nzAlign="middle">
                     <nz-col [nzSpan]="4">
-                      <i nz-icon nzType="check" nzTheme="outline" class="success"></i>
+                      <i nz-icon nzType="check" nzTheme="outline" class="success" aria-hidden="true"></i>
                     </nz-col>
                     <nz-col [nzSpan]="16">
                       <p>This worker model is enabled</p>
@@ -113,7 +127,7 @@
                 @if (workerModel.disabled) {
                   <nz-row nzAlign="middle">
                     <nz-col [nzSpan]="4">
-                      <i nz-icon nzType="warning" nzTheme="outline" class="fail"></i>
+                      <i nz-icon nzType="warning" nzTheme="outline" class="fail" aria-hidden="true"></i>
                     </nz-col>
                     <nz-col [nzSpan]="16">
                       <p>This worker model is disabled</p>
@@ -137,7 +151,7 @@
                   <ng-template #errorTpl>
                     <nz-row>
                       <nz-col [nzSpan]="4">
-                        <i nz-icon nzType="warning" nzTheme="outline" class="fail"></i>
+                        <i nz-icon nzType="warning" nzTheme="outline" class="fail" aria-hidden="true"></i>
                       </nz-col>
                       <nz-col [nzSpan]="20">
                         <h3>{{ 'worker_model_error' | translate }}</h3>
@@ -184,10 +198,10 @@
       <nz-row>
         <nz-col [nzSpan]="12">
           <nz-form-item>
-            <nz-form-label>Type</nz-form-label>
+            <nz-form-label nzFor="cds-field-wm-type">Type</nz-form-label>
             <nz-form-control>
               @if (types && workerModel.editable) {
-                <nz-select name="modelType" nzShowSearch [nzLoading]="loading" [(ngModel)]="workerModel.type"
+                <nz-select name="modelType" id="cds-field-wm-type" nzShowSearch [nzLoading]="loading" [(ngModel)]="workerModel.type"
                   (ngModelChange)="typeChange()">
                   @for (type of types; track type) {
                     <nz-option [nzValue]="type" [nzLabel]="type"></nz-option>
@@ -195,7 +209,7 @@
                 </nz-select>
               }
               @if (!workerModel.editable) {
-                <input nz-input type="text" name="type"
+                <input nz-input type="text" name="type" id="cds-field-wm-type-ro"
                   [ngModel]="workerModel.type" [readonly]="true">
               }
             </nz-form-control>
@@ -207,9 +221,9 @@
         <nz-row>
           <nz-col [nzSpan]="20">
             <nz-form-item>
-              <nz-form-label>Image</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-docker-image">Image</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="image"
+                <input nz-input type="text" name="image" id="cds-field-wm-docker-image"
                   [(ngModel)]="workerModel.model_docker.image" [readonly]="!workerModel.editable">
               </nz-form-control>
             </nz-form-item>
@@ -217,7 +231,7 @@
           <nz-col [nzSpan]="4">
             <label nz-checkbox name="private" [(ngModel)]="workerModel.model_docker.private" [disabled]="!workerModel.editable" nz-tooltip
               nzTooltipTitle="If your image comes from a private registry requiring some credentials">
-              Private registry <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip"></i>
+              Private registry <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip" aria-hidden="true"></i>
             </label>
           </nz-col>
         </nz-row>
@@ -226,9 +240,9 @@
           <nz-row>
             <nz-col [nzSpan]="8">
               <nz-form-item>
-                <nz-form-label>Registry URL</nz-form-label>
+                <nz-form-label nzFor="cds-field-wm-registry-url">Registry URL</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="text" name="registry_url"
+                  <input nz-input type="text" name="registry_url" id="cds-field-wm-registry-url"
                     placeholder="https://index.docker.io/v1/"
                     [(ngModel)]="workerModel.model_docker.registry"
                     [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
@@ -237,9 +251,9 @@
             </nz-col>
             <nz-col [nzSpan]="8">
               <nz-form-item>
-                <nz-form-label>Username</nz-form-label>
+                <nz-form-label nzFor="cds-field-wm-registry-username">Username</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="text" name="registry_username"
+                  <input nz-input type="text" name="registry_username" id="cds-field-wm-registry-username"
                     [(ngModel)]="workerModel.model_docker.username"
                     [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                 </nz-form-control>
@@ -247,9 +261,9 @@
             </nz-col>
             <nz-col [nzSpan]="8">
               <nz-form-item>
-                <nz-form-label>Password</nz-form-label>
+                <nz-form-label nzFor="cds-field-wm-registry-password">Password</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="password" name="registry_password"
+                  <input nz-input type="password" name="registry_password" id="cds-field-wm-registry-password"
                     [(ngModel)]="workerModel.model_docker.password"
                     [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                 </nz-form-control>
@@ -261,9 +275,9 @@
         <nz-row>
           <nz-col [nzSpan]="12">
             <nz-form-item>
-              <nz-form-label>Pattern of configuration scripts</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-pattern">Pattern of configuration scripts</nz-form-label>
               <nz-form-control>
-                <nz-select nzShowSearch  name="pattern" [(ngModel)]="patternSelected" [nzDisabled]="!workerModel.editable"
+                <nz-select nzShowSearch  name="pattern" id="cds-field-wm-pattern" [(ngModel)]="patternSelected" [nzDisabled]="!workerModel.editable"
                   (ngModelChange)="patternChange()" nzPlaceHolder="Select...">
                   <nz-option></nz-option>
                   @for (p of patternsFiltered; track p) {
@@ -275,9 +289,9 @@
           </nz-col>
           <nz-col [nzSpan]="12">
             <nz-form-item>
-              <nz-form-label>Shell command</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-shell">Shell command</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="shell" placeholder="sh -c"
+                <input nz-input type="text" name="shell" id="cds-field-wm-shell" placeholder="sh -c"
                   [(ngModel)]="workerModel.model_docker.shell"
                   [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
               </nz-form-control>
@@ -287,13 +301,13 @@
         <nz-row>
           <nz-col [nzSpan]="24">
             <nz-form-item>
-              <nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-cmd">
                 <span nz-tooltip nzTooltipTitle="The command must end with ./worker">
-                  Command <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip"></i>
+                  Command <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip" aria-hidden="true"></i>
                 </span>
               </nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd"
+                <input nz-input type="text" name="cmd" id="cds-field-wm-cmd" [(ngModel)]="workerModel.model_docker.cmd"
                   [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
               </nz-form-control>
             </nz-form-item>
@@ -304,7 +318,7 @@
             <nz-form-item>
               <nz-form-label>
                 <span nz-tooltip nzTooltipTitle="You can set environment variables to put in your worker. If you have no specific need, the default environment variables will be added automatically at the creation">
-                  Environment variables <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip"></i>
+                  Environment variables <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip" aria-hidden="true"></i>
                 </span>
               </nz-form-label>
             </nz-form-item>
@@ -316,19 +330,19 @@
             <nz-row>
               <nz-col [nzSpan]="10">
                 <input nz-input type="text" name="name-{{envName}}"
-                  [placeholder]="'common_name' | translate" [value]="envName" readonly>
+                  [placeholder]="'common_name' | translate" [attr.aria-label]="'common_name' | translate" [value]="envName" readonly>
               </nz-col>
               <nz-col [nzSpan]="10">
                 <input nz-input type="text" name="value-{{envName}}"
-                  [placeholder]="'common_value' | translate"
+                  [placeholder]="'common_value' | translate" [attr.aria-label]="'common_value' | translate"
                   [(ngModel)]="workerModel.model_docker.envs[envName]"
                   [readonly]="!workerModel.editable">
               </nz-col>
               <nz-col [nzSpan]="4">
                 @if (workerModel.editable) {
                   <button nz-button nzDanger (click)="deleteEnv(envName, index)"
-                    >
-                    <i nz-icon nzType="delete" nzTheme="outline"></i>
+                    aria-label="Delete environment variable {{envName}}">
+                    <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>
                   </button>
                 }
               </nz-col>
@@ -339,23 +353,23 @@
         <nz-row>
           <nz-col [nzSpan]="10">
             <nz-form-item>
-              <nz-form-label>Name</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-env-name">Name</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="newEnvName" [(ngModel)]="newEnvName">
+                <input nz-input type="text" name="newEnvName" id="cds-field-wm-env-name" [(ngModel)]="newEnvName">
               </nz-form-control>
             </nz-form-item>
           </nz-col>
           <nz-col [nzSpan]="10">
             <nz-form-item>
-              <nz-form-label>Value</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-env-value">Value</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="newEnvValue" [(ngModel)]="newEnvValue">
+                <input nz-input type="text" name="newEnvValue" id="cds-field-wm-env-value" [(ngModel)]="newEnvValue">
               </nz-form-control>
             </nz-form-item>
           </nz-col>
           <nz-col [nzSpan]="4">
-            <button nz-button nzType="primary" (click)="addEnv(newEnvName, newEnvValue)">
-              <i nz-icon nzType="plus" nzTheme="outline"></i>
+            <button nz-button nzType="primary" (click)="addEnv(newEnvName, newEnvValue)" aria-label="Add environment variable">
+              <i nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></i>
             </button>
           </nz-col>
         </nz-row>
@@ -365,9 +379,9 @@
         <nz-row>
           <nz-col [nzSpan]="12">
             <nz-form-item>
-              <nz-form-label>Image</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-vm-image">Image</nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="image"
+                <input nz-input type="text" name="image" id="cds-field-wm-vm-image"
                   [(ngModel)]="workerModel.model_virtual_machine.image"
                   [readonly]="!workerModel.editable">
               </nz-form-control>
@@ -376,9 +390,9 @@
           @if (workerModel.type === 'openstack') {
             <nz-col [nzSpan]="12">
               <nz-form-item>
-                <nz-form-label>Flavor</nz-form-label>
+                <nz-form-label nzFor="cds-field-wm-flavor">Flavor</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="text" name="flavor"
+                  <input nz-input type="text" name="flavor" id="cds-field-wm-flavor"
                     [(ngModel)]="workerModel.model_virtual_machine.flavor"
                     [readonly]="!workerModel.editable">
                 </nz-form-control>
@@ -389,9 +403,9 @@
         <nz-row>
           <nz-col [nzSpan]="12">
             <nz-form-item>
-              <nz-form-label>Patterns of configuration scripts</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-vm-pattern">Patterns of configuration scripts</nz-form-label>
               <nz-form-control>
-                <nz-select nzShowSearch name="pattern" [(ngModel)]="patternSelected" nzPlaceHolder="Select..."
+                <nz-select nzShowSearch name="pattern" id="cds-field-wm-vm-pattern" [(ngModel)]="patternSelected" nzPlaceHolder="Select..."
                   (ngModelChange)="patternChange()">
                   @for (p of patternsFiltered; track p) {
                     <nz-option [nzValue]="p" [nzLabel]="p.name"></nz-option>
@@ -405,9 +419,9 @@
           <nz-row>
             <nz-col [nzSpan]="12">
               <nz-form-item>
-                <nz-form-label>Username</nz-form-label>
+                <nz-form-label nzFor="cds-field-wm-vm-username">Username</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="text" name="registry_username"
+                  <input nz-input type="text" name="registry_username" id="cds-field-wm-vm-username"
                     [(ngModel)]="workerModel.model_virtual_machine.user"
                     [readonly]="loading || !currentAuthSummary.isAdmin()">
                 </nz-form-control>
@@ -415,9 +429,9 @@
             </nz-col>
             <nz-col [nzSpan]="12">
               <nz-form-item>
-                <nz-form-label>Password</nz-form-label>
+                <nz-form-label nzFor="cds-field-wm-vm-password">Password</nz-form-label>
                 <nz-form-control>
-                  <input nz-input type="password" name="registry_password"
+                  <input nz-input type="password" name="registry_password" id="cds-field-wm-vm-password"
                     [(ngModel)]="workerModel.model_virtual_machine.password"
                     [disabled]="loading || !currentAuthSummary.isAdmin()">
                 </nz-form-control>
@@ -428,9 +442,9 @@
         <nz-row>
           <nz-col [nzSpan]="24">
             <nz-form-item>
-              <nz-form-label>Pre worker command</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-pre-cmd">Pre worker command</nz-form-label>
               <nz-form-control>
-                <textarea nz-input name="pre_cmd"
+                <textarea nz-input name="pre_cmd" id="cds-field-wm-pre-cmd"
                   [(ngModel)]="workerModel.model_virtual_machine.pre_cmd"
                   [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                 </textarea>
@@ -441,13 +455,13 @@
         <nz-row>
           <nz-col [nzSpan]="24">
             <nz-form-item>
-              <nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-vm-cmd">
                 <span nz-tooltip nzTooltipTitle="The command must end with ./worker">
-                  Main worker command <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip"></i>
+                  Main worker command <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip" aria-hidden="true"></i>
                 </span>
               </nz-form-label>
               <nz-form-control>
-                <input nz-input type="text" name="cmd"
+                <input nz-input type="text" name="cmd" id="cds-field-wm-vm-cmd"
                   [(ngModel)]="workerModel.model_virtual_machine.cmd"
                   [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
               </nz-form-control>
@@ -457,9 +471,9 @@
         <nz-row>
           <nz-col [nzSpan]="24">
             <nz-form-item>
-              <nz-form-label>Post worker command</nz-form-label>
+              <nz-form-label nzFor="cds-field-wm-post-cmd">Post worker command</nz-form-label>
               <nz-form-control>
-                <textarea nz-input name="post_cmd"
+                <textarea nz-input name="post_cmd" id="cds-field-wm-post-cmd"
                   [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
                   [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                 </textarea>
@@ -473,11 +487,11 @@
           <nz-col [nzSpan]="24">
             <button nz-button nzType="primary" [class.loading]="loading"
               [class.disabled]="!canSave()" (click)="clickSave()">
-              <i nz-icon nzType="save" nzTheme="outline"></i>{{ 'btn_save' | translate }}
+              <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>{{ 'btn_save' | translate }}
             </button>
             @if (workerModel.id) {
               <button nz-button nzDanger nzType="primary" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this worker model? "
-                (nzOnConfirm)="clickDelete()"> <i nz-icon nzType="delete" nzTheme="outline"></i>Delete</button>
+                (nzOnConfirm)="clickDelete()"> <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete</button>
               }
             </nz-col>
           </nz-row>
@@ -500,11 +514,11 @@
           <nz-row>
             <nz-col [nzSpan]="24">
               <button nz-button nzType="primary" [nzLoading]="loading" (click)="clickSaveAsCode()" [disabled]="!workerModel.editable">
-                <i nz-icon nzType="save" nzTheme="outline"></i>{{ 'btn_save' | translate }}
+                <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>{{ 'btn_save' | translate }}
               </button>
               @if (workerModel.id) {
                 <button nz-button nzType="primary" nzDanger nz-popconfirm (nzOnConfirm)="clickDelete()" nzPopconfirmTitle="Are you sure you want to delete this worker model ?">
-                  <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                  <i nz-icon nzType="delete" nzTheme="outline" aria-hidden="true"></i>Delete
                 </button>
               }
             </nz-col>

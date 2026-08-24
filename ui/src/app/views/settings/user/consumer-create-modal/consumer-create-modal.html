@@ -11,18 +11,18 @@
                 <nz-row>
                   <nz-col [nzSpan]="10">
                     <nz-form-item>
-                      <nz-form-label>Name</nz-form-label>
+                      <nz-form-label nzFor="cds-field-name">Name</nz-form-label>
                       <nz-form-control>
-                        <input nz-input type="text" name="name"
+                        <input nz-input type="text" name="name" id="cds-field-name"
                           [(ngModel)]="newConsumer.name">
                       </nz-form-control>
                     </nz-form-item>
                   </nz-col>
                   <nz-col [nzSpan]="10" [nzOffset]="4">
                     <nz-form-item>
-                      <nz-form-label>Description</nz-form-label>
+                      <nz-form-label nzFor="cds-field-description">Description</nz-form-label>
                       <nz-form-control>
-                        <input nz-input type="text" name="group"
+                        <input nz-input type="text" name="group" id="cds-field-description"
                           [(ngModel)]="newConsumer.description">
                       </nz-form-control>
                     </nz-form-item>
@@ -31,9 +31,9 @@
                 <nz-row>
                   <nz-col [nzSpan]="10">
                     <nz-form-item>
-                      <nz-form-label>TTL (in days)</nz-form-label>
+                      <nz-form-label nzFor="cds-field-duration">TTL (in days)</nz-form-label>
                       <nz-form-control>
-                        <input nz-input type="number" name="duration" min="1" max="365"
+                        <input nz-input type="number" name="duration" id="cds-field-duration" min="1" max="365"
                           [(ngModel)]="newConsumer.validity_periods[0].duration">
                       </nz-form-control>
                     </nz-form-item>
@@ -80,27 +80,27 @@
                 <nz-row>
                   <nz-col [nzSpan]="8">
                     <nz-form-item>
-                      <nz-form-label>Name</nz-form-label>
+                      <nz-form-label nzFor="cds-field-service-name">Name</nz-form-label>
                       <nz-form-control>
-                        <input nz-input type="text" name="name"
+                        <input nz-input type="text" name="name" id="cds-field-service-name"
                           [(ngModel)]="newConsumer.auth_consumer_user.service_name">
                       </nz-form-control>
                     </nz-form-item>
                   </nz-col>
                   <nz-col [nzSpan]="7" [nzOffset]="1">
                     <nz-form-item>
-                      <nz-form-label>Type</nz-form-label>
+                      <nz-form-label nzFor="cds-field-service-type">Type</nz-form-label>
                       <nz-form-control>
-                        <input nz-input type="text" name="type"
+                        <input nz-input type="text" name="type" id="cds-field-service-type"
                           [(ngModel)]="newConsumer.auth_consumer_user.service_type">
                       </nz-form-control>
                     </nz-form-item>
                   </nz-col>
                   <nz-col [nzSpan]="7" [nzOffset]="1">
                     <nz-form-item>
-                      <nz-form-label>Region</nz-form-label>
+                      <nz-form-label nzFor="cds-field-service-region">Region</nz-form-label>
                       <nz-form-control>
-                        <input nz-input type="text" name="region"
+                        <input nz-input type="text" name="region" id="cds-field-service-region"
                           [(ngModel)]="newConsumer.auth_consumer_user.service_region">
                         <label nz-checkbox name="ignore" [(ngModel)]="newConsumer.auth_consumer_user.service_ignore_job_with_no_region">
                           Ignore job with no region
@@ -142,7 +142,7 @@
           nz-button nzType="primary"
           (click)="clickNext()">
           @if (activeStep === formStepName.SERVICE) {
-            <i nz-icon nzType="save" nzTheme="outline"></i>
+            <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>
             Create
           } @else {
             Next

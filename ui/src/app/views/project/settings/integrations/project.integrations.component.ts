@@ -30,6 +30,9 @@ export class ProjectIntegrationsComponent implements OnInit, OnDestroy {
     codeMirrorConfigRO: any;
     themeSubscription: Subscription;
     integrations: Array<ProjectIntegration> = [];
+    filteredIntegrations: Array<ProjectIntegration> = [];
+    filter: string = '';
+    createModalVisible: boolean = false;
     models: Array<IntegrationModel> = [];
     newIntegration: ProjectIntegration;
 
@@ -76,6 +79,7 @@ export class ProjectIntegrationsComponent implements OnInit, OnDestroy {
             this.integrations = await lastValueFrom(this._v2ProjectService.getIntegrations(this.project.key));
             this.integrations = this.integrations.map(integ => this.setDefaultConfig(integ));
             this.integrations.sort((a, b) => a.name < b.name ? -1 : 1);
+            this.applyFilter();
         } catch (e) {
             this._messageService.error(`Unable to load integrations: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
@@ -89,6 +93,7 @@ export class ProjectIntegrationsComponent implements OnInit, OnDestroy {
         try {
             await lastValueFrom(this._v2ProjectService.deleteIntegration(this.project.key, p.name));
             this.integrations = this.integrations.filter(i => i.name !== p.name);
+            this.applyFilter();
         } catch (e) {
             this._messageService.error(`Unable to delete integration: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
@@ -102,6 +107,7 @@ export class ProjectIntegrationsComponent implements OnInit, OnDestroy {
         try {
             const integration = await lastValueFrom(this._v2ProjectService.putIntegration(this.project.key, p));
             this.integrations = this.integrations.map(i => i.name === integration.name ? integration : i);
+            this.applyFilter();
         } catch (e) {
             this._messageService.error(`Unable to update integration: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
@@ -116,7 +122,8 @@ export class ProjectIntegrationsComponent implements OnInit, OnDestroy {
             const integration = await lastValueFrom(this._v2ProjectService.postIntegration(this.project.key, this.newIntegration));
             this.integrations = this.integrations.concat(this.setDefaultConfig(integration));
             this.integrations.sort((a, b) => a.name < b.name ? -1 : 1);
-            this.newIntegration = new ProjectIntegration();
+            this.applyFilter();
+            this.closeCreateModal();
             if (this.autoHeightDirective) { this.autoHeightDirective.onResize(null); }
         } catch (e) {
             this._messageService.error(`Unable to create integration: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
@@ -125,9 +132,40 @@ export class ProjectIntegrationsComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    cancel(): void {
+    updateFilter(value: string): void {
+        this.filter = value;
+        this.applyFilter();
+        this._cd.markForCheck();
+    }
+
+    applyFilter(): void {
+        const search = (this.filter ?? '').trim().toLowerCase();
+        this.filteredIntegrations = search === '' ? this.integrations :
+            this.integrations.filter(i => [i.name, i.model?.name, ...this.modelTypes(i.model)]
+                .some(field => (field ?? '').toLowerCase().indexOf(search) !== -1));
+    }
+
+    modelTypes(model: IntegrationModel): Array<string> {
+        if (!model) {
+            return [];
+        }
+        return [
+            model.storage ? 'storage' : null,
+            model.hook ? 'hook' : null,
+            model.event ? 'event' : null,
+            model.deployment ? 'deployment' : null
+        ].filter(t => !!t);
+    }
+
+    openCreateModal(): void {
         this.newIntegration = new ProjectIntegration();
-        if (this.autoHeightDirective) { this.autoHeightDirective.onResize(null); }
+        this.createModalVisible = true;
+        this._cd.markForCheck();
+    }
+
+    closeCreateModal(): void {
+        this.createModalVisible = false;
+        this.newIntegration = new ProjectIntegration();
         this._cd.markForCheck();
     }
 

@@ -1,9 +1,11 @@
-@if (loading) {
+@if (loading && !entity) {
   <nz-spin nzTip="Loading entity"></nz-spin>
 }
 
-@if (entity && !loading) {
-  <div class="content">
+@if (entity) {
+  <!-- The editor stays mounted while the next entity is read: building monaco again for each of them
+       is what made opening one slow. -->
+  <div class="content" [class.loading]="loading">
     <div class="leftPanel">
       <nz-tabs nzType="card" nzSize="small">
         <nz-tab [nzTitle]="entity.type + ' ' + entity.file_path"></nz-tab>

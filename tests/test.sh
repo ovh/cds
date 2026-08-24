@@ -1,11 +1,23 @@
 #!/bin/bash
 
-trap 'kill $(jobs -p)' EXIT
+# Kill the test suites still running when the script exits early. jobs -p is
+# empty once everything has been waited for, and can still list a suite that
+# just terminated, so neither case is worth reporting as an error.
+cleanup() {
+    local pids
+    pids=$(jobs -p)
+    if [ -n "${pids}" ]; then
+        kill ${pids} 2>/dev/null
+    fi
+    return 0
+}
+trap cleanup EXIT
 
 # script usage definition
 usage() {
     echo "Usage: ./test.sh <target...>"
-    echo "   Available targets: smoke_api, smoke_services, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties, admin"
+    echo "   Available targets: smoke_api, initialization, smoke_services, cli, workflow, workflow_with_integration, workflow_with_third_parties, admin, v2, v2_concurrency"
+    echo "   The v2 target can be split across runners with SHARD_TOTAL and SHARD_INDEX."
 }
 
 # Arguments are mandatory
@@ -62,6 +74,11 @@ CDS_REGION_REQ="${CDS_REGION_REQ:-""}"
 HOSTNAME="${HOSTNAME:-localhost}"
 MAX_CHILDREN="${MAX_CHILDREN:-10}"
 
+# Split a test suite across several runners. SHARD_INDEX is 0-based and must be
+# lower than SHARD_TOTAL. Defaults run every test suite in a single shard.
+SHARD_TOTAL="${SHARD_TOTAL:-1}"
+SHARD_INDEX="${SHARD_INDEX:-0}"
+
 # The default values below fit to default minio installation.
 # Run "make minio_start" to start a minio docker container
 AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
@@ -97,6 +114,32 @@ check_failure() {
 mv_results() {
     tsuite_file=$1
     mv ./results/venom.log ./results/${tsuite_file}-venom.log
+}
+
+# Suites running in parallel report their failure through a marker file: their
+# exit status is lost by the `wait` that collects them, and a suite dying before
+# writing its xml report would otherwise go unnoticed. Every suite is still run,
+# the whole list of failures is reported once they are all done.
+FAILED_DIR=./results/.failed
+
+mark_failure() {
+    mkdir -p ${FAILED_DIR}
+    touch ${FAILED_DIR}/$1
+}
+
+report_failures() {
+    if [ ! -d ${FAILED_DIR} ] || [ -z "$(ls -A ${FAILED_DIR} 2>/dev/null)" ]; then
+        return 0
+    fi
+    echo -e "${LIGHTRED}Failed test suites:${NOCOLOR}"
+    for f in $(ls -1 ${FAILED_DIR}); do
+        echo -e "  ${RED}${f}${NOCOLOR}"
+    done
+    return 1
+}
+
+shard() {
+    awk -v total="${SHARD_TOTAL}" -v idx="${SHARD_INDEX}" 'NR % total == idx'
 }
 
 smoke_tests_api() {
@@ -198,16 +241,17 @@ run_workflow_tests() {
     echo -e "  ${YELLOW}${f} ${BLUE}STARTING ${DARKGRAY}cmd: ${CMD}${NOCOLOR}"
     START="$(date +%s)"
     ${CMD} > ./results/${f}/${f}.output 2>&1
-    exit_status=$?    
+    exit_status=$?
     if [ $exit_status -ne 0 ]; then
         out=`cat ./results/${f}/${f}.output`
         echo -e "  ${YELLOW}${f} ${LIGHTRED}FAILURE ${DARKGRAY}code: ${exit_status}\n${RED}${out}${NOCOLOR}"
         mv ./results/${f}/venom.log ./results/${f}/${f}-venom.log
+        mark_failure ${f}
     else
         echo -e "  ${YELLOW}${f} ${GREEN}SUCCESS ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
     fi
     mv ./results/${f}/* ./results
-    exit $exit_status
+    return $exit_status
 }
 
 workflow_with_integration_tests() {
@@ -268,8 +312,8 @@ admin_tests() {
 cds_v2_tests() {
     echo "Check if forgejo is running"
     curl --fail -I -X GET ${FORGEJO_HOST}/api/swagger
-    echo "Running CDS v2 tests (excluding concurrency):"
-    for f in $(ls -1 08_*.yml | grep -v concurrency); do
+    echo "Running CDS v2 tests (excluding concurrency), shard ${SHARD_INDEX}/${SHARD_TOTAL}:"
+    for f in $(ls -1 08_*.yml | grep -v concurrency | shard); do
         run_cds_v2_tests $f &
         local my_pid=$$
         local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
@@ -297,16 +341,19 @@ run_cds_v2_tests() {
     echo -e "  ${YELLOW}${f} ${BLUE}STARTING ${DARKGRAY}cmd: ${CMD}${NOCOLOR}"
     START="$(date +%s)"
     ${CMD} > ./results/${f}/${f}.output 2>&1
-    exit_status=$?    
+    exit_status=$?
     if [ $exit_status -ne 0 ]; then
         out=`cat ./results/${f}/${f}.output`
         echo -e "  ${YELLOW}${f} ${LIGHTRED}FAILURE ${DARKGRAY}code: ${exit_status}\n${RED}${out}${NOCOLOR}"
         mv ./results/${f}/venom.log ./results/${f}/${f}-venom.log
+        mark_failure ${f}
     else
         echo -e "  ${YELLOW}${f} ${GREEN}SUCCESS ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
     fi
     mv ./results/${f}/* ./results
-    exit $exit_status
+    # Returning instead of exiting: the concurrency suites call this function in
+    # the foreground, an exit here would end the script after the first one.
+    return $exit_status
 }
 
 rm -rf ./results
@@ -345,3 +392,9 @@ for target in $@; do
             exit 1;;
     esac
 done
+
+# Every suite has run by now, so the whole list of failures can be reported at
+# once. This is also what makes the exit status meaningful for the targets
+# running their suites in parallel.
+report_failures
+exit $?

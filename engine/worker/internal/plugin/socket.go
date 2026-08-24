@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/kardianos/osext"
 	"github.com/rockbears/log"
@@ -24,7 +22,6 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 	currentOS := strings.ToLower(sdk.GOOS)
 	currentARCH := strings.ToLower(sdk.GOARCH)
 
-	var pluginBinaryInfos *sdk.GRPCPluginBinary
 	var currentPlugin *sdk.GRPCPlugin
 	switch pluginType {
 	case TypeAction, TypeStream:
@@ -44,40 +41,13 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 		}
 	}
 
-	pluginBinaryInfos = currentPlugin.GetBinary(currentOS, currentARCH)
-	if pluginBinaryInfos == nil {
-		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find plugin %s for %s/%s", pluginName, currentOS, currentARCH)
-	}
-
-	// Try to download the plugin
-	if _, err := w.BaseDir().Stat(pluginBinaryInfos.Name); os.IsNotExist(err) {
-		log.Debug(ctx, "Downloading the plugin %s", pluginBinaryInfos.PluginName)
-		var retry int
-		for {
-			//If the file doesn't exist. Download it.
-			fi, err := w.BaseDir().OpenFile(pluginBinaryInfos.Name, os.O_CREATE|os.O_RDWR, os.FileMode(pluginBinaryInfos.Perm))
-			if err != nil {
-				return nil, nil, sdk.WrapError(err, "unable to create the file %s", pluginBinaryInfos.Name)
-			}
-
-			log.Debug(ctx, "Get the binary plugin %s", pluginBinaryInfos.PluginName)
-			if err := w.PluginGetBinary(pluginBinaryInfos.PluginName, currentOS, currentARCH, fi); err != nil {
-				err = sdk.WrapError(err, "unable to get the binary plugin the file %s", pluginBinaryInfos.PluginName)
-				if retry >= 20 {
-					_ = fi.Close()
-					return nil, nil, err
-				}
-				log.Debug(ctx, "%v", err)
-				retry++
-				time.Sleep(3 * time.Second)
-				continue
-			}
-
-			_ = fi.Close()
-			break
-		}
-	} else {
-		log.Debug(ctx, "plugin binary is in cache %s", pluginBinaryInfos)
+	// Download the plugin and check its integrity. The returned descriptor is read from the
+	// API: it takes precedence over the one carried by the job payload, which can be older
+	// than the binary actually served. Use currentPlugin.Name and not pluginName: for
+	// integration plugins the latter is an integration type, not a plugin name.
+	pluginBinaryInfos, err := DownloadBinary(ctx, w, currentPlugin.Name, currentOS, currentARCH)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	log.Info(ctx, "Starting GRPC Plugin %s", pluginBinaryInfos.Name)

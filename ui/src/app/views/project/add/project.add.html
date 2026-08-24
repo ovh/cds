@@ -4,27 +4,27 @@
       <h2>Create a new project</h2>
       <form nz-form (ngSubmit)="createProject()" nzLayout="vertical">
         <nz-form-item>
-          <nz-form-label>Project name</nz-form-label>
+          <nz-form-label nzFor="cds-field-projectname">Project name</nz-form-label>
           <nz-form-control>
-            <input nz-input name="projectname" [(ngModel)]="project.name" (keyup)="generateKey($event.target.value)">
+            <input nz-input id="cds-field-projectname" name="projectname" [(ngModel)]="project.name" (keyup)="generateKey($event.target.value)">
           </nz-form-control>
         </nz-form-item>
         @if (nameError) {
           <nz-alert nzType="error" nzMessage="project name is mandatory"></nz-alert>
         }
         <nz-form-item>
-          <nz-form-label>Project unique key</nz-form-label>
+          <nz-form-label nzFor="cds-field-projectkey">Project unique key</nz-form-label>
           <nz-form-control>
-            <input nz-input name="projectkey" [(ngModel)]="project.key">
+            <input nz-input id="cds-field-projectkey" name="projectkey" [(ngModel)]="project.key">
           </nz-form-control>
         </nz-form-item>
         @if (keyError) {
           <nz-alert nzType="error" nzMessage="project unique key is mandatory and must be in upper case"></nz-alert>
         }
         <nz-form-item>
-          <nz-form-label>Description</nz-form-label>
+          <nz-form-label nzFor="cds-field-projectdescription">Description</nz-form-label>
           <nz-form-control>
-            <textarea nz-input name="projectdescription" [(ngModel)]="project.description"></textarea>
+            <textarea nz-input id="cds-field-projectdescription" name="projectdescription" [(ngModel)]="project.description"></textarea>
           </nz-form-control>
         </nz-form-item>
         <nz-form-item>
@@ -32,7 +32,7 @@
           <nz-form-control>
             @if (!fileTooLarge && project.icon) {
               <div>
-                <img class="proj-icon" [src]="project.icon" alt="icon"/>
+                <img class="proj-icon" [src]="project.icon" alt="Preview of the selected project icon"/>
               </div>
             }
             <app-upload-button accept=".png,.jpg,.jpeg" [image]="true" (event)="fileEvent($event)"></app-upload-button>
@@ -44,11 +44,11 @@
         <hr>
           <nz-alert nzType="info" nzMessage="{{'project_add_group_help' | translate}}"></nz-alert>
           <nz-form-item>
-            <nz-form-label>
-              {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="groupModalVisible = true">{{ 'project_permission_form_wizard_new' | translate }}</a>
+            <nz-form-label nzFor="cds-field-group">
+              {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" appClickable (click)="groupModalVisible = true">{{ 'project_permission_form_wizard_new' | translate }}</a>
             </nz-form-label>
             <nz-form-control>
-              <nz-select name="group" nzShowSearch [ngModel]="group?.id" (ngModelChange)="setGroup($event)">
+              <nz-select id="cds-field-group" name="group" nzShowSearch [ngModel]="group?.id" (ngModelChange)="setGroup($event)">
                 @for (g of groupList; track g) {
                   <nz-option [nzValue]="g.id" [nzLabel]="g.name"></nz-option>
                 }
@@ -58,7 +58,7 @@
           <nz-form-item nzJustify="end">
             <nz-form-control>
               <button nz-button nzType="primary" name="createproject" [nzLoading]="loading">
-                <i nz-icon nzType="save" nzTheme="outline"></i>Create
+                <i nz-icon nzType="save" nzTheme="outline" aria-hidden="true"></i>Create
               </button>
             </nz-form-control>
           </nz-form-item>
@@ -70,9 +70,9 @@
     <div *nzModalContent>
       <form nz-form>
         <nz-form-item>
-          <nz-form-label>Group name</nz-form-label>
+          <nz-form-label nzFor="cds-field-groupname">Group name</nz-form-label>
           <nz-form-control>
-            <input nz-input type="text" name="groupname" [(ngModel)]="newGroup.name">
+            <input nz-input type="text" id="cds-field-groupname" name="groupname" [(ngModel)]="newGroup.name">
           </nz-form-control>
         </nz-form-item>
       </form>

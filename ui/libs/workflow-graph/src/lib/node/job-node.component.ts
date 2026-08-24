@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model'
 import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
 import { Subscription, concatMap, from, interval } from 'rxjs';
@@ -35,10 +35,33 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy, InteractiveNode
     conditionTooltip: string = '';
 
     private _cd = inject(ChangeDetectorRef);
+    private _host = inject(ElementRef);
 
     constructor() {
         this.setHighlight.bind(this);
         this.selectNode.bind(this);
+    }
+
+    get ariaLabel(): string {
+        const name = this.node?.job?.name && this.node.job.name.indexOf('${{') !== 0 ? this.node.job.name : this.node?.name;
+        let label = `Job ${name}`;
+        if (this.node?.run?.status) {
+            label += `, status ${this.node.run.status}`;
+        }
+        if (this.node?.job?.stage) {
+            label += `, stage ${this.node.job.stage}`;
+        }
+        return label;
+    }
+
+    focusNode(navigationKey: string): void {
+        if (!this.match(navigationKey)) {
+            return;
+        }
+        const element = this._host.nativeElement.firstElementChild as HTMLElement;
+        if (element) {
+            element.focus({ preventScroll: true });
+        }
     }
 
     ngOnDestroy(): void {
@@ -57,7 +80,24 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy, InteractiveNode
         if (this.node.job.if) {
             this.conditionTooltip += `\n - if: ${this.node.job.if}`;
         }
+        this.initRun();
+    }
+
+    /** The run of the node changed: recompute what is derived from it, keeping the node in place. */
+    refreshRun(): void {
+        this.initRun();
+    }
+
+    private initRun(): void {
+        if (this.delaySubs) {
+            this.delaySubs.unsubscribe();
+            this.delaySubs = null;
+        }
+        this.warningStep = false;
+        delete this.duration;
         if (!this.node.run) {
+            delete this.dates;
+            this._cd.markForCheck();
             return;
         }
         this.dates = {

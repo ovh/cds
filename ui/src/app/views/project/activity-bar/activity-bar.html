@@ -1,28 +1,28 @@
 @if (projectv1) {
   <a [routerLink]="['/project', project.key]" [class.active]="homeActive">
-    <button nz-button nzType="text" nzSize="large" nzBlock>
-      <span nz-icon nzType="home" nzTheme="outline"></span>
+    <button nz-button nzType="text" nzSize="large" nzBlock aria-label="Project home">
+      <span nz-icon nzType="home" nzTheme="outline" aria-hidden="true"></span>
     </button>
   </a>
 }
 <a [routerLink]="['/project', project.key, 'explore']" routerLinkActive="active" title="Explore">
-  <button nz-button nzType="text" nzSize="large" nzBlock (click)="clickActivity($event, 'explore')">
-    <span nz-icon nzType="folder" nzTheme="outline"></span>
+  <button nz-button nzType="text" nzSize="large" nzBlock aria-label="Explore" (click)="clickActivity($event, 'explore')">
+    <span nz-icon nzType="folder" nzTheme="outline" aria-hidden="true"></span>
   </button>
   @if (projectv1) {
     <div class="label">v2</div>
   }
 </a>
 <a [routerLink]="['/project', project.key, 'run']" routerLinkActive="active" title="Workflow V2 run list">
-  <button nz-button nzType="text" nzSize="large" nzBlock (click)="clickActivity($event, 'run')">
-    <span nz-icon nzType="play-circle" nzTheme="outline"></span>
+  <button nz-button nzType="text" nzSize="large" nzBlock aria-label="Workflow V2 run list" (click)="clickActivity($event, 'run')">
+    <span nz-icon nzType="play-circle" nzTheme="outline" aria-hidden="true"></span>
   </button>
   @if (projectv1) {
     <div class="label">v2</div>
   }
 </a>
 <a [routerLink]="['/project', project.key, 'settings']" routerLinkActive="active" title="Project settings">
-  <button nz-button nzType="text" nzSize="large" nzBlock>
-    <span nz-icon nzType="setting" nzTheme="outline"></span>
+  <button nz-button nzType="text" nzSize="large" nzBlock aria-label="Project settings">
+    <span nz-icon nzType="setting" nzTheme="outline" aria-hidden="true"></span>
   </button>
 </a>

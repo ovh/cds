@@ -33,7 +33,8 @@
       (dblclick)="$event.stopPropagation();">
       @if (selectionMode === 'active') {
         <label nz-checkbox [ngModel]="allMatrixSelected"
-          (ngModelChange)="clickSelectionOverlay()">
+          (ngModelChange)="clickSelectionOverlay()"
+          [attr.aria-label]="'Select all jobs of ' + node?.name + ' for restart'">
         </label>
       }
     </div>
@@ -43,7 +44,8 @@
   <div class="jobs">
     @for (key of keys; track key) {
       <div class="job-wrapper">
-        <div class="job" [class.highlight]="highlightKey === key && selectedKey !== key"
+        <div class="job" role="button" tabindex="-1" [attr.aria-label]="jobAriaLabel(key)"
+          [class.highlight]="highlightKey === key && selectedKey !== key"
           [class.active]="selectedKey === key" (click)="onMouseClick(key)" (mouseenter)="onMouseEnter(key)"
           (mouseleave)="onMouseOut(key)" [class.success]="status[key] && status[key] === statusEnum.Success"
           [class.inactive]="status[key] && status[key] === statusEnum.Skipped"
@@ -89,34 +91,11 @@
             </div>
           }
           <div class="infos">
+            <!-- Only the duration here. The dates behind it, and where that duration went, are on the
+                 lane of this variant in the Timeline tab. -->
             @if (durations[key] && selectionMode === 'disabled') {
-              <div class="duration" nz-tooltip
-                [nzTooltipTitle]="durationTooltip">
-                {{durations[key]}}
-                <ng-template #durationTooltip>
-                  <div class="durationTooltip">
-                    @if (dates[key].queued) {
-                      <div><b>Queued:</b>&nbsp;{{dates[key].queued | date: 'long'}}
-                    </div>
-                  }
-                  @if (dates[key].scheduled) {
-                    <div><b>Scheduled:</b>&nbsp;{{dates[key].scheduled | date:
-                    'long'}}
-                  </div>
-                }
-                @if (dates[key].started) {
-                  <div><b>Started:</b>&nbsp;{{dates[key].started | date:
-                  'long'}}
-                </div>
-              }
-              @if (dates[key].ended) {
-                <div><b>Ended:</b>&nbsp;{{dates[key].ended | date: 'long'}}
-              </div>
+              <div class="duration">{{durations[key]}}</div>
             }
-          </div>
-        </ng-template>
-      </div>
-    }
     @if (status[key] && selectionMode === 'disabled') {
       <div class="status">
         {{status[key].toLowerCase()}}
@@ -131,7 +110,8 @@
     @if (selectionMode === 'active') {
       <div class="controls">
         <label nz-checkbox [ngModel]="selectedMatrixKeys.includes(key)"
-        (ngModelChange)="clickMatrixJobCheckbox(key)"></label>
+        (ngModelChange)="clickMatrixJobCheckbox(key)"
+        [attr.aria-label]="'Select job ' + (displayNames[key] ?? key) + ' for restart'"></label>
       </div>
     }
   </div>

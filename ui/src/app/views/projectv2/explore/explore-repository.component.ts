@@ -58,14 +58,19 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
             if (this.vcsProject?.name === p['vcsName'] && this.repository?.name === p['repoName']) {
                 return;
             }
+            // The events of a repository are keyed by the names the url carries: they are read at the
+            // same time as the repository and the vcs rather than after them.
+            this.loadingHooks = true;
             forkJoin([
                 this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']),
-                this._projectService.getVCSProject(this.project.key, p['vcsName'])
+                this._projectService.getVCSProject(this.project.key, p['vcsName']),
+                this._projectService.listRepositoryEvents(this.project.key, p['vcsName'], p['repoName'])
             ]).subscribe(result => {
                 this.repository = result[0];
                 this.vcsProject = result[1];
+                this.applyHookEvents(result[2]);
+                this.loadingHooks = false;
                 this._cd.markForCheck();
-                this.loadHookEvents();
             });
         });
     }
@@ -76,7 +81,14 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         this.loadingHooks = true;
         this._cd.markForCheck();
 
-        this.hookEvents = await lastValueFrom(this._projectService.listRepositoryEvents(this.project.key, this.vcsProject.name, this.repository.name));
+        this.applyHookEvents(await lastValueFrom(this._projectService.listRepositoryEvents(this.project.key, this.vcsProject.name, this.repository.name)));
+
+        this.loadingHooks = false;
+        this._cd.markForCheck();
+    }
+
+    private applyHookEvents(hookEvents: Array<RepositoryHookEvent>) {
+        this.hookEvents = hookEvents;
         (this.hookEvents ?? []).forEach(he => {
             he.created_string = new Date(he.created / 1000000).toJSON();
             if (he.workflows) {
@@ -87,9 +99,6 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
                 he.nbScheduled = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Scheduled).length;
             }
         });
-
-        this.loadingHooks = false;
-        this._cd.markForCheck();
     }
 
     async removeRepositoryFromProject() {

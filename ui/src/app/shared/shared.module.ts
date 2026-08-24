@@ -101,6 +101,7 @@ import { WorkflowWNodeOutGoingHookComponent } from './workflow/wnode/outgoinghoo
 import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.pipeline.component';
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.directive';
+import { ClickableDirective } from 'app/shared/directives/clickable.directive';
 import {
     NZ_CONFIG,
     NzConfig
@@ -194,6 +195,7 @@ import {
     RocketOutline,
     SafetyCertificateOutline,
     SaveOutline,
+    SearchOutline,
     SettingFill,
     SettingOutline,
     ShareAltOutline,
@@ -254,13 +256,16 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NsAutoHeightTableDirective } from './directives/ns-auto-height-table.directive';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { DateFromNowComponent } from './date-from-now/date-from-now';
+import { WorkflowNameComponent } from './workflow-name/workflow-name.component';
 import { NzTreeModule } from 'ng-zorro-antd/tree';
+import { NzTreeSelectModule } from 'ng-zorro-antd/tree-select';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { SearchableComponent } from './searchable/searchable.component';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { RepositoryRefSelectComponent } from './repository-ref-selector/repository-ref-select.component';
 import { InputFilterComponent } from './input/input-filter.component';
+import { ListToolbarComponent } from './list-toolbar/list-toolbar.component';
 
 const ngZorroConfig: NzConfig = {
     notification: {
@@ -346,6 +351,7 @@ const icons: IconDefinition[] = [
     RocketOutline,
     SafetyCertificateOutline,
     SaveOutline,
+    SearchOutline,
     SettingFill,
     SettingOutline,
     ShareAltOutline,
@@ -418,6 +424,7 @@ const icons: IconDefinition[] = [
         NzTagModule,
         NzTooltipModule,
         NzTreeModule,
+        NzTreeSelectModule,
         NzTreeViewModule,
         NzTypographyModule,
         NzUploadModule,
@@ -447,6 +454,7 @@ const icons: IconDefinition[] = [
         CutPipe,
         DataTableComponent,
         DateFromNowComponent,
+        WorkflowNameComponent,
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
@@ -458,9 +466,11 @@ const icons: IconDefinition[] = [
         KeysListComponent,
         KeysPipe,
         LabelsEditComponent,
+        ListToolbarComponent,
         NgForNumber,
         NgxAutoScrollDirective,
         NsAutoHeightTableDirective,
+        ClickableDirective,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,
@@ -561,6 +571,7 @@ const icons: IconDefinition[] = [
         CutPipe,
         DataTableComponent,
         DateFromNowComponent,
+        WorkflowNameComponent,
         DiffItemComponent,
         DiffListComponent,
         DragulaModule,
@@ -575,11 +586,13 @@ const icons: IconDefinition[] = [
         KeysListComponent,
         KeysPipe,
         LabelsEditComponent,
+        ListToolbarComponent,
         MarkdownModule,
         MomentModule,
         NgForNumber,
         NgxAutoScrollDirective,
         NsAutoHeightTableDirective,
+        ClickableDirective,
         NzAlertModule,
         NzAutocompleteModule,
         NzAvatarModule,
@@ -620,6 +633,7 @@ const icons: IconDefinition[] = [
         NzTagModule,
         NzTooltipModule,
         NzTreeModule,
+        NzTreeSelectModule,
         NzTreeViewModule,
         NzTypographyModule,
         NzUploadModule,

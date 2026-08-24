@@ -15,7 +15,7 @@
     @if (project.application_names && project.application_names.length > 0) {
       <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
         @for (app of filteredApplications; track app) {
-          <nz-col class="cardContainer" [routerLink]="['./application', app.name]" [nzSpan]="6">
+          <nz-col class="cardContainer" appClickable [routerLink]="['./application', app.name]" [nzSpan]="6">
             <app-card [title]="app.name" [description]="app.description" [image]="app.icon"></app-card>
           </nz-col>
         }

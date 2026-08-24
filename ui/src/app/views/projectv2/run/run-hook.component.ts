@@ -46,7 +46,8 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 			language: 'json',
 			minimap: { enabled: false },
 			readOnly: true,
-			scrollBeyondLastLine: false
+			scrollBeyondLastLine: false,
+			ariaLabel: 'Hook event viewer'
 		};
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
