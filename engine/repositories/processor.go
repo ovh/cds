@@ -7,7 +7,6 @@ import (
 
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -76,7 +75,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 		ttl := int(ttlDuration.Seconds())
 		ttlTime := time.Now().Add(ttlDuration)
 		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())
-		s.dao.store.SetWithTTL(cache.Key(lastAccessKey, r.ID()), ttlTime, ttl)
+		s.dao.saveLastAccess(r.ID(), ttlTime, ttl)
 	}()
 
 	switch {
