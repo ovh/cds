@@ -1888,10 +1888,23 @@ loop:
 	if err != nil {
 		return nil, err
 	}
-	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, wref.project, *run, *repoTemplate, *vcsTemplate, templateEntity.Ref, templateEntity.Commit, wref.ef.libraryProject, &wref.ef.initiator)
+	// The finder's location must be the template's (project must match its vcs), so the
+	// template's entity references resolve against the template, not the run's project.
+	tmplProject := wref.project
+	if templateEntity.ProjectKey != wref.project.Key {
+		p, err := project.Load(ctx, db, templateEntity.ProjectKey)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to find project %s", templateEntity.ProjectKey)
+		}
+		tmplProject = *p
+	}
+	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, tmplProject, *run, *repoTemplate, *vcsTemplate, templateEntity.Ref, templateEntity.Commit, wref.ef.libraryProject, &wref.ef.initiator)
 	if err != nil {
 		return nil, err
 	}
+	// Project-scoped resources (integrations, variable sets, concurrencies) belong to the
+	// run's project, not the template's.
+	wrefTemplate.project = wref.project
 	integrations, msgs, err := wrefTemplate.checkIntegrations(ctx, db, newJobs)
 	if err != nil {
 		return nil, err
@@ -1902,10 +1915,22 @@ loop:
 
 	// Set job on workflow
 	for k, v := range newJobs {
-		// Jobs resolved from the template keep the template's complete name as
-		// provenance. Empty jobs are skipped: `from` without content would read as
-		// an unresolved reference. Nested references keep their own `from`.
-		if v.From == "" && (len(v.Steps) > 0 || v.RunsOn.Model != "") {
+		if v.NeedsTemplateResolution() {
+			// Rewrite the nested reference with the template's complete name, resolved
+			// against the declaring template's location: the relative reference only
+			// makes sense there, and the location is lost once the job is injected.
+			eNested, msg, err := wrefTemplate.checkWorkflowTemplate(ctx, db, store, v.From)
+			if err != nil {
+				return nil, err
+			}
+			if msg != nil {
+				return []sdk.V2WorkflowRunInfo{*msg}, nil
+			}
+			v.From = eNested.CompleteName
+		} else if v.From == "" && (len(v.Steps) > 0 || v.RunsOn.Model != "") {
+			// Jobs resolved from the template keep the template's complete name as
+			// provenance. Empty jobs are skipped: `from` without content would read
+			// as an unresolved reference.
 			v.From = templateEntity.CompleteName
 		}
 		run.WorkflowData.Workflow.Jobs[k] = v

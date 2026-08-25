@@ -66,7 +66,7 @@ func TestWorkflowTrigger_JobTemplateInsideTemplate(t *testing.T) {
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "my/"+sdk.RandomString(8))
 
 	// Create template
 	e := sdk.Entity{
@@ -97,7 +97,7 @@ spec: |-
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
 		UserID:              &admin.ID,
-		Data: `name: mytemplate
+		Data: `name: myJobTemplate
 spec: |-
   jobs:
     it:
@@ -166,10 +166,13 @@ spec: |-
 	_, has = wrAfter1.WorkflowData.Workflow.Jobs["deploy"]
 	require.True(t, has)
 
-	// Empty jobs carry no provenance, the nested reference keeps its own from
+	// Empty jobs carry no provenance, the nested reference is rewritten with the
+	// nested template's complete name
 	require.Empty(t, wrAfter1.WorkflowData.Workflow.Jobs["build"].From)
 	require.Empty(t, wrAfter1.WorkflowData.Workflow.Jobs["test"].From)
-	require.Equal(t, ".cds/workflow-templates/mytmpl2.yml", wrAfter1.WorkflowData.Workflow.Jobs["deploy"].From)
+	require.Equal(t,
+		fmt.Sprintf("%s/%s/%s/myJobTemplate@refs/heads/master", proj.Key, vcsServer.Name, repo.Name),
+		wrAfter1.WorkflowData.Workflow.Jobs["deploy"].From)
 
 	rjs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
 	require.NoError(t, err)
@@ -264,7 +267,7 @@ func TestWorkflowTrigger_JobTemplateDuplicateJob(t *testing.T) {
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "my/"+sdk.RandomString(8))
 
 	// Create template
 	e := sdk.Entity{
@@ -295,7 +298,7 @@ spec: |-
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
 		UserID:              &admin.ID,
-		Data: `name: mytemplate
+		Data: `name: myJobTemplate
 spec: |-
   jobs:
     it:
@@ -448,7 +451,7 @@ spec: |-
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
 		UserID:              &admin.ID,
-		Data: `name: mytemplate
+		Data: `name: myJobTemplate
 spec: |-
   jobs:
     it:
@@ -587,6 +590,22 @@ spec: |-
       from: .cds/workflow-templates/mytmpl2.yml`,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &e))
+
+	eTmpl2 := sdk.Entity{
+		ProjectKey:          proj.Key,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/mytmpl2.yml",
+		Name:                "myJobTemplate",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		ProjectRepositoryID: repo.ID,
+		UserID:              &admin.ID,
+		Data: `name: myJobTemplate
+spec: |-
+  jobs:
+    it:`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &eTmpl2))
 
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
@@ -1292,4 +1311,168 @@ spec: |-
 	require.Equal(t, 2, len(wrAfter.WorkflowData.Workflow.Jobs))
 
 	require.Equal(t, []string{"vs-deploy"}, wrAfter.WorkflowData.Workflow.Jobs["itDeploy"].VariableSets)
+}
+
+// A workflow using a job template hosted in another repository on a non-default
+// branch, whose content references a nested job template with a local path. The
+// nested reference must be normalized with the parent template's location at
+// expansion, then resolved there: without it, the local path resolves against
+// the workflow repository (decoy entities prove which one was used).
+func TestWorkflowTrigger_NestedJobTemplateResolvedAgainstParentTemplate(t *testing.T) {
+	ctx := context.TODO()
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:        sdk.RegionRoleExecute,
+				AllProjects: true,
+				RegionID:    reg.ID,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repoRun := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "run/"+sdk.RandomString(8))
+	repoTmpl := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "tmpl/"+sdk.RandomString(8))
+
+	// Parent template on a non-default branch of another repository, referencing
+	// a nested template with a local path
+	entityT1 := sdk.Entity{
+		ProjectKey:          proj.Key,
+		ProjectRepositoryID: repoTmpl.ID,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/t1.yml",
+		Name:                "t1",
+		Ref:                 "refs/heads/branchX",
+		Commit:              "t1sha12345",
+		Head:                true,
+		Data: `name: t1
+spec: |-
+  jobs:
+    nested:
+      from: .cds/workflow-templates/t2.yml`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &entityT1))
+
+	// Nested template on the parent template's branch, plus decoys on the
+	// template repository default branch and on the workflow repository
+	t2Data := `name: t2tmpl
+spec: |-
+  jobs:
+    %s:`
+	for _, e := range []sdk.Entity{
+		{ProjectRepositoryID: repoTmpl.ID, Ref: "refs/heads/branchX", Commit: "t1sha12345", Data: fmt.Sprintf(t2Data, "fromBranchX")},
+		{ProjectRepositoryID: repoTmpl.ID, Ref: "refs/heads/master", Commit: "othersha12", Data: fmt.Sprintf(t2Data, "fromMasterB")},
+		{ProjectRepositoryID: repoRun.ID, Ref: "refs/heads/master", Commit: "runsha1234", Data: fmt.Sprintf(t2Data, "fromRepoRun")},
+	} {
+		e.ProjectKey = proj.Key
+		e.Type = sdk.EntityTypeWorkflowTemplate
+		e.FilePath = ".cds/workflow-templates/t2.yml"
+		e.Name = "t2tmpl"
+		e.Head = true
+		require.NoError(t, entity.Insert(ctx, db, &e))
+	}
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repoRun.ID,
+		Repository:   repoRun.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "runsha1234",
+		WorkflowRef:  "refs/heads/master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: "myworkflow",
+			Jobs: map[string]sdk.V2Job{
+				"root": {
+					From: fmt.Sprintf("%s/%s/%s/t1@refs/heads/branchX", proj.Key, vcsServer.Name, repoTmpl.Name),
+				},
+			},
+		}},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	// First trigger: t1 is expanded, the nested reference must be normalized
+	// with t1's location
+	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}))
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	for _, ri := range runInfos {
+		t.Logf("RunInfo: %s", ri.Message)
+	}
+	require.Equal(t, 0, len(runInfos))
+
+	wrAfter1, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	nestedJob, has := wrAfter1.WorkflowData.Workflow.Jobs["nested"]
+	require.True(t, has)
+	require.Equal(t,
+		fmt.Sprintf("%s/%s/%s/t2tmpl@refs/heads/branchX", proj.Key, vcsServer.Name, repoTmpl.Name),
+		nestedJob.From)
+
+	// Second trigger: t2 is expanded from the parent template's branch
+	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}))
+
+	wrAfter2, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	for j := range wrAfter2.WorkflowData.Workflow.Jobs {
+		t.Logf("Job %s", j)
+	}
+	_, has = wrAfter2.WorkflowData.Workflow.Jobs["fromBranchX"]
+	require.True(t, has, "expected job fromBranchX from t2@branchX, got jobs: %v", wrAfter2.WorkflowData.Workflow.Jobs)
 }

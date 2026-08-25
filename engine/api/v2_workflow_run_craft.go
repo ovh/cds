@@ -287,6 +287,23 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			return stopRun(ctx, api.mustDB(), api.Cache, run, &wref.ef.initiator, msgs...)
 		}
 
+		// Rewrite job template references with the template's complete name, resolved
+		// against the workflow template's location: relative references only make sense
+		// there, and the location is lost once crafting is done.
+		for jobID, j := range run.WorkflowData.Workflow.Jobs {
+			if !j.NeedsTemplateResolution() {
+				continue
+			}
+			eJobTmpl, msg, err := wref.checkWorkflowTemplate(ctx, api.mustDB(), api.Cache, j.From)
+			if err != nil {
+				return err
+			}
+			if msg != nil {
+				return stopRun(ctx, api.mustDB(), api.Cache, run, &wref.ef.initiator, *msg)
+			}
+			j.From = eJobTmpl.CompleteName
+			run.WorkflowData.Workflow.Jobs[jobID] = j
+		}
 	}
 
 	mustSaveVersion := false
