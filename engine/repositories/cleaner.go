@@ -62,7 +62,7 @@ func (s *Service) vacuumStoreCleanerRun(ctx context.Context) error {
 type cleanerOutcome int
 
 const (
-	cleanerKeptLocked cleanerOutcome = iota
+	cleanerKeptInUse cleanerOutcome = iota
 	cleanerKeptProtected
 	cleanerRemoved
 )
@@ -82,7 +82,7 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 
 	sort.Strings(names)
 
-	var locked, protected, removed, failed int
+	var inUse, protected, removed, failed int
 	var freedBytes, protectedBytes uint64
 	for _, n := range names {
 		size, _ := s.repoSize(n)
@@ -91,8 +91,8 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 		case err != nil:
 			failed++
 			log.Error(ctx, "vacuumFilesystemCleanerRun> %s: %v", n, err)
-		case outcome == cleanerKeptLocked:
-			locked++
+		case outcome == cleanerKeptInUse:
+			inUse++
 		case outcome == cleanerKeptProtected:
 			protected++
 			protectedBytes += uint64(size)
@@ -102,8 +102,8 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 		}
 	}
 
-	log.Info(ctx, "vacuumFilesystemCleanerRun> done in %s on instance %q: %d git repositories checked, %d removed (%s freed), %d kept (protected, %s), %d kept (locked), %d failed",
-		time.Since(start).Round(time.Millisecond), s.dao.hostname, len(names), removed, humanize.IBytes(freedBytes), protected, humanize.IBytes(protectedBytes), locked, failed)
+	log.Info(ctx, "vacuumFilesystemCleanerRun> done in %s on instance %q: %d git repositories checked, %d removed (%s freed), %d kept (protected, %s), %d kept (in use), %d failed",
+		time.Since(start).Round(time.Millisecond), s.dao.hostname, len(names), removed, humanize.IBytes(freedBytes), protected, humanize.IBytes(protectedBytes), inUse, failed)
 	return nil
 }
 
@@ -130,14 +130,14 @@ func (s *Service) repoSizeLabel(repoID string) string {
 func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoID string) (cleanerOutcome, error) {
 	label := repoLabel(repoID)
 	sizeLabel := s.repoSizeLabel(repoID)
-	if err := s.dao.lock(repoID); err == errLockUnavailable {
+	// The processor marks repositories it is working on in the local cache
+	if _, busy := s.localCache.Get(repoID); busy {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: an operation is running on it [%s]", label, sizeLabel)
-		return cleanerKeptLocked, nil
+		return cleanerKeptInUse, nil
 	}
 
 	if v, expired := s.dao.isExpired(ctx, repoID); !expired {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: protected until %s (%s left) [%s]", label, v.Format(time.RFC3339), time.Until(v).Round(time.Second), sizeLabel)
-		_ = s.dao.unlock(ctx, repoID)
 		return cleanerKeptProtected, nil
 	}
 
@@ -146,10 +146,5 @@ func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoID string
 	if err := os.RemoveAll(path); err != nil {
 		return cleanerRemoved, err
 	}
-
-	if err := s.dao.deleteLock(ctx, repoID); err != nil {
-		log.Error(ctx, "unable to deleteLock %v: %v", repoID, err)
-	}
-
 	return cleanerRemoved, nil
 }

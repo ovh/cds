@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/rockbears/log"
@@ -14,7 +13,6 @@ import (
 var (
 	rootKey           = cache.Key("repositories", "operations")
 	processorKey      = cache.Key("repositories", "processor")
-	locksKey          = cache.Key("repositories", "locks")
 	lastAccessRootKey = cache.Key("repositories", "lastAccess")
 )
 
@@ -71,31 +69,6 @@ func (d *dao) loadAllOperations(ctx context.Context) ([]*sdk.Operation, error) {
 		return nil, err
 	}
 	return opes, nil
-}
-
-var errLockUnavailable = fmt.Errorf("errLockUnavailable")
-
-func (d *dao) lock(uuid string) error {
-	ok, err := d.store.Lock(cache.Key(locksKey, uuid), 10*time.Minute, -1, -1)
-	if err != nil || !ok {
-		return errLockUnavailable
-	}
-	return nil
-}
-
-func (d *dao) deleteLock(ctx context.Context, uuid string) error {
-	k := cache.Key(locksKey, uuid)
-	if err := d.store.Delete(k); err != nil {
-		log.Error(ctx, "unable to cache delete %s: %v", k, err)
-	}
-	return nil
-}
-
-func (d *dao) unlock(ctx context.Context, uuid string) error {
-	if err := d.store.Unlock(cache.Key(locksKey, uuid)); err != nil {
-		log.Error(ctx, "error on unlock uuid %s: %v", uuid, err)
-	}
-	return nil
 }
 
 func (d *dao) isExpired(ctx context.Context, uuid string) (time.Time, bool) {

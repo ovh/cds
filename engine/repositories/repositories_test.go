@@ -11,6 +11,7 @@ import (
 	"net/textproto"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
@@ -19,6 +20,8 @@ import (
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/api"
+	gocache "github.com/patrickmn/go-cache"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
@@ -71,6 +74,7 @@ func newTestService(t *testing.T) (*Service, error) {
 		return nil, errCache
 	}
 
+	service.localCache = gocache.New(10*time.Minute, 10*time.Minute)
 	service.dao = dao{
 		store:    service.Cache,
 		hostname: "test-instance",

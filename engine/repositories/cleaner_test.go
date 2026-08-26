@@ -39,6 +39,11 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 			protect:    func(repoID string) { otherDao.saveLastAccess(repoID, time.Now().Add(time.Minute), 60) },
 			expectKept: false,
 		},
+		{
+			name:       "clone with an operation in progress is kept even without last access",
+			protect:    func(repoID string) { s.localCache.Set(repoID, true, time.Minute) },
+			expectKept: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -49,6 +54,7 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 			t.Cleanup(func() {
 				_ = s.Cache.Delete(s.dao.lastAccessKey(repoID))
 				_ = s.Cache.Delete(otherDao.lastAccessKey(repoID))
+				s.localCache.Delete(repoID)
 			})
 
 			if tt.protect != nil {
