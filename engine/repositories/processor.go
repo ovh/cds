@@ -39,8 +39,8 @@ func (s *Service) processor(ctx context.Context) error {
 		if uuid != "" {
 			op := s.dao.loadOperation(ctx, uuid)
 			r := s.Repo(*op)
-			_, has := s.localCache.Get(r.ID())
-			if has {
+			// Same marker as the cleaner: whoever holds it owns the directory, the other steps back.
+			if err := s.localCache.Add(r.ID(), true, 10*time.Minute); err != nil {
 				s.GoRoutines.Exec(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
 					op.NbRetries++
 					log.Info(ctx, "repositories > processor > lock unavailable on repository %s. Retry", op.RepoFullName)
@@ -51,7 +51,6 @@ func (s *Service) processor(ctx context.Context) error {
 				})
 				continue
 			}
-			s.localCache.Set(r.ID(), true, 10*time.Minute)
 			chanOperation <- *op
 		}
 	}

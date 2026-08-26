@@ -63,6 +63,10 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 
 			_, err := s.vacuumFileSystemCleanerFunc(context.TODO(), repoID)
 			require.NoError(t, err)
+			if tt.name != "clone with an operation in progress is kept even without last access" {
+				_, held := s.localCache.Get(repoID)
+				require.False(t, held, "the cleaner must release its marker once done")
+			}
 
 			_, err = os.Stat(path)
 			if tt.expectKept {

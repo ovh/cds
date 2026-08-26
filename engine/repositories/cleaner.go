@@ -130,11 +130,12 @@ func (s *Service) repoSizeLabel(repoID string) string {
 func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoID string) (cleanerOutcome, error) {
 	label := repoLabel(repoID)
 	sizeLabel := s.repoSizeLabel(repoID)
-	// The processor marks repositories it is working on in the local cache
-	if _, busy := s.localCache.Get(repoID); busy {
+	// Same marker as the processor: whoever holds it owns the directory, the other steps back.
+	if err := s.localCache.Add(repoID, true, 10*time.Minute); err != nil {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: an operation is running on it [%s]", label, sizeLabel)
 		return cleanerKeptInUse, nil
 	}
+	defer s.localCache.Delete(repoID)
 
 	if v, expired := s.dao.isExpired(ctx, repoID); !expired {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: protected until %s (%s left) [%s]", label, v.Format(time.RFC3339), time.Until(v).Round(time.Second), sizeLabel)
