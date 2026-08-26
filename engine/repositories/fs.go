@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -111,12 +112,15 @@ func (s *Service) computeCacheSize(ctx context.Context) error {
 	for {
 		select {
 		case <-tick.C:
+			start := time.Now()
 			snap, err := computeRepoSizes(s.Cfg.Basedir)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to compute size"))
 				continue
 			}
 			s.repoSizes.Store(snap)
+			log.Info(ctx, "computeCacheSize> measured %d git repositories in %s: %s total",
+				len(snap.sizes), time.Since(start).Round(time.Millisecond), humanize.IBytes(uint64(snap.total)))
 		case <-ctx.Done():
 			return ctx.Err()
 		}
