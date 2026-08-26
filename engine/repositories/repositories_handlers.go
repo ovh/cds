@@ -4,9 +4,12 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -26,6 +29,50 @@ func muxVar(r *http.Request, s string) string {
 func (s *Service) GetLocalCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return service.WriteJSON(w, s.localCache.Items(), http.StatusOK)
+	}
+}
+
+// getAdminRepositoriesHandler lists the git repositories stored by this
+// instance with their disk usage, sorted by decreasing size.
+func (s *Service) getAdminRepositoriesHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		entries, err := os.ReadDir(s.Cfg.Basedir)
+		if err != nil {
+			return sdk.WrapError(err, "unable to read %s", s.Cfg.Basedir)
+		}
+
+		res := sdk.RepositoriesAdminList{Instance: s.dao.hostname, Repositories: []sdk.RepositoriesAdminEntry{}}
+		if snap := s.repoSizes.Load(); snap != nil {
+			computedAt := snap.computedAt
+			res.ComputedAt = &computedAt
+			res.TotalSize = snap.total
+		}
+
+		for _, e := range entries {
+			if !e.IsDir() {
+				continue
+			}
+			repoID := e.Name()
+			entry := sdk.RepositoriesAdminEntry{ID: repoID, URL: repoID}
+			if url, err := base64.StdEncoding.DecodeString(repoID); err == nil {
+				entry.URL = string(url)
+			}
+			entry.Size, _ = s.repoSize(repoID)
+			until, expired := s.dao.isExpired(ctx, repoID)
+			entry.Expired = expired
+			if !expired {
+				entry.ProtectedUntil = &until
+			}
+			res.Repositories = append(res.Repositories, entry)
+		}
+
+		sort.Slice(res.Repositories, func(i, j int) bool {
+			if res.Repositories[i].Size != res.Repositories[j].Size {
+				return res.Repositories[i].Size > res.Repositories[j].Size
+			}
+			return res.Repositories[i].URL < res.Repositories[j].URL
+		})
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
@@ -148,9 +195,13 @@ func (s *Service) getOperationsHandler() service.Handler {
 func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := s.NewMonitoringStatus()
 
+	var total int64
+	if snap := s.repoSizes.Load(); snap != nil {
+		total = snap.total
+	}
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{
 		Component: "Cache size",
-		Value:     fmt.Sprintf("%d octets", s.cacheSize),
+		Value:     fmt.Sprintf("%d octets", total),
 		Status:    sdk.MonitoringStatusOK,
 	})
 	return m

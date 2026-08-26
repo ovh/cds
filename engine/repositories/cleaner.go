@@ -2,11 +2,14 @@ package repositories
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -23,7 +26,8 @@ func (s *Service) vacuumCleaner(ctx context.Context) error {
 	for {
 		select {
 		case <-tick.C:
-			log.Info(ctx, "vacuumCleaner> Run")
+			log.Info(ctx, "vacuumCleaner> Run: removing git repositories unused for %s on instance %q",
+				s.repositoriesRetention(ctx), s.dao.hostname)
 			if err := s.vacuumFilesystemCleanerRun(ctx); err != nil {
 				log.Error(ctx, "vacuumCleaner> Error cleaning the filesystem: %v", err)
 			}
@@ -54,7 +58,17 @@ func (s *Service) vacuumStoreCleanerRun(ctx context.Context) error {
 	return nil
 }
 
+// cleanerOutcome tells what the cleaner decided for one git repository directory.
+type cleanerOutcome int
+
+const (
+	cleanerKeptLocked cleanerOutcome = iota
+	cleanerKeptProtected
+	cleanerRemoved
+)
+
 func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
+	start := time.Now()
 	fi, err := os.Open(s.Cfg.Basedir)
 	if err != nil {
 		return err
@@ -68,39 +82,74 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 
 	sort.Strings(names)
 
+	var locked, protected, removed, failed int
+	var freedBytes, protectedBytes uint64
 	for _, n := range names {
-		if err := s.vacuumFileSystemCleanerFunc(ctx, n); err != nil {
-			log.Error(context.TODO(), "vacuumFilesystemCleanerRun> %v ", err)
+		size, _ := s.repoSize(n)
+		outcome, err := s.vacuumFileSystemCleanerFunc(ctx, n)
+		switch {
+		case err != nil:
+			failed++
+			log.Error(ctx, "vacuumFilesystemCleanerRun> %s: %v", n, err)
+		case outcome == cleanerKeptLocked:
+			locked++
+		case outcome == cleanerKeptProtected:
+			protected++
+			protectedBytes += uint64(size)
+		case outcome == cleanerRemoved:
+			removed++
+			freedBytes += uint64(size)
 		}
 	}
 
+	log.Info(ctx, "vacuumFilesystemCleanerRun> done in %s on instance %q: %d git repositories checked, %d removed (%s freed), %d kept (protected, %s), %d kept (locked), %d failed",
+		time.Since(start).Round(time.Millisecond), s.dao.hostname, len(names), removed, humanize.IBytes(freedBytes), protected, humanize.IBytes(protectedBytes), locked, failed)
 	return nil
 }
 
-func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoUUID string) error {
-	log.Debug(ctx, "vacuumFileSystemCleanerFunc> Checking %s", repoUUID)
+// repoLabel renders a Basedir entry for logs: the decoded repository URL
+// followed by the raw directory name (base64 of the URL, also used in the
+// Redis keys); names that are not a valid ID are returned as is.
+func repoLabel(repoID string) string {
+	url, err := base64.StdEncoding.DecodeString(repoID)
+	if err != nil {
+		return repoID
+	}
+	return fmt.Sprintf("%s (%s)", url, repoID)
+}
 
-	if err := s.dao.lock(repoUUID); err == errLockUnavailable {
-		log.Debug(ctx, "vacuumFileSystemCleanerFunc> %s is locked. skipping", repoUUID)
-		return nil
+// repoSizeLabel renders the last measured size of a repository for logs.
+func (s *Service) repoSizeLabel(repoID string) string {
+	size, ok := s.repoSize(repoID)
+	if !ok {
+		return "size unknown"
+	}
+	return humanize.IBytes(uint64(size))
+}
+
+func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoID string) (cleanerOutcome, error) {
+	label := repoLabel(repoID)
+	sizeLabel := s.repoSizeLabel(repoID)
+	if err := s.dao.lock(repoID); err == errLockUnavailable {
+		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: an operation is running on it [%s]", label, sizeLabel)
+		return cleanerKeptLocked, nil
 	}
 
-	if v, b := s.dao.isExpired(ctx, repoUUID); !b {
-		log.Debug(ctx, "vacuumFileSystemCleanerFunc> %s is not expired: %s. skipping", repoUUID, v.String())
-		_ = s.dao.unlock(ctx, repoUUID)
-		return nil
+	if v, expired := s.dao.isExpired(ctx, repoID); !expired {
+		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: protected until %s (%s left) [%s]", label, v.Format(time.RFC3339), time.Until(v).Round(time.Second), sizeLabel)
+		_ = s.dao.unlock(ctx, repoID)
+		return cleanerKeptProtected, nil
 	}
 
-	log.Debug(ctx, "vacuumFileSystemCleanerFunc> Removing %s", repoUUID)
-
-	path := filepath.Join(s.Cfg.Basedir, repoUUID)
+	path := filepath.Join(s.Cfg.Basedir, repoID)
+	log.Info(ctx, "vacuumFileSystemCleanerFunc> %s removed: no last access recorded for instance %q (%s) [%s]", label, s.dao.hostname, path, sizeLabel)
 	if err := os.RemoveAll(path); err != nil {
-		return err
+		return cleanerRemoved, err
 	}
 
-	if err := s.dao.deleteLock(ctx, repoUUID); err != nil {
-		log.Error(ctx, "unable to deleteLock %v: %v", repoUUID, err)
+	if err := s.dao.deleteLock(ctx, repoID); err != nil {
+		log.Error(ctx, "unable to deleteLock %v: %v", repoID, err)
 	}
 
-	return nil
+	return cleanerRemoved, nil
 }

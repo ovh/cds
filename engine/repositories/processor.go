@@ -57,6 +57,17 @@ func (s *Service) processor(ctx context.Context) error {
 	}
 }
 
+// repositoriesRetention returns how long a clone stays protected after its
+// last use on this instance; falls back to 24h on an invalid configuration.
+func (s *Service) repositoriesRetention(ctx context.Context) time.Duration {
+	d, err := time.ParseDuration(s.Cfg.RepositoriesRetention)
+	if err != nil {
+		log.Error(ctx, "invalid repositoriesRetention duration %q: %v, falling back to 24h", s.Cfg.RepositoriesRetention, err)
+		return 24 * time.Hour
+	}
+	return d
+}
+
 func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	ctx = context.WithValue(ctx, cdslog.Operation, op.UUID)
 	ctx = context.WithValue(ctx, cdslog.VCSServer, op.VCSServer)
@@ -67,11 +78,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	r := s.Repo(op)
 	defer func() {
 		s.localCache.Delete(r.ID())
-		ttlDuration, err := time.ParseDuration(s.Cfg.RepositoriesRetention)
-		if err != nil {
-			log.Error(ctx, "invalid repositoriesRetention duration %q: %v, falling back to 24h", s.Cfg.RepositoriesRetention, err)
-			ttlDuration = 24 * time.Hour
-		}
+		ttlDuration := s.repositoriesRetention(ctx)
 		ttl := int(ttlDuration.Seconds())
 		ttlTime := time.Now().Add(ttlDuration)
 		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())
