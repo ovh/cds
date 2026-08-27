@@ -39,8 +39,8 @@ func (s *Service) processor(ctx context.Context) error {
 		if uuid != "" {
 			op := s.dao.loadOperation(ctx, uuid)
 			r := s.Repo(*op)
-			_, has := s.localCache.Get(r.ID())
-			if has {
+			// Same marker as the cleaner: whoever holds it owns the directory, the other steps back.
+			if err := s.localCache.Add(r.ID(), true, 10*time.Minute); err != nil {
 				s.GoRoutines.Exec(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
 					op.NbRetries++
 					log.Info(ctx, "repositories > processor > lock unavailable on repository %s. Retry", op.RepoFullName)
@@ -51,10 +51,20 @@ func (s *Service) processor(ctx context.Context) error {
 				})
 				continue
 			}
-			s.localCache.Set(r.ID(), true, 10*time.Minute)
 			chanOperation <- *op
 		}
 	}
+}
+
+// repositoriesRetention returns how long a clone stays protected after its
+// last use on this instance; falls back to 24h on an invalid configuration.
+func (s *Service) repositoriesRetention(ctx context.Context) time.Duration {
+	d, err := time.ParseDuration(s.Cfg.RepositoriesRetention)
+	if err != nil {
+		log.Error(ctx, "invalid repositoriesRetention duration %q: %v, falling back to 24h", s.Cfg.RepositoriesRetention, err)
+		return 24 * time.Hour
+	}
+	return d
 }
 
 func (s *Service) do(ctx context.Context, op sdk.Operation) error {
@@ -67,11 +77,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	r := s.Repo(op)
 	defer func() {
 		s.localCache.Delete(r.ID())
-		ttlDuration, err := time.ParseDuration(s.Cfg.RepositoriesRetention)
-		if err != nil {
-			log.Error(ctx, "invalid repositoriesRetention duration %q: %v, falling back to 24h", s.Cfg.RepositoriesRetention, err)
-			ttlDuration = 24 * time.Hour
-		}
+		ttlDuration := s.repositoriesRetention(ctx)
 		ttl := int(ttlDuration.Seconds())
 		ttlTime := time.Now().Add(ttlDuration)
 		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())

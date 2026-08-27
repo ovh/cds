@@ -21,9 +21,9 @@ type Operation struct {
 	RepositoryInfo     *OperationRepositoryInfo `json:"repository_info,omitempty"`
 	Date               *time.Time               `json:"date,omitempty"`
 	User               struct {
-		Username string `json:"username,omitempty"  db:"-" cli:"-"`
-		Fullname string `json:"fullname,omitempty"  db:"-" cli:"-"`
-		Email    string `json:"email,omitempty"  db:"-" cli:"-"`
+		Username string `json:"username,omitempty"  db:"-"`
+		Fullname string `json:"fullname,omitempty"  db:"-"`
+		Email    string `json:"email,omitempty"  db:"-"`
 	} `json:"user,omitempty"`
 	RequestID string `json:"request_id,omitempty"`
 	NbRetries int    `json:"nb_retries,omitempty"`
@@ -147,4 +147,28 @@ type OperationRepo struct {
 // ID returns a generated ID for a Operation
 func (r OperationRepo) ID() string {
 	return base64.StdEncoding.EncodeToString([]byte(r.URL))
+}
+
+// RepositoriesAdminList describes the git repositories stored on disk by one
+// repositories service instance.
+type RepositoriesAdminList struct {
+	Instance string `json:"instance"`
+	// ComputedAt is the time of the disk-usage measure; nil when sizes were
+	// not measured yet, in which case every Size is 0.
+	ComputedAt   *time.Time               `json:"computed_at"`
+	TotalSize    int64                    `json:"total_size"`
+	Repositories []RepositoriesAdminEntry `json:"repositories"`
+}
+
+// RepositoriesAdminEntry is one git repository directory of a repositories
+// service instance.
+type RepositoriesAdminEntry struct {
+	ID   string `json:"id"`
+	URL  string `json:"url"`
+	Size int64  `json:"size"`
+	// Expired is true when no retention protects the repository on this
+	// instance: the cleaner removes it at its next run.
+	Expired bool `json:"expired"`
+	// ProtectedUntil is the end of the retention window; nil when Expired.
+	ProtectedUntil *time.Time `json:"protected_until,omitempty"`
 }

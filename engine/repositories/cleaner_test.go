@@ -39,6 +39,11 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 			protect:    func(repoID string) { otherDao.saveLastAccess(repoID, time.Now().Add(time.Minute), 60) },
 			expectKept: false,
 		},
+		{
+			name:       "clone with an operation in progress is kept even without last access",
+			protect:    func(repoID string) { s.localCache.Set(repoID, true, time.Minute) },
+			expectKept: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -49,15 +54,21 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 			t.Cleanup(func() {
 				_ = s.Cache.Delete(s.dao.lastAccessKey(repoID))
 				_ = s.Cache.Delete(otherDao.lastAccessKey(repoID))
+				s.localCache.Delete(repoID)
 			})
 
 			if tt.protect != nil {
 				tt.protect(repoID)
 			}
 
-			require.NoError(t, s.vacuumFileSystemCleanerFunc(context.TODO(), repoID))
+			_, err := s.vacuumFileSystemCleanerFunc(context.TODO(), repoID)
+			require.NoError(t, err)
+			if tt.name != "clone with an operation in progress is kept even without last access" {
+				_, held := s.localCache.Get(repoID)
+				require.False(t, held, "the cleaner must release its marker once done")
+			}
 
-			_, err := os.Stat(path)
+			_, err = os.Stat(path)
 			if tt.expectKept {
 				require.NoError(t, err, "clone directory must still exist")
 			} else {
@@ -65,4 +76,19 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_repoLabel(t *testing.T) {
+	id := sdk.OperationRepo{URL: "git@stash.example.net:cds/cds.git"}.ID()
+	require.Equal(t, "git@stash.example.net:cds/cds.git ("+id+")", repoLabel(id))
+	require.Equal(t, "not-base64!", repoLabel("not-base64!"), "invalid IDs are returned unchanged")
+}
+
+func Test_repoSizeLabel(t *testing.T) {
+	s := &Service{}
+	require.Equal(t, "size unknown", s.repoSizeLabel("repoA"), "no snapshot yet")
+
+	s.repoSizes.Store(&repoSizesSnapshot{sizes: map[string]int64{"repoA": 1536 * 1024}})
+	require.Equal(t, "1.5 MiB", s.repoSizeLabel("repoA"))
+	require.Equal(t, "size unknown", s.repoSizeLabel("repoB"), "not present at the last walk")
 }
