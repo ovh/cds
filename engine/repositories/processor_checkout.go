@@ -93,7 +93,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		}
 	}
 
-	if err := s.checkCommitSignature(ctx, gitRepo, op); err != nil {
+	if err := s.checkCommitSignature(ctx, gitRepo, op, nil); err != nil {
 		return err
 	}
 

@@ -54,9 +54,9 @@ var (
 	cacheRoots    = []cacheRoot{cacheRootFull, cacheRootBare}
 )
 
-// lastAccessID scopes a repo ID to this cache so that the retention of the
-// full and bare copies of a repository are independent.
-func (c cacheRoot) lastAccessID(repoID string) string {
+// cloneKey identifies a clone ("<kind>/<id>"): its retention entry, in-progress
+// marker and size snapshot key; full and bare copies never share one.
+func (c cacheRoot) cloneKey(repoID string) string {
 	return c.kind + "/" + repoID
 }
 
@@ -65,12 +65,30 @@ func (s *Service) rootDir(c cacheRoot) string {
 	return filepath.Join(s.Cfg.Basedir, c.kind)
 }
 
+// clonePath is the directory of one clone.
+func (s *Service) clonePath(c cacheRoot, repoID string) string {
+	return filepath.Join(s.rootDir(c), repoID)
+}
+
+// cacheRootFor returns the cache an operation works on.
+func (s *Service) cacheRootFor(op sdk.Operation) cacheRoot {
+	if s.useBareAnalysisCache(op) {
+		return cacheRootBare
+	}
+	return cacheRootFull
+}
+
+// cloneKey identifies the clone an operation works on.
+func (s *Service) cloneKey(op sdk.Operation) string {
+	return s.cacheRootFor(op).cloneKey(s.Repo(op).ID())
+}
+
 // repoIn maps an operation to its clone location in the given cache.
 func (s *Service) repoIn(c cacheRoot, op sdk.Operation) *sdk.OperationRepo {
 	r := new(sdk.OperationRepo)
 	r.URL = op.URL
 	r.RepositoryStrategy = op.RepositoryStrategy
-	r.Basedir = filepath.Join(s.rootDir(c), r.ID())
+	r.Basedir = s.clonePath(c, r.ID())
 	return r
 }
 

@@ -16,10 +16,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// execGitIn runs a git command in dir with a neutral identity, no signing and
-// no global nor system config, so fixtures do not depend on the host git
-// environment; identity is forced through env vars, which take precedence
-// over any configuration.
+// execGitIn runs git in dir with a fixed identity and no host config, so
+// fixtures do not depend on the developer's git environment.
 func execGitIn(t *testing.T, dir string, args ...string) string {
 	allArgs := append([]string{"-C", dir,
 		"-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false",
@@ -76,6 +74,23 @@ func Test_processGitCloneBare(t *testing.T) {
 	_, err = s.processGitCloneBare(context.TODO(), &op)
 	require.NoError(t, err)
 	require.NotNil(t, op.RepositoryInfo)
+
+	// With an explicit branch the default branch is not resolved (remote round-trip)
+	opBranch := sdk.Operation{URL: "file://" + fixture, RepoFullName: "test/fixture"}
+	opBranch.Setup.Checkout.Branch = "master"
+	_, err = s.processGitCloneBare(context.TODO(), &opBranch)
+	require.NoError(t, err)
+	assert.Empty(t, opBranch.RepositoryInfo.DefaultBranch)
+
+	// A directory left by an interrupted clone is not a bare repository: it must
+	// be discarded and cloned again instead of failing forever
+	require.NoError(t, os.RemoveAll(filepath.Join(path, "refs")))
+	require.NoError(t, os.WriteFile(filepath.Join(path, "leftover"), []byte("x"), os.FileMode(0644)))
+	op.RepositoryInfo = nil
+	_, err = s.processGitCloneBare(context.TODO(), &op)
+	require.NoError(t, err)
+	assert.Equal(t, "true", execGitIn(t, path, "rev-parse", "--is-bare-repository"))
+	assert.NoFileExists(t, filepath.Join(path, "leftover"))
 }
 
 func Test_processAnalyzeBare(t *testing.T) {
@@ -94,6 +109,8 @@ func Test_processAnalyzeBare(t *testing.T) {
 
 	featSha := execGitIn(t, fixture, "rev-parse", "feat")
 	sinceSha := execGitIn(t, fixture, "rev-parse", "master")
+	// A tag named like the target branch, on an older commit: diffs must use the branch
+	execGitIn(t, fixture, "tag", "master", "master~1")
 
 	s := &Service{}
 	s.Cfg.Basedir = t.TempDir()
@@ -138,9 +155,9 @@ func Test_processAnalyzeBare(t *testing.T) {
 		op.Setup.Checkout.ChangeSetBranchTo = "master"
 
 		require.NoError(t, s.processAnalyzeBare(context.TODO(), &op))
-		require.Len(t, op.Setup.Checkout.Result.Files, 4)
+		require.Len(t, op.Setup.Checkout.Result.Files, 4, "diff against the branch head, not the homonymous tag")
 		assert.Equal(t, "M", op.Setup.Checkout.Result.Files["README.md"].Status)
-		assert.Equal(t, "D", op.Setup.Checkout.Result.Files["main.go"].Status)
+		assert.Equal(t, "D", op.Setup.Checkout.Result.Files["main.go"].Status, "main.go only exists on the branch head")
 	})
 
 	t.Run("changeset falls back to last commit files on unknown since commit", func(t *testing.T) {
@@ -163,6 +180,42 @@ func Test_processAnalyzeBare(t *testing.T) {
 		assert.Equal(t, "1.0.0", op.Setup.Checkout.Result.Semver.Current)
 		assert.False(t, op.Setup.Checkout.Result.CommitVerified)
 		assert.Equal(t, "commit not signed", op.Setup.Checkout.Result.Msg)
+	})
+
+	t.Run("message and semver on an annotated tag", func(t *testing.T) {
+		execGitIn(t, fixture, "tag", "-a", "v1.1.0", "-m", "release 1.1.0", "feat")
+		op := sdk.Operation{URL: "file://" + fixture, RepoFullName: "test/fixture"}
+		op.Setup.Checkout.Tag = "v1.1.0"
+		op.Setup.Checkout.GetMessage = true
+		op.Setup.Checkout.ProcessSemver = true
+
+		require.NoError(t, s.processAnalyzeBare(context.TODO(), &op))
+		assert.Equal(t, "update readme", op.Setup.Checkout.Result.CommitMessage, "the tag must be peeled to its commit")
+		assert.Equal(t, "1.1.0", op.Setup.Checkout.Result.Semver.Current)
+	})
+
+	t.Run("unknown tag is an error", func(t *testing.T) {
+		op := sdk.Operation{URL: "file://" + fixture, RepoFullName: "test/fixture"}
+		op.Setup.Checkout.Tag = "v9.9.9"
+		op.Setup.Checkout.ProcessSemver = true
+
+		err := s.processAnalyzeBare(context.TODO(), &op)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "tag v9.9.9 not found")
+	})
+
+	t.Run("changeset between branches on a tag analysis", func(t *testing.T) {
+		s := &Service{}
+		s.Cfg.Basedir = t.TempDir() // fresh cache: no branch fetched yet
+		op := sdk.Operation{URL: "file://" + fixture, RepoFullName: "test/fixture"}
+		op.Setup.Checkout.Tag = "v1.1.0"
+		op.Setup.Checkout.Branch = "feat"
+		op.Setup.Checkout.GetChangeSet = true
+		op.Setup.Checkout.ChangeSetBranchTo = "master"
+
+		require.NoError(t, s.processAnalyzeBare(context.TODO(), &op))
+		require.Len(t, op.Setup.Checkout.Result.Files, 4, "both branches must be fetched for the diff")
+		assert.Equal(t, "D", op.Setup.Checkout.Result.Files["main.go"].Status)
 	})
 
 	t.Run("no blob was ever fetched in the bare cache", func(t *testing.T) {
@@ -202,8 +255,8 @@ func Test_doWithBareAnalysisCache(t *testing.T) {
 	}
 	repoID := s.Repo(newOp()).ID()
 	t.Cleanup(func() {
-		_ = s.Cache.Delete(s.dao.lastAccessKey(cacheRootFull.lastAccessID(repoID)))
-		_ = s.Cache.Delete(s.dao.lastAccessKey(cacheRootBare.lastAccessID(repoID)))
+		_ = s.Cache.Delete(s.dao.lastAccessKey(cacheRootFull.cloneKey(repoID)))
+		_ = s.Cache.Delete(s.dao.lastAccessKey(cacheRootBare.cloneKey(repoID)))
 	})
 
 	t.Run("analysis operation is routed to the bare cache", func(t *testing.T) {
@@ -225,10 +278,10 @@ func Test_doWithBareAnalysisCache(t *testing.T) {
 		assert.NoDirExists(t, filepath.Join(s.rootDir(cacheRootFull), repoID), "the full clones namespace must stay untouched")
 
 		var protectedUntil time.Time
-		found, err := s.Cache.Get(s.dao.lastAccessKey(cacheRootBare.lastAccessID(repoID)), &protectedUntil)
+		found, err := s.Cache.Get(s.dao.lastAccessKey(cacheRootBare.cloneKey(repoID)), &protectedUntil)
 		require.NoError(t, err)
 		assert.True(t, found, "the bare scoped lastAccess key must be written")
-		found, err = s.Cache.Get(s.dao.lastAccessKey(cacheRootFull.lastAccessID(repoID)), &protectedUntil)
+		found, err = s.Cache.Get(s.dao.lastAccessKey(cacheRootFull.cloneKey(repoID)), &protectedUntil)
 		require.NoError(t, err)
 		assert.False(t, found, "the full clone lastAccess key must not be written")
 	})
@@ -259,7 +312,7 @@ func Test_doWithBareAnalysisCache(t *testing.T) {
 		assert.DirExists(t, filepath.Join(s.rootDir(cacheRootFull), repoID), "the operation must run on the full clones cache")
 
 		var protectedUntil time.Time
-		found, err := s.Cache.Get(s.dao.lastAccessKey(cacheRootFull.lastAccessID(repoID)), &protectedUntil)
+		found, err := s.Cache.Get(s.dao.lastAccessKey(cacheRootFull.cloneKey(repoID)), &protectedUntil)
 		require.NoError(t, err)
 		assert.True(t, found, "the full clone lastAccess key must be written")
 	})
@@ -303,7 +356,7 @@ func Test_fetchAnalysisTarget(t *testing.T) {
 	opTag.Setup.Checkout.Tag = "v1.0.0"
 	target, err = s.fetchAnalysisTarget(context.TODO(), gitRepo, &opTag)
 	require.NoError(t, err)
-	assert.Equal(t, "refs/tags/v1.0.0", target)
+	assert.Equal(t, execGitIn(t, fixture, "rev-parse", "v1.0.0^{commit}"), target, "the tag is resolved to its commit")
 	assert.NotEmpty(t, execGitIn(t, clonePath, "rev-parse", "refs/tags/v1.0.0"))
 
 	// Empty branch falls back to the default branch

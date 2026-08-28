@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"os"
 	"strings"
 
 	"github.com/fsamin/go-repo"
@@ -61,6 +62,19 @@ func (s *Service) processGitCloneBare(ctx context.Context, op *sdk.Operation) (r
 
 	bareRepo, err := repo.NewBare(ctx, r.Basedir, opts...)
 	if err != nil {
+		// A non-empty directory that is not a bare repository is a clone that was
+		// interrupted or corrupted; git refuses to clone into it, so start over.
+		if empty, errDir := isEmptyDir(r.Basedir); errDir != nil {
+			return repo.Repo{}, sdk.WithStack(errDir)
+		} else if !empty {
+			log.Warn(ctx, "processGitCloneBare> %s > %s is not a valid bare repository (%v), removing it", op.UUID, r.Basedir, err)
+			if err := os.RemoveAll(r.Basedir); err != nil {
+				return repo.Repo{}, sdk.WrapError(err, "unable to remove broken bare repository %s", r.Basedir)
+			}
+			if err := s.checkOrCreateFS(r); err != nil {
+				return repo.Repo{}, err
+			}
+		}
 		log.Info(ctx, "processGitCloneBare> %s > cloning %s into %s", op.UUID, r.URL, r.Basedir)
 		if _, err := repo.CloneBare(ctx, r.Basedir, r.URL, append(opts, repo.WithFilter("blob:none"))...); err != nil {
 			if strings.Contains(err.Error(), "Invalid username or password") ||
@@ -83,32 +97,41 @@ func (s *Service) processGitCloneBare(ctx context.Context, op *sdk.Operation) (r
 		return repo.Repo{}, sdk.WithStack(err)
 	}
 
-	d, err := gitRepo.DefaultBranch(ctx)
-	if err != nil {
-		if strings.Contains(err.Error(), "you do not have permission to access it") {
-			return repo.Repo{}, sdk.NewError(sdk.ErrForbidden, err)
-		}
-		return repo.Repo{}, sdk.WithStack(err)
-	}
+	op.RepositoryInfo = &sdk.OperationRepositoryInfo{Name: op.RepoFullName, FetchURL: f}
 
-	op.RepositoryInfo = &sdk.OperationRepositoryInfo{
-		Name:          op.RepoFullName,
-		FetchURL:      f,
-		DefaultBranch: d,
+	// The default branch costs a remote round-trip (git remote show); analyses
+	// only need it as the fallback target when neither branch nor tag is given
+	if op.Setup.Checkout.Branch == "" && op.Setup.Checkout.Tag == "" {
+		d, err := gitRepo.DefaultBranch(ctx)
+		if err != nil {
+			if strings.Contains(err.Error(), "you do not have permission to access it") {
+				return repo.Repo{}, sdk.NewError(sdk.ErrForbidden, err)
+			}
+			return repo.Repo{}, sdk.WithStack(err)
+		}
+		op.RepositoryInfo.DefaultBranch = d
 	}
 	return gitRepo, nil
 }
 
 // fetchAnalysisTarget fetches the refs the operation needs and returns the
-// commit-ish all analyses must run on; a bare clone has no meaningful HEAD.
+// commit all analyses must run on; a bare clone has no meaningful HEAD.
 func (s *Service) fetchAnalysisTarget(ctx context.Context, gitRepo repo.Repo, op *sdk.Operation) (string, error) {
 	if op.Setup.Checkout.Tag != "" {
 		log.Debug(ctx, "fetchAnalysisTarget> fetching tags from %s", op.URL)
 		if err := gitRepo.FetchRemoteTags(ctx, "origin"); err != nil {
 			return "", sdk.WithStack(err)
 		}
-		log.Info(ctx, "fetchAnalysisTarget> repository %s ready on tag '%s'", op.URL, op.Setup.Checkout.Tag)
-		return "refs/tags/" + op.Setup.Checkout.Tag, nil
+		if err := s.fetchChangesetBranches(ctx, gitRepo, op); err != nil {
+			return "", err
+		}
+		// Peel to the commit: annotated tags are objects of their own
+		target, err := gitRepo.RevParse(ctx, "refs/tags/"+op.Setup.Checkout.Tag)
+		if err != nil {
+			return "", sdk.NewErrorFrom(sdk.ErrNotFound, "tag %s not found on %s", op.Setup.Checkout.Tag, op.URL)
+		}
+		log.Info(ctx, "fetchAnalysisTarget> repository %s ready on tag '%s' (%s)", op.URL, op.Setup.Checkout.Tag, target)
+		return target, nil
 	}
 
 	if op.Setup.Checkout.Branch == "" {
@@ -118,14 +141,8 @@ func (s *Service) fetchAnalysisTarget(ctx context.Context, gitRepo repo.Repo, op
 	if err := gitRepo.FetchBranchWithoutCheckout(ctx, "origin", op.Setup.Checkout.Branch); err != nil {
 		return "", sdk.WithStack(err)
 	}
-
-	// The changeset target branch never comes with the analyzed branch: a bare
-	// clone has no default fetch refspec, every needed ref is fetched explicitly
-	if op.Setup.Checkout.GetChangeSet && op.Setup.Checkout.ChangeSetBranchTo != "" && op.Setup.Checkout.ChangeSetBranchTo != op.Setup.Checkout.Branch {
-		log.Debug(ctx, "fetchAnalysisTarget> fetching changeset target branch %s from %s", op.Setup.Checkout.ChangeSetBranchTo, op.URL)
-		if err := gitRepo.FetchBranchWithoutCheckout(ctx, "origin", op.Setup.Checkout.ChangeSetBranchTo); err != nil {
-			return "", sdk.WithStack(err)
-		}
+	if err := s.fetchChangesetBranches(ctx, gitRepo, op); err != nil {
+		return "", err
 	}
 
 	if op.Setup.Checkout.Commit != "" {
@@ -134,17 +151,53 @@ func (s *Service) fetchAnalysisTarget(ctx context.Context, gitRepo repo.Repo, op
 	return "refs/heads/" + op.Setup.Checkout.Branch, nil
 }
 
+// fetchChangesetBranches fetches the branches a branch-to-branch changeset
+// compares: a bare clone has no default fetch refspec, every ref is explicit.
+func (s *Service) fetchChangesetBranches(ctx context.Context, gitRepo repo.Repo, op *sdk.Operation) error {
+	if !op.Setup.Checkout.GetChangeSet || op.Setup.Checkout.ChangeSetBranchTo == "" {
+		return nil
+	}
+	branches := []string{op.Setup.Checkout.ChangeSetBranchTo}
+	if op.Setup.Checkout.Tag != "" && op.Setup.Checkout.Branch != "" {
+		branches = append(branches, op.Setup.Checkout.Branch)
+	}
+	for _, b := range branches {
+		if b == op.Setup.Checkout.Branch && op.Setup.Checkout.Tag == "" {
+			continue // already fetched as the analyzed branch
+		}
+		log.Debug(ctx, "fetchAnalysisTarget> fetching changeset branch %s from %s", b, op.URL)
+		if err := gitRepo.FetchBranchWithoutCheckout(ctx, "origin", b); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+	return nil
+}
+
 // processAnalyses runs the requested analyses against target, without any
 // checkout: on a bare clone every git command names the commit-ish it reads.
 func (s *Service) processAnalyses(ctx context.Context, gitRepo repo.Repo, op *sdk.Operation, target string) error {
-	if op.Setup.Checkout.GetMessage {
-		currentCommit, err := gitRepo.GetCommit(ctx, target, repo.CommitOption{DisableDiffDetail: true})
-		if err != nil {
-			return sdk.WithStack(err)
+	// Every step reads the same commit: fetch it once, on demand
+	var commit *repo.Commit
+	getCommit := func() (*repo.Commit, error) {
+		if commit != nil {
+			return commit, nil
 		}
-		op.Setup.Checkout.Result.CommitMessage = currentCommit.Subject
-		op.Setup.Checkout.Result.Author = currentCommit.Author
-		op.Setup.Checkout.Result.AuthorEmail = currentCommit.AuthorEmail
+		c, err := gitRepo.GetCommit(ctx, target, repo.CommitOption{DisableDiffDetail: true})
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		commit = &c
+		return commit, nil
+	}
+
+	if op.Setup.Checkout.GetMessage {
+		c, err := getCommit()
+		if err != nil {
+			return err
+		}
+		op.Setup.Checkout.Result.CommitMessage = c.Subject
+		op.Setup.Checkout.Result.Author = c.Author
+		op.Setup.Checkout.Result.AuthorEmail = c.AuthorEmail
 	}
 
 	if op.Setup.Checkout.ProcessSemver {
@@ -161,25 +214,29 @@ func (s *Service) processAnalyses(ctx context.Context, gitRepo repo.Repo, op *sd
 		}
 	}
 
-	if err := s.checkCommitSignature(ctx, gitRepo, op); err != nil {
+	// The signature of a commit is read from the commit itself; tags are read apart
+	var signed *repo.Commit
+	if op.Setup.Checkout.CheckSignature && op.Setup.Checkout.Tag == "" && op.Setup.Checkout.Commit != "" {
+		c, err := getCommit()
+		if err != nil {
+			return err
+		}
+		signed = c
+	}
+	if err := s.checkCommitSignature(ctx, gitRepo, op, signed); err != nil {
 		return err
 	}
 
 	if op.Setup.Checkout.GetChangeSet {
-		op.Setup.Checkout.Result.Files = make(map[string]sdk.OperationChangetsetFile)
 		computeFromLastCommit := false
 		if op.Setup.Checkout.ChangeSetBranchTo != "" {
-			files, err := gitRepo.DiffBetweenBranches(ctx, op.Setup.Checkout.Branch, op.Setup.Checkout.ChangeSetBranchTo)
+			// Full refs: a tag named like a branch would otherwise win the resolution
+			files, err := gitRepo.DiffBetweenBranches(ctx, "refs/heads/"+op.Setup.Checkout.Branch, "refs/heads/"+op.Setup.Checkout.ChangeSetBranchTo)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				computeFromLastCommit = true
 			} else {
-				for k, v := range files {
-					op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
-						Filename: v.Filename,
-						Status:   v.Status,
-					}
-				}
+				setChangesetFiles(op, files)
 			}
 		} else if op.Setup.Checkout.ChangeSetCommitSince != "" {
 			files, err := gitRepo.DiffMergeBase(ctx, op.Setup.Checkout.ChangeSetCommitSince, target)
@@ -187,31 +244,29 @@ func (s *Service) processAnalyses(ctx context.Context, gitRepo repo.Repo, op *sd
 				log.ErrorWithStackTrace(ctx, err)
 				computeFromLastCommit = true
 			} else {
-				for k, v := range files {
-					op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
-						Filename: v.Filename,
-						Status:   v.Status,
-					}
-				}
+				setChangesetFiles(op, files)
 			}
 		} else {
 			computeFromLastCommit = true
 		}
 
 		if computeFromLastCommit {
-			commitWithChangesets, err := gitRepo.GetCommit(ctx, target, repo.CommitOption{DisableDiffDetail: true})
+			c, err := getCommit()
 			if err != nil {
 				return err
 			}
-			for k, v := range commitWithChangesets.Files {
-				op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
-					Filename: v.Filename,
-					Status:   v.Status,
-				}
-			}
+			setChangesetFiles(op, c.Files)
 		}
 	}
 
 	log.Info(ctx, "processAnalyses> repository %s ready", op.URL)
 	return nil
+}
+
+// setChangesetFiles records a git diff as the operation changeset.
+func setChangesetFiles(op *sdk.Operation, files map[string]repo.File) {
+	op.Setup.Checkout.Result.Files = make(map[string]sdk.OperationChangetsetFile, len(files))
+	for k, v := range files {
+		op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{Filename: v.Filename, Status: v.Status}
+	}
 }

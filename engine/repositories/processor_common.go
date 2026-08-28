@@ -72,11 +72,9 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (gitRe
 	return gitRepo, r.Basedir, currentBranch, nil
 }
 
-// checkCommitSignature verifies the signature of the operation commit or tag:
-// it resolves the signing key ID, looks up the public key (VCS keys loaded at
-// startup, then user keys, then VCS users through the API), imports it and
-// runs the git verification. Results are reported in op.Setup.Checkout.Result.
-func (s *Service) checkCommitSignature(ctx context.Context, gitRepo repo.Repo, op *sdk.Operation) error {
+// checkCommitSignature verifies the signature of the operation tag or commit
+// (commit, when given, spares a git lookup); the outcome goes to op.Setup.Checkout.Result.
+func (s *Service) checkCommitSignature(ctx context.Context, gitRepo repo.Repo, op *sdk.Operation, commit *repo.Commit) error {
 	if !op.Setup.Checkout.CheckSignature || (op.Setup.Checkout.Commit == "" && op.Setup.Checkout.Tag == "") {
 		return nil
 	}
@@ -92,11 +90,14 @@ func (s *Service) checkCommitSignature(ctx context.Context, gitRepo repo.Repo, o
 		gpgKeyID = t.GPGKeyID
 	} else {
 		log.Debug(ctx, "retrieve gpg key id from commit %s", op.Setup.Checkout.Commit)
-		c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit, repo.CommitOption{DisableDiffDetail: true})
-		if err != nil {
-			return sdk.WithStack(err)
+		if commit == nil {
+			c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit, repo.CommitOption{DisableDiffDetail: true})
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			commit = &c
 		}
-		gpgKeyID = c.GPGKeyID
+		gpgKeyID = commit.GPGKeyID
 	}
 
 	if gpgKeyID == "" {

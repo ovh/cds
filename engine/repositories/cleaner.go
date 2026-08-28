@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"time"
 
@@ -83,7 +82,7 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 			return err
 		}
 		for _, n := range names {
-			s.cleanRepository(ctx, &st, filepath.Join(s.rootDir(c), n), n, c.lastAccessID(n))
+			s.cleanRepository(ctx, &st, c, n)
 		}
 	}
 
@@ -92,15 +91,15 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 	return nil
 }
 
-// cleanRepository runs the cleaner on one directory and records the outcome.
-func (s *Service) cleanRepository(ctx context.Context, st *cleanerStats, path, repoID, lastAccessID string) {
+// cleanRepository runs the cleaner on one clone and records the outcome.
+func (s *Service) cleanRepository(ctx context.Context, st *cleanerStats, c cacheRoot, repoID string) {
 	st.checked++
-	size, _ := s.repoSize(lastAccessID)
-	outcome, err := s.vacuumFileSystemCleanerFunc(ctx, path, repoID, lastAccessID)
+	size, _ := s.repoSize(c.cloneKey(repoID))
+	outcome, err := s.vacuumFileSystemCleanerFunc(ctx, c, repoID)
 	switch {
 	case err != nil:
 		st.failed++
-		log.Error(ctx, "vacuumFilesystemCleanerRun> %s: %v", lastAccessID, err)
+		log.Error(ctx, "vacuumFilesystemCleanerRun> %s: %v", c.cloneKey(repoID), err)
 	case outcome == cleanerKeptInUse:
 		st.inUse++
 	case outcome == cleanerKeptProtected:
@@ -112,23 +111,22 @@ func (s *Service) cleanRepository(ctx context.Context, st *cleanerStats, path, r
 	}
 }
 
-// readCacheEntries lists the clones of a cache root; a root that does not
-// exist yet holds no clone.
+// readCacheEntries lists the clone directories of a cache root, sorted; a root
+// that does not exist yet holds no clone.
 func readCacheEntries(dir string) ([]string, error) {
-	fi, err := os.Open(dir)
+	entries, err := os.ReadDir(dir)
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	defer fi.Close()
-
-	names, err := fi.Readdirnames(-1)
-	if err != nil {
-		return nil, err
+	names := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if e.IsDir() {
+			names = append(names, e.Name())
+		}
 	}
-
 	sort.Strings(names)
 	return names, nil
 }
@@ -144,29 +142,29 @@ func repoLabel(repoID string) string {
 	return fmt.Sprintf("%s (%s)", url, repoID)
 }
 
-// repoSizeLabel renders the last measured size of a repository for logs.
-func (s *Service) repoSizeLabel(repoID string) string {
-	size, ok := s.repoSize(repoID)
+// repoSizeLabel renders the last measured size of a clone ("<kind>/<id>") for logs.
+func (s *Service) repoSizeLabel(key string) string {
+	size, ok := s.repoSize(key)
 	if !ok {
 		return "size unknown"
 	}
 	return humanize.IBytes(uint64(size))
 }
 
-// vacuumFileSystemCleanerFunc decides the fate of one clone directory: repoID
-// is the repository id shared by its full and bare copies (the processor's
-// in-progress marker), lastAccessID the retention key of this copy.
-func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, path, repoID, lastAccessID string) (cleanerOutcome, error) {
-	label := "[" + filepath.Dir(lastAccessID) + "] " + repoLabel(repoID)
-	sizeLabel := s.repoSizeLabel(lastAccessID)
-	// Same marker as the processor: whoever holds it owns the directory, the other steps back.
-	if err := s.localCache.Add(repoID, true, 10*time.Minute); err != nil {
+// vacuumFileSystemCleanerFunc decides the fate of one clone.
+func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, c cacheRoot, repoID string) (cleanerOutcome, error) {
+	key := c.cloneKey(repoID)
+	path := s.clonePath(c, repoID)
+	label := "[" + c.kind + "] " + repoLabel(repoID)
+	sizeLabel := s.repoSizeLabel(key)
+	// Same marker as the processor: whoever holds it owns the clone, the other steps back.
+	if err := s.localCache.Add(key, true, 10*time.Minute); err != nil {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: an operation is running on it [%s]", label, sizeLabel)
 		return cleanerKeptInUse, nil
 	}
-	defer s.localCache.Delete(repoID)
+	defer s.localCache.Delete(key)
 
-	if v, expired := s.dao.isExpired(ctx, lastAccessID); !expired {
+	if v, expired := s.dao.isExpired(ctx, key); !expired {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: protected until %s (%s left) [%s]", label, v.Format(time.RFC3339), time.Until(v).Round(time.Second), sizeLabel)
 		return cleanerKeptProtected, nil
 	}

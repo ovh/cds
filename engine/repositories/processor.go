@@ -38,9 +38,13 @@ func (s *Service) processor(ctx context.Context) error {
 		}
 		if uuid != "" {
 			op := s.dao.loadOperation(ctx, uuid)
-			r := s.Repo(*op)
-			// Same marker as the cleaner: whoever holds it owns the directory, the other steps back.
-			if err := s.localCache.Add(r.ID(), true, 10*time.Minute); err != nil {
+			if op == nil {
+				log.Error(ctx, "repositories > processor > operation %s not found in store, skipping", uuid)
+				continue
+			}
+			cloneKey := s.cloneKey(*op)
+			// Same marker as the cleaner: whoever holds it owns the clone, the other steps back.
+			if err := s.localCache.Add(cloneKey, true, 10*time.Minute); err != nil {
 				s.GoRoutines.Exec(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
 					op.NbRetries++
 					log.Info(ctx, "repositories > processor > lock unavailable on repository %s. Retry", op.RepoFullName)
@@ -74,24 +78,20 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 
 	log.Debug(ctx, "processing > %v", op.UUID)
 
-	r := s.Repo(op)
-	useBareCache := s.useBareAnalysisCache(op)
-	lastAccessID := cacheRootFull.lastAccessID(r.ID())
-	if useBareCache {
-		lastAccessID = cacheRootBare.lastAccessID(r.ID())
-	}
+	root := s.cacheRootFor(op)
+	cloneKey := s.cloneKey(op)
 	defer func() {
-		s.localCache.Delete(r.ID())
+		s.localCache.Delete(cloneKey)
 		ttlDuration := s.repositoriesRetention(ctx)
 		ttl := int(ttlDuration.Seconds())
 		ttlTime := time.Now().Add(ttlDuration)
-		log.Info(ctx, "%s protected until %s", lastAccessID, ttlTime.String())
-		s.dao.saveLastAccess(lastAccessID, ttlTime, ttl)
+		log.Info(ctx, "%s protected until %s", cloneKey, ttlTime.String())
+		s.dao.saveLastAccess(cloneKey, ttlTime, ttl)
 	}()
 
 	switch {
 	// Analysis-only operation on the bare clones cache
-	case useBareCache:
+	case root == cacheRootBare:
 		if err := s.processAnalyzeBare(ctx, &op); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, err.Error())
