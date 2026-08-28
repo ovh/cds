@@ -42,28 +42,44 @@ type Configuration struct {
 	BareAnalysisCache bool `toml:"bareAnalysisCache" comment:"Process analysis-only operations (signature, semver, changeset) on a cache of bare partial clones, much lighter on disk. Requires git partial clone support on the VCS" default:"false" json:"bareAnalysisCache"`
 }
 
-// Repo retiens a sdk.OperationRepo from an sdk.Operation
-func (s *Service) Repo(op sdk.Operation) *sdk.OperationRepo {
+// cacheRoot is one of the clone caches under Basedir: full clones serve
+// checkout/loadfiles/push operations, bare partial clones serve analyses.
+type cacheRoot struct {
+	kind string
+}
+
+var (
+	cacheRootFull = cacheRoot{kind: "full"}
+	cacheRootBare = cacheRoot{kind: "bare"}
+	cacheRoots    = []cacheRoot{cacheRootFull, cacheRootBare}
+)
+
+// lastAccessID scopes a repo ID to this cache so that the retention of the
+// full and bare copies of a repository are independent.
+func (c cacheRoot) lastAccessID(repoID string) string {
+	return c.kind + "/" + repoID
+}
+
+// rootDir is the directory holding the clones of this cache.
+func (s *Service) rootDir(c cacheRoot) string {
+	return filepath.Join(s.Cfg.Basedir, c.kind)
+}
+
+// repoIn maps an operation to its clone location in the given cache.
+func (s *Service) repoIn(c cacheRoot, op sdk.Operation) *sdk.OperationRepo {
 	r := new(sdk.OperationRepo)
 	r.URL = op.URL
-	r.Basedir = filepath.Join(s.Cfg.Basedir, r.ID())
 	r.RepositoryStrategy = op.RepositoryStrategy
+	r.Basedir = filepath.Join(s.rootDir(c), r.ID())
 	return r
 }
 
-// bareCacheDir is the basedir subdirectory holding bare partial clones,
-// kept apart from the full clones used by checkout/loadfiles/push operations
-const bareCacheDir = "bare"
+// Repo maps an operation to its full clone.
+func (s *Service) Repo(op sdk.Operation) *sdk.OperationRepo {
+	return s.repoIn(cacheRootFull, op)
+}
 
-// BareRepo maps an operation to its location in the bare clones cache
+// BareRepo maps an operation to its bare partial clone.
 func (s *Service) BareRepo(op sdk.Operation) *sdk.OperationRepo {
-	r := s.Repo(op)
-	r.Basedir = filepath.Join(s.Cfg.Basedir, bareCacheDir, r.ID())
-	return r
-}
-
-// bareLastAccessID scopes a repo ID to the bare cache so that the retention
-// of a bare clone and of a full clone of the same repository are independent
-func bareLastAccessID(repoID string) string {
-	return bareCacheDir + "/" + repoID
+	return s.repoIn(cacheRootBare, op)
 }

@@ -202,8 +202,8 @@ func Test_doWithBareAnalysisCache(t *testing.T) {
 	}
 	repoID := s.Repo(newOp()).ID()
 	t.Cleanup(func() {
-		_ = s.Cache.Delete(s.dao.lastAccessKey(repoID))
-		_ = s.Cache.Delete(s.dao.lastAccessKey(bareLastAccessID(repoID)))
+		_ = s.Cache.Delete(s.dao.lastAccessKey(cacheRootFull.lastAccessID(repoID)))
+		_ = s.Cache.Delete(s.dao.lastAccessKey(cacheRootBare.lastAccessID(repoID)))
 	})
 
 	t.Run("analysis operation is routed to the bare cache", func(t *testing.T) {
@@ -221,14 +221,14 @@ func Test_doWithBareAnalysisCache(t *testing.T) {
 		require.Len(t, saved.Setup.Checkout.Result.Files, 1)
 		assert.Equal(t, "A", saved.Setup.Checkout.Result.Files["handler.go"].Status)
 
-		assert.DirExists(t, filepath.Join(s.Cfg.Basedir, bareCacheDir, repoID), "the clone must live in the bare namespace")
-		assert.NoDirExists(t, filepath.Join(s.Cfg.Basedir, repoID), "the full clones namespace must stay untouched")
+		assert.DirExists(t, filepath.Join(s.rootDir(cacheRootBare), repoID), "the clone must live in the bare namespace")
+		assert.NoDirExists(t, filepath.Join(s.rootDir(cacheRootFull), repoID), "the full clones namespace must stay untouched")
 
 		var protectedUntil time.Time
-		found, err := s.Cache.Get(s.dao.lastAccessKey(bareLastAccessID(repoID)), &protectedUntil)
+		found, err := s.Cache.Get(s.dao.lastAccessKey(cacheRootBare.lastAccessID(repoID)), &protectedUntil)
 		require.NoError(t, err)
 		assert.True(t, found, "the bare scoped lastAccess key must be written")
-		found, err = s.Cache.Get(s.dao.lastAccessKey(repoID), &protectedUntil)
+		found, err = s.Cache.Get(s.dao.lastAccessKey(cacheRootFull.lastAccessID(repoID)), &protectedUntil)
 		require.NoError(t, err)
 		assert.False(t, found, "the full clone lastAccess key must not be written")
 	})
@@ -256,10 +256,10 @@ func Test_doWithBareAnalysisCache(t *testing.T) {
 		require.NotNil(t, saved)
 		t.Cleanup(func() { _ = s.dao.deleteOperation(saved) })
 		assert.Equal(t, sdk.OperationStatusDone, saved.Status)
-		assert.DirExists(t, filepath.Join(s.Cfg.Basedir, repoID), "the operation must run on the full clones cache")
+		assert.DirExists(t, filepath.Join(s.rootDir(cacheRootFull), repoID), "the operation must run on the full clones cache")
 
 		var protectedUntil time.Time
-		found, err := s.Cache.Get(s.dao.lastAccessKey(repoID), &protectedUntil)
+		found, err := s.Cache.Get(s.dao.lastAccessKey(cacheRootFull.lastAccessID(repoID)), &protectedUntil)
 		require.NoError(t, err)
 		assert.True(t, found, "the full clone lastAccess key must be written")
 	})

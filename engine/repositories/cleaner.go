@@ -77,26 +77,14 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 	start := time.Now()
 	var st cleanerStats
 
-	// Full clones live at the basedir root; the bare clones cache is a namespace, not a repository
-	names, err := readCacheEntries(s.Cfg.Basedir)
-	if err != nil {
-		return err
-	}
-	for _, n := range names {
-		if n == bareCacheDir {
-			continue
+	for _, c := range cacheRoots {
+		names, err := readCacheEntries(s.rootDir(c))
+		if err != nil {
+			return err
 		}
-		s.cleanRepository(ctx, &st, filepath.Join(s.Cfg.Basedir, n), n, n)
-	}
-
-	// Bare clones cache, absent until the first analysis operation runs
-	bareDir := filepath.Join(s.Cfg.Basedir, bareCacheDir)
-	bareNames, err := readCacheEntries(bareDir)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	for _, n := range bareNames {
-		s.cleanRepository(ctx, &st, filepath.Join(bareDir, n), n, bareLastAccessID(n))
+		for _, n := range names {
+			s.cleanRepository(ctx, &st, filepath.Join(s.rootDir(c), n), n, c.lastAccessID(n))
+		}
 	}
 
 	log.Info(ctx, "vacuumFilesystemCleanerRun> done in %s on instance %q: %d git repositories checked, %d removed (%s freed), %d kept (protected, %s), %d kept (in use), %d failed",
@@ -124,8 +112,13 @@ func (s *Service) cleanRepository(ctx context.Context, st *cleanerStats, path, r
 	}
 }
 
+// readCacheEntries lists the clones of a cache root; a root that does not
+// exist yet holds no clone.
 func readCacheEntries(dir string) ([]string, error) {
 	fi, err := os.Open(dir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -164,10 +157,7 @@ func (s *Service) repoSizeLabel(repoID string) string {
 // is the repository id shared by its full and bare copies (the processor's
 // in-progress marker), lastAccessID the retention key of this copy.
 func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, path, repoID, lastAccessID string) (cleanerOutcome, error) {
-	label := repoLabel(repoID)
-	if lastAccessID != repoID {
-		label = "[" + filepath.Dir(lastAccessID) + "] " + label
-	}
+	label := "[" + filepath.Dir(lastAccessID) + "] " + repoLabel(repoID)
 	sizeLabel := s.repoSizeLabel(lastAccessID)
 	// Same marker as the processor: whoever holds it owns the directory, the other steps back.
 	if err := s.localCache.Add(repoID, true, 10*time.Minute); err != nil {

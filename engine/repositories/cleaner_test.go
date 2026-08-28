@@ -35,22 +35,22 @@ func Test_vacuumFilesystemCleanerRun(t *testing.T) {
 	expiredBare := sdk.UUID()
 	crossProtected := sdk.UUID()
 
-	protectedFullPath := mkClone(protectedFull)
-	expiredFullPath := mkClone(expiredFull)
-	protectedBarePath := mkClone(bareCacheDir, protectedBare)
-	expiredBarePath := mkClone(bareCacheDir, expiredBare)
+	protectedFullPath := mkClone(cacheRootFull.kind, protectedFull)
+	expiredFullPath := mkClone(cacheRootFull.kind, expiredFull)
+	protectedBarePath := mkClone(cacheRootBare.kind, protectedBare)
+	expiredBarePath := mkClone(cacheRootBare.kind, expiredBare)
 	// Protected as a full clone only: its bare copy must still expire
-	crossProtectedPath := mkClone(bareCacheDir, crossProtected)
+	crossProtectedPath := mkClone(cacheRootBare.kind, crossProtected)
 
-	protect(protectedFull)
-	protect(bareLastAccessID(protectedBare))
-	protect(crossProtected)
+	protect(cacheRootFull.lastAccessID(protectedFull))
+	protect(cacheRootBare.lastAccessID(protectedBare))
+	protect(cacheRootFull.lastAccessID(crossProtected))
 
 	require.NoError(t, s.vacuumFilesystemCleanerRun(ctx))
 
 	assert.DirExists(t, protectedFullPath, "protected full clone must be kept")
 	assert.NoDirExists(t, expiredFullPath, "expired full clone must be removed")
-	assert.DirExists(t, filepath.Join(s.Cfg.Basedir, bareCacheDir), "the bare namespace itself must never be removed")
+	assert.DirExists(t, s.rootDir(cacheRootBare), "the cache roots themselves must never be removed")
 	assert.DirExists(t, protectedBarePath, "protected bare clone must be kept")
 	assert.NoDirExists(t, expiredBarePath, "expired bare clone must be removed")
 	assert.NoDirExists(t, crossProtectedPath, "a full clone last access must not protect the bare copy")
@@ -82,13 +82,17 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 			expectKept: false,
 		},
 		{
-			name:       "clone recently used by this instance is kept",
-			protect:    func(repoID string) { s.dao.saveLastAccess(repoID, time.Now().Add(time.Minute), 60) },
+			name: "clone recently used by this instance is kept",
+			protect: func(repoID string) {
+				s.dao.saveLastAccess(cacheRootFull.lastAccessID(repoID), time.Now().Add(time.Minute), 60)
+			},
 			expectKept: true,
 		},
 		{
-			name:       "last access from another instance does not protect the clone",
-			protect:    func(repoID string) { otherDao.saveLastAccess(repoID, time.Now().Add(time.Minute), 60) },
+			name: "last access from another instance does not protect the clone",
+			protect: func(repoID string) {
+				otherDao.saveLastAccess(cacheRootFull.lastAccessID(repoID), time.Now().Add(time.Minute), 60)
+			},
 			expectKept: false,
 		},
 		{
@@ -101,11 +105,12 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repoID := sdk.UUID()
-			path := filepath.Join(s.Cfg.Basedir, repoID)
+			lastAccessID := cacheRootFull.lastAccessID(repoID)
+			path := filepath.Join(s.rootDir(cacheRootFull), repoID)
 			require.NoError(t, os.MkdirAll(path, os.FileMode(0700)))
 			t.Cleanup(func() {
-				_ = s.Cache.Delete(s.dao.lastAccessKey(repoID))
-				_ = s.Cache.Delete(otherDao.lastAccessKey(repoID))
+				_ = s.Cache.Delete(s.dao.lastAccessKey(lastAccessID))
+				_ = s.Cache.Delete(otherDao.lastAccessKey(lastAccessID))
 				s.localCache.Delete(repoID)
 			})
 
@@ -113,7 +118,7 @@ func Test_vacuumFileSystemCleanerFunc(t *testing.T) {
 				tt.protect(repoID)
 			}
 
-			_, err := s.vacuumFileSystemCleanerFunc(context.TODO(), path, repoID, repoID)
+			_, err := s.vacuumFileSystemCleanerFunc(context.TODO(), path, repoID, lastAccessID)
 			require.NoError(t, err)
 			if tt.name != "clone with an operation in progress is kept even without last access" {
 				_, held := s.localCache.Get(repoID)

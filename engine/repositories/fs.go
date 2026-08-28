@@ -13,15 +13,28 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// checkOrCreateRootFS makes sure Basedir and every cache root exist.
 func (s *Service) checkOrCreateRootFS() error {
-	fi, err := os.Stat(s.Cfg.Basedir)
-	if os.IsNotExist(err) {
-		return sdk.WrapError(os.MkdirAll(s.Cfg.Basedir, os.FileMode(0700)), "unable to create directory %q", s.Cfg.Basedir)
+	dirs := []string{s.Cfg.Basedir}
+	for _, c := range cacheRoots {
+		dirs = append(dirs, s.rootDir(c))
 	}
-	if fi.IsDir() {
-		return nil
+	for _, dir := range dirs {
+		fi, err := os.Stat(dir)
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(dir, os.FileMode(0700)); err != nil {
+				return sdk.WrapError(err, "unable to create directory %q", dir)
+			}
+			continue
+		}
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		if !fi.IsDir() {
+			return fmt.Errorf("bad configuration: %s is not a directory", dir)
+		}
 	}
-	return fmt.Errorf("bad configuration: %s is not a directory", s.Cfg.Basedir)
+	return nil
 }
 
 func (s *Service) checkOrCreateFS(r *sdk.OperationRepo) error {

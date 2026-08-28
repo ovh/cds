@@ -76,9 +76,9 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 
 	r := s.Repo(op)
 	useBareCache := s.useBareAnalysisCache(op)
-	lastAccessID := r.ID()
+	lastAccessID := cacheRootFull.lastAccessID(r.ID())
 	if useBareCache {
-		lastAccessID = bareLastAccessID(r.ID())
+		lastAccessID = cacheRootBare.lastAccessID(r.ID())
 	}
 	defer func() {
 		s.localCache.Delete(r.ID())
