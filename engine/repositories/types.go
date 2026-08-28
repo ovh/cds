@@ -4,6 +4,7 @@ package repositories
 import (
 	"path/filepath"
 	"sync/atomic"
+	"time"
 
 	gocache "github.com/patrickmn/go-cache"
 
@@ -76,6 +77,20 @@ func (s *Service) cacheRootFor(op sdk.Operation) cacheRoot {
 		return cacheRootBare
 	}
 	return cacheRootFull
+}
+
+// repositoryLockTTL bounds how long a repository stays locked if its holder never releases it.
+const repositoryLockTTL = 10 * time.Minute
+
+// tryLockRepository marks a repository as in use on this instance (processor operation
+// or cleaner pass); false when it is already held, the caller must step back.
+func (s *Service) tryLockRepository(cloneKey string) bool {
+	return s.localCache.Add(cloneKey, true, repositoryLockTTL) == nil
+}
+
+// unlockRepository releases a repository locked by tryLockRepository.
+func (s *Service) unlockRepository(cloneKey string) {
+	s.localCache.Delete(cloneKey)
 }
 
 // cloneKey identifies the clone an operation works on.

@@ -33,6 +33,10 @@ func (s *Service) processAnalyzeBare(ctx context.Context, op *sdk.Operation) err
 		return sdk.WrapError(err, "unable to process bare git clone")
 	}
 
+	// Fetch the data we need
+	// * the current ref (branch or tag)
+	// * changeset branch if needed ( compute changeset for a pr )
+	// -> return the current commit ( for tags or the branch name)
 	target, err := s.fetchAnalysisTarget(ctx, gitRepo, op)
 	if err != nil {
 		return err

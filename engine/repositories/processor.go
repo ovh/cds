@@ -42,9 +42,7 @@ func (s *Service) processor(ctx context.Context) error {
 				log.Error(ctx, "repositories > processor > operation %s not found in store, skipping", uuid)
 				continue
 			}
-			cloneKey := s.cloneKey(*op)
-			// Same marker as the cleaner: whoever holds it owns the clone, the other steps back.
-			if err := s.localCache.Add(cloneKey, true, 10*time.Minute); err != nil {
+			if !s.tryLockRepository(s.cloneKey(*op)) {
 				s.GoRoutines.Exec(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
 					op.NbRetries++
 					log.Info(ctx, "repositories > processor > lock unavailable on repository %s. Retry", op.RepoFullName)
@@ -81,7 +79,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	root := s.cacheRootFor(op)
 	cloneKey := s.cloneKey(op)
 	defer func() {
-		s.localCache.Delete(cloneKey)
+		s.unlockRepository(cloneKey)
 		ttlDuration := s.repositoriesRetention(ctx)
 		ttl := int(ttlDuration.Seconds())
 		ttlTime := time.Now().Add(ttlDuration)

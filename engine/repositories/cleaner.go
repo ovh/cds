@@ -76,6 +76,7 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 	start := time.Now()
 	var st cleanerStats
 
+	// Browse all roots ( full and bare )
 	for _, c := range cacheRoots {
 		names, err := readCacheEntries(s.rootDir(c))
 		if err != nil {
@@ -100,12 +101,12 @@ func (s *Service) cleanRepository(ctx context.Context, st *cleanerStats, c cache
 	case err != nil:
 		st.failed++
 		log.Error(ctx, "vacuumFilesystemCleanerRun> %s: %v", c.cloneKey(repoID), err)
-	case outcome == cleanerKeptInUse:
+	case outcome == cleanerKeptInUse: // operation is still running
 		st.inUse++
-	case outcome == cleanerKeptProtected:
+	case outcome == cleanerKeptProtected: // not yet expired
 		st.protected++
 		st.protectedBytes += uint64(size)
-	case outcome == cleanerRemoved:
+	case outcome == cleanerRemoved: // removed
 		st.removed++
 		st.freedBytes += uint64(size)
 	}
@@ -157,12 +158,11 @@ func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, c cacheRoot, 
 	path := s.clonePath(c, repoID)
 	label := "[" + c.kind + "] " + repoLabel(repoID)
 	sizeLabel := s.repoSizeLabel(key)
-	// Same marker as the processor: whoever holds it owns the clone, the other steps back.
-	if err := s.localCache.Add(key, true, 10*time.Minute); err != nil {
+	if !s.tryLockRepository(key) {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: an operation is running on it [%s]", label, sizeLabel)
 		return cleanerKeptInUse, nil
 	}
-	defer s.localCache.Delete(key)
+	defer s.unlockRepository(key)
 
 	if v, expired := s.dao.isExpired(ctx, key); !expired {
 		log.Info(ctx, "vacuumFileSystemCleanerFunc> %s kept: protected until %s (%s left) [%s]", label, v.Format(time.RFC3339), time.Until(v).Round(time.Second), sizeLabel)
