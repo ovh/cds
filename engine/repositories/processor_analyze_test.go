@@ -68,6 +68,7 @@ func Test_processGitCloneBare(t *testing.T) {
 	path := s.BareRepo(op).Basedir
 	assert.Equal(t, "true", execGitIn(t, path, "rev-parse", "--is-bare-repository"))
 	assert.Equal(t, "blob:none", execGitIn(t, path, "config", "--get", "remote.origin.partialclonefilter"))
+	assert.Contains(t, execGitIn(t, path, "config", "--get", "remote.origin.url"), fixture, "the clone must be the repository itself, not an ancestor")
 
 	// Second call must reopen the cached clone, not fail on a non-empty directory
 	op.RepositoryInfo = nil
