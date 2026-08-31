@@ -49,7 +49,8 @@ testcases:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern TMPL; grep "this a a line in the file, with a CDS variable 1" *.log
       retry: 100
       delay: 1
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern KEY; grep "BEGIN RSA PRIVATE KEY" *.log
+    # The job checks the installed files itself: a key printed in the logs is blurred, as it should be
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern KEY; grep "KEY INSTALLED IN WORKSPACE" *.log && grep "KEY INSTALLED IN TMP" *.log
       retry: 100
       delay: 1
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern ARTIFACTLIST; grep "\"name\":\"myFileUploaded\"" *.log

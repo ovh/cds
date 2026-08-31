@@ -93,10 +93,10 @@ jobs:
       - if [[ -z "$GIT_SSH" ]]; then exit 1; fi;
       - ""
       - worker key install --file id_rsa proj-ssh-04scworkflowrunworkercmd
-      - cat id_rsa
+      - if [ -s id_rsa ] && head -n 1 id_rsa | grep -q BEGIN; then echo "KEY INSTALLED IN WORKSPACE"; else exit 1; fi
       - ""
       - worker key install --file /tmp/ssh/id_rsa proj-ssh-04scworkflowrunworkercmd
-      - cat /tmp/ssh/id_rsa
+      - if [ -s /tmp/ssh/id_rsa ] && head -n 1 /tmp/ssh/id_rsa | grep -q BEGIN; then echo "KEY INSTALLED IN TMP"; else exit 1; fi
     - script:
         - sleep 5
   requirements:
