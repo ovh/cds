@@ -155,13 +155,19 @@ func (s *Service) fetchAnalysisTarget(ctx context.Context, gitRepo repo.Repo, op
 	return "refs/heads/" + op.Setup.Checkout.Branch, nil
 }
 
+// changesetBranchTo returns the branch name a PR changeset compares against:
+// the field always carries a full ref ("refs/heads/x"), as the hooks send it.
+func changesetBranchTo(op *sdk.Operation) string {
+	return strings.TrimPrefix(op.Setup.Checkout.ChangeSetBranchTo, sdk.GitRefBranchPrefix)
+}
+
 // fetchChangesetBranches fetches the branches a branch-to-branch changeset
 // compares: a bare clone has no default fetch refspec, every ref is explicit.
 func (s *Service) fetchChangesetBranches(ctx context.Context, gitRepo repo.Repo, op *sdk.Operation) error {
 	if !op.Setup.Checkout.GetChangeSet || op.Setup.Checkout.ChangeSetBranchTo == "" {
 		return nil
 	}
-	branches := []string{op.Setup.Checkout.ChangeSetBranchTo}
+	branches := []string{changesetBranchTo(op)}
 	if op.Setup.Checkout.Tag != "" && op.Setup.Checkout.Branch != "" {
 		branches = append(branches, op.Setup.Checkout.Branch)
 	}
@@ -235,7 +241,7 @@ func (s *Service) processAnalyses(ctx context.Context, gitRepo repo.Repo, op *sd
 		computeFromLastCommit := false
 		if op.Setup.Checkout.ChangeSetBranchTo != "" {
 			// Full refs: a tag named like a branch would otherwise win the resolution
-			files, err := gitRepo.DiffBetweenBranches(ctx, "refs/heads/"+op.Setup.Checkout.Branch, "refs/heads/"+op.Setup.Checkout.ChangeSetBranchTo)
+			files, err := gitRepo.DiffBetweenBranches(ctx, sdk.GitRefBranchPrefix+op.Setup.Checkout.Branch, sdk.GitRefBranchPrefix+changesetBranchTo(op))
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				computeFromLastCommit = true

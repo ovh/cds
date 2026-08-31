@@ -152,7 +152,8 @@ func Test_processAnalyzeBare(t *testing.T) {
 	t.Run("pull request changeset", func(t *testing.T) {
 		op := newOp()
 		op.Setup.Checkout.GetChangeSet = true
-		op.Setup.Checkout.ChangeSetBranchTo = "master"
+		// Hooks send the target branch as a full ref
+		op.Setup.Checkout.ChangeSetBranchTo = "refs/heads/master"
 
 		require.NoError(t, s.processAnalyzeBare(context.TODO(), &op))
 		require.Len(t, op.Setup.Checkout.Result.Files, 4, "diff against the branch head, not the homonymous tag")
