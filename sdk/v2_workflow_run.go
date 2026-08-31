@@ -183,6 +183,8 @@ type V2WorkflowRunData struct {
 	Workflow     V2Workflow               `json:"workflow"`
 	WorkerModels map[string]V2WorkerModel `json:"worker_models"`
 	Actions      map[string]V2Action      `json:"actions"`
+	// Use to detect template cycles and keep each job's template provenance
+	JobTemplateChains map[string][]string `json:"job_template_chains,omitempty"`
 }
 
 func (w V2WorkflowRunData) Value() (driver.Value, error) {

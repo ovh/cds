@@ -1815,6 +1815,17 @@ func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Sto
 }
 
 func handleTemplatedJobInWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, templateEntity *sdk.EntityWithObject, run *sdk.V2WorkflowRun, newJobs map[string]sdk.V2Job, newStages map[string]sdk.WorkflowStage, newGates map[string]sdk.V2JobGate, newAnnotations map[string]string, newConcurrencies []sdk.WorkflowConcurrency, jobID string, j sdk.V2Job, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
+	// Retrieve the current template chain for the given job
+	parentChain := run.WorkflowData.JobTemplateChains[jobID]
+	if slices.Contains(parentChain, templateEntity.CompleteName) {
+		return []sdk.V2WorkflowRunInfo{{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("job %s: template cycle detected: %s", jobID, strings.Join(append(slices.Clone(parentChain), templateEntity.CompleteName), " -> ")),
+		}}, nil
+	}
+
 	// Check duplication of jobID
 	// Retrieve root job
 	rootJobs := make([]string, 0)
@@ -1913,6 +1924,14 @@ loop:
 		return msgs, nil
 	}
 
+	// New jobs inherit from parent template chain + add the current template
+	templateChain := append(slices.Clone(parentChain), templateEntity.CompleteName)
+	delete(run.WorkflowData.JobTemplateChains, jobID) // remove the job that will be replaced
+
+	if run.WorkflowData.JobTemplateChains == nil {
+		run.WorkflowData.JobTemplateChains = make(map[string][]string)
+	}
+
 	// Set job on workflow
 	for k, v := range newJobs {
 		if v.NeedsTemplateResolution() {
@@ -1934,6 +1953,7 @@ loop:
 			v.From = templateEntity.CompleteName
 		}
 		run.WorkflowData.Workflow.Jobs[k] = v
+		run.WorkflowData.JobTemplateChains[k] = templateChain
 		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, k, v, wrefTemplate, integrations, allVariableSets, defaultRegion)
 		if msg != nil {
 			return []sdk.V2WorkflowRunInfo{*msg}, nil
