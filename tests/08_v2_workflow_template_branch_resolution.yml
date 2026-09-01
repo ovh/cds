@@ -1,0 +1,252 @@
+name: Workflow pinned on a workflow template branch, with job templates resolved against the template location
+vars:
+  cds_project: "ITV2WFTMPLBRANCH"
+  git_repo_templates: "it_v2_wkf_tmpl_branch_templates"
+  git_repo_distant: "it_v2_wkf_tmpl_branch_distant"
+  git_repo_workflow: "it_v2_wkf_tmpl_branch_repo"
+  cds_workflow: "WorkflowTemplatePinnedBranch"
+testcases:
+- name: Prepare test
+  steps:
+  - name: "Verify cdsctl configuration"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+    vars:
+      cdsUser:
+        from: result.systemoutjson.username
+  - name: "Display username"
+    info: "Connected CDS user is {{.cdsUser}}"
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.forgejo.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo_templates}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.forgejo.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo_distant}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.forgejo.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo_workflow}}"
+
+  - type: v2_install_gpg_key
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    vars:
+      emailaddress:
+        from: result.emailaddress
+
+- name: Push distant job template on master
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo_distant}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/debianDistant.yml:
+        name: docker-debian
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:bookworm
+      workflow-templates/distantjob.yaml:
+        name: "distantjob"
+        parameters: []
+        spec: |-
+          jobs:
+            distantjob_master:
+              runs-on: .cds/worker-models/debianDistant.yml
+              steps:
+              - run: echo "distantjob resolved on master of the distant repository"
+
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_distant}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+
+- name: Push decoy job templates on templates repository master
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo_templates}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/debianTmpl.yml:
+        name: docker-debian
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:bookworm
+      workflow-templates/buildlocal.yaml:
+        name: "buildlocal"
+        parameters: []
+        spec: |-
+          jobs:
+            buildlocal_master:
+              runs-on: .cds/worker-models/debianTmpl.yml
+              steps:
+              - run: echo "buildlocal wrongly resolved on master"
+      workflow-templates/deployfull.yaml:
+        name: "deployfull"
+        parameters: []
+        spec: |-
+          jobs:
+            deployfull_master:
+              runs-on: .cds/worker-models/debianTmpl.yml
+              steps:
+              - run: echo "deployfull wrongly resolved on master"
+
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_templates}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+
+- name: Push workflow template and job templates on templates repository dev branch
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo_templates}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    branch: dev
+    files:
+      worker-models/debianTmpl.yml:
+        name: docker-debian
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:bookworm
+      workflow-templates/buildlocal.yaml:
+        name: "buildlocal"
+        parameters: []
+        spec: |-
+          jobs:
+            buildlocal_dev:
+              runs-on: .cds/worker-models/debianTmpl.yml
+              steps:
+              - run: echo "buildlocal resolved on the template branch dev"
+      workflow-templates/deployfull.yaml:
+        name: "deployfull"
+        parameters: []
+        spec: |-
+          jobs:
+            deployfull_dev:
+              runs-on: .cds/worker-models/debianTmpl.yml
+              steps:
+              - run: echo "deployfull resolved on the template branch dev"
+      workflow-templates/montemplate.yaml:
+        name: "montemplate"
+        parameters: []
+        spec: |-
+          jobs:
+            job1:
+              from: .cds/workflow-templates/buildlocal.yaml
+            job2:
+              from: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_templates}}/deployfull
+            job3:
+              from: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_distant}}/distantjob
+
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_templates}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 3
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+
+- name: Push workflow
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo_workflow}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      workflows/myworkflow.yaml:
+        name: {{.cds_workflow}}
+        from: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_templates}}/montemplate@dev
+        parameters: {}
+        on: [push]
+
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_workflow}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 100
+    delay: 1
+
+  - name: Check that the CDS workflow has at least one execution and is terminated
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_workflow}} {{.cds_workflow}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 1
+    - or:
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Fail"
+    retry: 200
+    delay: 1
+    vars:
+      workflowRunID:
+        from: result.systemoutjson.systemoutjson0.id
+      workflowRunStatus:
+        from: result.systemoutjson.systemoutjson0.status
+
+  - name: Check that jobs come from the template branch dev and from the distant repository master
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 3
+    - result.systemout ShouldContainSubstring buildlocal_dev
+    - result.systemout ShouldContainSubstring deployfull_dev
+    - result.systemout ShouldContainSubstring distantjob_master
+    - result.systemout ShouldNotContainSubstring buildlocal_master
+    - result.systemout ShouldNotContainSubstring deployfull_master
+
+  - name: Check run status
+    script: echo {{.workflowRunStatus}}
+    assertions:
+    - result.systemout ShouldEqual Success
