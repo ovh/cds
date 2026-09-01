@@ -81,10 +81,6 @@ func TestNodeHook_ConfigValueContainsEventsDefault(t *testing.T) {
 			expected: true,
 		},
 		{
-			given:    GerritEventsDefault,
-			expected: true,
-		},
-		{
 			given:    GitHubEvents,
 			expected: true,
 		},

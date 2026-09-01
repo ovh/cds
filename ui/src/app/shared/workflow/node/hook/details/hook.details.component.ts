@@ -102,8 +102,6 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
         let jsonBody;
         if (this.task.webhook) {
             jsonBody = atob(this.task.webhook.request_body);
-        } else if (this.task.gerrit) {
-            jsonBody = atob(this.task.gerrit.message);
         }
         try {
             this.body = JSON.stringify(JSON.parse(jsonBody), null, 4);

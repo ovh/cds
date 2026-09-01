@@ -8,25 +8,19 @@ import (
 	"io"
 	"net/http"
 	"time"
-
-	"github.com/go-gorp/gorp"
 )
 
 // HTTP Headers
 const (
-	HeaderXVCSURL           = "X-CDS-VCS-URL"
-	HeaderXVCSURLApi        = "X-CDS-VCS-URL-API"
-	HeaderXVCSType          = "X-CDS-VCS-TYPE"
-	HeaderXVCSToken         = "X-CDS-VCS-TOKEN"
-	HeaderXVCSUsername      = "X-CDS-VCS-USERNAME"
-	HeaderXVCSProjectKey    = "X-CDS-VCS-PROJECT-KEY"
-	HeaderXVCSSSHUsername   = "X-CDS-VCS-SSH-USERNAME"
-	HeaderXVCSSSHPort       = "X-CDS-VCS-SSH-PORT"
-	HeaderXVCSSSHPrivateKey = "X-CDS-VCS-SSH-PRIVATE-KEY"
+	HeaderXVCSURL        = "X-CDS-VCS-URL"
+	HeaderXVCSURLApi     = "X-CDS-VCS-URL-API"
+	HeaderXVCSType       = "X-CDS-VCS-TYPE"
+	HeaderXVCSToken      = "X-CDS-VCS-TOKEN"
+	HeaderXVCSUsername   = "X-CDS-VCS-USERNAME"
+	HeaderXVCSProjectKey = "X-CDS-VCS-PROJECT-KEY"
 
 	VCSTypeGitea           = "gitea"
 	VCSTypeForgejo         = "forgejo"
-	VCSTypeGerrit          = "gerrit"
 	VCSTypeGitlab          = "gitlab"
 	VCSTypeBitbucketServer = "bitbucketserver"
 	VCSTypeBitbucketCloud  = "bitbucketcloud"
@@ -140,50 +134,6 @@ var (
 		"Push Hook",
 		"Tag Push Hook",
 	}
-
-	GerritEvents = []string{
-		GerritEventTypePatchsetCreated,
-		GerritEventTypeAssignedChanged,
-		GerritEventTypeChangeAbandoned,
-		GerritEventTypeChangeDeleted,
-		GerritEventTypeChangeMerged,
-		GerritEventTypeChangeRestored,
-		GerritEventTypeCommentAdded,
-		GerritEventTypeDrafPublished,
-		GerritEventTypeDroppedOutput,
-		GerritEventTypeHashTagsChanged,
-		GerritEventTypeProjectCreated,
-		GerritEventTypeRefUpdated,
-		GerritEventTypeReviewerAdded,
-		GerritEventTypeReviewerDelete,
-		GerritEventTypeTopicChanged,
-		GerritEventTypeWIPStateChanged,
-		GerritEventTypePrivateStateChanged,
-		GerritEventTypeVoteDeleted,
-	}
-
-	GerritEventTypeAssignedChanged     = "assignee-changed"
-	GerritEventTypeChangeAbandoned     = "change-abandoned"
-	GerritEventTypeChangeDeleted       = "change-deleted"
-	GerritEventTypeChangeMerged        = "change-merged"
-	GerritEventTypeChangeRestored      = "change-restored"
-	GerritEventTypeCommentAdded        = "comment-added"
-	GerritEventTypeDrafPublished       = "draft-published"
-	GerritEventTypeDroppedOutput       = "dropped-output"
-	GerritEventTypeHashTagsChanged     = "hashtags-changed"
-	GerritEventTypeProjectCreated      = "project-created"
-	GerritEventTypePatchsetCreated     = "patchset-created"
-	GerritEventTypeRefUpdated          = "ref-updated"
-	GerritEventTypeReviewerAdded       = "reviewer-added"
-	GerritEventTypeReviewerDelete      = "reviewer-deleted"
-	GerritEventTypeTopicChanged        = "topic-changed"
-	GerritEventTypeWIPStateChanged     = "wip-state-changed"
-	GerritEventTypePrivateStateChanged = "private-state-changed"
-	GerritEventTypeVoteDeleted         = "vote-deleted"
-
-	GerritEventsDefault = []string{
-		GerritEventTypePatchsetCreated,
-	}
 )
 
 // BuildNumberAndHash represents BuildNumber, Commit Hash and Branch for a Pipeline Build or Node Run
@@ -217,11 +167,6 @@ type VCSAuthProject struct {
 	SSHKeyName   string `json:"sshKeyName,omitempty" db:"-"`
 	GPGKeyName   string `json:"gpgKeyName,omitempty" db:"-"`
 	EmailAddress string `json:"emailAddress,omitempty" db:"-"`
-
-	// Used by gerrit
-	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
-	SSHPort       int    `json:"sshPort,omitempty" db:"-"`
-	SSHPrivateKey string `json:"sshPrivateKey,omitempty" db:"-"`
 }
 
 type VCSUserGPGKey struct {
@@ -242,14 +187,11 @@ type VCSOptionsProject struct {
 }
 
 func (v VCSProject) Lint(prj Project) error {
-	// If it's not a gerrit vcs
-	if v.Auth.SSHUsername == "" {
-		if v.Auth.Username == "" {
-			return NewErrorFrom(ErrInvalidData, "missing auth username")
-		}
-		if v.Auth.Token == "" {
-			return NewErrorFrom(ErrInvalidData, "missing auth token")
-		}
+	if v.Auth.Username == "" {
+		return NewErrorFrom(ErrInvalidData, "missing auth username")
+	}
+	if v.Auth.Token == "" {
+		return NewErrorFrom(ErrInvalidData, "missing auth token")
 	}
 
 	if v.Auth.SSHKeyName != "" {
@@ -290,13 +232,6 @@ type VCSConfiguration struct {
 	URL  string `json:"url"`
 }
 
-type VCSGerritConfiguration struct {
-	SSHUsername   string `json:"sshUsername"`
-	SSHPrivateKey string `json:"sshPrivateKey"`
-	URL           string `json:"url"`
-	SSHPort       int    `json:"sshport"`
-}
-
 // VCSAuth contains tokens (oauth2 tokens or personalAccessToken)
 type VCSAuth struct {
 	Type     string
@@ -304,9 +239,6 @@ type VCSAuth struct {
 	URLApi   string // optional
 	Username string
 	Token    string
-
-	SSHUsername string
-	SSHPort     int
 }
 
 // VCSServer is an interface for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient.
@@ -399,7 +331,6 @@ type VCSAuthorizedClient interface {
 type VCSAuthorizedClientService interface {
 	VCSAuthorizedClientCommon
 	PullRequests(ctx context.Context, repo string, mods ...VCSRequestModifier) ([]VCSPullRequest, error)
-	IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, error)
 	IsBitbucketCloud() bool
 }
 
@@ -453,7 +384,4 @@ type VCSBuildStatus struct {
 
 	RepositoryFullname string `json:"repository_fullname"`
 	GitHash            string `json:"git_hash"`
-
-	// from v1 workflow only
-	GerritChange *GerritChangeEvent `json:"gerrit_change,omitempty"`
 }
