@@ -23,6 +23,18 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+const (
+	// queueMetricsInterval paces the queue metrics, which drive scheduling dashboards and alerting
+	// and therefore have to stay close to real time.
+	queueMetricsInterval = 9 * time.Second
+	// inventoryMetricsInterval paces the counts of what CDS holds. They move slowly and each of them
+	// is a full table scan, so they are refreshed at a rate that does not weigh on the database.
+	inventoryMetricsInterval = 5 * time.Minute
+	// inventoryMetricsQueryTimeout caps a single count. A count that cannot complete within it is
+	// worth losing rather than holding a connection for the next tick to pile onto.
+	inventoryMetricsQueryTimeout = 2 * time.Minute
+)
+
 // Status returns status, implements interface service.Service
 func (api *API) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := api.NewMonitoringStatus()
@@ -298,8 +310,15 @@ func (api *API) computeMetrics(ctx context.Context) {
 		log.Error(ctx, "api.computeMetrics> unable to tag observability context: %v", err)
 	}
 
-	api.GoRoutines.RunWithRestart(ctx, "api.computeMetrics", func(ctx context.Context) {
-		tick := time.NewTicker(9 * time.Second).C
+	api.computeQueueMetrics(ctx)
+	api.computeInventoryMetrics(ctx)
+}
+
+// computeQueueMetrics refreshes what a scheduling dashboard reads: the queues, which are small hot
+// tables filtered on an indexed status, and the state of the process itself.
+func (api *API) computeQueueMetrics(ctx context.Context) {
+	api.GoRoutines.RunWithRestart(ctx, "api.computeQueueMetrics", func(ctx context.Context) {
+		tick := time.NewTicker(queueMetricsInterval).C
 		for {
 			select {
 			case <-ctx.Done():
@@ -308,27 +327,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 					return
 				}
 			case <-tick:
-				// Common metrics
-				api.countMetric(ctx, api.Metrics.nbUsers, "SELECT COUNT(1) FROM \"authentified_user\"")
-				api.countMetric(ctx, api.Metrics.nbProjects, "SELECT COUNT(1) FROM project")
-				api.countMetric(ctx, api.Metrics.nbGroups, "SELECT COUNT(1) FROM \"group\"")
 				telemetry.Record(ctx, api.Metrics.DatabaseConns, int64(api.DBConnectionFactory.DB().Stats().OpenConnections))
-
-				// V1 metrics
-				api.countMetric(ctx, api.Metrics.nbApplications, "SELECT COUNT(1) FROM application")
-				api.countMetric(ctx, api.Metrics.nbPipelines, "SELECT COUNT(1) FROM pipeline")
-				api.countMetric(ctx, api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow")
-				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts")
-				api.countMetric(ctx, api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
-				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COUNT(1) FROM workflow_run")
-				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT COUNT(1) FROM workflow_node_run")
-				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
-				api.countMetric(ctx, api.Metrics.RunResultSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NOT NULL")
-				api.countMetric(ctx, api.Metrics.RunResultToSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NULL")
-				api.countMetric(ctx, api.Metrics.RunResultSynchronizedError, "SELECT COUNT(1) FROM workflow_run_result where sync ? 'error'")
-
-				// V2 metrics
-				api.countMetric(ctx, api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct(project_repository_id,name)) from entity where type = 'Workflow'")
 
 				// Queue common
 				now := time.Now()
@@ -380,10 +379,59 @@ func (api *API) computeMetrics(ctx context.Context) {
 	})
 }
 
+// computeInventoryMetrics counts what CDS holds. None of those counts can be answered from an index:
+// they are sequential scans of the largest tables of the instance, so they run on their own slow
+// ticker rather than with the queues. Refreshing them every few seconds kept a connection of every
+// API replica permanently busy scanning, and evicted from the shared buffers the pages every other
+// query needs.
+func (api *API) computeInventoryMetrics(ctx context.Context) {
+	api.GoRoutines.RunWithRestart(ctx, "api.computeInventoryMetrics", func(ctx context.Context) {
+		tick := time.NewTicker(inventoryMetricsInterval).C
+		for {
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					log.Error(ctx, "Exiting metrics.Initialize: %v", ctx.Err())
+					return
+				}
+			case <-tick:
+				// Common metrics
+				api.countMetric(ctx, api.Metrics.nbUsers, "SELECT COUNT(1) FROM \"authentified_user\"")
+				api.countMetric(ctx, api.Metrics.nbProjects, "SELECT COUNT(1) FROM project")
+				api.countMetric(ctx, api.Metrics.nbGroups, "SELECT COUNT(1) FROM \"group\"")
+
+				// V1 metrics
+				api.countMetric(ctx, api.Metrics.nbApplications, "SELECT COUNT(1) FROM application")
+				api.countMetric(ctx, api.Metrics.nbPipelines, "SELECT COUNT(1) FROM pipeline")
+				api.countMetric(ctx, api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow")
+				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts")
+				api.countMetric(ctx, api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
+				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COUNT(1) FROM workflow_run")
+				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT COUNT(1) FROM workflow_node_run")
+				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
+				api.countMetric(ctx, api.Metrics.RunResultSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NOT NULL")
+				api.countMetric(ctx, api.Metrics.RunResultToSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NULL")
+				api.countMetric(ctx, api.Metrics.RunResultSynchronizedError, "SELECT COUNT(1) FROM workflow_run_result where sync ? 'error'")
+
+				// V2 metrics
+				api.countMetric(ctx, api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct(project_repository_id,name)) from entity where type = 'Workflow'")
+			}
+		}
+	})
+}
+
 func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
-	n, err := api.mustDB().SelectInt(query)
+	// Bounded so that a scan that outgrew the instance releases its connection instead of holding one
+	// of the few the pool has until it completes.
+	ctxQuery, cancel := context.WithTimeout(ctx, inventoryMetricsQueryTimeout)
+	defer cancel()
+
+	n, err := api.mustDBWithCtx(ctxQuery).SelectInt(query)
 	if err != nil {
+		// Reporting nothing leaves the last count in place. Reporting the zero of a count that did
+		// not happen reads as the disappearance of everything it counts.
 		log.Warn(ctx, "metrics>Errors while fetching count %s: %v", query, err)
+		return
 	}
 	telemetry.Record(ctx, v, n)
 }

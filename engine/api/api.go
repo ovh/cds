@@ -925,6 +925,10 @@ func (a *API) Serve(ctx context.Context) error {
 		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines, a.Config.URL.UI)
 	})
 
+	a.GoRoutines.RunWithRestart(ctx, "event_v2.flushRunJobStepUpdates", func(ctx context.Context) {
+		event_v2.FlushRunJobStepUpdates(ctx, a.Cache)
+	})
+
 	log.Info(ctx, "Initializing internal routines...")
 	a.GoRoutines.RunWithRestart(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		if err := a.listenMaintenance(ctx); err != nil {
