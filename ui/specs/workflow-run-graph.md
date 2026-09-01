@@ -418,6 +418,11 @@ Events of an attempt other than the displayed one are ignored. When the run is r
 somewhere else, the view follows the new attempt, unless the user was deliberately looking at a
 previous one.
 
+**Steps moving faster than the eye.** The progress of a job is announced at most once per second. A
+job made of quick steps would otherwise send more frames than a view can show, to every client
+watching that run. Each announcement carries the whole job rather than what changed in it, so the one
+that is sent stands for those it replaces, and nothing is lost.
+
 **What events do not carry.** Run infos and job infos are not published as events: they are read again
 when the run or one of its jobs changes state, and at most once per interval for a job going through
 many steps.
