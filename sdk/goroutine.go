@@ -168,16 +168,23 @@ func (m *GoRoutines) GetStatus() []MonitoringStatusLine {
 	return lines
 }
 
-func (m *GoRoutines) exec(g *GoRoutine) {
+// goRoutineHostname is read once: it does not change while the process runs, and reading it is a
+// system call that Exec used to make on the caller, for every goroutine it started.
+var goRoutineHostname = sync.OnceValue(func() string {
 	hostname, _ := os.Hostname()
+	return hostname
+})
 
+func (m *GoRoutines) exec(g *GoRoutine) {
 	go func(ctx context.Context) {
 		ctx = context.WithValue(ctx, cdslog.Goroutine, g.Name)
 
+		// No goroutine id among the labels: deriving one means walking the stack of the goroutine
+		// that is starting, and a label unique to each of them gives a profile as many groups as
+		// there are goroutines, which is the opposite of what grouping is for.
 		labels := pprof.Labels(
 			"goroutine-name", g.Name,
-			"goroutine-hostname", hostname,
-			"goroutine-id", fmt.Sprintf("%d", GoroutineID()),
+			"goroutine-hostname", goRoutineHostname(),
 		)
 		goroutineCtx := pprof.WithLabels(ctx, labels)
 		pprof.SetGoroutineLabels(goroutineCtx)
@@ -187,7 +194,7 @@ func (m *GoRoutines) exec(g *GoRoutine) {
 				buf := make([]byte, 1<<16)
 				buf = buf[:runtime.Stack(buf, false)]
 				ctx = context.WithValue(ctx, cdslog.Stacktrace, string(buf))
-				log.Error(ctx, "[PANIC][%s] %s failed", hostname, g.Name)
+				log.Error(ctx, "[PANIC][%s] %s failed", goRoutineHostname(), g.Name)
 			}
 			g.mutex.Lock()
 			g.Active = false
