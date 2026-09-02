@@ -39,7 +39,7 @@ func hookUnregistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, st
 
 	// Delete from vcs configuration if needed
 	for _, h := range hookToDelete {
-		if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GerritHookModelName {
+		if h.HookModelName == sdk.RepositoryWebHookModelName {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, h.Config["vcsServer"].Value)
 			if err == nil {
@@ -111,7 +111,7 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			Configurable: false,
 		}
 
-		if h.IsRepositoryWebHook() || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
+		if h.IsRepositoryWebHook() || h.HookModelName == sdk.GitPollerModelName {
 			if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
 			}
@@ -149,7 +149,7 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 				continue
 			} else if has {
 				// If repository change, force new UUID to be able to delete the previous one
-				if h.IsRepositoryWebHook() || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
+				if h.IsRepositoryWebHook() || h.HookModelName == sdk.GitPollerModelName {
 					if h.Config[sdk.HookConfigVCSServer].Value != previousHook.Config[sdk.HookConfigVCSServer].Value ||
 						h.Config[sdk.HookConfigRepoFullName].Value != previousHook.Config[sdk.HookConfigRepoFullName].Value {
 						h.UUID = sdk.UUID()

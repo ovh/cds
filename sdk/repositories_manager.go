@@ -114,7 +114,6 @@ type VCSInsightData struct {
 // VCSPullRequest represents a pull request
 type VCSPullRequest struct {
 	ID       int          `json:"id"`
-	ChangeID string       `json:"change_id"`
 	URL      string       `json:"url"`
 	User     VCSAuthor    `json:"user"`
 	Head     VCSPushEvent `json:"head"`
@@ -158,7 +157,6 @@ func (s VCSPullRequestState) IsValid() bool {
 
 type VCSPullRequestCommentRequest struct {
 	ID       int    `json:"id"`
-	ChangeID string `json:"change_id"` // gerrit only
 	Revision string `json:"revision"`
 	Message  string `json:"message"`
 }

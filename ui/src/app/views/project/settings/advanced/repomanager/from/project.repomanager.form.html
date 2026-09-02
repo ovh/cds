@@ -68,75 +68,41 @@
               </label>
             </nz-form-item>
           }
-          @if (vcsProject.type !== 'gerrit') {
-            <nz-form-item>
-              <label nz-checkbox [(ngModel)]="vcsProject.options.disableWebhooks" name="disableWebhooks">
-                <span>Disable webhooks. You can disable webhooks you don't want to let CDS creating and using webhook to be triggered.</span>
-              </label>
-            </nz-form-item>
-          }
-          @if (vcsProject.type !== 'gerrit') {
-            <nz-form-item>
-              <h3>Authentication</h3>
-              CDS needs to call VCS API (getting repos, commits, etc...). These fields are mandatory.
-            </nz-form-item>
-            <nz-form-item nz-rows>
-              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-username">Username</nz-form-label>
-              <nz-form-control [nzSm]="14">
-                <input nz-input type="text" id="cds-field-vcs-username" [(ngModel)]="vcsProject.auth.username" name="username">
-              </nz-form-control>
-            </nz-form-item>
-            <nz-form-item>
-              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-token">Token</nz-form-label>
-              <nz-form-control [nzSm]="14">
-                <input nz-input type="password" id="cds-field-vcs-token" [(ngModel)]="vcsProject.auth.token" name="token">
-              </nz-form-control>
-            </nz-form-item>
-            <nz-form-item>
-              <nz-form-label [nzSm]="6">SSH key</nz-form-label>
-              <nz-form-control [nzSm]="14">
-                <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
-                  [(value)]="vcsProject.auth.sshKeyName" (valueChange)="updatePublicKey($event)">
-                </app-parameter-value>
-              </nz-form-control>
-              @if (selectedPublicKey) {
-                <button nz-button [title]="'key_copy_public' | translate" [attr.aria-label]="'key_copy_public' | translate" ngxClipboard
-                  [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
-                  <i nz-icon nzType="copy" nzTheme="outline" aria-hidden="true"></i>
-                </button>
-              }
-            </nz-form-item>
-          }
-          @if (vcsProject.type === 'gerrit') {
-            <nz-form-item>
-              <h3>Gerrit Authentication</h3>
-              CDS needs to call Gerrit API. SSH Auth is used to access gerrit event stream. User and Token are used to add a review on Changes.
-            </nz-form-item>
-            <nz-form-item nz-rows>
-              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-sshusername">SSH Username</nz-form-label>
-              <nz-form-control [nzSm]="14">
-                <input nz-input type="text" id="cds-field-vcs-sshusername" [(ngModel)]="vcsProject.auth.sshUsername" name="sshUsername">
-              </nz-form-control>
-            </nz-form-item>
-            <nz-form-item>
-              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-sshport">SSH Port</nz-form-label>
-              <nz-form-control [nzSm]="14">
-                <input nz-input type="text" id="cds-field-vcs-sshport" [(ngModel)]="vcsProject.auth.sshPort" name="sshPort">
-              </nz-form-control>
-            </nz-form-item>
-            <nz-form-item>
-              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-revieweruser">Reviewer User</nz-form-label>
-              <nz-form-control [nzSm]="14">
-                <input nz-input type="text" id="cds-field-vcs-revieweruser" [(ngModel)]="vcsProject.auth.username" name="username">
-              </nz-form-control>
-            </nz-form-item>
-            <nz-form-item>
-              <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-reviewertoken">Reviewer Token</nz-form-label>
-              <nz-form-control [nzSm]="14">
-                <input nz-input type="password" id="cds-field-vcs-reviewertoken" [(ngModel)]="vcsProject.auth.token" name="token">
-              </nz-form-control>
-            </nz-form-item>
-          }
+          <nz-form-item>
+            <label nz-checkbox [(ngModel)]="vcsProject.options.disableWebhooks" name="disableWebhooks">
+              <span>Disable webhooks. You can disable webhooks you don't want to let CDS creating and using webhook to be triggered.</span>
+            </label>
+          </nz-form-item>
+          <nz-form-item>
+            <h3>Authentication</h3>
+            CDS needs to call VCS API (getting repos, commits, etc...). These fields are mandatory.
+          </nz-form-item>
+          <nz-form-item nz-rows>
+            <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-username">Username</nz-form-label>
+            <nz-form-control [nzSm]="14">
+              <input nz-input type="text" id="cds-field-vcs-username" [(ngModel)]="vcsProject.auth.username" name="username">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSm]="6" nzFor="cds-field-vcs-token">Token</nz-form-label>
+            <nz-form-control [nzSm]="14">
+              <input nz-input type="password" id="cds-field-vcs-token" [(ngModel)]="vcsProject.auth.token" name="token">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSm]="6">SSH key</nz-form-label>
+            <nz-form-control [nzSm]="14">
+              <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
+                [(value)]="vcsProject.auth.sshKeyName" (valueChange)="updatePublicKey($event)">
+              </app-parameter-value>
+            </nz-form-control>
+            @if (selectedPublicKey) {
+              <button nz-button [title]="'key_copy_public' | translate" [attr.aria-label]="'key_copy_public' | translate" ngxClipboard
+                [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
+                <i nz-icon nzType="copy" nzTheme="outline" aria-hidden="true"></i>
+              </button>
+            }
+          </nz-form-item>
         </form>
       }
     </nz-spin>

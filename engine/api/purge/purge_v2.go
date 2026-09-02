@@ -236,8 +236,8 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 				gitRefReport.Error = "unable to remove run " + id
 				return gitRefReport, err
 			}
+			event_v2.PublishRunEvent(ctx, store, sdk.EventRunDeleted, *wr, nil, nil, nil)
 		}
-		event_v2.PublishRunEvent(ctx, store, sdk.EventRunDeleted, *wr, nil, nil, nil)
 	}
 
 	// Select next run to delete runs
@@ -257,12 +257,12 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 				gitRefReport.Error = "unable to remove run " + id
 				return gitRefReport, err
 			}
+			event_v2.PublishRunEvent(ctx, store, sdk.EventRunDeleted, *wr, nil, nil, nil)
 		}
 		gitRefReport.DeletedDatas = append(gitRefReport.DeletedDatas, sdk.WorkflowRefDataPurgeReport{
 			RunID:     wr.ID,
 			RunNumber: wr.RunNumber,
 		})
-		event_v2.PublishRunEvent(ctx, store, sdk.EventRunDeleted, *wr, nil, nil, nil)
 	}
 
 	return gitRefReport, nil
