@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
@@ -4076,4 +4077,79 @@ func TestFindCommitter_GithubUnsignedTag_CommitterNotFound(t *testing.T) {
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
 	require.Contains(t, errMsg, unknownGithubUsername)
 	require.Nil(t, initiator)
+}
+
+// insertAnalysisPollerTestRepository builds the minimum a repository analysis
+// needs to exist: a project, a VCS server on it, and a repository.
+func insertAnalysisPollerTestRepository(t *testing.T, api *API, db *test.FakeTransaction) sdk.ProjectRepository {
+	t.Helper()
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "vcs-server", "github")
+	repo := sdk.ProjectRepository{
+		Name:         "myrepo",
+		Created:      time.Now(),
+		VCSProjectID: vcsProject.ID,
+		CreatedBy:    "me",
+		CloneURL:     "myurl",
+		ProjectKey:   proj.Key,
+	}
+	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
+	return repo
+}
+
+// backdateAnalysisCreation moves created into the past in place. Safe to do in
+// SQL: the signed canonical form is {ID}{ProjectRepositoryID}{VCSProjectID}
+// {ProjectKey}{Commit}, so timestamps sit outside the signature.
+func backdateAnalysisCreation(t *testing.T, db gorpmapper.SqlExecutorWithTx, analysisID string, age time.Duration) {
+	t.Helper()
+	_, err := db.Exec("UPDATE project_repository_analysis SET created = $1 WHERE id = $2", time.Now().Add(-age), analysisID)
+	require.NoError(t, err)
+}
+
+// TestAnalysisInProgressPollerSeesNewestWorkPastABacklog builds a backlog
+// larger than the poller's window and checks that a freshly created analysis is
+// still returned.
+//
+// This is the failure the ordering exists to prevent: an analysis whose owner
+// died stays InProgress forever, and with an unordered LIMIT the window filled
+// with whichever rows the table happened to return, so new work could sit
+// behind a wall of stuck rows and never be looked at — no error, no timeout,
+// nothing in the logs.
+func TestAnalysisInProgressPollerSeesNewestWorkPastABacklog(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+	repo := insertAnalysisPollerTestRepository(t, api, db)
+
+	insert := func(i int) sdk.ProjectRepositoryAnalysis {
+		a := sdk.ProjectRepositoryAnalysis{
+			ProjectRepositoryID: repo.ID,
+			ProjectKey:          repo.ProjectKey,
+			VCSProjectID:        repo.VCSProjectID,
+			Ref:                 "refs/heads/main",
+			Commit:              fmt.Sprintf("%040d", i),
+			Status:              sdk.RepositoryAnalysisStatusInProgress,
+		}
+		require.NoError(t, repository.InsertAnalysis(ctx, db, &a))
+		return a
+	}
+
+	// A backlog wider than the window, explicitly aged so the ordering under
+	// test is the only thing deciding what comes back.
+	const backlog = 120
+	for i := 0; i < backlog; i++ {
+		stuck := insert(i)
+		backdateAnalysisCreation(t, db, stuck.ID, time.Duration(backlog-i)*time.Hour)
+	}
+	newest := insert(backlog)
+
+	found, err := repository.LoadRepositoryIDsAnalysisInProgress(ctx, db)
+	require.NoError(t, err)
+	require.Len(t, found, 100, "the poller reads a fixed-size window")
+
+	ids := make(map[string]struct{}, len(found))
+	for i := range found {
+		ids[found[i].ID] = struct{}{}
+	}
+	require.Contains(t, ids, newest.ID, "the most recently created analysis must be visible to the poller even behind a backlog")
 }

@@ -112,8 +112,16 @@ func LoadAnalysesByRepo(ctx context.Context, db gorp.SqlExecutor, projectReposit
 	return getAnalyses(ctx, db, query)
 }
 
+// LoadRepositoryIDsAnalysisInProgress returns the analyses the poller should
+// pick up next.
+//
+// The ordering matters. This is a fixed-size window over every row sitting in
+// InProgress, and an analysis whose owner died stays in that state, so without
+// an order the window fills with whichever hundred rows the table happens to
+// return and newly created analyses may never be seen at all. Newest first
+// keeps fresh work reachable however large the backlog grows.
 func LoadRepositoryIDsAnalysisInProgress(ctx context.Context, db gorp.SqlExecutor) ([]sdk.ProjectRepositoryAnalysis, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analysis WHERE status = $1 LIMIT 100").Args(sdk.RepositoryAnalysisStatusInProgress)
+	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analysis WHERE status = $1 ORDER BY created DESC LIMIT 100").Args(sdk.RepositoryAnalysisStatusInProgress)
 	return getAnalyses(ctx, db, query)
 }
 
