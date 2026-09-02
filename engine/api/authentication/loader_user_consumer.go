@@ -88,9 +88,11 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 	}
 
 	for i := range cs {
-		if user, ok := mUsers[cs[i].AuthConsumerUser.AuthentifiedUserID]; ok {
-			cs[i].AuthConsumerUser.AuthentifiedUser = &user
+		u, ok := mUsers[cs[i].AuthConsumerUser.AuthentifiedUserID]
+		if !ok {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find user %s for auth consumer %s", cs[i].AuthConsumerUser.AuthentifiedUserID, cs[i].ID)
 		}
+		cs[i].AuthConsumerUser.AuthentifiedUser = &u
 	}
 
 	return nil

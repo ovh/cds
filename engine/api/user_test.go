@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
@@ -507,5 +508,36 @@ func Test_deleteUserHandler(t *testing.T) {
 				assert.Contains(t, rec.Body.String(), c.ExpectedBodyContains)
 			}
 		})
+	}
+}
+
+// Deleting a user must also delete its consumers: an orphan consumer keeps its token accepted at
+// signin while its user data are gone by cascade, which used to panic on a nil AuthentifiedUser.
+func Test_deleteUserHandlerRemovesConsumers(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	assets.DeleteAdmins(t, db)
+
+	_, jwtAdminRaw := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertLambdaUser(t, db)
+
+	consumers, err := authentication.LoadUserConsumersByUserID(context.TODO(), db, u.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, consumers)
+
+	uri := api.Router.GetRoute(http.MethodDelete, api.deleteUserHandler, map[string]string{
+		"permUsernamePublic": u.Username,
+	})
+	require.NotEmpty(t, uri)
+
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdminRaw, http.MethodDelete, uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	// The auth_consumer rows must be gone, not only the auth_consumer_user rows removed by cascade
+	for _, c := range consumers {
+		_, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
+		require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "consumer %s should have been deleted, got %v", c.ID, err)
 	}
 }
