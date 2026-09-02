@@ -163,6 +163,10 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 }
 
 func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
+	// One pass advances the event by at most one state. Whether the next state
+	// runs now or waits for the sweep is decided at the end of this function.
+	statusOnEntry := hre.Status
+
 	ctx, next := telemetry.Span(ctx, "s.executeEvent")
 	defer next()
 	defer func() {
@@ -230,5 +234,33 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 			log.Error(ctx, "executeEvent >unable to remove event %s from inprogress list: %v", hre.UUID, err)
 		}
 	}
+
+	// Run the next state now rather than waiting to be swept up.
+	//
+	// A push walks Scheduled -> Analysis -> WorkflowHooks -> GitInfo ->
+	// Workflow, and each pass through this function handles exactly one of
+	// them. Nothing re-queued the event in between, so every transition waited
+	// for manageOldRepositoryEvent, which ticks once per
+	// OldRepositoryEventRetry minute: four or five states meant minutes between
+	// a push and its run while the work itself took seconds.
+	//
+	// Only re-queue when this pass actually moved the event. A trigger that
+	// returns without advancing is waiting on something it does not own — an
+	// analysis still running, an operation outstanding — and re-queueing that
+	// would spin the worker instead of waiting for the callback that resolves
+	// it. The periodic sweep stays as the backstop for exactly those.
+	if hre.Status != statusOnEntry && !isTerminalHookEventStatus(hre.Status) {
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, hre); err != nil {
+			return sdk.WrapError(err, "unable to enqueue repository event %s for its next state", hre.GetFullName())
+		}
+	}
 	return nil
+}
+
+func isTerminalHookEventStatus(status string) bool {
+	switch status {
+	case sdk.HookEventStatusDone, sdk.HookEventStatusSkipped, sdk.HookEventStatusError:
+		return true
+	}
+	return false
 }
