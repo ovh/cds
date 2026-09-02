@@ -13,31 +13,54 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// checkOrCreateRootFS makes sure Basedir and every cache root exist.
 func (s *Service) checkOrCreateRootFS() error {
-	fi, err := os.Stat(s.Cfg.Basedir)
-	if os.IsNotExist(err) {
-		return sdk.WrapError(os.MkdirAll(s.Cfg.Basedir, os.FileMode(0700)), "unable to create directory %q", s.Cfg.Basedir)
+	dirs := []string{s.Cfg.Basedir}
+	for _, c := range cacheRoots {
+		dirs = append(dirs, s.rootDir(c))
 	}
-	if fi.IsDir() {
-		return nil
+	for _, dir := range dirs {
+		fi, err := os.Stat(dir)
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(dir, os.FileMode(0700)); err != nil {
+				return sdk.WrapError(err, "unable to create directory %q", dir)
+			}
+			continue
+		}
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		if !fi.IsDir() {
+			return fmt.Errorf("bad configuration: %s is not a directory", dir)
+		}
 	}
-	return fmt.Errorf("bad configuration: %s is not a directory", s.Cfg.Basedir)
+	return nil
 }
 
 func (s *Service) checkOrCreateFS(r *sdk.OperationRepo) error {
 	if err := s.checkOrCreateRootFS(); err != nil {
 		return sdk.WithStack(err)
 	}
-	path := filepath.Join(s.Cfg.Basedir, r.ID())
-	fi, err := os.Stat(path)
+	fi, err := os.Stat(r.Basedir)
 	if os.IsNotExist(err) {
-		return sdk.WrapError(os.MkdirAll(path, os.FileMode(0700)), "unable to create directory %q", path)
+		return sdk.WrapError(os.MkdirAll(r.Basedir, os.FileMode(0700)), "unable to create directory %q", r.Basedir)
+	}
+	if err != nil {
+		return sdk.WrapError(err, "unable to stat %q", r.Basedir)
 	}
 	if fi.IsDir() {
 		return nil
 	}
-	r.Basedir = path
-	return nil
+	return fmt.Errorf("bad repository basedir: %s is not a directory", r.Basedir)
+}
+
+// isEmptyDir reports whether dir exists and holds no entry.
+func isEmptyDir(dir string) (bool, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false, err
+	}
+	return len(entries) == 0, nil
 }
 
 func (s *Service) cleanFS(ctx context.Context, r *sdk.OperationRepo) error {
@@ -72,36 +95,35 @@ func dirSize(dir string) (int64, error) {
 	return size, err
 }
 
-// computeRepoSizes measures each first-level directory of basedir.
-func computeRepoSizes(basedir string) (*repoSizesSnapshot, error) {
-	entries, err := os.ReadDir(basedir)
-	if err != nil {
-		return nil, err
-	}
-	snap := &repoSizesSnapshot{sizes: make(map[string]int64, len(entries))}
-	for _, e := range entries {
-		if !e.IsDir() {
-			continue
-		}
-		size, err := dirSize(filepath.Join(basedir, e.Name()))
+// computeRepoSizes measures every clone of every cache root, keyed by clone key.
+func (s *Service) computeRepoSizes() (*repoSizesSnapshot, error) {
+	snap := &repoSizesSnapshot{sizes: make(map[string]int64)}
+	for _, c := range cacheRoots {
+		names, err := readCacheEntries(s.rootDir(c))
 		if err != nil {
 			return nil, err
 		}
-		snap.sizes[e.Name()] = size
-		snap.total += size
+		for _, n := range names {
+			size, err := dirSize(s.clonePath(c, n))
+			if err != nil {
+				return nil, err
+			}
+			snap.sizes[c.cloneKey(n)] = size
+			snap.total += size
+		}
 	}
 	snap.computedAt = time.Now()
 	return snap, nil
 }
 
-// repoSize returns the last known disk usage of a repository; ok is false when
-// no snapshot exists yet or the repository was not present at the last walk.
-func (s *Service) repoSize(repoID string) (size int64, ok bool) {
+// repoSize returns the last known disk usage of a clone, keyed "<kind>/<id>";
+// ok is false when no snapshot exists yet or the clone was absent at the last walk.
+func (s *Service) repoSize(key string) (size int64, ok bool) {
 	snap := s.repoSizes.Load()
 	if snap == nil {
 		return 0, false
 	}
-	size, ok = snap.sizes[repoID]
+	size, ok = snap.sizes[key]
 	return size, ok
 }
 
@@ -113,7 +135,7 @@ func (s *Service) computeCacheSize(ctx context.Context) error {
 		select {
 		case <-tick.C:
 			start := time.Now()
-			snap, err := computeRepoSizes(s.Cfg.Basedir)
+			snap, err := s.computeRepoSizes()
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to compute size"))
 				continue
