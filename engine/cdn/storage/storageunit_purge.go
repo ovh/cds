@@ -30,7 +30,8 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 	}
 
 	for _, ui := range unitItems {
-		ctx = context.WithValue(ctx, FieldAPIRef, ui.Item.APIRefHash)
+		// Shadowed per iteration so that the context chain does not grow with the number of items
+		ctx := context.WithValue(ctx, FieldAPIRef, ui.Item.APIRefHash)
 		ctx = context.WithValue(ctx, FieldSize, ui.Item.Size)
 
 		exists, err := s.ItemExists(ctx, x.m, x.db, *ui.Item)
@@ -57,8 +58,7 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 						log.Info(ctx, "Item %s has already been deleted from %s", ui.ItemID, s.Name())
 						continue
 					}
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "unable to remove item %s on %s: %v", ui.ID, s.Name(), err)
+					log.Error(sdk.ContextWithStacktrace(ctx, err), "unable to remove item %s on %s: %v", ui.ID, s.Name(), err)
 					continue
 				}
 				log.Info(ctx, "item %s deleted on %s", ui.ID, s.Name())
@@ -71,8 +71,7 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 		}
 
 		if err := DeleteItemUnit(x.m, tx, &ui); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to delete item unit %s: %v", ui.ID, err)
+			log.Error(sdk.ContextWithStacktrace(ctx, err), "unable to delete item unit %s: %v", ui.ID, err)
 			_ = tx.Rollback() // nolint
 			continue
 		}

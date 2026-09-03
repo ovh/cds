@@ -49,8 +49,8 @@ func MarkOldWorkflowRunsV1(ctx context.Context, DBFunc func() *gorp.DbMap, maxRe
 			var err error
 			cursor, err = markOldWorkflowRunsV1Batch(ctx, db, maxRetentionDays, batchSize, cursor)
 			if err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "purge> MarkOldWorkflowRunsV1: %v", err)
+				// Do not keep the stack trace on the ticker context: it would pile up one per failed tick
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "purge> MarkOldWorkflowRunsV1: %v", err)
 				cursor = time.Time{}
 			}
 		}
