@@ -211,9 +211,11 @@ func (a *API) initWebsocket(pubSubKey string) error {
 		server:     websocket.NewServer(),
 		clientData: make(map[string]*websocketClientData),
 	}
-	tickerMetrics := time.NewTicker(10 * time.Second)
-	defer tickerMetrics.Stop()
+	// See initWebsocketV2: the ticker is created by the goroutine reading it, so that its stop is not
+	// deferred to the return of this function.
 	a.GoRoutines.Run(a.Router.Background, "api.InitRouter.WSServer", func(ctx context.Context) {
+		tickerMetrics := time.NewTicker(10 * time.Second)
+		defer tickerMetrics.Stop()
 		for {
 			select {
 			case <-tickerMetrics.C:
