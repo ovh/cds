@@ -263,6 +263,8 @@ type Configuration struct {
 		RoutineDelay      int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
 		Retention         string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
 		AnalysisRetention int64  `toml:"analysisRetention" comment:"Number of analysis to keep" json:"analysisRetention" commented:"true" default:"250"`
+		AnalysisTimeout   string `toml:"analysisTimeout" comment:"How long an analysis may stay InProgress before it is failed" json:"analysisTimeout" commented:"true" default:"30m"`
+		AnalysisBatch     int64  `toml:"analysisExpiryBatch" comment:"How many timed out analyses are failed per poller tick" json:"analysisExpiryBatch" commented:"true" default:"200"`
 	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
 	Project struct {
 		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
@@ -529,12 +531,23 @@ func (a *API) Serve(ctx context.Context) error {
 	if a.Config.Entity.AnalysisRetention <= 0 {
 		a.Config.Entity.AnalysisRetention = 250
 	}
+	if a.Config.Entity.AnalysisTimeout == "" {
+		a.Config.Entity.AnalysisTimeout = defaultAnalysisTimeout.String()
+	}
+	if a.Config.Entity.AnalysisBatch <= 0 {
+		a.Config.Entity.AnalysisBatch = defaultAnalysisBatch
+	}
 	if a.Config.WorkflowV2.VersionRetentionScheduling == 0 {
 		a.Config.WorkflowV2.VersionRetentionScheduling = 60
 	}
 	if a.Config.WorkflowV2.VersionRetention == 0 {
 		a.Config.WorkflowV2.VersionRetention = 25
 	}
+	analysisTimeout, err := time.ParseDuration(a.Config.Entity.AnalysisTimeout)
+	if err != nil {
+		return sdk.WrapError(err, "wrong entity analysisTimeout %s, bad format.", a.Config.Entity.AnalysisTimeout)
+	}
+
 	entityRetention, err := time.ParseDuration(a.Config.Entity.Retention)
 	if err != nil {
 		return sdk.WrapError(err, "wrong entity retention %s, bad format.", a.Config.Entity.Retention)
@@ -1007,7 +1020,7 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {
-		a.repositoryAnalysisPoller(ctx, 5*time.Second)
+		a.repositoryAnalysisPoller(ctx, 5*time.Second, analysisTimeout)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoryAnalysis", func(ctx context.Context) {
 		a.cleanRepositoryAnalysis(ctx, 1*time.Hour)
