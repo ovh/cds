@@ -29,8 +29,7 @@ func (s *Service) itemPurge(ctx context.Context) {
 			return
 		case <-tickPurge.C:
 			if err := s.cleanItemToDelete(ctx); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "cdn:ItemPurge: error on cleanItemToDelete: %v", err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:ItemPurge: error on cleanItemToDelete: %v", err)
 			}
 		}
 	}
@@ -49,12 +48,10 @@ func (s *Service) itemsGC(ctx context.Context) {
 			return
 		case <-tickGC.C:
 			if err := s.cleanBuffer(ctx); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "cdn:CompleteWaitingItems: cleanBuffer err: %v", err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:CompleteWaitingItems: cleanBuffer err: %v", err)
 			}
 			if err := s.cleanWaitingItem(ctx, ItemLogGC); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "cdn:CompleteWaitingItems: ContextWithStacktrace err: %v", err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:CompleteWaitingItems: ContextWithStacktrace err: %v", err)
 			}
 		}
 	}
@@ -197,7 +194,8 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 		return err
 	}
 	for _, it := range items {
-		ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
+		// Shadowed per iteration so that the context chain does not grow with the number of items
+		ctx := context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
 		log.Info(ctx, "cleanWaitingItem> cleaning item %s", it.ID)
 
 		// Load Item Unit
@@ -269,8 +267,7 @@ func (s *Service) workerCacheExpiredPurge(ctx context.Context) {
 			return
 		case <-tick.C:
 			if err := s.purgeExpiredWorkerCacheItems(ctx, batchSize, gracePeriodDays); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "cdn:worker-cache-purge: %v", err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:worker-cache-purge: %v", err)
 			}
 		}
 	}

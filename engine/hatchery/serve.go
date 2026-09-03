@@ -354,8 +354,7 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []cdslog.Messa
 		sign, err := jws.Sign(c.Signer, s.Signature)
 		if err != nil {
 			err = sdk.WrapError(err, "unable to sign service log message")
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, err.Error())
+			log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 			continue
 		}
 		lineNumber := c.mapServiceNextLineNumber[s.ServiceKey()]

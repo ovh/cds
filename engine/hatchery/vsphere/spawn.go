@@ -49,8 +49,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		h.cachePendingJobID.list = sdk.DeleteFromArray(h.cachePendingJobID.list, spawnArgs.JobID)
 		h.cachePendingJobID.mu.Unlock()
 		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
+			log.Error(sdk.ContextWithStacktrace(ctx, err), "SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
 		} else {
 			log.Info(ctx, "SpawnWorker %q from model %q: DONE", spawnArgs.WorkerName, spawnArgs.ModelName())
 		}
@@ -365,8 +364,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 		log.Error(ctx, "virtual machine %q is not ready: %v", spawnArgs.WorkerName, err)
 		log.Warn(ctx, "shutdown virtual machine %q", spawnArgs.WorkerName)
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", spawnArgs.Model.GetPath(), err)
+			log.Error(sdk.ContextWithStacktrace(ctx, err), "createVMModel> unable to shutdown vm %q: %v", spawnArgs.Model.GetPath(), err)
 		}
 		h.markToDelete(ctx, spawnArgs.WorkerName)
 		return err
@@ -394,8 +392,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 		log.Error(ctx, "cannot start program on virtual machine %q: %v", spawnArgs.WorkerName, err)
 		log.Warn(ctx, "shutdown virtual machine %q", spawnArgs.WorkerName)
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", spawnArgs.Model.GetName(), err)
+			log.Error(sdk.ContextWithStacktrace(ctx, err), "createVMModel> unable to shutdown vm %q: %v", spawnArgs.Model.GetName(), err)
 		}
 		h.markToDelete(ctx, spawnArgs.WorkerName)
 		return err
@@ -427,8 +424,7 @@ func (h *HatcheryVSphere) markToDelete(ctx context.Context, vmName string) {
 
 	if vmRef == nil {
 		err := sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", vmName))
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, "unable to get virtual machines: %v", err)
+		log.Error(sdk.ContextWithStacktrace(ctx, err), "unable to get virtual machines: %v", err)
 		return
 	}
 
@@ -590,15 +586,13 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 			log.Debug(ctx, "provision %q already used by another worker starter - skip it", machine.Name)
 			continue
 		} else if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to load vm provision %q", machine.Name)
+			log.Error(sdk.ContextWithStacktrace(ctx, err), "unable to load vm provision %q", machine.Name)
 			continue
 		}
 
 		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmPoweredOffEvent")
 		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
+			log.Error(sdk.ContextWithStacktrace(ctx, err), "unable to load VmStartingEvent events: %v", err)
 			continue
 		}
 

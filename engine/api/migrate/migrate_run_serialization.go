@@ -21,7 +21,8 @@ func MigrateRunSerialization(ctx context.Context, db *gorp.DbMap, store cache.St
 
 	var lastError error
 	for _, p := range prjs {
-		ctx = context.WithValue(ctx, cdslog.Project, p.Key)
+		// Shadowed per iteration so that the context chain does not grow with the number of items
+		ctx := context.WithValue(ctx, cdslog.Project, p.Key)
 		if err := migrateProjectRuns(ctx, db, store, p.Key); err != nil {
 			lastError = err
 			log.ErrorWithStackTrace(ctx, err)

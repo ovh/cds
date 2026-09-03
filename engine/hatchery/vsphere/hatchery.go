@@ -97,8 +97,7 @@ func (h *HatcheryVSphere) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := h.NewMonitoringStatus()
 	ws, err := h.WorkersStarted(ctx)
 	if err != nil {
-		ctx = log.ContextWithStackTrace(ctx, err)
-		log.Warn(ctx, err.Error())
+		log.Warn(log.ContextWithStackTrace(ctx, err), err.Error())
 	}
 	maxWorkerDisplay := fmt.Sprintf("%d", h.Config.Provision.MaxWorker)
 	if h.Config.Provision.MaxWorker == 0 {
@@ -543,8 +542,7 @@ func (h *HatcheryVSphere) GetDetaultModelV2Name(ctx context.Context, requirement
 func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 	workerPoolDisabled, err := hatchery.WorkerPool(ctx, h, sdk.StatusDisabled)
 	if err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, "killDisabledWorkers> Pool> Error: %v", err)
+		log.Error(sdk.ContextWithStacktrace(ctx, err), "killDisabledWorkers> Pool> Error: %v", err)
 		return
 	}
 
@@ -599,7 +597,8 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	}()
 
 	for _, s := range srvs {
-		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, s.Name)
+		// Shadowed per iteration so that the context chain does not grow with the number of items
+		ctx := context.WithValue(ctx, cdslog.AuthWorkerName, s.Name)
 
 		annot := getVirtualMachineCDSAnnotation(ctx, s)
 		if annot == nil {
@@ -613,8 +612,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		if h.isMarkedToDelete(s) {
 			log.Info(ctx, "deleting machine %q as it's already marked to be deleted", s.Name)
 			if err := h.deleteServer(ctx, s); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "killAwolServers> cannot delete server (markedToDelete) %s: %v", s.Name, err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "killAwolServers> cannot delete server (markedToDelete) %s: %v", s.Name, err)
 			} else {
 				deleted = true
 				h.releaseDeadWorkerJob(ctx, s.Name, jobByWorker)
@@ -686,8 +684,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
 		log.Info(ctx, "deleting machine %q - expired (poweredOff=%t existsOnAPISide=%t startTime=%v)", s.Name, poweredOff, existsOnAPISide, startTime)
 		if err := h.deleteServer(ctx, s); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "killAwolServers> cannot delete server (expire) %s: %v", s.Name, err)
+			log.Error(sdk.ContextWithStacktrace(ctx, err), "killAwolServers> cannot delete server (expire) %s: %v", s.Name, err)
 		} else {
 			deleted = true
 			h.releaseDeadWorkerJob(ctx, s.Name, jobByWorker)
@@ -705,8 +702,7 @@ func (h *HatcheryVSphere) releaseDeadWorkerJob(ctx context.Context, workerName s
 		return
 	}
 	if err := h.CDSClientV2().V2HatcheryReleaseJob(ctx, h.GetRegion(), jobRunID); err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Warn(ctx, "killAwolServers> unable to release job %s of reclaimed worker %q: %v", jobRunID, workerName, err)
+		log.Warn(sdk.ContextWithStacktrace(ctx, err), "killAwolServers> unable to release job %s of reclaimed worker %q: %v", jobRunID, workerName, err)
 		return
 	}
 	log.Info(ctx, "killAwolServers> released job %s for re-queue after reclaiming worker %q", jobRunID, workerName)
