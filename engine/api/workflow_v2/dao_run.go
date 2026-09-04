@@ -705,19 +705,29 @@ func LoadRunsUnsafeWithPagination(ctx context.Context, db gorp.SqlExecutor, offs
 	return runs, nil
 }
 
-func LoadRunsDescAtOffset(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow, ref string, offset int64) ([]string, error) {
+// LoadRunsDescAtOffset returns the runs beyond the given offset, newest first.
+// The offset selects the candidates, the outer conditions then protect those
+// that must not be deleted: a run still going, and a run whose last update is
+// more recent than graceInHours, so that a run can always be consulted for a
+// while once it ended. Filtering before the offset instead would let an older
+// run take the place of a protected one and be deleted in its stead.
+func LoadRunsDescAtOffset(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow, ref string, offset int64, graceInHours int64) ([]string, error) {
 	query := `
-	SELECT id FROM v2_workflow_run
-	WHERE project_key = $1 AND
-	vcs_server = $2 AND
-	repository = $3 AND
-	workflow_name = $4 AND
-	contexts -> 'git' ->> 'ref'::TEXT = $5
-	ORDER BY run_number DESC
-	OFFSET $6`
+	SELECT id FROM (
+		SELECT id, status, last_modified FROM v2_workflow_run
+		WHERE project_key = $1 AND
+		vcs_server = $2 AND
+		repository = $3 AND
+		workflow_name = $4 AND
+		contexts -> 'git' ->> 'ref'::TEXT = $5
+		ORDER BY run_number DESC
+		OFFSET $6
+	) candidates
+	WHERE candidates.status != ALL($7) AND
+	now() - candidates.last_modified > $8 * INTERVAL '1' HOUR`
 
 	var ids []string
-	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, offset); err != nil {
+	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, offset, pq.StringArray(sdk.V2WorkflowRunNonTerminalStatuses()), graceInHours); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -731,10 +741,11 @@ func LoadOlderRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo,
 	repository = $3 AND
 	workflow_name = $4 AND
 	contexts -> 'git' ->> 'ref'::TEXT = $5 AND
-	now() - started > $6 * INTERVAL '1' DAY`
+	now() - started > $6 * INTERVAL '1' DAY AND
+	status != ALL($7)`
 
 	var ids []string
-	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, days); err != nil {
+	if _, err := db.Select(&ids, query, projKey, vcs, repo, workflow, ref, days, pq.StringArray(sdk.V2WorkflowRunNonTerminalStatuses())); err != nil {
 		return nil, err
 	}
 	return ids, nil
