@@ -14,7 +14,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
-	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
@@ -89,6 +88,62 @@ type websocketV2ClientData struct {
 	AuthConsumer sdk.AuthUserConsumer
 	mutex        sync.Mutex
 	filters      webSocketV2Filters
+	accessMutex  sync.Mutex
+	access       *runJobAccess
+}
+
+// runJobAccessTTL bounds how long the permissions of a client are held before being read again. A
+// right taken away reaches an open connection within that delay; registering a filter checks the
+// permissions of the moment anyway.
+const runJobAccessTTL = 30 * time.Second
+
+// runJobAccess is what a client may see of the job events: the projects it can read and the regions
+// it can execute on. It follows the consumer, not the event, so it is read once for a while rather
+// than for each of the job events of the instance, of which a single job produces eight.
+type runJobAccess struct {
+	projectKeys sdk.StringSlice
+	regionNames sdk.StringSlice
+	readAt      time.Time
+}
+
+func (c *websocketV2ClientData) runJobEventAccess(ctx context.Context, db gorp.SqlExecutor) (*runJobAccess, error) {
+	// Held for the read so that a burst of events on a client that has nothing cached asks the
+	// database once instead of once per event.
+	c.accessMutex.Lock()
+	defer c.accessMutex.Unlock()
+
+	if c.access != nil && time.Since(c.access.readAt) < runJobAccessTTL {
+		return c.access, nil
+	}
+
+	userID := c.AuthConsumer.AuthConsumerUser.AuthentifiedUserID
+
+	projectKeys, err := rbac.LoadAllProjectKeysAllowed(ctx, db, sdk.ProjectRoleRead, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, userID)
+	if err != nil {
+		return nil, err
+	}
+	regionIDs := sdk.StringSlice{}
+	for _, r := range rbacRegions {
+		regionIDs = append(regionIDs, r.RegionID)
+	}
+	regionIDs.Unique()
+
+	allowedRegions, err := region.LoadRegionByIDs(ctx, db, regionIDs)
+	if err != nil {
+		return nil, err
+	}
+	regionNames := sdk.StringSlice{}
+	for _, r := range allowedRegions {
+		regionNames = append(regionNames, r.Name)
+	}
+
+	c.access = &runJobAccess{projectKeys: projectKeys, regionNames: regionNames, readAt: time.Now()}
+	return c.access, nil
 }
 
 func (c *websocketV2ClientData) updateEventFilters(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, msg []byte) error {
@@ -139,7 +194,10 @@ func (c *websocketV2ClientData) updateEventFilters(ctx context.Context, db gorp.
 }
 
 // For some event we need to check if it should be sent or not depending permissions or filters
-func (c *websocketV2ClientData) eventPostCheck(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, event sdk.FullEventV2) (result bool, err error) {
+//
+// run is the run the event carries, read once for every client the event is offered to, and nil
+// when the event carries none or it could not be read.
+func (c *websocketV2ClientData) eventPostCheck(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, event sdk.FullEventV2, run *sdk.EventWorkflowRunPayload) (result bool, err error) {
 	log.Debug(ctx, "websocketV2ClientData.eventPostCheck> running eventPostCheck for event.Type: %q", string(event.Type))
 	defer log.Debug(ctx, "websocketV2ClientData.eventPostCheck> result eventPostCheck for event.Type: %q is %t", string(event.Type), result)
 
@@ -150,41 +208,17 @@ func (c *websocketV2ClientData) eventPostCheck(ctx context.Context, db gorp.SqlE
 			return true, nil
 		}
 
-		pKeys, err := rbac.LoadAllProjectKeysAllowed(ctx, db, sdk.ProjectRoleRead, c.AuthConsumer.AuthConsumerUser.AuthentifiedUserID)
+		access, err := c.runJobEventAccess(ctx, db)
 		if err != nil {
 			return false, err
 		}
-		if len(pKeys) == 0 || !pKeys.Contains(event.ProjectKey) {
-			return false, nil
-		}
-
-		rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, c.AuthConsumer.AuthConsumerUser.AuthentifiedUserID)
-		if err != nil {
-			return false, err
-		}
-		regionIDs := sdk.StringSlice{}
-		for _, r := range rbacRegions {
-			regionIDs = append(regionIDs, r.RegionID)
-		}
-		regionIDs.Unique()
-
-		allowedRegions, err := region.LoadRegionByIDs(ctx, db, regionIDs)
-		if err != nil {
-			return false, err
-		}
-		for _, r := range allowedRegions {
-			if r.Name == event.Region {
-				return true, nil
-			}
-		}
-
-		return false, nil
+		return access.projectKeys.Contains(event.ProjectKey) && access.regionNames.Contains(event.Region), nil
 	}
 
 	// Post check to return only runs according query filters
 	if event.Type == sdk.EventRunCrafted || event.Type == sdk.EventRunBuilding || event.Type == sdk.EventRunEnded || event.Type == sdk.EventRunRestart {
 		filter := c.filters.GetFirstByType(sdk.WebsocketV2FilterTypeProjectRuns)
-		if filter == nil {
+		if filter == nil || run == nil {
 			return false, nil
 		}
 
@@ -192,18 +226,20 @@ func (c *websocketV2ClientData) eventPostCheck(ctx context.Context, db gorp.SqlE
 		if err != nil {
 			return false, sdk.WrapError(err, "cannot parse project_runs_params filter")
 		}
-		filters, offset, limit, sort := parseWorkflowRunsSearchV2Query(query)
+		filters, offset, _, _ := parseWorkflowRunsSearchV2Query(query)
 
-		runs, err := workflow_v2.SearchRuns(ctx, db, filter.ProjectKey, filters, offset, limit, sort)
-		if err != nil {
-			return false, sdk.WrapError(err, "unable to search runs")
+		// The filters are matched against the run the event carries. Nothing is read: what is asked
+		// here is whether the run is one the client asked to see, and whether the client may read
+		// the project at all was settled when it registered this filter.
+		//
+		// The page is not part of the answer, where replaying the search made it one. A client
+		// reading further down the list is pushed nothing, since the only place a run list has for a
+		// run arriving is its top; on the first page every run the search matches is pushed, and
+		// where it belongs among those displayed is for the list to decide.
+		if offset > 0 {
+			return false, nil
 		}
-		for i := range runs {
-			if runs[i].ID == event.WorkflowRunID {
-				return true, nil
-			}
-		}
-		return false, nil
+		return run.ProjectKey == filter.ProjectKey && filters.MatchesRun(*run), nil
 	}
 
 	return false, nil
@@ -215,9 +251,11 @@ func (a *API) initWebsocketV2(pubSubKey string) error {
 		server:     websocket.NewServer(),
 		clientData: make(map[string]*websocketV2ClientData),
 	}
-	tickerMetrics := time.NewTicker(10 * time.Second)
-	defer tickerMetrics.Stop()
+	// The ticker belongs to the goroutine reading it: created here, the deferred stop would run when
+	// this function returns, which is before the first tick, and the count would never be recorded.
 	a.GoRoutines.Run(a.Router.Background, "api.initWebsocketV2.WSV2Server", func(ctx context.Context) {
+		tickerMetrics := time.NewTicker(10 * time.Second)
+		defer tickerMetrics.Stop()
 		for {
 			select {
 			case <-tickerMetrics.C:
@@ -289,6 +327,19 @@ func (a *API) websocketV2OnMessage(e sdk.FullEventV2) {
 		return
 	}
 
+	// The run an event carries is read once here rather than by each of the clients it is offered
+	// to: it is what the filters of a run list are matched against.
+	var run *sdk.EventWorkflowRunPayload
+	if e.Type == sdk.EventRunCrafted || e.Type == sdk.EventRunBuilding || e.Type == sdk.EventRunEnded || e.Type == sdk.EventRunRestart {
+		var payload sdk.EventWorkflowRunPayload
+		if err := sdk.JSONUnmarshal(e.Payload, &payload); err != nil {
+			ctx := sdk.ContextWithStacktrace(context.TODO(), err)
+			log.Warn(ctx, "api.websocketV2OnMessage> cannot read the run of a %s event: %v", e.Type, err)
+		} else {
+			run = &payload
+		}
+	}
+
 	clientIDs := a.WSV2Server.server.ClientIDs()
 	// Randomize the order of client to prevent the old client to always received new events in priority
 	rand.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
@@ -315,7 +366,7 @@ func (a *API) websocketV2OnMessage(e sdk.FullEventV2) {
 			}
 
 			if needPostCheck {
-				allowed, err := c.eventPostCheck(ctx, a.mustDBWithCtx(ctx), a.Cache, e)
+				allowed, err := c.eventPostCheck(ctx, a.mustDBWithCtx(ctx), a.Cache, e, run)
 				if err != nil {
 					err = sdk.WrapError(err, "unable to validate event post check for client %s with consumer id: %s", clientID, c.AuthConsumer.ID)
 					ctx = sdk.ContextWithStacktrace(ctx, err)

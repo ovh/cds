@@ -371,8 +371,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Warn(ctx, "unable to start required container on %s: %s", dockerClient.name, err)
+					log.Warn(sdk.ContextWithStacktrace(ctx, err), "unable to start required container on %s: %s", dockerClient.name, err)
 					return err
 				}
 				services = append(services, serviceName)
@@ -471,8 +470,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	//start the worker
 	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Warn(ctx, "unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.GetDockerImage(), err)
+		log.Warn(sdk.ContextWithStacktrace(ctx, err), "unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.GetDockerImage(), err)
 		return err
 	}
 
@@ -549,8 +547,7 @@ func (h *HatcherySwarm) SpawnWorkerService(ctx context.Context, dockerClient *do
 	}
 
 	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Warn(ctx, "unable to start required container on %s: %s", dockerClient.name, err)
+		log.Warn(sdk.ContextWithStacktrace(ctx, err), "unable to start required container on %s: %s", dockerClient.name, err)
 		return serviceName, err
 	}
 

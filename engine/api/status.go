@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -18,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -33,6 +35,10 @@ const (
 	// inventoryMetricsQueryTimeout caps a single count. A count that cannot complete within it is
 	// worth losing rather than holding a connection for the next tick to pile onto.
 	inventoryMetricsQueryTimeout = 2 * time.Minute
+	// inventoryMetricsCacheKey holds the counts one instance read for all of them. Reading them once
+	// per instance multiplies over the replicas a full scan of the largest tables CDS has, for
+	// numbers that cannot differ from one instance to the next.
+	inventoryMetricsCacheKey = "api:metrics:inventory"
 )
 
 // Status returns status, implements interface service.Service
@@ -298,6 +304,16 @@ func (api *API) initMetrics(ctx context.Context) error {
 		telemetry.NewViewLast("cds/run_results_to_synchronized_error", api.Metrics.RunResultSynchronizedError, tagsService),
 	)
 
+	// The pool of the database describes itself: the connections in use, and above all how long the
+	// callers waited for one. cds/database_conn only counts the connections that are open, which says
+	// that the pool is full but nothing of the queue behind it, and a queue is what a saturated pool
+	// is read from.
+	if db := api.DBConnectionFactory.DB(); db != nil {
+		if err := telemetry.RegisterCollector(ctx, collectors.NewDBStatsCollector(db, api.DBConnectionFactory.DBName)); err != nil {
+			log.Error(ctx, "unable to expose the metrics of the database pool: %v", err)
+		}
+	}
+
 	api.computeMetrics(ctx)
 
 	return err
@@ -395,45 +411,109 @@ func (api *API) computeInventoryMetrics(ctx context.Context) {
 					return
 				}
 			case <-tick:
-				// Common metrics
-				api.countMetric(ctx, api.Metrics.nbUsers, "SELECT COUNT(1) FROM \"authentified_user\"")
-				api.countMetric(ctx, api.Metrics.nbProjects, "SELECT COUNT(1) FROM project")
-				api.countMetric(ctx, api.Metrics.nbGroups, "SELECT COUNT(1) FROM \"group\"")
-
-				// V1 metrics
-				api.countMetric(ctx, api.Metrics.nbApplications, "SELECT COUNT(1) FROM application")
-				api.countMetric(ctx, api.Metrics.nbPipelines, "SELECT COUNT(1) FROM pipeline")
-				api.countMetric(ctx, api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow")
-				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts")
-				api.countMetric(ctx, api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
-				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COUNT(1) FROM workflow_run")
-				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT COUNT(1) FROM workflow_node_run")
-				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
-				api.countMetric(ctx, api.Metrics.RunResultSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NOT NULL")
-				api.countMetric(ctx, api.Metrics.RunResultToSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NULL")
-				api.countMetric(ctx, api.Metrics.RunResultSynchronizedError, "SELECT COUNT(1) FROM workflow_run_result where sync ? 'error'")
-
-				// V2 metrics
-				api.countMetric(ctx, api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct(project_repository_id,name)) from entity where type = 'Workflow'")
+				api.refreshInventoryMetrics(ctx)
 			}
 		}
 	})
 }
 
-func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
+// inventoryCount is one of the counts of what CDS holds, with the measure it feeds. The key is what
+// the value is shared under, so it stays the same while a mix of versions runs.
+type inventoryCount struct {
+	key     string
+	measure *stats.Int64Measure
+	query   string
+}
+
+func (api *API) inventoryCounts() []inventoryCount {
+	return []inventoryCount{
+		// Common
+		{"users", api.Metrics.nbUsers, `SELECT COUNT(1) FROM "authentified_user"`},
+		{"projects", api.Metrics.nbProjects, "SELECT COUNT(1) FROM project"},
+		{"groups", api.Metrics.nbGroups, `SELECT COUNT(1) FROM "group"`},
+
+		// V1
+		{"applications", api.Metrics.nbApplications, "SELECT COUNT(1) FROM application"},
+		{"pipelines", api.Metrics.nbPipelines, "SELECT COUNT(1) FROM pipeline"},
+		{"workflows", api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow"},
+		{"artifacts", api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts"},
+		{"worker_models", api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model"},
+		{"workflow_runs", api.Metrics.nbWorkflowRuns, "SELECT COUNT(1) FROM workflow_run"},
+		{"workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, "SELECT COUNT(1) FROM workflow_node_run"},
+		{"max_workers_building", api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'"},
+		{"run_results_synchronized", api.Metrics.RunResultSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NOT NULL"},
+		{"run_results_to_synchronize", api.Metrics.RunResultToSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NULL"},
+		{"run_results_synchronized_error", api.Metrics.RunResultSynchronizedError, "SELECT COUNT(1) FROM workflow_run_result where sync ? 'error'"},
+
+		// V2
+		{"workflows_as_code_v2", api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct(project_repository_id,name)) from entity where type = 'Workflow'"},
+	}
+}
+
+// refreshInventoryMetrics records the counts of what CDS holds. They describe the database, so they
+// are the same read from any instance, and each of them is a full table scan: one instance reads
+// them and shares them, the others record what it read.
+//
+// Every instance records them rather than only the one that read them: a measure only exists where
+// it was recorded, so leaving the others silent would spread one number over as many series as there
+// are instances, each holding whatever it last saw. Aggregating those is only right for a count that
+// never goes down, and several of these do.
+func (api *API) refreshInventoryMetrics(ctx context.Context) {
+	counts := api.inventoryCounts()
+
+	// Held for the interval and not released: the instance that reads them is whichever one ticks
+	// first once the last read has aged out.
+	locked, err := api.Cache.Lock(cache.Key(inventoryMetricsCacheKey, "lock"), inventoryMetricsInterval, 0, 1)
+	if err != nil {
+		log.Warn(ctx, "metrics> unable to take the inventory counts lock: %v", err)
+	}
+
+	if !locked {
+		var shared map[string]int64
+		found, err := api.Cache.Get(inventoryMetricsCacheKey, &shared)
+		if err != nil {
+			log.Warn(ctx, "metrics> unable to read the shared inventory counts: %v", err)
+		}
+		if found {
+			for _, c := range counts {
+				if n, ok := shared[c.key]; ok {
+					telemetry.Record(ctx, c.measure, n)
+				}
+			}
+			return
+		}
+		// Nothing has been shared yet, which is the first pass of a cluster starting: reading them
+		// here costs a duplicated pass, reporting nothing costs the metrics until the next tick.
+	}
+
+	shared := make(map[string]int64, len(counts))
+	for _, c := range counts {
+		n, err := api.count(ctx, c.query)
+		if err != nil {
+			// Reporting nothing leaves the last count in place. Reporting the zero of a count that
+			// did not happen reads as the disappearance of everything it counts.
+			log.Warn(ctx, "metrics> unable to count %s: %v", c.key, err)
+			continue
+		}
+		shared[c.key] = n
+		telemetry.Record(ctx, c.measure, n)
+	}
+
+	// Kept longer than the interval so that an instance ticking while no read is in progress still
+	// finds them.
+	if err := api.Cache.SetWithDuration(inventoryMetricsCacheKey, shared, 3*inventoryMetricsInterval); err != nil {
+		log.Warn(ctx, "metrics> unable to share the inventory counts: %v", err)
+	}
+}
+
+func (api *API) count(ctx context.Context, query string) (int64, error) {
 	// Bounded so that a scan that outgrew the instance releases its connection instead of holding one
 	// of the few the pool has until it completes.
 	ctxQuery, cancel := context.WithTimeout(ctx, inventoryMetricsQueryTimeout)
 	defer cancel()
 
 	n, err := api.mustDBWithCtx(ctxQuery).SelectInt(query)
-	if err != nil {
-		// Reporting nothing leaves the last count in place. Reporting the zero of a count that did
-		// not happen reads as the disappearance of everything it counts.
-		log.Warn(ctx, "metrics>Errors while fetching count %s: %v", query, err)
-		return
-	}
-	telemetry.Record(ctx, v, n)
+	return n, sdk.WithStack(err)
 }
 
 func (api *API) countMetricRange(ctx context.Context, status string, timerange string, v *stats.Int64Measure, query string, args ...interface{}) {

@@ -49,16 +49,17 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 		return err
 	}
 	for _, wf := range wfs {
-		ctx = context.WithValue(ctx, log.Field("action_metadata_project_key"), wf.ProjectKey)
-		ctx = context.WithValue(ctx, log.Field("action_metadata_workflow_name"), wf.Name)
+		// Scope the log fields to the iteration: chaining them on the shared context would grow it
+		// by two entries per workflow, and every log call walks the whole chain.
+		wfCtx := context.WithValue(ctx, log.Field("action_metadata_project_key"), wf.ProjectKey)
+		wfCtx = context.WithValue(wfCtx, log.Field("action_metadata_workflow_name"), wf.Name)
 
-		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
+		_, enabled := featureflipping.IsEnabled(wfCtx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
 		if !enabled {
 			continue
 		}
-		if err := ApplyRetentionPolicyOnWorkflow(ctx, store, db, wf, MarkAsDeleteOptions{DryRun: false}, nil); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "%v", err)
+		if err := ApplyRetentionPolicyOnWorkflow(wfCtx, store, db, wf, MarkAsDeleteOptions{DryRun: false}, nil); err != nil {
+			log.Error(sdk.ContextWithStacktrace(wfCtx, err), "%v", err)
 		}
 	}
 	workflow.CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)

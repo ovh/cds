@@ -52,8 +52,8 @@ func MarkRunsAsDelete(ctx context.Context, store cache.Store, DBFunc func() *gor
 			// Mark workflow run to delete
 			log.Info(ctx, "purge> Start marking workflow run as delete")
 			if err := markWorkflowRunsToDelete(ctx, store, DBFunc(), workflowRunsMarkToDelete); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "%v", err)
+				// Do not keep the stack trace on the ticker context: it would pile up one per failed tick
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "%v", err)
 			}
 		}
 	}
