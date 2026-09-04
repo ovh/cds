@@ -177,3 +177,35 @@ func TestDeleteConsumer(t *testing.T) {
 	_, err = authentication.LoadUserConsumerByID(context.TODO(), db, c.ID)
 	assert.Error(t, err)
 }
+
+// A consumer whose user has been deleted is orphan: its auth_consumer_user row is removed by cascade.
+// Loading it must fail instead of returning a consumer with no user, else every caller dereferencing
+// AuthConsumerUser.AuthentifiedUser panics (ex: signin with a token of a deleted user).
+func TestLoadConsumerOfDeletedUser(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	u := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+	}
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
+
+	c := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			Type:            sdk.ConsumerBuiltin,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			AuthentifiedUserID: u.ID,
+		},
+	}
+	require.NoError(t, authentication.InsertUserConsumer(context.TODO(), db, &c))
+
+	require.NoError(t, user.DeleteByID(db, u.ID))
+
+	_, err := authentication.LoadUserConsumerByID(context.TODO(), db, c.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
+	require.Error(t, err)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "got %v", err)
+}

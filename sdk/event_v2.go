@@ -22,12 +22,18 @@ const (
 	EventRunJobRunResultAdded   EventType = "RunJobRunResultAdded"
 	EventRunJobRunResultUpdated EventType = "RunJobRunResultUpdated"
 	EventRunJobEnded            EventType = "RunJobEnded"
+	// EventRunJobStepUpdated is sent when a worker reports the progress of the steps of a job. Only
+	// the steps moved, the job status did not change.
+	EventRunJobStepUpdated EventType = "RunJobStepUpdated"
 
 	EventRunCrafted  EventType = "RunCrafted"
 	EventRunBuilding EventType = "RunBuilding"
-	EventRunEnded    EventType = "RunEnded"
-	EventRunRestart  EventType = "RunRestart"
-	EventRunDeleted  EventType = "RunDeleted"
+	// EventRunUpdated is sent when the definition of a running workflow changed, which happens when
+	// jobs coming from a template or a matrix replace the job that declared them.
+	EventRunUpdated EventType = "RunUpdated"
+	EventRunEnded   EventType = "RunEnded"
+	EventRunRestart EventType = "RunRestart"
+	EventRunDeleted EventType = "RunDeleted"
 
 	EventEntityCreated EventType = "EntityCreated"
 	EventEntityUpdated EventType = "EntityUpdated"
@@ -400,6 +406,7 @@ func NewEventWorkflowRunPayload(wr V2WorkflowRun, rjs map[string]V2WorkflowRunJo
 		WorkflowData: wr.WorkflowData,
 		UserID:       wr.Initiator.UserID,
 		Username:     wr.Initiator.Username(),
+		VCSUsername:  wr.Initiator.VCSUsername,
 		AdminMFA:     wr.Initiator.IsAdminWithMFA,
 		RunEvent:     wr.RunEvent,
 		RunJobEvent:  wr.RunJobEvent,
@@ -461,6 +468,9 @@ type EventWorkflowRunPayload struct {
 	RunEvent     V2WorkflowRunEvent     `json:"event,omitempty"`
 	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events,omitempty"`
 	Annotations  WorkflowRunAnnotations `json:"annotations,omitempty"`
+	// VCSUsername is the VCS user that started the run, as the run holds it. Username flattens it
+	// into "vcs/username", which is not the form the runs are searched on.
+	VCSUsername string `json:"vcs_username,omitempty"`
 
 	Contexts EventWorkflowRunPayloadContexts `json:"contexts" db:"contexts"`
 }

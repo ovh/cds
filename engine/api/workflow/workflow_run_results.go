@@ -666,8 +666,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		DefaultLowMaturitySuffix: lowMaturitySuffixFromConfig,
 	})
 	if err != nil {
-		ctx = log.ContextWithStackTrace(ctx, err)
-		log.Warn(ctx, err.Error())
+		log.Warn(log.ContextWithStackTrace(ctx, err), err.Error())
 		return handleSyncError(sdk.Errorf("unable to prepare build info for artifact manager"))
 	}
 
@@ -697,8 +696,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		if err == nil {
 			break
 		} else if nbAttempts >= 3 {
-			ctx = log.ContextWithStackTrace(ctx, err)
-			log.Warn(ctx, err.Error())
+			log.Warn(log.ContextWithStackTrace(ctx, err), err.Error())
 			return handleSyncError(sdk.Errorf("unable to publish build info on artifact manager"))
 		} else {
 			log.Error(ctx, "error while pushing buildinfo %s %s. Retrying...\n", buildInfoRequest.Name, buildInfoRequest.Number)
@@ -713,8 +711,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 
 		noderun, err := LoadNodeRunByID(ctx, db, result.WorkflowNodeRunID, LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil {
-			ctx = log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to load node run %d: %v", result.WorkflowNodeRunID, err)
+			log.Error(log.ContextWithStackTrace(ctx, err), "unable to load node run %d: %v", result.WorkflowNodeRunID, err)
 			continue
 		}
 

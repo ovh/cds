@@ -80,7 +80,24 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy, InteractiveNode
         if (this.node.job.if) {
             this.conditionTooltip += `\n - if: ${this.node.job.if}`;
         }
+        this.initRun();
+    }
+
+    /** The run of the node changed: recompute what is derived from it, keeping the node in place. */
+    refreshRun(): void {
+        this.initRun();
+    }
+
+    private initRun(): void {
+        if (this.delaySubs) {
+            this.delaySubs.unsubscribe();
+            this.delaySubs = null;
+        }
+        this.warningStep = false;
+        delete this.duration;
         if (!this.node.run) {
+            delete this.dates;
+            this._cd.markForCheck();
             return;
         }
         this.dates = {

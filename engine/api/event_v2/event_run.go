@@ -69,13 +69,31 @@ func PublishRunJobManualEvent(ctx context.Context, store cache.Store, eventType 
 }
 
 func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, rj sdk.V2WorkflowRunJob) {
+	publishRunJobEvent(ctx, store, eventType, rj, time.Now())
+
+	ev := NewEventJobSummaryV2(wr, rj)
+	event.PublishEventJobSummary(ctx, ev, nil)
+}
+
+// PublishRunJobStepUpdate reports the progress of the steps of a job. It carries no job summary: the
+// job status did not change, only its steps did. Progress reported while the job already announced
+// some is held back, see stepUpdates.
+func PublishRunJobStepUpdate(ctx context.Context, store cache.Store, rj sdk.V2WorkflowRunJob) {
+	at := time.Now()
+	if !runJobStepUpdates.take(rj, at) {
+		return
+	}
+	publishRunJobEvent(ctx, store, sdk.EventRunJobStepUpdated, rj, at)
+}
+
+func publishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, rj sdk.V2WorkflowRunJob, at time.Time) {
 	bts, _ := json.Marshal(rj)
 	e := sdk.WorkflowRunJobEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
 			ID:        sdk.UUID(),
 			Type:      eventType,
 			Payload:   bts,
-			Timestamp: time.Now(),
+			Timestamp: at,
 		},
 		ProjectEventV2: sdk.ProjectEventV2{
 			ProjectKey: rj.ProjectKey,
@@ -97,9 +115,6 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.Ev
 		Username:      rj.Initiator.Username(),
 	}
 	publish(ctx, store, e)
-
-	ev := NewEventJobSummaryV2(wr, rj)
-	event.PublishEventJobSummary(ctx, ev, nil)
 }
 
 func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobs map[string]sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult, initiator *sdk.V2Initiator) {

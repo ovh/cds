@@ -312,6 +312,9 @@ func LoadRunsAnnotations(ctx context.Context, db gorp.SqlExecutor, projKey strin
 	return annotations, nil
 }
 
+// runQueryFilters are the filters every run search goes through. The ones reading the annotations
+// are held apart in runQueryAnnotationFilters: they are only valid next to the join defining
+// annotation_strings, which a search reading no annotation leaves out.
 const runQueryFilters = `
 	(array_length(:workflows::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY(:workflows))
 	AND (array_length(:actors::text[], 1) IS NULL OR initiator -> 'user' ->> 'username' = ANY(:actors) OR initiator ->> 'vcs_username' = ANY(:actors))
@@ -323,6 +326,9 @@ const runQueryFilters = `
 	AND (array_length(:authors::text[], 1) IS NULL OR contexts -> 'git' ->> 'author' = ANY(:authors))
 	AND (array_length(:commits::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY(:commits))
 	AND (array_length(:templates::text[], 1) IS NULL OR ((contexts -> 'cds' ->> 'workflow_template_vcs_server') || '/' || (contexts -> 'cds' ->> 'workflow_template_repository') || '/' || (contexts -> 'cds' ->> 'workflow_template')) = ANY(:templates))
+`
+
+const runQueryAnnotationFilters = `
 	AND (array_length(:annotations::text[], 1) IS NULL OR annotation_strings @> :annotations)
 	AND (array_length(:query::text[], 1) IS NULL OR LOWER(` + runQuerySearchableText + `) LIKE ALL(:query::text[]))
 `
@@ -347,7 +353,9 @@ const runQuerySearchableText = `CONCAT_WS(' ',
 	)`
 
 // runAnnotationsJoin flattens the run annotations jsonb into a text[] of "key:value" values, so that
-// they can be filtered and searched.
+// they can be filtered and searched. It is only joined by a search that reads them: it groups every
+// annotated run of its scope and no LIMIT can bound it, so a search that has nothing to do with the
+// annotations must not pay a pass over all of them.
 const runAnnotationsJoin = `
 	LEFT JOIN (
 		SELECT run.id, array_agg(concat(annotation_object.key, ':', annotation_object.value)) as "annotation_strings"
@@ -374,9 +382,14 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFi
 	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
 
+	var join, annotationFilters string
+	if len(filters.Annotations) > 0 || len(filters.queryPatterns()) > 0 {
+		join, annotationFilters = runAnnotationsJoin, runQueryAnnotationFilters
+	}
+
 	query := `SELECT COUNT(1)
-	FROM v2_workflow_run` + runAnnotationsJoin + `
-	WHERE ` + runQueryFilters
+	FROM v2_workflow_run` + join + `
+	WHERE ` + runQueryFilters + annotationFilters
 
 	params := map[string]interface{}{
 		"workflows":             pq.StringArray(filters.Workflows),
@@ -401,10 +414,15 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
 
+	var join, annotationFilters string
+	if len(filters.Annotations) > 0 || len(filters.queryPatterns()) > 0 {
+		join, annotationFilters = runAnnotationsJoinByProject, runQueryAnnotationFilters
+	}
+
 	query := `SELECT COUNT(1)
-	FROM v2_workflow_run` + runAnnotationsJoinByProject + `
+	FROM v2_workflow_run` + join + `
 	WHERE
-		project_key = :projKey AND ` + runQueryFilters
+		project_key = :projKey AND ` + runQueryFilters + annotationFilters
 
 	params := map[string]interface{}{
 		"projKey":               projKey,
@@ -451,15 +469,24 @@ func (s SearchRunsFilters) queryPatterns() pq.StringArray {
 	return pq.StringArray(sdk.SearchQueryLikePatterns(s.Query))
 }
 
-func parseSortFilter(sort string) (string, error) {
-	if sort == "" {
-		return "started:desc", nil
+// runQueryOrderBy turns the sort parameter into the order clause of a search. The clause is picked
+// from a fixed set, so nothing of what the caller sent reaches the query.
+//
+// It orders on one column. Choosing between the four with CASE WHEN, as this used to, is an
+// expression no index can be matched against: the planner had to read and sort every run of the
+// project before the LIMIT could take twenty of them.
+func runQueryOrderBy(sort string) (string, error) {
+	switch sort {
+	case "", "started:desc":
+		return "ORDER BY started DESC", nil
+	case "started:asc":
+		return "ORDER BY started ASC", nil
+	case "last_modified:desc":
+		return "ORDER BY last_modified DESC", nil
+	case "last_modified:asc":
+		return "ORDER BY last_modified ASC", nil
 	}
-	splitted := strings.Split(sort, ":")
-	if len(splitted) != 2 || (splitted[0] != "started" && splitted[0] != "last_modified") || (splitted[1] != "asc" && splitted[1] != "desc") {
-		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given value for sort param: %q", sort)
-	}
-	return sort, nil
+	return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given value for sort param: %q", sort)
 }
 
 func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowRun, error) {
@@ -473,20 +500,21 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 		limit = 100
 	}
 
-	sort, err := parseSortFilter(sort)
+	orderBy, err := runQueryOrderBy(sort)
 	if err != nil {
 		return nil, err
 	}
 
+	var join, annotationFilters string
+	if len(filters.Annotations) > 0 || len(filters.queryPatterns()) > 0 {
+		join, annotationFilters = runAnnotationsJoin, runQueryAnnotationFilters
+	}
+
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run.*
-    FROM v2_workflow_run` + runAnnotationsJoin + `
-		WHERE ` + runQueryFilters + `
-		ORDER BY
-			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
-			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
-			CASE WHEN :sort = 'started:asc' THEN started END asc,
-			CASE WHEN :sort = 'started:desc' THEN started END desc
+    FROM v2_workflow_run` + join + `
+		WHERE ` + runQueryFilters + annotationFilters + `
+		` + orderBy + `
     LIMIT :limit OFFSET :offset
 	`).Args(
 		map[string]interface{}{
@@ -502,7 +530,6 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchRunsF
 			"templates":             pq.StringArray(filters.Templates),
 			"annotations":           pq.StringArray(filters.Annotations),
 			"query":                 filters.queryPatterns(),
-			"sort":                  sort,
 			"limit":                 limit,
 			"offset":                offset,
 		})
@@ -521,20 +548,21 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 		limit = 100
 	}
 
-	sort, err := parseSortFilter(sort)
+	orderBy, err := runQueryOrderBy(sort)
 	if err != nil {
 		return nil, err
 	}
 
+	var join, annotationFilters string
+	if len(filters.Annotations) > 0 || len(filters.queryPatterns()) > 0 {
+		join, annotationFilters = runAnnotationsJoinByProject, runQueryAnnotationFilters
+	}
+
 	query := gorpmapping.NewQuery(`
     SELECT v2_workflow_run.*
-    FROM v2_workflow_run` + runAnnotationsJoinByProject + `
-		WHERE project_key = :projKey AND ` + runQueryFilters + `
-		ORDER BY
-			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
-			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
-			CASE WHEN :sort = 'started:asc' THEN started END asc,
-			CASE WHEN :sort = 'started:desc' THEN started END desc
+    FROM v2_workflow_run` + join + `
+		WHERE project_key = :projKey AND ` + runQueryFilters + annotationFilters + `
+		` + orderBy + `
 		LIMIT :limit OFFSET :offset
 	`).Args(map[string]interface{}{
 		"projKey":               projKey,
@@ -550,7 +578,6 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 		"templates":             pq.StringArray(filters.Templates),
 		"annotations":           pq.StringArray(filters.Annotations),
 		"query":                 filters.queryPatterns(),
-		"sort":                  sort,
 		"limit":                 limit,
 		"offset":                offset,
 	})

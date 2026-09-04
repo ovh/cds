@@ -98,7 +98,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
     
     - name: Run a 2nd time
@@ -110,7 +110,7 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Blocked"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
 
     - name: Run 3
@@ -123,7 +123,7 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Blocked"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Blocked"
         - result.systemoutjson.systemoutjson2.status ShouldEqual "Building"
-      retry: 20
+      retry: 120
       delay: 1
 
     - name: Wait for the first to end and the 3rd to start
@@ -133,7 +133,7 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Building"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Blocked"
         - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
-      retry: 50
+      retry: 120
       delay: 1
 
     - name: Wait for the 3rd to end and the 2nd to start

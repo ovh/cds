@@ -3,6 +3,7 @@ package repositories
 // Service is the stuct representing a vcs µService
 import (
 	"path/filepath"
+	"sync/atomic"
 
 	gocache "github.com/patrickmn/go-cache"
 
@@ -15,11 +16,12 @@ import (
 // Service is the repostories service
 type Service struct {
 	service.Common
-	Cfg        Configuration
-	Router     *api.Router
-	Cache      cache.Store
-	dao        dao
-	cacheSize  int64
+	Cfg    Configuration
+	Router *api.Router
+	Cache  cache.Store
+	dao    dao
+	// repoSizes is the latest disk-usage snapshot; nil until the first walk completes.
+	repoSizes  atomic.Pointer[repoSizesSnapshot]
 	localCache *gocache.Cache
 }
 
@@ -40,7 +42,7 @@ type Configuration struct {
 }
 
 // Repo retiens a sdk.OperationRepo from an sdk.Operation
-func (s Service) Repo(op sdk.Operation) *sdk.OperationRepo {
+func (s *Service) Repo(op sdk.Operation) *sdk.OperationRepo {
 	r := new(sdk.OperationRepo)
 	r.URL = op.URL
 	r.Basedir = filepath.Join(s.Cfg.Basedir, r.ID())

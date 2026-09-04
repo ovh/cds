@@ -102,6 +102,13 @@ func LoadUserConsumersByGroupID(ctx context.Context, db gorp.SqlExecutor, groupI
 	return consumers, nil
 }
 
+// DeleteConsumersByUserID removes all the auth consumers of a given user from database.
+// Sessions and child consumers are removed by cascade.
+func DeleteConsumersByUserID(db gorp.SqlExecutor, userID string) error {
+	_, err := db.Exec(`DELETE FROM auth_consumer WHERE id IN (SELECT auth_consumer_id FROM auth_consumer_user WHERE user_id = $1)`, userID)
+	return sdk.WrapError(err, "unable to delete auth consumers of user %s", userID)
+}
+
 // LoadUserConsumerByID returns an auth consumer from database.
 func LoadUserConsumerByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadUserConsumerOptionFunc) (*sdk.AuthUserConsumer, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE id = $1").Args(id)

@@ -43,7 +43,7 @@ func (wm V2WorkerModel) GetName() string {
 	return wm.Name
 }
 
-func (wm V2WorkerModel) Lint() []error {
+func (wm V2WorkerModel) LintYamlDefinition() []error {
 	workerModelSchema := GetWorkerModelJsonSchema()
 	workerModelSchemaS, err := workerModelSchema.MarshalJSON()
 	if err != nil {

@@ -71,27 +71,10 @@
     }
   }
 
+  <!-- Only the duration here. The dates behind it, and where that duration went, are on the lane of
+       this job in the Timeline tab, which shows them without having to be hovered one node at a time. -->
   @if (duration && selectionMode === 'disabled') {
-    <div class="duration" nz-tooltip
-      [nzTooltipTitle]="durationTooltip">
-      {{duration}}
-      <ng-template #durationTooltip>
-        <div class="durationTooltip">
-          @if (dates.queued) {
-            <div><b>Queued:</b>&nbsp;{{dates.queued | date: 'long'}}</div>
-          }
-          @if (dates.scheduled) {
-            <div><b>Scheduled:</b>&nbsp;{{dates.scheduled | date: 'long'}}</div>
-          }
-          @if (dates.started) {
-            <div><b>Started:</b>&nbsp;{{dates.started | date: 'long'}}</div>
-          }
-          @if (dates.ended) {
-            <div><b>Ended:</b>&nbsp;{{dates.ended | date: 'long'}}</div>
-          }
-        </div>
-      </ng-template>
-    </div>
+    <div class="duration">{{duration}}</div>
   }
   @if (node?.run?.status && selectionMode === 'disabled') {
     <div class="status">

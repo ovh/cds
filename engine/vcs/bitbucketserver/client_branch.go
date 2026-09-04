@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -85,27 +87,54 @@ func (b *bitbucketClient) Branch(ctx context.Context, fullname string, filters s
 	}
 
 	branches := BranchResponse{}
-	path := fmt.Sprintf("/projects/%s/repos/%s/branches?orderBy=MODIFICATION&filterText=%s", t[0], t[1], url.QueryEscape(filters.BranchName))
+	// boostMatches asks bitbucket to bring exact and prefix matches to the top of the page, so the
+	// branch we are looking for is not left out of a page ordered by modification date.
+	path := fmt.Sprintf("/projects/%s/repos/%s/branches?orderBy=MODIFICATION&boostMatches=true&filterText=%s", t[0], t[1], url.QueryEscape(filters.BranchName))
 
 	if err := b.do(ctx, "GET", "core", path, nil, nil, &branches, Options{DisableCache: filters.NoCache}); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get branch %s %s", filters.BranchName, path)
 	}
 
-	if len(branches.Values) == 0 {
-		return nil, sdk.WithStack(sdk.ErrNoBranch)
-	}
-
-	for _, b := range branches.Values {
-		if b.DisplayID == filters.BranchName {
+	displayIDs := make([]string, 0, len(branches.Values))
+	for _, sb := range branches.Values {
+		if sb.DisplayID == filters.BranchName {
 			return &sdk.VCSBranch{
-				ID:           b.ID,
-				DisplayID:    b.DisplayID,
-				LatestCommit: b.LatestHash,
-				Default:      b.IsDefault,
+				ID:           sb.ID,
+				DisplayID:    sb.DisplayID,
+				LatestCommit: sb.LatestHash,
+				Default:      sb.IsDefault,
 			}, nil
 		}
+		displayIDs = append(displayIDs, sb.DisplayID)
 	}
-	return nil, sdk.ErrNoBranch
+
+	// filterText is a tokenized substring filter and the response is paginated: the branches
+	// listing can omit an existing branch, the default one included. Before concluding that the
+	// branch does not exist, ask for the default branch explicitly. Same workaround as in Branches().
+	var defaultBranchName string
+	defaultBranch, err := b.GetDefaultBranch(ctx, fullname, Options{DisableCache: filters.NoCache})
+	if err != nil {
+		// this fallback must not hide the diagnosis of the initial lookup
+		log.Error(ctx, "bitbucketClient.Branch> unable to get default branch of %s: %v", fullname, err)
+		defaultBranchName = "unknown"
+	} else {
+		defaultBranchName = defaultBranch.DisplayID
+		// an empty latest commit means the configured default branch points to a ref that does not
+		// exist anymore: do not confirm a branch on the repository configuration only.
+		if defaultBranch.DisplayID == filters.BranchName && defaultBranch.LatestCommit != "" {
+			log.Warn(ctx, "bitbucketClient.Branch> branch %s of %s is missing from the branches listing but is the default branch: %s", filters.BranchName, fullname, path)
+			return defaultBranch, nil
+		}
+	}
+
+	if len(branches.Values) == 0 {
+		return nil, sdk.NewErrorFrom(sdk.WithStack(sdk.ErrNoBranch),
+			"bitbucket returned no branch for filterText=%q on %s, default branch is %q",
+			filters.BranchName, path, defaultBranchName)
+	}
+	return nil, sdk.NewErrorFrom(sdk.WithStack(sdk.ErrNoBranch),
+		"bitbucket returned %d branch(es) for filterText=%q (lastPage=%t) on %s, none matching exactly and default branch is %q: %s",
+		len(branches.Values), filters.BranchName, branches.IsLastPage, path, defaultBranchName, strings.Join(displayIDs, ", "))
 }
 
 func (b *bitbucketClient) GetDefaultBranch(ctx context.Context, fullname string, opts Options) (*sdk.VCSBranch, error) {
@@ -125,7 +154,8 @@ func (b *bitbucketClient) GetDefaultBranch(ctx context.Context, fullname string,
 		ID:           defaultBranch.ID,
 		DisplayID:    defaultBranch.DisplayID,
 		LatestCommit: defaultBranch.LatestHash,
-		Default:      defaultBranch.IsDefault,
+		// this comes from /branches/default, it is the default branch whatever isDefault holds
+		Default: true,
 	}, nil
 
 }

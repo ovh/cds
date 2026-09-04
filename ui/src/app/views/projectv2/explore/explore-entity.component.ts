@@ -119,20 +119,26 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 		this._cd.markForCheck();
 
 		try {
+			// The entity is keyed by the names the url carries, not by what the vcs and the repository
+			// answer: all four are read at once rather than the entity after the others.
 			const results = await Promise.all([
 				lastValueFrom(this._projectService.getVCSProject(this.projectKey, vcsName)),
 				lastValueFrom(this._projectService.getVCSRepository(this.projectKey, vcsName, repoName)),
-				lastValueFrom(this._projectService.getJSONSchema(entityType))
+				lastValueFrom(this._projectService.getJSONSchema(entityType)),
+				lastValueFrom(this._projectService.getRepoEntity(this.projectKey, vcsName, repoName, entityType, entityName, this.currentRef))
 			]);
 			this.vcs = results[0];
 			this.repository = results[1];
 			this.jsonSchema = results[2];
-			this.entity = await lastValueFrom(this._projectService.getRepoEntity(this.projectKey, this.vcs.name, this.repository.name, entityType, entityName, this.currentRef));
+			this.entity = results[3];
 			this.showWorkflowPreview = false;
 			if (this.entity.type === EntityType.Workflow) {
 				const wkf = load(this.entity.data);
 				this.showWorkflowPreview = !wkf['from'];
 			}
+			// The editor outlives the entity it shows, so the schema of its type is applied on every
+			// load and not only when the editor is built.
+			this.applyJsonSchema();
 		} catch (e: any) {
 			this._messageService.error(`Unable to load entity: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 			this._router.navigate(['/project', this.projectKey, 'explore', 'vcs', vcsName, 'repository', repoName]);
@@ -143,12 +149,7 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 	}
 
 	onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
-		monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-			schemas: [{
-				uri: '',
-				schema: JSONSchema.flat(this.jsonSchema)
-			}]
-		});
+		this.applyJsonSchema();
 		this._editorInstance = <editor.ICodeEditor>e;
 		// The editor is destroyed and rebuilt on every entity load, so the collection
 		// has to be rebound; the previous one belongs to a discarded editor.
@@ -185,6 +186,18 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 			'repository', path.repository ?? this.repository.name,
 			EntityTypeUtil.toURLParam(entityType), path.name
 		], ref ? { queryParams: { ref } } : {});
+	}
+
+	private applyJsonSchema(): void {
+		if (!this.jsonSchema || typeof monaco === 'undefined') {
+			return;
+		}
+		monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+			schemas: [{
+				uri: '',
+				schema: JSONSchema.flat(this.jsonSchema)
+			}]
+		});
 	}
 
 	private applyDecorations(): void {

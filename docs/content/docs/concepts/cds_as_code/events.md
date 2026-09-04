@@ -106,14 +106,20 @@ Each action on CDS triggers an event.
 
 * `RunCrafted`
 * `RunBuilding`
+* `RunUpdated`
 * `RunEnded`
-* `RunRestartFailedJob`
+* `RunRestart`
+* `RunDeleted`
 
 # Workflow Run Job events
 
 * `RunJobEnqueued`
 * `RunJobScheduled`
 * `RunJobBuilding`
+* `RunJobBlocked`
+* `RunJobCancelled`
+* `RunJobSkipped`
+* `RunJobStopped`
 * `RunJobManualTriggered`
 * `RunJobRunResultAdded`
 * `RunJobRunResultUpdated`

@@ -1,10 +1,23 @@
 export enum EventV2Type {
 	EventRunCrafted = "RunCrafted",
 	EventRunBuilding = "RunBuilding",
+	EventRunUpdated = "RunUpdated",
 	EventRunEnded = "RunEnded",
 	EventRunRestart = "RunRestart",
+	EventRunDeleted = "RunDeleted",
 
 	EventRunJobEnqueued = "RunJobEnqueued",
+	EventRunJobBlocked = "RunJobBlocked",
+	EventRunJobCancelled = "RunJobCancelled",
+	EventRunJobSkipped = "RunJobSkipped",
+	EventRunJobStopped = "RunJobStopped",
+	EventRunJobScheduled = "RunJobScheduled",
+	EventRunJobBuilding = "RunJobBuilding",
+	EventRunJobManualTriggered = "RunJobManualTriggered",
+	EventRunJobStepUpdated = "RunJobStepUpdated",
+	EventRunJobEnded = "RunJobEnded",
+	EventRunJobRunResultAdded = "RunJobRunResultAdded",
+	EventRunJobRunResultUpdated = "RunJobRunResultUpdated",
 
 	EventProjectPurge = "EventProjectPurge",
 

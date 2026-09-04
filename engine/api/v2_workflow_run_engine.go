@@ -325,7 +325,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// Enqueue JOB
 	hasTemplatedJob := false
 	for _, j := range jobsToQueue {
-		if j.Job.From != "" {
+		if j.Job.NeedsTemplateResolution() {
 			hasTemplatedJob = true
 		}
 	}
@@ -521,6 +521,16 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(tx.Commit())
+	}
+
+	// The definition of the run changed while it was running: jobs coming from a template or a matrix
+	// replaced the job that declared them. Send the new definition so that a run view can redraw its
+	// graph instead of waiting for a manual refresh.
+	// The initiator of the enqueue is not passed on purpose: it may carry a user id without the user
+	// itself, which Username() dereferences, and the engine rewriting the definition is not the doing
+	// of whoever enqueued it. The run reports its own initiator.
+	if runUpdated {
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunUpdated, *run, allrunJobsMap, runResults, nil)
 	}
 
 	needReEnqueue := hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedJob
@@ -1536,7 +1546,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		}
 
 		// No matrixed jobs or templated job skipped
-		if len(matrixPermutation) == 0 || (jobDef.From != "" && jobToTrigger.Status.IsTerminated()) {
+		if len(matrixPermutation) == 0 || (jobDef.NeedsTemplateResolution() && jobToTrigger.Status.IsTerminated()) {
 			runJob := sdk.V2WorkflowRunJob{
 				ID:                 sdk.UUID(),
 				WorkflowRunID:      run.ID,
@@ -1555,7 +1565,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				RunAttempt:         run.RunAttempt,
 				Initiator:          wrEnqueue.Initiator,
 			}
-			if jobDef.From == "" && len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
+			if !jobDef.NeedsTemplateResolution() && len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
 				runJob.Status = sdk.V2WorkflowRunJobStatusSuccess
 			}
 			// If the current job was a matrix, skip it
@@ -1572,7 +1582,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			// If job has to be run
 			if !runJob.Status.IsTerminated() {
 				// If from template, retrieve template and apply it
-				if jobDef.From != "" {
+				if jobDef.NeedsTemplateResolution() {
 					hasToUpdateRun = true
 					// For templated job, we only create new jobs on the parent worklow
 					// With hasToUpdateRun the workflow run will be saved to update his definition
@@ -1660,7 +1670,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				allVariableSets: allVariableSets,
 			}
 
-			if jobDef.From == "" {
+			if !jobDef.NeedsTemplateResolution() {
 				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 				if err != nil {
 					return nil, nil, nil, nil, false, err
@@ -1791,7 +1801,7 @@ func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Sto
 	}
 
 	msgsLint := make([]sdk.V2WorkflowRunInfo, 0)
-	errs := run.WorkflowData.Workflow.Lint()
+	errs := run.WorkflowData.Workflow.LintWorkflowRunData()
 	for _, e := range errs {
 		msgsLint = append(msgsLint, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -1805,6 +1815,17 @@ func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Sto
 }
 
 func handleTemplatedJobInWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, templateEntity *sdk.EntityWithObject, run *sdk.V2WorkflowRun, newJobs map[string]sdk.V2Job, newStages map[string]sdk.WorkflowStage, newGates map[string]sdk.V2JobGate, newAnnotations map[string]string, newConcurrencies []sdk.WorkflowConcurrency, jobID string, j sdk.V2Job, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
+	// Retrieve the current template chain for the given job
+	parentChain := run.WorkflowData.JobTemplateChains[jobID]
+	if slices.Contains(parentChain, templateEntity.CompleteName) {
+		return []sdk.V2WorkflowRunInfo{{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("job %s: template cycle detected: %s", jobID, strings.Join(append(slices.Clone(parentChain), templateEntity.CompleteName), " -> ")),
+		}}, nil
+	}
+
 	// Check duplication of jobID
 	// Retrieve root job
 	rootJobs := make([]string, 0)
@@ -1878,10 +1899,23 @@ loop:
 	if err != nil {
 		return nil, err
 	}
-	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, wref.project, *run, *repoTemplate, *vcsTemplate, templateEntity.Ref, templateEntity.Commit, wref.ef.libraryProject, &wref.ef.initiator)
+	// The finder's location must be the template's (project must match its vcs), so the
+	// template's entity references resolve against the template, not the run's project.
+	tmplProject := wref.project
+	if templateEntity.ProjectKey != wref.project.Key {
+		p, err := project.Load(ctx, db, templateEntity.ProjectKey)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to find project %s", templateEntity.ProjectKey)
+		}
+		tmplProject = *p
+	}
+	wrefTemplate, err := NewWorkflowRunEntityFinder(ctx, db, tmplProject, *run, *repoTemplate, *vcsTemplate, templateEntity.Ref, templateEntity.Commit, wref.ef.libraryProject, &wref.ef.initiator)
 	if err != nil {
 		return nil, err
 	}
+	// Project-scoped resources (integrations, variable sets, concurrencies) belong to the
+	// run's project, not the template's.
+	wrefTemplate.project = wref.project
 	integrations, msgs, err := wrefTemplate.checkIntegrations(ctx, db, newJobs)
 	if err != nil {
 		return nil, err
@@ -1890,9 +1924,36 @@ loop:
 		return msgs, nil
 	}
 
+	// New jobs inherit from parent template chain + add the current template
+	templateChain := append(slices.Clone(parentChain), templateEntity.CompleteName)
+	delete(run.WorkflowData.JobTemplateChains, jobID) // remove the job that will be replaced
+
+	if run.WorkflowData.JobTemplateChains == nil {
+		run.WorkflowData.JobTemplateChains = make(map[string][]string)
+	}
+
 	// Set job on workflow
 	for k, v := range newJobs {
+		if v.NeedsTemplateResolution() {
+			// Rewrite the nested reference with the template's complete name, resolved
+			// against the declaring template's location: the relative reference only
+			// makes sense there, and the location is lost once the job is injected.
+			eNested, msg, err := wrefTemplate.checkWorkflowTemplate(ctx, db, store, v.From)
+			if err != nil {
+				return nil, err
+			}
+			if msg != nil {
+				return []sdk.V2WorkflowRunInfo{*msg}, nil
+			}
+			v.From = eNested.CompleteName
+		} else if v.From == "" && (len(v.Steps) > 0 || v.RunsOn.Model != "") {
+			// Jobs resolved from the template keep the template's complete name as
+			// provenance. Empty jobs are skipped: `from` without content would read
+			// as an unresolved reference.
+			v.From = templateEntity.CompleteName
+		}
 		run.WorkflowData.Workflow.Jobs[k] = v
+		run.WorkflowData.JobTemplateChains[k] = templateChain
 		msg := retrieveAndUpdateAllJobDependencies(ctx, db, store, run, k, v, wrefTemplate, integrations, allVariableSets, defaultRegion)
 		if msg != nil {
 			return []sdk.V2WorkflowRunInfo{*msg}, nil
@@ -2102,7 +2163,7 @@ func createTemplatedMatrixedJobs(ctx context.Context, db *gorp.DbMap, store cach
 	}
 
 	msgsLint := make([]sdk.V2WorkflowRunInfo, 0)
-	errs := run.WorkflowData.Workflow.Lint()
+	errs := run.WorkflowData.Workflow.LintWorkflowRunData()
 	for _, e := range errs {
 		msgsLint = append(msgsLint, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -2373,7 +2434,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 			if runJobMapItem.Job.Strategy != nil && len(runJobMapItem.Job.Strategy.Matrix) > 0 {
 
 				// If runjob has a status && a template, ignore it. A matrix job can be run if template has been resolved
-				if runJobMapItem.Job.From != "" {
+				if runJobMapItem.Job.NeedsTemplateResolution() {
 					continue
 				}
 

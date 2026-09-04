@@ -82,6 +82,27 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy, InteractiveN
     }
 
     ngOnInit(): void {
+        this.initRun();
+    }
+
+    /** The runs of the variants changed: recompute what is derived from them, keeping the node in place. */
+    refreshRun(): void {
+        this.initRun();
+    }
+
+    private initRun(): void {
+        if (this.delaySubs) {
+            this.delaySubs.unsubscribe();
+            this.delaySubs = null;
+        }
+        this.dates = {};
+        this.status = {};
+        this.jobRunIDs = {};
+        this.displayNames = {};
+        this.retries = {};
+        this.warningSteps = {};
+        this.durations = {};
+
         const alls = GraphNode.generateMatrixOptions(this.node.job.strategy.matrix);
         this.keys = alls.map(option => {
             return Array.from(option.keys()).sort().map(key => {

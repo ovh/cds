@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -158,6 +159,17 @@ func WriteMarshal(w http.ResponseWriter, req *http.Request, data interface{}, st
 	}
 
 	return sdk.WithStack(Write(w, bytes.NewReader(body), status, contentType))
+}
+
+// Accepts reports whether the request asks for the given media type in its Accept header.
+func Accepts(r *http.Request, mediaType string) bool {
+	for _, accepted := range strings.Split(r.Header.Get("Accept"), ",") {
+		// Drop the parameters of the media range, "application/json;q=0.9" accepts application/json.
+		if name, _, _ := strings.Cut(accepted, ";"); strings.TrimSpace(name) == mediaType {
+			return true
+		}
+	}
+	return false
 }
 
 // WriteProcessTime writes the duration of the call in the responsewriter

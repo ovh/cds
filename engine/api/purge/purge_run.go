@@ -29,18 +29,14 @@ type MarkAsDeleteOptions struct {
 }
 
 const (
-	RunStatus          = "run_status"
-	RunDaysBefore      = "run_days_before"
-	RunHasGitBranch    = "has_git_branch"
-	RunGitBranchExist  = "git_branch_exist"
-	RunChangeExist     = "gerrit_change_exist"
-	RunChangeMerged    = "gerrit_change_merged"
-	RunChangeAbandoned = "gerrit_change_abandoned"
-	RunChangeDayBefore = "gerrit_change_days_before"
+	RunStatus         = "run_status"
+	RunDaysBefore     = "run_days_before"
+	RunHasGitBranch   = "has_git_branch"
+	RunGitBranchExist = "git_branch_exist"
 )
 
 func GetRetentionPolicyVariables() []string {
-	return []string{RunDaysBefore, RunStatus, RunHasGitBranch, RunGitBranchExist, RunChangeMerged, RunChangeAbandoned, RunChangeDayBefore, RunChangeExist}
+	return []string{RunDaysBefore, RunStatus, RunHasGitBranch, RunGitBranchExist}
 }
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
@@ -53,16 +49,17 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 		return err
 	}
 	for _, wf := range wfs {
-		ctx = context.WithValue(ctx, log.Field("action_metadata_project_key"), wf.ProjectKey)
-		ctx = context.WithValue(ctx, log.Field("action_metadata_workflow_name"), wf.Name)
+		// Scope the log fields to the iteration: chaining them on the shared context would grow it
+		// by two entries per workflow, and every log call walks the whole chain.
+		wfCtx := context.WithValue(ctx, log.Field("action_metadata_project_key"), wf.ProjectKey)
+		wfCtx = context.WithValue(wfCtx, log.Field("action_metadata_workflow_name"), wf.Name)
 
-		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
+		_, enabled := featureflipping.IsEnabled(wfCtx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
 		if !enabled {
 			continue
 		}
-		if err := ApplyRetentionPolicyOnWorkflow(ctx, store, db, wf, MarkAsDeleteOptions{DryRun: false}, nil); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "%v", err)
+		if err := ApplyRetentionPolicyOnWorkflow(wfCtx, store, db, wf, MarkAsDeleteOptions{DryRun: false}, nil); err != nil {
+			log.Error(sdk.ContextWithStacktrace(wfCtx, err), "%v", err)
 		}
 	}
 	workflow.CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)
@@ -243,7 +240,7 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 		return true, sdk.WithStack(err)
 	}
 
-	if err := purgeComputeVariables(ctx, luaCheck, run, payload, branchesMap, app, vcsClient); err != nil {
+	if err := purgeComputeVariables(luaCheck, run, payload, branchesMap, vcsClient); err != nil {
 		return true, err
 	}
 
@@ -272,25 +269,9 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 	return false, nil
 }
 
-func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run sdk.WorkflowRunSummary, payload map[string]string, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService) error {
+func purgeComputeVariables(luaCheck *luascript.Check, run sdk.WorkflowRunSummary, payload map[string]string, branchesMap map[string]struct{}, vcsClient sdk.VCSAuthorizedClientService) error {
 	vars := payload
 	varsFloats := make(map[string]float64)
-
-	// If we have gerrit change id, check status
-	if changeID, ok := vars["gerrit.change.id"]; ok && vcsClient != nil {
-		ch, err := vcsClient.PullRequest(ctx, app.RepositoryFullname, changeID)
-		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return err
-			}
-			vars[RunChangeExist] = "false"
-		} else {
-			vars[RunChangeExist] = "true"
-			vars[RunChangeMerged] = strconv.FormatBool(ch.Merged)
-			vars[RunChangeAbandoned] = strconv.FormatBool(ch.Closed)
-			varsFloats[RunChangeDayBefore] = math.Floor(time.Now().Sub(ch.Updated).Hours())
-		}
-	}
 
 	// If we have a branch in payload, check if it exists on repository branches list
 	b, has := vars["git.branch"]

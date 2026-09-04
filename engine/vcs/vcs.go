@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/vcs/bitbucketcloud"
 	"github.com/ovh/cds/engine/vcs/bitbucketserver"
 	"github.com/ovh/cds/engine/vcs/forgejo"
-	"github.com/ovh/cds/engine/vcs/gerrit"
 	"github.com/ovh/cds/engine/vcs/gitea"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/engine/vcs/gitlab"
@@ -116,15 +115,6 @@ func (s *Service) getConsumer(vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
 			vcsAuth.Username,
 			vcsAuth.Token,
 		), nil
-	case sdk.VCSTypeGerrit:
-		return gerrit.New(
-			vcsAuth.URL,
-			s.Cache,
-			vcsAuth.SSHUsername,
-			vcsAuth.SSHPort,
-			vcsAuth.Username,
-			vcsAuth.Token,
-		), nil
 	case sdk.VCSTypeGithub:
 		return github.New(
 			vcsAuth.URL,
@@ -175,7 +165,11 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	// register custom field
-	log.RegisterField(log.Field(github.LogFieldGithubRateLimitRemaining))
+	log.RegisterField(
+		log.Field(github.LogFieldGithubRateLimitRemaining),
+		log.Field(github.LogFieldGithubRateLimitLimit),
+		log.Field(github.LogFieldGithubRateLimitReset),
+	)
 
 	//Start the http server
 	log.Info(c, "VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)

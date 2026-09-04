@@ -22,6 +22,8 @@ export enum SelectionMode {
 
 export interface InteractiveNode {
     getNodes(): Array<GraphNode>;
+    /** Re-read the run data carried by the node, the graph itself is left untouched. */
+    refreshRun(): void;
     setHighlight(active: boolean, options?: any): void;
     selectNode(navigationKey: string): void;
     activateNode(navigationKey: string): void;
@@ -50,6 +52,7 @@ export class WorkflowV2Graph<T extends InteractiveNode> {
     static margin = 40; // let 40px on top and bottom of the graph
     static marginSubGraph = 20; // let 20px on top and bottom of the sub graph
     static maxOriginScale = 1;
+    static edgeColors = ['color-success', 'color-fail', 'color-inactive'];
 
     nodesComponent = new Map<string, ComponentRef<T>>();
     nodes = new Array<Node>();
@@ -596,6 +599,65 @@ export class WorkflowV2Graph<T extends InteractiveNode> {
 
     setNodeStatus(key: string, status: string): void {
         this.nodeStatus[`node-${key}`] = status;
+    }
+
+    /**
+     * Refresh the graph from the run data now carried by its nodes, without rebuilding it: nodes keep
+     * their component, their DOM and the focus, and the layout is not computed again.
+     * Only valid while the shape of the graph is unchanged, see GraphComponent.runJobs.
+     */
+    refreshRun(): void {
+        this.nodesComponent.forEach(c => c.instance.refreshRun());
+        this.refreshEdgesStatus();
+    }
+
+    /** Recompute the status of the nodes, forks and joins, then recolor the edges accordingly. */
+    private refreshEdgesStatus(): void {
+        this.nodes.forEach(n => {
+            if (n.type === GraphNodeType.Stage || n.type === GraphNodeType.Matrix) {
+                return;
+            }
+            // Same rule as initGraph: only a node holding a run colors the edges leaving it.
+            const node = this.nodesComponent.get(`node-${n.key}`)?.instance.getNodes()[0];
+            if (node?.run) {
+                this.nodeStatus[`node-${n.key}`] = node.run.status;
+            } else {
+                delete this.nodeStatus[`node-${n.key}`];
+            }
+        });
+
+        Object.keys(this.forks).forEach(f => {
+            this.nodeStatus[`fork-${f}`] = this.sumNodesStatus(this.forks[f].parents);
+        });
+        Object.keys(this.joins).forEach(j => {
+            this.nodeStatus[`join-${j}`] = this.sumNodesStatus(this.joins[j].parents);
+        });
+
+        this.applyEdgesColor();
+    }
+
+    private sumNodesStatus(keys: Array<string>): string {
+        const nodes = keys
+            .map(n => this.nodesComponent.get(n)?.instance.getNodes() ?? [])
+            .reduce((p, c) => p.concat(c), []);
+        if (nodes.length === 0) {
+            return null;
+        }
+        return NodeStatus.sum(nodes.map(n => n.run ? n.run.status : null));
+    }
+
+    /** Repaint the rendered edges from the current node statuses, as drawEdges does when drawing. */
+    private applyEdgesColor(): void {
+        if (!this.g) {
+            return;
+        }
+        this.g.selectAll('g.edgePath').each((d: any, index: number, groups: any) => {
+            const group = d3.select(groups[index]);
+            const status = this.nodeStatus[d?.v];
+            const color = status ? this.nodeStatusToColor(status) : '';
+            WorkflowV2Graph.edgeColors.forEach(c => group.classed(c, c === color));
+            group.selectAll('path').attr('style', color ? 'stroke-width: 2px;' : 'stroke: #B5B7BD;stroke-width: 2px;');
+        });
     }
 
     createGNode(name: string, componentRef: ComponentRef<T>, width: number, height: number, options: {}): void {

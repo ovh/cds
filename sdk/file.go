@@ -42,6 +42,11 @@ func UntarGz(fs afero.Fs, dst string, r io.Reader) error {
 func Untar(fs afero.Fs, dst string, r io.Reader) error {
 	tr := tar.NewReader(r)
 
+	// Reused for every entry. io.Copy allocates a 32kB buffer per call, which an
+	// archive holding a lot of small files, a go module cache for instance, pays
+	// once per file.
+	buf := make([]byte, 256*1024)
+
 	for {
 		header, err := tr.Next()
 
@@ -59,10 +64,10 @@ func Untar(fs afero.Fs, dst string, r io.Reader) error {
 		// check the file type
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if _, err := fs.Stat(target); err != nil {
-				if err := fs.MkdirAll(target, 0755); err != nil {
-					return err
-				}
+			// MkdirAll already returns nil on an existing directory, stating it
+			// first only adds a syscall per entry.
+			if err := fs.MkdirAll(target, 0755); err != nil {
+				return err
 			}
 
 		case tar.TypeReg:
@@ -71,7 +76,7 @@ func Untar(fs afero.Fs, dst string, r io.Reader) error {
 				return err
 			}
 
-			if _, err := io.Copy(f, tr); err != nil {
+			if _, err := io.CopyBuffer(f, tr, buf); err != nil {
 				return err
 			}
 			if err := f.Close(); err != nil {

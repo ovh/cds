@@ -546,8 +546,6 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea, sdk.VCSTypeForgejo:
 		analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 		filesContent, err = api.getCdsFilesOnVCSDirectory(ctx, analysis, vcsProjectWithSecret.Name, repo.Name, analysis.Commit, ".cds")
-	case sdk.VCSTypeGerrit:
-		return sdk.WithStack(sdk.ErrNotImplemented)
 	}
 
 	if err != nil {
@@ -1364,7 +1362,6 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 		var selectedVCS []sdk.VCSProject
 		for _, v := range allvcs {
 			v.Auth.Token = "" // we are sure we don't need this
-			v.Auth.SSHPrivateKey = ""
 
 			log.Debug(ctx, "%s = %s", v.Auth.GPGKeyName, k.Name)
 			if v.Auth.GPGKeyName == k.Name {
@@ -1660,7 +1657,7 @@ func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, files
 // and concurrencies belong to the run's project.
 func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store, o T, ef *EntityFinder, ownerProjectKey string, wmDockerImageWhiteList []regexp.Regexp) []error {
 	// 1. Static lint
-	if err := o.Lint(); err != nil {
+	if err := o.LintYamlDefinition(); err != nil {
 		return err
 	}
 

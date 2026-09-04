@@ -287,6 +287,23 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			return stopRun(ctx, api.mustDB(), api.Cache, run, &wref.ef.initiator, msgs...)
 		}
 
+		// Rewrite job template references with the template's complete name, resolved
+		// against the workflow template's location: relative references only make sense
+		// there, and the location is lost once crafting is done.
+		for jobID, j := range run.WorkflowData.Workflow.Jobs {
+			if !j.NeedsTemplateResolution() {
+				continue
+			}
+			eJobTmpl, msg, err := wref.checkWorkflowTemplate(ctx, api.mustDB(), api.Cache, j.From)
+			if err != nil {
+				return err
+			}
+			if msg != nil {
+				return stopRun(ctx, api.mustDB(), api.Cache, run, &wref.ef.initiator, *msg)
+			}
+			j.From = eJobTmpl.CompleteName
+			run.WorkflowData.Workflow.Jobs[jobID] = j
+		}
 	}
 
 	mustSaveVersion := false
@@ -318,7 +335,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 	// Check workflow lint in case of modification through job template
 	msgs := make([]sdk.V2WorkflowRunInfo, 0)
-	errs := run.WorkflowData.Workflow.Lint()
+	errs := run.WorkflowData.Workflow.LintYamlDefinition()
 	for _, e := range errs {
 		msgs = append(msgs, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -560,7 +577,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 }
 
 func retrieveAndUpdateAllJobDependencies(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, jobID string, j sdk.V2Job, wref *WorkflowRunEntityFinder, integrations map[string]sdk.ProjectIntegration, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) *sdk.V2WorkflowRunInfo {
-	if len(j.Steps) == 0 && j.From == "" {
+	if len(j.Steps) == 0 && !j.NeedsTemplateResolution() {
 		return nil
 	}
 
@@ -600,7 +617,7 @@ func retrieveAndUpdateAllJobDependencies(ctx context.Context, db *gorp.DbMap, st
 	}
 
 	// Check worker model
-	if !strings.Contains(j.RunsOn.Model, "${{") && j.From == "" && !strings.Contains(j.Region, "${{") {
+	if !strings.Contains(j.RunsOn.Model, "${{") && !j.NeedsTemplateResolution() && !strings.Contains(j.Region, "${{") {
 		completeName, msg, err := wref.checkWorkerModel(ctx, db, store, jobID, j.RunsOn.Model, j.Region, defaultRegion)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)

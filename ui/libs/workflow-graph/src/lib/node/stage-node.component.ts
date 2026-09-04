@@ -84,6 +84,10 @@ export class GraphStageNodeComponent implements AfterViewInit, InteractiveNode {
         this.graph.setRunActive(active);
     }
 
+    refreshRun(): void {
+        this.graph?.refreshRun();
+    }
+
     ngAfterViewInit(): void {
         this.ready = true;
         this._cd.detectChanges();

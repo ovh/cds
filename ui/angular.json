@@ -251,6 +251,29 @@
           "defaultConfiguration": "production"
         }
       }
+    },
+    "timeline": {
+      "projectType": "library",
+      "root": "libs/timeline",
+      "sourceRoot": "libs/timeline/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "options": {
+            "project": "libs/timeline/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/timeline/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/timeline/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
     }
   },
   "schematics": {

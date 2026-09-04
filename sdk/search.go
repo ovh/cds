@@ -56,21 +56,33 @@ var searchQueryLikeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`
 // of a search. Extra words are dropped.
 const SearchQueryMaxWords = 20
 
-// SearchQueryLikePatterns turns a free text search into one lowered SQL LIKE pattern per word.
-// All the returned patterns have to match, so words can be given in any order, and the LIKE
-// wildcards are escaped to be matched literally. An empty query returns no pattern at all.
-func SearchQueryLikePatterns(query string) []string {
-	patterns := make([]string, 0, SearchQueryMaxWords)
+// SearchQueryWords are the words a free text search is made of, lowered, without duplicates and
+// bounded. They are what has to be matched, whether by a database or in memory, so both read them
+// from here.
+func SearchQueryWords(query string) []string {
+	words := make([]string, 0, SearchQueryMaxWords)
 	seen := make(map[string]struct{})
 	for _, w := range strings.Fields(strings.ToLower(query)) {
 		if _, ok := seen[w]; ok {
 			continue
 		}
 		seen[w] = struct{}{}
-		patterns = append(patterns, "%"+searchQueryLikeEscaper.Replace(w)+"%")
-		if len(patterns) == SearchQueryMaxWords {
+		words = append(words, w)
+		if len(words) == SearchQueryMaxWords {
 			break
 		}
+	}
+	return words
+}
+
+// SearchQueryLikePatterns turns a free text search into one lowered SQL LIKE pattern per word.
+// All the returned patterns have to match, so words can be given in any order, and the LIKE
+// wildcards are escaped to be matched literally. An empty query returns no pattern at all.
+func SearchQueryLikePatterns(query string) []string {
+	words := SearchQueryWords(query)
+	patterns := make([]string, 0, len(words))
+	for _, w := range words {
+		patterns = append(patterns, "%"+searchQueryLikeEscaper.Replace(w)+"%")
 	}
 	return patterns
 }

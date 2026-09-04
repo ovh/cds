@@ -40,6 +40,21 @@ import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentPar
 })
 @AutoUnsubscribe()
 export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, AfterViewInit {
+    /**
+     * The tree of the last project explored. The view is rebuilt from scratch every time it is opened,
+     * and reading a repository goes through the vcs provider: without this, coming back to it means
+     * waiting for the whole tree again. Kept on the class, since it must outlive the component, and
+     * for one project only, the one being explored.
+     */
+    private static snapshot: {
+        projectKey: string;
+        vcss: Array<VCSProject>;
+        repositories: { [vcs: string]: Array<ProjectRepository> };
+        entities: { [repositoryPath: string]: Map<EntityType, Array<Entity>> };
+        branches: { [repositoryPath: string]: Array<Branch> };
+        tags: { [repositoryPath: string]: Array<Tag> };
+    };
+
     @Input() project: Project;
 
     loading: boolean = true;
@@ -70,6 +85,17 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     ngOnInit(): void {
         this.treeExpandState = this._store.selectSnapshot(PreferencesState.selectProjectTreeExpandState(this.project.key));
         this.refSelectState = this._store.selectSnapshot(PreferencesState.selectProjectRefSelectState(this.project.key));
+
+        // Coming back to the explore view draws the tree it was left with at once, then reads it
+        // again in the background rather than showing nothing until every repository has answered.
+        const snapshot = ProjectV2ExploreSidebarComponent.snapshot;
+        if (snapshot && snapshot.projectKey === this.project.key) {
+            this.vcss = snapshot.vcss;
+            this.repositories = snapshot.repositories;
+            this.entities = snapshot.entities;
+            this.branches = snapshot.branches;
+            this.tags = snapshot.tags;
+        }
 
         this.load();
 
@@ -102,9 +128,16 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
                     this.treeExpandState[vcs.name] = true;
                 }
             });
+            this._cd.markForCheck();
             await this.loadRepositories();
-            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-            await this.expandTreeToSelectedRoute(params);
+            ProjectV2ExploreSidebarComponent.snapshot = {
+                projectKey: this.project.key,
+                vcss: this.vcss,
+                repositories: this.repositories,
+                entities: this.entities,
+                branches: this.branches,
+                tags: this.tags
+            };
         } catch (e: any) {
             this._messageService.error(`Unable to load vcs and repositories: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
@@ -119,34 +152,65 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         this.vcss.forEach((vcs, i) => {
             this.repositories[vcs.name] = resp[i];
         });
-        // Async load each repository expanded
-        let promises = [];
-        this.vcss.forEach((vcs, i) => {
-            this.repositories[vcs.name].forEach(repo => {
-                if (this.treeExpandState[vcs.name + '/' + repo.name]) {
-                    promises.push(this.loadRepository(vcs, repo));
-                }
-            });
-        });
-        await Promise.all(promises);
+        // The repositories are shown as soon as they are known, without waiting for their content.
+        this._cd.markForCheck();
+
+        // What the url points at is expanded before reading anything, so that its repository joins
+        // the batch instead of being read once every other one has answered.
+        this.expandToRoute(this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root));
+
+        await Promise.all(this.vcss.flatMap(vcs => (this.repositories[vcs.name] ?? [])
+            .filter(repo => this.treeExpandState[vcs.name + '/' + repo.name])
+            .map(repo => this.loadRepository(vcs, repo))));
     }
 
     async loadRepository(vcs: VCSProject, repo: ProjectRepository) {
+        const key = vcs.name + '/' + repo.name;
+
+        // Nothing to show for that repository yet: without this, the tree announces "No resource
+        // found" until its entities answer. A repository that already shows some is refreshed
+        // silently, keeping them.
+        if (!this.entities[key]) {
+            this.loadingEntities[key] = true;
+            this._cd.markForCheck();
+        }
+
         try {
-            const branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, vcs.name, repo.name, 50));
-            this.branches[vcs.name + '/' + repo.name] = branches;
-            const tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, vcs.name, repo.name));
-            this.tags[vcs.name + '/' + repo.name] = tags;
-            if (!this.refSelectState[vcs.name + '/' + repo.name] || (
-                !branches.find(b => 'refs/heads/' + b.display_id === this.refSelectState[vcs.name + '/' + repo.name])
-                && !tags.find(t => 'refs/tags/' + t.tag === this.refSelectState[vcs.name + '/' + repo.name])
-            )) {
-                this.refSelectState[vcs.name + '/' + repo.name] = 'refs/heads/' + branches.find(b => b.default).display_id;
+            // The entities of a ref only need that ref. With one already selected, they are read at
+            // the same time as the branches and the tags of the repository, which come from the vcs
+            // provider and are the slowest of the three, instead of after them.
+            const selectedRef = this.refSelectState[key];
+            const entitiesOfSelectedRef = selectedRef
+                ? lastValueFrom(this._projectService.getRepoEntities(this.project.key, vcs.name, repo.name, selectedRef)).catch(() => null)
+                : null;
+
+            const [branches, tags] = await Promise.all([
+                lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, vcs.name, repo.name, 50)),
+                lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, vcs.name, repo.name))
+            ]);
+            this.branches[key] = branches;
+            this.tags[key] = tags;
+
+            const refExists = !!selectedRef && (
+                !!branches.find(b => 'refs/heads/' + b.display_id === selectedRef)
+                || !!tags.find(t => 'refs/tags/' + t.tag === selectedRef)
+            );
+            if (!refExists) {
+                this.refSelectState[key] = 'refs/heads/' + branches.find(b => b.default).display_id;
             }
-            await this.loadEntities(vcs, repo);
+
+            // The ref that was selected is gone: what was read for it is dropped and the default
+            // branch is read instead.
+            const entities = (refExists ? await entitiesOfSelectedRef : null)
+                ?? await lastValueFrom(this._projectService.getRepoEntities(this.project.key, vcs.name, repo.name, this.refSelectState[key]));
+            this.applyEntities(vcs, repo, entities);
         } catch (e: any) {
             this._messageService.error(`Unable to load repository: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
+
+        // Each repository shows up as it answers, rather than all of them once the slowest has.
+        this.loadingEntities[key] = false;
+        this._cd.markForCheck();
     }
 
     clickVCS(vcs: VCSProject): void {
@@ -189,6 +253,10 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
 
     async loadEntities(vcs: VCSProject, repo: ProjectRepository) {
         const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, vcs.name, repo.name, this.refSelectState[vcs.name + '/' + repo.name]));
+        this.applyEntities(vcs, repo, resp);
+    }
+
+    private applyEntities(vcs: VCSProject, repo: ProjectRepository, resp: Array<Entity>) {
         if (resp.length === 0) {
             this.entities[vcs.name + '/' + repo.name] = null;
             return
@@ -303,36 +371,49 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     }
 
     async expandTreeToSelectedRoute(params: any) {
-        if (!params['vcsName'] || this.vcss.findIndex(vcs => vcs.name === params['vcsName']) < 0) {
-            return;
+        const target = this.expandToRoute(params);
+        if (target?.read) {
+            await this.loadRepository(target.vcs, target.repo);
         }
+    }
+
+    /**
+     * Expands the branch of the tree the url points at, reading nothing. Tells whether the content of
+     * the repository it names has to be read, so that the caller can decide when.
+     */
+    private expandToRoute(params: any): { vcs: VCSProject, repo: ProjectRepository, read: boolean } {
         const vcs = this.vcss.find(vcs => vcs.name === params['vcsName']);
-        this.treeExpandState[vcs.name] = true;
-        if (!params['repoName'] || this.repositories[vcs.name].findIndex(repo => repo.name === params['repoName']) < 0) {
-            return;
+        if (!vcs) {
+            return null;
         }
-        let loadRepo = false;
-        const repo = this.repositories[vcs.name].find(repo => repo.name === params['repoName'])
-        if (!this.treeExpandState[vcs.name + '/' + repo.name]) {
-            this.treeExpandState[vcs.name + '/' + repo.name] = true;
-            loadRepo = true;
+        this.treeExpandState[vcs.name] = true;
+
+        const repo = (this.repositories[vcs.name] ?? []).find(repo => repo.name === params['repoName']);
+        if (!repo) {
+            return null;
+        }
+        const key = vcs.name + '/' + repo.name;
+
+        let read = false;
+        if (!this.treeExpandState[key]) {
+            this.treeExpandState[key] = true;
+            read = true;
         }
         const ref = this._activatedRoute.snapshot.queryParams['ref'];
-        if (ref && this.refSelectState[vcs.name + '/' + repo.name] !== ref) {
-            this.refSelectState[vcs.name + '/' + repo.name] = ref;
-            loadRepo = true;
+        if (ref && this.refSelectState[key] !== ref) {
+            this.refSelectState[key] = ref;
+            read = true;
         }
-        if (loadRepo) {
-            await this.loadRepository(vcs, repo);
-        }
+
         if (params['entityType']) {
             try {
-                const entityType = EntityTypeUtil.fromURLParam(params['entityType']);
-                this.treeExpandState[vcs.name + '/' + repo.name + '/' + entityType] = true;
+                this.treeExpandState[key + '/' + EntityTypeUtil.fromURLParam(params['entityType'])] = true;
             } catch (e) {
                 // URL carries an unknown entity type, nothing to expand
             }
         }
+
+        return { vcs, repo, read };
     }
 
     saveRefSelectState(): void {

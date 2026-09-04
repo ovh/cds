@@ -4,6 +4,10 @@
 
 The workflow run view renders an interactive **directed acyclic graph (DAG)** that visualizes the complete structure of a CDS workflow: its jobs, stages, matrix expansions, dependency edges, and runtime status. The graph is the central element of the run page — it drives navigation, status monitoring, and operational features such as **job restart** and **gate management**.
 
+The graph shows the run as structure. The same run seen as time — how long each job waited and ran, and
+when it produced what — is the Timeline tab of the bottom panel, specified in
+[workflow-run-timeline.md](workflow-run-timeline.md).
+
 ---
 
 ## 1 — Graph Rendering
@@ -16,6 +20,17 @@ The graph is built from the workflow YAML definition and runtime job data:
 2. Each job run is matched to its definition by name. Matrix jobs (jobs with multiple parameter combinations) are grouped under a single matrix node.
 3. The graph engine lays out nodes and edges using the **dagre** layout algorithm, then renders them as SVG.
 4. After drawing, the graph auto-centers to fit the viewport. A resize observer re-centers on container changes.
+
+### 1.3 Drawing Again Or Refreshing In Place
+
+Laying out and drawing the graph again replaces every node, which costs the focus, the hover and the
+duration of the running jobs. It is therefore only done when the layout itself would differ: when the
+workflow definition changed, when the direction is toggled, or when a job starts being drawn as a
+matrix. A job merely gaining or losing its run keeps the same node of the same size.
+
+While a run progresses, the graph is refreshed in place instead: each node re-reads the run it
+carries, forks and joins recompute their aggregated status, and the edges are recolored from the
+status of the job they leave. The layout, the viewport and the focus are untouched.
 
 ### 1.2 Layout
 
@@ -36,6 +51,10 @@ A rectangular node representing a single workflow job.
 - Duration (live-updating while active, static when terminated)
 - Status label (success, fail, building, inactive, etc.)
 - Condition tooltip showing gate and if-expressions when defined
+
+The duration is a number and nothing more. The dates behind it — queued, scheduled, started, ended —
+and how the duration was split between waiting and working are on the job's lane in the Timeline tab,
+which shows them for every job at once instead of one hovered node at a time.
 
 **Action buttons** (in the commands area):
 - **Gate button**: Shown when the job defines a gate and the workflow is not active. For gates without inputs, a popconfirm triggers the gate directly. For gates with inputs, a button opens a drawer.
@@ -92,7 +111,8 @@ Edges represent dependencies between jobs. The rendering pipeline:
 5. Colors edges based on source node status (green for success, red for fail, grey for inactive)
 6. Active-status edges are drawn thicker for emphasis
 
-On **hover**, all edges connected to the hovered node are highlighted.
+On **hover**, all edges connected to the hovered node are highlighted, and the graph reports which run
+job is being pointed at so that the timeline can bring out the same one.
 
 ---
 
@@ -157,6 +177,12 @@ The graph maintains a **navigation graph** — a flattened representation of the
 ### 5.3 Help Tooltip
 
 A help icon (?) in the toolbar shows a tooltip listing all keyboard shortcuts with styled key caps. The Shift shortcut line is only visible when the workflow run has terminated, since selection mode is only relevant for terminated runs.
+
+The Shift and Enter shortcuts of selection mode only act when **this graph is the thing being used**: the
+focus is inside it, or the pointer is over it. They are listened for on the window, so without that a Shift
+pressed anywhere on the page — as a modifier for something else entirely, in another view of the same run —
+armed the lasso and flipped the graph into selection mode. The pointer counts as well as the focus because
+the lasso is a drag, and a drag has to be armed before there is anything to have clicked on.
 
 ---
 
@@ -348,7 +374,76 @@ Job nodes display condition information in tooltips to help users understand exe
 
 ---
 
-## 10 — Source File Reference
+## 10 — Opening A Run
+
+Everything the view shows is keyed by the id of the run, not by anything the run carries, so the run,
+its jobs, its results and its infos are read **at once** and applied **together**. The view is drawn
+once, complete: the graph is laid out a single time, already colored, instead of appearing grey and
+filling in afterwards.
+
+Applying them together is not only about speed. The jobs of a run are matched to the nodes of the
+graph by job name, and two runs of the same workflow share those names: a graph drawn from one run
+while still holding the jobs of another paints its nodes with the statuses of that other run. The
+definition and the jobs are therefore always set in the same breath, and what could not be read is
+shown empty rather than kept from the run being left — that goes for the jobs, the results, the test
+report and the runs of the sidebar when the workflow changes.
+
+The runs listed in the sidebar are the only thing needing the run to be read first, since they are the
+runs of its workflow. They are read afterwards and hold nothing back; their strip keeps its width from
+the first frame so that their arrival does not push the graph sideways, and shows placeholders until
+they land. They are asked for without the definition each of them ran, which weighs more than
+everything else in that answer and is not displayed.
+
+While the run itself is being read, the frame of the view is drawn rather than a blank page, and the
+graph it will hold is left as it was when coming from another run. A spinner only fades in if the wait
+lasts, so a run that arrives quickly never shows one.
+
+---
+
+## 11 — Live Updates
+
+The run view mirrors a run that is still going. It subscribes to the events of that single run — the
+run itself, its jobs, the steps of its jobs and their results — and applies each of them to what it
+already holds, rather than reading everything again on a timer.
+
+| Event | Applied to the view |
+|---|---|
+| Run | Replaces the run: status, attempt, annotations, definition. A status change is announced to screen readers. |
+| Job | Replaces that job, or appends it when seen for the first time. The graph refreshes in place. |
+| Job step | Carries the same job with its steps moved forward: refreshes the open job panel and the warning marker of its node. |
+| Job result | Adds or replaces one result, feeding the results and tests tabs. |
+| Run deleted | Warns that the run does not exist anymore. |
+
+Events of an attempt other than the displayed one are ignored. When the run is restarted from
+somewhere else, the view follows the new attempt, unless the user was deliberately looking at a
+previous one.
+
+**Steps moving faster than the eye.** The progress of a job is announced at most once per second. A
+job made of quick steps would otherwise send more frames than a view can show, to every client
+watching that run. Each announcement carries the whole job rather than what changed in it, so the one
+that is sent stands for those it replaces, and nothing is lost.
+
+**What events do not carry.** Run infos and job infos are not published as events: they are read again
+when the run or one of its jobs changes state, and at most once per interval for a job going through
+many steps.
+
+**Definition changing mid-run.** A job coming from a template or a matrix is replaced, while the run
+is going, by the jobs it declares. The API sends the new definition of the run, and the view also
+reads the run again whenever a job event names a job that its definition does not know. Either way
+the graph is drawn again from the new definition, without closing the panel that is open.
+
+**Safety nets**, since an event can always be missed:
+- Events sent while the websocket was closed are lost: everything is read again when it opens.
+- A background tab has its timers throttled and its frames delayed: everything is read again when it
+  becomes visible again.
+- While the run is active, a low-frequency refresh reads everything again.
+- Events are not ordered on the wire: an event older than the last one applied to the same subject is
+  dropped.
+- When the run ends, everything is read one last time.
+
+---
+
+## 11 — Source File Reference
 
 | Area | Key files |
 |---|---|

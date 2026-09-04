@@ -22,6 +22,7 @@ import { ProjectV2State } from "app/store/project-v2.state";
 import { Filter, FilterText } from "../../../shared/input/input-filter.component";
 import { Clipboard } from '@angular/cdk/clipboard';
 import { SearchService } from "app/service/search.service";
+import { RUN_SUMMARY_HEADERS, runInsertIndex } from "app/service/workflowv2/workflow.service";
 import { SearchResultType } from "app/model/search.model";
 import { DisplaySearchResult } from "app/views/search/search.component";
 import { WorkflowNameComponent } from "app/shared/workflow-name/workflow-name.component";
@@ -107,13 +108,25 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 			if (idx !== -1) {
 				this.runs[idx] = event.payload;
 			} else {
-				this.runs = [event.payload].concat(...this.runs);
+				const at = runInsertIndex(this.runs, event.payload, this.sort, ProjectV2RunListComponent.DEFAULT_PAGESIZE);
+				if (at === -1) {
+					// A run of a later page: this one has no room for it, and it is already counted
+					// in the total.
+					return;
+				}
+				// A page that was not full held every run the search matches, so one arriving that
+				// is not in it is one more. A crafted run is new whatever the page holds.
+				const isNewMatch = this.runs.length < ProjectV2RunListComponent.DEFAULT_PAGESIZE
+					|| event.type === EventV2Type.EventRunCrafted;
+				this.runs = this.runs.slice(0, at).concat(event.payload, this.runs.slice(at));
 				if (this.runs.length > ProjectV2RunListComponent.DEFAULT_PAGESIZE) {
 					this.runs.pop();
 				}
+				if (isNewMatch) {
+					this.totalCount++;
+				}
 				// The run pushed by the websocket matches the current search, so the empty result
 				// state and the workflows it was suggesting do not stand anymore.
-				this.totalCount++;
 				this.matchingWorkflows = [];
 			}
 			this.animatedRuns[event.payload.id] = true;
@@ -166,7 +179,11 @@ export class ProjectV2RunListComponent implements OnInit, OnDestroy {
 		});
 
 		try {
-			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run`, { params, observe: 'response' })
+			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run`, {
+				params,
+				headers: RUN_SUMMARY_HEADERS,
+				observe: 'response'
+			})
 				.pipe(map(res => {
 					let headers: HttpHeaders = res.headers;
 					return {
