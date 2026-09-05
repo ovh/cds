@@ -15,6 +15,9 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
+
+	"golang.org/x/sync/errgroup"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -2009,6 +2012,48 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 	return keyId, analyzeError, nil
 }
 
+// cdsFileFetchConcurrency bounds how many entity files are read from the VCS
+// at once.
+const cdsFileFetchConcurrency = 8
+
+// listCdsFilePaths walks the .cds tree and returns the entity files in it.
+// Listing is one call per directory, a handful in total; reading the files is
+// the part that scales with the repository, so it is done separately and can
+// then be done in parallel.
+func (api *API) listCdsFilePaths(ctx context.Context, client sdk.VCSAuthorizedClientService, repoName, commit, directory string) ([]string, error) {
+	contents, err := client.ListContent(ctx, repoName, commit, directory, "0", "100")
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
+	}
+	paths := make([]string, 0, len(contents))
+	for _, c := range contents {
+		if c.IsFile && (strings.HasSuffix(c.Name, ".yml") || strings.HasSuffix(c.Name, ".yaml")) {
+			paths = append(paths, directory+"/"+c.Name)
+		}
+		if c.IsDirectory {
+			sub, err := api.listCdsFilePaths(ctx, client, repoName, commit, directory+"/"+c.Name)
+			if err != nil {
+				return nil, err
+			}
+			paths = append(paths, sub...)
+		}
+	}
+	return paths, nil
+}
+
+// getCdsFilesOnVCSDirectory reads every entity file under a directory.
+//
+// The files are read concurrently. Read one after another, an analysis costs
+// one network round trip per entity in series, so its duration grows with the
+// number of entities a repository declares rather than with the work involved:
+// a repository with about a hundred and thirty entities took five and a half
+// minutes to analyse while one with far fewer took thirty-six seconds, and the
+// VCS service logged two and a half thousand requests in fifteen minutes,
+// nearly all single-file reads for one analysis. None of that is compute, so
+// it parallelises directly.
+//
+// Bounded rather than unbounded: every read crosses whatever fronts the forge,
+// and that hop, not CDS, is what sets the safe ceiling.
 func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsName, repoName, commit, directory string) (map[string][]byte, error) {
 	ctx, next := telemetry.Span(ctx, "api.getCdsFilesOnVCSDirectory")
 	defer next()
@@ -2018,33 +2063,34 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 		return nil, sdk.WithStack(err)
 	}
 
-	filesContent := make(map[string][]byte)
-	contents, err := client.ListContent(ctx, repoName, commit, directory, "0", "100")
+	paths, err := api.listCdsFilePaths(ctx, client, repoName, commit, directory)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
+		return nil, err
 	}
-	for _, c := range contents {
-		if c.IsFile && (strings.HasSuffix(c.Name, ".yml") || strings.HasSuffix(c.Name, ".yaml")) {
-			filePath := directory + "/" + c.Name
-			vcsContent, err := client.GetContent(ctx, repoName, commit, filePath)
+
+	filesContent := make(map[string][]byte, len(paths))
+	var mu sync.Mutex
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(cdsFileFetchConcurrency)
+	for i := range paths {
+		filePath := paths[i]
+		group.Go(func() error {
+			vcsContent, err := client.GetContent(groupCtx, repoName, commit, filePath)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			contentBts, err := base64.StdEncoding.DecodeString(vcsContent.Content)
 			if err != nil {
-				return nil, sdk.WithStack(err)
+				return sdk.WithStack(err)
 			}
+			mu.Lock()
 			filesContent[filePath] = contentBts
-		}
-		if c.IsDirectory {
-			contents, err := api.getCdsFilesOnVCSDirectory(ctx, analysis, vcsName, repoName, commit, directory+"/"+c.Name)
-			if err != nil {
-				return nil, err
-			}
-			for k, v := range contents {
-				filesContent[k] = v
-			}
-		}
+			mu.Unlock()
+			return nil
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return nil, err
 	}
 	return filesContent, nil
 }
