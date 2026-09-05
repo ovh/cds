@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
@@ -4076,4 +4077,104 @@ func TestFindCommitter_GithubUnsignedTag_CommitterNotFound(t *testing.T) {
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
 	require.Contains(t, errMsg, unknownGithubUsername)
 	require.Nil(t, initiator)
+}
+
+// insertAnalysisDeadlineTestRepository builds the minimum a repository analysis
+// needs to exist: a project, a VCS server on it, and a repository.
+func insertAnalysisDeadlineTestRepository(t *testing.T, api *API, db *test.FakeTransaction) sdk.ProjectRepository {
+	t.Helper()
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "vcs-server", "github")
+	repo := sdk.ProjectRepository{
+		Name:         "myrepo",
+		Created:      time.Now(),
+		VCSProjectID: vcsProject.ID,
+		CreatedBy:    "me",
+		CloneURL:     "myurl",
+		ProjectKey:   proj.Key,
+	}
+	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
+	return repo
+}
+
+// ageRepositoryAnalysis backdates last_modified in place. Safe to do in SQL:
+// the signed canonical form is {ID}{ProjectRepositoryID}{VCSProjectID}
+// {ProjectKey}{Commit}, so timestamps and status sit outside the signature.
+func ageRepositoryAnalysis(t *testing.T, db gorpmapper.SqlExecutorWithTx, analysisID string, age time.Duration) {
+	t.Helper()
+	_, err := db.Exec("UPDATE project_repository_analysis SET last_modified = $1 WHERE id = $2", time.Now().Add(-age), analysisID)
+	require.NoError(t, err)
+}
+
+// TestExpireStaleRepositoryAnalysesFailsOnlyThePastDeadlineOnes covers both
+// directions of the deadline, which is the part that carries the risk: work in
+// flight must be left alone, and work that outlived the deadline must end in a
+// state that says what happened rather than staying InProgress forever.
+func TestExpireStaleRepositoryAnalysesFailsOnlyThePastDeadlineOnes(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+	repo := insertAnalysisDeadlineTestRepository(t, api, db)
+
+	insert := func(commit string) sdk.ProjectRepositoryAnalysis {
+		a := sdk.ProjectRepositoryAnalysis{
+			ProjectRepositoryID: repo.ID,
+			ProjectKey:          repo.ProjectKey,
+			VCSProjectID:        repo.VCSProjectID,
+			Ref:                 "refs/heads/main",
+			Commit:              commit,
+			Status:              sdk.RepositoryAnalysisStatusInProgress,
+		}
+		require.NoError(t, repository.InsertAnalysis(ctx, db, &a))
+		return a
+	}
+
+	stale := insert("1111111111111111111111111111111111111111")
+	fresh := insert("2222222222222222222222222222222222222222")
+	// Well past the deadline rather than a minute past it, so the row is among
+	// the oldest and cannot be pushed out of a bounded sweep.
+	ageRepositoryAnalysis(t, db, stale.ID, defaultAnalysisTimeout+24*time.Hour)
+
+	api.expireStaleRepositoryAnalyses(ctx, defaultAnalysisTimeout)
+
+	reloadedStale, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, stale.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, reloadedStale.Status)
+	// It says so, rather than failing silently: the whole point is that "did
+	// not finish" becomes a reported outcome.
+	require.Contains(t, reloadedStale.Data.Error, "did not complete within")
+
+	reloadedFresh, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, fresh.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.RepositoryAnalysisStatusInProgress, reloadedFresh.Status, "the reaper must not touch work still inside the deadline")
+}
+
+// TestLoadAnalysesInProgressIdleSinceRespectsItsBound checks the sweep is
+// bounded, so a large backlog drains over several ticks instead of one long
+// transaction.
+func TestLoadAnalysesInProgressIdleSinceRespectsItsBound(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+	repo := insertAnalysisDeadlineTestRepository(t, api, db)
+
+	for i := 0; i < 5; i++ {
+		a := sdk.ProjectRepositoryAnalysis{
+			ProjectRepositoryID: repo.ID,
+			ProjectKey:          repo.ProjectKey,
+			VCSProjectID:        repo.VCSProjectID,
+			Ref:                 "refs/heads/main",
+			Commit:              fmt.Sprintf("%040d", i),
+			Status:              sdk.RepositoryAnalysisStatusInProgress,
+		}
+		require.NoError(t, repository.InsertAnalysis(ctx, db, &a))
+		ageRepositoryAnalysis(t, db, a.ID, defaultAnalysisTimeout+time.Duration(48+i)*time.Hour)
+	}
+
+	stuck, err := repository.LoadAnalysesInProgressIdleSince(ctx, db, time.Now().Add(-defaultAnalysisTimeout), 3)
+	require.NoError(t, err)
+	require.Len(t, stuck, 3, "the sweep must honour its limit")
+	// Oldest first, so a backlog drains from its head and no row is starved.
+	for i := 1; i < len(stuck); i++ {
+		require.False(t, stuck[i].LastModified.Before(stuck[i-1].LastModified), "stale analyses must come back oldest first")
+	}
 }

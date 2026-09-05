@@ -357,7 +357,7 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	return &repoAnalysis, nil
 }
 
-func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration) {
+func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration, analysisTimeout time.Duration) {
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 
@@ -369,6 +369,7 @@ func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration
 			}
 			return
 		case <-ticker.C:
+			api.expireStaleRepositoryAnalyses(ctx, analysisTimeout)
 			analysis, err := repository.LoadRepositoryIDsAnalysisInProgress(ctx, api.mustDB())
 			if err != nil {
 				log.Error(ctx, "unable to load analysis in progress: %v", err)
@@ -388,6 +389,62 @@ func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration
 			}
 		}
 	}
+}
+
+// Defaults for the entity analysis timeout settings, applied when the
+// configuration does not carry a usable value.
+const (
+	defaultAnalysisTimeout = 30 * time.Minute
+	defaultAnalysisBatch   = int64(200)
+)
+
+// expireStaleRepositoryAnalyses fails analyses that outlived the timeout.
+//
+// Nothing else does: cleanRepositoryAnalysis only trims per-repository
+// retention, so an analysis that cannot finish stays InProgress for the life
+// of the database and permanently consumes one of the slots the poller reads.
+func (api *API) expireStaleRepositoryAnalyses(ctx context.Context, analysisTimeout time.Duration) {
+	if analysisTimeout <= 0 {
+		analysisTimeout = defaultAnalysisTimeout
+	}
+	batch := api.Config.Entity.AnalysisBatch
+	if batch <= 0 {
+		batch = defaultAnalysisBatch
+	}
+
+	idleSince := time.Now().Add(-analysisTimeout)
+	stale, err := repository.LoadAnalysesInProgressIdleSince(ctx, api.mustDB(), idleSince, batch)
+	if err != nil {
+		log.Error(ctx, "unable to load stale repository analyses: %v", err)
+		return
+	}
+	if len(stale) == 0 {
+		return
+	}
+	log.Warn(ctx, "expiring %d repository analyses left in progress for more than %s", len(stale), analysisTimeout)
+	for i := range stale {
+		if err := api.expireRepositoryAnalysis(ctx, stale[i], analysisTimeout); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}
+}
+
+func (api *API) expireRepositoryAnalysis(ctx context.Context, analysis sdk.ProjectRepositoryAnalysis, analysisTimeout time.Duration) error {
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
+
+	analysis.Status = sdk.RepositoryAnalysisStatusError
+	analysis.Data.Error = fmt.Sprintf(
+		"analysis did not complete within %s and was expired; re-run it if the ref still needs analysing",
+		analysisTimeout,
+	)
+	if err := repository.UpdateAnalysis(ctx, tx, &analysis); err != nil {
+		return err
+	}
+	return sdk.WithStack(tx.Commit())
 }
 
 func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, analysisID string) error {
