@@ -4098,19 +4098,18 @@ func insertAnalysisDeadlineTestRepository(t *testing.T, api *API, db *test.FakeT
 	return repo
 }
 
-// ageRepositoryAnalysis backdates last_modified in place. Safe to do in SQL:
-// the signed canonical form is {ID}{ProjectRepositoryID}{VCSProjectID}
-// {ProjectKey}{Commit}, so timestamps and status sit outside the signature.
+// ageRepositoryAnalysis backdates last_modified in place. The signed canonical
+// form is {ID}{ProjectRepositoryID}{VCSProjectID}{ProjectKey}{Commit}, so
+// writing a timestamp in SQL leaves the signature valid.
 func ageRepositoryAnalysis(t *testing.T, db gorpmapper.SqlExecutorWithTx, analysisID string, age time.Duration) {
 	t.Helper()
 	_, err := db.Exec("UPDATE project_repository_analysis SET last_modified = $1 WHERE id = $2", time.Now().Add(-age), analysisID)
 	require.NoError(t, err)
 }
 
-// TestExpireStaleRepositoryAnalysesFailsOnlyThePastDeadlineOnes covers both
-// directions of the deadline, which is the part that carries the risk: work in
-// flight must be left alone, and work that outlived the deadline must end in a
-// state that says what happened rather than staying InProgress forever.
+// TestExpireStaleRepositoryAnalysesFailsOnlyThePastDeadlineOnes checks both
+// directions of the deadline: an analysis inside it is left InProgress, one
+// past it ends in Error carrying a message that says why.
 func TestExpireStaleRepositoryAnalysesFailsOnlyThePastDeadlineOnes(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
@@ -4131,8 +4130,8 @@ func TestExpireStaleRepositoryAnalysesFailsOnlyThePastDeadlineOnes(t *testing.T)
 
 	stale := insert("1111111111111111111111111111111111111111")
 	fresh := insert("2222222222222222222222222222222222222222")
-	// Well past the deadline rather than a minute past it, so the row is among
-	// the oldest and cannot be pushed out of a bounded sweep.
+	// Well past the deadline, so the row is among the oldest and cannot fall
+	// outside a bounded sweep.
 	ageRepositoryAnalysis(t, db, stale.ID, defaultAnalysisTimeout+24*time.Hour)
 
 	api.expireStaleRepositoryAnalyses(ctx, defaultAnalysisTimeout)
@@ -4140,8 +4139,7 @@ func TestExpireStaleRepositoryAnalysesFailsOnlyThePastDeadlineOnes(t *testing.T)
 	reloadedStale, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, stale.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusError, reloadedStale.Status)
-	// It says so, rather than failing silently: the whole point is that "did
-	// not finish" becomes a reported outcome.
+	// The error names the timeout, so the outcome is readable.
 	require.Contains(t, reloadedStale.Data.Error, "did not complete within")
 
 	reloadedFresh, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, fresh.ID)
@@ -4149,9 +4147,8 @@ func TestExpireStaleRepositoryAnalysesFailsOnlyThePastDeadlineOnes(t *testing.T)
 	require.Equal(t, sdk.RepositoryAnalysisStatusInProgress, reloadedFresh.Status, "the reaper must not touch work still inside the deadline")
 }
 
-// TestLoadAnalysesInProgressIdleSinceRespectsItsBound checks the sweep is
-// bounded, so a large backlog drains over several ticks instead of one long
-// transaction.
+// TestLoadAnalysesInProgressIdleSinceRespectsItsBound checks the query honours
+// its limit and returns the oldest rows first.
 func TestLoadAnalysesInProgressIdleSinceRespectsItsBound(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
@@ -4173,7 +4170,7 @@ func TestLoadAnalysesInProgressIdleSinceRespectsItsBound(t *testing.T) {
 	stuck, err := repository.LoadAnalysesInProgressIdleSince(ctx, db, time.Now().Add(-defaultAnalysisTimeout), 3)
 	require.NoError(t, err)
 	require.Len(t, stuck, 3, "the sweep must honour its limit")
-	// Oldest first, so a backlog drains from its head and no row is starved.
+	// Oldest first.
 	for i := 1; i < len(stuck); i++ {
 		require.False(t, stuck[i].LastModified.Before(stuck[i-1].LastModified), "stale analyses must come back oldest first")
 	}
