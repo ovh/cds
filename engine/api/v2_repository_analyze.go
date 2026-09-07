@@ -2057,26 +2057,23 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 	filesContent := make(map[string][]byte, len(paths))
 	var mu sync.Mutex
 	group, groupCtx := errgroup.WithContext(ctx)
-	// errgroup.SetLimit(0) does not mean unbounded: it admits no goroutines at
-	// all and Wait blocks forever. Serve applies the default, but an API built
-	// without being served keeps the zero, so the value is clamped where it is
-	// read rather than only where it is configured.
+	// errgroup.SetLimit(0) admits no goroutines and Wait then blocks forever,
+	// so an unset bound falls back to the default here as well as in Serve.
 	fileFetchConcurrency := int(api.Config.Entity.FileFetchConcurrency)
 	if fileFetchConcurrency <= 0 {
 		fileFetchConcurrency = defaultEntityFileFetchConcurrency
 	}
 	group.SetLimit(fileFetchConcurrency)
 	for i := range paths {
-		// A failed read cancels groupCtx, and every read started after that
-		// can only fail with the same error. Stop scheduling them.
+		// A failed read cancels groupCtx; every read started after that can
+		// only fail with the same error.
 		if groupCtx.Err() != nil {
 			break
 		}
 		filePath := paths[i]
 		group.Go(func() (err error) {
-			// errgroup starts a bare goroutine, so a panic here takes the
-			// process down; the serial version this replaces was covered by
-			// the recover in GoRoutines.Exec further up the call chain.
+			// errgroup starts a bare goroutine with no recovery of its own,
+			// so a panic here would reach the runtime and end the process.
 			defer func() {
 				if r := recover(); r != nil {
 					buf := make([]byte, 1<<16)

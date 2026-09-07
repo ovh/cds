@@ -4080,9 +4080,8 @@ func TestFindCommitter_GithubUnsignedTag_CommitterNotFound(t *testing.T) {
 	require.Nil(t, initiator)
 }
 
-// TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded covers both
-// things the change has to get right: the same files come back as when they
-// were read one after another, and the reads genuinely overlap without
+// TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded checks the
+// tree comes back whole and decoded, and that the reads overlap without ever
 // exceeding the configured bound.
 func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testing.T) {
 	api, db, _ := newTestAPI(t)
@@ -4091,8 +4090,8 @@ func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testin
 	const bound = 8
 	api.Config.Entity.FileFetchConcurrency = bound
 
-	// A tree wide enough that the bound is actually reached, plus a nested
-	// directory and a file that must be ignored.
+	// Wide enough to reach the bound, with a nested directory and a file that
+	// must be ignored.
 	const nestedFiles = 24
 	expected := map[string]string{
 		".cds/workflows/root-a.yml":  "root-a",
@@ -4109,8 +4108,7 @@ func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testin
 	analysis := analysisFixtureForFileReads(t, api, db, func(path string, out interface{}) (int, error) {
 		switch typed := out.(type) {
 		case *[]sdk.VCSContent:
-			// Directory listing. Sequential by design: a handful of calls,
-			// and it is the file reads that scale with the repository.
+			// Directory listing: one call per directory.
 			if strings.Contains(path, "sub") {
 				*typed = nested
 				return 200, nil
@@ -4122,8 +4120,8 @@ func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testin
 				{Name: "sub", IsDirectory: true},
 			}
 		case *sdk.VCSContent:
-			// One file read. Hold it open briefly so overlap is observable:
-			// serial code can never push the in-flight count above one.
+			// One file read, held open briefly so the in-flight count is
+			// observable.
 			current := atomic.AddInt64(&inFlight, 1)
 			for {
 				observed := atomic.LoadInt64(&maxInFlight)
@@ -4148,8 +4146,7 @@ func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testin
 	files, err := api.getCdsFilesOnVCSDirectory(ctx, analysis, "vcs-server", "myrepo", analysis.Commit, ".cds/workflows")
 	require.NoError(t, err)
 
-	// Same result as reading them one at a time: every entity file, decoded,
-	// keyed by full path, and nothing that is not an entity file.
+	// Every entity file, decoded, keyed by full path, and nothing else.
 	require.Len(t, files, len(expected), "every entity file in the tree must come back exactly once")
 	require.NotContains(t, files, ".cds/workflows/notes.txt", "non-entity files must still be ignored")
 	for path, body := range expected {
@@ -4164,10 +4161,8 @@ func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testin
 	require.LessOrEqual(t, observed, int64(bound), "reads must stay within the configured bound")
 }
 
-// TestGetCdsFilesOnVCSDirectoryPropagatesReadFailures checks a failing read
-// still fails the whole call. Concurrency makes this worth pinning: a dropped
-// error would turn a partial read into an analysis that silently sees fewer
-// entities than the repository declares.
+// TestGetCdsFilesOnVCSDirectoryPropagatesReadFailures checks one failing read
+// fails the whole call rather than returning a partial tree.
 func TestGetCdsFilesOnVCSDirectoryPropagatesReadFailures(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
@@ -4191,7 +4186,8 @@ func TestGetCdsFilesOnVCSDirectoryPropagatesReadFailures(t *testing.T) {
 }
 
 // analysisFixtureForFileReads builds the project, repository and analysis the
-// entity-file read path needs, and installs a mocked VCS service client.
+// entity-file read path needs, and installs a mocked VCS service client. The
+// handler decides what the VCS answers for a listing or a file read.
 func analysisFixtureForFileReads(t *testing.T, api *API, db *test.FakeTransaction, handler func(path string, out interface{}) (int, error)) *sdk.ProjectRepositoryAnalysis {
 	ctx := context.TODO()
 
@@ -4241,12 +4237,9 @@ func analysisFixtureForFileReads(t *testing.T, api *API, db *test.FakeTransactio
 	return &analysis
 }
 
-// TestGetCdsFilesOnVCSDirectoryHonoursConfiguredConcurrency pins that the
-// bound comes from configuration and not from the default: set to one, the
-// reads must not overlap at all. Forges differ in what they will take -- some
-// rate limit concurrent requests, some limit calls per minute -- so an
-// operator has to be able to lower this, and a knob that is read but ignored
-// looks exactly like one that works.
+// TestGetCdsFilesOnVCSDirectoryHonoursConfiguredConcurrency checks the bound
+// comes from configuration rather than from the default: set to one, the reads
+// must not overlap at all.
 func TestGetCdsFilesOnVCSDirectoryHonoursConfiguredConcurrency(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
@@ -4284,16 +4277,14 @@ func TestGetCdsFilesOnVCSDirectoryHonoursConfiguredConcurrency(t *testing.T) {
 }
 
 // TestGetCdsFilesOnVCSDirectoryDoesNotDeadlockWithoutConfiguredConcurrency
-// pins the failure mode that makes an unset bound hang rather than fail:
-// errgroup's SetLimit(0) admits no goroutines, so Wait blocks forever. Serve
-// fills the default in, but anything building an API without serving it --
-// every test in this package -- leaves the value at zero, and reading it
-// unclamped stops the whole package with no failing assertion to point at.
+// checks an unset bound falls back to the default instead of blocking forever,
+// which is what errgroup.SetLimit(0) does. The assertion is that the call
+// finishes at all, so it is written as a bounded wait.
 func TestGetCdsFilesOnVCSDirectoryDoesNotDeadlockWithoutConfiguredConcurrency(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	// Explicitly unset, as it is for any API that has not been through Serve.
+	// Unset, as for any API that has not been through Serve.
 	api.Config.Entity.FileFetchConcurrency = 0
 
 	analysis := analysisFixtureForFileReads(t, api, db, func(path string, out interface{}) (int, error) {
@@ -4324,12 +4315,9 @@ func TestGetCdsFilesOnVCSDirectoryDoesNotDeadlockWithoutConfiguredConcurrency(t 
 	require.Len(t, files, 2)
 }
 
-// TestGetCdsFilesOnVCSDirectoryRecoversFromAReadPanic pins that a panic in a
-// read fails the analysis instead of the process. errgroup starts bare
-// goroutines with no recovery of their own -- x/sync removed it deliberately
-// -- where the serial version this replaces was covered by the recover in
-// GoRoutines.Exec further up the call chain. Without the recover here this
-// test does not fail, it takes the test binary down with it.
+// TestGetCdsFilesOnVCSDirectoryRecoversFromAReadPanic checks a panic in one
+// read is returned as an error from the call. Without the recover it is not a
+// failing assertion, it is the test binary ending.
 func TestGetCdsFilesOnVCSDirectoryRecoversFromAReadPanic(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
@@ -4352,10 +4340,8 @@ func TestGetCdsFilesOnVCSDirectoryRecoversFromAReadPanic(t *testing.T) {
 	require.Contains(t, err.Error(), "panic while reading")
 }
 
-// TestGetCdsFilesOnVCSDirectoryStopsSchedulingAfterAFailure pins that a failed
-// read ends the fan-out. Once the group's context is cancelled every read
-// started after it can only fail with the same error, so scheduling the rest
-// of a large repository is work the forge is asked for and nothing can use.
+// TestGetCdsFilesOnVCSDirectoryStopsSchedulingAfterAFailure checks a failure
+// part way through a large tree stops the remaining reads being scheduled.
 func TestGetCdsFilesOnVCSDirectoryStopsSchedulingAfterAFailure(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
