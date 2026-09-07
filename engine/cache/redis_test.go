@@ -111,13 +111,15 @@ func TestDequeueJSONRawMessagesWithContextMaxTimeout(t *testing.T) {
 }
 
 // TestKeysWalksWholeKeyspace covers the SCAN-based Keys(). SCAN differs from
-// KEYS in ways that matter to callers: it pages through a cursor, it can return
-// the same key more than once, and it needs several round trips when the
-// keyspace is larger than one batch.
+// KEYS in ways that matter to callers: it pages through a cursor, so it needs
+// several round trips when the keyspace is larger than one batch.
 //
 // The batch is deliberately tiny here so a small keyspace still forces many
-// cursor steps; production uses keysScanBatch. The result must be complete,
-// free of duplicates, and correctly filtered by pattern.
+// cursor steps; production uses keysScanBatch. The result must be complete and
+// correctly filtered by pattern. De-duplication is covered separately, in
+// TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps: a live Redis only
+// repeats a key if it happens to resize its hash table mid-walk, so asserting
+// on it here would pass whether or not the code de-duplicates at all.
 func TestKeysWalksWholeKeyspace(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
@@ -152,11 +154,7 @@ func TestKeysWalksWholeKeyspace(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, found, total, "Keys must return the whole keyspace matching the pattern, across cursor pages")
-	seen := make(map[string]struct{}, len(found))
 	for _, k := range found {
-		_, dup := seen[k]
-		require.False(t, dup, "Keys must not return a key twice even though SCAN can repeat across cursor steps: %s", k)
-		seen[k] = struct{}{}
 		_, want := expected[k]
 		require.True(t, want, "Keys returned a key outside the requested pattern: %s", k)
 	}
@@ -181,4 +179,56 @@ func TestKeysReturnsEmptyForUnmatchedPattern(t *testing.T) {
 	found, err := s.Keys("test:nothing:" + sdk.RandomString(12) + ":*")
 	require.NoError(t, err)
 	require.Empty(t, found)
+}
+
+// TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps covers the de-duplication
+// the cursor walk needs. SCAN guarantees a key present for the whole walk is
+// returned at least once, not exactly once: a hash table resized while the
+// cursor is open can hand the same key back on a later step. That is not
+// reproducible on demand against a live Redis, so the step is driven directly
+// with the input a resize produces.
+func TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps(t *testing.T) {
+	seen := make(map[string]struct{})
+	var keys []string
+
+	keys = appendUnseen(seen, keys, []string{"a", "b"})
+	// Second cursor step repeats a key from the first and adds a new one.
+	keys = appendUnseen(seen, keys, []string{"b", "c"})
+	// Third repeats within its own batch.
+	keys = appendUnseen(seen, keys, []string{"c", "c", "d"})
+
+	require.Equal(t, []string{"a", "b", "c", "d"}, keys, "each key must appear exactly once, in the order it was first seen")
+}
+
+// TestDeleteAllRemovesTheWholeMatchingKeyspace covers DeleteAll, which walks
+// with the same cursor as Keys. A keyspace larger than one batch is the case
+// that a single-shot listing got right and a truncated walk would not.
+func TestDeleteAllRemovesTheWholeMatchingKeyspace(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
+	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
+	require.NoError(t, err, "error when unmarshal config")
+
+	s, err := NewRedisStore(sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: int(redisDbIndex)}, 60)
+	require.NoError(t, err)
+
+	const total = 250
+	prefix := "test:deleteall:" + sdk.RandomString(8)
+	for i := 0; i < total; i++ {
+		require.NoError(t, s.SetWithTTL(prefix+":"+strconv.Itoa(i), "v", 120))
+	}
+	// A key outside the pattern, which must survive.
+	other := "test:deleteall-other:" + sdk.RandomString(8)
+	require.NoError(t, s.SetWithTTL(other, "v", 120))
+	t.Cleanup(func() { s.Delete(other) })
+
+	require.NoError(t, s.DeleteAll(prefix+":*"))
+
+	left, err := s.Keys(prefix + ":*")
+	require.NoError(t, err)
+	require.Empty(t, left, "DeleteAll must remove every key matching the pattern")
+
+	survived, err := s.Keys(other)
+	require.NoError(t, err)
+	require.Len(t, survived, 1, "DeleteAll must not touch keys outside the pattern")
 }
