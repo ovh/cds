@@ -60,8 +60,8 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 	if e.ID == "" {
 		e.ID = sdk.UUID()
 	}
-	if e.UserID != nil && *e.UserID == "" {
-		e.UserID = nil
+	if e.DeprecatedUserID != nil && *e.DeprecatedUserID == "" {
+		e.DeprecatedUserID = nil
 	}
 
 	e.LastUpdate = time.Now()
@@ -75,8 +75,8 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 
 func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
 	e.LastUpdate = time.Now()
-	if e.UserID != nil && *e.UserID == "" {
-		e.UserID = nil
+	if e.DeprecatedUserID != nil && *e.DeprecatedUserID == "" {
+		e.DeprecatedUserID = nil
 	}
 	dbData := &dbEntity{Entity: *e}
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {

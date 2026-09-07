@@ -177,7 +177,7 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().RetrieveHookEventSigningKey(gomock.Any(), gomock.Any()).Times(1)
 	userID := "aaa-bbb-ccc"
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().EntityGet(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&sdk.Entity{
-		UserID: &userID,
+		DeprecatedUserID: &userID,
 	}, nil).Times(1)
 
 	// Force dequeue

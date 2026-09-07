@@ -122,8 +122,8 @@ func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEv
 	if err != nil {
 		return err
 	}
-	if e.UserID != nil {
-		wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+	if e.DeprecatedUserID != nil {
+		wh.Initiator = &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
 	}
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
 	return nil
@@ -136,8 +136,8 @@ func (s *Service) handleWorkflowRunHook(ctx context.Context, hre *sdk.HookReposi
 		if err != nil {
 			return err
 		}
-		if e.UserID != nil {
-			wh.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+		if e.DeprecatedUserID != nil {
+			wh.Initiator = &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
 		}
 	}
 	return nil
@@ -218,8 +218,8 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 			if err != nil {
 				return err
 			}
-			if e.UserID != nil {
-				w.Initiator = &sdk.V2Initiator{UserID: *e.UserID}
+			if e.DeprecatedUserID != nil {
+				w.Initiator = &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
 			}
 		}
 		hre.WorkflowHooks = append(hre.WorkflowHooks, w)
@@ -259,9 +259,9 @@ func (s *Service) handleWebhookHook(ctx context.Context, hre *sdk.HookRepository
 
 		},
 	}
-	if e.UserID != nil {
+	if e.DeprecatedUserID != nil {
 		hre.Initiator = &sdk.V2Initiator{
-			UserID: *e.UserID,
+			UserID: *e.DeprecatedUserID,
 		}
 	}
 

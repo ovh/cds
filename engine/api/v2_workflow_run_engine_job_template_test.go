@@ -77,7 +77,7 @@ func TestWorkflowTrigger_JobTemplateInsideTemplate(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -96,7 +96,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: myJobTemplate
 spec: |-
   jobs:
@@ -278,7 +278,7 @@ func TestWorkflowTrigger_JobTemplateDuplicateJob(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -297,7 +297,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: myJobTemplate
 spec: |-
   jobs:
@@ -426,7 +426,7 @@ func TestWorkflowTrigger_JobTemplateAddStageOnNonStagedWorkflow(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mytemplate
 spec: |-
   stages:
@@ -450,7 +450,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: myJobTemplate
 spec: |-
   jobs:
@@ -580,7 +580,7 @@ func TestWorkflowTrigger_JobTemplateNoStageOnTemplate(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -599,7 +599,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: myJobTemplate
 spec: |-
   jobs:
@@ -725,7 +725,7 @@ func TestWorkflowTrigger_JobTemplateWithFromAndRunsOnFails(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -855,7 +855,7 @@ func TestWorkflowTrigger_JobTemplateContainingMatrixJob(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mymodel
 type: docker
 osarch: linux-amd64
@@ -873,7 +873,7 @@ spec:
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -1049,7 +1049,7 @@ func TestWorkflowTrigger_JobTemplateContainingMatrixJobPartialPermutations(t *te
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mymodel
 type: docker
 osarch: linux-amd64
@@ -1067,7 +1067,7 @@ spec:
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -1239,7 +1239,7 @@ func TestWorkflowTrigger_JobTemplateWithVariableSets(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -1533,7 +1533,7 @@ func TestWorkflowTrigger_JobTemplateCycleFailsRun(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: tmplA
 spec: |-
   jobs:
@@ -1551,7 +1551,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: tmplB
 spec: |-
   jobs:
@@ -1719,7 +1719,7 @@ spec: |-
 			Commit:              "123456789",
 			Ref:                 "refs/heads/master",
 			ProjectRepositoryID: repo.ID,
-			UserID:              &admin.ID,
+			DeprecatedUserID:    &admin.ID,
 			Data:                tmpl.data,
 		}
 		require.NoError(t, entity.Insert(ctx, db, &e))
@@ -1864,7 +1864,7 @@ func TestWorkflowTrigger_SameJobTemplateReusedBySiblingJobs(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: xtmpl
 parameters:
 - key: name
