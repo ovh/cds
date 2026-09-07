@@ -900,20 +900,20 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			if workflowEntity.UserID != nil {
-				log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s user_id: %s", workflowEntity.ID, workflowEntity.Name, *workflowEntity.UserID)
+			if workflowEntity.DeprecatedUserID != nil {
+				log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s user_id: %s", workflowEntity.ID, workflowEntity.Name, *workflowEntity.DeprecatedUserID)
 			} else {
-				log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s user_id: %v", workflowEntity.ID, workflowEntity.Name, workflowEntity.UserID)
+				log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s user_id: %v", workflowEntity.ID, workflowEntity.Name, workflowEntity.DeprecatedUserID)
 			}
 			log.Debug(ctx, "postWorkflowRunFromHookV2Handler - wk.Repository: %+v", wk.Repository)
 
 			if wk.Repository != nil && wk.Repository.InsecureSkipSignatureVerify {
 				// Use entity owner as user fallback
-				if workflowEntity.UserID == nil {
+				if workflowEntity.DeprecatedUserID == nil {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown workflow owner. Please analyse your repository.")
 				}
 				runRequest.Initiator = &sdk.V2Initiator{
-					UserID: *workflowEntity.UserID,
+					UserID: *workflowEntity.DeprecatedUserID,
 				}
 			}
 

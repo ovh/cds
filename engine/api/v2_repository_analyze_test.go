@@ -2780,7 +2780,7 @@ GDFkaTe3nUJdYV4=
 		Name:                "mymodel",
 		Commit:              "HEAD",
 		Ref:                 "refs/heads/main",
-		UserID:              &u.ID,
+		DeprecatedUserID:    &u.ID,
 		Data:                "name: mymodel",
 	}
 	require.NoError(t, entity.Insert(ctx, db, &entityWM))
@@ -3015,7 +3015,7 @@ GDFkaTe3nUJdYV4=
 		Name:                "mymodel",
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/main",
-		UserID:              &u.ID,
+		DeprecatedUserID:    &u.ID,
 		Data:                "name: mymodel",
 		Head:                true,
 	}
@@ -3262,7 +3262,7 @@ GDFkaTe3nUJdYV4=
 		Name:                "mymodel",
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/main",
-		UserID:              &u.ID,
+		DeprecatedUserID:    &u.ID,
 		Data:                "name: mymodel",
 		Head:                true,
 	}
@@ -3506,7 +3506,7 @@ GDFkaTe3nUJdYV4=
 		Name:                "mymodel",
 		Commit:              "HEAD",
 		Ref:                 "refs/heads/main",
-		UserID:              &u.ID,
+		DeprecatedUserID:    &u.ID,
 		Data:                "name: mymodel",
 	}
 	require.NoError(t, entity.Insert(ctx, db, &entityWM))
@@ -3820,7 +3820,7 @@ GDFkaTe3nUJdYV4=
 		Ref:                 analysis.Ref,
 		Name:                "docker-debian",
 		Data:                "MyModel",
-		UserID:              &u.ID,
+		DeprecatedUserID:    &u.ID,
 	}
 	require.NoError(t, entity.Insert(ctx, db, &previousEnt))
 

@@ -2033,7 +2033,7 @@ func TestCraftWorkflowFromTemplateFail(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: db-schema-model
 spec: |-
   stages:
@@ -2976,7 +2976,7 @@ func TestCraftWorkflowRun_Fallback(t *testing.T) {
 		Ref:                 "refs/heads/master",
 		Data:                string(entityData),
 		Head:                true,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entWkf))
 
@@ -3167,7 +3167,7 @@ func TestCraftWorkflowFromTemplateAndSemver(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: db-schema-model
 spec: |-
   semver:
@@ -3312,7 +3312,7 @@ func TestCraftWorkflowFromTemplateWithEnv(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: my-template
 spec: |-
   env:
@@ -3460,7 +3460,7 @@ func TestCraftWorkflowFromTemplateCrossProjectWorkerModel(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		Head:                true,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: fmt.Sprintf(`name: my-template
 spec: |-
   integrations: [%s]
@@ -3733,7 +3733,7 @@ func TestCraftWorkflowFromTemplateWithVariableSets(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		UserID:              &admin.ID,
+		DeprecatedUserID:    &admin.ID,
 		Data: `name: my-template
 spec: |-
   jobs:
