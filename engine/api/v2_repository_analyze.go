@@ -399,10 +399,6 @@ const (
 )
 
 // expireStaleRepositoryAnalyses fails analyses that outlived the timeout.
-//
-// Nothing else does: cleanRepositoryAnalysis only trims per-repository
-// retention, so an analysis that cannot finish stays InProgress for the life
-// of the database and permanently consumes one of the slots the poller reads.
 func (api *API) expireStaleRepositoryAnalyses(ctx context.Context, analysisTimeout time.Duration) {
 	if analysisTimeout <= 0 {
 		analysisTimeout = defaultAnalysisTimeout
