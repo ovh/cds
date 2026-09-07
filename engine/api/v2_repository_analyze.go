@@ -16,8 +16,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-
-	"golang.org/x/sync/errgroup"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -25,6 +23,7 @@ import (
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/entity"
@@ -2012,14 +2011,11 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 	return keyId, analyzeError, nil
 }
 
-// cdsFileFetchConcurrency bounds how many entity files are read from the VCS
-// at once.
-const cdsFileFetchConcurrency = 8
+// defaultEntityFileFetchConcurrency is used when entity.fileFetchConcurrency
+// is not set.
+const defaultEntityFileFetchConcurrency = 8
 
 // listCdsFilePaths walks the .cds tree and returns the entity files in it.
-// Listing is one call per directory, a handful in total; reading the files is
-// the part that scales with the repository, so it is done separately and can
-// then be done in parallel.
 func (api *API) listCdsFilePaths(ctx context.Context, client sdk.VCSAuthorizedClientService, repoName, commit, directory string) ([]string, error) {
 	contents, err := client.ListContent(ctx, repoName, commit, directory, "0", "100")
 	if err != nil {
@@ -2041,19 +2037,8 @@ func (api *API) listCdsFilePaths(ctx context.Context, client sdk.VCSAuthorizedCl
 	return paths, nil
 }
 
-// getCdsFilesOnVCSDirectory reads every entity file under a directory.
-//
-// The files are read concurrently. Read one after another, an analysis costs
-// one network round trip per entity in series, so its duration grows with the
-// number of entities a repository declares rather than with the work involved:
-// a repository with about a hundred and thirty entities took five and a half
-// minutes to analyse while one with far fewer took thirty-six seconds, and the
-// VCS service logged two and a half thousand requests in fifteen minutes,
-// nearly all single-file reads for one analysis. None of that is compute, so
-// it parallelises directly.
-//
-// Bounded rather than unbounded: every read crosses whatever fronts the forge,
-// and that hop, not CDS, is what sets the safe ceiling.
+// getCdsFilesOnVCSDirectory reads every entity file under a directory,
+// concurrently, bounded by entity.fileFetchConcurrency.
 func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsName, repoName, commit, directory string) (map[string][]byte, error) {
 	ctx, next := telemetry.Span(ctx, "api.getCdsFilesOnVCSDirectory")
 	defer next()
@@ -2071,7 +2056,15 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 	filesContent := make(map[string][]byte, len(paths))
 	var mu sync.Mutex
 	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(cdsFileFetchConcurrency)
+	// errgroup.SetLimit(0) does not mean unbounded: it admits no goroutines at
+	// all and Wait blocks forever. Serve applies the default, but an API built
+	// without being served keeps the zero, so the value is clamped where it is
+	// read rather than only where it is configured.
+	fileFetchConcurrency := int(api.Config.Entity.FileFetchConcurrency)
+	if fileFetchConcurrency <= 0 {
+		fileFetchConcurrency = defaultEntityFileFetchConcurrency
+	}
+	group.SetLimit(fileFetchConcurrency)
 	for i := range paths {
 		filePath := paths[i]
 		group.Go(func() error {

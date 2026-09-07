@@ -13,6 +13,8 @@ import (
 
 	"io"
 	"net/http"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -27,9 +29,6 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
-	"strings"
-	"sync/atomic"
-
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
@@ -4084,111 +4083,69 @@ func TestFindCommitter_GithubUnsignedTag_CommitterNotFound(t *testing.T) {
 // TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded covers both
 // things the change has to get right: the same files come back as when they
 // were read one after another, and the reads genuinely overlap without
-// exceeding the bound.
-//
-// The bound matters as much as the parallelism. Every read crosses whatever
-// fronts the forge, and that hop, not CDS, is what sets the safe ceiling.
+// exceeding the configured bound.
 func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "vcs-server", "github")
+	const bound = 8
+	api.Config.Entity.FileFetchConcurrency = bound
 
-	repo := sdk.ProjectRepository{
-		Name:         "myrepo",
-		Created:      time.Now(),
-		VCSProjectID: vcsProject.ID,
-		CreatedBy:    "me",
-		CloneURL:     "myurl",
-		ProjectKey:   proj.Key,
-	}
-	require.NoError(t, repository.Insert(ctx, db, &repo))
-
-	analysis := sdk.ProjectRepositoryAnalysis{
-		Status:              sdk.RepositoryAnalysisStatusInProgress,
-		Commit:              "abcdef",
-		ProjectKey:          proj.Key,
-		ProjectRepositoryID: repo.ID,
-		Ref:                 "refs/heads/master",
-		VCSProjectID:        vcsProject.ID,
-	}
-	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
-
-	svc, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ []sdk.Service) services.Client {
-		return servicesClients
-	}
-	defer func() {
-		_ = services.Delete(db, svc)
-		services.NewClient = services.NewDefaultClient
-	}()
-
-	// A tree wide enough that a bound of cdsFileFetchConcurrency is actually
-	// reached, plus a nested directory and a file that must be ignored.
+	// A tree wide enough that the bound is actually reached, plus a nested
+	// directory and a file that must be ignored.
 	const nestedFiles = 24
 	expected := map[string]string{
 		".cds/workflows/root-a.yml":  "root-a",
 		".cds/workflows/root-b.yaml": "root-b",
 	}
 	nested := make([]sdk.VCSContent, 0, nestedFiles)
-	i := 0
-	for i < nestedFiles {
+	for i := 0; i < nestedFiles; i++ {
 		name := fmt.Sprintf("nested-%02d.yml", i)
 		nested = append(nested, sdk.VCSContent{Name: name, IsFile: true})
 		expected[".cds/workflows/sub/"+name] = strings.TrimSuffix(name, ".yml")
-		i++
 	}
 
 	var inFlight, maxInFlight, reads int64
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _, path string, _ interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-			switch typed := out.(type) {
-			case *[]sdk.VCSContent:
-				// Directory listing. Sequential by design: a handful of calls,
-				// and it is the file reads that scale with the repository.
-				if strings.Contains(path, "sub") {
-					*typed = nested
-					return nil, 200, nil
-				}
-				*typed = []sdk.VCSContent{
-					{Name: "root-a.yml", IsFile: true},
-					{Name: "root-b.yaml", IsFile: true},
-					{Name: "notes.txt", IsFile: true},
-					{Name: "sub", IsDirectory: true},
-				}
-				return nil, 200, nil
-			case *sdk.VCSContent:
-				// One file read. Hold it open briefly so overlap is observable:
-				// serial code can never push the in-flight count above one.
-				current := atomic.AddInt64(&inFlight, 1)
-				for {
-					observed := atomic.LoadInt64(&maxInFlight)
-					if current <= observed || atomic.CompareAndSwapInt64(&maxInFlight, observed, current) {
-						break
-					}
-				}
-				time.Sleep(20 * time.Millisecond)
-				atomic.AddInt64(&inFlight, -1)
-				atomic.AddInt64(&reads, 1)
-
-				name := path[strings.LastIndex(path, "%2F")+len("%2F"):]
-				if idx := strings.Index(name, "?"); idx >= 0 {
-					name = name[:idx]
-				}
-				body := strings.TrimSuffix(strings.TrimSuffix(name, ".yml"), ".yaml")
-				*typed = sdk.VCSContent{Name: name, IsFile: true, Content: base64.StdEncoding.EncodeToString([]byte(body))}
-				return nil, 200, nil
+	analysis := analysisFixtureForFileReads(t, api, db, func(path string, out interface{}) (int, error) {
+		switch typed := out.(type) {
+		case *[]sdk.VCSContent:
+			// Directory listing. Sequential by design: a handful of calls,
+			// and it is the file reads that scale with the repository.
+			if strings.Contains(path, "sub") {
+				*typed = nested
+				return 200, nil
 			}
-			return nil, 200, nil
-		}).AnyTimes()
+			*typed = []sdk.VCSContent{
+				{Name: "root-a.yml", IsFile: true},
+				{Name: "root-b.yaml", IsFile: true},
+				{Name: "notes.txt", IsFile: true},
+				{Name: "sub", IsDirectory: true},
+			}
+		case *sdk.VCSContent:
+			// One file read. Hold it open briefly so overlap is observable:
+			// serial code can never push the in-flight count above one.
+			current := atomic.AddInt64(&inFlight, 1)
+			for {
+				observed := atomic.LoadInt64(&maxInFlight)
+				if current <= observed || atomic.CompareAndSwapInt64(&maxInFlight, observed, current) {
+					break
+				}
+			}
+			time.Sleep(20 * time.Millisecond)
+			atomic.AddInt64(&inFlight, -1)
+			atomic.AddInt64(&reads, 1)
 
-	files, err := api.getCdsFilesOnVCSDirectory(ctx, &analysis, "vcs-server", repo.Name, analysis.Commit, ".cds/workflows")
+			name := path[strings.LastIndex(path, "%2F")+len("%2F"):]
+			if idx := strings.Index(name, "?"); idx >= 0 {
+				name = name[:idx]
+			}
+			body := strings.TrimSuffix(strings.TrimSuffix(name, ".yml"), ".yaml")
+			*typed = sdk.VCSContent{Name: name, IsFile: true, Content: base64.StdEncoding.EncodeToString([]byte(body))}
+		}
+		return 200, nil
+	})
+
+	files, err := api.getCdsFilesOnVCSDirectory(ctx, analysis, "vcs-server", "myrepo", analysis.Commit, ".cds/workflows")
 	require.NoError(t, err)
 
 	// Same result as reading them one at a time: every entity file, decoded,
@@ -4204,7 +4161,7 @@ func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testin
 	require.EqualValues(t, len(expected), atomic.LoadInt64(&reads), "each file must be read once, not repeatedly")
 	observed := atomic.LoadInt64(&maxInFlight)
 	require.Greater(t, observed, int64(1), "reads must overlap; serial reads can never exceed one in flight")
-	require.LessOrEqual(t, observed, int64(cdsFileFetchConcurrency), "reads must stay within the bound, the forge is the constraint")
+	require.LessOrEqual(t, observed, int64(bound), "reads must stay within the configured bound")
 }
 
 // TestGetCdsFilesOnVCSDirectoryPropagatesReadFailures checks a failing read
@@ -4213,6 +4170,29 @@ func TestGetCdsFilesOnVCSDirectoryReadsEveryFileConcurrentlyAndBounded(t *testin
 // entities than the repository declares.
 func TestGetCdsFilesOnVCSDirectoryPropagatesReadFailures(t *testing.T) {
 	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	analysis := analysisFixtureForFileReads(t, api, db, func(path string, out interface{}) (int, error) {
+		switch typed := out.(type) {
+		case *[]sdk.VCSContent:
+			*typed = []sdk.VCSContent{
+				{Name: "a.yml", IsFile: true},
+				{Name: "b.yml", IsFile: true},
+			}
+		case *sdk.VCSContent:
+			_ = typed
+			return 500, sdk.NewErrorFrom(sdk.ErrUnknownError, "vcs is unavailable")
+		}
+		return 200, nil
+	})
+
+	_, err := api.getCdsFilesOnVCSDirectory(ctx, analysis, "vcs-server", "myrepo", analysis.Commit, ".cds/workflows")
+	require.Error(t, err, "a failed read must fail the analysis rather than yield a partial tree")
+}
+
+// analysisFixtureForFileReads builds the project, repository and analysis the
+// entity-file read path needs, and installs a mocked VCS service client.
+func analysisFixtureForFileReads(t *testing.T, api *API, db *test.FakeTransaction, handler func(path string, out interface{}) (int, error)) *sdk.ProjectRepositoryAnalysis {
 	ctx := context.TODO()
 
 	key := sdk.RandomString(10)
@@ -4241,32 +4221,105 @@ func TestGetCdsFilesOnVCSDirectoryPropagatesReadFailures(t *testing.T) {
 
 	svc, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer func() {
+	t.Cleanup(func() {
 		_ = services.Delete(db, svc)
 		services.NewClient = services.NewDefaultClient
-	}()
+		ctrl.Finish()
+	})
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, _, path string, _ interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-			switch typed := out.(type) {
-			case *[]sdk.VCSContent:
-				*typed = []sdk.VCSContent{
-					{Name: "a.yml", IsFile: true},
-					{Name: "b.yml", IsFile: true},
-				}
-				return nil, 200, nil
-			case *sdk.VCSContent:
-				return nil, 500, sdk.NewErrorFrom(sdk.ErrUnknownError, "vcs is unavailable")
-			}
-			return nil, 200, nil
+			code, err := handler(path, out)
+			return nil, code, err
 		}).AnyTimes()
 
-	_, err := api.getCdsFilesOnVCSDirectory(ctx, &analysis, "vcs-server", repo.Name, analysis.Commit, ".cds/workflows")
-	require.Error(t, err, "a failed read must fail the analysis rather than yield a partial tree")
+	return &analysis
+}
+
+// TestGetCdsFilesOnVCSDirectoryHonoursConfiguredConcurrency pins that the
+// bound comes from configuration and not from the default: set to one, the
+// reads must not overlap at all. Forges differ in what they will take -- some
+// rate limit concurrent requests, some limit calls per minute -- so an
+// operator has to be able to lower this, and a knob that is read but ignored
+// looks exactly like one that works.
+func TestGetCdsFilesOnVCSDirectoryHonoursConfiguredConcurrency(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	api.Config.Entity.FileFetchConcurrency = 1
+
+	var inFlight, maxInFlight int64
+	analysis := analysisFixtureForFileReads(t, api, db, func(path string, out interface{}) (int, error) {
+		switch typed := out.(type) {
+		case *[]sdk.VCSContent:
+			contents := make([]sdk.VCSContent, 0, 12)
+			for i := 0; i < 12; i++ {
+				contents = append(contents, sdk.VCSContent{Name: fmt.Sprintf("f-%02d.yml", i), IsFile: true})
+			}
+			*typed = contents
+		case *sdk.VCSContent:
+			current := atomic.AddInt64(&inFlight, 1)
+			for {
+				observed := atomic.LoadInt64(&maxInFlight)
+				if current <= observed || atomic.CompareAndSwapInt64(&maxInFlight, observed, current) {
+					break
+				}
+			}
+			time.Sleep(10 * time.Millisecond)
+			atomic.AddInt64(&inFlight, -1)
+			*typed = sdk.VCSContent{IsFile: true, Content: base64.StdEncoding.EncodeToString([]byte("x"))}
+		}
+		return 200, nil
+	})
+
+	files, err := api.getCdsFilesOnVCSDirectory(ctx, analysis, "vcs-server", "myrepo", analysis.Commit, ".cds/workflows")
+	require.NoError(t, err)
+	require.Len(t, files, 12)
+	require.EqualValues(t, 1, atomic.LoadInt64(&maxInFlight), "with the bound configured to one the reads must not overlap")
+}
+
+// TestGetCdsFilesOnVCSDirectoryDoesNotDeadlockWithoutConfiguredConcurrency
+// pins the failure mode that makes an unset bound hang rather than fail:
+// errgroup's SetLimit(0) admits no goroutines, so Wait blocks forever. Serve
+// fills the default in, but anything building an API without serving it --
+// every test in this package -- leaves the value at zero, and reading it
+// unclamped stops the whole package with no failing assertion to point at.
+func TestGetCdsFilesOnVCSDirectoryDoesNotDeadlockWithoutConfiguredConcurrency(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	// Explicitly unset, as it is for any API that has not been through Serve.
+	api.Config.Entity.FileFetchConcurrency = 0
+
+	analysis := analysisFixtureForFileReads(t, api, db, func(path string, out interface{}) (int, error) {
+		switch typed := out.(type) {
+		case *[]sdk.VCSContent:
+			*typed = []sdk.VCSContent{{Name: "a.yml", IsFile: true}, {Name: "b.yml", IsFile: true}}
+		case *sdk.VCSContent:
+			*typed = sdk.VCSContent{IsFile: true, Content: base64.StdEncoding.EncodeToString([]byte("x"))}
+		}
+		return 200, nil
+	})
+
+	// The deadlock shows up as the package timing out with no failing test, so
+	// bound it here: this must finish, and finishing is the assertion.
+	done := make(chan struct{})
+	var files map[string][]byte
+	var err error
+	go func() {
+		defer close(done)
+		files, err = api.getCdsFilesOnVCSDirectory(ctx, analysis, "vcs-server", "myrepo", analysis.Commit, ".cds/workflows")
+	}()
+	select {
+	case <-done:
+	case <-time.After(30 * time.Second):
+		t.Fatal("getCdsFilesOnVCSDirectory blocked with fileFetchConcurrency unset: an unset bound must fall back to the default, not deadlock")
+	}
+	require.NoError(t, err)
+	require.Len(t, files, 2)
 }
