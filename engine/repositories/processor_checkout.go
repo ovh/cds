@@ -2,15 +2,12 @@ package repositories
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/fsamin/go-repo"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 var vcsPublicKeys map[string][]sdk.Key
@@ -96,90 +93,8 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		}
 	}
 
-	if op.Setup.Checkout.CheckSignature && (op.Setup.Checkout.Commit != "" || op.Setup.Checkout.Tag != "") {
-		var gpgKeyID string
-		if op.Setup.Checkout.Tag != "" {
-			log.Debug(ctx, "retrieve gpg key id from tag %s", op.Setup.Checkout.Tag)
-			// Check tag signature
-			t, err := gitRepo.GetTag(ctx, op.Setup.Checkout.Tag)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			gpgKeyID = t.GPGKeyID
-		} else {
-			log.Debug(ctx, "retrieve gpg key id from commit %s", op.Setup.Checkout.Commit)
-			c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit, repo.CommitOption{DisableDiffDetail: true})
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			gpgKeyID = c.GPGKeyID
-		}
-
-		if gpgKeyID == "" {
-			op.Setup.Checkout.Result.CommitVerified = false
-			op.Setup.Checkout.Result.Msg = "commit not signed"
-		} else {
-			ctx = context.WithValue(ctx, cdslog.GpgKey, gpgKeyID)
-			op.Setup.Checkout.Result.SignKeyID = gpgKeyID
-
-			// Search for public key on vcsserver
-			var publicKey string
-			vcsKeys, has := vcsPublicKeys[op.VCSServer]
-			if has {
-				for _, k := range vcsKeys {
-					if k.KeyID == gpgKeyID {
-						publicKey = k.Public
-						break
-					}
-				}
-			}
-
-			// If not key found, try to get it from a user
-			if publicKey == "" {
-				// Retrieve gpg public key on users
-				userKey, _ := s.Client.UserGpgKeyGet(ctx, gpgKeyID)
-				if userKey.PublicKey != "" {
-					publicKey = userKey.PublicKey
-				} else {
-					// Retrieve gpg public key on vcs
-					vcsUsers, _ := s.Client.VCSGPGKey(ctx, gpgKeyID)
-					for _, vcsUser := range vcsUsers {
-						if vcsUser.VCSProjectName == op.VCSServer && vcsUser.KeyID == gpgKeyID {
-							publicKey = vcsUser.PublicKey
-							break
-						}
-					}
-					if publicKey == "" {
-						op.Setup.Checkout.Result.CommitVerified = false
-						op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", gpgKeyID, err)
-						return nil
-					}
-				}
-			}
-
-			// Import gpg public key
-			fileName, _, err := sdk.ImportGPGKey(os.TempDir(), gpgKeyID, []byte(publicKey))
-			if err != nil {
-				return err
-			}
-			log.Debug(ctx, "key: %s, fileName: %s imported", gpgKeyID, fileName)
-
-			// Check commit signature
-			if op.Setup.Checkout.Tag != "" {
-				if _, err := gitRepo.VerifyTag(ctx, op.Setup.Checkout.Tag); err != nil {
-					op.Setup.Checkout.Result.CommitVerified = false
-					op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
-					return nil
-				}
-			} else {
-				if err := gitRepo.VerifyCommit(ctx, op.Setup.Checkout.Commit); err != nil {
-					op.Setup.Checkout.Result.CommitVerified = false
-					op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
-					return nil
-				}
-			}
-			op.Setup.Checkout.Result.CommitVerified = true
-		}
+	if err := s.checkCommitSignature(ctx, gitRepo, op, nil); err != nil {
+		return err
 	}
 
 	if op.Setup.Checkout.GetChangeSet {

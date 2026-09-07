@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -36,11 +35,6 @@ func (s *Service) GetLocalCacheHandler() service.Handler {
 // instance with their disk usage, sorted by decreasing size.
 func (s *Service) getAdminRepositoriesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		entries, err := os.ReadDir(s.Cfg.Basedir)
-		if err != nil {
-			return sdk.WrapError(err, "unable to read %s", s.Cfg.Basedir)
-		}
-
 		res := sdk.RepositoriesAdminList{Instance: s.dao.hostname, Repositories: []sdk.RepositoriesAdminEntry{}}
 		if snap := s.repoSizes.Load(); snap != nil {
 			computedAt := snap.computedAt
@@ -48,29 +42,36 @@ func (s *Service) getAdminRepositoriesHandler() service.Handler {
 			res.TotalSize = snap.total
 		}
 
-		for _, e := range entries {
-			if !e.IsDir() {
-				continue
+		for _, c := range cacheRoots {
+			names, err := readCacheEntries(s.rootDir(c))
+			if err != nil {
+				return sdk.WrapError(err, "unable to read %s", s.rootDir(c))
 			}
-			repoID := e.Name()
-			entry := sdk.RepositoriesAdminEntry{ID: repoID, URL: repoID}
-			if url, err := base64.StdEncoding.DecodeString(repoID); err == nil {
-				entry.URL = string(url)
+			for _, repoID := range names {
+				key := c.cloneKey(repoID)
+				entry := sdk.RepositoriesAdminEntry{ID: repoID, Kind: c.kind, URL: repoID}
+				if url, err := base64.StdEncoding.DecodeString(repoID); err == nil {
+					entry.URL = string(url)
+				}
+				entry.Size, _ = s.repoSize(key)
+				until, expired := s.dao.isExpired(ctx, key)
+				entry.Expired = expired
+				if !expired {
+					entry.ProtectedUntil = &until
+				}
+				res.Repositories = append(res.Repositories, entry)
 			}
-			entry.Size, _ = s.repoSize(repoID)
-			until, expired := s.dao.isExpired(ctx, repoID)
-			entry.Expired = expired
-			if !expired {
-				entry.ProtectedUntil = &until
-			}
-			res.Repositories = append(res.Repositories, entry)
 		}
 
 		sort.Slice(res.Repositories, func(i, j int) bool {
-			if res.Repositories[i].Size != res.Repositories[j].Size {
-				return res.Repositories[i].Size > res.Repositories[j].Size
+			a, b := res.Repositories[i], res.Repositories[j]
+			if a.Size != b.Size {
+				return a.Size > b.Size
 			}
-			return res.Repositories[i].URL < res.Repositories[j].URL
+			if a.URL != b.URL {
+				return a.URL < b.URL
+			}
+			return a.Kind < b.Kind
 		})
 		return service.WriteJSON(w, res, http.StatusOK)
 	}
@@ -175,6 +176,9 @@ func (s *Service) getOperationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		uuid := muxVar(r, "uuid")
 		op := s.dao.loadOperation(ctx, uuid)
+		if op == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "operation %s not found", uuid)
+		}
 		op.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 		op.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 
