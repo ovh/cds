@@ -108,18 +108,11 @@ func (s *RedisStore) Ping() error {
 // keysScanBatch is how many keys one SCAN cursor step asks for.
 const keysScanBatch = 10000
 
-// keysScanTimeout bounds a whole keyspace walk.
-//
-// KEYS was one round trip; a walk is several, each with the client's own
-// retries behind it, so a degraded Redis could hang a caller for much longer
-// than before. The walk is a handful of steps of well under a millisecond of
-// server time each, so this is several orders of magnitude of headroom and
-// only ever trips on a Redis that is not answering.
+// keysScanTimeout bounds a whole walk, however many cursor steps it takes, so
+// a Redis that stops answering cannot hold a caller indefinitely.
 const keysScanTimeout = 30 * time.Second
 
 // Keys returns the keys matching a pattern, walking the keyspace with SCAN.
-// KEYS is O(N) over the whole keyspace and blocks every other client of the
-// instance for as long as it runs.
 func (s *RedisStore) Keys(pattern string) ([]string, error) {
 	if s.Client == nil {
 		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
@@ -128,12 +121,11 @@ func (s *RedisStore) Keys(pattern string) ([]string, error) {
 }
 
 // scanKeys walks the keyspace one cursor step at a time, de-duplicating what
-// SCAN returns: a key present throughout is returned at least once, but may
-// be returned more than once if the keyspace is resized during the walk.
+// SCAN returns: a key present throughout the walk is returned at least once,
+// and more than once if the keyspace is resized while the cursor is open.
 //
-// Split out from Keys so the multi-step path can be exercised with a batch
-// small enough to force several cursor steps over a small keyspace; production
-// callers always go through Keys.
+// batch is the COUNT of one step. Keys passes keysScanBatch; the tests pass a
+// smaller one to force several steps over a small keyspace.
 func (s *RedisStore) scanKeys(pattern string, batch int64) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), keysScanTimeout)
 	defer cancel()

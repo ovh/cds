@@ -110,16 +110,11 @@ func TestDequeueJSONRawMessagesWithContextMaxTimeout(t *testing.T) {
 	require.Equal(t, 95, l2)
 }
 
-// TestKeysWalksWholeKeyspace covers the SCAN-based Keys(). SCAN differs from
-// KEYS in ways that matter to callers: it pages through a cursor, so it needs
-// several round trips when the keyspace is larger than one batch.
+// TestKeysWalksWholeKeyspace checks a walk spanning many cursor steps returns
+// every matching key and nothing else. The batch is far smaller than the
+// keyspace so the cursor loop, rather than a single round trip, is what runs.
 //
-// The batch is deliberately tiny here so a small keyspace still forces many
-// cursor steps; production uses keysScanBatch. The result must be complete and
-// correctly filtered by pattern. De-duplication is covered separately, in
-// TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps: a live Redis only
-// repeats a key if it happens to resize its hash table mid-walk, so asserting
-// on it here would pass whether or not the code de-duplicates at all.
+// De-duplication is covered by TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps.
 func TestKeysWalksWholeKeyspace(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
@@ -137,7 +132,7 @@ func TestKeysWalksWholeKeyspace(t *testing.T) {
 		require.NoError(t, s.SetWithTTL(k, "v", 120))
 		expected[k] = struct{}{}
 	}
-	// A key that must not match, so the pattern is proven to still filter.
+	// A key outside the pattern, which must not come back.
 	other := "test:other:" + sdk.RandomString(8)
 	require.NoError(t, s.SetWithTTL(other, "v", 120))
 
@@ -148,8 +143,7 @@ func TestKeysWalksWholeKeyspace(t *testing.T) {
 		s.Delete(other)
 	})
 
-	// A batch far smaller than the keyspace: the walk cannot complete in one
-	// step, so the cursor loop itself is under test.
+	// A batch far smaller than the keyspace, so the walk takes many steps.
 	found, err := s.scanKeys(prefix+":*", 10)
 	require.NoError(t, err)
 
@@ -159,7 +153,7 @@ func TestKeysWalksWholeKeyspace(t *testing.T) {
 		require.True(t, want, "Keys returned a key outside the requested pattern: %s", k)
 	}
 
-	// And the exported entry point, on the production batch, agrees.
+	// The exported entry point, on the production batch, returns the same set.
 	viaKeys, err := s.Keys(prefix + ":*")
 	require.NoError(t, err)
 	require.Len(t, viaKeys, total, "Keys must return the same set whatever the batch size")
@@ -174,19 +168,15 @@ func TestKeysReturnsEmptyForUnmatchedPattern(t *testing.T) {
 	s, err := NewRedisStore(sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err)
 
-	// A cursor walk that matches nothing must terminate and return empty rather
-	// than nil-with-error or spinning on a non-zero cursor.
+	// A pattern matching nothing must terminate and return empty.
 	found, err := s.Keys("test:nothing:" + sdk.RandomString(12) + ":*")
 	require.NoError(t, err)
 	require.Empty(t, found)
 }
 
-// TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps covers the de-duplication
-// the cursor walk needs. SCAN guarantees a key present for the whole walk is
-// returned at least once, not exactly once: a hash table resized while the
-// cursor is open can hand the same key back on a later step. That is not
-// reproducible on demand against a live Redis, so the step is driven directly
-// with the input a resize produces.
+// TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps checks a key returned by
+// more than one cursor step, or twice within one, appears once in the result.
+// SCAN returns that when the keyspace is resized while the cursor is open.
 func TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps(t *testing.T) {
 	seen := make(map[string]struct{})
 	var keys []string
@@ -200,9 +190,9 @@ func TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps(t *testing.T) {
 	require.Equal(t, []string{"a", "b", "c", "d"}, keys, "each key must appear exactly once, in the order it was first seen")
 }
 
-// TestDeleteAllRemovesTheWholeMatchingKeyspace covers DeleteAll, which walks
-// with the same cursor as Keys. A keyspace larger than one batch is the case
-// that a single-shot listing got right and a truncated walk would not.
+// TestDeleteAllRemovesTheWholeMatchingKeyspace checks DeleteAll removes every
+// key matching the pattern across a keyspace larger than one cursor step, and
+// leaves keys outside the pattern alone.
 func TestDeleteAllRemovesTheWholeMatchingKeyspace(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
