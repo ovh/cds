@@ -1171,6 +1171,7 @@ func prepareWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 					BranchFilter:      s.Branches,
 					TagFilter:         s.Tags,
 					WorkflowRunStatus: s.Status,
+					PathFilter:        s.Paths,
 				},
 				Head: e.Head,
 			}

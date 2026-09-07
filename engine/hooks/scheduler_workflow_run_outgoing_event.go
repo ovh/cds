@@ -224,6 +224,8 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 					Commit:               wh.Commit,
 					Data:                 wh.Data,
 					EntityID:             wh.EntityID,
+					PathFilters:          wh.Data.PathFilter,
+					ParentUpdatedFiles:   outgoingEvent.Event.Request.WorkflowRun.Git.ChangeSets,
 				},
 			},
 		}
