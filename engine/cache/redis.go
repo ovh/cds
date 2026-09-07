@@ -106,38 +106,20 @@ func (s *RedisStore) Ping() error {
 }
 
 // keysScanBatch is how many keys one SCAN cursor step asks for.
-//
-// Not configurable on purpose. Nothing outside Redis constrains it, a wrong
-// value costs efficiency rather than correctness, and there is no state an
-// operator can see that the code cannot — so a knob here would only ask
-// someone to guess at a number that has one right answer.
-//
-// It does need to be large. At 1000 a keyspace of a hundred and forty thousand
-// keys takes about a hundred and forty cursor steps, and the CDN asks four
-// times a second, which doubled this instance's command rate from 250/s to
-// 520/s the moment SCAN replaced KEYS. At 10000 the same walk is about
-// fifteen steps. Redis handles a single SCAN step of this size in well under
-// a millisecond, so the larger batch costs nothing that the round trips did
-// not cost more of.
 const keysScanBatch = 10000
 
-// Keys returns the keys matching a pattern.
+// keysScanTimeout bounds a whole keyspace walk.
 //
-// This walks the keyspace with SCAN rather than asking for KEYS. KEYS is O(N)
-// over the whole keyspace and, because Redis executes commands on one thread,
-// it blocks every other client for as long as it runs. The CDN's waitingJobs
-// loop calls this four times a second forever; against a keyspace of a hundred
-// and forty thousand keys each call measured 27-35ms in the slowlog, so that
-// loop alone held the server for roughly a tenth of all available time and
-// added a stall to every other command — locks, queue pops, cache reads — for
-// every service sharing this Redis. It is why a repository analysis could sit
-// unclaimed for over two minutes while the poller ticked every five seconds.
-//
-// SCAN returns the same keys without ever blocking for more than one batch.
-// It may return duplicates across cursor steps, which the set here removes,
-// and it is a moving view of a live keyspace rather than a snapshot — for a
-// caller that is polling for work to pick up, that is the same guarantee KEYS
-// gave it in practice.
+// KEYS was one round trip; a walk is several, each with the client's own
+// retries behind it, so a degraded Redis could hang a caller for much longer
+// than before. The walk is a handful of steps of well under a millisecond of
+// server time each, so this is several orders of magnitude of headroom and
+// only ever trips on a Redis that is not answering.
+const keysScanTimeout = 30 * time.Second
+
+// Keys returns the keys matching a pattern, walking the keyspace with SCAN.
+// KEYS is O(N) over the whole keyspace and blocks every other client of the
+// instance for as long as it runs.
 func (s *RedisStore) Keys(pattern string) ([]string, error) {
 	if s.Client == nil {
 		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
@@ -145,13 +127,16 @@ func (s *RedisStore) Keys(pattern string) ([]string, error) {
 	return s.scanKeys(pattern, keysScanBatch)
 }
 
-// scanKeys walks the keyspace one cursor step at a time.
+// scanKeys walks the keyspace one cursor step at a time, de-duplicating what
+// SCAN returns: a key present throughout is returned at least once, but may
+// be returned more than once if the keyspace is resized during the walk.
 //
 // Split out from Keys so the multi-step path can be exercised with a batch
 // small enough to force several cursor steps over a small keyspace; production
 // callers always go through Keys.
 func (s *RedisStore) scanKeys(pattern string, batch int64) ([]string, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), keysScanTimeout)
+	defer cancel()
 	seen := make(map[string]struct{})
 	keys := make([]string, 0)
 	var cursor uint64
@@ -160,18 +145,24 @@ func (s *RedisStore) scanKeys(pattern string, batch int64) ([]string, error) {
 		if err != nil {
 			return nil, sdk.WrapError(err, "redis> cannot list keys: %s", pattern)
 		}
-		for _, k := range found {
-			if _, dup := seen[k]; dup {
-				continue
-			}
-			seen[k] = struct{}{}
-			keys = append(keys, k)
-		}
+		keys = appendUnseen(seen, keys, found)
 		cursor = next
 		if cursor == 0 {
 			return keys, nil
 		}
 	}
+}
+
+// appendUnseen adds the keys of one cursor step that have not been seen yet.
+func appendUnseen(seen map[string]struct{}, dst []string, found []string) []string {
+	for _, k := range found {
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		dst = append(dst, k)
+	}
+	return dst
 }
 
 // Get a key from redis
@@ -263,7 +254,7 @@ func (s *RedisStore) DeleteAll(pattern string) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
-	keys, err := s.Client.Keys(context.Background(), pattern).Result()
+	keys, err := s.scanKeys(pattern, keysScanBatch)
 	if err != nil {
 		return sdk.WrapError(err, "redis> Error deleting %s", pattern)
 	}
