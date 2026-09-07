@@ -3,11 +3,14 @@ package gitea
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	gg "code.gitea.io/sdk/gitea"
 
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/vcs/transport"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -56,7 +59,13 @@ func New(URL, apiURL, uiURL, proxyURL string, store cache.Store, username, token
 
 // GetAuthorizedClient returns an authorized client
 func (g *giteaConsumer) GetAuthorizedClient(_ context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	client, err := gg.NewClient(g.URL, gg.SetBasicAuth(g.username, g.token))
+	client, err := gg.NewClient(g.URL,
+		gg.SetBasicAuth(g.username, g.token),
+		// This client is built per request, so its transport comes from the
+		// process-wide pool. The SDK's own default has neither a transport
+		// nor a timeout.
+		gg.SetHTTPClient(&http.Client{Timeout: 60 * time.Second, Transport: transport.Pooled()}),
+	)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
