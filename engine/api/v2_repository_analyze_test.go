@@ -4323,3 +4323,63 @@ func TestGetCdsFilesOnVCSDirectoryDoesNotDeadlockWithoutConfiguredConcurrency(t 
 	require.NoError(t, err)
 	require.Len(t, files, 2)
 }
+
+// TestGetCdsFilesOnVCSDirectoryRecoversFromAReadPanic pins that a panic in a
+// read fails the analysis instead of the process. errgroup starts bare
+// goroutines with no recovery of their own -- x/sync removed it deliberately
+// -- where the serial version this replaces was covered by the recover in
+// GoRoutines.Exec further up the call chain. Without the recover here this
+// test does not fail, it takes the test binary down with it.
+func TestGetCdsFilesOnVCSDirectoryRecoversFromAReadPanic(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	api.Config.Entity.FileFetchConcurrency = 2
+
+	analysis := analysisFixtureForFileReads(t, api, db, func(path string, out interface{}) (int, error) {
+		switch typed := out.(type) {
+		case *[]sdk.VCSContent:
+			*typed = []sdk.VCSContent{{Name: "a.yml", IsFile: true}, {Name: "b.yml", IsFile: true}}
+		case *sdk.VCSContent:
+			_ = typed
+			panic("boom")
+		}
+		return 200, nil
+	})
+
+	_, err := api.getCdsFilesOnVCSDirectory(ctx, analysis, "vcs-server", "myrepo", analysis.Commit, ".cds/workflows")
+	require.Error(t, err, "a panic in a read must fail the analysis, not the API process")
+	require.Contains(t, err.Error(), "panic while reading")
+}
+
+// TestGetCdsFilesOnVCSDirectoryStopsSchedulingAfterAFailure pins that a failed
+// read ends the fan-out. Once the group's context is cancelled every read
+// started after it can only fail with the same error, so scheduling the rest
+// of a large repository is work the forge is asked for and nothing can use.
+func TestGetCdsFilesOnVCSDirectoryStopsSchedulingAfterAFailure(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	api.Config.Entity.FileFetchConcurrency = 1
+
+	const total = 200
+	var reads int64
+	analysis := analysisFixtureForFileReads(t, api, db, func(path string, out interface{}) (int, error) {
+		switch typed := out.(type) {
+		case *[]sdk.VCSContent:
+			contents := make([]sdk.VCSContent, 0, total)
+			for i := 0; i < total; i++ {
+				contents = append(contents, sdk.VCSContent{Name: fmt.Sprintf("f-%03d.yml", i), IsFile: true})
+			}
+			*typed = contents
+		case *sdk.VCSContent:
+			atomic.AddInt64(&reads, 1)
+			return 500, sdk.NewErrorFrom(sdk.ErrUnknownError, "vcs is unavailable")
+		}
+		return 200, nil
+	})
+
+	_, err := api.getCdsFilesOnVCSDirectory(ctx, analysis, "vcs-server", "myrepo", analysis.Commit, ".cds/workflows")
+	require.Error(t, err)
+	require.Less(t, atomic.LoadInt64(&reads), int64(total), "reads must stop once the group's context is cancelled")
+}

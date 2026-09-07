@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -2066,8 +2067,24 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 	}
 	group.SetLimit(fileFetchConcurrency)
 	for i := range paths {
+		// A failed read cancels groupCtx, and every read started after that
+		// can only fail with the same error. Stop scheduling them.
+		if groupCtx.Err() != nil {
+			break
+		}
 		filePath := paths[i]
-		group.Go(func() error {
+		group.Go(func() (err error) {
+			// errgroup starts a bare goroutine, so a panic here takes the
+			// process down; the serial version this replaces was covered by
+			// the recover in GoRoutines.Exec further up the call chain.
+			defer func() {
+				if r := recover(); r != nil {
+					buf := make([]byte, 1<<16)
+					buf = buf[:runtime.Stack(buf, false)]
+					log.Error(groupCtx, "[PANIC] getCdsFilesOnVCSDirectory> reading %s: %v\n%s", filePath, r, string(buf))
+					err = sdk.WithStack(fmt.Errorf("panic while reading %s: %v", filePath, r))
+				}
+			}()
 			vcsContent, err := client.GetContent(groupCtx, repoName, commit, filePath)
 			if err != nil {
 				return err
