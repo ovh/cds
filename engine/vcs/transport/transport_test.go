@@ -17,11 +17,36 @@ import (
 // TestPooledRotates checks Pooled hands out every transport in the pool rather
 // than the same one each time.
 func TestPooledRotates(t *testing.T) {
+	defer Configure(DefaultPoolSize, DefaultMaxIdleConnsPerHost)
+
 	seen := make(map[http.RoundTripper]struct{})
-	for i := 0; i < PoolSize*3; i++ {
+	for i := 0; i < size()*3; i++ {
 		seen[Pooled()] = struct{}{}
 	}
-	require.Len(t, seen, PoolSize, "every transport in the pool must be handed out")
+	require.Len(t, seen, size(), "every transport in the pool must be handed out")
+}
+
+// TestConfigureSizesThePool checks the configured sizes are the ones used, and
+// that a size which is unset or negative falls back to its default rather than
+// producing an empty pool for Pooled to index into.
+func TestConfigureSizesThePool(t *testing.T) {
+	defer Configure(DefaultPoolSize, DefaultMaxIdleConnsPerHost)
+
+	Configure(3, 16)
+	require.Equal(t, 3, size(), "the configured pool size must be the one used")
+	seen := make(map[http.RoundTripper]struct{})
+	for i := 0; i < 9; i++ {
+		seen[Pooled()] = struct{}{}
+	}
+	require.Len(t, seen, 3, "rotation must follow the configured size")
+	require.Equal(t, 16, (*pool.Load())[0].MaxIdleConnsPerHost)
+
+	for _, unset := range []int{0, -1} {
+		Configure(unset, unset)
+		require.Equal(t, DefaultPoolSize, size(), "an unset pool size must mean the default, not an empty pool")
+		require.Equal(t, DefaultMaxIdleConnsPerHost, (*pool.Load())[0].MaxIdleConnsPerHost)
+		require.NotPanics(t, func() { Pooled() }, "an unset pool size must still yield a usable transport")
+	}
 }
 
 // TestPooledOpensSeveralConnectionsToAnHTTP2Host checks the pool spreads a
@@ -56,7 +81,7 @@ func TestPooledOpensSeveralConnectionsToAnHTTP2Host(t *testing.T) {
 	// The pool's transports do not trust the test server's certificate, so
 	// lend each of them the server's TLS config for the duration.
 	serverTLS := srv.Client().Transport.(*http.Transport).TLSClientConfig
-	for _, tr := range pool {
+	for _, tr := range *pool.Load() {
 		restore := tr.TLSClientConfig
 		tr.TLSClientConfig = serverTLS.Clone()
 		defer func(tr *http.Transport, cfg *tls.Config) { tr.TLSClientConfig = cfg }(tr, restore)
@@ -72,7 +97,7 @@ func TestPooledOpensSeveralConnectionsToAnHTTP2Host(t *testing.T) {
 	}
 
 	countAfterBurst := func(rt func(i int) http.RoundTripper) int {
-		for i := 0; i < PoolSize; i++ {
+		for i := 0; i < size(); i++ {
 			get(rt(i), "/warm")
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -81,7 +106,7 @@ func TestPooledOpensSeveralConnectionsToAnHTTP2Host(t *testing.T) {
 		mu.Unlock()
 
 		var wg sync.WaitGroup
-		for i := 0; i < PoolSize*3; i++ {
+		for i := 0; i < size()*3; i++ {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
@@ -95,11 +120,11 @@ func TestPooledOpensSeveralConnectionsToAnHTTP2Host(t *testing.T) {
 		return len(conns)
 	}
 
-	shared := pool[0]
+	shared := (*pool.Load())[0]
 	require.Equal(t, 1, countAfterBurst(func(int) http.RoundTripper { return shared }),
 		"a single transport must carry the whole burst on one connection")
 
-	transports := pool
+	transports := *pool.Load()
 	require.Greater(t, countAfterBurst(func(i int) http.RoundTripper { return transports[i%len(transports)] }), 1,
 		"the pool must spread a burst over several connections")
 }
