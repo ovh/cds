@@ -244,6 +244,10 @@ func (api *API) putUserHandler() service.Handler {
 			}
 		}
 
+		// A profile can be incomplete, but an update must not degrade it
+		if data.Fullname == "" && oldUser.Fullname != "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given fullname")
+		}
 		newUser.Fullname = data.Fullname
 
 		// Only an admin can change the ring of a user
